@@ -1,0 +1,11 @@
+# Management Console Generated Artifacts
+
+This directory is reserved for machine-generated reference material that agents should be able to inspect in-repo.
+
+Examples:
+
+- route inventories
+- bundle analysis snapshots
+- generated UI fixtures
+
+Do not hand-maintain generated artifacts here.

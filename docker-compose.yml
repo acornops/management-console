@@ -1,0 +1,13 @@
+name: acornops-management-console
+
+services:
+  management-console:
+    image: ${MANAGEMENT_CONSOLE_IMAGE:-ghcr.io/acornops/management-console:0.0.1-experimental.1}
+    ports:
+      - "${MANAGEMENT_CONSOLE_PORT:-3000}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped

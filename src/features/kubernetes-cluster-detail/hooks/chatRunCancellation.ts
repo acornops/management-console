@@ -1,0 +1,49 @@
+import { ChatMessage } from '@/types';
+
+export interface ActiveRunStreamControls {
+  abort: () => void;
+}
+
+export function replaceCancelledRunAssistantMessages(
+  messages: ChatMessage[],
+  runId: string,
+  cancelledMessage: string,
+  timestamp = Date.now()
+): ChatMessage[] {
+  let replaced = false;
+  const cancelledRunMessage: ChatMessage = {
+    id: `cancelled-${runId}`,
+    role: 'assistant',
+    content: cancelledMessage,
+    runId,
+    timestamp
+  };
+  const nextMessages: ChatMessage[] = [];
+  let insertionIndex = -1;
+  for (const message of messages) {
+    if (message.role === 'assistant' && message.runId === runId) {
+      if (replaced) {
+        continue;
+      }
+      replaced = true;
+      nextMessages.push({ ...cancelledRunMessage, id: message.id || cancelledRunMessage.id });
+      insertionIndex = nextMessages.length - 1;
+      continue;
+    }
+    nextMessages.push(message);
+    if (message.runId === runId) {
+      insertionIndex = nextMessages.length - 1;
+    }
+  }
+  if (replaced) {
+    return nextMessages;
+  }
+  if (insertionIndex < 0) {
+    return [...nextMessages, cancelledRunMessage];
+  }
+  return [
+    ...nextMessages.slice(0, insertionIndex + 1),
+    cancelledRunMessage,
+    ...nextMessages.slice(insertionIndex + 1)
+  ];
+}

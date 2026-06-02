@@ -1,0 +1,5 @@
+{
+  "name": "AcornOps",
+  "description": "An AI-powered Kubernetes troubleshooting platform with Google Cloud-inspired UI and real-time cluster health dashboard.",
+  "requestFramePermissions": []
+}

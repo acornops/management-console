@@ -1,0 +1,19 @@
+{
+  "defaultLanguage": "en",
+  "languages": [
+    {
+      "code": "en",
+      "label": "English",
+      "nativeLabel": "English",
+      "htmlLang": "en",
+      "source": "bundled"
+    },
+    {
+      "code": "zh",
+      "label": "Mandarin Chinese",
+      "nativeLabel": "中文",
+      "htmlLang": "zh-CN",
+      "source": "bundled"
+    }
+  ]
+}

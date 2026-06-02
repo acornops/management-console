@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-16T23:59:06+08:00",
+  "title": "Design System: AcornOps",
+  "extensions": {
+    "colorMeta": {
+      "accent-orange": {
+        "role": "primary",
+        "displayName": "Controlled Signal Orange",
+        "canonical": "#FF703B",
+        "tonalRamp": [
+          "oklch(0.15 0.12 42)",
+          "oklch(0.28 0.14 42)",
+          "oklch(0.42 0.16 42)",
+          "oklch(0.58 0.18 42)",
+          "oklch(0.70 0.17 42)",
+          "oklch(0.80 0.12 42)",
+          "oklch(0.90 0.07 42)",
+          "oklch(0.96 0.035 42)"
+        ]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Warm Canvas",
+        "canonical": "#FBFBFA",
+        "tonalRamp": [
+          "#121110",
+          "#1A1817",
+          "#211E1C",
+          "#2D2623",
+          "#8E8480",
+          "#F0EEEB",
+          "#F6F4F1",
+          "#FBFBFA"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Paper Surface",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#1A1817",
+          "#211E1C",
+          "#2D2623",
+          "#8E8480",
+          "#F0EEEB",
+          "#F6F4F1",
+          "#FBFBFA",
+          "#FFFFFF"
+        ]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Success Green",
+        "canonical": "#16805B",
+        "tonalRamp": [
+          "oklch(0.15 0.05 165)",
+          "oklch(0.28 0.07 165)",
+          "oklch(0.42 0.09 165)",
+          "oklch(0.55 0.10 165)",
+          "oklch(0.68 0.09 165)",
+          "oklch(0.80 0.06 165)",
+          "oklch(0.90 0.035 165)",
+          "oklch(0.96 0.018 165)"
+        ]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Warning Ochre",
+        "canonical": "#9D6A12",
+        "tonalRamp": [
+          "oklch(0.15 0.06 75)",
+          "oklch(0.28 0.08 75)",
+          "oklch(0.42 0.10 75)",
+          "oklch(0.55 0.11 75)",
+          "oklch(0.68 0.09 75)",
+          "oklch(0.80 0.06 75)",
+          "oklch(0.90 0.035 75)",
+          "oklch(0.96 0.018 75)"
+        ]
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Danger Rose",
+        "canonical": "#BE2646",
+        "tonalRamp": [
+          "oklch(0.15 0.06 15)",
+          "oklch(0.28 0.09 15)",
+          "oklch(0.42 0.12 15)",
+          "oklch(0.55 0.14 15)",
+          "oklch(0.68 0.11 15)",
+          "oklch(0.80 0.07 15)",
+          "oklch(0.90 0.04 15)",
+          "oklch(0.96 0.02 15)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Route Display",
+        "purpose": "Page titles and major route headers."
+      },
+      "headline": {
+        "displayName": "Panel Headline",
+        "purpose": "Section titles and panel headers."
+      },
+      "title": {
+        "displayName": "Row Title",
+        "purpose": "Cluster names, card titles, and item headings."
+      },
+      "body": {
+        "displayName": "Interface Body",
+        "purpose": "Descriptions, helper text, and standard UI copy."
+      },
+      "label": {
+        "displayName": "Operational Label",
+        "purpose": "Status labels, metadata, compact badges, and control labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "subtle-surface",
+        "value": "0 1px 2px rgb(0 0 0 / 0.05)",
+        "purpose": "Small structural elevation for buttons, cards, dialogs, and quiet panels."
+      },
+      {
+        "name": "accent-button",
+        "value": "0 1px 2px rgb(var(--brand-orange-rgb) / 0.20)",
+        "purpose": "Accent action depth only."
+      },
+      {
+        "name": "neutral-button",
+        "value": "0 1px 2px oklch(0.18 0.006 70 / 0.15)",
+        "purpose": "Filled neutral button depth."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "200ms ease",
+        "purpose": "Default color and state transitions."
+      },
+      {
+        "name": "sidebar-enter",
+        "value": "180ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Short sidebar/header state reveals."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms !important",
+        "purpose": "Global reduced-motion override for animations and transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Accent Button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "Main local action with orange fill and compact product sizing.",
+      "html": "<button class=\"ds-btn-accent\">Create Template</button>",
+      "css": ".ds-btn-accent { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--brand-orange); background: var(--brand-orange); color: var(--bg); border-radius: 6px; padding: 10px 16px; font: 600 14px/1.25 Outfit, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(var(--brand-orange-rgb) / 0.20); transition: background-color 200ms ease, border-color 200ms ease; } .ds-btn-accent:hover { background: var(--brand-orange-bright); border-color: var(--brand-orange-bright); } .ds-btn-accent:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Default page and toolbar action with bordered paper surface.",
+      "html": "<button class=\"ds-btn-secondary\">Open Cluster</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 10px 16px; font: 600 14px/1.25 Outfit, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); transition: background-color 200ms ease, border-color 200ms ease; } .ds-btn-secondary:hover { background: var(--bg); border-color: rgb(var(--brand-orange-rgb) / 0.30); } .ds-btn-secondary:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Calm operational field with warm canvas fill and orange focus border.",
+      "html": "<label class=\"ds-field\"><span>Name</span><input value=\"API saturation triage\" /></label>",
+      "css": ".ds-field { display: block; color: var(--text); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; } .ds-field span { display: block; color: var(--text-muted); font-size: 12px; font-weight: 700; line-height: 16px; } .ds-field input { margin-top: 8px; width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; padding: 12px 16px; font: 500 14px/1.5 Outfit, ui-sans-serif, system-ui, sans-serif; outline: none; transition: border-color 200ms ease; } .ds-field input:focus { border-color: rgb(var(--brand-orange-rgb) / 0.40); }"
+    },
+    {
+      "name": "Health Badge",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Semantic status chip with dot, soft background, and uppercase label.",
+      "html": "<span class=\"ds-health-badge\"><span></span>GREEN</span>",
+      "css": ".ds-health-badge { display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgb(var(--status-success-rgb) / 0.25); background: rgb(var(--status-success-soft-rgb)); color: rgb(var(--status-success-text-rgb)); border-radius: 4px; padding: 2px 8px; font: 700 10px/1.25 Outfit, ui-sans-serif, system-ui, sans-serif; letter-spacing: 0.05em; text-transform: uppercase; } .ds-health-badge span { width: 6px; height: 6px; border-radius: 9999px; background: rgb(var(--status-success-rgb)); }"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "surface-card",
+      "description": "Operational card surface with soft divider and subtle structural shadow.",
+      "html": "<article class=\"ds-surface-card\"><h3>Cluster Estate</h3><p>3 clusters, 14 namespaces, 2 findings</p></article>",
+      "css": ".ds-surface-card { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 20px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; } .ds-surface-card h3 { margin: 0; font-size: 16px; line-height: 1.5; font-weight: 700; } .ds-surface-card p { margin: 4px 0 0; color: var(--text-muted); font-size: 14px; line-height: 1.5; font-weight: 500; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Compact sidebar navigation item with muted default state and orange wash hover.",
+      "html": "<button class=\"ds-nav-item\"><span>Runbooks</span><span>3</span></button>",
+      "css": ".ds-nav-item { width: 100%; display: flex; align-items: center; justify-content: space-between; border: 0; background: transparent; color: var(--text-muted); border-radius: 8px; padding: 12px 16px; font: 500 14px/1.25 Outfit, ui-sans-serif, system-ui, sans-serif; transition: background-color 200ms ease, color 200ms ease; } .ds-nav-item:hover { background: rgb(var(--brand-orange-soft-rgb) / 0.30); color: var(--brand-orange-strong); } .ds-nav-item:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Operator's Ledger",
+    "overview": "AcornOps is an operational product UI: precise, calm, and built for people who need to inspect cluster state without hunting through decorative interface noise. The visual system is deliberately restrained. Warm neutral surfaces carry most of the experience, orange is held for action and state, and dense lists stay readable through rhythm, borders, and typography instead of spectacle.\n\nThe system should feel trustworthy during routine cluster setup and active investigation work. It rejects flashy SaaS gradients, decorative motion, glassy cards, clever custom controls, visual drama that competes with operational state, and invented affordances where familiar product UI patterns are faster.",
+    "keyCharacteristics": [
+      "Warm neutral shell with orange used sparingly for primary action, focus, and selected state.",
+      "Dense but breathable layouts: tables, rows, sidebars, and panels should be easy to scan repeatedly.",
+      "Familiar product controls: buttons, forms, dialogs, tabs, navigation, and toolbars should behave predictably.",
+      "Motion is state feedback only. Page choreography is prohibited."
+    ],
+    "rules": [
+      {
+        "name": "The Single Signal Rule",
+        "body": "Orange is the only primary accent. If a screen needs another loud hue, it must be semantic status or data visualization.",
+        "section": "colors"
+      },
+      {
+        "name": "The Warm Neutral Rule",
+        "body": "Backgrounds and borders stay warm and quiet. Do not introduce cool slate, blue-gray, or generic dashboard neutrals.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Display Drama Rule",
+        "body": "Display type is for route identity, not marketing. Do not add oversized hero typography inside operational pages.",
+        "section": "typography"
+      },
+      {
+        "name": "The Weight-First Rule",
+        "body": "Use font weight and muted color before adding new type sizes. New ad-hoc sizes should be rare.",
+        "section": "typography"
+      },
+      {
+        "name": "The Border Before Shadow Rule",
+        "body": "Use borders and tonal layers before adding elevation. If a shadow is visible before the border is readable, the shadow is too strong.",
+        "section": "elevation"
+      },
+      {
+        "name": "The No Glass Rule",
+        "body": "Blur-backed panels and glass cards are prohibited for this product.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do optimize for operator confidence: make every primary action show its target and consequence.",
+      "Do keep state inspectable with visible labels, selected targets, current cluster names, and execution context.",
+      "Do use familiar control vocabulary: buttons, forms, dialogs, tabs, navigation, and standard select fields.",
+      "Do reserve orange for actions, current selection, focus, and meaningful state.",
+      "Do maintain WCAG AA contrast, visible keyboard focus, usable hit targets, and reduced-motion safe interactions.",
+      "Do keep list-heavy workflows dense but readable with borders, spacing rhythm, and stable row layouts."
+    ],
+    "donts": [
+      "Don't use flashy SaaS gradients.",
+      "Don't use decorative motion.",
+      "Don't use glassy cards.",
+      "Don't use clever custom controls that make standard tasks harder to parse.",
+      "Don't add visual drama that competes with operational state.",
+      "Don't invent affordances where familiar product UI patterns are faster.",
+      "Don't rely on color alone for connection, warning, success, or destructive states.",
+      "Don't use border-left or border-right accent stripes wider than 1px on cards, rows, callouts, or alerts.",
+      "Don't add gradient text, bokeh blobs, decorative orbs, or generic dark-blue dashboard theming."
+    ]
+  }
+}

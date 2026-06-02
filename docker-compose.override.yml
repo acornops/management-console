@@ -1,0 +1,27 @@
+services:
+  management-console:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+      args:
+        VITE_APP_BASE_PATH: ${VITE_APP_BASE_PATH:-/}
+        VITE_APP_DATA_MODE: ${VITE_APP_DATA_MODE:-mock}
+        VITE_CONTROL_PLANE_API_BASE_URL: ${VITE_CONTROL_PLANE_API_BASE_URL:-http://localhost:8081}
+    image: acornops/management-console:local
+    environment:
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-true}
+      WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}
+      VITE_APP_DATA_MODE: ${VITE_APP_DATA_MODE:-mock}
+      VITE_CONTROL_PLANE_API_BASE_URL: ${VITE_CONTROL_PLANE_API_BASE_URL:-http://localhost:8081}
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173", "--strictPort"]
+    ports:
+      - "${MANAGEMENT_CONSOLE_PORT:-3000}:5173"
+    volumes:
+      - ./:/app
+      - management-console-node-modules:/app/node_modules
+    healthcheck:
+      disable: true
+
+volumes:
+  management-console-node-modules:
