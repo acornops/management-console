@@ -3,11 +3,13 @@ import { mapControlPlaneApprovalToPendingApproval } from '@/features/kubernetes-
 import {
   createConversationId,
   createConversationName,
+  mergeHydratedChatMessages,
   replaceCancelledRunMessagesForHydration,
   sortSessionsByTimestamp
 } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import type { ControlPlaneRunToolApproval } from '@/services/controlPlaneApi';
-import type { ChatSession } from '@/types';
+import type { ChatMessage, ChatSession } from '@/types';
+import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -144,6 +146,159 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
         },
         sessionsMessages[1]
       ]);
+    });
+
+    it('preserves optimistic user and pending assistant messages when backend hydration is empty', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user' },
+        { id: 'pending-assistant', role: 'assistant', content: '', timestamp: 2, transientStatus: 'pending_assistant' }
+      ];
+
+      expect(mergeHydratedChatMessages({ localMessages, backendMessages: [] })).toEqual(localMessages);
+    });
+
+    it('dedupes optimistic user messages by backend client message id', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user' }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 2, clientMessageId: 'local-user', runId: 'run-1' }
+      ];
+
+      expect(mergeHydratedChatMessages({ localMessages, backendMessages })).toEqual(backendMessages);
+    });
+
+    it('keeps an in-progress assistant placeholder when hydration has the user but not the assistant', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user' },
+        {
+          id: 'stream-run-1',
+          role: 'assistant',
+          content: '',
+          timestamp: 2,
+          runId: 'run-1',
+          transientStatus: 'pending_assistant'
+        }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 3, clientMessageId: 'local-user', runId: 'run-1' }
+      ];
+      const runTracesByRunId: Record<string, LiveRunTrace> = {
+        'run-1': { runId: 'run-1', status: 'running', steps: [], toolCalls: [] }
+      };
+
+      expect(mergeHydratedChatMessages({ localMessages, backendMessages, runTracesByRunId })).toEqual([
+        backendMessages[0],
+        localMessages[1]
+      ]);
+    });
+
+    it('replaces an assistant placeholder once a backend final exists for the same run', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user' },
+        {
+          id: 'stream-run-1',
+          role: 'assistant',
+          content: '',
+          timestamp: 2,
+          runId: 'run-1',
+          transientStatus: 'pending_assistant'
+        }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 3, clientMessageId: 'local-user', runId: 'run-1' },
+        { id: 'backend-assistant', role: 'assistant', content: 'Pods are healthy.', timestamp: 4, runId: 'run-1' }
+      ];
+
+      expect(mergeHydratedChatMessages({ localMessages, backendMessages })).toEqual(backendMessages);
+    });
+
+    it('dedupes duplicate assistant responses for a single run during hydration', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user', runId: 'run-1' }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 3, clientMessageId: 'local-user', runId: 'run-1' },
+        { id: 'backend-assistant-draft', role: 'assistant', content: 'Streaming answer', timestamp: 4, runId: 'run-1' },
+        { id: 'backend-assistant-final', role: 'assistant', content: 'Final answer', timestamp: 5, runId: 'run-1' }
+      ];
+
+      expect(mergeHydratedChatMessages({ localMessages, backendMessages })).toEqual([
+        backendMessages[0],
+        backendMessages[2]
+      ]);
+    });
+
+    it('anchors a late backend assistant final after its triggering user turn', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'backend-user-1', role: 'user', content: 'First question', timestamp: 1, runId: 'run-1' },
+        { id: 'local-user-2', role: 'user', content: 'Second question', timestamp: 3, clientMessageId: 'local-user-2', runId: 'run-2' },
+        {
+          id: 'stream-run-2',
+          role: 'assistant',
+          content: '',
+          timestamp: 4,
+          runId: 'run-2',
+          transientStatus: 'pending_assistant'
+        }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user-1', role: 'user', content: 'First question', timestamp: 1, runId: 'run-1' },
+        { id: 'backend-assistant-1', role: 'assistant', content: 'First answer', timestamp: 2, runId: 'run-1' }
+      ];
+
+      expect(mergeHydratedChatMessages({ localMessages, backendMessages }).map((message) => message.id)).toEqual([
+        'backend-user-1',
+        'backend-assistant-1',
+        'local-user-2',
+        'stream-run-2'
+      ]);
+    });
+
+    it('dedupes local and restored backend assistant placeholders for the same run', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user', runId: 'run-1' },
+        {
+          id: 'stream-run-1',
+          role: 'assistant',
+          content: '',
+          timestamp: 2,
+          runId: 'run-1',
+          transientStatus: 'pending_assistant'
+        }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 3, clientMessageId: 'local-user', runId: 'run-1' },
+        { id: 'rehydrated-run-1', role: 'assistant', content: '', timestamp: 4, runId: 'run-1' }
+      ];
+      const runTracesByRunId: Record<string, LiveRunTrace> = {
+        'run-1': { runId: 'run-1', status: 'running', steps: [], toolCalls: [] }
+      };
+
+      expect(mergeHydratedChatMessages({ localMessages, backendMessages, runTracesByRunId })).toEqual(backendMessages);
+    });
+
+    it('drops stale terminal assistant placeholders during hydration', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user', runId: 'run-1' },
+        {
+          id: 'stream-run-1',
+          role: 'assistant',
+          content: '',
+          timestamp: 2,
+          runId: 'run-1',
+          transientStatus: 'pending_assistant'
+        }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 3, clientMessageId: 'local-user', runId: 'run-1' }
+      ];
+
+      expect(mergeHydratedChatMessages({
+        localMessages,
+        backendMessages,
+        terminalRunIds: new Set(['run-1'])
+      })).toEqual(backendMessages);
     });
   });
 });

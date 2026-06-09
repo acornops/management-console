@@ -66,6 +66,9 @@ describe('target chat polish contracts', () => {
 
   it('keeps polish shared across transcript, composer, and trace surfaces', () => {
     expect(chatView).toContain('max-w-[min(48rem,94%)]');
+    expect(chatView).not.toContain('AnimatePresence mode="popLayout"');
+    expect(chatView).not.toContain('layout="position"');
+    expect(chatView).not.toContain('<motion.div\n                    key={message.id}');
     expect(enLocale).toContain("conversationHistory: 'Conversation History'");
     expect(enLocale).toContain("showHistory: 'Show conversation history'");
     expect(enLocale).toContain("hideHistory: 'Hide conversation history'");
@@ -86,6 +89,9 @@ describe('target chat polish contracts', () => {
     expect(chatComposerNotice).toContain('AlertTriangle');
     expect(chatComposerNotice).toContain('Info');
     expect(chatComposerNotice).toContain('border-status-warning/30 bg-status-warning-soft/45');
+    expect(chatView).toContain('const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;');
+    expect(chatView).toContain('const trace = activeRunTrace || messageTrace;');
+    expect(chatView).toContain('const traceRunId = trace?.runId || message.runId || message.id;');
     expect(traceFooter).toContain('aria-expanded={isExpanded}');
     expect(traceFooter).toContain('aria-controls={contentId}');
     expect(traceFooter).toContain('Run updates');

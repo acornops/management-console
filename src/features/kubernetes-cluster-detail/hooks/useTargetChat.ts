@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage, ChatSession, PendingApproval } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   mapControlPlaneMessage,
   sanitizeChatMessages,
+  isPendingAssistantPlaceholder,
   isBlankAssistantMessage,
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
@@ -67,11 +68,24 @@ export function useTargetChat({
   const [traceExpandedByRunId, setTraceExpandedByRunId] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldStickToBottomRef = useRef(true);
+  const lastChatScrollTopRef = useRef(0);
   const loadingEarlierMessagesRef = useRef(false);
   const latestSessionsRef = useRef<ChatSession[]>(sessions);
   const cancelledRunIdsRef = useRef<Set<string>>(new Set());
   const activeRunStreamControlsRef = useRef<Record<string, ActiveRunStreamControls>>({});
   const isRunCancelled = useCallback((runId: string) => cancelledRunIdsRef.current.has(runId), []);
+  const markRunCancelled = useCallback((runId: string) => {
+    cancelledRunIdsRef.current.add(runId);
+  }, []);
+  const setRunTracesByRunIdAndRef: typeof setRunTracesByRunId = useCallback((update) => {
+    setRunTracesByRunId((current) => {
+      const next = typeof update === 'function'
+        ? (update as (previous: Record<string, LiveRunTrace>) => Record<string, LiveRunTrace>)(current)
+        : update;
+      runTracesByRunIdRef.current = next;
+      return next;
+    });
+  }, []);
   const registerRunStream = useCallback((runId: string, controls: ActiveRunStreamControls) => {
     activeRunStreamControlsRef.current[runId] = controls;
   }, []);
@@ -108,6 +122,30 @@ export function useTargetChat({
   });
   const effectiveActiveRunId = derivedRunState.activeRunId;
   const isRunActive = isLoading || derivedRunState.isRunActive;
+  const lastMessage = messages[messages.length - 1];
+  const activeRunTrace = effectiveActiveRunId ? runTracesByRunId[effectiveActiveRunId] : undefined;
+  const activeRunLatestStep = activeRunTrace?.steps.at(-1);
+  const activeRunTraceSignature = activeRunTrace
+    ? [
+        activeRunTrace.status,
+        activeRunTrace.steps.length,
+        activeRunLatestStep?.id || '',
+        activeRunLatestStep?.detail?.length || 0,
+        activeRunTrace.toolCalls.length,
+        activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'running').length,
+        activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length,
+        activeRunTrace.usage ? 'usage' : ''
+      ].join(',')
+    : 'none';
+  const chatAutoScrollSignature = [
+    messages.length,
+    lastMessage?.id || '',
+    lastMessage?.content.length || 0,
+    lastMessage?.approval?.id || '',
+    lastMessage?.approval?.status || '',
+    effectiveActiveRunId || '',
+    activeRunTraceSignature
+  ].join(':');
 
   useEffect(() => {
     const sortedSessions = sortSessionsByTimestamp(cluster.chatSessions);
@@ -147,6 +185,7 @@ export function useTargetChat({
     runTracesByRunIdRef,
     setRunTracesByRunId,
     setTraceExpandedByRunId,
+    isRunCancelled,
     runCancelledMessage: t('chat.runCancelledMessage'),
     listSessions: sessionApi?.listSessions
   });
@@ -164,20 +203,34 @@ export function useTargetChat({
     runCancelledMessage: t('chat.runCancelledMessage')
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!scrollRef.current || !isChatActive) {
+      return;
+    }
+    if (isLoadingEarlierMessages) {
       return;
     }
     if (!shouldStickToBottomRef.current) {
       return;
     }
     const node = scrollRef.current;
-    requestAnimationFrame(() => {
+    node.scrollTop = node.scrollHeight;
+    lastChatScrollTopRef.current = node.scrollTop;
+    const frame = requestAnimationFrame(() => {
+      if (scrollRef.current !== node || !shouldStickToBottomRef.current) {
+        return;
+      }
       node.scrollTop = node.scrollHeight;
+      lastChatScrollTopRef.current = node.scrollTop;
     });
-  }, [messages, isRunActive, isChatActive]);
+    return () => window.cancelAnimationFrame(frame);
+  }, [chatAutoScrollSignature, isChatActive, isLoadingEarlierMessages]);
 
   const isInFlightAssistantPlaceholder = (message: ChatMessage): boolean => {
+    if (isPendingAssistantPlaceholder(message)) {
+      return true;
+    }
+
     if (!isBlankAssistantMessage(message)) {
       return false;
     }
@@ -199,7 +252,7 @@ export function useTargetChat({
     return isTraceInProgress(trace);
   };
 
-  const visibleMessages = messages.filter(
+  const visibleMessages = sanitizeChatMessages(messages).filter(
     (message) => !isBlankAssistantMessage(message) || isInFlightAssistantPlaceholder(message)
   );
   const hasEarlierMessages = Boolean(activeSession.backendSessionId && activeSession.messagesNextCursor);
@@ -207,8 +260,16 @@ export function useTargetChat({
   const handleChatScroll = () => {
     const node = scrollRef.current;
     if (!node) return;
+    const currentScrollTop = node.scrollTop;
     const distanceToBottom = node.scrollHeight - node.scrollTop - node.clientHeight;
-    shouldStickToBottomRef.current = distanceToBottom < 120;
+    const isScrollingUp = currentScrollTop < lastChatScrollTopRef.current - 0.5;
+    const isScrollingDown = currentScrollTop > lastChatScrollTopRef.current + 0.5;
+    if (isScrollingUp) {
+      shouldStickToBottomRef.current = false;
+    } else if (distanceToBottom <= 2 && (shouldStickToBottomRef.current || isScrollingDown)) {
+      shouldStickToBottomRef.current = true;
+    }
+    lastChatScrollTopRef.current = currentScrollTop;
     if (node.scrollTop < 160 && hasEarlierMessages && !loadingEarlierMessagesRef.current) {
       void handleLoadEarlierMessages();
     }
@@ -370,6 +431,7 @@ export function useTargetChat({
     const runId = effectiveActiveRunId;
     const timestamp = Date.now();
     cancelledRunIdsRef.current.add(runId);
+    const isPendingAcceptedRun = runId.startsWith('pending-trace-');
     activeRunStreamControlsRef.current[runId]?.abort();
     setIsCancellingRun(true);
     setActiveRunId(null);
@@ -378,25 +440,28 @@ export function useTargetChat({
     setRunTracesByRunId((current) => {
       const existingTrace = current[runId] || { runId, status: 'cancelled' as const, steps: [], toolCalls: [] };
       const hasCancelledStep = existingTrace.steps.some((step) => step.label === 'Run cancelled');
-      return {
-        ...current,
-        [runId]: {
-          ...existingTrace,
-          status: 'cancelled',
-          steps: hasCancelledStep
-            ? existingTrace.steps
-            : [
-                ...existingTrace.steps,
-                {
-                  id: `cancelled-${runId}-${timestamp}`,
-                  label: 'Run cancelled',
-                  detail: 'Cancelled by user.',
-                  status: 'error',
-                  timestamp
-                }
-              ]
-        }
+      const cancelledTrace: LiveRunTrace = {
+        ...existingTrace,
+        status: 'cancelled',
+        steps: hasCancelledStep
+          ? existingTrace.steps
+          : [
+              ...existingTrace.steps,
+              {
+                id: `cancelled-${runId}-${timestamp}`,
+                label: 'Run cancelled',
+                detail: 'Cancelled by user.',
+                status: 'error',
+                timestamp
+              }
+            ]
       };
+      const next = {
+        ...current,
+        [runId]: cancelledTrace
+      };
+      runTracesByRunIdRef.current = next;
+      return next;
     });
     const cancelledMessage = t('chat.runCancelledMessage');
     updateCurrentSession(replaceCancelledRunAssistantMessages(
@@ -406,7 +471,9 @@ export function useTargetChat({
       timestamp
     ));
     try {
-      await controlPlaneApi.cancelRun(runId);
+      if (!isPendingAcceptedRun) {
+        await controlPlaneApi.cancelRun(runId);
+      }
     } catch (error) {
       console.error('Failed cancelling run', error);
     } finally {
@@ -450,30 +517,44 @@ export function useTargetChat({
   const handleApprove = (approvalId: string) => decideApproval(approvalId, 'approved');
   const handleReject = (approvalId: string) => decideApproval(approvalId, 'rejected');
 
-  const handleSend = (overrideInput?: string) =>
+  const runSubmittedChatMessage = (args: {
+    activeSessionForSubmit: ChatSession;
+    activeSessionIdForSubmit: string | null;
+    canChatForSubmit: boolean;
+    overrideInput?: string;
+  }) =>
     submitChatMessage({
       cluster,
-      activeSession,
-      activeSessionId,
-      canChat: canPostInActiveSession,
+      activeSession: args.activeSessionForSubmit,
+      activeSessionId: args.activeSessionIdForSubmit,
+      canChat: args.canChatForSubmit,
       canRequestWriteRuns,
       inputValue,
       isLoading: isRunActive,
-      overrideInput,
+      overrideInput: args.overrideInput,
       shouldStickToBottomRef,
       onUpdateSessions,
       setActiveSessionId,
       setInputValue,
       setIsLoading,
       setActiveRunId,
-      setRunTracesByRunId,
+      setRunTracesByRunId: setRunTracesByRunIdAndRef,
       setTraceExpandedByRunId,
       createSession: sessionApi?.createSession,
       fallbackBackendErrorMessage: t('chat.backendRequestFailed'),
       runCancelledMessage: t('chat.runCancelledMessage'),
       isRunCancelled,
+      markRunCancelled,
       registerRunStream,
       unregisterRunStream
+    });
+
+  const handleSend = (overrideInput?: string) =>
+    runSubmittedChatMessage({
+      activeSessionForSubmit: activeSession,
+      activeSessionIdForSubmit: activeSessionId,
+      canChatForSubmit: canPostInActiveSession,
+      overrideInput
     });
 
   const handleSendInNewSession = async (overrideInput: string) => {
@@ -486,29 +567,11 @@ export function useTargetChat({
       setInputValue(overrideInput);
       return;
     }
-    return submitChatMessage({
-      cluster,
-      activeSession: draftSession,
-      activeSessionId: sessionId,
-      canChat,
-      canRequestWriteRuns,
-      inputValue,
-      isLoading: isRunActive,
-      overrideInput,
-      shouldStickToBottomRef,
-      onUpdateSessions,
-      setActiveSessionId,
-      setInputValue,
-      setIsLoading,
-      setActiveRunId,
-      setRunTracesByRunId,
-      setTraceExpandedByRunId,
-      createSession: sessionApi?.createSession,
-      fallbackBackendErrorMessage: t('chat.backendRequestFailed'),
-      runCancelledMessage: t('chat.runCancelledMessage'),
-      isRunCancelled,
-      registerRunStream,
-      unregisterRunStream
+    return runSubmittedChatMessage({
+      activeSessionForSubmit: draftSession,
+      activeSessionIdForSubmit: sessionId,
+      canChatForSubmit: canChat,
+      overrideInput
     });
   };
 

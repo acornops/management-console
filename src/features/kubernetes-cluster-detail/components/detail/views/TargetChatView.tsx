@@ -409,13 +409,14 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                   </button>
                 </div>
               )}
-              <AnimatePresence mode="popLayout">
               {visibleMessages.map((message) => {
                 const isUser = message.role === 'user';
-                const trace = !isUser && message.runId ? runTracesByRunId[message.runId] : undefined;
                 const isInFlightPlaceholder = !isUser && isInFlightAssistantPlaceholder(message);
+                const messageTrace = !isUser && message.runId ? runTracesByRunId[message.runId] : undefined;
+                const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;
+                const trace = activeRunTrace || messageTrace;
                 const shouldRenderThinkingPlaceholder = isInFlightPlaceholder && message.content.trim().length === 0;
-                const traceRunId = message.runId || message.id;
+                const traceRunId = trace?.runId || message.runId || message.id;
                 const traceToRender: LiveRunTrace | undefined =
                   trace ||
                   (isInFlightPlaceholder
@@ -435,13 +436,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                       }
                     : undefined);
                 return (
-                  <motion.div
+                  <div
                     key={message.id}
-                    layout="position"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                     className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
@@ -491,10 +487,9 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                         />
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
-              </AnimatePresence>
             </div>
           )}
         </div>

@@ -2,46 +2,26 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { ChatMessage, ChatSession, KubernetesCluster } from '@/types';
 import { controlPlaneApi, type ControlPlaneSession } from '@/services/controlPlaneApi';
 import { createLocalMessageId, sleep } from '@/features/kubernetes-cluster-detail/lib/helpers';
-import {
-  appendRunTraceStep,
-  formatTraceFailureDetail,
-  parseRunUsage
-} from '@/features/kubernetes-cluster-detail/lib/trace-utils';
+import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/features/kubernetes-cluster-detail/lib/trace-utils';
 import {
   buildChatFailureMessage,
   buildConversationTitleFromPrompt,
   formatRunFailureMessage,
   mapControlPlaneMessage,
+  preserveStreamingAssistantMessageId,
   sanitizeChatMessages,
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
-import {
-  createBaseRunTrace,
-  createRunEventHandler
-} from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
-import {
-  createConversationId,
-  createConversationName
-} from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
+import { createBaseRunTrace, createRunEventHandler } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
+import { createConversationId, createConversationName } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import {
   replaceCancelledRunAssistantMessages,
+  replacePendingCancelledRunMessages,
   type ActiveRunStreamControls
 } from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
 export const RUN_TERMINAL_WAIT_TIMEOUT_MS = 600000;
-
-export function preserveStreamingAssistantMessageId(
-  messages: ChatMessage[],
-  runId: string,
-  streamingMessageId: string
-): ChatMessage[] {
-  return messages.map((message) =>
-    message.role === 'assistant' && message.runId === runId
-      ? { ...message, id: streamingMessageId }
-      : message
-  );
-}
 
 export async function submitChatMessage(args: {
   cluster: KubernetesCluster;
@@ -64,6 +44,7 @@ export async function submitChatMessage(args: {
   runCancelledMessage: string;
   createSession?: (workspaceId: string, targetId: string, title: string) => Promise<ControlPlaneSession>;
   isRunCancelled?: (runId: string) => boolean;
+  markRunCancelled?: (runId: string) => void;
   registerRunStream?: (runId: string, controls: ActiveRunStreamControls) => void;
   unregisterRunStream?: (runId: string) => void;
 }): Promise<void> {
@@ -88,6 +69,7 @@ export async function submitChatMessage(args: {
     runCancelledMessage,
     createSession = controlPlaneApi.createSession,
     isRunCancelled = () => false,
+    markRunCancelled,
     registerRunStream,
     unregisterRunStream
   } = args;
@@ -123,11 +105,13 @@ export async function submitChatMessage(args: {
     sessions = upsertSession(sessions, session);
   }
 
+  const userMessageId = createLocalMessageId();
   const userMsg: ChatMessage = {
-    id: createLocalMessageId(),
+    id: userMessageId,
     role: 'user',
     content: prompt,
-    timestamp: now
+    timestamp: now,
+    clientMessageId: userMessageId
   };
 
   session = {
@@ -137,10 +121,8 @@ export async function submitChatMessage(args: {
   };
   sessions = upsertSession(sessions, session);
 
-  let pendingAssistantMessageId: string | undefined;
-  let pendingTraceRunId: string | undefined;
-  pendingAssistantMessageId = `pending-${createLocalMessageId()}`;
-  pendingTraceRunId = `pending-trace-${createLocalMessageId()}`;
+  const pendingAssistantMessageId = `pending-${createLocalMessageId()}`;
+  const pendingTraceRunId = `pending-trace-${createLocalMessageId()}`;
   session = {
     ...session,
     messages: [
@@ -150,32 +132,23 @@ export async function submitChatMessage(args: {
         role: 'assistant',
         runId: pendingTraceRunId,
         content: '',
+        transientStatus: 'pending_assistant',
         timestamp: Date.now()
       }
     ],
     timestamp: Date.now()
   };
   sessions = upsertSession(sessions, session);
-  setRunTracesByRunId((current) => ({
-    ...current,
-    [pendingTraceRunId!]: {
-      runId: pendingTraceRunId!,
-      status: 'connecting',
-      steps: [
-        {
-          id: createLocalMessageId(),
-          label: 'Submitting request',
-          detail: 'Sending message to control plane.',
-          status: 'info',
-          timestamp: Date.now()
-        }
-      ],
-      toolCalls: []
-    }
-  }));
+  const pendingTrace = appendRunTraceStep(
+    createBaseRunTrace(pendingTraceRunId, 'connecting'),
+    'Submitting request',
+    'info',
+    'Sending message to control plane.'
+  );
+  setRunTracesByRunId((current) => ({ ...current, [pendingTraceRunId]: pendingTrace }));
   setTraceExpandedByRunId((current) => ({
     ...current,
-    [pendingTraceRunId!]: false
+    [pendingTraceRunId]: false
   }));
 
   let streamAbortController: AbortController | null = null;
@@ -227,21 +200,19 @@ export async function submitChatMessage(args: {
       };
       sessions = upsertSession(sessions, session);
       publishSessions(true);
-      if (pendingTraceRunId) {
-        setRunTracesByRunId((current) => {
-          const trace = current[pendingTraceRunId!];
-          if (!trace) return current;
-          return {
-            ...current,
-            [pendingTraceRunId!]: appendRunTraceStep(
-              trace,
-              'Session ready',
-              'info',
-              'Chat session created. Waiting for run acceptance.'
-            )
-          };
-        });
-      }
+      setRunTracesByRunId((current) => {
+        const trace = current[pendingTraceRunId];
+        if (!trace) return current;
+        return {
+          ...current,
+          [pendingTraceRunId]: appendRunTraceStep(
+            trace,
+            'Session ready',
+            'info',
+            'Chat session created. Waiting for run acceptance.'
+          )
+        };
+      });
     }
 
     const accepted = await controlPlaneApi.postSessionMessage(
@@ -252,37 +223,61 @@ export async function submitChatMessage(args: {
     );
     const streamingMessageId = `stream-${accepted.runId}`;
     runIdForMessage = accepted.runId;
+    if (isRunCancelled(pendingTraceRunId)) {
+      const timestamp = Date.now();
+      markRunCancelled?.(accepted.runId);
+      session = {
+        ...session,
+        messages: replacePendingCancelledRunMessages(session.messages, {
+          pendingRunId: pendingTraceRunId,
+          acceptedRunId: accepted.runId,
+          userMessageId: userMsg.id,
+          pendingAssistantMessageId,
+          streamingMessageId,
+          cancelledMessage: runCancelledMessage,
+          timestamp
+        }),
+        timestamp
+      };
+      sessions = upsertSession(sessions, session);
+      publishSessions(true);
+      await controlPlaneApi.cancelRun(accepted.runId).catch(() => undefined);
+      return;
+    }
     if (isRunCancelled(accepted.runId)) {
       return;
     }
     setActiveRunId(accepted.runId);
-    if (pendingAssistantMessageId) {
-      session = {
-        ...session,
-        messages: session.messages.map((message) => {
-          if (message.id !== pendingAssistantMessageId) return message;
+    session = {
+      ...session,
+      messages: session.messages.map((message) => {
+        if (message.id === userMsg.id) {
           return {
             ...message,
-            id: streamingMessageId,
             runId: accepted.runId,
             timestamp: Date.now()
           };
-        }),
-        timestamp: Date.now()
-      };
-      sessions = upsertSession(sessions, session);
-      publishSessions(true);
-    }
-    if (pendingTraceRunId) {
-      setRunTracesByRunId((current) => {
-        const { [pendingTraceRunId!]: _removed, ...rest } = current;
-        return rest;
-      });
-      setTraceExpandedByRunId((current) => {
-        const { [pendingTraceRunId!]: _removed, ...rest } = current;
-        return rest;
-      });
-    }
+        }
+        if (message.id !== pendingAssistantMessageId) return message;
+        return {
+          ...message,
+          id: streamingMessageId,
+          runId: accepted.runId,
+          timestamp: Date.now()
+        };
+      }),
+      timestamp: Date.now()
+    };
+    sessions = upsertSession(sessions, session);
+    publishSessions(true);
+    setRunTracesByRunId((current) => {
+      const { [pendingTraceRunId]: _removed, ...rest } = current;
+      return rest;
+    });
+    setTraceExpandedByRunId((current) => {
+      const { [pendingTraceRunId]: _removed, ...rest } = current;
+      return rest;
+    });
     const seenSeq = new Set<number>();
     let trace: LiveRunTrace = {
       runId: accepted.runId,
@@ -335,6 +330,7 @@ export async function submitChatMessage(args: {
             role: 'assistant',
             runId: accepted.runId,
             content: '',
+            transientStatus: 'pending_assistant',
             timestamp: Date.now()
           }
         ],
@@ -355,6 +351,7 @@ export async function submitChatMessage(args: {
           return {
             ...message,
             content: `${message.content}${text}`,
+            transientStatus: undefined,
             timestamp: Date.now()
           };
         }),
@@ -375,6 +372,7 @@ export async function submitChatMessage(args: {
           return {
             ...message,
             approval,
+            transientStatus: undefined,
             timestamp: Date.now()
           };
         }),
@@ -623,16 +621,14 @@ export async function submitChatMessage(args: {
     if (pollEventsPromise) {
       await pollEventsPromise.catch(() => undefined);
     }
-    if (pendingTraceRunId) {
-      setRunTracesByRunId((current) => {
-        const { [pendingTraceRunId!]: _removed, ...rest } = current;
-        return rest;
-      });
-      setTraceExpandedByRunId((current) => {
-        const { [pendingTraceRunId!]: _removed, ...rest } = current;
-        return rest;
-      });
-    }
+    setRunTracesByRunId((current) => {
+      const { [pendingTraceRunId]: _removed, ...rest } = current;
+      return rest;
+    });
+    setTraceExpandedByRunId((current) => {
+      const { [pendingTraceRunId]: _removed, ...rest } = current;
+      return rest;
+    });
     if (pendingSessionPublish) {
       clearTimeout(pendingSessionPublish);
       pendingSessionPublish = null;

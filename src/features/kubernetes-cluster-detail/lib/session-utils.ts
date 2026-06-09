@@ -15,6 +15,7 @@ export function mapControlPlaneMessage(message: ControlPlaneSessionMessage): Cha
     role,
     content: message.content,
     runId: message.runId,
+    clientMessageId: message.clientMessageId,
     timestamp: toTimestamp(message.createdAt)
   };
 }
@@ -62,11 +63,124 @@ export function isBlankAssistantMessage(message: ChatMessage): boolean {
   return message.role === 'assistant' && String(message.content || '').trim().length === 0 && !message.approval;
 }
 
+export function isPendingAssistantPlaceholder(message: ChatMessage): boolean {
+  return message.role === 'assistant' && message.transientStatus === 'pending_assistant' && isBlankAssistantMessage(message);
+}
+
+function mergeAssistantRunMessages(left: ChatMessage, right: ChatMessage): ChatMessage {
+  const messages = [left, right];
+  const contentMessage = [...messages].reverse().find((message) => String(message.content || '').trim().length > 0);
+  const approvalMessage = [...messages].reverse().find((message) => message.approval);
+  const streamMessage = messages.find((message) => message.id === `stream-${message.runId}`);
+  const pendingMessage = messages.find(isPendingAssistantPlaceholder);
+  const newestMessage = messages.reduce((newest, message) => message.timestamp > newest.timestamp ? message : newest);
+  const baseMessage = contentMessage || approvalMessage || pendingMessage || newestMessage;
+  const hasDurableBody = Boolean(contentMessage || approvalMessage);
+
+  return {
+    ...baseMessage,
+    id: streamMessage?.id || baseMessage.id,
+    content: contentMessage?.content || baseMessage.content || '',
+    approval: approvalMessage?.approval || baseMessage.approval,
+    transientStatus: hasDurableBody ? undefined : pendingMessage?.transientStatus,
+    timestamp: Math.max(left.timestamp, right.timestamp)
+  };
+}
+
+export function dedupeAssistantMessagesByRun(chatMessages: ChatMessage[]): ChatMessage[] {
+  const assistantByRunId = new Map<string, ChatMessage>();
+  const duplicateRunIds = new Set<string>();
+
+  for (const message of chatMessages) {
+    if (message.role !== 'assistant' || !message.runId) continue;
+    const existing = assistantByRunId.get(message.runId);
+    if (!existing) {
+      assistantByRunId.set(message.runId, message);
+      continue;
+    }
+    duplicateRunIds.add(message.runId);
+    assistantByRunId.set(message.runId, mergeAssistantRunMessages(existing, message));
+  }
+
+  if (duplicateRunIds.size === 0) {
+    return chatMessages;
+  }
+
+  const placedRunIds = new Set<string>();
+  const dedupedMessages: ChatMessage[] = [];
+  for (const message of chatMessages) {
+    if (message.role !== 'assistant' || !message.runId || !duplicateRunIds.has(message.runId)) {
+      dedupedMessages.push(message);
+      continue;
+    }
+    if (placedRunIds.has(message.runId)) {
+      continue;
+    }
+    placedRunIds.add(message.runId);
+    dedupedMessages.push(assistantByRunId.get(message.runId) || message);
+  }
+
+  return dedupedMessages;
+}
+
+function isPendingTraceAssistant(message: ChatMessage): boolean {
+  return isPendingAssistantPlaceholder(message) && String(message.runId || '').startsWith('pending-trace-');
+}
+
+function dropSupersededPendingTraceAssistants(chatMessages: ChatMessage[]): ChatMessage[] {
+  return chatMessages.filter((message, index) => {
+    if (!isPendingTraceAssistant(message)) {
+      return true;
+    }
+
+    let turnStart = index;
+    for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+      if (chatMessages[cursor].role === 'user') {
+        turnStart = cursor;
+        break;
+      }
+    }
+
+    let turnEnd = chatMessages.length;
+    for (let cursor = index + 1; cursor < chatMessages.length; cursor += 1) {
+      if (chatMessages[cursor].role === 'user') {
+        turnEnd = cursor;
+        break;
+      }
+    }
+
+    return !chatMessages
+      .slice(turnStart, turnEnd)
+      .some((turnMessage) =>
+        turnMessage !== message &&
+        turnMessage.role === 'assistant' &&
+        turnMessage.runId &&
+        !String(turnMessage.runId).startsWith('pending-trace-')
+      );
+  });
+}
+
+export function preserveStreamingAssistantMessageId(
+  messages: ChatMessage[],
+  runId: string,
+  streamingMessageId: string
+): ChatMessage[] {
+  return messages.map((message) =>
+    message.role === 'assistant' && message.runId === runId
+      ? { ...message, id: streamingMessageId }
+      : message
+  );
+}
+
 /**
  * Removes empty assistant placeholders that are no longer active.
  */
 export function sanitizeChatMessages(chatMessages: ChatMessage[]): ChatMessage[] {
-  return chatMessages.filter((message) => !isBlankAssistantMessage(message));
+  return dedupeAssistantMessagesByRun(
+    dropSupersededPendingTraceAssistants(
+      chatMessages.filter((message) => !isBlankAssistantMessage(message) || isPendingAssistantPlaceholder(message))
+    )
+  );
 }
 
 /**

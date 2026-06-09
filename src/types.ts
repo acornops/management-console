@@ -370,6 +370,8 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   runId?: string;
+  clientMessageId?: string;
+  transientStatus?: 'pending_assistant';
   approval?: PendingApproval;
 }
 

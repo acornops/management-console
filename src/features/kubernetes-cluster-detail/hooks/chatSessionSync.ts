@@ -5,7 +5,9 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneRunToolApproval, ControlPlaneSessionListPage } from '@/services/controlPlaneApi';
 import { createLocalMessageId, toTimestamp } from '@/features/kubernetes-cluster-detail/lib/helpers';
 import {
+  dedupeAssistantMessagesByRun,
   isBlankAssistantMessage,
+  isPendingAssistantPlaceholder,
   mapControlPlaneMessage,
   sanitizeChatMessages,
   upsertSession
@@ -84,6 +86,141 @@ export function replaceCancelledRunMessagesForHydration(
   return nextMessages;
 }
 
+function messagesMatch(left: ChatMessage, right: ChatMessage): boolean {
+  if (left.id === right.id) return true;
+  if (left.clientMessageId && (left.clientMessageId === right.clientMessageId || left.clientMessageId === right.id)) return true;
+  if (right.clientMessageId && (right.clientMessageId === left.clientMessageId || right.clientMessageId === left.id)) return true;
+  return false;
+}
+
+function hasBackendAssistantFinalForRun(messages: ChatMessage[], runId?: string): boolean {
+  if (!runId) return false;
+  return messages.some(
+    (message) =>
+      message.role === 'assistant' &&
+      message.runId === runId &&
+      String(message.content || '').trim().length > 0
+  );
+}
+
+function hasBackendAssistantForRun(messages: ChatMessage[], runId?: string): boolean {
+  if (!runId) return false;
+  return messages.some((message) => message.role === 'assistant' && message.runId === runId);
+}
+
+function shouldPreserveLocalHydrationMessage(args: {
+  message: ChatMessage;
+  backendMessages: ChatMessage[];
+  runTracesByRunId: Record<string, LiveRunTrace>;
+  terminalRunIds?: ReadonlySet<string>;
+}): boolean {
+  const { message, backendMessages, runTracesByRunId, terminalRunIds } = args;
+
+  if (message.role === 'user') {
+    return true;
+  }
+
+  if (message.role !== 'assistant') {
+    return false;
+  }
+
+  if (hasBackendAssistantFinalForRun(backendMessages, message.runId)) {
+    return false;
+  }
+
+  if (message.runId && terminalRunIds?.has(message.runId)) {
+    return false;
+  }
+
+  if (isBlankAssistantMessage(message) && hasBackendAssistantForRun(backendMessages, message.runId)) {
+    return false;
+  }
+
+  if (!isBlankAssistantMessage(message)) {
+    return true;
+  }
+
+  return isPendingAssistantPlaceholder(message) || Boolean(message.runId && isTraceInProgress(runTracesByRunId[message.runId]));
+}
+
+function orderMessagesByRunTurn(messages: ChatMessage[]): ChatMessage[] {
+  const assistantMessagesByRunId = new Map<string, ChatMessage[]>();
+  for (const message of messages) {
+    if (message.role !== 'assistant' || !message.runId) continue;
+    const messagesForRun = assistantMessagesByRunId.get(message.runId) || [];
+    messagesForRun.push(message);
+    assistantMessagesByRunId.set(message.runId, messagesForRun);
+  }
+
+  const ordered: ChatMessage[] = [];
+  const addedIds = new Set<string>();
+  const appendMessage = (message: ChatMessage) => {
+    if (addedIds.has(message.id)) return;
+    ordered.push(message);
+    addedIds.add(message.id);
+  };
+  const appendRunAssistants = (runId?: string) => {
+    if (!runId) return;
+    for (const assistantMessage of assistantMessagesByRunId.get(runId) || []) {
+      appendMessage(assistantMessage);
+    }
+  };
+
+  for (const message of messages) {
+    if (message.role === 'assistant' && message.runId) continue;
+    appendMessage(message);
+    appendRunAssistants(message.runId);
+  }
+
+  for (const message of messages) {
+    appendMessage(message);
+  }
+
+  return ordered;
+}
+
+export function mergeHydratedChatMessages(args: {
+  localMessages: ChatMessage[];
+  backendMessages: ChatMessage[];
+  runTracesByRunId?: Record<string, LiveRunTrace>;
+  terminalRunIds?: ReadonlySet<string>;
+}): ChatMessage[] {
+  const { localMessages, backendMessages, runTracesByRunId = {}, terminalRunIds } = args;
+  const usedBackendIndexes = new Set<number>();
+  const merged: ChatMessage[] = [];
+
+  for (const localMessage of localMessages) {
+    const backendIndex = backendMessages.findIndex(
+      (backendMessage, index) => !usedBackendIndexes.has(index) && messagesMatch(localMessage, backendMessage)
+    );
+
+    if (backendIndex >= 0) {
+      usedBackendIndexes.add(backendIndex);
+      merged.push(backendMessages[backendIndex]);
+      continue;
+    }
+
+    if (shouldPreserveLocalHydrationMessage({ message: localMessage, backendMessages, runTracesByRunId, terminalRunIds })) {
+      merged.push(localMessage);
+    }
+  }
+
+  for (const [index, backendMessage] of backendMessages.entries()) {
+    if (!usedBackendIndexes.has(index)) {
+      if (
+        backendMessage.role === 'assistant' &&
+        isBlankAssistantMessage(backendMessage) &&
+        merged.some((message) => message.role === 'assistant' && message.runId === backendMessage.runId)
+      ) {
+        continue;
+      }
+      merged.push(backendMessage);
+    }
+  }
+
+  return orderMessagesByRunTurn(dedupeAssistantMessagesByRun(merged));
+}
+
 export function useControlPlaneChatSessionSync(args: {
   cluster: KubernetesCluster;
   activeSessionId: string | null;
@@ -92,6 +229,7 @@ export function useControlPlaneChatSessionSync(args: {
   runTracesByRunIdRef: RefObject<Record<string, LiveRunTrace>>;
   setRunTracesByRunId: Dispatch<SetStateAction<Record<string, LiveRunTrace>>>;
   setTraceExpandedByRunId: Dispatch<SetStateAction<Record<string, boolean>>>;
+  isRunCancelled?: (runId: string) => boolean;
   runCancelledMessage: string;
   listSessions?: (workspaceId: string, targetId: string, options?: { limit?: number; cursor?: string; q?: string; status?: string }) => Promise<ControlPlaneSessionListPage>;
 }): {
@@ -106,6 +244,7 @@ export function useControlPlaneChatSessionSync(args: {
     runTracesByRunIdRef,
     setRunTracesByRunId,
     setTraceExpandedByRunId,
+    isRunCancelled = () => false,
     runCancelledMessage,
     listSessions = controlPlaneApi.listSessions
   } = args;
@@ -214,6 +353,11 @@ export function useControlPlaneChatSessionSync(args: {
         const restoredTraces: Record<string, LiveRunTrace> = {};
         const terminalTraces: Record<string, LiveRunTrace> = {};
         const cancelledRunIds = new Set<string>();
+        for (const message of mappedMessages) {
+          if (message.runId && isRunCancelled(message.runId)) {
+            cancelledRunIds.add(message.runId);
+          }
+        }
 
         for (const runId of assistantRunIds) {
           const existingTrace = runTracesByRunIdRef.current?.[runId];
@@ -278,8 +422,19 @@ export function useControlPlaneChatSessionSync(args: {
           restoredAssistantPlaceholders.length > 0
             ? [...mappedMessages, ...restoredAssistantPlaceholders]
             : mappedMessages;
+        const terminalRunIds = new Set([...Object.keys(terminalTraces), ...cancelledRunIds]);
+        const mergedMessages = mergeHydratedChatMessages({
+          localMessages: session.messages,
+          backendMessages: restoredMessages,
+          runTracesByRunId: {
+            ...(runTracesByRunIdRef.current || {}),
+            ...restoredTraces,
+            ...terminalTraces
+          },
+          terminalRunIds
+        });
         const sanitizedRestoredMessages = replaceCancelledRunMessagesForHydration(
-          restoredMessages,
+          mergedMessages,
           cancelledRunIds,
           runCancelledMessage
         );
@@ -298,10 +453,14 @@ export function useControlPlaneChatSessionSync(args: {
           ...terminalTraces
         };
         if (Object.keys(tracesToApply).length > 0) {
-          setRunTracesByRunId((current) => ({
-            ...current,
-            ...tracesToApply
-          }));
+          setRunTracesByRunId((current) => {
+            const next = {
+              ...current,
+              ...tracesToApply
+            };
+            runTracesByRunIdRef.current = next;
+            return next;
+          });
           setTraceExpandedByRunId((current) => {
             const next = { ...current };
             for (const runId of Object.keys(tracesToApply)) {
@@ -326,6 +485,7 @@ export function useControlPlaneChatSessionSync(args: {
     activeSessionId,
     cluster.id,
     cluster.workspaceId,
+    isRunCancelled,
     listSessions,
     runTracesByRunIdRef,
     runCancelledMessage,

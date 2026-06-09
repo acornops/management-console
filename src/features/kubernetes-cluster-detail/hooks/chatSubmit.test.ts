@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { ChatMessage } from '@/types';
+import { RUN_TERMINAL_WAIT_TIMEOUT_MS } from '@/features/kubernetes-cluster-detail/hooks/chatSubmit';
+import { preserveStreamingAssistantMessageId } from '@/features/kubernetes-cluster-detail/lib/session-utils';
 import {
-  preserveStreamingAssistantMessageId,
-  RUN_TERMINAL_WAIT_TIMEOUT_MS
-} from '@/features/kubernetes-cluster-detail/hooks/chatSubmit';
-import { replaceCancelledRunAssistantMessages } from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
+  replaceCancelledRunAssistantMessages,
+  replacePendingCancelledRunMessages
+} from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
 
 describe('preserveStreamingAssistantMessageId', () => {
   it('keeps the streamed assistant message mounted when backend messages reconcile', () => {
@@ -38,6 +39,49 @@ describe('preserveStreamingAssistantMessageId', () => {
         id: 'stream-run-123'
       },
       messages[2]
+    ]);
+  });
+
+  it('remaps a cancelled pending trace to the accepted backend run id', () => {
+    const messages: ChatMessage[] = [
+      {
+        id: 'local-user',
+        role: 'user',
+        content: 'Check pods',
+        timestamp: 1,
+        clientMessageId: 'local-user'
+      },
+      {
+        id: 'pending-assistant',
+        role: 'assistant',
+        runId: 'pending-trace-1',
+        content: '',
+        transientStatus: 'pending_assistant',
+        timestamp: 2
+      }
+    ];
+
+    expect(replacePendingCancelledRunMessages(messages, {
+      pendingRunId: 'pending-trace-1',
+      acceptedRunId: 'run-123',
+      userMessageId: 'local-user',
+      pendingAssistantMessageId: 'pending-assistant',
+      streamingMessageId: 'stream-run-123',
+      cancelledMessage: 'Run cancelled. You can send another message when ready.',
+      timestamp: 3
+    })).toEqual([
+      {
+        ...messages[0],
+        runId: 'run-123',
+        timestamp: 3
+      },
+      {
+        id: 'stream-run-123',
+        role: 'assistant',
+        content: 'Run cancelled. You can send another message when ready.',
+        runId: 'run-123',
+        timestamp: 3
+      }
     ]);
   });
 });
