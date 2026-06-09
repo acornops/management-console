@@ -19,6 +19,7 @@ describe('session-utils', () => {
       role: 'assistant',
       kind: 'assistant_final',
       content: 'Hello operator',
+      clientMessageId: 'client-msg-1',
       createdAt: '2026-01-02T03:04:05.000Z'
     });
 
@@ -27,6 +28,7 @@ describe('session-utils', () => {
       role: 'assistant',
       content: 'Hello operator',
       runId: 'run-1',
+      clientMessageId: 'client-msg-1',
       timestamp: Date.parse('2026-01-02T03:04:05.000Z')
     });
   });
@@ -48,15 +50,22 @@ describe('session-utils', () => {
     expect(buildConversationTitleFromPrompt('x'.repeat(80), 'Conversation abc123')).toBe(`${'x'.repeat(64)}...`);
   });
 
-  it('drops blank assistant placeholders but keeps actionable messages', () => {
+  it('drops stale blank assistant placeholders but keeps actionable and pending messages', () => {
     const messages: ChatMessage[] = [
       { id: 'user-1', role: 'user', content: 'Need help', timestamp: 1 },
       { id: 'assistant-blank', role: 'assistant', content: '   ', timestamp: 2 },
       {
-        id: 'assistant-approval',
+        id: 'assistant-pending',
         role: 'assistant',
         content: '',
         timestamp: 3,
+        transientStatus: 'pending_assistant'
+      },
+      {
+        id: 'assistant-approval',
+        role: 'assistant',
+        content: '',
+        timestamp: 4,
         approval: {
           id: 'approval-1',
           action: 'Run restart_workload',
@@ -66,7 +75,106 @@ describe('session-utils', () => {
       }
     ];
 
-    expect(sanitizeChatMessages(messages)).toEqual([messages[0], messages[2]]);
+    expect(sanitizeChatMessages(messages)).toEqual([messages[0], messages[2], messages[3]]);
+  });
+
+  it('dedupes assistant placeholders for the same run', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'Need help', runId: 'run-1', timestamp: 1 },
+      {
+        id: 'pending-run-1',
+        role: 'assistant',
+        content: '',
+        runId: 'run-1',
+        timestamp: 2,
+        transientStatus: 'pending_assistant'
+      },
+      {
+        id: 'stream-run-1',
+        role: 'assistant',
+        content: '',
+        runId: 'run-1',
+        timestamp: 3,
+        transientStatus: 'pending_assistant'
+      }
+    ];
+
+    expect(sanitizeChatMessages(messages)).toEqual([
+      messages[0],
+      {
+        ...messages[2],
+        timestamp: 3
+      }
+    ]);
+  });
+
+  it('prefers a durable assistant response over a pending placeholder for the same run', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'Need help', runId: 'run-1', timestamp: 1 },
+      {
+        id: 'stream-run-1',
+        role: 'assistant',
+        content: '',
+        runId: 'run-1',
+        timestamp: 2,
+        transientStatus: 'pending_assistant'
+      },
+      {
+        id: 'backend-assistant-1',
+        role: 'assistant',
+        content: 'The cluster is healthy.',
+        runId: 'run-1',
+        timestamp: 3
+      }
+    ];
+
+    expect(sanitizeChatMessages(messages)).toEqual([
+      messages[0],
+      {
+        ...messages[2],
+        id: 'stream-run-1'
+      }
+    ]);
+  });
+
+  it('drops a pending trace placeholder once the same user turn has a real run placeholder', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'gg sia', runId: 'run-1', timestamp: 1 },
+      {
+        id: 'stream-run-1',
+        role: 'assistant',
+        content: '',
+        runId: 'run-1',
+        timestamp: 2,
+        transientStatus: 'pending_assistant'
+      },
+      {
+        id: 'pending-assistant',
+        role: 'assistant',
+        content: '',
+        runId: 'pending-trace-1',
+        timestamp: 3,
+        transientStatus: 'pending_assistant'
+      }
+    ];
+
+    expect(sanitizeChatMessages(messages)).toEqual([messages[0], messages[1]]);
+  });
+
+  it('keeps a pending trace placeholder until the backend run id is known', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'gg sia', timestamp: 1 },
+      {
+        id: 'pending-assistant',
+        role: 'assistant',
+        content: '',
+        runId: 'pending-trace-1',
+        timestamp: 2,
+        transientStatus: 'pending_assistant'
+      }
+    ];
+
+    expect(sanitizeChatMessages(messages)).toEqual(messages);
   });
 
   it('builds a user-facing failure message envelope', () => {

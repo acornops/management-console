@@ -15,10 +15,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
-import { TraceFooter } from '@/features/kubernetes-cluster-detail/components/detail/TraceFooter';
 import { ConversationHistory } from '@/features/kubernetes-cluster-detail/components/detail/ConversationHistory';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
-import { ApprovalCheckpoint } from '@/features/kubernetes-cluster-detail/components/detail/views/ApprovalCheckpoint';
+import { AssistantTurn } from '@/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn';
 import { ChatComposerNotice } from '@/features/kubernetes-cluster-detail/components/detail/views/ChatComposerNotice';
 import { DeleteConversationDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/DeleteConversationDialog';
 import type { TargetChatViewProps } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.types';
@@ -61,7 +60,6 @@ function getHistoryFocusWrapIndex(currentIndex: number, focusableCount: number, 
 
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   target,
-  isDark,
   descriptionKey,
   promptTitleKey,
   promptBodyKey,
@@ -409,13 +407,13 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                   </button>
                 </div>
               )}
-              <AnimatePresence mode="popLayout">
               {visibleMessages.map((message) => {
                 const isUser = message.role === 'user';
-                const trace = !isUser && message.runId ? runTracesByRunId[message.runId] : undefined;
                 const isInFlightPlaceholder = !isUser && isInFlightAssistantPlaceholder(message);
-                const shouldRenderThinkingPlaceholder = isInFlightPlaceholder && message.content.trim().length === 0;
-                const traceRunId = message.runId || message.id;
+                const messageTrace = !isUser && message.runId ? runTracesByRunId[message.runId] : undefined;
+                const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;
+                const trace = activeRunTrace || messageTrace;
+                const traceRunId = trace?.runId || message.runId || message.id;
                 const traceToRender: LiveRunTrace | undefined =
                   trace ||
                   (isInFlightPlaceholder
@@ -425,8 +423,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                         steps: [
                           {
                             id: `${traceRunId}-pending`,
-                            label: 'Preparing reasoning trace',
-                            detail: 'Waiting for live run events from the control plane.',
+                            label: 'Preparing response',
+                            detail: 'Waiting for the first progress update.',
                             status: 'info',
                             timestamp: message.timestamp
                           }
@@ -434,67 +432,45 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                         toolCalls: []
                       }
                     : undefined);
+
+                if (!isUser) {
+                  return (
+                    <div key={message.id} className="flex w-full justify-start">
+                      <AssistantTurn
+                        timestampLabel={formatMessageTime(message.timestamp)}
+                        content={message.content}
+                        isInFlightPlaceholder={isInFlightPlaceholder}
+                        markdownComponents={assistantMarkdownComponents}
+                        approval={message.approval}
+                        canApproveWriteActions={canApproveWriteActions}
+                        onApprove={onApprove}
+                        onReject={onReject}
+                        trace={traceToRender}
+                        traceRunId={traceRunId}
+                        isTraceExpanded={traceExpandedByRunId[traceRunId] ?? false}
+                        setTraceExpanded={(runId, expanded) => {
+                          setTraceExpandedByRunId((current) => ({ ...current, [runId]: expanded }));
+                        }}
+                        t={t}
+                      />
+                    </div>
+                  );
+                }
+
                 return (
-                  <motion.div
-                    key={message.id}
-                    layout="position"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                    className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`min-w-0 rounded-lg px-4 py-3 text-sm font-medium shadow-sm sm:px-5 sm:py-4 ${
-                        isUser
-                          ? 'max-w-[min(42rem,88%)] border border-ui-text-muted/20 bg-ui-text text-ui-bg'
-                          : 'max-w-[min(48rem,94%)] border border-ui-border bg-ui-surface text-ui-text'
-                      }`}
-                    >
-                      <div className={`mb-2 flex items-center justify-between gap-3 text-[11px] font-semibold ${
-                        isUser ? 'text-ui-bg/70' : 'text-ui-text-muted'
-                      }`}>
-                        <span>{isUser ? t('chat.roleUser') : t('chat.roleAssistant')}</span>
+                  <div key={message.id} className="flex w-full justify-end">
+                    <div className="min-w-0 max-w-[min(42rem,88%)] rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4">
+                      <div className="mb-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-ui-bg/70">
+                        <span>{t('chat.roleUser')}</span>
                         <span>{formatMessageTime(message.timestamp)}</span>
                       </div>
-                      {isInFlightPlaceholder ? (
-                        <div className="flex items-center gap-2 text-ui-text-muted">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>{t('chat.analyzing')}</span>
-                        </div>
-                      ) : (
-                        <ReactMarkdown components={isUser ? userMarkdownComponents : assistantMarkdownComponents}>
-                          {message.content}
-                        </ReactMarkdown>
-                      )}
-
-                      {message.approval && (
-                        <ApprovalCheckpoint
-                          approval={message.approval}
-                          canApproveWriteActions={canApproveWriteActions}
-                          onApprove={onApprove}
-                          onReject={onReject}
-                          t={t}
-                        />
-                      )}
-
-                      {traceToRender && traceToRender.steps.length > 0 && (
-                        <TraceFooter
-                          isDark={isDark}
-                          runId={traceRunId}
-                          trace={traceToRender}
-                          isExpanded={traceExpandedByRunId[traceRunId] ?? false}
-                          hideTopDivider={shouldRenderThinkingPlaceholder}
-                          setExpanded={(runId, expanded) => {
-                            setTraceExpandedByRunId((current) => ({ ...current, [runId]: expanded }));
-                          }}
-                        />
-                      )}
+                      <ReactMarkdown components={userMarkdownComponents}>
+                        {message.content}
+                      </ReactMarkdown>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
-              </AnimatePresence>
             </div>
           )}
         </div>

@@ -40,10 +40,10 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
     steps: [
       {
         id: createLocalMessageId(),
-        label: 'Run restored',
+        label: 'Run details restored',
         detail: isRunTerminal(run.status)
-          ? 'Reconciled persisted run details from the control plane.'
-          : 'Reconnected to an in-progress troubleshooting run.',
+          ? 'Restored saved progress for this response.'
+          : 'Reconnected to an in-progress assistant response.',
         status: 'info',
         timestamp: Date.now()
       }
@@ -58,12 +58,12 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
     }
 
     if (event.type === 'run_started') {
-      trace = appendRunTraceStep({ ...trace, status: 'running' }, 'Run started', 'info', 'Execution engine accepted the run.');
+      trace = appendRunTraceStep({ ...trace, status: 'running' }, 'Assistant started', 'info', 'The assistant worker accepted the request.');
     } else if (event.type === 'assistant_message_started') {
-      trace = appendRunTraceStep({ ...trace, status: 'running' }, 'Reasoning started', 'info', 'The agent is analyzing context and planning steps.');
+      trace = appendRunTraceStep({ ...trace, status: 'running' }, 'Thinking started', 'info', 'Reviewing the request and available context.');
     } else if (event.type === 'assistant_message_completed') {
       const usage = parseRunUsage(event.payload?.usage);
-      trace = appendRunTraceStep(usage ? { ...trace, usage } : trace, 'Response draft completed', 'success', 'Assistant response draft finalized.');
+      trace = appendRunTraceStep(usage ? { ...trace, usage } : trace, 'Response ready', 'success', 'The assistant finished writing its response.');
     } else if (event.type === 'run_progress') {
       const stage = typeof event.payload?.stage === 'string' ? event.payload.stage : 'progress';
       const message = typeof event.payload?.message === 'string' ? event.payload.message : '';
@@ -105,13 +105,13 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
       trace = appendRunTraceStep(trace, `Approval expired: ${toolName}`, 'error', 'No approval was recorded before timeout.');
     } else if (event.type === 'run_failed') {
-      trace = appendRunTraceStep({ ...trace, status: 'failed' }, 'Run failed', 'error', formatTraceFailureDetail());
+      trace = appendRunTraceStep({ ...trace, status: 'failed' }, 'Could not complete', 'error', formatTraceFailureDetail());
       reachedTerminalEvent = true;
     } else if (event.type === 'run_completed') {
-      trace = appendRunTraceStep({ ...trace, status: 'completed' }, 'Run completed', 'success', 'Execution finalized.');
+      trace = appendRunTraceStep({ ...trace, status: 'completed' }, 'Completed', 'success', 'The run finished successfully.');
       reachedTerminalEvent = true;
     } else if (event.type === 'run_cancelled') {
-      trace = appendRunTraceStep({ ...trace, status: 'cancelled' }, 'Run cancelled', 'error', 'Cancelled by user.');
+      trace = appendRunTraceStep({ ...trace, status: 'cancelled' }, 'Cancelled', 'error', 'You cancelled this response.');
       reachedTerminalEvent = true;
     }
   }
@@ -157,7 +157,7 @@ export function createRunEventHandler(args: {
 
     if (event.type === 'run_started') {
       trace = updateTrace({ ...trace, status: 'running' });
-      updateTrace(appendRunTraceStep(trace, 'Run started', 'info', 'Execution engine accepted the run.'));
+      updateTrace(appendRunTraceStep(trace, 'Assistant started', 'info', 'The assistant worker accepted the request.'));
       return;
     }
 
@@ -166,7 +166,7 @@ export function createRunEventHandler(args: {
         trace = updateTrace({ ...trace, status: 'running' });
       }
       updateTrace(
-        appendRunTraceStep(trace, 'Reasoning started', 'info', 'The agent is analyzing context and planning steps.')
+        appendRunTraceStep(trace, 'Thinking started', 'info', 'Reviewing the request and available context.')
       );
       args.ensureStreamingMessage();
       return;
@@ -185,7 +185,7 @@ export function createRunEventHandler(args: {
       const usage = parseRunUsage(event.payload?.usage);
       const nextTrace = usage ? { ...trace, usage } : trace;
       updateTrace(
-        appendRunTraceStep(nextTrace, 'Response draft completed', 'success', 'Assistant response draft finalized.')
+        appendRunTraceStep(nextTrace, 'Response ready', 'success', 'The assistant finished writing its response.')
       );
       return;
     }
@@ -301,7 +301,7 @@ export function createRunEventHandler(args: {
 
     if (event.type === 'run_failed') {
       updateTrace(
-        appendRunTraceStep({ ...trace, status: 'failed' }, 'Run failed', 'error', formatTraceFailureDetail())
+        appendRunTraceStep({ ...trace, status: 'failed' }, 'Could not complete', 'error', formatTraceFailureDetail())
       );
       args.setTraceExpanded(false);
       return;
@@ -309,7 +309,7 @@ export function createRunEventHandler(args: {
 
     if (event.type === 'run_completed') {
       updateTrace(
-        appendRunTraceStep({ ...trace, status: 'completed' }, 'Run completed', 'success', 'Execution finalized.')
+        appendRunTraceStep({ ...trace, status: 'completed' }, 'Completed', 'success', 'The run finished successfully.')
       );
       args.setTraceExpanded(false);
       return;
@@ -317,7 +317,7 @@ export function createRunEventHandler(args: {
 
     if (event.type === 'run_cancelled') {
       updateTrace(
-        appendRunTraceStep({ ...trace, status: 'cancelled' }, 'Run cancelled', 'error', 'Cancelled by user.')
+        appendRunTraceStep({ ...trace, status: 'cancelled' }, 'Cancelled', 'error', 'You cancelled this response.')
       );
       args.setTraceExpanded(false);
     }

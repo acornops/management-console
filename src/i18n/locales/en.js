@@ -862,7 +862,7 @@ export const en = {
     runCancelledMessage: 'Run cancelled. You can send another message when ready.',
     promptTitle: 'Start a triage run for {{name}}',
     promptBody: 'Choose a guided check or describe the target evidence you want inspected. Read checks can run immediately; writes remain gated.',
-    analyzing: 'Preparing run record...',
+    preparingResponse: 'Preparing response...',
     approveAction: 'Approve once',
     rejectAction: 'Reject',
     roleUser: 'Operator',

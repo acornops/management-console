@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   appendRunTraceStep,
+  formatTraceFailureDetail,
   formatRunUsageDetail,
+  getTraceActivityLabel,
   getStatusBadgeClass,
   mapRunStage,
   mapTraceStatusClass,
@@ -42,14 +44,15 @@ describe('trace-utils', () => {
       'Tokens: input 8, output 3'
     );
     expect(formatRunUsageDetail(undefined)).toBeUndefined();
+    expect(formatTraceFailureDetail()).toBe('Check the assistant response for details.');
   });
 
   it('deduplicates identical consecutive trace steps', () => {
     const trace = createTrace({
-      steps: [{ id: 'step-1', label: 'Run started', detail: 'Accepted', status: 'info', timestamp: 1 }]
+      steps: [{ id: 'step-1', label: 'Assistant started', detail: 'Accepted', status: 'info', timestamp: 1 }]
     });
 
-    expect(appendRunTraceStep(trace, 'Run started', 'info', 'Accepted')).toBe(trace);
+    expect(appendRunTraceStep(trace, 'Assistant started', 'info', 'Accepted')).toBe(trace);
   });
 
   it('retains only the most recent 200 trace steps', () => {
@@ -88,8 +91,48 @@ describe('trace-utils', () => {
   });
 
   it('maps known run stages and preserves unknown ones', () => {
-    expect(mapRunStage('bootstrap')).toBe('Bootstrapping run');
-    expect(mapRunStage('context_fetch')).toBe('Loading conversation context');
+    expect(mapRunStage('bootstrap')).toBe('Preparing response');
+    expect(mapRunStage('context_fetch')).toBe('Reviewing context');
+    expect(mapRunStage('reasoning')).toBe('Thinking');
+    expect(mapRunStage('inference')).toBe('Writing response');
     expect(mapRunStage('mystery_stage')).toBe('Progress: mystery_stage');
+  });
+
+  it('derives operator-facing trace activity labels', () => {
+    expect(getTraceActivityLabel(createTrace({ status: 'connecting' }))).toBe('Thinking');
+    expect(getTraceActivityLabel(createTrace({ status: 'completed' }))).toBe('Done');
+    expect(getTraceActivityLabel(createTrace({ status: 'failed' }))).toBe('Could not complete');
+    expect(getTraceActivityLabel(createTrace({ status: 'cancelled' }))).toBe('Cancelled');
+    expect(getTraceActivityLabel(createTrace({
+      status: 'running',
+      steps: [{ id: 'step-1', label: 'Request queued', status: 'info', timestamp: 1 }]
+    }))).toBe('Thinking');
+    expect(getTraceActivityLabel(createTrace({
+      status: 'running',
+      steps: [{ id: 'step-1', label: 'Reviewing context', status: 'info', timestamp: 1 }]
+    }))).toBe('Reviewing context');
+    expect(getTraceActivityLabel(createTrace({
+      status: 'running',
+      steps: [{ id: 'step-1', label: 'Thinking started', status: 'info', timestamp: 1 }]
+    }))).toBe('Thinking');
+    expect(getTraceActivityLabel(createTrace({
+      status: 'running',
+      steps: [{ id: 'step-1', label: 'Writing response', status: 'info', timestamp: 1 }]
+    }))).toBe('Writing response');
+    expect(getTraceActivityLabel(createTrace({
+      status: 'running',
+      toolCalls: [{ callId: 'call-1', tool: 'kubectl', status: 'running' }]
+    }))).toBe('Using tools');
+    expect(getTraceActivityLabel(createTrace({
+      status: 'running',
+      steps: [{ id: 'step-1', label: 'Approval requested: restart_workload', status: 'info', timestamp: 1 }]
+    }))).toBe('Waiting for approval');
+    expect(getTraceActivityLabel(createTrace({
+      status: 'running',
+      steps: [
+        { id: 'step-1', label: 'Approval requested: restart_workload', status: 'info', timestamp: 1 },
+        { id: 'step-2', label: 'Approval granted: restart_workload', status: 'success', timestamp: 2 }
+      ]
+    }))).toBe('Working');
   });
 });

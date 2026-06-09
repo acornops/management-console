@@ -348,6 +348,7 @@ describe('target chat controller wiring', () => {
   const appClusterChatRuntime = readFileSync(resolve(root, 'src/app/AppClusterChatRuntime.tsx'), 'utf8');
   const chatView = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'), 'utf8');
   const useTargetChat = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/useTargetChat.ts'), 'utf8');
+  const chatSubmit = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSubmit.ts'), 'utf8');
   const chatSessionSync = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSessionSync.ts'), 'utf8');
   const targetChatRunWatcher = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/targetChatRunWatcher.ts'), 'utf8');
 
@@ -372,16 +373,60 @@ describe('target chat controller wiring', () => {
     expect(useTargetChat).toContain("status: 'cancelled'");
     expect(useTargetChat).toContain("t('chat.runCancelledMessage')");
     expect(useTargetChat).toContain('cancelledRunIdsRef.current.add(runId);');
+    expect(useTargetChat).toContain("const isPendingAcceptedRun = runId.startsWith('pending-trace-');");
+    expect(useTargetChat).toContain('if (!isPendingAcceptedRun)');
+    expect(useTargetChat).toContain('markRunCancelled,');
     expect(useTargetChat).toContain('activeRunStreamControlsRef.current[runId]?.abort();');
+    expect(useTargetChat).toContain('runTracesByRunIdRef.current = next;');
     expect(useTargetChat).toContain('replaceCancelledRunAssistantMessages(');
+    expect(chatSubmit).toContain('isRunCancelled(pendingTraceRunId)');
+    expect(chatSubmit).toContain('markRunCancelled?.(accepted.runId);');
+    expect(chatSubmit).toContain('replacePendingCancelledRunMessages(');
+    expect(chatSubmit).toContain('await controlPlaneApi.cancelRun(accepted.runId).catch(() => undefined);');
   });
 
   it('merges session refreshes with the latest selected session id', () => {
     expect(chatSessionSync).toContain('const activeSessionIdRef = useRef(activeSessionId);');
     expect(chatSessionSync).toContain('activeSessionIdRef.current = activeSessionId;');
     expect(chatSessionSync).toContain('mergeFetchedChatSessions(fetched, latestSessionsRef.current, activeSessionIdRef.current)');
+    expect(chatSessionSync).toContain('mergeHydratedChatMessages({');
     expect(chatSessionSync).toContain("if (existingTrace.status === 'cancelled')");
+    expect(chatSessionSync).toContain('if (message.runId && isRunCancelled(message.runId))');
+    expect(chatSessionSync).toContain('isRunCancelled,');
     expect(chatSessionSync).toContain('replaceCancelledRunMessagesForHydration(');
+  });
+
+  it('keeps chat auto-scroll anchored by stable render signals', () => {
+    expect(useTargetChat).toContain('const chatAutoScrollSignature = [');
+    expect(useTargetChat).toContain('lastMessage?.content.length || 0');
+    expect(useTargetChat).toContain('lastMessage?.approval?.status ||');
+    expect(useTargetChat).toContain('const activeRunTraceSignature = activeRunTrace');
+    expect(useTargetChat).toContain('activeRunTrace.steps.length');
+    expect(useTargetChat).toContain('activeRunLatestStep?.detail?.length || 0');
+    expect(useTargetChat).toContain("toolCall.status === 'running'");
+    expect(useTargetChat).toContain('activeRunTraceSignature');
+    expect(useTargetChat).toContain('useLayoutEffect(() => {');
+    expect(useTargetChat).toContain('if (isLoadingEarlierMessages)');
+    expect(useTargetChat).toContain('node.scrollTop = node.scrollHeight;');
+    expect(useTargetChat).toContain('const lastChatScrollTopRef = useRef(0);');
+    expect(useTargetChat).toContain('currentScrollTop < lastChatScrollTopRef.current - 0.5');
+    expect(useTargetChat).toContain('currentScrollTop > lastChatScrollTopRef.current + 0.5');
+    expect(useTargetChat).toContain('shouldStickToBottomRef.current = false;');
+    expect(useTargetChat).toContain('distanceToBottom <= 2 && (shouldStickToBottomRef.current || isScrollingDown)');
+    expect(useTargetChat).toContain('[chatAutoScrollSignature, isChatActive, isLoadingEarlierMessages]');
+    expect(useTargetChat).not.toContain('[messages, isRunActive, isChatActive]');
+  });
+
+  it('keeps live run trace state and reconciliation refs synchronized', () => {
+    expect(useTargetChat).toContain('const setRunTracesByRunIdAndRef: typeof setRunTracesByRunId = useCallback((update) => {');
+    expect(useTargetChat).toContain('runTracesByRunIdRef.current = next;');
+    expect(useTargetChat).toContain('setRunTracesByRunId: setRunTracesByRunIdAndRef,');
+    expect(targetChatRunWatcher).toContain('runTracesByRunIdRef.current = next;');
+    expect(chatSessionSync).toContain('runTracesByRunIdRef.current = next;');
+  });
+
+  it('sanitizes visible messages before rendering in-flight placeholders', () => {
+    expect(useTargetChat).toContain('const visibleMessages = sanitizeChatMessages(messages).filter(');
   });
 
   it('does not mark watched sessions inactive after a stream pause without checking run status', () => {
@@ -389,6 +434,7 @@ describe('target chat controller wiring', () => {
     expect(targetChatRunWatcher).toContain('const missedEvents = await controlPlaneApi.getRunEvents(runId).catch(() => []);');
     expect(targetChatRunWatcher).toContain('hydrated: backendMessages ? true : session.hydrated');
     expect(targetChatRunWatcher).toContain('hasActiveRun: latestRun ? isRunInProgress(latestRun.status) : isTraceInProgress(trace)');
+    expect(targetChatRunWatcher).toContain('mergeHydratedChatMessages({');
   });
 
   it('reconnects watched run streams with capped backoff instead of opening duplicate streams', () => {

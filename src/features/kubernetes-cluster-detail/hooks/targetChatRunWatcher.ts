@@ -7,6 +7,7 @@ import {
   sanitizeChatMessages,
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
+import { mergeHydratedChatMessages } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import { replaceCancelledRunAssistantMessages } from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
 import {
   buildTraceFromRunEvents,
@@ -50,7 +51,13 @@ export function useWatchedRunStream(args: {
 
   useEffect(() => {
     const runId = effectiveActiveRunId;
-    if (!runId || activeRunId === runId || isRunCancelled(runId) || !watchedSessionId || !watchedBackendSessionId) {
+    if (
+      !runId ||
+      activeRunId === runId ||
+      isRunCancelled(runId) ||
+      !watchedSessionId ||
+      !watchedBackendSessionId
+    ) {
       return;
     }
 
@@ -73,10 +80,14 @@ export function useWatchedRunStream(args: {
     const setTraceForRun = (nextTrace: LiveRunTrace) => {
       if (isRunCancelled(runId)) return;
       trace = nextTrace;
-      setRunTracesByRunId((current) => ({
-        ...current,
-        [runId]: nextTrace
-      }));
+      setRunTracesByRunId((current) => {
+        const next = {
+          ...current,
+          [runId]: nextTrace
+        };
+        runTracesByRunIdRef.current = next;
+        return next;
+      });
     };
 
     const publishWatchedSessions = (immediate = false) => {
@@ -305,11 +316,20 @@ export function useWatchedRunStream(args: {
         const fallbackMessages = latestRun?.status === 'cancelled'
           ? replaceCancelledRunAssistantMessages(session.messages, runId, runCancelledMessage)
           : session.messages;
+        const terminalRunIds = latestRun && !isRunInProgress(latestRun.status) ? new Set([runId]) : undefined;
+        const nextMessages = mappedMessages
+          ? mergeHydratedChatMessages({
+              localMessages: fallbackMessages,
+              backendMessages: mappedMessages,
+              runTracesByRunId: runTracesByRunIdRef.current,
+              terminalRunIds
+            })
+          : fallbackMessages;
         return {
           ...session,
           hydrated: backendMessages ? true : session.hydrated,
           hasActiveRun: latestRun ? isRunInProgress(latestRun.status) : isTraceInProgress(trace),
-          messages: mappedMessages && mappedMessages.length > 0 ? mappedMessages : fallbackMessages,
+          messages: nextMessages,
           timestamp: Date.now()
         };
       }, true);

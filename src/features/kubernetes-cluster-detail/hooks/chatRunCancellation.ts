@@ -47,3 +47,33 @@ export function replaceCancelledRunAssistantMessages(
     ...nextMessages.slice(insertionIndex + 1)
   ];
 }
+
+export function replacePendingCancelledRunMessages(
+  messages: ChatMessage[],
+  args: {
+    pendingRunId: string;
+    acceptedRunId: string;
+    userMessageId: string;
+    pendingAssistantMessageId?: string;
+    streamingMessageId: string;
+    cancelledMessage: string;
+    timestamp?: number;
+  }
+): ChatMessage[] {
+  const remappedMessages = messages.map((message) => {
+    if (message.id === args.userMessageId) {
+      return { ...message, runId: args.acceptedRunId };
+    }
+    if (message.id === args.pendingAssistantMessageId || message.runId === args.pendingRunId) {
+      return { ...message, id: args.streamingMessageId, runId: args.acceptedRunId };
+    }
+    return message;
+  });
+
+  return replaceCancelledRunAssistantMessages(
+    remappedMessages,
+    args.acceptedRunId,
+    args.cancelledMessage,
+    args.timestamp
+  );
+}

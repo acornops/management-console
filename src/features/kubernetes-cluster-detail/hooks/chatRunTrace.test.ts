@@ -98,14 +98,14 @@ describe('chatRunTrace helpers', () => {
     expect(trace.status).toBe('completed');
     expect(trace.usage).toEqual({ inputTokens: 12, outputTokens: 7, toolCalls: 1 });
     expect(trace.steps.map((step) => step.label)).toEqual(expect.arrayContaining([
-      'Run restored',
-      'Run started',
-      'Reasoning started',
-      'Loading conversation context',
+      'Run details restored',
+      'Assistant started',
+      'Thinking started',
+      'Reviewing context',
       'Tool call started: kubectl',
       'Tool call completed: kubectl',
-      'Response draft completed',
-      'Run completed'
+      'Response ready',
+      'Completed'
     ]));
     expect(trace.toolCalls).toEqual([
       {
@@ -161,15 +161,15 @@ describe('chatRunTrace helpers', () => {
     expect(trace.status).toBe('completed');
     expect(trace.usage).toEqual({ inputTokens: 9, outputTokens: 4, toolCalls: 1 });
     expect(trace.steps.map((step) => step.label)).toEqual(expect.arrayContaining([
-      'Run started',
-      'Reasoning started',
-      'Reasoning',
+      'Assistant started',
+      'Thinking started',
+      'Thinking',
       'Tool call started: kubectl',
       'Tool call completed: kubectl',
       'Approval requested: restart_workload',
       'Approval granted: restart_workload',
-      'Response draft completed',
-      'Run completed'
+      'Response ready',
+      'Completed'
     ]));
     expect(trace.toolCalls).toEqual([
       {
@@ -213,10 +213,10 @@ describe('chatRunTrace helpers', () => {
 
     handleEvent(createEvent('run_failed', 1));
     expect(trace.status).toBe('failed');
-    expect(trace.steps.at(-1)?.label).toBe('Run failed');
+    expect(trace.steps.at(-1)?.label).toBe('Could not complete');
     handleEvent(createEvent('assistant_token_delta', 2, { text: 'stale' }));
     expect(trace.status).toBe('failed');
-    expect(trace.steps.at(-1)?.label).toBe('Run failed');
+    expect(trace.steps.at(-1)?.label).toBe('Could not complete');
 
     trace = createBaseRunTrace('run-1', 'connecting');
     const handleCancelledEvent = createRunEventHandler({
@@ -232,11 +232,11 @@ describe('chatRunTrace helpers', () => {
 
     handleCancelledEvent(createEvent('run_cancelled', 1));
     expect(trace.status).toBe('cancelled');
-    expect(trace.steps.at(-1)?.label).toBe('Run cancelled');
+    expect(trace.steps.at(-1)?.label).toBe('Cancelled');
     handleCancelledEvent(createEvent('assistant_token_delta', 2, { text: 'stale' }));
     handleCancelledEvent(createEvent('run_completed', 3));
     expect(trace.status).toBe('cancelled');
-    expect(trace.steps.at(-1)?.label).toBe('Run cancelled');
+    expect(trace.steps.at(-1)?.label).toBe('Cancelled');
     expect(setTraceExpanded).toHaveBeenCalledTimes(2);
     expect(appendStreamingText).not.toHaveBeenCalled();
   });

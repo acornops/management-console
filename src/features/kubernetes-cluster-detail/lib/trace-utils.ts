@@ -7,7 +7,7 @@ const MAX_TRACE_STEPS = 200;
  * Returns fixed detail text for run-level errors in the reasoning pane.
  */
 export function formatTraceFailureDetail(): string {
-  return 'See assistant response for user-facing error details.';
+  return 'Check the assistant response for details.';
 }
 
 function toNonNegativeInt(value: unknown): number | null {
@@ -36,6 +36,42 @@ export function parseRunUsage(value: unknown): RunTraceUsage | undefined {
 export function formatRunUsageDetail(usage: RunTraceUsage | undefined): string | undefined {
   if (!usage) return undefined;
   return `Tokens: input ${usage.inputTokens}, output ${usage.outputTokens}`;
+}
+
+export function getTraceActivityLabel(trace: LiveRunTrace): string {
+  if (trace.status === 'completed') return 'Done';
+  if (trace.status === 'failed') return 'Could not complete';
+  if (trace.status === 'cancelled') return 'Cancelled';
+  if (trace.status === 'connecting') return 'Thinking';
+
+  let hasUnresolvedApproval = false;
+  for (let index = trace.steps.length - 1; index >= 0; index -= 1) {
+    const step = trace.steps[index];
+    if (
+      step.label.startsWith('Approval granted:') ||
+      step.label.startsWith('Approval rejected:') ||
+      step.label.startsWith('Approval expired:')
+    ) {
+      break;
+    }
+    if (step.label.startsWith('Approval requested:')) {
+      hasUnresolvedApproval = true;
+      break;
+    }
+  }
+  if (hasUnresolvedApproval) return 'Waiting for approval';
+
+  if (trace.toolCalls.some((toolCall) => toolCall.status === 'running')) return 'Using tools';
+
+  const latestStep = trace.steps.at(-1)?.label || '';
+  if (latestStep === 'Reviewing context' || latestStep === 'Context ready') return 'Reviewing context';
+  if (latestStep === 'Thinking' || latestStep === 'Thinking started') return 'Thinking';
+  if (latestStep === 'Writing response' || latestStep === 'Response ready') return 'Writing response';
+  if (latestStep === 'Request queued' || latestStep === 'Submitting request' || latestStep === 'Conversation ready') {
+    return 'Thinking';
+  }
+
+  return 'Working';
 }
 
 /**
@@ -114,11 +150,11 @@ export function mapTraceStatusClass(status: RunTraceStatus): string {
 }
 
 export function mapRunStage(stage: string): string {
-  if (stage === 'bootstrap') return 'Bootstrapping run';
-  if (stage === 'context_fetch') return 'Loading conversation context';
+  if (stage === 'bootstrap') return 'Preparing response';
+  if (stage === 'context_fetch') return 'Reviewing context';
   if (stage === 'context_ready') return 'Context ready';
-  if (stage === 'reasoning') return 'Reasoning';
-  if (stage === 'inference') return 'Generating troubleshooting response';
+  if (stage === 'reasoning') return 'Thinking';
+  if (stage === 'inference') return 'Writing response';
   return `Progress: ${stage}`;
 }
 
