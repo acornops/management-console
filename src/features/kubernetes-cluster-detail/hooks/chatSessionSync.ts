@@ -86,35 +86,70 @@ export function replaceCancelledRunMessagesForHydration(
   return nextMessages;
 }
 
-function messagesMatch(left: ChatMessage, right: ChatMessage): boolean {
-  if (left.id === right.id) return true;
-  if (left.clientMessageId && (left.clientMessageId === right.clientMessageId || left.clientMessageId === right.id)) return true;
-  if (right.clientMessageId && (right.clientMessageId === left.clientMessageId || right.clientMessageId === left.id)) return true;
-  return false;
+interface HydrationBackendIndex {
+  messageIndexesByIdentityKey: Map<string, number[]>;
+  assistantRunIds: Set<string>;
+  assistantFinalRunIds: Set<string>;
 }
 
-function hasBackendAssistantFinalForRun(messages: ChatMessage[], runId?: string): boolean {
-  if (!runId) return false;
-  return messages.some(
-    (message) =>
-      message.role === 'assistant' &&
-      message.runId === runId &&
-      String(message.content || '').trim().length > 0
-  );
+function addBackendIdentityKey(index: HydrationBackendIndex, key: string | undefined, messageIndex: number): void {
+  if (!key) return;
+  const indexes = index.messageIndexesByIdentityKey.get(key) || [];
+  indexes.push(messageIndex);
+  index.messageIndexesByIdentityKey.set(key, indexes);
 }
 
-function hasBackendAssistantForRun(messages: ChatMessage[], runId?: string): boolean {
-  if (!runId) return false;
-  return messages.some((message) => message.role === 'assistant' && message.runId === runId);
+function buildHydrationBackendIndex(backendMessages: ChatMessage[]): HydrationBackendIndex {
+  const index: HydrationBackendIndex = {
+    messageIndexesByIdentityKey: new Map(),
+    assistantRunIds: new Set(),
+    assistantFinalRunIds: new Set()
+  };
+
+  backendMessages.forEach((message, messageIndex) => {
+    addBackendIdentityKey(index, message.id, messageIndex);
+    addBackendIdentityKey(index, message.clientMessageId, messageIndex);
+
+    if (message.role === 'assistant' && message.runId) {
+      index.assistantRunIds.add(message.runId);
+      if (String(message.content || '').trim().length > 0) {
+        index.assistantFinalRunIds.add(message.runId);
+      }
+    }
+  });
+
+  return index;
+}
+
+function findBackendMessageIndexForLocalMessage(args: {
+  localMessage: ChatMessage;
+  backendIndex: HydrationBackendIndex;
+  usedBackendIndexes: Set<number>;
+}): number {
+  const { localMessage, backendIndex, usedBackendIndexes } = args;
+  const identityKeys = [localMessage.id, localMessage.clientMessageId].filter(Boolean) as string[];
+  const checkedIndexes = new Set<number>();
+
+  for (const identityKey of identityKeys) {
+    for (const candidateIndex of backendIndex.messageIndexesByIdentityKey.get(identityKey) || []) {
+      if (checkedIndexes.has(candidateIndex)) continue;
+      checkedIndexes.add(candidateIndex);
+      if (!usedBackendIndexes.has(candidateIndex)) {
+        return candidateIndex;
+      }
+    }
+  }
+
+  return -1;
 }
 
 function shouldPreserveLocalHydrationMessage(args: {
   message: ChatMessage;
-  backendMessages: ChatMessage[];
+  backendIndex: HydrationBackendIndex;
   runTracesByRunId: Record<string, LiveRunTrace>;
   terminalRunIds?: ReadonlySet<string>;
 }): boolean {
-  const { message, backendMessages, runTracesByRunId, terminalRunIds } = args;
+  const { message, backendIndex, runTracesByRunId, terminalRunIds } = args;
 
   if (message.role === 'user') {
     return true;
@@ -124,7 +159,7 @@ function shouldPreserveLocalHydrationMessage(args: {
     return false;
   }
 
-  if (hasBackendAssistantFinalForRun(backendMessages, message.runId)) {
+  if (message.runId && backendIndex.assistantFinalRunIds.has(message.runId)) {
     return false;
   }
 
@@ -132,7 +167,7 @@ function shouldPreserveLocalHydrationMessage(args: {
     return false;
   }
 
-  if (isBlankAssistantMessage(message) && hasBackendAssistantForRun(backendMessages, message.runId)) {
+  if (isBlankAssistantMessage(message) && message.runId && backendIndex.assistantRunIds.has(message.runId)) {
     return false;
   }
 
@@ -186,21 +221,24 @@ export function mergeHydratedChatMessages(args: {
   terminalRunIds?: ReadonlySet<string>;
 }): ChatMessage[] {
   const { localMessages, backendMessages, runTracesByRunId = {}, terminalRunIds } = args;
+  const backendIndex = buildHydrationBackendIndex(backendMessages);
   const usedBackendIndexes = new Set<number>();
   const merged: ChatMessage[] = [];
 
   for (const localMessage of localMessages) {
-    const backendIndex = backendMessages.findIndex(
-      (backendMessage, index) => !usedBackendIndexes.has(index) && messagesMatch(localMessage, backendMessage)
-    );
+    const backendMessageIndex = findBackendMessageIndexForLocalMessage({
+      localMessage,
+      backendIndex,
+      usedBackendIndexes
+    });
 
-    if (backendIndex >= 0) {
-      usedBackendIndexes.add(backendIndex);
-      merged.push(backendMessages[backendIndex]);
+    if (backendMessageIndex >= 0) {
+      usedBackendIndexes.add(backendMessageIndex);
+      merged.push(backendMessages[backendMessageIndex]);
       continue;
     }
 
-    if (shouldPreserveLocalHydrationMessage({ message: localMessage, backendMessages, runTracesByRunId, terminalRunIds })) {
+    if (shouldPreserveLocalHydrationMessage({ message: localMessage, backendIndex, runTracesByRunId, terminalRunIds })) {
       merged.push(localMessage);
     }
   }

@@ -168,6 +168,17 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
       expect(mergeHydratedChatMessages({ localMessages, backendMessages })).toEqual(backendMessages);
     });
 
+    it('dedupes optimistic user messages when the backend stores the local id as its client message id', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1 }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 2, clientMessageId: 'local-user', runId: 'run-1' }
+      ];
+
+      expect(mergeHydratedChatMessages({ localMessages, backendMessages })).toEqual(backendMessages);
+    });
+
     it('keeps an in-progress assistant placeholder when hydration has the user but not the assistant', () => {
       const localMessages: ChatMessage[] = [
         { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user' },

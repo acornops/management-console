@@ -72,8 +72,7 @@ describe('preserveStreamingAssistantMessageId', () => {
     })).toEqual([
       {
         ...messages[0],
-        runId: 'run-123',
-        timestamp: 3
+        runId: 'run-123'
       },
       {
         id: 'stream-run-123',

@@ -62,7 +62,7 @@ export function replacePendingCancelledRunMessages(
 ): ChatMessage[] {
   const remappedMessages = messages.map((message) => {
     if (message.id === args.userMessageId) {
-      return { ...message, runId: args.acceptedRunId, timestamp: args.timestamp ?? message.timestamp };
+      return { ...message, runId: args.acceptedRunId };
     }
     if (message.id === args.pendingAssistantMessageId || message.runId === args.pendingRunId) {
       return { ...message, id: args.streamingMessageId, runId: args.acceptedRunId };

@@ -254,8 +254,7 @@ export async function submitChatMessage(args: {
         if (message.id === userMsg.id) {
           return {
             ...message,
-            runId: accepted.runId,
-            timestamp: Date.now()
+            runId: accepted.runId
           };
         }
         if (message.id !== pendingAssistantMessageId) return message;
