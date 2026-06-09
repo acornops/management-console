@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   approvalCheckpoint,
+  assistantTurn,
   chatComposerNotice,
   chatView,
   conversationHistory,
@@ -55,7 +56,7 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain("t('chat.approvalConsequence')");
     expect(approvalCheckpoint).toContain("t('chat.approvalHelp')");
     expect(approvalCheckpoint).toContain('type-code mt-1 max-h-36');
-    expect(chatView).toMatch(/<ApprovalCheckpoint[\s\S]*?onApprove=\{onApprove\}/);
+    expect(assistantTurn).toMatch(/<ApprovalCheckpoint[\s\S]*?onApprove=\{onApprove\}/);
     expect(enLocale).toContain("approvalCheckpoint: 'Approval checkpoint'");
     expect(enLocale).toContain("approvalStatusLabel: {");
     expect(enLocale).toContain("approveAction: 'Approve once'");
@@ -65,7 +66,16 @@ describe('target chat polish contracts', () => {
   });
 
   it('keeps polish shared across transcript, composer, and trace surfaces', () => {
-    expect(chatView).toContain('max-w-[min(48rem,94%)]');
+    expect(assistantTurn).toContain('data-chat-assistant-turn="true"');
+    expect(assistantTurn).toContain('className="w-full min-w-0 text-sm font-medium text-ui-text"');
+    expect(assistantTurn).toContain('max-w-[72ch]');
+    expect(assistantTurn).toContain('data-chat-assistant-loading-row="true"');
+    expect(assistantTurn).toContain('min-h-8');
+    expect(assistantTurn).toContain("t('chat.preparingResponse')");
+    expect(assistantTurn).not.toContain("t('chat.analyzing')");
+    expect(assistantTurn).not.toContain("t('chat.startingAssistant')");
+    expect(chatView).toContain('max-w-[min(42rem,88%)] rounded-lg border border-ui-text-muted/20 bg-ui-text');
+    expect(chatView).not.toContain("max-w-[min(48rem,94%)] border border-ui-border bg-ui-surface text-ui-text");
     expect(chatView).not.toContain('AnimatePresence mode="popLayout"');
     expect(chatView).not.toContain('layout="position"');
     expect(chatView).not.toContain('<motion.div\n                    key={message.id}');
@@ -92,10 +102,45 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;');
     expect(chatView).toContain('const trace = activeRunTrace || messageTrace;');
     expect(chatView).toContain('const traceRunId = trace?.runId || message.runId || message.id;');
+    expect(chatView).toContain("label: 'Preparing response'");
+    expect(chatView).toContain("detail: 'Waiting for the first progress update.'");
     expect(traceFooter).toContain('aria-expanded={isExpanded}');
     expect(traceFooter).toContain('aria-controls={contentId}');
-    expect(traceFooter).toContain('Run updates');
+    expect(traceFooter).not.toContain('AnimatePresence initial={false} mode="wait"');
+    expect(traceFooter).toContain('getTraceActivityLabel(trace)');
+    expect(traceFooter).toContain("const activitySummary = trace.status === 'connecting'");
+    expect(traceFooter).toContain("? 'Waiting for progress'");
+    expect(traceFooter).toContain('`${trace.steps.length} steps`');
+    expect(traceFooter).toContain('`${completedToolCalls} of ${trace.toolCalls.length} tools complete`');
+    expect(traceFooter).toContain("const disclosureLabel = isExpanded ? 'Hide run details' : 'Show run details';");
+    expect(traceFooter).toContain('mt-3 max-w-[72ch]');
+    expect(traceFooter).toContain('group inline-flex min-h-10 max-w-full items-center gap-2 rounded-md px-2.5 py-1.5');
+    expect(traceFooter).toContain('{disclosureLabel}');
+    expect(traceFooter).toContain('bg-ui-surface/45 text-ui-text-muted hover:bg-ui-surface/75 hover:text-ui-text');
+    expect(traceFooter).toContain('type-micro-label w-[9.25rem] shrink-0 text-ui-text-muted');
+    expect(traceFooter).toContain('type-caption min-w-0 max-w-[min(20rem,45vw)] truncate');
+    expect(traceFooter).not.toContain('group flex min-h-10 w-full');
+    expect(traceFooter).not.toContain('border border-ui-border bg-ui-bg/80');
+    expect(traceFooter).not.toContain('rounded-full px-2 py-0.5');
+    expect(traceFooter).toContain('hidden={!isExpanded}');
+    expect(traceFooter).toContain('max-h-60 divide-y divide-ui-border overflow-y-auto overscroll-contain');
+    expect(traceFooter).toContain('max-h-44 divide-y divide-ui-border overflow-y-auto overscroll-contain');
+    expect(traceFooter).toContain('Progress steps');
+    expect(traceFooter).not.toContain('Run updates');
+    expect(traceFooter).not.toContain('const statusLabel = trace.status');
     expect(enLocale).toContain("targetContext: 'Target context: {{name}}'");
+    expect(enLocale).toContain("preparingResponse: 'Preparing response...'");
+    expect(enLocale).not.toContain("analyzing: 'Preparing run record...'");
+    expect(enLocale).not.toContain("startingAssistant: 'Starting assistant...'");
     expect(zhLocale).toContain("targetContext: '目标上下文：{{name}}'");
+    expect(zhLocale).toContain("preparingResponse: '正在准备回复...'");
+    expect(zhLocale).not.toContain("analyzing: '正在准备运行记录...'");
+    expect(zhLocale).not.toContain("startingAssistant: '正在启动 AI 助手...'");
+    const visibleChatStatusSources = `${assistantTurn}\n${chatView}\n${traceFooter}`;
+    expect(visibleChatStatusSources).not.toContain('Starting assistant');
+    expect(visibleChatStatusSources).not.toContain('run record');
+    expect(visibleChatStatusSources).not.toContain('control plane');
+    expect(visibleChatStatusSources).not.toContain('execution engine');
+    expect(visibleChatStatusSources).not.toContain('reasoning trace');
   });
 });

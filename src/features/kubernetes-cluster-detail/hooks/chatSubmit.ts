@@ -143,7 +143,7 @@ export async function submitChatMessage(args: {
     createBaseRunTrace(pendingTraceRunId, 'connecting'),
     'Submitting request',
     'info',
-    'Sending message to control plane.'
+    'Sending your message.'
   );
   setRunTracesByRunId((current) => ({ ...current, [pendingTraceRunId]: pendingTrace }));
   setTraceExpandedByRunId((current) => ({
@@ -207,9 +207,9 @@ export async function submitChatMessage(args: {
           ...current,
           [pendingTraceRunId]: appendRunTraceStep(
             trace,
-            'Session ready',
+            'Conversation ready',
             'info',
-            'Chat session created. Waiting for run acceptance.'
+            'Waiting for the assistant to accept the request.'
           )
         };
       });
@@ -285,8 +285,8 @@ export async function submitChatMessage(args: {
       steps: [
         {
           id: createLocalMessageId(),
-          label: 'Run queued',
-          detail: 'Waiting for execution engine.',
+          label: 'Request queued',
+          detail: 'Waiting for an assistant worker.',
           status: 'info',
           timestamp: Date.now()
         }
@@ -468,9 +468,9 @@ export async function submitChatMessage(args: {
         const traceWithUsage = usage ? { ...existingTrace, usage } : existingTrace;
         const completedTrace = appendRunTraceStep(
           { ...traceWithUsage, status: 'completed' },
-          'Run completed',
+          'Completed',
           'success',
-          'Execution finalized.'
+          'The run finished successfully.'
         );
         return {
           ...current,
@@ -486,7 +486,7 @@ export async function submitChatMessage(args: {
         const existingTrace = current[accepted.runId] || createBaseRunTrace(accepted.runId, 'cancelled');
         const cancelledTrace = existingTrace.steps.length > 0
           ? existingTrace
-          : appendRunTraceStep(existingTrace, 'Run cancelled', 'error', 'Cancelled by user.');
+          : appendRunTraceStep(existingTrace, 'Cancelled', 'error', 'You cancelled this response.');
         return {
           ...current,
           [accepted.runId]: {
@@ -501,7 +501,7 @@ export async function submitChatMessage(args: {
         const existingTrace = current[accepted.runId] || createBaseRunTrace(accepted.runId, 'failed');
         const failedTrace = existingTrace.steps.length > 0
           ? existingTrace
-          : appendRunTraceStep(existingTrace, 'Run failed', 'error', formatTraceFailureDetail());
+          : appendRunTraceStep(existingTrace, 'Could not complete', 'error', formatTraceFailureDetail());
         return {
           ...current,
           [accepted.runId]: {

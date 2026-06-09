@@ -859,7 +859,7 @@ export const zh = {
     runCancelledMessage: '运行已取消。准备好后可以继续发送消息。',
     promptTitle: '为 {{name}} 开始分诊运行',
     promptBody: '选择一个起始检查，或描述需要检查的目标证据。只读检查可直接运行，写操作仍需批准。',
-    analyzing: '正在准备运行记录...',
+    preparingResponse: '正在准备回复...',
     approveAction: '批准一次',
     rejectAction: '拒绝',
     roleUser: '操作员',

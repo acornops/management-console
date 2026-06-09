@@ -38,6 +38,9 @@ export const mcpServersDialogs = readSource(
 export const chatView = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'
 );
+export const assistantTurn = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn.tsx'
+);
 export const approvalCheckpoint = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/ApprovalCheckpoint.tsx'
 );

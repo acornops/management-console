@@ -259,8 +259,8 @@ describe('theme color contract', () => {
     expect(chatView).not.toContain('chat.runStatus');
     expect(chatView).not.toContain('chat.activeTriage');
     expect(chatView).not.toContain('chat.guardedWrites');
-    expect(traceFooter).toContain('Run audit trail');
-    expect(traceFooter).toContain('Current step');
+    expect(traceFooter).toContain('Show run details');
+    expect(traceFooter).toMatch(/const activitySummary = trace\.status === 'connecting'[\s\S]*'Waiting for progress'/);
   });
 
   it('keeps triage history from resizing the primary navigation shell', () => {

@@ -439,7 +439,7 @@ export function useTargetChat({
     setTraceExpandedByRunId((current) => ({ ...current, [runId]: false }));
     setRunTracesByRunId((current) => {
       const existingTrace = current[runId] || { runId, status: 'cancelled' as const, steps: [], toolCalls: [] };
-      const hasCancelledStep = existingTrace.steps.some((step) => step.label === 'Run cancelled');
+      const hasCancelledStep = existingTrace.steps.some((step) => step.label === 'Cancelled' || step.label === 'Run cancelled');
       const cancelledTrace: LiveRunTrace = {
         ...existingTrace,
         status: 'cancelled',
@@ -449,8 +449,8 @@ export function useTargetChat({
               ...existingTrace.steps,
               {
                 id: `cancelled-${runId}-${timestamp}`,
-                label: 'Run cancelled',
-                detail: 'Cancelled by user.',
+                label: 'Cancelled',
+                detail: 'You cancelled this response.',
                 status: 'error',
                 timestamp
               }
