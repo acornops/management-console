@@ -59,12 +59,29 @@ export function buildChatFailureMessage(message: string, runId?: string): ChatMe
   };
 }
 
+export function buildChatSetupFailureMessage(message: string, runId?: string): ChatMessage {
+  return {
+    id: createLocalMessageId(),
+    role: 'assistant',
+    content: message,
+    runId,
+    timestamp: Date.now()
+  };
+}
+
 export function isBlankAssistantMessage(message: ChatMessage): boolean {
   return message.role === 'assistant' && String(message.content || '').trim().length === 0 && !message.approval;
 }
 
 export function isPendingAssistantPlaceholder(message: ChatMessage): boolean {
   return message.role === 'assistant' && message.transientStatus === 'pending_assistant' && isBlankAssistantMessage(message);
+}
+
+export function resolveAssistantTransientStatus(
+  content: string,
+  approval?: ChatMessage['approval']
+): ChatMessage['transientStatus'] {
+  return String(content || '').trim().length > 0 || approval ? undefined : 'pending_assistant';
 }
 
 function mergeAssistantRunMessages(left: ChatMessage, right: ChatMessage): ChatMessage {
@@ -226,6 +243,21 @@ export function formatRunFailureMessage(errorCode?: string, errorMessage?: strin
     (normalized.includes('unsupported parameter') || normalized.includes('not supported with this model'));
   if (isTokenParamUnsupported) {
     return 'Selected model requires a different output-token parameter. AcornOps will auto-adjust this; retry your request.';
+  }
+
+  const providerName =
+    errorCode === 'OPENAI_ERROR'
+      ? 'OpenAI'
+      : errorCode === 'ANTHROPIC_ERROR'
+        ? 'Anthropic'
+        : errorCode === 'GEMINI_ERROR'
+          ? 'Gemini'
+          : 'The AI provider';
+  if (normalized === 'provider request failed') {
+    return `${providerName} rejected or could not complete the request. Check or rotate the workspace API key in AI Settings, then retry. If the key is valid, the provider may be temporarily unavailable.`;
+  }
+  if (normalized === 'provider temporarily unavailable') {
+    return `${providerName} is temporarily unavailable. Retry shortly; if this repeats, check the workspace API key in AI Settings.`;
   }
 
   return providerMessage;

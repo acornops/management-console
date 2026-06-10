@@ -58,8 +58,13 @@ describe('desktop sidebar workspace switcher', () => {
       desktopSidebar.indexOf("<SidebarSection title={t('app.workspaceAdministration')} quiet>")
     );
     expect(desktopSidebar).toContain("label={t('app.auditLog')}");
+    expect(desktopSidebar).toContain("label={t('app.aiSettings')}");
     expect(desktopSidebar).toContain("label={t('app.workspaceSettings')}");
+    expect(desktopSidebar).toContain("{hasWorkspaceDataAccess && (\n                  <SidebarNavButton\n                    active={activeResourceNav === 'workspaceAiSettings'}");
     expect(desktopSidebar.indexOf("label={t('app.auditLog')}")).toBeLessThan(
+      desktopSidebar.indexOf("label={t('app.aiSettings')}")
+    );
+    expect(desktopSidebar.indexOf("label={t('app.aiSettings')}")).toBeLessThan(
       desktopSidebar.indexOf("label={t('app.workspaceSettings')}")
     );
     expect(desktopSidebar).toContain('quiet?: boolean');

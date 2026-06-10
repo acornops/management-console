@@ -47,6 +47,7 @@ assert(types.includes('userId?: string'), 'project member type must preserve con
 assert(types.includes('role: string'), 'project member role type must accept deployment role keys');
 assert(types.includes('WorkspaceRoleTemplate'), 'project member type must preserve role template metadata');
 assert(types.includes('read_audit_log: boolean'), 'workspace permissions must include audit-log read capability');
+assert(types.includes('manage_ai_settings: boolean'), 'workspace permissions must include AI settings management capability');
 
 for (const appNeedle of [
   'refreshWorkspaceMembers',

@@ -349,6 +349,7 @@ describe('target chat controller wiring', () => {
   const chatView = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'), 'utf8');
   const useTargetChat = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/useTargetChat.ts'), 'utf8');
   const chatSubmit = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSubmit.ts'), 'utf8');
+  const chatSubmitFailures = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSubmitFailures.ts'), 'utf8');
   const chatSessionSync = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSessionSync.ts'), 'utf8');
   const targetChatRunWatcher = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/targetChatRunWatcher.ts'), 'utf8');
 
@@ -383,6 +384,17 @@ describe('target chat controller wiring', () => {
     expect(chatSubmit).toContain('markRunCancelled?.(accepted.runId);');
     expect(chatSubmit).toContain('replacePendingCancelledRunMessages(');
     expect(chatSubmit).toContain('await controlPlaneApi.cancelRun(accepted.runId).catch(() => undefined);');
+  });
+
+  it('replaces transient assistant placeholders with actionable setup failures', () => {
+    expect(chatSubmitFailures).toContain("error.code === 'AI_PROVIDER_CREDENTIAL_MISSING'");
+    expect(chatSubmitFailures).toContain('buildChatSetupFailureMessage(errorMessage, args.runId)');
+    expect(chatSubmit).toContain('buildChatSubmitFailureMessage({');
+    expect(chatSubmit).toContain('replacePendingAssistantWithFailure({');
+    expect(chatSubmit).toContain('pendingAssistantMessageId,');
+    expect(chatSubmit).toContain('pendingTraceRunId,');
+    expect(chatSubmitFailures).toContain('isBlankAssistantMessage(message)');
+    expect(chatSubmitFailures).toContain('AI Settings](#${AppPaths.workspaceAiSettings(workspaceId)}');
   });
 
   it('merges session refreshes with the latest selected session id', () => {
@@ -463,7 +475,11 @@ describe('target chat controller wiring', () => {
     expect(targetChatRunWatcher).toContain('replayApprovalState(events);');
     expect(targetChatRunWatcher).toContain('streamingContent = `${streamingContent}${text}`;');
     expect(targetChatRunWatcher).toContain('streamingApproval = approval;');
-    expect(targetChatRunWatcher).toContain('approval: streamingApproval || message.approval');
+    expect(targetChatRunWatcher).toContain('const nextApproval = streamingApproval || existingRunMessage.approval;');
+    expect(targetChatRunWatcher).toContain('approval: nextApproval');
+    expect(targetChatRunWatcher).toContain('resolveAssistantTransientStatus(nextContent, nextApproval)');
+    expect(targetChatRunWatcher).toContain('resolveAssistantTransientStatus(content, streamingApproval)');
+    expect(chatSubmit).toContain('resolveAssistantTransientStatus(nextContent, message.approval)');
     expect(targetChatRunWatcher).not.toContain('content: `${message.content}${text}`');
   });
 });

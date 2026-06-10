@@ -87,6 +87,10 @@ for (const [docPath, implNeedle, label] of [
   ['`POST /api/v1/workspaces/{workspaceId}/members`', 'addWorkspaceMember(', 'Add workspace member implementation'],
   ['`PATCH /api/v1/workspaces/{workspaceId}/members/{userId}`', 'updateWorkspaceMemberRole(', 'Update workspace member implementation'],
   ['`DELETE /api/v1/workspaces/{workspaceId}/members/{userId}`', 'deleteWorkspaceMember(', 'Delete workspace member implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/ai-settings`', 'getWorkspaceAiSettings(', 'Get workspace AI settings implementation'],
+  ['`PATCH /api/v1/workspaces/{workspaceId}/ai-settings`', 'updateWorkspaceAiSettings(', 'Update workspace AI settings implementation'],
+  ['`PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}`', 'saveWorkspaceAiProviderCredential(', 'Save workspace AI provider credential implementation'],
+  ['`DELETE /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}`', 'deleteWorkspaceAiProviderCredential(', 'Delete workspace AI provider credential implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters`', 'getClustersForWorkspace(', 'List clusters implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/investigations`', 'listWorkspaceInvestigations(', 'List investigations implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}`', 'getCluster(workspaceId', 'Cluster detail path'],
@@ -171,6 +175,11 @@ expectIncludes(doc, '`operation`', 'Workspace audit operation field doc');
 expectIncludes(controlPlaneMapping, 'operation: WorkspaceAuditOperation', 'Workspace audit operation type');
 expectIncludes(read('src/pages/WorkspaceAuditLogPage.tsx'), "t('auditLog.operation')", 'Workspace audit operation detail');
 expectIncludes(doc, '`permissions.manage_targets`', 'Workspace permissions doc');
+expectIncludes(doc, '`permissions.manage_ai_settings`', 'Workspace AI settings permission doc');
+expectIncludes(controlPlaneMapping, 'manage_ai_settings: boolean', 'Workspace AI settings permission type');
+expectIncludes(controlPlaneMapping, 'WorkspaceAiSettings', 'Workspace AI settings type');
+expectIncludes(controlPlaneApiSurface, 'ai-provider-credentials', 'Workspace AI provider credential path');
+expectIncludes(doc, 'must never expect or display API key values', 'Workspace AI credential redaction doc');
 expectIncludes(controlPlaneMapping, 'currentUserRole', 'Workspace current-user role mapping');
 expectIncludes(controlPlaneMapping, 'permissions: workspace.permissions', 'Workspace permissions mapping');
 expectIncludes(controlPlaneApiSurface, 'listWorkspaceMembers(', 'Workspace members must be fetched from control plane');

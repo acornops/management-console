@@ -87,15 +87,18 @@ export function createMarkdownComponents(tone: MarkdownTone = 'assistant'): Comp
     td: ({ children }) => (
       <td className={`border px-2 py-1 align-top ${tableCellBorderClass}`}>{children}</td>
     ),
-    a: ({ children, href }) => (
-      <a
-        className={`${linkClass} underline`}
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {children}
-      </a>
-    )
+    a: ({ children, href }) => {
+      const isInternalRoute = href?.startsWith('#/');
+      return (
+        <a
+          className={`${linkClass} underline`}
+          href={href}
+          target={isInternalRoute ? undefined : '_blank'}
+          rel={isInternalRoute ? undefined : 'noreferrer'}
+        >
+          {children}
+        </a>
+      );
+    }
   };
 }

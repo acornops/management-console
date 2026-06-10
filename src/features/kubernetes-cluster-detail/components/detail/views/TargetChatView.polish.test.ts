@@ -6,6 +6,7 @@ import {
   chatView,
   conversationHistory,
   enLocale,
+  markdownComponents,
   traceFooter,
   zhLocale
 } from '@/stylesTestSupport';
@@ -88,6 +89,11 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('type-body mt-2 max-w-2xl');
     expect(chatView).toContain('t(resolvedDescriptionKey, { name: cluster.name })');
     expect(chatView).toContain("variant=\"secondary\"");
+    expect(chatView).toContain('const newChatDisabledReason =');
+    expect(chatView).toContain("t('chat.newChatWaitingForRun')");
+    expect(chatView).toContain('Tooltip content={newChatDisabledReason}');
+    expect(enLocale).toContain("newChatWaitingForRun: 'Start a new chat after this response finishes or cancel the current run.'");
+    expect(zhLocale).toContain("newChatWaitingForRun: '当前回复完成后再开始新聊天，或先取消当前运行。'");
     expect(chatView).toContain('composerActionLabel');
     expect(chatView).toContain('canCancelActiveRun');
     expect(chatView).toContain("type={isRunActive ? 'button' : 'submit'}");
@@ -128,6 +134,9 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('Progress steps');
     expect(traceFooter).not.toContain('Run updates');
     expect(traceFooter).not.toContain('const statusLabel = trace.status');
+    expect(markdownComponents).toContain("href?.startsWith('#/')");
+    expect(markdownComponents).toContain("target={isInternalRoute ? undefined : '_blank'}");
+    expect(markdownComponents).toContain("rel={isInternalRoute ? undefined : 'noreferrer'}");
     expect(enLocale).toContain("targetContext: 'Target context: {{name}}'");
     expect(enLocale).toContain("preparingResponse: 'Preparing response...'");
     expect(enLocale).not.toContain("analyzing: 'Preparing run record...'");

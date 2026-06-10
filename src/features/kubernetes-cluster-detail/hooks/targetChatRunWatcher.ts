@@ -4,6 +4,7 @@ import type { ChatSession } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   mapControlPlaneMessage,
+  resolveAssistantTransientStatus,
   sanitizeChatMessages,
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
@@ -156,6 +157,8 @@ export function useWatchedRunStream(args: {
           if (!shouldSyncContent && !shouldSyncApproval) {
             return session;
           }
+          const nextContent = shouldSyncContent ? content : existingRunMessage.content;
+          const nextApproval = streamingApproval || existingRunMessage.approval;
           return {
             ...session,
             hasActiveRun: true,
@@ -163,8 +166,9 @@ export function useWatchedRunStream(args: {
               message.id === existingRunMessage.id
                 ? {
                     ...message,
-                    content: shouldSyncContent ? content : message.content,
-                    approval: streamingApproval || message.approval,
+                    content: nextContent,
+                    approval: nextApproval,
+                    transientStatus: resolveAssistantTransientStatus(nextContent, nextApproval),
                     timestamp: Date.now()
                   }
                 : message
@@ -183,6 +187,7 @@ export function useWatchedRunStream(args: {
               runId,
               content,
               approval: streamingApproval,
+              transientStatus: resolveAssistantTransientStatus(content, streamingApproval),
               timestamp: Date.now()
             }
           ],

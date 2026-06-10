@@ -2,6 +2,7 @@ import {
   ProjectMember,
   User,
   Workspace,
+  WorkspaceAiSettings,
   WorkspaceAuditCategory,
   WorkspaceAuditEvent
 } from '@/types';
@@ -109,6 +110,46 @@ export const controlPlaneApi = {
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/roles`
     );
     return toArray(page.items);
+  },
+
+  async getWorkspaceAiSettings(workspaceId: string): Promise<WorkspaceAiSettings> {
+    return requestJson<WorkspaceAiSettings>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`
+    );
+  },
+
+  async updateWorkspaceAiSettings(
+    workspaceId: string,
+    input: {
+      defaultProvider: WorkspaceAiSettings['defaultProvider'];
+      defaultModel: WorkspaceAiSettings['defaultModel'];
+    }
+  ): Promise<WorkspaceAiSettings> {
+    return requestJson<WorkspaceAiSettings>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`,
+      { method: 'PATCH', body: JSON.stringify(input) }
+    );
+  },
+
+  async saveWorkspaceAiProviderCredential(
+    workspaceId: string,
+    provider: WorkspaceAiSettings['defaultProvider'],
+    apiKey: string
+  ): Promise<WorkspaceAiSettings> {
+    return requestJson<WorkspaceAiSettings>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/ai-provider-credentials/${encodeURIComponent(provider)}`,
+      { method: 'PUT', body: JSON.stringify({ apiKey }) }
+    );
+  },
+
+  async deleteWorkspaceAiProviderCredential(
+    workspaceId: string,
+    provider: WorkspaceAiSettings['defaultProvider']
+  ): Promise<WorkspaceAiSettings> {
+    return requestJson<WorkspaceAiSettings>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/ai-provider-credentials/${encodeURIComponent(provider)}`,
+      { method: 'DELETE' }
+    );
   },
 
   async listWorkspaceMembers(

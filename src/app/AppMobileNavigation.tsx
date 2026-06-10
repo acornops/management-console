@@ -16,6 +16,7 @@ type ActiveResourceNav =
   | 'clusters'
   | 'virtualMachines'
   | 'members'
+  | 'workspaceAiSettings'
   | 'workspaceSettings'
   | 'workspaceAuditLog'
   | 'settings'
@@ -402,6 +403,23 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               {t('app.auditLog')}
+                            </button>
+                          )}
+                          {hasWorkspaceDataAccess && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onSetMobileNavOpen(false);
+                                selectedWorkspaceId && navigate(AppPaths.workspaceAiSettings(selectedWorkspaceId));
+                              }}
+                              disabled={!selectedWorkspaceId}
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                                activeResourceNav === 'workspaceAiSettings'
+                                  ? 'bg-accent-soft text-accent-strong'
+                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
+                            >
+                              {t('app.aiSettings')}
                             </button>
                           )}
                           {hasWorkspaceDataAccess && (
