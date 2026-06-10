@@ -275,7 +275,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
           description={t('workspaceAiSettings.credentialsBody')}
         >
           {displayedProviderStatuses.map((providerStatus) => {
-            const provider = providerStatus.provider as LlmProvider;
+            const provider = providerStatus.provider;
             const isDeleteConfirming = deleteCandidate === provider;
             return (
               <div key={provider} className="flex flex-col gap-5 border-b border-ui-border p-6 last:border-0 lg:flex-row lg:items-center lg:justify-between">

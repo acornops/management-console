@@ -120,7 +120,10 @@ export const controlPlaneApi = {
 
   async updateWorkspaceAiSettings(
     workspaceId: string,
-    input: { defaultProvider: string; defaultModel: string }
+    input: {
+      defaultProvider: WorkspaceAiSettings['defaultProvider'];
+      defaultModel: WorkspaceAiSettings['defaultModel'];
+    }
   ): Promise<WorkspaceAiSettings> {
     return requestJson<WorkspaceAiSettings>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`,
@@ -130,7 +133,7 @@ export const controlPlaneApi = {
 
   async saveWorkspaceAiProviderCredential(
     workspaceId: string,
-    provider: string,
+    provider: WorkspaceAiSettings['defaultProvider'],
     apiKey: string
   ): Promise<WorkspaceAiSettings> {
     return requestJson<WorkspaceAiSettings>(
@@ -141,7 +144,7 @@ export const controlPlaneApi = {
 
   async deleteWorkspaceAiProviderCredential(
     workspaceId: string,
-    provider: string
+    provider: WorkspaceAiSettings['defaultProvider']
   ): Promise<WorkspaceAiSettings> {
     return requestJson<WorkspaceAiSettings>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/ai-provider-credentials/${encodeURIComponent(provider)}`,
