@@ -2,9 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   buildChatFailureMessage,
+  buildChatSetupFailureMessage,
   buildConversationTitleFromPrompt,
   formatRunFailureMessage,
   mapControlPlaneMessage,
+  resolveAssistantTransientStatus,
   sanitizeChatMessages,
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
@@ -177,6 +179,34 @@ describe('session-utils', () => {
     expect(sanitizeChatMessages(messages)).toEqual(messages);
   });
 
+  it('keeps a pending placeholder when early streamed content is only whitespace', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'Check pods', timestamp: 1 },
+      {
+        id: 'stream-run-1',
+        role: 'assistant',
+        content: '\n ',
+        runId: 'run-1',
+        timestamp: 2,
+        transientStatus: 'pending_assistant'
+      }
+    ];
+
+    expect(sanitizeChatMessages(messages)).toEqual(messages);
+  });
+
+  it('keeps pending assistant status until visible content or approval exists', () => {
+    expect(resolveAssistantTransientStatus('')).toBe('pending_assistant');
+    expect(resolveAssistantTransientStatus('\n ')).toBe('pending_assistant');
+    expect(resolveAssistantTransientStatus('Response started')).toBeUndefined();
+    expect(resolveAssistantTransientStatus('', {
+      id: 'approval-1',
+      action: 'Run restart_workload',
+      toolName: 'restart_workload',
+      arguments: {}
+    })).toBeUndefined();
+  });
+
   it('builds a user-facing failure message envelope', () => {
     const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(1234);
 
@@ -193,6 +223,22 @@ describe('session-utils', () => {
     }
   });
 
+  it('builds a setup failure message without implying a run completed', () => {
+    const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(1234);
+
+    try {
+      const message = buildChatSetupFailureMessage('Add an API key in AI Settings.', 'run-9');
+
+      expect(message.role).toBe('assistant');
+      expect(message.runId).toBe('run-9');
+      expect(message.content).toBe('Add an API key in AI Settings.');
+      expect(message.content).not.toContain('I could not complete the troubleshooting run.');
+      expect(message.timestamp).toBe(1234);
+    } finally {
+      dateNowSpy.mockRestore();
+    }
+  });
+
   it('normalizes provider rate limit failures with retry guidance', () => {
     const message = formatRunFailureMessage(
       'rate_limit',
@@ -201,6 +247,15 @@ describe('session-utils', () => {
 
     expect(message).toContain('LLM provider rate limit reached (rate_limit).');
     expect(message).toContain('Retry after about 2 seconds.');
+  });
+
+  it('normalizes provider setup failures with AI Settings guidance', () => {
+    expect(formatRunFailureMessage('OPENAI_ERROR', 'Provider request failed')).toContain(
+      'Check or rotate the workspace API key in AI Settings'
+    );
+    expect(formatRunFailureMessage('ANTHROPIC_ERROR', 'Provider temporarily unavailable')).toContain(
+      'Anthropic is temporarily unavailable'
+    );
   });
 
   it('rewrites unsupported temperature and token parameter failures', () => {

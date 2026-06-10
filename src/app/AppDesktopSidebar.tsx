@@ -16,6 +16,7 @@ type ActiveResourceNav =
   | 'clusters'
   | 'virtualMachines'
   | 'members'
+  | 'workspaceAiSettings'
   | 'workspaceSettings'
   | 'workspaceAuditLog'
   | 'settings'
@@ -330,6 +331,15 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     icon={<ICONS.Shield className={navIconClass(activeResourceNav === 'workspaceAuditLog')} />}
                     label={t('app.auditLog')}
                     onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceAuditLog(selectedWorkspaceId))}
+                  />
+                )}
+                {hasWorkspaceDataAccess && (
+                  <SidebarNavButton
+                    active={activeResourceNav === 'workspaceAiSettings'}
+                    disabled={!selectedWorkspaceId}
+                    icon={<ICONS.Zap className={navIconClass(activeResourceNav === 'workspaceAiSettings')} />}
+                    label={t('app.aiSettings')}
+                    onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceAiSettings(selectedWorkspaceId))}
                   />
                 )}
                 {hasWorkspaceDataAccess && (

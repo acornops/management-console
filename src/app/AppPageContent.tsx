@@ -56,6 +56,9 @@ const WorkspaceOverviewPage = React.lazy(() =>
 const WorkspaceSettingsPage = React.lazy(() =>
   import('@/pages/WorkspaceSettingsPage').then((module) => ({ default: module.WorkspaceSettingsPage }))
 );
+const WorkspaceAiSettingsPage = React.lazy(() =>
+  import('@/pages/WorkspaceAiSettingsPage').then((module) => ({ default: module.WorkspaceAiSettingsPage }))
+);
 
 const WorkspaceAuditLogPage = React.lazy(() =>
   import('@/pages/WorkspaceAuditLogPage').then((module) => ({ default: module.WorkspaceAuditLogPage }))
@@ -70,6 +73,7 @@ function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspa
       route.kind === 'workspaceInvestigations' ||
       route.kind === 'workspaceRunbooks' ||
       route.kind === 'workspaceMembers' ||
+      route.kind === 'workspaceAiSettings' ||
       route.kind === 'workspaceSettings' ||
       route.kind === 'workspaceAuditLog' ||
       route.kind === 'workspaceKubernetesClusters' ||
@@ -312,6 +316,14 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               workspace={workspaceContext}
               canDeleteWorkspace={getWorkspacePermission(workspaceContext.id, 'delete_workspace')}
               onDeleteWorkspace={onOpenDeleteWorkspace}
+            />
+          )}
+
+          {route.kind === 'workspaceAiSettings' && workspaceContext && (
+            <WorkspaceAiSettingsPage
+              workspace={workspaceContext}
+              canManageAiSettings={getWorkspacePermission(workspaceContext.id, 'manage_ai_settings')}
+              showToast={showToast}
             />
           )}
 

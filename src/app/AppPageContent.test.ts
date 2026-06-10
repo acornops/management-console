@@ -18,6 +18,7 @@ describe('AppPageContent route loading', () => {
       'WorkspaceInvestigationsPage',
       'WorkspaceInvitePage',
       'WorkspaceMembersPage',
+      'WorkspaceAiSettingsPage',
       'WorkspaceOverviewPage',
       'WorkspaceSettingsPage'
     ]) {

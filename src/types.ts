@@ -295,6 +295,7 @@ export interface Workspace {
     manage_targets: boolean;
     manage_mcp: boolean;
     manage_tools: boolean;
+    manage_ai_settings: boolean;
     manage_agent_keys: boolean;
     manage_webhooks: boolean;
     create_sessions: boolean;
@@ -416,6 +417,7 @@ export type WorkspaceCapability =
   | 'manage_targets'
   | 'manage_mcp'
   | 'manage_tools'
+  | 'manage_ai_settings'
   | 'manage_agent_keys'
   | 'manage_webhooks'
   | 'create_sessions'
@@ -459,6 +461,23 @@ export interface WorkspaceAuditEvent {
   summary: string;
   metadata: Record<string, unknown>;
   occurredAt: string;
+}
+
+export type LlmProvider = 'openai' | 'anthropic' | 'gemini';
+
+export interface WorkspaceAiProviderStatus {
+  provider: LlmProvider;
+  configured: boolean;
+  enabled: boolean;
+}
+
+export interface WorkspaceAiSettings {
+  workspaceId: string;
+  defaultProvider: LlmProvider;
+  defaultModel: string;
+  allowedProviders: LlmProvider[];
+  allowedModels: string[];
+  providers: WorkspaceAiProviderStatus[];
 }
 
 export interface MCPIntegration {

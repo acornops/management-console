@@ -9,6 +9,7 @@ import {
   isBlankAssistantMessage,
   isPendingAssistantPlaceholder,
   mapControlPlaneMessage,
+  resolveAssistantTransientStatus,
   sanitizeChatMessages,
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
@@ -442,13 +443,15 @@ export function useControlPlaneChatSessionSync(args: {
             const events = await controlPlaneApi.getRunEvents(run.id).catch(() => []);
             const approvals = await controlPlaneApi.listRunApprovals(run.id).catch(() => []);
             const approval = approvals.find((item) => item.status === 'pending') || approvals[approvals.length - 1];
+            const pendingApproval = approval ? mapControlPlaneApprovalToPendingApproval(approval) : undefined;
             restoredAssistantPlaceholders.push({
               id: `rehydrated-${run.id}`,
               role: 'assistant',
               runId: run.id,
               content: '',
+              transientStatus: resolveAssistantTransientStatus('', pendingApproval),
               timestamp: Date.now(),
-              approval: approval ? mapControlPlaneApprovalToPendingApproval(approval) : undefined
+              approval: pendingApproval
             });
             restoredTraces[run.id] = buildTraceFromRunEvents(run, events);
           } catch {

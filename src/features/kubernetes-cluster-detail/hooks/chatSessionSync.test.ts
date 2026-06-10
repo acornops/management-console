@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { sanitizeChatMessages } from '@/features/kubernetes-cluster-detail/lib/session-utils';
 import { mapControlPlaneApprovalToPendingApproval } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import {
   createConversationId,
@@ -287,6 +288,31 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
       };
 
       expect(mergeHydratedChatMessages({ localMessages, backendMessages, runTracesByRunId })).toEqual(backendMessages);
+    });
+
+    it('keeps a restored in-progress assistant placeholder visible after sanitization', () => {
+      const backendMessages: ChatMessage[] = [
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user', runId: 'run-1' },
+        {
+          id: 'rehydrated-run-1',
+          role: 'assistant',
+          content: '',
+          timestamp: 2,
+          runId: 'run-1',
+          transientStatus: 'pending_assistant'
+        }
+      ];
+      const runTracesByRunId: Record<string, LiveRunTrace> = {
+        'run-1': { runId: 'run-1', status: 'running', steps: [], toolCalls: [] }
+      };
+
+      const mergedMessages = mergeHydratedChatMessages({
+        localMessages: [],
+        backendMessages,
+        runTracesByRunId
+      });
+
+      expect(sanitizeChatMessages(mergedMessages)).toEqual(backendMessages);
     });
 
     it('drops stale terminal assistant placeholders during hydration', () => {

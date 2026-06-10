@@ -9,6 +9,7 @@ import {
   formatRunFailureMessage,
   mapControlPlaneMessage,
   preserveStreamingAssistantMessageId,
+  resolveAssistantTransientStatus,
   sanitizeChatMessages,
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
@@ -20,6 +21,10 @@ import {
   type ActiveRunStreamControls
 } from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
+import {
+  buildChatSubmitFailureMessage,
+  replacePendingAssistantWithFailure
+} from '@/features/kubernetes-cluster-detail/hooks/chatSubmitFailures';
 
 export const RUN_TERMINAL_WAIT_TIMEOUT_MS = 600000;
 
@@ -88,13 +93,8 @@ export async function submitChatMessage(args: {
       timestamp: now
     };
 
-  if (!sessions.find((existingSession) => existingSession.id === localSessionId)) {
-    sessions = [...sessions, session];
-  }
-
-  if (!activeSessionId) {
-    setActiveSessionId(localSessionId);
-  }
+  if (!sessions.find((existingSession) => existingSession.id === localSessionId)) sessions = [...sessions, session];
+  if (!activeSessionId) setActiveSessionId(localSessionId);
 
   const isFirstUserMessage = !session.messages.some((message) => message.role === 'user');
   if (isFirstUserMessage) {
@@ -132,7 +132,7 @@ export async function submitChatMessage(args: {
         role: 'assistant',
         runId: pendingTraceRunId,
         content: '',
-        transientStatus: 'pending_assistant',
+        transientStatus: resolveAssistantTransientStatus(''),
         timestamp: Date.now()
       }
     ],
@@ -329,7 +329,7 @@ export async function submitChatMessage(args: {
             role: 'assistant',
             runId: accepted.runId,
             content: '',
-            transientStatus: 'pending_assistant',
+            transientStatus: resolveAssistantTransientStatus(''),
             timestamp: Date.now()
           }
         ],
@@ -347,10 +347,11 @@ export async function submitChatMessage(args: {
         ...session,
         messages: session.messages.map((message) => {
           if (message.id !== streamingMessageId) return message;
+          const nextContent = `${message.content}${text}`;
           return {
             ...message,
-            content: `${message.content}${text}`,
-            transientStatus: undefined,
+            content: nextContent,
+            transientStatus: resolveAssistantTransientStatus(nextContent, message.approval),
             timestamp: Date.now()
           };
         }),
@@ -600,26 +601,31 @@ export async function submitChatMessage(args: {
     if (isAcceptedRunCancelled()) {
       return;
     }
-    const errorMessage = error instanceof Error ? error.message : fallbackBackendErrorMessage;
+    const failureMessage = buildChatSubmitFailureMessage({
+      error,
+      workspaceId: cluster.workspaceId,
+      fallbackMessage: fallbackBackendErrorMessage,
+      runId: runIdForMessage
+    });
     session = {
       ...session,
       hydrated: true,
-      messages: [...sanitizeChatMessages(session.messages), buildChatFailureMessage(errorMessage, runIdForMessage)],
+      messages: replacePendingAssistantWithFailure({
+        messages: session.messages,
+        pendingAssistantMessageId,
+        pendingTraceRunId,
+        acceptedRunId: runIdForMessage,
+        failureMessage
+      }),
       timestamp: Date.now()
     };
     sessions = upsertSession(sessions, session);
     publishSessions(true);
   } finally {
-    if (streamAbortController) {
-      streamAbortController.abort();
-    }
-    if (streamPromise) {
-      await streamPromise.catch(() => undefined);
-    }
+    if (streamAbortController) streamAbortController.abort();
+    if (streamPromise) await streamPromise.catch(() => undefined);
     pollEventsStop = true;
-    if (pollEventsPromise) {
-      await pollEventsPromise.catch(() => undefined);
-    }
+    if (pollEventsPromise) await pollEventsPromise.catch(() => undefined);
     setRunTracesByRunId((current) => {
       const { [pendingTraceRunId]: _removed, ...rest } = current;
       return rest;
@@ -632,9 +638,7 @@ export async function submitChatMessage(args: {
       clearTimeout(pendingSessionPublish);
       pendingSessionPublish = null;
     }
-    if (runIdForMessage) {
-      unregisterRunStream?.(runIdForMessage);
-    }
+    if (runIdForMessage) unregisterRunStream?.(runIdForMessage);
     setIsLoading(false);
     setActiveRunId(null);
   }

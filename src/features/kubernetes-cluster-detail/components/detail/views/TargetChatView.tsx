@@ -148,6 +148,11 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
         ? t('chat.cancelRun')
         : t('chat.cancelWaiting')
     : t('chat.send');
+  const newChatDisabledReason = !canChat
+    ? t(resolvedNoChatAccessKey)
+    : isRunActive
+      ? t('chat.newChatWaitingForRun')
+      : '';
   const historyControlLabel = isHistoryOpen ? t('chat.hideHistory') : t('chat.showHistory');
   const panelWindowControls = (
     <div className="flex shrink-0 items-center gap-1">
@@ -338,17 +343,21 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                 <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: cluster.name })}</p>
               </div>
               <div className="flex w-full min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end">
-                <Button
-                  type="button"
-                  onClick={onCreateSession}
-                  disabled={!canChat || isRunActive}
-                  variant="secondary"
-                  size="md"
-                  className="w-full whitespace-nowrap sm:w-auto"
-                >
-                  <Plus className="h-4 w-4" />
-                  {t('chat.newChat')}
-                </Button>
+                <Tooltip content={newChatDisabledReason} disabled={!newChatDisabledReason}>
+                  <span className="inline-flex w-full sm:w-auto">
+                    <Button
+                      type="button"
+                      onClick={onCreateSession}
+                      disabled={!canChat || isRunActive}
+                      variant="secondary"
+                      size="md"
+                      className="w-full whitespace-nowrap sm:w-auto"
+                    >
+                      <Plus className="h-4 w-4" />
+                      {t('chat.newChat')}
+                    </Button>
+                  </span>
+                </Tooltip>
               </div>
             </div>
           )}

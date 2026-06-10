@@ -107,6 +107,7 @@ Workspace responses expose server-owned authorization fields:
 - `permissions.manage_targets`
 - `permissions.manage_mcp`
 - `permissions.manage_tools`
+- `permissions.manage_ai_settings`
 - `permissions.manage_agent_keys`
 - `permissions.manage_webhooks`
 - `permissions.create_sessions`
@@ -121,6 +122,8 @@ Workspace responses expose server-owned authorization fields:
 The console treats `permissions.read_workspace_data` as the gate for operational workspace surfaces. Auditor summaries may include member context but must not drive cluster telemetry or operational navigation; `clusterCount` and operational quota usage are redacted to `0`. Member counts and `quota.members.used` require `permissions.read_members`. Workspace quota rows are rendered in Workspace Settings only.
 
 The management console keeps Kubernetes-specific lifecycle, install, inventory, namespace, and pod-log flows on the cluster APIs. The Virtual Machines page uses the VM APIs for Linux/systemd registration, inventory, findings, metrics, logs, MCP Servers, read-only chat, and VM Settings.
+
+The AI Settings page consumes `GET /api/v1/workspaces/{workspaceId}/ai-settings` to render AI assistant defaults, deployment allow-lists, and per-provider configured status for users with workspace data access. Users with `permissions.manage_ai_settings` may call `PATCH /api/v1/workspaces/{workspaceId}/ai-settings` to update the default provider/model, `PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` with write-only `{apiKey}` to add or rotate a provider credential, and `DELETE /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` to remove one. The console must never expect or display API key values, ciphertexts, or internal secret names; it only displays configured/not-configured status.
 
 The Members page consumes authoritative membership from `GET /api/v1/workspaces/{workspaceId}/members`. Member rows include:
 

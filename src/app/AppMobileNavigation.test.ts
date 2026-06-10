@@ -32,8 +32,13 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).toContain("t('app.workspaceContext')");
     expect(mobileNavigation).toContain("t('app.userSettings')");
     expect(mobileNavigation).toContain("{t('app.auditLog')}");
+    expect(mobileNavigation).toContain("{t('app.aiSettings')}");
     expect(mobileNavigation).toContain("{t('app.workspaceSettings')}");
+    expect(mobileNavigation).toContain("{hasWorkspaceDataAccess && (\n                            <button\n                              type=\"button\"\n                              onClick={() => {\n                                onSetMobileNavOpen(false);\n                                selectedWorkspaceId && navigate(AppPaths.workspaceAiSettings(selectedWorkspaceId));");
     expect(mobileNavigation.indexOf("{t('app.auditLog')}")).toBeLessThan(
+      mobileNavigation.indexOf("{t('app.aiSettings')}")
+    );
+    expect(mobileNavigation.indexOf("{t('app.aiSettings')}")).toBeLessThan(
       mobileNavigation.indexOf("{t('app.workspaceSettings')}")
     );
   });

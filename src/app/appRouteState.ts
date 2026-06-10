@@ -8,6 +8,7 @@ export type ActiveResourceNav =
   | 'clusters'
   | 'virtualMachines'
   | 'members'
+  | 'workspaceAiSettings'
   | 'workspaceSettings'
   | 'workspaceAuditLog'
   | 'settings'
@@ -32,6 +33,7 @@ export function getWorkspaceRouteId(route: AppRoute): string | null {
     route.kind === 'workspaceVirtualMachines' ||
     route.kind === 'workspaceVirtualMachineDetail' ||
     route.kind === 'workspaceMembers' ||
+    route.kind === 'workspaceAiSettings' ||
     route.kind === 'workspaceSettings' ||
     route.kind === 'workspaceAuditLog' ||
     route.kind === 'workspaceKubernetesClusterDiagnostics'
@@ -78,6 +80,7 @@ export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
     return 'vmOverview';
   }
   if (route.kind === 'settings') return 'settings';
+  if (route.kind === 'workspaceAiSettings') return 'workspaceAiSettings';
   if (route.kind === 'workspaceSettings') return 'workspaceSettings';
   if (route.kind === 'workspaceAuditLog') return 'workspaceAuditLog';
   if (route.kind === 'workspaceMembers') return 'members';
