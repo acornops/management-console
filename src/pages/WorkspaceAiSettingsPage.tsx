@@ -134,9 +134,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       && currentAiSettings.allowedReasoningEfforts.includes(reasoningEffort)
   );
   const isSaving = Boolean(savingAction);
-  const reasoningPolicyDisabled = Boolean(
-    currentAiSettings && currentAiSettings.allowedReasoningSummaryModes.every((mode) => mode === 'off')
-  );
+  const reasoningPolicyDisabled = Boolean(currentAiSettings && !currentAiSettings.reasoningSummariesEnabled);
   const displayedProviderStatuses = currentAiSettings?.providers || PROVIDERS.map((provider) => ({
     provider,
     configured: false,

@@ -20,6 +20,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   const [hasCopied, setHasCopied] = React.useState(false);
   const copyResetTimeoutRef = React.useRef<number | null>(null);
   const canCopy = copyText.trim().length > 0;
+  const canUseClipboard = typeof navigator !== 'undefined' && Boolean(navigator.clipboard?.writeText);
+  const canCopyToClipboard = canCopy && canUseClipboard;
 
   React.useEffect(() => () => {
     if (copyResetTimeoutRef.current !== null) {
@@ -36,7 +38,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   }, [copyText]);
 
   const handleCopy = async () => {
-    if (!canCopy || !navigator.clipboard?.writeText) return;
+    if (!canCopyToClipboard) return;
 
     try {
       await navigator.clipboard.writeText(copyText);
@@ -74,7 +76,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       <button
         type="button"
         onClick={() => void handleCopy()}
-        disabled={!canCopy}
+        disabled={!canCopyToClipboard}
         className="inline-flex h-6 w-6 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface/75 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={hasCopied ? t('chat.copiedMessage') : t('chat.copyMessage')}
         title={hasCopied ? t('chat.copiedMessage') : t('chat.copyMessage')}

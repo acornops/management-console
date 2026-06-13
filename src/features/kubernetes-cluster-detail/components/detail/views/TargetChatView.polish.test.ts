@@ -287,7 +287,8 @@ describe('target chat polish contracts', () => {
     expect(messageActions).toContain('const copyResetTimeoutRef = React.useRef<number | null>(null);');
     expect(messageActions).toContain('}, [copyText]);');
     expect(messageActions).toContain('window.clearTimeout(copyResetTimeoutRef.current);');
-    expect(messageActions).toContain('!navigator.clipboard?.writeText');
+    expect(messageActions).toContain("const canUseClipboard = typeof navigator !== 'undefined' && Boolean(navigator.clipboard?.writeText);");
+    expect(messageActions).toContain('disabled={!canCopyToClipboard}');
     expect(messageActions).toContain('await navigator.clipboard.writeText(copyText);');
     expect(messageActions).toContain('copyResetTimeoutRef.current = window.setTimeout(() => {');
     expect(messageActions).toContain('} catch {');
