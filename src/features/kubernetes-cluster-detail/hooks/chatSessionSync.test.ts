@@ -3,7 +3,6 @@ import { sanitizeChatMessages } from '@/features/kubernetes-cluster-detail/lib/s
 import { mapControlPlaneApprovalToPendingApproval } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import {
   createConversationId,
-  createConversationName,
   mergeHydratedChatMessages,
   replaceCancelledRunMessagesForHydration,
   sortSessionsByTimestamp
@@ -46,7 +45,7 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
   });
 
   describe('chatSessionSync helpers', () => {
-    it('sorts sessions newest-first and formats conversation names', () => {
+    it('sorts sessions newest-first', () => {
       const sessions: ChatSession[] = [
         { id: 'session-a', name: 'A', messages: [], timestamp: 1 },
         { id: 'session-c', name: 'C', messages: [], timestamp: 3 },
@@ -58,7 +57,6 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
         'session-b',
         'session-a'
       ]);
-      expect(createConversationName('abcdef123456')).toBe('Conversation abcdef12');
     });
 
     it('prefers crypto randomUUID and falls back to local ids', () => {
@@ -288,6 +286,44 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
       };
 
       expect(mergeHydratedChatMessages({ localMessages, backendMessages, runTracesByRunId })).toEqual(backendMessages);
+    });
+
+    it('does not reinsert a revised cancelled run from backend hydration', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'replacement-user', role: 'user', content: 'Check all pods', timestamp: 4, clientMessageId: 'replacement-user', runId: 'run-new' },
+        {
+          id: 'stream-run-new',
+          role: 'assistant',
+          content: '',
+          timestamp: 5,
+          runId: 'run-new',
+          transientStatus: 'pending_assistant'
+        }
+      ];
+      const backendMessages: ChatMessage[] = [
+        { id: 'old-user', role: 'user', content: 'Check pods', timestamp: 1, runId: 'run-cancelled' },
+        {
+          id: 'old-assistant',
+          role: 'assistant',
+          content: 'Run cancelled. You can send another message when ready.',
+          timestamp: 2,
+          runId: 'run-cancelled'
+        },
+        { id: 'replacement-user-backend', role: 'user', content: 'Check all pods', timestamp: 6, clientMessageId: 'replacement-user', runId: 'run-new' }
+      ];
+      const runTracesByRunId: Record<string, LiveRunTrace> = {
+        'run-new': { runId: 'run-new', status: 'running', steps: [], toolCalls: [] }
+      };
+
+      expect(mergeHydratedChatMessages({
+        localMessages,
+        backendMessages,
+        runTracesByRunId,
+        suppressedRunIds: new Set(['run-cancelled'])
+      })).toEqual([
+        backendMessages[2],
+        localMessages[1]
+      ]);
     });
 
     it('keeps a restored in-progress assistant placeholder visible after sanitization', () => {

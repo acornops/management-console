@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import { LlmProvider, Workspace, WorkspaceAiSettings } from '@/types';
+import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace, WorkspaceAiSettings } from '@/types';
 
 interface WorkspaceAiSettingsPageProps {
   workspace: Workspace;
@@ -28,6 +28,8 @@ const SettingSection: React.FC<{
 );
 
 const PROVIDERS: LlmProvider[] = ['openai', 'anthropic', 'gemini'];
+const REASONING_SUMMARY_MODES: ReasoningSummaryMode[] = ['off', 'auto', 'concise', 'detailed'];
+const REASONING_EFFORTS: ReasoningEffort[] = ['default', 'low', 'medium', 'high'];
 const EMPTY_PROVIDER_KEYS: Record<LlmProvider, string> = {
   openai: '',
   anthropic: '',
@@ -38,6 +40,14 @@ function providerLabel(provider: LlmProvider): string {
   if (provider === 'openai') return 'OpenAI';
   if (provider === 'anthropic') return 'Anthropic';
   return 'Gemini';
+}
+
+function reasoningModeLabel(mode: ReasoningSummaryMode): string {
+  return `workspaceAiSettings.reasoningMode.${mode}`;
+}
+
+function reasoningEffortLabel(effort: ReasoningEffort): string {
+  return `workspaceAiSettings.reasoningEffort.${effort}`;
 }
 
 function modelBelongsToProvider(model: string, provider: LlmProvider): boolean {
@@ -63,6 +73,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const [isLoadingAiSettings, setIsLoadingAiSettings] = useState(false);
   const [defaultProvider, setDefaultProvider] = useState<LlmProvider>('gemini');
   const [defaultModel, setDefaultModel] = useState('gemini-2.0-flash');
+  const [reasoningSummaryMode, setReasoningSummaryMode] = useState<ReasoningSummaryMode>('off');
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>('default');
   const [providerKeys, setProviderKeys] = useState<Record<LlmProvider, string>>(EMPTY_PROVIDER_KEYS);
   const [savingAction, setSavingAction] = useState('');
   const [deleteCandidate, setDeleteCandidate] = useState<LlmProvider | null>(null);
@@ -83,6 +95,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
         setAiSettings(settings);
         setDefaultProvider(settings.defaultProvider);
         setDefaultModel(settings.defaultModel);
+        setReasoningSummaryMode(settings.reasoningSummaryMode);
+        setReasoningEffort(settings.reasoningEffort);
       })
       .catch((error) => {
         if (cancelled) return;
@@ -116,8 +130,11 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       && currentAiSettings
       && currentAiSettings.allowedProviders.includes(defaultProvider)
       && providerModels.includes(defaultModel)
+      && currentAiSettings.allowedReasoningSummaryModes.includes(reasoningSummaryMode)
+      && currentAiSettings.allowedReasoningEfforts.includes(reasoningEffort)
   );
   const isSaving = Boolean(savingAction);
+  const reasoningPolicyDisabled = Boolean(currentAiSettings && !currentAiSettings.reasoningSummariesEnabled);
   const displayedProviderStatuses = currentAiSettings?.providers || PROVIDERS.map((provider) => ({
     provider,
     configured: false,
@@ -139,7 +156,9 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     try {
       const updated = await controlPlaneApi.updateWorkspaceAiSettings(workspace.id, {
         defaultProvider,
-        defaultModel
+        defaultModel,
+        reasoningSummaryMode,
+        reasoningEffort
       });
       if (workspaceIdRef.current !== workspace.id) return;
       setAiSettings(updated);
@@ -266,6 +285,78 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
             {aiSettingsError && <p className="mt-4 text-sm font-semibold text-status-danger-text">{aiSettingsError}</p>}
             {!canManageAiSettings && (
               <p className="mt-4 text-xs font-medium text-ui-text-muted">{t('workspaceAiSettings.noAccess')}</p>
+            )}
+          </div>
+        </SettingSection>
+
+        <SettingSection
+          title={t('workspaceAiSettings.reasoningTitle')}
+          description={t('workspaceAiSettings.reasoningBody')}
+        >
+          <div className="p-6">
+            <div className="mb-5 flex min-w-0 items-center gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong shadow-sm">
+                <ICONS.MessageSquare className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="mb-0.5 text-sm font-bold text-ui-text">{t('workspaceAiSettings.reasoningSummaries')}</p>
+                <p className="text-xs leading-5 text-ui-text-muted">
+                  {reasoningPolicyDisabled
+                    ? t('workspaceAiSettings.reasoningPolicyDisabled')
+                    : t('workspaceAiSettings.reasoningDescription')}
+                </p>
+              </div>
+            </div>
+            {isLoadingAiSettings ? (
+              <p className="text-sm font-medium text-ui-text-muted">{t('workspaceAiSettings.loading')}</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
+                    {t('workspaceAiSettings.reasoningSummaryMode')}
+                  </span>
+                  <select
+                    className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    value={reasoningSummaryMode}
+                    onChange={(event) => setReasoningSummaryMode(event.target.value as ReasoningSummaryMode)}
+                    disabled={!canManageAiSettings || !currentAiSettings || reasoningPolicyDisabled || isSaving}
+                  >
+                    {REASONING_SUMMARY_MODES.map((mode) => (
+                      <option key={mode} value={mode} disabled={!currentAiSettings?.allowedReasoningSummaryModes.includes(mode)}>
+                        {t(reasoningModeLabel(mode))}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
+                    {t('workspaceAiSettings.reasoningEffortLabel')}
+                  </span>
+                  <select
+                    className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    value={reasoningEffort}
+                    onChange={(event) => setReasoningEffort(event.target.value as ReasoningEffort)}
+                    disabled={!canManageAiSettings || !currentAiSettings || reasoningSummaryMode === 'off' || isSaving}
+                  >
+                    {REASONING_EFFORTS.map((effort) => (
+                      <option key={effort} value={effort} disabled={!currentAiSettings?.allowedReasoningEfforts.includes(effort)}>
+                        {t(reasoningEffortLabel(effort))}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSaveDefaults}
+                  disabled={!canSaveDefaults || isSaving}
+                  className="w-full md:w-auto"
+                >
+                  <ICONS.CheckCircle2 className="h-4 w-4" />
+                  {savingAction === 'defaults' ? t('workspaceAiSettings.saving') : t('workspaceAiSettings.saveSettings')}
+                </Button>
+              </div>
             )}
           </div>
         </SettingSection>

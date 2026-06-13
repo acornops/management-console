@@ -13,56 +13,108 @@ import { fadeTransition } from '@/lib/motion';
 import { AppRoute, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 
-const AgentRunbooksPage = React.lazy(() =>
-  import('@/pages/AgentRunbooksPage').then((module) => ({ default: module.AgentRunbooksPage }))
-);
+const loadAgentRunbooksPage = () =>
+  import('@/pages/AgentRunbooksPage').then((module) => ({ default: module.AgentRunbooksPage }));
 
-const KubernetesClustersPage = React.lazy(() =>
-  import('@/pages/KubernetesClustersPage').then((module) => ({ default: module.KubernetesClustersPage }))
-);
+const loadKubernetesClustersPage = () =>
+  import('@/pages/KubernetesClustersPage').then((module) => ({ default: module.KubernetesClustersPage }));
 
-const KubernetesClusterDetailPage = React.lazy(() =>
-  import('@/pages/KubernetesClusterDetailPage').then((module) => ({ default: module.KubernetesClusterDetailPage }))
-);
+const loadKubernetesClusterDetailPage = () =>
+  import('@/pages/KubernetesClusterDetailPage').then((module) => ({ default: module.KubernetesClusterDetailPage }));
 
-const NotFoundPage = React.lazy(() =>
-  import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }))
-);
+const loadNotFoundPage = () =>
+  import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }));
 
-const UserSettingsPage = React.lazy(() =>
-  import('@/pages/UserSettingsPage').then((module) => ({ default: module.UserSettingsPage }))
-);
+const loadUserSettingsPage = () =>
+  import('@/pages/UserSettingsPage').then((module) => ({ default: module.UserSettingsPage }));
 
-const VirtualMachinesPage = React.lazy(() =>
-  import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }))
-);
+const loadVirtualMachinesPage = () =>
+  import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
 
-const WorkspaceInvestigationsPage = React.lazy(() =>
-  import('@/pages/WorkspaceInvestigationsPage').then((module) => ({ default: module.WorkspaceInvestigationsPage }))
-);
+const loadWorkspaceInvestigationsPage = () =>
+  import('@/pages/WorkspaceInvestigationsPage').then((module) => ({ default: module.WorkspaceInvestigationsPage }));
 
-const WorkspaceInvitePage = React.lazy(() =>
-  import('@/pages/WorkspaceInvitePage').then((module) => ({ default: module.WorkspaceInvitePage }))
-);
+const loadWorkspaceInvitePage = () =>
+  import('@/pages/WorkspaceInvitePage').then((module) => ({ default: module.WorkspaceInvitePage }));
 
-const WorkspaceMembersPage = React.lazy(() =>
-  import('@/pages/WorkspaceMembersPage').then((module) => ({ default: module.WorkspaceMembersPage }))
-);
+const loadWorkspaceMembersPage = () =>
+  import('@/pages/WorkspaceMembersPage').then((module) => ({ default: module.WorkspaceMembersPage }));
 
-const WorkspaceOverviewPage = React.lazy(() =>
-  import('@/pages/WorkspaceOverviewPage').then((module) => ({ default: module.WorkspaceOverviewPage }))
-);
+const loadWorkspaceOverviewPage = () =>
+  import('@/pages/WorkspaceOverviewPage').then((module) => ({ default: module.WorkspaceOverviewPage }));
 
-const WorkspaceSettingsPage = React.lazy(() =>
-  import('@/pages/WorkspaceSettingsPage').then((module) => ({ default: module.WorkspaceSettingsPage }))
-);
-const WorkspaceAiSettingsPage = React.lazy(() =>
-  import('@/pages/WorkspaceAiSettingsPage').then((module) => ({ default: module.WorkspaceAiSettingsPage }))
-);
+const loadWorkspaceSettingsPage = () =>
+  import('@/pages/WorkspaceSettingsPage').then((module) => ({ default: module.WorkspaceSettingsPage }));
 
-const WorkspaceAuditLogPage = React.lazy(() =>
-  import('@/pages/WorkspaceAuditLogPage').then((module) => ({ default: module.WorkspaceAuditLogPage }))
-);
+const loadWorkspaceAiSettingsPage = () =>
+  import('@/pages/WorkspaceAiSettingsPage').then((module) => ({ default: module.WorkspaceAiSettingsPage }));
+
+const loadWorkspaceAuditLogPage = () =>
+  import('@/pages/WorkspaceAuditLogPage').then((module) => ({ default: module.WorkspaceAuditLogPage }));
+
+const AgentRunbooksPage = React.lazy(loadAgentRunbooksPage);
+const KubernetesClustersPage = React.lazy(loadKubernetesClustersPage);
+const KubernetesClusterDetailPage = React.lazy(loadKubernetesClusterDetailPage);
+const NotFoundPage = React.lazy(loadNotFoundPage);
+const UserSettingsPage = React.lazy(loadUserSettingsPage);
+const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
+const WorkspaceInvestigationsPage = React.lazy(loadWorkspaceInvestigationsPage);
+const WorkspaceInvitePage = React.lazy(loadWorkspaceInvitePage);
+const WorkspaceMembersPage = React.lazy(loadWorkspaceMembersPage);
+const WorkspaceOverviewPage = React.lazy(loadWorkspaceOverviewPage);
+const WorkspaceSettingsPage = React.lazy(loadWorkspaceSettingsPage);
+const WorkspaceAiSettingsPage = React.lazy(loadWorkspaceAiSettingsPage);
+const WorkspaceAuditLogPage = React.lazy(loadWorkspaceAuditLogPage);
+
+export function preloadAppRoutePage(route: AppRoute): void {
+  switch (route.kind) {
+    case 'workspaceRunbooks':
+      void loadAgentRunbooksPage();
+      break;
+    case 'kubernetesClusters':
+    case 'workspaceKubernetesClusters':
+      void loadKubernetesClustersPage();
+      break;
+    case 'kubernetesClusterDiagnostics':
+    case 'workspaceKubernetesClusterDiagnostics':
+      void loadKubernetesClusterDetailPage();
+      break;
+    case 'notFound':
+      void loadNotFoundPage();
+      break;
+    case 'settings':
+      void loadUserSettingsPage();
+      break;
+    case 'workspaceVirtualMachines':
+    case 'workspaceVirtualMachineDetail':
+      void loadVirtualMachinesPage();
+      break;
+    case 'workspaceInvestigations':
+      void loadWorkspaceInvestigationsPage();
+      break;
+    case 'workspaceInvitation':
+      void loadWorkspaceInvitePage();
+      break;
+    case 'workspaceMembers':
+      void loadWorkspaceMembersPage();
+      break;
+    case 'workspaceOverview':
+      void loadWorkspaceOverviewPage();
+      break;
+    case 'workspaceSettings':
+      void loadWorkspaceSettingsPage();
+      break;
+    case 'workspaceAiSettings':
+      void loadWorkspaceAiSettingsPage();
+      break;
+    case 'workspaceAuditLog':
+      void loadWorkspaceAuditLogPage();
+      break;
+    case 'home':
+    case 'workspaces':
+      break;
+  }
+}
 
 function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspace | undefined, workspaceCount: number): boolean {
   return (

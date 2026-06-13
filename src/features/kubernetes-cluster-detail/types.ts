@@ -40,6 +40,28 @@ export interface RunTraceUsage {
   inputTokens: number;
   outputTokens: number;
   toolCalls: number;
+  reasoningTokens?: number;
+}
+
+export interface RunTraceReasoningSummary {
+  id: string;
+  text: string;
+  provider?: string;
+  model?: string;
+  status: 'streaming' | 'completed' | 'unavailable';
+  reason?: string;
+  timestamp: number;
+}
+
+export interface RunTraceTimelineEvent {
+  id: string;
+  type: 'step' | 'reasoning' | 'tool';
+  label: string;
+  detail?: string;
+  status: 'info' | 'success' | 'error' | 'streaming' | 'completed' | 'unavailable';
+  provider?: string;
+  model?: string;
+  timestamp: number;
 }
 
 export interface LiveRunTrace {
@@ -47,5 +69,8 @@ export interface LiveRunTrace {
   status: RunTraceStatus;
   steps: RunTraceStep[];
   toolCalls: RunTraceToolCall[];
+  reasoningSummaries?: RunTraceReasoningSummary[];
+  timelineEvents?: RunTraceTimelineEvent[];
+  activeReasoningSummary?: string;
   usage?: RunTraceUsage;
 }

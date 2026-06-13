@@ -30,6 +30,7 @@ export function useWatchedRunStream(args: {
   latestSessionsRef: MutableRefObject<ChatSession[]>;
   onUpdateSessions: (sessions: ChatSession[]) => void;
   runTracesByRunIdRef: MutableRefObject<Record<string, LiveRunTrace>>;
+  suppressedHydrationRunIdsRef?: MutableRefObject<ReadonlySet<string>>;
   setRunTracesByRunId: Dispatch<SetStateAction<Record<string, LiveRunTrace>>>;
   setTraceExpandedByRunId: Dispatch<SetStateAction<Record<string, boolean>>>;
   isRunCancelled?: (runId: string) => boolean;
@@ -42,6 +43,7 @@ export function useWatchedRunStream(args: {
     latestSessionsRef,
     onUpdateSessions,
     runTracesByRunIdRef,
+    suppressedHydrationRunIdsRef,
     setRunTracesByRunId,
     setTraceExpandedByRunId,
     isRunCancelled = () => false,
@@ -126,7 +128,7 @@ export function useWatchedRunStream(args: {
     };
 
     const updateWatchedSession = (mutate: (session: ChatSession) => ChatSession, immediate = false) => {
-      if (isRunCancelled(runId)) return;
+      if (cancelled || isRunCancelled(runId)) return;
       const currentSessions = pendingWatchedSessions || latestSessionsRef.current;
       const currentSession = currentSessions.find((session) => session.id === watchedSessionId);
       if (!currentSession) return;
@@ -310,7 +312,7 @@ export function useWatchedRunStream(args: {
 
     const reconcileWatchedSession = async (latestRun: ControlPlaneRun | null) => {
       const backendMessages = await controlPlaneApi.getSessionMessages(watchedBackendSessionId, { limit: 100 }).catch(() => null);
-      if (isRunCancelled(runId)) return;
+      if (cancelled || isRunCancelled(runId)) return;
       let mappedMessages = backendMessages
         ? sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage))
         : null;
@@ -327,12 +329,14 @@ export function useWatchedRunStream(args: {
               localMessages: fallbackMessages,
               backendMessages: mappedMessages,
               runTracesByRunId: runTracesByRunIdRef.current,
-              terminalRunIds
+              terminalRunIds,
+              suppressedRunIds: suppressedHydrationRunIdsRef?.current
             })
           : fallbackMessages;
         return {
           ...session,
           hydrated: backendMessages ? true : session.hydrated,
+          messagesLoadFailed: backendMessages ? false : session.messagesLoadFailed,
           hasActiveRun: latestRun ? isRunInProgress(latestRun.status) : isTraceInProgress(trace),
           messages: nextMessages,
           timestamp: Date.now()

@@ -1,14 +1,103 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ChevronDown, ChevronRight, CircleDashed, Wrench } from 'lucide-react';
+import { ChevronRight, CircleDashed, MessageSquare, Wrench } from 'lucide-react';
 import { formatRunUsageDetail, getTraceActivityLabel } from '@/features/kubernetes-cluster-detail/lib/trace-utils';
-import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
+import { LiveRunTrace, RunTraceTimelineEvent } from '@/features/kubernetes-cluster-detail/types';
 
 interface TraceFooterProps {
   runId: string;
   trace: LiveRunTrace;
   isExpanded: boolean;
   setExpanded: (runId: string, expanded: boolean) => void;
+  suppressCompactReasoningSummary?: boolean;
+  compactStatusOnly?: boolean;
+}
+
+function inferTimelineStepType(label: string): RunTraceTimelineEvent['type'] {
+  return label.startsWith('Tool call ') || label.startsWith('Approval ') ? 'tool' : 'step';
+}
+
+function inferTimelineToolStatus(toolCall: LiveRunTrace['toolCalls'][number]): RunTraceTimelineEvent['status'] {
+  if (toolCall.status === 'running') return 'info';
+  return toolCall.isError ? 'error' : 'success';
+}
+
+function buildTimelineEvents(trace: LiveRunTrace): RunTraceTimelineEvent[] {
+  if (trace.timelineEvents?.length) {
+    return trace.timelineEvents;
+  }
+
+  const fallbackToolTimestamp = Math.max(
+    0,
+    ...trace.steps.map((step) => step.timestamp),
+    ...(trace.reasoningSummaries || []).map((summary) => summary.timestamp)
+  );
+
+  return [
+    ...trace.steps.map((step) => ({
+      id: step.id,
+      type: inferTimelineStepType(step.label),
+      label: step.label,
+      detail: step.detail,
+      status: step.status,
+      timestamp: step.timestamp
+    })),
+    ...(trace.reasoningSummaries || []).map((summary) => ({
+      id: summary.id,
+      type: 'reasoning' as const,
+      label: summary.status === 'unavailable' ? 'Reasoning summary unavailable' : 'Reasoning summary',
+      detail: summary.text,
+      status: summary.status,
+      provider: summary.provider,
+      model: summary.model,
+      timestamp: summary.timestamp
+    })),
+    ...trace.toolCalls.map((toolCall, index) => ({
+      id: toolCall.callId,
+      type: 'tool' as const,
+      label: toolCall.tool,
+      status: inferTimelineToolStatus(toolCall),
+      timestamp: fallbackToolTimestamp + index + 1
+    }))
+  ].sort((left, right) => left.timestamp - right.timestamp);
+}
+
+function getTimelineEventMeta(event: RunTraceTimelineEvent): string {
+  if (event.type === 'reasoning') {
+    const source = [event.provider, event.model].filter(Boolean).join(' / ');
+    const status = event.status === 'unavailable'
+      ? 'Unavailable'
+      : event.status === 'completed'
+        ? 'Completed'
+        : 'Live';
+    return [source, status].filter(Boolean).join(' · ');
+  }
+
+  if (event.type === 'tool') {
+    if (event.status === 'success') return 'Tool · Done';
+    if (event.status === 'error') return 'Tool · Attention';
+    if (event.status === 'info') return 'Tool · Running';
+    return 'Tool';
+  }
+
+  if (event.status === 'success') return 'Done';
+  if (event.status === 'error') return 'Attention';
+  return 'Progress';
+}
+
+function getTimelineEventToneClass(event: RunTraceTimelineEvent): string {
+  if (event.status === 'error') return 'text-status-danger-text';
+  if (event.status === 'unavailable') return 'text-status-warning-text';
+  if (event.status === 'success' || event.status === 'completed') return 'text-status-success-text';
+  if (event.status === 'streaming') return 'text-accent-strong';
+  return 'text-ui-text-muted';
+}
+
+function getTimelineMarkerClass(event: RunTraceTimelineEvent): string {
+  if (event.status === 'error') return 'bg-status-danger';
+  if (event.status === 'unavailable') return 'bg-status-warning';
+  if (event.status === 'success' || event.status === 'completed') return 'bg-status-success';
+  return 'bg-accent';
 }
 
 /**
@@ -18,14 +107,24 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   runId,
   trace,
   isExpanded,
-  setExpanded
+  setExpanded,
+  suppressCompactReasoningSummary = false,
+  compactStatusOnly = false
 }) => {
   const contentId = React.useId();
   const shouldReduceMotion = useReducedMotion();
   const isInProgress = trace.status === 'connecting' || trace.status === 'running';
   const statusLabel = getTraceActivityLabel(trace);
   const completedToolCalls = trace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length;
+  const reasoningSummaryCount = trace.reasoningSummaries?.length || 0;
+  const compactReasoningSummary = isInProgress && !suppressCompactReasoningSummary
+    ? trace.activeReasoningSummary?.trim()
+    : '';
+  const hasCompactReasoningSummary = Boolean(compactReasoningSummary);
+  const shouldShowCompactStatusLabel = hasCompactReasoningSummary || !isInProgress || !suppressCompactReasoningSummary;
+  const compactStatusLabel = hasCompactReasoningSummary ? 'Working through' : statusLabel;
   const usageDetail = formatRunUsageDetail(trace.usage);
+  const timelineEvents = buildTimelineEvents(trace);
   const compactToolSummary =
     trace.toolCalls.length > 0
       ? `${completedToolCalls} of ${trace.toolCalls.length} tools complete`
@@ -34,10 +133,12 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
     ? 'Waiting for progress'
     : [
         `${trace.steps.length} steps`,
+        reasoningSummaryCount > 0 ? `${reasoningSummaryCount} summaries` : undefined,
         compactToolSummary,
         trace.status === 'completed' ? usageDetail : undefined
       ].filter(Boolean).join(' · ');
   const disclosureLabel = isExpanded ? 'Hide run details' : 'Show run details';
+  const disclosureSummary = hasCompactReasoningSummary ? compactReasoningSummary : activitySummary;
   const statusDotClass = trace.status === 'completed'
     ? 'bg-status-success'
     : trace.status === 'failed' || trace.status === 'cancelled'
@@ -45,88 +146,107 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
       : 'bg-accent';
 
   return (
-    <div className="mt-3 max-w-[72ch]">
+    <div className={`${compactStatusOnly ? '' : 'mt-3'} w-full max-w-[72ch]`}>
       <button
         type="button"
         onClick={() => setExpanded(runId, !isExpanded)}
-        className={`group inline-flex min-h-10 max-w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 ${
+        className={`group min-h-10 items-center gap-2 py-2 pl-0 pr-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 ${
           isExpanded
-            ? 'bg-ui-surface text-ui-text shadow-sm ring-1 ring-ui-border'
-            : 'bg-ui-surface/45 text-ui-text-muted hover:bg-ui-surface/75 hover:text-ui-text'
+            ? 'flex w-full rounded-md bg-ui-surface/45 text-ui-text hover:bg-ui-surface/75'
+            : 'flex w-full rounded-md bg-ui-surface/45 text-ui-text-muted hover:bg-ui-surface/75 hover:text-ui-text'
         }`}
         aria-expanded={isExpanded}
         aria-controls={contentId}
       >
-        <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotClass} ${isInProgress ? 'animate-pulse' : ''}`} />
+        <span
+          className={`-ml-1 shrink-0 text-ui-text-muted group-hover:text-ui-text ${
+            shouldReduceMotion
+              ? ''
+              : 'transition-transform duration-150 ease-out'
+          } ${isExpanded ? 'rotate-90' : 'rotate-0'}`}
+          aria-hidden="true"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </span>
+        <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotClass} ${isInProgress ? 'animate-pulse motion-reduce:animate-none' : ''}`} />
         <span className="type-caption shrink-0 text-ui-text">
           {disclosureLabel}
         </span>
-        <span className="type-micro-label w-[9.25rem] shrink-0 text-ui-text-muted" aria-live="polite">
-          {statusLabel}
-        </span>
-        <span className="type-caption min-w-0 max-w-[min(20rem,45vw)] truncate" title={activitySummary}>
-          {activitySummary}
-        </span>
-        <span className="shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text">
-          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        <span
+          className="flex min-w-0 max-w-[min(34rem,54vw)] flex-1 items-center gap-1.5"
+          aria-live="polite"
+        >
+          {shouldShowCompactStatusLabel && (
+            <span className="type-micro-label shrink-0 text-ui-text-muted">
+              {compactStatusLabel}
+            </span>
+          )}
+          {shouldShowCompactStatusLabel && (
+            <span className="type-caption shrink-0 text-ui-text-muted/70">·</span>
+          )}
+          <span
+            className={`type-caption min-w-0 truncate ${
+              hasCompactReasoningSummary
+                ? 'text-ui-text'
+                : 'text-ui-text-muted'
+            }`}
+            title={disclosureSummary}
+          >
+            {disclosureSummary}
+          </span>
         </span>
       </button>
       <div id={contentId} hidden={!isExpanded}>
         {isExpanded && (
           <motion.div
             key="details"
+            className="mt-1 border-t border-ui-border/80 pt-1"
             initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
             animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="mt-2 max-h-72 overflow-hidden rounded-md border border-ui-border bg-ui-bg/65">
-              <p className="type-micro-label border-b border-ui-border px-3 py-2 text-ui-text-muted">Progress steps</p>
-              <div className="max-h-60 divide-y divide-ui-border overflow-y-auto overscroll-contain">
-              {trace.steps.map((step) => (
-                <div key={step.id} className="flex items-start gap-2 px-3 py-2.5">
-                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                    step.status === 'success'
-                      ? 'bg-status-success'
-                      : step.status === 'error'
-                        ? 'bg-status-danger'
-                        : 'bg-accent'
-                  }`}></span>
-                  <div className="min-w-0">
-                    <p className="type-caption text-ui-text">{step.label}</p>
-                    {step.detail && (
-                      <p className="type-caption mt-0.5 whitespace-pre-wrap break-words">{step.detail}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-              </div>
-            </div>
-            <div className="mt-3 max-h-56 overflow-hidden rounded-md border border-ui-border bg-ui-bg/65">
-              <div className="type-caption flex items-center gap-2 border-b border-ui-border px-3 py-2">
-                <Wrench className="h-3.5 w-3.5" />
-                Tool Activity
-              </div>
-              {trace.toolCalls.length > 0 ? (
-                <div className="max-h-44 divide-y divide-ui-border overflow-y-auto overscroll-contain">
-                {trace.toolCalls.map((toolCall) => (
-                  <div key={toolCall.callId} className="flex items-center justify-between gap-3 px-3 py-2">
-                    <span className="type-code truncate text-ui-text" title={toolCall.tool}>{toolCall.tool}</span>
-                    <span className={`type-micro-label shrink-0 ${
-                      toolCall.status === 'running'
-                        ? 'text-accent-strong'
-                        : toolCall.isError
-                          ? 'text-status-danger-text'
-                          : 'text-status-success-text'
-                    }`}>
-                      {toolCall.status === 'running' ? 'Running' : (toolCall.isError ? 'Error' : 'Completed')}
-                    </span>
-                  </div>
-                ))}
+            <div className="max-h-80 overflow-hidden">
+              {timelineEvents.length > 0 ? (
+                <div className="max-h-80 divide-y divide-ui-border overflow-y-auto overscroll-contain">
+                  {timelineEvents.map((event) => (
+                    <div key={event.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 px-3 py-2.5">
+                      <span className="mt-0.5 flex h-5 w-5 items-center justify-center">
+                        {event.type === 'reasoning' ? (
+                          <MessageSquare className={`h-3.5 w-3.5 ${getTimelineEventToneClass(event)}`} />
+                        ) : event.type === 'tool' ? (
+                          <Wrench className={`h-3.5 w-3.5 ${getTimelineEventToneClass(event)}`} />
+                        ) : (
+                          <span className={`h-2 w-2 rounded-full ${getTimelineMarkerClass(event)}`} />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-baseline gap-2">
+                          <p className="type-caption min-w-0 truncate text-ui-text" title={event.label}>
+                            {event.label}
+                          </p>
+                          <span
+                            className={`type-micro-label max-w-[45%] shrink truncate ${getTimelineEventToneClass(event)}`}
+                            title={getTimelineEventMeta(event)}
+                          >
+                            {getTimelineEventMeta(event)}
+                          </span>
+                        </div>
+                        {event.detail && (
+                          <p
+                            className="type-caption mt-0.5 line-clamp-4 whitespace-pre-wrap break-words text-ui-text-muted"
+                            title={event.detail}
+                          >
+                            {event.detail}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="type-caption flex items-center gap-2 px-3 py-2">
                   <CircleDashed className="h-3.5 w-3.5" />
-                  No MCP or target tools were recorded for this message.
+                  No run activity has been recorded for this message.
                 </div>
               )}
             </div>

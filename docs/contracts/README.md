@@ -280,6 +280,9 @@ Current event types used by the UI:
 - `run_started`
 - `assistant_message_started`
 - `assistant_token_delta`
+- `assistant_reasoning_summary_delta`
+- `assistant_reasoning_summary_completed`
+- `assistant_reasoning_summary_unavailable`
 - `tool_call_started`
 - `tool_call_completed`
 - `tool_approval_requested`

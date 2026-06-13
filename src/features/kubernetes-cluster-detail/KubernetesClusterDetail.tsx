@@ -121,7 +121,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
     isCancellingRun,
     visibleMessages,
     runTracesByRunId,
-    scrollRef,
+    transcriptRef,
     setActiveSessionId,
     handleCreateSession,
     handleDismissRecentActivityWarning,
@@ -132,6 +132,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
     handleChatScroll,
     handleLoadEarlierMessages,
     handleSend,
+    handleEditLastUserMessage,
     handleApprove,
     handleReject,
     isInFlightAssistantPlaceholder
@@ -253,11 +254,12 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 userMarkdownComponents={userMarkdownComponents}
                 visibleMessages={visibleMessages}
                 runTracesByRunId={runTracesByRunId}
-                scrollRef={scrollRef}
+                transcriptRef={transcriptRef}
                 onChatScroll={handleChatScroll}
                 onLoadEarlierMessages={handleLoadEarlierMessages}
                 onInputChange={setInputValue}
                 onSend={handleSend}
+                onEditLastUserMessage={handleEditLastUserMessage}
                 onApprove={handleApprove}
                 onReject={handleReject}
                 onSelectSession={setActiveSessionId}

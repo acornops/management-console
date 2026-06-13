@@ -6,6 +6,7 @@ import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/f
 import {
   buildChatFailureMessage,
   buildConversationTitleFromPrompt,
+  filterMessagesByRunIds,
   formatRunFailureMessage,
   mapControlPlaneMessage,
   preserveStreamingAssistantMessageId,
@@ -14,7 +15,7 @@ import {
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
 import { createBaseRunTrace, createRunEventHandler } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
-import { createConversationId, createConversationName } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
+import { createConversationId } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import {
   replaceCancelledRunAssistantMessages,
   replacePendingCancelledRunMessages,
@@ -27,7 +28,6 @@ import {
 } from '@/features/kubernetes-cluster-detail/hooks/chatSubmitFailures';
 
 export const RUN_TERMINAL_WAIT_TIMEOUT_MS = 600000;
-
 export async function submitChatMessage(args: {
   cluster: KubernetesCluster;
   activeSession: ChatSession;
@@ -45,6 +45,7 @@ export async function submitChatMessage(args: {
   setActiveRunId: (runId: string | null) => void;
   setRunTracesByRunId: Dispatch<SetStateAction<Record<string, LiveRunTrace>>>;
   setTraceExpandedByRunId: Dispatch<SetStateAction<Record<string, boolean>>>;
+  draftConversationName: string;
   fallbackBackendErrorMessage: string;
   runCancelledMessage: string;
   createSession?: (workspaceId: string, targetId: string, title: string) => Promise<ControlPlaneSession>;
@@ -52,6 +53,7 @@ export async function submitChatMessage(args: {
   markRunCancelled?: (runId: string) => void;
   registerRunStream?: (runId: string, controls: ActiveRunStreamControls) => void;
   unregisterRunStream?: (runId: string) => void;
+  suppressedRunIdsRef?: MutableRefObject<ReadonlySet<string>>;
 }): Promise<void> {
   const {
     cluster,
@@ -70,13 +72,15 @@ export async function submitChatMessage(args: {
     setActiveRunId,
     setRunTracesByRunId,
     setTraceExpandedByRunId,
+    draftConversationName,
     fallbackBackendErrorMessage,
     runCancelledMessage,
     createSession = controlPlaneApi.createSession,
     isRunCancelled = () => false,
     markRunCancelled,
     registerRunStream,
-    unregisterRunStream
+    unregisterRunStream,
+    suppressedRunIdsRef
   } = args;
   const prompt = (overrideInput ?? inputValue).trim();
   if (!prompt || isLoading || !canChat) return;
@@ -84,16 +88,21 @@ export async function submitChatMessage(args: {
   const localSessionId = activeSessionId || createConversationId();
   const now = Date.now();
   let sessions = [...cluster.chatSessions];
-  let session =
-    sessions.find((existingSession) => existingSession.id === localSessionId) || {
+  const existingSession = sessions.find((candidate) => candidate.id === localSessionId);
+  let session = existingSession ? {
+    ...existingSession,
+    hydrated: true, messagesLoadFailed: false,
+    messages: activeSession.messages,
+    timestamp: activeSession.timestamp
+  } : {
       id: localSessionId,
-      name: createConversationName(localSessionId),
-      hydrated: true,
+      name: draftConversationName,
+      hydrated: true, messagesLoadFailed: false,
       messages: activeSession.messages,
       timestamp: now
     };
 
-  if (!sessions.find((existingSession) => existingSession.id === localSessionId)) sessions = [...sessions, session];
+  sessions = existingSession ? upsertSession(sessions, session) : [...sessions, session];
   if (!activeSessionId) setActiveSessionId(localSessionId);
 
   const isFirstUserMessage = !session.messages.some((message) => message.role === 'user');
@@ -151,14 +160,14 @@ export async function submitChatMessage(args: {
     [pendingTraceRunId]: false
   }));
 
-  let streamAbortController: AbortController | null = null;
-  let streamPromise: Promise<void> | null = null;
+  let streamAbortController: AbortController | null = null, streamPromise: Promise<void> | null = null;
   let pollEventsStop = false;
   let pollEventsPromise: Promise<void> | null = null;
   let runIdForMessage: string | undefined;
   const isAcceptedRunCancelled = () => Boolean(runIdForMessage && isRunCancelled(runIdForMessage));
   const canPublishSessions = () => !isAcceptedRunCancelled();
   let pendingSessionPublish: ReturnType<typeof setTimeout> | null = null;
+  const filterSuppressedMessages = (nextMessages: ChatMessage[]) => filterMessagesByRunIds(nextMessages, suppressedRunIdsRef?.current);
   const publishSessions = (immediate = false) => {
     if (immediate) {
       if (pendingSessionPublish) {
@@ -195,7 +204,7 @@ export async function submitChatMessage(args: {
         status: createdSession.status,
         createdBy: createdSession.createdBy,
         createdByUser: createdSession.createdByUser,
-        hydrated: true,
+        hydrated: true, messagesLoadFailed: false,
         timestamp: Date.parse(createdSession.updatedAt) || Date.now()
       };
       sessions = upsertSession(sessions, session);
@@ -524,7 +533,7 @@ export async function submitChatMessage(args: {
     }
 
     let backendMessages = await controlPlaneApi.getSessionMessages(session.backendSessionId!, { limit: 100 });
-    let mappedMessages = sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage));
+    let mappedMessages = filterSuppressedMessages(sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage)));
     mappedMessages = preserveStreamingAssistantMessageId(mappedMessages, run.id, streamingMessageId);
     if (run.status === 'cancelled') {
       mappedMessages = replaceCancelledRunAssistantMessages(mappedMessages, run.id, runCancelledMessage);
@@ -533,9 +542,7 @@ export async function submitChatMessage(args: {
       (message) => message.role === 'assistant' && message.runId === run.id && message.content.trim().length > 0
     );
     if (run.status === 'failed' && !hasRunAssistantMessage) {
-      mappedMessages.push(
-        buildChatFailureMessage(formatRunFailureMessage(run.errorCode, run.errorMessage), run.id)
-      );
+      mappedMessages.push(buildChatFailureMessage(formatRunFailureMessage(run.errorCode, run.errorMessage), run.id));
     } else if (run.status === 'completed' && !hasRunAssistantMessage) {
       const committedAssistantContent = String(run.assistantMessage?.content || '').trim();
       if (committedAssistantContent) {
@@ -549,7 +556,7 @@ export async function submitChatMessage(args: {
       } else {
         await sleep(300);
         backendMessages = await controlPlaneApi.getSessionMessages(session.backendSessionId!, { limit: 100 });
-        mappedMessages = sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage));
+        mappedMessages = filterSuppressedMessages(sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage)));
         mappedMessages = preserveStreamingAssistantMessageId(mappedMessages, run.id, streamingMessageId);
         const hasRunAssistantMessageAfterRetry = mappedMessages.some(
           (message) => message.role === 'assistant' && message.runId === run.id && message.content.trim().length > 0
@@ -568,26 +575,23 @@ export async function submitChatMessage(args: {
     if (mappedMessages.length > 0) {
       session = {
         ...session,
-        hydrated: true,
-        messages: mappedMessages,
+        hydrated: true, messagesLoadFailed: false,
+        messages: filterSuppressedMessages(mappedMessages),
         timestamp: Date.now()
       };
     } else if (run.status === 'failed') {
       session = {
         ...session,
-        hydrated: true,
-        messages: [
-          ...sanitizeChatMessages(session.messages),
-          buildChatFailureMessage(formatRunFailureMessage(run.errorCode, run.errorMessage), run.id)
-        ],
+        hydrated: true, messagesLoadFailed: false,
+        messages: filterSuppressedMessages([...sanitizeChatMessages(session.messages), buildChatFailureMessage(formatRunFailureMessage(run.errorCode, run.errorMessage), run.id)]),
         timestamp: Date.now()
       };
     } else if (run.status === 'cancelled') {
       session = {
         ...session,
-        hydrated: true,
+        hydrated: true, messagesLoadFailed: false,
         messages: replaceCancelledRunAssistantMessages(
-          sanitizeChatMessages(session.messages),
+          filterSuppressedMessages(sanitizeChatMessages(session.messages)),
           run.id,
           runCancelledMessage
         ),
@@ -609,7 +613,7 @@ export async function submitChatMessage(args: {
     });
     session = {
       ...session,
-      hydrated: true,
+      hydrated: true, messagesLoadFailed: false,
       messages: replacePendingAssistantWithFailure({
         messages: session.messages,
         pendingAssistantMessageId,

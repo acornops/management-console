@@ -1,9 +1,10 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
-import { Loader2 } from 'lucide-react';
+import { motion, type Transition, useReducedMotion } from 'framer-motion';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import { TraceFooter } from '@/features/kubernetes-cluster-detail/components/detail/TraceFooter';
 import { ApprovalCheckpoint } from '@/features/kubernetes-cluster-detail/components/detail/views/ApprovalCheckpoint';
+import { MessageActions } from '@/features/kubernetes-cluster-detail/components/detail/views/MessageActions';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 import type { PendingApproval } from '@/types';
 
@@ -20,6 +21,7 @@ interface AssistantTurnProps {
   traceRunId: string;
   isTraceExpanded: boolean;
   setTraceExpanded: (runId: string, expanded: boolean) => void;
+  compactStatusOnly?: boolean;
   t: TFunction;
 }
 
@@ -36,50 +38,138 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   traceRunId,
   isTraceExpanded,
   setTraceExpanded,
+  compactStatusOnly = false,
   t
-}) => (
-  <article
-    data-chat-assistant-turn="true"
-    className="w-full min-w-0 text-sm font-medium text-ui-text"
-  >
-    <div className="mb-2 flex max-w-[72ch] items-center justify-between gap-3 text-[11px] font-semibold text-ui-text-muted">
-      <span>{t('chat.roleAssistant')}</span>
-      <time>{timestampLabel}</time>
-    </div>
+}) => {
+  const shouldReduceMotion = useReducedMotion();
+  const assistantColumnClass = 'w-full max-w-[72ch]';
+  const previousWorkingTextRef = React.useRef('');
+  const isTraceInProgress = trace?.status === 'connecting' || trace?.status === 'running';
+  const isAssistantWorking = isInFlightPlaceholder || isTraceInProgress;
+  const activeReasoningSummary = isTraceInProgress
+    ? trace?.activeReasoningSummary
+      ?.replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim()
+    : '';
+  const inlineWorkingText = activeReasoningSummary || (isAssistantWorking ? t('chat.thinking') : '');
+  const previousWorkingText = previousWorkingTextRef.current;
+  const stableWorkingText = previousWorkingText && inlineWorkingText.startsWith(previousWorkingText)
+    ? previousWorkingText
+    : '';
+  const incomingWorkingText = stableWorkingText
+    ? inlineWorkingText.slice(stableWorkingText.length)
+    : inlineWorkingText;
+  const shouldAnimateIncomingText = Boolean(inlineWorkingText && incomingWorkingText);
+  const incomingTextInitial = shouldReduceMotion
+    ? { opacity: 0.78 }
+    : { opacity: 0.38 };
+  const incomingTextAnimate = { opacity: 1 };
+  const incomingTextTransition: Transition = shouldReduceMotion
+    ? { duration: 0.14, ease: [0.16, 1, 0.3, 1] }
+    : { duration: 0.24, ease: [0.16, 1, 0.3, 1] };
+  const shouldShowWorkingShimmer = Boolean(inlineWorkingText && isAssistantWorking && shouldReduceMotion !== true);
+  const workingShimmerDurationSeconds = activeReasoningSummary ? 5 : 3.8;
 
-    {isInFlightPlaceholder ? (
-      <div
-        data-chat-assistant-loading-row="true"
-        className="flex min-h-8 max-w-[72ch] items-center gap-2 text-ui-text-muted"
+  React.useEffect(() => {
+    previousWorkingTextRef.current = inlineWorkingText;
+  }, [inlineWorkingText]);
+
+  const workingLine = inlineWorkingText ? (
+    <div className={isInFlightPlaceholder ? `flex min-h-8 items-center ${assistantColumnClass}` : `mt-4 border-t border-ui-border/80 pt-2 ${assistantColumnClass}`}>
+      <p
+        className={`type-caption relative block truncate text-ui-text-muted ${
+          shouldShowWorkingShimmer ? 'reasoning-summary-active' : ''
+        }`}
+        title={inlineWorkingText}
+        aria-live="polite"
+        style={{
+          '--reasoning-summary-shimmer-duration': `${workingShimmerDurationSeconds}s`
+        } as React.CSSProperties}
       >
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span>{t('chat.preparingResponse')}</span>
-      </div>
-    ) : (
-      <div className="max-w-[72ch]">
-        <ReactMarkdown components={markdownComponents}>
-          {content}
-        </ReactMarkdown>
-      </div>
-    )}
-
-    {approval && (
-      <ApprovalCheckpoint
-        approval={approval}
-        canApproveWriteActions={canApproveWriteActions}
-        onApprove={onApprove}
-        onReject={onReject}
+        {shouldAnimateIncomingText ? (
+          <>
+            {stableWorkingText && (
+              <span>{stableWorkingText}</span>
+            )}
+            <motion.span
+              key={inlineWorkingText}
+              initial={incomingTextInitial}
+              animate={incomingTextAnimate}
+              transition={incomingTextTransition}
+            >
+              {incomingWorkingText}
+            </motion.span>
+          </>
+        ) : (
+          <span>{inlineWorkingText}</span>
+        )}
+      </p>
+    </div>
+  ) : null;
+  const copyText = content.trim() || inlineWorkingText;
+  const messageActions = (
+    <div className={assistantColumnClass}>
+      <MessageActions
+        align="left"
+        copyText={copyText}
+        timestampLabel={timestampLabel}
         t={t}
       />
-    )}
+    </div>
+  );
+  const hasTraceDetails = Boolean(
+    trace && (
+      trace.steps.length > 0 ||
+      trace.toolCalls.length > 0 ||
+      (trace.reasoningSummaries?.length || 0) > 0 ||
+      (trace.timelineEvents?.length || 0) > 0
+    )
+  );
+  const shouldRenderCompactStatusOnly = compactStatusOnly && hasTraceDetails;
 
-    {trace && trace.steps.length > 0 && (
-      <TraceFooter
-        runId={traceRunId}
-        trace={trace}
-        isExpanded={isTraceExpanded}
-        setExpanded={setTraceExpanded}
-      />
-    )}
-  </article>
-);
+  return (
+    <article
+      data-chat-assistant-turn="true"
+      className="group w-full min-w-0 text-sm font-medium text-ui-text"
+      aria-label={t('chat.roleAssistant')}
+    >
+      <span className="sr-only">{t('chat.roleAssistant')}</span>
+
+      {isInFlightPlaceholder ? workingLine : shouldRenderCompactStatusOnly ? null : (
+        <div className={assistantColumnClass}>
+          <ReactMarkdown components={markdownComponents}>
+            {content}
+          </ReactMarkdown>
+        </div>
+      )}
+
+      {!isInFlightPlaceholder && workingLine}
+
+      {!hasTraceDetails && !shouldRenderCompactStatusOnly && messageActions}
+
+      {approval && (
+        <ApprovalCheckpoint
+          approval={approval}
+          canApproveWriteActions={canApproveWriteActions}
+          onApprove={onApprove}
+          onReject={onReject}
+          t={t}
+        />
+      )}
+
+      {hasTraceDetails && trace && (
+        <TraceFooter
+          runId={traceRunId}
+          trace={trace}
+          isExpanded={isTraceExpanded}
+          setExpanded={setTraceExpanded}
+          suppressCompactReasoningSummary={Boolean(inlineWorkingText)}
+          compactStatusOnly={shouldRenderCompactStatusOnly}
+        />
+      )}
+
+      {hasTraceDetails && !shouldRenderCompactStatusOnly && messageActions}
+    </article>
+  );
+};

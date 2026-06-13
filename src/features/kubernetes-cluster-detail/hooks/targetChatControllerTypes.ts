@@ -41,7 +41,7 @@ export interface TargetChatController {
   visibleMessages: ChatMessage[];
   runTracesByRunId: Record<string, LiveRunTrace>;
   traceExpandedByRunId: Record<string, boolean>;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
+  transcriptRef: (node: HTMLDivElement | null) => void;
   setActiveSessionId: (sessionId: string) => void;
   handleCreateSession: () => void;
   handleDismissRecentActivityWarning: () => void;
@@ -54,6 +54,7 @@ export interface TargetChatController {
   handleLoadEarlierMessages: () => Promise<void>;
   handleSend: (overrideInput?: string) => Promise<void>;
   handleSendInNewSession: (overrideInput: string) => Promise<void>;
+  handleEditLastUserMessage: (messageId: string, nextContent: string) => Promise<void>;
   handleApprove: (approvalId: string) => Promise<void>;
   handleReject: (approvalId: string) => Promise<void>;
   isInFlightAssistantPlaceholder: (message: ChatMessage) => boolean;

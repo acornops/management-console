@@ -89,10 +89,15 @@ describe('chatRunTrace helpers', () => {
       createEvent('run_started', 1),
       createEvent('assistant_message_started', 2),
       createEvent('run_progress', 3, { stage: 'context_fetch', message: 'Loading prior context' }),
-      createEvent('tool_call_started', 4, { call_id: 'call-1', tool: 'kubectl', arguments: { cmd: 'get pods' } }),
-      createEvent('tool_call_completed', 5, { call_id: 'call-1', tool: 'kubectl', result: { ok: true } }),
-      createEvent('assistant_message_completed', 6, { usage: { input_tokens: 5, output_tokens: 3, tool_calls: 1 } }),
-      createEvent('run_completed', 7)
+      createEvent('assistant_reasoning_summary_delta', 4, {
+        text: 'Checking whether current cluster state is needed.',
+        provider: 'openai',
+        model: 'gpt-test'
+      }),
+      createEvent('tool_call_started', 5, { call_id: 'call-1', tool: 'kubectl', arguments: { cmd: 'get pods' } }),
+      createEvent('tool_call_completed', 6, { call_id: 'call-1', tool: 'kubectl', result: { ok: true } }),
+      createEvent('assistant_message_completed', 7, { usage: { input_tokens: 5, output_tokens: 3, tool_calls: 1 } }),
+      createEvent('run_completed', 8)
     ]);
 
     expect(trace.status).toBe('completed');
@@ -115,6 +120,33 @@ describe('chatRunTrace helpers', () => {
         isError: false
       }
     ]);
+    expect(trace.reasoningSummaries?.[0]?.text).toBe('Checking whether current cluster state is needed.');
+    expect(trace.timelineEvents?.map((event) => event.label)).toEqual([
+      'Run details restored',
+      'Assistant started',
+      'Thinking started',
+      'Reviewing context',
+      'Reasoning summary',
+      'Tool call started: kubectl',
+      'Tool call completed: kubectl',
+      'Response ready',
+      'Completed'
+    ]);
+    expect(trace.timelineEvents?.[4]).toMatchObject({
+      type: 'reasoning',
+      detail: 'Checking whether current cluster state is needed.',
+      provider: 'openai',
+      model: 'gpt-test',
+      status: 'streaming'
+    });
+    expect(trace.timelineEvents?.[5]).toMatchObject({
+      type: 'tool',
+      label: 'Tool call started: kubectl'
+    });
+    expect(trace.timelineEvents?.[6]).toMatchObject({
+      type: 'tool',
+      label: 'Tool call completed: kubectl'
+    });
   });
 
   it('creates and incrementally updates traces from streamed events', () => {
@@ -144,20 +176,39 @@ describe('chatRunTrace helpers', () => {
     handleEvent(createEvent('assistant_message_started', 2));
     handleEvent(createEvent('assistant_token_delta', 3, { text: 'hello' }));
     handleEvent(createEvent('run_progress', 4, { stage: 'reasoning', message: 'Thinking' }));
-    handleEvent(createEvent('tool_call_started', 5, { call_id: 'call-1', tool: 'kubectl', arguments: { cmd: 'get pods' } }));
-    handleEvent(createEvent('tool_call_completed', 6, { call_id: 'call-1', tool: 'kubectl', is_error: true, result: { error: 'boom' } }));
-    handleEvent(createEvent('tool_approval_requested', 7, {
+    vi.advanceTimersByTime(1000);
+    handleEvent(createEvent('assistant_reasoning_summary_delta', 5, {
+      text: 'Checking whether a cluster read is needed.',
+      provider: 'openai',
+      model: 'gpt-test'
+    }));
+    const reasoningStartedAt = trace.timelineEvents?.find((event) => event.type === 'reasoning')?.timestamp;
+    vi.advanceTimersByTime(1000);
+    handleEvent(createEvent('assistant_reasoning_summary_delta', 6, {
+      text: 'Preparing to inspect pods.',
+      provider: 'openai',
+      model: 'gpt-test'
+    }));
+    vi.advanceTimersByTime(1000);
+    handleEvent(createEvent('assistant_reasoning_summary_completed', 7, {
+      text: 'Checking whether a cluster read is needed. Preparing to inspect pods.',
+      provider: 'openai',
+      model: 'gpt-test'
+    }));
+    handleEvent(createEvent('tool_call_started', 8, { call_id: 'call-1', tool: 'kubectl', arguments: { cmd: 'get pods' } }));
+    handleEvent(createEvent('tool_call_completed', 9, { call_id: 'call-1', tool: 'kubectl', is_error: true, result: { error: 'boom' } }));
+    handleEvent(createEvent('tool_approval_requested', 10, {
       approval_id: 'approval-1',
       tool_call_id: 'call-1',
       tool: 'restart_workload',
       arguments: { namespace: 'prod' },
       expires_at: '2026-05-25T00:05:00.000Z'
     }));
-    handleEvent(createEvent('tool_approval_approved', 8, { approval_id: 'approval-1', tool: 'restart_workload' }));
-    handleEvent(createEvent('assistant_message_completed', 9, { usage: { input_tokens: 9, output_tokens: 4, tool_calls: 1 } }));
-    handleEvent(createEvent('run_completed', 10));
+    handleEvent(createEvent('tool_approval_approved', 11, { approval_id: 'approval-1', tool: 'restart_workload' }));
+    handleEvent(createEvent('assistant_message_completed', 12, { usage: { input_tokens: 9, output_tokens: 4, tool_calls: 1 } }));
+    handleEvent(createEvent('run_completed', 13));
 
-    expect(seenSeq.size).toBe(10);
+    expect(seenSeq.size).toBe(13);
     expect(trace.status).toBe('completed');
     expect(trace.usage).toEqual({ inputTokens: 9, outputTokens: 4, toolCalls: 1 });
     expect(trace.steps.map((step) => step.label)).toEqual(expect.arrayContaining([
@@ -179,8 +230,38 @@ describe('chatRunTrace helpers', () => {
         isError: true
       }
     ]);
-    expect(ensureStreamingMessage).toHaveBeenCalledTimes(1);
+    expect(ensureStreamingMessage).toHaveBeenCalledTimes(4);
     expect(appendStreamingText).toHaveBeenCalledWith('hello');
+    expect(trace.reasoningSummaries).toHaveLength(1);
+    expect(trace.reasoningSummaries?.[0]).toMatchObject({
+      text: 'Checking whether a cluster read is needed. Preparing to inspect pods.',
+      status: 'completed'
+    });
+    expect(trace.timelineEvents?.map((event) => event.label)).toEqual([
+      'Assistant started',
+      'Thinking started',
+      'Thinking',
+      'Reasoning summary',
+      'Tool call started: kubectl',
+      'Tool call completed: kubectl',
+      'Approval requested: restart_workload',
+      'Approval granted: restart_workload',
+      'Response ready',
+      'Completed'
+    ]);
+    expect(trace.timelineEvents?.filter((event) => event.type === 'reasoning')).toHaveLength(1);
+    expect(trace.timelineEvents?.[3]).toMatchObject({
+      type: 'reasoning',
+      detail: 'Checking whether a cluster read is needed. Preparing to inspect pods.',
+      status: 'completed',
+      timestamp: reasoningStartedAt
+    });
+    expect(trace.timelineEvents?.filter((event) => event.type === 'tool').map((event) => event.label)).toEqual([
+      'Tool call started: kubectl',
+      'Tool call completed: kubectl',
+      'Approval requested: restart_workload',
+      'Approval granted: restart_workload'
+    ]);
     expect(onApprovalRequested).toHaveBeenCalledWith({
       id: 'approval-1',
       runId: 'run-1',
@@ -193,6 +274,41 @@ describe('chatRunTrace helpers', () => {
     });
     expect(onApprovalResolved).toHaveBeenCalledWith('approval-1', 'approved');
     expect(setTraceExpanded).toHaveBeenCalledWith(false);
+  });
+
+  it('materializes the assistant turn when reasoning summaries arrive before text', () => {
+    let trace: LiveRunTrace = createBaseRunTrace('run-1', 'connecting');
+    const ensureStreamingMessage = vi.fn();
+    const appendStreamingText = vi.fn();
+
+    const handleEvent = createRunEventHandler({
+      seenSeq: new Set<number>(),
+      getTrace: () => trace,
+      setTrace: (nextTrace) => {
+        trace = nextTrace;
+      },
+      setTraceExpanded: vi.fn(),
+      ensureStreamingMessage,
+      appendStreamingText
+    });
+
+    handleEvent(createEvent('assistant_reasoning_summary_delta', 1, {
+      text: 'Checking cluster health and recent rollout events.',
+      provider: 'openai',
+      model: 'gpt-test'
+    }));
+
+    expect(ensureStreamingMessage).toHaveBeenCalledTimes(1);
+    expect(appendStreamingText).not.toHaveBeenCalled();
+    expect(trace.status).toBe('running');
+    expect(trace.activeReasoningSummary).toBe('Checking cluster health and recent rollout events.');
+    expect(trace.reasoningSummaries).toHaveLength(1);
+    expect(trace.timelineEvents).toHaveLength(1);
+    expect(trace.timelineEvents?.[0]).toMatchObject({
+      type: 'reasoning',
+      label: 'Reasoning summary',
+      detail: 'Checking cluster health and recent rollout events.'
+    });
   });
 
   it('marks failed and cancelled runs terminal without streaming side effects', () => {

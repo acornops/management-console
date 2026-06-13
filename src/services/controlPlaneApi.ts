@@ -123,6 +123,8 @@ export const controlPlaneApi = {
     input: {
       defaultProvider: WorkspaceAiSettings['defaultProvider'];
       defaultModel: WorkspaceAiSettings['defaultModel'];
+      reasoningSummaryMode: WorkspaceAiSettings['reasoningSummaryMode'];
+      reasoningEffort: WorkspaceAiSettings['reasoningEffort'];
     }
   ): Promise<WorkspaceAiSettings> {
     return requestJson<WorkspaceAiSettings>(
