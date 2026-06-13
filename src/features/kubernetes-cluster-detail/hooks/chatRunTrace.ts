@@ -1,7 +1,10 @@
 import { ControlPlaneRun, ControlPlaneRunEvent } from '@/services/controlPlaneApi';
 import { createLocalMessageId, previewValue } from '@/features/kubernetes-cluster-detail/lib/helpers';
 import {
+  appendReasoningSummaryDelta,
+  appendReasoningUnavailable,
   appendRunTraceStep,
+  completeReasoningSummary,
   formatTraceFailureDetail,
   mapRunStage,
   parseRunUsage,
@@ -34,21 +37,30 @@ export function mapRunStatusToTraceStatus(status: ControlPlaneRun['status']): Li
 }
 
 export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPlaneRunEvent[]): LiveRunTrace {
+  const restoredStep = {
+    id: createLocalMessageId(),
+    label: 'Run details restored',
+    detail: isRunTerminal(run.status)
+      ? 'Restored saved progress for this response.'
+      : 'Reconnected to an in-progress assistant response.',
+    status: 'info' as const,
+    timestamp: Date.now()
+  };
   let trace: LiveRunTrace = {
     runId: run.id,
     status: mapRunStatusToTraceStatus(run.status),
-    steps: [
+    steps: [restoredStep],
+    toolCalls: [],
+    timelineEvents: [
       {
-        id: createLocalMessageId(),
-        label: 'Run details restored',
-        detail: isRunTerminal(run.status)
-          ? 'Restored saved progress for this response.'
-          : 'Reconnected to an in-progress assistant response.',
-        status: 'info',
-        timestamp: Date.now()
+        id: restoredStep.id,
+        type: 'step',
+        label: restoredStep.label,
+        detail: restoredStep.detail,
+        status: restoredStep.status,
+        timestamp: restoredStep.timestamp
       }
-    ],
-    toolCalls: []
+    ]
   };
 
   let reachedTerminalEvent = false;
@@ -68,6 +80,21 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const stage = typeof event.payload?.stage === 'string' ? event.payload.stage : 'progress';
       const message = typeof event.payload?.message === 'string' ? event.payload.message : '';
       trace = appendRunTraceStep({ ...trace, status: 'running' }, mapRunStage(stage), 'info', message || undefined);
+    } else if (event.type === 'assistant_reasoning_summary_delta') {
+      const text = typeof event.payload?.text === 'string' ? event.payload.text : '';
+      const provider = typeof event.payload?.provider === 'string' ? event.payload.provider : undefined;
+      const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
+      trace = appendReasoningSummaryDelta({ ...trace, status: 'running' }, text, provider, model);
+    } else if (event.type === 'assistant_reasoning_summary_completed') {
+      const text = typeof event.payload?.text === 'string' ? event.payload.text : '';
+      const provider = typeof event.payload?.provider === 'string' ? event.payload.provider : undefined;
+      const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
+      trace = completeReasoningSummary({ ...trace, status: 'running' }, text, provider, model);
+    } else if (event.type === 'assistant_reasoning_summary_unavailable') {
+      const reason = typeof event.payload?.reason === 'string' ? event.payload.reason : 'provider_omitted';
+      const provider = typeof event.payload?.provider === 'string' ? event.payload.provider : undefined;
+      const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
+      trace = appendReasoningUnavailable(trace, reason, provider, model);
     } else if (event.type === 'tool_call_started') {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
@@ -75,7 +102,8 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
         upsertToolCall(trace, callId, { callId, tool: toolName, status: 'running' }),
         `Tool call started: ${toolName}`,
         'info',
-        previewValue(event.payload?.arguments, 600)
+        previewValue(event.payload?.arguments, 600),
+        'tool'
       );
     } else if (event.type === 'tool_call_completed') {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
@@ -85,7 +113,8 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
         upsertToolCall(trace, callId, { callId, tool: toolName, status: 'completed', isError }),
         `Tool call completed: ${toolName}`,
         isError ? 'error' : 'success',
-        previewValue(event.payload?.result, 6000)
+        previewValue(event.payload?.result, 6000),
+        'tool'
       );
     } else if (event.type === 'tool_approval_requested') {
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
@@ -93,17 +122,18 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
         { ...trace, status: 'running' },
         `Approval requested: ${toolName}`,
         'info',
-        previewValue(event.payload?.arguments, 600)
+        previewValue(event.payload?.arguments, 600),
+        'tool'
       );
     } else if (event.type === 'tool_approval_approved') {
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
-      trace = appendRunTraceStep(trace, `Approval granted: ${toolName}`, 'success', 'User approved the write action.');
+      trace = appendRunTraceStep(trace, `Approval granted: ${toolName}`, 'success', 'User approved the write action.', 'tool');
     } else if (event.type === 'tool_approval_rejected') {
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
-      trace = appendRunTraceStep(trace, `Approval rejected: ${toolName}`, 'error', 'User rejected the write action.');
+      trace = appendRunTraceStep(trace, `Approval rejected: ${toolName}`, 'error', 'User rejected the write action.', 'tool');
     } else if (event.type === 'tool_approval_expired') {
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
-      trace = appendRunTraceStep(trace, `Approval expired: ${toolName}`, 'error', 'No approval was recorded before timeout.');
+      trace = appendRunTraceStep(trace, `Approval expired: ${toolName}`, 'error', 'No approval was recorded before timeout.', 'tool');
     } else if (event.type === 'run_failed') {
       trace = appendRunTraceStep({ ...trace, status: 'failed' }, 'Could not complete', 'error', formatTraceFailureDetail());
       reachedTerminalEvent = true;
@@ -200,6 +230,39 @@ export function createRunEventHandler(args: {
       return;
     }
 
+    if (event.type === 'assistant_reasoning_summary_delta') {
+      const text = typeof event.payload?.text === 'string' ? event.payload.text : '';
+      const provider = typeof event.payload?.provider === 'string' ? event.payload.provider : undefined;
+      const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
+      args.ensureStreamingMessage();
+      if (trace.status === 'connecting') {
+        trace = updateTrace({ ...trace, status: 'running' });
+      }
+      updateTrace(appendReasoningSummaryDelta(trace, text, provider, model));
+      return;
+    }
+
+    if (event.type === 'assistant_reasoning_summary_completed') {
+      const text = typeof event.payload?.text === 'string' ? event.payload.text : '';
+      const provider = typeof event.payload?.provider === 'string' ? event.payload.provider : undefined;
+      const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
+      args.ensureStreamingMessage();
+      if (trace.status === 'connecting') {
+        trace = updateTrace({ ...trace, status: 'running' });
+      }
+      updateTrace(completeReasoningSummary(trace, text, provider, model));
+      return;
+    }
+
+    if (event.type === 'assistant_reasoning_summary_unavailable') {
+      const reason = typeof event.payload?.reason === 'string' ? event.payload.reason : 'provider_omitted';
+      const provider = typeof event.payload?.provider === 'string' ? event.payload.provider : undefined;
+      const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
+      args.ensureStreamingMessage();
+      updateTrace(appendReasoningUnavailable(trace, reason, provider, model));
+      return;
+    }
+
     if (event.type === 'tool_call_started') {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
@@ -213,7 +276,8 @@ export function createRunEventHandler(args: {
           nextTrace,
           `Tool call started: ${toolName}`,
           'info',
-          previewValue(event.payload?.arguments, 600)
+          previewValue(event.payload?.arguments, 600),
+          'tool'
         )
       );
       return;
@@ -234,7 +298,8 @@ export function createRunEventHandler(args: {
           nextTrace,
           `Tool call completed: ${toolName}`,
           isError ? 'error' : 'success',
-          previewValue(event.payload?.result, 6000)
+          previewValue(event.payload?.result, 6000),
+          'tool'
         )
       );
       return;
@@ -265,7 +330,8 @@ export function createRunEventHandler(args: {
           { ...trace, status: 'running' },
           `Approval requested: ${toolName}`,
           'info',
-          previewValue(toolArguments, 600)
+          previewValue(toolArguments, 600),
+          'tool'
         )
       );
       return;
@@ -293,7 +359,8 @@ export function createRunEventHandler(args: {
             ? 'User approved the write action.'
             : status === 'rejected'
               ? 'User rejected the write action.'
-              : 'No approval was recorded before timeout.'
+              : 'No approval was recorded before timeout.',
+          'tool'
         )
       );
       return;

@@ -41,16 +41,30 @@ export const chatView = readSource(
 export const assistantTurn = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn.tsx'
 );
+export const messageActions = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/MessageActions.tsx'
+);
+export const userMessageTurn = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/UserMessageTurn.tsx'
+);
 export const approvalCheckpoint = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/ApprovalCheckpoint.tsx'
 );
 export const chatComposerNotice = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/ChatComposerNotice.tsx'
 );
+export const chatTranscriptStates = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/ChatTranscriptStates.tsx'
+);
 export const conversationHistory = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/ConversationHistory.tsx'
 );
 export const chatSubmit = readSource('src/features/kubernetes-cluster-detail/hooks/chatSubmit.ts');
+export const chatSessionSync = readSource('src/features/kubernetes-cluster-detail/hooks/chatSessionSync.ts');
+export const useTargetChat = readSource('src/features/kubernetes-cluster-detail/hooks/useTargetChat.ts');
+export const useTargetChatScrollAnchor = readSource(
+  'src/features/kubernetes-cluster-detail/hooks/useTargetChatScrollAnchor.ts'
+);
 export const clusterOverviewView = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx'
 );

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage, ChatSession, PendingApproval } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   mapControlPlaneMessage,
   sanitizeChatMessages,
+  filterMessagesByRunIds,
   isPendingAssistantPlaceholder,
   isBlankAssistantMessage,
   upsertSession
@@ -12,13 +13,10 @@ import {
 import { submitChatMessage } from '@/features/kubernetes-cluster-detail/hooks/chatSubmit';
 import {
   createConversationId,
-  createConversationName,
   sortSessionsByTimestamp,
   useControlPlaneChatSessionSync
 } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
-import {
-  isTraceInProgress
-} from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
+import { isTraceInProgress } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
 import {
   buildRecentActivityWarning,
   createRecentActivitySessionPlaceholder,
@@ -27,6 +25,7 @@ import {
 } from '@/features/kubernetes-cluster-detail/hooks/targetChatState';
 import type { TargetChatController, UseTargetChatArgs } from '@/features/kubernetes-cluster-detail/hooks/targetChatControllerTypes';
 import { useWatchedRunStream } from '@/features/kubernetes-cluster-detail/hooks/targetChatRunWatcher';
+import { useTargetChatScrollAnchor } from '@/features/kubernetes-cluster-detail/hooks/useTargetChatScrollAnchor';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 import {
   replaceCancelledRunAssistantMessages,
@@ -35,12 +34,6 @@ import {
 
 export type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/targetChatControllerTypes';
 
-/**
- * Encapsulates target triage session state and run orchestration.
- *
- * This hook owns optimistic message insertion, streaming updates, run trace
- * state, reconciliation with persisted run records, and approval handling.
- */
 export function useTargetChat({
   target,
   currentUserId,
@@ -66,12 +59,10 @@ export function useTargetChat({
   const [runTracesByRunId, setRunTracesByRunId] = useState<Record<string, LiveRunTrace>>({});
   const runTracesByRunIdRef = useRef<Record<string, LiveRunTrace>>({});
   const [traceExpandedByRunId, setTraceExpandedByRunId] = useState<Record<string, boolean>>({});
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const shouldStickToBottomRef = useRef(true);
-  const lastChatScrollTopRef = useRef(0);
   const loadingEarlierMessagesRef = useRef(false);
   const latestSessionsRef = useRef<ChatSession[]>(sessions);
   const cancelledRunIdsRef = useRef<Set<string>>(new Set());
+  const suppressedHydrationRunIdsRef = useRef<Set<string>>(new Set());
   const activeRunStreamControlsRef = useRef<Record<string, ActiveRunStreamControls>>({});
   const isRunCancelled = useCallback((runId: string) => cancelledRunIdsRef.current.has(runId), []);
   const markRunCancelled = useCallback((runId: string) => {
@@ -92,10 +83,9 @@ export function useTargetChat({
   const unregisterRunStream = useCallback((runId: string) => {
     delete activeRunStreamControlsRef.current[runId];
   }, []);
-
   const activeSession = sessions.find((s) => s.id === activeSessionId) || {
     id: 'default',
-    name: 'New Conversation',
+    name: t('chat.newConversation'),
     messages: [],
     timestamp: Date.now()
   };
@@ -134,6 +124,8 @@ export function useTargetChat({
         activeRunTrace.toolCalls.length,
         activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'running').length,
         activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length,
+        activeRunTrace.reasoningSummaries?.length || 0,
+        activeRunTrace.activeReasoningSummary?.length || 0,
         activeRunTrace.usage ? 'usage' : ''
       ].join(',')
     : 'none';
@@ -146,6 +138,17 @@ export function useTargetChat({
     effectiveActiveRunId || '',
     activeRunTraceSignature
   ].join(':');
+  const {
+    lastChatScrollTopRef,
+    scrollRef,
+    shouldStickToBottomRef,
+    transcriptRef
+  } = useTargetChatScrollAnchor({
+    activeSessionId,
+    chatAutoScrollSignature,
+    isChatActive,
+    isLoadingEarlierMessages
+  });
 
   useEffect(() => {
     const sortedSessions = sortSessionsByTimestamp(cluster.chatSessions);
@@ -165,14 +168,13 @@ export function useTargetChat({
     setActiveRunId(null);
     setIsCancellingRun(false);
     cancelledRunIdsRef.current.clear();
+    suppressedHydrationRunIdsRef.current.clear();
     activeRunStreamControlsRef.current = {};
     shouldStickToBottomRef.current = true;
   }, [cluster.id]);
-
   useEffect(() => {
     runTracesByRunIdRef.current = runTracesByRunId;
   }, [runTracesByRunId]);
-
   useEffect(() => {
     latestSessionsRef.current = sessions;
   }, [sessions]);
@@ -186,6 +188,7 @@ export function useTargetChat({
     setRunTracesByRunId,
     setTraceExpandedByRunId,
     isRunCancelled,
+    suppressedHydrationRunIdsRef,
     runCancelledMessage: t('chat.runCancelledMessage'),
     listSessions: sessionApi?.listSessions
   });
@@ -197,34 +200,12 @@ export function useTargetChat({
     latestSessionsRef,
     onUpdateSessions,
     runTracesByRunIdRef,
+    suppressedHydrationRunIdsRef,
     setTraceExpandedByRunId,
     setRunTracesByRunId,
     isRunCancelled,
     runCancelledMessage: t('chat.runCancelledMessage')
   });
-
-  useLayoutEffect(() => {
-    if (!scrollRef.current || !isChatActive) {
-      return;
-    }
-    if (isLoadingEarlierMessages) {
-      return;
-    }
-    if (!shouldStickToBottomRef.current) {
-      return;
-    }
-    const node = scrollRef.current;
-    node.scrollTop = node.scrollHeight;
-    lastChatScrollTopRef.current = node.scrollTop;
-    const frame = requestAnimationFrame(() => {
-      if (scrollRef.current !== node || !shouldStickToBottomRef.current) {
-        return;
-      }
-      node.scrollTop = node.scrollHeight;
-      lastChatScrollTopRef.current = node.scrollTop;
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [chatAutoScrollSignature, isChatActive, isLoadingEarlierMessages]);
 
   const isInFlightAssistantPlaceholder = (message: ChatMessage): boolean => {
     if (isPendingAssistantPlaceholder(message)) {
@@ -252,9 +233,8 @@ export function useTargetChat({
     return isTraceInProgress(trace);
   };
 
-  const visibleMessages = sanitizeChatMessages(messages).filter(
-    (message) => !isBlankAssistantMessage(message) || isInFlightAssistantPlaceholder(message)
-  );
+  const visibleMessages = filterMessagesByRunIds(sanitizeChatMessages(messages), suppressedHydrationRunIdsRef.current)
+    .filter((message) => !isBlankAssistantMessage(message) || isInFlightAssistantPlaceholder(message));
   const hasEarlierMessages = Boolean(activeSession.backendSessionId && activeSession.messagesNextCursor);
 
   const handleChatScroll = () => {
@@ -270,7 +250,7 @@ export function useTargetChat({
       shouldStickToBottomRef.current = true;
     }
     lastChatScrollTopRef.current = currentScrollTop;
-    if (node.scrollTop < 160 && hasEarlierMessages && !loadingEarlierMessagesRef.current) {
+    if (!shouldStickToBottomRef.current && node.scrollTop < 160 && hasEarlierMessages && !loadingEarlierMessagesRef.current) {
       void handleLoadEarlierMessages();
     }
   };
@@ -295,7 +275,7 @@ export function useTargetChat({
         ...activeSession,
         messagesNextCursor: page.nextCursor,
         messages: [...dedupedEarlierMessages, ...activeSession.messages],
-        hydrated: true
+        hydrated: true, messagesLoadFailed: false
       };
       onUpdateSessions(upsertSession(cluster.chatSessions, nextSession));
       if (node && dedupedEarlierMessages.length > 0) {
@@ -315,7 +295,7 @@ export function useTargetChat({
     let updatedSessions: ChatSession[];
     if (cluster.chatSessions.find((s) => s.id === activeSessionId)) {
       updatedSessions = cluster.chatSessions.map((s) =>
-        s.id === activeSessionId ? { ...s, messages: newMessages } : s
+        s.id === activeSessionId ? { ...s, messages: newMessages, messagesLoadFailed: false } : s
       );
     } else {
       const newSession: ChatSession = {
@@ -342,7 +322,7 @@ export function useTargetChat({
     }
     return {
       id: newSessionId,
-      name: createConversationName(newSessionId),
+      name: t('chat.newConversation'),
       hydrated: true,
       messages: [],
       timestamp: now,
@@ -541,12 +521,14 @@ export function useTargetChat({
       setRunTracesByRunId: setRunTracesByRunIdAndRef,
       setTraceExpandedByRunId,
       createSession: sessionApi?.createSession,
+      draftConversationName: t('chat.newConversation'),
       fallbackBackendErrorMessage: t('chat.backendRequestFailed'),
       runCancelledMessage: t('chat.runCancelledMessage'),
       isRunCancelled,
       markRunCancelled,
       registerRunStream,
-      unregisterRunStream
+      unregisterRunStream,
+      suppressedRunIdsRef: suppressedHydrationRunIdsRef
     });
 
   const handleSend = (overrideInput?: string) =>
@@ -556,6 +538,35 @@ export function useTargetChat({
       canChatForSubmit: canPostInActiveSession,
       overrideInput
     });
+
+  const handleEditLastUserMessage = async (messageId: string, nextContent: string) => {
+    const prompt = nextContent.trim();
+    if (!prompt || isRunActive || !canPostInActiveSession) return;
+    const sanitizedMessages = sanitizeChatMessages(activeSession.messages);
+    const userIndex = sanitizedMessages.findIndex((message) => message.id === messageId && message.role === 'user');
+    if (userIndex < 0) return;
+    const nextUserIndex = sanitizedMessages.findIndex((message, index) => index > userIndex && message.role === 'user');
+    const turnEndIndex = nextUserIndex >= 0 ? nextUserIndex : sanitizedMessages.length;
+    const turnMessages = sanitizedMessages.slice(userIndex, turnEndIndex);
+    const runId = sanitizedMessages[userIndex].runId || turnMessages.find((message) => message.runId)?.runId;
+    const revisedRunIds = new Set(turnMessages.map((message) => message.runId).filter(Boolean) as string[]);
+    const trace = runId ? runTracesByRunIdRef.current[runId] : undefined;
+    const canReviseTurn = runId && (trace?.status === 'cancelled' || trace?.status === 'failed' || cancelledRunIdsRef.current.has(runId));
+    const hasLaterUserMessage = sanitizedMessages.slice(turnEndIndex).some((message) => message.role === 'user');
+    if (!runId || !canReviseTurn || hasLaterUserMessage) return;
+
+    const revisedSession: ChatSession = { ...activeSession, messages: sanitizedMessages.slice(0, userIndex), timestamp: Date.now() };
+    revisedRunIds.add(runId);
+    for (const revisedRunId of revisedRunIds) suppressedHydrationRunIdsRef.current.add(revisedRunId);
+    updateCurrentSession(revisedSession.messages);
+    shouldStickToBottomRef.current = true;
+    await runSubmittedChatMessage({
+      activeSessionForSubmit: revisedSession,
+      activeSessionIdForSubmit: activeSessionId,
+      canChatForSubmit: canPostInActiveSession,
+      overrideInput: prompt
+    });
+  };
 
   const handleSendInNewSession = async (overrideInput: string) => {
     const draftSession = await createDraftSessionWithWarning();
@@ -593,7 +604,7 @@ export function useTargetChat({
     visibleMessages,
     runTracesByRunId,
     traceExpandedByRunId,
-    scrollRef,
+    transcriptRef,
     setActiveSessionId: handleSelectSession,
     handleCreateSession,
     handleDismissRecentActivityWarning,
@@ -606,6 +617,7 @@ export function useTargetChat({
     handleLoadEarlierMessages,
     handleSend,
     handleSendInNewSession,
+    handleEditLastUserMessage,
     handleApprove,
     handleReject,
     isInFlightAssistantPlaceholder

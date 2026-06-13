@@ -55,7 +55,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
     isCancellingRun,
     visibleMessages,
     runTracesByRunId,
-    scrollRef,
+    transcriptRef,
     setActiveSessionId,
     handleCreateSession,
     handleDismissRecentActivityWarning,
@@ -67,6 +67,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
     handleLoadEarlierMessages,
     handleSend,
     handleSendInNewSession,
+    handleEditLastUserMessage,
     handleApprove,
     handleReject,
     isInFlightAssistantPlaceholder
@@ -105,11 +106,12 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       userMarkdownComponents={userMarkdownComponents}
       visibleMessages={visibleMessages}
       runTracesByRunId={runTracesByRunId}
-      scrollRef={scrollRef}
+      transcriptRef={transcriptRef}
       onChatScroll={handleChatScroll}
       onLoadEarlierMessages={handleLoadEarlierMessages}
       onInputChange={setInputValue}
       onSend={handleSend}
+      onEditLastUserMessage={handleEditLastUserMessage}
       onApprove={handleApprove}
       onReject={handleReject}
       onSelectSession={setActiveSessionId}

@@ -4,6 +4,7 @@ import {
   buildChatFailureMessage,
   buildChatSetupFailureMessage,
   buildConversationTitleFromPrompt,
+  filterMessagesByRunIds,
   formatRunFailureMessage,
   mapControlPlaneMessage,
   resolveAssistantTransientStatus,
@@ -42,6 +43,20 @@ describe('session-utils', () => {
 
     expect(appended.map((session) => session.id)).toEqual(['session-1', 'session-2']);
     expect(replaced.find((session) => session.id === 'session-1')?.name).toBe('Updated');
+  });
+
+  it('filters messages for suppressed run ids', () => {
+    const messages: ChatMessage[] = [
+      { id: 'old-user', role: 'user', content: 'Check pods', runId: 'run-old', timestamp: 1 },
+      { id: 'old-assistant', role: 'assistant', content: 'Run cancelled.', runId: 'run-old', timestamp: 2 },
+      { id: 'new-user', role: 'user', content: 'Check pods again', runId: 'run-new', timestamp: 3 },
+      { id: 'new-assistant', role: 'assistant', content: '', runId: 'run-new', timestamp: 4, transientStatus: 'pending_assistant' }
+    ];
+
+    expect(filterMessagesByRunIds(messages, new Set(['run-old']))).toEqual([
+      messages[2],
+      messages[3]
+    ]);
   });
 
   it('builds stable conversation titles from the first prompt', () => {

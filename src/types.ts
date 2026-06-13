@@ -360,6 +360,7 @@ export interface ChatSession {
     dismissed?: boolean;
   };
   hydrated?: boolean;
+  messagesLoadFailed?: boolean;
   messagesNextCursor?: string;
   messages: ChatMessage[];
   timestamp: number;
@@ -464,6 +465,8 @@ export interface WorkspaceAuditEvent {
 }
 
 export type LlmProvider = 'openai' | 'anthropic' | 'gemini';
+export type ReasoningSummaryMode = 'off' | 'auto' | 'concise' | 'detailed';
+export type ReasoningEffort = 'default' | 'low' | 'medium' | 'high';
 
 export interface WorkspaceAiProviderStatus {
   provider: LlmProvider;
@@ -475,6 +478,11 @@ export interface WorkspaceAiSettings {
   workspaceId: string;
   defaultProvider: LlmProvider;
   defaultModel: string;
+  reasoningSummaryMode: ReasoningSummaryMode;
+  reasoningEffort: ReasoningEffort;
+  allowedReasoningSummaryModes: ReasoningSummaryMode[];
+  allowedReasoningEfforts: ReasoningEffort[];
+  reasoningSummariesEnabled: boolean;
   allowedProviders: LlmProvider[];
   allowedModels: string[];
   providers: WorkspaceAiProviderStatus[];

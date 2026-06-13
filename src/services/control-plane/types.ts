@@ -551,6 +551,7 @@ export interface ControlPlaneRun extends ControlPlaneTargetScope {
     input_tokens: number;
     output_tokens: number;
     tool_calls: number;
+    reasoning_tokens?: number;
   };
   assistantMessage?: {
     content: string;

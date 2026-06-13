@@ -352,6 +352,7 @@ describe('target chat controller wiring', () => {
   const chatSubmitFailures = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSubmitFailures.ts'), 'utf8');
   const chatSessionSync = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSessionSync.ts'), 'utf8');
   const targetChatRunWatcher = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/targetChatRunWatcher.ts'), 'utf8');
+  const useTargetChatScrollAnchor = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/useTargetChatScrollAnchor.ts'), 'utf8');
 
   it('keeps the chat runtime hoisted above sidebar and fullscreen presentations', () => {
     expect(clusterDetail).not.toContain('useTargetChat({');
@@ -405,6 +406,12 @@ describe('target chat controller wiring', () => {
     expect(chatSessionSync).toContain("if (existingTrace.status === 'cancelled')");
     expect(chatSessionSync).toContain('if (message.runId && isRunCancelled(message.runId))');
     expect(chatSessionSync).toContain('isRunCancelled,');
+    expect(chatSessionSync).toContain('suppressedRunIds: suppressedHydrationRunIdsRef?.current');
+    expect(useTargetChat).toContain('filterMessagesByRunIds(sanitizeChatMessages(messages), suppressedHydrationRunIdsRef.current)');
+    expect(useTargetChat).toContain('const revisedRunIds = new Set(turnMessages.map((message) => message.runId).filter(Boolean) as string[]);');
+    expect(useTargetChat).toContain('for (const revisedRunId of revisedRunIds) suppressedHydrationRunIdsRef.current.add(revisedRunId);');
+    expect(chatSubmit).toContain('suppressedRunIdsRef?: MutableRefObject<ReadonlySet<string>>;');
+    expect(chatSubmit).toContain('const filterSuppressedMessages = (nextMessages: ChatMessage[]) => filterMessagesByRunIds(nextMessages, suppressedRunIdsRef?.current);');
     expect(chatSessionSync).toContain('replaceCancelledRunMessagesForHydration(');
   });
 
@@ -417,15 +424,30 @@ describe('target chat controller wiring', () => {
     expect(useTargetChat).toContain('activeRunLatestStep?.detail?.length || 0');
     expect(useTargetChat).toContain("toolCall.status === 'running'");
     expect(useTargetChat).toContain('activeRunTraceSignature');
-    expect(useTargetChat).toContain('useLayoutEffect(() => {');
-    expect(useTargetChat).toContain('if (isLoadingEarlierMessages)');
-    expect(useTargetChat).toContain('node.scrollTop = node.scrollHeight;');
-    expect(useTargetChat).toContain('const lastChatScrollTopRef = useRef(0);');
+    expect(useTargetChat).toContain('useTargetChatScrollAnchor({');
+    expect(useTargetChat).toContain('transcriptRef');
+    expect(useTargetChatScrollAnchor).toContain('useLayoutEffect(() => {');
+    expect(useTargetChatScrollAnchor).toContain('const wasChatActiveRef = useRef(isChatActive);');
+    expect(useTargetChatScrollAnchor).toContain('const openedChatSessionIdRef = useRef(isChatActive ? activeSessionId : null);');
+    expect(useTargetChatScrollAnchor).toContain('const wasChatActive = wasChatActiveRef.current;');
+    expect(useTargetChatScrollAnchor).toContain('wasChatActiveRef.current = isChatActive;');
+    expect(useTargetChatScrollAnchor).toContain('const didChangeOpenSession = isChatActive && activeSessionId !== openedChatSessionIdRef.current;');
+    expect(useTargetChatScrollAnchor).toContain('openedChatSessionIdRef.current = isChatActive ? activeSessionId : null;');
+    expect(useTargetChatScrollAnchor).toContain('if ((isChatActive && !wasChatActive) || didChangeOpenSession) {');
+    expect(useTargetChatScrollAnchor).toContain('lastChatScrollTopRef.current = 0;');
+    expect(useTargetChatScrollAnchor).toContain('const transcriptRef = useCallback((node: HTMLDivElement | null) => {');
+    expect(useTargetChatScrollAnchor).toContain('scrollRef.current = node;');
+    expect(useTargetChatScrollAnchor).toContain('lastChatScrollTopRef.current = node.scrollTop;');
+    expect(useTargetChatScrollAnchor).toContain('window.requestAnimationFrame(() => {');
+    expect(useTargetChatScrollAnchor).toContain('isLoadingEarlierMessages');
+    expect(useTargetChatScrollAnchor).toContain('node.scrollTop = node.scrollHeight;');
+    expect(useTargetChatScrollAnchor).toContain('const lastChatScrollTopRef = useRef(0);');
     expect(useTargetChat).toContain('currentScrollTop < lastChatScrollTopRef.current - 0.5');
     expect(useTargetChat).toContain('currentScrollTop > lastChatScrollTopRef.current + 0.5');
     expect(useTargetChat).toContain('shouldStickToBottomRef.current = false;');
     expect(useTargetChat).toContain('distanceToBottom <= 2 && (shouldStickToBottomRef.current || isScrollingDown)');
-    expect(useTargetChat).toContain('[chatAutoScrollSignature, isChatActive, isLoadingEarlierMessages]');
+    expect(useTargetChat).toContain('!shouldStickToBottomRef.current && node.scrollTop < 160 && hasEarlierMessages');
+    expect(useTargetChatScrollAnchor).toContain('[activeSessionId, chatAutoScrollSignature, isChatActive, isLoadingEarlierMessages]');
     expect(useTargetChat).not.toContain('[messages, isRunActive, isChatActive]');
   });
 
@@ -438,7 +460,8 @@ describe('target chat controller wiring', () => {
   });
 
   it('sanitizes visible messages before rendering in-flight placeholders', () => {
-    expect(useTargetChat).toContain('const visibleMessages = sanitizeChatMessages(messages).filter(');
+    expect(useTargetChat).toContain('const visibleMessages = filterMessagesByRunIds(sanitizeChatMessages(messages), suppressedHydrationRunIdsRef.current)');
+    expect(useTargetChat).toContain(".filter((message) => !isBlankAssistantMessage(message) || isInFlightAssistantPlaceholder(message));");
   });
 
   it('does not mark watched sessions inactive after a stream pause without checking run status', () => {
@@ -459,6 +482,7 @@ describe('target chat controller wiring', () => {
     expect(targetChatRunWatcher).toContain('}, 80);');
     expect(targetChatRunWatcher).toContain('watchedBackendSessionId,');
     expect(targetChatRunWatcher).toContain('watchedSessionId');
+    expect(targetChatRunWatcher).toContain('if (cancelled || isRunCancelled(runId)) return;');
     expect(targetChatRunWatcher).not.toMatch(/activeSessionRecord,\s*activeSessionRecord\?\.backendSessionId/);
   });
 

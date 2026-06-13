@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  appendReasoningSummaryDelta,
   appendRunTraceStep,
+  completeReasoningSummary,
   formatTraceFailureDetail,
   formatRunUsageDetail,
   getTraceActivityLabel,
@@ -43,6 +45,9 @@ describe('trace-utils', () => {
     expect(formatRunUsageDetail({ inputTokens: 8, outputTokens: 3, toolCalls: 1 })).toBe(
       'Tokens: input 8, output 3'
     );
+    expect(formatRunUsageDetail({ inputTokens: 8, outputTokens: 3, toolCalls: 1, reasoningTokens: 0 })).toBe(
+      'Tokens: input 8, output 3, reasoning 0'
+    );
     expect(formatRunUsageDetail(undefined)).toBeUndefined();
     expect(formatTraceFailureDetail()).toBe('Check the assistant response for details.');
   });
@@ -53,6 +58,23 @@ describe('trace-utils', () => {
     });
 
     expect(appendRunTraceStep(trace, 'Assistant started', 'info', 'Accepted')).toBe(trace);
+  });
+
+  it('keeps oversized newest reasoning summaries retained and consistent', () => {
+    const oversizedSummary = 'x'.repeat(25_000);
+    const next = appendReasoningSummaryDelta(createTrace(), oversizedSummary);
+
+    expect(next.reasoningSummaries).toHaveLength(1);
+    expect(next.reasoningSummaries?.[0].text).toHaveLength(20_000);
+    expect(next.activeReasoningSummary).toBe(next.reasoningSummaries?.[0].text);
+    expect(next.timelineEvents?.[0].detail).toBe(next.reasoningSummaries?.[0].text);
+
+    const completed = completeReasoningSummary(next, `${oversizedSummary} completed`);
+    expect(completed.reasoningSummaries).toHaveLength(1);
+    expect(completed.reasoningSummaries?.[0].status).toBe('completed');
+    expect(completed.reasoningSummaries?.[0].text).toHaveLength(20_000);
+    expect(completed.activeReasoningSummary).toBe(completed.reasoningSummaries?.[0].text);
+    expect(completed.timelineEvents?.[0].detail).toBe(completed.reasoningSummaries?.[0].text);
   });
 
   it('retains only the most recent 200 trace steps', () => {

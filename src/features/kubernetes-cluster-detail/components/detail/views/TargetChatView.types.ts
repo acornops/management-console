@@ -34,11 +34,12 @@ export interface TargetChatViewProps {
   userMarkdownComponents: Components;
   visibleMessages: ChatMessage[];
   runTracesByRunId: Record<string, LiveRunTrace>;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
+  transcriptRef: (node: HTMLDivElement | null) => void;
   onChatScroll: () => void;
   onLoadEarlierMessages: () => void | Promise<void>;
   onInputChange: (value: string) => void;
   onSend: (overrideInput?: string) => void | Promise<void>;
+  onEditLastUserMessage: (messageId: string, nextContent: string) => void | Promise<void>;
   onApprove: (approvalId: string) => void | Promise<void>;
   onReject: (approvalId: string) => void | Promise<void>;
   onSelectSession: (sessionId: string) => void;

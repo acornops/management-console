@@ -1,25 +1,16 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
-import {
-  ClipboardList,
-  History,
-  Loader2,
-  Maximize2,
-  MessageSquare,
-  Plus,
-  Send,
-  Square,
-  X
-} from 'lucide-react';
+import { History, Loader2, Maximize2, MessageSquare, Plus, Send, Square, X } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
 import { ConversationHistory } from '@/features/kubernetes-cluster-detail/components/detail/ConversationHistory';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 import { AssistantTurn } from '@/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn';
 import { ChatComposerNotice } from '@/features/kubernetes-cluster-detail/components/detail/views/ChatComposerNotice';
+import { ChatEmptyPrompt, ChatTranscriptLoadError, ChatTranscriptSkeleton } from '@/features/kubernetes-cluster-detail/components/detail/views/ChatTranscriptStates';
 import { DeleteConversationDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/DeleteConversationDialog';
+import { UserMessageTurn } from '@/features/kubernetes-cluster-detail/components/detail/views/UserMessageTurn';
 import type { TargetChatViewProps } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.types';
 
 const SUGGESTION_KEYS = ['chat.suggestions.podTermination', 'chat.suggestions.serviceDns', 'chat.suggestions.crashLooping', 'chat.suggestions.mcpConnectivity'];
@@ -88,11 +79,12 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   userMarkdownComponents,
   visibleMessages,
   runTracesByRunId,
-  scrollRef,
+  transcriptRef,
   onChatScroll,
   onLoadEarlierMessages,
   onInputChange,
   onSend,
+  onEditLastUserMessage,
   onApprove,
   onReject,
   onSelectSession,
@@ -113,6 +105,9 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const [deletingSessionId, setDeletingSessionId] = React.useState<string | null>(null);
   const [deleteSessionError, setDeleteSessionError] = React.useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
+  const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
+  const [editingMessageValue, setEditingMessageValue] = React.useState('');
+  const [isSubmittingEdit, setIsSubmittingEdit] = React.useState(false);
   const historyButtonRef = React.useRef<HTMLButtonElement>(null);
   const historyPanelRef = React.useRef<HTMLElement>(null);
   const historyPanelId = React.useId();
@@ -129,10 +124,36 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     if (!text.trim() || !canPost || isRunActive) return;
     void onSend(text);
   };
+  const lastUserMessageIndex = React.useMemo(() => {
+    for (let index = visibleMessages.length - 1; index >= 0; index -= 1) {
+      if (visibleMessages[index].role === 'user') return index;
+    }
+    return -1;
+  }, [visibleMessages]);
+  const userTurnRunIdsByIndex = React.useMemo(() => {
+    const runIdsByIndex = new Map<number, string | undefined>();
+    let currentTurnRunId: string | undefined;
+    for (let index = visibleMessages.length - 1; index >= 0; index -= 1) {
+      const message = visibleMessages[index];
+      if (message.role === 'user') {
+        runIdsByIndex.set(index, message.runId || currentTurnRunId);
+        currentTurnRunId = undefined;
+        continue;
+      }
+      if (message.runId) {
+        currentTurnRunId = message.runId;
+      }
+    }
+    return runIdsByIndex;
+  }, [visibleMessages]);
   const canCancelActiveRun = isRunActive && canCancelRuns && Boolean(activeRunId);
   const isPanel = displayMode === 'panel';
   const activeSession = sessions.find((session) => session.id === activeSessionId) || null;
-  const title = activeSession && activeSession.messages.length > 0 ? activeSession.name : t('chat.triageConsole');
+  const title = activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t('chat.triageConsole');
+  const isHydratingExistingConversation = Boolean(activeSession?.backendSessionId && activeSession.hydrated === false && visibleMessages.length === 0);
+  const hasConversationLoadError = Boolean(activeSession?.backendSessionId && activeSession.messagesLoadFailed && visibleMessages.length === 0);
+  const isLoadingInitialConversation = !activeSession && isSessionsLoading;
+  const shouldShowTranscriptSkeleton = visibleMessages.length === 0 && !hasConversationLoadError && (isHydratingExistingConversation || isLoadingInitialConversation);
   const resolvedSuggestionKeys = suggestionKeys || SUGGESTION_KEYS;
   const resolvedDescriptionKey = descriptionKey || 'chat.description';
   const resolvedPromptTitleKey = promptTitleKey || 'chat.promptTitle';
@@ -148,11 +169,9 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
         ? t('chat.cancelRun')
         : t('chat.cancelWaiting')
     : t('chat.send');
-  const newChatDisabledReason = !canChat
+  const newChatUnavailableReason = !canChat
     ? t(resolvedNoChatAccessKey)
-    : isRunActive
-      ? t('chat.newChatWaitingForRun')
-      : '';
+    : '';
   const historyControlLabel = isHistoryOpen ? t('chat.hideHistory') : t('chat.showHistory');
   const panelWindowControls = (
     <div className="flex shrink-0 items-center gap-1">
@@ -213,6 +232,28 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       console.error('Failed deleting conversation', error);
     } finally {
       setDeletingSessionId(null);
+    }
+  };
+
+  const startEditingMessage = (messageId: string, content: string) => {
+    setEditingMessageId(messageId);
+    setEditingMessageValue(content);
+  };
+
+  const cancelEditingMessage = () => {
+    setEditingMessageId(null);
+    setEditingMessageValue('');
+  };
+
+  const submitEditedMessage = async (messageId: string) => {
+    const nextContent = editingMessageValue.trim();
+    if (!nextContent || isSubmittingEdit || isRunActive) return;
+    setIsSubmittingEdit(true);
+    try {
+      await onEditLastUserMessage(messageId, nextContent);
+      cancelEditingMessage();
+    } finally {
+      setIsSubmittingEdit(false);
     }
   };
 
@@ -343,12 +384,12 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                 <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: cluster.name })}</p>
               </div>
               <div className="flex w-full min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end">
-                <Tooltip content={newChatDisabledReason} disabled={!newChatDisabledReason}>
+                <Tooltip content={newChatUnavailableReason} disabled={!newChatUnavailableReason}>
                   <span className="inline-flex w-full sm:w-auto">
                     <Button
                       type="button"
                       onClick={onCreateSession}
-                      disabled={!canChat || isRunActive}
+                      disabled={!canChat}
                       variant="secondary"
                       size="md"
                       className="w-full whitespace-nowrap sm:w-auto"
@@ -364,44 +405,27 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
         </header>
 
         <div
-          ref={scrollRef}
+          ref={transcriptRef}
           onScroll={onChatScroll}
           className={`flex-1 scroll-pb-10 overflow-y-auto bg-ui-bg custom-scrollbar ${isPanel ? 'px-5 py-5 sm:px-6 sm:py-6' : 'stable-scrollbar-gutter px-4 py-6 sm:px-6 lg:px-10 lg:py-8'}`}
         >
-          {visibleMessages.length === 0 ? (
-            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`mx-auto ${isPanel ? 'max-w-3xl pt-2' : 'max-w-4xl pt-6 lg:pt-10'}`}>
-              <div className="border-b border-ui-border pb-5">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface text-ui-text-muted">
-                    <ClipboardList className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className={`${isPanel ? 'text-lg' : 'text-xl'} font-semibold tracking-tight text-ui-text`}>
-                      {t(resolvedPromptTitleKey, { name: cluster.name })}
-                    </h2>
-                    <p className={`${isPanel ? 'mt-2 text-sm' : 'mt-2 max-w-2xl text-sm'} leading-6 text-ui-text-muted`}>
-                      {t(resolvedPromptBodyKey)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className={`mt-5 grid grid-cols-1 gap-2 ${isPanel ? '' : 'md:grid-cols-2'}`}>
-                {resolvedSuggestionKeys.map((suggestionKey) => {
-                  const suggestion = t(suggestionKey);
-                  return (
-                  <button
-                    key={suggestionKey}
-                    onClick={() => sendText(suggestion)}
-                    disabled={!canPost || isRunActive}
-                    className="group flex min-h-14 items-start gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm font-medium text-ui-text transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" />
-                    <span className="min-w-0 break-words">{suggestion}</span>
-                  </button>
-                );
-                })}
-              </div>
-            </motion.div>
+          {shouldShowTranscriptSkeleton ? (
+            <ChatTranscriptSkeleton isPanel={isPanel} label={t('chat.loadingConversation')} />
+          ) : hasConversationLoadError ? (
+            <ChatTranscriptLoadError
+              isPanel={isPanel}
+              title={t('chat.conversationLoadFailed')}
+              body={t('chat.conversationLoadFailedBody')}
+            />
+          ) : visibleMessages.length === 0 ? (
+            <ChatEmptyPrompt
+              isPanel={isPanel}
+              title={t(resolvedPromptTitleKey, { name: cluster.name })}
+              body={t(resolvedPromptBodyKey)}
+              suggestions={resolvedSuggestionKeys.map((suggestionKey) => ({ key: suggestionKey, label: t(suggestionKey) }))}
+              canSendSuggestion={canPost && !isRunActive}
+              onSendSuggestion={sendText}
+            />
           ) : (
             <div className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} mx-auto space-y-5 pb-2`}>
               {hasEarlierMessages && (
@@ -416,13 +440,16 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                   </button>
                 </div>
               )}
-              {visibleMessages.map((message) => {
+              {visibleMessages.map((message, messageIndex) => {
                 const isUser = message.role === 'user';
                 const isInFlightPlaceholder = !isUser && isInFlightAssistantPlaceholder(message);
                 const messageTrace = !isUser && message.runId ? runTracesByRunId[message.runId] : undefined;
                 const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;
                 const trace = activeRunTrace || messageTrace;
                 const traceRunId = trace?.runId || message.runId || message.id;
+                const previousMessage = messageIndex > 0 ? visibleMessages[messageIndex - 1] : undefined;
+                const messageKey = !isUser && previousMessage?.role === 'user' ? `assistant-turn-${previousMessage.id}` : message.id;
+                const hasLaterUserMessage = messageIndex < lastUserMessageIndex;
                 const traceToRender: LiveRunTrace | undefined =
                   trace ||
                   (isInFlightPlaceholder
@@ -441,10 +468,14 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                         toolCalls: []
                       }
                     : undefined);
+                const isStaleCancelledAssistantStatus =
+                  !isUser &&
+                  hasLaterUserMessage &&
+                  traceToRender?.status === 'cancelled';
 
                 if (!isUser) {
                   return (
-                    <div key={message.id} className="flex w-full justify-start">
+                    <div key={messageKey} className="flex w-full justify-start">
                       <AssistantTurn
                         timestampLabel={formatMessageTime(message.timestamp)}
                         content={message.content}
@@ -460,24 +491,39 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                         setTraceExpanded={(runId, expanded) => {
                           setTraceExpandedByRunId((current) => ({ ...current, [runId]: expanded }));
                         }}
+                        compactStatusOnly={isStaleCancelledAssistantStatus}
                         t={t}
                       />
                     </div>
                   );
                 }
 
+                const userTurnRunId = userTurnRunIdsByIndex.get(messageIndex);
+                const userTurnTrace = userTurnRunId ? runTracesByRunId[userTurnRunId] : undefined;
+                const canEditUserMessage =
+                  canPost &&
+                  !isRunActive &&
+                  messageIndex === lastUserMessageIndex &&
+                  Boolean(userTurnRunId) &&
+                  (userTurnTrace?.status === 'cancelled' || userTurnTrace?.status === 'failed');
+                const isEditingMessage = editingMessageId === message.id;
+
                 return (
-                  <div key={message.id} className="flex w-full justify-end">
-                    <div className="min-w-0 max-w-[min(42rem,88%)] rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4">
-                      <div className="mb-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-ui-bg/70">
-                        <span>{t('chat.roleUser')}</span>
-                        <span>{formatMessageTime(message.timestamp)}</span>
-                      </div>
-                      <ReactMarkdown components={userMarkdownComponents}>
-                        {message.content}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
+                  <UserMessageTurn
+                    key={message.id}
+                    message={message}
+                    markdownComponents={userMarkdownComponents}
+                    timestampLabel={formatMessageTime(message.timestamp)}
+                    canEdit={canEditUserMessage}
+                    isEditing={isEditingMessage}
+                    editValue={editingMessageValue}
+                    isSubmittingEdit={isSubmittingEdit}
+                    onEditValueChange={setEditingMessageValue}
+                    onStartEdit={() => startEditingMessage(message.id, message.content)}
+                    onCancelEdit={cancelEditingMessage}
+                    onSubmitEdit={() => void submitEditedMessage(message.id)}
+                    t={t}
+                  />
                 );
               })}
             </div>

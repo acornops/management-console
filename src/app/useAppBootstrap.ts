@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
+import { preloadAppRoutePage } from '@/app/AppPageContent';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { AppRoute } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace } from '@/types';
@@ -99,6 +100,10 @@ export function useAppBootstrap(args: {
   useEffect(() => {
     workspacesRef.current = workspaces;
   }, [workspaces]);
+
+  useEffect(() => {
+    preloadAppRoutePage(route);
+  }, [route]);
 
   useEffect(() => {
     void bootstrapSession();

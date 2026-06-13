@@ -127,6 +127,24 @@ body {
   transform: translateX(-110%);
 }
 
+.reasoning-summary-active {
+  animation: reasoning-summary-text-sheen var(--reasoning-summary-shimmer-duration, 3.8s) cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  background-image: linear-gradient(
+    105deg,
+    currentColor 0%,
+    currentColor 34%,
+    rgb(var(--brand-orange-bright-rgb) / 0.52) 48%,
+    currentColor 62%,
+    currentColor 100%
+  );
+  background-position: 130% 0;
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  will-change: background-position;
+}
+
 .login-evidence-glow {
   background:
     linear-gradient(90deg, transparent 0 52%, rgb(var(--surface-rgb) / 0.72) 88%),
@@ -195,6 +213,21 @@ body {
 
   100% {
     transform: translateX(260%);
+  }
+}
+
+@keyframes reasoning-summary-text-sheen {
+  0%,
+  28% {
+    background-position: 130% 0;
+  }
+
+  64% {
+    background-position: -30% 0;
+  }
+
+  100% {
+    background-position: -30% 0;
   }
 }
 
@@ -428,6 +461,12 @@ body {
   .loading-bar-sweep {
     animation: none !important;
     transform: translateX(75%);
+  }
+
+  .reasoning-summary-active {
+    animation: none !important;
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
   }
 
   .login-health-indicator,

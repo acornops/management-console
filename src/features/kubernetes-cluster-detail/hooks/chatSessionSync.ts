@@ -6,6 +6,7 @@ import type { ControlPlaneRunToolApproval, ControlPlaneSessionListPage } from '@
 import { createLocalMessageId, toTimestamp } from '@/features/kubernetes-cluster-detail/lib/helpers';
 import {
   dedupeAssistantMessagesByRun,
+  filterMessagesByRunIds,
   isBlankAssistantMessage,
   isPendingAssistantPlaceholder,
   mapControlPlaneMessage,
@@ -32,10 +33,6 @@ export function createConversationId(): string {
     return randomUuid;
   }
   return `session-${createLocalMessageId()}`;
-}
-
-export function createConversationName(id: string): string {
-  return `Conversation ${id.slice(0, 8)}`;
 }
 
 export function mergeFetchedChatSessions(
@@ -220,8 +217,11 @@ export function mergeHydratedChatMessages(args: {
   backendMessages: ChatMessage[];
   runTracesByRunId?: Record<string, LiveRunTrace>;
   terminalRunIds?: ReadonlySet<string>;
+  suppressedRunIds?: ReadonlySet<string>;
 }): ChatMessage[] {
-  const { localMessages, backendMessages, runTracesByRunId = {}, terminalRunIds } = args;
+  const { runTracesByRunId = {}, terminalRunIds, suppressedRunIds } = args;
+  const localMessages = filterMessagesByRunIds(args.localMessages, suppressedRunIds);
+  const backendMessages = filterMessagesByRunIds(args.backendMessages, suppressedRunIds);
   const backendIndex = buildHydrationBackendIndex(backendMessages);
   const usedBackendIndexes = new Set<number>();
   const merged: ChatMessage[] = [];
@@ -269,6 +269,7 @@ export function useControlPlaneChatSessionSync(args: {
   setRunTracesByRunId: Dispatch<SetStateAction<Record<string, LiveRunTrace>>>;
   setTraceExpandedByRunId: Dispatch<SetStateAction<Record<string, boolean>>>;
   isRunCancelled?: (runId: string) => boolean;
+  suppressedHydrationRunIdsRef?: RefObject<ReadonlySet<string>>;
   runCancelledMessage: string;
   listSessions?: (workspaceId: string, targetId: string, options?: { limit?: number; cursor?: string; q?: string; status?: string }) => Promise<ControlPlaneSessionListPage>;
 }): {
@@ -284,14 +285,29 @@ export function useControlPlaneChatSessionSync(args: {
     setRunTracesByRunId,
     setTraceExpandedByRunId,
     isRunCancelled = () => false,
+    suppressedHydrationRunIdsRef,
     runCancelledMessage,
     listSessions = controlPlaneApi.listSessions
   } = args;
-  const [isSessionsLoading, setIsSessionsLoading] = useState(false);
+  const sessionListKey = `${cluster.workspaceId}:${cluster.id}`;
+  const [isSessionListRequestInFlight, setIsSessionListRequestInFlight] = useState(true);
+  const [loadedSessionListKey, setLoadedSessionListKey] = useState<string | null>(null);
+  const isSessionsLoading = isSessionListRequestInFlight || loadedSessionListKey !== sessionListKey;
   const hydratingBackendSessionsRef = useRef<Set<string>>(new Set());
   const latestSessionsRef = useRef<ChatSession[]>(cluster.chatSessions);
   const activeSessionIdRef = useRef(activeSessionId);
   const onUpdateSessionsRef = useRef(onUpdateSessions);
+  const activeHydrationSession = sessions.find((item) => item.id === activeSessionId) || null;
+  // Do not depend on the full sessions array; list refreshes can otherwise cancel
+  // the only in-flight message hydration and leave the transcript skeleton up.
+  const activeHydrationSessionKey = activeHydrationSession
+    ? [
+        activeHydrationSession.id,
+        activeHydrationSession.backendSessionId || '',
+        activeHydrationSession.hydrated === false ? 'pending' : 'ready',
+        activeHydrationSession.messagesLoadFailed ? 'failed' : 'ok'
+      ].join(':')
+    : 'none';
 
   useEffect(() => {
     latestSessionsRef.current = cluster.chatSessions;
@@ -312,7 +328,7 @@ export function useControlPlaneChatSessionSync(args: {
   useEffect(() => {
     let cancelled = false;
     const loadSessions = async () => {
-      setIsSessionsLoading(true);
+      setIsSessionListRequestInFlight(true);
       try {
         const fetched: ChatSession[] = [];
         const page = await listSessions(cluster.workspaceId, cluster.id, { limit: 50 });
@@ -328,6 +344,7 @@ export function useControlPlaneChatSessionSync(args: {
             createdByUser: session.createdByUser,
             name: session.title,
             hydrated: existing?.hydrated ?? false,
+            messagesLoadFailed: existing?.messagesLoadFailed,
             messagesNextCursor: existing?.messagesNextCursor,
             messages: existing?.messages || [],
             timestamp: toTimestamp(session.lastMessageAt || session.updatedAt)
@@ -340,7 +357,8 @@ export function useControlPlaneChatSessionSync(args: {
         // Session listing failures should not block active chat usage.
       } finally {
         if (!cancelled) {
-          setIsSessionsLoading(false);
+          setLoadedSessionListKey(sessionListKey);
+          setIsSessionListRequestInFlight(false);
         }
       }
     };
@@ -349,14 +367,14 @@ export function useControlPlaneChatSessionSync(args: {
     return () => {
       cancelled = true;
     };
-  }, [cluster.id, cluster.workspaceId]);
+  }, [cluster.id, cluster.workspaceId, sessionListKey]);
 
   useEffect(() => {
     if (!activeSessionId) {
       return;
     }
 
-    const session = sessions.find((item) => item.id === activeSessionId);
+    const session = activeHydrationSession;
     const backendSessionId = session?.backendSessionId;
     if (!session || !backendSessionId) {
       return;
@@ -369,7 +387,10 @@ export function useControlPlaneChatSessionSync(args: {
         Boolean(message.runId) &&
         isTraceInProgress(runTracesByRunIdRef.current?.[message.runId as string])
     );
-    if (session.hydrated && session.messages.length > 0 && !hasTransientAssistantPlaceholder && !hasAssistantWithInProgressTrace) {
+    if (session.messagesLoadFailed) {
+      return;
+    }
+    if (session.hydrated && !hasTransientAssistantPlaceholder && !hasAssistantWithInProgressTrace) {
       return;
     }
     if (hydratingBackendSessionsRef.current.has(backendSessionId)) {
@@ -459,20 +480,29 @@ export function useControlPlaneChatSessionSync(args: {
           }
         }
 
+        if (cancelled) {
+          return;
+        }
+        const currentSessionForMerge =
+          latestSessionsRef.current.find((item) => item.id === session.id) || session;
+        if (currentSessionForMerge.backendSessionId !== backendSessionId) {
+          return;
+        }
         const restoredMessages =
           restoredAssistantPlaceholders.length > 0
             ? [...mappedMessages, ...restoredAssistantPlaceholders]
             : mappedMessages;
         const terminalRunIds = new Set([...Object.keys(terminalTraces), ...cancelledRunIds]);
         const mergedMessages = mergeHydratedChatMessages({
-          localMessages: session.messages,
+          localMessages: currentSessionForMerge.messages,
           backendMessages: restoredMessages,
           runTracesByRunId: {
             ...(runTracesByRunIdRef.current || {}),
             ...restoredTraces,
             ...terminalTraces
           },
-          terminalRunIds
+          terminalRunIds,
+          suppressedRunIds: suppressedHydrationRunIdsRef?.current
         });
         const sanitizedRestoredMessages = replaceCancelledRunMessagesForHydration(
           mergedMessages,
@@ -480,14 +510,15 @@ export function useControlPlaneChatSessionSync(args: {
           runCancelledMessage
         );
         const nextSession: ChatSession = {
-          ...session,
+          ...currentSessionForMerge,
           hydrated: true,
+          messagesLoadFailed: false,
           hasActiveRun: restoredAssistantPlaceholders.length > 0,
           messagesNextCursor: backendMessages.nextCursor,
           messages: sanitizedRestoredMessages,
           timestamp: sanitizedRestoredMessages.length > 0
             ? sanitizedRestoredMessages[sanitizedRestoredMessages.length - 1].timestamp
-            : session.timestamp
+            : currentSessionForMerge.timestamp
         };
         const tracesToApply = {
           ...restoredTraces,
@@ -512,7 +543,16 @@ export function useControlPlaneChatSessionSync(args: {
         }
         onUpdateSessionsRef.current(upsertSession(latestSessionsRef.current, nextSession));
       } catch {
-        // Message hydration can be retried by selecting the session again.
+        if (!cancelled) {
+          const currentSession = latestSessionsRef.current.find((item) => item.id === session.id);
+          if (currentSession?.backendSessionId === backendSessionId && currentSession.messages.length === 0) {
+            onUpdateSessionsRef.current(upsertSession(latestSessionsRef.current, {
+              ...currentSession,
+              hydrated: true,
+              messagesLoadFailed: true
+            }));
+          }
+        }
       } finally {
         hydratingBackendSessionsRef.current.delete(backendSessionId);
       }
@@ -524,13 +564,14 @@ export function useControlPlaneChatSessionSync(args: {
     };
   }, [
     activeSessionId,
+    activeHydrationSessionKey,
     cluster.id,
     cluster.workspaceId,
     isRunCancelled,
     listSessions,
     runTracesByRunIdRef,
+    suppressedHydrationRunIdsRef,
     runCancelledMessage,
-    sessions,
     setRunTracesByRunId,
     setTraceExpandedByRunId
   ]);

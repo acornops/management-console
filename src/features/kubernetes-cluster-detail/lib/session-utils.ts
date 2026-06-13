@@ -140,6 +140,11 @@ export function dedupeAssistantMessagesByRun(chatMessages: ChatMessage[]): ChatM
   return dedupedMessages;
 }
 
+export function filterMessagesByRunIds(chatMessages: ChatMessage[], runIds?: ReadonlySet<string>): ChatMessage[] {
+  if (!runIds || runIds.size === 0) return chatMessages;
+  return chatMessages.filter((message) => !message.runId || !runIds.has(message.runId));
+}
+
 function isPendingTraceAssistant(message: ChatMessage): boolean {
   return isPendingAssistantPlaceholder(message) && String(message.runId || '').startsWith('pending-trace-');
 }
