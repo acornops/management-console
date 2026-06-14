@@ -29,6 +29,8 @@ describe('WorkspaceAuditLogPage audit operation rendering', () => {
     expect(auditLogPage).toContain("t('auditLog.allObjectTypes')");
     expect(auditLogPage).toContain("t('auditLog.object')");
     expect(auditLogPage).toContain('objectType: appliedFilters.objectType.trim() || undefined');
+    expect(auditLogPage).toContain("value: 'kubernetes', label: 'kubernetes'");
+    expect(auditLogPage).toContain("value: 'kubernetes_cluster', label: 'kubernetes_cluster'");
     expect(auditLogPage).not.toContain('<datalist');
     expect(enLocale).toContain("allEventTypes: 'All event types'");
     expect(enLocale).toContain("allObjectTypes: 'All object types'");

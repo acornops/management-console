@@ -88,18 +88,19 @@ const eventTypeOptions = [
   'mcp.server.tested.v1'
 ];
 
-const objectTypeOptions = [
-  'workspace',
-  'member',
-  'invitation',
-  'kubernetes_cluster',
-  'virtual_machine',
-  'session',
-  'run',
-  'tool_call',
-  'tool_approval',
-  'tool',
-  'mcp_server'
+const objectTypeOptions: Array<SelectOption<string>> = [
+  { value: 'workspace', label: 'workspace' },
+  { value: 'member', label: 'member' },
+  { value: 'invitation', label: 'invitation' },
+  { value: 'kubernetes', label: 'kubernetes' },
+  { value: 'kubernetes_cluster', label: 'kubernetes_cluster' },
+  { value: 'virtual_machine', label: 'virtual_machine' },
+  { value: 'session', label: 'session' },
+  { value: 'run', label: 'run' },
+  { value: 'tool_call', label: 'tool_call' },
+  { value: 'tool_approval', label: 'tool_approval' },
+  { value: 'tool', label: 'tool' },
+  { value: 'mcp_server', label: 'mcp_server' }
 ];
 
 function formatActor(event: WorkspaceAuditEvent): string {
@@ -355,7 +356,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   onChange={(value) => setDraftFilters((current) => ({ ...current, objectType: value }))}
                   options={[
                     { value: '', label: t('auditLog.allObjectTypes') },
-                    ...objectTypeOptions.map((value) => ({ value, label: value }))
+                    ...objectTypeOptions
                   ]}
                   ariaLabel={t('auditLog.filterObjectType')}
                   className="w-full"
