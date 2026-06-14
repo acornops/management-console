@@ -10,7 +10,7 @@ describe('mobile navigation structure', () => {
   it('uses named sections instead of vague More groups', () => {
     expect(mobileNavigation).not.toContain("t('app.more')");
     expect(mobileNavigation).toContain("t('app.primaryDestinations')");
-    expect(mobileNavigation).toContain("t('app.workspaceAdministration')");
+    expect(mobileNavigation).toContain("t('app.administration')");
     expect(mobileNavigation).toContain("['mcpServers', t('app.mcpServers'), ICONS.Server, 0]");
     expect(mobileNavigation).toContain("['settings', t('app.clusterSettings'), ICONS.Settings, 0]");
   });
