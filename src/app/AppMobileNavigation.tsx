@@ -370,7 +370,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                       )}
                       <div className="mt-3 border-t border-ui-border pt-3">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                          {t('app.workspaceAdministration')}
+                          {t('app.administration')}
                         </p>
                         <div className="grid grid-cols-2 gap-1.5">
                           <button
