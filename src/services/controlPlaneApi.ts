@@ -239,7 +239,7 @@ export const controlPlaneApi = {
       category?: WorkspaceAuditCategory | 'all';
       eventType?: string;
       actorUserId?: string;
-      targetType?: string;
+      objectType?: string;
       from?: string;
       to?: string;
     }
@@ -252,7 +252,7 @@ export const controlPlaneApi = {
           category: options?.category && options.category !== 'all' ? options.category : undefined,
           eventType: options?.eventType,
           actorUserId: options?.actorUserId,
-          targetType: options?.targetType,
+          objectType: options?.objectType,
           from: options?.from,
           to: options?.to
         }
