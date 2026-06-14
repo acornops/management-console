@@ -18,7 +18,7 @@ const categoryOptions: Array<SelectOption<WorkspaceAuditCategory | 'all'>> = [
   { value: 'all', label: 'All categories' },
   { value: 'membership', label: 'Membership' },
   { value: 'workspace', label: 'Workspace' },
-  { value: 'target', label: 'Targets' },
+  { value: 'target', label: 'Deployment targets' },
   { value: 'session', label: 'Sessions' },
   { value: 'run', label: 'Runs' },
   { value: 'approval', label: 'Approvals' },
@@ -30,7 +30,7 @@ interface AuditFilters {
   category: WorkspaceAuditCategory | 'all';
   eventType: string;
   actorUserId: string;
-  targetType: string;
+  objectType: string;
   from: string;
   to: string;
 }
@@ -39,7 +39,7 @@ const defaultFilters: AuditFilters = {
   category: 'all',
   eventType: '',
   actorUserId: '',
-  targetType: '',
+  objectType: '',
   from: '',
   to: ''
 };
@@ -48,14 +48,68 @@ type AuditTimePreset = 'today' | 'last24h' | 'past7d' | 'past30d';
 
 const timePresetOptions: AuditTimePreset[] = ['today', 'last24h', 'past7d', 'past30d'];
 
+const eventTypeOptions = [
+  'workspace.created.v1',
+  'workspace.deleted.v1',
+  'workspace.member.added.v1',
+  'workspace.member.role_updated.v1',
+  'workspace.member.removed.v1',
+  'workspace.invitation.created.v1',
+  'workspace.invitation.revoked.v1',
+  'workspace.ai_settings.updated.v1',
+  'workspace.ai_provider_credential.saved.v1',
+  'workspace.ai_provider_credential.deleted.v1',
+  'workspace.plan.updated.v1',
+  'workspace.quotas.updated.v1',
+  'target.registered.v1',
+  'target.updated.v1',
+  'target.deleted.v1',
+  'target.status_changed.v1',
+  'agent.connected.v1',
+  'agent.disconnected.v1',
+  'agent.capabilities_changed.v1',
+  'agent.key_rotated.v1',
+  'session.created.v1',
+  'session.deleted.v1',
+  'message.received.v1',
+  'run.created.v1',
+  'run.started.v1',
+  'run.completed.v1',
+  'run.failed.v1',
+  'run.cancelled.v1',
+  'run.cancel_requested.v1',
+  'run.tool_approval_requested.v1',
+  'run.tool_approval_decided.v1',
+  'tool.called.v1',
+  'tool.catalog.changed.v1',
+  'mcp.server.created.v1',
+  'mcp.server.updated.v1',
+  'mcp.server.deleted.v1',
+  'mcp.server.tested.v1'
+];
+
+const objectTypeOptions = [
+  'workspace',
+  'member',
+  'invitation',
+  'kubernetes_cluster',
+  'virtual_machine',
+  'session',
+  'run',
+  'tool_call',
+  'tool_approval',
+  'tool',
+  'mcp_server'
+];
+
 function formatActor(event: WorkspaceAuditEvent): string {
   if (event.actor.type === 'system') return 'System';
   if (event.actor.type === 'admin_token') return event.actor.tokenId || 'Admin token';
   return event.actor.displayName || event.actor.email || event.actor.userId || 'Unknown user';
 }
 
-function formatTarget(event: WorkspaceAuditEvent): string {
-  return event.target.name || event.target.id || event.target.type;
+function formatObject(event: WorkspaceAuditEvent): string {
+  return event.object.name || event.object.id || event.object.type;
 }
 
 function formatMetadata(metadata: Record<string, unknown>): string {
@@ -107,7 +161,7 @@ function normalizeFilters(filters: AuditFilters): AuditFilters {
     category: filters.category,
     eventType: filters.eventType.trim(),
     actorUserId: filters.actorUserId.trim(),
-    targetType: filters.targetType.trim(),
+    objectType: filters.objectType.trim(),
     from: filters.from,
     to: filters.to
   };
@@ -118,7 +172,7 @@ function filtersEqual(first: AuditFilters, second: AuditFilters): boolean {
     first.category === second.category &&
     first.eventType === second.eventType &&
     first.actorUserId === second.actorUserId &&
-    first.targetType === second.targetType &&
+    first.objectType === second.objectType &&
     first.from === second.from &&
     first.to === second.to
   );
@@ -127,6 +181,7 @@ function filtersEqual(first: AuditFilters, second: AuditFilters): boolean {
 export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ workspace }) => {
   const { t } = useTranslation();
   const closeAuditDetailsButtonRef = useRef<HTMLButtonElement>(null);
+  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const requestSeqRef = useRef(0);
   const [events, setEvents] = useState<WorkspaceAuditEvent[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
@@ -159,7 +214,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
         category: appliedFilters.category,
         eventType: appliedFilters.eventType.trim() || undefined,
         actorUserId: appliedFilters.actorUserId.trim() || undefined,
-        targetType: appliedFilters.targetType.trim() || undefined,
+        objectType: appliedFilters.objectType.trim() || undefined,
         from: toIsoDateTimeFilter(appliedFilters.from),
         to: toIsoDateTimeFilter(appliedFilters.to)
       });
@@ -187,6 +242,24 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
     }, 300);
     return () => window.clearTimeout(timer);
   }, [applyNormalizedFilters, draftFilters]);
+
+  useEffect(() => {
+    if (!nextCursor || isLoading || isLoadingMore || typeof IntersectionObserver === 'undefined') return;
+    const trigger = loadMoreTriggerRef.current;
+    if (!trigger) return;
+
+    let isActive = true;
+    const observer = new IntersectionObserver((entries) => {
+      if (!isActive || !entries.some((entry) => entry.isIntersecting)) return;
+      isActive = false;
+      void loadEvents(nextCursor);
+    }, { rootMargin: '240px 0px' });
+    observer.observe(trigger);
+    return () => {
+      isActive = false;
+      observer.disconnect();
+    };
+  }, [isLoading, isLoadingMore, loadEvents, nextCursor]);
 
   const visibleCount = useMemo(() => events.length, [events.length]);
   const selectedMetadata = selectedEvent ? formatMetadata(selectedEvent.metadata) : '';
@@ -248,18 +321,20 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   className="w-full"
                 />
               </div>
-              <label className="min-w-0" htmlFor="audit-filter-event-type">
-                <span className="sr-only">{t('auditLog.eventType')}</span>
-                <PageSearchInput
+              <div className="min-w-0">
+                <label className="sr-only" htmlFor="audit-filter-event-type">{t('auditLog.eventType')}</label>
+                <Select<string>
                   id="audit-filter-event-type"
-                  type="text"
                   value={draftFilters.eventType}
-                  onChange={(event) => setDraftFilters((current) => ({ ...current, eventType: event.target.value }))}
-                  placeholder={t('auditLog.filterEventType')}
-                  aria-label={t('auditLog.filterEventType')}
-                  className="lg:w-full"
+                  onChange={(value) => setDraftFilters((current) => ({ ...current, eventType: value }))}
+                  options={[
+                    { value: '', label: t('auditLog.allEventTypes') },
+                    ...eventTypeOptions.map((value) => ({ value, label: value }))
+                  ]}
+                  ariaLabel={t('auditLog.filterEventType')}
+                  className="w-full"
                 />
-              </label>
+              </div>
               <label className="min-w-0" htmlFor="audit-filter-actor">
                 <span className="sr-only">{t('auditLog.actor')}</span>
                 <PageSearchInput
@@ -272,18 +347,20 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   className="lg:w-full"
                 />
               </label>
-              <label className="min-w-0" htmlFor="audit-filter-target-type">
-                <span className="sr-only">{t('auditLog.target')}</span>
-                <PageSearchInput
-                  id="audit-filter-target-type"
-                  type="text"
-                  value={draftFilters.targetType}
-                  onChange={(event) => setDraftFilters((current) => ({ ...current, targetType: event.target.value }))}
-                  placeholder={t('auditLog.filterTargetType')}
-                  aria-label={t('auditLog.filterTargetType')}
-                  className="lg:w-full"
+              <div className="min-w-0">
+                <label className="sr-only" htmlFor="audit-filter-object-type">{t('auditLog.object')}</label>
+                <Select<string>
+                  id="audit-filter-object-type"
+                  value={draftFilters.objectType}
+                  onChange={(value) => setDraftFilters((current) => ({ ...current, objectType: value }))}
+                  options={[
+                    { value: '', label: t('auditLog.allObjectTypes') },
+                    ...objectTypeOptions.map((value) => ({ value, label: value }))
+                  ]}
+                  ariaLabel={t('auditLog.filterObjectType')}
+                  className="w-full"
                 />
-              </label>
+              </div>
             </div>
             <div className="mt-3 flex flex-col gap-3 border-t border-ui-border/70 pt-3 lg:flex-row lg:items-start lg:justify-between">
               <fieldset className="min-w-0">
@@ -375,7 +452,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   <th className="type-label px-3 py-4 sm:px-5">{t('auditLog.time')}</th>
                   <th className="type-label px-3 py-4 sm:px-5">{t('auditLog.event')}</th>
                   <th className="type-label hidden px-3 py-4 sm:px-5 md:table-cell">{t('auditLog.actor')}</th>
-                  <th className="type-label hidden px-3 py-4 sm:px-5 md:table-cell">{t('auditLog.target')}</th>
+                  <th className="type-label hidden px-3 py-4 sm:px-5 md:table-cell">{t('auditLog.object')}</th>
                   <th className="type-label px-3 py-4 text-right sm:px-5">{t('auditLog.details')}</th>
                 </tr>
               </thead>
@@ -388,13 +465,23 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                     <td className="px-3 py-4 align-top sm:px-5">
                       <p className="type-row-title break-words">{event.summary}</p>
                       <p className="type-caption mt-1 break-words">{event.eventType} · {formatOperation(event, t)}</p>
+                      <dl className="mt-3 grid gap-1 md:hidden">
+                        <div className="min-w-0">
+                          <dt className="type-micro-label">{t('auditLog.actor')}</dt>
+                          <dd className="type-caption mt-0.5 break-words text-ui-text">{formatActor(event)}</dd>
+                        </div>
+                        <div className="min-w-0">
+                          <dt className="type-micro-label">{t('auditLog.object')}</dt>
+                          <dd className="type-caption mt-0.5 break-words text-ui-text">{formatObject(event)} · {event.object.type}</dd>
+                        </div>
+                      </dl>
                     </td>
                     <td className="hidden px-3 py-4 align-top sm:px-5 md:table-cell">
                       <p className="type-ui break-words text-ui-text">{formatActor(event)}</p>
                     </td>
                     <td className="hidden px-3 py-4 align-top sm:px-5 md:table-cell">
-                      <p className="type-ui break-words text-ui-text">{formatTarget(event)}</p>
-                      <p className="type-caption mt-1 break-words">{event.target.type}</p>
+                      <p className="type-ui break-words text-ui-text">{formatObject(event)}</p>
+                      <p className="type-caption mt-1 break-words">{event.object.type}</p>
                     </td>
                     <td className="px-3 py-4 text-right align-top sm:px-5">
                       <Tooltip content={t('auditLog.viewDetails')}>
@@ -430,7 +517,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
             </table>
           </div>
           {nextCursor && (
-            <div className="border-t border-ui-border px-4 py-4 text-center">
+            <div ref={loadMoreTriggerRef} className="border-t border-ui-border px-4 py-4 text-center">
               <Button variant="secondary" size="md" onClick={() => loadEvents(nextCursor)} disabled={isLoadingMore}>
                 {isLoadingMore ? t('auditLog.loadingMore') : t('auditLog.loadMore')}
               </Button>
@@ -467,7 +554,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   [t('auditLog.eventType'), selectedEvent.eventType],
                   [t('auditLog.operation'), formatOperation(selectedEvent, t)],
                   [t('auditLog.actor'), formatActor(selectedEvent)],
-                  [t('auditLog.target'), formatTarget(selectedEvent)]
+                  [t('auditLog.object'), formatObject(selectedEvent)]
                 ].map(([label, value]) => (
                   <div key={label} className="grid grid-cols-[9rem,1fr] gap-4 px-1 py-3">
                     <dt className="type-label">{label}</dt>

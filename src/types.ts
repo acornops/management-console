@@ -454,7 +454,7 @@ export interface WorkspaceAuditEvent {
     email?: string;
     displayName?: string;
   };
-  target: {
+  object: {
     type: string;
     id?: string;
     name?: string;
