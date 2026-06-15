@@ -16,7 +16,7 @@ function cleanText(value: unknown): string {
   return String(value ?? '').replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-function targetLabel(argumentsValue: Record<string, unknown> | undefined, defaultKind?: string): string {
+function targetLabel(t: TFunction, argumentsValue: Record<string, unknown> | undefined, defaultKind?: string): string {
   const kind = cleanText(argumentsValue?.kind) || cleanText(defaultKind);
   const namespace = cleanText(argumentsValue?.namespace);
   const name = cleanText(argumentsValue?.name);
@@ -25,24 +25,41 @@ function targetLabel(argumentsValue: Record<string, unknown> | undefined, defaul
   if (namespace && name) return `${kind ? `${kind} ` : ''}${namespace}/${name}`;
   if (name) return `${kind ? `${kind} ` : ''}${name}`;
   if (target) return `${kind ? `${kind} ` : ''}${target}`;
-  if (namespace) return `${kind ? `${kind} in ` : ''}namespace ${namespace}`;
-  return kind ? `the selected ${kind}` : '';
+  if (namespace) {
+    return kind
+      ? t('chat.approvalFallbackTarget.kindNamespace', { kind, namespace })
+      : t('chat.approvalFallbackTarget.namespace', { namespace });
+  }
+  return kind ? t('chat.approvalFallbackTarget.selectedKind', { kind }) : '';
 }
 
-function fallbackApprovalSummary(approval: PendingApproval): string {
+function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): string {
   const toolName = cleanText(approval.toolName || approval.action).replace(/[_.]+/g, ' ');
-  if (approval.toolName === 'restart_workload') return `Restart ${targetLabel(approval.arguments, 'workload')}.`;
+  if (approval.toolName === 'restart_workload') {
+    return t('chat.approvalFallbackSummary.restart', {
+      target: targetLabel(t, approval.arguments, t('chat.approvalFallbackTarget.workload'))
+    });
+  }
   if (approval.toolName === 'scale_workload') {
     const replicas = cleanText(approval.arguments?.replicas);
+    const target = targetLabel(t, approval.arguments, t('chat.approvalFallbackTarget.workload'));
     return replicas
-      ? `Scale ${targetLabel(approval.arguments, 'workload')} to ${replicas} replicas.`
-      : `Scale ${targetLabel(approval.arguments, 'workload')}.`;
+      ? t('chat.approvalFallbackSummary.scaleReplicas', { target, replicas })
+      : t('chat.approvalFallbackSummary.scale', { target });
   }
   if (approval.toolName === 'apply_remediation') {
-    return `Apply the remediation plan to ${targetLabel(approval.arguments) || 'the selected target'}.`;
+    return t('chat.approvalFallbackSummary.applyRemediation', {
+      target: targetLabel(t, approval.arguments) || t('chat.approvalFallbackTarget.selectedTarget')
+    });
   }
-  const target = targetLabel(approval.arguments);
-  return target ? `Run ${toolName || 'write tool'} against ${target}.` : cleanText(approval.action) || 'Run the requested write action.';
+  const target = targetLabel(t, approval.arguments);
+  if (target) {
+    return t('chat.approvalFallbackSummary.genericTarget', {
+      tool: toolName || t('chat.approvalFallbackTarget.writeTool'),
+      target
+    });
+  }
+  return cleanText(approval.action) || t('chat.approvalFallbackSummary.generic');
 }
 
 export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
@@ -52,7 +69,7 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
   onReject,
   t
 }) => {
-  const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval);
+  const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval, t);
   const approvalStatus = approval.status || 'pending';
   const isPending = approvalStatus === 'pending';
   const StatusIcon = approvalStatus === 'approved' ? CheckCircle2 : approvalStatus === 'pending' ? ShieldCheck : XCircle;

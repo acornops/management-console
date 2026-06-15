@@ -965,6 +965,22 @@ export const en = {
       rejected: 'Rejected',
       expired: 'Expired'
     },
+    approvalFallbackTarget: {
+      workload: 'workload',
+      namespace: 'namespace {{namespace}}',
+      kindNamespace: '{{kind}} in namespace {{namespace}}',
+      selectedKind: 'the selected {{kind}}',
+      selectedTarget: 'the selected target',
+      writeTool: 'write tool'
+    },
+    approvalFallbackSummary: {
+      restart: 'Restart {{target}}.',
+      scaleReplicas: 'Scale {{target}} to {{replicas}} replicas.',
+      scale: 'Scale {{target}}.',
+      applyRemediation: 'Apply the remediation plan to {{target}}.',
+      genericTarget: 'Run {{tool}} against {{target}}.',
+      generic: 'Run the requested write action.'
+    },
     inputPlaceholder: 'Ask AcornOps to inspect {{name}}...',
     noChatAccess: 'You do not have permission to start target chat in this workspace.',
     send: 'Send',

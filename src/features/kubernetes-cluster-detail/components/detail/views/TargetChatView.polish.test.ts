@@ -62,10 +62,12 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain('const StatusIcon');
     expect(approvalCheckpoint).toContain('const statusToneClass');
     expect(approvalCheckpoint).toContain("t(`chat.approvalStatusLabel.${approvalStatus}`)");
-    expect(approvalCheckpoint).toContain('const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval);');
+    expect(approvalCheckpoint).toContain('const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval, t);');
     expect(approvalCheckpoint).toContain("String(value ?? '')");
     expect(approvalCheckpoint).toContain("approval.toolName === 'apply_remediation'");
-    expect(approvalCheckpoint).toContain('Apply the remediation plan to ${targetLabel(approval.arguments) || \'the selected target\'}.');
+    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.applyRemediation'");
+    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackTarget.selectedTarget')");
+    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.genericTarget'");
     expect(approvalCheckpoint).toContain('className="px-4 py-4"');
     expect(approvalCheckpoint).toContain('<h3 className="text-sm font-semibold leading-6 text-ui-text">{t(\'chat.guardTitle\')}</h3>');
     expect(approvalCheckpoint).toContain('<p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">');
@@ -81,11 +83,15 @@ describe('target chat polish contracts', () => {
     expect(enLocale).toContain("approvalAdvancedDetails: 'Advanced details'");
     expect(enLocale).toContain("guardTitle: 'Approve the following action?'");
     expect(enLocale).toContain("approvalStatusLabel: {");
+    expect(enLocale).toContain("approvalFallbackSummary: {");
+    expect(enLocale).toContain("genericTarget: 'Run {{tool}} against {{target}}.'");
     expect(enLocale).toContain("approveAction: 'Approve once'");
     expect(zhLocale).toContain("approvalCheckpoint: '批准检查点'");
     expect(zhLocale).toContain("approvalAdvancedDetails: '高级详情'");
     expect(zhLocale).toContain("guardTitle: '批准以下操作？'");
     expect(zhLocale).toContain('approvalStatusLabel: {');
+    expect(zhLocale).toContain('approvalFallbackSummary: {');
+    expect(zhLocale).toContain("genericTarget: '对 {{target}} 运行 {{tool}}。'");
     expect(zhLocale).toContain("approveAction: '批准一次'");
   });
 

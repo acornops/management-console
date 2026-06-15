@@ -962,6 +962,22 @@ export const zh = {
       rejected: '已拒绝',
       expired: '已过期'
     },
+    approvalFallbackTarget: {
+      workload: '工作负载',
+      namespace: '命名空间 {{namespace}}',
+      kindNamespace: '{{kind}}（命名空间 {{namespace}}）',
+      selectedKind: '选定的{{kind}}',
+      selectedTarget: '选定目标',
+      writeTool: '写入工具'
+    },
+    approvalFallbackSummary: {
+      restart: '重启 {{target}}。',
+      scaleReplicas: '将 {{target}} 扩缩到 {{replicas}} 个副本。',
+      scale: '扩缩 {{target}}。',
+      applyRemediation: '将修复计划应用到 {{target}}。',
+      genericTarget: '对 {{target}} 运行 {{tool}}。',
+      generic: '运行请求的写入操作。'
+    },
     inputPlaceholder: '让 AcornOps 检查 {{name}}...',
     noChatAccess: '你没有权限在此工作区开始目标聊天。',
     send: '发送',
