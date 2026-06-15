@@ -382,6 +382,7 @@ export interface PendingApproval {
   runId?: string;
   toolCallId?: string;
   action: string;
+  summary?: string;
   toolName?: string;
   arguments?: Record<string, unknown>;
   expiresAt?: string;

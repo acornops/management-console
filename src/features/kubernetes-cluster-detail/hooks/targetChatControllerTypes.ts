@@ -5,6 +5,7 @@ import type {
   ControlPlaneSessionListPage,
   ControlPlaneTargetChatActivity
 } from '@/services/controlPlaneApi';
+import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
 export interface UseTargetChatArgs {
@@ -40,6 +41,7 @@ export interface TargetChatController {
   isCancellingRun: boolean;
   visibleMessages: ChatMessage[];
   runTracesByRunId: Record<string, LiveRunTrace>;
+  sessionAssistantStatuses?: Record<string, AssistantNavStatus>;
   traceExpandedByRunId: Record<string, boolean>;
   transcriptRef: (node: HTMLDivElement | null) => void;
   setActiveSessionId: (sessionId: string) => void;

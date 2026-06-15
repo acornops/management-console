@@ -1,7 +1,9 @@
 import React from 'react';
 import { useTargetChat } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
 import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
+import { useConversationAssistantStatuses } from '@/features/kubernetes-cluster-detail/hooks/useConversationAssistantStatuses';
 import { ChatSession, KubernetesCluster, Workspace } from '@/types';
+import { deriveAssistantRuntimeStatus, type AssistantNavStatus } from '@/app/assistantNavStatus';
 
 interface AppClusterChatRuntimeProps {
   cluster: KubernetesCluster | null;
@@ -10,6 +12,7 @@ interface AppClusterChatRuntimeProps {
   currentWorkspacePermissions?: Workspace['permissions'];
   initialActiveSessionId?: string | null;
   isChatActive: boolean;
+  onAssistantRuntimeStatusChange?: (status: AssistantNavStatus) => void;
   onConversationDeleted?: (sessionName: string, targetName: string) => void;
   onUpdateSessions: (clusterId: string, sessions: ChatSession[]) => void;
   children: (controller: TargetChatController | null) => React.ReactNode;
@@ -26,6 +29,7 @@ const AppClusterChatRuntimeInner: React.FC<AppClusterChatRuntimeInnerProps> = ({
   currentWorkspacePermissions,
   initialActiveSessionId,
   isChatActive,
+  onAssistantRuntimeStatusChange,
   onConversationDeleted,
   onUpdateSessions,
   children
@@ -45,8 +49,23 @@ const AppClusterChatRuntimeInner: React.FC<AppClusterChatRuntimeInnerProps> = ({
     },
     initialActiveSessionId
   });
+  const assistantRuntimeStatus = deriveAssistantRuntimeStatus(controller);
+  const sessionAssistantStatuses = useConversationAssistantStatuses({
+    activeSessionId: controller.activeSessionId,
+    isChatVisible: isChatActive,
+    runTracesByRunId: controller.runTracesByRunId,
+    sessions: controller.sessions
+  });
+  const controllerWithAssistantStatuses = React.useMemo<TargetChatController>(() => ({
+    ...controller,
+    sessionAssistantStatuses
+  }), [controller, sessionAssistantStatuses]);
 
-  return <>{children(controller)}</>;
+  React.useEffect(() => {
+    onAssistantRuntimeStatusChange?.(assistantRuntimeStatus);
+  }, [assistantRuntimeStatus, onAssistantRuntimeStatusChange]);
+
+  return <>{children(controllerWithAssistantStatuses)}</>;
 };
 
 export const AppClusterChatRuntime: React.FC<AppClusterChatRuntimeProps> = ({

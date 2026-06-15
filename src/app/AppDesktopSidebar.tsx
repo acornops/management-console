@@ -2,12 +2,15 @@ import React from 'react';
 import type { Transition } from 'framer-motion';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
+import { NavCountBadge } from '@/app/NavCountBadge';
 import { ICONS } from '@/constants';
 import { Tooltip } from '@/components/common/Tooltip';
 import { canReadWorkspaceAuditLog, canReadWorkspaceData } from '@/app/workspacePermissions';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, Workspace } from '@/types';
 import { AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
+import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 
 type ActiveResourceNav =
   | 'overview'
@@ -43,6 +46,7 @@ interface AppDesktopSidebarProps {
   isVirtualMachineSidebar: boolean;
   activeResourceNav: ActiveResourceNav;
   selectedClusterFindingCount: number;
+  clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmFindingCount: number;
   workspaceInvestigationCount: number;
   theme: 'light' | 'dark';
@@ -84,6 +88,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   isVirtualMachineSidebar,
   activeResourceNav,
   selectedClusterFindingCount,
+  clusterAssistantNavStatus,
   selectedVmFindingCount,
   workspaceInvestigationCount,
   theme,
@@ -378,6 +383,10 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     label={label}
                     onClick={() => onNavigateClusterSubview(tab)}
                     badge={tab === 'overview' && selectedClusterFindingCount > 0 ? selectedClusterFindingCount : undefined}
+                    assistantStatus={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
+                    assistantStatusLabel={tab === 'chat' && clusterAssistantNavStatus !== 'idle'
+                      ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`)
+                      : undefined}
                   />
                 ))}
               </SidebarSection>
@@ -575,8 +584,10 @@ const SidebarNavButton: React.FC<{
   label: string;
   onClick: () => void;
   badge?: number;
+  assistantStatus?: AssistantNavStatus;
+  assistantStatusLabel?: string;
   title?: string;
-}> = ({ active, disabled, icon, label, onClick, badge, title }) => {
+}> = ({ active, disabled, icon, label, onClick, badge, assistantStatus = 'idle', assistantStatusLabel, title }) => {
   const shouldReduceMotion = useReducedMotion();
   const activeMarkerTransition: Transition = shouldReduceMotion
     ? { duration: 0 }
@@ -602,10 +613,9 @@ const SidebarNavButton: React.FC<{
         {icon}
         <span>{label}</span>
       </div>
-      <div className="relative z-10">
-        {typeof badge === 'number' ? (
-          <span className="rounded-full bg-status-danger px-1.5 py-0.5 text-[9px] font-bold text-[oklch(0.99_0.004_86)]">{badge}</span>
-        ) : null}
+      <div className="relative z-10 flex items-center gap-2">
+        {typeof badge === 'number' ? <NavCountBadge count={badge} /> : null}
+        <AssistantNavStatusIndicator status={assistantStatus} label={assistantStatusLabel} />
       </div>
     </motion.button>
   );

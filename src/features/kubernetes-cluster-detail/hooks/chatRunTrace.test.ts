@@ -201,6 +201,7 @@ describe('chatRunTrace helpers', () => {
       approval_id: 'approval-1',
       tool_call_id: 'call-1',
       tool: 'restart_workload',
+      summary: 'Restart workload in namespace prod.',
       arguments: { namespace: 'prod' },
       expires_at: '2026-05-25T00:05:00.000Z'
     }));
@@ -267,6 +268,7 @@ describe('chatRunTrace helpers', () => {
       runId: 'run-1',
       toolCallId: 'call-1',
       action: 'Run restart_workload',
+      summary: 'Restart workload in namespace prod.',
       toolName: 'restart_workload',
       arguments: { namespace: 'prod' },
       expiresAt: '2026-05-25T00:05:00.000Z',

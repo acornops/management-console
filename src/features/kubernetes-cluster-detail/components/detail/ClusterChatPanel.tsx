@@ -55,6 +55,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
     isCancellingRun,
     visibleMessages,
     runTracesByRunId,
+    sessionAssistantStatuses,
     transcriptRef,
     setActiveSessionId,
     handleCreateSession,
@@ -106,6 +107,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       userMarkdownComponents={userMarkdownComponents}
       visibleMessages={visibleMessages}
       runTracesByRunId={runTracesByRunId}
+      sessionAssistantStatuses={sessionAssistantStatuses}
       transcriptRef={transcriptRef}
       onChatScroll={handleChatScroll}
       onLoadEarlierMessages={handleLoadEarlierMessages}

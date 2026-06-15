@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 const root = resolve(__dirname, '../..');
 const desktopSidebar = readFileSync(resolve(root, 'src/app/AppDesktopSidebar.tsx'), 'utf8');
+const assistantStatusIndicator = readFileSync(resolve(root, 'src/app/AssistantNavStatusIndicator.tsx'), 'utf8');
+const navCountBadge = readFileSync(resolve(root, 'src/app/NavCountBadge.tsx'), 'utf8');
 
 describe('desktop sidebar workspace switcher', () => {
   it('uses popover/list semantics instead of incomplete menu roles', () => {
@@ -107,5 +109,26 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('compactAfter?: boolean');
     expect(desktopSidebar).toContain('data-sidebar-section-quiet={quiet ? \'true\' : undefined}');
     expect(desktopSidebar).toContain("quiet ? 'pt-0 pb-8' : compactAfter ? 'pb-4' : 'pb-10'");
+  });
+
+  it('renders compact assistant status indicators without adding nav-row text pills', () => {
+    expect(desktopSidebar).toContain('assistantStatus={tab === \'chat\' ? clusterAssistantNavStatus : \'idle\'}');
+    expect(desktopSidebar).toContain('AssistantNavStatusIndicator');
+    expect(assistantStatusIndicator).toContain('Tooltip content={label} side={tooltipSide}');
+    expect(assistantStatusIndicator).toContain('aria-label={label}');
+    expect(assistantStatusIndicator).toContain('title={withTooltip ? undefined : label}');
+    expect(desktopSidebar).toContain('title={title}');
+    expect(desktopSidebar).not.toContain('title={title || assistantStatusLabel}');
+    expect(assistantStatusIndicator).not.toContain('aria-live');
+    expect(assistantStatusIndicator).toContain('h-5 w-5 shrink-0');
+    expect(desktopSidebar).not.toContain('Needs review');
+  });
+
+  it('uses fixed circular count badges for workspace and target nav counts', () => {
+    expect(desktopSidebar).toContain("import { NavCountBadge } from '@/app/NavCountBadge'");
+    expect(desktopSidebar).toContain('<NavCountBadge count={badge} />');
+    expect(navCountBadge).toContain('h-5 w-5 min-w-5');
+    expect(navCountBadge).toContain('`${MAX_NAV_BADGE_COUNT}+`');
+    expect(desktopSidebar).not.toContain('rounded-full bg-status-danger px-1.5');
   });
 });

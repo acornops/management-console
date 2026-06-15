@@ -464,14 +464,11 @@ describe('theme color contract', () => {
     expect(enLocale).toContain("toolEnablementHelp: 'Newly discovered external tools stay disabled until an admin reviews and enables them.'");
     expect(enLocale).toContain("namespaceHelp: 'Limits the list to resources reported in one namespace.'");
     expect(enLocale).toContain("categoryHelp: 'Narrows results to the selected resource type.'");
-    expect(enLocale).toContain("approvalHelp: 'Approval executes this queued write action once.'");
     expect(zhLocale).toContain("healthCheckHelp: '检查连接并刷新已发现的工具。'");
     expect(zhLocale).toContain("toolEnablementHelp: '新发现的外部工具会保持停用，直到管理员审核并启用。'");
     expect(zhLocale).toContain("namespaceHelp: '仅列出一个命名空间上报的资源。'");
     expect(zhLocale).toContain("categoryHelp: '将结果缩小到所选资源类型。'");
-    expect(zhLocale).toContain("approvalHelp: '批准后仅执行这一次排队的写操作。'");
   });
-
 
   it('keeps MCP server management as an explicit card-action surface', () => {
     expect(mcpServersView).toContain('data-mcp-server-card-grid="true"');

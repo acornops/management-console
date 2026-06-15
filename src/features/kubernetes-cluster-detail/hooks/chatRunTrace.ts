@@ -309,6 +309,7 @@ export function createRunEventHandler(args: {
       const approvalId = typeof event.payload?.approval_id === 'string' ? event.payload.approval_id : '';
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
       const toolCallId = typeof event.payload?.tool_call_id === 'string' ? event.payload.tool_call_id : undefined;
+      const summary = typeof event.payload?.summary === 'string' ? event.payload.summary : undefined;
       const expiresAt = typeof event.payload?.expires_at === 'string' ? event.payload.expires_at : undefined;
       const toolArguments = event.payload?.arguments && typeof event.payload.arguments === 'object'
         ? event.payload.arguments as Record<string, unknown>
@@ -319,6 +320,7 @@ export function createRunEventHandler(args: {
           runId: event.run_id,
           toolCallId,
           action: `Run ${toolName}`,
+          summary,
           toolName,
           arguments: toolArguments,
           expiresAt,
