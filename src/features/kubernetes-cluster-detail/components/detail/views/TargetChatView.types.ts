@@ -1,5 +1,6 @@
 import type React from 'react';
 import type { Components } from 'react-markdown';
+import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ChatMessage, ChatSession, KubernetesCluster } from '@/types';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
@@ -34,6 +35,7 @@ export interface TargetChatViewProps {
   userMarkdownComponents: Components;
   visibleMessages: ChatMessage[];
   runTracesByRunId: Record<string, LiveRunTrace>;
+  sessionAssistantStatuses?: Record<string, AssistantNavStatus>;
   transcriptRef: (node: HTMLDivElement | null) => void;
   onChatScroll: () => void;
   onLoadEarlierMessages: () => void | Promise<void>;

@@ -32,6 +32,11 @@ export const zh = {
     network: '网络',
     logs: '日志',
     aiChat: 'AI 助手',
+    aiAssistantStatus: {
+      working: 'AI 助手正在处理',
+      review: 'AI 助手需要批准',
+      done: 'AI 助手已完成'
+    },
     clusterSettings: '集群设置',
     vmSettings: '虚拟机设置',
     navigation: '导航',
@@ -943,15 +948,9 @@ export const zh = {
     roleUser: '操作员',
     roleAssistant: 'AI 助手',
     approvalCheckpoint: '批准检查点',
-    approvalActionLabel: '操作',
-    approvalConsequenceLabel: '影响',
-    approvalConsequence: '批准后，这个受保护的写入或运行步骤会针对列出的目标执行。',
     approvalNoPermission: '你的工作区角色不能批准写入操作。',
-    approvalTargetLabel: '目标',
-    approvalArgumentsLabel: '参数',
-    guardTitle: '受保护操作',
-    guardBody: '请先确认操作和目标后再批准：{{action}}。',
-    approvalHelp: '批准后仅执行这一次排队的写操作。',
+    approvalAdvancedDetails: '高级详情',
+    guardTitle: '批准以下操作？',
     approvalStatus: {
       approved: '已批准。排队的写操作现在可以执行。',
       rejected: '已拒绝。写操作不会执行。',
@@ -962,6 +961,22 @@ export const zh = {
       approved: '已批准',
       rejected: '已拒绝',
       expired: '已过期'
+    },
+    approvalFallbackTarget: {
+      workload: '工作负载',
+      namespace: '命名空间 {{namespace}}',
+      kindNamespace: '{{kind}}（命名空间 {{namespace}}）',
+      selectedKind: '选定的{{kind}}',
+      selectedTarget: '选定目标',
+      writeTool: '写入工具'
+    },
+    approvalFallbackSummary: {
+      restart: '重启 {{target}}。',
+      scaleReplicas: '将 {{target}} 扩缩到 {{replicas}} 个副本。',
+      scale: '扩缩 {{target}}。',
+      applyRemediation: '将修复计划应用到 {{target}}。',
+      genericTarget: '对 {{target}} 运行 {{tool}}。',
+      generic: '运行请求的写入操作。'
     },
     inputPlaceholder: '让 AcornOps 检查 {{name}}...',
     noChatAccess: '你没有权限在此工作区开始目标聊天。',

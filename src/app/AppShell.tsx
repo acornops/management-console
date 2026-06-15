@@ -5,6 +5,11 @@ import { AppDesktopSidebar } from '@/app/AppDesktopSidebar';
 import { AppDialogs } from '@/app/AppDialogs';
 import { AppMobileNavigation } from '@/app/AppMobileNavigation';
 import { AppPageContent } from '@/app/AppPageContent';
+import {
+  isActiveAssistantStatus,
+  isTerminalAssistantStatus,
+  type AssistantNavStatus
+} from '@/app/assistantNavStatus';
 import { ActivePrimaryNav, ActiveResourceNav, getClusterBackToWorkspacePath, getVirtualMachineBackToWorkspacePath } from '@/app/appRouteState';
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
@@ -214,6 +219,37 @@ export const AppShell: React.FC<AppShellProps> = ({
   const chatRuntimeWorkspace = chatRuntimeCluster ? workspaces.find((workspace) => workspace.id === chatRuntimeCluster.workspaceId) : undefined;
   const chatRuntimeInitialSessionId = routeChatCluster ? new URLSearchParams(window.location.search).get('session') : null;
   const [pendingVmRunbookPrompt, setPendingVmRunbookPrompt] = React.useState<PendingVmRunbookPrompt | null>(null);
+  const isClusterChatVisible = activeClusterSubview === 'chat' || Boolean(isClusterCopilotOpen && clusterCopilotCluster);
+  const [clusterAssistantNavStatus, setClusterAssistantNavStatus] = React.useState<AssistantNavStatus>('idle');
+  const previousAssistantRuntimeStatusRef = React.useRef<AssistantNavStatus>('idle');
+  const isClusterChatVisibleRef = React.useRef(isClusterChatVisible);
+
+  React.useEffect(() => {
+    isClusterChatVisibleRef.current = isClusterChatVisible;
+    if (isClusterChatVisible) {
+      setClusterAssistantNavStatus((current) => isTerminalAssistantStatus(current) ? 'idle' : current);
+    }
+  }, [isClusterChatVisible]);
+
+  React.useEffect(() => {
+    previousAssistantRuntimeStatusRef.current = 'idle';
+    setClusterAssistantNavStatus('idle');
+  }, [chatRuntimeCluster?.id]);
+
+  const handleAssistantRuntimeStatusChange = React.useCallback((status: AssistantNavStatus) => {
+    const previousStatus = previousAssistantRuntimeStatusRef.current;
+    previousAssistantRuntimeStatusRef.current = status;
+
+    setClusterAssistantNavStatus((current) => {
+      if (isActiveAssistantStatus(status)) return status;
+      if (isTerminalAssistantStatus(status)) {
+        return isActiveAssistantStatus(previousStatus) && !isClusterChatVisibleRef.current
+          ? status
+          : 'idle';
+      }
+      return isTerminalAssistantStatus(current) ? current : 'idle';
+    });
+  }, []);
 
   const replaceWorkspaceKubernetesClusters = React.useCallback((workspaceId: string, nextClusters: KubernetesCluster[]) => {
     setKubernetesClusters((current) => [
@@ -287,6 +323,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         isDark={isDark}
         isMobileNavOpen={isMobileNavOpen}
         selectedClusterFindingCount={selectedClusterFindingCount}
+        clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmFindingCount={selectedSidebarVmFindingCount}
         workspaceInvestigationCount={workspaceInvestigationCount}
         selectedSidebarCluster={selectedSidebarCluster}
@@ -324,6 +361,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         activeResourceNav={activeResourceNav}
         selectedClusterFindingCount={selectedClusterFindingCount}
+        clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmFindingCount={selectedSidebarVmFindingCount}
         workspaceInvestigationCount={workspaceInvestigationCount}
         theme={theme}
@@ -354,7 +392,8 @@ export const AppShell: React.FC<AppShellProps> = ({
         currentUserRole={chatRuntimeWorkspace ? getCurrentUserRoleForWorkspace(chatRuntimeWorkspace.id) : 'viewer'}
         currentWorkspacePermissions={chatRuntimeWorkspace?.permissions}
         initialActiveSessionId={chatRuntimeInitialSessionId}
-        isChatActive={isClusterCopilotOpen || activeClusterSubview === 'chat'}
+        isChatActive={isClusterChatVisible}
+        onAssistantRuntimeStatusChange={handleAssistantRuntimeStatusChange}
         onConversationDeleted={onConversationDeleted}
         onUpdateSessions={(clusterId, sessions) => updateKubernetesCluster(clusterId, { chatSessions: sessions })}
       >

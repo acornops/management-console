@@ -12,6 +12,56 @@ interface ApprovalCheckpointProps {
   t: TFunction;
 }
 
+function cleanText(value: unknown): string {
+  return String(value ?? '').replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function targetLabel(t: TFunction, argumentsValue: Record<string, unknown> | undefined, defaultKind?: string): string {
+  const kind = cleanText(argumentsValue?.kind) || cleanText(defaultKind);
+  const namespace = cleanText(argumentsValue?.namespace);
+  const name = cleanText(argumentsValue?.name);
+  const target = cleanText(argumentsValue?.target || argumentsValue?.resource || argumentsValue?.service);
+
+  if (namespace && name) return `${kind ? `${kind} ` : ''}${namespace}/${name}`;
+  if (name) return `${kind ? `${kind} ` : ''}${name}`;
+  if (target) return `${kind ? `${kind} ` : ''}${target}`;
+  if (namespace) {
+    return kind
+      ? t('chat.approvalFallbackTarget.kindNamespace', { kind, namespace })
+      : t('chat.approvalFallbackTarget.namespace', { namespace });
+  }
+  return kind ? t('chat.approvalFallbackTarget.selectedKind', { kind }) : '';
+}
+
+function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): string {
+  const toolName = cleanText(approval.toolName || approval.action).replace(/[_.]+/g, ' ');
+  if (approval.toolName === 'restart_workload') {
+    return t('chat.approvalFallbackSummary.restart', {
+      target: targetLabel(t, approval.arguments, t('chat.approvalFallbackTarget.workload'))
+    });
+  }
+  if (approval.toolName === 'scale_workload') {
+    const replicas = cleanText(approval.arguments?.replicas);
+    const target = targetLabel(t, approval.arguments, t('chat.approvalFallbackTarget.workload'));
+    return replicas
+      ? t('chat.approvalFallbackSummary.scaleReplicas', { target, replicas })
+      : t('chat.approvalFallbackSummary.scale', { target });
+  }
+  if (approval.toolName === 'apply_remediation') {
+    return t('chat.approvalFallbackSummary.applyRemediation', {
+      target: targetLabel(t, approval.arguments) || t('chat.approvalFallbackTarget.selectedTarget')
+    });
+  }
+  const target = targetLabel(t, approval.arguments);
+  if (target) {
+    return t('chat.approvalFallbackSummary.genericTarget', {
+      tool: toolName || t('chat.approvalFallbackTarget.writeTool'),
+      target
+    });
+  }
+  return cleanText(approval.action) || t('chat.approvalFallbackSummary.generic');
+}
+
 export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
   approval,
   canApproveWriteActions,
@@ -19,11 +69,7 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
   onReject,
   t
 }) => {
-  const approvalTarget = [
-    approval.toolName,
-    typeof approval.arguments?.namespace === 'string' ? approval.arguments.namespace : '',
-    typeof approval.arguments?.name === 'string' ? approval.arguments.name : ''
-  ].filter(Boolean).join(' · ');
+  const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval, t);
   const approvalStatus = approval.status || 'pending';
   const isPending = approvalStatus === 'pending';
   const StatusIcon = approvalStatus === 'approved' ? CheckCircle2 : approvalStatus === 'pending' ? ShieldCheck : XCircle;
@@ -37,60 +83,48 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
   return (
     <section
       data-chat-approval-checkpoint="true"
-      className="mt-5 overflow-hidden rounded-md border border-ui-border bg-ui-bg/85 text-ui-text shadow-sm"
+      className="mt-5 overflow-hidden rounded-md border border-ui-border bg-ui-bg text-ui-text shadow-sm"
       aria-label={t('chat.approvalCheckpoint')}
     >
-      <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-surface px-4 py-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${statusToneClass}`}>
-            <StatusIcon className="h-4 w-4" />
-          </div>
-          <div className="min-w-0">
-            <p className="type-micro-label text-ui-text-muted">{t('chat.approvalCheckpoint')}</p>
-            <h3 className="mt-1 text-base font-semibold leading-6 text-ui-text">{t('chat.guardTitle')}</h3>
-            <p className="mt-1 text-xs leading-5 text-ui-text-muted">{t('chat.guardBody', { action: approval.action })}</p>
-          </div>
-        </div>
-        <p className={`type-micro-label shrink-0 rounded-full border px-2.5 py-1 ${statusToneClass}`} aria-live="polite">
-          {t(`chat.approvalStatusLabel.${approvalStatus}`)}
-        </p>
-      </div>
-
       <div className="px-4 py-4">
-        <p className="text-xs leading-5 text-ui-text-muted">
-          {isPending ? t('chat.approvalHelp') : t(`chat.approvalStatus.${approvalStatus}`)}
-        </p>
-        <div className="mt-3 divide-y divide-ui-border rounded-md border border-ui-border bg-ui-surface/70">
-          <div className="grid gap-1 px-3 py-2.5 sm:grid-cols-[7.5rem_minmax(0,1fr)]">
-            <p className="type-micro-label text-ui-text-muted">{t('chat.approvalActionLabel')}</p>
-            <p className="break-words text-sm font-semibold leading-6 text-ui-text">{approval.action}</p>
-          </div>
-          <div className="grid gap-1 px-3 py-2.5 sm:grid-cols-[7.5rem_minmax(0,1fr)]">
-            <p className="type-micro-label text-ui-text-muted">{t('chat.approvalConsequenceLabel')}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${statusToneClass}`}>
+              <StatusIcon className="h-4 w-4" />
+            </div>
             <div className="min-w-0">
-              <p className="text-sm leading-6 text-ui-text">{t('chat.approvalConsequence')}</p>
-              {!canApproveWriteActions && (
-                <p className="mt-1 text-xs leading-5 text-status-warning-text">{t('chat.approvalNoPermission')}</p>
-              )}
+              <h3 className="text-sm font-semibold leading-6 text-ui-text">{t('chat.guardTitle')}</h3>
+              <p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">
+                {approvalSummary}
+              </p>
             </div>
           </div>
-          {approvalTarget && (
-            <div className="grid gap-1 px-3 py-2.5 sm:grid-cols-[7.5rem_minmax(0,1fr)]">
-              <p className="type-micro-label text-ui-text-muted">{t('chat.approvalTargetLabel')}</p>
-              <p className="min-w-0 break-words text-xs font-semibold leading-5 text-ui-text-muted">{approvalTarget}</p>
-            </div>
-          )}
+          <p className={`type-micro-label shrink-0 rounded-full border px-2.5 py-1 ${statusToneClass}`} aria-live="polite">
+            {t(`chat.approvalStatusLabel.${approvalStatus}`)}
+          </p>
         </div>
+        {!isPending && (
+          <p className="mt-2 text-xs leading-5 text-ui-text-muted">{t(`chat.approvalStatus.${approvalStatus}`)}</p>
+        )}
+        {isPending && !canApproveWriteActions && (
+          <p className="mt-2 text-xs leading-5 text-status-warning-text">{t('chat.approvalNoPermission')}</p>
+        )}
         {approval.arguments && Object.keys(approval.arguments).length > 0 && (
-          <div className="mt-3">
-            <p className="type-micro-label text-ui-text-muted">{t('chat.approvalArgumentsLabel')}</p>
+          <details className="mt-3 rounded-md border border-ui-border bg-ui-surface/40 px-3 py-2">
+            <summary className="cursor-pointer select-none text-xs font-semibold leading-5 text-ui-text-muted">
+              {t('chat.approvalAdvancedDetails')}
+            </summary>
             <pre className="type-code mt-1 max-h-36 overflow-auto rounded-md border border-ui-border bg-code-bg px-3 py-2 text-slate-100">
               {JSON.stringify(approval.arguments, null, 2)}
             </pre>
-          </div>
+          </details>
         )}
         {isPending && (
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <Button onClick={() => void onReject(approval.id)} variant="secondary" size="sm" className="w-full sm:w-auto">
+              <XCircle className="h-4 w-4" />
+              {t('chat.rejectAction')}
+            </Button>
             <Button
               onClick={() => void onApprove(approval.id)}
               variant="primary"
@@ -100,10 +134,6 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
             >
               <CheckCircle2 className="h-4 w-4" />
               {t('chat.approveAction')}
-            </Button>
-            <Button onClick={() => void onReject(approval.id)} variant="secondary" size="sm" className="w-full sm:w-auto">
-              <XCircle className="h-4 w-4" />
-              {t('chat.rejectAction')}
             </Button>
           </div>
         )}

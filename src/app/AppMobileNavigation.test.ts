@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 const root = resolve(__dirname, '../..');
 const mobileNavigation = readFileSync(resolve(root, 'src/app/AppMobileNavigation.tsx'), 'utf8');
+const assistantStatusIndicator = readFileSync(resolve(root, 'src/app/AssistantNavStatusIndicator.tsx'), 'utf8');
+const navCountBadge = readFileSync(resolve(root, 'src/app/NavCountBadge.tsx'), 'utf8');
 
 describe('mobile navigation structure', () => {
   it('uses named sections instead of vague More groups', () => {
@@ -53,5 +55,25 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation.indexOf("t('app.virtualMachines')")).toBeLessThan(
       mobileNavigation.indexOf("['investigations', t('app.investigations')")
     );
+  });
+
+  it('keeps assistant activity as a compact trailing status indicator', () => {
+    expect(mobileNavigation).toContain('AssistantNavStatusIndicator');
+    expect(mobileNavigation).toContain('status={tab === \'chat\' ? clusterAssistantNavStatus : \'idle\'}');
+    expect(mobileNavigation).toContain('withTooltip={false}');
+    expect(mobileNavigation).not.toContain('tooltipSide="left"');
+    expect(assistantStatusIndicator).toContain('title={withTooltip ? undefined : label}');
+    expect(assistantStatusIndicator).toContain('aria-label={label}');
+    expect(assistantStatusIndicator).not.toContain('aria-live');
+    expect(assistantStatusIndicator).toContain('h-5 w-5 shrink-0');
+    expect(mobileNavigation).not.toContain('Needs review');
+  });
+
+  it('uses the same fixed circular count badge as desktop navigation', () => {
+    expect(mobileNavigation).toContain("import { NavCountBadge } from '@/app/NavCountBadge'");
+    expect(mobileNavigation).toContain('<NavCountBadge count={badge} />');
+    expect(mobileNavigation).not.toContain('MobileNavBadge');
+    expect(navCountBadge).toContain('h-5 w-5 min-w-5');
+    expect(navCountBadge).toContain('`${MAX_NAV_BADGE_COUNT}+`');
   });
 });

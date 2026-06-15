@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   approvalCheckpoint,
+  appClusterChatRuntime,
   assistantTurn,
   chatComposerNotice,
   chatTranscriptStates,
+  conversationAssistantStatuses,
   chatSessionSync,
   chatSubmit,
   chatView,
@@ -12,6 +14,7 @@ import {
   markdownComponents,
   messageActions,
   styles,
+  targetChatRunWatcher,
   traceFooter,
   useTargetChat,
   userMessageTurn,
@@ -59,17 +62,36 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain('const StatusIcon');
     expect(approvalCheckpoint).toContain('const statusToneClass');
     expect(approvalCheckpoint).toContain("t(`chat.approvalStatusLabel.${approvalStatus}`)");
-    expect(approvalCheckpoint).toContain("t('chat.approvalActionLabel')");
-    expect(approvalCheckpoint).toContain("t('chat.approvalConsequenceLabel')");
-    expect(approvalCheckpoint).toContain("t('chat.approvalConsequence')");
-    expect(approvalCheckpoint).toContain("t('chat.approvalHelp')");
+    expect(approvalCheckpoint).toContain('const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval, t);');
+    expect(approvalCheckpoint).toContain("String(value ?? '')");
+    expect(approvalCheckpoint).toContain("approval.toolName === 'apply_remediation'");
+    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.applyRemediation'");
+    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackTarget.selectedTarget')");
+    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.genericTarget'");
+    expect(approvalCheckpoint).toContain('className="px-4 py-4"');
+    expect(approvalCheckpoint).toContain('<h3 className="text-sm font-semibold leading-6 text-ui-text">{t(\'chat.guardTitle\')}</h3>');
+    expect(approvalCheckpoint).toContain('<p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">');
+    expect(approvalCheckpoint).toContain("t('chat.approvalAdvancedDetails')");
+    expect(approvalCheckpoint).toContain('<details');
     expect(approvalCheckpoint).toContain('type-code mt-1 max-h-36');
+    expect(chatSessionSync).toContain('summary: approval.summary');
+    expect(targetChatRunWatcher).toContain(
+      "const summary = typeof event.payload?.summary === 'string' ? event.payload.summary : undefined;"
+    );
     expect(assistantTurn).toMatch(/<ApprovalCheckpoint[\s\S]*?onApprove=\{onApprove\}/);
     expect(enLocale).toContain("approvalCheckpoint: 'Approval checkpoint'");
+    expect(enLocale).toContain("approvalAdvancedDetails: 'Advanced details'");
+    expect(enLocale).toContain("guardTitle: 'Approve the following action?'");
     expect(enLocale).toContain("approvalStatusLabel: {");
+    expect(enLocale).toContain("approvalFallbackSummary: {");
+    expect(enLocale).toContain("genericTarget: 'Run {{tool}} against {{target}}.'");
     expect(enLocale).toContain("approveAction: 'Approve once'");
     expect(zhLocale).toContain("approvalCheckpoint: '批准检查点'");
+    expect(zhLocale).toContain("approvalAdvancedDetails: '高级详情'");
+    expect(zhLocale).toContain("guardTitle: '批准以下操作？'");
     expect(zhLocale).toContain('approvalStatusLabel: {');
+    expect(zhLocale).toContain('approvalFallbackSummary: {');
+    expect(zhLocale).toContain("genericTarget: '对 {{target}} 运行 {{tool}}。'");
     expect(zhLocale).toContain("approveAction: '批准一次'");
   });
 
@@ -100,6 +122,20 @@ describe('target chat polish contracts', () => {
     expect(enLocale).toContain("hideHistory: 'Hide conversation history'");
     expect(enLocale).toContain("newConversation: 'New Conversation'");
     expect(enLocale).toContain("runCancelledMessage: 'Run cancelled. You can send another message when ready.'");
+    expect(conversationHistory).toContain('AssistantNavStatusIndicator');
+    expect(conversationHistory).toContain('sessionAssistantStatuses?: Record<string, AssistantNavStatus>');
+    expect(conversationHistory).toContain("t(`app.aiAssistantStatus.${assistantStatus}`)");
+    expect(conversationHistory).not.toContain('>Live<');
+    expect(chatView).toContain('sessionAssistantStatuses = {}');
+    expect(appClusterChatRuntime).toContain('useConversationAssistantStatuses({');
+    expect(appClusterChatRuntime).toContain('isChatVisible: isChatActive');
+    expect(appClusterChatRuntime).toContain('sessionAssistantStatuses');
+    expect(conversationAssistantStatuses).toContain('const [completedSessionStatusIds, setCompletedSessionStatusIds] = useState<Set<string>>(() => new Set());');
+    expect(conversationAssistantStatuses).toContain('const previousSessionStatusesRef = useRef<Map<string, AssistantNavStatus>>(new Map());');
+    expect(conversationAssistantStatuses).toContain('const isUnseenSession = !isChatVisible || session.id !== activeSessionId;');
+    expect(conversationAssistantStatuses).toContain('isActiveAssistantStatus(previousStatus) && isUnseenSession');
+    expect(conversationAssistantStatuses).toContain("completedSessionStatusIds.has(session.id)");
+    expect(conversationAssistantStatuses).toContain("rawStatus === 'done'");
     expect(chatView).toContain('Plus');
     expect(chatView).toContain('type-route-title');
     expect(chatView).toContain('type-body mt-2 max-w-2xl');

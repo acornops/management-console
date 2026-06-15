@@ -121,6 +121,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
     isCancellingRun,
     visibleMessages,
     runTracesByRunId,
+    sessionAssistantStatuses,
     transcriptRef,
     setActiveSessionId,
     handleCreateSession,
@@ -254,6 +255,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 userMarkdownComponents={userMarkdownComponents}
                 visibleMessages={visibleMessages}
                 runTracesByRunId={runTracesByRunId}
+                sessionAssistantStatuses={sessionAssistantStatuses}
                 transcriptRef={transcriptRef}
                 onChatScroll={handleChatScroll}
                 onLoadEarlierMessages={handleLoadEarlierMessages}

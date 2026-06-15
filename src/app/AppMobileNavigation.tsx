@@ -1,12 +1,15 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
+import { NavCountBadge } from '@/app/NavCountBadge';
 import { Dialog } from '@/components/common/Dialog';
 import { ICONS } from '@/constants';
 import { canReadWorkspaceAuditLog, canReadWorkspaceData } from '@/app/workspacePermissions';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
+import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 
 type ActivePrimaryNav = 'workspaces' | 'clusters';
 type ActiveResourceNav =
@@ -42,6 +45,7 @@ interface AppMobileNavigationProps {
   isDark: boolean;
   isMobileNavOpen: boolean;
   selectedClusterFindingCount: number;
+  clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmFindingCount: number;
   workspaceInvestigationCount: number;
   selectedSidebarCluster: KubernetesCluster | null;
@@ -62,12 +66,6 @@ interface AppMobileNavigationProps {
   onToggleTheme: () => void;
 }
 
-const MobileNavBadge: React.FC<{ count: number }> = ({ count }) => (
-  <span className="rounded-full bg-status-danger px-1.5 py-0.5 text-[9px] font-bold leading-none text-[oklch(0.99_0.004_86)]">
-    {count}
-  </span>
-);
-
 export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   activeClusterSubview,
   activeVmSubview,
@@ -78,6 +76,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   isDark,
   isMobileNavOpen,
   selectedClusterFindingCount,
+  clusterAssistantNavStatus,
   selectedVmFindingCount,
   workspaceInvestigationCount,
   selectedSidebarCluster,
@@ -263,7 +262,16 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                               <Icon className="h-3.5 w-3.5 shrink-0" />
                               <span className="truncate">{label}</span>
                             </span>
-                            {badge > 0 && <MobileNavBadge count={badge} />}
+                            <span className="flex shrink-0 items-center gap-2">
+                              {badge > 0 && <NavCountBadge count={badge} />}
+                              <AssistantNavStatusIndicator
+                                status={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
+                                label={tab === 'chat' && clusterAssistantNavStatus !== 'idle'
+                                  ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`)
+                                  : undefined}
+                                withTooltip={false}
+                              />
+                            </span>
                           </span>
                         </button>
                       ))}
@@ -308,7 +316,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                               <Icon className="h-3.5 w-3.5 shrink-0" />
                               <span className="truncate">{label}</span>
                             </span>
-                            {badge > 0 && <MobileNavBadge count={badge} />}
+                            {badge > 0 && <NavCountBadge count={badge} />}
                           </span>
                         </button>
                       ))}
@@ -338,7 +346,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             >
                               <span className="flex w-full items-center justify-between gap-3">
                                 <span>{label}</span>
-                                {badge > 0 && <MobileNavBadge count={badge} />}
+                                {badge > 0 && <NavCountBadge count={badge} />}
                               </span>
                             </button>
                           ))}
@@ -362,7 +370,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             >
                               <span className="flex w-full items-center justify-between gap-3">
                                 <span>{label}</span>
-                                {badge > 0 && <MobileNavBadge count={badge} />}
+                                {badge > 0 && <NavCountBadge count={badge} />}
                               </span>
                             </button>
                           ))}

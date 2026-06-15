@@ -250,7 +250,7 @@ Session listing response must remain cursor-based:
 
 - `{ items, nextCursor? }`
 - Each session item includes `targetId`, `targetType`, `createdBy`, and optional `createdByUser.{id,displayName}`. Kubernetes session items also include `clusterId`, which is the same backing target ID.
-- Run details and approval replay payloads include `targetId` and `targetType`. Kubernetes payloads also include `clusterId`; non-Kubernetes targets must not receive a synthetic cluster alias.
+- Run details and approval replay payloads include `targetId` and `targetType`. Approval payloads may include `summary`, a human-readable sentence for approval UI copy. Kubernetes payloads also include `clusterId`; non-Kubernetes targets must not receive a synthetic cluster alias.
 
 Recent target chat activity uses `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity?windowSeconds=300`. It requires target read access, not `create_sessions`. The response includes `targetId`, `targetType`, `targetName`, `windowSeconds`, `generatedAt`, and `recentActivity[]` rows with owner metadata, `lastActivityAt`, latest run metadata, active run metadata, `hasActiveRun`, `hasRecentWriteCapableRun`, and optional `latestToolAccessMode`. The management console uses this payload before starting a local draft conversation so recent target activity can be reviewed without creating a backend session.
 
@@ -285,10 +285,10 @@ Current event types used by the UI:
 - `assistant_reasoning_summary_unavailable`
 - `tool_call_started`
 - `tool_call_completed`
-- `tool_approval_requested`
-- `tool_approval_approved`
-- `tool_approval_rejected`
-- `tool_approval_expired`
+- `tool_approval_requested` with optional `payload.summary`
+- `tool_approval_approved` with optional `payload.summary`
+- `tool_approval_rejected` with optional `payload.summary`
+- `tool_approval_expired` with optional `payload.summary`
 - `assistant_message_completed`
 - `run_failed`
 - `run_cancelled`
@@ -303,4 +303,4 @@ a new message without waiting for stale stream writers.
 
 The management console sends `toolAccessMode=read_write` when the current workspace permissions allow write-capable runs. It must not depend on the browser having already loaded the full MCP tool catalog. The control plane remains authoritative and may still reject the request or filter write tools out of the run snapshot if agent, role, or policy conditions are not met.
 
-When a write approval is requested, the management console renders the approval payload from run events or approval replay and submits explicit approve/reject decisions to the control plane. It does not execute writes locally and must treat the backend approval state as authoritative when a decision has already been recorded or expired.
+When a write approval is requested, the management console renders the approval payload from run events or approval replay and submits explicit approve/reject decisions to the control plane. If present, `summary` is displayed as explanatory copy only. The console does not execute writes locally and must treat the backend approval state as authoritative when a decision has already been recorded or expired.

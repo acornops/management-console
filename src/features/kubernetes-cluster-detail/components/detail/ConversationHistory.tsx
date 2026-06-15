@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { History, MessageSquare, Trash2 } from 'lucide-react';
 import type { TFunction } from 'i18next';
+import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
+import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ChatSession } from '@/types';
 
@@ -8,6 +10,7 @@ interface ConversationHistoryProps {
   appName: string;
   sessions: ChatSession[];
   activeSessionId: string | null;
+  sessionAssistantStatuses?: Record<string, AssistantNavStatus>;
   isSessionsLoading: boolean;
   canDeleteSessions: boolean;
   onSelectSession: (sessionId: string) => void;
@@ -32,6 +35,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   appName,
   sessions,
   activeSessionId,
+  sessionAssistantStatuses = {},
   isSessionsLoading,
   canDeleteSessions,
   onSelectSession,
@@ -74,6 +78,10 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         )}
         {sessions.map((session) => {
           const isActive = session.id === activeSessionId;
+          const assistantStatus = sessionAssistantStatuses[session.id] || 'idle';
+          const assistantStatusLabel = assistantStatus === 'idle'
+            ? undefined
+            : t(`app.aiAssistantStatus.${assistantStatus}`);
           return (
             <div
               key={session.id}
@@ -91,7 +99,14 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
               >
                 <History className={`mt-0.5 h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ui-text">{session.name}</p>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate text-sm font-semibold text-ui-text">{session.name}</p>
+                    <AssistantNavStatusIndicator
+                      status={assistantStatus}
+                      label={assistantStatusLabel}
+                      withTooltip={false}
+                    />
+                  </div>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-ui-text-muted">
                     <span>{formatSessionTime(session.timestamp)}</span>
                     {session.createdByUser?.displayName && (
@@ -100,7 +115,6 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                         <span>{session.createdByUser.displayName}</span>
                       </>
                     )}
-                    {session.hasActiveRun && <span className="rounded border border-accent/25 bg-accent-soft px-1.5 py-0.5 text-accent-strong">Live</span>}
                     {isRecentSession(session.timestamp) && <span className="rounded border border-ui-border bg-ui-surface px-1.5 py-0.5 text-ui-text-muted">Recent</span>}
                   </div>
                 </div>

@@ -31,16 +31,13 @@ function formatMessageTime(timestamp: number): string {
     minute: '2-digit'
   });
 }
-
 function getFocusableHistoryElements(panel: HTMLElement): HTMLElement[] {
   return Array.from(panel.querySelectorAll<HTMLElement>(historyFocusableSelector)).filter((element) => {
     if (element.getAttribute('aria-hidden') === 'true' || element.hasAttribute('hidden')) return false;
-
     const style = window.getComputedStyle(element);
     return style.display !== 'none' && style.visibility !== 'hidden';
   });
 }
-
 function getHistoryFocusWrapIndex(currentIndex: number, focusableCount: number, shiftKey: boolean): number | null {
   if (focusableCount <= 0) return null;
   if (currentIndex < 0) return shiftKey ? focusableCount - 1 : 0;
@@ -79,6 +76,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   userMarkdownComponents,
   visibleMessages,
   runTracesByRunId,
+  sessionAssistantStatuses = {},
   transcriptRef,
   onChatScroll,
   onLoadEarlierMessages,
@@ -353,6 +351,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                 appName={cluster.name}
                 sessions={sessions}
                 activeSessionId={activeSessionId}
+                sessionAssistantStatuses={sessionAssistantStatuses}
                 isSessionsLoading={isSessionsLoading}
                 onSelectSession={selectSession}
                 onDeleteSessionClick={openDeleteSessionModal}
@@ -617,6 +616,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                 appName={cluster.name}
                 sessions={sessions}
                 activeSessionId={activeSessionId}
+                sessionAssistantStatuses={sessionAssistantStatuses}
                 isSessionsLoading={isSessionsLoading}
                 onSelectSession={selectSession}
                 onDeleteSessionClick={openDeleteSessionModal}

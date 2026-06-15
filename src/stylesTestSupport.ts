@@ -18,6 +18,7 @@ export const workspaceSettingsPage = readSource('src/pages/WorkspaceSettingsPage
 export const desktopSidebar = readSource('src/app/AppDesktopSidebar.tsx');
 export const mobileNavigation = readSource('src/app/AppMobileNavigation.tsx');
 export const appShell = readSource('src/app/AppShell.tsx');
+export const appClusterChatRuntime = readSource('src/app/AppClusterChatRuntime.tsx');
 export const appPageContent = readSource('src/app/AppPageContent.tsx');
 export const appDialogs = readSource('src/app/AppDialogs.tsx');
 export const workloadExplorerParts = readSource(
@@ -61,7 +62,11 @@ export const conversationHistory = readSource(
 );
 export const chatSubmit = readSource('src/features/kubernetes-cluster-detail/hooks/chatSubmit.ts');
 export const chatSessionSync = readSource('src/features/kubernetes-cluster-detail/hooks/chatSessionSync.ts');
+export const conversationAssistantStatuses = readSource(
+  'src/features/kubernetes-cluster-detail/hooks/useConversationAssistantStatuses.ts'
+);
 export const useTargetChat = readSource('src/features/kubernetes-cluster-detail/hooks/useTargetChat.ts');
+export const targetChatRunWatcher = readSource('src/features/kubernetes-cluster-detail/hooks/targetChatRunWatcher.ts');
 export const useTargetChatScrollAnchor = readSource(
   'src/features/kubernetes-cluster-detail/hooks/useTargetChatScrollAnchor.ts'
 );

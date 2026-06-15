@@ -574,6 +574,7 @@ export interface ControlPlaneRunToolApproval extends ControlPlaneTargetScope {
   workspaceId: string;
   toolCallId: string;
   toolName: string;
+  summary?: string;
   arguments: Record<string, unknown>;
   status: 'pending' | 'approved' | 'rejected' | 'expired';
   executionStatus?: 'not_started' | 'executing' | 'succeeded' | 'failed' | 'unknown';

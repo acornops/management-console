@@ -32,6 +32,11 @@ export const en = {
     network: 'Network',
     logs: 'Logs',
     aiChat: 'AI Assistant',
+    aiAssistantStatus: {
+      working: 'Assistant is working',
+      review: 'Assistant needs approval',
+      done: 'Assistant completed'
+    },
     clusterSettings: 'Cluster Settings',
     vmSettings: 'VM Settings',
     navigation: 'Navigation',
@@ -946,15 +951,9 @@ export const en = {
     roleUser: 'Operator',
     roleAssistant: 'AI Assistant',
     approvalCheckpoint: 'Approval checkpoint',
-    approvalActionLabel: 'Action',
-    approvalConsequenceLabel: 'Consequence',
-    approvalConsequence: 'Approving allows this guarded write or run step to execute against the listed target.',
     approvalNoPermission: 'Your workspace role cannot approve write actions.',
-    approvalTargetLabel: 'Target',
-    approvalArgumentsLabel: 'Arguments',
-    guardTitle: 'Guarded operation',
-    guardBody: 'Approve only after verifying this action and target: {{action}}.',
-    approvalHelp: 'Approval executes this queued write action once.',
+    approvalAdvancedDetails: 'Advanced details',
+    guardTitle: 'Approve the following action?',
     approvalStatus: {
       approved: 'Approved. The queued write action can now execute.',
       rejected: 'Rejected. The write action will not execute.',
@@ -965,6 +964,22 @@ export const en = {
       approved: 'Approved',
       rejected: 'Rejected',
       expired: 'Expired'
+    },
+    approvalFallbackTarget: {
+      workload: 'workload',
+      namespace: 'namespace {{namespace}}',
+      kindNamespace: '{{kind}} in namespace {{namespace}}',
+      selectedKind: 'the selected {{kind}}',
+      selectedTarget: 'the selected target',
+      writeTool: 'write tool'
+    },
+    approvalFallbackSummary: {
+      restart: 'Restart {{target}}.',
+      scaleReplicas: 'Scale {{target}} to {{replicas}} replicas.',
+      scale: 'Scale {{target}}.',
+      applyRemediation: 'Apply the remediation plan to {{target}}.',
+      genericTarget: 'Run {{tool}} against {{target}}.',
+      generic: 'Run the requested write action.'
     },
     inputPlaceholder: 'Ask AcornOps to inspect {{name}}...',
     noChatAccess: 'You do not have permission to start target chat in this workspace.',

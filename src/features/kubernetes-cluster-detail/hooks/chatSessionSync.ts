@@ -65,6 +65,7 @@ export function mapControlPlaneApprovalToPendingApproval(
     runId: approval.runId,
     toolCallId: approval.toolCallId,
     action: `Run ${approval.toolName}`,
+    summary: approval.summary,
     toolName: approval.toolName,
     arguments: approval.arguments || {},
     expiresAt: approval.expiresAt,
