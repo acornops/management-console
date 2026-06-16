@@ -52,8 +52,8 @@ interface BehaviorDraft {
 }
 
 const DEFAULT_BEHAVIOR_DRAFT: BehaviorDraft = {
-  defaultProvider: 'gemini',
-  defaultModel: 'gemini-2.0-flash',
+  defaultProvider: 'openai',
+  defaultModel: 'gpt-5.5',
   reasoningSummaryMode: 'off',
   reasoningEffort: 'default'
 };
