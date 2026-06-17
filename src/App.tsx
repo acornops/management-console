@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import { AppSessionRestoringScreen } from '@/app/AppSessionRestoringScreen';
 import { AppShell } from '@/app/AppShell';
-import { MattermostLinkRouteScreen } from '@/app/MattermostLinkRouteScreen';
+import { ExternalIntegrationLinkRouteScreen } from '@/app/ExternalIntegrationLinkRouteScreen';
 import { getActivePrimaryNav, getActiveResourceNav, getClusterRouteId, getWorkspaceRouteId } from '@/app/appRouteState';
 import { useAppBootstrap } from '@/app/useAppBootstrap';
 import { useAppPreferences } from '@/app/useAppPreferences';
@@ -466,8 +466,8 @@ const App: React.FC = () => {
   if (!user && isSessionRestoring) {
     return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
   }
-  if (route.kind === 'mattermostLink' && (user || route.status || !route.token)) {
-    return <MattermostLinkRouteScreen logoSrc={logoSrc} onLinkStatus={(status) => navigate(AppPaths.mattermostLinkStatus(status), { replace: true })} route={route} />;
+  if (route.kind === 'externalIntegrationLink' && (user || route.status || !route.token)) {
+    return <ExternalIntegrationLinkRouteScreen logoSrc={logoSrc} onLinkStatus={(status) => navigate(AppPaths.externalIntegrationLinkStatus(status), { replace: true })} route={route} />;
   }
   if (!user) {
     return (

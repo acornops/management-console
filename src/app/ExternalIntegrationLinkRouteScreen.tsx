@@ -5,23 +5,23 @@ import { MiniProgressBar } from '@/components/common/Loading';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { AppRoute } from '@/utils/routes';
 
-interface MattermostLinkRouteScreenProps {
+interface ExternalIntegrationLinkRouteScreenProps {
   logoSrc: string;
   onLinkStatus: (status: 'linked' | 'expired' | 'cancelled') => void;
-  route: Extract<AppRoute, { kind: 'mattermostLink' }>;
+  route: Extract<AppRoute, { kind: 'externalIntegrationLink' }>;
 }
 
-export function mattermostLinkStatusMessage(status?: 'linked' | 'expired' | 'cancelled'): string {
+export function externalIntegrationLinkStatusMessage(status?: 'linked' | 'expired' | 'cancelled'): string {
   if (status === 'linked') return 'Account linking successful.\nGo back to the external client.';
   if (status === 'expired') return 'Account linking unsuccessful due to expired token.\nRetry linking on external client.';
   if (status === 'cancelled') return 'Account linking cancelled.\nGo back to the external client.';
-  return 'Mattermost link unavailable.';
+  return 'External integration link unavailable.';
 }
 
-export const mattermostLinkApprovalTitle = 'Link AcornOps to Mattermost';
-export const mattermostLinkApprovalMessage = 'Approve this request to connect your signed-in AcornOps account to Mattermost.';
+export const externalIntegrationLinkApprovalTitle = 'Link AcornOps to an external client';
+export const externalIntegrationLinkApprovalMessage = 'Approve this request to connect your signed-in AcornOps account to the external client.';
 
-export const MattermostLinkRouteScreen: React.FC<MattermostLinkRouteScreenProps> = ({ logoSrc, onLinkStatus, route }) => {
+export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLinkRouteScreenProps> = ({ logoSrc, onLinkStatus, route }) => {
   const [isApproving, setIsApproving] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
 
@@ -29,10 +29,10 @@ export const MattermostLinkRouteScreen: React.FC<MattermostLinkRouteScreenProps>
     if (!route.token || isApproving) return;
     setIsApproving(true);
     setApprovalError(null);
-    void controlPlaneApi.completeMattermostLink(route.token)
+    void controlPlaneApi.completeExternalIntegrationLink(route.token)
       .then(() => onLinkStatus('linked'))
       .catch(() => {
-        setApprovalError('Unable to complete the Mattermost account link. The request may have expired.');
+        setApprovalError('Unable to complete the external integration account link. The request may have expired.');
         onLinkStatus('expired');
       })
       .finally(() => setIsApproving(false));
@@ -48,7 +48,7 @@ export const MattermostLinkRouteScreen: React.FC<MattermostLinkRouteScreenProps>
       <div role="status" aria-live="polite" className="flex min-h-screen justify-center bg-ui-bg px-6 pt-28 text-ui-text sm:pt-32">
         <div className="flex max-w-md flex-col items-center gap-4 text-center">
           <img src={logoSrc} className="h-12 w-12" alt="AcornOps" />
-          <p className="whitespace-pre-line text-lg font-semibold leading-7 text-ui-text">{mattermostLinkStatusMessage(route.status)}</p>
+          <p className="whitespace-pre-line text-lg font-semibold leading-7 text-ui-text">{externalIntegrationLinkStatusMessage(route.status)}</p>
         </div>
       </div>
     );
@@ -62,8 +62,8 @@ export const MattermostLinkRouteScreen: React.FC<MattermostLinkRouteScreenProps>
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-ui-border bg-ui-surface text-accent-strong">
             <Link2 aria-hidden="true" className="h-5 w-5" />
           </div>
-          <h1 className="text-2xl font-semibold text-ui-text">{mattermostLinkApprovalTitle}</h1>
-          <p className="text-sm leading-6 text-ui-text-muted">{mattermostLinkApprovalMessage}</p>
+          <h1 className="text-2xl font-semibold text-ui-text">{externalIntegrationLinkApprovalTitle}</h1>
+          <p className="text-sm leading-6 text-ui-text-muted">{externalIntegrationLinkApprovalMessage}</p>
         </div>
         <Button onClick={handleApprove} disabled={isApproving} variant="primary" size="lg" className="w-full">
           {isApproving ? 'Approving' : 'Approve'}
@@ -73,7 +73,7 @@ export const MattermostLinkRouteScreen: React.FC<MattermostLinkRouteScreenProps>
         </Button>
         {isApproving && (
           <div role="status" aria-live="polite" className="flex flex-col items-center gap-2">
-            <span className="sr-only">Completing Mattermost account link</span>
+            <span className="sr-only">Completing external integration account link</span>
             <MiniProgressBar className="w-32" />
           </div>
         )}

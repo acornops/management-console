@@ -87,27 +87,27 @@ describe('routes', () => {
     });
   });
 
-  it('parses Mattermost link routes with query state', () => {
-    expect(AppPaths.mattermostLink('mmlink_token/with space')).toBe(
-      '/integrations/mattermost/link?token=mmlink_token%2Fwith%20space'
+  it('parses external chat link routes with query state', () => {
+    expect(AppPaths.externalIntegrationLink('intlink_token/with space')).toBe(
+      '/integrations/external-chat/link?token=intlink_token%2Fwith%20space'
     );
-    expect(parseAppRoute('/integrations/mattermost/link?token=mmlink_token')).toEqual({
-      kind: 'mattermostLink',
-      token: 'mmlink_token',
+    expect(parseAppRoute('/integrations/external-chat/link?token=intlink_token')).toEqual({
+      kind: 'externalIntegrationLink',
+      token: 'intlink_token',
       status: undefined
     });
-    expect(parseAppRoute('/integrations/mattermost/link?status=linked')).toEqual({
-      kind: 'mattermostLink',
+    expect(parseAppRoute('/integrations/external-chat/link?status=linked')).toEqual({
+      kind: 'externalIntegrationLink',
       token: undefined,
       status: 'linked'
     });
-    expect(parseAppRoute('/integrations/mattermost/link?status=cancelled')).toEqual({
-      kind: 'mattermostLink',
+    expect(parseAppRoute('/integrations/external-chat/link?status=cancelled')).toEqual({
+      kind: 'externalIntegrationLink',
       token: undefined,
       status: 'cancelled'
     });
-    expect(AppPaths.mattermostLinkStatus('expired')).toBe('/integrations/mattermost/link?status=expired');
-    expect(AppPaths.mattermostLinkStatus('cancelled')).toBe('/integrations/mattermost/link?status=cancelled');
+    expect(AppPaths.externalIntegrationLinkStatus('expired')).toBe('/integrations/external-chat/link?status=expired');
+    expect(AppPaths.externalIntegrationLinkStatus('cancelled')).toBe('/integrations/external-chat/link?status=cancelled');
   });
 
   it('parses active workspace resource section routes', () => {

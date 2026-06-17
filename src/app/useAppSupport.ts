@@ -249,7 +249,7 @@ export function useAppSupport(args: {
     setIsAuthLoading(true);
     try {
       await controlPlaneApi.initiateLogin(window.location.href, {
-        mattermostLinkToken: route.kind === 'mattermostLink' ? route.token : undefined
+        externalIntegrationLinkToken: route.kind === 'externalIntegrationLink' ? route.token : undefined
       });
     } catch (err) {
       console.error('Login failed', err);

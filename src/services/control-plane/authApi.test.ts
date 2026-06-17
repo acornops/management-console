@@ -49,28 +49,28 @@ describe('controlPlaneAuthApi', () => {
     );
   });
 
-  it('carries a Mattermost link token into OIDC login state', async () => {
+  it('carries an external integration link token into OIDC login state', async () => {
     getControlPlaneUrl.mockReturnValue(new URL('https://control-plane.example.com/api/v1/auth/oidc/login'));
     const { controlPlaneAuthApi } = await import('./authApi');
 
-    await controlPlaneAuthApi.initiateLogin('/integrations/mattermost/link?token=mmlink_token', {
-      mattermostLinkToken: 'mmlink_token'
+    await controlPlaneAuthApi.initiateLogin('/integrations/external-chat/link?token=intlink_token', {
+      externalIntegrationLinkToken: 'intlink_token'
     });
 
     expect(assignMock).toHaveBeenCalledWith(
-      'https://control-plane.example.com/api/v1/auth/oidc/login?return_to=%2Fintegrations%2Fmattermost%2Flink%3Ftoken%3Dmmlink_token&mattermost_link_token=mmlink_token'
+      'https://control-plane.example.com/api/v1/auth/oidc/login?return_to=%2Fintegrations%2Fexternal-chat%2Flink%3Ftoken%3Dintlink_token&external_integration_link_token=intlink_token'
     );
   });
 
-  it('completes a Mattermost link through the authenticated browser endpoint', async () => {
+  it('completes an external integration link through the authenticated browser endpoint', async () => {
     requestJson.mockResolvedValueOnce({ status: 'linked' });
     const { controlPlaneAuthApi } = await import('./authApi');
 
-    await controlPlaneAuthApi.completeMattermostLink('mmlink_token');
+    await controlPlaneAuthApi.completeExternalIntegrationLink('intlink_token');
 
-    expect(requestJson).toHaveBeenCalledWith('/api/v1/auth/chat/mattermost/link/complete', {
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/auth/chat/integration/link/complete', {
       method: 'POST',
-      body: JSON.stringify({ token: 'mmlink_token' })
+      body: JSON.stringify({ token: 'intlink_token' })
     });
   });
 

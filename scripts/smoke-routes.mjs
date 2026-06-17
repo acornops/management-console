@@ -13,7 +13,7 @@ const routes = [
   '/workspaces/smoke-workspace/virtual-machines/smoke-vm/mcp-servers',
   '/workspaces/smoke-workspace/virtual-machines/smoke-vm/settings',
   '/invites/smoke-token',
-  '/integrations/mattermost/link?status=linked',
+  '/integrations/external-chat/link?status=linked',
   '/kubernetes-clusters/smoke-cluster/overview',
   '/workspaces/smoke-workspace/kubernetes-clusters/smoke-cluster/resources'
 ];

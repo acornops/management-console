@@ -6,7 +6,7 @@ export type AppRoute =
   | { kind: 'workspaces' }
   | { kind: 'kubernetesClusters' }
   | { kind: 'settings' }
-  | { kind: 'mattermostLink'; token?: string; status?: 'linked' | 'expired' | 'cancelled' }
+  | { kind: 'externalIntegrationLink'; token?: string; status?: 'linked' | 'expired' | 'cancelled' }
   | { kind: 'workspaceOverview'; workspaceId: string }
   | { kind: 'workspaceInvestigations'; workspaceId: string }
   | { kind: 'workspaceRunbooks'; workspaceId: string }
@@ -82,7 +82,7 @@ function splitRoutePath(path: string): { pathname: string; params: URLSearchPara
   };
 }
 
-function parseMattermostLinkStatus(value: string | null): 'linked' | 'expired' | 'cancelled' | undefined {
+function parseExternalIntegrationLinkStatus(value: string | null): 'linked' | 'expired' | 'cancelled' | undefined {
   if (value === 'linked' || value === 'expired' || value === 'cancelled') return value;
   return undefined;
 }
@@ -97,11 +97,11 @@ export function parseAppRoute(path: string): AppRoute {
   if (pathname === '/workspaces') return { kind: 'workspaces' };
   if (pathname === '/kubernetes-clusters') return { kind: 'kubernetesClusters' };
   if (pathname === '/settings') return { kind: 'settings' };
-  if (pathname === '/integrations/mattermost/link') {
+  if (pathname === '/integrations/external-chat/link') {
     return {
-      kind: 'mattermostLink',
+      kind: 'externalIntegrationLink',
       token: params.get('token') || undefined,
-      status: parseMattermostLinkStatus(params.get('status'))
+      status: parseExternalIntegrationLinkStatus(params.get('status'))
     };
   }
 
@@ -176,8 +176,8 @@ export function parseAppRoute(path: string): AppRoute {
 }
 
 export const AppPaths = {
-  mattermostLink: (token: string): string => `/integrations/mattermost/link?token=${encodeURIComponent(token)}`,
-  mattermostLinkStatus: (status: 'linked' | 'expired' | 'cancelled'): string => `/integrations/mattermost/link?status=${status}`,
+  externalIntegrationLink: (token: string): string => `/integrations/external-chat/link?token=${encodeURIComponent(token)}`,
+  externalIntegrationLinkStatus: (status: 'linked' | 'expired' | 'cancelled'): string => `/integrations/external-chat/link?status=${status}`,
   workspaceInvitation: (token: string): string => `/invites/${encodeURIComponent(token)}`,
   workspaceInvitationShareUrl: (token: string): string => {
     const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '');
