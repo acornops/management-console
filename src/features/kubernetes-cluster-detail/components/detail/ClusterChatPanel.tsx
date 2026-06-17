@@ -109,6 +109,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       runTracesByRunId={runTracesByRunId}
       sessionAssistantStatuses={sessionAssistantStatuses}
       transcriptRef={transcriptRef}
+      footerKey={canRequestWriteRuns ? undefined : 'chat.footerReadOnlyRole'}
       onChatScroll={handleChatScroll}
       onLoadEarlierMessages={handleLoadEarlierMessages}
       onInputChange={setInputValue}

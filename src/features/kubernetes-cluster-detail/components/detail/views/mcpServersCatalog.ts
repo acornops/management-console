@@ -56,7 +56,10 @@ function mapTool(tool: McpTool): ClusterToolCatalogItem {
     source: tool.toolType === 'builtin' ? 'builtin' : 'mcp',
     enabledConfigured: Boolean(tool.enabledConfigured ?? tool.enabled),
     enabledEffective: Boolean(tool.enabledEffective ?? tool.enabled),
-    effectiveDisabledReason: null
+    effectiveDisabledReason:
+      tool.effectiveDisabledReason === 'server_disabled' || tool.effectiveDisabledReason === 'agent_write_disabled'
+        ? tool.effectiveDisabledReason
+        : null
   };
 }
 
@@ -129,7 +132,8 @@ export function flattenCatalogTools(catalog: ClusterToolCatalog): KubernetesClus
         sourceServerName: server.name,
         sourceServerUrl: server.url,
         enabledConfigured: tool.enabledConfigured,
-        enabledEffective: tool.enabledEffective
+        enabledEffective: tool.enabledEffective,
+        effectiveDisabledReason: tool.effectiveDisabledReason
       });
     }
   }

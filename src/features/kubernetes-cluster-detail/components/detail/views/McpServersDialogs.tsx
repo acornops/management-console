@@ -122,6 +122,9 @@ export const McpServerToolsDialog: React.FC<{
                     {tool.effectiveDisabledReason === 'server_disabled' && (
                       <p className="type-caption mt-1 text-status-warning-text">{t('mcpServers.toolBlockedServerDisabled')}</p>
                     )}
+                    {tool.effectiveDisabledReason === 'agent_write_disabled' && (
+                      <p className="type-caption mt-1 text-status-warning-text">{t('mcpServers.toolBlockedAgentWriteDisabled')}</p>
+                    )}
                   </div>
                   <button
                     type="button"

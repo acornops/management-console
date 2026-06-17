@@ -412,6 +412,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
         targetContext={{ workspaceId: workspace.id, targetId: selected.id, targetType: 'virtual_machine' }}
         canManageMcp={Boolean(workspace.permissions?.manage_mcp)}
         canManageTools={Boolean(workspace.permissions?.manage_tools)}
+        canRequestWriteRuns={Boolean(workspace.permissions?.create_read_write_runs)}
       />
     );
   }

@@ -206,7 +206,7 @@ The UI depends on these catalog fields staying stable:
 - `permissions.editableRoles`
 - `servers[].{id,name,url,type,enabled,isSystem,canDelete,canEditConnection,authType,publicHeaders,connectionStatus,lastDiscoveryAt,lastDiscoveryError}`
 - `servers[].toolCounts.{total,enabledConfigured,enabledEffective,writeConfigured,writeEffective}`
-- `GET /mcp/servers/{serverId}/tools` returns paged tool rows with `{name,description,capability,version,source,enabledConfigured,enabledEffective,effectiveDisabledReason}`
+- `GET /mcp/servers/{serverId}/tools` returns paged tool rows with `{name,description,capability,version,source,enabledConfigured,enabledEffective,effectiveDisabledReason}`. `enabledEffective` includes target runtime availability; write tools on read-only agents return `effectiveDisabledReason=agent_write_disabled`.
 
 Current mutation policy exposed through the catalog:
 

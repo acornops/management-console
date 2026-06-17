@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Check, Copy, Plus, ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   ClusterToolCatalog,
@@ -57,6 +57,7 @@ interface McpServersViewProps {
   };
   canManageMcp?: boolean;
   canManageTools?: boolean;
+  canRequestWriteRuns?: boolean;
   onToggleTool?: (tool: ClusterToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onSyncTools?: (tools: KubernetesCluster['mcpTools']) => void;
 }
@@ -69,11 +70,31 @@ interface ServerToolsPageState {
   error: string | null;
 }
 
+const WRITE_MODE_HELM_COMMAND = 'helm -n acornops upgrade acornops-agent oci://ghcr.io/acornops/charts/acornops-k8s-agent --reuse-values --set rbac.write.enabled=true';
+
+function getOptimisticToolEffectiveState(
+  server: Pick<ClusterToolCatalogServer, 'enabled'>,
+  tool: Pick<ClusterToolCatalogItem, 'effectiveDisabledReason'>,
+  enabledConfigured: boolean
+): Pick<ClusterToolCatalogItem, 'enabledEffective' | 'effectiveDisabledReason'> {
+  if (!enabledConfigured) {
+    return { enabledEffective: false, effectiveDisabledReason: null };
+  }
+  if (!server.enabled) {
+    return { enabledEffective: false, effectiveDisabledReason: 'server_disabled' };
+  }
+  if (tool.effectiveDisabledReason === 'agent_write_disabled') {
+    return { enabledEffective: false, effectiveDisabledReason: 'agent_write_disabled' };
+  }
+  return { enabledEffective: true, effectiveDisabledReason: null };
+}
+
 export const McpServersView: React.FC<McpServersViewProps> = ({
   cluster,
   targetContext,
   canManageMcp = false,
   canManageTools = false,
+  canRequestWriteRuns = false,
   onToggleTool,
   onSyncTools
 }) => {
@@ -94,6 +115,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [testResultsByServerId, setTestResultsByServerId] = useState<Record<string, TargetMcpServerTestConnectionResult>>({});
   const [toolsByServerId, setToolsByServerId] = useState<Record<string, ServerToolsPageState>>({});
   const [showSecretValue, setShowSecretValue] = useState(false);
+  const [writeModeCommandCopied, setWriteModeCommandCopied] = useState(false);
   const onSyncToolsRef = useRef(onSyncTools);
   const serverToolsRequestSeqRef = useRef(0);
   const activeTarget = targetContext || {
@@ -106,6 +128,12 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const activeCatalog = catalog || localCatalog;
   const canEditServers = canManageMcp && activeCatalog.permissions.canEdit;
   const servers = activeCatalog.servers;
+  const allCatalogTools = useMemo(() => servers.flatMap((server) => server.tools), [servers]);
+  const hasConfiguredWriteTools = allCatalogTools.some((tool) => tool.capability === 'write' && tool.enabledConfigured);
+  const hasAgentWriteBlockedTools = allCatalogTools.some(
+    (tool) => tool.capability === 'write' && tool.enabledConfigured && tool.effectiveDisabledReason === 'agent_write_disabled'
+  );
+  const showWriteModeHelmCommand = activeTarget.targetType === 'kubernetes';
   const showInitialCatalogLoading = showCatalogLoadingNotice && !catalog && localCatalog.servers.length === 0;
   const activeServer = selectedServerId
     ? servers.find((server) => server.id === selectedServerId) || null
@@ -134,6 +162,16 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const formatMutationError = (error: unknown, fallback: string): string => {
     const raw = error instanceof Error ? error.message : fallback;
     return raw.replace(/^Control plane request failed \(\d+\):\s*/i, '') || fallback;
+  };
+
+  const copyWriteModeCommand = async () => {
+    try {
+      await window.navigator.clipboard.writeText(WRITE_MODE_HELM_COMMAND);
+      setWriteModeCommandCopied(true);
+      window.setTimeout(() => setWriteModeCommandCopied(false), 1800);
+    } catch {
+      setServerMutationError(t('mcpServers.copyWriteModeCommandFailed'));
+    }
   };
 
   const loadCatalog = useCallback(async (options?: { syncParent?: boolean }) => {
@@ -367,8 +405,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
                 ? {
                     ...item,
                     enabledConfigured: nextEnabled,
-                    enabledEffective: server.enabled && nextEnabled,
-                    effectiveDisabledReason: !server.enabled && nextEnabled ? 'server_disabled' : null
+                    ...getOptimisticToolEffectiveState(server, item, nextEnabled)
                   }
                 : item
             )
@@ -384,8 +421,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
               ? {
                   ...item,
                   enabledConfigured: nextEnabled,
-                  enabledEffective: candidate.enabled && nextEnabled,
-                  effectiveDisabledReason: !candidate.enabled && nextEnabled ? 'server_disabled' : null
+                  ...getOptimisticToolEffectiveState(candidate, item, nextEnabled)
                 }
               : item
           );
@@ -426,6 +462,38 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       {catalogError && (
         <div className="type-caption mb-5 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
           {catalogError}
+        </div>
+      )}
+
+      {hasAgentWriteBlockedTools && (
+        <section className="mb-5 rounded-lg border border-status-warning/30 bg-status-warning-soft px-4 py-3 text-status-warning-text">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 gap-3">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="min-w-0">
+                <h2 className="type-row-title">{t('mcpServers.agentWriteModeNoticeTitle')}</h2>
+                <p className="type-caption mt-1">{t('mcpServers.agentWriteModeNoticeBody')}</p>
+              </div>
+            </div>
+            {showWriteModeHelmCommand && (
+              <button
+                type="button"
+                onClick={() => void copyWriteModeCommand()}
+                className="type-code inline-flex min-h-9 max-w-full items-center gap-2 rounded-md border border-status-warning/35 bg-ui-surface px-3 py-2 text-left text-[11px] text-ui-text transition-colors hover:border-status-warning/50 hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning/25"
+                aria-label={t('mcpServers.copyWriteModeCommand')}
+                title={WRITE_MODE_HELM_COMMAND}
+              >
+                {writeModeCommandCopied ? <Check className="h-3.5 w-3.5 shrink-0" /> : <Copy className="h-3.5 w-3.5 shrink-0" />}
+                <span className="truncate">{WRITE_MODE_HELM_COMMAND}</span>
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+
+      {hasConfiguredWriteTools && !canRequestWriteRuns && (
+        <div className="type-caption mb-5 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
+          {t('mcpServers.roleWriteNotice')}
         </div>
       )}
 
