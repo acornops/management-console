@@ -101,7 +101,13 @@ describe('routes', () => {
       token: undefined,
       status: 'linked'
     });
+    expect(parseAppRoute('/integrations/mattermost/link?status=cancelled')).toEqual({
+      kind: 'mattermostLink',
+      token: undefined,
+      status: 'cancelled'
+    });
     expect(AppPaths.mattermostLinkStatus('expired')).toBe('/integrations/mattermost/link?status=expired');
+    expect(AppPaths.mattermostLinkStatus('cancelled')).toBe('/integrations/mattermost/link?status=cancelled');
   });
 
   it('parses active workspace resource section routes', () => {

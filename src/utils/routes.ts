@@ -6,7 +6,7 @@ export type AppRoute =
   | { kind: 'workspaces' }
   | { kind: 'kubernetesClusters' }
   | { kind: 'settings' }
-  | { kind: 'mattermostLink'; token?: string; status?: 'linked' | 'expired' }
+  | { kind: 'mattermostLink'; token?: string; status?: 'linked' | 'expired' | 'cancelled' }
   | { kind: 'workspaceOverview'; workspaceId: string }
   | { kind: 'workspaceInvestigations'; workspaceId: string }
   | { kind: 'workspaceRunbooks'; workspaceId: string }
@@ -82,8 +82,8 @@ function splitRoutePath(path: string): { pathname: string; params: URLSearchPara
   };
 }
 
-function parseMattermostLinkStatus(value: string | null): 'linked' | 'expired' | undefined {
-  if (value === 'linked' || value === 'expired') return value;
+function parseMattermostLinkStatus(value: string | null): 'linked' | 'expired' | 'cancelled' | undefined {
+  if (value === 'linked' || value === 'expired' || value === 'cancelled') return value;
   return undefined;
 }
 
@@ -177,7 +177,7 @@ export function parseAppRoute(path: string): AppRoute {
 
 export const AppPaths = {
   mattermostLink: (token: string): string => `/integrations/mattermost/link?token=${encodeURIComponent(token)}`,
-  mattermostLinkStatus: (status: 'linked' | 'expired'): string => `/integrations/mattermost/link?status=${status}`,
+  mattermostLinkStatus: (status: 'linked' | 'expired' | 'cancelled'): string => `/integrations/mattermost/link?status=${status}`,
   workspaceInvitation: (token: string): string => `/invites/${encodeURIComponent(token)}`,
   workspaceInvitationShareUrl: (token: string): string => {
     const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '');
