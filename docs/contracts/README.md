@@ -42,6 +42,7 @@ The management console depends on:
 - `POST /api/v1/auth/password/reset`
 - `POST /api/v1/auth/password/change`
 - `POST /api/v1/auth/oidc/link/start`
+- `POST /api/v1/auth/chat/mattermost/link/complete`
 - `GET /api/v1/auth/methods`
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/me`
@@ -51,6 +52,7 @@ Development-only shortcut outside production:
 - `POST /api/v1/auth/dev-login`
 
 The browser session cookie is the auth token for subsequent API traffic. Mutating requests with a session cookie also send the CSRF token from `GET /api/v1/auth/csrf` in the `x-csrf-token` header.
+Mattermost account-link URLs land on the console route `/integrations/mattermost/link?token=<mattermost-link-token>`. Without a browser session, the console shows the normal login page and preserves the token for password or OIDC sign-in. After either login method establishes a session, the console completes the durable link through `POST /api/v1/auth/chat/mattermost/link/complete`.
 `GET /api/v1/me` includes `quota.workspaceMemberships.{used,limit}`, which the console renders in User Settings only.
 `GET /api/v1/auth/config` includes `passwordEmailVerificationRequired` and `passwordResetEnabled`. When password signup returns `verification_required`, the console shows a pending verification state and does not bootstrap a user session. If signup returns `EMAIL_DELIVERY_FAILED`, the console treats the account as pending verification, explains that the email was not sent, and offers resend. `EMAIL_VERIFICATION_REQUIRED` from password login or invite acceptance shows the same pending flow. Verification links call `POST /api/v1/auth/password/verify-email`; expired or invalid tokens offer `POST /api/v1/auth/password/resend-verification` with enumeration-safe copy. Forgot password is shown only when password auth and reset are enabled, calls `POST /api/v1/auth/password/forgot`, and always renders generic check-email copy. Reset links call `POST /api/v1/auth/password/reset`; success shows a sign-in action without auto-login, while invalid or expired tokens offer a new reset email request.
 

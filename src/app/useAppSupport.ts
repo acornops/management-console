@@ -248,7 +248,9 @@ export function useAppSupport(args: {
   const handleLogin = async () => {
     setIsAuthLoading(true);
     try {
-      await controlPlaneApi.initiateLogin(window.location.href);
+      await controlPlaneApi.initiateLogin(window.location.href, {
+        mattermostLinkToken: route.kind === 'mattermostLink' ? route.token : undefined
+      });
     } catch (err) {
       console.error('Login failed', err);
       showToast(err instanceof Error ? err.message.replace(/^Control plane request failed \(\d+\):\s*/, '') : 'Login failed.');

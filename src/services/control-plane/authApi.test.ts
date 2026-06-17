@@ -49,6 +49,31 @@ describe('controlPlaneAuthApi', () => {
     );
   });
 
+  it('carries a Mattermost link token into OIDC login state', async () => {
+    getControlPlaneUrl.mockReturnValue(new URL('https://control-plane.example.com/api/v1/auth/oidc/login'));
+    const { controlPlaneAuthApi } = await import('./authApi');
+
+    await controlPlaneAuthApi.initiateLogin('/integrations/mattermost/link?token=mmlink_token', {
+      mattermostLinkToken: 'mmlink_token'
+    });
+
+    expect(assignMock).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/oidc/login?return_to=%2Fintegrations%2Fmattermost%2Flink%3Ftoken%3Dmmlink_token&mattermost_link_token=mmlink_token'
+    );
+  });
+
+  it('completes a Mattermost link through the authenticated browser endpoint', async () => {
+    requestJson.mockResolvedValueOnce({ status: 'linked' });
+    const { controlPlaneAuthApi } = await import('./authApi');
+
+    await controlPlaneAuthApi.completeMattermostLink('mmlink_token');
+
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/auth/chat/mattermost/link/complete', {
+      method: 'POST',
+      body: JSON.stringify({ token: 'mmlink_token' })
+    });
+  });
+
   it('maps password login and auth config responses', async () => {
     requestJson
       .mockResolvedValueOnce({

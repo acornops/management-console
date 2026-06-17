@@ -87,6 +87,23 @@ describe('routes', () => {
     });
   });
 
+  it('parses Mattermost link routes with query state', () => {
+    expect(AppPaths.mattermostLink('mmlink_token/with space')).toBe(
+      '/integrations/mattermost/link?token=mmlink_token%2Fwith%20space'
+    );
+    expect(parseAppRoute('/integrations/mattermost/link?token=mmlink_token')).toEqual({
+      kind: 'mattermostLink',
+      token: 'mmlink_token',
+      status: undefined
+    });
+    expect(parseAppRoute('/integrations/mattermost/link?status=linked')).toEqual({
+      kind: 'mattermostLink',
+      token: undefined,
+      status: 'linked'
+    });
+    expect(AppPaths.mattermostLinkStatus('expired')).toBe('/integrations/mattermost/link?status=expired');
+  });
+
   it('parses active workspace resource section routes', () => {
     expect(parseAppRoute(AppPaths.workspaceOverview('team-alpha'))).toEqual({
       kind: 'workspaceOverview',

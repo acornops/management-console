@@ -35,10 +35,20 @@ export const controlPlaneAuthApi = {
     return result.csrfToken;
   },
 
-  async initiateLogin(returnTo: string): Promise<void> {
+  async initiateLogin(returnTo: string, options?: { mattermostLinkToken?: string }): Promise<void> {
     const url = getControlPlaneUrl('/api/v1/auth/oidc/login');
     url.searchParams.set('return_to', returnTo);
+    if (options?.mattermostLinkToken) {
+      url.searchParams.set('mattermost_link_token', options.mattermostLinkToken);
+    }
     window.location.assign(url.toString());
+  },
+
+  async completeMattermostLink(token: string): Promise<void> {
+    await requestJson<{ status: 'linked' }>('/api/v1/auth/chat/mattermost/link/complete', {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    });
   },
 
   async loginWithPassword(identifier: string, password: string): Promise<User> {

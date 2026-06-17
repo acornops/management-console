@@ -6,6 +6,7 @@ export type AppRoute =
   | { kind: 'workspaces' }
   | { kind: 'kubernetesClusters' }
   | { kind: 'settings' }
+  | { kind: 'mattermostLink'; token?: string; status?: 'linked' | 'expired' }
   | { kind: 'workspaceOverview'; workspaceId: string }
   | { kind: 'workspaceInvestigations'; workspaceId: string }
   | { kind: 'workspaceRunbooks'; workspaceId: string }
@@ -72,21 +73,44 @@ function decodeParam(value: string): string {
   }
 }
 
+function splitRoutePath(path: string): { pathname: string; params: URLSearchParams } {
+  const queryIndex = path.indexOf('?');
+  if (queryIndex === -1) return { pathname: path, params: new URLSearchParams() };
+  return {
+    pathname: path.slice(0, queryIndex) || '/',
+    params: new URLSearchParams(path.slice(queryIndex + 1))
+  };
+}
+
+function parseMattermostLinkStatus(value: string | null): 'linked' | 'expired' | undefined {
+  if (value === 'linked' || value === 'expired') return value;
+  return undefined;
+}
+
 /**
  * Parses a management console route path into a typed route union.
  */
 export function parseAppRoute(path: string): AppRoute {
-  if (path === '/') return { kind: 'home' };
-  if (path === '/workspaces') return { kind: 'workspaces' };
-  if (path === '/kubernetes-clusters') return { kind: 'kubernetesClusters' };
-  if (path === '/settings') return { kind: 'settings' };
+  const { pathname, params } = splitRoutePath(path);
 
-  const inviteMatch = path.match(/^\/invites\/([^/]+)$/);
+  if (pathname === '/') return { kind: 'home' };
+  if (pathname === '/workspaces') return { kind: 'workspaces' };
+  if (pathname === '/kubernetes-clusters') return { kind: 'kubernetesClusters' };
+  if (pathname === '/settings') return { kind: 'settings' };
+  if (pathname === '/integrations/mattermost/link') {
+    return {
+      kind: 'mattermostLink',
+      token: params.get('token') || undefined,
+      status: parseMattermostLinkStatus(params.get('status'))
+    };
+  }
+
+  const inviteMatch = pathname.match(/^\/invites\/([^/]+)$/);
   if (inviteMatch) {
     return { kind: 'workspaceInvitation', token: decodeParam(inviteMatch[1]) };
   }
 
-  const workspaceSectionMatch = path.match(/^\/workspaces\/([^/]+)\/(overview|investigations|runbooks|members|ai-settings|settings|audit-log)$/);
+  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|investigations|runbooks|members|ai-settings|settings|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
@@ -99,7 +123,7 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceMembers', workspaceId };
   }
 
-  const workspaceKubernetesClustersMatch = path.match(/^\/workspaces\/([^/]+)\/kubernetes-clusters$/);
+  const workspaceKubernetesClustersMatch = pathname.match(/^\/workspaces\/([^/]+)\/kubernetes-clusters$/);
   if (workspaceKubernetesClustersMatch) {
     return {
       kind: 'workspaceKubernetesClusters',
@@ -107,7 +131,7 @@ export function parseAppRoute(path: string): AppRoute {
     };
   }
 
-  const workspaceVirtualMachinesMatch = path.match(/^\/workspaces\/([^/]+)\/virtual-machines$/);
+  const workspaceVirtualMachinesMatch = pathname.match(/^\/workspaces\/([^/]+)\/virtual-machines$/);
   if (workspaceVirtualMachinesMatch) {
     return {
       kind: 'workspaceVirtualMachines',
@@ -115,7 +139,7 @@ export function parseAppRoute(path: string): AppRoute {
     };
   }
 
-  const workspaceVirtualMachineDetailMatch = path.match(
+  const workspaceVirtualMachineDetailMatch = pathname.match(
     /^\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)(?:\/(overview|resources|services|processes|network|logs|mcp-servers|chat|settings))?$/
   );
   if (workspaceVirtualMachineDetailMatch) {
@@ -127,7 +151,7 @@ export function parseAppRoute(path: string): AppRoute {
     };
   }
 
-  const workspaceKubernetesClusterDiagnosticsMatch = path.match(
+  const workspaceKubernetesClusterDiagnosticsMatch = pathname.match(
     /^\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|health|chat|settings))?$/
   );
   if (workspaceKubernetesClusterDiagnosticsMatch) {
@@ -139,7 +163,7 @@ export function parseAppRoute(path: string): AppRoute {
     };
   }
 
-  const kubernetesClusterDiagnosticsMatch = path.match(/^\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|health|chat|settings))?$/);
+  const kubernetesClusterDiagnosticsMatch = pathname.match(/^\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|health|chat|settings))?$/);
   if (kubernetesClusterDiagnosticsMatch) {
     return {
       kind: 'kubernetesClusterDiagnostics',
@@ -148,10 +172,12 @@ export function parseAppRoute(path: string): AppRoute {
     };
   }
 
-  return { kind: 'notFound', path };
+  return { kind: 'notFound', path: pathname };
 }
 
 export const AppPaths = {
+  mattermostLink: (token: string): string => `/integrations/mattermost/link?token=${encodeURIComponent(token)}`,
+  mattermostLinkStatus: (status: 'linked' | 'expired'): string => `/integrations/mattermost/link?status=${status}`,
   workspaceInvitation: (token: string): string => `/invites/${encodeURIComponent(token)}`,
   workspaceInvitationShareUrl: (token: string): string => {
     const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '');

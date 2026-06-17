@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import { AppSessionRestoringScreen } from '@/app/AppSessionRestoringScreen';
 import { AppShell } from '@/app/AppShell';
+import { MattermostLinkRouteScreen } from '@/app/MattermostLinkRouteScreen';
 import { getActivePrimaryNav, getActiveResourceNav, getClusterRouteId, getWorkspaceRouteId } from '@/app/appRouteState';
 import { useAppBootstrap } from '@/app/useAppBootstrap';
 import { useAppPreferences } from '@/app/useAppPreferences';
@@ -444,15 +445,10 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [openClusterCopilot, selectedSidebarCluster]);
-
-  const getCurrentUserRoleForWorkspace = useCallback((workspaceId: string): Workspace['members'][number]['role'] => {
-    return getCurrentUserRoleForWorkspaceValue(workspaceById, user?.email, workspaceId);
-  }, [user?.email, workspaceById]);
-
+  const getCurrentUserRoleForWorkspace = useCallback((workspaceId: string): Workspace['members'][number]['role'] => getCurrentUserRoleForWorkspaceValue(workspaceById, user?.email, workspaceId), [user?.email, workspaceById]);
   const getWorkspacePermission = useCallback((workspaceId: string, permission: keyof NonNullable<Workspace['permissions']>): boolean => {
     return getWorkspacePermissionValue(workspaceById, user?.email, workspaceId, permission);
   }, [user?.email, workspaceById]);
-
   const handleLogout = async () => {
     try {
       await controlPlaneApi.logout();
@@ -469,6 +465,9 @@ const App: React.FC = () => {
   };
   if (!user && isSessionRestoring) {
     return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
+  }
+  if (route.kind === 'mattermostLink' && (user || route.status || !route.token)) {
+    return <MattermostLinkRouteScreen logoSrc={logoSrc} onLinkStatus={(status) => navigate(AppPaths.mattermostLinkStatus(status), { replace: true })} route={route} />;
   }
   if (!user) {
     return (
