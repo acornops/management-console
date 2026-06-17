@@ -1474,8 +1474,6 @@ export const zh = {
     toolBlockedAgentWriteDisabled: '目标 agent 正以只读模式运行，因此此工具不可用。',
     agentWriteModeNoticeTitle: '写工具已配置但不可用',
     agentWriteModeNoticeBody: '目标 agent 未声明写模式。请先为该 agent 更新写权限，然后具备写能力的助手运行才能使用这些工具。',
-    copyWriteModeCommand: '复制启用 agent 写模式的 Helm 命令',
-    copyWriteModeCommandFailed: '复制 Helm 命令失败。',
     roleWriteNotice: '你的角色可以配置或查看工具，但不能开始具备写能力的助手运行。',
     toolEnablementHelp: '新发现的外部工具会保持停用，直到管理员审核并启用。',
     enableToolNamed: '启用 {{name}}',

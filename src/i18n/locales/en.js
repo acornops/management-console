@@ -1477,8 +1477,6 @@ export const en = {
     toolBlockedAgentWriteDisabled: 'Unavailable because the target agent is running in read-only mode.',
     agentWriteModeNoticeTitle: 'Write tools are configured but unavailable',
     agentWriteModeNoticeBody: 'The target agent is not advertising write mode. Update that agent with write privileges before write-capable assistant runs can use these tools.',
-    copyWriteModeCommand: 'Copy Helm command to enable agent write mode',
-    copyWriteModeCommandFailed: 'Failed copying the Helm command.',
     roleWriteNotice: 'Your role can configure or view tools, but cannot start write-capable assistant runs.',
     toolEnablementHelp: 'Newly discovered external tools stay disabled until an admin reviews and enables them.',
     enableToolNamed: 'Enable {{name}}',

@@ -166,7 +166,7 @@ Virtual machine records include `hostname`, `osFamily`, `serviceManager`, `allow
 
 Pod logs are fetched lazily from `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs`. The workload drawer must treat follow mode as opt-in polling and stop polling when the drawer is closed or the logs tab is left.
 
-`installInstructions.command` is owned by the control plane. The management console displays it as returned and does not hardcode chart paths, release names, or Helm value names in control-plane mode.
+`installInstructions.command` is owned by the control plane. The management console displays it as returned and does not hardcode chart paths, release names, or Helm value names in control-plane mode. Agent write-mode guidance is advisory unless a control-plane-owned install or upgrade command is present in the target metadata.
 
 `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}` returns cluster metadata, `writeConfirmationPolicy`, `latestSnapshot.{clusterId,workspaceId,timestamp}`, and `summary.{resourceCount,findingCount,criticalFindingCount,namespaceCount,nodeCount,resourceFamilyCounts,resourceKindCounts}`. It must not return full `latestSnapshot.data` to the browser.
 
