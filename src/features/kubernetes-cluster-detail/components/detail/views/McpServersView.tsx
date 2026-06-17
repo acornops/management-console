@@ -19,7 +19,6 @@ import {
 } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServersDialogs';
 import {
   buildLocalCatalog,
-  computeToolCounts,
   DEFAULT_SERVER_FORM,
   flattenCatalogTools,
   ServerFormState
@@ -89,6 +88,26 @@ function getOptimisticToolEffectiveState(
   return { enabledEffective: true, effectiveDisabledReason: null };
 }
 
+function applyToolCountsDelta(
+  counts: ClusterToolCatalogServer['toolCounts'],
+  previousTool: ClusterToolCatalogItem,
+  nextTool: ClusterToolCatalogItem
+): ClusterToolCatalogServer['toolCounts'] {
+  const delta = (nextValue: boolean, previousValue: boolean) => Number(nextValue) - Number(previousValue);
+  const isWrite = previousTool.capability === 'write';
+  return {
+    ...counts,
+    enabledConfigured: counts.enabledConfigured + delta(nextTool.enabledConfigured, previousTool.enabledConfigured),
+    enabledEffective: counts.enabledEffective + delta(nextTool.enabledEffective, previousTool.enabledEffective),
+    writeConfigured: isWrite
+      ? counts.writeConfigured + delta(nextTool.enabledConfigured, previousTool.enabledConfigured)
+      : counts.writeConfigured,
+    writeEffective: isWrite
+      ? counts.writeEffective + delta(nextTool.enabledEffective, previousTool.enabledEffective)
+      : counts.writeEffective
+  };
+}
+
 export const McpServersView: React.FC<McpServersViewProps> = ({
   cluster,
   targetContext,
@@ -128,10 +147,9 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const activeCatalog = catalog || localCatalog;
   const canEditServers = canManageMcp && activeCatalog.permissions.canEdit;
   const servers = activeCatalog.servers;
-  const allCatalogTools = useMemo(() => servers.flatMap((server) => server.tools), [servers]);
-  const hasConfiguredWriteTools = allCatalogTools.some((tool) => tool.capability === 'write' && tool.enabledConfigured);
-  const hasAgentWriteBlockedTools = allCatalogTools.some(
-    (tool) => tool.capability === 'write' && tool.enabledConfigured && tool.effectiveDisabledReason === 'agent_write_disabled'
+  const hasConfiguredWriteTools = servers.some((server) => server.toolCounts.writeConfigured > 0);
+  const hasAgentWriteBlockedTools = servers.some(
+    (server) => server.enabled && server.toolCounts.writeConfigured > server.toolCounts.writeEffective
   );
   const showWriteModeHelmCommand = activeTarget.targetType === 'kubernetes';
   const showInitialCatalogLoading = showCatalogLoadingNotice && !catalog && localCatalog.servers.length === 0;
@@ -416,18 +434,19 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         ...current,
         servers: current.servers.map((candidate) => {
           if (candidate.id !== server.id) return candidate;
+          const nextTool = {
+            ...tool,
+            enabledConfigured: nextEnabled,
+            ...getOptimisticToolEffectiveState(candidate, tool, nextEnabled)
+          };
           const tools: ClusterToolCatalogItem[] = candidate.tools.map((item) =>
             item.name === tool.name
-              ? {
-                  ...item,
-                  enabledConfigured: nextEnabled,
-                  ...getOptimisticToolEffectiveState(candidate, item, nextEnabled)
-                }
+              ? nextTool
               : item
           );
           return {
             ...candidate,
-            toolCounts: computeToolCounts(tools),
+            toolCounts: applyToolCountsDelta(candidate.toolCounts, tool, nextTool),
             tools
           };
         })
