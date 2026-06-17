@@ -169,6 +169,55 @@ describe('tool mappers', () => {
     ]);
   });
 
+  it('preserves agent write-disabled catalog reasons', () => {
+    const catalog = mapClusterToolsCatalog({
+      workspaceId: 'workspace-1',
+      clusterId: 'cluster-1',
+      permissions: {
+        canEdit: true,
+        editableRoles: []
+      },
+      servers: [
+        {
+          id: 'server-1',
+          name: 'Built-in tools',
+          url: 'local://builtin',
+          type: 'builtin',
+          enabled: true,
+          isSystem: true,
+          canDelete: false,
+          canEditConnection: false,
+          authType: 'none',
+          toolCounts: {
+            total: 1,
+            enabledConfigured: 1,
+            enabledEffective: 0,
+            writeConfigured: 1,
+            writeEffective: 0
+          },
+          tools: [
+            {
+              name: 'restart_workload',
+              description: 'Restart workload',
+              capability: 'write',
+              version: 'v1',
+              source: 'builtin',
+              enabledConfigured: true,
+              enabledEffective: false,
+              effectiveDisabledReason: 'agent_write_disabled'
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(catalog.servers[0].tools[0]).toEqual(expect.objectContaining({
+      enabledConfigured: true,
+      enabledEffective: false,
+      effectiveDisabledReason: 'agent_write_disabled'
+    }));
+  });
+
   it('maps MCP servers and test results into UI models', () => {
     expect(
       mapMcpServer({

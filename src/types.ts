@@ -63,6 +63,7 @@ export interface KubernetesCluster {
     sourceServerUrl?: string;
     enabledConfigured?: boolean;
     enabledEffective?: boolean;
+    effectiveDisabledReason?: 'server_disabled' | 'agent_write_disabled' | null;
   }[];
   chatSessions: ChatSession[];
   workloads: Workload[];
@@ -106,7 +107,7 @@ export interface ClusterToolCatalogItem {
   source: 'builtin' | 'mcp';
   enabledConfigured: boolean;
   enabledEffective: boolean;
-  effectiveDisabledReason: 'server_disabled' | null;
+  effectiveDisabledReason: 'server_disabled' | 'agent_write_disabled' | null;
 }
 
 export interface ClusterToolCatalogServer {

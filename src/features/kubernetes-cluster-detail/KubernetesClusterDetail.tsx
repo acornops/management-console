@@ -227,6 +227,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 }}
                 canManageMcp={canManageMcp}
                 canManageTools={canManageTools}
+                canRequestWriteRuns={canRequestWriteRuns}
                 onToggleTool={onToggleTool}
                 onSyncTools={onSyncTools}
               />
@@ -257,6 +258,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 runTracesByRunId={runTracesByRunId}
                 sessionAssistantStatuses={sessionAssistantStatuses}
                 transcriptRef={transcriptRef}
+                footerKey={canRequestWriteRuns ? undefined : 'chat.footerReadOnlyRole'}
                 onChatScroll={handleChatScroll}
                 onLoadEarlierMessages={handleLoadEarlierMessages}
                 onInputChange={setInputValue}

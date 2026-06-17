@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Plus, ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   ClusterToolCatalog,
@@ -19,7 +19,6 @@ import {
 } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServersDialogs';
 import {
   buildLocalCatalog,
-  computeToolCounts,
   DEFAULT_SERVER_FORM,
   flattenCatalogTools,
   ServerFormState
@@ -57,6 +56,7 @@ interface McpServersViewProps {
   };
   canManageMcp?: boolean;
   canManageTools?: boolean;
+  canRequestWriteRuns?: boolean;
   onToggleTool?: (tool: ClusterToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onSyncTools?: (tools: KubernetesCluster['mcpTools']) => void;
 }
@@ -69,11 +69,49 @@ interface ServerToolsPageState {
   error: string | null;
 }
 
+function getOptimisticToolEffectiveState(
+  server: Pick<ClusterToolCatalogServer, 'enabled'>,
+  tool: Pick<ClusterToolCatalogItem, 'effectiveDisabledReason'>,
+  enabledConfigured: boolean
+): Pick<ClusterToolCatalogItem, 'enabledEffective' | 'effectiveDisabledReason'> {
+  if (!enabledConfigured) {
+    return { enabledEffective: false, effectiveDisabledReason: null };
+  }
+  if (!server.enabled) {
+    return { enabledEffective: false, effectiveDisabledReason: 'server_disabled' };
+  }
+  if (tool.effectiveDisabledReason === 'agent_write_disabled') {
+    return { enabledEffective: false, effectiveDisabledReason: 'agent_write_disabled' };
+  }
+  return { enabledEffective: true, effectiveDisabledReason: null };
+}
+
+function applyToolCountsDelta(
+  counts: ClusterToolCatalogServer['toolCounts'],
+  previousTool: ClusterToolCatalogItem,
+  nextTool: ClusterToolCatalogItem
+): ClusterToolCatalogServer['toolCounts'] {
+  const delta = (nextValue: boolean, previousValue: boolean) => Number(nextValue) - Number(previousValue);
+  const isWrite = previousTool.capability === 'write';
+  return {
+    ...counts,
+    enabledConfigured: counts.enabledConfigured + delta(nextTool.enabledConfigured, previousTool.enabledConfigured),
+    enabledEffective: counts.enabledEffective + delta(nextTool.enabledEffective, previousTool.enabledEffective),
+    writeConfigured: isWrite
+      ? counts.writeConfigured + delta(nextTool.enabledConfigured, previousTool.enabledConfigured)
+      : counts.writeConfigured,
+    writeEffective: isWrite
+      ? counts.writeEffective + delta(nextTool.enabledEffective, previousTool.enabledEffective)
+      : counts.writeEffective
+  };
+}
+
 export const McpServersView: React.FC<McpServersViewProps> = ({
   cluster,
   targetContext,
   canManageMcp = false,
   canManageTools = false,
+  canRequestWriteRuns = false,
   onToggleTool,
   onSyncTools
 }) => {
@@ -106,6 +144,10 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const activeCatalog = catalog || localCatalog;
   const canEditServers = canManageMcp && activeCatalog.permissions.canEdit;
   const servers = activeCatalog.servers;
+  const hasConfiguredWriteTools = servers.some((server) => server.toolCounts.writeConfigured > 0);
+  const hasAgentWriteBlockedTools = servers.some(
+    (server) => server.enabled && server.toolCounts.writeConfigured > server.toolCounts.writeEffective
+  );
   const showInitialCatalogLoading = showCatalogLoadingNotice && !catalog && localCatalog.servers.length === 0;
   const activeServer = selectedServerId
     ? servers.find((server) => server.id === selectedServerId) || null
@@ -367,8 +409,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
                 ? {
                     ...item,
                     enabledConfigured: nextEnabled,
-                    enabledEffective: server.enabled && nextEnabled,
-                    effectiveDisabledReason: !server.enabled && nextEnabled ? 'server_disabled' : null
+                    ...getOptimisticToolEffectiveState(server, item, nextEnabled)
                   }
                 : item
             )
@@ -379,19 +420,19 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         ...current,
         servers: current.servers.map((candidate) => {
           if (candidate.id !== server.id) return candidate;
+          const nextTool = {
+            ...tool,
+            enabledConfigured: nextEnabled,
+            ...getOptimisticToolEffectiveState(candidate, tool, nextEnabled)
+          };
           const tools: ClusterToolCatalogItem[] = candidate.tools.map((item) =>
             item.name === tool.name
-              ? {
-                  ...item,
-                  enabledConfigured: nextEnabled,
-                  enabledEffective: candidate.enabled && nextEnabled,
-                  effectiveDisabledReason: !candidate.enabled && nextEnabled ? 'server_disabled' : null
-                }
+              ? nextTool
               : item
           );
           return {
             ...candidate,
-            toolCounts: computeToolCounts(tools),
+            toolCounts: applyToolCountsDelta(candidate.toolCounts, tool, nextTool),
             tools
           };
         })
@@ -426,6 +467,26 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       {catalogError && (
         <div className="type-caption mb-5 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
           {catalogError}
+        </div>
+      )}
+
+      {hasAgentWriteBlockedTools && (
+        <section className="mb-5 rounded-lg border border-status-warning/30 bg-status-warning-soft px-4 py-3 text-status-warning-text">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 gap-3">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="min-w-0">
+                <h2 className="type-row-title">{t('mcpServers.agentWriteModeNoticeTitle')}</h2>
+                <p className="type-caption mt-1">{t('mcpServers.agentWriteModeNoticeBody')}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {hasConfiguredWriteTools && !canRequestWriteRuns && (
+        <div className="type-caption mb-5 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
+          {t('mcpServers.roleWriteNotice')}
         </div>
       )}
 
