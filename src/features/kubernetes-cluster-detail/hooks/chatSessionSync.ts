@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { ChatMessage, ChatSession, KubernetesCluster, PendingApproval } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type { ControlPlaneRunToolApproval, ControlPlaneSessionListPage } from '@/services/controlPlaneApi';
+import type { ControlPlaneRunToolApproval, ControlPlaneSession, ControlPlaneSessionListPage } from '@/services/controlPlaneApi';
 import { createLocalMessageId, toTimestamp } from '@/features/kubernetes-cluster-detail/lib/helpers';
 import {
   dedupeAssistantMessagesByRun,
@@ -16,6 +16,7 @@ import {
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
 import {
   buildTraceFromRunEvents,
+  hasTraceDetails,
   isRunInProgress,
   isRunTerminal,
   isTraceInProgress
@@ -57,6 +58,25 @@ export function mergeFetchedChatSessions(
   return sortSessionsByTimestamp(merged);
 }
 
+export function mapControlPlaneSessionToChatSession(
+  session: ControlPlaneSession,
+  existing?: ChatSession
+): ChatSession {
+  return {
+    id: session.id,
+    backendSessionId: session.id,
+    status: session.status,
+    createdBy: session.createdBy,
+    createdByUser: session.createdByUser,
+    name: session.title,
+    hydrated: existing?.hydrated ?? false,
+    messagesLoadFailed: existing?.messagesLoadFailed,
+    messagesNextCursor: existing?.messagesNextCursor,
+    messages: existing?.messages || [],
+    timestamp: toTimestamp(session.lastMessageAt || session.updatedAt)
+  };
+}
+
 export function mapControlPlaneApprovalToPendingApproval(
   approval: ControlPlaneRunToolApproval
 ): PendingApproval {
@@ -83,6 +103,13 @@ export function replaceCancelledRunMessagesForHydration(
     nextMessages = replaceCancelledRunAssistantMessages(nextMessages, runId, cancelledMessage);
   }
   return nextMessages;
+}
+
+export function hasRunMessageWithoutTraceDetails(
+  messages: ChatMessage[],
+  runTracesByRunId: Record<string, LiveRunTrace>
+): boolean {
+  return messages.some((message) => Boolean(message.runId) && !hasTraceDetails(runTracesByRunId[message.runId as string]));
 }
 
 interface HydrationBackendIndex {
@@ -299,6 +326,12 @@ export function useControlPlaneChatSessionSync(args: {
   const activeSessionIdRef = useRef(activeSessionId);
   const onUpdateSessionsRef = useRef(onUpdateSessions);
   const activeHydrationSession = sessions.find((item) => item.id === activeSessionId) || null;
+  const activeHydrationRunSignature = activeHydrationSession
+    ? activeHydrationSession.messages
+        .map((message) => message.runId)
+        .filter(Boolean)
+        .join(',')
+    : '';
   // Do not depend on the full sessions array; list refreshes can otherwise cancel
   // the only in-flight message hydration and leave the transcript skeleton up.
   const activeHydrationSessionKey = activeHydrationSession
@@ -306,7 +339,8 @@ export function useControlPlaneChatSessionSync(args: {
         activeHydrationSession.id,
         activeHydrationSession.backendSessionId || '',
         activeHydrationSession.hydrated === false ? 'pending' : 'ready',
-        activeHydrationSession.messagesLoadFailed ? 'failed' : 'ok'
+        activeHydrationSession.messagesLoadFailed ? 'failed' : 'ok',
+        activeHydrationRunSignature
       ].join(':')
     : 'none';
 
@@ -337,19 +371,7 @@ export function useControlPlaneChatSessionSync(args: {
         const existingById = new Map(existingSessions.map((session) => [session.id, session]));
         for (const session of page.items) {
           const existing = existingById.get(session.id);
-          fetched.push({
-            id: session.id,
-            backendSessionId: session.id,
-            status: session.status,
-            createdBy: session.createdBy,
-            createdByUser: session.createdByUser,
-            name: session.title,
-            hydrated: existing?.hydrated ?? false,
-            messagesLoadFailed: existing?.messagesLoadFailed,
-            messagesNextCursor: existing?.messagesNextCursor,
-            messages: existing?.messages || [],
-            timestamp: toTimestamp(session.lastMessageAt || session.updatedAt)
-          });
+          fetched.push(mapControlPlaneSessionToChatSession(session, existing));
         }
 
         if (cancelled) return;
@@ -388,10 +410,11 @@ export function useControlPlaneChatSessionSync(args: {
         Boolean(message.runId) &&
         isTraceInProgress(runTracesByRunIdRef.current?.[message.runId as string])
     );
+    const needsRunTraceHydration = hasRunMessageWithoutTraceDetails(session.messages, runTracesByRunIdRef.current || {});
     if (session.messagesLoadFailed) {
       return;
     }
-    if (session.hydrated && !hasTransientAssistantPlaceholder && !hasAssistantWithInProgressTrace) {
+    if (session.hydrated && !hasTransientAssistantPlaceholder && !hasAssistantWithInProgressTrace && !needsRunTraceHydration) {
       return;
     }
     if (hydratingBackendSessionsRef.current.has(backendSessionId)) {

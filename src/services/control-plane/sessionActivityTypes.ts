@@ -28,3 +28,27 @@ export interface ControlPlaneTargetChatActivity {
     latestToolAccessMode?: 'read_only' | 'read_write';
   }>;
 }
+
+export type ControlPlaneTargetChatActivityEventType =
+  | 'message.created'
+  | 'run.created'
+  | 'run.status_changed'
+  | 'assistant_message.committed'
+  | 'approval.requested'
+  | 'approval.decided'
+  | 'approval.expired'
+  | 'session.deleted';
+
+export interface ControlPlaneTargetChatActivityEvent {
+  id: string;
+  workspaceId: string;
+  targetId: string;
+  targetType: TargetType;
+  sessionId: string;
+  runId?: string;
+  messageId?: string;
+  approvalId?: string;
+  type: ControlPlaneTargetChatActivityEventType;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}

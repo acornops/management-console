@@ -10,6 +10,7 @@ import { toArray } from './control-plane/formatters';
 import {
   delay,
   getControlPlaneBaseUrl,
+  readJsonEventStream,
   readRunEventStream,
   requestJson
 } from './control-plane/http';
@@ -41,7 +42,10 @@ import type {
   ControlPlaneWorkspaceMember,
   PagedResult
 } from './control-plane/types';
-import type { ControlPlaneTargetChatActivity } from './control-plane/sessionActivityTypes';
+import type {
+  ControlPlaneTargetChatActivity,
+  ControlPlaneTargetChatActivityEvent
+} from './control-plane/sessionActivityTypes';
 
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
@@ -70,7 +74,10 @@ export type {
   TargetMcpServerToolInput,
   UpdateTargetMcpServerInput
 } from './control-plane/types';
-export type { ControlPlaneTargetChatActivity } from './control-plane/sessionActivityTypes';
+export type {
+  ControlPlaneTargetChatActivity,
+  ControlPlaneTargetChatActivityEvent
+} from './control-plane/sessionActivityTypes';
 export type { ControlPlaneVirtualMachine, RegisterVirtualMachineResponse } from './control-plane/virtualMachineTypes';
 
 export const controlPlaneApi = {
@@ -396,6 +403,37 @@ export const controlPlaneApi = {
         filters: { windowSeconds: options?.windowSeconds ? String(options.windowSeconds) : undefined }
       })}`
     );
+  },
+
+  async streamTargetChatActivity(
+    workspaceId: string,
+    targetId: string,
+    options?: {
+      signal?: AbortSignal;
+      after?: string;
+      onEvent?: (event: ControlPlaneTargetChatActivityEvent) => void;
+    }
+  ): Promise<void> {
+    try {
+      const afterQuery = options?.after ? `?after=${encodeURIComponent(options.after)}` : '';
+      const response = await fetch(
+        `${getControlPlaneBaseUrl()}/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/chat-activity/stream${afterQuery}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          headers: { accept: 'text/event-stream' },
+          signal: options?.signal
+        }
+      );
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('UNAUTHORIZED');
+        throw new Error(`Target chat activity stream request failed (${response.status}): ${await response.text()}`);
+      }
+      await readJsonEventStream<ControlPlaneTargetChatActivityEvent>(response, options?.onEvent);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      throw error;
+    }
   },
 
   async deleteWorkspace(workspaceId: string): Promise<void> {

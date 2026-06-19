@@ -3,6 +3,7 @@ import { sanitizeChatMessages } from '@/features/kubernetes-cluster-detail/lib/s
 import { mapControlPlaneApprovalToPendingApproval } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import {
   createConversationId,
+  hasRunMessageWithoutTraceDetails,
   mergeHydratedChatMessages,
   replaceCancelledRunMessagesForHydration,
   sortSessionsByTimestamp
@@ -110,6 +111,29 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
         },
         sessionsMessages[2]
       ]);
+    });
+
+    it('detects hydrated run messages that still need trace replay', () => {
+      const messages: ChatMessage[] = [
+        { id: 'user-message', role: 'user', content: 'Check rollout', runId: 'run-1', timestamp: 1 },
+        { id: 'assistant-message', role: 'assistant', content: 'Rollout is healthy.', runId: 'run-1', timestamp: 2 }
+      ];
+
+      expect(hasRunMessageWithoutTraceDetails(messages, {})).toBe(true);
+      expect(hasRunMessageWithoutTraceDetails(messages, {
+        'run-1': { runId: 'run-1', status: 'running', steps: [], toolCalls: [] }
+      })).toBe(true);
+      expect(hasRunMessageWithoutTraceDetails(messages, {
+        'run-1': {
+          runId: 'run-1',
+          status: 'completed',
+          steps: [{ id: 'step-1', label: 'Completed', status: 'success', timestamp: 2 }],
+          toolCalls: []
+        }
+      })).toBe(false);
+      expect(hasRunMessageWithoutTraceDetails([
+        { id: 'plain-message', role: 'assistant', content: 'No run attached.', timestamp: 3 }
+      ], {})).toBe(false);
     });
 
     it('adds a cancelled assistant message when hydration only has the user turn', () => {

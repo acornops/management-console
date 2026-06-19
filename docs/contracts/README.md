@@ -123,7 +123,7 @@ The console treats `permissions.read_workspace_data` as the gate for operational
 
 The management console keeps Kubernetes-specific lifecycle, install, inventory, namespace, and pod-log flows on the cluster APIs. The Virtual Machines page uses the VM APIs for Linux/systemd registration, inventory, findings, metrics, logs, MCP Servers, read-only chat, and VM Settings.
 
-The AI Settings page consumes `GET /api/v1/workspaces/{workspaceId}/ai-settings` to render AI assistant defaults, deployment allow-lists, and per-provider configured status for users with workspace data access. Users with `permissions.manage_ai_settings` may call `PATCH /api/v1/workspaces/{workspaceId}/ai-settings` to update the default provider/model, `PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` with write-only `{apiKey}` to add or rotate a provider credential, and `DELETE /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` to remove one. The console must never expect or display API key values, ciphertexts, or internal secret names; it only displays configured/not-configured status.
+The AI Settings page consumes `GET /api/v1/workspaces/{workspaceId}/ai-settings` to render AI assistant defaults, deployment allow-lists, and per-provider configured status for users with workspace data access. New and unset workspace AI settings default `reasoningSummaryMode` to `auto` when deployment policy allows reasoning summaries; admins can still set `off`. Users with `permissions.manage_ai_settings` may call `PATCH /api/v1/workspaces/{workspaceId}/ai-settings` to update the default provider/model, `PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` with write-only `{apiKey}` to add or rotate a provider credential, and `DELETE /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` to remove one. The console must never expect or display API key values, ciphertexts, or internal secret names; it only displays configured/not-configured status.
 
 The Members page consumes authoritative membership from `GET /api/v1/workspaces/{workspaceId}/members`. Member rows include:
 
@@ -223,6 +223,7 @@ The management console depends on:
 - `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/sessions`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/sessions`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity/stream`
 - `POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`
 - `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`
 - `DELETE /api/v1/sessions/{sessionId}`
@@ -253,6 +254,8 @@ Session listing response must remain cursor-based:
 - Run details and approval replay payloads include `targetId` and `targetType`. Approval payloads may include `summary`, a human-readable sentence for approval UI copy. Kubernetes payloads also include `clusterId`; non-Kubernetes targets must not receive a synthetic cluster alias.
 
 Recent target chat activity uses `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity?windowSeconds=300`. It requires target read access, not `create_sessions`. The response includes `targetId`, `targetType`, `targetName`, `windowSeconds`, `generatedAt`, and `recentActivity[]` rows with owner metadata, `lastActivityAt`, latest run metadata, active run metadata, `hasActiveRun`, `hasRecentWriteCapableRun`, and optional `latestToolAccessMode`. The management console uses this payload before starting a local draft conversation so recent target activity can be reviewed without creating a backend session.
+
+Target chat activity streaming uses `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity/stream`. The console expects SSE frames with `event: chat_activity`, `id: <activityEventId>`, and payloads shaped as `{id,workspaceId,targetId,targetType,sessionId,runId?,messageId?,approvalId?,type,payload,createdAt}`. The console resumes with `?after=<activityEventId>` after reconnect. Activity types consumed by the UI are `message.created`, `run.created`, `run.status_changed`, `assistant_message.committed`, `approval.requested`, `approval.decided`, `approval.expired`, and `session.deleted`. Activity events identify changed resources; message bodies remain loaded through `GET /api/v1/sessions/{sessionId}/messages`.
 
 `POST /api/v1/sessions/{sessionId}/messages` must keep accepting:
 
@@ -293,6 +296,8 @@ Current event types used by the UI:
 - `run_failed`
 - `run_cancelled`
 - `run_completed`
+
+Run SSE is a long-lived detail stream and may continue sending heartbeats after terminal run events. The management console must treat `run_completed`, `run_failed`, and `run_cancelled` as terminal signals and reconcile through run/session APIs instead of waiting for the SSE request to close.
 
 Cancellation is terminal from the browser perspective. After a user cancels a
 run, the management console must keep that run stopped locally, ignore later

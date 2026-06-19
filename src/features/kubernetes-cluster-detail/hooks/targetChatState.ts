@@ -129,3 +129,22 @@ export function deriveTargetChatRunState(args: {
 
   return { activeRunId: null, isRunActive: false };
 }
+
+export function deriveActivityDiscoveredRunId(args: {
+  activityWatchedRun: { sessionId: string; runId: string } | null;
+  activeSession: ChatSession;
+  runTracesByRunId: Record<string, LiveRunTrace>;
+  cancelledRunIds?: ReadonlySet<string>;
+}): string | null {
+  const { activityWatchedRun, activeSession, runTracesByRunId, cancelledRunIds } = args;
+  if (!activityWatchedRun) return null;
+  if (activityWatchedRun.sessionId !== activeSession.id) return null;
+  if (cancelledRunIds?.has(activityWatchedRun.runId)) return null;
+  return isTraceInProgress(runTracesByRunId[activityWatchedRun.runId])
+    ? activityWatchedRun.runId
+    : null;
+}
+
+export function shouldDiscoverActiveRunFromActivity(activeSessionId: string | null, sessionId: string): boolean {
+  return activeSessionId === sessionId;
+}
