@@ -165,6 +165,7 @@ export function useTargetChat({
   useEffect(() => {
     const sortedSessions = sortSessionsByTimestamp(cluster.chatSessions);
     if (!activeSessionId) {
+      setActiveSessionId(sortedSessions.length > 0 ? sortedSessions[0].id : null);
       return;
     }
     if (sortedSessions.some((session) => session.id === activeSessionId)) {
@@ -229,7 +230,6 @@ export function useTargetChat({
     setRunTracesByRunId: setRunTracesByRunIdAndRef,
     setTraceExpandedByRunId
   });
-
   const isInFlightAssistantPlaceholder = (message: ChatMessage): boolean => {
     if (isPendingAssistantPlaceholder(message)) {
       return true;
