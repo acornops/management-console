@@ -225,6 +225,7 @@ export function useTargetChat({
     onUpdateSessions,
     runTracesByRunIdRef,
     runCancelledMessage: t('chat.runCancelledMessage'),
+    cancelledRunIds: cancelledRunIdsRef.current,
     setRunTracesByRunId: setRunTracesByRunIdAndRef,
     setTraceExpandedByRunId
   });

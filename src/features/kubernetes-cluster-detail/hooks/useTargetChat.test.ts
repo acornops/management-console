@@ -539,7 +539,13 @@ describe('target chat controller wiring', () => {
     expect(useTargetChat).toContain('const effectiveActiveRunId = derivedRunState.activeRunId || activityDiscoveredRunId;');
     expect(useTargetChat).toContain('const isRunActive = isLoading || derivedRunState.isRunActive || Boolean(activityDiscoveredRunId);');
     expect(useTargetChat).toContain('onActiveRunDiscovered: handleActiveRunDiscovered,');
+    expect(useTargetChat).toContain('cancelledRunIds: cancelledRunIdsRef.current,');
     expect(useTargetChat).toContain("runCancelledMessage: t('chat.runCancelledMessage')");
+    expect(targetChatActivityStream).toContain('cancelledRunIds?: ReadonlySet<string>;');
+    expect(targetChatActivityStream).toContain('const isLocallyCancelledRun = cancelledRunIds?.has(run.id) === true;');
+    expect(targetChatActivityStream).toContain('if (isLocallyCancelledRun) {');
+    expect(targetChatActivityStream).toContain('hasActiveRun: run && cancelledRunIds?.has(run.id) ? false');
+    expect(targetChatActivityStream).toContain('!cancelledRunIds?.has(run.id) &&');
     expect(useTargetChat).toContain('resetActivityWatchedRun();');
     expect(useTargetChat).toContain('clearActivityWatchedRunForSession(sessionId);');
     expect(useTargetChat).toContain('if (!activeSessionId) {\n      return;\n    }');

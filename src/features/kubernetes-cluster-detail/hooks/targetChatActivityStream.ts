@@ -54,6 +54,7 @@ export function useTargetChatActivityStream(args: {
   onUpdateSessions: (sessions: ChatSession[]) => void;
   runTracesByRunIdRef: RefObject<Record<string, LiveRunTrace>>;
   runCancelledMessage: string;
+  cancelledRunIds?: ReadonlySet<string>;
   setRunTracesByRunId: Dispatch<SetStateAction<Record<string, LiveRunTrace>>>;
   setTraceExpandedByRunId: Dispatch<SetStateAction<Record<string, boolean>>>;
 }): void {
@@ -65,6 +66,7 @@ export function useTargetChatActivityStream(args: {
     onUpdateSessions,
     runTracesByRunIdRef,
     runCancelledMessage,
+    cancelledRunIds,
     setRunTracesByRunId,
     setTraceExpandedByRunId
   } = args;
@@ -147,8 +149,12 @@ export function useTargetChatActivityStream(args: {
       let terminalRunIds: Set<string> | undefined;
 
       if (run) {
+        const isLocallyCancelledRun = cancelledRunIds?.has(run.id) === true;
         const events = await controlPlaneApi.getRunEvents(run.id).catch(() => []);
-        if (isRunTerminal(run.status)) {
+        if (isLocallyCancelledRun) {
+          terminalRunIds = new Set([run.id]);
+          mappedMessages = replaceCancelledRunAssistantMessages(mappedMessages, run.id, runCancelledMessage);
+        } else if (isRunTerminal(run.status)) {
           traceUpdates[run.id] = buildTraceFromRunEvents(run, events);
           terminalRunIds = new Set([run.id]);
           if (run.status === 'cancelled') {
@@ -199,7 +205,7 @@ export function useTargetChatActivityStream(args: {
         hydrated: true,
         messagesLoadFailed: false,
         messagesNextCursor: backendMessages.nextCursor,
-        hasActiveRun: run ? isRunInProgress(run.status) : currentSession.hasActiveRun,
+        hasActiveRun: run && cancelledRunIds?.has(run.id) ? false : run ? isRunInProgress(run.status) : currentSession.hasActiveRun,
         messages: mergedMessages,
         timestamp: mergedMessages.length > 0 ? mergedMessages[mergedMessages.length - 1].timestamp : currentSession.timestamp
       };
@@ -222,6 +228,7 @@ export function useTargetChatActivityStream(args: {
 
       if (
         run &&
+        !cancelledRunIds?.has(run.id) &&
         isRunInProgress(run.status) &&
         shouldDiscoverActiveRunFromActivity(activeSessionIdRef.current, hydratedSession.id)
       ) {
@@ -281,6 +288,7 @@ export function useTargetChatActivityStream(args: {
     onActiveRunDiscovered,
     runTracesByRunIdRef,
     runCancelledMessage,
+    cancelledRunIds,
     setRunTracesByRunId,
     setTraceExpandedByRunId
   ]);
