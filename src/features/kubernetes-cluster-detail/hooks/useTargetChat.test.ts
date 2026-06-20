@@ -6,8 +6,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buildRecentActivityWarning,
   createRecentActivitySessionPlaceholder,
+  deriveActivityDiscoveredRunId,
   deriveTargetChatRunState,
-  isConversationOwner
+  isConversationOwner,
+  shouldDiscoverActiveRunFromActivity
 } from '@/features/kubernetes-cluster-detail/hooks/targetChatState';
 import { mergeFetchedChatSessions } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import type { ControlPlaneTargetChatActivity } from '@/services/controlPlaneApi';
@@ -156,6 +158,55 @@ describe('deriveTargetChatRunState', () => {
     });
 
     expect(state).toEqual({ activeRunId: 'run-newer', isRunActive: true });
+  });
+});
+
+describe('deriveActivityDiscoveredRunId', () => {
+  it('uses an in-progress run discovered from target activity for the active session', () => {
+    expect(deriveActivityDiscoveredRunId({
+      activityWatchedRun: { sessionId: 'session-1', runId: 'run-2' },
+      activeSession: makeSession([
+        { id: 'user-1', role: 'user', content: 'First check', runId: 'run-1', timestamp: 1 }
+      ]),
+      runTracesByRunId: {
+        'run-2': makeTrace('run-2', 'running')
+      }
+    })).toBe('run-2');
+  });
+
+  it('ignores discovered runs from another session, terminal traces, and cancelled runs', () => {
+    expect(deriveActivityDiscoveredRunId({
+      activityWatchedRun: { sessionId: 'session-2', runId: 'run-2' },
+      activeSession: makeSession([]),
+      runTracesByRunId: {
+        'run-2': makeTrace('run-2', 'running')
+      }
+    })).toBeNull();
+
+    expect(deriveActivityDiscoveredRunId({
+      activityWatchedRun: { sessionId: 'session-1', runId: 'run-2' },
+      activeSession: makeSession([]),
+      runTracesByRunId: {
+        'run-2': makeTrace('run-2', 'completed')
+      }
+    })).toBeNull();
+
+    expect(deriveActivityDiscoveredRunId({
+      activityWatchedRun: { sessionId: 'session-1', runId: 'run-2' },
+      activeSession: makeSession([]),
+      runTracesByRunId: {
+        'run-2': makeTrace('run-2', 'running')
+      },
+      cancelledRunIds: new Set(['run-2'])
+    })).toBeNull();
+  });
+});
+
+describe('shouldDiscoverActiveRunFromActivity', () => {
+  it('auto-attaches activity runs only when the session is already active', () => {
+    expect(shouldDiscoverActiveRunFromActivity(null, 'session-1')).toBe(false);
+    expect(shouldDiscoverActiveRunFromActivity('session-1', 'session-1')).toBe(true);
+    expect(shouldDiscoverActiveRunFromActivity('draft-session', 'session-1')).toBe(false);
   });
 });
 
@@ -352,6 +403,8 @@ describe('target chat controller wiring', () => {
   const chatSubmitFailures = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSubmitFailures.ts'), 'utf8');
   const chatSessionSync = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSessionSync.ts'), 'utf8');
   const targetChatRunWatcher = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/targetChatRunWatcher.ts'), 'utf8');
+  const targetChatActivityStream = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/targetChatActivityStream.ts'), 'utf8');
+  const useActivityDiscoveredRun = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/useActivityDiscoveredRun.ts'), 'utf8');
   const useTargetChatScrollAnchor = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/useTargetChatScrollAnchor.ts'), 'utf8');
 
   it('keeps the chat runtime hoisted above sidebar and fullscreen presentations', () => {
@@ -459,6 +512,61 @@ describe('target chat controller wiring', () => {
     expect(chatSessionSync).toContain('runTracesByRunIdRef.current = next;');
   });
 
+  it('advances target activity replay cursors only after canonical reconciliation', () => {
+    expect(targetChatActivityStream).toContain('let processing = Promise.resolve();');
+    expect(targetChatActivityStream).toContain('let activityRefreshFailed = false;');
+    expect(targetChatActivityStream).toContain('if (activityRefreshFailed) {');
+    expect(targetChatActivityStream).toContain('await refreshSession(event);');
+    expect(targetChatActivityStream).toContain('lastEventIdRef.current = event.id;');
+    expect(targetChatActivityStream.indexOf('await refreshSession(event);')).toBeLessThan(
+      targetChatActivityStream.indexOf('lastEventIdRef.current = event.id;')
+    );
+    expect(targetChatActivityStream.indexOf('activityRefreshFailed = true;')).toBeGreaterThan(
+      targetChatActivityStream.indexOf('lastEventIdRef.current = event.id;')
+    );
+    expect(targetChatActivityStream).toContain('const onUpdateSessionsRef = useRef(onUpdateSessions);');
+    expect(targetChatActivityStream).toContain('onUpdateSessionsRef.current = onUpdateSessions;');
+    expect(targetChatActivityStream).toContain('controlPlaneApi.getRun(event.runId).catch(() => null)');
+    expect(targetChatActivityStream).toContain('let fetchedSessions: ChatSession[] | null = null;');
+    expect(targetChatActivityStream).toContain('findExistingSessionForBackendId(latestSessions, session.id)');
+    expect(targetChatActivityStream).toContain('const currentSessions = latestSessionsRef.current;');
+    expect(targetChatActivityStream).toContain('const publishBase = fetchedSessions');
+    expect(targetChatActivityStream).toContain('nextSessions = upsertSession(publishBase, hydratedSession);');
+    expect(targetChatActivityStream).toContain('onUpdateSessionsRef.current(nextSessions);');
+    const activityEffectDependencies = targetChatActivityStream.slice(targetChatActivityStream.lastIndexOf('  }, ['));
+    expect(activityEffectDependencies).not.toContain('onUpdateSessions,');
+    expect(targetChatActivityStream).toContain("console.warn('Target chat activity refresh failed', error);");
+    expect(targetChatActivityStream).toContain('streamAbortController?.abort();');
+    expect(targetChatActivityStream).toContain('replaceCancelledRunAssistantMessages(mappedMessages, run.id, runCancelledMessage)');
+    expect(targetChatActivityStream).toContain('const restoredTrace = buildTraceFromRunEvents(run, events);');
+    expect(targetChatActivityStream).toContain('existingTrace && hasTraceDetails(existingTrace)');
+    expect(targetChatActivityStream).toContain('status: mapRunStatusToTraceStatus(run.status)');
+    expect(targetChatActivityStream).not.toContain('steps: [],\n                toolCalls: []');
+    expect(targetChatActivityStream).toContain('createRecentActivitySessionPlaceholder(event.sessionId)');
+    expect(targetChatActivityStream).toContain('shouldDiscoverActiveRunFromActivity(activeSessionIdRef.current, hydratedSession.id)');
+    expect(targetChatActivityStream).toContain('onActiveRunDiscovered?.(hydratedSession.id, run.id);');
+    expect(useTargetChat).toContain('} = useActivityDiscoveredRun({');
+    expect(useTargetChat).toContain('const effectiveActiveRunId = derivedRunState.activeRunId || activityDiscoveredRunId;');
+    expect(useTargetChat).toContain('const isRunActive = isLoading || derivedRunState.isRunActive || Boolean(activityDiscoveredRunId);');
+    expect(useTargetChat).toContain('onActiveRunDiscovered: handleActiveRunDiscovered,');
+    expect(useTargetChat).toContain('cancelledRunIds: cancelledRunIdsRef.current,');
+    expect(useTargetChat).toContain("runCancelledMessage: t('chat.runCancelledMessage')");
+    expect(targetChatActivityStream).toContain('cancelledRunIds?: ReadonlySet<string>;');
+    expect(targetChatActivityStream).toContain('const isLocallyCancelledRun = cancelledRunIds?.has(run.id) === true;');
+    expect(targetChatActivityStream).toContain('if (isLocallyCancelledRun) {');
+    expect(targetChatActivityStream).toContain('hasActiveRun: run && cancelledRunIds?.has(run.id) ? false');
+    expect(targetChatActivityStream).toContain('!cancelledRunIds?.has(run.id) &&');
+    expect(useTargetChat).toContain('resetActivityWatchedRun();');
+    expect(useTargetChat).toContain('clearActivityWatchedRunForSession(sessionId);');
+    expect(useTargetChat).toContain('if (!activeSessionId) {\n      setActiveSessionId(sortedSessions.length > 0 ? sortedSessions[0].id : null);\n      return;\n    }');
+    expect(chatSessionSync).not.toContain('activeHydrationRunSignature');
+    expect(chatSessionSync).toContain('Run-id churn is intentionally excluded');
+    expect(useActivityDiscoveredRun).toContain('const [activityWatchedRun, setActivityWatchedRun]');
+    expect(useActivityDiscoveredRun).toContain('const activityDiscoveredRunId = deriveActivityDiscoveredRunId({');
+    expect(useActivityDiscoveredRun).toContain('(sessionId: string, runId: string) => setActivityWatchedRun({ sessionId, runId })');
+    expect(useActivityDiscoveredRun).toContain('current?.sessionId === sessionId ? null : current');
+  });
+
   it('sanitizes visible messages before rendering in-flight placeholders', () => {
     expect(useTargetChat).toContain('const visibleMessages = filterMessagesByRunIds(sanitizeChatMessages(messages), suppressedHydrationRunIdsRef.current)');
     expect(useTargetChat).toContain(".filter((message) => !isBlankAssistantMessage(message) || isInFlightAssistantPlaceholder(message));");
@@ -474,16 +582,40 @@ describe('target chat controller wiring', () => {
 
   it('reconnects watched run streams with capped backoff instead of opening duplicate streams', () => {
     expect(targetChatRunWatcher).toContain('const WATCHER_RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10000];');
+    expect(targetChatRunWatcher).toContain('const WATCHER_EVENT_POLL_INTERVAL_MS = 700;');
+    expect(targetChatRunWatcher).toContain('const replayRunEvents = (run: ControlPlaneRun, events: ControlPlaneRunEvent[]) =>');
+    expect(targetChatRunWatcher).toContain('setTraceForRun(createBaseRunTrace(run.id, isRunInProgress(run.status) ? mapRunStatusToTraceStatus(run.status) :');
+    expect(targetChatRunWatcher).toContain('handleRunEvent(event);');
+    expect(targetChatRunWatcher).toContain('replayRunEvents(run, events);');
+    expect(targetChatRunWatcher).not.toContain('seenSeq.add(event.seq);');
     expect(targetChatRunWatcher).toContain('while (!cancelled && !isRunCancelled(runId) && latestRun && isRunInProgress(latestRun.status))');
+    expect(targetChatRunWatcher).toContain('const polledEvents = await controlPlaneApi.getRunEvents(runId);');
+    expect(targetChatRunWatcher).toContain('handleRunEvent(polledEvent);');
+    expect(targetChatRunWatcher).toContain('pollEventsStop = true;');
+    expect(targetChatRunWatcher).toContain('await pollEventsPromise.catch(() => undefined);');
     expect(targetChatRunWatcher).toContain('await waitForReconnect(delayMs);');
     expect(targetChatRunWatcher).toContain('abortController.abort();');
     expect(targetChatRunWatcher).toContain('let pendingSessionPublish');
     expect(targetChatRunWatcher).toContain('pendingSessionPublish = setTimeout');
     expect(targetChatRunWatcher).toContain('}, 80);');
+    expect(targetChatRunWatcher).toContain('const onUpdateSessionsRef = useRef(onUpdateSessions);');
+    expect(targetChatRunWatcher).toContain('onUpdateSessionsRef.current = onUpdateSessions;');
+    expect(targetChatRunWatcher).toContain('onUpdateSessionsRef.current(nextSessions);');
+    const watcherEffectDependencies = targetChatRunWatcher.slice(targetChatRunWatcher.lastIndexOf('  }, ['));
+    expect(watcherEffectDependencies).not.toContain('onUpdateSessions,');
     expect(targetChatRunWatcher).toContain('watchedBackendSessionId,');
     expect(targetChatRunWatcher).toContain('watchedSessionId');
     expect(targetChatRunWatcher).toContain('if (cancelled || isRunCancelled(runId)) return;');
     expect(targetChatRunWatcher).not.toMatch(/activeSessionRecord,\s*activeSessionRecord\?\.backendSessionId/);
+  });
+
+  it('skips only locally owned submit streams when following active runs', () => {
+    expect(useTargetChat).toContain('const hasLocalRunStream = useCallback((runId: string) => Boolean(activeRunStreamControlsRef.current[runId]), []);');
+    expect(useTargetChat).toContain('hasLocalRunStream,');
+    expect(targetChatRunWatcher).toContain('hasLocalRunStream?: (runId: string) => boolean;');
+    expect(targetChatRunWatcher).toContain('hasLocalRunStream = (runId: string) => activeRunId === runId');
+    expect(targetChatRunWatcher).toContain('hasLocalRunStream(runId)');
+    expect(targetChatRunWatcher).not.toContain('activeRunId === runId ||');
   });
 
   it('reuses restored assistant placeholders for watched streams', () => {

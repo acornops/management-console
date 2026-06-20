@@ -54,7 +54,7 @@ interface BehaviorDraft {
 const DEFAULT_BEHAVIOR_DRAFT: BehaviorDraft = {
   defaultProvider: 'openai',
   defaultModel: 'gpt-5.5',
-  reasoningSummaryMode: 'off',
+  reasoningSummaryMode: 'auto',
   reasoningEffort: 'default'
 };
 

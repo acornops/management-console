@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { ChatMessage, ChatSession, KubernetesCluster, PendingApproval } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type { ControlPlaneRunToolApproval, ControlPlaneSessionListPage } from '@/services/controlPlaneApi';
+import type { ControlPlaneRunToolApproval, ControlPlaneSession, ControlPlaneSessionListPage } from '@/services/controlPlaneApi';
 import { createLocalMessageId, toTimestamp } from '@/features/kubernetes-cluster-detail/lib/helpers';
 import {
   dedupeAssistantMessagesByRun,
@@ -16,6 +16,7 @@ import {
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
 import {
   buildTraceFromRunEvents,
+  hasTraceDetails,
   isRunInProgress,
   isRunTerminal,
   isTraceInProgress
@@ -40,9 +41,13 @@ export function mergeFetchedChatSessions(
   existingSessions: ChatSession[],
   activeSessionId: string | null
 ): ChatSession[] {
+  const isSameConversation = (left: ChatSession, right: ChatSession) =>
+    left.id === right.id ||
+    (Boolean(left.backendSessionId) && (left.backendSessionId === right.backendSessionId || left.backendSessionId === right.id)) ||
+    (Boolean(right.backendSessionId) && (right.backendSessionId === left.backendSessionId || right.backendSessionId === left.id));
   const merged = [...fetched];
   for (const draft of existingSessions.filter((session) => !session.backendSessionId)) {
-    if (!merged.some((session) => session.id === draft.id)) {
+    if (!merged.some((session) => isSameConversation(session, draft))) {
       merged.push(draft);
     }
   }
@@ -50,11 +55,37 @@ export function mergeFetchedChatSessions(
   const activeBackendSession = existingSessions.find(
     (session) => session.id === activeSessionId && Boolean(session.backendSessionId)
   );
-  if (activeBackendSession && !merged.some((session) => session.id === activeBackendSession.id)) {
+  if (activeBackendSession && !merged.some((session) => isSameConversation(session, activeBackendSession))) {
     merged.push(activeBackendSession);
   }
 
   return sortSessionsByTimestamp(merged);
+}
+
+export function findExistingSessionForBackendId(
+  existingSessions: ChatSession[],
+  backendSessionId: string
+): ChatSession | undefined {
+  return existingSessions.find((session) => session.id === backendSessionId || session.backendSessionId === backendSessionId);
+}
+
+export function mapControlPlaneSessionToChatSession(
+  session: ControlPlaneSession,
+  existing?: ChatSession
+): ChatSession {
+  return {
+    id: existing?.id || session.id,
+    backendSessionId: session.id,
+    status: session.status,
+    createdBy: session.createdBy,
+    createdByUser: session.createdByUser,
+    name: session.title,
+    hydrated: existing?.hydrated ?? false,
+    messagesLoadFailed: existing?.messagesLoadFailed,
+    messagesNextCursor: existing?.messagesNextCursor,
+    messages: existing?.messages || [],
+    timestamp: toTimestamp(session.lastMessageAt || session.updatedAt)
+  };
 }
 
 export function mapControlPlaneApprovalToPendingApproval(
@@ -83,6 +114,13 @@ export function replaceCancelledRunMessagesForHydration(
     nextMessages = replaceCancelledRunAssistantMessages(nextMessages, runId, cancelledMessage);
   }
   return nextMessages;
+}
+
+export function hasRunMessageWithoutTraceDetails(
+  messages: ChatMessage[],
+  runTracesByRunId: Record<string, LiveRunTrace>
+): boolean {
+  return messages.some((message) => Boolean(message.runId) && !hasTraceDetails(runTracesByRunId[message.runId as string]));
 }
 
 interface HydrationBackendIndex {
@@ -301,6 +339,8 @@ export function useControlPlaneChatSessionSync(args: {
   const activeHydrationSession = sessions.find((item) => item.id === activeSessionId) || null;
   // Do not depend on the full sessions array; list refreshes can otherwise cancel
   // the only in-flight message hydration and leave the transcript skeleton up.
+  // Run-id churn is intentionally excluded because live run discovery can update
+  // the active session while message hydration is still in flight.
   const activeHydrationSessionKey = activeHydrationSession
     ? [
         activeHydrationSession.id,
@@ -334,22 +374,9 @@ export function useControlPlaneChatSessionSync(args: {
         const fetched: ChatSession[] = [];
         const page = await listSessions(cluster.workspaceId, cluster.id, { limit: 50 });
         const existingSessions = latestSessionsRef.current;
-        const existingById = new Map(existingSessions.map((session) => [session.id, session]));
         for (const session of page.items) {
-          const existing = existingById.get(session.id);
-          fetched.push({
-            id: session.id,
-            backendSessionId: session.id,
-            status: session.status,
-            createdBy: session.createdBy,
-            createdByUser: session.createdByUser,
-            name: session.title,
-            hydrated: existing?.hydrated ?? false,
-            messagesLoadFailed: existing?.messagesLoadFailed,
-            messagesNextCursor: existing?.messagesNextCursor,
-            messages: existing?.messages || [],
-            timestamp: toTimestamp(session.lastMessageAt || session.updatedAt)
-          });
+          const existing = findExistingSessionForBackendId(existingSessions, session.id);
+          fetched.push(mapControlPlaneSessionToChatSession(session, existing));
         }
 
         if (cancelled) return;
@@ -388,10 +415,11 @@ export function useControlPlaneChatSessionSync(args: {
         Boolean(message.runId) &&
         isTraceInProgress(runTracesByRunIdRef.current?.[message.runId as string])
     );
+    const needsRunTraceHydration = hasRunMessageWithoutTraceDetails(session.messages, runTracesByRunIdRef.current || {});
     if (session.messagesLoadFailed) {
       return;
     }
-    if (session.hydrated && !hasTransientAssistantPlaceholder && !hasAssistantWithInProgressTrace) {
+    if (session.hydrated && !hasTransientAssistantPlaceholder && !hasAssistantWithInProgressTrace && !needsRunTraceHydration) {
       return;
     }
     if (hydratingBackendSessionsRef.current.has(backendSessionId)) {

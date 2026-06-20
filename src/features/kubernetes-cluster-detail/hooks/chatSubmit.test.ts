@@ -99,14 +99,37 @@ describe('replaceCancelledRunAssistantMessages', () => {
         role: 'assistant',
         runId: 'run-123',
         content: 'Stale generated content that arrived after cancel.',
-        timestamp: 2
+        timestamp: 2,
+        approval: {
+          id: 'approval-1',
+          runId: 'run-123',
+          action: 'Run restart_workload',
+          toolName: 'restart_workload',
+          arguments: {},
+          status: 'approved'
+        }
+      },
+      {
+        id: 'stale-rejected-approval-message',
+        role: 'assistant',
+        runId: 'run-123',
+        content: '',
+        timestamp: 3,
+        approval: {
+          id: 'approval-2',
+          runId: 'run-123',
+          action: 'Run scale_workload',
+          toolName: 'scale_workload',
+          arguments: {},
+          status: 'rejected'
+        }
       },
       {
         id: 'other-assistant-message',
         role: 'assistant',
         runId: 'run-older',
         content: 'Earlier result.',
-        timestamp: 3
+        timestamp: 4
       }
     ];
 
@@ -114,7 +137,7 @@ describe('replaceCancelledRunAssistantMessages', () => {
       messages,
       'run-123',
       'Run cancelled. You can send another message when ready.',
-      4
+      5
     )).toEqual([
       messages[0],
       {
@@ -122,9 +145,9 @@ describe('replaceCancelledRunAssistantMessages', () => {
         role: 'assistant',
         content: 'Run cancelled. You can send another message when ready.',
         runId: 'run-123',
-        timestamp: 4
+        timestamp: 5
       },
-      messages[2]
+      messages[3]
     ]);
   });
 });

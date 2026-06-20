@@ -121,7 +121,13 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
         )}
         {isPending && (
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button onClick={() => void onReject(approval.id)} variant="secondary" size="sm" className="w-full sm:w-auto">
+            <Button
+              onClick={() => void onReject(approval.id)}
+              variant="secondary"
+              size="sm"
+              className="w-full sm:w-auto"
+              disabled={!canApproveWriteActions}
+            >
               <XCircle className="h-4 w-4" />
               {t('chat.rejectAction')}
             </Button>

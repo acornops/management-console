@@ -24,7 +24,9 @@ import {
   isConversationOwner
 } from '@/features/kubernetes-cluster-detail/hooks/targetChatState';
 import type { TargetChatController, UseTargetChatArgs } from '@/features/kubernetes-cluster-detail/hooks/targetChatControllerTypes';
+import { useTargetChatActivityStream } from '@/features/kubernetes-cluster-detail/hooks/targetChatActivityStream';
 import { useWatchedRunStream } from '@/features/kubernetes-cluster-detail/hooks/targetChatRunWatcher';
+import { useActivityDiscoveredRun } from '@/features/kubernetes-cluster-detail/hooks/useActivityDiscoveredRun';
 import { useTargetChatScrollAnchor } from '@/features/kubernetes-cluster-detail/hooks/useTargetChatScrollAnchor';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 import {
@@ -83,6 +85,7 @@ export function useTargetChat({
   const unregisterRunStream = useCallback((runId: string) => {
     delete activeRunStreamControlsRef.current[runId];
   }, []);
+  const hasLocalRunStream = useCallback((runId: string) => Boolean(activeRunStreamControlsRef.current[runId]), []);
   const activeSession = sessions.find((s) => s.id === activeSessionId) || {
     id: 'default',
     name: t('chat.newConversation'),
@@ -110,8 +113,18 @@ export function useTargetChat({
     isLocalRunLoading: isLoading,
     cancelledRunIds: cancelledRunIdsRef.current
   });
-  const effectiveActiveRunId = derivedRunState.activeRunId;
-  const isRunActive = isLoading || derivedRunState.isRunActive;
+  const {
+    activityDiscoveredRunId,
+    clearActivityWatchedRunForSession,
+    handleActiveRunDiscovered,
+    resetActivityWatchedRun
+  } = useActivityDiscoveredRun({
+    activeSession,
+    runTracesByRunId,
+    cancelledRunIds: cancelledRunIdsRef.current
+  });
+  const effectiveActiveRunId = derivedRunState.activeRunId || activityDiscoveredRunId;
+  const isRunActive = isLoading || derivedRunState.isRunActive || Boolean(activityDiscoveredRunId);
   const lastMessage = messages[messages.length - 1];
   const activeRunTrace = effectiveActiveRunId ? runTracesByRunId[effectiveActiveRunId] : undefined;
   const activeRunLatestStep = activeRunTrace?.steps.at(-1);
@@ -149,23 +162,22 @@ export function useTargetChat({
     isChatActive,
     isLoadingEarlierMessages
   });
-
   useEffect(() => {
     const sortedSessions = sortSessionsByTimestamp(cluster.chatSessions);
-    if (sortedSessions.length > 0) {
-      if (activeSessionId && sortedSessions.some((session) => session.id === activeSessionId)) {
-        return;
-      }
-      setActiveSessionId(sortedSessions[0].id);
+    if (!activeSessionId) {
+      setActiveSessionId(sortedSessions.length > 0 ? sortedSessions[0].id : null);
       return;
     }
-    setActiveSessionId(null);
+    if (sortedSessions.some((session) => session.id === activeSessionId)) {
+      return;
+    }
+    setActiveSessionId(sortedSessions.length > 0 ? sortedSessions[0].id : null);
   }, [activeSessionId, cluster.chatSessions, cluster.id]);
-
   useEffect(() => {
     setRunTracesByRunId({});
     setTraceExpandedByRunId({});
     setActiveRunId(null);
+    resetActivityWatchedRun();
     setIsCancellingRun(false);
     cancelledRunIdsRef.current.clear();
     suppressedHydrationRunIdsRef.current.clear();
@@ -192,11 +204,11 @@ export function useTargetChat({
     runCancelledMessage: t('chat.runCancelledMessage'),
     listSessions: sessionApi?.listSessions
   });
-
   useWatchedRunStream({
     activeRunId,
     activeSessionRecord,
     effectiveActiveRunId,
+    hasLocalRunStream,
     latestSessionsRef,
     onUpdateSessions,
     runTracesByRunIdRef,
@@ -206,7 +218,18 @@ export function useTargetChat({
     isRunCancelled,
     runCancelledMessage: t('chat.runCancelledMessage')
   });
-
+  useTargetChatActivityStream({
+    cluster,
+    latestSessionsRef,
+    activeSessionId,
+    onActiveRunDiscovered: handleActiveRunDiscovered,
+    onUpdateSessions,
+    runTracesByRunIdRef,
+    runCancelledMessage: t('chat.runCancelledMessage'),
+    cancelledRunIds: cancelledRunIdsRef.current,
+    setRunTracesByRunId: setRunTracesByRunIdAndRef,
+    setTraceExpandedByRunId
+  });
   const isInFlightAssistantPlaceholder = (message: ChatMessage): boolean => {
     if (isPendingAssistantPlaceholder(message)) {
       return true;
@@ -463,6 +486,7 @@ export function useTargetChat({
 
   const handleSelectSession = (sessionId: string) => {
     setActiveSessionId(sessionId);
+    clearActivityWatchedRunForSession(sessionId);
     shouldStickToBottomRef.current = true;
   };
 

@@ -29,6 +29,18 @@ export function isTraceTerminal(trace?: LiveRunTrace): boolean {
   return trace?.status === 'completed' || trace?.status === 'failed' || trace?.status === 'cancelled';
 }
 
+export function hasTraceDetails(trace?: LiveRunTrace): boolean {
+  return Boolean(
+    trace && (
+      trace.steps.length > 0 ||
+      trace.toolCalls.length > 0 ||
+      (trace.reasoningSummaries?.length || 0) > 0 ||
+      (trace.timelineEvents?.length || 0) > 0 ||
+      Boolean(trace.usage)
+    )
+  );
+}
+
 export function mapRunStatusToTraceStatus(status: ControlPlaneRun['status']): LiveRunTrace['status'] {
   if (status === 'completed') return 'completed';
   if (status === 'failed') return 'failed';

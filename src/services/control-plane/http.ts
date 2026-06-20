@@ -136,9 +136,9 @@ export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function readRunEventStream(
+export async function readJsonEventStream<T>(
   response: Response,
-  onEvent?: (event: ControlPlaneRunEvent) => void
+  onEvent?: (event: T) => void
 ): Promise<void> {
   if (!response.body) {
     return;
@@ -154,7 +154,7 @@ export async function readRunEventStream(
     const payload = dataLines.join('\n');
     dataLines = [];
     try {
-      const parsed = JSON.parse(payload) as ControlPlaneRunEvent;
+      const parsed = JSON.parse(payload) as T;
       onEvent?.(parsed);
     } catch {
       // Ignore malformed frames.
@@ -188,4 +188,11 @@ export async function readRunEventStream(
     dataLines.push(buffer.slice('data:'.length).trimStart());
   }
   emitDataLines();
+}
+
+export async function readRunEventStream(
+  response: Response,
+  onEvent?: (event: ControlPlaneRunEvent) => void
+): Promise<void> {
+  return readJsonEventStream<ControlPlaneRunEvent>(response, onEvent);
 }

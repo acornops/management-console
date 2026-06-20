@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const requestJson = vi.fn();
 const delay = vi.fn();
 const getControlPlaneBaseUrl = vi.fn(() => 'https://control-plane.example.com');
+const readJsonEventStream = vi.fn();
 const readRunEventStream = vi.fn();
 const mapControlPlaneClusterToKubernetesCluster = vi.fn();
 const mapClusterToolsCatalog = vi.fn((value) => ({ mapped: value }));
@@ -16,6 +17,7 @@ vi.mock('./control-plane/http', () => ({
   requestJson,
   delay,
   getControlPlaneBaseUrl,
+  readJsonEventStream,
   readRunEventStream
 }));
 
@@ -294,5 +296,39 @@ describe('controlPlaneApi', () => {
       })
     );
     expect(readRunEventStream).toHaveBeenCalledTimes(1);
+  });
+
+  it('streams target chat activity events with replay cursors and treats aborts as non-failures', async () => {
+    const onEvent = vi.fn();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response('boom', { status: 500 }))
+      .mockResolvedValueOnce(new Response('data: {"id":"43"}\n\n', { status: 200 }))
+      .mockRejectedValueOnce(new DOMException('aborted', 'AbortError'));
+    vi.stubGlobal('fetch', fetchMock);
+    readJsonEventStream.mockResolvedValue(undefined);
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.streamTargetChatActivity('workspace-1', 'target-1')).rejects.toThrow('UNAUTHORIZED');
+    await expect(controlPlaneApi.streamTargetChatActivity('workspace-1', 'target-1')).rejects.toThrow(
+      'Target chat activity stream request failed (500): boom'
+    );
+    await expect(
+      controlPlaneApi.streamTargetChatActivity('workspace 1', 'target 1', { after: '42', onEvent })
+    ).resolves.toBeUndefined();
+    await expect(
+      controlPlaneApi.streamTargetChatActivity('workspace-1', 'target-1', { signal: new AbortController().signal })
+    ).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      'https://control-plane.example.com/api/v1/workspaces/workspace%201/targets/target%201/chat-activity/stream?after=42',
+      expect.objectContaining({
+        method: 'GET',
+        credentials: 'include',
+        headers: { accept: 'text/event-stream' }
+      })
+    );
+    expect(readJsonEventStream).toHaveBeenCalledWith(expect.any(Response), onEvent);
   });
 });
