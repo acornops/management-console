@@ -523,6 +523,7 @@ describe('target chat controller wiring', () => {
     expect(targetChatActivityStream).toContain('onUpdateSessionsRef.current = onUpdateSessions;');
     expect(targetChatActivityStream).toContain('controlPlaneApi.getRun(event.runId).catch(() => null)');
     expect(targetChatActivityStream).toContain('let fetchedSessions: ChatSession[] | null = null;');
+    expect(targetChatActivityStream).toContain('findExistingSessionForBackendId(latestSessions, session.id)');
     expect(targetChatActivityStream).toContain('const currentSessions = latestSessionsRef.current;');
     expect(targetChatActivityStream).toContain('const publishBase = fetchedSessions');
     expect(targetChatActivityStream).toContain('nextSessions = upsertSession(publishBase, hydratedSession);');

@@ -41,9 +41,13 @@ export function mergeFetchedChatSessions(
   existingSessions: ChatSession[],
   activeSessionId: string | null
 ): ChatSession[] {
+  const isSameConversation = (left: ChatSession, right: ChatSession) =>
+    left.id === right.id ||
+    (Boolean(left.backendSessionId) && (left.backendSessionId === right.backendSessionId || left.backendSessionId === right.id)) ||
+    (Boolean(right.backendSessionId) && (right.backendSessionId === left.backendSessionId || right.backendSessionId === left.id));
   const merged = [...fetched];
   for (const draft of existingSessions.filter((session) => !session.backendSessionId)) {
-    if (!merged.some((session) => session.id === draft.id)) {
+    if (!merged.some((session) => isSameConversation(session, draft))) {
       merged.push(draft);
     }
   }
@@ -51,11 +55,18 @@ export function mergeFetchedChatSessions(
   const activeBackendSession = existingSessions.find(
     (session) => session.id === activeSessionId && Boolean(session.backendSessionId)
   );
-  if (activeBackendSession && !merged.some((session) => session.id === activeBackendSession.id)) {
+  if (activeBackendSession && !merged.some((session) => isSameConversation(session, activeBackendSession))) {
     merged.push(activeBackendSession);
   }
 
   return sortSessionsByTimestamp(merged);
+}
+
+export function findExistingSessionForBackendId(
+  existingSessions: ChatSession[],
+  backendSessionId: string
+): ChatSession | undefined {
+  return existingSessions.find((session) => session.id === backendSessionId || session.backendSessionId === backendSessionId);
 }
 
 export function mapControlPlaneSessionToChatSession(
@@ -63,7 +74,7 @@ export function mapControlPlaneSessionToChatSession(
   existing?: ChatSession
 ): ChatSession {
   return {
-    id: session.id,
+    id: existing?.id || session.id,
     backendSessionId: session.id,
     status: session.status,
     createdBy: session.createdBy,
@@ -368,9 +379,8 @@ export function useControlPlaneChatSessionSync(args: {
         const fetched: ChatSession[] = [];
         const page = await listSessions(cluster.workspaceId, cluster.id, { limit: 50 });
         const existingSessions = latestSessionsRef.current;
-        const existingById = new Map(existingSessions.map((session) => [session.id, session]));
         for (const session of page.items) {
-          const existing = existingById.get(session.id);
+          const existing = findExistingSessionForBackendId(existingSessions, session.id);
           fetched.push(mapControlPlaneSessionToChatSession(session, existing));
         }
 

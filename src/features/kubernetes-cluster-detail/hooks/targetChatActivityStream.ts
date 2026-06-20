@@ -13,6 +13,7 @@ import {
   upsertSession
 } from '@/features/kubernetes-cluster-detail/lib/session-utils';
 import {
+  findExistingSessionForBackendId,
   mapControlPlaneApprovalToPendingApproval,
   mapControlPlaneSessionToChatSession,
   mergeFetchedChatSessions,
@@ -104,7 +105,6 @@ export function useTargetChatActivityStream(args: {
     const refreshSession = async (event: ControlPlaneTargetChatActivityEvent) => {
       if (cancelled) return;
       const latestSessions = latestSessionsRef.current;
-      const existingById = new Map(latestSessions.map((session) => [session.id, session]));
       const findSession = (sessions: ChatSession[]) =>
         sessions.find((session) => session.backendSessionId === event.sessionId || session.id === event.sessionId);
       const shouldRefreshSessionList =
@@ -120,7 +120,7 @@ export function useTargetChatActivityStream(args: {
         const sessionPage = await controlPlaneApi.listTargetSessions(cluster.workspaceId, cluster.id, { limit: 50 }).catch(() => null);
         if (sessionPage) {
           fetchedSessions = sessionPage.items.map((session) =>
-            mapControlPlaneSessionToChatSession(session, existingById.get(session.id))
+            mapControlPlaneSessionToChatSession(session, findExistingSessionForBackendId(latestSessions, session.id))
           );
           nextSessions = mergeFetchedChatSessions(fetchedSessions, latestSessions, activeSessionIdRef.current);
           sessionRecord = findSession(nextSessions) || sessionRecord;

@@ -3,12 +3,15 @@ import { sanitizeChatMessages } from '@/features/kubernetes-cluster-detail/lib/s
 import { mapControlPlaneApprovalToPendingApproval } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import {
   createConversationId,
+  findExistingSessionForBackendId,
   hasRunMessageWithoutTraceDetails,
+  mapControlPlaneSessionToChatSession,
   mergeHydratedChatMessages,
+  mergeFetchedChatSessions,
   replaceCancelledRunMessagesForHydration,
   sortSessionsByTimestamp
 } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
-import type { ControlPlaneRunToolApproval } from '@/services/controlPlaneApi';
+import type { ControlPlaneRunToolApproval, ControlPlaneSession } from '@/services/controlPlaneApi';
 import type { ChatMessage, ChatSession } from '@/types';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
@@ -60,6 +63,41 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
         'session-b',
         'session-a'
       ]);
+    });
+
+    it('preserves draft-backed sessions when fetched backend rows are mapped', () => {
+      const draftBackedSession: ChatSession = {
+        id: 'draft-session',
+        backendSessionId: 'backend-session',
+        name: 'Draft',
+        hydrated: true,
+        messages: [{ id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1 }],
+        timestamp: 1
+      };
+      const backendSession: ControlPlaneSession = {
+        id: 'backend-session',
+        workspaceId: 'workspace-1',
+        targetId: 'target-1',
+        targetType: 'kubernetes',
+        title: 'Backend session',
+        status: 'open',
+        createdBy: 'user-1',
+        createdByUser: { id: 'user-1', displayName: 'User One' },
+        createdAt: '2026-06-01T05:00:00.000Z',
+        updatedAt: '2026-06-01T05:00:00.000Z',
+        lastMessageAt: '2026-06-01T05:00:00.000Z',
+        expiresAt: '2026-06-02T05:00:00.000Z'
+      };
+
+      const existing = findExistingSessionForBackendId([draftBackedSession], backendSession.id);
+      const fetched = mapControlPlaneSessionToChatSession(backendSession, existing);
+      const merged = mergeFetchedChatSessions([fetched], [draftBackedSession], draftBackedSession.id);
+
+      expect(fetched.id).toBe('draft-session');
+      expect(fetched.backendSessionId).toBe('backend-session');
+      expect(fetched.messages).toEqual(draftBackedSession.messages);
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('draft-session');
     });
 
     it('prefers crypto randomUUID and falls back to local ids', () => {
