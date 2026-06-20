@@ -337,21 +337,16 @@ export function useControlPlaneChatSessionSync(args: {
   const activeSessionIdRef = useRef(activeSessionId);
   const onUpdateSessionsRef = useRef(onUpdateSessions);
   const activeHydrationSession = sessions.find((item) => item.id === activeSessionId) || null;
-  const activeHydrationRunSignature = activeHydrationSession
-    ? activeHydrationSession.messages
-        .map((message) => message.runId)
-        .filter(Boolean)
-        .join(',')
-    : '';
   // Do not depend on the full sessions array; list refreshes can otherwise cancel
   // the only in-flight message hydration and leave the transcript skeleton up.
+  // Run-id churn is intentionally excluded because live run discovery can update
+  // the active session while message hydration is still in flight.
   const activeHydrationSessionKey = activeHydrationSession
     ? [
         activeHydrationSession.id,
         activeHydrationSession.backendSessionId || '',
         activeHydrationSession.hydrated === false ? 'pending' : 'ready',
-        activeHydrationSession.messagesLoadFailed ? 'failed' : 'ok',
-        activeHydrationRunSignature
+        activeHydrationSession.messagesLoadFailed ? 'failed' : 'ok'
       ].join(':')
     : 'none';
 

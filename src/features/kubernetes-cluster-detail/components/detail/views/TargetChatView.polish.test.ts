@@ -159,7 +159,8 @@ describe('target chat polish contracts', () => {
     expect(chatSessionSync).toContain('setLoadedSessionListKey(sessionListKey);');
     expect(chatSessionSync).toContain('messagesLoadFailed: existing?.messagesLoadFailed');
     expect(chatSessionSync).toContain('if (session.messagesLoadFailed)');
-    expect(chatSessionSync).toContain('const activeHydrationRunSignature = activeHydrationSession');
+    expect(chatSessionSync).not.toContain('activeHydrationRunSignature');
+    expect(chatSessionSync).toContain('Run-id churn is intentionally excluded');
     expect(chatSessionSync).toContain('const needsRunTraceHydration = hasRunMessageWithoutTraceDetails(session.messages, runTracesByRunIdRef.current || {});');
     expect(chatSessionSync).toContain('if (session.hydrated && !hasTransientAssistantPlaceholder && !hasAssistantWithInProgressTrace && !needsRunTraceHydration)');
     expect(chatSessionSync).toContain('const currentSessionForMerge =');

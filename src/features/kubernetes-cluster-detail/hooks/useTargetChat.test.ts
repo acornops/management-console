@@ -514,9 +514,14 @@ describe('target chat controller wiring', () => {
 
   it('advances target activity replay cursors only after canonical reconciliation', () => {
     expect(targetChatActivityStream).toContain('let processing = Promise.resolve();');
+    expect(targetChatActivityStream).toContain('let activityRefreshFailed = false;');
+    expect(targetChatActivityStream).toContain('if (activityRefreshFailed) {');
     expect(targetChatActivityStream).toContain('await refreshSession(event);');
     expect(targetChatActivityStream).toContain('lastEventIdRef.current = event.id;');
     expect(targetChatActivityStream.indexOf('await refreshSession(event);')).toBeLessThan(
+      targetChatActivityStream.indexOf('lastEventIdRef.current = event.id;')
+    );
+    expect(targetChatActivityStream.indexOf('activityRefreshFailed = true;')).toBeGreaterThan(
       targetChatActivityStream.indexOf('lastEventIdRef.current = event.id;')
     );
     expect(targetChatActivityStream).toContain('const onUpdateSessionsRef = useRef(onUpdateSessions);');
@@ -554,6 +559,8 @@ describe('target chat controller wiring', () => {
     expect(useTargetChat).toContain('resetActivityWatchedRun();');
     expect(useTargetChat).toContain('clearActivityWatchedRunForSession(sessionId);');
     expect(useTargetChat).toContain('if (!activeSessionId) {\n      setActiveSessionId(sortedSessions.length > 0 ? sortedSessions[0].id : null);\n      return;\n    }');
+    expect(chatSessionSync).not.toContain('activeHydrationRunSignature');
+    expect(chatSessionSync).toContain('Run-id churn is intentionally excluded');
     expect(useActivityDiscoveredRun).toContain('const [activityWatchedRun, setActivityWatchedRun]');
     expect(useActivityDiscoveredRun).toContain('const activityDiscoveredRunId = deriveActivityDiscoveredRunId({');
     expect(useActivityDiscoveredRun).toContain('(sessionId: string, runId: string) => setActivityWatchedRun({ sessionId, runId })');

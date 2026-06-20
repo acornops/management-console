@@ -253,6 +253,7 @@ export function useTargetChatActivityStream(args: {
       while (!cancelled) {
         streamAbortController = new AbortController();
         let processing = Promise.resolve();
+        let activityRefreshFailed = false;
         try {
           await controlPlaneApi.streamTargetChatActivity(cluster.workspaceId, cluster.id, {
             signal: streamAbortController.signal,
@@ -260,12 +261,24 @@ export function useTargetChatActivityStream(args: {
             onEvent: (event) => {
               processing = processing
                 .then(async () => {
-                  await refreshSession(event);
-                  lastEventIdRef.current = event.id;
+                  if (activityRefreshFailed) {
+                    return;
+                  }
+                  try {
+                    await refreshSession(event);
+                    lastEventIdRef.current = event.id;
+                  } catch (error) {
+                    activityRefreshFailed = true;
+                    if (!cancelled) {
+                      console.warn('Target chat activity refresh failed', error);
+                      streamAbortController?.abort();
+                    }
+                  }
                 })
                 .catch((error) => {
+                  activityRefreshFailed = true;
                   if (!cancelled) {
-                    console.warn('Target chat activity refresh failed', error);
+                    console.warn('Target chat activity queue failed', error);
                     streamAbortController?.abort();
                   }
                 });
