@@ -14,7 +14,7 @@
 - Preserve route stability for workspace and cluster deep links.
 - Keep v1 console payloads bounded: lists use `{ items, nextCursor? }`, large routes lazy-load pages, and cluster detail exposes summary counts instead of full snapshot JSON.
 - Preserve run trace handling for replay, SSE, and terminal states.
-- Preserve target chat activity replay for collaborative message discovery, approval checkpoints, and final assistant commits.
+- Preserve target chat activity resume replay for collaborative message discovery, approval checkpoints, and final assistant commits; fresh streams rely on recent activity/session reads for initial state.
 
 ## Recovery Expectations
 

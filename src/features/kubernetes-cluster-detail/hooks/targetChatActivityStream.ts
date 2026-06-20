@@ -114,21 +114,26 @@ export function useTargetChatActivityStream(args: {
         !findSession(latestSessions);
       let nextSessions = latestSessions;
       let sessionRecord = findSession(latestSessions);
+      let fetchedSessions: ChatSession[] | null = null;
 
       if (shouldRefreshSessionList) {
         const sessionPage = await controlPlaneApi.listTargetSessions(cluster.workspaceId, cluster.id, { limit: 50 }).catch(() => null);
         if (sessionPage) {
-          const fetched = sessionPage.items.map((session) =>
+          fetchedSessions = sessionPage.items.map((session) =>
             mapControlPlaneSessionToChatSession(session, existingById.get(session.id))
           );
-          nextSessions = mergeFetchedChatSessions(fetched, latestSessions, activeSessionIdRef.current);
+          nextSessions = mergeFetchedChatSessions(fetchedSessions, latestSessions, activeSessionIdRef.current);
           sessionRecord = findSession(nextSessions) || sessionRecord;
         }
       }
 
       if (event.type === 'session.deleted') {
+        const currentSessions = latestSessionsRef.current;
+        const publishBase = fetchedSessions
+          ? mergeFetchedChatSessions(fetchedSessions, currentSessions, activeSessionIdRef.current)
+          : currentSessions;
         onUpdateSessionsRef.current(
-          nextSessions.filter((session) => session.backendSessionId !== event.sessionId && session.id !== event.sessionId)
+          publishBase.filter((session) => session.backendSessionId !== event.sessionId && session.id !== event.sessionId)
         );
         return;
       }
@@ -188,8 +193,13 @@ export function useTargetChatActivityStream(args: {
         }
       }
 
+      const currentSessions = latestSessionsRef.current;
+      const publishBase = fetchedSessions
+        ? mergeFetchedChatSessions(fetchedSessions, currentSessions, activeSessionIdRef.current)
+        : currentSessions;
       const currentSession =
-        nextSessions.find((session) => session.id === sessionRecord.id) ||
+        findSession(publishBase) ||
+        publishBase.find((session) => session.id === sessionRecord.id) ||
         sessionRecord;
       const mergedMessages = mergeHydratedChatMessages({
         localMessages: currentSession.messages,
@@ -209,7 +219,7 @@ export function useTargetChatActivityStream(args: {
         messages: mergedMessages,
         timestamp: mergedMessages.length > 0 ? mergedMessages[mergedMessages.length - 1].timestamp : currentSession.timestamp
       };
-      nextSessions = upsertSession(nextSessions, hydratedSession);
+      nextSessions = upsertSession(publishBase, hydratedSession);
 
       if (Object.keys(traceUpdates).length > 0) {
         setRunTracesByRunId((current) => {
