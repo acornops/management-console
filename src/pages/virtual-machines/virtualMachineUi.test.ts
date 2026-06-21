@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import {
   getVmApiStatusForConnectionFilter,
+  getVmStatusLabel,
   vmMatchesConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
 
@@ -35,5 +36,12 @@ describe('virtual machine connection filters', () => {
     expect(getVmApiStatusForConnectionFilter('all')).toBeUndefined();
     expect(getVmApiStatusForConnectionFilter('disconnected')).toBe('offline');
     expect(getVmApiStatusForConnectionFilter('not_installed')).toBe('unknown');
+  });
+
+  it('keeps setup-required distinct from disconnected copy', () => {
+    const t = (key: string) => key;
+
+    expect(getVmStatusLabel('unknown', t)).toBe('dashboard.setupRequired');
+    expect(getVmStatusLabel('offline', t)).toBe('virtualMachines.list.offline');
   });
 });

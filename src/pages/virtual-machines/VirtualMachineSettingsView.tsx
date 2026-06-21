@@ -77,7 +77,7 @@ export const VirtualMachineSettingsView: React.FC<{
           <SettingRow
             icon={ICONS.Activity}
             label={t('virtualMachines.settings.agentState')}
-            description={getVmStatusLabel(vm.status)}
+            description={getVmStatusLabel(vm.status, t)}
           />
           <SettingRow
             icon={ICONS.Clock}

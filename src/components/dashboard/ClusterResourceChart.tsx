@@ -1,35 +1,23 @@
 import React from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { KubernetesCluster } from '@/types';
 
-export interface VmMetricTimelinePoint {
+export interface ClusterMetricPoint {
   timestamp: number;
   cpu: number | null;
   memory: number | null;
 }
 
-export function formatMetricTime(timestamp: number): string {
+function formatShortTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function getVmMetricTimeline(points: Record<string, unknown>[]): VmMetricTimelinePoint[] {
-  return points
-    .map((point) => {
-      const timestamp = typeof point.timestamp === 'string' ? Date.parse(point.timestamp) : NaN;
-      if (Number.isNaN(timestamp)) return null;
-      return {
-        timestamp,
-        cpu: typeof point.cpuCores === 'number' && Number.isFinite(point.cpuCores) ? point.cpuCores : null,
-        memory: typeof point.memoryBytes === 'number' && Number.isFinite(point.memoryBytes)
-          ? point.memoryBytes / (1024 ** 3)
-          : null
-      };
-    })
-    .filter((point): point is VmMetricTimelinePoint => point !== null);
-}
-
-export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; points: VmMetricTimelinePoint[] }> = ({ vm, points }) => {
+export const ClusterResourceChart: React.FC<{
+  cluster: KubernetesCluster;
+  points: ClusterMetricPoint[];
+}> = ({ cluster, points }) => {
   const { t } = useTranslation();
   const width = 360;
   const height = 104;
@@ -40,19 +28,19 @@ export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; poi
   const safePoints = points.slice(-12);
   const footerStats = [
     {
-      label: t('virtualMachines.list.logSources'),
-      value: vm.allowedLogSources?.length ?? 0,
-      icon: <ICONS.BookOpen className="h-4 w-4 text-status-success-text/70" />
+      label: t('dashboard.nodes'),
+      value: cluster.resourceSummary?.nodeCount ?? cluster.nodes.length,
+      icon: <ICONS.Server className="h-4 w-4 text-status-success-text/70" />
     },
     {
-      label: t('virtualMachines.list.processes'),
-      value: vm.summary ? vm.summary.processCount : '-',
-      icon: <ICONS.Activity className="h-4 w-4 text-status-success-text/70" />
+      label: t('dashboard.namespaces'),
+      value: cluster.resourceSummary?.namespaceCount ?? cluster.namespaces.length,
+      icon: <ICONS.LayoutGrid className="h-4 w-4 text-status-success-text/70" />
     },
     {
       label: t('dashboard.findings'),
-      value: vm.summary ? vm.summary.findingCount : '-',
-      icon: <ICONS.Shield className="h-4 w-4 text-status-success-text/70" />
+      value: cluster.resourceSummary?.findingCount ?? cluster.alerts.length,
+      icon: <ShieldCheck className="h-4 w-4 text-status-success-text/70" />
     }
   ];
   const footer = (
@@ -60,8 +48,8 @@ export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; poi
       {footerStats.map((stat) => (
         <div key={stat.label} className="min-w-0 px-4 sm:px-5">
           <p className="truncate text-[0.625rem] font-medium leading-3 text-ui-text-muted">{stat.label}</p>
-          <div className="mt-1 flex min-w-0 items-center gap-2">
-            <span className="truncate text-base font-bold leading-5 text-ui-text">{stat.value}</span>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-base font-bold leading-5 text-ui-text">{stat.value}</span>
             {stat.icon}
           </div>
         </div>
@@ -74,16 +62,12 @@ export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; poi
 
   if (usableMetricPointCount < 2) {
     return (
-      <div className="grid h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)_4.25rem]" aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}>
+      <div className="grid h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)_4.25rem]" aria-label={t('dashboard.telemetryAria', { name: cluster.name })}>
         <div className="flex min-h-0 flex-col items-center justify-center px-5 pb-3 text-center">
-          <p className="type-micro-label">
-            {safePoints.length === 0
-              ? t('virtualMachines.list.noTelemetry')
-              : t('virtualMachines.list.collectingHistory')}
-          </p>
+          <p className="type-micro-label">{safePoints.length === 0 ? t('dashboard.noTelemetry') : t('dashboard.collectingHistory')}</p>
           {safePoints.length > 0 && (
             <p className="type-caption mt-2 max-w-xs">
-              {t('virtualMachines.list.trendAfterAnotherSample')}
+              {t('dashboard.collectingHistoryBody')}
             </p>
           )}
         </div>
@@ -92,8 +76,6 @@ export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; poi
     );
   }
 
-  const chartLatest = safePoints[safePoints.length - 1] as VmMetricTimelinePoint;
-  const chartFirst = safePoints[0] as VmMetricTimelinePoint;
   const xForIndex = (index: number) =>
     safePoints.length === 1
       ? width / 2
@@ -124,21 +106,20 @@ export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; poi
   };
   const cpuPath = buildPath('cpu');
   const memoryPath = buildPath('memory');
+  const latest = safePoints[safePoints.length - 1];
+  const first = safePoints[0];
 
   return (
-    <div
-      className="grid h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)_4.25rem]"
-      aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}
-    >
+    <div className="grid h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)_4.25rem]" aria-label={t('dashboard.telemetryAria', { name: cluster.name })}>
       <div className={chartBodyClassName}>
         <div className="mb-1.5 flex min-w-0 items-center gap-3">
           <span className="inline-flex items-center gap-1.5 truncate text-[0.6875rem] font-semibold leading-3 text-accent-strong">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-            {t('virtualMachines.list.cpu')} {chartLatest.cpu === null ? '-' : `${chartLatest.cpu.toFixed(2)} ${t('virtualMachines.list.core')}`}
+            {t('dashboard.cpu')} {latest.cpu === null ? '-' : `${latest.cpu.toFixed(2)} ${t('dashboard.core')}`}
           </span>
           <span className="inline-flex items-center gap-1.5 truncate text-[0.6875rem] font-semibold leading-3 text-metric-blue">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-metric-blue" />
-            {t('virtualMachines.list.memory')} {chartLatest.memory === null ? '-' : `${chartLatest.memory.toFixed(2)} ${t('virtualMachines.list.gib')}`}
+            {t('dashboard.memory')} {latest.memory === null ? '-' : `${latest.memory.toFixed(2)} ${t('dashboard.gib')}`}
           </span>
         </div>
         <svg viewBox={`0 0 ${width} ${height}`} className="h-full min-h-0 w-full overflow-visible" role="img">
@@ -160,17 +141,17 @@ export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; poi
           {memoryPath && (
             <path d={memoryPath} fill="none" stroke="rgb(var(--metric-blue-rgb))" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5 5" opacity="0.9" />
           )}
-          {chartLatest.cpu !== null && (
-            <circle cx={xForIndex(safePoints.length - 1)} cy={yForValue(chartLatest.cpu, 'cpu')} r={2.5} fill="var(--brand-orange)" stroke="var(--bg)" strokeWidth={1.5} />
+          {latest.cpu !== null && (
+            <circle cx={xForIndex(safePoints.length - 1)} cy={yForValue(latest.cpu, 'cpu')} r={2.5} fill="var(--brand-orange)" stroke="var(--bg)" strokeWidth={1.5} />
           )}
-          {chartLatest.memory !== null && (
-            <circle cx={xForIndex(safePoints.length - 1)} cy={yForValue(chartLatest.memory, 'memory')} r={2.5} fill="rgb(var(--metric-blue-rgb))" stroke="var(--bg)" strokeWidth={1.5} />
+          {latest.memory !== null && (
+            <circle cx={xForIndex(safePoints.length - 1)} cy={yForValue(latest.memory, 'memory')} r={2.5} fill="rgb(var(--metric-blue-rgb))" stroke="var(--bg)" strokeWidth={1.5} />
           )}
           <text x={paddingX} y={labelY} className="type-micro-label fill-ui-text-muted">
-            {formatMetricTime(chartFirst.timestamp)}
+            {formatShortTime(first.timestamp)}
           </text>
           <text x={width - paddingX} y={labelY} textAnchor="end" className="type-micro-label fill-ui-text-muted">
-            {formatMetricTime(chartLatest.timestamp)}
+            {formatShortTime(latest.timestamp)}
           </text>
         </svg>
       </div>

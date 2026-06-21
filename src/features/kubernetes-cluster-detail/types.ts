@@ -11,6 +11,7 @@ export interface KubernetesClusterDetailProps {
   isDark: boolean;
   onToggleTool?: (tool: ClusterToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onSyncTools?: (tools: KubernetesCluster['mcpTools']) => void;
+  onUpdateName?: (name: string) => Promise<void> | void;
   onUpdateNamespaceScope?: (scope: { include: string[]; exclude: string[] }) => Promise<void> | void;
   onUpdateWriteConfirmationPolicy?: (overrideRequired: boolean | null) => Promise<void> | void;
   onOpenCopilot?: (prompt?: string) => void;

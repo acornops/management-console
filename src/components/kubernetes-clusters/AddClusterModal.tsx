@@ -20,7 +20,6 @@ interface AddClusterModalProps {
   onIncludeNamespacesChange: (value: string) => void;
   onExcludeNamespacesChange: (value: string) => void;
   onProceedToInstructions: () => void;
-  onBackToDetails: () => void;
   onConfirmInstalled: () => void | Promise<void>;
 }
 
@@ -82,12 +81,20 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
   onIncludeNamespacesChange,
   onExcludeNamespacesChange,
   onProceedToInstructions,
-  onBackToDetails,
   onConfirmInstalled
 }) => {
   const { t } = useTranslation();
   const [hasCopiedCommand, setHasCopiedCommand] = useState(false);
   const clusterNameInputRef = React.useRef<HTMLInputElement>(null);
+  const namespaceScopeSummary = React.useMemo(() => {
+    const include = parseNamespaceList(includeNamespaces);
+    const exclude = parseNamespaceList(excludeNamespaces);
+
+    return t('clusterSetup.namespaceScopeSummary', {
+      include: include.length > 0 ? include.join(', ') : t('clusterSetup.allNamespaces'),
+      exclude: exclude.length > 0 ? exclude.join(', ') : t('clusterSetup.noExcludedNamespaces')
+    });
+  }, [excludeNamespaces, includeNamespaces, t]);
   const displayedInstallCommand = React.useMemo(
     () => clusterInstallCommand
       ? updateInstallCommandNamespaceScope(clusterInstallCommand, includeNamespaces, excludeNamespaces)
@@ -115,10 +122,10 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
       titleId="add-cluster-title"
       initialFocusRef={clusterNameInputRef}
       closeDisabled={isCreatingCluster}
-      className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-ui-border bg-ui-surface shadow-2xl"
+      className="relative flex max-h-[min(92vh,56rem)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
       onClose={onClose}
     >
-        <div className="flex items-center justify-between border-b border-ui-border bg-ui-surface px-6 py-4">
+        <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
           <h3 id="add-cluster-title" className="text-sm font-extrabold tracking-tight text-ui-text">
             {t('app.connectClusterHelm')}
           </h3>
@@ -135,7 +142,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
 
         {clusterCreationStep === 'details' ? (
           <>
-            <div className="space-y-5 p-6">
+            <div className="space-y-5 overflow-y-auto p-6">
               <div className="rounded-xl border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-accent-strong">
@@ -211,13 +218,13 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                 className="w-full rounded-lg text-xs uppercase tracking-widest"
               >
                 <Zap className="h-4 w-4" />
-                {isCreatingCluster ? t('clusterSetup.registering') : t('clusterSetup.next')}
+                {isCreatingCluster ? t('clusterSetup.registering') : t('clusterSetup.registerAndGenerate')}
               </Button>
             </div>
           </>
         ) : (
           <>
-            <div className="space-y-4 p-6">
+            <div className="space-y-4 overflow-y-auto p-6">
               <div className="rounded-xl border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-accent-strong">
@@ -227,35 +234,19 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="add-cluster-include-namespaces" className="mb-1.5 block px-1 text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('clusterSetup.includeNamespaces')}</label>
-                  <input
-                    id="add-cluster-include-namespaces"
-                    type="text"
-                    value={includeNamespaces}
-                    onChange={(event) => onIncludeNamespacesChange(event.target.value)}
-                    placeholder={t('clusterSetup.includeNamespacesPlaceholder')}
-                    className="w-full rounded-lg border border-ui-border bg-ui-bg px-3 py-2.5 text-xs font-medium text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
-                  />
+              <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-3">
+                <div className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">
+                  2. {t('clusterSetup.namespaceScope')}
                 </div>
-                <div>
-                  <label htmlFor="add-cluster-exclude-namespaces" className="mb-1.5 block px-1 text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('clusterSetup.excludeNamespaces')}</label>
-                  <input
-                    id="add-cluster-exclude-namespaces"
-                    type="text"
-                    value={excludeNamespaces}
-                    onChange={(event) => onExcludeNamespacesChange(event.target.value)}
-                    placeholder={t('clusterSetup.excludeNamespacesPlaceholder')}
-                    className="w-full rounded-lg border border-ui-border bg-ui-bg px-3 py-2.5 text-xs font-medium text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
-                  />
-                </div>
+                <p className="mt-1 text-xs font-medium leading-5 text-ui-text-muted">
+                  {namespaceScopeSummary}
+                </p>
               </div>
 
               {displayedInstallCommand ? (
                 <div className="rounded-xl border border-ui-border bg-ui-bg shadow-sm">
                   <div className="flex items-center justify-between gap-3 px-4 pt-4">
-                    <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">2. {t('clusterSetup.installCommand')}</span>
+                    <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">3. {t('clusterSetup.installCommand')}</span>
                     <button
                       type="button"
                       onClick={() => void copyInstallCommand()}
@@ -265,7 +256,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                       {hasCopiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
-                  <div className="overflow-x-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text">
+                  <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text">
                     <pre className="whitespace-pre">{displayedInstallCommand}</pre>
                   </div>
                 </div>
@@ -290,14 +281,6 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
               </p>
             </div>
             <div className="space-y-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-              <Button
-                onClick={onBackToDetails}
-                variant="secondary"
-                size="sm"
-                className="w-full rounded-lg uppercase tracking-widest"
-              >
-                {t('clusterSetup.back')}
-              </Button>
               <Button
                 onClick={() => void onConfirmInstalled()}
                 variant="accent"

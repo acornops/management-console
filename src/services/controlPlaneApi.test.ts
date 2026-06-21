@@ -208,6 +208,9 @@ describe('controlPlaneApi', () => {
         namespaceExclude: [' kube-system ']
       })
       .mockResolvedValueOnce({
+        name: 'production-east'
+      })
+      .mockResolvedValueOnce({
         writeConfirmationPolicy: {
           effectiveRequired: true,
           overrideRequired: false,
@@ -228,6 +231,9 @@ describe('controlPlaneApi', () => {
         exclude: ['kube-system']
       }
     });
+    await expect(
+      controlPlaneApi.updateClusterName('workspace-1', 'cluster-1', 'production-east')
+    ).resolves.toEqual({ name: 'production-east' });
     await expect(
       controlPlaneApi.updateClusterWriteConfirmationPolicy('workspace-1', 'cluster-1', false)
     ).resolves.toEqual({

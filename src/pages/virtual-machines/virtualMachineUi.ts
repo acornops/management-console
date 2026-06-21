@@ -30,11 +30,14 @@ export function statusTone(status: ControlPlaneVirtualMachine['status']): string
   return 'border border-ui-border bg-ui-bg text-ui-text-muted';
 }
 
-export function getVmStatusLabel(status: ControlPlaneVirtualMachine['status']): string {
-  if (status === 'online') return 'Healthy';
-  if (status === 'degraded') return 'Warning';
-  if (status === 'offline') return 'Offline';
-  return 'Awaiting agent';
+export function getVmStatusLabel(
+  status: ControlPlaneVirtualMachine['status'],
+  t: (key: string) => string
+): string {
+  if (status === 'online') return t('dashboard.healthy');
+  if (status === 'degraded') return t('virtualMachines.list.degraded');
+  if (status === 'offline') return t('virtualMachines.list.offline');
+  return t('dashboard.setupRequired');
 }
 
 export function getVmPostureClass(attentionCount: number): string {

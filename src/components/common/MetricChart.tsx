@@ -14,12 +14,18 @@ export const MetricChart: React.FC<{
 }> = ({ title, description, icon: Icon, points, unit, type, isLoading = false, emptyTitle, loadingTitle, emptyDescription }) => {
   const width = 520;
   const height = 220;
-  const padding = 28;
+  const plotLeft = 54;
+  const plotRight = width - 14;
+  const plotTop = 18;
+  const plotBottom = height - 30;
+  const yAxisLabelGap = 6;
+  const plotWidth = plotRight - plotLeft;
+  const plotHeight = plotBottom - plotTop;
 
   if (points.length < 2) {
     return (
       <div className="rounded-xl border border-ui-border bg-ui-surface p-4 shadow-sm sm:p-8">
-        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="type-section-title flex items-center gap-3">
               <Icon className={`h-6 w-6 ${type === 'area' ? 'text-accent-strong' : 'text-metric-blue'}`} />
@@ -40,21 +46,22 @@ export const MetricChart: React.FC<{
     );
   }
 
-  const maxValue = Math.max(...points.map((point) => point.value), 1);
+  const maxObservedValue = Math.max(...points.map((point) => point.value), 0);
+  const maxValue = Math.max(maxObservedValue * 1.12, 1);
   const coords = points.map((point, index) => {
     const x = points.length === 1
       ? width / 2
-      : padding + (index * (width - padding * 2)) / (points.length - 1);
-    const y = padding + (1 - Math.max(0, Math.min(1, point.value / maxValue))) * (height - padding * 2);
+      : plotLeft + (index * plotWidth) / (points.length - 1);
+    const y = plotTop + (1 - Math.max(0, Math.min(1, point.value / maxValue))) * plotHeight;
     return { x, y, ...point };
   });
   const linePath = coords.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
-  const areaPath = `${linePath} L ${coords[coords.length - 1].x} ${height - padding} L ${coords[0].x} ${height - padding} Z`;
+  const areaPath = `${linePath} L ${coords[coords.length - 1].x} ${plotBottom} L ${coords[0].x} ${plotBottom} Z`;
   const stroke = type === 'area' ? 'var(--brand-orange)' : 'rgb(var(--metric-blue-rgb))';
 
   return (
     <div className="rounded-xl border border-ui-border bg-ui-surface p-4 shadow-sm sm:p-8">
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="type-section-title flex items-center gap-3">
             <Icon className={`h-6 w-6 ${type === 'area' ? 'text-accent-strong' : 'text-metric-blue'}`} />
@@ -66,12 +73,12 @@ export const MetricChart: React.FC<{
       <div className="h-[240px] w-full">
         <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full overflow-visible" role="img" aria-label={title}>
           {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
-            const y = padding + (1 - tick) * (height - padding * 2);
+            const y = plotTop + (1 - tick) * plotHeight;
             const label = tick === 0 ? '0' : `${(maxValue * tick).toFixed(maxValue >= 10 ? 0 : 1)} ${unit}`;
             return (
               <g key={tick}>
-                <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="var(--border)" strokeDasharray="3 3" />
-                <text x={4} y={y + 4} className="type-micro-label fill-ui-text-muted">{label}</text>
+                <line x1={plotLeft} y1={y} x2={plotRight} y2={y} stroke="var(--border)" strokeDasharray="3 3" />
+                <text x={plotLeft - yAxisLabelGap} y={y + 4} textAnchor="end" className="type-micro-label fill-ui-text-muted">{label}</text>
               </g>
             );
           })}

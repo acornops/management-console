@@ -12,10 +12,8 @@ import { Workspace } from '@/types';
 import {
   findingSeverityTone,
   formatSnapshotTime,
-  getVmApiStatusForConnectionFilter,
   getFindingSeverity,
   getVmStatusLabel,
-  vmMatchesConnectionFilter,
   type VmConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
 import {
@@ -29,6 +27,7 @@ import { VirtualMachinesListView } from '@/pages/virtual-machines/VirtualMachine
 import { VirtualMachineResourcesView, VmResourceCategory } from '@/pages/virtual-machines/VirtualMachineResourcesView';
 import { VirtualMachineSettingsView } from '@/pages/virtual-machines/VirtualMachineSettingsView';
 import { toClusterShim } from '@/pages/virtual-machines/virtualMachineClusterShim';
+import { useVirtualMachineListRefresh } from '@/pages/virtual-machines/useVirtualMachineListRefresh';
 import { getSelectedVmRunbookPrompt, shouldClearPendingVmRunbookPrompt } from '@/pages/virtual-machines/virtualMachineRunbookPrompt';
 import type { PendingVmRunbookPrompt } from '@/pages/runbooks/runbookModel';
 
@@ -37,10 +36,15 @@ interface VirtualMachinesPageProps {
   currentUserId: string;
   route: Extract<AppRoute, { kind: 'workspaceVirtualMachines' | 'workspaceVirtualMachineDetail' }>;
   activeSubview: VmSubview;
+  virtualMachines: ControlPlaneVirtualMachine[];
+  hasLoadedWorkspaceVirtualMachines: boolean;
   isDark: boolean;
   canManageTargets: boolean;
   navigate: (path: string, options?: NavigateOptions) => void;
   onUpdateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
+  onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
+  onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
+  onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
   pendingRunbookPrompt?: PendingVmRunbookPrompt | null;
   onPendingRunbookPromptConsumed?: () => void;
 }
@@ -53,9 +57,24 @@ function vmSubviewToResourceCategory(view: VmSubview): VmResourceCategory {
   if (view === 'services' || view === 'processes' || view === 'network' || view === 'logs') return view;
   return 'all';
 }
-export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ workspace, currentUserId, route, activeSubview, isDark, canManageTargets, navigate, onUpdateWorkspace, pendingRunbookPrompt, onPendingRunbookPromptConsumed }) => {
+export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
+  workspace,
+  currentUserId,
+  route,
+  activeSubview,
+  virtualMachines,
+  hasLoadedWorkspaceVirtualMachines,
+  isDark,
+  canManageTargets,
+  navigate,
+  onUpdateWorkspace,
+  onReplaceWorkspaceVirtualMachines,
+  onUpsertWorkspaceVirtualMachine,
+  onRemoveWorkspaceVirtualMachine,
+  pendingRunbookPrompt,
+  onPendingRunbookPromptConsumed
+}) => {
   const { t } = useTranslation();
-  const [items, setItems] = React.useState<ControlPlaneVirtualMachine[]>([]);
   const [inventory, setInventory] = React.useState<Record<string, unknown>[]>([]);
   const [findings, setFindings] = React.useState<Record<string, unknown>[]>([]);
   const [logs, setLogs] = React.useState<Record<string, unknown>[]>([]);
@@ -66,11 +85,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
   const [metricHistory, setMetricHistory] = React.useState<Record<string, unknown>[]>([]);
   const [metricHistoryByVmId, setMetricHistoryByVmId] = React.useState<Record<string, Record<string, unknown>[]>>({});
   const [metricHistoryStatus, setMetricHistoryStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [installInstructions, setInstallInstructions] = React.useState<string | null>(null);
+  const [installInstructions, setInstallInstructions] = React.useState<{ vmId: string; value: string } | null>(null);
   const [isAddingVm, setIsAddingVm] = React.useState(false);
   const [vmCreationStep, setVmCreationStep] = React.useState<'details' | 'instructions'>('details');
   const [isRegisteringVm, setIsRegisteringVm] = React.useState(false);
-  const [createdVmId, setCreatedVmId] = React.useState<string | null>(null);
   const [newVmInstallInstructions, setNewVmInstallInstructions] = React.useState('');
   const [vmCreationError, setVmCreationError] = React.useState<string | null>(null);
   const [newVmName, setNewVmName] = React.useState('');
@@ -78,34 +96,28 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
   const [resourceCategory, setResourceCategory] = React.useState<VmResourceCategory>('all');
   const [query, setQuery] = React.useState('');
   const [status, setStatus] = React.useState<VmConnectionFilter>('all');
-  const [isLoading, setIsLoading] = React.useState(true);
   const metricHistoryRequestSeqRef = React.useRef(0);
   const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
   const view = route.kind === 'workspaceVirtualMachineDetail' ? activeSubview : 'overview';
-  const selected = selectedId ? items.find((item) => item.id === selectedId) || null : null;
+  const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
   const selectedRunbookPrompt = getSelectedVmRunbookPrompt(pendingRunbookPrompt, workspace.id, selectedId);
   const activeResourceCategory = isVmResourceSubview(view)
     ? vmSubviewToResourceCategory(view)
     : resourceCategory;
   const visibleMetricVms = React.useMemo(
     () => route.kind === 'workspaceVirtualMachines'
-      ? items.filter((vm) => vm.status === 'online').slice(0, 6)
+      ? virtualMachines.filter((vm) => vm.status === 'online').slice(0, 6)
       : [],
-    [items, route.kind]
+    [route.kind, virtualMachines]
   );
-  const reload = React.useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const page = await controlPlaneApi.listVirtualMachinesForWorkspace(workspace.id, {
-        limit: 50,
-        q: query,
-        status: getVmApiStatusForConnectionFilter(status)
-      });
-      setItems(page.items.filter((vm) => vmMatchesConnectionFilter(vm, status)));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [query, status, workspace.id]);
+  const isLoading = useVirtualMachineListRefresh({
+    workspaceId: workspace.id,
+    virtualMachines,
+    hasLoadedWorkspaceVirtualMachines,
+    query,
+    status,
+    onReplaceWorkspaceVirtualMachines
+  });
 
   const refreshWorkspaceSummary = React.useCallback(async () => {
     const refreshed = await controlPlaneApi.getWorkspace(workspace.id);
@@ -114,16 +126,12 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
   }, [onUpdateWorkspace, workspace.id]);
 
   React.useEffect(() => {
-    void reload();
-  }, [reload]);
-
-  React.useEffect(() => {
     if (!selectedId || selected || isLoading) return;
     let cancelled = false;
     void controlPlaneApi.getVirtualMachine(workspace.id, selectedId)
       .then((vm) => {
         if (cancelled) return;
-        setItems((current) => current.some((item) => item.id === vm.id) ? current : [vm, ...current]);
+        onUpsertWorkspaceVirtualMachine(workspace.id, vm);
       })
       .catch((error) => {
         console.error('Failed loading virtual machine detail', error);
@@ -135,7 +143,15 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
     return () => {
       cancelled = true;
     };
-  }, [isLoading, onPendingRunbookPromptConsumed, pendingRunbookPrompt, selected, selectedId, workspace.id]);
+  }, [
+    isLoading,
+    onPendingRunbookPromptConsumed,
+    onUpsertWorkspaceVirtualMachine,
+    pendingRunbookPrompt,
+    selected,
+    selectedId,
+    workspace.id
+  ]);
 
   React.useEffect(() => {
     if (shouldClearPendingVmRunbookPrompt(pendingRunbookPrompt, workspace.id, selectedId, view)) {
@@ -249,7 +265,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
     setIsAddingVm(false);
     setVmCreationStep('details');
     setIsRegisteringVm(false);
-    setCreatedVmId(null);
+    setInstallInstructions(null);
     setNewVmInstallInstructions('');
     setVmCreationError(null);
     setNewVmName('');
@@ -259,7 +275,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
     if (!canManageTargets) return;
     setIsAddingVm(true);
     setVmCreationStep('details');
-    setCreatedVmId(null);
     setNewVmInstallInstructions('');
     setVmCreationError(null);
   };
@@ -272,13 +287,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
       const result = await controlPlaneApi.registerVirtualMachine(workspace.id, {
         name: newVmName.trim()
       });
-      setInstallInstructions(result.installInstructions);
+      setInstallInstructions({ vmId: result.virtualMachine.id, value: result.installInstructions });
       setNewVmInstallInstructions(result.installInstructions);
-      setCreatedVmId(result.virtualMachine.id);
-      setItems((current) => [
-        result.virtualMachine,
-        ...current.filter((item) => item.id !== result.virtualMachine.id)
-      ]);
+      onUpsertWorkspaceVirtualMachine(workspace.id, result.virtualMachine);
       await refreshWorkspaceSummary();
       setVmCreationStep('instructions');
     } catch (error) {
@@ -290,22 +301,18 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
   };
 
   const confirmVmInstalled = () => {
-    const targetVmId = createdVmId;
     resetVmCreationState();
-    if (targetVmId) {
-      navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, targetVmId, 'settings'));
-    }
   };
 
   const rotateKey = async () => {
     if (!selected) return;
     const result = await controlPlaneApi.rotateVirtualMachineAgentKey(workspace.id, selected.id);
-    setInstallInstructions(result.installInstructions);
+    setInstallInstructions({ vmId: selected.id, value: result.installInstructions });
   };
 
   const deleteVirtualMachine = React.useCallback(async (vm: ControlPlaneVirtualMachine) => {
     await controlPlaneApi.deleteVirtualMachine(workspace.id, vm.id);
-    setItems((current) => current.filter((item) => item.id !== vm.id));
+    onRemoveWorkspaceVirtualMachine(workspace.id, vm.id);
     await refreshWorkspaceSummary();
     setMetricHistoryByVmId((current) => {
       const remaining = { ...current };
@@ -315,7 +322,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
     if (route.kind === 'workspaceVirtualMachineDetail' && route.vmId === vm.id) {
       navigate(AppPaths.workspaceVirtualMachines(workspace.id));
     }
-  }, [navigate, refreshWorkspaceSummary, route, workspace.id]);
+  }, [navigate, onRemoveWorkspaceVirtualMachine, refreshWorkspaceSummary, route, workspace.id]);
 
   const selectResourceCategory = React.useCallback((category: VmResourceCategory) => {
     if (!selected) return;
@@ -356,7 +363,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
       <>
         <VirtualMachinesListView
           workspace={workspace}
-          items={items}
+          items={virtualMachines}
           isLoading={isLoading}
           query={query}
           status={status}
@@ -378,7 +385,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
           onClose={resetVmCreationState}
           onVmNameChange={setNewVmName}
           onProceedToInstructions={registerVm}
-          onBackToDetails={() => setVmCreationStep('details')}
           onConfirmInstalled={confirmVmInstalled}
         />
       </>
@@ -436,7 +442,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
             </Button>
             <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">
               <div className={`h-2 w-2 rounded-full ${selected.status === 'online' ? 'bg-status-success' : selected.status === 'degraded' ? 'bg-status-warning' : 'bg-status-danger'}`} />
-              <span className="type-label">{getVmStatusLabel(selected.status)} · {formatSnapshotTime(selected)}</span>
+              <span className="type-label">{getVmStatusLabel(selected.status, t)} · {formatSnapshotTime(selected)}</span>
             </div>
           </div>
         </header>
@@ -631,7 +637,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({ worksp
       <VirtualMachineSettingsView
         vm={selected}
         workspace={workspace}
-        installInstructions={installInstructions}
+        installInstructions={installInstructions?.vmId === selected.id ? installInstructions.value : null}
         onRotateKey={rotateKey}
       />
     );

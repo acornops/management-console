@@ -70,8 +70,8 @@ const createVmTarget = (id: string, status: TargetSummary['status'] = 'online'):
 
 const labels = {
   disconnected: 'Kubernetes agent disconnected',
-  notInstalled: 'Kubernetes agent not installed',
-  offline: 'VM offline',
+  notInstalled: 'Kubernetes setup required',
+  offline: 'VM disconnected',
   degraded: 'VM degraded',
   awaitingAgent: 'VM awaiting agent'
 };

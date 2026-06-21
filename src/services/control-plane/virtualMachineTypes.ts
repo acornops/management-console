@@ -9,6 +9,15 @@ export interface ControlPlaneVirtualMachine {
   osFamily: 'linux';
   serviceManager: 'systemd';
   allowedLogSources?: string[];
+  summary?: {
+    inventoryCount: number;
+    findingCount: number;
+    criticalFindingCount: number;
+    serviceCount: number;
+    processCount: number;
+    listenerCount: number;
+    logCount: number;
+  };
   createdAt: string;
   updatedAt: string;
   latestSnapshot?: VirtualMachine['latestSnapshot'];

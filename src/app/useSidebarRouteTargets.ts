@@ -17,6 +17,7 @@ interface SidebarRouteTargetsArgs {
   selectedWorkspace: Workspace | undefined;
   kubernetesClusterById: Map<string, KubernetesCluster>;
   kubernetesClustersInWorkspaceContext: KubernetesCluster[];
+  virtualMachinesInWorkspaceContext: ControlPlaneVirtualMachine[];
   workspaceById: Map<string, Workspace>;
 }
 
@@ -37,6 +38,7 @@ export function useSidebarRouteTargets({
   selectedWorkspace,
   kubernetesClusterById,
   kubernetesClustersInWorkspaceContext,
+  virtualMachinesInWorkspaceContext,
   workspaceById
 }: SidebarRouteTargetsArgs): SidebarRouteTargets {
   const clusterContextId = getClusterRouteId(route);
@@ -53,9 +55,17 @@ export function useSidebarRouteTargets({
         : kubernetesClustersInWorkspaceContext[0] || null,
     [clusterContextId, kubernetesClusterById, kubernetesClustersInWorkspaceContext]
   );
+  const cachedSidebarVm = useMemo(
+    () => {
+      if (!routeVmWorkspaceId || !routeVmId) return null;
+      return virtualMachinesInWorkspaceContext.find((vm) => vm.id === routeVmId && vm.workspaceId === routeVmWorkspaceId) || null;
+    },
+    [routeVmWorkspaceId, routeVmId, virtualMachinesInWorkspaceContext]
+  );
   const selectedSidebarVmForRoute = useMemo(
     () => {
       if (!routeVmWorkspaceId || !routeVmId) return null;
+      if (cachedSidebarVm) return cachedSidebarVm;
       if (selectedSidebarVmId === routeVmId && selectedSidebarVmWorkspaceId === routeVmWorkspaceId) {
         return selectedSidebarVm;
       }
@@ -65,7 +75,7 @@ export function useSidebarRouteTargets({
         name: routeVmId
       };
     },
-    [routeVmWorkspaceId, routeVmId, selectedSidebarVm, selectedSidebarVmId, selectedSidebarVmWorkspaceId]
+    [cachedSidebarVm, routeVmWorkspaceId, routeVmId, selectedSidebarVm, selectedSidebarVmId, selectedSidebarVmWorkspaceId]
   );
 
   useEffect(() => {
@@ -79,6 +89,9 @@ export function useSidebarRouteTargets({
     if (!user) {
       return;
     }
+    if (cachedSidebarVm && (selectedSidebarVmId !== routeVmId || selectedSidebarVmWorkspaceId !== routeVmWorkspaceId)) {
+      setSelectedSidebarVm(cachedSidebarVm);
+    }
     if (selectedSidebarVmId === routeVmId && selectedSidebarVmWorkspaceId === routeVmWorkspaceId) {
       return;
     }
@@ -88,7 +101,7 @@ export function useSidebarRouteTargets({
     }
     let cancelled = false;
     void Promise.all([
-      controlPlaneApi.getVirtualMachine(routeVmWorkspaceId, routeVmId),
+      cachedSidebarVm ? Promise.resolve(cachedSidebarVm) : controlPlaneApi.getVirtualMachine(routeVmWorkspaceId, routeVmId),
       controlPlaneApi.listVirtualMachineFindings(routeVmWorkspaceId, routeVmId).catch(() => ({ items: [] }))
     ])
       .then(([vm, findings]) => {
@@ -106,6 +119,7 @@ export function useSidebarRouteTargets({
   }, [
     routeVmWorkspaceId,
     routeVmId,
+    cachedSidebarVm,
     selectedSidebarVmId,
     selectedSidebarVmWorkspaceId,
     user,
