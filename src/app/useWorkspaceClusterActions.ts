@@ -86,7 +86,6 @@ export function useWorkspaceClusterActions(args: {
   const [isCreatingCluster, setIsCreatingCluster] = useState(false);
   const [includeNamespaces, setIncludeNamespaces] = useState('');
   const [excludeNamespaces, setExcludeNamespaces] = useState('');
-  const [createdClusterId, setCreatedClusterId] = useState<string | null>(null);
 
   const refreshWorkspaceSummary = async (workspaceId: string) => {
     if (!user) return;
@@ -136,9 +135,11 @@ export function useWorkspaceClusterActions(args: {
     setTargetWorkspaceIdForClusterAdd(workspaceId);
     setClusterCreationStep('details');
     setIsAddingCluster(true);
+    setNewClusterName('');
+    setIncludeNamespaces('');
+    setExcludeNamespaces('');
     setClusterInstallCommand('');
     setClusterInstallWarnings([]);
-    setCreatedClusterId(null);
   };
 
   const handleProceedToInstructions = async () => {
@@ -156,8 +157,8 @@ export function useWorkspaceClusterActions(args: {
       );
 
       setKubernetesClusters((prev) => [
-        ...prev.filter((cluster) => cluster.id !== result.cluster.id),
-        result.cluster
+        result.cluster,
+        ...prev.filter((cluster) => cluster.id !== result.cluster.id)
       ]);
       setWorkspaces((prev) =>
         prev.map((workspace) =>
@@ -166,7 +167,7 @@ export function useWorkspaceClusterActions(args: {
                 ...workspace,
                 clusterIds: workspace.clusterIds.includes(result.cluster.id)
                   ? workspace.clusterIds
-                  : [...workspace.clusterIds, result.cluster.id],
+                  : [result.cluster.id, ...workspace.clusterIds],
                 clusterCount: workspace.clusterIds.includes(result.cluster.id)
                   ? workspace.clusterCount
                   : (workspace.clusterCount ?? workspace.clusterIds.length) + 1
@@ -177,7 +178,6 @@ export function useWorkspaceClusterActions(args: {
       await refreshWorkspaceSummary(targetWorkspaceIdForClusterAdd);
       setClusterInstallCommand(result.installCommand);
       setClusterInstallWarnings(result.installWarnings);
-      setCreatedClusterId(result.cluster.id);
       setClusterCreationStep('instructions');
     } catch (err) {
       console.error('Failed registering cluster in control plane', err);
@@ -188,38 +188,10 @@ export function useWorkspaceClusterActions(args: {
   };
 
   const handleConfirmAddCluster = async () => {
-    if (!newClusterName.trim() || !targetWorkspaceIdForClusterAdd) return;
+    resetClusterCreationState();
+  };
 
-    if (createdClusterId) {
-      try {
-        const namespaceInclude = parseNamespaceList(includeNamespaces);
-        const namespaceExclude = parseNamespaceList(excludeNamespaces);
-        const updatedScope = await controlPlaneApi.updateClusterNamespaceScope(
-          targetWorkspaceIdForClusterAdd,
-          createdClusterId,
-          {
-            namespaceInclude,
-            namespaceExclude
-          }
-        );
-        setKubernetesClusters((prev) =>
-          prev.map((cluster) =>
-            cluster.id === createdClusterId
-              ? {
-                  ...cluster,
-                  namespace: updatedScope.namespace,
-                  namespaceScope: updatedScope.namespaceScope
-                }
-              : cluster
-          )
-        );
-      } catch (err) {
-        console.error('Failed updating namespace scope for new cluster', err);
-        showToast(err instanceof Error ? err.message.replace(/^Control plane request failed \(\d+\):\s*/, '') : t('clusterSetup.updateScopeFailed'));
-        return;
-      }
-    }
-
+  const handleCancelAddCluster = () => {
     resetClusterCreationState();
   };
 
@@ -232,7 +204,6 @@ export function useWorkspaceClusterActions(args: {
     setTargetWorkspaceIdForClusterAdd(null);
     setIncludeNamespaces('');
     setExcludeNamespaces('');
-    setCreatedClusterId(null);
   };
 
   const handleDeleteWorkspace = async (workspaceId: string) => {
@@ -297,6 +268,7 @@ export function useWorkspaceClusterActions(args: {
     clusterInstallCommand,
     clusterInstallWarnings,
     excludeNamespaces,
+    handleCancelAddCluster,
     handleConfirmAddCluster,
     handleCreateWorkspace,
     handleDeleteCluster,
@@ -314,7 +286,6 @@ export function useWorkspaceClusterActions(args: {
     setClusterCreationStep,
     setExcludeNamespaces,
     setIncludeNamespaces,
-    setIsAddingCluster,
     setIsCreatingWorkspace,
     setNewClusterName,
     setNewWorkspaceName

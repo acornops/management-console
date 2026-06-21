@@ -436,7 +436,16 @@ export interface WorkspaceRoleTemplate {
   description: string;
   kind: 'system' | 'custom';
   capabilities: WorkspaceCapability[];
+  capabilityGroups?: WorkspaceRoleCapabilityGroup[];
   protected: boolean;
+  sortOrder: number;
+}
+
+export type WorkspaceRoleCapabilityGroupKey = 'workspace' | 'members' | 'targets' | 'operations' | 'settings';
+
+export interface WorkspaceRoleCapabilityGroup {
+  key: WorkspaceRoleCapabilityGroupKey;
+  capabilities: WorkspaceCapability[];
   sortOrder: number;
 }
 

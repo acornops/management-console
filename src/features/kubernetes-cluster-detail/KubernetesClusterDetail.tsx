@@ -84,6 +84,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   isDark,
   onToggleTool,
   onSyncTools,
+  onUpdateName,
   onUpdateNamespaceScope,
   onUpdateWriteConfirmationPolicy,
   onOpenCopilot,
@@ -280,6 +281,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 cluster={cluster}
                 workspaceName={workspaceName}
                 canManageCluster={canManageCluster}
+                onUpdateName={onUpdateName}
                 onEditNamespaceScope={onUpdateNamespaceScope ? () => setIsNamespaceScopeDialogOpen(true) : undefined}
                 onUpdateWriteConfirmationPolicy={onUpdateWriteConfirmationPolicy}
               />

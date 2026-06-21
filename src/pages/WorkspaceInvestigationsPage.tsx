@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowRight, Braces, Server, Terminal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { MiniProgressBar } from '@/components/common/Loading';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
 import { Select, SelectOption } from '@/components/common/Select';
 import { ResourceMetaPair } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
@@ -97,7 +98,7 @@ export const WorkspaceInvestigationsPage: React.FC<WorkspaceInvestigationsPagePr
   const [severity, setSeverity] = useState<'all' | InvestigationQueueItem['severity']>('all');
   const [investigations, setInvestigations] = useState<InvestigationQueueItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
-  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const kubernetesClusterById = useMemo(() => new Map(kubernetesClusters.map((app) => [app.id, app])), [kubernetesClusters]);
@@ -175,6 +176,8 @@ export const WorkspaceInvestigationsPage: React.FC<WorkspaceInvestigationsPagePr
   }, [kubernetesClusterById, query, severity, t, workspace.id]);
 
   useEffect(() => {
+    requestSeqRef.current += 1;
+    setIsLoadingInitial(true);
     const timer = window.setTimeout(() => {
       void loadInvestigations('replace');
     }, 300);
@@ -296,6 +299,13 @@ export const WorkspaceInvestigationsPage: React.FC<WorkspaceInvestigationsPagePr
           >
             {t('investigations.retryLoad')}
           </Button>
+        </div>
+      )}
+
+      {isLoadingInitial && investigations.length === 0 && (
+        <div role="status" aria-live="polite" className="mb-5 flex justify-center">
+          <span className="sr-only">{t('investigations.loadingQueue')}</span>
+          <MiniProgressBar className="w-32" />
         </div>
       )}
 

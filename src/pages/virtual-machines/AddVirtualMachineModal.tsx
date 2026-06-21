@@ -15,7 +15,6 @@ interface AddVirtualMachineModalProps {
   onClose: () => void;
   onVmNameChange: (value: string) => void;
   onProceedToInstructions: () => void | Promise<void>;
-  onBackToDetails: () => void;
   onConfirmInstalled: () => void;
 }
 
@@ -29,13 +28,11 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
   onClose,
   onVmNameChange,
   onProceedToInstructions,
-  onBackToDetails,
   onConfirmInstalled
 }) => {
   const { t } = useTranslation();
   const vmNameInputRef = React.useRef<HTMLInputElement>(null);
   const [hasCopiedInstructions, setHasCopiedInstructions] = React.useState(false);
-  const dialogWidthClassName = creationStep === 'instructions' ? 'max-w-2xl' : 'max-w-lg';
 
   if (!isOpen) return null;
 
@@ -55,10 +52,10 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
       titleId="add-vm-title"
       initialFocusRef={vmNameInputRef}
       closeDisabled={isRegistering}
-      className={`relative flex max-h-[calc(100dvh-4rem)] w-full ${dialogWidthClassName} flex-col overflow-hidden rounded-2xl border border-ui-border bg-ui-surface shadow-2xl`}
+      className="relative flex max-h-[min(92vh,56rem)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
       onClose={onClose}
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-ui-border bg-ui-surface px-6 py-4">
+      <div className="flex shrink-0 items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
         <h3 id="add-vm-title" className="text-sm font-extrabold tracking-tight text-ui-text">
           {t('virtualMachines.list.connectVm')}
         </h3>
@@ -124,7 +121,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
               className="w-full rounded-lg text-xs uppercase tracking-widest"
             >
               <Zap className="h-4 w-4" />
-              {isRegistering ? t('virtualMachines.list.registering') : t('virtualMachines.list.next')}
+              {isRegistering ? t('virtualMachines.list.registering') : t('virtualMachines.list.registerAndGenerate')}
             </Button>
           </div>
         </>
@@ -153,7 +150,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                     {hasCopiedInstructions ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
-                <div className="max-h-72 overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-5 text-ui-text custom-scrollbar">
+                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
                   <pre className="whitespace-pre">{installInstructions}</pre>
                 </div>
               </div>
@@ -172,14 +169,6 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
             </p>
           </div>
           <div className="shrink-0 space-y-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-            <Button
-              onClick={onBackToDetails}
-              variant="secondary"
-              size="sm"
-              className="w-full rounded-lg uppercase tracking-widest"
-            >
-              {t('virtualMachines.list.back')}
-            </Button>
             <Button
               onClick={onConfirmInstalled}
               variant="accent"

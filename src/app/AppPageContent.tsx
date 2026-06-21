@@ -8,6 +8,7 @@ import type { TargetChatController } from '@/features/kubernetes-cluster-detail/
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmRunbookPrompt, RunbookExecutionRequest } from '@/pages/runbooks/runbookModel';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { fadeTransition } from '@/lib/motion';
 import { AppRoute, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
@@ -141,6 +142,8 @@ interface AppPageContentProps {
   activeVmSubview: VmSubview;
   kubernetesClusters: KubernetesCluster[];
   kubernetesClustersInWorkspaceContext: KubernetesCluster[];
+  virtualMachinesInWorkspaceContext: ControlPlaneVirtualMachine[];
+  hasLoadedWorkspaceVirtualMachines: boolean;
   clusterContextId?: string;
   clusterChatController: TargetChatController | null;
   isDark: boolean;
@@ -163,6 +166,9 @@ interface AppPageContentProps {
   onUpdateKubernetesCluster: (clusterId: string, updates: Partial<KubernetesCluster>) => void;
   onReplaceWorkspaceKubernetesClusters: (workspaceId: string, nextClusters: KubernetesCluster[]) => void;
   onAppendWorkspaceKubernetesClusters: (workspaceId: string, nextClusters: KubernetesCluster[]) => void;
+  onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
+  onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
+  onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
   onUpdateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   onOpenClusterChatPanel: (cluster: KubernetesCluster, prompt?: string) => void;
   onRunRunbook: (request: RunbookExecutionRequest) => void;
@@ -183,6 +189,8 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   activeVmSubview,
   kubernetesClusters,
   kubernetesClustersInWorkspaceContext,
+  virtualMachinesInWorkspaceContext,
+  hasLoadedWorkspaceVirtualMachines,
   clusterContextId,
   clusterChatController,
   isDark,
@@ -205,6 +213,9 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   onUpdateKubernetesCluster,
   onReplaceWorkspaceKubernetesClusters,
   onAppendWorkspaceKubernetesClusters,
+  onReplaceWorkspaceVirtualMachines,
+  onUpsertWorkspaceVirtualMachine,
+  onRemoveWorkspaceVirtualMachine,
   onUpdateWorkspace,
   onOpenClusterChatPanel,
   onRunRunbook,
@@ -286,6 +297,9 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               totalClusterCount={route.kind === 'workspaceKubernetesClusters' ? workspaceContext?.clusterCount : undefined}
               onSelectKubernetesCluster={navigateToKubernetesCluster}
               onInstallAgent={onInstallAgent}
+              onOpenClusterSettings={(cluster) =>
+                navigate(AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'settings'))
+              }
               onAddCluster={
                 route.kind === 'workspaceKubernetesClusters' && getWorkspacePermission(route.workspaceId, 'manage_targets')
                   ? () => onInitiateAddCluster(route.workspaceId)
@@ -304,10 +318,15 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               currentUserId={user.id}
               route={route}
               activeSubview={activeVmSubview}
+              virtualMachines={virtualMachinesInWorkspaceContext}
+              hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               isDark={isDark}
               canManageTargets={getWorkspacePermission(workspaceContext.id, 'manage_targets')}
               navigate={navigate}
               onUpdateWorkspace={onUpdateWorkspace}
+              onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
+              onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}
+              onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
               pendingRunbookPrompt={pendingVmRunbookPrompt}
               onPendingRunbookPromptConsumed={onPendingVmRunbookPromptConsumed}
             />
@@ -423,6 +442,13 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                 });
               }}
               onSyncClusterTools={(clusterId, tools) => onUpdateKubernetesCluster(clusterId, { mcpTools: tools })}
+              onUpdateClusterName={async (clusterId, name) => {
+                const cluster = kubernetesClusters.find((item) => item.id === clusterId);
+                if (!cluster) return;
+                const updatedName = await controlPlaneApi.updateClusterName(cluster.workspaceId, cluster.id, name);
+                onUpdateKubernetesCluster(clusterId, updatedName);
+                showToast(t('clusterSettings.clusterNameUpdated'));
+              }}
               onUpdateClusterNamespaceScope={async (clusterId, scope) => {
                 const cluster = kubernetesClusters.find((item) => item.id === clusterId);
                 if (!cluster) return;

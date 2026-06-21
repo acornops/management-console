@@ -231,6 +231,27 @@ body {
   }
 }
 
+.pending-agent-step-pulse {
+  animation: pending-agent-step-pulse 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  box-shadow: 0 0 0 0 rgb(var(--status-warning-rgb) / 0);
+}
+
+@keyframes pending-agent-step-pulse {
+  0%,
+  72%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--status-warning-rgb) / 0);
+  }
+
+  18% {
+    box-shadow: 0 0 0 4px rgb(var(--status-warning-rgb) / 0.08);
+  }
+
+  42% {
+    box-shadow: 0 0 0 7px rgb(var(--status-warning-rgb) / 0);
+  }
+}
+
 @keyframes login-health-breathe {
   0%,
   100% {
@@ -467,6 +488,11 @@ body {
     animation: none !important;
     background-image: none;
     -webkit-text-fill-color: currentColor;
+  }
+
+  .pending-agent-step-pulse {
+    animation: none !important;
+    box-shadow: none;
   }
 
   .login-health-indicator,

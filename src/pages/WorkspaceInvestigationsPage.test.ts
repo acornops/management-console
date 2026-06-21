@@ -57,6 +57,27 @@ describe('WorkspaceInvestigationsPage signal compression', () => {
     ].forEach((needle) => expect(zh).toContain(needle));
   });
 
+  it('does not show the empty investigation state during the initial debounced load', () => {
+    expect(investigationsPage).toContain("import { MiniProgressBar } from '@/components/common/Loading';");
+    expect(investigationsPage).toContain('const [isLoadingInitial, setIsLoadingInitial] = useState(true);');
+    expect(investigationsPage).toContain('requestSeqRef.current += 1;');
+    expect(investigationsPage).toContain('role="status" aria-live="polite" className="mb-5 flex justify-center"');
+    expect(investigationsPage).toContain('<span className="sr-only">{t(\'investigations.loadingQueue\')}</span>');
+    expect(investigationsPage).toContain('<MiniProgressBar className="w-32" />');
+    expect(en).toContain("loadingQueue: 'Loading investigations'");
+    expect(zh).toContain("loadingQueue: '正在加载调查'");
+    expectBefore(
+      investigationsPage,
+      'setIsLoadingInitial(true);',
+      "const timer = window.setTimeout(() => {\n      void loadInvestigations('replace');"
+    );
+    expectBefore(
+      investigationsPage,
+      '<MiniProgressBar className="w-32" />',
+      "t('investigations.clearTitle')"
+    );
+  });
+
   it('uses the same queue action order and keeps later triage actions bordered', () => {
     const mobileActions = investigationsPage.slice(
       investigationsPage.indexOf('data-mobile-triage-actions="true"'),

@@ -28,6 +28,8 @@ interface AppShellProps {
   activeResourceNav: ActiveResourceNav;
   kubernetesClusters: KubernetesCluster[];
   kubernetesClustersInWorkspaceContext: KubernetesCluster[];
+  virtualMachinesInWorkspaceContext: ControlPlaneVirtualMachine[];
+  hasLoadedWorkspaceVirtualMachines: boolean;
   clusterContextId: string | undefined;
   clusterCopilotCluster: KubernetesCluster | null;
   clusterCopilotInitialPrompt: { id: number; text: string } | null;
@@ -41,6 +43,7 @@ interface AppShellProps {
   excludeNamespaces: string;
   getCurrentUserRoleForWorkspace: (workspaceId: string) => Workspace['members'][number]['role'];
   getWorkspacePermission: (workspaceId: string, permission: keyof NonNullable<Workspace['permissions']>) => boolean;
+  handleCancelAddCluster: () => void;
   handleConfirmAddCluster: () => Promise<void>;
   handleCreateWorkspace: (workspace: Omit<Workspace, 'id' | 'clusterIds'>) => void;
   handleDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
@@ -80,6 +83,9 @@ interface AppShellProps {
   selectedWorkspace: Workspace | undefined;
   selectedWorkspaceId: string | null;
   setKubernetesClusters: React.Dispatch<React.SetStateAction<KubernetesCluster[]>>;
+  onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
+  onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
+  onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
   setClusterCopilotInitialPrompt: React.Dispatch<React.SetStateAction<{ id: number; text: string } | null>>;
   setClusterCopilotWidth: React.Dispatch<React.SetStateAction<number>>;
   setClusterCreationStep: React.Dispatch<React.SetStateAction<'details' | 'instructions'>>;
@@ -88,7 +94,6 @@ interface AppShellProps {
   setIncludeNamespaces: React.Dispatch<React.SetStateAction<string>>;
   setInstallAgentClusterId: React.Dispatch<React.SetStateAction<string | null>>;
   setIsAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsAddingCluster: React.Dispatch<React.SetStateAction<boolean>>;
   setIsClusterCopilotOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setIsCreatingWorkspace: React.Dispatch<React.SetStateAction<boolean>>;
   setIsDeletingWorkspace: React.Dispatch<React.SetStateAction<boolean>>;
@@ -123,6 +128,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   activeResourceNav,
   kubernetesClusters,
   kubernetesClustersInWorkspaceContext,
+  virtualMachinesInWorkspaceContext,
+  hasLoadedWorkspaceVirtualMachines,
   clusterContextId,
   clusterCopilotCluster,
   clusterCopilotInitialPrompt,
@@ -136,6 +143,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   excludeNamespaces,
   getCurrentUserRoleForWorkspace,
   getWorkspacePermission,
+  handleCancelAddCluster,
   handleConfirmAddCluster,
   handleCreateWorkspace,
   handleDeleteCluster,
@@ -175,6 +183,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   selectedWorkspace,
   selectedWorkspaceId,
   setKubernetesClusters,
+  onReplaceWorkspaceVirtualMachines,
+  onUpsertWorkspaceVirtualMachine,
+  onRemoveWorkspaceVirtualMachine,
   setClusterCopilotInitialPrompt,
   setClusterCopilotWidth,
   setClusterCreationStep,
@@ -183,7 +194,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   setIncludeNamespaces,
   setInstallAgentClusterId,
   setIsAccountMenuOpen,
-  setIsAddingCluster,
   setIsClusterCopilotOpen,
   setIsCreatingWorkspace,
   setIsDeletingWorkspace,
@@ -404,6 +414,8 @@ export const AppShell: React.FC<AppShellProps> = ({
               activeVmSubview={activeVmSubview}
               kubernetesClusters={kubernetesClusters}
               kubernetesClustersInWorkspaceContext={kubernetesClustersInWorkspaceContext}
+              virtualMachinesInWorkspaceContext={virtualMachinesInWorkspaceContext}
+              hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               clusterContextId={clusterContextId}
               clusterChatController={clusterChatController}
               isDark={isDark}
@@ -426,6 +438,9 @@ export const AppShell: React.FC<AppShellProps> = ({
               onUpdateKubernetesCluster={updateKubernetesCluster}
               onReplaceWorkspaceKubernetesClusters={replaceWorkspaceKubernetesClusters}
               onAppendWorkspaceKubernetesClusters={appendWorkspaceKubernetesClusters}
+              onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
+              onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}
+              onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
               onUpdateWorkspace={updateWorkspace}
               onOpenClusterChatPanel={openClusterCopilot}
               onRunRunbook={runRunbook}
@@ -480,9 +495,8 @@ export const AppShell: React.FC<AppShellProps> = ({
         newWorkspaceName={newWorkspaceName}
         toasts={toasts}
         user={user}
-        onBackToClusterDetails={() => setClusterCreationStep('details')}
         onClusterNameChange={setNewClusterName}
-        onCloseAddCluster={() => setIsAddingCluster(false)}
+        onCloseAddCluster={handleCancelAddCluster}
         onCloseInstallAgent={() => setInstallAgentClusterId(null)}
         onCloseWorkspaceCreate={() => setIsCreatingWorkspace(false)}
         onCloseWorkspaceDelete={() => setDeleteWorkspaceId(null)}

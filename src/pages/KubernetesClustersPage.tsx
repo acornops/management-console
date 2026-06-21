@@ -15,6 +15,7 @@ interface KubernetesClustersPageProps {
   onSelectKubernetesCluster: (cluster: KubernetesCluster) => void;
   onInstallAgent?: (clusterId: string) => void;
   onAddCluster?: () => void;
+  onOpenClusterSettings?: (cluster: KubernetesCluster) => void;
   canDeleteKubernetesCluster?: (cluster: KubernetesCluster) => boolean;
   onDeleteKubernetesCluster?: (cluster: KubernetesCluster) => Promise<void> | void;
   onReplaceWorkspaceKubernetesClusters?: (workspaceId: string, clusters: KubernetesCluster[]) => void;
@@ -32,6 +33,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
   onSelectKubernetesCluster,
   onInstallAgent,
   onAddCluster,
+  onOpenClusterSettings,
   canDeleteKubernetesCluster,
   onDeleteKubernetesCluster,
   onReplaceWorkspaceKubernetesClusters,
@@ -110,6 +112,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
           kubernetesClusters={kubernetesClusters}
           onSelectKubernetesCluster={onSelectKubernetesCluster}
           onInstallAgent={onInstallAgent}
+          onOpenClusterSettings={onOpenClusterSettings}
           workspaceName={workspaceName}
           totalClusterCount={totalClusterCount}
           controls={workspaceId ? (
