@@ -5,6 +5,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import { TraceFooter } from '@/features/kubernetes-cluster-detail/components/detail/TraceFooter';
 import { ApprovalCheckpoint } from '@/features/kubernetes-cluster-detail/components/detail/views/ApprovalCheckpoint';
 import { MessageActions } from '@/features/kubernetes-cluster-detail/components/detail/views/MessageActions';
+import { markdownRemarkPlugins } from '@/features/kubernetes-cluster-detail/lib/markdown';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 import type { PendingApproval } from '@/types';
 
@@ -138,7 +139,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
 
       {isInFlightPlaceholder ? workingLine : shouldRenderCompactStatusOnly ? null : (
         <div className={assistantColumnClass}>
-          <ReactMarkdown components={markdownComponents}>
+          <ReactMarkdown components={markdownComponents} remarkPlugins={markdownRemarkPlugins}>
             {content}
           </ReactMarkdown>
         </div>

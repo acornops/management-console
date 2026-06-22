@@ -1,6 +1,9 @@
 import { Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type MarkdownTone = 'assistant' | 'user';
+
+export const markdownRemarkPlugins = [remarkGfm];
 
 /**
  * Returns markdown renderers tuned for chat readability.

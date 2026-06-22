@@ -449,6 +449,8 @@ describe('target chat polish contracts', () => {
     expect(markdownComponents).toContain("href?.startsWith('#/')");
     expect(markdownComponents).toContain("target={isInternalRoute ? undefined : '_blank'}");
     expect(markdownComponents).toContain("rel={isInternalRoute ? undefined : 'noreferrer'}");
+    expect(assistantTurn).toContain('remarkPlugins={markdownRemarkPlugins}');
+    expect(userMessageTurn).toContain('remarkPlugins={markdownRemarkPlugins}');
     expect(enLocale).toContain("targetContext: 'Target context: {{name}}'");
     expect(enLocale).not.toContain("preparingResponse: 'Preparing response...'");
     expect(enLocale).toContain("thinking: 'Thinking...'");

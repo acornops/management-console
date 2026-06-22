@@ -595,6 +595,8 @@ describe('theme color contract', () => {
   it('keeps table rows visibly highlighted on hover', () => {
     expect(membersPage).toContain('className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45"');
     expect(clusterOverviewView).toContain('transition-colors last:border-b-0 hover:bg-ui-bg/70');
+    expect(markdownComponents).toContain("import remarkGfm from 'remark-gfm';");
+    expect(markdownComponents).toContain('export const markdownRemarkPlugins = [remarkGfm];');
     expect(markdownComponents).toContain("const tableRowHoverClass = isUserTone ? 'hover:bg-ui-bg/10' : 'hover:bg-ui-bg/70'");
     expect(markdownComponents).toContain('<tr className={`transition-colors ${tableRowHoverClass}`}>{children}</tr>');
   });
