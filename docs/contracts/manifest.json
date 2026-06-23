@@ -86,6 +86,7 @@
         "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/sessions",
         "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/sessions",
         "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity",
+        "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity/stream",
         "POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions",
         "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions",
         "DELETE /api/v1/sessions/{sessionId}",
@@ -154,9 +155,21 @@
         "run_cancelled",
         "run_completed"
       ],
+      "targetChatActivityEventTypes": [
+        "message.created",
+        "run.created",
+        "run.status_changed",
+        "assistant_message.committed",
+        "approval.requested",
+        "approval.decided",
+        "approval.expired",
+        "session.deleted"
+      ],
       "snapshotFields": [
         "latestSnapshot.{clusterId,workspaceId,timestamp}",
         "summary.{resourceCount,findingCount,criticalFindingCount,namespaceCount,nodeCount,resourceFamilyCounts,resourceKindCounts}",
+        "virtualMachine.latestSnapshot.{targetId,workspaceId,timestamp}",
+        "virtualMachine.summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}",
         "GET /api/v1/workspaces/{workspaceId}/investigations",
         "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources",
         "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/findings"
@@ -191,7 +204,7 @@
           "providers[].{provider,configured,enabled}",
           "no API key values, secret names, or reasoning summary text"
         ],
-        "roleTemplate": ["key", "displayName", "description", "kind", "capabilities", "protected", "sortOrder"],
+        "roleTemplate": ["key", "displayName", "description", "kind", "capabilities", "capabilityGroups[].{key,capabilities,sortOrder}", "protected", "sortOrder"],
         "membership": ["role", "roleTemplate?"],
         "invitation": ["role", "roleTemplate?"],
         "auditEvent": ["id", "workspaceId", "category", "eventType", "operation", "actor", "object", "summary", "metadata", "occurredAt"],

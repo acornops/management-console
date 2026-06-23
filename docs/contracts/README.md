@@ -173,6 +173,8 @@ Pod logs are fetched lazily from `GET /api/v1/workspaces/{workspaceId}/kubernete
 
 `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}` returns cluster metadata, `writeConfirmationPolicy`, `latestSnapshot.{clusterId,workspaceId,timestamp}`, and `summary.{resourceCount,findingCount,criticalFindingCount,namespaceCount,nodeCount,resourceFamilyCounts,resourceKindCounts}`. It must not return full `latestSnapshot.data` to the browser.
 
+Virtual machine list and detail responses return `virtualMachine.latestSnapshot.{targetId,workspaceId,timestamp}` and `virtualMachine.summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}` derived from normalized snapshot rows. They must not return full raw snapshot data to the browser.
+
 `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters` returns cluster summaries only. Historical CPU and memory telemetry must be loaded lazily from `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/metrics/history` for a selected cluster, or from the bounded batch endpoint `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/metrics/history?clusterIds=...` for visible dashboard charts. The batch endpoint is capped by the control plane and must not be used as an unbounded all-clusters history fetch.
 
 Snapshot-derived console data is fetched through bounded list endpoints:
