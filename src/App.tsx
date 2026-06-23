@@ -12,7 +12,8 @@ import { useClusterCopilotState } from '@/app/useClusterCopilotState';
 import { useSidebarRouteTargets } from '@/app/useSidebarRouteTargets';
 import { useWorkspaceClusterActions } from '@/app/useWorkspaceClusterActions';
 import { useWorkspaceVirtualMachineCache } from '@/app/useWorkspaceVirtualMachineCache';
-import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts, getWorkspaceInvestigationCounts } from '@/app/appWorkspaceSummaries';
+import { useRecentInvestigationSync } from '@/app/useRecentInvestigationSync';
+import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from '@/app/appWorkspaceSummaries';
 import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
@@ -53,7 +54,6 @@ const App: React.FC = () => {
   const kubernetesClusterById = useMemo(() => new Map(kubernetesClusters.map((app) => [app.id, app])), [kubernetesClusters]);
   const kubernetesClustersByWorkspaceId = useMemo(() => buildKubernetesClustersByWorkspaceId(kubernetesClusters), [kubernetesClusters]);
   const workspaceClusterCounts = useMemo(() => getWorkspaceClusterCounts(workspaces, kubernetesClustersByWorkspaceId), [kubernetesClustersByWorkspaceId, workspaces]);
-  const workspaceInvestigationCounts = useMemo(() => getWorkspaceInvestigationCounts(kubernetesClustersByWorkspaceId), [kubernetesClustersByWorkspaceId]);
   const workspaceContext = workspaceContextId ? workspaceById.get(workspaceContextId) : undefined;
   const selectedWorkspace = selectedWorkspaceId ? workspaceById.get(selectedWorkspaceId) : undefined;
   const deleteTargetWorkspace = deleteWorkspaceId ? workspaceById.get(deleteWorkspaceId) : undefined;
@@ -77,7 +77,7 @@ const App: React.FC = () => {
     setClusterCopilotInitialPrompt,
     setClusterCopilotWidth,
     setIsClusterCopilotOpen
-  } = useClusterCopilotState(kubernetesClusterById, workspaceById);
+  } = useClusterCopilotState(user?.id ?? null, kubernetesClusterById, workspaceById);
   const activePrimaryNav = useMemo(() => getActivePrimaryNav(route), [route]);
   const activeResourceNav = useMemo(() => getActiveResourceNav(route), [route]);
   const { bootstrapSession } = useAppBootstrap({
@@ -132,7 +132,6 @@ const App: React.FC = () => {
     setUser,
     setWorkspaces
   });
-
   const {
     clusterCreationStep,
     clusterInstallCommand,
@@ -187,7 +186,12 @@ const App: React.FC = () => {
     theme,
     user
   });
-
+  useRecentInvestigationSync({
+    currentUserId: user?.id ?? null,
+    route,
+    kubernetesClusterById,
+    virtualMachinesInWorkspaceContext: virtualMachineCache.virtualMachinesInWorkspaceContext
+  });
   useEffect(() => {
     if (!user || (route.kind !== 'home' && route.kind !== 'workspaces')) {
       return;
@@ -489,9 +493,6 @@ const App: React.FC = () => {
 
   const installAgentCluster = installAgentClusterId ? kubernetesClusterById.get(installAgentClusterId) || null : null;
   const installAgentWorkspace = installAgentCluster ? workspaceById.get(installAgentCluster.workspaceId) : undefined;
-  const workspaceNavigationId = workspaceContextId || selectedWorkspaceId;
-  const workspaceInvestigationCount = workspaceNavigationId ? workspaceInvestigationCounts.get(workspaceNavigationId) || 0 : 0;
-
   return (
     <AppShell
       acceptWorkspaceInvitation={acceptWorkspaceInvitation}
@@ -591,7 +592,6 @@ const App: React.FC = () => {
       workspaceClusterCounts={workspaceClusterCounts}
       workspaceContext={workspaceContext}
       workspaceContextId={workspaceContextId}
-      workspaceInvestigationCount={workspaceInvestigationCount}
       workspaces={workspaces}
     />
   );

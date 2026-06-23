@@ -32,9 +32,6 @@ const loadUserSettingsPage = () =>
 const loadVirtualMachinesPage = () =>
   import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
 
-const loadWorkspaceInvestigationsPage = () =>
-  import('@/pages/WorkspaceInvestigationsPage').then((module) => ({ default: module.WorkspaceInvestigationsPage }));
-
 const loadWorkspaceInvitePage = () =>
   import('@/pages/WorkspaceInvitePage').then((module) => ({ default: module.WorkspaceInvitePage }));
 
@@ -59,7 +56,6 @@ const KubernetesClusterDetailPage = React.lazy(loadKubernetesClusterDetailPage);
 const NotFoundPage = React.lazy(loadNotFoundPage);
 const UserSettingsPage = React.lazy(loadUserSettingsPage);
 const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
-const WorkspaceInvestigationsPage = React.lazy(loadWorkspaceInvestigationsPage);
 const WorkspaceInvitePage = React.lazy(loadWorkspaceInvitePage);
 const WorkspaceMembersPage = React.lazy(loadWorkspaceMembersPage);
 const WorkspaceOverviewPage = React.lazy(loadWorkspaceOverviewPage);
@@ -89,9 +85,6 @@ export function preloadAppRoutePage(route: AppRoute): void {
     case 'workspaceVirtualMachines':
     case 'workspaceVirtualMachineDetail':
       void loadVirtualMachinesPage();
-      break;
-    case 'workspaceInvestigations':
-      void loadWorkspaceInvestigationsPage();
       break;
     case 'workspaceInvitation':
       void loadWorkspaceInvitePage();
@@ -123,7 +116,6 @@ function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspa
     !workspaceContext &&
     (
       route.kind === 'workspaceOverview' ||
-      route.kind === 'workspaceInvestigations' ||
       route.kind === 'workspaceRunbooks' ||
       route.kind === 'workspaceMembers' ||
       route.kind === 'workspaceAiSettings' ||
@@ -260,24 +252,19 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
         <Suspense fallback={<PageLoadingFallback label={t('common.loading')} />}>
           {route.kind === 'workspaceOverview' && workspaceContext && (
             <WorkspaceOverviewPage
+              currentUserId={user.id}
               workspace={workspaceContext}
               kubernetesClusters={kubernetesClustersInWorkspaceContext}
-              canManageClusters={getWorkspacePermission(workspaceContext.id, 'manage_targets')}
-              onConnectCluster={() => onInitiateAddCluster(workspaceContext.id)}
-              onOpenVirtualMachines={() => navigate(AppPaths.workspaceVirtualMachines(workspaceContext.id))}
-              onOpenInvestigations={() => navigate(AppPaths.workspaceInvestigations(workspaceContext.id))}
-              onSelectCluster={navigateToKubernetesCluster}
-            />
-          )}
-
-          {route.kind === 'workspaceInvestigations' && workspaceContext && (
-            <WorkspaceInvestigationsPage
-              workspace={workspaceContext}
-              kubernetesClusters={kubernetesClustersInWorkspaceContext}
-              canManageClusters={getWorkspacePermission(workspaceContext.id, 'manage_targets')}
-              onConnectCluster={() => onInitiateAddCluster(workspaceContext.id)}
-              onOpenClusterChat={onOpenClusterChatPanel}
-              onSelectCluster={navigateToKubernetesCluster}
+              virtualMachines={virtualMachinesInWorkspaceContext}
+              hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
+              onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
+              onSelectCluster={(clusterId) =>
+                navigate(AppPaths.workspaceKubernetesClusterDiagnostics(workspaceContext.id, clusterId))
+              }
+              onSelectVirtualMachine={(vmId) =>
+                navigate(AppPaths.workspaceVirtualMachineDetail(workspaceContext.id, vmId))
+              }
+              onResumeRecentInvestigation={(path) => navigate(path)}
             />
           )}
 

@@ -45,7 +45,7 @@ describe('mobile navigation structure', () => {
     );
   });
 
-  it('links virtual machines between clusters and investigations', () => {
+  it('links virtual machines between clusters and runbooks', () => {
     expect(mobileNavigation).toContain("t('app.virtualMachines')");
     expect(mobileNavigation).toContain("['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0]");
     expect(mobileNavigation).not.toContain("title={t('app.virtualMachinesTooltip')}");
@@ -53,7 +53,7 @@ describe('mobile navigation structure', () => {
       mobileNavigation.indexOf("t('app.virtualMachines')")
     );
     expect(mobileNavigation.indexOf("t('app.virtualMachines')")).toBeLessThan(
-      mobileNavigation.indexOf("['investigations', t('app.investigations')")
+      mobileNavigation.indexOf("['runbooks', t('app.runbooks')")
     );
   });
 

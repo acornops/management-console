@@ -50,20 +50,6 @@ export const getWorkspaceClusterCounts = (
   return counts;
 };
 
-export const getWorkspaceInvestigationCounts = (kubernetesClustersByWorkspaceId: Map<string, KubernetesCluster[]>): Map<string, number> => {
-  const counts = new Map<string, number>();
-  kubernetesClustersByWorkspaceId.forEach((workspaceKubernetesClusters, workspaceId) => {
-    counts.set(
-      workspaceId,
-      workspaceKubernetesClusters.reduce(
-        (total, cluster) => total + (cluster.resourceSummary?.findingCount ?? cluster.alerts?.length ?? 0),
-        0
-      )
-    );
-  });
-  return counts;
-};
-
 export const getWorkspaceInitials = (workspaceName?: string): string =>
   (workspaceName || 'WS')
     .split(/\s+/)

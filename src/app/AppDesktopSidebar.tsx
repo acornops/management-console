@@ -14,7 +14,6 @@ import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 
 type ActiveResourceNav =
   | 'overview'
-  | 'investigations'
   | 'runbooks'
   | 'clusters'
   | 'virtualMachines'
@@ -48,7 +47,6 @@ interface AppDesktopSidebarProps {
   selectedClusterFindingCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmFindingCount: number;
-  workspaceInvestigationCount: number;
   theme: 'light' | 'dark';
   isDark: boolean;
   isSidebarWorkspaceMenuOpen: boolean;
@@ -90,7 +88,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   selectedClusterFindingCount,
   clusterAssistantNavStatus,
   selectedVmFindingCount,
-  workspaceInvestigationCount,
   theme,
   isDark,
   isSidebarWorkspaceMenuOpen,
@@ -301,14 +298,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                         icon={<ICONS.Server className={navIconClass(activeResourceNav === 'virtualMachines')} />}
                         label={t('app.virtualMachines')}
                         onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceVirtualMachines(selectedWorkspaceId))}
-                      />
-                      <SidebarNavButton
-                        active={activeResourceNav === 'investigations'}
-                        disabled={!selectedWorkspaceId}
-                        icon={<ICONS.AlertTriangle className={navIconClass(activeResourceNav === 'investigations')} />}
-                        label={t('app.investigations')}
-                        onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceInvestigations(selectedWorkspaceId))}
-                        badge={workspaceInvestigationCount > 0 ? workspaceInvestigationCount : undefined}
                       />
                       <SidebarNavButton
                         active={activeResourceNav === 'runbooks'}

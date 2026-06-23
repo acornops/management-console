@@ -1,17 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   appDialogs,
-  chatView,
   clusterSettingsView,
   dashboardPage,
   desktopSidebar,
-  enLocale,
   mcpServersDialogs,
   mcpServersView,
   membersPage,
   mobileNavigation,
   overviewPage,
-  workspaceSettingsPage
+  workspaceSettingsPage,
+  enLocale
 } from './stylesTestSupport';
 
 describe('workspace overview style contract', () => {
@@ -26,35 +25,29 @@ describe('workspace overview style contract', () => {
     expect(membersPage).not.toContain('group-hover:text-white');
     expect(mcpServersView).not.toContain('text-white');
     expect(mcpServersDialogs).not.toContain('text-white');
-    expect(chatView).not.toContain('text-white');
   });
 
-  it('keeps the workspace overview focused on the triage queue before inventory', () => {
-    expect(overviewPage).toContain('buildInvestigationQueue(kubernetesClusters)');
-    expect(overviewPage).toContain('overview.triageQueueTitle');
-    expect(overviewPage).toContain('overview.triageQueueBody');
-    expect(overviewPage).toContain('overview.priorityQueue');
-    expect(overviewPage).toContain('overview.nextActionTitle');
-    expect(overviewPage).toContain('overview.openNextAction');
-    expect(overviewPage).toContain('overview.operatingSignals');
-    expect(overviewPage).toContain('overview.reviewFindings');
-    expect(overviewPage).toContain('overview.inventoryTitle');
-    expect(overviewPage).toContain('overview.targetEstate');
-    expect(overviewPage).toContain('overview.virtualMachineEstate');
-    expect(overviewPage).toContain('data-primary-triage-action="true"');
-    expect(overviewPage.indexOf('overview.triageQueueTitle')).toBeLessThan(
-      overviewPage.lastIndexOf('overview.targetEstate')
+  it('keeps the workspace overview focused on connected targets and urgent issues', () => {
+    expect(overviewPage).toContain('data-overview-quick-actions="true"');
+    expect(overviewPage).toContain('data-connected-targets="true"');
+    expect(overviewPage).toContain('data-attention-board="true"');
+    expect(overviewPage).toContain("t('overview.quickActionsTitle')");
+    expect(overviewPage).toContain("t('overview.connectedClustersTitle')");
+    expect(overviewPage).toContain("t('overview.connectedVirtualMachinesTitle')");
+    expect(overviewPage).toContain("t('overview.needsAttentionTitle')");
+    expect(overviewPage).toContain('ICONS.Layers');
+    expect(overviewPage).toContain('ICONS.Server');
+    expect(overviewPage).toContain('ICONS.AlertTriangle');
+    expect(overviewPage).toContain("variant=\"secondary\"");
+    expect(overviewPage.indexOf('data-connected-targets="true"')).toBeLessThan(
+      overviewPage.indexOf('data-attention-board="true"')
     );
-    expect(overviewPage.indexOf('overview.priorityQueue')).toBeLessThan(
-      overviewPage.indexOf('overview.inventoryTitle')
-    );
-    expect(enLocale).toContain("triageQueueTitle: 'Triage queue'");
-    expect(enLocale).toContain("operatingSignals: 'Signals'");
-    expect(enLocale).not.toContain("incidentCommandTitle: 'Incident command'");
-    expect(enLocale).not.toContain("commandSignals: 'Command signals'");
-    expect(overviewPage).not.toContain('overview.operationsTitle');
-    expect(overviewPage).not.toContain('overview.openClusterEstate');
-    expect(overviewPage).not.toContain('overview.riskSummary');
-    expect(overviewPage).not.toContain('variants={containerVariants}');
+    expect(overviewPage).not.toContain('overview.triageQueueTitle');
+    expect(overviewPage).not.toContain('overview.inventoryTitle');
+    expect(overviewPage).not.toContain('overview.targetEstate');
+    expect(overviewPage).not.toContain('data-healthy-targets="true"');
+    expect(overviewPage).not.toContain('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg');
+    expect(overviewPage).not.toContain('{card.targetTypeLabel}');
+    expect(enLocale).toContain("needsAttentionTitle: 'What needs attention now'");
   });
 });

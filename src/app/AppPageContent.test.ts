@@ -16,7 +16,6 @@ describe('AppPageContent route loading', () => {
       'NotFoundPage',
       'UserSettingsPage',
       'VirtualMachinesPage',
-      'WorkspaceInvestigationsPage',
       'WorkspaceInvitePage',
       'WorkspaceMembersPage',
       'WorkspaceAiSettingsPage',

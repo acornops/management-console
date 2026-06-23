@@ -3,27 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   buildKubernetesClustersByWorkspaceId,
   getWorkspaceClusterCounts,
-  getWorkspaceInitials,
-  getWorkspaceInvestigationCounts
+  getWorkspaceInitials
 } from '@/app/appWorkspaceSummaries';
 import { KubernetesCluster, Workspace } from '@/types';
 
 const cluster = (id: string, workspaceId: string): KubernetesCluster => ({
   id,
   workspaceId
-}) as KubernetesCluster;
-
-const clusterWithFindings = (id: string, workspaceId: string, findingCount: number): KubernetesCluster => ({
-  id,
-  workspaceId,
-  resourceSummary: {
-    resourceCount: 0,
-    findingCount,
-    criticalFindingCount: 0,
-    namespaceCount: 0,
-    nodeCount: 0
-  },
-  alerts: []
 }) as KubernetesCluster;
 
 const workspace = (id: string, clusterCount?: number): Workspace => ({
@@ -118,19 +104,6 @@ describe('app workspace summaries', () => {
       }
     ], grouped)).toEqual(new Map([
       ['workspace-a', 0]
-    ]));
-  });
-
-  it('counts investigation badges from loaded finding summaries', () => {
-    const grouped = buildKubernetesClustersByWorkspaceId([
-      clusterWithFindings('cluster-1', 'workspace-a', 3),
-      clusterWithFindings('cluster-2', 'workspace-a', 2),
-      clusterWithFindings('cluster-3', 'workspace-b', 0)
-    ]);
-
-    expect(getWorkspaceInvestigationCounts(grouped)).toEqual(new Map([
-      ['workspace-a', 5],
-      ['workspace-b', 0]
     ]));
   });
 

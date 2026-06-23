@@ -92,10 +92,6 @@ describe('routes', () => {
       kind: 'workspaceOverview',
       workspaceId: 'team-alpha'
     });
-    expect(parseAppRoute(AppPaths.workspaceInvestigations('team-alpha'))).toEqual({
-      kind: 'workspaceInvestigations',
-      workspaceId: 'team-alpha'
-    });
     expect(parseAppRoute(AppPaths.workspaceRunbooks('team-alpha'))).toEqual({
       kind: 'workspaceRunbooks',
       workspaceId: 'team-alpha'
@@ -122,6 +118,10 @@ describe('routes', () => {
     expect(parseAppRoute('/workspaces/team-alpha/services')).toEqual({
       kind: 'notFound',
       path: '/workspaces/team-alpha/services'
+    });
+    expect(parseAppRoute('/workspaces/team-alpha/investigations')).toEqual({
+      kind: 'notFound',
+      path: '/workspaces/team-alpha/investigations'
     });
     expect(parseAppRoute('/kubernetes-clusters/prod-cluster/workloads')).toEqual({
       kind: 'notFound',

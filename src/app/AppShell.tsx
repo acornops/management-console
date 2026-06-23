@@ -116,7 +116,6 @@ interface AppShellProps {
   workspaceClusterCounts: Map<string, number>;
   workspaceContext: Workspace | undefined;
   workspaceContextId: string | null;
-  workspaceInvestigationCount: number;
   workspaces: Workspace[];
 }
 
@@ -216,7 +215,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   workspaceClusterCounts,
   workspaceContext,
   workspaceContextId,
-  workspaceInvestigationCount,
   workspaces
 }) => {
   const backToWorkspaceId = selectedSidebarCluster?.workspaceId || workspaceContextId || selectedWorkspaceId;
@@ -335,7 +333,6 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedClusterFindingCount={selectedClusterFindingCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmFindingCount={selectedSidebarVmFindingCount}
-        workspaceInvestigationCount={workspaceInvestigationCount}
         selectedSidebarCluster={selectedSidebarCluster}
         selectedSidebarVm={selectedSidebarVm}
         selectedWorkspace={selectedWorkspace}
@@ -373,7 +370,6 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedClusterFindingCount={selectedClusterFindingCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmFindingCount={selectedSidebarVmFindingCount}
-        workspaceInvestigationCount={workspaceInvestigationCount}
         theme={theme}
         isDark={isDark}
         isSidebarWorkspaceMenuOpen={isSidebarWorkspaceMenuOpen}

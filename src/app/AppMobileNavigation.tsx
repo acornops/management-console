@@ -14,7 +14,6 @@ import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 type ActivePrimaryNav = 'workspaces' | 'clusters';
 type ActiveResourceNav =
   | 'overview'
-  | 'investigations'
   | 'runbooks'
   | 'clusters'
   | 'virtualMachines'
@@ -47,7 +46,6 @@ interface AppMobileNavigationProps {
   selectedClusterFindingCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmFindingCount: number;
-  workspaceInvestigationCount: number;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
   selectedWorkspace: Workspace | undefined;
@@ -78,7 +76,6 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   selectedClusterFindingCount,
   clusterAssistantNavStatus,
   selectedVmFindingCount,
-  workspaceInvestigationCount,
   selectedSidebarCluster,
   selectedSidebarVm,
   selectedWorkspace,
@@ -351,7 +348,6 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             </button>
                           ))}
                           {([
-                            ['investigations', t('app.investigations'), AppPaths.workspaceInvestigations, workspaceInvestigationCount],
                             ['runbooks', t('app.runbooks'), AppPaths.workspaceRunbooks, 0]
                           ] as const).map(([nav, label, pathForWorkspace, badge]) => (
                             <button

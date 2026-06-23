@@ -7,7 +7,6 @@ const routes = [
   '/',
   '/workspaces',
   '/settings',
-  '/workspaces/smoke-workspace/investigations',
   '/workspaces/smoke-workspace/runbooks',
   '/workspaces/smoke-workspace/virtual-machines',
   '/workspaces/smoke-workspace/virtual-machines/smoke-vm/mcp-servers',

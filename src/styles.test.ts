@@ -18,7 +18,6 @@ import {
   enLocale,
   fieldValidationMessage,
   indexHtml,
-  investigationsPage,
   lightTheme,
   loginAuthPanel,
   loginAuthPanelParts,
@@ -246,18 +245,18 @@ describe('theme color contract', () => {
     expect(loginPreview).not.toContain('shadow-accent-bright/30');
   });
 
-  it('makes the desktop triage workflow inspectable from queue to trace', () => {
-    expect(investigationsPage).toContain('listWorkspaceInvestigations');
-    expect(investigationsPage).toContain('nextCursor');
-    expect(investigationsPage).toContain('investigations.queueTitle');
-    expect(investigationsPage).toContain('investigations.activeTriageTitle');
-    expect(investigationsPage).toContain('investigations.activeTriageBody');
-    expect(investigationsPage).toContain('investigations.viewCluster');
-    expect(investigationsPage).toContain('investigations.runTriagePrimary');
-    expect(investigationsPage).toContain('remainingInvestigations.map');
-    expect(investigationsPage).toContain('lg:grid-cols-[1.75rem_minmax(0,1fr)_auto] lg:items-start');
-    expect(investigationsPage).toContain('grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center lg:self-start lg:justify-end');
-    expect(investigationsPage).not.toContain('onOpenClusterFindings');
+  it('makes the workspace homepage triage workflow inspectable from summary to target issue boards', () => {
+    expect(overviewPage).toContain('loadAllWorkspaceInvestigations');
+    expect(overviewPage).toContain('loadAllVirtualMachineFindings');
+    expect(overviewPage).toContain('data-overview-quick-actions="true"');
+    expect(overviewPage).toContain('data-connected-targets="true"');
+    expect(overviewPage).toContain('data-attention-board="true"');
+    expect(overviewPage).toContain('data-primary-issue-card="true"');
+    expect(overviewPage).toContain('buildWorkspaceOverviewCards');
+    expect(overviewPage).toContain('attentionItems.map');
+    expect(overviewPage).toContain('onSelectCluster(card.targetId)');
+    expect(overviewPage).toContain('onSelectVirtualMachine(card.targetId)');
+    expect(overviewPage).toContain('readRecentInvestigation(workspace.id, currentUserId)');
     expect(chatView).not.toContain('chat.runStatus');
     expect(chatView).not.toContain('chat.activeTriage');
     expect(chatView).not.toContain('chat.guardedWrites');
@@ -394,9 +393,9 @@ describe('theme color contract', () => {
     expect(dashboardPage).not.toContain('variants={containerVariants}');
     expect(dashboardPage).not.toContain('variants={itemVariants}');
     expect(dashboardPage).not.toContain('layout');
-    expect(investigationsPage).not.toContain('variants={containerVariants}');
-    expect(investigationsPage).not.toContain('variants={itemVariants}');
-    expect(investigationsPage).not.toContain('layout');
+    expect(overviewPage).not.toContain('variants={containerVariants}');
+    expect(overviewPage).not.toContain('variants={itemVariants}');
+    expect(overviewPage).not.toContain('layout');
     expect(runbooksPage).not.toContain('variants={containerVariants}');
     expect(runbooksPage).not.toContain('variants={itemVariants}');
     expect(runbooksPage).not.toContain('layout');
@@ -417,9 +416,7 @@ describe('theme color contract', () => {
     expect(buttonComponent).toContain("tertiary: 'text-ui-text-muted");
     expect(buttonComponent).toContain('hover:bg-accent-soft hover:text-accent-strong');
     expect(buttonComponent).not.toContain('text-white');
-    expect(investigationsPage).toContain('variant="accent" size="md"');
-    expect(investigationsPage).toContain('<Button onClick={onConnectCluster} variant="accent" size="lg" className="mt-8">');
-    expect(investigationsPage).not.toContain('text-status-success-text text-status-success-text');
+    expect(overviewPage).toContain('variant="secondary"');
     expect(membersPage).toMatch(/onClick=\{openInviteModal\}[\s\S]*?variant="secondary"/);
     expect(addClusterModal).not.toContain('text-slate-950');
     expect(addClusterModal).toContain('variant="accent"');
@@ -440,7 +437,6 @@ describe('theme color contract', () => {
   it('keeps app page-header action buttons at the medium size', () => {
     expect(dashboardPage).toContain('<Button onClick={onAddCluster} variant="secondary" size="md" className="whitespace-nowrap">');
     expect(overviewPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
-    expect(investigationsPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
     expect(runbooksPage).toContain('<Button onClick={startCreatingRunbook} variant="accent" size="md" className="whitespace-nowrap">');
     expect(mcpServersView).toContain(
       '<Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md" className="whitespace-nowrap">'
@@ -497,7 +493,6 @@ describe('theme color contract', () => {
     expect(dashboardPage).toContain('type-route-title');
     expect(overviewPage).toContain('type-route-title');
     expect(membersPage).toContain('type-route-title');
-    expect(investigationsPage).toContain('type-route-title');
     expect(runbooksPage).toContain('type-route-title');
     expect(userSettingsPage).toContain('mb-2 text-3xl font-bold tracking-tight text-ui-text');
     expect(workspaceSettingsPage).toContain('type-route-title');
@@ -518,46 +513,26 @@ describe('theme color contract', () => {
     expect(mcpServersView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
   });
 
-  it('keeps the workspace command center in normal responsive flow', () => {
-    expect(overviewPage).toMatch(
-      /<section\s+data-workspace-command-center="true"\s+className="mb-6 min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm"/
-    );
-    expect(overviewPage).toContain('data-workspace-command-center-header="true"');
-    expect(overviewPage).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:items-start');
-    expect(overviewPage).toContain('<h2 className="type-row-title">{t(\'overview.triageQueueTitle\')}</h2>');
-    expect(overviewPage).toContain('grid min-w-0 max-w-full overflow-hidden rounded-md border border-current/10 bg-ui-surface/70 sm:grid-cols-3 lg:min-w-[26rem]');
-    expect(overviewPage).toContain('border-b border-ui-border/70 sm:border-b-0 sm:border-r');
-    expect(overviewPage).toContain('<dt className="type-caption">{item.label}</dt>');
-    expect(overviewPage).toContain('data-workspace-command-center-body="true"');
-    expect(overviewPage).toContain('data-priority-queue-panel="true"');
-    expect(overviewPage).toContain('data-operating-signals-panel="true"');
-    expect(overviewPage).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]');
-    expect(overviewPage).toContain(
-      'flex flex-col items-start gap-3 border-b border-ui-border bg-ui-bg px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6'
-    );
-    expect(overviewPage).not.toContain('className="w-full justify-center whitespace-nowrap sm:w-auto sm:shrink-0"');
-    expect(overviewPage).toContain("const queuePrimaryActionLabel = clusterCount === 0 && canManageClusters ? t('app.connectClusterHelm') : t('overview.viewInvestigationQueue');");
-    expect(overviewPage).toContain('data-queue-primary-action="true"');
-    expect(overviewPage.indexOf('data-workspace-command-center-header')).toBeLessThan(
-      overviewPage.indexOf('data-workspace-command-center-body')
-    );
-    expect(overviewPage.indexOf('data-priority-queue-panel')).toBeLessThan(
-      overviewPage.indexOf('data-operating-signals-panel')
-    );
+  it('keeps the workspace homepage in normal responsive flow', () => {
+    expect(overviewPage).toContain('data-overview-quick-actions="true"');
+    expect(overviewPage).toContain('data-connected-targets="true"');
+    expect(overviewPage).toContain('data-attention-board="true"');
+    expect(overviewPage).toContain('rounded-lg border border-ui-border bg-ui-surface shadow-sm');
+    expect(overviewPage).toContain('sm:grid-cols-2 lg:min-w-[22rem]');
+    expect(overviewPage).toContain('flex flex-col gap-4 px-5 py-5 sm:px-6');
+    expect(overviewPage).toContain('xl:grid-cols-2');
+    expect(overviewPage).toContain('overflow-hidden rounded-xl border border-accent/20');
+    expect(overviewPage).toContain('w-full justify-center sm:w-auto');
+    expect(overviewPage).toContain('group flex items-center justify-between gap-4 rounded-lg border border-ui-border bg-ui-bg px-4 py-4');
+    expect(overviewPage).toContain('data-primary-issue-card="true"');
+    expect(overviewPage).not.toContain('{card.targetTypeLabel}');
+    expect(overviewPage).not.toContain('{issue.summary &&');
   });
 
-  it('promotes mobile investigation triage before the desktop queue toolbar and queue introduction', () => {
-    expect(investigationsPage).toContain('data-mobile-triage-actions="true"');
-    expect(investigationsPage).not.toContain('data-investigation-metrics="true"');
-    expect(investigationsPage).toContain('data-investigation-queue-toolbar="true"');
-    expect(investigationsPage.indexOf('data-mobile-triage-actions="true"')).toBeLessThan(
-      investigationsPage.indexOf('data-investigation-queue-toolbar="true"')
-    );
-    expect(investigationsPage.indexOf('data-mobile-triage-actions="true"')).toBeLessThan(
-      investigationsPage.indexOf('data-investigation-queue-panel="true"')
-    );
-    expect(investigationsPage).toContain('className="mb-5 md:hidden"');
-    expect(investigationsPage).toContain('variant="accent" size="md" className="w-full"');
+  it('keeps connected target lists directly reachable without a secondary healthy-target panel', () => {
+    expect(overviewPage).toContain("t('overview.connectedClustersTitle')");
+    expect(overviewPage).toContain("t('overview.connectedVirtualMachinesTitle')");
+    expect(overviewPage).not.toContain('data-healthy-targets="true"');
   });
 
   it('keeps workspace member access changes deliberate and stable', () => {

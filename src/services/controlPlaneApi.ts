@@ -55,6 +55,7 @@ export type {
   ControlPlanePodLogsOptions,
   ControlPlaneResourcePageItem,
   ControlPlaneFindingPageItem,
+  ControlPlaneInvestigationItem,
   ControlPlaneRun,
   ControlPlaneRunEvent,
   ControlPlaneRunToolApproval,
@@ -364,9 +365,16 @@ export const controlPlaneApi = {
     );
   },
 
-  async listVirtualMachineFindings(workspaceId: string, vmId: string): Promise<PagedResult<Record<string, unknown>>> {
+  async listVirtualMachineFindings(
+    workspaceId: string,
+    vmId: string,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<PagedResult<Record<string, unknown>>> {
     return requestJson<PagedResult<Record<string, unknown>>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/findings`
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/findings${pageQuery({
+        limit: options?.limit,
+        cursor: options?.cursor
+      })}`
     );
   },
 

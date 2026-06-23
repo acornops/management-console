@@ -11,7 +11,6 @@ export function workspaceLandingPath(workspace: Workspace): string {
 export function isWorkspaceDataRoute(route: AppRoute): boolean {
   return (
     route.kind === 'workspaceOverview' ||
-    route.kind === 'workspaceInvestigations' ||
     route.kind === 'workspaceRunbooks' ||
     route.kind === 'workspaceKubernetesClusters' ||
     route.kind === 'workspaceVirtualMachines' ||
