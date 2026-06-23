@@ -251,7 +251,7 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('data-overview-quick-actions="true"');
     expect(overviewPage).toContain('data-connected-targets="true"');
     expect(overviewPage).toContain('data-attention-board="true"');
-    expect(overviewPage).toContain('data-primary-issue-card="true"');
+    expect(overviewPage).toContain("data-primary-issue-card={isPrimary ? 'true' : undefined}");
     expect(overviewPage).toContain('buildWorkspaceOverviewCards');
     expect(overviewPage).toContain('attentionItems.map');
     expect(overviewPage).toContain('onSelectCluster(card.targetId)');
@@ -517,14 +517,19 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('data-overview-quick-actions="true"');
     expect(overviewPage).toContain('data-connected-targets="true"');
     expect(overviewPage).toContain('data-attention-board="true"');
-    expect(overviewPage).toContain('rounded-lg border border-ui-border bg-ui-surface shadow-sm');
-    expect(overviewPage).toContain('sm:grid-cols-2 lg:min-w-[22rem]');
+    expect(overviewPage).toContain('rounded-lg border border-ui-border bg-ui-surface');
+    expect(overviewPage).toContain('sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end');
+    expect(overviewPage).toContain('flex min-h-11 w-full items-center justify-between gap-3');
     expect(overviewPage).toContain('flex flex-col gap-4 px-5 py-5 sm:px-6');
     expect(overviewPage).toContain('xl:grid-cols-2');
     expect(overviewPage).toContain('overflow-hidden rounded-xl border border-accent/20');
     expect(overviewPage).toContain('w-full justify-center sm:w-auto');
-    expect(overviewPage).toContain('group flex items-center justify-between gap-4 rounded-lg border border-ui-border bg-ui-bg px-4 py-4');
-    expect(overviewPage).toContain('data-primary-issue-card="true"');
+    expect(overviewPage).toContain('group flex w-full items-center gap-4 px-4 py-3');
+    expect(overviewPage).toContain("data-primary-issue-card={isPrimary ? 'true' : undefined}");
+    expect(overviewPage).toContain("t('overview.evidenceLabel')");
+    expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
+      overviewPage.indexOf('data-connected-targets="true"')
+    );
     expect(overviewPage).not.toContain('{card.targetTypeLabel}');
     expect(overviewPage).not.toContain('{issue.summary &&');
   });

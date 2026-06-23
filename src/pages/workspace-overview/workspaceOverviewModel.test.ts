@@ -58,9 +58,9 @@ describe('workspace overview model', () => {
 
   it('sorts issues by severity, then recency, then stable title fallback', () => {
     const issues: WorkspaceOverviewIssue[] = [
-      { id: '3', targetId: 'cluster-1', targetType: 'kubernetes', severity: 'warning', title: 'Zulu', timestamp: 10, detail: '' },
-      { id: '2', targetId: 'cluster-1', targetType: 'kubernetes', severity: 'critical', title: 'Alpha', timestamp: 1, detail: '' },
-      { id: '1', targetId: 'cluster-1', targetType: 'kubernetes', severity: 'critical', title: 'Bravo', timestamp: 5, detail: '' }
+      { id: '3', targetId: 'cluster-1', targetType: 'kubernetes', severity: 'warning', title: 'Zulu', timestamp: 10, detail: '', evidence: '' },
+      { id: '2', targetId: 'cluster-1', targetType: 'kubernetes', severity: 'critical', title: 'Alpha', timestamp: 1, detail: '', evidence: '' },
+      { id: '1', targetId: 'cluster-1', targetType: 'kubernetes', severity: 'critical', title: 'Bravo', timestamp: 5, detail: '', evidence: '' }
     ];
 
     expect(sortWorkspaceOverviewIssues(issues).map((issue) => issue.id)).toEqual(['1', '2', '3']);
@@ -113,6 +113,8 @@ describe('workspace overview model', () => {
     ]);
     expect(result.connectedClusterCards.map((card) => card.name)).toEqual(['cluster-1', 'cluster-2', 'cluster-3']);
     expect(result.connectedVirtualMachineCards.map((card) => card.name)).toEqual(['vm-1', 'vm-2']);
+    expect(result.attentionItems[0].issue.evidence).toBe('API server unavailable.');
+    expect(result.attentionItems[1].issue.evidence).toBe('85% used');
     expect(result.criticalIssueCount).toBe(1);
     expect(result.warningIssueCount).toBe(2);
   });

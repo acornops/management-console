@@ -2,7 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
-  Clock3
+  Clock3,
+  Terminal
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
@@ -17,6 +18,7 @@ import {
   type WorkspaceOverviewAttentionItem,
   type WorkspaceOverviewTargetCard
 } from '@/pages/workspace-overview/workspaceOverviewModel';
+import type { RunbookExecutionRequest } from '@/pages/runbooks/runbookModel';
 
 interface WorkspaceOverviewPageProps {
   currentUserId: string;
@@ -26,6 +28,7 @@ interface WorkspaceOverviewPageProps {
   hasLoadedWorkspaceVirtualMachines: boolean;
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
   onResumeRecentInvestigation: (path: string) => void;
+  onRunTriage: (request: RunbookExecutionRequest) => void;
   onSelectCluster: (clusterId: string) => void;
   onSelectVirtualMachine: (vmId: string) => void;
 }
@@ -85,6 +88,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   hasLoadedWorkspaceVirtualMachines,
   onReplaceWorkspaceVirtualMachines,
   onResumeRecentInvestigation,
+  onRunTriage,
   onSelectCluster,
   onSelectVirtualMachine
 }) => {
@@ -232,6 +236,13 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   const isLoadingBoard = isLoadingInvestigations || isLoadingVirtualMachines || isLoadingVmFindings;
   const boardWarnings = [clusterLoadError, vmFindingsLoadErrorCount > 0 ? t('overview.vmIssuesUnavailable', { count: vmFindingsLoadErrorCount }) : null]
     .filter((warning): warning is string => Boolean(warning));
+  const recentInvestigationUpdated = recentInvestigation ? formatRelativeTime(recentInvestigation.timestamp, t) : '';
+  const recentInvestigationBody = recentInvestigation
+    ? t('overview.quickActionsResumeBody', {
+      targetName: recentInvestigation.targetName,
+      updated: recentInvestigationUpdated
+    })
+    : t('overview.quickActionsEmptyBody');
 
   const openCard = (card: { targetId: string; targetType: 'kubernetes' | 'virtual_machine' }) => {
     if (card.targetType === 'kubernetes') {
@@ -241,6 +252,25 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     onSelectVirtualMachine(card.targetId);
   };
 
+  const runTriage = (item: WorkspaceOverviewAttentionItem) => {
+    const issue = item.issue;
+    const prompt = item.targetType === 'virtual_machine'
+      ? t('virtualMachines.overview.triageFindingPrompt', {
+        title: issue.title,
+        severity: issue.severity,
+        source: issue.detail,
+        message: issue.evidence || issue.title
+      })
+      : `Triage "${issue.title}" on ${item.targetName}. Severity: ${issue.severity}. Scope: ${issue.detail}. Finding summary: ${issue.evidence || issue.title}`;
+
+    onRunTriage({
+      targetId: item.targetId,
+      workspaceId: workspace.id,
+      targetType: item.targetType,
+      prompt
+    });
+  };
+
   const renderConnectedPanel = (
     title: string,
     Icon: typeof ICONS.Layers,
@@ -248,39 +278,39 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     emptyBody: string,
     cards: WorkspaceOverviewTargetCard[]
   ) => (
-    <section className="rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-      <div className="border-b border-ui-border px-5 py-4 sm:px-6">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong">
-            <Icon className="h-5 w-5" />
-          </span>
-          <h2 className="type-row-title">{title}</h2>
+    <section className="rounded-lg border border-ui-border bg-ui-surface">
+      <div className="border-b border-ui-border px-4 py-3 sm:px-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong">
+              <Icon className="h-5 w-5" />
+            </span>
+            <h2 className="type-row-title truncate">{title}</h2>
+          </div>
+          <span className="type-caption shrink-0 text-ui-text-muted">{t('overview.connectedTargetCount', { count: cards.length })}</span>
         </div>
       </div>
-      <div className="px-5 py-5 sm:px-6">
+      <div>
         {cards.length === 0 ? (
-          <div className="rounded-md border border-ui-border bg-ui-bg px-4 py-4">
+          <div className="px-4 py-4 sm:px-5">
             <p className="type-row-title">{emptyTitle}</p>
             <p className="type-body mt-1 text-ui-text-muted">{emptyBody}</p>
           </div>
         ) : (
-          <div className="grid gap-3">
+          <div className="divide-y divide-ui-border">
             {cards.map((card) => (
               <button
                 key={`${card.targetType}-${card.targetId}`}
                 type="button"
                 onClick={() => openCard(card)}
-                className="group flex items-center justify-between gap-4 rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-left transition-colors hover:border-accent/40 hover:bg-accent-soft/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                className="group flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 sm:px-5"
               >
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`type-micro-label shrink-0 rounded-full px-2.5 py-1 ${card.postureTone}`}>
+                    {card.postureLabel}
+                  </span>
                   <h3 className="type-row-title break-words text-ui-text">{card.name}</h3>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${card.postureTone}`}>
-                      {card.postureLabel}
-                    </span>
-                  </div>
                 </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-accent-strong" />
               </button>
             ))}
           </div>
@@ -289,20 +319,19 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     </section>
   );
 
-  const renderAttentionIssueCard = (item: WorkspaceOverviewAttentionItem) => {
+  const renderAttentionIssueCard = (item: WorkspaceOverviewAttentionItem, index: number) => {
     const issue = item.issue;
+    const isPrimary = index === 0;
     return (
-      <button
+      <article
         key={`${issue.id}-${item.targetType}-${item.targetId}`}
-        type="button"
-        onClick={() => openCard(item)}
-        className="group w-full rounded-lg border border-ui-border bg-ui-bg p-4 text-left transition-colors hover:border-accent/40 hover:bg-accent-soft/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+        className="w-full rounded-lg border border-ui-border bg-ui-bg p-4 text-left transition-colors hover:border-accent/40 hover:bg-accent-soft/20 sm:p-5"
       >
-        <div data-primary-issue-card="true" className="flex items-start justify-between gap-4">
+        <div data-primary-issue-card={isPrimary ? 'true' : undefined} className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="type-micro-label rounded-full border border-status-danger/20 bg-status-danger-soft px-2.5 py-1 text-status-danger-text">
-                {t('overview.issueRank', { count: 1 })}
+              <span className="type-micro-label rounded-full border border-ui-border bg-ui-surface px-2.5 py-1 text-ui-text-muted">
+                {t('overview.issueRank', { count: index + 1 })}
               </span>
               <span
                 className={`type-micro-label rounded-full px-2.5 py-1 ${
@@ -318,20 +347,41 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
               <span className="type-micro-label rounded-full border border-ui-border bg-ui-surface px-2.5 py-1 text-ui-text-muted">
                 {item.targetTypeLabel}
               </span>
-              <span className="type-caption text-ui-text-muted">
-                {issue.detail} · {formatRelativeTime(issue.timestamp, t)}
-              </span>
             </div>
             <h3 className="mt-3 type-panel-title break-words">{issue.title}</h3>
+            <dl className="mt-3 grid gap-3 text-ui-text-muted sm:grid-cols-3">
+              <div className="min-w-0">
+                <dt className="type-micro-label">{t('overview.targetLabel')}</dt>
+                <dd className="type-caption mt-1 break-words text-ui-text">{item.targetName}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="type-micro-label">{t('overview.scopeLabel')}</dt>
+                <dd className="type-caption mt-1 break-words text-ui-text">{issue.detail}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="type-micro-label">{t('overview.updatedLabel')}</dt>
+                <dd className="type-caption mt-1 text-ui-text">{formatRelativeTime(issue.timestamp, t)}</dd>
+              </div>
+            </dl>
+            {issue.evidence && (
+              <p className="type-body mt-3 line-clamp-2 max-w-4xl text-ui-text-muted">
+                <span className="font-semibold text-ui-text">{t('overview.evidenceLabel')}: </span>
+                {issue.evidence}
+              </p>
+            )}
           </div>
-          <div className="mt-1 flex shrink-0 items-center gap-2">
-            <span className="type-micro-label rounded-full border border-ui-border bg-ui-surface px-2.5 py-1 text-ui-text">
-              {item.targetName}
-            </span>
-            <ArrowRight className="h-4 w-4 text-ui-text-muted transition-colors group-hover:text-accent-strong" />
+          <div className="flex w-full shrink-0 flex-col gap-2 self-start sm:w-auto sm:flex-row lg:justify-end">
+            <Button onClick={() => runTriage(item)} variant="accent" size="sm" className="w-full justify-center sm:w-auto">
+              <Terminal className="h-4 w-4" />
+              {t('overview.runTriageIssue')}
+            </Button>
+            <Button onClick={() => openCard(item)} variant="secondary" size="sm" className="w-full justify-center sm:w-auto">
+              <ArrowRight className="h-4 w-4" />
+              {t('overview.viewMoreIssue')}
+            </Button>
           </div>
         </div>
-      </button>
+      </article>
     );
   };
 
@@ -342,11 +392,11 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
           <h1 className="type-route-title">{t('overview.title')}</h1>
           <p className="type-body mt-2 break-words">{t('overview.summaryFor')}</p>
         </div>
-        <dl className="grid min-w-0 gap-3 sm:grid-cols-2 lg:min-w-[22rem]">
+        <dl className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end">
           {summaryStats.map((item) => (
-            <div key={item.label} className="rounded-lg border border-ui-border bg-ui-surface px-4 py-3 shadow-sm">
-              <dt className="type-caption">{item.label}</dt>
-              <dd className={`type-data mt-1 ${item.tone}`}>{item.value}</dd>
+            <div key={item.label} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm sm:w-fit">
+              <dt className="type-label whitespace-nowrap">{item.label}</dt>
+              <dd className={`type-row-title tabular-nums ${item.tone}`}>{item.value}</dd>
             </div>
           ))}
         </dl>
@@ -359,7 +409,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="type-micro-label text-accent-strong">{t('overview.quickActionsTitle')}</p>
-            <p className="type-row-title mt-2">{t('overview.quickActionsBody')}</p>
+            <p className="type-row-title mt-2">{recentInvestigationBody}</p>
           </div>
           <Button
             onClick={() => recentInvestigation && onResumeRecentInvestigation(recentInvestigation.path)}
@@ -381,23 +431,6 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
           ))}
         </div>
       )}
-
-      <div data-connected-targets="true" className="mb-6 grid gap-6 xl:grid-cols-2">
-        {renderConnectedPanel(
-          t('overview.connectedClustersTitle'),
-          ICONS.Layers,
-          t('overview.noConnectedClustersTitle'),
-          t('overview.noConnectedClustersBody'),
-          connectedClusterCards
-        )}
-        {renderConnectedPanel(
-          t('overview.connectedVirtualMachinesTitle'),
-          ICONS.Server,
-          t('overview.noConnectedVirtualMachinesTitle'),
-          t('overview.noConnectedVirtualMachinesBody'),
-          connectedVirtualMachineCards
-        )}
-      </div>
 
       <section
         data-attention-board="true"
@@ -428,10 +461,27 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
           </div>
         ) : (
           <div className="flex flex-col gap-4 px-5 py-5 sm:px-6">
-            {attentionItems.map((item) => renderAttentionIssueCard(item))}
+            {attentionItems.map((item, index) => renderAttentionIssueCard(item, index))}
           </div>
         )}
       </section>
+
+      <div data-connected-targets="true" className="mb-6 grid gap-6 xl:grid-cols-2">
+        {renderConnectedPanel(
+          t('overview.connectedClustersTitle'),
+          ICONS.Layers,
+          t('overview.noConnectedClustersTitle'),
+          t('overview.noConnectedClustersBody'),
+          connectedClusterCards
+        )}
+        {renderConnectedPanel(
+          t('overview.connectedVirtualMachinesTitle'),
+          ICONS.Server,
+          t('overview.noConnectedVirtualMachinesTitle'),
+          t('overview.noConnectedVirtualMachinesBody'),
+          connectedVirtualMachineCards
+        )}
+      </div>
     </div>
   );
 };

@@ -20,6 +20,55 @@ import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 import { AppPaths, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
 
+interface TargetReturnContext {
+  targetId: string;
+  targetType: 'kubernetes' | 'virtual_machine';
+  workspaceId: string;
+  path: string;
+}
+
+function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRoute): TargetReturnContext | null {
+  if (nextRoute.kind === 'workspaceKubernetesClusterDiagnostics') {
+    if (previousRoute?.kind === 'workspaceOverview' && previousRoute.workspaceId === nextRoute.workspaceId) {
+      return {
+        targetId: nextRoute.clusterId,
+        targetType: 'kubernetes',
+        workspaceId: nextRoute.workspaceId,
+        path: AppPaths.workspaceOverview(nextRoute.workspaceId)
+      };
+    }
+    if (previousRoute?.kind === 'workspaceKubernetesClusters' && previousRoute.workspaceId === nextRoute.workspaceId) {
+      return {
+        targetId: nextRoute.clusterId,
+        targetType: 'kubernetes',
+        workspaceId: nextRoute.workspaceId,
+        path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId)
+      };
+    }
+  }
+
+  if (nextRoute.kind === 'workspaceVirtualMachineDetail') {
+    if (previousRoute?.kind === 'workspaceOverview' && previousRoute.workspaceId === nextRoute.workspaceId) {
+      return {
+        targetId: nextRoute.vmId,
+        targetType: 'virtual_machine',
+        workspaceId: nextRoute.workspaceId,
+        path: AppPaths.workspaceOverview(nextRoute.workspaceId)
+      };
+    }
+    if (previousRoute?.kind === 'workspaceVirtualMachines' && previousRoute.workspaceId === nextRoute.workspaceId) {
+      return {
+        targetId: nextRoute.vmId,
+        targetType: 'virtual_machine',
+        workspaceId: nextRoute.workspaceId,
+        path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId)
+      };
+    }
+  }
+
+  return null;
+}
+
 interface AppShellProps {
   acceptWorkspaceInvitation: (token: string) => Promise<void>;
   activeClusterSubview: ClusterSubview;
@@ -219,6 +268,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 }) => {
   const backToWorkspaceId = selectedSidebarCluster?.workspaceId || workspaceContextId || selectedWorkspaceId;
   const vmBackToWorkspaceId = selectedSidebarVm?.workspaceId || workspaceContextId || selectedWorkspaceId;
+  const [targetReturnContext, setTargetReturnContext] = React.useState<TargetReturnContext | null>(null);
+  const previousRouteRef = React.useRef<AppRoute | null>(null);
   const selectedWorkspaceInitials = getWorkspaceInitials(selectedWorkspace?.name);
   const selectedClusterFindingCount =
     selectedSidebarCluster?.resourceSummary?.findingCount ?? selectedSidebarCluster?.alerts.length ?? 0;
@@ -231,6 +282,49 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [clusterAssistantNavStatus, setClusterAssistantNavStatus] = React.useState<AssistantNavStatus>('idle');
   const previousAssistantRuntimeStatusRef = React.useRef<AssistantNavStatus>('idle');
   const isClusterChatVisibleRef = React.useRef(isClusterChatVisible);
+
+  React.useEffect(() => {
+    const previousRoute = previousRouteRef.current;
+    const nextReturnContext = getTargetReturnContext(previousRoute, route);
+    if (nextReturnContext) {
+      setTargetReturnContext(nextReturnContext);
+    }
+    previousRouteRef.current = route;
+  }, [route]);
+
+  const getBackToWorkspacePath = React.useCallback(() => {
+    if (
+      isVirtualMachineSidebar &&
+      selectedSidebarVm &&
+      targetReturnContext?.targetType === 'virtual_machine' &&
+      targetReturnContext.workspaceId === selectedSidebarVm.workspaceId &&
+      targetReturnContext.targetId === selectedSidebarVm.id
+    ) {
+      return targetReturnContext.path;
+    }
+
+    if (
+      isClusterSidebar &&
+      selectedSidebarCluster &&
+      targetReturnContext?.targetType === 'kubernetes' &&
+      targetReturnContext.workspaceId === selectedSidebarCluster.workspaceId &&
+      targetReturnContext.targetId === selectedSidebarCluster.id
+    ) {
+      return targetReturnContext.path;
+    }
+
+    return isVirtualMachineSidebar
+      ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId)
+      : getClusterBackToWorkspacePath(backToWorkspaceId);
+  }, [
+    backToWorkspaceId,
+    isClusterSidebar,
+    isVirtualMachineSidebar,
+    selectedSidebarCluster,
+    selectedSidebarVm,
+    targetReturnContext,
+    vmBackToWorkspaceId
+  ]);
 
   React.useEffect(() => {
     isClusterChatVisibleRef.current = isClusterChatVisible;
@@ -341,7 +435,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         workspaceClusterCounts={workspaceClusterCounts}
         workspaces={workspaces}
         navigate={navigate}
-        onBackToWorkspaceSidebar={() => navigate(isVirtualMachineSidebar ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId) : getClusterBackToWorkspacePath(backToWorkspaceId))}
+        onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}
         onLogout={() => void handleLogout()}
         onNavigateClusterSubview={(tab) => {
           if (!selectedSidebarCluster) return;
@@ -376,7 +470,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         sidebarAccountMenuRef={sidebarAccountMenuRef}
         sidebarWorkspaceMenuRef={sidebarWorkspaceMenuRef}
         navigate={navigate}
-        onBackToWorkspaceSidebar={() => navigate(isVirtualMachineSidebar ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId) : getClusterBackToWorkspacePath(backToWorkspaceId))}
+        onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}
         onNavigateClusterSubview={(tab) => {
           if (!selectedSidebarCluster) return;
           navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab));

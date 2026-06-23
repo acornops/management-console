@@ -21,16 +21,27 @@ describe('WorkspaceOverviewPage homepage board', () => {
     for (const locale of [en, zh]) {
       expect(locale).toContain('quickActionsTitle');
       expect(locale).toContain('quickActionsBody');
+      expect(locale).toContain('quickActionsResumeBody');
+      expect(locale).toContain('quickActionsEmptyBody');
       expect(locale).toContain('resumeRecentInvestigation');
       expect(locale).toContain('connectedClustersTitle');
       expect(locale).toContain('connectedVirtualMachinesTitle');
+      expect(locale).toContain('connectedTargetCount');
       expect(locale).toContain('needsAttentionTitle');
       expect(locale).toContain('needsAttentionBody');
+      expect(locale).toContain('targetLabel');
+      expect(locale).toContain('scopeLabel');
+      expect(locale).toContain('updatedLabel');
+      expect(locale).toContain('evidenceLabel');
+      expect(locale).toContain('investigateIssue');
+      expect(locale).toContain('runTriageIssue');
+      expect(locale).toContain('viewMoreIssue');
+      expect(locale).not.toContain('openTarget');
       expect(locale).toContain('issueRank');
     }
   });
 
-  it('renders header-only connected-target icons and a flatter issue queue', () => {
+  it('renders the issue queue before flatter connected-target lists', () => {
     expect(workspaceOverviewPage).toContain('data-connected-targets="true"');
     expect(workspaceOverviewPage).toContain("t('overview.connectedClustersTitle')");
     expect(workspaceOverviewPage).toContain("t('overview.connectedVirtualMachinesTitle')");
@@ -38,9 +49,18 @@ describe('WorkspaceOverviewPage homepage board', () => {
     expect(workspaceOverviewPage).toContain('ICONS.Server');
     expect(workspaceOverviewPage).toContain('data-attention-board="true"');
     expect(workspaceOverviewPage).toContain('ICONS.AlertTriangle');
-    expect(workspaceOverviewPage).toContain("t('overview.issueRank'");
-    expect(workspaceOverviewPage).toContain('data-primary-issue-card="true"');
+    expect(workspaceOverviewPage).toContain("t('overview.issueRank', { count: index + 1 })");
+    expect(workspaceOverviewPage).toContain("t('overview.evidenceLabel')");
+    expect(workspaceOverviewPage).toContain("t('overview.runTriageIssue')");
+    expect(workspaceOverviewPage).toContain("t('overview.viewMoreIssue')");
+    expect(workspaceOverviewPage).not.toContain("t('overview.openTarget')");
+    expect(workspaceOverviewPage).toContain('group flex w-full items-center gap-4 px-4 py-3');
+    expect(workspaceOverviewPage).toContain('onRunTriage({');
+    expect(workspaceOverviewPage).toContain("data-primary-issue-card={isPrimary ? 'true' : undefined}");
     expect(workspaceOverviewPage).toContain('variant="secondary"');
+    expect(workspaceOverviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
+      workspaceOverviewPage.indexOf('data-connected-targets="true"')
+    );
     expect(workspaceOverviewPage).not.toContain('{card.targetTypeLabel}');
     expect(workspaceOverviewPage).not.toContain('{issue.summary &&');
     expect(workspaceOverviewPage).not.toContain('data-ranked-issues-list="true"');

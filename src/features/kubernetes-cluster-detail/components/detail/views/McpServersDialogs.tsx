@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Eye, EyeOff, Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { Select, SelectOption } from '@/components/common/Select';
 import { ClusterToolCatalogItem, ClusterToolCatalogServer } from '@/types';
 import { getToolLabel, ServerFormState } from '@/features/kubernetes-cluster-detail/components/detail/views/mcpServersCatalog';
@@ -83,20 +84,10 @@ export const McpServerFormDialog: React.FC<{
   const reviewTools = reviewServer?.tools || [];
   const reviewEnabledCount = reviewTools.filter((tool) => tool.enabledConfigured).length;
   const reviewWriteCount = reviewTools.filter((tool) => tool.capability === 'write').length;
-  const renderStep = (step: 1 | 2, label: string) => {
-    const active = (step === 1 && !isReviewStep) || (step === 2 && isReviewStep);
-    const complete = step === 1 && isReviewStep;
-    return (
-      <span className={`type-micro-label inline-flex items-center gap-2 ${active || complete ? 'text-accent-strong' : 'text-ui-text-muted'}`}>
-        <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${
-          active ? 'bg-accent text-[oklch(0.99_0.004_86)]' : complete ? 'bg-accent-soft text-accent-strong' : 'border border-ui-border bg-ui-surface'
-        }`}>
-          {complete ? <CheckCircle2 className="h-3.5 w-3.5" /> : step}
-        </span>
-        {label}
-      </span>
-    );
-  };
+  const createSteps = [
+    { id: 'configure', label: t('mcpServers.stepConfigure') },
+    { id: 'review', label: t('mcpServers.stepReviewTools') }
+  ];
   const renderReviewTool = (tool: ClusterToolCatalogItem) => {
     const pendingTool = pendingToolName === tool.name;
     return (
@@ -150,11 +141,7 @@ export const McpServerFormDialog: React.FC<{
             {t(mode === 'edit' ? 'mcpServers.edit' : 'mcpServers.add')}
           </h3>
           {mode === 'create' && (
-            <div className="mt-4 flex items-center gap-3">
-              {renderStep(1, t('mcpServers.stepConfigure'))}
-              <span className="h-px w-16 bg-ui-border" />
-              {renderStep(2, t('mcpServers.stepReviewTools'))}
-            </div>
+            <ModalStepIndicator steps={createSteps} currentStepId={isReviewStep ? 'review' : 'configure'} className="mt-4" />
           )}
         </div>
         <button

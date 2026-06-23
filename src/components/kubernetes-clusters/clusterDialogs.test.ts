@@ -16,23 +16,30 @@ const namespaceScopeDialog = readFileSync(
 describe('cluster dialog accessibility contracts', () => {
   it('uses the shared dialog shell for the connect-cluster flow', () => {
     expect(addClusterModal).toContain("import { Dialog } from '@/components/common/Dialog'");
+    expect(addClusterModal).toContain("import { ModalStepIndicator } from '@/components/common/ModalStepIndicator'");
     expect(addClusterModal).toContain('titleId="add-cluster-title"');
     expect(addClusterModal).toContain('initialFocusRef={clusterNameInputRef}');
     expect(addClusterModal).toContain('htmlFor="add-cluster-name-input"');
     expect(addClusterModal).toContain('id="add-cluster-name-input"');
     expect(addClusterModal).toContain("aria-label={t('clusterSetup.closeAddDialog')}");
-    expect(addClusterModal).toContain('w-full max-w-xl flex-col overflow-hidden');
+    expect(addClusterModal).toContain('w-full max-w-5xl flex-col overflow-hidden');
     expect(addClusterModal).toContain('rounded-xl border border-ui-border bg-ui-surface');
     expect(addClusterModal).toContain('border-b border-ui-border bg-ui-bg px-6 py-4');
+    expect(addClusterModal).toContain('<ModalStepIndicator steps={connectSteps} currentStepId={clusterCreationStep} className="mt-4" />');
+    expect(addClusterModal).toContain('lg:grid-cols-[minmax(0,1fr)_19rem]');
     expect(addClusterModal).not.toContain('rounded-2xl');
     expect(addClusterModal).not.toContain("clusterCreationStep === 'instructions' ? 'max-w-3xl' : 'max-w-xl'");
     expect(addClusterModal).toContain('max-h-[18rem] overflow-auto');
   });
 
   it('keeps connect-cluster registration settings separate from install instructions', () => {
-    expect(addClusterModal).toContain("t('clusterSetup.registerAndGenerate')");
+    expect(addClusterModal).toContain("t('clusterSetup.continueToInstallAgent')");
+    expect(addClusterModal).not.toContain("t('clusterSetup.registerAndGenerate')");
     expect(addClusterModal).toContain("t('clusterSetup.namespaceScopeSummary'");
-    expect(addClusterModal).toContain("3. {t('clusterSetup.installCommand')}");
+    expect(addClusterModal).toContain("t('clusterSetup.installCommand')");
+    expect(addClusterModal).not.toContain("1. {t('clusterSetup.clusterName')}");
+    expect(addClusterModal).not.toContain("2. {t('clusterSetup.namespaceScope')}");
+    expect(addClusterModal).not.toContain("3. {t('clusterSetup.installCommand')}");
     expect(addClusterModal).not.toContain('onBackToDetails');
     expect(addClusterModal).not.toContain("t('clusterSetup.back')");
     expect((addClusterModal.match(/add-cluster-include-namespaces/g) || []).length).toBe(2);

@@ -39,14 +39,24 @@ describe('workspace overview style contract', () => {
     expect(overviewPage).toContain('ICONS.Server');
     expect(overviewPage).toContain('ICONS.AlertTriangle');
     expect(overviewPage).toContain("variant=\"secondary\"");
-    expect(overviewPage.indexOf('data-connected-targets="true"')).toBeLessThan(
-      overviewPage.indexOf('data-attention-board="true"')
+    expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
+      overviewPage.indexOf('data-connected-targets="true"')
     );
+    expect(overviewPage).toContain("t('overview.evidenceLabel')");
+    expect(overviewPage).toContain("t('overview.runTriageIssue')");
+    expect(overviewPage).toContain("t('overview.viewMoreIssue')");
+    expect(overviewPage).toContain('onRunTriage({');
+    expect(overviewPage).toContain("t('overview.connectedTargetCount'");
+    expect(overviewPage).toContain('flex min-h-11 w-full items-center justify-between gap-3');
+    expect(overviewPage).toContain('type-label whitespace-nowrap');
+    expect(overviewPage).toContain('w-full rounded-lg border border-ui-border bg-ui-bg p-4 text-left');
+    expect(overviewPage).toContain('border border-ui-border bg-ui-surface px-2.5 py-1 text-ui-text-muted');
+    expect(overviewPage).not.toContain('bg-status-danger-soft/30');
+    expect(overviewPage).not.toContain('bg-status-warning-soft/30');
     expect(overviewPage).not.toContain('overview.triageQueueTitle');
     expect(overviewPage).not.toContain('overview.inventoryTitle');
     expect(overviewPage).not.toContain('overview.targetEstate');
     expect(overviewPage).not.toContain('data-healthy-targets="true"');
-    expect(overviewPage).not.toContain('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg');
     expect(overviewPage).not.toContain('{card.targetTypeLabel}');
     expect(enLocale).toContain("needsAttentionTitle: 'What needs attention now'");
   });

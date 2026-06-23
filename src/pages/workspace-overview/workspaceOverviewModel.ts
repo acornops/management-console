@@ -13,6 +13,7 @@ export interface WorkspaceOverviewIssue {
   title: string;
   timestamp: number;
   detail: string;
+  evidence: string;
 }
 
 export interface WorkspaceOverviewTargetCard {
@@ -62,6 +63,15 @@ function clusterPostureTone(status: HealthStatus): string {
   return 'bg-status-danger-soft text-status-danger-text';
 }
 
+function compactText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function clusterIssueDetail(item: ControlPlaneInvestigationItem, t: OverviewTranslator): string {
+  const object = [compactText(item.objectKind), compactText(item.objectName)].filter(Boolean).join(' ');
+  return [compactText(item.namespace) || t('overview.clusterWide'), object].filter(Boolean).join(' · ');
+}
+
 export function isConnectedCluster(cluster: KubernetesCluster): boolean {
   return cluster.agentConnectionState === 'connected';
 }
@@ -81,7 +91,8 @@ export function mapClusterInvestigationToOverviewIssue(
     severity: item.severity,
     title: item.title,
     timestamp: item.timestamp,
-    detail: item.namespace || t('overview.clusterWide')
+    detail: clusterIssueDetail(item, t),
+    evidence: compactText(item.reason) || compactText(item.message)
   };
 }
 
@@ -101,7 +112,8 @@ export function mapVmFindingToOverviewIssue(
     severity: normalizedSeverity,
     title: String(finding.title || t('virtualMachines.overview.findingFallback')),
     timestamp: Date.parse(String(finding.updatedAt || finding.timestamp || virtualMachine.updatedAt || Date.now())) || Date.now(),
-    detail: String(finding.source || finding.category || t('virtualMachines.overview.snapshotFinding'))
+    detail: String(finding.source || finding.category || t('virtualMachines.overview.snapshotFinding')),
+    evidence: compactText(finding.message) || compactText(finding.description) || compactText(finding.reason)
   };
 }
 

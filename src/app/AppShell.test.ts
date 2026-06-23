@@ -22,4 +22,17 @@ describe('AppShell cluster page callbacks', () => {
     expect(appShell).toContain('clusterAssistantNavStatus={clusterAssistantNavStatus}');
     expect(appShell).toContain('onAssistantRuntimeStatusChange={handleAssistantRuntimeStatusChange}');
   });
+
+  it('keeps target back navigation aligned with the page that opened the target', () => {
+    expect(appShell).toContain('interface TargetReturnContext');
+    expect(appShell).toContain('function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRoute): TargetReturnContext | null');
+    expect(appShell).toContain("previousRoute?.kind === 'workspaceOverview'");
+    expect(appShell).toContain('path: AppPaths.workspaceOverview(nextRoute.workspaceId)');
+    expect(appShell).toContain("previousRoute?.kind === 'workspaceKubernetesClusters'");
+    expect(appShell).toContain('path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId)');
+    expect(appShell).toContain("previousRoute?.kind === 'workspaceVirtualMachines'");
+    expect(appShell).toContain('path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId)');
+    expect(appShell).toContain('const getBackToWorkspacePath = React.useCallback');
+    expect(appShell).toContain('onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}');
+  });
 });

@@ -258,6 +258,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               virtualMachines={virtualMachinesInWorkspaceContext}
               hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
+              onRunTriage={onRunRunbook}
               onSelectCluster={(clusterId) =>
                 navigate(AppPaths.workspaceKubernetesClusterDiagnostics(workspaceContext.id, clusterId))
               }

@@ -15,14 +15,19 @@ const virtualMachineUi = readFileSync(resolve(root, 'src/pages/virtual-machines/
 describe('virtual machine onboarding dialog', () => {
   it('uses the shared dialog shell like the connect-cluster flow', () => {
     expect(addVirtualMachineModal).toContain("import { Dialog } from '@/components/common/Dialog'");
+    expect(addVirtualMachineModal).toContain("import { ModalStepIndicator } from '@/components/common/ModalStepIndicator'");
     expect(addVirtualMachineModal).toContain('titleId="add-vm-title"');
     expect(addVirtualMachineModal).toContain('initialFocusRef={vmNameInputRef}');
     expect(addVirtualMachineModal).toContain('htmlFor="add-vm-name-input"');
     expect(addVirtualMachineModal).toContain('id="add-vm-name-input"');
     expect(addVirtualMachineModal).toContain("aria-label={t('virtualMachines.list.closeAddDialog')}");
-    expect(addVirtualMachineModal).toContain('w-full max-w-xl flex-col overflow-hidden');
+    expect(addVirtualMachineModal).toContain('w-full max-w-5xl flex-col overflow-hidden');
     expect(addVirtualMachineModal).toContain('rounded-xl border border-ui-border bg-ui-surface');
     expect(addVirtualMachineModal).toContain('border-b border-ui-border bg-ui-bg px-6 py-4');
+    expect(addVirtualMachineModal).toContain('<ModalStepIndicator steps={connectSteps} currentStepId={creationStep} className="mt-4" />');
+    expect(addVirtualMachineModal).toContain('lg:grid-cols-[minmax(0,1fr)_19rem]');
+    expect(addVirtualMachineModal).not.toContain("1. {t('virtualMachines.list.vmName')}");
+    expect(addVirtualMachineModal).not.toContain("2. {t('virtualMachines.list.installInstructions')}");
     expect(addVirtualMachineModal).not.toContain('rounded-2xl');
   });
 
@@ -37,10 +42,11 @@ describe('virtual machine onboarding dialog', () => {
   it('bounds install instructions inside a scrollable dialog body', () => {
     expect(addVirtualMachineModal).not.toContain("creationStep === 'instructions' ? 'max-w-2xl' : 'max-w-lg'");
     expect(addVirtualMachineModal).toContain('max-h-[min(92vh,56rem)]');
-    expect(addVirtualMachineModal).toContain('min-h-0 flex-1 space-y-4 overflow-y-auto');
+    expect(addVirtualMachineModal).toContain('grid min-h-0 flex-1 gap-6 overflow-y-auto');
     expect(addVirtualMachineModal).toContain('max-h-[18rem] overflow-auto');
-    expect(addVirtualMachineModal).toContain('shrink-0 space-y-3 border-t');
-    expect(addVirtualMachineModal).toContain("t('virtualMachines.list.registerAndGenerate')");
+    expect(addVirtualMachineModal).toContain('justify-end gap-3 border-t');
+    expect(addVirtualMachineModal).toContain("t('virtualMachines.list.continueToInstallAgent')");
+    expect(addVirtualMachineModal).not.toContain("t('virtualMachines.list.registerAndGenerate')");
     expect(addVirtualMachineModal).not.toContain('onBackToDetails');
     expect(addVirtualMachineModal).not.toContain("t('virtualMachines.list.back')");
     expect(virtualMachinesPage).toContain('const confirmVmInstalled = () => {');

@@ -34,6 +34,8 @@ describe('MCP server form dialog polish', () => {
     expect(mcpServersView).toContain('const createdServer = await controlPlaneApi.createTargetMcpServer');
     expect(mcpServersView).toContain('setCreateReviewServerId(createdServer.id)');
     expect(mcpServersView).toContain("createStep={createReviewServerId ? 'review' : 'configure'}");
+    expect(mcpServersDialogs).toContain("import { ModalStepIndicator } from '@/components/common/ModalStepIndicator'");
+    expect(mcpServersDialogs).toContain('<ModalStepIndicator steps={createSteps} currentStepId={isReviewStep ? \'review\' : \'configure\'} className="mt-4" />');
     expect(mcpServersDialogs).toContain("'mcpServers.reviewToolsAction'");
     expect(mcpServersDialogs).toContain("t('mcpServers.finish')");
     expect(mcpServersView).not.toContain('setSelectedServerId(createdServer.id)');
