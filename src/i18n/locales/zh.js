@@ -16,6 +16,7 @@ export const zh = {
     newWorkspace: '新建工作区',
     overview: '概览',
     investigations: '调查',
+    workflows: '工作流',
     runbooks: '运行手册',
     clusters: 'Kubernetes 集群',
     virtualMachines: '虚拟机',

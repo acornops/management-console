@@ -6,11 +6,11 @@ product
 
 ## Users
 
-Platform operators and developers validating end-to-end troubleshooting flows use the management console while inspecting workspaces, clusters, diagnostics, troubleshooting sessions, tool settings, and MCP server configuration. They are usually trying to understand platform state, preserve route-shareable context, and make deliberate operational changes without losing traceability.
+Platform operators and developers validating end-to-end troubleshooting flows use the management console while inspecting workspaces, clusters, diagnostics, troubleshooting sessions, workflow automations, tool settings, and MCP server configuration. They are usually trying to understand platform state, preserve route-shareable context, and make deliberate operational changes without losing traceability.
 
 ## Product Purpose
 
-The management console is the operator-facing AcornOps control-plane client. It renders workspace and cluster views, submits troubleshooting sessions, displays run progress, surfaces cluster tool configuration, and supports the control-plane-backed runtime. It does not own server-side auth, tenancy decisions, cluster-state source of truth, or direct integration with execution-engine, llm-gateway, or k8s-agent.
+The management console is the operator-facing AcornOps control-plane client. It renders workspace, workflow, cluster, and VM views, submits troubleshooting sessions, displays run progress, surfaces target tool configuration, and supports the control-plane-backed runtime. It does not own server-side auth, tenancy decisions, cluster-state source of truth, workflow execution authorization, or direct integration with execution-engine, llm-gateway, or k8s-agent.
 
 ## Brand Personality
 

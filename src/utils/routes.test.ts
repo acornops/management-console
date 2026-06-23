@@ -96,6 +96,10 @@ describe('routes', () => {
       kind: 'workspaceRunbooks',
       workspaceId: 'team-alpha'
     });
+    expect(parseAppRoute(AppPaths.workspaceWorkflows('team-alpha'))).toEqual({
+      kind: 'workspaceWorkflows',
+      workspaceId: 'team-alpha'
+    });
     expect(parseAppRoute(AppPaths.workspaceMembers('team-alpha'))).toEqual({
       kind: 'workspaceMembers',
       workspaceId: 'team-alpha'

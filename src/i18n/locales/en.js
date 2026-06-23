@@ -16,6 +16,7 @@ export const en = {
     newWorkspace: 'New Workspace',
     overview: 'Overview',
     investigations: 'Investigations',
+    workflows: 'Workflows',
     runbooks: 'Runbooks',
     clusters: 'Kubernetes Clusters',
     virtualMachines: 'Virtual Machines',

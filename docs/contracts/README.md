@@ -163,6 +163,7 @@ Virtual machine agent-key rotation response must remain:
 - `{ vmId, agentKey, keyVersion, installInstructions }`
 
 Virtual machine records include `hostname`, `osFamily`, `serviceManager`, `allowedLogSources`, `status`, and install instructions owned by the control plane. The management console displays generated systemd install instructions as returned and does not hardcode service file content.
+Virtual machine detail responses include `virtualMachine.latestSnapshot.{targetId,workspaceId,timestamp}` and `virtualMachine.summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}`. They must not return full raw VM snapshot payloads to the browser.
 
 Pod logs are fetched lazily from `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs`. The workload drawer must treat follow mode as opt-in polling and stop polling when the drawer is closed or the logs tab is left.
 
@@ -309,3 +310,45 @@ a new message without waiting for stale stream writers.
 The management console sends `toolAccessMode=read_write` when the current workspace permissions allow write-capable runs. It must not depend on the browser having already loaded the full MCP tool catalog. The control plane remains authoritative and may still reject the request or filter write tools out of the run snapshot if agent, role, or policy conditions are not met.
 
 When a write approval is requested, the management console renders the approval payload from run events or approval replay and submits explicit approve/reject decisions to the control plane. If present, `summary` is displayed as explanatory copy only. The console does not execute writes locally and must treat the backend approval state as authoritative when a decision has already been recorded or expired.
+
+### Workflow automation APIs
+
+Workflows are shared workspace resources, distinct from target runbooks and target troubleshooting chats. The management console consumes server-owned workflow definitions when the control plane is available and must not treat client-side hiding as authorization. The control plane compiles workflow MCP, tool, skill, data, and chat-history grants into server-issued run permissions before workflow execution can call tools or read granted data.
+
+Public routes:
+
+- `GET /api/v1/workspaces/{workspaceId}/workflows`
+- `GET /api/v1/workflows/{workflowId}`
+- `PATCH /api/v1/workflows/{workflowId}`
+- `GET /api/v1/workflows/{workflowId}/sessions`
+- `POST /api/v1/workflows/{workflowId}/sessions`
+- `POST /api/v1/workflow-sessions/{sessionId}/messages`
+- `GET /internal/v1/workflow-sessions/{sessionId}/context`
+
+Reserved create and delete authoring routes return `501 NOT_IMPLEMENTED` until full workflow authoring ships:
+
+- `POST /api/v1/workspaces/{workspaceId}/workflows`
+- `DELETE /api/v1/workflows/{workflowId}`
+
+`PATCH /api/v1/workflows/{workflowId}` lets owners/admins edit server-owned workflow category and MCP scope. The management console sends workspace id, category, policy mode, approval requirements, and per-step MCP servers, allowed tools, context grants, and approval-required flags; the control plane authorizes with `manage_mcp`, audits the change, and applies it only to future compiled workflow sessions.
+
+Workflow definitions are workspace-scoped and include:
+
+- `workflow.{id,workspaceId,name,description,status,category,createdBy,updatedAt}`
+- `inputs[]` typed launch fields
+- `steps[]` ordered actions with required inputs, enabled skills, allowed MCP/tools, context grants, and approval gates
+- `policy.{mode,maxRuntime,approvalRequirements,retention}`
+- `presentation.{icon,launchCopy,defaultStarterPrompt}`
+
+Workflow chat history is separate from Kubernetes cluster and VM chat history. Launching a workflow creates a workflow session first; the assistant collects missing inputs, displays the compiled access scope, then starts a run from a frozen workflow snapshot. Editing a workflow must not change in-flight run snapshots.
+Workflow session listing responses include workflow run records. The management console uses those records plus the existing public run detail, event, approval, stream, and cancel routes to review workflow history and output.
+Workflow approval gates are surfaced through the existing run approval routes. Workflow approval resources use `toolName = "workflow.approval_gate"` with workflow identifiers and summary copy; decisions use `{ "decision": "approved" | "rejected" }`, require backend authorization, and the control plane dispatches the workflow only after every gate is approved.
+
+Execution bootstrap for workflow runs remains an internal control-plane to execution-engine contract. The management console must consume the public workflow session, message, run history, approval, and output APIs rather than calling internal workflow context routes directly.
+
+Default authorization direction:
+
+- Owners and admins configure shared workflows and workflow MCP scope.
+- Operators can run permitted workflows according to the workflow's read-only or read-write policy.
+- Workflow access to other chat histories requires an explicit configured grant, such as selected and approved chat sessions.
+- Audit logs record workflow scope updates, session creation, runs, and approvals, and must extend to workflow create, delete, and cancel events as those routes ship.

@@ -7,6 +7,7 @@ export type AppRoute =
   | { kind: 'kubernetesClusters' }
   | { kind: 'settings' }
   | { kind: 'workspaceOverview'; workspaceId: string }
+  | { kind: 'workspaceWorkflows'; workspaceId: string }
   | { kind: 'workspaceRunbooks'; workspaceId: string }
   | { kind: 'workspaceMembers'; workspaceId: string }
   | { kind: 'workspaceAiSettings'; workspaceId: string }
@@ -85,11 +86,12 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceInvitation', token: decodeParam(inviteMatch[1]) };
   }
 
-  const workspaceSectionMatch = path.match(/^\/workspaces\/([^/]+)\/(overview|runbooks|members|ai-settings|settings|audit-log)$/);
+  const workspaceSectionMatch = path.match(/^\/workspaces\/([^/]+)\/(overview|workflows|runbooks|members|ai-settings|settings|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
     if (section === 'overview') return { kind: 'workspaceOverview', workspaceId };
+    if (section === 'workflows') return { kind: 'workspaceWorkflows', workspaceId };
     if (section === 'runbooks') return { kind: 'workspaceRunbooks', workspaceId };
     if (section === 'ai-settings') return { kind: 'workspaceAiSettings', workspaceId };
     if (section === 'settings') return { kind: 'workspaceSettings', workspaceId };
@@ -160,6 +162,8 @@ export const AppPaths = {
   kubernetesClusters: (): string => '/kubernetes-clusters',
   settings: (): string => '/settings',
   workspaceOverview: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/overview`,
+  workspaceWorkflows: (workspaceId: string): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/workflows`,
   workspaceRunbooks: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/runbooks`,
   workspaceMembers: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/members`,

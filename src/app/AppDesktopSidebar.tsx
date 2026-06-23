@@ -14,6 +14,7 @@ import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 
 type ActiveResourceNav =
   | 'overview'
+  | 'workflows'
   | 'runbooks'
   | 'clusters'
   | 'virtualMachines'
@@ -298,6 +299,13 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                         icon={<ICONS.Server className={navIconClass(activeResourceNav === 'virtualMachines')} />}
                         label={t('app.virtualMachines')}
                         onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceVirtualMachines(selectedWorkspaceId))}
+                      />
+                      <SidebarNavButton
+                        active={activeResourceNav === 'workflows'}
+                        disabled={!selectedWorkspaceId}
+                        icon={<ICONS.GitBranch className={navIconClass(activeResourceNav === 'workflows')} />}
+                        label={t('app.workflows')}
+                        onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceWorkflows(selectedWorkspaceId))}
                       />
                       <SidebarNavButton
                         active={activeResourceNav === 'runbooks'}

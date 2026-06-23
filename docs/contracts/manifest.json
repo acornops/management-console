@@ -97,6 +97,17 @@
         "POST /api/v1/runs/{runId}/approvals/{approvalId}/decision",
         "POST /api/v1/runs/{runId}/cancel"
       ],
+      "plannedWorkflowPaths": [
+        "GET /api/v1/workspaces/{workspaceId}/workflows",
+        "POST /api/v1/workspaces/{workspaceId}/workflows",
+        "GET /api/v1/workflows/{workflowId}",
+        "PATCH /api/v1/workflows/{workflowId}",
+        "DELETE /api/v1/workflows/{workflowId}",
+        "GET /api/v1/workflows/{workflowId}/sessions",
+        "POST /api/v1/workflows/{workflowId}/sessions",
+        "POST /api/v1/workflow-sessions/{sessionId}/messages",
+        "GET /internal/v1/workflow-sessions/{sessionId}/context"
+      ],
       "webhookPaths": [
         "GET /api/v1/workspaces/{workspaceId}/webhooks",
         "POST /api/v1/workspaces/{workspaceId}/webhooks",
@@ -166,6 +177,8 @@
       "snapshotFields": [
         "latestSnapshot.{clusterId,workspaceId,timestamp}",
         "summary.{resourceCount,findingCount,criticalFindingCount,namespaceCount,nodeCount,resourceFamilyCounts,resourceKindCounts}",
+        "virtualMachine.latestSnapshot.{targetId,workspaceId,timestamp}",
+        "virtualMachine.summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}",
         "GET /api/v1/workspaces/{workspaceId}/investigations",
         "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources",
         "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/findings"
@@ -200,7 +213,7 @@
           "providers[].{provider,configured,enabled}",
           "no API key values, secret names, or reasoning summary text"
         ],
-        "roleTemplate": ["key", "displayName", "description", "kind", "capabilities", "protected", "sortOrder"],
+        "roleTemplate": ["key", "displayName", "description", "kind", "capabilities", "capabilityGroups[].{key,capabilities,sortOrder}", "protected", "sortOrder"],
         "membership": ["role", "roleTemplate?"],
         "invitation": ["role", "roleTemplate?"],
         "auditEvent": ["id", "workspaceId", "category", "eventType", "operation", "actor", "object", "summary", "metadata", "occurredAt"],

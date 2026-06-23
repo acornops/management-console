@@ -32,6 +32,9 @@ const loadUserSettingsPage = () =>
 const loadVirtualMachinesPage = () =>
   import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
 
+const loadWorkspaceWorkflowsPage = () =>
+  import('@/pages/WorkspaceWorkflowsPage').then((module) => ({ default: module.WorkspaceWorkflowsPage }));
+
 const loadWorkspaceInvitePage = () =>
   import('@/pages/WorkspaceInvitePage').then((module) => ({ default: module.WorkspaceInvitePage }));
 
@@ -56,6 +59,7 @@ const KubernetesClusterDetailPage = React.lazy(loadKubernetesClusterDetailPage);
 const NotFoundPage = React.lazy(loadNotFoundPage);
 const UserSettingsPage = React.lazy(loadUserSettingsPage);
 const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
+const WorkspaceWorkflowsPage = React.lazy(loadWorkspaceWorkflowsPage);
 const WorkspaceInvitePage = React.lazy(loadWorkspaceInvitePage);
 const WorkspaceMembersPage = React.lazy(loadWorkspaceMembersPage);
 const WorkspaceOverviewPage = React.lazy(loadWorkspaceOverviewPage);
@@ -85,6 +89,9 @@ export function preloadAppRoutePage(route: AppRoute): void {
     case 'workspaceVirtualMachines':
     case 'workspaceVirtualMachineDetail':
       void loadVirtualMachinesPage();
+      break;
+    case 'workspaceWorkflows':
+      void loadWorkspaceWorkflowsPage();
       break;
     case 'workspaceInvitation':
       void loadWorkspaceInvitePage();
@@ -116,6 +123,7 @@ function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspa
     !workspaceContext &&
     (
       route.kind === 'workspaceOverview' ||
+      route.kind === 'workspaceWorkflows' ||
       route.kind === 'workspaceRunbooks' ||
       route.kind === 'workspaceMembers' ||
       route.kind === 'workspaceAiSettings' ||
@@ -274,6 +282,12 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               workspace={workspaceContext}
               kubernetesClusters={kubernetesClustersInWorkspaceContext}
               onRunRunbook={onRunRunbook}
+            />
+          )}
+
+          {route.kind === 'workspaceWorkflows' && workspaceContext && (
+            <WorkspaceWorkflowsPage
+              workspace={workspaceContext}
             />
           )}
 

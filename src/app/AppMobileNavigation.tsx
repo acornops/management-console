@@ -14,6 +14,7 @@ import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 type ActivePrimaryNav = 'workspaces' | 'clusters';
 type ActiveResourceNav =
   | 'overview'
+  | 'workflows'
   | 'runbooks'
   | 'clusters'
   | 'virtualMachines'
@@ -325,7 +326,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           {([
                             ['overview', t('app.overview'), AppPaths.workspaceOverview, 0],
                             ['clusters', t('app.clusters'), AppPaths.workspaceKubernetesClusters, 0],
-                            ['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0]
+                            ['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0],
+                            ['workflows', t('app.workflows'), AppPaths.workspaceWorkflows, 0]
                           ] as const).map(([nav, label, pathForWorkspace, badge]) => (
                             <button
                               key={nav}

@@ -3,6 +3,7 @@ import { AppPaths, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
 export type ActivePrimaryNav = 'workspaces' | 'clusters';
 export type ActiveResourceNav =
   | 'overview'
+  | 'workflows'
   | 'runbooks'
   | 'clusters'
   | 'virtualMachines'
@@ -26,6 +27,7 @@ export type ActiveResourceNav =
 export function getWorkspaceRouteId(route: AppRoute): string | null {
   if (
     route.kind === 'workspaceOverview' ||
+    route.kind === 'workspaceWorkflows' ||
     route.kind === 'workspaceRunbooks' ||
     route.kind === 'workspaceKubernetesClusters' ||
     route.kind === 'workspaceVirtualMachines' ||
@@ -65,6 +67,7 @@ export function getActivePrimaryNav(route: AppRoute): ActivePrimaryNav {
 
 export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
   if (route.kind === 'workspaceOverview') return 'overview';
+  if (route.kind === 'workspaceWorkflows') return 'workflows';
   if (route.kind === 'workspaceRunbooks') return 'runbooks';
   if (route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters') return 'clusters';
   if (route.kind === 'workspaceVirtualMachines') return 'virtualMachines';
