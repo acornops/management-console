@@ -45,39 +45,27 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('const selectedWorkspaceName = selectedWorkspace?.name || t(\'app.noWorkspace\');');
     expect(desktopSidebar).toContain('const selectedClusterName = selectedSidebarCluster?.name || t(\'app.unknownCluster\');');
     expect(desktopSidebar).toContain('const selectedVmName = selectedSidebarVm?.name || t(\'app.unknownVirtualMachine\');');
-    expect(desktopSidebar).toContain('title={name}');
-    expect(desktopSidebar).toContain('name={selectedClusterName}');
-    expect(desktopSidebar).toContain('name={selectedVmName}');
-    expect(desktopSidebar).toContain('nameDataAttribute="data-desktop-sidebar-active-cluster"');
-    expect(desktopSidebar).toContain('nameDataAttribute="data-desktop-sidebar-active-vm"');
-    expect(desktopSidebar).toContain('const splitSidebarContextName = (name: string): [string, string]');
-    expect(desktopSidebar).toContain('return [parts[0], parts.slice(1).join(\' \')];');
-    expect(desktopSidebar).toContain('<SidebarContextName name={selectedWorkspaceName} />');
-    expect(desktopSidebar).toContain('<SidebarContextName name={name} nameDataAttribute={nameDataAttribute} />');
-    expect(desktopSidebar).toContain("{...(nameDataAttribute ? { [nameDataAttribute]: 'true' } : {})}");
-    expect(desktopSidebar).toContain('grid h-[2.1875rem] max-w-[8.75rem] grid-rows-2 text-sm font-bold leading-tight text-ui-text');
-    expect(desktopSidebar).toContain('<span className="block min-w-0 truncate">{firstLine}</span>');
-    expect(desktopSidebar).toContain('aria-hidden={secondLine ? undefined : \'true\'}');
+    expect(desktopSidebar).toContain('title={selectedWorkspaceName}');
+    expect(desktopSidebar).toContain('title={selectedClusterName}');
+    expect(desktopSidebar).toContain('title={selectedVmName}');
+    expect(desktopSidebar).toContain('data-desktop-sidebar-active-cluster="true"');
+    expect(desktopSidebar).toContain('data-desktop-sidebar-active-vm="true"');
+    expect(desktopSidebar).toContain('line-clamp-2 max-w-[8.75rem] break-words');
+    expect(desktopSidebar).toContain('type-row-title line-clamp-2 break-words');
+    expect(desktopSidebar).not.toContain('type-row-title truncate');
   });
 
-  it('keeps workspace and target sidebar context in the same reserved slot', () => {
-    expect(desktopSidebar).toContain('const SidebarContextSlot = React.forwardRef<HTMLDivElement');
-    expect(desktopSidebar).toContain('children: React.ReactNode');
-    expect(desktopSidebar).toContain('className="relative mb-8 mt-2 min-w-0 px-4"');
-    expect(desktopSidebar).toContain('<SidebarContextSlot ref={sidebarWorkspaceMenuRef}>');
-    expect(desktopSidebar).toContain('<SidebarTargetContext');
-    expect(desktopSidebar).toContain("contextLabel={t('app.cluster')}");
-    expect(desktopSidebar).toContain("contextLabel={t('app.vm')}");
-    expect(desktopSidebar).toContain('contextLabel: string;');
-    expect(desktopSidebar).toContain('className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-accent-soft');
-    expect(desktopSidebar).toContain('<Tooltip content={backLabel} side="bottom" className="w-full">');
-    expect(desktopSidebar).toContain('className="group w-full rounded-lg border border-transparent p-3 text-left outline-none transition-all');
-    expect(desktopSidebar).toContain('aria-label={backLabel}');
-    expect(desktopSidebar).toContain('<span className="type-micro-label">{contextLabel}</span>');
-    expect(desktopSidebar).toContain('className="flex min-w-0 items-center justify-between"');
-    expect(desktopSidebar).toContain('className="flex min-w-0 items-center gap-3"');
-    expect(desktopSidebar).toContain('className="h-4 w-4 shrink-0" aria-hidden="true"');
-    expect(desktopSidebar).toContain('grid h-[2.1875rem] max-w-[8.75rem] grid-rows-2');
+  it('uses the initial top-section structure for workspace and target contexts', () => {
+    expect(desktopSidebar).toContain('<div className="relative min-w-0 px-4 mb-8 mt-2" ref={sidebarWorkspaceMenuRef}>');
+    expect(desktopSidebar).not.toContain('const SidebarContextSlot = React.forwardRef<HTMLDivElement');
+    expect(desktopSidebar).not.toContain('<SidebarTargetContext');
+    expect(desktopSidebar).not.toContain('const splitSidebarContextName = (name: string): [string, string]');
+    expect(desktopSidebar).toContain('className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"');
+    expect(desktopSidebar).toContain("<ICONS.ChevronLeft className=\"w-3.5 h-3.5\" />");
+    expect(desktopSidebar).toContain("<div className=\"type-micro-label mb-1\">{t('app.activeCluster')}</div>");
+    expect(desktopSidebar).toContain("<div className=\"type-micro-label mb-1\">{t('app.activeVirtualMachine')}</div>");
+    expect(desktopSidebar).toContain('className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedClusterName}');
+    expect(desktopSidebar).toContain('className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedVmName}');
   });
 
   it('separates frequent operational routes from quieter administration routes', () => {

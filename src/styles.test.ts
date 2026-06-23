@@ -27,7 +27,9 @@ import {
   loginPreview,
   markdownComponents,
   mcpServerCard,
+  mcpServerToolsDialog,
   mcpServersDialogs,
+  mcpServersInventory,
   mcpServersView,
   membersPage,
   mobileNavigation,
@@ -441,47 +443,46 @@ describe('theme color contract', () => {
     expect(investigationsPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
     expect(runbooksPage).toContain('<Button onClick={startCreatingRunbook} variant="accent" size="md" className="whitespace-nowrap">');
     expect(mcpServersView).toContain(
-      '<Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md">'
+      '<Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md" className="whitespace-nowrap">'
     );
   });
 
   it('keeps MCP connection state copy action-oriented instead of ambiguous', () => {
     expect(mcpServerCard).toContain("server.type === 'builtin'");
-    expect(mcpServerCard).toContain("t('mcpServers.localServer')");
-    expect(mcpServerCard).toContain("'mcpServers.notChecked'");
-    expect(enLocale).toContain("notChecked: 'Not checked'");
-    expect(enLocale).toContain("localServer: 'Local server'");
-    expect(zhLocale).toContain("notChecked: '尚未检查'");
-    expect(zhLocale).toContain("localServer: '本地服务器'");
+    expect(mcpServerCard).toContain("'mcpServers.statusNotChecked'");
+    expect(mcpServerCard).toContain("t('mcpServers.managedByAcornOps')");
+    expect(mcpServerCard).not.toContain('detailKey');
+    ["statusConnected: 'Connected'", "statusNeedsAuth: 'Needs auth'", "statusDiscoveryFailed: 'Discovery failed'", "statusNotChecked: 'Not checked'"].forEach((copy) => expect(enLocale).toContain(copy));
+    expect(enLocale).toContain("managedByAcornOps: 'Managed by AcornOps'");
+    ["statusConnected: '已连接'", "statusNeedsAuth: '需要认证'", "statusDiscoveryFailed: '发现失败'", "statusNotChecked: '尚未检查'"].forEach((copy) => expect(zhLocale).toContain(copy));
+    expect(zhLocale).toContain("managedByAcornOps: '由 AcornOps 管理'");
   });
 
   it('keeps contextual help concise at jargon-heavy controls', () => {
     expect(mcpServerCard).toContain("t('mcpServers.healthCheckHelp')");
-    expect(mcpServersDialogs).toContain("t('mcpServers.toolEnablementHelp')");
+    expect(mcpServerToolsDialog).toContain("t('mcpServers.toolAccessSummaryBody')");
     expect(resourceExplorerControls).toContain("t('resources.filters.namespaceHelp')");
     expect(resourceExplorerControls).toContain("t('resources.filters.categoryHelp')");
     expect(enLocale).toContain("healthCheckHelp: 'Checks connectivity and refreshes discovered tools.'");
-    expect(enLocale).toContain("toolEnablementHelp: 'Newly discovered external tools stay disabled until an admin reviews and enables them.'");
+    expect(enLocale).toContain("toolAccessSummaryBody: 'Tools available from this MCP server.'");
     expect(enLocale).toContain("namespaceHelp: 'Limits the list to resources reported in one namespace.'");
     expect(enLocale).toContain("categoryHelp: 'Narrows results to the selected resource type.'");
     expect(zhLocale).toContain("healthCheckHelp: '检查连接并刷新已发现的工具。'");
-    expect(zhLocale).toContain("toolEnablementHelp: '新发现的外部工具会保持停用，直到管理员审核并启用。'");
+    expect(zhLocale).toContain("toolAccessSummaryBody: '此 MCP 服务器提供的工具。'");
     expect(zhLocale).toContain("namespaceHelp: '仅列出一个命名空间上报的资源。'");
     expect(zhLocale).toContain("categoryHelp: '将结果缩小到所选资源类型。'");
   });
 
-  it('keeps MCP server management as an explicit card-action surface', () => {
-    expect(mcpServersView).toContain('data-mcp-server-card-grid="true"');
-    expect(mcpServerCard).toContain('data-mcp-server-card="true"');
-    expect(mcpServersView).not.toContain('data-mcp-server-list="true"');
-    expect(mcpServersView).not.toContain('data-mcp-server-row="true"');
-    expect(mcpServersView).toContain('lg:grid-cols-2');
+  it('keeps MCP server management as an explicit inventory surface', () => {
+    expect(mcpServersInventory).toContain('data-mcp-server-access-summary="true"');
+    expect(mcpServersInventory).toContain('data-mcp-server-list="true"');
+    expect(mcpServerCard).toContain('data-mcp-server-row="true"');
+    expect(mcpServersView).not.toContain('data-mcp-server-card-grid="true"');
+    expect(mcpServerCard).not.toContain('data-mcp-server-card="true"');
     expect(mcpServersView).not.toContain('xl:grid-cols-3');
     expect(mcpServersView).not.toContain('absolute inset-0 z-0');
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.manageToolsNamed', { name: server.name })}");
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.healthCheckNamed', { name: server.name })}");
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.editNamed', { name: server.name })}");
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.deleteNamed', { name: server.name })}");
+    expect(mcpServerCard).toContain("aria-label={t('mcpServers.serverActionsNamed', { name: server.name })}");
+    expect(mcpServerCard).toContain('role="menuitem"');
   });
 
   it('keeps runbook creation and execution context separated', () => {

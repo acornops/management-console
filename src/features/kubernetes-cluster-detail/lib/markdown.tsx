@@ -1,9 +1,16 @@
+import { cloneElement, isValidElement } from 'react';
+import type { ComponentPropsWithoutRef, ReactElement } from 'react';
 import { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 type MarkdownTone = 'assistant' | 'user';
 
 export const markdownRemarkPlugins = [remarkGfm];
+
+type CodeProps = ComponentPropsWithoutRef<'code'> & {
+  node?: unknown;
+  'data-code-block'?: boolean;
+};
 
 /**
  * Returns markdown renderers tuned for chat readability.
@@ -52,21 +59,37 @@ export function createMarkdownComponents(tone: MarkdownTone = 'assistant'): Comp
     strong: ({ children }) => (
       <strong className={`font-semibold ${headingClass}`}>{children}</strong>
     ),
-    code: ({ children, className, ...props }) => (
-      <code
-        className={`${className || ''} type-code rounded px-1.5 py-0.5 ${inlineCodeClass}`}
-        {...props}
-      >
-        {children}
-      </code>
-    ),
-    pre: ({ children }) => (
-      <pre
-        className={`type-code my-2 overflow-x-auto rounded-lg border p-3 ${codeBlockClass}`}
-      >
-        {children}
-      </pre>
-    ),
+    code: ({ children, className, node: _node, ...props }: CodeProps) => {
+      const {
+        'data-code-block': isCodeBlock,
+        ...codeProps
+      } = props;
+      const codeClassName = isCodeBlock
+        ? `${className || ''} type-code block min-w-max bg-transparent p-0 text-inherit`
+        : `${className || ''} type-code rounded px-1.5 py-0.5 ${inlineCodeClass}`;
+
+      return (
+        <code
+          className={codeClassName}
+          {...codeProps}
+        >
+          {children}
+        </code>
+      );
+    },
+    pre: ({ children }) => {
+      const codeChild = isValidElement(children)
+        ? cloneElement(children as ReactElement<CodeProps>, { 'data-code-block': true })
+        : children;
+
+      return (
+        <pre
+          className={`type-code my-2 overflow-x-auto rounded-lg border p-3 ${codeBlockClass}`}
+        >
+          {codeChild}
+        </pre>
+      );
+    },
     blockquote: ({ children }) => (
       <blockquote className={`my-2 rounded-lg border px-3 py-2 italic ${blockquoteClass}`}>
         {children}

@@ -36,6 +36,12 @@ export const mcpServerCard = readSource(
 export const mcpServersDialogs = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/McpServersDialogs.tsx'
 );
+export const mcpServerToolsDialog = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/McpServerToolsDialog.tsx'
+);
+export const mcpServersInventory = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/McpServersInventory.tsx'
+);
 export const chatView = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'
 );

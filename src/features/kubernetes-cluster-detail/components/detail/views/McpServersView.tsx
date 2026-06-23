@@ -11,41 +11,22 @@ import {
 import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { TargetMcpServerTestConnectionResult, TargetType, controlPlaneApi, CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
-import { AddMcpServerCard, McpServerCard } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServerCard';
+import { McpServersInventory } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServersInventory';
 import {
   DeleteMcpServerDialog,
-  McpServerFormDialog,
-  McpServerToolsDialog
+  McpServerFormDialog
 } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServersDialogs';
+import { McpServerToolsDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServerToolsDialog';
 import {
   buildLocalCatalog,
+  publicHeaderRowsFromRecord,
+  publicHeadersFromRows,
   DEFAULT_SERVER_FORM,
   flattenCatalogTools,
-  ServerFormState
+  formatMcpMutationError,
+  ServerFormState,
+  validatePublicHeaderRows
 } from '@/features/kubernetes-cluster-detail/components/detail/views/mcpServersCatalog';
-
-function createPublicHeaderRow(name = '', value = ''): ServerFormState['publicHeaders'][number] {
-  return {
-    id: `${name || 'header'}-${Math.random().toString(36).slice(2)}`,
-    name,
-    value
-  };
-}
-
-function publicHeaderRowsFromRecord(headers: Record<string, string> | undefined): ServerFormState['publicHeaders'] {
-  return Object.entries(headers || {}).map(([name, value]) => createPublicHeaderRow(name, value));
-}
-
-function publicHeadersFromRows(rows: ServerFormState['publicHeaders']): Record<string, string> | undefined {
-  const headers = rows.reduce<Record<string, string>>((acc, row) => {
-    const name = row.name.trim();
-    if (name) {
-      acc[name] = row.value;
-    }
-    return acc;
-  }, {});
-  return Object.keys(headers).length > 0 ? headers : undefined;
-}
 
 interface McpServersViewProps {
   cluster: KubernetesCluster;
@@ -121,6 +102,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [showCatalogLoadingNotice, setShowCatalogLoadingNotice] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
+  const [createReviewServerId, setCreateReviewServerId] = useState<string | null>(null);
   const [pendingToolName, setPendingToolName] = useState<string | null>(null);
   const [serverModalOpen, setServerModalOpen] = useState(false);
   const [serverForm, setServerForm] = useState<ServerFormState>(DEFAULT_SERVER_FORM);
@@ -129,6 +111,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [pendingServerMutation, setPendingServerMutation] = useState(false);
   const [deleteTargetServer, setDeleteTargetServer] = useState<ClusterToolCatalogServer | null>(null);
   const [pendingTestServerId, setPendingTestServerId] = useState<string | null>(null);
+  const [pendingToggleServerId, setPendingToggleServerId] = useState<string | null>(null);
   const [testResultsByServerId, setTestResultsByServerId] = useState<Record<string, TargetMcpServerTestConnectionResult>>({});
   const [toolsByServerId, setToolsByServerId] = useState<Record<string, ServerToolsPageState>>({});
   const [showSecretValue, setShowSecretValue] = useState(false);
@@ -153,12 +136,10 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     ? servers.find((server) => server.id === selectedServerId) || null
     : null;
   const activeServerTools = activeServer ? toolsByServerId[activeServer.id] : undefined;
-  const activeServerWithPagedTools = activeServer
-    ? {
-        ...activeServer,
-        tools: activeServerTools?.items || []
-      }
-    : null;
+  const activeServerWithPagedTools = activeServer ? { ...activeServer, tools: activeServerTools?.items || activeServer.tools } : null;
+  const createReviewServer = createReviewServerId ? servers.find((server) => server.id === createReviewServerId) || null : null;
+  const createReviewServerTools = createReviewServerId ? toolsByServerId[createReviewServerId] : undefined;
+  const createReviewServerWithPagedTools = createReviewServer ? { ...createReviewServer, tools: createReviewServerTools?.items || createReviewServer.tools } : null;
 
   useEffect(() => {
     onSyncToolsRef.current = onSyncTools;
@@ -173,11 +154,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     return () => window.clearTimeout(timeoutId);
   }, [catalogLoading]);
 
-  const formatMutationError = (error: unknown, fallback: string): string => {
-    const raw = error instanceof Error ? error.message : fallback;
-    return raw.replace(/^Control plane request failed \(\d+\):\s*/i, '') || fallback;
-  };
-
   const loadCatalog = useCallback(async (options?: { syncParent?: boolean }) => {
     setCatalogLoading(true);
     setCatalogError(null);
@@ -187,10 +163,12 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       if (options?.syncParent) {
         onSyncToolsRef.current?.(flattenCatalogTools(loadedCatalog));
       }
+      return loadedCatalog;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed loading MCP server catalog.';
       setCatalogError(message);
       setCatalog(null);
+      return null;
     } finally {
       setCatalogLoading(false);
     }
@@ -248,6 +226,11 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     void loadServerTools(selectedServerId, 'replace');
   }, [loadServerTools, selectedServerId, toolsByServerId]);
 
+  useEffect(() => {
+    if (!createReviewServerId || toolsByServerId[createReviewServerId]) return;
+    void loadServerTools(createReviewServerId, 'replace');
+  }, [createReviewServerId, loadServerTools, toolsByServerId]);
+
   const updateCatalogLocal = (updater: (current: ClusterToolCatalog) => ClusterToolCatalog) => {
     setCatalog((current) => {
       const next = updater(current || localCatalog);
@@ -259,6 +242,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const openCreateServerModal = () => {
     if (!canEditServers) return;
     setEditingServer(null);
+    setCreateReviewServerId(null);
     setServerForm({ ...DEFAULT_SERVER_FORM, publicHeaders: [] });
     setServerMutationError(null);
     setShowSecretValue(false);
@@ -268,6 +252,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const openEditServerModal = (server: ClusterToolCatalogServer) => {
     if (!canEditServers || !server.canEditConnection || server.isSystem) return;
     setEditingServer(server);
+    setCreateReviewServerId(null);
     setServerForm({
       name: server.name,
       url: server.url,
@@ -282,20 +267,33 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setServerModalOpen(true);
   };
 
+  const closeServerModal = () => {
+    setServerModalOpen(false);
+    setEditingServer(null);
+    setCreateReviewServerId(null);
+    setServerMutationError(null);
+    setServerForm({ ...DEFAULT_SERVER_FORM, publicHeaders: [] });
+  };
+
   const authWasChanged = Boolean(editingServer && serverForm.authType !== editingServer.authType);
   const shouldValidateCredential = serverForm.authType !== 'none' &&
     (!editingServer || authWasChanged || Boolean(serverForm.secretValue.trim()));
   const shouldValidateHeader = serverForm.authType === 'custom_header' && shouldValidateCredential;
+  const publicHeadersValidationError = useMemo(() => {
+    const validationKey = validatePublicHeaderRows(serverForm.publicHeaders);
+    return validationKey ? t(`mcpServers.${validationKey}`) : null;
+  }, [serverForm.publicHeaders, t]);
   const serverFormIsValid =
     Boolean(serverForm.name.trim()) &&
     Boolean(serverForm.url.trim()) &&
+    !publicHeadersValidationError &&
     (
       !shouldValidateCredential ||
       (
         Boolean(serverForm.secretValue.trim()) &&
         (!shouldValidateHeader || Boolean(serverForm.headerName.trim()))
       )
-    );
+  );
 
   const buildAuthPayload = (): CreateTargetMcpServerInput['auth'] | undefined => {
     if (
@@ -319,7 +317,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     }
     return auth;
   };
-
   const buildPublicHeadersPayload = (
     includeEmpty = false
   ): CreateTargetMcpServerInput['publicHeaders'] | undefined => publicHeadersFromRows(serverForm.publicHeaders) || (includeEmpty ? {} : undefined);
@@ -336,21 +333,25 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           publicHeaders: buildPublicHeadersPayload(true),
           auth: buildAuthPayload()
         });
+        closeServerModal();
+        await loadCatalog({ syncParent: true });
       } else {
-        await controlPlaneApi.createTargetMcpServer(activeTarget.workspaceId, activeTarget.targetId, {
+        const createdServer = await controlPlaneApi.createTargetMcpServer(activeTarget.workspaceId, activeTarget.targetId, {
           name: serverForm.name.trim(),
           url: serverForm.url.trim(),
           enabled: serverForm.enabled,
           publicHeaders: buildPublicHeadersPayload(),
           auth: buildAuthPayload()
         });
+        const loadedCatalog = await loadCatalog({ syncParent: true });
+        setCreateReviewServerId(createdServer.id);
+        void loadServerTools(createdServer.id, 'replace');
+        if (!loadedCatalog?.servers.some((server) => server.id === createdServer.id)) {
+          setServerMutationError(t('mcpServers.reviewToolsRefreshPending'));
+        }
       }
-      setServerModalOpen(false);
-      setEditingServer(null);
-      setServerForm({ ...DEFAULT_SERVER_FORM, publicHeaders: [] });
-      await loadCatalog({ syncParent: true });
     } catch (error) {
-      const message = formatMutationError(error, editingServer ? 'Failed updating MCP server.' : 'Failed adding MCP server.');
+      const message = formatMcpMutationError(error, editingServer ? 'Failed updating MCP server.' : 'Failed adding MCP server.');
       setServerMutationError(message);
     } finally {
       setPendingServerMutation(false);
@@ -369,7 +370,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       setDeleteTargetServer(null);
       await loadCatalog({ syncParent: true });
     } catch (error) {
-      const message = formatMutationError(error, 'Failed deleting MCP server.');
+      const message = formatMcpMutationError(error, 'Failed deleting MCP server.');
       setServerMutationError(message);
     } finally {
       setPendingServerMutation(false);
@@ -385,15 +386,70 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       setTestResultsByServerId((current) => ({ ...current, [server.id]: result }));
       await loadCatalog({ syncParent: true });
     } catch (error) {
-      setServerMutationError(formatMutationError(error, t('mcpServers.healthCheckFailedMessage')));
+      setServerMutationError(formatMcpMutationError(error, t('mcpServers.healthCheckFailedMessage')));
     } finally {
       setPendingTestServerId(null);
     }
   };
 
-  const handleToggleTool = async (server: ClusterToolCatalogServer, tool: ClusterToolCatalogItem) => {
+  const applyServerEnabledState = (serverId: string, enabled: boolean) => {
+    setToolsByServerId((current) => {
+      if (!current[serverId]) return current;
+      const { [serverId]: _staleServerTools, ...rest } = current;
+      return rest;
+    });
+    updateCatalogLocal((current) => ({
+      ...current,
+      servers: current.servers.map((candidate) => {
+        if (candidate.id !== serverId) return candidate;
+        const tools = candidate.tools.map((tool) => ({
+          ...tool,
+          enabledEffective: enabled && tool.enabledConfigured && tool.effectiveDisabledReason !== 'agent_write_disabled',
+          effectiveDisabledReason: enabled
+            ? tool.effectiveDisabledReason === 'server_disabled'
+              ? null
+              : tool.effectiveDisabledReason
+            : tool.enabledConfigured
+              ? 'server_disabled' as const
+              : null
+        }));
+        return {
+          ...candidate,
+          enabled,
+          toolCounts: {
+            ...candidate.toolCounts,
+            enabledEffective: tools.filter((tool) => tool.enabledEffective).length,
+            writeEffective: tools.filter((tool) => tool.capability === 'write' && tool.enabledEffective).length
+          },
+          tools
+        };
+      })
+    }));
+  };
+
+  const handleToggleServer = async (server: ClusterToolCatalogServer, enabled: boolean) => {
+    if (!canEditServers || pendingToggleServerId || pendingServerMutation) return;
+    if (server.enabled === enabled) return;
+    setPendingToggleServerId(server.id);
+    setServerMutationError(null);
+    applyServerEnabledState(server.id, enabled);
+    try {
+      await controlPlaneApi.updateTargetMcpServer(activeTarget.workspaceId, activeTarget.targetId, server.id, {
+        enabled
+      });
+      await loadCatalog({ syncParent: true });
+    } catch (error) {
+      applyServerEnabledState(server.id, server.enabled);
+      setServerMutationError(formatMcpMutationError(error, 'Failed updating MCP server.'));
+    } finally {
+      setPendingToggleServerId(null);
+    }
+  };
+
+  const handleToggleTool = async (server: ClusterToolCatalogServer, tool: ClusterToolCatalogItem, requestedEnabled?: boolean) => {
     if (!onToggleTool || !canManageTools || pendingToolName) return;
-    const nextEnabled = !tool.enabledConfigured;
+    const nextEnabled = requestedEnabled ?? !tool.enabledConfigured;
+    if (nextEnabled === tool.enabledConfigured) return;
     setPendingToolName(tool.name);
     try {
       await onToggleTool(tool, nextEnabled);
@@ -438,7 +494,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         })
       }));
     } catch (error) {
-      setServerMutationError(formatMutationError(error, 'Failed updating MCP tool.'));
+      setServerMutationError(formatMcpMutationError(error, 'Failed updating MCP tool.'));
     } finally {
       setPendingToolName(null);
     }
@@ -453,7 +509,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
             {t('mcpServers.description', { name: cluster.name })}
           </p>
         </div>
-        <Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md">
+        <Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md" className="whitespace-nowrap">
           <Plus className="h-4 w-4" />
           {t('mcpServers.add')}
         </Button>
@@ -507,28 +563,21 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       )}
 
       {servers.length > 0 && (
-        <div data-mcp-server-card-grid="true" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {servers.map((server) => (
-            <McpServerCard
-              key={server.id}
-              server={server}
-              canEditServers={canEditServers}
-              pendingTestServerId={pendingTestServerId}
-              testResult={testResultsByServerId[server.id]}
-              onManageTools={setSelectedServerId}
-              onTestConnection={(targetServer) => void handleTestConnection(targetServer)}
-              onEdit={openEditServerModal}
-              onDelete={(targetServer) => {
-                setServerMutationError(null);
-                setDeleteTargetServer(targetServer);
-              }}
-            />
-          ))}
-
-          {canEditServers && servers.length > 0 && (
-            <AddMcpServerCard onClick={openCreateServerModal} />
-          )}
-        </div>
+        <McpServersInventory
+          servers={servers}
+          canEditServers={canEditServers}
+          pendingTestServerId={pendingTestServerId}
+          pendingToggleServerId={pendingToggleServerId}
+          testResultsByServerId={testResultsByServerId}
+          onManageTools={setSelectedServerId}
+          onTestConnection={(targetServer) => void handleTestConnection(targetServer)}
+          onToggleServer={(targetServer, enabled) => void handleToggleServer(targetServer, enabled)}
+          onEdit={openEditServerModal}
+          onDelete={(targetServer) => {
+            setServerMutationError(null);
+            setDeleteTargetServer(targetServer);
+          }}
+        />
       )}
 
       <AnimatePresence>
@@ -537,12 +586,12 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
             server={activeServerWithPagedTools}
             canManageTools={Boolean(canManageTools && onToggleTool)}
             pendingToolName={pendingToolName}
-            isLoadingTools={Boolean(activeServerTools?.loadingInitial)}
+            isLoadingTools={!activeServerTools || Boolean(activeServerTools.loadingInitial)}
             isLoadingMoreTools={Boolean(activeServerTools?.loadingMore)}
             toolsError={activeServerTools?.error || null}
             hasMoreTools={Boolean(activeServerTools?.nextCursor)}
             onClose={() => setSelectedServerId(null)}
-            onToggleTool={(tool) => void handleToggleTool(activeServerWithPagedTools, tool)}
+            onToggleTool={(tool, enabled) => handleToggleTool(activeServerWithPagedTools, tool, enabled)}
             onLoadMoreTools={() => {
               if (activeServerTools?.nextCursor && !activeServerTools.loadingMore && !activeServerTools.loadingInitial) {
                 void loadServerTools(activeServerWithPagedTools.id, 'append', activeServerTools.nextCursor);
@@ -562,13 +611,21 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
             pending={pendingServerMutation}
             showSecretValue={showSecretValue}
             isValid={serverFormIsValid}
-            onClose={() => {
-              setServerModalOpen(false);
-              setEditingServer(null);
-            }}
+            publicHeadersValidationError={publicHeadersValidationError}
+            createStep={createReviewServerId ? 'review' : 'configure'}
+            reviewServer={createReviewServerWithPagedTools}
+            reviewToolsLoading={pendingServerMutation || Boolean(createReviewServerId && !createReviewServerWithPagedTools && !serverMutationError) || Boolean(createReviewServerTools?.loadingInitial)}
+            reviewToolsError={createReviewServerTools?.error || null}
+            canManageTools={Boolean(canManageTools && onToggleTool)}
+            pendingToolName={pendingToolName}
+            onClose={closeServerModal}
             onFormChange={setServerForm}
             onShowSecretValueChange={setShowSecretValue}
             onSubmit={() => void handleSubmitServer()}
+            onToggleReviewTool={(tool, enabled) => {
+              if (createReviewServerWithPagedTools) void handleToggleTool(createReviewServerWithPagedTools, tool, enabled);
+            }}
+            onFinishReview={closeServerModal}
           />
         )}
       </AnimatePresence>
