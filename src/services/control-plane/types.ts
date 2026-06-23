@@ -50,6 +50,16 @@ export interface ControlPlaneAuthMethods {
   };
 }
 
+export interface ControlPlaneExternalIntegrationLinkPreview {
+  integrationClientId: string;
+  provider: string;
+  clientDisplayName: string;
+  externalUserId: string;
+  externalDisplayName?: string;
+  expiresAt: string;
+  signedInUser: ControlPlaneUser;
+}
+
 export type TargetType = 'kubernetes' | 'virtual_machine';
 
 interface ControlPlaneTargetScope { targetId: string; targetType: TargetType; clusterId?: string; }

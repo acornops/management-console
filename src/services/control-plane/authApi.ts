@@ -3,6 +3,7 @@ import { ControlPlaneRequestError, getControlPlaneUrl, requestJson } from './htt
 import {
   ControlPlaneAuthConfig,
   ControlPlaneAuthMethods,
+  ControlPlaneExternalIntegrationLinkPreview,
   ControlPlanePasswordResetRequestResult,
   ControlPlaneUser,
   ControlPlaneVerificationRequired,
@@ -44,8 +45,15 @@ export const controlPlaneAuthApi = {
     window.location.assign(url.toString());
   },
 
+  async previewExternalIntegrationLink(token: string): Promise<ControlPlaneExternalIntegrationLinkPreview> {
+    return requestJson<ControlPlaneExternalIntegrationLinkPreview>('/api/v1/auth/external-integrations/link/preview', {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    });
+  },
+
   async completeExternalIntegrationLink(token: string): Promise<void> {
-    await requestJson<{ status: 'linked' }>('/api/v1/auth/chat/integration/link/complete', {
+    await requestJson<{ status: 'linked' }>('/api/v1/auth/external-integrations/link/complete', {
       method: 'POST',
       body: JSON.stringify({ token })
     });

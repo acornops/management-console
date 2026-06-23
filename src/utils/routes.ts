@@ -97,7 +97,7 @@ export function parseAppRoute(path: string): AppRoute {
   if (pathname === '/workspaces') return { kind: 'workspaces' };
   if (pathname === '/kubernetes-clusters') return { kind: 'kubernetesClusters' };
   if (pathname === '/settings') return { kind: 'settings' };
-  if (pathname === '/integrations/external-chat/link') {
+  if (pathname === '/integrations/external/link') {
     return {
       kind: 'externalIntegrationLink',
       token: params.get('token') || undefined,
@@ -176,8 +176,8 @@ export function parseAppRoute(path: string): AppRoute {
 }
 
 export const AppPaths = {
-  externalIntegrationLink: (token: string): string => `/integrations/external-chat/link?token=${encodeURIComponent(token)}`,
-  externalIntegrationLinkStatus: (status: 'linked' | 'expired' | 'cancelled'): string => `/integrations/external-chat/link?status=${status}`,
+  externalIntegrationLink: (token: string): string => `/integrations/external/link?token=${encodeURIComponent(token)}`,
+  externalIntegrationLinkStatus: (status: 'linked' | 'expired' | 'cancelled'): string => `/integrations/external/link?status=${status}`,
   workspaceInvitation: (token: string): string => `/invites/${encodeURIComponent(token)}`,
   workspaceInvitationShareUrl: (token: string): string => {
     const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '');

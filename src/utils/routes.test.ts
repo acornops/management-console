@@ -87,27 +87,27 @@ describe('routes', () => {
     });
   });
 
-  it('parses external chat link routes with query state', () => {
+  it('parses external integration link routes with query state', () => {
     expect(AppPaths.externalIntegrationLink('intlink_token/with space')).toBe(
-      '/integrations/external-chat/link?token=intlink_token%2Fwith%20space'
+      '/integrations/external/link?token=intlink_token%2Fwith%20space'
     );
-    expect(parseAppRoute('/integrations/external-chat/link?token=intlink_token')).toEqual({
+    expect(parseAppRoute('/integrations/external/link?token=intlink_token')).toEqual({
       kind: 'externalIntegrationLink',
       token: 'intlink_token',
       status: undefined
     });
-    expect(parseAppRoute('/integrations/external-chat/link?status=linked')).toEqual({
+    expect(parseAppRoute('/integrations/external/link?status=linked')).toEqual({
       kind: 'externalIntegrationLink',
       token: undefined,
       status: 'linked'
     });
-    expect(parseAppRoute('/integrations/external-chat/link?status=cancelled')).toEqual({
+    expect(parseAppRoute('/integrations/external/link?status=cancelled')).toEqual({
       kind: 'externalIntegrationLink',
       token: undefined,
       status: 'cancelled'
     });
-    expect(AppPaths.externalIntegrationLinkStatus('expired')).toBe('/integrations/external-chat/link?status=expired');
-    expect(AppPaths.externalIntegrationLinkStatus('cancelled')).toBe('/integrations/external-chat/link?status=cancelled');
+    expect(AppPaths.externalIntegrationLinkStatus('expired')).toBe('/integrations/external/link?status=expired');
+    expect(AppPaths.externalIntegrationLinkStatus('cancelled')).toBe('/integrations/external/link?status=cancelled');
   });
 
   it('parses active workspace resource section routes', () => {

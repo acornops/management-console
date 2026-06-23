@@ -7,9 +7,12 @@ import {
 
 describe('ExternalIntegrationLinkRouteScreen', () => {
   it('uses explicit account-linking approval copy', () => {
-    expect(externalIntegrationLinkApprovalTitle).toBe('Link AcornOps to an external client');
+    expect(externalIntegrationLinkApprovalTitle()).toBe('Link AcornOps to an external integration');
+    expect(externalIntegrationLinkApprovalTitle({ clientDisplayName: 'Mattermost Engineering' })).toBe(
+      'Link AcornOps to Mattermost Engineering'
+    );
     expect(externalIntegrationLinkApprovalMessage).toBe(
-      'Approve this request to connect your signed-in AcornOps account to the external client.'
+      'Approve this request to connect your signed-in AcornOps account to the external account shown below.'
     );
   });
 
