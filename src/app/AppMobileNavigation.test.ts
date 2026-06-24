@@ -45,15 +45,14 @@ describe('mobile navigation structure', () => {
     );
   });
 
-  it('links virtual machines between clusters and runbooks', () => {
+  it('links virtual machines after clusters in workspace resources', () => {
     expect(mobileNavigation).toContain("t('app.virtualMachines')");
     expect(mobileNavigation).toContain("['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0]");
     expect(mobileNavigation).not.toContain("title={t('app.virtualMachinesTooltip')}");
+    expect(mobileNavigation).not.toContain("t('app.runbooks')");
+    expect(mobileNavigation).not.toContain('AppPaths.workspaceRunbooks');
     expect(mobileNavigation.indexOf("['clusters', t('app.clusters')")).toBeLessThan(
       mobileNavigation.indexOf("t('app.virtualMachines')")
-    );
-    expect(mobileNavigation.indexOf("t('app.virtualMachines')")).toBeLessThan(
-      mobileNavigation.indexOf("['runbooks', t('app.runbooks')")
     );
   });
 

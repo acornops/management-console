@@ -71,9 +71,8 @@ describe('desktop sidebar workspace switcher', () => {
   it('separates frequent operational routes from quieter administration routes', () => {
     expect(desktopSidebar).toContain("<SidebarSection title={t('app.operations')} compactAfter>");
     expect(desktopSidebar).toContain("<SidebarSection title={t('app.administration')} quiet>");
-    expect(desktopSidebar.indexOf("label={t('app.runbooks')}")).toBeLessThan(
-      desktopSidebar.indexOf("<SidebarSection title={t('app.administration')} quiet>")
-    );
+    expect(desktopSidebar).not.toContain("label={t('app.runbooks')}");
+    expect(desktopSidebar).not.toContain('AppPaths.workspaceRunbooks');
     expect(desktopSidebar.indexOf("label={t('app.members')}")).toBeGreaterThan(
       desktopSidebar.indexOf("<SidebarSection title={t('app.administration')} quiet>")
     );

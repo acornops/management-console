@@ -6,16 +6,13 @@ import { PageLoadingFallback } from '@/components/common/Loading';
 import { ICONS } from '@/constants';
 import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
-import type { PendingVmRunbookPrompt, RunbookExecutionRequest } from '@/pages/runbooks/runbookModel';
+import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { fadeTransition } from '@/lib/motion';
 import { AppRoute, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
-
-const loadAgentRunbooksPage = () =>
-  import('@/pages/AgentRunbooksPage').then((module) => ({ default: module.AgentRunbooksPage }));
 
 const loadKubernetesClustersPage = () =>
   import('@/pages/KubernetesClustersPage').then((module) => ({ default: module.KubernetesClustersPage }));
@@ -53,7 +50,6 @@ const loadWorkspaceAiSettingsPage = () =>
 const loadWorkspaceAuditLogPage = () =>
   import('@/pages/WorkspaceAuditLogPage').then((module) => ({ default: module.WorkspaceAuditLogPage }));
 
-const AgentRunbooksPage = React.lazy(loadAgentRunbooksPage);
 const KubernetesClustersPage = React.lazy(loadKubernetesClustersPage);
 const KubernetesClusterDetailPage = React.lazy(loadKubernetesClusterDetailPage);
 const NotFoundPage = React.lazy(loadNotFoundPage);
@@ -69,9 +65,6 @@ const WorkspaceAuditLogPage = React.lazy(loadWorkspaceAuditLogPage);
 
 export function preloadAppRoutePage(route: AppRoute): void {
   switch (route.kind) {
-    case 'workspaceRunbooks':
-      void loadAgentRunbooksPage();
-      break;
     case 'kubernetesClusters':
     case 'workspaceKubernetesClusters':
       void loadKubernetesClustersPage();
@@ -124,7 +117,6 @@ function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspa
     (
       route.kind === 'workspaceOverview' ||
       route.kind === 'workspaceWorkflows' ||
-      route.kind === 'workspaceRunbooks' ||
       route.kind === 'workspaceMembers' ||
       route.kind === 'workspaceAiSettings' ||
       route.kind === 'workspaceSettings' ||
@@ -171,9 +163,9 @@ interface AppPageContentProps {
   onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
   onUpdateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   onOpenClusterChatPanel: (cluster: KubernetesCluster, prompt?: string) => void;
-  onRunRunbook: (request: RunbookExecutionRequest) => void;
-  pendingVmRunbookPrompt: PendingVmRunbookPrompt | null;
-  onPendingVmRunbookPromptConsumed: () => void;
+  onRunTargetPrompt: (request: TargetPromptRequest) => void;
+  pendingVmTargetPrompt: PendingVmTargetPrompt | null;
+  onPendingVmTargetPromptConsumed: () => void;
   onRefreshWorkspaceInvitations: (workspaceId: string) => Promise<void>;
   onRefreshWorkspaceMembers: (workspaceId: string) => Promise<void>;
   onDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
@@ -218,9 +210,9 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   onRemoveWorkspaceVirtualMachine,
   onUpdateWorkspace,
   onOpenClusterChatPanel,
-  onRunRunbook,
-  pendingVmRunbookPrompt,
-  onPendingVmRunbookPromptConsumed,
+  onRunTargetPrompt,
+  pendingVmTargetPrompt,
+  onPendingVmTargetPromptConsumed,
   onRefreshWorkspaceInvitations,
   onRefreshWorkspaceMembers,
   onDeleteCluster,
@@ -266,7 +258,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               virtualMachines={virtualMachinesInWorkspaceContext}
               hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
-              onRunTriage={onRunRunbook}
+              onRunTriage={onRunTargetPrompt}
               onSelectCluster={(clusterId) =>
                 navigate(AppPaths.workspaceKubernetesClusterDiagnostics(workspaceContext.id, clusterId))
               }
@@ -274,14 +266,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                 navigate(AppPaths.workspaceVirtualMachineDetail(workspaceContext.id, vmId))
               }
               onResumeRecentInvestigation={(path) => navigate(path)}
-            />
-          )}
-
-          {route.kind === 'workspaceRunbooks' && workspaceContext && (
-            <AgentRunbooksPage
-              workspace={workspaceContext}
-              kubernetesClusters={kubernetesClustersInWorkspaceContext}
-              onRunRunbook={onRunRunbook}
             />
           )}
 
@@ -329,8 +313,8 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
               onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}
               onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
-              pendingRunbookPrompt={pendingVmRunbookPrompt}
-              onPendingRunbookPromptConsumed={onPendingVmRunbookPromptConsumed}
+              pendingTargetPrompt={pendingVmTargetPrompt}
+              onPendingTargetPromptConsumed={onPendingVmTargetPromptConsumed}
             />
           )}
 

@@ -17,7 +17,6 @@ export const en = {
     overview: 'Overview',
     investigations: 'Investigations',
     workflows: 'Workflows',
-    runbooks: 'Runbooks',
     clusters: 'Kubernetes Clusters',
     virtualMachines: 'Virtual Machines',
     virtualMachinesTooltip: 'Virtual Machine target support is not enabled in this release.',
@@ -576,123 +575,6 @@ export const en = {
       critical: 'Critical',
       warning: 'Warning',
       info: 'Info'
-    }
-  },
-  runbooks: {
-    title: 'Runbooks',
-    summaryFor: 'Save and run reusable investigations for workspace targets.',
-    runTarget: 'Run target',
-    selectRunTarget: 'Select run target',
-    targetHelper: 'Choose a connected cluster or online VM to enable run actions.',
-    targetDisconnectedReason: 'Kubernetes agent disconnected',
-    targetNotInstalledReason: 'Kubernetes setup required',
-    vmOfflineReason: 'VM disconnected',
-    vmDegradedReason: 'VM degraded',
-    vmAwaitingAgentReason: 'VM awaiting agent',
-    loadingVmTargets: 'Loading VM targets...',
-    vmTargetsLoadFailed: 'VM targets could not be loaded. Kubernetes runbooks are still available.',
-    targetTypes: {
-      kubernetes: 'Kubernetes',
-      virtual_machine: 'VM'
-    },
-    targetStatuses: {
-      online: 'Online',
-      offline: 'Disconnected',
-      degraded: 'Degraded',
-      unknown: 'Awaiting agent',
-      connected: 'Connected',
-      disconnected: 'Agent disconnected',
-      not_installed: 'Setup Required'
-    },
-    filters: {
-      compatible: 'Compatible',
-      all: 'All',
-      kubernetes: 'Kubernetes',
-      virtual_machine: 'VM'
-    },
-    applicability: {
-      kubernetes: 'Kubernetes',
-      virtual_machine: 'VM',
-      all: 'All targets'
-    },
-    applicabilityLabel: 'Target applicability',
-    generateRunbook: 'Generate Runbook',
-    generateRunbookUnavailable: 'Planned: generate from incident docs and Confluence.',
-    createRunbook: 'Create Template',
-    createTitle: 'Create an investigation command template',
-    createBody: 'Add reusable agent instructions for checks your team runs often.',
-    editTitle: 'Edit investigation command template',
-    nameLabel: 'Name',
-    namePlaceholder: 'API saturation triage',
-    descriptionLabel: 'Description',
-    descriptionPlaceholder: 'When to use this template',
-    promptLabel: 'Agent command',
-    promptPlaceholder: 'Describe the exact checks, context, and output this investigation command should produce.',
-    validation: {
-      nameRequired: 'Name this template before saving.',
-      promptRequired: 'Add the agent command before saving.'
-    },
-    cancel: 'Cancel',
-    saveRunbook: 'Save Template',
-    saveChanges: 'Save Changes',
-    edit: 'Edit',
-    delete: 'Delete',
-    editRunbook: 'Edit {{name}}',
-    deleteRunbook: 'Delete {{name}}',
-    reorderRunbook: 'Drag to reorder {{name}}',
-    confirmDelete: 'Delete "{{name}}" from this workspace?',
-    manualDescriptionFallback: 'Manual investigation command template',
-    readOnly: 'Read-only',
-    disabledNoTarget: 'Select a run target first.',
-    disabledTargetUnavailable: 'The selected target is unavailable.',
-    disabledKubernetesOnly: 'This template is Kubernetes-only.',
-    disabledVmOnly: 'This template is VM-only.',
-    selectTargetToRun: 'Select target to run',
-    runForTarget: 'Run on {{name}}',
-    notAvailableForTarget: 'Not available for {{type}}',
-    emptyTemplatesTitle: 'No templates to show',
-    emptyTemplatesBody: 'Create a template or switch filters to show another target scope.',
-    seedTemplates: {
-      oomkilledTriage: {
-        title: 'OOMKilled Triage',
-        description: 'Investigate memory pressure and restart loops on a workload.',
-        prompt: 'Review recent OOMKilled pods, compare container limits against observed usage, check recent deploys, then summarize the likely root cause and a safer memory target.'
-      },
-      latencyAnalysis: {
-        title: 'High API Latency Analysis',
-        description: 'Trace ingress, service, and workload causes for a latency spike.',
-        prompt: 'Inspect recent service latency regressions, correlate ingress and backend workload health, and identify whether the bottleneck is network, saturation, or release related.'
-      },
-      nodeNotReady: {
-        title: 'Node NotReady Debug',
-        description: 'Check node health drift and likely platform causes.',
-        prompt: 'Summarize why the selected node entered NotReady, including recent kubelet, pressure, or network indicators, then suggest the next operator action.'
-      },
-      vmServiceFailure: {
-        title: 'Host Service Failure Triage',
-        description: 'Inspect failing services and recent host-level changes.',
-        prompt: 'Review failed systemd services, recent unit restarts, dependency failures, and relevant journal entries, then summarize the likely service failure cause.'
-      },
-      vmLogErrorSweep: {
-        title: 'Host Log Error Sweep',
-        description: 'Scan host logs for recurring errors and warnings.',
-        prompt: 'Search allowed host log sources for repeated errors, warnings, authentication failures, and crash indicators, then group the strongest signals by likely subsystem.'
-      },
-      vmCpuMemoryPressure: {
-        title: 'CPU and Memory Pressure',
-        description: 'Review host saturation signals and top processes.',
-        prompt: 'Inspect CPU, memory, swap, and process pressure indicators, identify the top consumers where available, and recommend the safest next diagnostic step.'
-      },
-      vmNetworkListeners: {
-        title: 'Network Listener Review',
-        description: 'Check listening ports and unexpected network exposure.',
-        prompt: 'Review network listeners, bound addresses, owning processes, and recent service changes, then flag unexpected exposure or missing expected listeners.'
-      },
-      targetHealthSummary: {
-        title: 'Target Health Summary',
-        description: 'Summarize the selected target health and highest-priority signals.',
-        prompt: 'Summarize the selected target health, current availability signals, active findings, recent changes, and the next three operator checks without making changes.'
-      }
     }
   },
   settings: {

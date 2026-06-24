@@ -17,7 +17,6 @@ export const zh = {
     overview: '概览',
     investigations: '调查',
     workflows: '工作流',
-    runbooks: '运行手册',
     clusters: 'Kubernetes 集群',
     virtualMachines: '虚拟机',
     virtualMachinesTooltip: '此版本未启用虚拟机目标支持。',
@@ -574,123 +573,6 @@ export const zh = {
       critical: '严重',
       warning: '警告',
       info: '信息'
-    }
-  },
-  runbooks: {
-    title: '运行手册',
-    summaryFor: '保存可复用的调查模板，并对工作区目标运行。',
-    runTarget: '运行目标',
-    selectRunTarget: '选择运行目标',
-    targetHelper: '选择已连接集群或在线虚拟机以启用运行操作。',
-    targetDisconnectedReason: 'Kubernetes Agent 已断开',
-    targetNotInstalledReason: 'Kubernetes 需要配置',
-    vmOfflineReason: '虚拟机已断开',
-    vmDegradedReason: '虚拟机状态降级',
-    vmAwaitingAgentReason: '虚拟机等待 Agent',
-    loadingVmTargets: '正在加载虚拟机目标...',
-    vmTargetsLoadFailed: '无法加载虚拟机目标。Kubernetes 运行手册仍可使用。',
-    targetTypes: {
-      kubernetes: 'Kubernetes',
-      virtual_machine: '虚拟机'
-    },
-    targetStatuses: {
-      online: '在线',
-      offline: '已断开',
-      degraded: '降级',
-      unknown: '等待 Agent',
-      connected: '已连接',
-      disconnected: 'Agent 已断开',
-      not_installed: '需要配置'
-    },
-    filters: {
-      compatible: '兼容',
-      all: '全部',
-      kubernetes: 'Kubernetes',
-      virtual_machine: '虚拟机'
-    },
-    applicability: {
-      kubernetes: 'Kubernetes',
-      virtual_machine: '虚拟机',
-      all: '全部目标'
-    },
-    applicabilityLabel: '目标适用范围',
-    generateRunbook: '生成运行手册',
-    generateRunbookUnavailable: '计划支持：从事故文档和 Confluence 生成。',
-    createRunbook: '创建模板',
-    createTitle: '创建调查命令模板',
-    createBody: '添加团队常用检查流程的可复用 Agent 指令。',
-    editTitle: '编辑调查命令模板',
-    nameLabel: '名称',
-    namePlaceholder: 'API 饱和度排障',
-    descriptionLabel: '描述',
-    descriptionPlaceholder: '这个模板适用的场景',
-    promptLabel: 'Agent 命令',
-    promptPlaceholder: '描述此调查命令应执行的检查、上下文和输出格式。',
-    validation: {
-      nameRequired: '保存前请填写模板名称。',
-      promptRequired: '保存前请填写 Agent 命令。'
-    },
-    cancel: '取消',
-    saveRunbook: '保存模板',
-    saveChanges: '保存更改',
-    edit: '编辑',
-    delete: '删除',
-    editRunbook: '编辑 {{name}}',
-    deleteRunbook: '删除 {{name}}',
-    reorderRunbook: '拖拽以重新排序 {{name}}',
-    confirmDelete: '从此工作区删除“{{name}}”？',
-    manualDescriptionFallback: '手动调查命令模板',
-    readOnly: '只读',
-    disabledNoTarget: '请先选择运行目标。',
-    disabledTargetUnavailable: '所选目标不可用。',
-    disabledKubernetesOnly: '此模板仅适用于 Kubernetes。',
-    disabledVmOnly: '此模板仅适用于虚拟机。',
-    selectTargetToRun: '选择目标后运行',
-    runForTarget: '对 {{name}} 运行',
-    notAvailableForTarget: '不适用于{{type}}',
-    emptyTemplatesTitle: '没有可显示的模板',
-    emptyTemplatesBody: '创建模板，或切换筛选条件以查看其他目标范围。',
-    seedTemplates: {
-      oomkilledTriage: {
-        title: 'OOMKilled 排障',
-        description: '调查工作负载的内存压力和重启循环。',
-        prompt: '查看最近出现 OOMKilled 的 Pod，对比容器限制与观测到的用量，检查近期发布变更，然后总结可能根因和更安全的内存目标。'
-      },
-      latencyAnalysis: {
-        title: '高 API 延迟分析',
-        description: '追踪入口、服务和工作负载导致的延迟峰值。',
-        prompt: '检查近期服务延迟回退，关联入口和后端工作负载健康状态，并判断瓶颈来自网络、资源饱和还是发布变更。'
-      },
-      nodeNotReady: {
-        title: '节点 NotReady 调试',
-        description: '检查节点健康漂移和可能的平台原因。',
-        prompt: '总结所选节点进入 NotReady 的原因，包括近期 kubelet、资源压力或网络信号，然后建议下一步运维操作。'
-      },
-      vmServiceFailure: {
-        title: '主机服务故障排障',
-        description: '检查失败服务和最近的主机级变更。',
-        prompt: '查看失败的 systemd 服务、近期单元重启、依赖失败和相关 journal 日志，然后总结最可能的服务故障原因。'
-      },
-      vmLogErrorSweep: {
-        title: '主机日志错误巡检',
-        description: '扫描主机日志中的重复错误和警告。',
-        prompt: '在允许的主机日志来源中搜索重复错误、警告、认证失败和崩溃信号，然后按最可能的子系统归类最强信号。'
-      },
-      vmCpuMemoryPressure: {
-        title: 'CPU 和内存压力',
-        description: '查看主机饱和信号和高消耗进程。',
-        prompt: '检查 CPU、内存、交换分区和进程压力信号，在可用时识别最高消耗项，并建议最安全的下一步诊断。'
-      },
-      vmNetworkListeners: {
-        title: '网络监听检查',
-        description: '检查监听端口和意外的网络暴露。',
-        prompt: '查看网络监听、绑定地址、所属进程和近期服务变更，然后标记意外暴露或缺失的预期监听。'
-      },
-      targetHealthSummary: {
-        title: '目标健康摘要',
-        description: '总结所选目标的健康状态和最高优先级信号。',
-        prompt: '总结所选目标健康状态、当前可用性信号、活跃发现、近期变更，以及接下来三个不做变更的运维检查。'
-      }
     }
   },
   settings: {

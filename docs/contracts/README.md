@@ -313,7 +313,7 @@ When a write approval is requested, the management console renders the approval 
 
 ### Workflow automation APIs
 
-Workflows are shared workspace resources, distinct from target runbooks and target troubleshooting chats. The management console consumes server-owned workflow definitions when the control plane is available and must not treat client-side hiding as authorization. The control plane compiles workflow MCP, tool, skill, data, and chat-history grants into server-issued run permissions before workflow execution can call tools or read granted data.
+Workflows are shared workspace resources, distinct from target troubleshooting chats. The management console consumes server-owned workflow definitions when the control plane is available and must not treat client-side hiding as authorization. The control plane compiles workflow MCP, tool, skill, data, and chat-history grants into server-issued run permissions before workflow execution can call tools or read granted data.
 
 Public routes:
 

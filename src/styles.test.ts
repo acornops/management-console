@@ -37,7 +37,6 @@ import {
   resourceExplorerLayout,
   resourcesView,
   rgbVariableValue,
-  runbooksPage,
   styles,
   tailwindConfig,
   traceFooter,
@@ -396,9 +395,6 @@ describe('theme color contract', () => {
     expect(overviewPage).not.toContain('variants={containerVariants}');
     expect(overviewPage).not.toContain('variants={itemVariants}');
     expect(overviewPage).not.toContain('layout');
-    expect(runbooksPage).not.toContain('variants={containerVariants}');
-    expect(runbooksPage).not.toContain('variants={itemVariants}');
-    expect(runbooksPage).not.toContain('layout');
     expect(userSettingsPage).not.toContain('variants={containerVariants}');
     expect(userSettingsPage).not.toContain('variants={itemVariants}');
     expect(workspaceSettingsPage).not.toContain('variants={containerVariants}');
@@ -437,7 +433,6 @@ describe('theme color contract', () => {
   it('keeps app page-header action buttons at the medium size', () => {
     expect(dashboardPage).toContain('<Button onClick={onAddCluster} variant="secondary" size="md" className="whitespace-nowrap">');
     expect(overviewPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
-    expect(runbooksPage).toContain('<Button onClick={startCreatingRunbook} variant="accent" size="md" className="whitespace-nowrap">');
     expect(mcpServersView).toContain(
       '<Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md" className="whitespace-nowrap">'
     );
@@ -481,19 +476,10 @@ describe('theme color contract', () => {
     expect(mcpServerCard).toContain('role="menuitem"');
   });
 
-  it('keeps runbook creation and execution context separated', () => {
-    expect(runbooksPage).toContain('runbooks.targetHelper');
-    expect(runbooksPage).toContain('ariaLabel={t(\'runbooks.runTarget\')}');
-    expect(runbooksPage).toContain('className="mb-5 flex flex-col gap-4 border-y border-ui-border bg-ui-surface/60 px-4 py-4');
-    expect(runbooksPage).not.toContain('setIsCreatingRunbook((isOpen) => !isOpen)');
-    expect(runbooksPage).not.toContain("t('runbooks.cancelCreate')");
-  });
-
   it('keeps app page-header titles at the standard page scale', () => {
     expect(dashboardPage).toContain('type-route-title');
     expect(overviewPage).toContain('type-route-title');
     expect(membersPage).toContain('type-route-title');
-    expect(runbooksPage).toContain('type-route-title');
     expect(userSettingsPage).toContain('mb-2 text-3xl font-bold tracking-tight text-ui-text');
     expect(workspaceSettingsPage).toContain('type-route-title');
   });

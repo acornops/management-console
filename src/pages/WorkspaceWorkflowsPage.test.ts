@@ -22,7 +22,7 @@ const mobileNavigation = readFileSync(resolve(root, 'src/app/AppMobileNavigation
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
 
 describe('WorkspaceWorkflowsPage model', () => {
-  it('ships governed workspace automation examples separate from target runbooks', () => {
+  it('ships governed workspace automation examples separate from target chats', () => {
     const workflows = createDefaultWorkflowDefinitions();
 
     expect(workflows.map((workflow) => workflow.id)).toEqual([

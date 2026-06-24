@@ -28,8 +28,8 @@ import { VirtualMachineResourcesView, VmResourceCategory } from '@/pages/virtual
 import { VirtualMachineSettingsView } from '@/pages/virtual-machines/VirtualMachineSettingsView';
 import { toClusterShim } from '@/pages/virtual-machines/virtualMachineClusterShim';
 import { useVirtualMachineListRefresh } from '@/pages/virtual-machines/useVirtualMachineListRefresh';
-import { getSelectedVmRunbookPrompt, shouldClearPendingVmRunbookPrompt } from '@/pages/virtual-machines/virtualMachineRunbookPrompt';
-import type { PendingVmRunbookPrompt } from '@/pages/runbooks/runbookModel';
+import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/pages/virtual-machines/virtualMachineTargetPrompt';
+import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
 
 interface VirtualMachinesPageProps {
   workspace: Workspace;
@@ -45,8 +45,8 @@ interface VirtualMachinesPageProps {
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
   onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
   onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
-  pendingRunbookPrompt?: PendingVmRunbookPrompt | null;
-  onPendingRunbookPromptConsumed?: () => void;
+  pendingTargetPrompt?: PendingVmTargetPrompt | null;
+  onPendingTargetPromptConsumed?: () => void;
 }
 
 function isVmResourceSubview(view: VmSubview): view is 'resources' | 'services' | 'processes' | 'network' | 'logs' {
@@ -71,8 +71,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   onReplaceWorkspaceVirtualMachines,
   onUpsertWorkspaceVirtualMachine,
   onRemoveWorkspaceVirtualMachine,
-  pendingRunbookPrompt,
-  onPendingRunbookPromptConsumed
+  pendingTargetPrompt,
+  onPendingTargetPromptConsumed
 }) => {
   const { t } = useTranslation();
   const [inventory, setInventory] = React.useState<Record<string, unknown>[]>([]);
@@ -100,7 +100,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
   const view = route.kind === 'workspaceVirtualMachineDetail' ? activeSubview : 'overview';
   const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
-  const selectedRunbookPrompt = getSelectedVmRunbookPrompt(pendingRunbookPrompt, workspace.id, selectedId);
+  const selectedTargetPrompt = getSelectedVmTargetPrompt(pendingTargetPrompt, workspace.id, selectedId);
   const activeResourceCategory = isVmResourceSubview(view)
     ? vmSubviewToResourceCategory(view)
     : resourceCategory;
@@ -136,8 +136,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       .catch((error) => {
         console.error('Failed loading virtual machine detail', error);
         if (cancelled) return;
-        if (pendingRunbookPrompt?.workspaceId === workspace.id && pendingRunbookPrompt.targetId === selectedId) {
-          onPendingRunbookPromptConsumed?.();
+        if (pendingTargetPrompt?.workspaceId === workspace.id && pendingTargetPrompt.targetId === selectedId) {
+          onPendingTargetPromptConsumed?.();
         }
       });
     return () => {
@@ -145,19 +145,19 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     };
   }, [
     isLoading,
-    onPendingRunbookPromptConsumed,
+    onPendingTargetPromptConsumed,
     onUpsertWorkspaceVirtualMachine,
-    pendingRunbookPrompt,
+    pendingTargetPrompt,
     selected,
     selectedId,
     workspace.id
   ]);
 
   React.useEffect(() => {
-    if (shouldClearPendingVmRunbookPrompt(pendingRunbookPrompt, workspace.id, selectedId, view)) {
-      onPendingRunbookPromptConsumed?.();
+    if (shouldClearPendingVmTargetPrompt(pendingTargetPrompt, workspace.id, selectedId, view)) {
+      onPendingTargetPromptConsumed?.();
     }
-  }, [onPendingRunbookPromptConsumed, pendingRunbookPrompt, selectedId, view, workspace.id]);
+  }, [onPendingTargetPromptConsumed, pendingTargetPrompt, selectedId, view, workspace.id]);
 
   const loadVmInventory = React.useCallback(async (vm: ControlPlaneVirtualMachine) => {
     setResourceStatus('loading');
@@ -603,9 +603,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         workspace={workspace}
         currentUserId={currentUserId}
         isDark={isDark}
-        initialInputValue={selectedRunbookPrompt || pendingChatPrompt}
+        initialInputValue={selectedTargetPrompt || pendingChatPrompt}
         onInitialInputConsumed={() => {
-          if (selectedRunbookPrompt) onPendingRunbookPromptConsumed?.();
+          if (selectedTargetPrompt) onPendingTargetPromptConsumed?.();
           setPendingChatPrompt('');
         }}
       />

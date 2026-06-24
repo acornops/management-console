@@ -14,7 +14,7 @@ import { ActivePrimaryNav, ActiveResourceNav, getClusterBackToWorkspacePath, get
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
-import type { PendingVmRunbookPrompt, RunbookExecutionRequest } from '@/pages/runbooks/runbookModel';
+import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import type { controlPlaneApi as ControlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
@@ -277,7 +277,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const chatRuntimeCluster = isClusterCopilotOpen && clusterCopilotCluster ? clusterCopilotCluster : routeChatCluster;
   const chatRuntimeWorkspace = chatRuntimeCluster ? workspaces.find((workspace) => workspace.id === chatRuntimeCluster.workspaceId) : undefined;
   const chatRuntimeInitialSessionId = routeChatCluster ? new URLSearchParams(window.location.search).get('session') : null;
-  const [pendingVmRunbookPrompt, setPendingVmRunbookPrompt] = React.useState<PendingVmRunbookPrompt | null>(null);
+  const [pendingVmTargetPrompt, setPendingVmTargetPrompt] = React.useState<PendingVmTargetPrompt | null>(null);
   const isClusterChatVisible = activeClusterSubview === 'chat' || Boolean(isClusterCopilotOpen && clusterCopilotCluster);
   const [clusterAssistantNavStatus, setClusterAssistantNavStatus] = React.useState<AssistantNavStatus>('idle');
   const previousAssistantRuntimeStatusRef = React.useRef<AssistantNavStatus>('idle');
@@ -392,7 +392,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     );
   }, [setKubernetesClusters, setWorkspaces]);
 
-  const runRunbook = React.useCallback((request: RunbookExecutionRequest) => {
+  const runTargetPrompt = React.useCallback((request: TargetPromptRequest) => {
     if (request.targetType === 'kubernetes') {
       const cluster = kubernetesClusters.find((item) => item.id === request.targetId && item.workspaceId === request.workspaceId);
       if (!cluster) return;
@@ -400,7 +400,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       return;
     }
 
-    setPendingVmRunbookPrompt({
+    setPendingVmTargetPrompt({
       workspaceId: request.workspaceId,
       targetId: request.targetId,
       prompt: request.prompt,
@@ -409,8 +409,8 @@ export const AppShell: React.FC<AppShellProps> = ({
     navigate(AppPaths.workspaceVirtualMachineDetail(request.workspaceId, request.targetId, 'chat'));
   }, [kubernetesClusters, navigate, openClusterCopilot]);
 
-  const consumePendingVmRunbookPrompt = React.useCallback(() => {
-    setPendingVmRunbookPrompt(null);
+  const consumePendingVmTargetPrompt = React.useCallback(() => {
+    setPendingVmTargetPrompt(null);
   }, []);
 
   return (
@@ -533,9 +533,9 @@ export const AppShell: React.FC<AppShellProps> = ({
               onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
               onUpdateWorkspace={updateWorkspace}
               onOpenClusterChatPanel={openClusterCopilot}
-              onRunRunbook={runRunbook}
-              pendingVmRunbookPrompt={pendingVmRunbookPrompt}
-              onPendingVmRunbookPromptConsumed={consumePendingVmRunbookPrompt}
+              onRunTargetPrompt={runTargetPrompt}
+              pendingVmTargetPrompt={pendingVmTargetPrompt}
+              onPendingVmTargetPromptConsumed={consumePendingVmTargetPrompt}
               onRefreshWorkspaceInvitations={refreshWorkspaceInvitations}
               onRefreshWorkspaceMembers={refreshWorkspaceMembers}
               onDeleteCluster={handleDeleteCluster}

@@ -18,7 +18,7 @@ import {
   type WorkspaceOverviewAttentionItem,
   type WorkspaceOverviewTargetCard
 } from '@/pages/workspace-overview/workspaceOverviewModel';
-import type { RunbookExecutionRequest } from '@/pages/runbooks/runbookModel';
+import type { TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 
 interface WorkspaceOverviewPageProps {
   currentUserId: string;
@@ -28,7 +28,7 @@ interface WorkspaceOverviewPageProps {
   hasLoadedWorkspaceVirtualMachines: boolean;
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
   onResumeRecentInvestigation: (path: string) => void;
-  onRunTriage: (request: RunbookExecutionRequest) => void;
+  onRunTriage: (request: TargetPromptRequest) => void;
   onSelectCluster: (clusterId: string) => void;
   onSelectVirtualMachine: (vmId: string) => void;
 }

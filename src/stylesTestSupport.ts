@@ -11,7 +11,6 @@ export const loginPage = readSource('src/pages/LoginPage.tsx');
 export const loginPreview = readSource('src/pages/login/LoginPreview.tsx');
 export const dashboardPage = readSource('src/components/dashboard/Dashboard.tsx');
 export const overviewPage = readSource('src/pages/WorkspaceOverviewPage.tsx');
-export const runbooksPage = readSource('src/pages/AgentRunbooksPage.tsx');
 export const userSettingsPage = readSource('src/pages/UserSettingsPage.tsx');
 export const workspaceSettingsPage = readSource('src/pages/WorkspaceSettingsPage.tsx');
 export const desktopSidebar = readSource('src/app/AppDesktopSidebar.tsx');
