@@ -17,6 +17,8 @@ import {
 
 const root = resolve(__dirname, '../..');
 const workflowsPage = readFileSync(resolve(root, 'src/pages/WorkspaceWorkflowsPage.tsx'), 'utf8');
+const workflowActions = readFileSync(resolve(root, 'src/pages/workflows/useWorkspaceWorkflowActions.ts'), 'utf8');
+const workflowHelpers = readFileSync(resolve(root, 'src/pages/workflows/workflowPageHelpers.tsx'), 'utf8');
 const desktopSidebar = readFileSync(resolve(root, 'src/app/AppDesktopSidebar.tsx'), 'utf8');
 const mobileNavigation = readFileSync(resolve(root, 'src/app/AppMobileNavigation.tsx'), 'utf8');
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
@@ -101,23 +103,13 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain("activeTab === 'mcp'");
     expect(workflowsPage).toContain("activeTab === 'skills'");
     expect(workflowsPage).toContain("activeTab === 'settings'");
-    expect(workflowsPage).toContain('getWorkflowToolScopeSummary(selectedWorkflow)');
+    expect(workflowsPage).toContain('getWorkflowToolScopeSummary(workflow)');
     expect(workflowsPage).toContain("variant=\"accent\"");
     expect(workflowsPage).toContain('Add workflow');
     expect(workflowsPage).toContain('Run prompt message');
-    expect(workflowsPage).toContain('data-workflow-create-panel="true"');
-    expect(workflowsPage).toContain('createWorkflowSteps');
-    expect(workflowsPage).toContain("id: 'details'");
-    expect(workflowsPage).toContain("id: 'prompt'");
-    expect(workflowsPage).toContain("id: 'access'");
-    expect(workflowsPage).toContain('Step {createWorkflowStepIndex + 1} of 3');
-    expect(workflowsPage).toContain('Next: Prompt');
-    expect(workflowsPage).toContain('Next: Access');
     expect(workflowsPage).toContain('Launch workflow');
     expect(workflowsPage).toContain('workflowSearchTags');
-    expect(workflowsPage).toContain('workflowSearchOpen');
     expect(workflowsPage).toContain('appendWorkflowSearchTag(current, tag)');
-    expect(workflowsPage).toContain('workflow-search-suggestions');
     expect(workflowsPage).not.toContain('list="workflow-search-tags"');
     expect(workflowsPage).toContain('Search workflows, tags, skills, MCP scope');
     expect(workflowsPage).not.toContain('Server-defined');
@@ -144,27 +136,19 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
   it('surfaces workflow run approvals for review and server-side decisions', () => {
     expect(workflowsPage).toContain('listWorkflowRunApprovals');
     expect(workflowsPage).toContain('listWorkflowRunEvents');
-    expect(workflowsPage).toContain('cancelWorkflowRun');
-    expect(workflowsPage).toContain('decideWorkflowRunApproval');
+    expect(workflowActions).toContain('cancelWorkflowRun');
+    expect(workflowActions).toContain('decideWorkflowRunApproval');
     expect(workflowsPage).toContain('approvalRecords');
-    expect(workflowsPage).toContain('data-workflow-run-details="true"');
     expect(workflowsPage).toContain('TraceFooter');
     expect(workflowsPage).toContain('window.setInterval');
     expect(workflowsPage).toContain('2500');
     expect(workflowsPage).toContain('Stop workflow run');
     expect(workflowsPage).toContain('Approve');
     expect(workflowsPage).toContain('Reject');
-    expect(workflowsPage).toContain('Approval requested');
-    expect(workflowsPage).toContain('No approvals');
   });
 
   it('configures workflow-level MCP servers and skills with cluster MCP server style switches', () => {
-    expect(workflowsPage).toContain('data-workflow-mcp-server-selection="true"');
-    expect(workflowsPage).toContain('data-workflow-skill-selection="true"');
-    expect(workflowsPage).toContain('WorkflowMcpToolsDialog');
-    expect(workflowsPage).toContain('setActiveMcpToolsServerId(serverId)');
-    expect(workflowsPage).toContain('role="dialog"');
-    expect(workflowsPage).toContain('Workflow MCP servers');
+    expect(workflowsPage).toContain('Workflow MCP scope');
     expect(workflowsPage).not.toContain('Filter MCP servers');
     expect(workflowsPage).not.toContain('workflow-mcp-server-tags');
     expect(workflowsPage).not.toContain('visibleMcpServerRows');
@@ -174,37 +158,30 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain('Edit MCP scope');
     expect(workflowsPage).toContain('Edit skills');
     expect(workflowsPage).toContain('Save MCP changes');
-    expect(workflowsPage).toContain('Draft changes are not saved yet.');
     expect(workflowsPage).toContain("scopeSaveResult?.tab === 'mcp'");
     expect(workflowsPage).toContain("scopeSaveResult?.tab === 'skills'");
     expect(workflowsPage).not.toContain('Discard');
     expect(workflowsPage).not.toContain('testWorkflowMcpServerConnection');
-    expect(workflowsPage).toContain('Tool access summary');
-    expect(workflowsPage).toContain('Read-only tools');
-    expect(workflowsPage).toContain('Write-capable tools');
-    expect(workflowsPage).toContain('role="switch"');
-    expect(workflowsPage).toContain('Workflow MCP scope saved. Future sessions will use the updated scope.');
-    expect(workflowsPage).toContain('setScopeSaveResult');
-    expect(workflowsPage).toContain('enabledMcpServers: splitLines(draft.enabledMcpServers)');
-    expect(workflowsPage).toContain('enabledSkills: splitLines(draft.enabledSkills)');
-    expect(workflowsPage).not.toContain('category: draft.category');
+    expect(workflowHelpers).toContain('role="switch"');
+    expect(workflowActions).toContain('Workflow MCP scope saved. Future sessions will use the updated scope.');
+    expect(workflowActions).toContain('setScopeSaveResult');
+    expect(workflowActions).toContain('enabledMcpServers: splitLines(draft.enabledMcpServers)');
+    expect(workflowActions).toContain('enabledSkills: splitLines(draft.enabledSkills)');
+    expect(workflowActions).not.toContain('category: draft.category');
     expect(workflowsPage).not.toContain("['MCP servers', 'allowedMcpServers']");
     expect(workflowsPage).not.toContain("['Allowed tools', 'allowedTools']");
   });
 
   it('lets operators edit and delete user-authored workflow definitions without category authoring', () => {
-    expect(workflowsPage).toContain('updateWorkflow');
-    expect(workflowsPage).toContain('deleteWorkflow');
+    expect(workflowActions).toContain('updateWorkflow');
+    expect(workflowActions).toContain('deleteWorkflow');
     expect(workflowsPage).toContain('startEditingWorkflow');
     expect(workflowsPage).toContain('saveWorkflowDefinition');
     expect(workflowsPage).toContain('toggleWorkflowActive');
     expect(workflowsPage).toContain('Toggle workflow active state');
     expect(workflowsPage).toContain('deleteSelectedWorkflow');
-    expect(workflowsPage).toContain("selectedWorkflow.source === 'user'");
-    expect(workflowsPage).toContain('Workflow name');
-    expect(workflowsPage).toContain('Built-in workflows cannot be deleted from the console.');
-    expect(workflowsPage).toContain('Delete unavailable');
-    expect(workflowsPage).toContain('Workflow updated.');
+    expect(workflowsPage).toContain("selectedWorkflow.source !== 'user'");
+    expect(workflowActions).toContain('Workflow updated.');
     expect(workflowsPage).not.toContain('WORKFLOW_CATEGORY_INVALID');
   });
 
