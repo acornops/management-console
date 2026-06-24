@@ -3,6 +3,7 @@ import { ControlPlaneRequestError, getControlPlaneUrl, requestJson } from './htt
 import {
   ControlPlaneAuthConfig,
   ControlPlaneAuthMethods,
+  ControlPlaneExternalIntegrationLinkPreview,
   ControlPlanePasswordResetRequestResult,
   ControlPlaneUser,
   ControlPlaneVerificationRequired,
@@ -35,10 +36,27 @@ export const controlPlaneAuthApi = {
     return result.csrfToken;
   },
 
-  async initiateLogin(returnTo: string): Promise<void> {
+  async initiateLogin(returnTo: string, options?: { externalIntegrationLinkToken?: string }): Promise<void> {
     const url = getControlPlaneUrl('/api/v1/auth/oidc/login');
     url.searchParams.set('return_to', returnTo);
+    if (options?.externalIntegrationLinkToken) {
+      url.searchParams.set('external_integration_link_token', options.externalIntegrationLinkToken);
+    }
     window.location.assign(url.toString());
+  },
+
+  async previewExternalIntegrationLink(token: string): Promise<ControlPlaneExternalIntegrationLinkPreview> {
+    return requestJson<ControlPlaneExternalIntegrationLinkPreview>('/api/v1/auth/external-integrations/link/preview', {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    });
+  },
+
+  async completeExternalIntegrationLink(token: string): Promise<void> {
+    await requestJson<{ status: 'linked' }>('/api/v1/auth/external-integrations/link/complete', {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    });
   },
 
   async loginWithPassword(identifier: string, password: string): Promise<User> {

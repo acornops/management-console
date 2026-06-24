@@ -49,6 +49,59 @@ describe('controlPlaneAuthApi', () => {
     );
   });
 
+  it('carries an external integration link token into OIDC login state', async () => {
+    getControlPlaneUrl.mockReturnValue(new URL('https://control-plane.example.com/api/v1/auth/oidc/login'));
+    const { controlPlaneAuthApi } = await import('./authApi');
+
+    await controlPlaneAuthApi.initiateLogin('/integrations/external/link?token=intlink_token', {
+      externalIntegrationLinkToken: 'intlink_token'
+    });
+
+    expect(assignMock).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/oidc/login?return_to=%2Fintegrations%2Fexternal%2Flink%3Ftoken%3Dintlink_token&external_integration_link_token=intlink_token'
+    );
+  });
+
+  it('previews an external integration link through the authenticated browser endpoint', async () => {
+    requestJson.mockResolvedValueOnce({
+      integrationClientId: 'mattermost-eng',
+      provider: 'mattermost',
+      clientDisplayName: 'Mattermost Engineering',
+      externalUserId: 'mm-user-1',
+      externalDisplayName: 'Ops User',
+      expiresAt: '2026-06-09T00:00:00.000Z',
+      signedInUser: {
+        id: 'user-1',
+        email: 'ops@example.com',
+        displayName: 'Ops User'
+      }
+    });
+    const { controlPlaneAuthApi } = await import('./authApi');
+
+    await expect(controlPlaneAuthApi.previewExternalIntegrationLink('intlink_token')).resolves.toMatchObject({
+      integrationClientId: 'mattermost-eng',
+      provider: 'mattermost',
+      clientDisplayName: 'Mattermost Engineering',
+      externalUserId: 'mm-user-1'
+    });
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/auth/external-integrations/link/preview', {
+      method: 'POST',
+      body: JSON.stringify({ token: 'intlink_token' })
+    });
+  });
+
+  it('completes an external integration link through the authenticated browser endpoint', async () => {
+    requestJson.mockResolvedValueOnce({ status: 'linked' });
+    const { controlPlaneAuthApi } = await import('./authApi');
+
+    await controlPlaneAuthApi.completeExternalIntegrationLink('intlink_token');
+
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/auth/external-integrations/link/complete', {
+      method: 'POST',
+      body: JSON.stringify({ token: 'intlink_token' })
+    });
+  });
+
   it('maps password login and auth config responses', async () => {
     requestJson
       .mockResolvedValueOnce({

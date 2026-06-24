@@ -87,6 +87,29 @@ describe('routes', () => {
     });
   });
 
+  it('parses external integration link routes with query state', () => {
+    expect(AppPaths.externalIntegrationLink('intlink_token/with space')).toBe(
+      '/integrations/external/link?token=intlink_token%2Fwith%20space'
+    );
+    expect(parseAppRoute('/integrations/external/link?token=intlink_token')).toEqual({
+      kind: 'externalIntegrationLink',
+      token: 'intlink_token',
+      status: undefined
+    });
+    expect(parseAppRoute('/integrations/external/link?status=linked')).toEqual({
+      kind: 'externalIntegrationLink',
+      token: undefined,
+      status: 'linked'
+    });
+    expect(parseAppRoute('/integrations/external/link?status=cancelled')).toEqual({
+      kind: 'externalIntegrationLink',
+      token: undefined,
+      status: 'cancelled'
+    });
+    expect(AppPaths.externalIntegrationLinkStatus('expired')).toBe('/integrations/external/link?status=expired');
+    expect(AppPaths.externalIntegrationLinkStatus('cancelled')).toBe('/integrations/external/link?status=cancelled');
+  });
+
   it('parses active workspace resource section routes', () => {
     expect(parseAppRoute(AppPaths.workspaceOverview('team-alpha'))).toEqual({
       kind: 'workspaceOverview',

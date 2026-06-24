@@ -25,7 +25,8 @@ function getCurrentAppPath(basePath: string): string {
     return window.location.hash.slice(1) || '/';
   }
   const raw = stripBasePath(window.location.pathname, basePath) || '/';
-  return raw.startsWith('/') ? raw : `/${raw}`;
+  const appPath = raw.startsWith('/') ? raw : `/${raw}`;
+  return window.location.search ? `${appPath}${window.location.search}` : appPath;
 }
 
 export interface NavigateOptions {
