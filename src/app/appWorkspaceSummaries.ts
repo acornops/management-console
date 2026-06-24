@@ -1,4 +1,5 @@
 import { KubernetesCluster, Workspace } from '@/types';
+import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 
 export const buildKubernetesClustersByWorkspaceId = (kubernetesClusters: KubernetesCluster[]): Map<string, KubernetesCluster[]> => {
   const groupedKubernetesClusters = new Map<string, KubernetesCluster[]>();
@@ -11,6 +12,19 @@ export const buildKubernetesClustersByWorkspaceId = (kubernetesClusters: Kuberne
     groupedKubernetesClusters.set(cluster.workspaceId, [cluster]);
   });
   return groupedKubernetesClusters;
+};
+
+export const buildVirtualMachinesByWorkspaceId = (virtualMachines: ControlPlaneVirtualMachine[]): Map<string, ControlPlaneVirtualMachine[]> => {
+  const groupedVirtualMachines = new Map<string, ControlPlaneVirtualMachine[]>();
+  virtualMachines.forEach((virtualMachine) => {
+    const workspaceVirtualMachines = groupedVirtualMachines.get(virtualMachine.workspaceId);
+    if (workspaceVirtualMachines) {
+      workspaceVirtualMachines.push(virtualMachine);
+      return;
+    }
+    groupedVirtualMachines.set(virtualMachine.workspaceId, [virtualMachine]);
+  });
+  return groupedVirtualMachines;
 };
 
 export const getWorkspaceClusterCounts = (
@@ -32,20 +46,6 @@ export const getWorkspaceClusterCounts = (
     if (!counts.has(workspaceId)) {
       counts.set(workspaceId, workspaceKubernetesClusters.length);
     }
-  });
-  return counts;
-};
-
-export const getWorkspaceInvestigationCounts = (kubernetesClustersByWorkspaceId: Map<string, KubernetesCluster[]>): Map<string, number> => {
-  const counts = new Map<string, number>();
-  kubernetesClustersByWorkspaceId.forEach((workspaceKubernetesClusters, workspaceId) => {
-    counts.set(
-      workspaceId,
-      workspaceKubernetesClusters.reduce(
-        (total, cluster) => total + (cluster.resourceSummary?.findingCount ?? cluster.alerts?.length ?? 0),
-        0
-      )
-    );
   });
   return counts;
 };

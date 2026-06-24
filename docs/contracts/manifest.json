@@ -99,6 +99,17 @@
         "POST /api/v1/runs/{runId}/approvals/{approvalId}/decision",
         "POST /api/v1/runs/{runId}/cancel"
       ],
+      "plannedWorkflowPaths": [
+        "GET /api/v1/workspaces/{workspaceId}/workflows",
+        "POST /api/v1/workspaces/{workspaceId}/workflows",
+        "GET /api/v1/workflows/{workflowId}",
+        "PATCH /api/v1/workflows/{workflowId}",
+        "DELETE /api/v1/workflows/{workflowId}",
+        "GET /api/v1/workflows/{workflowId}/sessions",
+        "POST /api/v1/workflows/{workflowId}/sessions",
+        "POST /api/v1/workflow-sessions/{sessionId}/messages",
+        "GET /internal/v1/workflow-sessions/{sessionId}/context"
+      ],
       "webhookPaths": [
         "GET /api/v1/workspaces/{workspaceId}/webhooks",
         "POST /api/v1/workspaces/{workspaceId}/webhooks",

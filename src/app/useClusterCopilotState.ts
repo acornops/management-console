@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import { KubernetesCluster, Workspace } from '@/types';
+import { AppPaths } from '@/utils/routes';
+import { writeRecentInvestigation } from '@/pages/workspace-overview/recentInvestigation';
 
 export function useClusterCopilotState(
+  currentUserId: string | null,
   kubernetesClusterById: Map<string, KubernetesCluster>,
   workspaceById: Map<string, Workspace>
 ) {
@@ -18,7 +21,15 @@ export function useClusterCopilotState(
     setClusterCopilotClusterId(cluster.id);
     setClusterCopilotInitialPrompt(prompt && prompt.trim() ? { id: Date.now(), text: prompt.trim() } : null);
     setIsClusterCopilotOpen(true);
-  }, []);
+    if (!currentUserId) return;
+    writeRecentInvestigation({
+      userId: currentUserId,
+      workspaceId: cluster.workspaceId,
+      path: AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'chat'),
+      targetName: cluster.name,
+      targetType: 'kubernetes'
+    });
+  }, [currentUserId]);
 
   return {
     clusterCopilotCluster,

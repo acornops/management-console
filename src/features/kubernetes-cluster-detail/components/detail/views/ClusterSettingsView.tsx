@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/common/Button';
@@ -11,6 +11,7 @@ interface ClusterSettingsViewProps {
   cluster: KubernetesCluster;
   workspaceName?: string;
   canManageCluster?: boolean;
+  onUpdateName?: (name: string) => void | Promise<void>;
   onEditNamespaceScope?: () => void;
   onUpdateWriteConfirmationPolicy?: (overrideRequired: boolean | null) => void | Promise<void>;
 }
@@ -77,10 +78,16 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   cluster,
   workspaceName,
   canManageCluster = false,
+  onUpdateName,
   onEditNamespaceScope,
   onUpdateWriteConfirmationPolicy
 }) => {
   const { t } = useTranslation();
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(cluster.name);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const clusterNameInputRef = useRef<HTMLInputElement>(null);
   const agentConnectionState = getAgentConnectionState(cluster);
   const namespaceScope = formatNamespaceScope(cluster, t);
   const writeConfirmationPolicyValue = getWriteConfirmationPolicyValue(cluster);
@@ -96,6 +103,44 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
     : t('clusterSettings.writeConfirmationsSourceDefault');
   const canEditNamespaceScope = canManageCluster && Boolean(onEditNamespaceScope);
   const canEditWriteConfirmations = canManageCluster && Boolean(onUpdateWriteConfirmationPolicy);
+  const canEditClusterName = canManageCluster && Boolean(onUpdateName);
+  const trimmedDraftName = draftName.trim();
+  const clusterNameValidationError = isEditingName && trimmedDraftName.length === 0
+    ? t('clusterSettings.clusterNameRequired')
+    : null;
+  const canSaveClusterName = trimmedDraftName.length > 0 && trimmedDraftName !== cluster.name && !isSavingName;
+
+  useEffect(() => {
+    setDraftName(cluster.name);
+    setIsEditingName(false);
+    setNameError(null);
+  }, [cluster.id, cluster.name]);
+
+  useEffect(() => {
+    if (!isEditingName) return;
+    clusterNameInputRef.current?.focus();
+    clusterNameInputRef.current?.select();
+  }, [isEditingName]);
+
+  const handleSaveClusterName = async () => {
+    if (!canSaveClusterName) return;
+    setIsSavingName(true);
+    setNameError(null);
+    try {
+      await onUpdateName?.(trimmedDraftName);
+      setIsEditingName(false);
+    } catch (error) {
+      setNameError(error instanceof Error ? error.message : t('clusterSettings.clusterNameUpdateFailed'));
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  const cancelClusterNameEdit = () => {
+    setDraftName(cluster.name);
+    setIsEditingName(false);
+    setNameError(null);
+  };
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
@@ -114,7 +159,69 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
           <SettingRow
             icon={ICONS.Server}
             label={t('clusterSettings.clusterName')}
-            description={cluster.name}
+            description={isEditingName ? (
+              <div className="grid max-w-md gap-3" data-cluster-settings-name-editor="true">
+                <input
+                  ref={clusterNameInputRef}
+                  value={draftName}
+                  onChange={(event) => {
+                    setDraftName(event.target.value);
+                    setNameError(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      void handleSaveClusterName();
+                    }
+                    if (event.key === 'Escape') {
+                      event.preventDefault();
+                      cancelClusterNameEdit();
+                    }
+                  }}
+                  className="min-h-10 rounded-md border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text shadow-sm outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+                  aria-label={t('clusterSettings.clusterName')}
+                  aria-invalid={Boolean(clusterNameValidationError)}
+                  aria-describedby={clusterNameValidationError || nameError ? 'cluster-name-edit-error' : undefined}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    data-cluster-settings-action="save-name"
+                    onClick={handleSaveClusterName}
+                    disabled={!canSaveClusterName}
+                    variant="primary"
+                    size="sm"
+                  >
+                    {isSavingName ? t('common.saving') : t('common.saveChanges')}
+                  </Button>
+                  <Button
+                    data-cluster-settings-action="cancel-name"
+                    onClick={cancelClusterNameEdit}
+                    disabled={isSavingName}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </div>
+                {(clusterNameValidationError || nameError) && (
+                  <p id="cluster-name-edit-error" className="text-xs font-semibold text-status-danger-text">
+                    {clusterNameValidationError || nameError}
+                  </p>
+                )}
+              </div>
+            ) : cluster.name}
+            action={canEditClusterName && !isEditingName ? (
+              <Button
+                data-cluster-settings-action="edit-name"
+                onClick={() => setIsEditingName(true)}
+                variant="secondary"
+                size="sm"
+                className="w-full sm:w-auto"
+              >
+                <ICONS.Pencil className="h-4 w-4" />
+                {t('clusterSettings.editClusterName')}
+              </Button>
+            ) : undefined}
           />
           <SettingRow
             icon={ICONS.LayoutGrid}

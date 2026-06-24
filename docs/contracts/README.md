@@ -126,7 +126,7 @@ The console treats `permissions.read_workspace_data` as the gate for operational
 
 The management console keeps Kubernetes-specific lifecycle, install, inventory, namespace, and pod-log flows on the cluster APIs. The Virtual Machines page uses the VM APIs for Linux/systemd registration, inventory, findings, metrics, logs, MCP Servers, read-only chat, and VM Settings.
 
-The AI Settings page consumes `GET /api/v1/workspaces/{workspaceId}/ai-settings` to render AI assistant defaults, deployment allow-lists, and per-provider configured status for users with workspace data access. Users with `permissions.manage_ai_settings` may call `PATCH /api/v1/workspaces/{workspaceId}/ai-settings` to update the default provider/model, `PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` with write-only `{apiKey}` to add or rotate a provider credential, and `DELETE /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` to remove one. The console must never expect or display API key values, ciphertexts, or internal secret names; it only displays configured/not-configured status.
+The AI Settings page consumes `GET /api/v1/workspaces/{workspaceId}/ai-settings` to render AI assistant defaults, deployment allow-lists, and per-provider configured status for users with workspace data access. New and unset workspace AI settings default `reasoningSummaryMode` to `auto` when deployment policy allows reasoning summaries; admins can still set `off`. Users with `permissions.manage_ai_settings` may call `PATCH /api/v1/workspaces/{workspaceId}/ai-settings` to update the default provider/model, `PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` with write-only `{apiKey}` to add or rotate a provider credential, and `DELETE /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` to remove one. The console must never expect or display API key values, ciphertexts, or internal secret names; it only displays configured/not-configured status.
 
 The Members page consumes authoritative membership from `GET /api/v1/workspaces/{workspaceId}/members`. Member rows include:
 
@@ -166,10 +166,11 @@ Virtual machine agent-key rotation response must remain:
 - `{ vmId, agentKey, keyVersion, installInstructions }`
 
 Virtual machine records include `hostname`, `osFamily`, `serviceManager`, `allowedLogSources`, `status`, and install instructions owned by the control plane. The management console displays generated systemd install instructions as returned and does not hardcode service file content.
+Virtual machine detail responses include `virtualMachine.latestSnapshot.{targetId,workspaceId,timestamp}` and `virtualMachine.summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}`. They must not return full raw VM snapshot payloads to the browser.
 
 Pod logs are fetched lazily from `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs`. The workload drawer must treat follow mode as opt-in polling and stop polling when the drawer is closed or the logs tab is left.
 
-`installInstructions.command` is owned by the control plane. The management console displays it as returned and does not hardcode chart paths, release names, or Helm value names in control-plane mode.
+`installInstructions.command` is owned by the control plane. The management console displays it as returned and does not hardcode chart paths, release names, or Helm value names in control-plane mode. Agent write-mode guidance is advisory unless a control-plane-owned install or upgrade command is present in the target metadata.
 
 `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}` returns cluster metadata, `writeConfirmationPolicy`, `latestSnapshot.{clusterId,workspaceId,timestamp}`, and `summary.{resourceCount,findingCount,criticalFindingCount,namespaceCount,nodeCount,resourceFamilyCounts,resourceKindCounts}`. It must not return full `latestSnapshot.data` to the browser.
 
@@ -211,7 +212,7 @@ The UI depends on these catalog fields staying stable:
 - `permissions.editableRoles`
 - `servers[].{id,name,url,type,enabled,isSystem,canDelete,canEditConnection,authType,publicHeaders,connectionStatus,lastDiscoveryAt,lastDiscoveryError}`
 - `servers[].toolCounts.{total,enabledConfigured,enabledEffective,writeConfigured,writeEffective}`
-- `GET /mcp/servers/{serverId}/tools` returns paged tool rows with `{name,description,capability,version,source,enabledConfigured,enabledEffective,effectiveDisabledReason}`
+- `GET /mcp/servers/{serverId}/tools` returns paged tool rows with `{name,description,capability,version,source,enabledConfigured,enabledEffective,effectiveDisabledReason}`. `enabledEffective` includes target runtime availability; write tools on read-only agents return `effectiveDisabledReason=agent_write_disabled`.
 
 Current mutation policy exposed through the catalog:
 
@@ -228,6 +229,7 @@ The management console depends on:
 - `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/sessions`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/sessions`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity/stream`
 - `POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`
 - `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`
 - `DELETE /api/v1/sessions/{sessionId}`
@@ -258,6 +260,8 @@ Session listing response must remain cursor-based:
 - Run details and approval replay payloads include `targetId` and `targetType`. Approval payloads may include `summary`, a human-readable sentence for approval UI copy. Kubernetes payloads also include `clusterId`; non-Kubernetes targets must not receive a synthetic cluster alias.
 
 Recent target chat activity uses `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity?windowSeconds=300`. It requires target read access, not `create_sessions`. The response includes `targetId`, `targetType`, `targetName`, `windowSeconds`, `generatedAt`, and `recentActivity[]` rows with owner metadata, `lastActivityAt`, latest run metadata, active run metadata, `hasActiveRun`, `hasRecentWriteCapableRun`, and optional `latestToolAccessMode`. The management console uses this payload before starting a local draft conversation so recent target activity can be reviewed without creating a backend session.
+
+Target chat activity streaming uses `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity/stream`. The console expects SSE frames with `event: chat_activity`, `id: <activityEventId>`, and payloads shaped as `{id,workspaceId,targetId,targetType,sessionId,runId?,messageId?,approvalId?,type,payload,createdAt}`. The console resumes with `?after=<activityEventId>` after reconnect; fresh streams are live-only and rely on recent activity/session reads for initial state. Activity types consumed by the UI are `message.created`, `run.created`, `run.status_changed`, `assistant_message.committed`, `approval.requested`, `approval.decided`, `approval.expired`, and `session.deleted`. Activity events identify changed resources; message bodies remain loaded through `GET /api/v1/sessions/{sessionId}/messages`.
 
 `POST /api/v1/sessions/{sessionId}/messages` must keep accepting:
 
@@ -299,6 +303,8 @@ Current event types used by the UI:
 - `run_cancelled`
 - `run_completed`
 
+Run SSE is a long-lived detail stream and may continue sending heartbeats after terminal run events. The management console must treat `run_completed`, `run_failed`, and `run_cancelled` as terminal signals and reconcile through run/session APIs instead of waiting for the SSE request to close.
+
 Cancellation is terminal from the browser perspective. After a user cancels a
 run, the management console must keep that run stopped locally, ignore later
 token/progress/replay updates for the cancelled run, and allow the user to send
@@ -309,3 +315,45 @@ a new message without waiting for stale stream writers.
 The management console sends `toolAccessMode=read_write` when the current workspace permissions allow write-capable runs. It must not depend on the browser having already loaded the full MCP tool catalog. The control plane remains authoritative and may still reject the request or filter write tools out of the run snapshot if agent, role, or policy conditions are not met.
 
 When a write approval is requested, the management console renders the approval payload from run events or approval replay and submits explicit approve/reject decisions to the control plane. If present, `summary` is displayed as explanatory copy only. The console does not execute writes locally and must treat the backend approval state as authoritative when a decision has already been recorded or expired.
+
+### Workflow automation APIs
+
+Workflows are shared workspace resources, distinct from target troubleshooting chats. The management console consumes server-owned workflow definitions when the control plane is available and must not treat client-side hiding as authorization. The control plane compiles workflow MCP, tool, skill, data, and chat-history grants into server-issued run permissions before workflow execution can call tools or read granted data.
+
+Public routes:
+
+- `GET /api/v1/workspaces/{workspaceId}/workflows`
+- `GET /api/v1/workflows/{workflowId}`
+- `PATCH /api/v1/workflows/{workflowId}`
+- `GET /api/v1/workflows/{workflowId}/sessions`
+- `POST /api/v1/workflows/{workflowId}/sessions`
+- `POST /api/v1/workflow-sessions/{sessionId}/messages`
+- `GET /internal/v1/workflow-sessions/{sessionId}/context`
+
+Reserved create and delete authoring routes return `501 NOT_IMPLEMENTED` until full workflow authoring ships:
+
+- `POST /api/v1/workspaces/{workspaceId}/workflows`
+- `DELETE /api/v1/workflows/{workflowId}`
+
+`PATCH /api/v1/workflows/{workflowId}` lets owners/admins edit server-owned workflow category and MCP scope. The management console sends workspace id, category, policy mode, approval requirements, and per-step MCP servers, allowed tools, context grants, and approval-required flags; the control plane authorizes with `manage_mcp`, audits the change, and applies it only to future compiled workflow sessions.
+
+Workflow definitions are workspace-scoped and include:
+
+- `workflow.{id,workspaceId,name,description,status,category,createdBy,updatedAt}`
+- `inputs[]` typed launch fields
+- `steps[]` ordered actions with required inputs, enabled skills, allowed MCP/tools, context grants, and approval gates
+- `policy.{mode,maxRuntime,approvalRequirements,retention}`
+- `presentation.{icon,launchCopy,defaultStarterPrompt}`
+
+Workflow chat history is separate from Kubernetes cluster and VM chat history. Launching a workflow creates a workflow session first; the assistant collects missing inputs, displays the compiled access scope, then starts a run from a frozen workflow snapshot. Editing a workflow must not change in-flight run snapshots.
+Workflow session listing responses include workflow run records. The management console uses those records plus the existing public run detail, event, approval, stream, and cancel routes to review workflow history and output.
+Workflow approval gates are surfaced through the existing run approval routes. Workflow approval resources use `toolName = "workflow.approval_gate"` with workflow identifiers and summary copy; decisions use `{ "decision": "approved" | "rejected" }`, require backend authorization, and the control plane dispatches the workflow only after every gate is approved.
+
+Execution bootstrap for workflow runs remains an internal control-plane to execution-engine contract. The management console must consume the public workflow session, message, run history, approval, and output APIs rather than calling internal workflow context routes directly.
+
+Default authorization direction:
+
+- Owners and admins configure shared workflows and workflow MCP scope.
+- Operators can run permitted workflows according to the workflow's read-only or read-write policy.
+- Workflow access to other chat histories requires an explicit configured grant, such as selected and approved chat sessions.
+- Audit logs record workflow scope updates, session creation, runs, and approvals, and must extend to workflow create, delete, and cancel events as those routes ship.

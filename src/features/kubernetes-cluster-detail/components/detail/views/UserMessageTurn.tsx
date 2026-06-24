@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import { Button } from '@/components/common/Button';
 import { MessageActions } from '@/features/kubernetes-cluster-detail/components/detail/views/MessageActions';
+import { markdownRemarkPlugins } from '@/features/kubernetes-cluster-detail/lib/markdown';
 import type { ChatMessage } from '@/types';
 
 interface UserMessageTurnProps {
@@ -91,7 +92,7 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
               </div>
             </form>
           ) : (
-            <ReactMarkdown components={markdownComponents}>
+            <ReactMarkdown components={markdownComponents} remarkPlugins={markdownRemarkPlugins}>
               {message.content}
             </ReactMarkdown>
           )}

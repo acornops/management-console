@@ -8,8 +8,7 @@ export type AppRoute =
   | { kind: 'settings' }
   | { kind: 'externalIntegrationLink'; token?: string; status?: 'linked' | 'expired' | 'cancelled' }
   | { kind: 'workspaceOverview'; workspaceId: string }
-  | { kind: 'workspaceInvestigations'; workspaceId: string }
-  | { kind: 'workspaceRunbooks'; workspaceId: string }
+  | { kind: 'workspaceWorkflows'; workspaceId: string }
   | { kind: 'workspaceMembers'; workspaceId: string }
   | { kind: 'workspaceAiSettings'; workspaceId: string }
   | { kind: 'workspaceSettings'; workspaceId: string }
@@ -110,13 +109,12 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceInvitation', token: decodeParam(inviteMatch[1]) };
   }
 
-  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|investigations|runbooks|members|ai-settings|settings|audit-log)$/);
+  const workspaceSectionMatch = path.match(/^\/workspaces\/([^/]+)\/(overview|workflows|members|ai-settings|settings|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
     if (section === 'overview') return { kind: 'workspaceOverview', workspaceId };
-    if (section === 'investigations') return { kind: 'workspaceInvestigations', workspaceId };
-    if (section === 'runbooks') return { kind: 'workspaceRunbooks', workspaceId };
+    if (section === 'workflows') return { kind: 'workspaceWorkflows', workspaceId };
     if (section === 'ai-settings') return { kind: 'workspaceAiSettings', workspaceId };
     if (section === 'settings') return { kind: 'workspaceSettings', workspaceId };
     if (section === 'audit-log') return { kind: 'workspaceAuditLog', workspaceId };
@@ -188,10 +186,8 @@ export const AppPaths = {
   kubernetesClusters: (): string => '/kubernetes-clusters',
   settings: (): string => '/settings',
   workspaceOverview: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/overview`,
-  workspaceInvestigations: (workspaceId: string): string =>
-    `/workspaces/${encodeURIComponent(workspaceId)}/investigations`,
-  workspaceRunbooks: (workspaceId: string): string =>
-    `/workspaces/${encodeURIComponent(workspaceId)}/runbooks`,
+  workspaceWorkflows: (workspaceId: string): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/workflows`,
   workspaceMembers: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/members`,
   workspaceAiSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`,
   workspaceSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/settings`,

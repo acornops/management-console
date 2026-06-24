@@ -1,200 +1,60 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Eye, EyeOff, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { Select, SelectOption } from '@/components/common/Select';
 import { ClusterToolCatalogItem, ClusterToolCatalogServer } from '@/types';
 import { getToolLabel, ServerFormState } from '@/features/kubernetes-cluster-detail/components/detail/views/mcpServersCatalog';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 
-export const McpServerToolsDialog: React.FC<{
-  server: ClusterToolCatalogServer;
-  canManageTools: boolean;
-  pendingToolName: string | null;
-  isLoadingTools?: boolean;
-  isLoadingMoreTools?: boolean;
-  toolsError?: string | null;
-  hasMoreTools?: boolean;
-  onClose: () => void;
-  onToggleTool: (tool: ClusterToolCatalogItem) => void;
-  onLoadMoreTools?: () => void;
-}> = ({
-  server,
-  canManageTools,
-  pendingToolName,
-  isLoadingTools = false,
-  isLoadingMoreTools = false,
-  toolsError = null,
-  hasMoreTools = false,
-  onClose,
-  onToggleTool,
-  onLoadMoreTools
-}) => {
-  const { t } = useTranslation();
-  const loadMoreToolsRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const target = loadMoreToolsRef.current;
-    if (!target || !hasMoreTools || !onLoadMoreTools) return undefined;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting) && !isLoadingTools && !isLoadingMoreTools) {
-        onLoadMoreTools();
-      }
-    }, { rootMargin: '240px' });
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreTools, isLoadingMoreTools, isLoadingTools, onLoadMoreTools]);
-
-  return (
-    <motion.div
-      {...modalOverlayMotion}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ui-text/45 p-4 dark:bg-ui-bg/75"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-    <motion.div
-      {...modalPanelMotion}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="mcp-server-tools-title"
-      className="relative flex max-h-[86vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
-      onMouseDown={(event) => event.stopPropagation()}
-    >
-      <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-5">
-        <div className="min-w-0">
-          <div className="type-micro-label mb-2 flex items-center gap-2">
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            {t('mcpServers.mcpServer')}
-          </div>
-          <h2 id="mcp-server-tools-title" className="type-section-title truncate" title={server.name}>{server.name}</h2>
-          <p className="type-code mt-1 truncate text-ui-text-muted" title={server.url}>
-            {server.url}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong"
-          aria-label={t('mcpServers.closeTools')}
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="overflow-y-auto p-6 custom-scrollbar">
-        {toolsError && (
-          <div className="type-caption mb-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
-            {toolsError}
-          </div>
-        )}
-        {isLoadingTools ? (
-          <InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="bg-ui-bg text-xs" />
-        ) : server.tools.length === 0 ? (
-          <div className="type-caption rounded-lg border border-ui-border bg-ui-bg px-4 py-3">
-            {t('mcpServers.noToolsDiscovered')}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="type-caption rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-ui-text-muted">
-              {t('mcpServers.toolEnablementHelp')}
-            </p>
-            {server.tools.map((tool) => {
-              const pending = pendingToolName === tool.name;
-              return (
-                <div key={tool.name} className="flex items-center justify-between gap-5 rounded-xl border border-ui-border bg-ui-bg p-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="type-row-title truncate" title={getToolLabel(tool)}>
-                        {getToolLabel(tool)}
-                      </h3>
-                      {tool.enabledEffective && <CheckCircle2 className="h-4 w-4 shrink-0 text-status-success-text" />}
-                    </div>
-                    <div className="type-micro-label mt-1 flex min-w-0 items-center gap-2">
-                      <span className="type-code truncate text-ui-text-muted" title={tool.name}>{tool.name}</span>
-                      <span className="h-1 w-1 rounded-full bg-ui-text-muted/30" />
-                      <span>{tool.capability}</span>
-                      <span className="h-1 w-1 rounded-full bg-ui-text-muted/30" />
-                      <span className="truncate">{tool.version}</span>
-                    </div>
-                    {tool.effectiveDisabledReason === 'server_disabled' && (
-                      <p className="type-caption mt-1 text-status-warning-text">{t('mcpServers.toolBlockedServerDisabled')}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    disabled={!canManageTools || pending}
-                    onClick={() => onToggleTool(tool)}
-                    className={`relative h-7 w-12 shrink-0 rounded-full border transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
-                      tool.enabledConfigured
-                        ? 'border-accent bg-accent'
-                        : 'border-ui-border bg-ui-surface'
-                    }`}
-                    aria-label={t(tool.enabledConfigured ? 'mcpServers.disableToolNamed' : 'mcpServers.enableToolNamed', { name: getToolLabel(tool) })}
-                  >
-                    <motion.span
-                      className="absolute left-1 top-1 h-5 w-5 rounded-full bg-ui-surface shadow-sm"
-                      animate={{ x: tool.enabledConfigured ? 18 : 0 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  </button>
-                </div>
-              );
-            })}
-            <div ref={loadMoreToolsRef}>
-              {hasMoreTools && (
-                <button
-                  type="button"
-                  onClick={onLoadMoreTools}
-                  disabled={isLoadingMoreTools}
-                  className="type-label w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isLoadingMoreTools ? t('mcpServers.loadingTools') : t('common.loadMore')}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {!canManageTools && (
-          <div className="type-caption mt-5 rounded-lg border border-ui-border bg-ui-bg px-4 py-3">
-            {t('mcpServers.manageToolsNoAccess')}
-          </div>
-        )}
-      </div>
-    </motion.div>
-    </motion.div>
-  );
-};
-
 export const McpServerFormDialog: React.FC<{
   mode: 'create' | 'edit';
+  createStep?: 'configure' | 'review';
   urlReadOnly: boolean;
   form: ServerFormState;
   mutationError: string | null;
   pending: boolean;
   showSecretValue: boolean;
   isValid: boolean;
+  publicHeadersValidationError: string | null;
+  reviewServer?: ClusterToolCatalogServer | null;
+  reviewToolsLoading?: boolean;
+  reviewToolsError?: string | null;
+  canManageTools?: boolean;
+  pendingToolName?: string | null;
   onClose: () => void;
   onFormChange: React.Dispatch<React.SetStateAction<ServerFormState>>;
   onShowSecretValueChange: React.Dispatch<React.SetStateAction<boolean>>;
   onSubmit: () => void;
+  onToggleReviewTool?: (tool: ClusterToolCatalogItem, enabled: boolean) => void | Promise<void>;
+  onFinishReview?: () => void;
 }> = ({
   mode,
+  createStep = 'configure',
   urlReadOnly,
   form,
   mutationError,
   pending,
   showSecretValue,
   isValid,
+  publicHeadersValidationError,
+  reviewServer,
+  reviewToolsLoading = false,
+  reviewToolsError = null,
+  canManageTools = false,
+  pendingToolName = null,
   onClose,
   onFormChange,
   onShowSecretValueChange,
-  onSubmit
+  onSubmit,
+  onToggleReviewTool,
+  onFinishReview
 }) => {
   const { t } = useTranslation();
+  const isReviewStep = mode === 'create' && createStep === 'review';
   const authTypeOptions: Array<SelectOption<ServerFormState['authType']>> = [
     { value: 'none', label: t('mcpServers.authNone') },
     { value: 'bearer_token', label: t('mcpServers.authBearer') },
@@ -221,6 +81,44 @@ export const McpServerFormDialog: React.FC<{
       publicHeaders: current.publicHeaders.filter((header) => header.id !== id)
     }));
   };
+  const reviewTools = reviewServer?.tools || [];
+  const reviewEnabledCount = reviewTools.filter((tool) => tool.enabledConfigured).length;
+  const reviewWriteCount = reviewTools.filter((tool) => tool.capability === 'write').length;
+  const createSteps = [
+    { id: 'configure', label: t('mcpServers.stepConfigure') },
+    { id: 'review', label: t('mcpServers.stepReviewTools') }
+  ];
+  const renderReviewTool = (tool: ClusterToolCatalogItem) => {
+    const pendingTool = pendingToolName === tool.name;
+    return (
+      <div key={tool.name} className="grid min-w-0 grid-cols-1 gap-3 border-b border-ui-border px-4 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_6rem_auto] sm:items-center">
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+            <h4 className="type-row-title truncate" title={getToolLabel(tool)}>{getToolLabel(tool)}</h4>
+          </div>
+          <p className="type-code mt-1 truncate text-ui-text-muted" title={tool.name}>{tool.name}</p>
+        </div>
+        <span className={`type-micro-label w-fit rounded-full px-2 py-1 ${tool.capability === 'write' ? 'bg-status-warning-soft text-status-warning-text' : 'bg-status-success-soft text-status-success-text'}`}>
+          {tool.capability === 'write' ? t('mcpServers.capabilityWrite') : t('mcpServers.capabilityRead')}
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={tool.enabledConfigured}
+          disabled={!canManageTools || pendingTool || pending}
+          onClick={() => onToggleReviewTool?.(tool, !tool.enabledConfigured)}
+          className={`relative h-7 w-12 shrink-0 rounded-full border transition-all disabled:cursor-not-allowed disabled:opacity-50 ${tool.enabledConfigured ? 'border-status-success bg-status-success' : 'border-ui-border bg-ui-bg'}`}
+          aria-label={t(tool.enabledConfigured ? 'mcpServers.disableToolNamed' : 'mcpServers.enableToolNamed', { name: getToolLabel(tool) })}
+        >
+          <motion.span
+            className="absolute left-1 top-1 h-5 w-5 rounded-full bg-ui-surface shadow-sm"
+            animate={{ x: tool.enabledConfigured ? 18 : 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          />
+        </button>
+      </div>
+    );
+  };
   return (
     <motion.div
     {...modalOverlayMotion}
@@ -234,13 +132,18 @@ export const McpServerFormDialog: React.FC<{
       role="dialog"
       aria-modal="true"
         aria-labelledby="mcp-server-form-title"
-      className="w-full max-w-2xl overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
+      className="flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl"
       onMouseDown={(event) => event.stopPropagation()}
     >
       <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
-        <h3 id="mcp-server-form-title" className="type-panel-title">
-          {t(mode === 'edit' ? 'mcpServers.edit' : 'mcpServers.add')}
-        </h3>
+        <div>
+          <h3 id="mcp-server-form-title" className="type-panel-title">
+            {t(mode === 'edit' ? 'mcpServers.edit' : 'mcpServers.add')}
+          </h3>
+          {mode === 'create' && (
+            <ModalStepIndicator steps={createSteps} currentStepId={isReviewStep ? 'review' : 'configure'} className="mt-4" />
+          )}
+        </div>
         <button
           type="button"
           onClick={onClose}
@@ -252,7 +155,68 @@ export const McpServerFormDialog: React.FC<{
         </button>
       </div>
 
-      <div className="space-y-4 p-6">
+      <div className="grid min-h-0 gap-6 overflow-y-auto p-6 custom-scrollbar lg:grid-cols-[minmax(0,1fr)_19rem]">
+        {isReviewStep ? (
+          <>
+            <div className="overflow-hidden rounded-lg border border-ui-border bg-ui-bg">
+              <div className="border-b border-ui-border bg-ui-surface px-5 py-4">
+                <h4 className="type-row-title">{t('mcpServers.reviewToolsTitle')}</h4>
+                <p className="type-caption mt-1 text-ui-text-muted">{t('mcpServers.reviewToolsBody')}</p>
+              </div>
+              {reviewToolsError && (
+                <div className="type-caption m-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
+                  {reviewToolsError}
+                </div>
+              )}
+              {mutationError && (
+                <div className="type-caption m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
+                  {mutationError}
+                </div>
+              )}
+              {reviewToolsLoading ? (
+                <InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="m-4 bg-ui-surface text-xs" />
+              ) : reviewTools.length === 0 ? (
+                <div className="type-caption m-4 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
+                  {t('mcpServers.noToolsDiscovered')}
+                </div>
+              ) : (
+                reviewTools.map(renderReviewTool)
+              )}
+            </div>
+
+            <aside className="rounded-lg border border-ui-border bg-ui-surface p-5">
+              <h4 className="type-row-title">{t('mcpServers.serverCreated')}</h4>
+              <p className="type-caption mt-2 text-ui-text-muted">{t('mcpServers.serverCreatedBody')}</p>
+              <div className="mt-5 space-y-3">
+                <div>
+                  <p className="type-label text-ui-text-muted">{t('mcpServers.server')}</p>
+                  <p className="type-row-title mt-1 truncate" title={reviewServer?.name}>{reviewServer?.name || t('mcpServers.loadingCatalog')}</p>
+                </div>
+                <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-3">
+                  <div className="flex items-center justify-between gap-4 border-b border-ui-border py-2 first:pt-0">
+                    <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
+                    <p className="text-base font-semibold tracking-tight text-ui-text">{reviewTools.length}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-ui-border py-2">
+                    <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
+                    <p className="text-base font-semibold tracking-tight text-status-success-text">{reviewEnabledCount}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-2 last:pb-0">
+                    <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
+                    <p className="text-base font-semibold tracking-tight text-status-warning-text">{reviewWriteCount}</p>
+                  </div>
+                </div>
+                {!canManageTools && (
+                  <p className="type-caption rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">
+                    {t('mcpServers.manageToolsNoAccess')}
+                  </p>
+                )}
+              </div>
+            </aside>
+          </>
+        ) : (
+          <>
+        <div className="space-y-4 rounded-lg border border-ui-border bg-ui-bg p-5">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="space-y-1">
             <span className="type-label px-1">{t('mcpServers.serverName')}</span>
@@ -355,50 +319,62 @@ export const McpServerFormDialog: React.FC<{
           </div>
         )}
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="type-label px-1">{t('mcpServers.publicHeaders')}</p>
-              <p className="type-caption px-1 text-ui-text-muted">{t('mcpServers.publicHeadersHelp')}</p>
+        <details className="rounded-lg border border-ui-border bg-ui-surface">
+          <summary className="type-label flex cursor-pointer items-center justify-between gap-3 px-4 py-3">
+            {t('mcpServers.advancedOptions')}
+            <span className="text-ui-text-muted">›</span>
+          </summary>
+          <div className="space-y-3 border-t border-ui-border px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="type-label px-1">{t('mcpServers.publicHeaders')}</p>
+                <p className="type-caption px-1 text-ui-text-muted">{t('mcpServers.publicHeadersHelp')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={addPublicHeader}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                aria-label={t('mcpServers.addHeader')}
+                title={t('mcpServers.addHeader')}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={addPublicHeader}
-              className="inline-flex items-center gap-2 rounded-lg border border-ui-border px-3 py-2 text-xs font-semibold text-ui-text transition-colors hover:bg-ui-surface"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t('mcpServers.addHeader')}
-            </button>
+            {publicHeadersValidationError && (
+              <p className="type-caption rounded-md border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">
+                {publicHeadersValidationError}
+              </p>
+            )}
+            {form.publicHeaders.length > 0 && (
+              <div className="space-y-2">
+                {form.publicHeaders.map((header) => (
+                  <div key={header.id} className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                    <input
+                      value={header.name}
+                      onChange={(event) => updatePublicHeader(header.id, { name: event.target.value })}
+                      placeholder={t('mcpServers.publicHeaderNamePlaceholder')}
+                      className="min-w-0 rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
+                    />
+                    <input
+                      value={header.value}
+                      onChange={(event) => updatePublicHeader(header.id, { value: event.target.value })}
+                      placeholder={t('mcpServers.publicHeaderValuePlaceholder')}
+                      className="min-w-0 rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePublicHeader(header.id)}
+                      className="rounded-lg border border-ui-border p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text sm:self-center"
+                      aria-label={t('mcpServers.removeHeader')}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {form.publicHeaders.length > 0 && (
-            <div className="space-y-2">
-              {form.publicHeaders.map((header) => (
-                <div key={header.id} className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                  <input
-                    value={header.name}
-                    onChange={(event) => updatePublicHeader(header.id, { name: event.target.value })}
-                    placeholder={t('mcpServers.publicHeaderNamePlaceholder')}
-                    className="min-w-0 rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
-                  />
-                  <input
-                    value={header.value}
-                    onChange={(event) => updatePublicHeader(header.id, { value: event.target.value })}
-                    placeholder={t('mcpServers.publicHeaderValuePlaceholder')}
-                    className="min-w-0 rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePublicHeader(header.id)}
-                    className="rounded-lg border border-ui-border p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text sm:self-center"
-                    aria-label={t('mcpServers.removeHeader')}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        </details>
 
         <div className="type-caption rounded-lg border border-ui-border bg-ui-bg p-3">
           {urlReadOnly ? t('mcpServers.editHelp') : t('mcpServers.createHelp')}
@@ -409,25 +385,57 @@ export const McpServerFormDialog: React.FC<{
             {mutationError}
           </div>
         )}
+        </div>
+
+        <aside className="rounded-lg border border-ui-border bg-ui-surface p-5">
+          <h4 className="type-row-title">{t('mcpServers.aboutServers')}</h4>
+          <p className="type-caption mt-2 text-ui-text-muted">{t('mcpServers.aboutServersBody')}</p>
+          <div className="mt-5 space-y-4">
+            <div className="flex gap-3">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg text-ui-text-muted">
+                <SlidersHorizontal className="h-4 w-4" />
+              </span>
+              <p className="type-caption text-ui-text-muted">{t('mcpServers.aboutDiscovery')}</p>
+            </div>
+            <div className="flex gap-3">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-status-warning-soft text-status-warning-text">
+                <ShieldCheck className="h-4 w-4" />
+              </span>
+              <p className="type-caption text-ui-text-muted">{t('mcpServers.aboutWriteApproval')}</p>
+            </div>
+          </div>
+        </aside>
+          </>
+        )}
       </div>
 
       <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-        <Button
-          onClick={onClose}
-          disabled={pending}
-          variant="secondary"
-          size="sm"
-        >
-          {t('app.cancel')}
-        </Button>
-        <Button
-          onClick={onSubmit}
-          disabled={pending || !isValid}
-          variant="primary"
-          size="sm"
-        >
-          {pending ? t('mcpServers.saving') : t('mcpServers.save')}
-        </Button>
+        {isReviewStep ? (
+          <Button onClick={onFinishReview || onClose} disabled={pending} variant="accent" size="sm">
+            {t('mcpServers.finish')}
+          </Button>
+        ) : (
+          <>
+            <Button
+              onClick={onClose}
+              disabled={pending}
+              variant="secondary"
+              size="sm"
+            >
+              {t('app.cancel')}
+            </Button>
+            <Button
+              onClick={onSubmit}
+              disabled={pending || !isValid}
+              variant="accent"
+              size="sm"
+            >
+              {pending
+                ? t(mode === 'edit' ? 'mcpServers.saving' : 'mcpServers.discoveringTools')
+                : t(mode === 'edit' ? 'mcpServers.save' : 'mcpServers.reviewToolsAction')}
+            </Button>
+          </>
+        )}
       </div>
     </motion.div>
     </motion.div>

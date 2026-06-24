@@ -1,6 +1,6 @@
 # Management Console Design Overview
 
-The management console is the operator-facing UI for workspace navigation, Kubernetes cluster diagnostics, disabled Virtual Machines navigation, troubleshooting sessions, and Kubernetes tool-management flows.
+The management console is the operator-facing UI for workspace navigation, workspace workflow automation, Kubernetes cluster diagnostics, Virtual Machines navigation, troubleshooting sessions, and target tool-management flows.
 
 Primary design sources:
 

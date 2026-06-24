@@ -14,8 +14,7 @@ import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 type ActivePrimaryNav = 'workspaces' | 'clusters';
 type ActiveResourceNav =
   | 'overview'
-  | 'investigations'
-  | 'runbooks'
+  | 'workflows'
   | 'clusters'
   | 'virtualMachines'
   | 'members'
@@ -47,7 +46,6 @@ interface AppMobileNavigationProps {
   selectedClusterFindingCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmFindingCount: number;
-  workspaceInvestigationCount: number;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
   selectedWorkspace: Workspace | undefined;
@@ -78,7 +76,6 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   selectedClusterFindingCount,
   clusterAssistantNavStatus,
   selectedVmFindingCount,
-  workspaceInvestigationCount,
   selectedSidebarCluster,
   selectedSidebarVm,
   selectedWorkspace,
@@ -328,31 +325,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           {([
                             ['overview', t('app.overview'), AppPaths.workspaceOverview, 0],
                             ['clusters', t('app.clusters'), AppPaths.workspaceKubernetesClusters, 0],
-                            ['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0]
-                          ] as const).map(([nav, label, pathForWorkspace, badge]) => (
-                            <button
-                              key={nav}
-                              type="button"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                selectedWorkspaceId && navigate(pathForWorkspace(selectedWorkspaceId));
-                              }}
-                              disabled={!selectedWorkspaceId}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                                activeResourceNav === nav
-                                  ? 'bg-accent-soft text-accent-strong'
-                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              <span className="flex w-full items-center justify-between gap-3">
-                                <span>{label}</span>
-                                {badge > 0 && <NavCountBadge count={badge} />}
-                              </span>
-                            </button>
-                          ))}
-                          {([
-                            ['investigations', t('app.investigations'), AppPaths.workspaceInvestigations, workspaceInvestigationCount],
-                            ['runbooks', t('app.runbooks'), AppPaths.workspaceRunbooks, 0]
+                            ['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0],
+                            ['workflows', t('app.workflows'), AppPaths.workspaceWorkflows, 0]
                           ] as const).map(([nav, label, pathForWorkspace, badge]) => (
                             <button
                               key={nav}

@@ -231,6 +231,21 @@ export const kubernetesClusterApi = {
     };
   },
 
+  async updateClusterName(
+    workspaceId: string,
+    clusterId: string,
+    name: string
+  ): Promise<Pick<KubernetesCluster, 'name'>> {
+    const cluster = await requestJson<ControlPlaneCluster>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ name })
+      }
+    );
+    return { name: cluster.name };
+  },
+
   async updateClusterWriteConfirmationPolicy(
     workspaceId: string,
     clusterId: string,

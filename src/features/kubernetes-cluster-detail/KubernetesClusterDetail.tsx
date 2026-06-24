@@ -84,6 +84,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   isDark,
   onToggleTool,
   onSyncTools,
+  onUpdateName,
   onUpdateNamespaceScope,
   onUpdateWriteConfirmationPolicy,
   onOpenCopilot,
@@ -227,6 +228,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 }}
                 canManageMcp={canManageMcp}
                 canManageTools={canManageTools}
+                canRequestWriteRuns={canRequestWriteRuns}
                 onToggleTool={onToggleTool}
                 onSyncTools={onSyncTools}
               />
@@ -257,6 +259,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 runTracesByRunId={runTracesByRunId}
                 sessionAssistantStatuses={sessionAssistantStatuses}
                 transcriptRef={transcriptRef}
+                footerKey={canRequestWriteRuns ? undefined : 'chat.footerReadOnlyRole'}
                 onChatScroll={handleChatScroll}
                 onLoadEarlierMessages={handleLoadEarlierMessages}
                 onInputChange={setInputValue}
@@ -278,6 +281,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 cluster={cluster}
                 workspaceName={workspaceName}
                 canManageCluster={canManageCluster}
+                onUpdateName={onUpdateName}
                 onEditNamespaceScope={onUpdateNamespaceScope ? () => setIsNamespaceScopeDialogOpen(true) : undefined}
                 onUpdateWriteConfirmationPolicy={onUpdateWriteConfirmationPolicy}
               />

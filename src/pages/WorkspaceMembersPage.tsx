@@ -12,7 +12,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 import { WorkspaceInvitationsPanel } from '@/pages/workspace-members/WorkspaceInvitationsPanel';
 import { WorkspaceInviteModal } from '@/pages/workspace-members/WorkspaceInviteModal';
-import { SupportedRolesTable } from '@/pages/workspace-members/SupportedRolesTable';
+import { SupportedRolesList } from '@/pages/workspace-members/SupportedRolesList';
 import { formatMemberMutationError, formatRole, getInitials } from '@/pages/workspace-members/memberUtils';
 
 interface WorkspaceMembersPageProps {
@@ -461,6 +461,15 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
         </div>
       </motion.div>
 
+      <WorkspaceInvitationsPanel
+        invitations={invitations}
+        hasMoreInvitations={Boolean(nextInvitationCursor)}
+        isLoadingMoreInvitations={isLoadingMoreInvitations}
+        onCreateInvitation={onCreateInvitation ? createInvitation : undefined}
+        onLoadMoreInvitations={nextInvitationCursor ? () => void loadInvitations('append', nextInvitationCursor) : undefined}
+        onRevokeInvitation={onRevokeInvitation ? revokeInvitation : undefined}
+      />
+
       <motion.div
         {...fadeTransition}
         className="mt-8 overflow-hidden rounded-lg border border-ui-border bg-ui-surface"
@@ -474,17 +483,8 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
             {t('members.supportedRolesCount', { count: roleTemplates.length })}
           </span>
         </div>
-        <SupportedRolesTable roleTemplates={roleTemplates} />
+        <SupportedRolesList roleTemplates={roleTemplates} />
       </motion.div>
-
-      <WorkspaceInvitationsPanel
-        invitations={invitations}
-        hasMoreInvitations={Boolean(nextInvitationCursor)}
-        isLoadingMoreInvitations={isLoadingMoreInvitations}
-        onCreateInvitation={onCreateInvitation ? createInvitation : undefined}
-        onLoadMoreInvitations={nextInvitationCursor ? () => void loadInvitations('append', nextInvitationCursor) : undefined}
-        onRevokeInvitation={onRevokeInvitation ? revokeInvitation : undefined}
-      />
 
       <AnimatePresence>
         {isInviteModalOpen && (

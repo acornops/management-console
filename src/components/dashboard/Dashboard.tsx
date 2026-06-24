@@ -1,20 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KubernetesCluster, HealthStatus, ClusterMetricHistoryPoint } from '@/types';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, Cloud, Clock, Trash2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Activity, MoreHorizontal, Settings, Trash2 } from 'lucide-react';
+import { Trans, useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { actionCardButtonClassName, cardClassName } from '@/components/common/Card';
 import { Dialog } from '@/components/common/Dialog';
+import { ClusterResourceChart, type ClusterMetricPoint } from '@/components/dashboard/ClusterResourceChart';
+import { PendingClusterSetup } from '@/components/dashboard/PendingClusterSetup';
 import { headerMotion } from '@/lib/motion';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
-  formatLastUpdated,
   getAgentConnectionState,
-  getEffectiveHealthStatus,
-  getTelemetryFreshness,
-  getTelemetryFreshnessLabel
+  getEffectiveHealthStatus
 } from '@/utils/telemetry';
 
 interface DashboardProps {
@@ -25,14 +24,9 @@ interface DashboardProps {
   totalClusterCount?: number;
   controls?: React.ReactNode;
   onAddCluster?: () => void;
+  onOpenClusterSettings?: (cluster: KubernetesCluster) => void;
   canDeleteKubernetesCluster?: (cluster: KubernetesCluster) => boolean;
   onDeleteKubernetesCluster?: (cluster: KubernetesCluster) => Promise<void> | void;
-}
-
-interface ClusterMetricPoint {
-  timestamp: number;
-  cpu: number | null;
-  memory: number | null;
 }
 
 function getClusterStatusLabel(cluster: KubernetesCluster, requiresAgentInstall: boolean, t: (key: string) => string): string {
@@ -86,114 +80,6 @@ function getPersistedMetricHistory(points: ClusterMetricHistoryPoint[]): Cluster
     .filter((point): point is ClusterMetricPoint => point !== null);
 }
 
-function formatShortTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-const ClusterResourceChart: React.FC<{ cluster: KubernetesCluster; points: ClusterMetricPoint[] }> = ({ cluster, points }) => {
-  const { t } = useTranslation();
-  const width = 320;
-  const height = 104;
-  const paddingX = 10;
-  const paddingY = 12;
-  const safePoints = points.slice(-12);
-
-  if (safePoints.length < 2) {
-    return (
-      <div className="flex h-[154px] w-full flex-col items-center justify-center border-y border-dashed border-ui-border bg-ui-bg/60 px-5 text-center">
-        <p className="type-micro-label">{safePoints.length === 0 ? t('dashboard.noTelemetry') : t('dashboard.collectingHistory')}</p>
-        {safePoints.length === 1 && (
-          <p className="type-caption mt-2 max-w-xs">
-            {t('dashboard.collectingHistoryBody')}
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  const xForIndex = (index: number) =>
-    safePoints.length === 1
-      ? width / 2
-      : paddingX + (index * (width - paddingX * 2)) / (safePoints.length - 1);
-  const maxForMetric = (metric: 'cpu' | 'memory') => {
-    const values = safePoints
-      .map((point) => point[metric])
-      .filter((value): value is number => value !== null);
-    if (values.length === 0) return 1;
-    return Math.max(...values, 1);
-  };
-  const maxByMetric = {
-    cpu: maxForMetric('cpu'),
-    memory: maxForMetric('memory')
-  };
-  const yForValue = (value: number, metric: 'cpu' | 'memory') => {
-    const ratio = Math.max(0, Math.min(1, value / maxByMetric[metric]));
-    return paddingY + (1 - ratio) * (height - paddingY * 2);
-  };
-  const buildPath = (metric: 'cpu' | 'memory') => {
-    const segments: string[] = [];
-    safePoints.forEach((point, index) => {
-      const value = point[metric];
-      if (value === null) return;
-      segments.push(`${segments.length === 0 ? 'M' : 'L'} ${xForIndex(index)} ${yForValue(value, metric)}`);
-    });
-    return segments.join(' ');
-  };
-  const cpuPath = buildPath('cpu');
-  const memoryPath = buildPath('memory');
-  const latest = safePoints[safePoints.length - 1];
-  const first = safePoints[0];
-
-  return (
-    <div className="h-[118px] border-y border-ui-border bg-ui-bg/60 px-3 py-2.5" aria-label={t('dashboard.telemetryAria', { name: cluster.name })}>
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="type-micro-label inline-flex items-center gap-1 text-accent-strong">
-            <span className="h-2 w-2 rounded-full bg-accent" />
-            CPU {latest.cpu === null ? '-' : `${latest.cpu.toFixed(2)} Core`}
-          </span>
-          <span className="type-micro-label inline-flex items-center gap-1 text-metric-blue">
-            <span className="h-2 w-2 rounded-full bg-metric-blue" />
-            Memory {latest.memory === null ? '-' : `${latest.memory.toFixed(2)} GiB`}
-          </span>
-        </div>
-        <span className="type-micro-label">{t('dashboard.history')}</span>
-      </div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-[4.6rem] w-full overflow-visible" role="img">
-        {[0.25, 0.5, 0.75].map((tick) => (
-          <line
-            key={tick}
-            x1={paddingX}
-            y1={paddingY + (1 - tick) * (height - paddingY * 2)}
-            x2={width - paddingX}
-            y2={paddingY + (1 - tick) * (height - paddingY * 2)}
-            stroke="var(--border)"
-            strokeDasharray="3 4"
-          />
-        ))}
-        {cpuPath && (
-          <path d={cpuPath} fill="none" stroke="var(--brand-orange)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
-        )}
-        {memoryPath && (
-          <path d={memoryPath} fill="none" stroke="rgb(var(--metric-blue-rgb))" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5 5" opacity="0.95" />
-        )}
-        {latest.cpu !== null && (
-          <circle cx={xForIndex(safePoints.length - 1)} cy={yForValue(latest.cpu, 'cpu')} r={3} fill="var(--brand-orange)" stroke="var(--bg)" strokeWidth={1.5} />
-        )}
-        {latest.memory !== null && (
-          <circle cx={xForIndex(safePoints.length - 1)} cy={yForValue(latest.memory, 'memory')} r={3} fill="rgb(var(--metric-blue-rgb))" stroke="var(--bg)" strokeWidth={1.5} />
-        )}
-        <text x={paddingX} y={height + 1} className="type-micro-label fill-ui-text-muted">
-          {formatShortTime(first.timestamp)}
-        </text>
-        <text x={width - paddingX} y={height + 1} textAnchor="end" className="type-micro-label fill-ui-text-muted">
-          {formatShortTime(latest.timestamp)}
-        </text>
-      </svg>
-    </div>
-  );
-};
-
 const Dashboard: React.FC<DashboardProps> = ({
   kubernetesClusters,
   onSelectKubernetesCluster,
@@ -202,6 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   totalClusterCount,
   controls,
   onAddCluster,
+  onOpenClusterSettings,
   canDeleteKubernetesCluster,
   onDeleteKubernetesCluster
 }) => {
@@ -216,12 +103,30 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [deleteClusterError, setDeleteClusterError] = useState<string | null>(null);
   const [isDeletingCluster, setIsDeletingCluster] = useState(false);
   const [deleteClusterConfirmation, setDeleteClusterConfirmation] = useState('');
+  const [openClusterActionMenuId, setOpenClusterActionMenuId] = useState<string | null>(null);
   const [metricHistoryByClusterId, setMetricHistoryByClusterId] = useState<Record<string, ClusterMetricHistoryPoint[]>>({});
   const metricHistoryRequestSeqRef = useRef(0);
   const visibleMetricClusters = useMemo(
     () => kubernetesClusters.filter((cluster) => getAgentConnectionState(cluster) === 'connected').slice(0, 6),
     [kubernetesClusters]
   );
+
+  useEffect(() => {
+    if (!openClusterActionMenuId) return undefined;
+
+    const closeMenu = () => setOpenClusterActionMenuId(null);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeMenu();
+    };
+
+    window.addEventListener('click', closeMenu);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('click', closeMenu);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openClusterActionMenuId]);
 
   useEffect(() => {
     const visibleClusterIds = new Set(visibleMetricClusters.map((cluster) => cluster.id));
@@ -272,6 +177,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const closeDeleteClusterDialog = () => {
     setDeleteClusterConfirmation('');
+    setDeleteClusterError(null);
     setDeleteTargetCluster(null);
   };
 
@@ -365,62 +271,38 @@ const Dashboard: React.FC<DashboardProps> = ({
             const requiresAgentInstall = agentState === 'not_installed';
             const agentConnected = agentState === 'connected';
             const canDeleteCluster = Boolean(onDeleteKubernetesCluster && canDeleteKubernetesCluster?.(cluster));
-            const lastUpdatedLabel = formatLastUpdated(cluster.lastUpdate);
-            const telemetryFreshness = getTelemetryFreshness(cluster);
-            const telemetryLabel = getTelemetryFreshnessLabel(telemetryFreshness);
+            const hasClusterMenu = Boolean(onOpenClusterSettings || canDeleteCluster);
             const chartPoints = getPersistedMetricHistory(metricHistoryByClusterId[cluster.id] ?? cluster.metricHistory ?? []);
             const clusterSummary = (
               <>
                 <div className="min-w-0 text-left">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg">
-                      <Cloud className="h-5 w-5 text-accent-strong" />
+                      <ICONS.Layers className="h-5 w-5 text-accent-strong" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 flex-wrap items-center gap-2 pr-10">
-                        <h3 className="type-panel-title truncate" title={cluster.name}>{cluster.name}</h3>
-                        <span className={`type-micro-label shrink-0 rounded-full px-2 py-0.5 ${getClusterStatusClass(cluster, requiresAgentInstall)}`}>
+                    <div className="min-w-0 flex-1 pr-14">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <h3 className="type-panel-title min-w-0 flex-1 truncate" title={cluster.name}>{cluster.name}</h3>
+                        <span className={`type-micro-label shrink-0 rounded-full px-1.5 py-px text-[0.625rem] leading-3 ${getClusterStatusClass(cluster, requiresAgentInstall)}`}>
                           {getClusterStatusLabel(cluster, requiresAgentInstall, t)}
                         </span>
                       </div>
-                      <div className="type-caption mt-1.5 flex items-center gap-2">
-                        <Clock className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">
-                          {requiresAgentInstall ? t('dashboard.awaitingAgent') : t('dashboard.telemetryUpdated', { telemetryLabel, lastUpdatedLabel })}
-                        </span>
-                      </div>
-                      <p className="mt-1 type-caption">
-                        {cluster.resourceSummary?.nodeCount ?? cluster.nodes.length} {t('dashboard.nodes')} · {cluster.nodes[0]?.version || t('common.unknown')}
-                      </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="w-full">
-                  {agentConnected && <ClusterResourceChart cluster={cluster} points={chartPoints} />}
-                  {requiresAgentInstall && (
-                    <div className="flex min-h-[118px] flex-col justify-center gap-3 border-y border-ui-border bg-ui-bg/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="type-caption">{t('dashboard.installAgentMessage')}</p>
-                      <Button
-                        data-cluster-setup-action="install"
-                        type="button"
-                        onClick={() => onInstallAgent?.(cluster.id)}
-                        disabled={!onInstallAgent}
-                        variant="accent"
-                        size="sm"
-                        className="pointer-events-auto w-fit rounded-md px-2.5 py-1.5 font-semibold"
-                      >
-                        <ICONS.Wrench className="h-3.5 w-3.5" />
-                        {t('dashboard.installAgent')}
-                      </Button>
-                    </div>
-                  )}
-                  {agentState === 'disconnected' && (
-                    <div className="type-caption flex min-h-[118px] items-center border-y border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
-                      {t('dashboard.agentOffline')}
-                    </div>
-                  )}
-                </div>
+                {requiresAgentInstall && <PendingClusterSetup clusterId={cluster.id} onInstallAgent={onInstallAgent} />}
+
+                {(agentConnected || agentState === 'disconnected') && (
+                  <div className="flex min-h-0 flex-1 flex-col">
+                    {agentConnected && <ClusterResourceChart cluster={cluster} points={chartPoints} />}
+                    {agentState === 'disconnected' && (
+                      <div className="type-caption flex min-h-[118px] items-center border-y border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
+                        {t('dashboard.agentOffline')}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             );
 
@@ -430,7 +312,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 data-cluster-card="true"
                 className={cardClassName({
                   interactive: !requiresAgentInstall,
-                  className: 'group relative flex min-w-0 flex-col overflow-hidden'
+                  className: 'group relative flex h-[20rem] min-w-0 flex-col overflow-hidden'
                 })}
               >
                 {!requiresAgentInstall && (
@@ -443,26 +325,67 @@ const Dashboard: React.FC<DashboardProps> = ({
                   />
                 )}
 
-                {canDeleteCluster && (
+                {hasClusterMenu && (
                   <div className="absolute right-3 top-3 z-20 pointer-events-auto">
                     <button
-                      data-cluster-card-action="delete"
+                      data-cluster-overflow-action="toggle"
                       type="button"
-                      onClick={() => {
-                        setDeleteClusterConfirmation('');
-                        setDeleteClusterError(null);
-                        setDeleteTargetCluster(cluster);
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setOpenClusterActionMenuId((current) => current === cluster.id ? null : cluster.id);
                       }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-status-danger/25 bg-ui-surface/95 text-status-danger-text shadow-sm transition-colors hover:bg-status-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                      aria-label={`${t('dashboard.delete')} ${cluster.name}`}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-surface hover:text-ui-text active:bg-ui-bg/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                      aria-haspopup="menu"
+                      aria-expanded={openClusterActionMenuId === cluster.id}
+                      aria-label={t('dashboard.clusterActionsFor', { name: cluster.name })}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <MoreHorizontal className="h-4 w-4" />
                     </button>
+                    {openClusterActionMenuId === cluster.id && (
+                      <div
+                        role="menu"
+                        onClick={(event) => event.stopPropagation()}
+                        className="absolute right-0 top-10 w-52 overflow-hidden rounded-lg border border-ui-border bg-ui-surface p-1 text-sm shadow-xl"
+                      >
+                        {onOpenClusterSettings && (
+                          <button
+                            data-cluster-overflow-action="settings"
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setOpenClusterActionMenuId(null);
+                              onOpenClusterSettings(cluster);
+                            }}
+                            className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                          >
+                            <Settings className="h-4 w-4 text-ui-text-muted" />
+                            {t('dashboard.clusterSettings')}
+                          </button>
+                        )}
+                        {canDeleteCluster && (
+                          <button
+                            data-cluster-overflow-action="delete"
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setOpenClusterActionMenuId(null);
+                              setDeleteClusterConfirmation('');
+                              setDeleteClusterError(null);
+                              setDeleteTargetCluster(cluster);
+                            }}
+                            className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-status-danger-text transition-colors hover:bg-status-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            {t('dashboard.deleteCluster')}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                <div className="relative z-10 flex min-h-full flex-col pointer-events-none">
-                  <div className="grid flex-1 gap-4 px-4 pb-6 pt-4 sm:px-5 sm:pb-7">
+                <div className="relative z-10 flex flex-1 flex-col pointer-events-none">
+                  <div className="flex min-h-0 flex-1 flex-col gap-5 px-4 pb-6 pt-4 sm:px-5 sm:pb-7">
                     {clusterSummary}
                   </div>
                 </div>
@@ -474,7 +397,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               data-cluster-add-card="true"
               type="button"
               onClick={onAddCluster}
-              className={actionCardButtonClassName({ className: 'min-h-[17rem] flex-col' })}
+              className={actionCardButtonClassName({ className: 'h-[20rem] flex-col' })}
             >
               <ICONS.Plus className="h-4 w-4" />
               {t('dashboard.addCluster')}
@@ -536,7 +459,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                   htmlFor="delete-cluster-confirmation-input"
                   className="mb-1.5 block px-1 text-xs font-bold text-ui-text-muted"
                 >
-                  {t('dashboard.deleteClusterConfirmationLabel', { name: deleteTargetCluster.name })}
+                  <Trans
+                    i18nKey="dashboard.deleteClusterConfirmationLabel"
+                    values={{ name: deleteTargetCluster.name }}
+                    components={{
+                      name: <span className="font-extrabold text-status-danger-text" />
+                    }}
+                  />
                 </label>
                 <input
                   id="delete-cluster-confirmation-input"

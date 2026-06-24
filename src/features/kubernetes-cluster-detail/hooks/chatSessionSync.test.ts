@@ -3,11 +3,15 @@ import { sanitizeChatMessages } from '@/features/kubernetes-cluster-detail/lib/s
 import { mapControlPlaneApprovalToPendingApproval } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
 import {
   createConversationId,
+  findExistingSessionForBackendId,
+  hasRunMessageWithoutTraceDetails,
+  mapControlPlaneSessionToChatSession,
   mergeHydratedChatMessages,
+  mergeFetchedChatSessions,
   replaceCancelledRunMessagesForHydration,
   sortSessionsByTimestamp
 } from '@/features/kubernetes-cluster-detail/hooks/chatSessionSync';
-import type { ControlPlaneRunToolApproval } from '@/services/controlPlaneApi';
+import type { ControlPlaneRunToolApproval, ControlPlaneSession } from '@/services/controlPlaneApi';
 import type { ChatMessage, ChatSession } from '@/types';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
@@ -61,6 +65,41 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
       ]);
     });
 
+    it('preserves draft-backed sessions when fetched backend rows are mapped', () => {
+      const draftBackedSession: ChatSession = {
+        id: 'draft-session',
+        backendSessionId: 'backend-session',
+        name: 'Draft',
+        hydrated: true,
+        messages: [{ id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1 }],
+        timestamp: 1
+      };
+      const backendSession: ControlPlaneSession = {
+        id: 'backend-session',
+        workspaceId: 'workspace-1',
+        targetId: 'target-1',
+        targetType: 'kubernetes',
+        title: 'Backend session',
+        status: 'open',
+        createdBy: 'user-1',
+        createdByUser: { id: 'user-1', displayName: 'User One' },
+        createdAt: '2026-06-01T05:00:00.000Z',
+        updatedAt: '2026-06-01T05:00:00.000Z',
+        lastMessageAt: '2026-06-01T05:00:00.000Z',
+        expiresAt: '2026-06-02T05:00:00.000Z'
+      };
+
+      const existing = findExistingSessionForBackendId([draftBackedSession], backendSession.id);
+      const fetched = mapControlPlaneSessionToChatSession(backendSession, existing);
+      const merged = mergeFetchedChatSessions([fetched], [draftBackedSession], draftBackedSession.id);
+
+      expect(fetched.id).toBe('draft-session');
+      expect(fetched.backendSessionId).toBe('backend-session');
+      expect(fetched.messages).toEqual(draftBackedSession.messages);
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('draft-session');
+    });
+
     it('prefers crypto randomUUID and falls back to local ids', () => {
       const randomUuidSpy = vi.spyOn(globalThis.crypto, 'randomUUID');
       randomUuidSpy.mockReturnValueOnce('12345678-1234-1234-1234-123456789abc');
@@ -110,6 +149,29 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
         },
         sessionsMessages[2]
       ]);
+    });
+
+    it('detects hydrated run messages that still need trace replay', () => {
+      const messages: ChatMessage[] = [
+        { id: 'user-message', role: 'user', content: 'Check rollout', runId: 'run-1', timestamp: 1 },
+        { id: 'assistant-message', role: 'assistant', content: 'Rollout is healthy.', runId: 'run-1', timestamp: 2 }
+      ];
+
+      expect(hasRunMessageWithoutTraceDetails(messages, {})).toBe(true);
+      expect(hasRunMessageWithoutTraceDetails(messages, {
+        'run-1': { runId: 'run-1', status: 'running', steps: [], toolCalls: [] }
+      })).toBe(true);
+      expect(hasRunMessageWithoutTraceDetails(messages, {
+        'run-1': {
+          runId: 'run-1',
+          status: 'completed',
+          steps: [{ id: 'step-1', label: 'Completed', status: 'success', timestamp: 2 }],
+          toolCalls: []
+        }
+      })).toBe(false);
+      expect(hasRunMessageWithoutTraceDetails([
+        { id: 'plain-message', role: 'assistant', content: 'No run attached.', timestamp: 3 }
+      ], {})).toBe(false);
     });
 
     it('adds a cancelled assistant message when hydration only has the user turn', () => {

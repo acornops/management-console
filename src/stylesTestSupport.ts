@@ -11,8 +11,6 @@ export const loginPage = readSource('src/pages/LoginPage.tsx');
 export const loginPreview = readSource('src/pages/login/LoginPreview.tsx');
 export const dashboardPage = readSource('src/components/dashboard/Dashboard.tsx');
 export const overviewPage = readSource('src/pages/WorkspaceOverviewPage.tsx');
-export const investigationsPage = readSource('src/pages/WorkspaceInvestigationsPage.tsx');
-export const runbooksPage = readSource('src/pages/AgentRunbooksPage.tsx');
 export const userSettingsPage = readSource('src/pages/UserSettingsPage.tsx');
 export const workspaceSettingsPage = readSource('src/pages/WorkspaceSettingsPage.tsx');
 export const desktopSidebar = readSource('src/app/AppDesktopSidebar.tsx');
@@ -35,6 +33,12 @@ export const mcpServerCard = readSource(
 );
 export const mcpServersDialogs = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/McpServersDialogs.tsx'
+);
+export const mcpServerToolsDialog = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/McpServerToolsDialog.tsx'
+);
+export const mcpServersInventory = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/McpServersInventory.tsx'
 );
 export const chatView = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'

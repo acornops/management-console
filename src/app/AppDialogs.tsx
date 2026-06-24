@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModal';
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { Button } from '@/components/common/Button';
@@ -27,7 +27,6 @@ interface AppDialogsProps {
   newWorkspaceName: string;
   toasts: AppToast[];
   user: User;
-  onBackToClusterDetails: () => void;
   onClusterNameChange: (value: string) => void;
   onCloseAddCluster: () => void;
   onCloseInstallAgent: () => void;
@@ -63,7 +62,6 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   newWorkspaceName,
   toasts,
   user,
-  onBackToClusterDetails,
   onClusterNameChange,
   onCloseAddCluster,
   onCloseInstallAgent,
@@ -146,7 +144,11 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                     htmlFor="delete-workspace-confirmation-input"
                     className="mb-1.5 block px-1 text-xs font-bold text-ui-text-muted"
                   >
-                    {t('app.deleteWorkspaceConfirmationLabel', { name: deleteTargetWorkspace.name })}
+                    <Trans
+                      i18nKey="app.deleteWorkspaceConfirmationLabel"
+                      values={{ name: deleteTargetWorkspace.name }}
+                      components={{ name: <span className="font-extrabold text-status-danger-text" /> }}
+                    />
                   </label>
                   <input
                     id="delete-workspace-confirmation-input"
@@ -271,7 +273,6 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           onIncludeNamespacesChange={onIncludeNamespacesChange}
           onExcludeNamespacesChange={onExcludeNamespacesChange}
           onProceedToInstructions={onProceedToClusterInstructions}
-          onBackToDetails={onBackToClusterDetails}
           onConfirmInstalled={onConfirmClusterInstalled}
         />
 

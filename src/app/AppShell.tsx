@@ -14,11 +14,60 @@ import { ActivePrimaryNav, ActiveResourceNav, getClusterBackToWorkspacePath, get
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
-import type { PendingVmRunbookPrompt, RunbookExecutionRequest } from '@/pages/runbooks/runbookModel';
+import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import type { controlPlaneApi as ControlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 import { AppPaths, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
+
+interface TargetReturnContext {
+  targetId: string;
+  targetType: 'kubernetes' | 'virtual_machine';
+  workspaceId: string;
+  path: string;
+}
+
+function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRoute): TargetReturnContext | null {
+  if (nextRoute.kind === 'workspaceKubernetesClusterDiagnostics') {
+    if (previousRoute?.kind === 'workspaceOverview' && previousRoute.workspaceId === nextRoute.workspaceId) {
+      return {
+        targetId: nextRoute.clusterId,
+        targetType: 'kubernetes',
+        workspaceId: nextRoute.workspaceId,
+        path: AppPaths.workspaceOverview(nextRoute.workspaceId)
+      };
+    }
+    if (previousRoute?.kind === 'workspaceKubernetesClusters' && previousRoute.workspaceId === nextRoute.workspaceId) {
+      return {
+        targetId: nextRoute.clusterId,
+        targetType: 'kubernetes',
+        workspaceId: nextRoute.workspaceId,
+        path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId)
+      };
+    }
+  }
+
+  if (nextRoute.kind === 'workspaceVirtualMachineDetail') {
+    if (previousRoute?.kind === 'workspaceOverview' && previousRoute.workspaceId === nextRoute.workspaceId) {
+      return {
+        targetId: nextRoute.vmId,
+        targetType: 'virtual_machine',
+        workspaceId: nextRoute.workspaceId,
+        path: AppPaths.workspaceOverview(nextRoute.workspaceId)
+      };
+    }
+    if (previousRoute?.kind === 'workspaceVirtualMachines' && previousRoute.workspaceId === nextRoute.workspaceId) {
+      return {
+        targetId: nextRoute.vmId,
+        targetType: 'virtual_machine',
+        workspaceId: nextRoute.workspaceId,
+        path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId)
+      };
+    }
+  }
+
+  return null;
+}
 
 interface AppShellProps {
   acceptWorkspaceInvitation: (token: string) => Promise<void>;
@@ -28,6 +77,8 @@ interface AppShellProps {
   activeResourceNav: ActiveResourceNav;
   kubernetesClusters: KubernetesCluster[];
   kubernetesClustersInWorkspaceContext: KubernetesCluster[];
+  virtualMachinesInWorkspaceContext: ControlPlaneVirtualMachine[];
+  hasLoadedWorkspaceVirtualMachines: boolean;
   clusterContextId: string | undefined;
   clusterCopilotCluster: KubernetesCluster | null;
   clusterCopilotInitialPrompt: { id: number; text: string } | null;
@@ -41,6 +92,7 @@ interface AppShellProps {
   excludeNamespaces: string;
   getCurrentUserRoleForWorkspace: (workspaceId: string) => Workspace['members'][number]['role'];
   getWorkspacePermission: (workspaceId: string, permission: keyof NonNullable<Workspace['permissions']>) => boolean;
+  handleCancelAddCluster: () => void;
   handleConfirmAddCluster: () => Promise<void>;
   handleCreateWorkspace: (workspace: Omit<Workspace, 'id' | 'clusterIds'>) => void;
   handleDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
@@ -80,6 +132,9 @@ interface AppShellProps {
   selectedWorkspace: Workspace | undefined;
   selectedWorkspaceId: string | null;
   setKubernetesClusters: React.Dispatch<React.SetStateAction<KubernetesCluster[]>>;
+  onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
+  onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
+  onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
   setClusterCopilotInitialPrompt: React.Dispatch<React.SetStateAction<{ id: number; text: string } | null>>;
   setClusterCopilotWidth: React.Dispatch<React.SetStateAction<number>>;
   setClusterCreationStep: React.Dispatch<React.SetStateAction<'details' | 'instructions'>>;
@@ -88,7 +143,6 @@ interface AppShellProps {
   setIncludeNamespaces: React.Dispatch<React.SetStateAction<string>>;
   setInstallAgentClusterId: React.Dispatch<React.SetStateAction<string | null>>;
   setIsAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsAddingCluster: React.Dispatch<React.SetStateAction<boolean>>;
   setIsClusterCopilotOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setIsCreatingWorkspace: React.Dispatch<React.SetStateAction<boolean>>;
   setIsDeletingWorkspace: React.Dispatch<React.SetStateAction<boolean>>;
@@ -111,7 +165,6 @@ interface AppShellProps {
   workspaceClusterCounts: Map<string, number>;
   workspaceContext: Workspace | undefined;
   workspaceContextId: string | null;
-  workspaceInvestigationCount: number;
   workspaces: Workspace[];
 }
 
@@ -123,6 +176,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   activeResourceNav,
   kubernetesClusters,
   kubernetesClustersInWorkspaceContext,
+  virtualMachinesInWorkspaceContext,
+  hasLoadedWorkspaceVirtualMachines,
   clusterContextId,
   clusterCopilotCluster,
   clusterCopilotInitialPrompt,
@@ -136,6 +191,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   excludeNamespaces,
   getCurrentUserRoleForWorkspace,
   getWorkspacePermission,
+  handleCancelAddCluster,
   handleConfirmAddCluster,
   handleCreateWorkspace,
   handleDeleteCluster,
@@ -175,6 +231,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   selectedWorkspace,
   selectedWorkspaceId,
   setKubernetesClusters,
+  onReplaceWorkspaceVirtualMachines,
+  onUpsertWorkspaceVirtualMachine,
+  onRemoveWorkspaceVirtualMachine,
   setClusterCopilotInitialPrompt,
   setClusterCopilotWidth,
   setClusterCreationStep,
@@ -183,7 +242,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   setIncludeNamespaces,
   setInstallAgentClusterId,
   setIsAccountMenuOpen,
-  setIsAddingCluster,
   setIsClusterCopilotOpen,
   setIsCreatingWorkspace,
   setIsDeletingWorkspace,
@@ -206,11 +264,12 @@ export const AppShell: React.FC<AppShellProps> = ({
   workspaceClusterCounts,
   workspaceContext,
   workspaceContextId,
-  workspaceInvestigationCount,
   workspaces
 }) => {
   const backToWorkspaceId = selectedSidebarCluster?.workspaceId || workspaceContextId || selectedWorkspaceId;
   const vmBackToWorkspaceId = selectedSidebarVm?.workspaceId || workspaceContextId || selectedWorkspaceId;
+  const [targetReturnContext, setTargetReturnContext] = React.useState<TargetReturnContext | null>(null);
+  const previousRouteRef = React.useRef<AppRoute | null>(null);
   const selectedWorkspaceInitials = getWorkspaceInitials(selectedWorkspace?.name);
   const selectedClusterFindingCount =
     selectedSidebarCluster?.resourceSummary?.findingCount ?? selectedSidebarCluster?.alerts.length ?? 0;
@@ -218,11 +277,54 @@ export const AppShell: React.FC<AppShellProps> = ({
   const chatRuntimeCluster = isClusterCopilotOpen && clusterCopilotCluster ? clusterCopilotCluster : routeChatCluster;
   const chatRuntimeWorkspace = chatRuntimeCluster ? workspaces.find((workspace) => workspace.id === chatRuntimeCluster.workspaceId) : undefined;
   const chatRuntimeInitialSessionId = routeChatCluster ? new URLSearchParams(window.location.search).get('session') : null;
-  const [pendingVmRunbookPrompt, setPendingVmRunbookPrompt] = React.useState<PendingVmRunbookPrompt | null>(null);
+  const [pendingVmTargetPrompt, setPendingVmTargetPrompt] = React.useState<PendingVmTargetPrompt | null>(null);
   const isClusterChatVisible = activeClusterSubview === 'chat' || Boolean(isClusterCopilotOpen && clusterCopilotCluster);
   const [clusterAssistantNavStatus, setClusterAssistantNavStatus] = React.useState<AssistantNavStatus>('idle');
   const previousAssistantRuntimeStatusRef = React.useRef<AssistantNavStatus>('idle');
   const isClusterChatVisibleRef = React.useRef(isClusterChatVisible);
+
+  React.useEffect(() => {
+    const previousRoute = previousRouteRef.current;
+    const nextReturnContext = getTargetReturnContext(previousRoute, route);
+    if (nextReturnContext) {
+      setTargetReturnContext(nextReturnContext);
+    }
+    previousRouteRef.current = route;
+  }, [route]);
+
+  const getBackToWorkspacePath = React.useCallback(() => {
+    if (
+      isVirtualMachineSidebar &&
+      selectedSidebarVm &&
+      targetReturnContext?.targetType === 'virtual_machine' &&
+      targetReturnContext.workspaceId === selectedSidebarVm.workspaceId &&
+      targetReturnContext.targetId === selectedSidebarVm.id
+    ) {
+      return targetReturnContext.path;
+    }
+
+    if (
+      isClusterSidebar &&
+      selectedSidebarCluster &&
+      targetReturnContext?.targetType === 'kubernetes' &&
+      targetReturnContext.workspaceId === selectedSidebarCluster.workspaceId &&
+      targetReturnContext.targetId === selectedSidebarCluster.id
+    ) {
+      return targetReturnContext.path;
+    }
+
+    return isVirtualMachineSidebar
+      ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId)
+      : getClusterBackToWorkspacePath(backToWorkspaceId);
+  }, [
+    backToWorkspaceId,
+    isClusterSidebar,
+    isVirtualMachineSidebar,
+    selectedSidebarCluster,
+    selectedSidebarVm,
+    targetReturnContext,
+    vmBackToWorkspaceId
+  ]);
 
   React.useEffect(() => {
     isClusterChatVisibleRef.current = isClusterChatVisible;
@@ -290,7 +392,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     );
   }, [setKubernetesClusters, setWorkspaces]);
 
-  const runRunbook = React.useCallback((request: RunbookExecutionRequest) => {
+  const runTargetPrompt = React.useCallback((request: TargetPromptRequest) => {
     if (request.targetType === 'kubernetes') {
       const cluster = kubernetesClusters.find((item) => item.id === request.targetId && item.workspaceId === request.workspaceId);
       if (!cluster) return;
@@ -298,7 +400,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       return;
     }
 
-    setPendingVmRunbookPrompt({
+    setPendingVmTargetPrompt({
       workspaceId: request.workspaceId,
       targetId: request.targetId,
       prompt: request.prompt,
@@ -307,8 +409,8 @@ export const AppShell: React.FC<AppShellProps> = ({
     navigate(AppPaths.workspaceVirtualMachineDetail(request.workspaceId, request.targetId, 'chat'));
   }, [kubernetesClusters, navigate, openClusterCopilot]);
 
-  const consumePendingVmRunbookPrompt = React.useCallback(() => {
-    setPendingVmRunbookPrompt(null);
+  const consumePendingVmTargetPrompt = React.useCallback(() => {
+    setPendingVmTargetPrompt(null);
   }, []);
 
   return (
@@ -325,7 +427,6 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedClusterFindingCount={selectedClusterFindingCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmFindingCount={selectedSidebarVmFindingCount}
-        workspaceInvestigationCount={workspaceInvestigationCount}
         selectedSidebarCluster={selectedSidebarCluster}
         selectedSidebarVm={selectedSidebarVm}
         selectedWorkspace={selectedWorkspace}
@@ -334,7 +435,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         workspaceClusterCounts={workspaceClusterCounts}
         workspaces={workspaces}
         navigate={navigate}
-        onBackToWorkspaceSidebar={() => navigate(isVirtualMachineSidebar ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId) : getClusterBackToWorkspacePath(backToWorkspaceId))}
+        onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}
         onLogout={() => void handleLogout()}
         onNavigateClusterSubview={(tab) => {
           if (!selectedSidebarCluster) return;
@@ -363,14 +464,13 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedClusterFindingCount={selectedClusterFindingCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmFindingCount={selectedSidebarVmFindingCount}
-        workspaceInvestigationCount={workspaceInvestigationCount}
         theme={theme}
         isDark={isDark}
         isSidebarWorkspaceMenuOpen={isSidebarWorkspaceMenuOpen}
         sidebarAccountMenuRef={sidebarAccountMenuRef}
         sidebarWorkspaceMenuRef={sidebarWorkspaceMenuRef}
         navigate={navigate}
-        onBackToWorkspaceSidebar={() => navigate(isVirtualMachineSidebar ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId) : getClusterBackToWorkspacePath(backToWorkspaceId))}
+        onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}
         onNavigateClusterSubview={(tab) => {
           if (!selectedSidebarCluster) return;
           navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab));
@@ -404,6 +504,8 @@ export const AppShell: React.FC<AppShellProps> = ({
               activeVmSubview={activeVmSubview}
               kubernetesClusters={kubernetesClusters}
               kubernetesClustersInWorkspaceContext={kubernetesClustersInWorkspaceContext}
+              virtualMachinesInWorkspaceContext={virtualMachinesInWorkspaceContext}
+              hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               clusterContextId={clusterContextId}
               clusterChatController={clusterChatController}
               isDark={isDark}
@@ -426,11 +528,14 @@ export const AppShell: React.FC<AppShellProps> = ({
               onUpdateKubernetesCluster={updateKubernetesCluster}
               onReplaceWorkspaceKubernetesClusters={replaceWorkspaceKubernetesClusters}
               onAppendWorkspaceKubernetesClusters={appendWorkspaceKubernetesClusters}
+              onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
+              onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}
+              onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
               onUpdateWorkspace={updateWorkspace}
               onOpenClusterChatPanel={openClusterCopilot}
-              onRunRunbook={runRunbook}
-              pendingVmRunbookPrompt={pendingVmRunbookPrompt}
-              onPendingVmRunbookPromptConsumed={consumePendingVmRunbookPrompt}
+              onRunTargetPrompt={runTargetPrompt}
+              pendingVmTargetPrompt={pendingVmTargetPrompt}
+              onPendingVmTargetPromptConsumed={consumePendingVmTargetPrompt}
               onRefreshWorkspaceInvitations={refreshWorkspaceInvitations}
               onRefreshWorkspaceMembers={refreshWorkspaceMembers}
               onDeleteCluster={handleDeleteCluster}
@@ -480,9 +585,8 @@ export const AppShell: React.FC<AppShellProps> = ({
         newWorkspaceName={newWorkspaceName}
         toasts={toasts}
         user={user}
-        onBackToClusterDetails={() => setClusterCreationStep('details')}
         onClusterNameChange={setNewClusterName}
-        onCloseAddCluster={() => setIsAddingCluster(false)}
+        onCloseAddCluster={handleCancelAddCluster}
         onCloseInstallAgent={() => setInstallAgentClusterId(null)}
         onCloseWorkspaceCreate={() => setIsCreatingWorkspace(false)}
         onCloseWorkspaceDelete={() => setDeleteWorkspaceId(null)}

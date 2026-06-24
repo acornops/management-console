@@ -18,7 +18,6 @@ import {
   enLocale,
   fieldValidationMessage,
   indexHtml,
-  investigationsPage,
   lightTheme,
   loginAuthPanel,
   loginAuthPanelParts,
@@ -27,7 +26,9 @@ import {
   loginPreview,
   markdownComponents,
   mcpServerCard,
+  mcpServerToolsDialog,
   mcpServersDialogs,
+  mcpServersInventory,
   mcpServersView,
   membersPage,
   mobileNavigation,
@@ -36,7 +37,6 @@ import {
   resourceExplorerLayout,
   resourcesView,
   rgbVariableValue,
-  runbooksPage,
   styles,
   tailwindConfig,
   traceFooter,
@@ -244,18 +244,18 @@ describe('theme color contract', () => {
     expect(loginPreview).not.toContain('shadow-accent-bright/30');
   });
 
-  it('makes the desktop triage workflow inspectable from queue to trace', () => {
-    expect(investigationsPage).toContain('listWorkspaceInvestigations');
-    expect(investigationsPage).toContain('nextCursor');
-    expect(investigationsPage).toContain('investigations.queueTitle');
-    expect(investigationsPage).toContain('investigations.activeTriageTitle');
-    expect(investigationsPage).toContain('investigations.activeTriageBody');
-    expect(investigationsPage).toContain('investigations.viewCluster');
-    expect(investigationsPage).toContain('investigations.runTriagePrimary');
-    expect(investigationsPage).toContain('remainingInvestigations.map');
-    expect(investigationsPage).toContain('lg:grid-cols-[1.75rem_minmax(0,1fr)_auto] lg:items-start');
-    expect(investigationsPage).toContain('grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center lg:self-start lg:justify-end');
-    expect(investigationsPage).not.toContain('onOpenClusterFindings');
+  it('makes the workspace homepage triage workflow inspectable from summary to target issue boards', () => {
+    expect(overviewPage).toContain('loadAllWorkspaceInvestigations');
+    expect(overviewPage).toContain('loadAllVirtualMachineFindings');
+    expect(overviewPage).toContain('data-overview-quick-actions="true"');
+    expect(overviewPage).toContain('data-connected-targets="true"');
+    expect(overviewPage).toContain('data-attention-board="true"');
+    expect(overviewPage).toContain("data-primary-issue-card={isPrimary ? 'true' : undefined}");
+    expect(overviewPage).toContain('buildWorkspaceOverviewCards');
+    expect(overviewPage).toContain('attentionItems.map');
+    expect(overviewPage).toContain('onSelectCluster(card.targetId)');
+    expect(overviewPage).toContain('onSelectVirtualMachine(card.targetId)');
+    expect(overviewPage).toContain('readRecentInvestigation(workspace.id, currentUserId)');
     expect(chatView).not.toContain('chat.runStatus');
     expect(chatView).not.toContain('chat.activeTriage');
     expect(chatView).not.toContain('chat.guardedWrites');
@@ -392,12 +392,9 @@ describe('theme color contract', () => {
     expect(dashboardPage).not.toContain('variants={containerVariants}');
     expect(dashboardPage).not.toContain('variants={itemVariants}');
     expect(dashboardPage).not.toContain('layout');
-    expect(investigationsPage).not.toContain('variants={containerVariants}');
-    expect(investigationsPage).not.toContain('variants={itemVariants}');
-    expect(investigationsPage).not.toContain('layout');
-    expect(runbooksPage).not.toContain('variants={containerVariants}');
-    expect(runbooksPage).not.toContain('variants={itemVariants}');
-    expect(runbooksPage).not.toContain('layout');
+    expect(overviewPage).not.toContain('variants={containerVariants}');
+    expect(overviewPage).not.toContain('variants={itemVariants}');
+    expect(overviewPage).not.toContain('layout');
     expect(userSettingsPage).not.toContain('variants={containerVariants}');
     expect(userSettingsPage).not.toContain('variants={itemVariants}');
     expect(workspaceSettingsPage).not.toContain('variants={containerVariants}');
@@ -415,9 +412,7 @@ describe('theme color contract', () => {
     expect(buttonComponent).toContain("tertiary: 'text-ui-text-muted");
     expect(buttonComponent).toContain('hover:bg-accent-soft hover:text-accent-strong');
     expect(buttonComponent).not.toContain('text-white');
-    expect(investigationsPage).toContain('variant="accent" size="md"');
-    expect(investigationsPage).toContain('<Button onClick={onConnectCluster} variant="accent" size="lg" className="mt-8">');
-    expect(investigationsPage).not.toContain('text-status-success-text text-status-success-text');
+    expect(overviewPage).toContain('variant="secondary"');
     expect(membersPage).toMatch(/onClick=\{openInviteModal\}[\s\S]*?variant="secondary"/);
     expect(addClusterModal).not.toContain('text-slate-950');
     expect(addClusterModal).toContain('variant="accent"');
@@ -438,66 +433,53 @@ describe('theme color contract', () => {
   it('keeps app page-header action buttons at the medium size', () => {
     expect(dashboardPage).toContain('<Button onClick={onAddCluster} variant="secondary" size="md" className="whitespace-nowrap">');
     expect(overviewPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
-    expect(investigationsPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
-    expect(runbooksPage).toContain('<Button onClick={startCreatingRunbook} variant="accent" size="md" className="whitespace-nowrap">');
     expect(mcpServersView).toContain(
-      '<Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md">'
+      '<Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md" className="whitespace-nowrap">'
     );
   });
 
   it('keeps MCP connection state copy action-oriented instead of ambiguous', () => {
     expect(mcpServerCard).toContain("server.type === 'builtin'");
-    expect(mcpServerCard).toContain("t('mcpServers.localServer')");
-    expect(mcpServerCard).toContain("'mcpServers.notChecked'");
-    expect(enLocale).toContain("notChecked: 'Not checked'");
-    expect(enLocale).toContain("localServer: 'Local server'");
-    expect(zhLocale).toContain("notChecked: '尚未检查'");
-    expect(zhLocale).toContain("localServer: '本地服务器'");
+    expect(mcpServerCard).toContain("'mcpServers.statusNotChecked'");
+    expect(mcpServerCard).toContain("t('mcpServers.managedByAcornOps')");
+    expect(mcpServerCard).not.toContain('detailKey');
+    ["statusConnected: 'Connected'", "statusNeedsAuth: 'Needs auth'", "statusDiscoveryFailed: 'Discovery failed'", "statusNotChecked: 'Not checked'"].forEach((copy) => expect(enLocale).toContain(copy));
+    expect(enLocale).toContain("managedByAcornOps: 'Managed by AcornOps'");
+    ["statusConnected: '已连接'", "statusNeedsAuth: '需要认证'", "statusDiscoveryFailed: '发现失败'", "statusNotChecked: '尚未检查'"].forEach((copy) => expect(zhLocale).toContain(copy));
+    expect(zhLocale).toContain("managedByAcornOps: '由 AcornOps 管理'");
   });
 
   it('keeps contextual help concise at jargon-heavy controls', () => {
     expect(mcpServerCard).toContain("t('mcpServers.healthCheckHelp')");
-    expect(mcpServersDialogs).toContain("t('mcpServers.toolEnablementHelp')");
+    expect(mcpServerToolsDialog).toContain("t('mcpServers.toolAccessSummaryBody')");
     expect(resourceExplorerControls).toContain("t('resources.filters.namespaceHelp')");
     expect(resourceExplorerControls).toContain("t('resources.filters.categoryHelp')");
     expect(enLocale).toContain("healthCheckHelp: 'Checks connectivity and refreshes discovered tools.'");
-    expect(enLocale).toContain("toolEnablementHelp: 'Newly discovered external tools stay disabled until an admin reviews and enables them.'");
+    expect(enLocale).toContain("toolAccessSummaryBody: 'Tools available from this MCP server.'");
     expect(enLocale).toContain("namespaceHelp: 'Limits the list to resources reported in one namespace.'");
     expect(enLocale).toContain("categoryHelp: 'Narrows results to the selected resource type.'");
     expect(zhLocale).toContain("healthCheckHelp: '检查连接并刷新已发现的工具。'");
-    expect(zhLocale).toContain("toolEnablementHelp: '新发现的外部工具会保持停用，直到管理员审核并启用。'");
+    expect(zhLocale).toContain("toolAccessSummaryBody: '此 MCP 服务器提供的工具。'");
     expect(zhLocale).toContain("namespaceHelp: '仅列出一个命名空间上报的资源。'");
     expect(zhLocale).toContain("categoryHelp: '将结果缩小到所选资源类型。'");
   });
 
-  it('keeps MCP server management as an explicit card-action surface', () => {
-    expect(mcpServersView).toContain('data-mcp-server-card-grid="true"');
-    expect(mcpServerCard).toContain('data-mcp-server-card="true"');
-    expect(mcpServersView).not.toContain('data-mcp-server-list="true"');
-    expect(mcpServersView).not.toContain('data-mcp-server-row="true"');
-    expect(mcpServersView).toContain('lg:grid-cols-2');
+  it('keeps MCP server management as an explicit inventory surface', () => {
+    expect(mcpServersInventory).toContain('data-mcp-server-access-summary="true"');
+    expect(mcpServersInventory).toContain('data-mcp-server-list="true"');
+    expect(mcpServerCard).toContain('data-mcp-server-row="true"');
+    expect(mcpServersView).not.toContain('data-mcp-server-card-grid="true"');
+    expect(mcpServerCard).not.toContain('data-mcp-server-card="true"');
     expect(mcpServersView).not.toContain('xl:grid-cols-3');
     expect(mcpServersView).not.toContain('absolute inset-0 z-0');
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.manageToolsNamed', { name: server.name })}");
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.healthCheckNamed', { name: server.name })}");
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.editNamed', { name: server.name })}");
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.deleteNamed', { name: server.name })}");
-  });
-
-  it('keeps runbook creation and execution context separated', () => {
-    expect(runbooksPage).toContain('runbooks.targetHelper');
-    expect(runbooksPage).toContain('ariaLabel={t(\'runbooks.runTarget\')}');
-    expect(runbooksPage).toContain('className="mb-5 flex flex-col gap-4 border-y border-ui-border bg-ui-surface/60 px-4 py-4');
-    expect(runbooksPage).not.toContain('setIsCreatingRunbook((isOpen) => !isOpen)');
-    expect(runbooksPage).not.toContain("t('runbooks.cancelCreate')");
+    expect(mcpServerCard).toContain("aria-label={t('mcpServers.serverActionsNamed', { name: server.name })}");
+    expect(mcpServerCard).toContain('role="menuitem"');
   });
 
   it('keeps app page-header titles at the standard page scale', () => {
     expect(dashboardPage).toContain('type-route-title');
     expect(overviewPage).toContain('type-route-title');
     expect(membersPage).toContain('type-route-title');
-    expect(investigationsPage).toContain('type-route-title');
-    expect(runbooksPage).toContain('type-route-title');
     expect(userSettingsPage).toContain('mb-2 text-3xl font-bold tracking-tight text-ui-text');
     expect(workspaceSettingsPage).toContain('type-route-title');
   });
@@ -517,46 +499,31 @@ describe('theme color contract', () => {
     expect(mcpServersView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
   });
 
-  it('keeps the workspace command center in normal responsive flow', () => {
-    expect(overviewPage).toMatch(
-      /<section\s+data-workspace-command-center="true"\s+className="mb-6 min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm"/
+  it('keeps the workspace homepage in normal responsive flow', () => {
+    expect(overviewPage).toContain('data-overview-quick-actions="true"');
+    expect(overviewPage).toContain('data-connected-targets="true"');
+    expect(overviewPage).toContain('data-attention-board="true"');
+    expect(overviewPage).toContain('rounded-lg border border-ui-border bg-ui-surface');
+    expect(overviewPage).toContain('sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end');
+    expect(overviewPage).toContain('flex min-h-11 w-full items-center justify-between gap-3');
+    expect(overviewPage).toContain('flex flex-col gap-4 px-5 py-5 sm:px-6');
+    expect(overviewPage).toContain('xl:grid-cols-2');
+    expect(overviewPage).toContain('overflow-hidden rounded-xl border border-accent/20');
+    expect(overviewPage).toContain('w-full justify-center sm:w-auto');
+    expect(overviewPage).toContain('group flex w-full items-center gap-4 px-4 py-3');
+    expect(overviewPage).toContain("data-primary-issue-card={isPrimary ? 'true' : undefined}");
+    expect(overviewPage).toContain("t('overview.evidenceLabel')");
+    expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
+      overviewPage.indexOf('data-connected-targets="true"')
     );
-    expect(overviewPage).toContain('data-workspace-command-center-header="true"');
-    expect(overviewPage).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:items-start');
-    expect(overviewPage).toContain('<h2 className="type-row-title">{t(\'overview.triageQueueTitle\')}</h2>');
-    expect(overviewPage).toContain('grid min-w-0 max-w-full overflow-hidden rounded-md border border-current/10 bg-ui-surface/70 sm:grid-cols-3 lg:min-w-[26rem]');
-    expect(overviewPage).toContain('border-b border-ui-border/70 sm:border-b-0 sm:border-r');
-    expect(overviewPage).toContain('<dt className="type-caption">{item.label}</dt>');
-    expect(overviewPage).toContain('data-workspace-command-center-body="true"');
-    expect(overviewPage).toContain('data-priority-queue-panel="true"');
-    expect(overviewPage).toContain('data-operating-signals-panel="true"');
-    expect(overviewPage).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]');
-    expect(overviewPage).toContain(
-      'flex flex-col items-start gap-3 border-b border-ui-border bg-ui-bg px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6'
-    );
-    expect(overviewPage).not.toContain('className="w-full justify-center whitespace-nowrap sm:w-auto sm:shrink-0"');
-    expect(overviewPage).toContain("const queuePrimaryActionLabel = clusterCount === 0 && canManageClusters ? t('app.connectClusterHelm') : t('overview.viewInvestigationQueue');");
-    expect(overviewPage).toContain('data-queue-primary-action="true"');
-    expect(overviewPage.indexOf('data-workspace-command-center-header')).toBeLessThan(
-      overviewPage.indexOf('data-workspace-command-center-body')
-    );
-    expect(overviewPage.indexOf('data-priority-queue-panel')).toBeLessThan(
-      overviewPage.indexOf('data-operating-signals-panel')
-    );
+    expect(overviewPage).not.toContain('{card.targetTypeLabel}');
+    expect(overviewPage).not.toContain('{issue.summary &&');
   });
 
-  it('promotes mobile investigation triage before the desktop queue toolbar and queue introduction', () => {
-    expect(investigationsPage).toContain('data-mobile-triage-actions="true"');
-    expect(investigationsPage).not.toContain('data-investigation-metrics="true"');
-    expect(investigationsPage).toContain('data-investigation-queue-toolbar="true"');
-    expect(investigationsPage.indexOf('data-mobile-triage-actions="true"')).toBeLessThan(
-      investigationsPage.indexOf('data-investigation-queue-toolbar="true"')
-    );
-    expect(investigationsPage.indexOf('data-mobile-triage-actions="true"')).toBeLessThan(
-      investigationsPage.indexOf('data-investigation-queue-panel="true"')
-    );
-    expect(investigationsPage).toContain('className="mb-5 md:hidden"');
-    expect(investigationsPage).toContain('variant="accent" size="md" className="w-full"');
+  it('keeps connected target lists directly reachable without a secondary healthy-target panel', () => {
+    expect(overviewPage).toContain("t('overview.connectedClustersTitle')");
+    expect(overviewPage).toContain("t('overview.connectedVirtualMachinesTitle')");
+    expect(overviewPage).not.toContain('data-healthy-targets="true"');
   });
 
   it('keeps workspace member access changes deliberate and stable', () => {
@@ -595,6 +562,8 @@ describe('theme color contract', () => {
   it('keeps table rows visibly highlighted on hover', () => {
     expect(membersPage).toContain('className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45"');
     expect(clusterOverviewView).toContain('transition-colors last:border-b-0 hover:bg-ui-bg/70');
+    expect(markdownComponents).toContain("import remarkGfm from 'remark-gfm';");
+    expect(markdownComponents).toContain('export const markdownRemarkPlugins = [remarkGfm];');
     expect(markdownComponents).toContain("const tableRowHoverClass = isUserTone ? 'hover:bg-ui-bg/10' : 'hover:bg-ui-bg/70'");
     expect(markdownComponents).toContain('<tr className={`transition-colors ${tableRowHoverClass}`}>{children}</tr>');
   });

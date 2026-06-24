@@ -1,7 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { getPostWorkspaceDeleteNavigationPath } from '@/app/useWorkspaceClusterActions';
 import { HealthStatus, KubernetesCluster, Workspace } from '@/types';
+
+const actionsSource = readFileSync(resolve(__dirname, 'useWorkspaceClusterActions.ts'), 'utf8');
 
 const workspace = (id: string): Workspace => ({
   id,
@@ -36,6 +40,11 @@ const cluster = (id: string, workspaceId: string): KubernetesCluster => ({
 });
 
 describe('getPostWorkspaceDeleteNavigationPath', () => {
+  it('prepends newly registered clusters so the next setup action stays visible', () => {
+    expect(actionsSource).toContain('setKubernetesClusters((prev) => [\n        result.cluster,\n        ...prev.filter((cluster) => cluster.id !== result.cluster.id)\n      ]);');
+    expect(actionsSource).toContain(': [result.cluster.id, ...workspace.clusterIds],');
+  });
+
   it('returns the workspace list route after deleting the last workspace on a workspace route', () => {
     expect(getPostWorkspaceDeleteNavigationPath({
       kubernetesClusters: [],

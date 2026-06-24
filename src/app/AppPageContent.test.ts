@@ -10,13 +10,11 @@ const appBootstrap = readFileSync(resolve(root, 'src/app/useAppBootstrap.ts'), '
 describe('AppPageContent route loading', () => {
   it('lazy imports route page bodies so initial navigation keeps the app bundle lean', () => {
     for (const page of [
-      'AgentRunbooksPage',
       'KubernetesClustersPage',
       'KubernetesClusterDetailPage',
       'NotFoundPage',
       'UserSettingsPage',
       'VirtualMachinesPage',
-      'WorkspaceInvestigationsPage',
       'WorkspaceInvitePage',
       'WorkspaceMembersPage',
       'WorkspaceAiSettingsPage',

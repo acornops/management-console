@@ -44,7 +44,11 @@ export function mapClusterToolsFromCatalog(catalog: ControlPlaneClusterToolCatal
         sourceServerName: server.name,
         sourceServerUrl: server.url,
         enabledConfigured: Boolean(tool.enabledConfigured),
-        enabledEffective: Boolean(tool.enabledEffective)
+        enabledEffective: Boolean(tool.enabledEffective),
+        effectiveDisabledReason:
+          tool.effectiveDisabledReason === 'server_disabled' || tool.effectiveDisabledReason === 'agent_write_disabled'
+            ? tool.effectiveDisabledReason
+            : null
       });
     }
   }
@@ -91,7 +95,10 @@ export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog):
         source: tool.source === 'builtin' ? 'builtin' : 'mcp',
         enabledConfigured: Boolean(tool.enabledConfigured),
         enabledEffective: Boolean(tool.enabledEffective),
-        effectiveDisabledReason: tool.effectiveDisabledReason === 'server_disabled' ? 'server_disabled' : null
+        effectiveDisabledReason:
+          tool.effectiveDisabledReason === 'server_disabled' || tool.effectiveDisabledReason === 'agent_write_disabled'
+            ? tool.effectiveDisabledReason
+            : null
       }))
     }))
   };

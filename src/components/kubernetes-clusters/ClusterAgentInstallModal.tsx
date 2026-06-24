@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check, Copy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
@@ -69,7 +70,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
     <Dialog
       titleId="install-agent-title"
       initialFocusRef={generateCommandButtonRef}
-      className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
+      className="relative flex max-h-[min(92vh,56rem)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
       onClose={onClose}
     >
         <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
@@ -87,7 +88,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="space-y-4 overflow-y-auto p-6">
           <div className="rounded-xl border border-accent/20 bg-accent-soft/60 p-4">
             <p className="text-sm font-medium text-ui-text">
               {t('clusterSetup.installAgentFirst')}
@@ -101,8 +102,22 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           )}
 
           {command && (
-            <div className="overflow-x-auto rounded-xl bg-code-bg p-4 font-mono text-xs text-slate-100 shadow-xl">
-              <pre className="whitespace-pre">{command}</pre>
+            <div className="rounded-xl border border-ui-border bg-ui-bg shadow-sm">
+              <div className="flex items-center justify-between gap-3 px-4 pt-4">
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('clusterSetup.installCommand')}</span>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  disabled={isCopying}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-all hover:bg-ui-bg hover:text-ui-text disabled:cursor-wait disabled:opacity-70"
+                  aria-label={isCopying ? t('clusterSetup.copied') : t('clusterSetup.copy')}
+                >
+                  {isCopying ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text">
+                <pre className="whitespace-pre">{command}</pre>
+              </div>
             </div>
           )}
 
@@ -121,18 +136,9 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           )}
 
           {command && (
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[11px] text-ui-text-muted">
-                {keyVersion ? t('clusterSetup.agentKeyVersion', { version: keyVersion }) : t('clusterSetup.agentKeyPending')} {t('clusterSetup.rotateHelp')}
-              </p>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="rounded-lg border border-ui-border bg-ui-surface px-3 py-1.5 text-xs font-bold text-ui-text-muted transition-all hover:bg-ui-bg hover:text-ui-text"
-              >
-                {isCopying ? t('clusterSetup.copied') : t('clusterSetup.copyCommand')}
-              </button>
-            </div>
+            <p className="text-[11px] leading-5 text-ui-text-muted">
+              {keyVersion ? t('clusterSetup.agentKeyVersion', { version: keyVersion }) : t('clusterSetup.agentKeyPending')} {t('clusterSetup.rotateHelp')}
+            </p>
           )}
         </div>
 

@@ -1,7 +1,7 @@
-import type { PendingVmRunbookPrompt } from '@/pages/runbooks/runbookModel';
+import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
 
-export const getSelectedVmRunbookPrompt = (
-  pendingPrompt: PendingVmRunbookPrompt | null | undefined,
+export const getSelectedVmTargetPrompt = (
+  pendingPrompt: PendingVmTargetPrompt | null | undefined,
   workspaceId: string,
   selectedId: string | null
 ): string =>
@@ -9,8 +9,8 @@ export const getSelectedVmRunbookPrompt = (
     ? pendingPrompt.prompt
     : '';
 
-export const shouldClearPendingVmRunbookPrompt = (
-  pendingPrompt: PendingVmRunbookPrompt | null | undefined,
+export const shouldClearPendingVmTargetPrompt = (
+  pendingPrompt: PendingVmTargetPrompt | null | undefined,
   workspaceId: string,
   selectedId: string | null,
   view: string

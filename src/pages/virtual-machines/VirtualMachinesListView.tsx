@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
-import { Clock, Server, Trash2 } from 'lucide-react';
+import { Trans, useTranslation } from 'react-i18next';
+import { MoreHorizontal, Server, Settings, Trash2 } from 'lucide-react';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
@@ -14,8 +14,8 @@ import type { NavigateOptions } from '@/hooks/useAppRouter';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { getVmMetricTimeline, VmCardResourceChart } from '@/pages/virtual-machines/VirtualMachineMetrics';
+import { PendingVirtualMachineSetup } from '@/pages/virtual-machines/PendingVirtualMachineSetup';
 import {
-  formatSnapshotTime,
   getVmPostureClass,
   getVmStatusLabel,
   statusTone,
@@ -56,6 +56,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   const [deleteVmConfirmation, setDeleteVmConfirmation] = React.useState('');
   const [deleteVmError, setDeleteVmError] = React.useState<string | null>(null);
   const [isDeletingVm, setIsDeletingVm] = React.useState(false);
+  const [openVmActionMenuId, setOpenVmActionMenuId] = React.useState<string | null>(null);
   const statusOptions: Array<SelectOption<typeof status>> = [
     { value: 'all', label: t('dashboard.allStates') },
     { value: 'connected', label: t('dashboard.connected') },
@@ -64,7 +65,25 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   ];
   const onlineCount = items.filter((vm) => vm.status === 'online').length;
   const attentionCount = items.filter((vm) => vm.status === 'degraded' || vm.status === 'offline').length;
-  const awaitingAgentCount = items.filter((vm) => vm.status === 'unknown').length;
+  const setupRequiredCount = items.filter((vm) => vm.status === 'unknown').length;
+
+  React.useEffect(() => {
+    if (!openVmActionMenuId) return undefined;
+
+    const closeMenu = () => setOpenVmActionMenuId(null);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeMenu();
+    };
+
+    window.addEventListener('click', closeMenu);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('click', closeMenu);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openVmActionMenuId]);
+
   const closeDeleteVmDialog = () => {
     setDeleteVmConfirmation('');
     setDeleteVmError(null);
@@ -136,8 +155,8 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                 <p className="mt-1 text-sm leading-6 text-ui-text-muted">
                   {attentionCount > 0
                     ? t('virtualMachines.list.needReview', { count: attentionCount })
-                    : awaitingAgentCount > 0
-                      ? t('virtualMachines.list.awaitingTelemetry', { count: awaitingAgentCount })
+                    : setupRequiredCount > 0
+                      ? t('virtualMachines.list.setupRequiredSummary', { count: setupRequiredCount })
                       : t('virtualMachines.list.loadedTelemetry', { online: onlineCount, total: items.length })}
                 </p>
               </div>
@@ -166,6 +185,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
             {items.map((vm) => {
               const requiresAgentInstall = vm.status === 'unknown';
               const canDeleteVm = canManageTargets;
+              const hasVmMenu = canManageTargets;
 
               return (
                 <article
@@ -173,7 +193,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                   data-vm-card="true"
                   className={cardClassName({
                     interactive: !requiresAgentInstall,
-                    className: 'group relative flex min-w-0 flex-col overflow-hidden'
+                    className: 'group relative flex h-[20rem] min-w-0 flex-col overflow-hidden'
                   })}
                 >
                   {!requiresAgentInstall && (
@@ -184,73 +204,102 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                       aria-label={t('virtualMachines.list.openVm', { name: vm.name })}
                     />
                   )}
-                  <div className="relative z-10 flex min-h-full flex-col pointer-events-none">
-                    <div className="grid flex-1 gap-4 px-4 pb-6 pt-4 sm:px-5 sm:pb-7">
+
+                  {hasVmMenu && (
+                    <div className="absolute right-3 top-3 z-20 pointer-events-auto">
+                      <button
+                        data-vm-overflow-action="toggle"
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpenVmActionMenuId((current) => current === vm.id ? null : vm.id);
+                        }}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-surface hover:text-ui-text active:bg-ui-bg/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                        aria-haspopup="menu"
+                        aria-expanded={openVmActionMenuId === vm.id}
+                        aria-label={t('virtualMachines.list.vmActionsFor', { name: vm.name })}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                      {openVmActionMenuId === vm.id && (
+                        <div
+                          role="menu"
+                          onClick={(event) => event.stopPropagation()}
+                          className="absolute right-0 top-10 w-52 overflow-hidden rounded-lg border border-ui-border bg-ui-surface p-1 text-sm shadow-xl"
+                        >
+                          <button
+                            data-vm-overflow-action="settings"
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setOpenVmActionMenuId(null);
+                              navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'settings'));
+                            }}
+                            className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                          >
+                            <Settings className="h-4 w-4 text-ui-text-muted" />
+                            {t('virtualMachines.list.vmSettings')}
+                          </button>
+                          {canDeleteVm && (
+                            <button
+                              data-vm-overflow-action="delete"
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                setOpenVmActionMenuId(null);
+                                setDeleteVmConfirmation('');
+                                setDeleteVmError(null);
+                                setDeleteTargetVm(vm);
+                              }}
+                              className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-status-danger-text transition-colors hover:bg-status-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              {t('virtualMachines.list.deleteVm')}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="relative z-10 flex flex-1 flex-col pointer-events-none">
+                    <div className="flex min-h-0 flex-1 flex-col gap-5 px-4 pb-6 pt-4 sm:px-5 sm:pb-7">
                       <div className="min-w-0 text-left">
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg">
                             <Server className="h-5 w-5 text-accent-strong" />
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex min-w-0 flex-wrap items-center gap-2 pr-10">
-                              <h3 className="type-panel-title truncate">{vm.name}</h3>
-                              <span className={`type-micro-label shrink-0 rounded-full px-2 py-0.5 ${statusTone(vm.status)}`}>
-                                {getVmStatusLabel(vm.status)}
+                          <div className="min-w-0 flex-1 pr-14">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <h3 className="type-panel-title min-w-0 flex-1 truncate" title={vm.name}>{vm.name}</h3>
+                              <span className={`type-micro-label shrink-0 rounded-full px-1.5 py-px text-[0.625rem] leading-3 ${statusTone(vm.status)}`}>
+                                {getVmStatusLabel(vm.status, t)}
                               </span>
                             </div>
-                            <div className="type-caption mt-1.5 flex items-center gap-2">
-                              <Clock className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate">{formatSnapshotTime(vm)}</span>
-                            </div>
-                            <p className="mt-1 type-caption">
-                              {vm.hostname || t('virtualMachines.list.linuxVm')} · {vm.serviceManager}
-                            </p>
                           </div>
                         </div>
                       </div>
-                      <div className="w-full">
-                        {vm.status === 'online' ? (
-                          <VmCardResourceChart vm={vm} points={getVmMetricTimeline(metricHistoryByVmId[vm.id] || [])} />
-                        ) : requiresAgentInstall ? (
-                          <div className="flex min-h-[118px] flex-col justify-center gap-3 border-y border-ui-border bg-ui-bg/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="type-caption">{t('virtualMachines.list.waitingForTelemetry')}</p>
-                            <Button
-                              data-vm-setup-action="install"
-                              type="button"
-                              onClick={() => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'settings'))}
-                              variant="accent"
-                              size="sm"
-                              className="pointer-events-auto w-fit rounded-md px-2.5 py-1.5 font-semibold"
-                            >
-                              <ICONS.Wrench className="h-3.5 w-3.5" />
-                              {t('dashboard.installAgent')}
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="type-caption flex min-h-[118px] items-center border-y border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
-                            {t('virtualMachines.list.telemetryUnavailable')}
-                          </div>
-                        )}
-                      </div>
+
+                      {requiresAgentInstall && (
+                        <PendingVirtualMachineSetup
+                          vmId={vm.id}
+                          onInstallAgent={(vmId) => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vmId, 'settings'))}
+                        />
+                      )}
+
+                      {!requiresAgentInstall && (
+                        <div className="flex min-h-0 flex-1 flex-col">
+                          {vm.status === 'online' ? (
+                            <VmCardResourceChart vm={vm} points={getVmMetricTimeline(metricHistoryByVmId[vm.id] || [])} />
+                          ) : (
+                            <div className="type-caption flex min-h-[118px] items-center border-y border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
+                              {t('virtualMachines.list.telemetryUnavailable')}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {canDeleteVm && (
-                    <div className="absolute right-3 top-3 z-20 pointer-events-auto">
-                      <button
-                        data-vm-card-action="delete"
-                        type="button"
-                        onClick={() => {
-                          setDeleteVmConfirmation('');
-                          setDeleteVmError(null);
-                          setDeleteTargetVm(vm);
-                        }}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-status-danger/25 bg-ui-surface/95 text-status-danger-text shadow-sm transition-colors hover:bg-status-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                        aria-label={`${t('dashboard.delete')} ${vm.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
                 </article>
               );
             })}
@@ -259,7 +308,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                 data-vm-add-card="true"
                 type="button"
                 onClick={onOpenRegisterVm}
-                className={actionCardButtonClassName({ className: 'min-h-[17rem] flex-col' })}
+                className={actionCardButtonClassName({ className: 'h-[20rem] flex-col' })}
               >
                 <ICONS.Plus className="h-4 w-4" />
                 {t('virtualMachines.list.connectVm')}
@@ -324,7 +373,11 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                   htmlFor="delete-vm-confirmation-input"
                   className="mb-1.5 block px-1 text-xs font-bold text-ui-text-muted"
                 >
-                  {t('virtualMachines.list.deleteVmConfirmationLabel', { name: deleteTargetVm.name })}
+                  <Trans
+                    i18nKey="virtualMachines.list.deleteVmConfirmationLabel"
+                    values={{ name: deleteTargetVm.name }}
+                    components={{ name: <span className="font-extrabold text-status-danger-text" /> }}
+                  />
                 </label>
                 <input
                   id="delete-vm-confirmation-input"

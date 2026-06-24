@@ -18,6 +18,7 @@ interface KubernetesClusterDetailPageProps {
   onOpenInstallModal: (clusterId: string) => void;
   onToggleClusterTool: (clusterId: string, tool: ClusterToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onSyncClusterTools: (clusterId: string, tools: KubernetesCluster['mcpTools']) => void;
+  onUpdateClusterName: (clusterId: string, name: string) => void | Promise<void>;
   onUpdateClusterNamespaceScope: (clusterId: string, scope: { include: string[]; exclude: string[] }) => void | Promise<void>;
   onUpdateClusterWriteConfirmationPolicy: (clusterId: string, overrideRequired: boolean | null) => void | Promise<void>;
   onNavigateBackToClusters: () => void;
@@ -38,6 +39,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   onOpenInstallModal,
   onToggleClusterTool,
   onSyncClusterTools,
+  onUpdateClusterName,
   onUpdateClusterNamespaceScope,
   onUpdateClusterWriteConfirmationPolicy,
   onNavigateBackToClusters,
@@ -64,7 +66,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
     <div className="h-full min-h-0 flex flex-col overflow-hidden">
       <div className="flex-1 min-h-0 flex overflow-hidden">
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-          {selectedCluster && !requiresClusterAgentInstall && clusterChatController ? (
+          {selectedCluster && clusterChatController && (!requiresClusterAgentInstall || requestedClusterView === 'settings') ? (
             <KubernetesClusterDetail
               cluster={selectedCluster}
               chatController={clusterChatController}
@@ -78,6 +80,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               isDark={isDark}
               onToggleTool={(tool, enabled) => onToggleClusterTool(selectedCluster.id, tool, enabled)}
               onSyncTools={(tools) => onSyncClusterTools(selectedCluster.id, tools)}
+              onUpdateName={(name) => onUpdateClusterName(selectedCluster.id, name)}
               onUpdateNamespaceScope={(scope) => onUpdateClusterNamespaceScope(selectedCluster.id, scope)}
               onUpdateWriteConfirmationPolicy={(overrideRequired) =>
                 onUpdateClusterWriteConfirmationPolicy(selectedCluster.id, overrideRequired)

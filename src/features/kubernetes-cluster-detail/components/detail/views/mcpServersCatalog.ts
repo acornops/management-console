@@ -4,6 +4,7 @@ import {
   ClusterToolCatalogServer,
   KubernetesCluster
 } from '@/types';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 
 type McpTool = KubernetesCluster['mcpTools'][number];
 
@@ -26,6 +27,88 @@ export const DEFAULT_SERVER_FORM: ServerFormState = {
   headerName: '',
   publicHeaders: []
 };
+
+export function createPublicHeaderRow(name = '', value = ''): ServerFormState['publicHeaders'][number] {
+  return {
+    id: `${name || 'header'}-${Math.random().toString(36).slice(2)}`,
+    name,
+    value
+  };
+}
+
+export function publicHeaderRowsFromRecord(headers: Record<string, string> | undefined): ServerFormState['publicHeaders'] {
+  return Object.entries(headers || {}).map(([name, value]) => createPublicHeaderRow(name, value));
+}
+
+export function publicHeadersFromRows(rows: ServerFormState['publicHeaders']): Record<string, string> | undefined {
+  const headers = rows.reduce<Record<string, string>>((acc, row) => {
+    const name = row.name.trim();
+    if (name) {
+      acc[name] = row.value;
+    }
+    return acc;
+  }, {});
+  return Object.keys(headers).length > 0 ? headers : undefined;
+}
+
+export type PublicHeadersValidationKey =
+  | 'publicHeadersTooMany'
+  | 'publicHeaderNameRequired'
+  | 'publicHeaderNameInvalid'
+  | 'publicHeaderDuplicate'
+  | 'publicHeaderReserved'
+  | 'publicHeaderCredentialLike'
+  | 'publicHeaderValueInvalid';
+
+const publicHeaderNamePattern = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+const reservedPublicHeaderNames = new Set([
+  'host',
+  'connection',
+  'content-length',
+  'transfer-encoding',
+  'upgrade',
+  'keep-alive',
+  'proxy-connection',
+  'te',
+  'trailer',
+  'x-workspace-id',
+  'x-target-id',
+  'x-target-type',
+  'x-run-id',
+  'x-tool-name'
+]);
+const deniedPublicHeaderNames = new Set([
+  'authorization',
+  'proxy-authorization',
+  'cookie',
+  'set-cookie',
+  'x-api-key',
+  'x-auth-token',
+  'x-access-token'
+]);
+const deniedPublicHeaderPatterns = ['token', 'secret', 'credential', 'api-key', 'apikey'];
+
+export function validatePublicHeaderRows(rows: ServerFormState['publicHeaders']): PublicHeadersValidationKey | null {
+  const activeRows = rows.filter((row) => row.name.trim() || row.value.length > 0);
+  if (activeRows.length === 0) return null;
+  if (activeRows.length > 64) return 'publicHeadersTooMany';
+
+  const seenHeaders = new Set<string>();
+  for (const row of activeRows) {
+    const name = row.name.trim();
+    const normalizedName = name.toLowerCase();
+    if (!name) return 'publicHeaderNameRequired';
+    if (!publicHeaderNamePattern.test(name)) return 'publicHeaderNameInvalid';
+    if (seenHeaders.has(normalizedName)) return 'publicHeaderDuplicate';
+    seenHeaders.add(normalizedName);
+    if (reservedPublicHeaderNames.has(normalizedName)) return 'publicHeaderReserved';
+    if (deniedPublicHeaderNames.has(normalizedName) || deniedPublicHeaderPatterns.some((pattern) => normalizedName.includes(pattern))) {
+      return 'publicHeaderCredentialLike';
+    }
+    if (row.value.length > 4096 || /[\r\n]/.test(row.value)) return 'publicHeaderValueInvalid';
+  }
+  return null;
+}
 
 function getServerKey(tool: McpTool): string {
   if (tool.sourceServerId) return tool.sourceServerId;
@@ -56,7 +139,10 @@ function mapTool(tool: McpTool): ClusterToolCatalogItem {
     source: tool.toolType === 'builtin' ? 'builtin' : 'mcp',
     enabledConfigured: Boolean(tool.enabledConfigured ?? tool.enabled),
     enabledEffective: Boolean(tool.enabledEffective ?? tool.enabled),
-    effectiveDisabledReason: null
+    effectiveDisabledReason:
+      tool.effectiveDisabledReason === 'server_disabled' || tool.effectiveDisabledReason === 'agent_write_disabled'
+        ? tool.effectiveDisabledReason
+        : null
   };
 }
 
@@ -129,7 +215,8 @@ export function flattenCatalogTools(catalog: ClusterToolCatalog): KubernetesClus
         sourceServerName: server.name,
         sourceServerUrl: server.url,
         enabledConfigured: tool.enabledConfigured,
-        enabledEffective: tool.enabledEffective
+        enabledEffective: tool.enabledEffective,
+        effectiveDisabledReason: tool.effectiveDisabledReason
       });
     }
   }
@@ -138,6 +225,28 @@ export function flattenCatalogTools(catalog: ClusterToolCatalog): KubernetesClus
 
 export function getToolLabel(tool: ClusterToolCatalogItem): string {
   return tool.description || `Tool ${tool.name}`;
+}
+
+export function isManagedMcpServer(server: Pick<ClusterToolCatalogServer, 'type' | 'isSystem' | 'url'>): boolean {
+  return server.type === 'builtin' || server.isSystem || /\/internal\/v\d+\/mcp(?:$|[/?#])/i.test(server.url);
+}
+
+export function formatMcpMutationError(error: unknown, fallback: string): string {
+  if (error instanceof ControlPlaneRequestError) {
+    const formErrors = error.details?.formErrors;
+    const fieldErrors = error.details?.fieldErrors;
+    const detail = [
+      ...(Array.isArray(formErrors) ? formErrors : []),
+      ...(fieldErrors && typeof fieldErrors === 'object'
+        ? Object.entries(fieldErrors).flatMap(([field, messages]) =>
+            Array.isArray(messages) ? messages.map((message) => `${field}: ${message}`) : []
+          )
+        : [])
+    ].find((message): message is string => typeof message === 'string' && message.trim().length > 0);
+    if (detail) return detail;
+  }
+  const raw = error instanceof Error ? error.message : fallback;
+  return raw.replace(/^Control plane request failed \(\d+\):\s*/i, '') || fallback;
 }
 
 export function formatDiscoveryTimestamp(value: string | null): string {

@@ -14,8 +14,7 @@ import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 
 type ActiveResourceNav =
   | 'overview'
-  | 'investigations'
-  | 'runbooks'
+  | 'workflows'
   | 'clusters'
   | 'virtualMachines'
   | 'members'
@@ -48,7 +47,6 @@ interface AppDesktopSidebarProps {
   selectedClusterFindingCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmFindingCount: number;
-  workspaceInvestigationCount: number;
   theme: 'light' | 'dark';
   isDark: boolean;
   isSidebarWorkspaceMenuOpen: boolean;
@@ -90,7 +88,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   selectedClusterFindingCount,
   clusterAssistantNavStatus,
   selectedVmFindingCount,
-  workspaceInvestigationCount,
   theme,
   isDark,
   isSidebarWorkspaceMenuOpen,
@@ -171,7 +168,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
           <div className="space-y-0.5">
             {!isClusterSidebar && !isVirtualMachineSidebar && (
               <>
-                <SidebarContextSlot ref={sidebarWorkspaceMenuRef}>
+                <div className="relative min-w-0 px-4 mb-8 mt-2" ref={sidebarWorkspaceMenuRef}>
                   <motion.button
                     ref={workspaceSwitcherButtonRef}
                     type="button"
@@ -190,7 +187,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                       </span>
                       <span className="min-w-0 flex flex-col items-start transition-all">
                         <span className="type-micro-label">{t('app.workspace')}</span>
-                        <SidebarContextName name={selectedWorkspaceName} />
+                        <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm font-bold leading-tight text-ui-text" title={selectedWorkspaceName}>
+                          {selectedWorkspaceName}
+                        </span>
                       </span>
                     </span>
                     <motion.div
@@ -274,7 +273,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </SidebarContextSlot>
+                </div>
 
                 <SidebarSection title={t('app.operations')} compactAfter>
                   {hasWorkspaceDataAccess && (
@@ -301,19 +300,11 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                         onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceVirtualMachines(selectedWorkspaceId))}
                       />
                       <SidebarNavButton
-                        active={activeResourceNav === 'investigations'}
+                        active={activeResourceNav === 'workflows'}
                         disabled={!selectedWorkspaceId}
-                        icon={<ICONS.AlertTriangle className={navIconClass(activeResourceNav === 'investigations')} />}
-                        label={t('app.investigations')}
-                        onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceInvestigations(selectedWorkspaceId))}
-                        badge={workspaceInvestigationCount > 0 ? workspaceInvestigationCount : undefined}
-                      />
-                      <SidebarNavButton
-                        active={activeResourceNav === 'runbooks'}
-                        disabled={!selectedWorkspaceId}
-                        icon={<ICONS.BookOpen className={navIconClass(activeResourceNav === 'runbooks')} />}
-                        label={t('app.runbooks')}
-                        onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceRunbooks(selectedWorkspaceId))}
+                        icon={<ICONS.GitBranch className={navIconClass(activeResourceNav === 'workflows')} />}
+                        label={t('app.workflows')}
+                        onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceWorkflows(selectedWorkspaceId))}
                       />
                     </>
                   )}
@@ -360,13 +351,23 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
           {isClusterSidebar && (
             <>
-              <SidebarTargetContext
-                contextLabel={t('app.cluster')}
-                name={selectedClusterName}
-                nameDataAttribute="data-desktop-sidebar-active-cluster"
-                onBack={onBackToWorkspaceSidebar}
-                backLabel={t('app.backToWorkspace')}
-              />
+              <div className="px-4 mb-4 pt-2">
+                <motion.button
+                  type="button"
+                  onClick={onBackToWorkspaceSidebar}
+                  className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  aria-label={t('app.backToWorkspace')}
+                >
+                  <ICONS.ChevronLeft className="w-3.5 h-3.5" />
+                  <span>{t('app.backToWorkspace')}</span>
+                </motion.button>
+                <div className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedClusterName}>
+                  <div className="type-micro-label mb-1">{t('app.activeCluster')}</div>
+                  <div data-desktop-sidebar-active-cluster="true" className="type-row-title line-clamp-2 break-words" title={selectedClusterName}>
+                    {selectedClusterName}
+                  </div>
+                </div>
+              </div>
 
               <SidebarSection title={t('app.operations')} compactAfter>
                 {([
@@ -405,13 +406,23 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
           {isVirtualMachineSidebar && (
             <>
-              <SidebarTargetContext
-                contextLabel={t('app.vm')}
-                name={selectedVmName}
-                nameDataAttribute="data-desktop-sidebar-active-vm"
-                onBack={onBackToWorkspaceSidebar}
-                backLabel={t('app.backToWorkspace')}
-              />
+              <div className="px-4 mb-4 pt-2">
+                <motion.button
+                  type="button"
+                  onClick={onBackToWorkspaceSidebar}
+                  className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  aria-label={t('app.backToWorkspace')}
+                >
+                  <ICONS.ChevronLeft className="w-3.5 h-3.5" />
+                  <span>{t('app.backToWorkspace')}</span>
+                </motion.button>
+                <div className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedVmName}>
+                  <div className="type-micro-label mb-1">{t('app.activeVirtualMachine')}</div>
+                  <div data-desktop-sidebar-active-vm="true" className="type-row-title line-clamp-2 break-words" title={selectedVmName}>
+                    {selectedVmName}
+                  </div>
+                </div>
+              </div>
 
               <SidebarSection title={t('app.operations')} compactAfter>
                 {([
@@ -490,78 +501,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
     </aside>
   );
 };
-
-const SidebarContextSlot = React.forwardRef<HTMLDivElement, { children: React.ReactNode }>(
-  ({ children }, ref) => (
-    <div ref={ref} className="relative mb-8 mt-2 min-w-0 px-4">
-      {children}
-    </div>
-  )
-);
-
-SidebarContextSlot.displayName = 'SidebarContextSlot';
-
-const splitSidebarContextName = (name: string): [string, string] => {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-
-  if (parts.length <= 1) {
-    return [parts[0] || name, ''];
-  }
-
-  return [parts[0], parts.slice(1).join(' ')];
-};
-
-const SidebarContextName: React.FC<{
-  name: string;
-  nameDataAttribute?: 'data-desktop-sidebar-active-cluster' | 'data-desktop-sidebar-active-vm';
-}> = ({ name, nameDataAttribute }) => {
-  const [firstLine, secondLine] = splitSidebarContextName(name);
-
-  return (
-    <span
-      {...(nameDataAttribute ? { [nameDataAttribute]: 'true' } : {})}
-      className="grid h-[2.1875rem] max-w-[8.75rem] grid-rows-2 text-sm font-bold leading-tight text-ui-text"
-      title={name}
-    >
-      <span className="block min-w-0 truncate">{firstLine}</span>
-      <span className="block min-w-0 truncate" aria-hidden={secondLine ? undefined : 'true'}>
-        {secondLine}
-      </span>
-    </span>
-  );
-};
-
-const SidebarTargetContext: React.FC<{
-  contextLabel: string;
-  name: string;
-  nameDataAttribute: 'data-desktop-sidebar-active-cluster' | 'data-desktop-sidebar-active-vm';
-  onBack: () => void;
-  backLabel: string;
-}> = ({ contextLabel, name, nameDataAttribute, onBack, backLabel }) => (
-  <SidebarContextSlot>
-    <Tooltip content={backLabel} side="bottom" className="w-full">
-      <button
-        type="button"
-        onClick={onBack}
-        className="group w-full rounded-lg border border-transparent p-3 text-left outline-none transition-all hover:border-ui-border hover:bg-ui-bg focus-visible:ring-2 focus-visible:ring-accent/20"
-        aria-label={backLabel}
-      >
-        <span className="flex min-w-0 items-center justify-between">
-          <span className="flex min-w-0 items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-accent-soft text-accent-strong transition-colors group-hover:bg-accent-soft/80">
-              <ICONS.ChevronLeft className="h-4 w-4" />
-            </span>
-            <span className="min-w-0 flex flex-col items-start transition-all">
-              <span className="type-micro-label">{contextLabel}</span>
-              <SidebarContextName name={name} nameDataAttribute={nameDataAttribute} />
-            </span>
-          </span>
-          <span className="h-4 w-4 shrink-0" aria-hidden="true" />
-        </span>
-      </button>
-    </Tooltip>
-  </SidebarContextSlot>
-);
 
 const SidebarSection: React.FC<{
   title: string;
