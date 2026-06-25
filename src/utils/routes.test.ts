@@ -31,6 +31,15 @@ describe('routes', () => {
       clusterId: 'cluster-one',
       tab: 'resources'
     });
+    expect(AppPaths.workspaceKubernetesClusterDiagnostics('team-alpha', 'cluster-one', 'skills')).toBe(
+      '/workspaces/team-alpha/kubernetes-clusters/cluster-one/skills'
+    );
+    expect(parseAppRoute('/workspaces/team-alpha/kubernetes-clusters/cluster-one/skills')).toEqual({
+      kind: 'workspaceKubernetesClusterDiagnostics',
+      workspaceId: 'team-alpha',
+      clusterId: 'cluster-one',
+      tab: 'skills'
+    });
     expect(AppPaths.workspaceKubernetesClusterDiagnostics('team-alpha', 'cluster-one', 'settings')).toBe(
       '/workspaces/team-alpha/kubernetes-clusters/cluster-one/settings'
     );
@@ -44,6 +53,12 @@ describe('routes', () => {
       kind: 'kubernetesClusterDiagnostics',
       clusterId: 'cluster-one',
       tab: 'chat'
+    });
+    expect(AppPaths.kubernetesClusterDiagnostics('cluster-one', 'skills')).toBe('/kubernetes-clusters/cluster-one/skills');
+    expect(parseAppRoute('/kubernetes-clusters/cluster-one/skills')).toEqual({
+      kind: 'kubernetesClusterDiagnostics',
+      clusterId: 'cluster-one',
+      tab: 'skills'
     });
     expect(AppPaths.kubernetesClusterDiagnostics('cluster-one', 'settings')).toBe('/kubernetes-clusters/cluster-one/settings');
     expect(parseAppRoute('/kubernetes-clusters/cluster-one/settings')).toEqual({
@@ -74,6 +89,18 @@ describe('routes', () => {
     expect(parseAppRoute(AppPaths.workspaceVirtualMachines('team-alpha'))).toEqual({
       kind: 'workspaceVirtualMachines',
       workspaceId: 'team-alpha'
+    });
+    expect(AppPaths.workspaceVirtualMachineDetail('team-alpha', 'vm-one', 'mcpServers')).toBe(
+      '/workspaces/team-alpha/virtual-machines/vm-one/mcp-servers'
+    );
+    expect(AppPaths.workspaceVirtualMachineDetail('team-alpha', 'vm-one', 'skills')).toBe(
+      '/workspaces/team-alpha/virtual-machines/vm-one/skills'
+    );
+    expect(parseAppRoute('/workspaces/team-alpha/virtual-machines/vm-one/skills')).toEqual({
+      kind: 'workspaceVirtualMachineDetail',
+      workspaceId: 'team-alpha',
+      vmId: 'vm-one',
+      tab: 'skills'
     });
   });
 

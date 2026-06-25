@@ -481,6 +481,19 @@ export interface UpdateTargetMcpServerInput {
   tools?: TargetMcpServerToolInput[];
   removeTools?: string[];
 }
+export type {
+  ControlPlaneTargetSkillDetail,
+  ControlPlaneTargetSkillFile,
+  ControlPlaneTargetSkillSource,
+  ControlPlaneTargetSkillSummary,
+  ControlPlaneTargetSkillsCatalog,
+  CreateTargetSkillInput,
+  ImportTargetSkillInput,
+  TargetSkillSourceType,
+  TargetSkillSyncStatus,
+  TargetSkillValidationStatus,
+  UpdateTargetSkillInput
+} from './targetSkillTypes';
 
 export interface RegisterClusterResponse {
   cluster: ControlPlaneCluster;

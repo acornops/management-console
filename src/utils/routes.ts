@@ -1,5 +1,5 @@
-export type ClusterSubview = 'overview' | 'resources' | 'mcpServers' | 'health' | 'chat' | 'settings';
-export type VmSubview = 'overview' | 'resources' | 'services' | 'processes' | 'network' | 'logs' | 'mcpServers' | 'chat' | 'settings';
+export type ClusterSubview = 'overview' | 'resources' | 'mcpServers' | 'skills' | 'health' | 'chat' | 'settings';
+export type VmSubview = 'overview' | 'resources' | 'services' | 'processes' | 'network' | 'logs' | 'mcpServers' | 'skills' | 'chat' | 'settings';
 
 export type AppRoute =
   | { kind: 'home' }
@@ -24,6 +24,7 @@ export type AppRoute =
 function parseClusterSubview(value?: string): ClusterSubview | undefined {
   if (!value) return undefined;
   if (value === 'mcp-servers') return 'mcpServers';
+  if (value === 'skills') return 'skills';
   if (
     value === 'overview' ||
     value === 'resources' ||
@@ -44,6 +45,7 @@ function clusterSubviewPathSegment(tab: ClusterSubview): string {
 function parseVmSubview(value?: string): VmSubview | undefined {
   if (!value) return undefined;
   if (value === 'mcp-servers') return 'mcpServers';
+  if (value === 'skills') return 'skills';
   if (
     value === 'overview' ||
     value === 'resources' ||
@@ -138,7 +140,7 @@ export function parseAppRoute(path: string): AppRoute {
   }
 
   const workspaceVirtualMachineDetailMatch = pathname.match(
-    /^\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)(?:\/(overview|resources|services|processes|network|logs|mcp-servers|chat|settings))?$/
+    /^\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)(?:\/(overview|resources|services|processes|network|logs|mcp-servers|skills|chat|settings))?$/
   );
   if (workspaceVirtualMachineDetailMatch) {
     return {
@@ -150,7 +152,7 @@ export function parseAppRoute(path: string): AppRoute {
   }
 
   const workspaceKubernetesClusterDiagnosticsMatch = pathname.match(
-    /^\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|health|chat|settings))?$/
+    /^\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|skills|health|chat|settings))?$/
   );
   if (workspaceKubernetesClusterDiagnosticsMatch) {
     return {
@@ -161,7 +163,7 @@ export function parseAppRoute(path: string): AppRoute {
     };
   }
 
-  const kubernetesClusterDiagnosticsMatch = pathname.match(/^\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|health|chat|settings))?$/);
+  const kubernetesClusterDiagnosticsMatch = pathname.match(/^\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|skills|health|chat|settings))?$/);
   if (kubernetesClusterDiagnosticsMatch) {
     return {
       kind: 'kubernetesClusterDiagnostics',

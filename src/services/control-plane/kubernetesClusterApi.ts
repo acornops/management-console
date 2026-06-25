@@ -15,20 +15,25 @@ import type {
   ControlPlaneClusterMetricsHistoryResponse,
   ControlPlaneClusterToolCatalog,
   ControlPlaneClusterToolCatalogItem,
+  ControlPlaneTargetSkillDetail,
+  ControlPlaneTargetSkillsCatalog,
   ControlPlaneFindingPageItem,
   ControlPlaneMcpServer,
   ControlPlaneMcpServerTestConnectionResponse,
   ControlPlanePodLogs,
   ControlPlanePodLogsOptions,
+  CreateTargetSkillInput,
   ControlPlaneResourcePageItem,
   ControlPlaneSession,
   ControlPlaneSessionListPage,
   ControlPlaneWorkspaceClusterMetricsHistoryResponse,
   CreateTargetMcpServerInput,
+  ImportTargetSkillInput,
   PagedResult,
   RegisterClusterResponse,
   RotateAgentKeyResponse,
   TargetMcpServer,
+  UpdateTargetSkillInput,
   TargetMcpServerTestConnectionResult,
   UpdateTargetMcpServerInput
 } from './types';
@@ -366,5 +371,70 @@ export const kubernetesClusterApi = {
       { method: 'POST' }
     );
     return mapMcpServerTestConnectionResult(result);
+  },
+
+  async listTargetSkills(
+    workspaceId: string,
+    targetId: string,
+    options?: { limit?: number; cursor?: string; q?: string }
+  ): Promise<ControlPlaneTargetSkillsCatalog> {
+    return requestJson<ControlPlaneTargetSkillsCatalog>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills${pageQuery({
+        limit: options?.limit,
+        cursor: options?.cursor,
+        q: options?.q
+      })}`
+    );
+  },
+
+  async getTargetSkill(workspaceId: string, targetId: string, skillId: string): Promise<ControlPlaneTargetSkillDetail> {
+    return requestJson<ControlPlaneTargetSkillDetail>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills/${encodeURIComponent(skillId)}`
+    );
+  },
+
+  async createTargetSkill(workspaceId: string, targetId: string, input: CreateTargetSkillInput): Promise<ControlPlaneTargetSkillDetail> {
+    return requestJson<ControlPlaneTargetSkillDetail>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills`,
+      { method: 'POST', body: JSON.stringify(input) }
+    );
+  },
+
+  async importTargetSkill(workspaceId: string, targetId: string, input: ImportTargetSkillInput): Promise<ControlPlaneTargetSkillDetail> {
+    return requestJson<ControlPlaneTargetSkillDetail>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills/import`,
+      { method: 'POST', body: JSON.stringify(input) }
+    );
+  },
+
+  async updateTargetSkill(
+    workspaceId: string,
+    targetId: string,
+    skillId: string,
+    input: UpdateTargetSkillInput
+  ): Promise<ControlPlaneTargetSkillDetail> {
+    return requestJson<ControlPlaneTargetSkillDetail>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills/${encodeURIComponent(skillId)}`,
+      { method: 'PATCH', body: JSON.stringify(input) }
+    );
+  },
+
+  async deleteTargetSkill(workspaceId: string, targetId: string, skillId: string): Promise<void> {
+    await requestJson<void>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills/${encodeURIComponent(skillId)}`,
+      { method: 'DELETE' }
+    );
+  },
+
+  async reimportTargetSkill(
+    workspaceId: string,
+    targetId: string,
+    skillId: string,
+    input: { force?: boolean } = {}
+  ): Promise<ControlPlaneTargetSkillDetail> {
+    return requestJson<ControlPlaneTargetSkillDetail>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills/${encodeURIComponent(skillId)}/reimport`,
+      { method: 'POST', body: JSON.stringify(input) }
+    );
   }
 };

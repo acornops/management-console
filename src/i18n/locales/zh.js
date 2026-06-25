@@ -30,6 +30,7 @@ export const zh = {
     backToWorkspace: '返回工作区',
     workloads: '工作负载',
     mcpServers: 'MCP 服务器',
+    skills: '技能',
     nodes: '节点',
     namespaces: '命名空间',
     services: '服务',

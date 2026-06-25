@@ -25,11 +25,13 @@ type ActiveResourceNav =
   | 'clusterOverview'
   | 'clusterResources'
   | 'clusterMcpServers'
+  | 'clusterSkills'
   | 'clusterSettings'
   | 'clusterChat'
   | 'vmOverview'
   | 'vmResources'
   | 'vmMcpServers'
+  | 'vmSkills'
   | 'vmSettings'
   | 'vmChat'
   | 'workspaces';
@@ -374,6 +376,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   ['overview', 'clusterOverview', t('app.overview'), ICONS.LayoutGrid],
                   ['resources', 'clusterResources', t('app.resources'), ICONS.Activity],
                   ['mcpServers', 'clusterMcpServers', t('app.mcpServers'), ICONS.Server],
+                  ['skills', 'clusterSkills', t('app.skills'), ICONS.BookOpen],
                   ['chat', 'clusterChat', t('app.aiChat'), ICONS.Terminal]
                 ] as Array<[ClusterSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
                   <SidebarNavButton
@@ -429,6 +432,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   ['overview', 'vmOverview', t('app.overview'), ICONS.LayoutGrid],
                   ['resources', 'vmResources', t('app.resources'), ICONS.Activity],
                   ['mcpServers', 'vmMcpServers', t('app.mcpServers'), ICONS.Server],
+                  ['skills', 'vmSkills', t('app.skills'), ICONS.BookOpen],
                   ['chat', 'vmChat', t('app.aiChat'), ICONS.Terminal]
                 ] as Array<[VmSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
                   <SidebarNavButton

@@ -68,11 +68,19 @@ export type {
   ControlPlaneRoleTemplate,
   TargetType,
   TargetSummary,
+  ControlPlaneTargetSkillDetail,
+  ControlPlaneTargetSkillsCatalog,
   CreateTargetMcpServerInput,
+  CreateTargetSkillInput,
+  ImportTargetSkillInput,
   TargetMcpServer,
+  TargetSkillSourceType,
+  TargetSkillValidationStatus,
+  TargetSkillSyncStatus,
   TargetMcpServerAuthInput,
   TargetMcpServerTestConnectionResult,
   TargetMcpServerToolInput,
+  UpdateTargetSkillInput,
   UpdateTargetMcpServerInput
 } from './control-plane/types';
 export type {

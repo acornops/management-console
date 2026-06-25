@@ -14,11 +14,13 @@ export type ActiveResourceNav =
   | 'clusterOverview'
   | 'clusterResources'
   | 'clusterMcpServers'
+  | 'clusterSkills'
   | 'clusterSettings'
   | 'clusterChat'
   | 'vmOverview'
   | 'vmResources'
   | 'vmMcpServers'
+  | 'vmSkills'
   | 'vmSettings'
   | 'vmChat'
   | 'workspaces';
@@ -72,6 +74,7 @@ export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
     const tab = route.tab || 'overview';
     if (tab === 'resources' || tab === 'services' || tab === 'processes' || tab === 'network' || tab === 'logs') return 'vmResources';
     if (tab === 'mcpServers') return 'vmMcpServers';
+    if (tab === 'skills') return 'vmSkills';
     if (tab === 'settings') return 'vmSettings';
     if (tab === 'chat') return 'vmChat';
     return 'vmOverview';
@@ -85,6 +88,7 @@ export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
     const tab = route.tab || 'overview';
     if (tab === 'resources') return 'clusterResources';
     if (tab === 'mcpServers') return 'clusterMcpServers';
+    if (tab === 'skills') return 'clusterSkills';
     if (tab === 'settings') return 'clusterSettings';
     if (tab === 'chat') return 'clusterChat';
     return 'clusterOverview';

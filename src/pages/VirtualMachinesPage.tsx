@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
-import { McpServersView } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServersView';
 import { controlPlaneApi, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { AppPaths, AppRoute, VmSubview } from '@/utils/routes';
@@ -22,11 +21,11 @@ import {
   VmMetricTimelinePoint
 } from '@/pages/virtual-machines/VirtualMachineMetrics';
 import { AddVirtualMachineModal } from '@/pages/virtual-machines/AddVirtualMachineModal';
+import { VirtualMachineAdminView } from '@/pages/virtual-machines/VirtualMachineAdminView';
 import { VirtualMachineChatView } from '@/pages/virtual-machines/VirtualMachineChatView';
 import { VirtualMachinesListView } from '@/pages/virtual-machines/VirtualMachinesListView';
 import { VirtualMachineResourcesView, VmResourceCategory } from '@/pages/virtual-machines/VirtualMachineResourcesView';
 import { VirtualMachineSettingsView } from '@/pages/virtual-machines/VirtualMachineSettingsView';
-import { toClusterShim } from '@/pages/virtual-machines/virtualMachineClusterShim';
 import { useVirtualMachineListRefresh } from '@/pages/virtual-machines/useVirtualMachineListRefresh';
 import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/pages/virtual-machines/virtualMachineTargetPrompt';
 import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
@@ -411,14 +410,12 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     );
   }
 
-  if (view === 'mcpServers') {
+  if (view === 'mcpServers' || view === 'skills') {
     return (
-      <McpServersView
-        cluster={toClusterShim(selected)}
-        targetContext={{ workspaceId: workspace.id, targetId: selected.id, targetType: 'virtual_machine' }}
-        canManageMcp={Boolean(workspace.permissions?.manage_mcp)}
-        canManageTools={Boolean(workspace.permissions?.manage_tools)}
-        canRequestWriteRuns={Boolean(workspace.permissions?.create_read_write_runs)}
+      <VirtualMachineAdminView
+        view={view}
+        virtualMachine={selected}
+        workspace={workspace}
       />
     );
   }

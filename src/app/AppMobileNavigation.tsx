@@ -25,11 +25,13 @@ type ActiveResourceNav =
   | 'clusterOverview'
   | 'clusterResources'
   | 'clusterMcpServers'
+  | 'clusterSkills'
   | 'clusterSettings'
   | 'clusterChat'
   | 'vmOverview'
   | 'vmResources'
   | 'vmMcpServers'
+  | 'vmSkills'
   | 'vmSettings'
   | 'vmChat'
   | 'workspaces';
@@ -237,6 +239,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterFindingCount],
                         ['resources', t('app.resources'), ICONS.Activity, 0],
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
+                        ['skills', t('app.skills'), ICONS.BookOpen, 0],
                         ['chat', t('app.aiChat'), ICONS.Terminal, 0],
                         ['settings', t('app.clusterSettings'), ICONS.Settings, 0]
                       ] as Array<[ClusterSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
@@ -289,6 +292,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmFindingCount],
                         ['resources', t('app.resources'), ICONS.Activity, 0],
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
+                        ['skills', t('app.skills'), ICONS.BookOpen, 0],
                         ['chat', t('app.aiChat'), ICONS.Terminal, 0],
                         ['settings', t('app.vmSettings'), ICONS.Settings, 0]
                       ] as Array<[VmSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (

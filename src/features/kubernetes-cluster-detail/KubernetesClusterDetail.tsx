@@ -6,6 +6,7 @@ import { McpServersView } from '@/features/kubernetes-cluster-detail/components/
 import { NamespaceScopeDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/NamespaceScopeDialog';
 import { OverviewView } from '@/features/kubernetes-cluster-detail/components/detail/views/OverviewView';
 import { ResourcesView } from '@/features/kubernetes-cluster-detail/components/detail/views/ResourcesView';
+import { TargetSkillsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsView';
 import { createMarkdownComponents } from '@/features/kubernetes-cluster-detail/lib/markdown';
 import { KubernetesClusterDetailProps, View } from '@/features/kubernetes-cluster-detail/types';
 import { fadeTransition } from '@/lib/motion';
@@ -15,7 +16,7 @@ interface KubernetesClusterDetailLocationState {
   sessionId: string | null;
 }
 
-const VIEWS: View[] = ['overview', 'resources', 'mcpServers', 'chat', 'settings'];
+const VIEWS: View[] = ['overview', 'resources', 'mcpServers', 'skills', 'chat', 'settings'];
 
 function normalizeView(value: string | null): View | null {
   if (value === 'mcp-servers') return 'mcpServers';
@@ -231,6 +232,17 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 canRequestWriteRuns={canRequestWriteRuns}
                 onToggleTool={onToggleTool}
                 onSyncTools={onSyncTools}
+              />
+            )}
+            {activeView === 'skills' && (
+              <TargetSkillsView
+                cluster={cluster}
+                targetContext={{
+                  workspaceId: cluster.workspaceId,
+                  targetId: cluster.id,
+                  targetType: 'kubernetes'
+                }}
+                canManageSkills={Boolean(currentWorkspacePermissions?.manage_skills)}
               />
             )}
             {activeView === 'chat' && (

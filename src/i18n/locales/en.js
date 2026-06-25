@@ -30,6 +30,7 @@ export const en = {
     backToWorkspace: 'Back to Workspace',
     workloads: 'Workloads',
     mcpServers: 'MCP Servers',
+    skills: 'Skills',
     nodes: 'Nodes',
     namespaces: 'Namespaces',
     services: 'Services',

@@ -29,6 +29,7 @@ describe('app navigation guards', () => {
       manage_targets: false,
       manage_mcp: false,
       manage_tools: false,
+      manage_skills: false,
       manage_ai_settings: false,
       manage_agent_keys: false,
       manage_webhooks: false,

@@ -18,7 +18,7 @@ export interface KubernetesClusterDetailProps {
   onActiveViewChange?: (view: View) => void;
 }
 
-export type View = 'overview' | 'resources' | 'mcpServers' | 'chat' | 'settings';
+export type View = 'overview' | 'resources' | 'mcpServers' | 'skills' | 'chat' | 'settings';
 
 export type RunTraceStatus = 'connecting' | 'running' | 'completed' | 'failed' | 'cancelled';
 
