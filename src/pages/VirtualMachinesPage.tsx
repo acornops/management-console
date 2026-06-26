@@ -4,12 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
-import { controlPlaneApi, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import { controlPlaneApi, ControlPlaneVirtualMachine, type ControlPlaneIssueItem } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { AppPaths, AppRoute, VmSubview } from '@/utils/routes';
 import { Workspace } from '@/types';
 import {
-  findingSeverityTone,
   formatSnapshotTime,
   getFindingSeverity,
   getVmStatusLabel,
@@ -23,6 +22,7 @@ import {
 import { AddVirtualMachineModal } from '@/pages/virtual-machines/AddVirtualMachineModal';
 import { VirtualMachineAdminView } from '@/pages/virtual-machines/VirtualMachineAdminView';
 import { VirtualMachineChatView } from '@/pages/virtual-machines/VirtualMachineChatView';
+import { VirtualMachineIssuesPanel } from '@/pages/virtual-machines/VirtualMachineIssuesPanel';
 import { VirtualMachinesListView } from '@/pages/virtual-machines/VirtualMachinesListView';
 import { VirtualMachineResourcesView, VmResourceCategory } from '@/pages/virtual-machines/VirtualMachineResourcesView';
 import { VirtualMachineSettingsView } from '@/pages/virtual-machines/VirtualMachineSettingsView';
@@ -56,6 +56,7 @@ function vmSubviewToResourceCategory(view: VmSubview): VmResourceCategory {
   if (view === 'services' || view === 'processes' || view === 'network' || view === 'logs') return view;
   return 'all';
 }
+
 export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   workspace,
   currentUserId,
@@ -76,6 +77,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const { t } = useTranslation();
   const [inventory, setInventory] = React.useState<Record<string, unknown>[]>([]);
   const [findings, setFindings] = React.useState<Record<string, unknown>[]>([]);
+  const [issues, setIssues] = React.useState<ControlPlaneIssueItem[] | null>(null);
+  const [isLoadingIssueEvidence, setIsLoadingIssueEvidence] = React.useState(false);
   const [logs, setLogs] = React.useState<Record<string, unknown>[]>([]);
   const [resourceStatus, setResourceStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [resourceError, setResourceError] = React.useState<string | null>(null);
@@ -189,7 +192,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   }, [t, workspace.id]);
 
   React.useEffect(() => {
-    if (!selected) return;
+    if (!selected) {
+      setIsLoadingIssueEvidence(false);
+      return;
+    }
     if (isVmResourceSubview(view)) {
       void loadVmInventory(selected);
       if (view === 'logs') {
@@ -197,8 +203,35 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       }
     }
     if (view === 'overview') {
-      void controlPlaneApi.listVirtualMachineFindings(workspace.id, selected.id).then((page) => setFindings(page.items || []));
       let isCurrent = true;
+      setIssues(null);
+      setFindings([]);
+      setIsLoadingIssueEvidence(true);
+      const issueRequest = controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 })
+        .then((page) => {
+          if (!isCurrent) return;
+          setIssues(page.items || []);
+        })
+        .catch((error) => {
+          console.error('Failed loading virtual machine issues', error);
+          if (!isCurrent) return;
+          setIssues(null);
+        });
+      const findingRequest = controlPlaneApi.listVirtualMachineFindings(workspace.id, selected.id)
+        .then((page) => {
+          if (!isCurrent) return;
+          setFindings(page.items || []);
+        })
+        .catch((error) => {
+          console.error('Failed loading virtual machine findings', error);
+          if (!isCurrent) return;
+          setFindings([]);
+        });
+      void Promise.allSettled([issueRequest, findingRequest])
+        .finally(() => {
+          if (!isCurrent) return;
+          setIsLoadingIssueEvidence(false);
+        });
       setMetricHistoryStatus('loading');
       void controlPlaneApi.getVirtualMachineMetricsHistory(workspace.id, selected.id)
         .then((payload) => {
@@ -216,6 +249,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         isCurrent = false;
       };
     }
+    setIsLoadingIssueEvidence(false);
   }, [loadVmInventory, loadVmLogs, selected, view, workspace.id]);
 
   React.useEffect(() => {
@@ -342,6 +376,17 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     setPendingChatPrompt(prompt);
     navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, selected.id, 'chat'));
   }, [navigate, selected, t, workspace.id]);
+  const openVmIssueTriage = React.useCallback((issue: ControlPlaneIssueItem) => {
+    if (!selected) return;
+    const prompt = t('virtualMachines.overview.triageIssuePrompt', {
+      title: issue.title,
+      severity: issue.severity,
+      source: issue.objectName || issue.objectKind || issue.reason || 'host',
+      message: issue.summary
+    });
+    setPendingChatPrompt(prompt);
+    navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, selected.id, 'chat'));
+  }, [navigate, selected, t, workspace.id]);
   const metricTimeline = React.useMemo(() => getVmMetricTimeline(metricHistory), [metricHistory]);
   const cpuSeries = React.useMemo(
     () =>
@@ -421,10 +466,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   }
 
   if (view === 'overview') {
-    const findingCount = findings.length;
-    const criticalFindings = findings.filter((finding) => getFindingSeverity(finding) === 'critical').length;
-    const warningFindings = findings.filter((finding) => getFindingSeverity(finding) === 'warning').length;
-
     return (
       <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
         <header className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -444,111 +485,14 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           </div>
         </header>
 
-        <section className="mb-10 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-          <div className="flex flex-col gap-6 border-b border-ui-border bg-ui-bg px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface/70 text-accent-strong">
-                <ICONS.AlertTriangle className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="type-row-title">{t('virtualMachines.overview.activeFindings')}</p>
-                <p className="mt-1 text-sm leading-6 text-ui-text-muted">
-                  {t('virtualMachines.overview.activeFindingsBody')}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="type-caption rounded-full bg-ui-surface px-3 py-1">
-                {t('virtualMachines.overview.findingCount', { count: findingCount })}
-              </span>
-              <span className="type-caption rounded-full bg-status-danger-soft px-3 py-1 text-status-danger-text">
-                {t('virtualMachines.overview.criticalFindings', { count: criticalFindings })}
-              </span>
-              <span className="type-caption rounded-full bg-status-warning-soft px-3 py-1 text-status-warning-text">
-                {t('virtualMachines.overview.warningFindings', { count: warningFindings })}
-              </span>
-            </div>
-          </div>
-
-          {findings.length === 0 ? (
-            <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
-              <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
-                <ICONS.CheckCircle2 className="h-5 w-5" />
-              </div>
-              <h2 className="type-row-title mt-4">{t('virtualMachines.overview.noFindingsTitle')}</h2>
-              <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.noFindingsBody')}</p>
-            </div>
-          ) : (
-            <>
-              <div className="hidden overflow-x-auto md:block">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-ui-border">
-                      <th className="type-label px-5 py-3 text-left">{t('clusterOverview.finding')}</th>
-                      <th className="type-label px-5 py-3 text-left">{t('clusterOverview.severity')}</th>
-                      <th className="type-label px-5 py-3 text-left">{t('virtualMachines.overview.source')}</th>
-                      <th className="type-label px-5 py-3 text-left">{t('clusterOverview.updated')}</th>
-                      <th className="type-label px-5 py-3 text-right">{t('clusterOverview.action')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {findings.map((finding, index) => {
-                      const severity = getFindingSeverity(finding);
-                      return (
-                        <tr key={String(finding.findingId || index)} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                          <td className="max-w-[34rem] px-5 py-4">
-                            <p className="type-micro-label">{t('virtualMachines.overview.snapshotFinding')}</p>
-                            <h2 className="type-row-title mt-2">{String(finding.title || t('virtualMachines.overview.findingFallback'))}</h2>
-                            <p className="type-body mt-1">{String(finding.message || '')}</p>
-                          </td>
-                          <td className="px-5 py-4 align-top">
-                            <span className={`type-micro-label rounded-full px-2.5 py-1 ${findingSeverityTone(severity)}`}>
-                              {t(`investigations.severity.${severity}`)}
-                            </span>
-                          </td>
-                          <td className="type-caption px-5 py-4 align-top">
-                            {String(finding.source || finding.category || 'host')}
-                          </td>
-                          <td className="type-caption px-5 py-4 align-top">
-                            {String(finding.timestamp || selected.latestSnapshot?.timestamp || selected.updatedAt)}
-                          </td>
-                          <td className="px-5 py-4 align-top text-right">
-                            <Button onClick={() => openVmTriage(finding)} variant="accent" size="md">
-                              <Terminal className="h-4 w-4" />
-                              {t('clusterOverview.runTriage')}
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="divide-y divide-ui-border md:hidden">
-                {findings.map((finding, index) => {
-                  const severity = getFindingSeverity(finding);
-                  return (
-                    <article key={String(finding.findingId || index)} className="p-5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${findingSeverityTone(severity)}`}>
-                          {t(`investigations.severity.${severity}`)}
-                        </span>
-                        <span className="type-caption">{String(finding.source || finding.category || 'host')}</span>
-                      </div>
-                      <h2 className="type-row-title mt-4">{String(finding.title || t('virtualMachines.overview.findingFallback'))}</h2>
-                      <p className="type-body mt-2">{String(finding.message || '')}</p>
-                      <Button onClick={() => openVmTriage(finding)} variant="accent" size="md" className="mt-4">
-                        <Terminal className="h-4 w-4" />
-                        {t('clusterOverview.runTriage')}
-                      </Button>
-                    </article>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </section>
+        <VirtualMachineIssuesPanel
+          selected={selected}
+          findings={findings}
+          issues={issues}
+          isLoading={isLoadingIssueEvidence}
+          onOpenFindingTriage={openVmTriage}
+          onOpenIssueTriage={openVmIssueTriage}
+        />
 
         <div className="mb-12 grid w-full grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
           <MetricChart

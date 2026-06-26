@@ -30,8 +30,19 @@ describe('cluster overview metric history loading', () => {
 
 describe('cluster overview findings command signal copy', () => {
   it('keeps the findings header scoped while the body tells operators what to do next', () => {
-    expect(overviewView).toContain("t('clusterOverview.activeFindingsScope'");
-    expect(overviewView).toContain("t('clusterOverview.activeFindingsBody', { findings: findingCount, critical: criticalFindings, warning: warningFindings })");
-    expect(overviewView).not.toContain("t('clusterOverview.activeFindingsBody', { pods: podCount, resources: scopedResourceCount })");
+    expect(overviewView).toContain("t('clusterOverview.activeIssuesScope'");
+    expect(overviewView).toContain("t('clusterOverview.activeIssuesBody', { issues: issueCount, critical: criticalIssues, warning: warningIssues })");
+    expect(overviewView).not.toContain("t('clusterOverview.activeIssuesBody', { pods: podCount, resources: scopedResourceCount })");
+  });
+
+  it('keeps loaded durable issues as the primary overview source instead of falling back to raw findings', () => {
+    expect(overviewView).toContain('const useIssueCounts = hasIssueRows;');
+    expect(overviewView).toContain(') : hasIssueRows ? (');
+  });
+
+  it('labels durable issue rows separately from raw snapshot finding rows', () => {
+    expect(overviewView).toContain("t('clusterOverview.issue')");
+    expect(overviewView).toContain("t('clusterOverview.finding')");
+    expect(overviewView).toContain("t('issues.originFinding')");
   });
 });

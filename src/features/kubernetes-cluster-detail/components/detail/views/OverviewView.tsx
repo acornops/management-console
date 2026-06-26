@@ -3,8 +3,9 @@ import { Activity, AlertTriangle, Cpu, Terminal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
+import { issueStatusTone } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type { ControlPlaneFindingPageItem } from '@/services/controlPlaneApi';
+import type { ControlPlaneFindingPageItem, ControlPlaneIssueItem } from '@/services/controlPlaneApi';
 import { Alert, ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState, getTelemetryFreshness, getTelemetryFreshnessLabel } from '@/utils/telemetry';
 
@@ -41,6 +42,14 @@ function getSeverityTone(severity: Alert['severity']): string {
   if (severity === 'critical') return 'bg-status-danger-soft text-status-danger-text';
   if (severity === 'warning') return 'bg-status-warning-soft text-status-warning-text';
   return 'bg-sky-500/10 text-sky-600 dark:text-sky-300';
+}
+
+function issueTimestamp(issue: ControlPlaneIssueItem): number {
+  return Date.parse(issue.lastSeenAt || issue.updatedAt) || Date.now();
+}
+
+function issueFirstSeenTimestamp(issue: ControlPlaneIssueItem): number {
+  return Date.parse(issue.firstSeenAt || issue.createdAt) || issueTimestamp(issue);
 }
 
 function mapFindingToAlert(finding: ControlPlaneFindingPageItem): Alert {
@@ -108,6 +117,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   );
 
   const [clusterFindings, setClusterFindings] = useState<Alert[] | null>(null);
+  const [clusterIssues, setClusterIssues] = useState<ControlPlaneIssueItem[] | null>(null);
   useEffect(() => {
     let isCurrent = true;
 
@@ -142,7 +152,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   useEffect(() => {
     let isCurrent = true;
     setClusterFindings(null);
+    setClusterIssues(null);
 
+    void controlPlaneApi.listTargetIssues(cluster.workspaceId, cluster.id, { limit: 50 })
+      .then((page) => {
+        if (!isCurrent) return;
+        setClusterIssues(page.items);
+      })
+      .catch((error) => {
+        console.error('Failed loading cluster issues', error);
+        if (isCurrent) setClusterIssues(null);
+      });
     void controlPlaneApi.listClusterFindings(cluster.workspaceId, cluster.id, { limit: 50 })
       .then((page) => {
         if (!isCurrent) return;
@@ -167,17 +187,35 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       }),
     [cluster.alerts, clusterFindings]
   );
-  const findingCount = cluster.resourceSummary?.findingCount ?? reportedFindings.length;
-  const criticalFindings = cluster.resourceSummary?.criticalFindingCount ??
-    reportedFindings.filter((finding) => finding.severity === 'critical').length;
-  const warningFindings = Math.max(
-    findingCount - criticalFindings,
-    reportedFindings.filter((finding) => finding.severity === 'warning').length
+  const reportedIssues = useMemo(
+    () =>
+      [...(clusterIssues || [])].sort((left, right) => {
+        const severityDelta = severityRank(left.severity) - severityRank(right.severity);
+        if (severityDelta !== 0) return severityDelta;
+        return issueTimestamp(right) - issueTimestamp(left);
+      }),
+    [clusterIssues]
   );
+  const hasIssueRows = clusterIssues !== null;
+  const useIssueCounts = hasIssueRows;
+  const issueCount = useIssueCounts ? reportedIssues.length : cluster.resourceSummary?.findingCount ?? reportedFindings.length;
+  const criticalIssues = useIssueCounts
+    ? reportedIssues.filter((issue) => issue.severity === 'critical').length
+    : cluster.resourceSummary?.criticalFindingCount ?? reportedFindings.filter((finding) => finding.severity === 'critical').length;
+  const warningIssues = useIssueCounts
+    ? reportedIssues.filter((issue) => issue.severity === 'warning').length
+    : Math.max(
+      issueCount - criticalIssues,
+      reportedFindings.filter((finding) => finding.severity === 'warning').length
+    );
   const scopedResourceCount = cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
   const openTriage = (finding: Alert) => {
     const prompt = `Triage "${finding.title}" on ${cluster.name}. Severity: ${finding.severity}. Namespace: ${finding.namespace || t('clusterOverview.clusterWide')}. Finding summary: ${finding.message}`;
+    onOpenCopilot?.(prompt);
+  };
+  const openIssueTriage = (issue: ControlPlaneIssueItem) => {
+    const prompt = `Triage "${issue.title}" on ${cluster.name}. Severity: ${issue.severity}. Status: ${issue.status}. Scope: ${issue.scopeName || issue.namespace || t('clusterOverview.clusterWide')}. Issue summary: ${issue.summary}`;
     onOpenCopilot?.(prompt);
   };
 
@@ -203,35 +241,123 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="type-row-title">{t('clusterOverview.activeFindings')}</p>
+              <p className="type-row-title">{t('clusterOverview.activeIssues')}</p>
               <p className="type-caption mt-2 max-w-3xl">
-                {t('clusterOverview.activeFindingsScope', { pods: podCount, resources: scopedResourceCount })}
+                {t('clusterOverview.activeIssuesScope', { pods: podCount, resources: scopedResourceCount })}
               </p>
               <p className="type-body mt-2 max-w-3xl">
-                {t('clusterOverview.activeFindingsBody', { findings: findingCount, critical: criticalFindings, warning: warningFindings })}
+                {t('clusterOverview.activeIssuesBody', { issues: issueCount, critical: criticalIssues, warning: warningIssues })}
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="type-caption rounded-full bg-ui-surface px-3 py-1">
-              {t('clusterOverview.findingCount', { count: findingCount })}
+              {t('clusterOverview.issueCount', { count: issueCount })}
             </span>
             <span className="type-caption rounded-full bg-status-danger-soft px-3 py-1 text-status-danger-text">
-              {t('clusterOverview.criticalFindings', { count: criticalFindings })}
+              {t('clusterOverview.criticalIssues', { count: criticalIssues })}
             </span>
             <span className="type-caption rounded-full bg-status-warning-soft px-3 py-1 text-status-warning-text">
-              {t('clusterOverview.warningFindings', { count: warningFindings })}
+              {t('clusterOverview.warningIssues', { count: warningIssues })}
             </span>
           </div>
         </div>
 
-        {reportedFindings.length === 0 && findingCount > 0 ? (
+        {reportedIssues.length > 0 ? (
+          <>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-ui-border">
+                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.issue')}</th>
+                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.severity')}</th>
+                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.namespace')}</th>
+                    <th className="type-label px-5 py-3 text-left">{t('overview.lastSeenLabel')}</th>
+                    {onOpenCopilot && <th className="type-label px-5 py-3 text-right">{t('clusterOverview.action')}</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportedIssues.map((issue) => (
+                    <tr key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
+                      <td className="max-w-[34rem] px-5 py-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
+                            {t(`issues.status.${issue.status}`)}
+                          </span>
+                          <span className="type-caption text-ui-text-muted">
+                            {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
+                          </span>
+                        </div>
+                        <h2 className="type-row-title mt-2">{issue.title}</h2>
+                        <p className="type-body mt-1">{issue.reason || issue.summary}</p>
+                      </td>
+                      <td className="px-5 py-4 align-top">
+                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>
+                          {t(`issues.severity.${issue.severity}`)}
+                        </span>
+                      </td>
+                      <td className="type-caption px-5 py-4 align-top">
+                        {issue.scopeName || issue.namespace || t('clusterOverview.clusterWide')}
+                      </td>
+                      <td className="type-caption px-5 py-4 align-top">
+                        {formatRelativeTime(issueTimestamp(issue))}
+                      </td>
+                      {onOpenCopilot && (
+                        <td className="px-5 py-4 align-top text-right">
+                          <Button onClick={() => openIssueTriage(issue)} variant="accent" size="md">
+                            <Terminal className="h-4 w-4" />
+                            {t('clusterOverview.runTriage')}
+                          </Button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="divide-y divide-ui-border md:hidden">
+              {reportedIssues.map((issue) => (
+                <article key={issue.id} className="p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>
+                      {t(`issues.severity.${issue.severity}`)}
+                    </span>
+                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
+                      {t(`issues.status.${issue.status}`)}
+                    </span>
+                    <span className="type-caption">{formatRelativeTime(issueTimestamp(issue))}</span>
+                  </div>
+                  <p className="type-caption mt-3 text-ui-text-muted">
+                    {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
+                  </p>
+                  <h2 className="type-row-title mt-4">{issue.title}</h2>
+                  <p className="type-body mt-2">{issue.reason || issue.summary}</p>
+                  {onOpenCopilot && (
+                    <Button onClick={() => openIssueTriage(issue)} variant="accent" size="md" className="mt-4">
+                      <Terminal className="h-4 w-4" />
+                      {t('clusterOverview.runTriage')}
+                    </Button>
+                  )}
+                </article>
+              ))}
+            </div>
+          </>
+        ) : hasIssueRows ? (
+          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
+            <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <h2 className="type-row-title mt-4">{t('clusterOverview.noFindingsTitle')}</h2>
+            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.noFindingsBody')}</p>
+          </div>
+        ) : reportedFindings.length === 0 && issueCount > 0 ? (
           <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
             <div className="rounded-md border border-accent/20 bg-accent-soft p-3 text-accent-strong">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <h2 className="type-row-title mt-4">{t('clusterOverview.findingsPagedTitle')}</h2>
-            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.findingsPagedBody', { count: findingCount })}</p>
+            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.findingsPagedBody', { count: issueCount })}</p>
           </div>
         ) : reportedFindings.length === 0 ? (
           <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
@@ -258,13 +384,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   {reportedFindings.map((finding) => (
                     <tr key={finding.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
                       <td className="max-w-[34rem] px-5 py-4">
-                        <p className="type-micro-label">{t('investigations.originFinding')}</p>
+                        <p className="type-micro-label">{t('issues.originFinding')}</p>
                         <h2 className="type-row-title mt-2">{finding.title}</h2>
                         <p className="type-body mt-1">{finding.message}</p>
                       </td>
                       <td className="px-5 py-4 align-top">
                         <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(finding.severity)}`}>
-                          {t(`investigations.severity.${finding.severity}`)}
+                          {t(`issues.severity.${finding.severity}`)}
                         </span>
                       </td>
                       <td className="type-caption px-5 py-4 align-top">
@@ -292,7 +418,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <article key={finding.id} className="p-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(finding.severity)}`}>
-                      {t(`investigations.severity.${finding.severity}`)}
+                      {t(`issues.severity.${finding.severity}`)}
                     </span>
                     <span className="type-caption">{finding.namespace || t('clusterOverview.clusterWide')}</span>
                     <span className="type-caption">{formatRelativeTime(finding.timestamp)}</span>

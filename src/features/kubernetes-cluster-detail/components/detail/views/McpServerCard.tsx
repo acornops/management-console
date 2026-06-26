@@ -99,14 +99,14 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
   const readConfiguredTools = Math.max(0, server.toolCounts.total - writeConfiguredTools);
   const statusDetail = !server.canToggle
     ? t('mcpServers.serverRecordMissing')
-    : server.lastDiscoveryError
-      ? server.lastDiscoveryError
-      : isManagedServer
-        ? t('mcpServers.managed')
+    : isManagedServer
+      ? t('mcpServers.managed')
+      : server.lastDiscoveryError
+        ? server.lastDiscoveryError
         : server.lastDiscoveryAt
           ? formatDiscoveryTimestamp(server.lastDiscoveryAt)
           : t('mcpServers.notChecked');
-  const statusDetailClassName = server.lastDiscoveryError
+  const statusDetailClassName = server.lastDiscoveryError && !isManagedServer
     ? 'text-status-danger-text'
     : !server.canToggle
       ? 'text-status-warning-text'

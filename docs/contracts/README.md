@@ -178,9 +178,12 @@ Virtual machine list and detail responses return `virtualMachine.latestSnapshot.
 
 `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters` returns cluster summaries only. Historical CPU and memory telemetry must be loaded lazily from `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/metrics/history` for a selected cluster, or from the bounded batch endpoint `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/metrics/history?clusterIds=...` for visible dashboard charts. The batch endpoint is capped by the control plane and must not be used as an unbounded all-clusters history fetch.
 
-Snapshot-derived console data is fetched through bounded list endpoints:
+Durable issue and snapshot-derived console data is fetched through bounded list endpoints:
 
-- `GET /api/v1/workspaces/{workspaceId}/investigations`
+- `GET /api/v1/workspaces/{workspaceId}/issues`
+- `GET /api/v1/workspaces/{workspaceId}/issues/{issueId}`
+- `GET /api/v1/workspaces/{workspaceId}/issues/{issueId}/observations`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/issues`
 - `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources`
 - `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/findings`
 - `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/resources`

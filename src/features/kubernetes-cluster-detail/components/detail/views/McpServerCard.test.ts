@@ -34,6 +34,8 @@ describe('McpServerCard desktop density', () => {
     expect(mcpServerCard).toContain("formatDiscoveryTimestamp(server.lastDiscoveryAt)");
     expect(mcpServerCard).toContain("t('mcpServers.notChecked')");
     expect(mcpServerCard).toContain('const statusDetail = !server.canToggle');
+    expect(mcpServerCard).toContain(": isManagedServer\n      ? t('mcpServers.managed')");
+    expect(mcpServerCard).toContain('const statusDetailClassName = server.lastDiscoveryError && !isManagedServer');
     expect(mcpServerCard).toContain('type-caption mt-0.5 truncate');
     expect(mcpServerCard).not.toContain('line-clamp-1 text-status-danger-text');
     expect(mcpServerCard).not.toContain('line-clamp-1 text-status-warning-text');

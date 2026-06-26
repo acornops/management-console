@@ -1,4 +1,4 @@
-import type { ControlPlaneInvestigationItem, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { ControlPlaneIssueItem, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { HealthStatus, type KubernetesCluster } from '@/types';
 import { getVmStatusLabel, statusTone } from '@/pages/virtual-machines/virtualMachineUi';
 import { getEffectiveHealthStatus } from '@/utils/telemetry';
@@ -12,6 +12,9 @@ export interface WorkspaceOverviewIssue {
   severity: WorkspaceOverviewSeverity;
   title: string;
   timestamp: number;
+  status: ControlPlaneIssueItem['status'];
+  firstSeenAt: string;
+  lastSeenAt: string;
   detail: string;
   evidence: string;
 }
@@ -67,11 +70,6 @@ function compactText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function clusterIssueDetail(item: ControlPlaneInvestigationItem, t: OverviewTranslator): string {
-  const object = [compactText(item.objectKind), compactText(item.objectName)].filter(Boolean).join(' ');
-  return [compactText(item.namespace) || t('overview.clusterWide'), object].filter(Boolean).join(' · ');
-}
-
 export function isConnectedCluster(cluster: KubernetesCluster): boolean {
   return cluster.agentConnectionState === 'connected';
 }
@@ -80,48 +78,35 @@ export function isConnectedVirtualMachine(virtualMachine: ControlPlaneVirtualMac
   return virtualMachine.status === 'online' || virtualMachine.status === 'degraded';
 }
 
-export function mapClusterInvestigationToOverviewIssue(
-  item: ControlPlaneInvestigationItem,
+function issueDetail(item: ControlPlaneIssueItem, t: OverviewTranslator): string {
+  const object = [compactText(item.objectKind), compactText(item.objectName)].filter(Boolean).join(' ');
+  const defaultScope = item.targetType === 'kubernetes' ? t('overview.clusterWide') : t('overview.targetWide');
+  return [compactText(item.namespace || item.scopeName) || defaultScope, object].filter(Boolean).join(' · ');
+}
+
+export function mapControlPlaneIssueToOverviewIssue(
+  item: ControlPlaneIssueItem,
   t: OverviewTranslator
 ): WorkspaceOverviewIssue {
   return {
     id: item.id,
-    targetId: item.clusterId,
-    targetType: 'kubernetes',
+    targetId: item.targetId,
+    targetType: item.targetType,
     severity: item.severity,
     title: item.title,
-    timestamp: item.timestamp,
-    detail: clusterIssueDetail(item, t),
-    evidence: compactText(item.reason) || compactText(item.message)
-  };
-}
-
-export function mapVmFindingToOverviewIssue(
-  virtualMachine: ControlPlaneVirtualMachine,
-  finding: Record<string, unknown>,
-  t: OverviewTranslator
-): WorkspaceOverviewIssue {
-  const severity = String(finding.severity || '').toLowerCase();
-  const normalizedSeverity: WorkspaceOverviewSeverity =
-    severity === 'critical' ? 'critical' : severity === 'warning' ? 'warning' : 'info';
-
-  return {
-    id: String(finding.id || `${virtualMachine.id}-${finding.title || 'finding'}-${finding.updatedAt || finding.timestamp || ''}`),
-    targetId: virtualMachine.id,
-    targetType: 'virtual_machine',
-    severity: normalizedSeverity,
-    title: String(finding.title || t('virtualMachines.overview.findingFallback')),
-    timestamp: Date.parse(String(finding.updatedAt || finding.timestamp || virtualMachine.updatedAt || Date.now())) || Date.now(),
-    detail: String(finding.source || finding.category || t('virtualMachines.overview.snapshotFinding')),
-    evidence: compactText(finding.message) || compactText(finding.description) || compactText(finding.reason)
+    timestamp: Date.parse(item.lastSeenAt || item.updatedAt) || Date.now(),
+    status: item.status,
+    firstSeenAt: item.firstSeenAt,
+    lastSeenAt: item.lastSeenAt,
+    detail: issueDetail(item, t),
+    evidence: compactText(item.reason) || compactText(item.summary)
   };
 }
 
 export function buildWorkspaceOverviewCards(args: {
   kubernetesClusters: KubernetesCluster[];
-  clusterInvestigations: ControlPlaneInvestigationItem[];
+  issues: ControlPlaneIssueItem[];
   virtualMachines: ControlPlaneVirtualMachine[];
-  vmFindingsById: Record<string, Record<string, unknown>[]>;
   t: OverviewTranslator;
 }): {
   attentionItems: WorkspaceOverviewAttentionItem[];
@@ -130,14 +115,9 @@ export function buildWorkspaceOverviewCards(args: {
   criticalIssueCount: number;
   warningIssueCount: number;
 } {
-  const { kubernetesClusters, clusterInvestigations, virtualMachines, vmFindingsById, t } = args;
-  const clusterIssuesById = new Map<string, WorkspaceOverviewIssue[]>();
-  for (const item of clusterInvestigations) {
-    const mapped = mapClusterInvestigationToOverviewIssue(item, t);
-    const issues = clusterIssuesById.get(item.clusterId);
-    if (issues) issues.push(mapped);
-    else clusterIssuesById.set(item.clusterId, [mapped]);
-  }
+  const { kubernetesClusters, issues, virtualMachines, t } = args;
+  const clustersById = new Map(kubernetesClusters.map((cluster) => [cluster.id, cluster]));
+  const virtualMachinesById = new Map(virtualMachines.map((vm) => [vm.id, vm]));
 
   const attentionItems: WorkspaceOverviewAttentionItem[] = [];
   const connectedClusterCards: WorkspaceOverviewTargetCard[] = [];
@@ -145,7 +125,6 @@ export function buildWorkspaceOverviewCards(args: {
 
   for (const cluster of kubernetesClusters) {
     if (!isConnectedCluster(cluster)) continue;
-    const issues = sortWorkspaceOverviewIssues(clusterIssuesById.get(cluster.id) || []);
     const healthStatus = getEffectiveHealthStatus(cluster);
     const card: WorkspaceOverviewTargetCard = {
       targetId: cluster.id,
@@ -156,22 +135,10 @@ export function buildWorkspaceOverviewCards(args: {
     };
 
     connectedClusterCards.push(card);
-    attentionItems.push(
-      ...issues.map((issue) => ({
-        issue,
-        targetId: cluster.id,
-        targetType: 'kubernetes' as const,
-        targetName: cluster.name,
-        targetTypeLabel: t('overview.kubernetesCluster')
-      }))
-    );
   }
 
   for (const virtualMachine of virtualMachines) {
     if (!isConnectedVirtualMachine(virtualMachine)) continue;
-    const issues = sortWorkspaceOverviewIssues(
-      (vmFindingsById[virtualMachine.id] || []).map((finding) => mapVmFindingToOverviewIssue(virtualMachine, finding, t))
-    );
     const card: WorkspaceOverviewTargetCard = {
       targetId: virtualMachine.id,
       targetType: 'virtual_machine',
@@ -181,16 +148,23 @@ export function buildWorkspaceOverviewCards(args: {
     };
 
     connectedVirtualMachineCards.push(card);
-    attentionItems.push(
-      ...issues.map((issue) => ({
-        issue,
-        targetId: virtualMachine.id,
-        targetType: 'virtual_machine' as const,
-        targetName: virtualMachine.name,
-        targetTypeLabel: t('overview.virtualMachine')
-      }))
-    );
   }
+
+  attentionItems.push(
+    ...sortWorkspaceOverviewIssues(issues.map((issue) => mapControlPlaneIssueToOverviewIssue(issue, t))).map((issue) => {
+      const target =
+        issue.targetType === 'kubernetes'
+          ? clustersById.get(issue.targetId)
+          : virtualMachinesById.get(issue.targetId);
+      return {
+        issue,
+        targetId: issue.targetId,
+        targetType: issue.targetType,
+        targetName: target?.name || issues.find((item) => item.id === issue.id)?.targetName || issue.targetId,
+        targetTypeLabel: issue.targetType === 'kubernetes' ? t('overview.kubernetesCluster') : t('overview.virtualMachine')
+      };
+    })
+  );
 
   const compareAttentionItems = (left: WorkspaceOverviewAttentionItem, right: WorkspaceOverviewAttentionItem) => {
     const severityDelta = getSeverityRank(left.issue.severity) - getSeverityRank(right.issue.severity);

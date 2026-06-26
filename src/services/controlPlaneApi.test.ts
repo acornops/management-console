@@ -93,6 +93,90 @@ describe('controlPlaneApi', () => {
     );
   });
 
+  it('builds filtered workspace issue queries', async () => {
+    requestJson.mockResolvedValue({
+      items: [
+        {
+          id: 'issue-1',
+          targetId: 'cluster-1',
+          targetType: 'kubernetes',
+          status: 'active',
+          severity: 'critical',
+          title: 'Pod unhealthy'
+        }
+      ],
+      nextCursor: 'cursor-2'
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(
+      controlPlaneApi.listWorkspaceIssues('workspace 1', {
+        limit: 10,
+        cursor: 'cursor-1',
+        q: 'api',
+        status: 'active',
+        severity: 'critical',
+        targetType: 'kubernetes',
+        targetId: 'cluster-1',
+        namespace: 'default'
+      })
+    ).resolves.toEqual({
+      items: [
+        {
+          id: 'issue-1',
+          targetId: 'cluster-1',
+          targetType: 'kubernetes',
+          status: 'active',
+          severity: 'critical',
+          title: 'Pod unhealthy'
+        }
+      ],
+      nextCursor: 'cursor-2'
+    });
+    expect(requestJson).toHaveBeenCalledWith(
+      '/api/v1/workspaces/workspace%201/issues?limit=10&cursor=cursor-1&q=api&status=active&severity=critical&targetType=kubernetes&targetId=cluster-1&namespace=default'
+    );
+  });
+
+  it('builds filtered target issue queries', async () => {
+    requestJson.mockResolvedValue({ items: [], nextCursor: undefined });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(
+      controlPlaneApi.listTargetIssues('workspace 1', 'target/1', {
+        limit: 25,
+        q: 'crash',
+        status: 'recovering',
+        severity: 'warning',
+        namespace: 'default'
+      })
+    ).resolves.toEqual({ items: [], nextCursor: undefined });
+    expect(requestJson).toHaveBeenCalledWith(
+      '/api/v1/workspaces/workspace%201/targets/target%2F1/issues?limit=25&q=crash&status=recovering&severity=warning&namespace=default'
+    );
+  });
+
+  it('builds issue detail and observation queries', async () => {
+    requestJson
+      .mockResolvedValueOnce({ id: 'issue/1', title: 'Pod unhealthy' })
+      .mockResolvedValueOnce({ items: [{ id: 'observation-1' }], nextCursor: 'cursor-2' });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.getWorkspaceIssue('workspace 1', 'issue/1')).resolves.toEqual({
+      id: 'issue/1',
+      title: 'Pod unhealthy'
+    });
+    await expect(
+      controlPlaneApi.listIssueObservations('workspace 1', 'issue/1', { limit: 10, cursor: 'cursor-1' })
+    ).resolves.toEqual({ items: [{ id: 'observation-1' }], nextCursor: 'cursor-2' });
+
+    expect(requestJson).toHaveBeenNthCalledWith(1, '/api/v1/workspaces/workspace%201/issues/issue%2F1');
+    expect(requestJson).toHaveBeenNthCalledWith(
+      2,
+      '/api/v1/workspaces/workspace%201/issues/issue%2F1/observations?limit=10&cursor=cursor-1'
+    );
+  });
+
   it('lists workspace cluster summaries without metric-history fan-out', async () => {
     requestJson.mockResolvedValue({
       items: [{ id: 'cluster-1' }, { id: 'cluster-2' }],

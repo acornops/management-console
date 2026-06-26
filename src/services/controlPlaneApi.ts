@@ -27,7 +27,8 @@ import { mapWorkspace, mapWorkspaceMember } from './control-plane/workspaceMappe
 import type {
   ControlPlaneAcceptWorkspaceInvitationResult,
   ControlPlaneAcceptedMessage,
-  ControlPlaneInvestigationItem,
+  ControlPlaneIssueItem,
+  ControlPlaneIssueObservationItem,
   ControlPlaneRun,
   ControlPlaneRunEvent,
   ControlPlaneRunToolApproval,
@@ -55,7 +56,8 @@ export type {
   ControlPlanePodLogsOptions,
   ControlPlaneResourcePageItem,
   ControlPlaneFindingPageItem,
-  ControlPlaneInvestigationItem,
+  ControlPlaneIssueItem,
+  ControlPlaneIssueObservationItem,
   ControlPlaneRun,
   ControlPlaneRunEvent,
   ControlPlaneRunToolApproval,
@@ -232,18 +234,58 @@ export const controlPlaneApi = {
     );
   },
 
-  async listWorkspaceInvestigations(
+  async listWorkspaceIssues(
     workspaceId: string,
-    options?: { limit?: number; cursor?: string; q?: string; severity?: string; clusterId?: string; namespace?: string }
-  ): Promise<PagedResult<ControlPlaneInvestigationItem>> {
-    return requestJson<PagedResult<ControlPlaneInvestigationItem>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/investigations${pageQuery({
+    options?: { limit?: number; cursor?: string; q?: string; status?: string; severity?: string; targetType?: string; targetId?: string; namespace?: string }
+  ): Promise<PagedResult<ControlPlaneIssueItem>> {
+    return requestJson<PagedResult<ControlPlaneIssueItem>>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/issues${pageQuery({
         limit: options?.limit,
         cursor: options?.cursor,
         q: options?.q,
         filters: {
+          status: options?.status,
           severity: options?.severity,
-          clusterId: options?.clusterId,
+          targetType: options?.targetType,
+          targetId: options?.targetId,
+          namespace: options?.namespace
+        }
+      })}`
+    );
+  },
+
+  async getWorkspaceIssue(workspaceId: string, issueId: string): Promise<ControlPlaneIssueItem> {
+    return requestJson<ControlPlaneIssueItem>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/issues/${encodeURIComponent(issueId)}`
+    );
+  },
+
+  async listIssueObservations(
+    workspaceId: string,
+    issueId: string,
+    options?: { limit?: number; cursor?: string }
+  ): Promise<PagedResult<ControlPlaneIssueObservationItem>> {
+    return requestJson<PagedResult<ControlPlaneIssueObservationItem>>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/issues/${encodeURIComponent(issueId)}/observations${pageQuery({
+        limit: options?.limit,
+        cursor: options?.cursor
+      })}`
+    );
+  },
+
+  async listTargetIssues(
+    workspaceId: string,
+    targetId: string,
+    options?: { limit?: number; cursor?: string; q?: string; status?: string; severity?: string; namespace?: string }
+  ): Promise<PagedResult<ControlPlaneIssueItem>> {
+    return requestJson<PagedResult<ControlPlaneIssueItem>>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/issues${pageQuery({
+        limit: options?.limit,
+        cursor: options?.cursor,
+        q: options?.q,
+        filters: {
+          status: options?.status,
+          severity: options?.severity,
           namespace: options?.namespace
         }
       })}`

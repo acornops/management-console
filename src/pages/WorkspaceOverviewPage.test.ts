@@ -8,13 +8,14 @@ const en = readFileSync(resolve(__dirname, '../i18n/locales/en.js'), 'utf8');
 const zh = readFileSync(resolve(__dirname, '../i18n/locales/zh.js'), 'utf8');
 
 describe('WorkspaceOverviewPage homepage board', () => {
-  it('loads cluster investigations and VM findings into one mixed target board', () => {
-    expect(workspaceOverviewPage).toContain('loadAllWorkspaceInvestigations');
+  it('loads durable workspace issues into one mixed target board', () => {
+    expect(workspaceOverviewPage).toContain('loadAllWorkspaceIssues');
     expect(workspaceOverviewPage).toContain('loadAllWorkspaceVirtualMachines');
-    expect(workspaceOverviewPage).toContain('loadAllVirtualMachineFindings');
     expect(workspaceOverviewPage).toContain('buildWorkspaceOverviewCards');
-    expect(workspaceOverviewPage).toContain('vmFindingsLoadErrorCount');
-    expect(workspaceOverviewPage).toContain('Promise.allSettled');
+    expect(workspaceOverviewPage).toContain('listWorkspaceIssues');
+    expect(workspaceOverviewPage).toContain('isLoadingIssues');
+    expect(workspaceOverviewPage).not.toContain('loadAllWorkspaceInvestigations');
+    expect(workspaceOverviewPage).not.toContain('loadAllVirtualMachineFindings');
   });
 
   it('keeps the banner, connected-target headings, and issue queue copy localized in English and Chinese', () => {
@@ -31,9 +32,9 @@ describe('WorkspaceOverviewPage homepage board', () => {
       expect(locale).toContain('needsAttentionBody');
       expect(locale).toContain('targetLabel');
       expect(locale).toContain('scopeLabel');
-      expect(locale).toContain('updatedLabel');
+      expect(locale).toContain('lastSeenLabel');
+      expect(locale).toContain('firstSeenLabel');
       expect(locale).toContain('evidenceLabel');
-      expect(locale).toContain('investigateIssue');
       expect(locale).toContain('runTriageIssue');
       expect(locale).toContain('viewMoreIssue');
       expect(locale).not.toContain('openTarget');

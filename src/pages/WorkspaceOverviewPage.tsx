@@ -10,7 +10,8 @@ import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
-import { controlPlaneApi, type ControlPlaneInvestigationItem, type ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import { issueStatusTone } from '@/pages/issues/issueUi';
+import { controlPlaneApi, type ControlPlaneIssueItem, type ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { type KubernetesCluster, type Workspace } from '@/types';
 import { readRecentInvestigation } from '@/pages/workspace-overview/recentInvestigation';
 import {
@@ -41,12 +42,17 @@ function formatRelativeTime(timestamp: number, t: (key: string, options?: Record
   return t('overview.updatedDaysAgo', { count: Math.floor(elapsedHours / 24) });
 }
 
-async function loadAllWorkspaceInvestigations(workspaceId: string): Promise<ControlPlaneInvestigationItem[]> {
-  const items: ControlPlaneInvestigationItem[] = [];
+function formatIsoRelativeTime(timestamp: string, fallbackTimestamp: number, t: (key: string, options?: Record<string, unknown>) => string): string {
+  const parsed = Date.parse(timestamp);
+  return formatRelativeTime(Number.isFinite(parsed) ? parsed : fallbackTimestamp, t);
+}
+
+async function loadAllWorkspaceIssues(workspaceId: string): Promise<ControlPlaneIssueItem[]> {
+  const items: ControlPlaneIssueItem[] = [];
   let cursor: string | undefined;
 
   do {
-    const page = await controlPlaneApi.listWorkspaceInvestigations(workspaceId, { limit: 100, cursor });
+    const page = await controlPlaneApi.listWorkspaceIssues(workspaceId, { limit: 100, cursor });
     items.push(...page.items);
     cursor = page.nextCursor;
   } while (cursor);
@@ -60,19 +66,6 @@ async function loadAllWorkspaceVirtualMachines(workspaceId: string): Promise<Con
 
   do {
     const page = await controlPlaneApi.listVirtualMachinesForWorkspace(workspaceId, { limit: 100, cursor });
-    items.push(...page.items);
-    cursor = page.nextCursor;
-  } while (cursor);
-
-  return items;
-}
-
-async function loadAllVirtualMachineFindings(workspaceId: string, vmId: string): Promise<Record<string, unknown>[]> {
-  const items: Record<string, unknown>[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const page = await controlPlaneApi.listVirtualMachineFindings(workspaceId, vmId, { limit: 100, cursor });
     items.push(...page.items);
     cursor = page.nextCursor;
   } while (cursor);
@@ -94,18 +87,14 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const [workspaceVirtualMachines, setWorkspaceVirtualMachines] = React.useState(virtualMachines);
-  const [clusterInvestigations, setClusterInvestigations] = React.useState<ControlPlaneInvestigationItem[]>([]);
-  const [vmFindingsById, setVmFindingsById] = React.useState<Record<string, Record<string, unknown>[]>>({});
-  const [isLoadingInvestigations, setIsLoadingInvestigations] = React.useState(true);
+  const [workspaceIssues, setWorkspaceIssues] = React.useState<ControlPlaneIssueItem[]>([]);
+  const [isLoadingIssues, setIsLoadingIssues] = React.useState(true);
   const [isLoadingVirtualMachines, setIsLoadingVirtualMachines] = React.useState(
     !hasLoadedWorkspaceVirtualMachines && virtualMachines.length === 0
   );
-  const [isLoadingVmFindings, setIsLoadingVmFindings] = React.useState(false);
-  const [clusterLoadError, setClusterLoadError] = React.useState<string | null>(null);
-  const [vmFindingsLoadErrorCount, setVmFindingsLoadErrorCount] = React.useState(0);
-  const clusterRequestSeqRef = React.useRef(0);
+  const [issueLoadError, setIssueLoadError] = React.useState<string | null>(null);
+  const issueRequestSeqRef = React.useRef(0);
   const vmListRequestSeqRef = React.useRef(0);
-  const vmFindingsRequestSeqRef = React.useRef(0);
 
   React.useEffect(() => {
     if (hasLoadedWorkspaceVirtualMachines || virtualMachines.length > 0) {
@@ -115,24 +104,24 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   }, [hasLoadedWorkspaceVirtualMachines, virtualMachines]);
 
   React.useEffect(() => {
-    const requestId = ++clusterRequestSeqRef.current;
-    setIsLoadingInvestigations(true);
-    setClusterLoadError(null);
+    const requestId = ++issueRequestSeqRef.current;
+    setIsLoadingIssues(true);
+    setIssueLoadError(null);
 
-    void loadAllWorkspaceInvestigations(workspace.id)
+    void loadAllWorkspaceIssues(workspace.id)
       .then((items) => {
-        if (requestId !== clusterRequestSeqRef.current) return;
-        setClusterInvestigations(items);
+        if (requestId !== issueRequestSeqRef.current) return;
+        setWorkspaceIssues(items);
       })
       .catch((error) => {
-        console.error('Failed loading workspace investigations', error);
-        if (requestId !== clusterRequestSeqRef.current) return;
-        setClusterInvestigations([]);
-        setClusterLoadError(error instanceof Error ? error.message : t('overview.clusterIssuesUnavailable'));
+        console.error('Failed loading workspace issues', error);
+        if (requestId !== issueRequestSeqRef.current) return;
+        setWorkspaceIssues([]);
+        setIssueLoadError(error instanceof Error ? error.message : t('overview.clusterIssuesUnavailable'));
       })
       .finally(() => {
-        if (requestId !== clusterRequestSeqRef.current) return;
-        setIsLoadingInvestigations(false);
+        if (requestId !== issueRequestSeqRef.current) return;
+        setIsLoadingIssues(false);
       });
   }, [t, workspace.id]);
 
@@ -163,47 +152,6 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     };
   }, [hasLoadedWorkspaceVirtualMachines, onReplaceWorkspaceVirtualMachines, virtualMachines.length, workspace.id]);
 
-  React.useEffect(() => {
-    const connectedVirtualMachines = workspaceVirtualMachines.filter((vm) => vm.status === 'online' || vm.status === 'degraded');
-    if (connectedVirtualMachines.length === 0) {
-      setVmFindingsById({});
-      setVmFindingsLoadErrorCount(0);
-      setIsLoadingVmFindings(false);
-      return undefined;
-    }
-
-    const requestId = ++vmFindingsRequestSeqRef.current;
-    setIsLoadingVmFindings(true);
-    setVmFindingsLoadErrorCount(0);
-
-    void Promise.allSettled(
-      connectedVirtualMachines.map(async (vm) => [vm.id, await loadAllVirtualMachineFindings(workspace.id, vm.id)] as const)
-    ).then((results) => {
-      if (requestId !== vmFindingsRequestSeqRef.current) return;
-      const nextFindingsById: Record<string, Record<string, unknown>[]> = {};
-      let failedCount = 0;
-
-      results.forEach((result, index) => {
-        const vm = connectedVirtualMachines[index];
-        if (result.status === 'fulfilled') {
-          nextFindingsById[result.value[0]] = result.value[1];
-          return;
-        }
-        console.error('Failed loading virtual machine findings', result.reason);
-        failedCount += 1;
-        nextFindingsById[vm.id] = [];
-      });
-
-      setVmFindingsById(nextFindingsById);
-      setVmFindingsLoadErrorCount(failedCount);
-      setIsLoadingVmFindings(false);
-    });
-
-    return () => {
-      vmFindingsRequestSeqRef.current += 1;
-    };
-  }, [workspace.id, workspaceVirtualMachines]);
-
   const recentInvestigation = React.useMemo(
     () => readRecentInvestigation(workspace.id, currentUserId),
     [currentUserId, workspace.id]
@@ -212,12 +160,11 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     () =>
       buildWorkspaceOverviewCards({
         kubernetesClusters,
-        clusterInvestigations,
+        issues: workspaceIssues,
         virtualMachines: workspaceVirtualMachines,
-        vmFindingsById,
         t
       }),
-    [clusterInvestigations, kubernetesClusters, t, vmFindingsById, workspaceVirtualMachines]
+    [kubernetesClusters, t, workspaceIssues, workspaceVirtualMachines]
   );
 
   const summaryStats = [
@@ -233,8 +180,8 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     }
   ];
 
-  const isLoadingBoard = isLoadingInvestigations || isLoadingVirtualMachines || isLoadingVmFindings;
-  const boardWarnings = [clusterLoadError, vmFindingsLoadErrorCount > 0 ? t('overview.vmIssuesUnavailable', { count: vmFindingsLoadErrorCount }) : null]
+  const isLoadingBoard = isLoadingIssues || isLoadingVirtualMachines;
+  const boardWarnings = [issueLoadError]
     .filter((warning): warning is string => Boolean(warning));
   const recentInvestigationUpdated = recentInvestigation ? formatRelativeTime(recentInvestigation.timestamp, t) : '';
   const recentInvestigationBody = recentInvestigation
@@ -255,13 +202,13 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   const runTriage = (item: WorkspaceOverviewAttentionItem) => {
     const issue = item.issue;
     const prompt = item.targetType === 'virtual_machine'
-      ? t('virtualMachines.overview.triageFindingPrompt', {
+      ? t('virtualMachines.overview.triageIssuePrompt', {
         title: issue.title,
         severity: issue.severity,
         source: issue.detail,
         message: issue.evidence || issue.title
       })
-      : `Triage "${issue.title}" on ${item.targetName}. Severity: ${issue.severity}. Scope: ${issue.detail}. Finding summary: ${issue.evidence || issue.title}`;
+      : `Triage "${issue.title}" on ${item.targetName}. Severity: ${issue.severity}. Scope: ${issue.detail}. Issue summary: ${issue.evidence || issue.title}`;
 
     onRunTriage({
       targetId: item.targetId,
@@ -342,14 +289,17 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
                       : 'bg-ui-surface text-ui-text-muted'
                 }`}
               >
-                {t(`investigations.severity.${issue.severity}`)}
+                {t(`issues.severity.${issue.severity}`)}
+              </span>
+              <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
+                {t(`issues.status.${issue.status}`)}
               </span>
               <span className="type-micro-label rounded-full border border-ui-border bg-ui-surface px-2.5 py-1 text-ui-text-muted">
                 {item.targetTypeLabel}
               </span>
             </div>
             <h3 className="mt-3 type-panel-title break-words">{issue.title}</h3>
-            <dl className="mt-3 grid gap-3 text-ui-text-muted sm:grid-cols-3">
+            <dl className="mt-3 grid gap-3 text-ui-text-muted sm:grid-cols-2 xl:grid-cols-4">
               <div className="min-w-0">
                 <dt className="type-micro-label">{t('overview.targetLabel')}</dt>
                 <dd className="type-caption mt-1 break-words text-ui-text">{item.targetName}</dd>
@@ -359,8 +309,12 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
                 <dd className="type-caption mt-1 break-words text-ui-text">{issue.detail}</dd>
               </div>
               <div className="min-w-0">
-                <dt className="type-micro-label">{t('overview.updatedLabel')}</dt>
+                <dt className="type-micro-label">{t('overview.lastSeenLabel')}</dt>
                 <dd className="type-caption mt-1 text-ui-text">{formatRelativeTime(issue.timestamp, t)}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="type-micro-label">{t('overview.firstSeenLabel')}</dt>
+                <dd className="type-caption mt-1 text-ui-text">{formatIsoRelativeTime(issue.firstSeenAt, issue.timestamp, t)}</dd>
               </div>
             </dl>
             {issue.evidence && (

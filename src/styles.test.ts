@@ -245,8 +245,8 @@ describe('theme color contract', () => {
   });
 
   it('makes the workspace homepage triage workflow inspectable from summary to target issue boards', () => {
-    expect(overviewPage).toContain('loadAllWorkspaceInvestigations');
-    expect(overviewPage).toContain('loadAllVirtualMachineFindings');
+    expect(overviewPage).toContain('loadAllWorkspaceIssues');
+    expect(overviewPage).toContain('listWorkspaceIssues');
     expect(overviewPage).toContain('data-overview-quick-actions="true"');
     expect(overviewPage).toContain('data-connected-targets="true"');
     expect(overviewPage).toContain('data-attention-board="true"');
@@ -540,11 +540,11 @@ describe('theme color contract', () => {
     expect(membersPage).not.toContain('[loadInvitations, workspace.id, workspace.invitations]');
   });
 
-  it('labels paged member and investigation counts as loaded counts', () => {
+  it('labels paged member and issue counts as loaded counts', () => {
     expect(membersPage).toContain('members.loadedTotalCount');
     expect(membersPage).toContain('members.loadedMatchingCount');
     expect(enLocale).toContain("inviteLinksCount: '{{count}} loaded links'");
-    expect(enLocale).toContain("active: 'Loaded investigations'");
+    expect(enLocale).toContain("active: 'Active'");
   });
 
   it('clears resource pages before replacing paginated resources', () => {

@@ -10,7 +10,9 @@ const virtualMachinesPage = readFileSync(resolve(root, 'src/pages/VirtualMachine
 const virtualMachinesListView = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachinesListView.tsx'), 'utf8');
 const pendingVirtualMachineSetup = readFileSync(resolve(root, 'src/pages/virtual-machines/PendingVirtualMachineSetup.tsx'), 'utf8');
 const virtualMachineMetrics = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachineMetrics.tsx'), 'utf8');
+const virtualMachineIssuesPanel = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachineIssuesPanel.tsx'), 'utf8');
 const virtualMachineUi = readFileSync(resolve(root, 'src/pages/virtual-machines/virtualMachineUi.ts'), 'utf8');
+const constants = readFileSync(resolve(root, 'src/constants.tsx'), 'utf8');
 
 describe('virtual machine onboarding dialog', () => {
   it('uses the shared dialog shell like the connect-cluster flow', () => {
@@ -148,5 +150,32 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachineUi).toContain("t('dashboard.setupRequired')");
     expect(virtualMachineUi).not.toContain("return 'Healthy'");
     expect(virtualMachineUi).not.toContain("t('virtualMachines.list.awaitingAgent')");
+  });
+
+  it('guards VM overview issue and finding loads against stale target switches', () => {
+    expect(virtualMachinesPage).toContain('const issueRequest = controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 })');
+    expect(virtualMachinesPage).toContain('const findingRequest = controlPlaneApi.listVirtualMachineFindings(workspace.id, selected.id)');
+    expect(virtualMachinesPage).toContain('setIsLoadingIssueEvidence(true);');
+    expect(virtualMachinesPage).toContain('Promise.allSettled([issueRequest, findingRequest])');
+    expect(virtualMachinesPage).toContain('setIsLoadingIssueEvidence(false);');
+    expect(virtualMachinesPage).toContain('if (!isCurrent) return;');
+    expect(virtualMachinesPage).toContain('setFindings([]);');
+    expect(virtualMachinesPage).toContain("console.error('Failed loading virtual machine findings', error);");
+    expect(virtualMachinesPage).toContain('isLoading={isLoadingIssueEvidence}');
+    expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.loadingIssuesTitle')");
+    expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.loadingIssuesBody')");
+    expect(virtualMachineIssuesPanel).toContain('<ICONS.RefreshCw className="h-5 w-5 animate-spin" />');
+    expect(constants).toContain('RefreshCw');
+  });
+
+  it('labels durable VM issues separately from raw VM snapshot findings', () => {
+    expect(virtualMachineIssuesPanel).toContain("t('clusterOverview.issue')");
+    expect(virtualMachineIssuesPanel).toContain("t('clusterOverview.finding')");
+    expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.snapshotFinding')");
+  });
+
+  it('keeps loaded durable VM issues as the primary source instead of falling back to raw findings', () => {
+    expect(virtualMachineIssuesPanel).toContain('const useIssueCounts = hasIssueRows;');
+    expect(virtualMachineIssuesPanel).toContain(') : hasIssueRows || findings.length === 0 ? (');
   });
 });

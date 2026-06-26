@@ -47,7 +47,8 @@ import {
   Mail,
   Smartphone,
   Languages,
-  Clock
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 
 export const ICONS = {
@@ -99,7 +100,8 @@ export const ICONS = {
   Mail,
   Smartphone,
   Languages,
-  Clock
+  Clock,
+  RefreshCw
 };
 
 export const THEME_CLASSES = {

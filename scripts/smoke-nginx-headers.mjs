@@ -172,10 +172,11 @@ try {
   assertStatus(missingLocale, '/locales/missing.json', 404);
   assertSecurityHeaders(missingLocale, '/locales/missing.json');
 
-  const deepRoute = await fetchText('/workspaces/smoke-workspace/investigations');
-  assertStatus(deepRoute.response, '/workspaces/smoke-workspace/investigations');
-  assertHeader(deepRoute.response, 'cache-control', 'no-cache', '/workspaces/smoke-workspace/investigations');
-  assertSecurityHeaders(deepRoute.response, '/workspaces/smoke-workspace/investigations');
+  const deepRoutePath = '/workspaces/smoke-workspace/settings';
+  const deepRoute = await fetchText(deepRoutePath);
+  assertStatus(deepRoute.response, deepRoutePath);
+  assertHeader(deepRoute.response, 'cache-control', 'no-cache', deepRoutePath);
+  assertSecurityHeaders(deepRoute.response, deepRoutePath);
 
   console.log('management console nginx header smoke checks passed.');
 } finally {

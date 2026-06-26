@@ -7,6 +7,11 @@ export type {
   ControlPlaneWorkspaceMember
 } from './workspaceTypes';
 export type {
+  ControlPlaneFindingPageItem,
+  ControlPlaneIssueItem,
+  ControlPlaneIssueObservationItem
+} from './issueTypes';
+export type {
   ControlPlaneTargetToolConfig,
   ControlPlaneTargetToolDomainFilters,
   ControlPlaneTargetToolItem,
@@ -84,20 +89,6 @@ export interface TargetSummary {
 
 export type ControlPlaneWorkspaceAuditEvent = WorkspaceAuditEvent;
 
-export interface ControlPlaneInvestigationItem {
-  id: string;
-  severity: 'critical' | 'warning' | 'info';
-  title: string;
-  message: string;
-  timestamp: number;
-  namespace?: string;
-  objectKind?: string;
-  objectName?: string;
-  reason?: string;
-  clusterId: string;
-  clusterName: string;
-}
-
 export interface ControlPlaneResourcePageItem {
   id: string;
   family: 'workloads' | 'network' | 'storage' | 'cluster';
@@ -110,8 +101,6 @@ export interface ControlPlaneResourcePageItem {
   clusterName: string;
   item: Record<string, unknown>;
 }
-
-export type ControlPlaneFindingPageItem = ControlPlaneInvestigationItem;
 
 export interface ControlPlaneClusterSummary {
   resourceCount: number;
@@ -184,6 +173,8 @@ export interface SnapshotResourcePod {
   name?: string;
   namespace?: string;
   uid?: string;
+  labels?: Record<string, string>;
+  ownerReferences?: Array<{ apiVersion?: string; kind?: string; name?: string; uid?: string; controller?: boolean; blockOwnerDeletion?: boolean }>;
   creationTimestamp?: string;
   phase?: string;
   nodeName?: string;
@@ -192,14 +183,8 @@ export interface SnapshotResourcePod {
     name?: string;
     ready?: boolean;
     restartCount?: number;
-    state?: {
-      waiting?: {
-        reason?: string;
-      };
-      terminated?: {
-        reason?: string;
-      };
-    };
+    state?: { waiting?: { reason?: string; message?: string }; terminated?: { reason?: string; message?: string } };
+    lastState?: { waiting?: { reason?: string; message?: string }; terminated?: { reason?: string; message?: string } };
   }>;
 }
 
