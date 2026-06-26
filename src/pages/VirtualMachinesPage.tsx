@@ -410,7 +410,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     );
   }
 
-  if (view === 'mcpServers' || view === 'skills') {
+  if (view === 'mcpServers' || view === 'tools' || view === 'skills') {
     return (
       <VirtualMachineAdminView
         view={view}

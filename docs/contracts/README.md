@@ -190,33 +190,62 @@ Snapshot-derived console data is fetched through bounded list endpoints:
 
 Paged list endpoints return `{ items, nextCursor? }`, accept `limit`, `cursor`, and `q` where search is supported, and apply exact filters before pagination. Cursor reuse with different query/filter state must return `400`. The control plane still stores agent snapshots append-only, but the management console consumes derived pages and summary counts instead of full snapshot payloads.
 
-### Tool catalog and MCP server management
+### MCP server management, skills, and tools
 
 The management console depends on:
 
-- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/catalog`
-- `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolName}`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/catalog`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools`
+- `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}`
+- `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools`
 - `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`
 - `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`
 - `DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`
 - `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection`
-- `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/tools/catalog`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills`
+- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills`
+- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/import`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`
+- `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`
+- `DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`
+- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}/reimport`
 
-Remote MCP server management is target-scoped. Kubernetes clusters and virtual machines both use the target MCP surface. VM built-in tools are read-only and surfaced through the VM MCP Servers sidebar without enabling Kubernetes write controls.
+Built-in tools and MCP-discovered tools use distinct target-scoped APIs. Kubernetes clusters and virtual machines both use the target MCP, Skills, and Tools surfaces. The Tools tab shows only AcornOps built-in tools such as `web_search`; MCP-discovered tools remain on the MCP Servers page.
 
-The UI depends on these catalog fields staying stable:
+The UI depends on these MCP catalog fields staying stable:
 
-- `permissions.canEdit`
+- `workspaceId`, plus `targetId`/`targetType` for target-scoped catalogs. Kubernetes target catalog responses may also include `clusterId`.
+- `permissions.canEdit` for MCP server configuration
 - `permissions.editableRoles`
-- `servers[].{id,name,url,type,enabled,isSystem,canDelete,canEditConnection,authType,publicHeaders,connectionStatus,lastDiscoveryAt,lastDiscoveryError}`
+- `servers[].{id,name,url,type,enabled,isSystem,canDelete,canEditConnection,canToggle,authType,publicHeaders,connectionStatus,lastDiscoveryAt,lastDiscoveryError}`
 - `servers[].toolCounts.{total,enabledConfigured,enabledEffective,writeConfigured,writeEffective}`
 - `GET /mcp/servers/{serverId}/tools` returns paged tool rows with `{name,description,capability,version,source,enabledConfigured,enabledEffective,effectiveDisabledReason}`. `enabledEffective` includes target runtime availability; write tools on read-only agents return `effectiveDisabledReason=agent_write_disabled`.
+- MCP tool toggles are patched through `/mcp/servers/{serverId}/tools/{toolName}` with `{enabled, capability?}`.
+
+The UI depends on these built-in Tools catalog fields staying stable:
+
+- `workspaceId`
+- `targetId`
+- `targetType`
+- `permissions.canEdit`
+- `permissions.editableRoles`
+- `items[].{id,label,enabled,description,capability,runtimeKind,visibility,config}`
+- `web_search.config.domainFilters.{allowedDomains,blockedDomains}`
+- Built-in tool settings are patched through `/tools/{toolId}` with `{enabled, config?}`.
+
+The UI depends on these target Skills fields staying stable:
+
+- `items[].{id,name,description,enabled,validationStatus,validationErrors}`
+- `items[].bundleStats.{fileCount,totalBytes}`
+- `items[].source.{type,repoUrl?,ref?,subpath?,commitSha?,syncStatus}`
+- `GET /skills/{skillId}` returns `files[].{path,content,sizeBytes}`.
 
 Current mutation policy exposed through the catalog:
 
-- Roles with MCP and tool-management capability may add/delete MCP servers and edit per-tool enablement.
+- Roles with MCP capability may add/delete MCP servers.
+- Roles with tool-management capability may edit MCP per-tool enablement and built-in tool settings.
 - Creating a remote MCP server is discovery-first: the management console sends connection details plus optional non-secret public headers, and the control plane/gateway discovers tools from the server's `tools/list` endpoint.
 - Newly discovered external tools remain disabled until a role with tool-management capability reviews and enables them.
 - The management console keeps server URL changes as delete and re-add, while allowing roles with MCP-management capability to update name, enabled state, secret-backed auth, and non-secret public headers in place.

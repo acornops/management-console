@@ -56,9 +56,12 @@ export function mapClusterToolsFromCatalog(catalog: ControlPlaneClusterToolCatal
 }
 
 export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog): ClusterToolCatalog {
+  const targetId = catalog.targetId || catalog.clusterId || '';
   return {
     workspaceId: catalog.workspaceId,
-    clusterId: catalog.clusterId,
+    clusterId: catalog.clusterId || targetId,
+    targetId,
+    targetType: catalog.targetType,
     permissions: {
       canEdit: Boolean(catalog.permissions?.canEdit),
       editableRoles: Array.isArray(catalog.permissions?.editableRoles) ? catalog.permissions.editableRoles : []
@@ -72,6 +75,7 @@ export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog):
       isSystem: Boolean(server.isSystem),
       canDelete: Boolean(server.canDelete),
       canEditConnection: Boolean(server.canEditConnection),
+      canToggle: server.canToggle !== false,
       authType: server.authType || 'none',
       publicHeaders: server.publicHeaders || {},
       connectionStatus:

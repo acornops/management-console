@@ -82,6 +82,8 @@ export const McpServerToolsDialog: React.FC<{
       }
       setConfiguredOverrides({});
       onClose();
+    } catch {
+      // The parent owns the visible error so it can be shared with paged tool loading failures.
     } finally {
       setIsSavingTools(false);
     }

@@ -91,13 +91,13 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
       <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
         <div className="min-w-0">
           <h3 id="target-skill-editor-title" className="type-panel-title">
-            {mode === 'create' ? 'Create target skill' : detail?.name || 'Edit target skill'}
+            {mode === 'create' ? 'Create target skill' : detail?.name || (canEditSkills ? 'Edit target skill' : 'View target skill')}
           </h3>
           {mode === 'create' ? (
             <ModalStepIndicator steps={createSteps} currentStepId={step} className="mt-4" />
           ) : (
             <p className="type-caption mt-1 text-ui-text-muted">
-              {detail?.description || 'Edit Markdown context for this target skill.'}
+              {detail?.description || (canEditSkills ? 'Edit Markdown context for this target skill.' : 'Inspect Markdown context for this target skill.')}
             </p>
           )}
         </div>
@@ -162,7 +162,9 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                   <p className="type-label truncate text-ui-text">{activeFile?.path || 'SKILL.md'}</p>
                   {detail && (
                     <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
-                      <span className="rounded-full border border-ui-border px-2 py-1 text-ui-text-muted">{sourceLabel(detail)}</span>
+                      {detail.source.type === 'git_import' && (
+                        <span className="rounded-full border border-ui-border px-2 py-1 text-ui-text-muted">{sourceLabel(detail)}</span>
+                      )}
                       <span className="rounded-full border border-ui-border px-2 py-1 text-ui-text-muted">
                         {detail.bundleStats.fileCount} files, {summarizeBytes(detail.bundleStats.totalBytes)}
                       </span>
@@ -225,6 +227,13 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
               <Button variant="accent" size="sm" onClick={onSubmit} disabled={!canEditSkills || saving}>
                 {saving ? 'Creating...' : 'Create Skill'}
               </Button>
+            </div>
+          </>
+        ) : !canEditSkills ? (
+          <>
+            <span />
+            <div className="flex justify-end gap-3">
+              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>Close</Button>
             </div>
           </>
         ) : (

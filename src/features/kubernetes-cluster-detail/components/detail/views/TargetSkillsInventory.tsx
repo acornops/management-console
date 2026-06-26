@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Edit3, MoreVertical, Search, Trash2 } from 'lucide-react';
+import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
 import { Select } from '@/components/common/Select';
 import type { SelectOption } from '@/components/common/Select';
@@ -43,7 +44,6 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
   const isTogglingSkill = pendingToggleSkillId === skill.id;
   const isBlockedByOtherSkillToggle = Boolean(pendingToggleSkillId && !isTogglingSkill);
   const canToggleSkill = canEditSkills && !isBlockedByOtherSkillToggle && !isTogglingSkill;
-
   const updateActionMenuPosition = React.useCallback(() => {
     const trigger = actionMenuButtonRef.current;
     if (!trigger) return;
@@ -103,8 +103,12 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
             }}
             className={menuOptionClassName()}
           >
-            <Edit3 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-            <span>Edit skill</span>
+            {canEditSkills ? (
+              <Edit3 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+            ) : (
+              <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+            )}
+            <span>{canEditSkills ? 'Edit skill' : 'View skill'}</span>
           </button>
           {canEditSkills && (
             <button
@@ -128,9 +132,19 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
   return (
     <tr data-target-skill-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
       <td className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-ui-text">{skill.name}</span>
-          <span className="mt-1 line-clamp-2 text-xs leading-5 text-ui-text-muted">{skill.description}</span>
+        <div className="flex min-w-0 gap-3">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
+            <BookOpen className="h-5 w-5 text-accent-strong" aria-hidden="true" />
+            {skill.source.type === 'git_import' && (
+              <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-md border border-ui-border bg-ui-surface shadow-sm">
+                <GitBranch className="h-3 w-3 text-ui-text-muted" aria-hidden="true" />
+              </span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-ui-text">{skill.name}</span>
+            <span className="mt-1 block truncate text-xs leading-5 text-ui-text-muted" title={skill.description}>{skill.description}</span>
+          </div>
         </div>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
@@ -166,11 +180,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
           />
         </button>
       </td>
-      <td className="hidden px-4 py-6 text-xs font-semibold text-ui-text-muted sm:px-6 md:table-cell lg:px-8">
-        {sourceLabel(skill)}
-        {syncLabel(skill) && <span className="mt-1 block font-medium">{syncLabel(skill)}</span>}
-      </td>
-      <td className="hidden px-4 py-6 text-xs text-ui-text-muted sm:px-6 lg:table-cell lg:px-8">
+      <td className="hidden px-4 py-6 text-xs text-ui-text-muted sm:px-6 md:table-cell lg:px-8">
         {skill.bundleStats.fileCount} files, {summarizeBytes(skill.bundleStats.totalBytes)}
       </td>
       <td className="px-4 py-6 text-right sm:px-6 lg:px-8">
@@ -201,6 +211,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
   onDeleteSkill,
   onToggleSkill
 }) => {
+  const { t } = useTranslation();
   const [skillSearch, setSkillSearch] = React.useState('');
   const [skillFilter, setSkillFilter] = React.useState<'all' | 'enabled' | 'disabled' | 'valid' | 'invalid'>('all');
   const filterOptions: Array<SelectOption<typeof skillFilter>> = [
@@ -215,7 +226,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
     total: skills.length,
     enabled: skills.filter((skill) => skill.enabled).length,
     valid: skills.filter((skill) => skill.validationStatus === 'valid').length,
-    imported: skills.filter((skill) => skill.source.type === 'git_import').length,
+    needsFixes: skills.filter((skill) => skill.validationStatus !== 'valid').length,
     files: skills.reduce((total, skill) => total + skill.bundleStats.fileCount, 0)
   }), [skills]);
 
@@ -227,7 +238,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
         skill.description,
         skill.validationStatus === 'valid' ? 'valid' : 'needs fixes',
         skill.enabled ? 'enabled' : 'disabled',
-        sourceLabel(skill),
+        skill.source.type === 'git_import' ? sourceLabel(skill) : '',
         syncLabel(skill) || '',
         `${skill.bundleStats.fileCount} files`,
         summarizeBytes(skill.bundleStats.totalBytes)
@@ -249,14 +260,14 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
         <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
           <div className="px-5 py-3.5">
             <h2 className="type-row-title">Skill inventory</h2>
-            <p className="type-caption mt-1 text-ui-text-muted">Target-scoped prompt context for troubleshooting runs.</p>
+            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">Target-scoped prompt context for troubleshooting runs.</p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">Skills</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.total}</p>
           </div>
           <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Enabled</p>
+            <p className="type-caption text-ui-text-muted">Enabled skills</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.enabled}</p>
           </div>
           <div className="px-5 py-3.5">
@@ -267,8 +278,11 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
             </p>
           </div>
           <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Git imports</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.imported}</p>
+            <p className="type-caption text-ui-text-muted">Needs fixes</p>
+            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+              {summary.needsFixes}
+              <span className="h-2 w-2 rounded-full bg-status-warning" />
+            </p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">Files</p>
@@ -278,16 +292,16 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
       </section>
 
       <section data-target-skill-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:flex-row xl:items-center">
-          <div className="relative flex-1">
-            <label htmlFor="target-skill-search" className="sr-only">Search skills</label>
+        <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
+          <div className="relative min-w-0">
+            <label htmlFor="target-skill-search" className="sr-only">{t('targetSkills.searchSkills')}</label>
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
             <input
               id="target-skill-search"
               type="text"
               value={skillSearch}
               onChange={(event) => setSkillSearch(event.target.value)}
-              placeholder="Search skills"
+              placeholder={t('targetSkills.searchSkills')}
               className="w-full rounded-lg border border-transparent bg-ui-bg py-3 pl-11 pr-4 text-sm text-ui-text outline-none transition-colors placeholder:text-ui-text-muted/60 focus-visible:border-accent/30 focus-visible:ring-2 focus-visible:ring-accent/10"
             />
           </div>
@@ -295,31 +309,29 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
             value={skillFilter}
             options={filterOptions}
             onChange={setSkillFilter}
-            className="min-w-48"
-            ariaLabel="Filter skills"
+            className="w-full"
+            ariaLabel={t('targetSkills.filterSkills')}
           />
-          <span className="type-label rounded-full border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">
-            Showing {filteredSkills.length} of {skills.length}
+          <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
+            {t('targetSkills.showingItems', { count: filteredSkills.length, total: skills.length })}
           </span>
         </div>
         <div className="min-w-0">
           <table className="w-full table-fixed text-left" aria-label="Target skills">
             <caption className="sr-only">Target skills</caption>
             <colgroup>
-              <col className="w-[31%]" />
-              <col className="w-[17%]" />
+              <col className="w-[34%]" />
+              <col className="w-[23%]" />
               <col className="w-[11%]" />
-              <col className="w-[18%]" />
-              <col className="w-[12%]" />
+              <col className="w-[21%]" />
               <col className="w-[11%]" />
             </colgroup>
             <thead>
               <tr className="border-b border-ui-border">
                 <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Skill</th>
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Status</th>
+                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Validation</th>
                 <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Enabled</th>
-                <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">Source</th>
-                <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 lg:table-cell lg:px-8">Files</th>
+                <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">Files</th>
                 <th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">Actions</th>
               </tr>
             </thead>
@@ -336,9 +348,11 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
                 />
               )) : (
                 <tr>
-                  <td colSpan={6} className="px-8 py-12 text-center">
-                    <p className="type-body">No skills match these filters.</p>
-                    <p className="type-caption mt-1 text-ui-text-muted">Adjust the search text or status filter.</p>
+                  <td colSpan={5} className="px-8 py-12 text-center">
+                    <p className="type-body">{skills.length === 0 ? 'No target skills configured.' : 'No skills match these filters.'}</p>
+                    <p className="type-caption mt-1 text-ui-text-muted">
+                      {skills.length === 0 ? 'Create or import a skill to add target-scoped prompt context.' : 'Adjust the search text or status filter.'}
+                    </p>
                   </td>
                 </tr>
               )}

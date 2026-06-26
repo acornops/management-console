@@ -15,7 +15,19 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).toContain("t('app.administration')");
     expect(mobileNavigation).toContain("['mcpServers', t('app.mcpServers'), ICONS.Server, 0]");
     expect(mobileNavigation).toContain("['skills', t('app.skills'), ICONS.BookOpen, 0]");
-    expect(mobileNavigation).toContain("['settings', t('app.clusterSettings'), ICONS.Settings, 0]");
+    expect(mobileNavigation).toContain("['tools', t('app.tools'), ICONS.Wrench, 0]");
+    expect(mobileNavigation.indexOf("t('app.mcpServers')")).toBeLessThan(
+      mobileNavigation.indexOf("t('app.skills')")
+    );
+    expect(mobileNavigation.indexOf("t('app.skills')")).toBeLessThan(
+      mobileNavigation.indexOf("t('app.tools')")
+    );
+    expect(mobileNavigation).not.toContain("['settings', t('app.clusterSettings'), ICONS.Settings, 0]");
+    expect(mobileNavigation).not.toContain("['settings', t('app.vmSettings'), ICONS.Settings, 0]");
+    expect(mobileNavigation).toContain("onNavigateClusterSubview('settings')");
+    expect(mobileNavigation).toContain("onNavigateVmSubview('settings')");
+    expect(mobileNavigation).toContain("activeClusterSubview === 'settings'");
+    expect(mobileNavigation).toContain("activeVmSubview === 'settings'");
   });
 
   it('uses the shared dialog behavior for the open navigation panel', () => {

@@ -34,6 +34,15 @@ describe('routes', () => {
     expect(AppPaths.workspaceKubernetesClusterDiagnostics('team-alpha', 'cluster-one', 'skills')).toBe(
       '/workspaces/team-alpha/kubernetes-clusters/cluster-one/skills'
     );
+    expect(AppPaths.workspaceKubernetesClusterDiagnostics('team-alpha', 'cluster-one', 'tools')).toBe(
+      '/workspaces/team-alpha/kubernetes-clusters/cluster-one/tools'
+    );
+    expect(parseAppRoute('/workspaces/team-alpha/kubernetes-clusters/cluster-one/tools')).toEqual({
+      kind: 'workspaceKubernetesClusterDiagnostics',
+      workspaceId: 'team-alpha',
+      clusterId: 'cluster-one',
+      tab: 'tools'
+    });
     expect(parseAppRoute('/workspaces/team-alpha/kubernetes-clusters/cluster-one/skills')).toEqual({
       kind: 'workspaceKubernetesClusterDiagnostics',
       workspaceId: 'team-alpha',
@@ -55,6 +64,12 @@ describe('routes', () => {
       tab: 'chat'
     });
     expect(AppPaths.kubernetesClusterDiagnostics('cluster-one', 'skills')).toBe('/kubernetes-clusters/cluster-one/skills');
+    expect(AppPaths.kubernetesClusterDiagnostics('cluster-one', 'tools')).toBe('/kubernetes-clusters/cluster-one/tools');
+    expect(parseAppRoute('/kubernetes-clusters/cluster-one/tools')).toEqual({
+      kind: 'kubernetesClusterDiagnostics',
+      clusterId: 'cluster-one',
+      tab: 'tools'
+    });
     expect(parseAppRoute('/kubernetes-clusters/cluster-one/skills')).toEqual({
       kind: 'kubernetesClusterDiagnostics',
       clusterId: 'cluster-one',
@@ -96,6 +111,15 @@ describe('routes', () => {
     expect(AppPaths.workspaceVirtualMachineDetail('team-alpha', 'vm-one', 'skills')).toBe(
       '/workspaces/team-alpha/virtual-machines/vm-one/skills'
     );
+    expect(AppPaths.workspaceVirtualMachineDetail('team-alpha', 'vm-one', 'tools')).toBe(
+      '/workspaces/team-alpha/virtual-machines/vm-one/tools'
+    );
+    expect(parseAppRoute('/workspaces/team-alpha/virtual-machines/vm-one/tools')).toEqual({
+      kind: 'workspaceVirtualMachineDetail',
+      workspaceId: 'team-alpha',
+      vmId: 'vm-one',
+      tab: 'tools'
+    });
     expect(parseAppRoute('/workspaces/team-alpha/virtual-machines/vm-one/skills')).toEqual({
       kind: 'workspaceVirtualMachineDetail',
       workspaceId: 'team-alpha',
@@ -139,6 +163,10 @@ describe('routes', () => {
 
   it('parses active workspace resource section routes', () => {
     expect(parseAppRoute(AppPaths.workspaceOverview('team-alpha'))).toEqual({
+      kind: 'workspaceOverview',
+      workspaceId: 'team-alpha'
+    });
+    expect(parseAppRoute('/workspaces/team-alpha/overview?from=sidebar')).toEqual({
       kind: 'workspaceOverview',
       workspaceId: 'team-alpha'
     });

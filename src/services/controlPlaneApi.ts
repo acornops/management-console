@@ -70,6 +70,8 @@ export type {
   TargetSummary,
   ControlPlaneTargetSkillDetail,
   ControlPlaneTargetSkillsCatalog,
+  ControlPlaneTargetToolItem,
+  ControlPlaneTargetToolsCatalog,
   CreateTargetMcpServerInput,
   CreateTargetSkillInput,
   ImportTargetSkillInput,
@@ -81,7 +83,8 @@ export type {
   TargetMcpServerTestConnectionResult,
   TargetMcpServerToolInput,
   UpdateTargetSkillInput,
-  UpdateTargetMcpServerInput
+  UpdateTargetMcpServerInput,
+  UpdateTargetToolInput
 } from './control-plane/types';
 export type {
   ControlPlaneTargetChatActivity,

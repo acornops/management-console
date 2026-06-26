@@ -443,9 +443,9 @@ describe('theme color contract', () => {
     expect(mcpServerCard).toContain("'mcpServers.statusNotChecked'");
     expect(mcpServerCard).toContain("t('mcpServers.managedByAcornOps')");
     expect(mcpServerCard).not.toContain('detailKey');
-    ["statusConnected: 'Connected'", "statusNeedsAuth: 'Needs auth'", "statusDiscoveryFailed: 'Discovery failed'", "statusNotChecked: 'Not checked'"].forEach((copy) => expect(enLocale).toContain(copy));
+    ["statusConnected: 'Connected'", "statusNeedsAuth: 'Needs auth'", "statusDiscoveryFailed: 'Discovery failed'", "statusNotChecked: 'No check yet'", "notChecked: 'No health check yet'"].forEach((copy) => expect(enLocale).toContain(copy));
     expect(enLocale).toContain("managedByAcornOps: 'Managed by AcornOps'");
-    ["statusConnected: '已连接'", "statusNeedsAuth: '需要认证'", "statusDiscoveryFailed: '发现失败'", "statusNotChecked: '尚未检查'"].forEach((copy) => expect(zhLocale).toContain(copy));
+    ["statusConnected: '已连接'", "statusNeedsAuth: '需要认证'", "statusDiscoveryFailed: '发现失败'", "statusNotChecked: '尚未检查'", "notChecked: '尚未进行健康检查'"].forEach((copy) => expect(zhLocale).toContain(copy));
     expect(zhLocale).toContain("managedByAcornOps: '由 AcornOps 管理'");
   });
 

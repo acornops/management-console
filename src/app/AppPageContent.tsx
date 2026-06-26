@@ -408,25 +408,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               isDark={isDark}
               workspaces={workspaces}
               onOpenInstallModal={onInstallAgent}
-              onToggleClusterTool={async (clusterId, tool, enabled) => {
-                const cluster = kubernetesClusters.find((item) => item.id === clusterId);
-                if (!cluster) return;
-
-                try {
-                  await controlPlaneApi.updateTargetTool(cluster.workspaceId, cluster.id, tool.name, enabled, {
-                    capability: tool.capability
-                  });
-                } catch (err) {
-                  console.error('Failed updating cluster tool settings', err);
-                  return;
-                }
-
-                onUpdateKubernetesCluster(clusterId, {
-                  mcpTools: (cluster.mcpTools || []).map((existingTool) =>
-                    existingTool.toolId === tool.name ? { ...existingTool, enabled } : existingTool
-                  )
-                });
-              }}
               onSyncClusterTools={(clusterId, tools) => onUpdateKubernetesCluster(clusterId, { mcpTools: tools })}
               onUpdateClusterName={async (clusterId, name) => {
                 const cluster = kubernetesClusters.find((item) => item.id === clusterId);

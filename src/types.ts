@@ -119,6 +119,7 @@ export interface ClusterToolCatalogServer {
   isSystem: boolean;
   canDelete: boolean;
   canEditConnection: boolean;
+  canToggle: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
   publicHeaders?: Record<string, string>;
   connectionStatus: 'unknown' | 'ok' | 'error';
@@ -137,6 +138,8 @@ export interface ClusterToolCatalogServer {
 export interface ClusterToolCatalog {
   workspaceId: string;
   clusterId: string;
+  targetId: string;
+  targetType?: 'kubernetes' | 'virtual_machine';
   permissions: {
     canEdit: boolean;
     editableRoles: string[];

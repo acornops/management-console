@@ -1,4 +1,4 @@
-import { ClusterToolCatalogItem, KubernetesCluster, ProjectMember, Workspace } from '@/types';
+import { KubernetesCluster, ProjectMember, Workspace } from '@/types';
 import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
 
 export interface KubernetesClusterDetailProps {
@@ -9,7 +9,6 @@ export interface KubernetesClusterDetailProps {
   workspaceName?: string;
   chatController: TargetChatController;
   isDark: boolean;
-  onToggleTool?: (tool: ClusterToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onSyncTools?: (tools: KubernetesCluster['mcpTools']) => void;
   onUpdateName?: (name: string) => Promise<void> | void;
   onUpdateNamespaceScope?: (scope: { include: string[]; exclude: string[] }) => Promise<void> | void;
@@ -18,7 +17,7 @@ export interface KubernetesClusterDetailProps {
   onActiveViewChange?: (view: View) => void;
 }
 
-export type View = 'overview' | 'resources' | 'mcpServers' | 'skills' | 'chat' | 'settings';
+export type View = 'overview' | 'resources' | 'mcpServers' | 'skills' | 'tools' | 'chat' | 'settings';
 
 export type RunTraceStatus = 'connecting' | 'running' | 'completed' | 'failed' | 'cancelled';
 

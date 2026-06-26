@@ -26,17 +26,16 @@ const controlPlaneApi = read('src/services/controlPlaneApi.ts');
 const controlPlaneAuthApi = read('src/services/control-plane/authApi.ts');
 const kubernetesClusterApi = read('src/services/control-plane/kubernetesClusterApi.ts');
 const targetApi = read('src/services/control-plane/targetApi.ts');
-const controlPlaneToolRequests = read('src/services/control-plane/toolRequests.ts');
-const controlPlaneApiSurface = `${controlPlaneApi}\n${controlPlaneAuthApi}\n${kubernetesClusterApi}\n${targetApi}\n${controlPlaneToolRequests}`;
+const controlPlaneApiSurface = `${controlPlaneApi}\n${controlPlaneAuthApi}\n${kubernetesClusterApi}\n${targetApi}`;
 const controlPlaneMapping = [
   read('src/types.ts'),
   controlPlaneApi,
   controlPlaneAuthApi,
   kubernetesClusterApi,
   targetApi,
-  controlPlaneToolRequests,
   read('src/services/control-plane/clusterMappers.ts'),
   read('src/services/control-plane/toolMappers.ts'),
+  read('src/services/control-plane/targetToolTypes.ts'),
   read('src/services/control-plane/workspaceMappers.ts'),
   read('src/services/control-plane/types.ts')
 ].join('\n');
@@ -102,14 +101,23 @@ for (const [docPath, implNeedle, label] of [
   ['`DELETE /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}`', 'deleteCluster(', 'Delete cluster implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/rotate-agent-key`', '/rotate-agent-key', 'Rotate agent-key path'],
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs`', 'getPodLogs(', 'Pod logs implementation'],
-  ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/tools/catalog`', '/tools/catalog', 'Tools catalog path'],
-  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolName}`', '/targets/${encodeURIComponent(targetId)}/tools/${encodeURIComponent(toolName)}`', 'Target tool patch path'],
+  ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/catalog`', '/mcp/catalog', 'Target MCP catalog path'],
+  ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools`', 'listTargetTools(', 'Target tools implementation'],
+  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}`', "updateTargetTool(", 'Target tool settings implementation'],
+  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}`', "updateTargetMcpServerTool(", 'Target MCP tool patch implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', '/targets/${encodeURIComponent(targetId)}/mcp/servers', 'List target MCP servers path'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools`', 'listMcpServerTools(', 'List target MCP server tools implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', "createTargetMcpServer(", 'Create target MCP server implementation'],
   ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', "updateTargetMcpServer(", 'Update target MCP server implementation'],
   ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', "deleteTargetMcpServer(", 'Delete target MCP server implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection`', '/test-connection', 'Test target MCP server path'],
+  ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills`', 'listTargetSkills(', 'List target skills implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills`', 'createTargetSkill(', 'Create target skill implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/import`', 'importTargetSkill(', 'Import target skill implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`', 'getTargetSkill(', 'Get target skill implementation'],
+  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`', 'updateTargetSkill(', 'Update target skill implementation'],
+  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`', 'deleteTargetSkill(', 'Delete target skill implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}/reimport`', 'reimportTargetSkill(', 'Reimport target skill implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`', 'createSession(', 'Create session implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`', 'listSessions(', 'List sessions implementation'],
   ['`DELETE /api/v1/sessions/{sessionId}`', 'deleteSession(', 'Delete session implementation'],
@@ -152,7 +160,11 @@ for (const catalogField of [
   'publicHeaders',
   'connectionStatus',
   'lastDiscoveryAt',
-  'lastDiscoveryError'
+  'lastDiscoveryError',
+  'targetType',
+  'domainFilters',
+  'allowedDomains',
+  'blockedDomains'
 ]) {
   expectIncludes(doc, catalogField, 'Catalog field doc');
   expectIncludes(controlPlaneMapping, catalogField, 'Catalog field implementation');

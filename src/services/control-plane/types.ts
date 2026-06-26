@@ -6,6 +6,13 @@ export type {
   ControlPlaneWorkspaceInvitation,
   ControlPlaneWorkspaceMember
 } from './workspaceTypes';
+export type {
+  ControlPlaneTargetToolConfig,
+  ControlPlaneTargetToolDomainFilters,
+  ControlPlaneTargetToolItem,
+  ControlPlaneTargetToolsCatalog,
+  UpdateTargetToolInput
+} from './targetToolTypes';
 
 export interface PagedResult<T> { items: T[]; nextCursor?: string; }
 
@@ -377,7 +384,9 @@ export interface ControlPlaneClusterTool {
 
 export interface ControlPlaneClusterToolCatalog {
   workspaceId: string;
-  clusterId: string;
+  clusterId?: string;
+  targetId?: string;
+  targetType?: TargetType;
   permissions: {
     canEdit: boolean;
     editableRoles: string[];
@@ -394,6 +403,7 @@ export interface ControlPlaneClusterToolCatalogServer {
   isSystem: boolean;
   canDelete: boolean;
   canEditConnection: boolean;
+  canToggle?: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
   publicHeaders?: Record<string, string>;
   connectionStatus?: 'unknown' | 'ok' | 'error';

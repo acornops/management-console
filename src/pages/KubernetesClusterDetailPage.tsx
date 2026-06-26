@@ -4,7 +4,7 @@ import { Button } from '@/components/common/Button';
 import { ICONS, THEME_CLASSES } from '@/constants';
 import KubernetesClusterDetail from '@/features/kubernetes-cluster-detail/KubernetesClusterDetail';
 import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
-import { ClusterToolCatalogItem, KubernetesCluster, Workspace } from '@/types';
+import { KubernetesCluster, Workspace } from '@/types';
 import { ClusterSubview } from '@/utils/routes';
 
 interface KubernetesClusterDetailPageProps {
@@ -16,7 +16,6 @@ interface KubernetesClusterDetailPageProps {
   isDark: boolean;
   workspaces: Workspace[];
   onOpenInstallModal: (clusterId: string) => void;
-  onToggleClusterTool: (clusterId: string, tool: ClusterToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onSyncClusterTools: (clusterId: string, tools: KubernetesCluster['mcpTools']) => void;
   onUpdateClusterName: (clusterId: string, name: string) => void | Promise<void>;
   onUpdateClusterNamespaceScope: (clusterId: string, scope: { include: string[]; exclude: string[] }) => void | Promise<void>;
@@ -37,7 +36,6 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   isDark,
   workspaces,
   onOpenInstallModal,
-  onToggleClusterTool,
   onSyncClusterTools,
   onUpdateClusterName,
   onUpdateClusterNamespaceScope,
@@ -78,7 +76,6 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               currentWorkspacePermissions={selectedWorkspace?.permissions}
               workspaceName={selectedWorkspace?.name}
               isDark={isDark}
-              onToggleTool={(tool, enabled) => onToggleClusterTool(selectedCluster.id, tool, enabled)}
               onSyncTools={(tools) => onSyncClusterTools(selectedCluster.id, tools)}
               onUpdateName={(name) => onUpdateClusterName(selectedCluster.id, name)}
               onUpdateNamespaceScope={(scope) => onUpdateClusterNamespaceScope(selectedCluster.id, scope)}

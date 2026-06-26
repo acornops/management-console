@@ -9,10 +9,14 @@ const routes = [
   '/settings',
   '/workspaces/smoke-workspace/virtual-machines',
   '/workspaces/smoke-workspace/virtual-machines/smoke-vm/mcp-servers',
+  '/workspaces/smoke-workspace/virtual-machines/smoke-vm/skills',
+  '/workspaces/smoke-workspace/virtual-machines/smoke-vm/tools',
   '/workspaces/smoke-workspace/virtual-machines/smoke-vm/settings',
   '/invites/smoke-token',
   '/integrations/external/link?status=linked',
   '/kubernetes-clusters/smoke-cluster/overview',
+  '/kubernetes-clusters/smoke-cluster/skills',
+  '/kubernetes-clusters/smoke-cluster/tools',
   '/workspaces/smoke-workspace/kubernetes-clusters/smoke-cluster/resources'
 ];
 

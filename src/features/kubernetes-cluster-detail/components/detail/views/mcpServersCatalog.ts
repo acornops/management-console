@@ -179,6 +179,7 @@ export function buildLocalCatalog(cluster: KubernetesCluster, canEdit: boolean):
       isSystem: type === 'builtin',
       canDelete: Boolean(tool.sourceServerId && type === 'mcp'),
       canEditConnection: Boolean(tool.sourceServerId && type === 'mcp'),
+      canToggle: Boolean(tool.sourceServerId || type === 'builtin'),
       authType: 'none',
       publicHeaders: {},
       connectionStatus: 'unknown',
@@ -192,6 +193,8 @@ export function buildLocalCatalog(cluster: KubernetesCluster, canEdit: boolean):
   return {
     workspaceId: cluster.workspaceId,
     clusterId: cluster.id,
+    targetId: cluster.id,
+    targetType: 'kubernetes',
     permissions: {
       canEdit,
       editableRoles: []
@@ -249,8 +252,7 @@ export function formatMcpMutationError(error: unknown, fallback: string): string
   return raw.replace(/^Control plane request failed \(\d+\):\s*/i, '') || fallback;
 }
 
-export function formatDiscoveryTimestamp(value: string | null): string {
-  if (!value) return 'Never';
+export function formatDiscoveryTimestamp(value: string): string {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
 }

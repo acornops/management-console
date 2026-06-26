@@ -57,4 +57,11 @@ describe('McpServerToolsDialog summary polish', () => {
     expect(mcpServerToolsDialog).toContain('const blockReason = globalBlockReason ? null : getSectionBlockReason(tools);');
     expect(mcpServerToolsDialog).toContain('{globalBlockReason && (');
   });
+
+  it('keeps the tool editor open when a save fails', () => {
+    expect(mcpServerToolsDialog).toContain('await onToggleTool(tool, configuredOverrides[tool.name] ?? tool.enabledConfigured);');
+    expect(mcpServerToolsDialog).toContain('} catch {');
+    expect(mcpServerToolsDialog).toContain('The parent owns the visible error');
+    expect(mcpServerToolsDialog).toContain('{toolsError && (');
+  });
 });

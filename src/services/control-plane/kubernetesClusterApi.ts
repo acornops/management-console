@@ -8,7 +8,6 @@ import { formatNamespaceScope, normalizeNamespaceList, toArray } from './formatt
 import { requestJson } from './http';
 import { pageQuery } from './query';
 import { mapClusterToolsCatalog, mapMcpServer, mapMcpServerTestConnectionResult } from './toolMappers';
-import { updateTargetToolRequest } from './toolRequests';
 import type {
   ControlPlaneCluster,
   ControlPlaneClusterDetail,
@@ -17,6 +16,7 @@ import type {
   ControlPlaneClusterToolCatalogItem,
   ControlPlaneTargetSkillDetail,
   ControlPlaneTargetSkillsCatalog,
+  ControlPlaneTargetToolsCatalog,
   ControlPlaneFindingPageItem,
   ControlPlaneMcpServer,
   ControlPlaneMcpServerTestConnectionResponse,
@@ -35,7 +35,8 @@ import type {
   TargetMcpServer,
   UpdateTargetSkillInput,
   TargetMcpServerTestConnectionResult,
-  UpdateTargetMcpServerInput
+  UpdateTargetMcpServerInput,
+  UpdateTargetToolInput
 } from './types';
 
 async function listWorkspaceKubernetesClusters(
@@ -302,13 +303,42 @@ export const kubernetesClusterApi = {
     return requestJson<ControlPlaneSessionListPage>(`${url.pathname}${url.search}`);
   },
 
-  updateTargetTool: updateTargetToolRequest,
-
-  async getTargetToolsCatalog(workspaceId: string, targetId: string): Promise<ClusterToolCatalog> {
+  async getTargetMcpCatalog(workspaceId: string, targetId: string): Promise<ClusterToolCatalog> {
     const catalog = await requestJson<ControlPlaneClusterToolCatalog>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/tools/catalog?limit=50`
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/mcp/catalog?limit=50`
     );
     return mapClusterToolsCatalog(catalog);
+  },
+
+  async listTargetTools(workspaceId: string, targetId: string): Promise<ControlPlaneTargetToolsCatalog> {
+    return requestJson<ControlPlaneTargetToolsCatalog>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/tools`
+    );
+  },
+
+  async updateTargetTool(
+    workspaceId: string,
+    targetId: string,
+    toolId: string,
+    input: UpdateTargetToolInput
+  ): Promise<ControlPlaneTargetToolsCatalog['items'][number]> {
+    return requestJson<ControlPlaneTargetToolsCatalog['items'][number]>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/tools/${encodeURIComponent(toolId)}`,
+      { method: 'PATCH', body: JSON.stringify(input) }
+    );
+  },
+
+  async updateTargetMcpServerTool(
+    workspaceId: string,
+    targetId: string,
+    serverId: string,
+    toolName: string,
+    input: { enabled: boolean; capability?: 'read' | 'write' }
+  ): Promise<ControlPlaneClusterToolCatalogItem> {
+    return requestJson<ControlPlaneClusterToolCatalogItem>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/mcp/servers/${encodeURIComponent(serverId)}/tools/${encodeURIComponent(toolName)}`,
+      { method: 'PATCH', body: JSON.stringify(input) }
+    );
   },
 
   async listMcpServerTools(

@@ -44,6 +44,8 @@ describe('Target skills editor dialog', () => {
     expect(targetSkillsInventory).toContain('data-target-skill-primary-actions="true"');
     expect(targetSkillsInventory).toContain('<MoreVertical className="h-4 w-4" aria-hidden="true" />');
     expect(targetSkillsInventory).toContain('<th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">Actions</th>');
+    expect(targetSkillsInventory).toContain('<th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Validation</th>');
+    expect(targetSkillsInventory).toContain("canEditSkills ? 'Edit skill' : 'View skill'");
     expect(targetSkillsInventory).toContain('role="switch"');
     expect(targetSkillsInventory).toContain("skill.enabled ? 'translate-x-[22px]' : 'translate-x-1'");
     expect(targetSkillsInventory).not.toContain('ScopeSwitch');
@@ -127,6 +129,11 @@ describe('Target skills editor dialog', () => {
     expect(targetSkillEditorDialog).toContain("const folderStateKey = `${mode}:${detail?.id || 'new'}:${step}:${resetVersion}`;");
     expect(targetSkillEditorDialog).toContain('className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-6 py-4"');
     expect(targetSkillEditorDialog).toContain('<Button variant="secondary" size="sm" onClick={onReset} disabled={!dirty || saving || loading}>Reset changes</Button>');
+    expect(targetSkillEditorDialog).toContain("detail?.name || (canEditSkills ? 'Edit target skill' : 'View target skill')");
+    expect(targetSkillEditorDialog).toContain("canEditSkills ? 'Edit Markdown context for this target skill.' : 'Inspect Markdown context for this target skill.'");
+    expect(targetSkillEditorDialog).toContain("detail.source.type === 'git_import'");
+    expect(targetSkillEditorDialog).toContain(") : !canEditSkills ? (");
+    expect(targetSkillEditorDialog).toContain('<Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>Close</Button>');
     expect(targetSkillEditorDialog).not.toContain('<Button variant="secondary" size="sm" onClick={onReset} disabled={!dirty || saving}>Reset changes</Button>');
   });
 
@@ -137,6 +144,31 @@ describe('Target skills editor dialog', () => {
     expect(targetSkillsInventory).toContain('sourceLabel(skill)');
     expect(targetSkillsInventory).toContain('syncLabel(skill) ||');
     expect(targetSkillsInventory).toContain('searchableText.includes(normalizedSearch)');
+  });
+
+  it('keeps the skills summary focused on operational state instead of source type', () => {
+    expect(targetSkillsInventory).toContain('needsFixes: skills.filter');
+    expect(targetSkillsInventory).toContain('Needs fixes');
+    expect(targetSkillsViewModel).toContain("return skill.source.type === 'git_import' ? 'Git import' : null;");
+    expect(targetSkillsInventory).not.toContain('Git imports');
+    expect(targetSkillsInventory).not.toContain('summary.imported');
+    expect(targetSkillsViewModel).not.toContain("'Manual'");
+  });
+
+  it('keeps skill row descriptions to one line like the other target tables', () => {
+    expect(targetSkillsInventory).toContain('block truncate text-xs leading-5 text-ui-text-muted" title={skill.description}');
+    expect(targetSkillsInventory).toContain('xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem]');
+    expect(targetSkillsInventory).toContain('type-label flex h-11 items-center justify-center whitespace-nowrap');
+    expect(targetSkillsInventory).toContain("t('targetSkills.showingItems', { count: filteredSkills.length, total: skills.length })");
+    expect(targetSkillsInventory).not.toContain('line-clamp-2 text-xs leading-5 text-ui-text-muted">{skill.description}');
+    expect(targetSkillsInventory).not.toContain('skillSyncLabel');
+    expect(targetSkillsInventory).not.toContain('mt-2 flex flex-wrap items-center gap-2 text-xs text-ui-text-muted');
+  });
+
+  it('does not show a read-only permission notice while editable permissions are still loading', () => {
+    expect(targetSkillsView).toContain('const showPermissionNotice = catalog ? !canEditSkills : !canManageSkills;');
+    expect(targetSkillsView).toContain('{showPermissionNotice && (');
+    expect(targetSkillsView).not.toContain('{!canEditSkills && (');
   });
 
   it('imports skills as enabled without showing an import toggle', () => {

@@ -1,12 +1,13 @@
 import React from 'react';
 import { McpServersView } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServersView';
 import { TargetSkillsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsView';
+import { TargetToolsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetToolsView';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { toClusterShim } from '@/pages/virtual-machines/virtualMachineClusterShim';
 
 interface VirtualMachineAdminViewProps {
-  view: 'mcpServers' | 'skills';
+  view: 'mcpServers' | 'skills' | 'tools';
   virtualMachine: ControlPlaneVirtualMachine;
   workspace: Workspace;
 }
@@ -29,6 +30,16 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
         cluster={cluster}
         targetContext={targetContext}
         canManageSkills={Boolean(workspace.permissions?.manage_skills)}
+      />
+    );
+  }
+
+  if (view === 'tools') {
+    return (
+      <TargetToolsView
+        cluster={cluster}
+        targetContext={targetContext}
+        canManageTools={Boolean(workspace.permissions?.manage_tools)}
       />
     );
   }

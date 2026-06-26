@@ -7,6 +7,7 @@ import { NamespaceScopeDialog } from '@/features/kubernetes-cluster-detail/compo
 import { OverviewView } from '@/features/kubernetes-cluster-detail/components/detail/views/OverviewView';
 import { ResourcesView } from '@/features/kubernetes-cluster-detail/components/detail/views/ResourcesView';
 import { TargetSkillsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsView';
+import { TargetToolsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetToolsView';
 import { createMarkdownComponents } from '@/features/kubernetes-cluster-detail/lib/markdown';
 import { KubernetesClusterDetailProps, View } from '@/features/kubernetes-cluster-detail/types';
 import { fadeTransition } from '@/lib/motion';
@@ -16,10 +17,11 @@ interface KubernetesClusterDetailLocationState {
   sessionId: string | null;
 }
 
-const VIEWS: View[] = ['overview', 'resources', 'mcpServers', 'skills', 'chat', 'settings'];
+const VIEWS: View[] = ['overview', 'resources', 'mcpServers', 'skills', 'tools', 'chat', 'settings'];
 
 function normalizeView(value: string | null): View | null {
   if (value === 'mcp-servers') return 'mcpServers';
+  if (value === 'tools') return 'tools';
   return isView(value) ? value : null;
 }
 
@@ -83,7 +85,6 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   workspaceName,
   chatController,
   isDark,
-  onToggleTool,
   onSyncTools,
   onUpdateName,
   onUpdateNamespaceScope,
@@ -230,7 +231,6 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 canManageMcp={canManageMcp}
                 canManageTools={canManageTools}
                 canRequestWriteRuns={canRequestWriteRuns}
-                onToggleTool={onToggleTool}
                 onSyncTools={onSyncTools}
               />
             )}
@@ -243,6 +243,17 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                   targetType: 'kubernetes'
                 }}
                 canManageSkills={Boolean(currentWorkspacePermissions?.manage_skills)}
+              />
+            )}
+            {activeView === 'tools' && (
+              <TargetToolsView
+                cluster={cluster}
+                targetContext={{
+                  workspaceId: cluster.workspaceId,
+                  targetId: cluster.id,
+                  targetType: 'kubernetes'
+                }}
+                canManageTools={canManageTools}
               />
             )}
             {activeView === 'chat' && (

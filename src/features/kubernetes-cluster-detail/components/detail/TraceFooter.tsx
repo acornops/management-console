@@ -74,10 +74,10 @@ function getTimelineEventMeta(event: RunTraceTimelineEvent): string {
   }
 
   if (event.type === 'tool') {
-    if (event.status === 'success') return 'Tool · Done';
-    if (event.status === 'error') return 'Tool · Attention';
-    if (event.status === 'info') return 'Tool · Running';
-    return 'Tool';
+    if (event.status === 'success') return 'Function tool · Done';
+    if (event.status === 'error') return 'Function tool · Attention';
+    if (event.status === 'info') return 'Function tool · Running';
+    return 'Function tool';
   }
 
   if (event.status === 'success') return 'Done';
@@ -127,8 +127,8 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   const timelineEvents = buildTimelineEvents(trace);
   const compactToolSummary =
     trace.toolCalls.length > 0
-      ? `${completedToolCalls} of ${trace.toolCalls.length} tools complete`
-      : 'No tools';
+      ? `${completedToolCalls} of ${trace.toolCalls.length} function calls complete`
+      : 'No function tool calls';
   const activitySummary = trace.status === 'connecting'
     ? 'Waiting for progress'
     : [

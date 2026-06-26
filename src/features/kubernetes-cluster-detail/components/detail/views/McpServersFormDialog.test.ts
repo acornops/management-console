@@ -41,6 +41,15 @@ describe('MCP server form dialog polish', () => {
     expect(mcpServersView).not.toContain('setSelectedServerId(createdServer.id)');
   });
 
+  it('does not show the empty MCP server CTA before the catalog has resolved', () => {
+    expect(mcpServersView).toContain('const showInitialCatalogLoading = !catalog && !catalogError && !hasLocalFallbackServers;');
+    expect(mcpServersView).toContain('const showEmptyCatalog = Boolean(catalog) && servers.length === 0;');
+    expect(mcpServersView).toContain('{showInitialCatalogLoading && (');
+    expect(mcpServersView).toContain('{showEmptyCatalog && (');
+    expect(mcpServersView).not.toContain('setShowCatalogLoadingNotice');
+    expect(mcpServersView).not.toContain('!showInitialCatalogLoading && servers.length === 0');
+  });
+
   it('keeps the create review sidebar compact for narrow modal space', () => {
     expect(mcpServersDialogs).toContain('rounded-lg border border-ui-border bg-ui-bg px-4 py-3');
     expect(mcpServersDialogs).toContain('flex items-center justify-between gap-4 border-b border-ui-border py-2');
@@ -78,5 +87,12 @@ describe('MCP server form dialog polish', () => {
     expect(mcpServersView).toContain('await controlPlaneApi.updateTargetMcpServer(activeTarget.workspaceId, activeTarget.targetId, server.id, {\n        enabled\n      });');
     expect(mcpServersView).toContain('pendingToggleServerId={pendingToggleServerId}');
     expect(mcpServersView).toContain('onToggleServer={(targetServer, enabled) => void handleToggleServer(targetServer, enabled)}');
+  });
+
+  it('keeps MCP tool save failures visible in the active tools dialog', () => {
+    expect(mcpServersView).toContain("const message = formatMcpMutationError(error, 'Failed updating MCP tool.');");
+    expect(mcpServersView).toContain('error: message');
+    expect(mcpServersView).toContain('throw error;');
+    expect(mcpServersView).toContain('void handleToggleTool(createReviewServerWithPagedTools, tool, enabled).catch(() => undefined)');
   });
 });

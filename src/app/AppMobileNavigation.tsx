@@ -25,12 +25,14 @@ type ActiveResourceNav =
   | 'clusterOverview'
   | 'clusterResources'
   | 'clusterMcpServers'
+  | 'clusterTools'
   | 'clusterSkills'
   | 'clusterSettings'
   | 'clusterChat'
   | 'vmOverview'
   | 'vmResources'
   | 'vmMcpServers'
+  | 'vmTools'
   | 'vmSkills'
   | 'vmSettings'
   | 'vmChat'
@@ -240,8 +242,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         ['resources', t('app.resources'), ICONS.Activity, 0],
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
                         ['skills', t('app.skills'), ICONS.BookOpen, 0],
-                        ['chat', t('app.aiChat'), ICONS.Terminal, 0],
-                        ['settings', t('app.clusterSettings'), ICONS.Settings, 0]
+                        ['tools', t('app.tools'), ICONS.Wrench, 0],
+                        ['chat', t('app.aiChat'), ICONS.Terminal, 0]
                       ] as Array<[ClusterSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
                         <button
                           key={tab}
@@ -275,6 +277,29 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           </span>
                         </button>
                       ))}
+                      <div className="mt-3 border-t border-ui-border pt-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
+                          {t('app.administration')}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSetMobileNavOpen(false);
+                            onNavigateClusterSubview('settings');
+                          }}
+                          disabled={!selectedSidebarCluster}
+                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                            activeClusterSubview === 'settings'
+                              ? 'bg-accent-soft text-accent-strong'
+                              : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                          } disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <ICONS.Settings className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{t('app.clusterSettings')}</span>
+                          </span>
+                        </button>
+                      </div>
                     </>
                   ) : isVirtualMachineSidebar ? (
                     <>
@@ -293,8 +318,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         ['resources', t('app.resources'), ICONS.Activity, 0],
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
                         ['skills', t('app.skills'), ICONS.BookOpen, 0],
-                        ['chat', t('app.aiChat'), ICONS.Terminal, 0],
-                        ['settings', t('app.vmSettings'), ICONS.Settings, 0]
+                        ['tools', t('app.tools'), ICONS.Wrench, 0],
+                        ['chat', t('app.aiChat'), ICONS.Terminal, 0]
                       ] as Array<[VmSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
                         <button
                           key={tab}
@@ -321,6 +346,29 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           </span>
                         </button>
                       ))}
+                      <div className="mt-3 border-t border-ui-border pt-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
+                          {t('app.administration')}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSetMobileNavOpen(false);
+                            onNavigateVmSubview('settings');
+                          }}
+                          disabled={!selectedSidebarVm}
+                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                            activeVmSubview === 'settings'
+                              ? 'bg-accent-soft text-accent-strong'
+                              : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                          } disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <ICONS.Settings className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{t('app.vmSettings')}</span>
+                          </span>
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <>

@@ -154,8 +154,8 @@ export function summarizeBytes(totalBytes: number): string {
   return `${(totalBytes / 1024).toFixed(1)} KiB`;
 }
 
-export function sourceLabel(skill: ControlPlaneTargetSkillsCatalog['items'][number]): string {
-  return skill.source.type === 'git_import' ? 'Git import' : 'Manual';
+export function sourceLabel(skill: ControlPlaneTargetSkillsCatalog['items'][number]): string | null {
+  return skill.source.type === 'git_import' ? 'Git import' : null;
 }
 
 export function syncLabel(skill: ControlPlaneTargetSkillsCatalog['items'][number]): string | null {

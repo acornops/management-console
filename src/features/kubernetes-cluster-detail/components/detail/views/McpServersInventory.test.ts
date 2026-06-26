@@ -14,6 +14,9 @@ describe('McpServersInventory table polish', () => {
     expect(mcpServersInventory).toContain("{t('mcpServers.enabled')}");
     expect(mcpServersInventory).toContain('pendingToggleServerId={pendingToggleServerId}');
     expect(mcpServersInventory).toContain('onToggleServer={onToggleServer}');
+    expect(mcpServersInventory).toContain('xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem]');
+    expect(mcpServersInventory).toContain('type-label flex h-11 items-center justify-center whitespace-nowrap');
+    expect(mcpServersInventory).toContain("t('mcpServers.showingServers', { count: filteredServers.length, total: servers.length })");
     expect(mcpServerCard).toContain('<tr data-mcp-server-row="true"');
   });
 
@@ -28,6 +31,10 @@ describe('McpServersInventory table polish', () => {
     expect(mcpServersInventory).toContain("t('mcpServers.serverInventoryBody')");
     expect(mcpServersInventory).toContain("t('mcpServers.serversMetric')");
     expect(mcpServersInventory).toContain("t('mcpServers.enabledToolsMetric')");
+    expect(mcpServerCard).toContain('enabledOfTotalShort');
+    expect(mcpServerCard).toContain('readConfiguredTools');
+    expect(mcpServerCard).toContain('writeConfiguredTools');
+    expect(mcpServerCard).not.toContain('server.toolCounts.enabledEffective - server.toolCounts.writeEffective');
     expect(mcpServersInventory).not.toContain("t('mcpServers.serverCount'");
     expect(mcpServersInventory).not.toContain("t('mcpServers.approvalRequired')");
     expect(mcpServersInventory).not.toContain("t('mcpServers.accessSummaryTitle')");

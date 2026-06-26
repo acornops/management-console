@@ -38,7 +38,6 @@ interface McpServersViewProps {
   canManageMcp?: boolean;
   canManageTools?: boolean;
   canRequestWriteRuns?: boolean;
-  onToggleTool?: (tool: ClusterToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onSyncTools?: (tools: KubernetesCluster['mcpTools']) => void;
 }
 
@@ -93,13 +92,10 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   canManageMcp = false,
   canManageTools = false,
   canRequestWriteRuns = false,
-  onToggleTool,
   onSyncTools
 }) => {
   const { t } = useTranslation();
   const [catalog, setCatalog] = useState<ClusterToolCatalog | null>(null);
-  const [catalogLoading, setCatalogLoading] = useState(false);
-  const [showCatalogLoadingNotice, setShowCatalogLoadingNotice] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
   const [createReviewServerId, setCreateReviewServerId] = useState<string | null>(null);
@@ -117,11 +113,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [showSecretValue, setShowSecretValue] = useState(false);
   const onSyncToolsRef = useRef(onSyncTools);
   const serverToolsRequestSeqRef = useRef(0);
-  const activeTarget = targetContext || {
-    workspaceId: cluster.workspaceId,
-    targetId: cluster.id,
-    targetType: 'kubernetes' as const
-  };
+  const activeTarget = targetContext || { workspaceId: cluster.workspaceId, targetId: cluster.id, targetType: 'kubernetes' as const };
 
   const localCatalog = useMemo(() => buildLocalCatalog(cluster, canManageMcp), [cluster, canManageMcp]);
   const activeCatalog = catalog || localCatalog;
@@ -131,7 +123,9 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const hasAgentWriteBlockedTools = servers.some(
     (server) => server.enabled && server.toolCounts.writeConfigured > server.toolCounts.writeEffective
   );
-  const showInitialCatalogLoading = showCatalogLoadingNotice && !catalog && localCatalog.servers.length === 0;
+  const hasLocalFallbackServers = localCatalog.servers.length > 0;
+  const showInitialCatalogLoading = !catalog && !catalogError && !hasLocalFallbackServers;
+  const showEmptyCatalog = Boolean(catalog) && servers.length === 0;
   const activeServer = selectedServerId
     ? servers.find((server) => server.id === selectedServerId) || null
     : null;
@@ -145,20 +139,10 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     onSyncToolsRef.current = onSyncTools;
   }, [onSyncTools]);
 
-  useEffect(() => {
-    if (!catalogLoading) {
-      setShowCatalogLoadingNotice(false);
-      return;
-    }
-    const timeoutId = window.setTimeout(() => setShowCatalogLoadingNotice(true), 350);
-    return () => window.clearTimeout(timeoutId);
-  }, [catalogLoading]);
-
   const loadCatalog = useCallback(async (options?: { syncParent?: boolean }) => {
-    setCatalogLoading(true);
     setCatalogError(null);
     try {
-      const loadedCatalog = await controlPlaneApi.getTargetToolsCatalog(activeTarget.workspaceId, activeTarget.targetId);
+      const loadedCatalog = await controlPlaneApi.getTargetMcpCatalog(activeTarget.workspaceId, activeTarget.targetId);
       setCatalog(loadedCatalog);
       if (options?.syncParent) {
         onSyncToolsRef.current?.(flattenCatalogTools(loadedCatalog));
@@ -169,8 +153,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       setCatalogError(message);
       setCatalog(null);
       return null;
-    } finally {
-      setCatalogLoading(false);
     }
   }, [activeTarget.targetId, activeTarget.workspaceId]);
 
@@ -429,6 +411,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
 
   const handleToggleServer = async (server: ClusterToolCatalogServer, enabled: boolean) => {
     if (!canEditServers || pendingToggleServerId || pendingServerMutation) return;
+    if (!server.canToggle) return;
     if (server.enabled === enabled) return;
     setPendingToggleServerId(server.id);
     setServerMutationError(null);
@@ -447,12 +430,15 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   };
 
   const handleToggleTool = async (server: ClusterToolCatalogServer, tool: ClusterToolCatalogItem, requestedEnabled?: boolean) => {
-    if (!onToggleTool || !canManageTools || pendingToolName) return;
+    if (!canManageTools || pendingToolName) return;
     const nextEnabled = requestedEnabled ?? !tool.enabledConfigured;
     if (nextEnabled === tool.enabledConfigured) return;
     setPendingToolName(tool.name);
     try {
-      await onToggleTool(tool, nextEnabled);
+      await controlPlaneApi.updateTargetMcpServerTool(activeTarget.workspaceId, activeTarget.targetId, server.id, tool.name, {
+        enabled: nextEnabled,
+        capability: tool.capability
+      });
       setToolsByServerId((current) => {
         const page = current[server.id];
         if (!page) return current;
@@ -494,7 +480,12 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         })
       }));
     } catch (error) {
-      setServerMutationError(formatMcpMutationError(error, 'Failed updating MCP tool.'));
+      const message = formatMcpMutationError(error, 'Failed updating MCP tool.');
+      setServerMutationError(message);
+      setToolsByServerId((current) => current[server.id]
+        ? { ...current, [server.id]: { ...current[server.id], error: message } }
+        : current);
+      throw error;
     } finally {
       setPendingToolName(null);
     }
@@ -550,7 +541,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         <InlineLoadingIndicator label={t('mcpServers.loadingCatalog')} className="mb-5" />
       )}
 
-      {!showInitialCatalogLoading && servers.length === 0 && (
+      {showEmptyCatalog && (
         <div className="rounded-xl border border-ui-border bg-ui-surface p-10 text-center shadow-sm">
           <p className="type-body">{t('mcpServers.empty')}</p>
           {canEditServers && (
@@ -584,7 +575,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         {activeServerWithPagedTools && (
           <McpServerToolsDialog
             server={activeServerWithPagedTools}
-            canManageTools={Boolean(canManageTools && onToggleTool)}
+            canManageTools={Boolean(canManageTools)}
             pendingToolName={pendingToolName}
             isLoadingTools={!activeServerTools || Boolean(activeServerTools.loadingInitial)}
             isLoadingMoreTools={Boolean(activeServerTools?.loadingMore)}
@@ -616,14 +607,14 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
             reviewServer={createReviewServerWithPagedTools}
             reviewToolsLoading={pendingServerMutation || Boolean(createReviewServerId && !createReviewServerWithPagedTools && !serverMutationError) || Boolean(createReviewServerTools?.loadingInitial)}
             reviewToolsError={createReviewServerTools?.error || null}
-            canManageTools={Boolean(canManageTools && onToggleTool)}
+            canManageTools={Boolean(canManageTools)}
             pendingToolName={pendingToolName}
             onClose={closeServerModal}
             onFormChange={setServerForm}
             onShowSecretValueChange={setShowSecretValue}
             onSubmit={() => void handleSubmitServer()}
             onToggleReviewTool={(tool, enabled) => {
-              if (createReviewServerWithPagedTools) void handleToggleTool(createReviewServerWithPagedTools, tool, enabled);
+              if (createReviewServerWithPagedTools) void handleToggleTool(createReviewServerWithPagedTools, tool, enabled).catch(() => undefined);
             }}
             onFinishReview={closeServerModal}
           />

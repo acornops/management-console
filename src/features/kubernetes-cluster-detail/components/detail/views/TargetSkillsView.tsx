@@ -65,6 +65,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
     ? editorStep === 'files' && draftFiles.length > 0
     : Boolean(selectedDetail) && draftSignature !== detailSignature;
   const canEditSkills = Boolean(canManageSkills && catalog?.permissions?.canEdit);
+  const showPermissionNotice = catalog ? !canEditSkills : !canManageSkills;
 
   const openImportDialog = () => {
     setImportError(null);
@@ -331,7 +332,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
             Create Skill
           </Button>
         </div>
-        {!canEditSkills && (
+        {showPermissionNotice && (
           <p className="type-caption lg:max-w-xs">
             {catalog?.permissions?.editableRoles?.length
               ? `Editable by: ${catalog.permissions.editableRoles.join(', ')}`
@@ -350,19 +351,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
         <InlineLoadingIndicator label="Loading skills" className="mb-5" />
       )}
 
-      {!catalogLoading && catalog?.items?.length === 0 && (
-        <div className="rounded-xl border border-ui-border bg-ui-surface p-10 text-center shadow-sm">
-          <p className="type-body">No target skills configured.</p>
-          {canEditSkills && (
-            <Button onClick={openCreateEditor} variant="accent" size="sm" className="mt-6">
-              <Plus className="h-4 w-4" />
-              Create first skill
-            </Button>
-          )}
-        </div>
-      )}
-
-      {catalog?.items?.length ? (
+      {catalog ? (
         <TargetSkillsInventory
           skills={catalog.items}
           canEditSkills={canEditSkills}

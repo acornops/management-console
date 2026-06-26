@@ -100,6 +100,36 @@ describe('tool mappers', () => {
         enabledEffective: true
       })
     ]);
+    const catalog = mapClusterToolsCatalog({
+      workspaceId: 'workspace-1',
+      clusterId: 'cluster-1',
+      permissions: {
+        canEdit: true,
+        editableRoles: []
+      },
+      servers: [
+        {
+          id: 'server-1',
+          name: 'Builtin tools',
+          url: 'builtin://cluster',
+          type: 'builtin',
+          enabled: true,
+          isSystem: true,
+          canDelete: false,
+          canEditConnection: false,
+          authType: 'none',
+          toolCounts: {
+            total: 0,
+            enabledConfigured: 0,
+            enabledEffective: 0,
+            writeConfigured: 0,
+            writeEffective: 0
+          },
+          tools: []
+        }
+      ]
+    });
+    expect(catalog.servers[0].canToggle).toBe(true);
   });
 
   it('normalizes cluster tool catalog server defaults', () => {
@@ -120,6 +150,7 @@ describe('tool mappers', () => {
           isSystem: 0 as unknown as boolean,
           canDelete: 1 as unknown as boolean,
           canEditConnection: 0 as unknown as boolean,
+          canToggle: false,
           authType: 'custom_header',
           connectionStatus: 'degraded' as 'unknown',
           toolCounts: {
@@ -151,6 +182,7 @@ describe('tool mappers', () => {
     });
     expect(catalog.servers).toEqual([
       expect.objectContaining({
+        canToggle: false,
         connectionStatus: 'unknown',
         toolCounts: {
           total: 0,
@@ -167,6 +199,26 @@ describe('tool mappers', () => {
         ]
       })
     ]);
+  });
+
+  it('preserves target identity for target-scoped MCP catalogs', () => {
+    const catalog = mapClusterToolsCatalog({
+      workspaceId: 'workspace-1',
+      targetId: 'vm-1',
+      targetType: 'virtual_machine',
+      permissions: {
+        canEdit: false,
+        editableRoles: []
+      },
+      servers: []
+    });
+
+    expect(catalog).toEqual(expect.objectContaining({
+      workspaceId: 'workspace-1',
+      clusterId: 'vm-1',
+      targetId: 'vm-1',
+      targetType: 'virtual_machine'
+    }));
   });
 
   it('preserves agent write-disabled catalog reasons', () => {

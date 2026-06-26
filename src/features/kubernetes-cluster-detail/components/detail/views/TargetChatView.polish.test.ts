@@ -384,7 +384,8 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain("const activitySummary = trace.status === 'connecting'");
     expect(traceFooter).toContain("? 'Waiting for progress'");
     expect(traceFooter).toContain('`${trace.steps.length} steps`');
-    expect(traceFooter).toContain('`${completedToolCalls} of ${trace.toolCalls.length} tools complete`');
+    expect(traceFooter).toContain('`${completedToolCalls} of ${trace.toolCalls.length} function calls complete`');
+    expect(traceFooter).toContain("'No function tool calls'");
     expect(traceFooter).toContain("const disclosureLabel = isExpanded ? 'Hide run details' : 'Show run details';");
     expect(traceFooter).toContain('const disclosureSummary = hasCompactReasoningSummary ? compactReasoningSummary : activitySummary;');
     expect(traceFooter).toContain("${compactStatusOnly ? '' : 'mt-3'} w-full max-w-[72ch]");
@@ -425,10 +426,10 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain("event.type === 'tool'");
     expect(traceFooter).toContain('<Wrench className={`h-3.5 w-3.5 ${getTimelineEventToneClass(event)}`} />');
     expect(traceFooter).toContain("if (event.type === 'tool') {");
-    expect(traceFooter).toContain("if (event.status === 'success') return 'Tool · Done';");
-    expect(traceFooter).toContain("if (event.status === 'error') return 'Tool · Attention';");
-    expect(traceFooter).toContain("if (event.status === 'info') return 'Tool · Running';");
-    expect(traceFooter).toContain("return 'Tool';");
+    expect(traceFooter).toContain("if (event.status === 'success') return 'Function tool · Done';");
+    expect(traceFooter).toContain("if (event.status === 'error') return 'Function tool · Attention';");
+    expect(traceFooter).toContain("if (event.status === 'info') return 'Function tool · Running';");
+    expect(traceFooter).toContain("return 'Function tool';");
     expect(traceFooter).toContain('type-micro-label max-w-[45%] shrink truncate');
     expect(traceFooter).toContain('title={getTimelineEventMeta(event)}');
     expect(traceFooter).toContain('{getTimelineEventMeta(event)}');

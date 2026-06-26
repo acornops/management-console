@@ -82,7 +82,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
         <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
           <div className="px-5 py-3.5">
             <h2 className="type-row-title">{t('mcpServers.serverInventoryTitle')}</h2>
-            <p className="type-caption mt-1 text-ui-text-muted">{t('mcpServers.serverInventoryBody')}</p>
+            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('mcpServers.serverInventoryBody')}</p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.serversMetric')}</p>
@@ -114,8 +114,8 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
       </section>
 
       <section data-mcp-server-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:flex-row xl:items-center">
-          <div className="relative flex-1">
+        <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
+          <div className="relative min-w-0">
             <label htmlFor="mcp-server-search" className="sr-only">
               {t('mcpServers.searchServers')}
             </label>
@@ -133,10 +133,10 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
             value={serverFilter}
             options={serverFilterOptions}
             onChange={setServerFilter}
-            className="min-w-48"
+            className="w-full"
             ariaLabel={t('mcpServers.filterServers')}
           />
-          <span className="type-label rounded-full border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">
+          <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
             {t('mcpServers.showingServers', { count: filteredServers.length, total: servers.length })}
           </span>
         </div>
@@ -144,11 +144,10 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
           <table className="w-full table-fixed text-left" aria-label={t('mcpServers.title')}>
             <caption className="sr-only">{t('mcpServers.title')}</caption>
             <colgroup>
-              <col className="w-[31%]" />
-              <col className="w-[17%]" />
+              <col className="w-[34%]" />
+              <col className="w-[23%]" />
               <col className="w-[11%]" />
-              <col className="w-[18%]" />
-              <col className="w-[12%]" />
+              <col className="w-[21%]" />
               <col className="w-[11%]" />
             </colgroup>
             <thead>
@@ -157,7 +156,6 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                 <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('mcpServers.status')}</th>
                 <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('mcpServers.enabled')}</th>
                 <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">{t('mcpServers.tools')}</th>
-                <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 lg:table-cell lg:px-8">{t('mcpServers.lastDiscoveryColumn')}</th>
                 <th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">{t('mcpServers.actions')}</th>
               </tr>
             </thead>
@@ -180,7 +178,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-8 py-12 text-center">
+                  <td colSpan={5} className="px-8 py-12 text-center">
                     <p className="type-body">{t('mcpServers.noServerMatches')}</p>
                     <p className="type-caption mt-1 text-ui-text-muted">{t('mcpServers.noServerMatchesHelp')}</p>
                   </td>
