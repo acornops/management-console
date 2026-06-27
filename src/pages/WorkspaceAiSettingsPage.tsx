@@ -79,9 +79,12 @@ function modelBelongsToProvider(model: string, provider: LlmProvider): boolean {
   return normalized.includes('gemini');
 }
 
+function modelBelongsToAnyProvider(model: string): boolean {
+  return PROVIDERS.some((provider) => modelBelongsToProvider(model, provider));
+}
+
 function modelsForProvider(allowedModels: string[], provider: LlmProvider): string[] {
-  const providerModels = allowedModels.filter((model) => modelBelongsToProvider(model, provider));
-  return providerModels.length > 0 ? providerModels : allowedModels;
+  return allowedModels.filter((model) => modelBelongsToProvider(model, provider) || !modelBelongsToAnyProvider(model));
 }
 
 function behaviorDraftFromSettings(settings: WorkspaceAiSettings): BehaviorDraft {
@@ -125,6 +128,14 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const [credentialEditorProvider, setCredentialEditorProvider] = useState<LlmProvider | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<LlmProvider | null>(null);
   const workspaceIdRef = useRef(workspace.id);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -195,11 +206,13 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const savedDefaultProvider = currentAiSettings?.defaultProvider ?? behaviorDraft.defaultProvider;
   const savedDefaultModel = currentAiSettings?.defaultModel ?? behaviorDraft.defaultModel;
   const savedReasoningSummaryMode = currentAiSettings?.reasoningSummaryMode ?? behaviorDraft.reasoningSummaryMode;
+  const savedReasoningEffort = currentAiSettings?.reasoningEffort ?? behaviorDraft.reasoningEffort;
   const savedDefaultProviderStatus = providerStatusByProvider.get(savedDefaultProvider);
   const savedDefaultProviderConfigured = Boolean(savedDefaultProviderStatus?.configured);
   const savedDefaultProviderEnabled = Boolean(savedDefaultProviderStatus?.enabled);
   const savedDefaultProviderMissingCredential = Boolean(currentAiSettings && savedDefaultProviderStatus && savedDefaultProviderEnabled && !savedDefaultProviderConfigured);
   const savedDefaultProviderDisabled = Boolean(currentAiSettings && savedDefaultProviderStatus && !savedDefaultProviderEnabled);
+  const isCurrentWorkspaceRequest = () => isMountedRef.current && workspaceIdRef.current === workspace.id;
   const readinessNotice = !canManageAiSettings
     ? { tone: 'neutral' as const, message: t('workspaceAiSettings.noAccess') }
     : savedDefaultProviderDisabled
@@ -237,15 +250,15 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
         reasoningSummaryMode: behaviorDraft.reasoningSummaryMode,
         reasoningEffort: behaviorDraft.reasoningEffort
       });
-      if (workspaceIdRef.current !== workspace.id) return;
+      if (!isCurrentWorkspaceRequest()) return;
       setAiSettings(updated);
       setBehaviorDraft(behaviorDraftFromSettings(updated));
       showToast(t('workspaceAiSettings.settingsSaved'));
     } catch (error) {
-      if (workspaceIdRef.current !== workspace.id) return;
+      if (!isCurrentWorkspaceRequest()) return;
       setBehaviorError(error instanceof Error ? error.message : t('workspaceAiSettings.saveFailed'));
     } finally {
-      if (workspaceIdRef.current === workspace.id) setSavingAction('');
+      if (isCurrentWorkspaceRequest()) setSavingAction('');
     }
   };
 
@@ -270,7 +283,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     try {
       const wasConfigured = currentAiSettings.providers.some((status) => status.provider === provider && status.configured);
       const updated = await controlPlaneApi.saveWorkspaceAiProviderCredential(workspace.id, provider, apiKey);
-      if (workspaceIdRef.current !== workspace.id) return;
+      if (!isCurrentWorkspaceRequest()) return;
       setAiSettings(updated);
       setProviderKeys((current) => ({ ...current, [provider]: '' }));
       setCredentialEditorProvider(null);
@@ -278,13 +291,13 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
         provider: providerLabel(provider)
       }));
     } catch (error) {
-      if (workspaceIdRef.current !== workspace.id) return;
+      if (!isCurrentWorkspaceRequest()) return;
       setCredentialErrors((current) => ({
         ...current,
         [provider]: error instanceof Error ? error.message : t('workspaceAiSettings.saveFailed')
       }));
     } finally {
-      if (workspaceIdRef.current === workspace.id) setSavingAction('');
+      if (isCurrentWorkspaceRequest()) setSavingAction('');
     }
   };
 
@@ -294,20 +307,20 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     setCredentialErrors((current) => ({ ...current, [provider]: '' }));
     try {
       const updated = await controlPlaneApi.deleteWorkspaceAiProviderCredential(workspace.id, provider);
-      if (workspaceIdRef.current !== workspace.id) return;
+      if (!isCurrentWorkspaceRequest()) return;
       setAiSettings(updated);
       setDeleteCandidate(null);
       setCredentialEditorProvider(null);
       setProviderKeys((current) => ({ ...current, [provider]: '' }));
       showToast(t('workspaceAiSettings.keyDeleted', { provider: providerLabel(provider) }));
     } catch (error) {
-      if (workspaceIdRef.current !== workspace.id) return;
+      if (!isCurrentWorkspaceRequest()) return;
       setCredentialErrors((current) => ({
         ...current,
         [provider]: error instanceof Error ? error.message : t('workspaceAiSettings.saveFailed')
       }));
     } finally {
-      if (workspaceIdRef.current === workspace.id) setSavingAction('');
+      if (isCurrentWorkspaceRequest()) setSavingAction('');
     }
   };
 
@@ -356,9 +369,14 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                 <div className="bg-ui-surface p-5">
                   <p className="mb-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.reasoningReadiness')}</p>
                   <p className="text-sm font-bold text-ui-text">
-                    {isReasoningPolicyDisabled
-                      ? t('workspaceAiSettings.reasoningUnavailable')
-                      : t(reasoningModeLabel(savedReasoningSummaryMode))}
+                    {t('workspaceAiSettings.reasoningSummaryStatus', {
+                      mode: isReasoningPolicyDisabled
+                        ? t('workspaceAiSettings.reasoningSummaryUnavailable')
+                        : t(reasoningModeLabel(savedReasoningSummaryMode))
+                    })}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-ui-text-muted">
+                    {t('workspaceAiSettings.reasoningEffortStatus', { effort: t(reasoningEffortLabel(savedReasoningEffort)) })}
                   </p>
                 </div>
               </div>
@@ -440,37 +458,31 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                         : t('workspaceAiSettings.reasoningDescription')}
                     </p>
                   </label>
-                  <div className="block">
+                  <label className="block">
                     <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
                       {t('workspaceAiSettings.reasoningEffortLabel')}
                     </span>
-                    {behaviorDraft.reasoningSummaryMode !== 'off' && !isReasoningPolicyDisabled ? (
-                      <select
-                        className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
-                        value={behaviorDraft.reasoningEffort}
-                        onChange={(event) => {
-                          setBehaviorError('');
-                          setBehaviorDraft((current) => ({ ...current, reasoningEffort: event.target.value as ReasoningEffort }));
-                        }}
-                        disabled={!canManageAiSettings || !currentAiSettings || isSaving}
-                      >
-                        {REASONING_EFFORTS.map((effort) => (
-                          <option key={effort} value={effort} disabled={!currentAiSettings.allowedReasoningEfforts.includes(effort)}>
-                            {t(reasoningEffortLabel(effort))}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="flex h-10 w-full items-center rounded-lg border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text-muted">
-                        {t('workspaceAiSettings.reasoningEffortInactive')}
-                      </div>
-                    )}
+                    <select
+                      className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      value={behaviorDraft.reasoningEffort}
+                      onChange={(event) => {
+                        setBehaviorError('');
+                        setBehaviorDraft((current) => ({ ...current, reasoningEffort: event.target.value as ReasoningEffort }));
+                      }}
+                      disabled={!canManageAiSettings || !currentAiSettings || isSaving}
+                    >
+                      {REASONING_EFFORTS.map((effort) => (
+                        <option key={effort} value={effort} disabled={!currentAiSettings?.allowedReasoningEfforts.includes(effort)}>
+                          {t(reasoningEffortLabel(effort))}
+                        </option>
+                      ))}
+                    </select>
                     <p className="mt-2 min-h-10 text-xs font-medium leading-5 text-ui-text-muted">
-                      {behaviorDraft.reasoningSummaryMode !== 'off' && !isReasoningPolicyDisabled
-                        ? t('workspaceAiSettings.reasoningEffortHelp')
-                        : t('workspaceAiSettings.reasoningEffortOffHelp')}
+                      {behaviorDraft.reasoningSummaryMode === 'off'
+                        ? t('workspaceAiSettings.reasoningEffortOffHelp')
+                        : t('workspaceAiSettings.reasoningEffortHelp')}
                     </p>
-                  </div>
+                  </label>
                 </div>
                 {behaviorError && <InlineAlert tone="danger" className="mt-5">{behaviorError}</InlineAlert>}
               </div>

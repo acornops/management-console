@@ -418,7 +418,23 @@ describe('target chat controller wiring', () => {
     expect(chatView).toContain("type={isRunActive ? 'button' : 'submit'}");
     expect(chatView).toContain('if (canCancelActiveRun && !isCancellingRun) void onCancelRun();');
     expect(chatView).toContain('disabled={!canPost || isRunActive}');
-    expect(chatView).toContain('disabled={isRunActive ? !canCancelActiveRun || isCancellingRun : !canPost || !inputValue.trim()}');
+    expect(chatView).toContain('const hasComposerSubmitPayload = Boolean(inputValue.trim() || hasComposerAttachmentContext);');
+    expect(chatView).toContain('disabled={isRunActive ? !canCancelActiveRun || isCancellingRun : !canPost || !hasComposerSubmitPayload || isComposerRuntimeUnavailable}');
+  });
+
+  it('serializes chat submissions before React run-active state catches up', () => {
+    expect(useTargetChat).toContain('const submitInFlightRef = useRef(false);');
+    expect(useTargetChat).toContain('const submitChatMessageForArgs = (args: {');
+    expect(useTargetChat).toContain('const releaseSubmitLockSoon = () => {');
+    expect(useTargetChat).toContain('setTimeout(() => {');
+    expect(useTargetChat).toContain('if (submitInFlightRef.current) return;');
+    expect(useTargetChat).toContain('submitInFlightRef.current = true;');
+    expect(useTargetChat).toContain('releaseSubmitLockSoon();');
+    expect(useTargetChat).toContain('if (shouldReleaseSubmitLock) submitInFlightRef.current = false;');
+    expect(useTargetChat).toContain('if (!prompt || isRunActive || !canPostInActiveSession || submitInFlightRef.current) return;');
+    expect(useTargetChat).toContain('const handleSendInNewSession = async (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => {');
+    expect(useTargetChat).toContain('let shouldReleaseSubmitLock = true;');
+    expect(useTargetChat).toContain('const submitPromise = submitChatMessageForArgs({');
   });
 
   it('optimistically resolves cancelled runs so the composer and placeholder recover', () => {

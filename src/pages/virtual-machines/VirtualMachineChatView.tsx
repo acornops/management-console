@@ -104,6 +104,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
     <TargetChatView
       target={target}
       isDark={isDark}
+      titleKey="virtualMachines.chat.title"
       descriptionKey="virtualMachines.chat.description"
       promptTitleKey="virtualMachines.chat.promptTitle"
       promptBodyKey="virtualMachines.chat.promptBody"

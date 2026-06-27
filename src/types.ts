@@ -504,6 +504,12 @@ export interface WorkspaceAiSettings {
   providers: WorkspaceAiProviderStatus[];
 }
 
+export interface ChatRuntimeSelection {
+  provider: LlmProvider;
+  model: string;
+  reasoningEffort: ReasoningEffort;
+}
+
 export interface MCPIntegration {
   id: string;
   name: string;

@@ -1,4 +1,5 @@
 import {
+  ChatRuntimeSelection,
   ProjectMember,
   User,
   Workspace,
@@ -515,11 +516,28 @@ export const controlPlaneApi = {
     sessionId: string,
     content: string,
     toolAccessMode?: 'read_only' | 'read_write',
-    clientMessageId?: string
+    clientMessageId?: string,
+    runtimeSelection?: ChatRuntimeSelection
   ): Promise<{ messageId: string; runId: string }> {
     const accepted = await requestJson<ControlPlaneAcceptedMessage>(
       `/api/v1/sessions/${encodeURIComponent(sessionId)}/messages`,
-      { method: 'POST', body: JSON.stringify({ content, toolAccessMode, clientMessageId }) }
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          content,
+          toolAccessMode,
+          clientMessageId,
+          ...(runtimeSelection
+            ? {
+                llm: {
+                  provider: runtimeSelection.provider,
+                  model: runtimeSelection.model,
+                  reasoningEffort: runtimeSelection.reasoningEffort
+                }
+              }
+            : {})
+        })
+      }
     );
     return { messageId: accepted.message_id, runId: accepted.run_id };
   },

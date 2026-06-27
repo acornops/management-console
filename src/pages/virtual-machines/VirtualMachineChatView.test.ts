@@ -15,6 +15,7 @@ describe('VirtualMachineChatView wiring', () => {
     expect(source).toContain('listSessions: controlPlaneApi.listTargetSessions');
     expect(source).toContain('target,');
     expect(source).toContain('<TargetChatView');
+    expect(source).toContain('titleKey="virtualMachines.chat.title"');
   });
 
   it('keeps VM assistant runs read-only', () => {

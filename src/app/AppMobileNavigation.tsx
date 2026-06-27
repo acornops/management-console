@@ -243,7 +243,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
                         ['skills', t('app.skills'), ICONS.BookOpen, 0],
                         ['tools', t('app.tools'), ICONS.Wrench, 0],
-                        ['chat', t('app.aiChat'), ICONS.Terminal, 0]
+                        ['chat', t('app.clusterAssistant'), ICONS.Terminal, 0]
                       ] as Array<[ClusterSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
                         <button
                           key={tab}
@@ -319,7 +319,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
                         ['skills', t('app.skills'), ICONS.BookOpen, 0],
                         ['tools', t('app.tools'), ICONS.Wrench, 0],
-                        ['chat', t('app.aiChat'), ICONS.Terminal, 0]
+                        ['chat', t('app.vmAssistant'), ICONS.Terminal, 0]
                       ] as Array<[VmSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
                         <button
                           key={tab}

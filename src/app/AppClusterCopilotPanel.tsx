@@ -82,7 +82,7 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
     <RightSidePanel
       isOpen={isOpen && Boolean(cluster) && Boolean(chatController)}
       onClose={onClose}
-      ariaLabel={t('app.aiChat')}
+      ariaLabel={t('app.clusterAssistant')}
       style={{ width }}
       className="max-w-[calc(100vw-1rem)]"
     >

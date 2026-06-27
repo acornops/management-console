@@ -380,7 +380,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   ['mcpServers', 'clusterMcpServers', t('app.mcpServers'), ICONS.Server],
                   ['skills', 'clusterSkills', t('app.skills'), ICONS.BookOpen],
                   ['tools', 'clusterTools', t('app.tools'), ICONS.Wrench],
-                  ['chat', 'clusterChat', t('app.aiChat'), ICONS.Terminal]
+                  ['chat', 'clusterChat', t('app.clusterAssistant'), ICONS.Terminal]
                 ] as Array<[ClusterSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
                   <SidebarNavButton
                     key={tab}
@@ -437,7 +437,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   ['mcpServers', 'vmMcpServers', t('app.mcpServers'), ICONS.Server],
                   ['skills', 'vmSkills', t('app.skills'), ICONS.BookOpen],
                   ['tools', 'vmTools', t('app.tools'), ICONS.Wrench],
-                  ['chat', 'vmChat', t('app.aiChat'), ICONS.Terminal]
+                  ['chat', 'vmChat', t('app.vmAssistant'), ICONS.Terminal]
                 ] as Array<[VmSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
                   <SidebarNavButton
                     key={tab}

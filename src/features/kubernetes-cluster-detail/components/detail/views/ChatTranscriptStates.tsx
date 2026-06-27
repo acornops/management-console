@@ -7,7 +7,7 @@ interface ChatEmptyPromptProps {
   body: string;
   suggestions: Array<{ key: string; label: string }>;
   canSendSuggestion: boolean;
-  onSendSuggestion: (suggestion: string) => void;
+  onSendSuggestion: (suggestion: string) => void | Promise<void>;
 }
 
 export function ChatEmptyPrompt({
@@ -45,7 +45,8 @@ export function ChatEmptyPrompt({
         {suggestions.map((suggestion) => (
           <button
             key={suggestion.key}
-            onClick={() => onSendSuggestion(suggestion.label)}
+            type="button"
+            onClick={() => void onSendSuggestion(suggestion.label)}
             disabled={!canSendSuggestion}
             className="group flex min-h-14 items-start gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm font-medium text-ui-text transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-60"
           >

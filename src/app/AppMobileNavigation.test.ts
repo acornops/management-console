@@ -16,6 +16,8 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).toContain("['mcpServers', t('app.mcpServers'), ICONS.Server, 0]");
     expect(mobileNavigation).toContain("['skills', t('app.skills'), ICONS.BookOpen, 0]");
     expect(mobileNavigation).toContain("['tools', t('app.tools'), ICONS.Wrench, 0]");
+    expect(mobileNavigation).toContain("['chat', t('app.clusterAssistant'), ICONS.Terminal, 0]");
+    expect(mobileNavigation).toContain("['chat', t('app.vmAssistant'), ICONS.Terminal, 0]");
     expect(mobileNavigation.indexOf("t('app.mcpServers')")).toBeLessThan(
       mobileNavigation.indexOf("t('app.skills')")
     );

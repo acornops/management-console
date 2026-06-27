@@ -1,5 +1,5 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
-import { ChatMessage, ChatSession, KubernetesCluster } from '@/types';
+import { ChatMessage, ChatRuntimeSelection, ChatSession, KubernetesCluster } from '@/types';
 import { controlPlaneApi, type ControlPlaneSession } from '@/services/controlPlaneApi';
 import { createLocalMessageId, sleep } from '@/features/kubernetes-cluster-detail/lib/helpers';
 import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/features/kubernetes-cluster-detail/lib/trace-utils';
@@ -37,6 +37,7 @@ export async function submitChatMessage(args: {
   inputValue: string;
   isLoading: boolean;
   overrideInput?: string;
+  runtimeSelection?: ChatRuntimeSelection;
   shouldStickToBottomRef: MutableRefObject<boolean>;
   onUpdateSessions: (sessions: ChatSession[]) => void;
   setActiveSessionId: (sessionId: string) => void;
@@ -64,6 +65,7 @@ export async function submitChatMessage(args: {
     inputValue,
     isLoading,
     overrideInput,
+    runtimeSelection,
     shouldStickToBottomRef,
     onUpdateSessions,
     setActiveSessionId,
@@ -228,7 +230,8 @@ export async function submitChatMessage(args: {
       session.backendSessionId!,
       prompt,
       canRequestWriteRuns ? 'read_write' : 'read_only',
-      userMsg.id
+      userMsg.id,
+      runtimeSelection
     );
     const streamingMessageId = `stream-${accepted.runId}`;
     runIdForMessage = accepted.runId;

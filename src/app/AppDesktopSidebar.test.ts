@@ -86,9 +86,10 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar.indexOf("label={t('app.aiSettings')}")).toBeLessThan(
       desktopSidebar.indexOf("label={t('app.workspaceSettings')}")
     );
-    expect(desktopSidebar.indexOf("label={t('app.aiChat')}")).toBeLessThan(
+    expect(desktopSidebar.indexOf("label={t('app.clusterAssistant')}")).toBeLessThan(
       desktopSidebar.indexOf("label={t('app.clusterSettings')}")
     );
+    expect(desktopSidebar).toContain("['chat', 'vmChat', t('app.vmAssistant'), ICONS.Terminal]");
     expect(desktopSidebar).toContain("['skills', 'clusterSkills', t('app.skills'), ICONS.BookOpen]");
     expect(desktopSidebar).toContain("['tools', 'clusterTools', t('app.tools'), ICONS.Wrench]");
     expect(desktopSidebar).toContain("['skills', 'vmSkills', t('app.skills'), ICONS.BookOpen]");
