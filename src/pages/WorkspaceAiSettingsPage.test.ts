@@ -57,10 +57,12 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).not.toContain('secretName');
   });
 
-  it('mirrors backend provider/model filtering with a custom-model fallback', () => {
-    expect(workspaceAiSettingsPage).toContain('function modelBelongsToAnyProvider(model: string): boolean');
-    expect(workspaceAiSettingsPage).toContain('return allowedModels.filter((model) => modelBelongsToProvider(model, provider) || !modelBelongsToAnyProvider(model));');
+  it('uses provider-scoped model ownership from the control-plane contract', () => {
+    expect(workspaceAiSettingsPage).toContain('function modelsForProvider(settings: WorkspaceAiSettings | null, provider: LlmProvider): string[]');
+    expect(workspaceAiSettingsPage).toContain('return settings?.allowedProviderModels[provider] || [];');
     expect(workspaceAiSettingsPage).toContain('providerModels.includes(behaviorDraft.defaultModel)');
+    expect(workspaceAiSettingsPage).not.toContain('function modelBelongsToAnyProvider(model: string): boolean');
+    expect(workspaceAiSettingsPage).not.toContain('modelBelongsToProvider');
   });
 
   it('uses one behavior save workflow for provider, model, and reasoning settings', () => {

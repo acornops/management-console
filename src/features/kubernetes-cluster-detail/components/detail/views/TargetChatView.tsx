@@ -39,7 +39,7 @@ const MAX_ATTACHMENT_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_CONTEXT_CHARS = 24000;
 const MAX_COMPOSER_ATTACHMENTS = 5;
 const REASONING_OPTIONS = [
-  { value: 'default', labelKey: 'chat.effortDefault' },
+  { value: 'off', labelKey: 'chat.effortOff' },
   { value: 'low', labelKey: 'chat.effortLow' },
   { value: 'medium', labelKey: 'chat.effortMedium' },
   { value: 'high', labelKey: 'chat.effortHigh' }
@@ -244,23 +244,12 @@ function providerLabel(provider: LlmProvider): string {
   return 'Gemini';
 }
 
-function modelBelongsToProvider(model: string, provider: LlmProvider): boolean {
-  const normalized = model.toLowerCase();
-  if (provider === 'openai') return normalized.startsWith('gpt-') || normalized.startsWith('o');
-  if (provider === 'anthropic') return normalized.includes('claude');
-  return normalized.includes('gemini');
-}
-
-function modelBelongsToAnyProvider(model: string): boolean {
-  return PROVIDERS.some((provider) => modelBelongsToProvider(model, provider));
-}
-
 function providerStatusFor(settings: WorkspaceAiSettings, provider: LlmProvider): WorkspaceAiProviderStatus | undefined {
   return settings.providers.find((status) => status.provider === provider);
 }
 
-function modelsForProvider(allowedModels: string[], provider: LlmProvider): string[] {
-  return allowedModels.filter((model) => modelBelongsToProvider(model, provider) || !modelBelongsToAnyProvider(model));
+function modelsForProvider(settings: WorkspaceAiSettings, provider: LlmProvider): string[] {
+  return settings.allowedProviderModels[provider] || [];
 }
 
 function buildComposerModelOptions(settings: WorkspaceAiSettings | null): ComposerModelOption[] {
@@ -269,7 +258,7 @@ function buildComposerModelOptions(settings: WorkspaceAiSettings | null): Compos
     const providerStatus = providerStatusFor(settings, provider);
     const configured = providerStatus?.configured ?? false;
     const enabled = providerStatus?.enabled ?? true;
-    return modelsForProvider(settings.allowedModels, provider).map((model) => ({
+    return modelsForProvider(settings, provider).map((model) => ({
       provider,
       model,
       configured,
@@ -355,7 +344,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const [workspaceAiSettingsError, setWorkspaceAiSettingsError] = React.useState('');
   const [selectedProvider, setSelectedProvider] = React.useState<LlmProvider>('openai');
   const [selectedModel, setSelectedModel] = React.useState('');
-  const [selectedEffort, setSelectedEffort] = React.useState<ReasoningEffort>('default');
+  const [selectedEffort, setSelectedEffort] = React.useState<ReasoningEffort>('low');
   const [isModelMenuOpen, setIsModelMenuOpen] = React.useState(false);
   const [isModelSubmenuOpen, setIsModelSubmenuOpen] = React.useState(false);
   const [dragDepth, setDragDepth] = React.useState(0);
@@ -783,7 +772,9 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       ? selectedEffort
       : workspaceAiSettings.allowedReasoningEfforts.includes(workspaceAiSettings.reasoningEffort)
         ? workspaceAiSettings.reasoningEffort
-        : workspaceAiSettings.allowedReasoningEfforts[0] || 'default';
+        : workspaceAiSettings.allowedReasoningEfforts.includes('low')
+          ? 'low'
+          : workspaceAiSettings.allowedReasoningEfforts[0] || 'low';
     if (nextEffort !== selectedEffort) {
       setSelectedEffort(nextEffort);
     }
@@ -1263,6 +1254,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                   onChange={(event) => void handleAttachmentInputChange(event)}
                   disabled={!canPost || isRunActive}
                 />
+                <span className="min-w-0 flex-1" aria-hidden="true" />
                 <div ref={modelMenuRef} className="relative">
                   <button
                     type="button"
@@ -1288,7 +1280,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                         exit={{ opacity: 0, y: 6, scale: 0.98 }}
                         transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
                         id={modelMenuPanelId}
-                        className="absolute bottom-full left-0 z-50 mb-3 w-64 rounded-2xl border border-ui-border bg-ui-surface-strong p-2 text-sm shadow-xl shadow-ui-text/10"
+                        className="absolute bottom-full right-0 z-50 mb-3 w-64 rounded-2xl border border-ui-border bg-ui-surface-strong p-2 text-sm shadow-xl shadow-ui-text/10"
                         role="group"
                         aria-labelledby={modelSelectorId}
                       >
@@ -1331,7 +1323,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                                 exit={{ opacity: 0, x: -4, scale: 0.98 }}
                                 transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
                                 id={modelSubmenuPanelId}
-                                className="absolute bottom-[calc(100%+0.5rem)] left-0 z-50 w-56 rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 sm:bottom-0 sm:left-[calc(100%+0.5rem)]"
+                                className="absolute bottom-[calc(100%+0.5rem)] right-0 z-50 w-56 rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 sm:bottom-0 sm:right-[calc(100%+0.5rem)]"
                                 role="group"
                                 aria-labelledby={modelSubmenuButtonId}
                               >
@@ -1377,7 +1369,6 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
                     )}
                   </AnimatePresence>
                 </div>
-                <span className="min-w-0 flex-1" aria-hidden="true" />
                 <Tooltip content={composerActionLabel}>
                   <Button
                     type={isRunActive ? 'button' : 'submit'}

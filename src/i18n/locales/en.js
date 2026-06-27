@@ -651,8 +651,8 @@ export const en = {
     reasoningPolicyDisabled: 'Reasoning summaries are disabled by deployment policy.',
     reasoningSummaryMode: 'Summary mode',
     reasoningEffortLabel: 'Reasoning effort',
-    reasoningEffortHelp: 'Controls the default model reasoning effort used for new assistant runs.',
-    reasoningEffortOffHelp: 'Reasoning effort still applies to model generation when summaries are off.',
+    reasoningEffortHelp: 'Controls the default reasoning effort for new assistant runs. Off avoids requesting extra model reasoning.',
+    reasoningEffortOffHelp: 'Summaries are off. Reasoning effort still controls whether AcornOps requests extra model reasoning.',
     reasoningMode: {
       off: 'Off',
       auto: 'Auto',
@@ -660,7 +660,7 @@ export const en = {
       detailed: 'Detailed'
     },
     reasoningEffort: {
-      default: 'Default',
+      off: 'Off',
       low: 'Low',
       medium: 'Medium',
       high: 'High'
@@ -814,7 +814,7 @@ export const en = {
     noModelsAvailable: 'No models available',
     noConfiguredModels: 'Configure an AI provider key in AI Settings before starting a run.',
     effortSelector: 'Reasoning effort',
-    effortDefault: 'Default',
+    effortOff: 'Off',
     effortLow: 'Low',
     effortMedium: 'Medium',
     effortHigh: 'High',

@@ -32,7 +32,7 @@ const SettingSection: React.FC<{
 
 const PROVIDERS: LlmProvider[] = ['openai', 'anthropic', 'gemini'];
 const REASONING_SUMMARY_MODES: ReasoningSummaryMode[] = ['off', 'auto', 'concise', 'detailed'];
-const REASONING_EFFORTS: ReasoningEffort[] = ['default', 'low', 'medium', 'high'];
+const REASONING_EFFORTS: ReasoningEffort[] = ['off', 'low', 'medium', 'high'];
 const EMPTY_PROVIDER_KEYS: Record<LlmProvider, string> = {
   openai: '',
   anthropic: '',
@@ -55,7 +55,7 @@ const DEFAULT_BEHAVIOR_DRAFT: BehaviorDraft = {
   defaultProvider: 'openai',
   defaultModel: 'gpt-5.5',
   reasoningSummaryMode: 'auto',
-  reasoningEffort: 'default'
+  reasoningEffort: 'low'
 };
 
 function providerLabel(provider: LlmProvider): string {
@@ -72,19 +72,8 @@ function reasoningEffortLabel(effort: ReasoningEffort): string {
   return `workspaceAiSettings.reasoningEffort.${effort}`;
 }
 
-function modelBelongsToProvider(model: string, provider: LlmProvider): boolean {
-  const normalized = model.toLowerCase();
-  if (provider === 'openai') return normalized.startsWith('gpt-') || normalized.startsWith('o');
-  if (provider === 'anthropic') return normalized.includes('claude');
-  return normalized.includes('gemini');
-}
-
-function modelBelongsToAnyProvider(model: string): boolean {
-  return PROVIDERS.some((provider) => modelBelongsToProvider(model, provider));
-}
-
-function modelsForProvider(allowedModels: string[], provider: LlmProvider): string[] {
-  return allowedModels.filter((model) => modelBelongsToProvider(model, provider) || !modelBelongsToAnyProvider(model));
+function modelsForProvider(settings: WorkspaceAiSettings | null, provider: LlmProvider): string[] {
+  return settings?.allowedProviderModels[provider] || [];
 }
 
 function behaviorDraftFromSettings(settings: WorkspaceAiSettings): BehaviorDraft {
@@ -171,8 +160,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const currentAiSettings = aiSettings?.workspaceId === workspace.id ? aiSettings : null;
 
   const providerModels = useMemo(() => {
-    return modelsForProvider(currentAiSettings?.allowedModels || [], behaviorDraft.defaultProvider);
-  }, [behaviorDraft.defaultProvider, currentAiSettings?.allowedModels]);
+    return modelsForProvider(currentAiSettings, behaviorDraft.defaultProvider);
+  }, [behaviorDraft.defaultProvider, currentAiSettings]);
 
   const selectableModels = useMemo(() => {
     return providerModels.includes(behaviorDraft.defaultModel) ? providerModels : [behaviorDraft.defaultModel, ...providerModels];
@@ -229,7 +218,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
 
   const handleDefaultProviderChange = (provider: LlmProvider) => {
     setBehaviorError('');
-    const nextProviderModels = modelsForProvider(currentAiSettings?.allowedModels || [], provider);
+    const nextProviderModels = modelsForProvider(currentAiSettings, provider);
     setBehaviorDraft((current) => ({
       ...current,
       defaultProvider: provider,

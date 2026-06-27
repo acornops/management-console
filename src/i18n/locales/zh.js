@@ -649,8 +649,8 @@ export const zh = {
     reasoningPolicyDisabled: '部署策略已停用推理摘要。',
     reasoningSummaryMode: '摘要模式',
     reasoningEffortLabel: '推理强度',
-    reasoningEffortHelp: '控制新助手运行默认使用的模型推理强度。',
-    reasoningEffortOffHelp: '即使摘要关闭，推理强度仍会应用到模型生成。',
+    reasoningEffortHelp: '控制新助手运行默认使用的推理强度。关闭时不会请求额外的模型推理。',
+    reasoningEffortOffHelp: '摘要已关闭。推理强度仍会控制 AcornOps 是否请求额外的模型推理。',
     reasoningMode: {
       off: '关闭',
       auto: '自动',
@@ -658,7 +658,7 @@ export const zh = {
       detailed: '详细'
     },
     reasoningEffort: {
-      default: '默认',
+      off: '关闭',
       low: '低',
       medium: '中',
       high: '高'
@@ -812,7 +812,7 @@ export const zh = {
     noModelsAvailable: '没有可用模型',
     noConfiguredModels: '请先在 AI 设置中配置提供商 API key，再开始运行。',
     effortSelector: '推理强度',
-    effortDefault: '默认',
+    effortOff: '关闭',
     effortLow: '低',
     effortMedium: '中',
     effortHigh: '高',
