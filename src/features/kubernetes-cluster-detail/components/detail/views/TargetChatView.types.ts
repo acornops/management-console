@@ -20,6 +20,7 @@ export interface TargetChatViewProps {
   isConversationOwner: boolean;
   conversationNotice: string | null;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
+  canRequestWriteRuns: boolean;
   canApproveWriteActions: boolean;
   canCancelRuns: boolean;
   canDeleteSessions: boolean;

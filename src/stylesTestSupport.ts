@@ -40,9 +40,12 @@ export const mcpServerToolsDialog = readSource(
 export const mcpServersInventory = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/McpServersInventory.tsx'
 );
-export const chatView = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'
-);
+export const chatView = [
+  readSource('src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'),
+  readSource('src/features/kubernetes-cluster-detail/components/detail/views/TargetChatViewBody.tsx'),
+  readSource('src/features/kubernetes-cluster-detail/components/detail/views/TargetChatComposer.tsx'),
+  readSource('src/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers.ts')
+].join('\n');
 export const assistantTurn = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn.tsx'
 );

@@ -91,6 +91,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       isConversationOwner={isActiveSessionOwner}
       conversationNotice={conversationNotice}
       recentActivityWarning={recentActivityWarning}
+      canRequestWriteRuns={canRequestWriteRuns}
       canApproveWriteActions={canRequestWriteRuns}
       canCancelRuns={canCancelRuns}
       canDeleteSessions={canDeleteSessions}

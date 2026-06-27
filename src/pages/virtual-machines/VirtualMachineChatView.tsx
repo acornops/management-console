@@ -117,6 +117,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       isConversationOwner={controller.isActiveSessionOwner}
       conversationNotice={controller.conversationNotice}
       recentActivityWarning={controller.recentActivityWarning}
+      canRequestWriteRuns={false}
       canApproveWriteActions={false}
       canCancelRuns={canCancelRuns}
       canDeleteSessions={canDeleteSessions}

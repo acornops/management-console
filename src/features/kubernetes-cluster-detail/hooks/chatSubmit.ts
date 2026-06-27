@@ -26,7 +26,6 @@ import {
   buildChatSubmitFailureMessage,
   replacePendingAssistantWithFailure
 } from '@/features/kubernetes-cluster-detail/hooks/chatSubmitFailures';
-
 export const RUN_TERMINAL_WAIT_TIMEOUT_MS = 600000;
 export async function submitChatMessage(args: {
   cluster: KubernetesCluster;
@@ -86,7 +85,6 @@ export async function submitChatMessage(args: {
   } = args;
   const prompt = (overrideInput ?? inputValue).trim();
   if (!prompt || isLoading || !canChat) return;
-
   const localSessionId = activeSessionId || createConversationId();
   const now = Date.now();
   let sessions = [...cluster.chatSessions];
@@ -106,7 +104,6 @@ export async function submitChatMessage(args: {
 
   sessions = existingSession ? upsertSession(sessions, session) : [...sessions, session];
   if (!activeSessionId) setActiveSessionId(localSessionId);
-
   const isFirstUserMessage = !session.messages.some((message) => message.role === 'user');
   if (isFirstUserMessage) {
     session = {

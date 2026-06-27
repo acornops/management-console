@@ -20,6 +20,7 @@ describe('VirtualMachineChatView wiring', () => {
 
   it('keeps VM assistant runs read-only', () => {
     expect(source).toContain('canRequestWriteRuns: false');
+    expect(source).toContain('canRequestWriteRuns={false}');
     expect(source).toContain('canApproveWriteActions={false}');
     expect(source).not.toContain('useClusterChat');
     expect(source).not.toContain('controlPlaneApi.createSession');

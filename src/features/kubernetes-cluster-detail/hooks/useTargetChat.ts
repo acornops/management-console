@@ -19,9 +19,10 @@ import {
 import { isTraceInProgress } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
 import {
   buildRecentActivityWarning,
+  buildTargetChatAutoScrollSignature,
+  buildTargetChatConversationAccessState,
   createRecentActivitySessionPlaceholder,
   deriveTargetChatRunState,
-  isConversationOwner
 } from '@/features/kubernetes-cluster-detail/hooks/targetChatState';
 import type { TargetChatController, UseTargetChatArgs } from '@/features/kubernetes-cluster-detail/hooks/targetChatControllerTypes';
 import { useTargetChatActivityStream } from '@/features/kubernetes-cluster-detail/hooks/targetChatActivityStream';
@@ -33,9 +34,7 @@ import {
   replaceCancelledRunAssistantMessages,
   type ActiveRunStreamControls
 } from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
-
 export type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/targetChatControllerTypes';
-
 export function useTargetChat({
   target,
   currentUserId,
@@ -94,18 +93,12 @@ export function useTargetChat({
     timestamp: Date.now()
   };
   const activeSessionRecord = sessions.find((s) => s.id === activeSessionId) || null;
-  const isActiveSessionOwner = isConversationOwner(activeSessionRecord, currentUserId);
-  const ownerName = activeSessionRecord?.createdByUser?.displayName || 'Another user';
-  const conversationNotice = activeSessionRecord?.backendSessionId
-    ? isActiveSessionOwner
-      ? 'Your conversation. Others can watch this investigation live, but only you can send follow-ups here.'
-      : `View-only conversation. ${ownerName} started this conversation. You can follow the live run, but only ${ownerName} can send follow-ups here.`
-    : null;
-  const recentActivityWarning = activeSessionRecord?.recentActivityWarning && !activeSessionRecord.recentActivityWarning.dismissed
-    ? activeSessionRecord.recentActivityWarning
-    : null;
-  const canPostInActiveSession = canChat && isActiveSessionOwner && !recentActivityWarning;
-
+  const {
+    isActiveSessionOwner,
+    conversationNotice,
+    recentActivityWarning,
+    canPostInActiveSession
+  } = buildTargetChatConversationAccessState({ canChat, currentUserId, session: activeSessionRecord });
   const messages = activeSession.messages;
   const derivedRunState = deriveTargetChatRunState({
     localActiveRunId: activeRunId,
@@ -126,32 +119,7 @@ export function useTargetChat({
   });
   const effectiveActiveRunId = derivedRunState.activeRunId || activityDiscoveredRunId;
   const isRunActive = isLoading || derivedRunState.isRunActive || Boolean(activityDiscoveredRunId);
-  const lastMessage = messages[messages.length - 1];
-  const activeRunTrace = effectiveActiveRunId ? runTracesByRunId[effectiveActiveRunId] : undefined;
-  const activeRunLatestStep = activeRunTrace?.steps.at(-1);
-  const activeRunTraceSignature = activeRunTrace
-    ? [
-        activeRunTrace.status,
-        activeRunTrace.steps.length,
-        activeRunLatestStep?.id || '',
-        activeRunLatestStep?.detail?.length || 0,
-        activeRunTrace.toolCalls.length,
-        activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'running').length,
-        activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length,
-        activeRunTrace.reasoningSummaries?.length || 0,
-        activeRunTrace.activeReasoningSummary?.length || 0,
-        activeRunTrace.usage ? 'usage' : ''
-      ].join(',')
-    : 'none';
-  const chatAutoScrollSignature = [
-    messages.length,
-    lastMessage?.id || '',
-    lastMessage?.content.length || 0,
-    lastMessage?.approval?.id || '',
-    lastMessage?.approval?.status || '',
-    effectiveActiveRunId || '',
-    activeRunTraceSignature
-  ].join(':');
+  const chatAutoScrollSignature = buildTargetChatAutoScrollSignature({ messages, effectiveActiveRunId, runTracesByRunId });
   const {
     lastChatScrollTopRef,
     scrollRef,
@@ -235,16 +203,13 @@ export function useTargetChat({
     if (isPendingAssistantPlaceholder(message)) {
       return true;
     }
-
     if (!isBlankAssistantMessage(message)) {
       return false;
     }
-
     const messageId = String(message.id || '');
     if (isRunActive && (messageId.startsWith('pending-') || messageId.startsWith('stream-'))) {
       return true;
     }
-
     if (!message.runId) {
       return false;
     }

@@ -1,4 +1,4 @@
-import type { ChatSession } from '@/types';
+import type { ChatMessage, ChatSession } from '@/types';
 import type { ControlPlaneTargetChatActivity } from '@/services/controlPlaneApi';
 import { isTraceInProgress } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
@@ -9,6 +9,69 @@ export function isConversationOwner(session: ChatSession | null | undefined, cur
   if (!session?.backendSessionId) return true;
   if (!session.createdBy) return true;
   return session.createdBy === currentUserId;
+}
+
+export function buildTargetChatConversationAccessState(args: {
+  canChat: boolean;
+  currentUserId: string;
+  session: ChatSession | null;
+}): {
+  isActiveSessionOwner: boolean;
+  conversationNotice: string | null;
+  recentActivityWarning: ChatSession['recentActivityWarning'] | null;
+  canPostInActiveSession: boolean;
+} {
+  const { canChat, currentUserId, session } = args;
+  const isActiveSessionOwner = isConversationOwner(session, currentUserId);
+  const ownerName = session?.createdByUser?.displayName || 'Another user';
+  const conversationNotice = session?.backendSessionId
+    ? isActiveSessionOwner
+      ? 'Your conversation. Others can watch this investigation live, but only you can send follow-ups here.'
+      : `View-only conversation. ${ownerName} started this conversation. You can follow the live run, but only ${ownerName} can send follow-ups here.`
+    : null;
+  const recentActivityWarning = session?.recentActivityWarning && !session.recentActivityWarning.dismissed
+    ? session.recentActivityWarning
+    : null;
+  return {
+    isActiveSessionOwner,
+    conversationNotice,
+    recentActivityWarning,
+    canPostInActiveSession: canChat && isActiveSessionOwner && !recentActivityWarning
+  };
+}
+
+export function buildTargetChatAutoScrollSignature(args: {
+  messages: ChatMessage[];
+  effectiveActiveRunId: string | null | undefined;
+  runTracesByRunId: Record<string, LiveRunTrace>;
+}): string {
+  const { messages, effectiveActiveRunId, runTracesByRunId } = args;
+  const lastMessage = messages[messages.length - 1];
+  const activeRunTrace = effectiveActiveRunId ? runTracesByRunId[effectiveActiveRunId] : undefined;
+  const activeRunLatestStep = activeRunTrace?.steps.at(-1);
+  const activeRunTraceSignature = activeRunTrace
+    ? [
+        activeRunTrace.status,
+        activeRunTrace.steps.length,
+        activeRunLatestStep?.id || '',
+        activeRunLatestStep?.detail?.length || 0,
+        activeRunTrace.toolCalls.length,
+        activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'running').length,
+        activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length,
+        activeRunTrace.reasoningSummaries?.length || 0,
+        activeRunTrace.activeReasoningSummary?.length || 0,
+        activeRunTrace.usage ? 'usage' : ''
+      ].join(',')
+    : 'none';
+  return [
+    messages.length,
+    lastMessage?.id || '',
+    lastMessage?.content.length || 0,
+    lastMessage?.approval?.id || '',
+    lastMessage?.approval?.status || '',
+    effectiveActiveRunId || '',
+    activeRunTraceSignature
+  ].join(':');
 }
 
 function translateActivityCopy(

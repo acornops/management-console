@@ -189,7 +189,7 @@ describe('target chat polish contracts', () => {
     expect(chatTranscriptStates).toContain('export function ChatEmptyPrompt');
     expect(chatTranscriptStates).toContain('suggestions: Array<{ key: string; label: string }>;');
     expect(chatTranscriptStates).toContain('key={suggestion.key}');
-    expect(chatTranscriptStates).toContain('ClipboardList');
+    expect(chatTranscriptStates).toContain('BotMessageSquare');
     expect(enLocale).toContain("loadingConversation: 'Loading conversation'");
     expect(enLocale).toContain("conversationLoadFailed: 'Conversation could not be loaded'");
     expect(zhLocale).toContain("loadingConversation: '正在加载会话'");
@@ -238,9 +238,16 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('return settings.allowedProviderModels[provider] || [];');
     expect(chatView).not.toContain('modelBelongsToProvider');
     expect(chatView).toContain('ready: configured && enabled');
+    expect(chatView).toContain('const selectableComposerModelOptions = React.useMemo');
+    expect(chatView).toContain('composerModelOptions: selectableComposerModelOptions');
     expect(chatView).toContain('const isComposerRuntimeBlocked = Boolean(workspaceAiSettings && !hasReadyComposerModel);');
     expect(chatView).toContain('const isComposerRuntimeUnavailable = Boolean(isWorkspaceAiSettingsLoading || workspaceAiSettingsError || (workspaceAiSettings && !selectedModelOption?.ready));');
-    expect(chatView).toContain('disabled={!option.ready}');
+    expect(chatView).toContain('max-h-[min(24rem,calc(100vh-8rem))]');
+    expect(chatView).toContain('overflow-y-auto');
+    expect(chatView).toContain('composerModelOptions.length > 0 ? `${selectedModelLabel} ${selectedEffortLabel}` : selectedModelLabel');
+    expect(chatView).not.toContain('disabled={!option.ready}');
+    expect(chatView).not.toContain("t('workspaceAiSettings.providerDisabled')");
+    expect(chatView).not.toContain("t('workspaceAiSettings.credentialMissingBadge')");
     expect(chatView).toContain('!canPost || !hasComposerSubmitPayload || isComposerRuntimeUnavailable');
     expect(chatView).toContain('findComposerModelOption(composerModelOptions, selectedProvider, selectedModel)');
     expect(chatView).toContain('const composerRuntimeSelection: ChatRuntimeSelection | undefined');
