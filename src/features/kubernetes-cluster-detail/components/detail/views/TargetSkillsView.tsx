@@ -1,5 +1,6 @@
 import React from 'react';
 import { GitBranch, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
@@ -25,6 +26,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   targetContext,
   canManageSkills = false
 }) => {
+  const { t } = useTranslation();
   const activeTarget = targetContext || {
     workspaceId: cluster.workspaceId,
     targetId: cluster.id,
@@ -317,9 +319,9 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
     <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
       <header className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
-          <h1 className="type-route-title">Skills</h1>
+          <h1 className="type-route-title">{t('targetSkills.title')}</h1>
           <p className="type-body mt-2">
-            Markdown-only instruction files scoped to {cluster.name}.
+            {t('targetSkills.description', { name: cluster.name })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -425,10 +427,10 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
       {confirmDeleteSkillId && (
         <Dialog titleId="delete-target-skill-title" onClose={() => setConfirmDeleteSkillId(null)} className="w-full max-w-lg rounded-lg border border-ui-border bg-ui-surface shadow-xl">
           <div className="border-b border-ui-border px-6 py-4">
-            <h3 id="delete-target-skill-title" className="text-base font-semibold text-ui-text">Delete target skill</h3>
+            <h3 id="delete-target-skill-title" className="text-base font-semibold text-ui-text">{t('targetSkills.deleteTitle')}</h3>
           </div>
           <div className="px-6 py-5 text-sm text-ui-text-muted">
-            Delete this target-scoped troubleshooting skill and remove its Markdown files from the target.
+            {t('targetSkills.deleteBody')}
           </div>
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
             <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteSkillId(null)}>Cancel</Button>

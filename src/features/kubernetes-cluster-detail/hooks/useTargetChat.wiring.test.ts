@@ -47,6 +47,8 @@ describe('target chat controller wiring', () => {
     expect(assistantCapabilityPreviewControl).toContain('preview?.toolSummary.totalAllowed');
     expect(assistantCapabilityPreviewControl).toContain('preview && !error && !isLoading');
     expect(assistantCapabilityPreviewControl).toContain('const showToolPolicyNote = toolItems.length > 0 || Boolean(writeUnavailableLabel);');
+    expect(assistantCapabilityPreviewControl).toContain("TOOL_CAPABILITY_ORDER[first.capability] - TOOL_CAPABILITY_ORDER[second.capability]");
+    expect(assistantCapabilityPreviewControl).toContain('border-status-warning/25 bg-status-warning-soft text-status-warning-text');
     expect(assistantCapabilityPreviewControl).toContain('{showToolPolicyNote && (');
     expect(assistantCapabilityPreviewControl).toContain('setIsOpen(false);');
     expect(clusterDetail).toContain('canRequestWriteRuns={canRequestWriteRuns}');
