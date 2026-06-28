@@ -5,6 +5,7 @@ coverage/
 .env.*
 !.env.example
 .codex/
+.superpowers/
 __pycache__/
 *.py[cod]
 .DS_Store
