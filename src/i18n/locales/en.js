@@ -842,10 +842,15 @@ export const en = {
     effortMedium: 'Medium',
     effortHigh: 'High',
     noChatAccess: 'You do not have permission to start target chat in this workspace.',
+    chooseRecentActivityAction: 'Choose an option above to continue.',
     send: 'Send',
     fullscreen: 'Open full chat',
     openConversation: 'Open conversation',
     continueSeparateChat: 'Continue separate chat',
+    conversationNotice: {
+      owner: 'Your conversation. Others can watch live, but only you can reply here.',
+      viewer: 'View-only conversation. You can watch live, but only {{owner}} can reply here.'
+    },
     recentActivityTime: {
       justNow: 'just now',
       minuteAgo: '{{count}} minute ago',
@@ -854,11 +859,20 @@ export const en = {
       hoursAgo: '{{count}} hours ago'
     },
     recentWriteActivity: {
-      sameUser: 'You started a write-capable chat {{relativeTime}}. Consider reviewing that conversation before starting another triage chat.',
-      otherUser: '{{user}} started a write-capable chat {{relativeTime}}. Consider reviewing that conversation before starting another triage chat.',
-      multipleUsers: 'Multiple users started a write-capable chat {{relativeTime}}. Consider reviewing that conversation before starting another triage chat.'
+      sameUser: 'You started a write-capable chat {{relativeTime}}. Reopen it to keep context together, or start separately.',
+      otherUser: '{{user}} started a write-capable chat {{relativeTime}}. Review it before starting another.',
+      multipleUsers: 'Multiple users started a write-capable chat {{relativeTime}}. Review that conversation before starting another.'
     },
-    footer: 'Read operations can run automatically. Write actions require an explicit approval before execution.',
+    recentReadActivity: {
+      sameUser: 'You started "{{title}}" {{relativeTime}}. Continue that conversation to keep context together, or start separately.',
+      otherUser: '{{user}} investigated "{{title}}" {{relativeTime}}. Review that conversation before starting another.',
+      sameUserMultiple: 'You investigated this target recently. Review recent conversations before starting another.',
+      otherUserMultiple: '{{user}} investigated this target recently. Review recent conversations before starting another.',
+      multipleUsers: 'Multiple users investigated this target recently. Review recent conversations before starting another.'
+    },
+    footer: 'Read operations can run automatically. Write behavior follows the target policy.',
+    footerApprovalRequired: 'Read operations can run automatically. Write actions require explicit approval before execution.',
+    footerApprovalNotRequired: 'Read and write operations can run automatically under this cluster policy.',
     footerReadOnlyRole: 'Read-only mode: your workspace role can run read checks, but cannot start write-capable assistant runs.',
     footerNoAccess: 'Contact your workspace administrator to upgrade your permissions.',
     failedDelete: 'Failed deleting conversation.',

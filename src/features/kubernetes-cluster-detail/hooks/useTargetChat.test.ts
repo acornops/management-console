@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildRecentActivityWarning,
+  buildTargetChatConversationAccessState,
   createRecentActivitySessionPlaceholder,
   deriveActivityDiscoveredRunId,
   deriveTargetChatRunState,
@@ -56,10 +57,13 @@ function makeTranslator(messages: Record<string, string>) {
 }
 
 const zhChatWarningTranslator = makeTranslator({
+  'chat.conversationNotice.owner': '你的会话。其他人可以实时查看，但只有你可以在这里回复。',
+  'chat.conversationNotice.viewer': '只读会话。你可以实时查看，但只有 {{owner}} 可以在这里回复。',
   'chat.recentActivityTime.minuteAgo': '{{count}} 分钟前',
   'chat.recentActivityTime.minutesAgo': '{{count}} 分钟前',
-  'chat.recentWriteActivity.sameUser': '你在 {{relativeTime}}开始了一个可写聊天。建议先查看该会话，再开始新的分诊聊天。',
-  'chat.recentWriteActivity.otherUser': '{{user}} 在 {{relativeTime}}开始了一个可写聊天。建议先查看该会话，再开始新的分诊聊天。'
+  'chat.recentReadActivity.sameUser': '你在 {{relativeTime}}开始了“{{title}}”。继续该会话以保留上下文，或单独开始。',
+  'chat.recentWriteActivity.sameUser': '你在 {{relativeTime}}开始了一个可写聊天。重新打开以保留上下文，或单独开始。',
+  'chat.recentWriteActivity.otherUser': '{{user}} 在 {{relativeTime}}开始了一个可写聊天。建议先查看，再开始新的聊天。'
 });
 
 afterEach(() => {
@@ -214,6 +218,23 @@ describe('target chat ownership and recent activity warnings', () => {
     expect(isConversationOwner({ ...makeSession([]), backendSessionId: 'backend-1', createdBy: 'user-1' }, 'user-2')).toBe(false);
   });
 
+  it('localizes conversation ownership notices', () => {
+    const state = buildTargetChatConversationAccessState({
+      canChat: true,
+      currentUserId: 'user-2',
+      session: {
+        ...makeSession([]),
+        backendSessionId: 'backend-1',
+        createdBy: 'user-1',
+        createdByUser: { id: 'user-1', displayName: '平台负责人' }
+      },
+      t: zhChatWarningTranslator
+    });
+
+    expect(state.conversationNotice).toBe('只读会话。你可以实时查看，但只有 平台负责人 可以在这里回复。');
+    expect(state.canPostInActiveSession).toBe(false);
+  });
+
   it('uses same-user recent activity copy for the current user', () => {
     vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-06-01T05:05:00.000Z'));
 
@@ -229,9 +250,30 @@ describe('target chat ownership and recent activity warnings', () => {
       }]
     }), 'user-1');
 
-    expect(warning?.message).toContain('You recently investigated this target.');
+    expect(warning?.message).toContain('You started');
     expect(warning?.message).toContain('"Restart api"');
     expect(warning?.actionSessionId).toBe('session-1');
+    expect(warning?.actionLabel).toBeUndefined();
+  });
+
+  it('uses localized copy for same-user recent read activity', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-06-01T05:05:00.000Z'));
+
+    const warning = buildRecentActivityWarning(makeActivity({
+      recentActivity: [{
+        sessionId: 'session-1',
+        title: 'Restart api',
+        createdBy: 'user-1',
+        createdByUser: { id: 'user-1', displayName: 'Ops User' },
+        lastActivityAt: '2026-06-01T05:03:00.000Z',
+        hasActiveRun: false,
+        hasRecentWriteCapableRun: false
+      }]
+    }), 'user-1', zhChatWarningTranslator);
+
+    expect(warning?.message).toBe('你在 2 分钟前开始了“Restart api”。继续该会话以保留上下文，或单独开始。');
+    expect(warning?.actionSessionId).toBe('session-1');
+    expect(warning?.actionLabel).toBeUndefined();
   });
 
   it('uses stronger copy for recent write-capable activity', () => {
@@ -249,7 +291,7 @@ describe('target chat ownership and recent activity warnings', () => {
       }]
     }), 'user-1');
 
-    expect(warning?.message).toBe('Platform Lead started a write-capable chat 1 minute ago. Consider reviewing that conversation before starting another triage chat.');
+    expect(warning?.message).toBe('Platform Lead started a write-capable chat 1 minute ago. Review it before starting another.');
     expect(warning?.actionSessionId).toBe('session-2');
   });
 
@@ -268,7 +310,7 @@ describe('target chat ownership and recent activity warnings', () => {
       }]
     }), 'user-1', zhChatWarningTranslator);
 
-    expect(warning?.message).toBe('Platform Lead 在 1 分钟前开始了一个可写聊天。建议先查看该会话，再开始新的分诊聊天。');
+    expect(warning?.message).toBe('Platform Lead 在 1 分钟前开始了一个可写聊天。建议先查看，再开始新的聊天。');
     expect(warning?.actionSessionId).toBe('session-2');
   });
 
@@ -287,7 +329,7 @@ describe('target chat ownership and recent activity warnings', () => {
       }]
     }), 'user-1');
 
-    expect(warning?.message).toBe('You started a write-capable chat 3 minutes ago. Consider reviewing that conversation before starting another triage chat.');
+    expect(warning?.message).toBe('You started a write-capable chat 3 minutes ago. Reopen it to keep context together, or start separately.');
     expect(warning?.actionSessionId).toBe('session-3');
   });
 
@@ -306,7 +348,7 @@ describe('target chat ownership and recent activity warnings', () => {
       }]
     }), 'user-1', zhChatWarningTranslator);
 
-    expect(warning?.message).toBe('你在 3 分钟前开始了一个可写聊天。建议先查看该会话，再开始新的分诊聊天。');
+    expect(warning?.message).toBe('你在 3 分钟前开始了一个可写聊天。重新打开以保留上下文，或单独开始。');
     expect(warning?.actionSessionId).toBe('session-3');
   });
 
@@ -333,7 +375,7 @@ describe('target chat ownership and recent activity warnings', () => {
     }), 'user-3');
 
     expect(warning?.actionSessionId).toBe('session-write');
-    expect(warning?.actionLabel).toBe('Open conversation');
+    expect(warning?.actionLabel).toBeUndefined();
   });
 
   it('summarizes multiple recent users without linking to a single conversation', () => {
@@ -358,7 +400,7 @@ describe('target chat ownership and recent activity warnings', () => {
       ]
     }), 'user-3');
 
-    expect(warning?.message).toContain('Multiple users investigated this target in the last 5 minutes');
+    expect(warning?.message).toBe('Multiple users investigated this target recently. Review recent conversations before starting another.');
     expect(warning?.actionSessionId).toBeUndefined();
     expect(warning?.actionLabel).toBeUndefined();
   });

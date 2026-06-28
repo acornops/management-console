@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LlmProvider, ReasoningEffort, WorkspaceAiProviderStatus, WorkspaceAiSettings } from '@/types';
+import type { KubernetesCluster, LlmProvider, ReasoningEffort, WorkspaceAiProviderStatus, WorkspaceAiSettings } from '@/types';
 
 export const SUGGESTION_KEYS = ['chat.suggestions.podTermination', 'chat.suggestions.serviceDns', 'chat.suggestions.crashLooping', 'chat.suggestions.mcpConnectivity'];
 const READABLE_ATTACHMENT_EXTENSIONS = new Set([
@@ -275,6 +275,13 @@ export function providerLabel(provider: LlmProvider): string {
   if (provider === 'openai') return 'OpenAI';
   if (provider === 'anthropic') return 'Anthropic';
   return 'Gemini';
+}
+
+export function resolveClusterChatFooterKey(cluster: KubernetesCluster, canRequestWriteRuns: boolean): string {
+  if (!canRequestWriteRuns) return 'chat.footerReadOnlyRole';
+  return cluster.writeConfirmationPolicy?.effectiveRequired ?? true
+    ? 'chat.footerApprovalRequired'
+    : 'chat.footerApprovalNotRequired';
 }
 
 function providerStatusFor(settings: WorkspaceAiSettings, provider: LlmProvider): WorkspaceAiProviderStatus | undefined {

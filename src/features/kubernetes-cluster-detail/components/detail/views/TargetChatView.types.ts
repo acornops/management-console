@@ -48,7 +48,7 @@ export interface TargetChatViewProps {
   onReject: (approvalId: string) => void | Promise<void>;
   onSelectSession: (sessionId: string) => void;
   onCreateSession: () => void;
-  onDismissRecentActivityWarning: () => void;
+  onDismissRecentActivityWarning: (sessionId: string) => void;
   onOpenRecentActivitySession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => Promise<void>;
   onCancelRun: () => Promise<void>;

@@ -89,7 +89,7 @@ export interface TargetChatViewBodyProps {
   onApprove: (approvalId: string) => void | Promise<void>;
   onCancelRun: () => Promise<void>;
   onChatScroll: () => void;
-  onDismissRecentActivityWarning: () => void;
+  onDismissRecentActivityWarning: (sessionId: string) => void;
   onInputChange: (value: string) => void;
   onLoadEarlierMessages: () => void | Promise<void>;
   onOpenRecentActivitySession: (sessionId: string) => void;
@@ -290,7 +290,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 {canPost && !isRunActive ? t('chat.dropFilesTitle') : t('chat.dropFilesUnavailableTitle')}
               </p>
               <p className="mt-2 max-w-md text-sm font-medium leading-6 text-ui-text-muted">
-                {canPost && !isRunActive ? t('chat.dropFilesBody') : t(resolvedNoChatAccessKey)}
+                {canPost && !isRunActive ? t('chat.dropFilesBody') : recentActivityWarning ? t('chat.chooseRecentActivityAction') : t(resolvedNoChatAccessKey)}
               </p>
             </div>
           </motion.div>
@@ -522,6 +522,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
         </div>
 
         <TargetChatComposer
+          activeSessionId={activeSessionId}
           allowedReasoningOptions={allowedReasoningOptions}
           assistantCapabilitiesPreview={assistantCapabilitiesPreview}
           assistantCapabilitiesPreviewError={assistantCapabilitiesPreviewError}

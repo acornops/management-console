@@ -10,6 +10,7 @@ import type { TargetChatViewBodyProps } from '@/features/kubernetes-cluster-deta
 import type { ReasoningEffort } from '@/types';
 
 type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
+  | 'activeSessionId'
   | 'allowedReasoningOptions'
   | 'assistantCapabilitiesPreview'
   | 'assistantCapabilitiesPreviewError'
@@ -69,6 +70,7 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
 >;
 
 export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
+  activeSessionId,
   allowedReasoningOptions,
   assistantCapabilitiesPreview,
   assistantCapabilitiesPreviewError,
@@ -125,7 +127,15 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   submitComposerMessage,
   t,
   workspaceAiSettingsError
-}) => (
+}) => {
+  const blockedComposerMessage = recentActivityWarning
+    ? t('chat.chooseRecentActivityAction')
+    : t(resolvedNoChatAccessKey);
+  const blockedFooterMessage = recentActivityWarning
+    ? t('chat.chooseRecentActivityAction')
+    : t(resolvedFooterNoAccessKey);
+
+  return (
         <form
           className={`${isPanel ? 'px-5 py-4 sm:px-6 sm:py-5' : 'px-4 pb-4 pt-2 sm:px-5'} bg-ui-bg`}
           onSubmit={(event) => {
@@ -134,6 +144,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
           }}
         >
           <ChatComposerNotice
+            activeSessionId={activeSessionId}
             isPanel={isPanel}
             conversationNotice={conversationNotice}
             recentActivityWarning={recentActivityWarning}
@@ -202,7 +213,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                   rows={1}
                   className={`${isPanel ? 'min-h-9 text-sm' : 'min-h-10 text-sm'} max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 font-medium text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60`}
                   aria-label={t('chat.composerInputLabel', { name: cluster.name })}
-                  placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: cluster.name }) : t(resolvedNoChatAccessKey)}
+                  placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: cluster.name }) : blockedComposerMessage}
                   disabled={!canPost || isRunActive}
                 />
               </div>
@@ -363,8 +374,9 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               </div>
             </div>
             <p className="mt-2 text-center text-[10px] font-medium text-ui-text-muted">
-              {canPost ? composerSubmitUnavailableReason || t(resolvedFooterKey) : t(resolvedFooterNoAccessKey)}
+              {canPost ? composerSubmitUnavailableReason || t(resolvedFooterKey) : blockedFooterMessage}
             </p>
           </div>
         </form>
-);
+  );
+};

@@ -46,7 +46,7 @@ export interface TargetChatController {
   transcriptRef: (node: HTMLDivElement | null) => void;
   setActiveSessionId: (sessionId: string) => void;
   handleCreateSession: () => void;
-  handleDismissRecentActivityWarning: () => void;
+  handleDismissRecentActivityWarning: (sessionId?: string) => void;
   handleOpenRecentActivitySession: (sessionId: string) => void;
   handleDeleteSession: (sessionId: string) => Promise<void>;
   handleCancelRun: () => Promise<void>;

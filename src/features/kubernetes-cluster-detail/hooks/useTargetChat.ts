@@ -98,7 +98,7 @@ export function useTargetChat({
     conversationNotice,
     recentActivityWarning,
     canPostInActiveSession
-  } = buildTargetChatConversationAccessState({ canChat, currentUserId, session: activeSessionRecord });
+  } = buildTargetChatConversationAccessState({ canChat, currentUserId, session: activeSessionRecord, t });
   const messages = activeSession.messages;
   const derivedRunState = deriveTargetChatRunState({
     localActiveRunId: activeRunId,
@@ -218,7 +218,6 @@ export function useTargetChat({
     if (!trace) {
       return false;
     }
-
     return isTraceInProgress(trace);
   };
 
@@ -350,10 +349,11 @@ export function useTargetChat({
     });
   };
 
-  const handleDismissRecentActivityWarning = () => {
-    if (!activeSessionId) return;
+  const handleDismissRecentActivityWarning = (sessionId?: string) => {
+    const targetSessionId = sessionId || activeSessionId;
+    if (!targetSessionId) return;
     onUpdateSessions(cluster.chatSessions.map((session) =>
-      session.id === activeSessionId && session.recentActivityWarning
+      session.id === targetSessionId && session.recentActivityWarning
         ? {
             ...session,
             recentActivityWarning: {

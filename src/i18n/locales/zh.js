@@ -840,10 +840,15 @@ export const zh = {
     effortMedium: '中',
     effortHigh: '高',
     noChatAccess: '你没有权限在此工作区开始目标聊天。',
+    chooseRecentActivityAction: '请先选择上方选项再继续。',
     send: '发送',
     fullscreen: '打开完整聊天',
     openConversation: '打开会话',
     continueSeparateChat: '继续单独聊天',
+    conversationNotice: {
+      owner: '你的会话。其他人可以实时查看，但只有你可以在这里回复。',
+      viewer: '只读会话。你可以实时查看，但只有 {{owner}} 可以在这里回复。'
+    },
     recentActivityTime: {
       justNow: '刚刚',
       minuteAgo: '{{count}} 分钟前',
@@ -852,11 +857,20 @@ export const zh = {
       hoursAgo: '{{count}} 小时前'
     },
     recentWriteActivity: {
-      sameUser: '你在 {{relativeTime}}开始了一个可写聊天。建议先查看该会话，再开始新的分诊聊天。',
-      otherUser: '{{user}} 在 {{relativeTime}}开始了一个可写聊天。建议先查看该会话，再开始新的分诊聊天。',
-      multipleUsers: '多位用户在 {{relativeTime}}开始了可写聊天。建议先查看该会话，再开始新的分诊聊天。'
+      sameUser: '你在 {{relativeTime}}开始了一个可写聊天。重新打开以保留上下文，或单独开始。',
+      otherUser: '{{user}} 在 {{relativeTime}}开始了一个可写聊天。建议先查看，再开始新的聊天。',
+      multipleUsers: '多位用户在 {{relativeTime}}开始了可写聊天。建议先查看，再开始新的聊天。'
     },
-    footer: '只读操作可自动执行。写操作必须经过明确批准后才会执行。',
+    recentReadActivity: {
+      sameUser: '你在 {{relativeTime}}开始了“{{title}}”。继续该会话以保留上下文，或单独开始。',
+      otherUser: '{{user}} 在 {{relativeTime}}查看了“{{title}}”。建议先查看，再开始新的聊天。',
+      sameUserMultiple: '你最近查看过此目标。建议先查看近期会话，再开始新的聊天。',
+      otherUserMultiple: '{{user}} 最近查看过此目标。建议先查看近期会话，再开始新的聊天。',
+      multipleUsers: '多位用户最近查看过此目标。建议先查看近期会话，再开始新的聊天。'
+    },
+    footer: '只读操作可自动执行。写操作遵循目标策略。',
+    footerApprovalRequired: '只读操作可自动执行。写操作必须经过明确批准后才会执行。',
+    footerApprovalNotRequired: '根据此集群策略，只读和写操作都可以自动执行。',
     footerReadOnlyRole: '只读模式：你的工作区角色可以运行只读检查，但不能开始具备写能力的助手运行。',
     footerNoAccess: '请联系工作区管理员提升权限。',
     failedDelete: '删除会话失败。',

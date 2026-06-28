@@ -1,5 +1,6 @@
 import React from 'react';
 import { TargetChatView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatView';
+import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
 import { createMarkdownComponents } from '@/features/kubernetes-cluster-detail/lib/markdown';
 import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
 import { KubernetesCluster, Workspace } from '@/types';
@@ -110,7 +111,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       runTracesByRunId={runTracesByRunId}
       sessionAssistantStatuses={sessionAssistantStatuses}
       transcriptRef={transcriptRef}
-      footerKey={canRequestWriteRuns ? undefined : 'chat.footerReadOnlyRole'}
+      footerKey={resolveClusterChatFooterKey(cluster, canRequestWriteRuns)}
       onChatScroll={handleChatScroll}
       onLoadEarlierMessages={handleLoadEarlierMessages}
       onInputChange={setInputValue}

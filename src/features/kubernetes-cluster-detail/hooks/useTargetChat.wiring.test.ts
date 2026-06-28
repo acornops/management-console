@@ -11,6 +11,7 @@ describe('target chat controller wiring', () => {
   const appClusterChatRuntime = readFileSync(resolve(root, 'src/app/AppClusterChatRuntime.tsx'), 'utf8');
   const chatView = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'), 'utf8');
   const chatComposer = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatComposer.tsx'), 'utf8');
+  const targetChatViewHelpers = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers.ts'), 'utf8');
   const assistantCapabilityPreviewControl = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/AssistantCapabilityPreviewControl.tsx'), 'utf8');
   const useTargetChat = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/useTargetChat.ts'), 'utf8');
   const targetChatState = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/targetChatState.ts'), 'utf8');
@@ -51,6 +52,14 @@ describe('target chat controller wiring', () => {
     expect(clusterDetail).toContain('canRequestWriteRuns={canRequestWriteRuns}');
     expect(clusterChatPanel).toContain('canRequestWriteRuns={canRequestWriteRuns}');
     expect(chatSubmit).toContain("canRequestWriteRuns ? 'read_write' : 'read_only'");
+  });
+
+  it('uses cluster write confirmation policy for composer footer copy', () => {
+    expect(clusterDetail).toContain('resolveClusterChatFooterKey(cluster, canRequestWriteRuns)');
+    expect(clusterChatPanel).toContain('resolveClusterChatFooterKey(cluster, canRequestWriteRuns)');
+    expect(targetChatViewHelpers).toContain('cluster.writeConfirmationPolicy?.effectiveRequired ?? true');
+    expect(targetChatViewHelpers).toContain("'chat.footerApprovalRequired'");
+    expect(targetChatViewHelpers).toContain("'chat.footerApprovalNotRequired'");
   });
 
   it('serializes chat submissions before React run-active state catches up', () => {

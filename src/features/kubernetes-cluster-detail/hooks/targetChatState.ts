@@ -15,19 +15,25 @@ export function buildTargetChatConversationAccessState(args: {
   canChat: boolean;
   currentUserId: string;
   session: ChatSession | null;
+  t?: ActivityWarningTranslator;
 }): {
   isActiveSessionOwner: boolean;
   conversationNotice: string | null;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
   canPostInActiveSession: boolean;
 } {
-  const { canChat, currentUserId, session } = args;
+  const { canChat, currentUserId, session, t } = args;
   const isActiveSessionOwner = isConversationOwner(session, currentUserId);
   const ownerName = session?.createdByUser?.displayName || 'Another user';
   const conversationNotice = session?.backendSessionId
     ? isActiveSessionOwner
-      ? 'Your conversation. Others can watch this investigation live, but only you can send follow-ups here.'
-      : `View-only conversation. ${ownerName} started this conversation. You can follow the live run, but only ${ownerName} can send follow-ups here.`
+      ? translateActivityCopy(t, 'chat.conversationNotice.owner', 'Your conversation. Others can watch live, but only you can reply here.')
+      : translateActivityCopy(
+          t,
+          'chat.conversationNotice.viewer',
+          `View-only conversation. You can watch live, but only ${ownerName} can reply here.`,
+          { owner: ownerName }
+        )
     : null;
   const recentActivityWarning = session?.recentActivityWarning && !session.recentActivityWarning.dismissed
     ? session.recentActivityWarning
@@ -119,35 +125,61 @@ export function buildRecentActivityWarning(
     message = translateActivityCopy(
       t,
       'chat.recentWriteActivity.multipleUsers',
-      `Multiple users started a write-capable chat ${relativeTime}. Consider reviewing that conversation before starting another triage chat.`,
+      `Multiple users started a write-capable chat ${relativeTime}. Review that conversation before starting another.`,
       { relativeTime }
     );
   } else if (writeEntry && primary.createdBy === currentUserId) {
     message = translateActivityCopy(
       t,
       'chat.recentWriteActivity.sameUser',
-      `You started a write-capable chat ${relativeTime}. Consider reviewing that conversation before starting another triage chat.`,
+      `You started a write-capable chat ${relativeTime}. Reopen it to keep context together, or start separately.`,
       { relativeTime }
     );
   } else if (writeEntry) {
     message = translateActivityCopy(
       t,
       'chat.recentWriteActivity.otherUser',
-      `${userName} started a write-capable chat ${relativeTime}. Consider reviewing that conversation before starting another triage chat.`,
+      `${userName} started a write-capable chat ${relativeTime}. Review it before starting another.`,
       { user: userName, relativeTime }
     );
+  } else if (entries.length === 1 && primary.createdBy === currentUserId) {
+    message = translateActivityCopy(
+      t,
+      'chat.recentReadActivity.sameUser',
+      `You started "${primary.title}" ${relativeTime}. Continue that conversation to keep context together, or start separately.`,
+      { title: primary.title, relativeTime }
+    );
+  } else if (entries.length === 1) {
+    message = translateActivityCopy(
+      t,
+      'chat.recentReadActivity.otherUser',
+      `${userName} investigated "${primary.title}" ${relativeTime}. Review that conversation before starting another.`,
+      { user: userName, title: primary.title, relativeTime }
+    );
+  } else if (multipleUsers) {
+    message = translateActivityCopy(
+      t,
+      'chat.recentReadActivity.multipleUsers',
+      'Multiple users investigated this target recently. Review recent conversations before starting another.'
+    );
+  } else if (primary.createdBy === currentUserId) {
+    message = translateActivityCopy(
+      t,
+      'chat.recentReadActivity.sameUserMultiple',
+      'You investigated this target recently. Review recent conversations before starting another.'
+    );
   } else {
-    message = entries.length === 1 && primary.createdBy === currentUserId
-      ? `You recently investigated this target. You started "${primary.title}" ${relativeTime}. Continue that conversation to keep context together, or start a separate chat.`
-      : entries.length === 1
-        ? `Recent AI activity on this target. ${userName} investigated this target ${relativeTime}. Review "${primary.title}" before starting another chat.`
-        : `Recent AI activity on this target. ${multipleUsers ? 'Multiple users' : userName} investigated this target in the last ${Math.round(activity.windowSeconds / 60)} minutes. Review recent conversations before starting another chat.`;
+    message = translateActivityCopy(
+      t,
+      'chat.recentReadActivity.otherUserMultiple',
+      `${userName} investigated this target recently. Review recent conversations before starting another.`,
+      { user: userName }
+    );
   }
   const actionSessionId = writeEntry || entries.length === 1 ? primary.sessionId : undefined;
   return {
     message,
-    actionSessionId,
-    actionLabel: actionSessionId ? 'Open conversation' : undefined
+    actionSessionId
   };
 }
 
