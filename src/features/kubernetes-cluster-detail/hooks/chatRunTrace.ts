@@ -8,6 +8,7 @@ import {
   formatTraceFailureDetail,
   mapRunStage,
   parseRunUsage,
+  upsertSkillLoad,
   upsertToolCall
 } from '@/features/kubernetes-cluster-detail/lib/trace-utils';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
@@ -34,6 +35,7 @@ export function hasTraceDetails(trace?: LiveRunTrace): boolean {
     trace && (
       trace.steps.length > 0 ||
       trace.toolCalls.length > 0 ||
+      (trace.skillLoads?.length || 0) > 0 ||
       (trace.reasoningSummaries?.length || 0) > 0 ||
       (trace.timelineEvents?.length || 0) > 0 ||
       Boolean(trace.usage)
@@ -46,6 +48,52 @@ export function mapRunStatusToTraceStatus(status: ControlPlaneRun['status']): Li
   if (status === 'failed') return 'failed';
   if (status === 'cancelled') return 'cancelled';
   return status === 'queued' || status === 'dispatching' ? 'connecting' : 'running';
+}
+
+function applySkillContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent): LiveRunTrace | null {
+  if (
+    event.type !== 'skill_context_load_started' &&
+    event.type !== 'skill_context_loaded' &&
+    event.type !== 'skill_context_load_failed'
+  ) {
+    return null;
+  }
+
+  const skillRef = typeof event.payload?.skill_ref === 'string' ? event.payload.skill_ref : createLocalMessageId();
+  const skillName = typeof event.payload?.name === 'string' ? event.payload.name : skillRef;
+
+  if (event.type === 'skill_context_load_started') {
+    return appendRunTraceStep(
+      upsertSkillLoad(trace, skillRef, { skillRef, name: skillName, status: 'loading' }),
+      `Loading skill context: ${skillName}`,
+      'info',
+      undefined,
+      'skill'
+    );
+  }
+
+  if (event.type === 'skill_context_loaded') {
+    const skillId = typeof event.payload?.skill_id === 'string' ? event.payload.skill_id : undefined;
+    const fileCount = typeof event.payload?.file_count === 'number' ? event.payload.file_count : undefined;
+    const totalBytes = typeof event.payload?.total_bytes === 'number' ? event.payload.total_bytes : undefined;
+    const detail = fileCount !== undefined && totalBytes !== undefined ? `${fileCount} files, ${totalBytes} bytes` : undefined;
+    return appendRunTraceStep(
+      upsertSkillLoad(trace, skillRef, { skillRef, skillId, name: skillName, status: 'loaded', fileCount, totalBytes }),
+      `Skill context loaded: ${skillName}`,
+      'success',
+      detail,
+      'skill'
+    );
+  }
+
+  const message = typeof event.payload?.message === 'string' ? event.payload.message : 'Skill context was not available.';
+  return appendRunTraceStep(
+    upsertSkillLoad(trace, skillRef, { skillRef, name: skillName, status: 'failed' }),
+    `Skill context unavailable: ${skillName}`,
+    'error',
+    message,
+    'skill'
+  );
 }
 
 export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPlaneRunEvent[]): LiveRunTrace {
@@ -63,6 +111,7 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
     status: mapRunStatusToTraceStatus(run.status),
     steps: [restoredStep],
     toolCalls: [],
+    skillLoads: [],
     timelineEvents: [
       {
         id: restoredStep.id,
@@ -107,6 +156,8 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const provider = typeof event.payload?.provider === 'string' ? event.payload.provider : undefined;
       const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
       trace = appendReasoningUnavailable(trace, reason, provider, model);
+    } else if (event.type === 'skill_catalog_available') {
+      trace = { ...trace, status: 'running' };
     } else if (event.type === 'tool_call_started') {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
@@ -128,6 +179,15 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
         previewValue(event.payload?.result, 6000),
         'tool'
       );
+    } else if (
+      event.type === 'skill_context_load_started' ||
+      event.type === 'skill_context_loaded' ||
+      event.type === 'skill_context_load_failed'
+    ) {
+      const skillTrace = applySkillContextEvent(trace, event);
+      if (skillTrace) {
+        trace = skillTrace;
+      }
     } else if (event.type === 'tool_approval_requested') {
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
       trace = appendRunTraceStep(
@@ -170,7 +230,8 @@ export function createBaseRunTrace(runId: string, status: LiveRunTrace['status']
     runId,
     status,
     steps: [],
-    toolCalls: []
+    toolCalls: [],
+    skillLoads: []
   };
 }
 
@@ -275,6 +336,13 @@ export function createRunEventHandler(args: {
       return;
     }
 
+    if (event.type === 'skill_catalog_available') {
+      if (trace.status === 'connecting') {
+        updateTrace({ ...trace, status: 'running' });
+      }
+      return;
+    }
+
     if (event.type === 'tool_call_started') {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
@@ -314,6 +382,12 @@ export function createRunEventHandler(args: {
           'tool'
         )
       );
+      return;
+    }
+
+    const skillTrace = applySkillContextEvent(trace, event);
+    if (skillTrace) {
+      updateTrace(skillTrace);
       return;
     }
 

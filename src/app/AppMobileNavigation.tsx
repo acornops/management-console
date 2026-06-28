@@ -21,9 +21,9 @@ interface AppMobileNavigationProps {
   isVirtualMachineSidebar: boolean;
   isDark: boolean;
   isMobileNavOpen: boolean;
-  selectedClusterFindingCount: number;
+  selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
-  selectedVmFindingCount: number;
+  selectedVmIssueCount: number;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
   selectedWorkspace: Workspace | undefined;
@@ -51,9 +51,9 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   isVirtualMachineSidebar,
   isDark,
   isMobileNavOpen,
-  selectedClusterFindingCount,
+  selectedClusterIssueCount,
   clusterAssistantNavStatus,
-  selectedVmFindingCount,
+  selectedVmIssueCount,
   selectedSidebarCluster,
   selectedSidebarVm,
   selectedWorkspace,
@@ -222,12 +222,12 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         {t('app.backToWorkspace')}
                       </button>
                       {([
-                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterFindingCount],
+                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount],
                         ['resources', t('app.resources'), ICONS.Activity, 0],
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
                         ['skills', t('app.skills'), ICONS.BookOpen, 0],
                         ['tools', t('app.tools'), ICONS.Wrench, 0],
-                        ['chat', t('app.aiChat'), ICONS.Terminal, 0]
+                        ['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0]
                       ] as Array<[ClusterSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
                         <button
                           key={tab}
@@ -295,12 +295,12 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         {t('app.backToWorkspace')}
                       </button>
                       {([
-                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmFindingCount],
+                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount],
                         ['resources', t('app.resources'), ICONS.Activity, 0],
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
                         ['skills', t('app.skills'), ICONS.BookOpen, 0],
                         ['tools', t('app.tools'), ICONS.Wrench, 0],
-                        ['chat', t('app.aiChat'), ICONS.Terminal, 0]
+                        ['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0]
                       ] as Array<[VmSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
                         <button
                           key={tab}

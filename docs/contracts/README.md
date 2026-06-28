@@ -93,7 +93,6 @@ The management console consumes:
 - `DELETE /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}`
 - `POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/rotate-agent-key`
 - `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/resources`
-- `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/findings`
 - `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/metrics/history`
 - `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/logs`
 
@@ -126,7 +125,7 @@ Workspace responses expose server-owned authorization fields:
 
 The console treats `permissions.read_workspace_data` as the gate for operational workspace surfaces. Auditor summaries may include member context but must not drive cluster telemetry or operational navigation; `clusterCount` and operational quota usage are redacted to `0`. Member counts and `quota.members.used` require `permissions.read_members`. Workspace quota rows are rendered in Workspace Settings only.
 
-The management console keeps Kubernetes-specific lifecycle, install, inventory, namespace, and pod-log flows on the cluster APIs. The Virtual Machines page uses the VM APIs for Linux/systemd registration, inventory, findings, metrics, logs, MCP Servers, read-only chat, and VM Settings.
+The management console keeps Kubernetes-specific lifecycle, install, inventory, namespace, and pod-log flows on the cluster APIs. The Virtual Machines page uses the VM APIs for Linux/systemd registration, inventory, durable issues, metrics, logs, MCP Servers, read-only chat, and VM Settings.
 
 ### Workspace agents and workflows
 
@@ -204,20 +203,19 @@ Virtual machine list and detail responses return `virtualMachine.latestSnapshot.
 
 `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters` returns cluster summaries only. Historical CPU and memory telemetry must be loaded lazily from `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/metrics/history` for a selected cluster, or from the bounded batch endpoint `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/metrics/history?clusterIds=...` for visible dashboard charts. The batch endpoint is capped by the control plane and must not be used as an unbounded all-clusters history fetch.
 
-Durable issue and snapshot-derived console data is fetched through bounded list endpoints:
+Durable issue, resource, metric, and log console data is fetched through bounded list and summary endpoints:
 
 - `GET /api/v1/workspaces/{workspaceId}/issues`
 - `GET /api/v1/workspaces/{workspaceId}/issues/{issueId}`
 - `GET /api/v1/workspaces/{workspaceId}/issues/{issueId}/observations`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/issues`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/issues/summary`
 - `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources`
-- `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/findings`
 - `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/resources`
-- `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/findings`
 - `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/metrics/history`
 - `GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/logs`
 
-Paged list endpoints return `{ items, nextCursor? }`, accept `limit`, `cursor`, and `q` where search is supported, and apply exact filters before pagination. Cursor reuse with different query/filter state must return `400`. The control plane still stores agent snapshots append-only, but the management console consumes derived pages and summary counts instead of full snapshot payloads.
+Paged list endpoints return `{ items, nextCursor? }`, accept `limit`, `cursor`, and `q` where search is supported, and apply exact filters before pagination. Cursor reuse with different query/filter state must return `400`. Target issue summaries return exact active plus recovering counts by status and severity from durable issues, excluding resolved issues, and are the canonical source for overview navigation badges. The control plane still stores agent snapshots append-only, but the management console consumes durable issue rows, derived resources, metric/log pages, and summary counts instead of full snapshot payloads.
 
 ### MCP server management, skills, and tools
 
@@ -225,6 +223,7 @@ The management console depends on:
 
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/catalog`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/assistant/capabilities-preview?toolAccessMode=read_only|read_write`
 - `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}`
 - `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`
@@ -301,6 +300,8 @@ The management console depends on:
 - `POST /api/v1/runs/{runId}/cancel`
 
 Target-scoped session routes can create/list target sessions. Posting a message starts runs for Kubernetes and virtual machine targets. VM troubleshooting chat must send `toolAccessMode=read_only` and must not show Kubernetes approval/write affordances.
+
+Run event handling includes skill catalog and skill context lifecycle events (`skill_catalog_available`, `skill_context_load_started`, `skill_context_loaded`, and `skill_context_load_failed`) so assistant traces can show skill loading state alongside reasoning, tool calls, approvals, and final messages.
 
 Troubleshooting conversations are owner-write and viewer-read. The management console must preserve `createdBy` and optional `createdByUser.{id,displayName}` on session payloads. The creator can send follow-ups when existing run permissions allow it. Non-creators with target read access can open sessions and watch active runs through `GET /api/v1/runs/{runId}/stream`, but the composer and prompt suggestions are view-only. The backend remains authoritative and returns `403 CONVERSATION_OWNER_REQUIRED` when a non-owner posts into a session.
 

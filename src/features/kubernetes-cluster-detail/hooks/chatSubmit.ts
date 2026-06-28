@@ -1,5 +1,5 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
-import { ChatMessage, ChatSession, KubernetesCluster } from '@/types';
+import { ChatMessage, ChatRuntimeSelection, ChatSession, KubernetesCluster } from '@/types';
 import { controlPlaneApi, type ControlPlaneSession } from '@/services/controlPlaneApi';
 import { createLocalMessageId, sleep } from '@/features/kubernetes-cluster-detail/lib/helpers';
 import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/features/kubernetes-cluster-detail/lib/trace-utils';
@@ -26,7 +26,6 @@ import {
   buildChatSubmitFailureMessage,
   replacePendingAssistantWithFailure
 } from '@/features/kubernetes-cluster-detail/hooks/chatSubmitFailures';
-
 export const RUN_TERMINAL_WAIT_TIMEOUT_MS = 600000;
 export async function submitChatMessage(args: {
   cluster: KubernetesCluster;
@@ -37,6 +36,7 @@ export async function submitChatMessage(args: {
   inputValue: string;
   isLoading: boolean;
   overrideInput?: string;
+  runtimeSelection?: ChatRuntimeSelection;
   shouldStickToBottomRef: MutableRefObject<boolean>;
   onUpdateSessions: (sessions: ChatSession[]) => void;
   setActiveSessionId: (sessionId: string) => void;
@@ -64,6 +64,7 @@ export async function submitChatMessage(args: {
     inputValue,
     isLoading,
     overrideInput,
+    runtimeSelection,
     shouldStickToBottomRef,
     onUpdateSessions,
     setActiveSessionId,
@@ -84,7 +85,6 @@ export async function submitChatMessage(args: {
   } = args;
   const prompt = (overrideInput ?? inputValue).trim();
   if (!prompt || isLoading || !canChat) return;
-
   const localSessionId = activeSessionId || createConversationId();
   const now = Date.now();
   let sessions = [...cluster.chatSessions];
@@ -104,7 +104,6 @@ export async function submitChatMessage(args: {
 
   sessions = existingSession ? upsertSession(sessions, session) : [...sessions, session];
   if (!activeSessionId) setActiveSessionId(localSessionId);
-
   const isFirstUserMessage = !session.messages.some((message) => message.role === 'user');
   if (isFirstUserMessage) {
     session = {
@@ -228,7 +227,8 @@ export async function submitChatMessage(args: {
       session.backendSessionId!,
       prompt,
       canRequestWriteRuns ? 'read_write' : 'read_only',
-      userMsg.id
+      userMsg.id,
+      runtimeSelection
     );
     const streamingMessageId = `stream-${accepted.runId}`;
     runIdForMessage = accepted.runId;

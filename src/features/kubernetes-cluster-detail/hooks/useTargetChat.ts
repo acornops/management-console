@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChatMessage, ChatSession, PendingApproval } from '@/types';
+import { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   mapControlPlaneMessage,
@@ -19,9 +19,10 @@ import {
 import { isTraceInProgress } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
 import {
   buildRecentActivityWarning,
+  buildTargetChatAutoScrollSignature,
+  buildTargetChatConversationAccessState,
   createRecentActivitySessionPlaceholder,
   deriveTargetChatRunState,
-  isConversationOwner
 } from '@/features/kubernetes-cluster-detail/hooks/targetChatState';
 import type { TargetChatController, UseTargetChatArgs } from '@/features/kubernetes-cluster-detail/hooks/targetChatControllerTypes';
 import { useTargetChatActivityStream } from '@/features/kubernetes-cluster-detail/hooks/targetChatActivityStream';
@@ -33,9 +34,7 @@ import {
   replaceCancelledRunAssistantMessages,
   type ActiveRunStreamControls
 } from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
-
 export type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/targetChatControllerTypes';
-
 export function useTargetChat({
   target,
   currentUserId,
@@ -66,6 +65,7 @@ export function useTargetChat({
   const cancelledRunIdsRef = useRef<Set<string>>(new Set());
   const suppressedHydrationRunIdsRef = useRef<Set<string>>(new Set());
   const activeRunStreamControlsRef = useRef<Record<string, ActiveRunStreamControls>>({});
+  const submitInFlightRef = useRef(false);
   const isRunCancelled = useCallback((runId: string) => cancelledRunIdsRef.current.has(runId), []);
   const markRunCancelled = useCallback((runId: string) => {
     cancelledRunIdsRef.current.add(runId);
@@ -93,18 +93,12 @@ export function useTargetChat({
     timestamp: Date.now()
   };
   const activeSessionRecord = sessions.find((s) => s.id === activeSessionId) || null;
-  const isActiveSessionOwner = isConversationOwner(activeSessionRecord, currentUserId);
-  const ownerName = activeSessionRecord?.createdByUser?.displayName || 'Another user';
-  const conversationNotice = activeSessionRecord?.backendSessionId
-    ? isActiveSessionOwner
-      ? 'Your conversation. Others can watch this investigation live, but only you can send follow-ups here.'
-      : `View-only conversation. ${ownerName} started this conversation. You can follow the live run, but only ${ownerName} can send follow-ups here.`
-    : null;
-  const recentActivityWarning = activeSessionRecord?.recentActivityWarning && !activeSessionRecord.recentActivityWarning.dismissed
-    ? activeSessionRecord.recentActivityWarning
-    : null;
-  const canPostInActiveSession = canChat && isActiveSessionOwner && !recentActivityWarning;
-
+  const {
+    isActiveSessionOwner,
+    conversationNotice,
+    recentActivityWarning,
+    canPostInActiveSession
+  } = buildTargetChatConversationAccessState({ canChat, currentUserId, session: activeSessionRecord, t });
   const messages = activeSession.messages;
   const derivedRunState = deriveTargetChatRunState({
     localActiveRunId: activeRunId,
@@ -125,32 +119,7 @@ export function useTargetChat({
   });
   const effectiveActiveRunId = derivedRunState.activeRunId || activityDiscoveredRunId;
   const isRunActive = isLoading || derivedRunState.isRunActive || Boolean(activityDiscoveredRunId);
-  const lastMessage = messages[messages.length - 1];
-  const activeRunTrace = effectiveActiveRunId ? runTracesByRunId[effectiveActiveRunId] : undefined;
-  const activeRunLatestStep = activeRunTrace?.steps.at(-1);
-  const activeRunTraceSignature = activeRunTrace
-    ? [
-        activeRunTrace.status,
-        activeRunTrace.steps.length,
-        activeRunLatestStep?.id || '',
-        activeRunLatestStep?.detail?.length || 0,
-        activeRunTrace.toolCalls.length,
-        activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'running').length,
-        activeRunTrace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length,
-        activeRunTrace.reasoningSummaries?.length || 0,
-        activeRunTrace.activeReasoningSummary?.length || 0,
-        activeRunTrace.usage ? 'usage' : ''
-      ].join(',')
-    : 'none';
-  const chatAutoScrollSignature = [
-    messages.length,
-    lastMessage?.id || '',
-    lastMessage?.content.length || 0,
-    lastMessage?.approval?.id || '',
-    lastMessage?.approval?.status || '',
-    effectiveActiveRunId || '',
-    activeRunTraceSignature
-  ].join(':');
+  const chatAutoScrollSignature = buildTargetChatAutoScrollSignature({ messages, effectiveActiveRunId, runTracesByRunId });
   const {
     lastChatScrollTopRef,
     scrollRef,
@@ -234,16 +203,13 @@ export function useTargetChat({
     if (isPendingAssistantPlaceholder(message)) {
       return true;
     }
-
     if (!isBlankAssistantMessage(message)) {
       return false;
     }
-
     const messageId = String(message.id || '');
     if (isRunActive && (messageId.startsWith('pending-') || messageId.startsWith('stream-'))) {
       return true;
     }
-
     if (!message.runId) {
       return false;
     }
@@ -252,7 +218,6 @@ export function useTargetChat({
     if (!trace) {
       return false;
     }
-
     return isTraceInProgress(trace);
   };
 
@@ -384,10 +349,11 @@ export function useTargetChat({
     });
   };
 
-  const handleDismissRecentActivityWarning = () => {
-    if (!activeSessionId) return;
+  const handleDismissRecentActivityWarning = (sessionId?: string) => {
+    const targetSessionId = sessionId || activeSessionId;
+    if (!targetSessionId) return;
     onUpdateSessions(cluster.chatSessions.map((session) =>
-      session.id === activeSessionId && session.recentActivityWarning
+      session.id === targetSessionId && session.recentActivityWarning
         ? {
             ...session,
             recentActivityWarning: {
@@ -521,11 +487,12 @@ export function useTargetChat({
   const handleApprove = (approvalId: string) => decideApproval(approvalId, 'approved');
   const handleReject = (approvalId: string) => decideApproval(approvalId, 'rejected');
 
-  const runSubmittedChatMessage = (args: {
+  const submitChatMessageForArgs = (args: {
     activeSessionForSubmit: ChatSession;
     activeSessionIdForSubmit: string | null;
     canChatForSubmit: boolean;
     overrideInput?: string;
+    runtimeSelection?: ChatRuntimeSelection;
   }) =>
     submitChatMessage({
       cluster,
@@ -536,6 +503,7 @@ export function useTargetChat({
       inputValue,
       isLoading: isRunActive,
       overrideInput: args.overrideInput,
+      runtimeSelection: args.runtimeSelection,
       shouldStickToBottomRef,
       onUpdateSessions,
       setActiveSessionId,
@@ -555,17 +523,37 @@ export function useTargetChat({
       suppressedRunIdsRef: suppressedHydrationRunIdsRef
     });
 
-  const handleSend = (overrideInput?: string) =>
+  const releaseSubmitLockSoon = () => {
+    setTimeout(() => {
+      submitInFlightRef.current = false;
+    }, 0);
+  };
+
+  const runSubmittedChatMessage = async (args: Parameters<typeof submitChatMessageForArgs>[0]) => {
+    if (submitInFlightRef.current) return;
+    submitInFlightRef.current = true;
+    try {
+      const submitPromise = submitChatMessageForArgs(args);
+      releaseSubmitLockSoon();
+      await submitPromise;
+    } catch (error) {
+      submitInFlightRef.current = false;
+      throw error;
+    }
+  };
+
+  const handleSend = (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) =>
     runSubmittedChatMessage({
       activeSessionForSubmit: activeSession,
       activeSessionIdForSubmit: activeSessionId,
       canChatForSubmit: canPostInActiveSession,
-      overrideInput
+      overrideInput,
+      runtimeSelection
     });
 
-  const handleEditLastUserMessage = async (messageId: string, nextContent: string) => {
+  const handleEditLastUserMessage = async (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => {
     const prompt = nextContent.trim();
-    if (!prompt || isRunActive || !canPostInActiveSession) return;
+    if (!prompt || isRunActive || !canPostInActiveSession || submitInFlightRef.current) return;
     const sanitizedMessages = sanitizeChatMessages(activeSession.messages);
     const userIndex = sanitizedMessages.findIndex((message) => message.id === messageId && message.role === 'user');
     if (userIndex < 0) return;
@@ -588,26 +576,38 @@ export function useTargetChat({
       activeSessionForSubmit: revisedSession,
       activeSessionIdForSubmit: activeSessionId,
       canChatForSubmit: canPostInActiveSession,
-      overrideInput: prompt
+      overrideInput: prompt,
+      runtimeSelection
     });
   };
 
-  const handleSendInNewSession = async (overrideInput: string) => {
-    const draftSession = await createDraftSessionWithWarning();
-    const sessionId = draftSession.id;
-    setActiveSessionId(sessionId);
-    shouldStickToBottomRef.current = true;
-    if (draftSession.recentActivityWarning) {
-      onUpdateSessions(sortSessionsByTimestamp([draftSession, ...cluster.chatSessions]));
-      setInputValue(overrideInput);
-      return;
+  const handleSendInNewSession = async (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => {
+    if (submitInFlightRef.current) return;
+    submitInFlightRef.current = true;
+    let shouldReleaseSubmitLock = true;
+    try {
+      const draftSession = await createDraftSessionWithWarning();
+      const sessionId = draftSession.id;
+      setActiveSessionId(sessionId);
+      shouldStickToBottomRef.current = true;
+      if (draftSession.recentActivityWarning) {
+        onUpdateSessions(sortSessionsByTimestamp([draftSession, ...cluster.chatSessions]));
+        setInputValue(overrideInput);
+        return;
+      }
+      const submitPromise = submitChatMessageForArgs({
+        activeSessionForSubmit: draftSession,
+        activeSessionIdForSubmit: sessionId,
+        canChatForSubmit: canChat,
+        overrideInput,
+        runtimeSelection
+      });
+      releaseSubmitLockSoon();
+      shouldReleaseSubmitLock = false;
+      await submitPromise;
+    } finally {
+      if (shouldReleaseSubmitLock) submitInFlightRef.current = false;
     }
-    return runSubmittedChatMessage({
-      activeSessionForSubmit: draftSession,
-      activeSessionIdForSubmit: sessionId,
-      canChatForSubmit: canChat,
-      overrideInput
-    });
   };
 
   return {

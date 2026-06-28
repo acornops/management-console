@@ -152,30 +152,35 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachineUi).not.toContain("t('virtualMachines.list.awaitingAgent')");
   });
 
-  it('guards VM overview issue and finding loads against stale target switches', () => {
-    expect(virtualMachinesPage).toContain('const issueRequest = controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 })');
-    expect(virtualMachinesPage).toContain('const findingRequest = controlPlaneApi.listVirtualMachineFindings(workspace.id, selected.id)');
+  it('guards VM overview issue loads against stale target switches', () => {
+    expect(virtualMachinesPage).toContain('controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 })');
+    expect(virtualMachinesPage).not.toContain('listVirtualMachineFindings');
     expect(virtualMachinesPage).toContain('setIsLoadingIssueEvidence(true);');
-    expect(virtualMachinesPage).toContain('Promise.allSettled([issueRequest, findingRequest])');
     expect(virtualMachinesPage).toContain('setIsLoadingIssueEvidence(false);');
+    expect(virtualMachinesPage).toContain('if (!selected) {\n      setIssues(null);');
     expect(virtualMachinesPage).toContain('if (!isCurrent) return;');
-    expect(virtualMachinesPage).toContain('setFindings([]);');
-    expect(virtualMachinesPage).toContain("console.error('Failed loading virtual machine findings', error);");
+    expect(virtualMachinesPage).toContain('setIssueLoadFailed(true);');
+    expect(virtualMachinesPage).not.toContain("console.error('Failed loading virtual machine findings', error);");
     expect(virtualMachinesPage).toContain('isLoading={isLoadingIssueEvidence}');
+    expect(virtualMachinesPage).toContain('issueLoadFailed={issueLoadFailed}');
     expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.loadingIssuesTitle')");
     expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.loadingIssuesBody')");
+    expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.issueLoadFailedTitle')");
+    expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.issueLoadFailedBody')");
     expect(virtualMachineIssuesPanel).toContain('<ICONS.RefreshCw className="h-5 w-5 animate-spin" />');
     expect(constants).toContain('RefreshCw');
   });
 
-  it('labels durable VM issues separately from raw VM snapshot findings', () => {
+  it('renders durable VM issues without raw snapshot finding fallback rows', () => {
     expect(virtualMachineIssuesPanel).toContain("t('clusterOverview.issue')");
-    expect(virtualMachineIssuesPanel).toContain("t('clusterOverview.finding')");
-    expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.snapshotFinding')");
+    expect(virtualMachineIssuesPanel).not.toContain("t('clusterOverview.finding')");
+    expect(virtualMachineIssuesPanel).not.toContain("t('virtualMachines.overview.snapshotFinding')");
   });
 
-  it('keeps loaded durable VM issues as the primary source instead of falling back to raw findings', () => {
-    expect(virtualMachineIssuesPanel).toContain('const useIssueCounts = hasIssueRows;');
-    expect(virtualMachineIssuesPanel).toContain(') : hasIssueRows || findings.length === 0 ? (');
+  it('keeps durable VM issue summaries and rows as the only overview issue sources', () => {
+    expect(virtualMachineIssuesPanel).toContain('const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);');
+    expect(virtualMachineIssuesPanel).toContain('? issueSummary.critical');
+    expect(virtualMachineIssuesPanel).toContain('? issueSummary.warning');
+    expect(virtualMachineIssuesPanel).not.toContain('findings.length');
   });
 });

@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { ChatMessage, ChatSession, KubernetesCluster, PendingApproval } from '@/types';
+import type { ChatMessage, ChatRuntimeSelection, ChatSession, KubernetesCluster, PendingApproval } from '@/types';
 import type {
   ControlPlaneSession,
   ControlPlaneSessionListPage,
@@ -46,7 +46,7 @@ export interface TargetChatController {
   transcriptRef: (node: HTMLDivElement | null) => void;
   setActiveSessionId: (sessionId: string) => void;
   handleCreateSession: () => void;
-  handleDismissRecentActivityWarning: () => void;
+  handleDismissRecentActivityWarning: (sessionId?: string) => void;
   handleOpenRecentActivitySession: (sessionId: string) => void;
   handleDeleteSession: (sessionId: string) => Promise<void>;
   handleCancelRun: () => Promise<void>;
@@ -54,9 +54,9 @@ export interface TargetChatController {
   setTraceExpandedByRunId: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   handleChatScroll: () => void;
   handleLoadEarlierMessages: () => Promise<void>;
-  handleSend: (overrideInput?: string) => Promise<void>;
-  handleSendInNewSession: (overrideInput: string) => Promise<void>;
-  handleEditLastUserMessage: (messageId: string, nextContent: string) => Promise<void>;
+  handleSend: (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => Promise<void>;
+  handleSendInNewSession: (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => Promise<void>;
+  handleEditLastUserMessage: (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => Promise<void>;
   handleApprove: (approvalId: string) => Promise<void>;
   handleReject: (approvalId: string) => Promise<void>;
   isInFlightAssistantPlaceholder: (message: ChatMessage) => boolean;

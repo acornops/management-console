@@ -256,9 +256,6 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('onSelectCluster(card.targetId)');
     expect(overviewPage).toContain('onSelectVirtualMachine(card.targetId)');
     expect(overviewPage).toContain('readRecentInvestigation(workspace.id, currentUserId)');
-    expect(chatView).not.toContain('chat.runStatus');
-    expect(chatView).not.toContain('chat.activeTriage');
-    expect(chatView).not.toContain('chat.guardedWrites');
     expect(traceFooter).toContain('Show run details');
     expect(traceFooter).toMatch(/const activitySummary = trace\.status === 'connecting'[\s\S]*'Waiting for progress'/);
   });

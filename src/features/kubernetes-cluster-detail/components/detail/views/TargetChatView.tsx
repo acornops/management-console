@@ -1,53 +1,33 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { History, Loader2, Maximize2, MessageSquare, Plus, Send, Square, X } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Tooltip } from '@/components/common/Tooltip';
-import { ConversationHistory } from '@/features/kubernetes-cluster-detail/components/detail/ConversationHistory';
-import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
-import { AssistantTurn } from '@/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn';
-import { ChatComposerNotice } from '@/features/kubernetes-cluster-detail/components/detail/views/ChatComposerNotice';
-import { ChatEmptyPrompt, ChatTranscriptLoadError, ChatTranscriptSkeleton } from '@/features/kubernetes-cluster-detail/components/detail/views/ChatTranscriptStates';
-import { DeleteConversationDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/DeleteConversationDialog';
-import { UserMessageTurn } from '@/features/kubernetes-cluster-detail/components/detail/views/UserMessageTurn';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { TargetChatViewBody } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatViewBody';
 import type { TargetChatViewProps } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.types';
-
-const SUGGESTION_KEYS = ['chat.suggestions.podTermination', 'chat.suggestions.serviceDns', 'chat.suggestions.crashLooping', 'chat.suggestions.mcpConnectivity'];
-
-const historyFocusableSelector = [
-  'a[href]',
-  'button:not([disabled])',
-  'textarea:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  '[contenteditable="true"]',
-  '[tabindex]:not([tabindex="-1"])'
-].join(',');
-
-function formatMessageTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-function getFocusableHistoryElements(panel: HTMLElement): HTMLElement[] {
-  return Array.from(panel.querySelectorAll<HTMLElement>(historyFocusableSelector)).filter((element) => {
-    if (element.getAttribute('aria-hidden') === 'true' || element.hasAttribute('hidden')) return false;
-    const style = window.getComputedStyle(element);
-    return style.display !== 'none' && style.visibility !== 'hidden';
-  });
-}
-function getHistoryFocusWrapIndex(currentIndex: number, focusableCount: number, shiftKey: boolean): number | null {
-  if (focusableCount <= 0) return null;
-  if (currentIndex < 0) return shiftKey ? focusableCount - 1 : 0;
-  if (shiftKey && currentIndex === 0) return focusableCount - 1;
-  if (!shiftKey && currentIndex === focusableCount - 1) return 0;
-  return null;
-}
+import {
+  buildComposerModelOptions,
+  buildPromptWithComposerContext,
+  ComposerAttachment,
+  ComposerModelOption,
+  createComposerAttachment,
+  findComposerModelOption,
+  fitAttachmentToRemainingContext,
+  formatAttachmentSize,
+  isFileDragEvent,
+  MAX_ATTACHMENT_FILE_BYTES,
+  MAX_COMPOSER_ATTACHMENTS,
+  MAX_TOTAL_ATTACHMENT_CONTEXT_CHARS,
+  REASONING_OPTIONS,
+  resolveComposerReasoningEffort,
+  revokeAttachmentPreview,
+  SUGGESTION_KEYS,
+  useTargetChatHistoryFocus
+} from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
+import type { ChatRuntimeSelection, LlmProvider, ReasoningEffort, WorkspaceAiSettings } from '@/types';
+import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   target,
+  titleKey,
   descriptionKey,
   promptTitleKey,
   promptBodyKey,
@@ -60,6 +40,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   isConversationOwner,
   conversationNotice,
   recentActivityWarning,
+  canRequestWriteRuns,
   canApproveWriteActions,
   canCancelRuns,
   canDeleteSessions,
@@ -106,11 +87,42 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
   const [editingMessageValue, setEditingMessageValue] = React.useState('');
   const [isSubmittingEdit, setIsSubmittingEdit] = React.useState(false);
+  const [composerAttachments, setComposerAttachments] = React.useState<ComposerAttachment[]>([]);
+  const [composerAttachmentNotice, setComposerAttachmentNotice] = React.useState('');
+  const [workspaceAiSettings, setWorkspaceAiSettings] = React.useState<WorkspaceAiSettings | null>(null);
+  const [isWorkspaceAiSettingsLoading, setIsWorkspaceAiSettingsLoading] = React.useState(true);
+  const [workspaceAiSettingsError, setWorkspaceAiSettingsError] = React.useState('');
+  const [assistantCapabilitiesPreview, setAssistantCapabilitiesPreview] = React.useState<ControlPlaneTargetAssistantCapabilitiesPreview | null>(null);
+  const [isAssistantCapabilitiesPreviewLoading, setIsAssistantCapabilitiesPreviewLoading] = React.useState(canChat);
+  const [assistantCapabilitiesPreviewError, setAssistantCapabilitiesPreviewError] = React.useState('');
+  const [selectedProvider, setSelectedProvider] = React.useState<LlmProvider>('openai');
+  const [selectedModel, setSelectedModel] = React.useState('');
+  const [selectedEffort, setSelectedEffort] = React.useState<ReasoningEffort>('low');
+  const [isModelMenuOpen, setIsModelMenuOpen] = React.useState(false);
+  const [isModelSubmenuOpen, setIsModelSubmenuOpen] = React.useState(false);
+  const [dragDepth, setDragDepth] = React.useState(0);
   const historyButtonRef = React.useRef<HTMLButtonElement>(null);
   const historyPanelRef = React.useRef<HTMLElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const composerRootRef = React.useRef<HTMLDivElement>(null);
+  const composerTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const composerAttachmentsRef = React.useRef<ComposerAttachment[]>([]);
+  const composerAttachmentEpochRef = React.useRef(0);
+  const isMountedRef = React.useRef(true);
+  const modelMenuRef = React.useRef<HTMLDivElement>(null);
+  const selectedEffortTouchedRef = React.useRef(false);
+  const previousIsRunActiveRef = React.useRef(isRunActive);
+  const previousActiveSessionIdRef = React.useRef(activeSessionId);
+  const pendingComposerFocusRef = React.useRef(false);
+  const isComposerSubmittingRef = React.useRef(false);
   const historyPanelId = React.useId();
+  const modelMenuId = React.useId();
   const desktopHistoryPanelId = `${historyPanelId}-desktop`;
   const mobileHistoryPanelId = `${historyPanelId}-mobile`;
+  const modelSelectorId = `${modelMenuId}-selector`;
+  const modelMenuPanelId = `${modelMenuId}-panel`;
+  const modelSubmenuButtonId = `${modelMenuId}-model-button`;
+  const modelSubmenuPanelId = `${modelMenuId}-model-panel`;
 
   const deleteTargetSession = React.useMemo(
     () => sessions.find((session) => session.id === deleteTargetSessionId) || null,
@@ -118,10 +130,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   );
 
   const canPost = canChat && isConversationOwner && !recentActivityWarning;
-  const sendText = (text: string) => {
-    if (!text.trim() || !canPost || isRunActive) return;
-    void onSend(text);
-  };
+  const requestedToolAccessMode = canRequestWriteRuns ? 'read_write' : 'read_only';
   const lastUserMessageIndex = React.useMemo(() => {
     for (let index = visibleMessages.length - 1; index >= 0; index -= 1) {
       if (visibleMessages[index].role === 'user') return index;
@@ -147,7 +156,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const canCancelActiveRun = isRunActive && canCancelRuns && Boolean(activeRunId);
   const isPanel = displayMode === 'panel';
   const activeSession = sessions.find((session) => session.id === activeSessionId) || null;
-  const title = activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t('chat.triageConsole');
+  const resolvedTitleKey = titleKey || 'chat.triageConsole';
+  const title = activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey);
   const isHydratingExistingConversation = Boolean(activeSession?.backendSessionId && activeSession.hydrated === false && visibleMessages.length === 0);
   const hasConversationLoadError = Boolean(activeSession?.backendSessionId && activeSession.messagesLoadFailed && visibleMessages.length === 0);
   const isLoadingInitialConversation = !activeSession && isSessionsLoading;
@@ -160,46 +170,78 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const resolvedNoChatAccessKey = noChatAccessKey || 'chat.noChatAccess';
   const resolvedFooterKey = footerKey || 'chat.footer';
   const resolvedFooterNoAccessKey = footerNoAccessKey || 'chat.footerNoAccess';
+  const hasComposerAttachmentContext = composerAttachments.some((attachment) => attachment.status === 'ready' && attachment.content.trim());
+  const hasComposerSubmitPayload = Boolean(inputValue.trim() || hasComposerAttachmentContext);
+  const composerModelOptions = React.useMemo(() => buildComposerModelOptions(workspaceAiSettings), [workspaceAiSettings]);
+  const selectableComposerModelOptions = React.useMemo(() => composerModelOptions.filter((option) => option.ready), [composerModelOptions]);
+  const hasReadyComposerModel = selectableComposerModelOptions.length > 0;
+  const selectedModelOption = React.useMemo(
+    () => findComposerModelOption(composerModelOptions, selectedProvider, selectedModel),
+    [composerModelOptions, selectedModel, selectedProvider]
+  );
+  const isComposerRuntimeBlocked = Boolean(workspaceAiSettings && !hasReadyComposerModel);
+  const isComposerRuntimeUnavailable = Boolean(isWorkspaceAiSettingsLoading || workspaceAiSettingsError || (workspaceAiSettings && !selectedModelOption?.ready));
+  const allowedReasoningOptions = React.useMemo(
+    () => REASONING_OPTIONS.filter((option) => !workspaceAiSettings || workspaceAiSettings.allowedReasoningEfforts.includes(option.value as ReasoningEffort)),
+    [workspaceAiSettings]
+  );
+  const selectedEffortOption = allowedReasoningOptions.find((option) => option.value === selectedEffort) || allowedReasoningOptions[0] || REASONING_OPTIONS[0];
+  const selectedModelLabel = selectedModelOption?.ready
+    ? selectedModelOption.model
+    : isWorkspaceAiSettingsLoading
+      ? t('chat.modelLoading')
+      : workspaceAiSettingsError
+        ? t('chat.modelUnavailable')
+        : workspaceAiSettings && !hasReadyComposerModel
+          ? t('chat.noModelsAvailable')
+          : t('chat.modelDefault');
+  const selectedEffortLabel = t(selectedEffortOption.labelKey);
+  const composerRuntimeSelection: ChatRuntimeSelection | undefined = workspaceAiSettings && selectedModelOption?.ready
+    ? {
+        provider: selectedModelOption.provider,
+        model: selectedModelOption.model,
+        reasoningEffort: selectedEffortOption.value as ReasoningEffort
+      }
+    : undefined;
+  const isFileDragActive = dragDepth > 0;
+  const composerSubmitUnavailableReason = isComposerRuntimeBlocked
+    ? t('chat.noConfiguredModels')
+    : isWorkspaceAiSettingsLoading
+      ? t('chat.modelLoading')
+      : isComposerRuntimeUnavailable
+      ? t('chat.modelUnavailable')
+      : '';
   const composerActionLabel = isRunActive
     ? isCancellingRun
       ? t('chat.cancellingRun')
       : canCancelActiveRun
         ? t('chat.cancelRun')
         : t('chat.cancelWaiting')
-    : t('chat.send');
+    : composerSubmitUnavailableReason || t('chat.send');
   const newChatUnavailableReason = !canChat
     ? t(resolvedNoChatAccessKey)
     : '';
   const historyControlLabel = isHistoryOpen ? t('chat.hideHistory') : t('chat.showHistory');
-  const panelWindowControls = (
-    <div className="flex shrink-0 items-center gap-1">
-      {onMaximize && (
-        <Tooltip content={t('chat.fullscreen')}>
-          <button
-            type="button"
-            onClick={onMaximize}
-            className="rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-            aria-label={t('chat.fullscreen')}
-          >
-            <Maximize2 className="h-5 w-5" />
-          </button>
-        </Tooltip>
-      )}
-      {onClose && (
-        <Tooltip content={t('app.close')}>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-            aria-label={t('app.close')}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </Tooltip>
-      )}
-    </div>
-  );
-
+  const releaseComposerSubmitLockSoon = () => {
+    setTimeout(() => {
+      isComposerSubmittingRef.current = false;
+    }, 0);
+  };
+  const sendText = async (text: string) => {
+    if (!text.trim() || !canPost || isRunActive || isComposerRuntimeUnavailable || isComposerSubmittingRef.current) return;
+    const message = buildPromptWithComposerContext(text, composerAttachments);
+    isComposerSubmittingRef.current = true;
+    try {
+      composerAttachmentEpochRef.current += 1;
+      const sendPromise = onSend(message, composerRuntimeSelection);
+      releaseComposerSubmitLockSoon();
+      await sendPromise;
+      clearComposerAttachments();
+    } catch (error) {
+      isComposerSubmittingRef.current = false;
+      throw error;
+    }
+  };
   const openDeleteSessionModal = (sessionId: string) => {
     if (!canDeleteSessions) return;
     setDeleteSessionError(null);
@@ -207,6 +249,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   };
 
   const selectSession = (sessionId: string) => {
+    if (sessionId !== activeSessionId) clearComposerAttachments();
     onSelectSession(sessionId);
   };
 
@@ -245,15 +288,260 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
 
   const submitEditedMessage = async (messageId: string) => {
     const nextContent = editingMessageValue.trim();
-    if (!nextContent || isSubmittingEdit || isRunActive) return;
+    if (!nextContent || !canPost || isSubmittingEdit || isRunActive || isComposerRuntimeUnavailable) return;
     setIsSubmittingEdit(true);
     try {
-      await onEditLastUserMessage(messageId, nextContent);
+      await onEditLastUserMessage(messageId, nextContent, composerRuntimeSelection);
       cancelEditingMessage();
     } finally {
       setIsSubmittingEdit(false);
     }
   };
+
+  const removeComposerAttachment = (attachmentId: string) => {
+    setComposerAttachments((current) => {
+      const targetAttachment = current.find((attachment) => attachment.id === attachmentId);
+      if (targetAttachment) revokeAttachmentPreview(targetAttachment);
+      return current.filter((attachment) => attachment.id !== attachmentId);
+    });
+    setComposerAttachmentNotice('');
+  };
+
+  const clearComposerAttachments = () => {
+    composerAttachmentEpochRef.current += 1;
+    setComposerAttachments((current) => {
+      current.forEach(revokeAttachmentPreview);
+      return [];
+    });
+    setComposerAttachmentNotice('');
+  };
+
+  const processComposerFiles = async (files: File[]) => {
+    if (!canPost || isRunActive || files.length === 0) return;
+    const attachmentEpoch = composerAttachmentEpochRef.current;
+    const currentAttachments = composerAttachmentsRef.current;
+    const remainingSlots = Math.max(0, MAX_COMPOSER_ATTACHMENTS - currentAttachments.length);
+    const oversizedCount = files.filter((file) => file.size > MAX_ATTACHMENT_FILE_BYTES).length;
+    const eligibleFiles = files.filter((file) => file.size <= MAX_ATTACHMENT_FILE_BYTES);
+    const selectedFiles = eligibleFiles.slice(0, remainingSlots);
+    const skippedCount = eligibleFiles.length - selectedFiles.length;
+    const notices = [
+      oversizedCount > 0 ? t('chat.attachmentTooLargeNotice', { count: oversizedCount, size: formatAttachmentSize(MAX_ATTACHMENT_FILE_BYTES) }) : '',
+      skippedCount > 0 || (files.length > 0 && remainingSlots === 0) ? t('chat.attachmentLimitNotice', { count: skippedCount || files.length, max: MAX_COMPOSER_ATTACHMENTS }) : ''
+    ].filter(Boolean);
+    setComposerAttachmentNotice(notices.join(' '));
+    if (selectedFiles.length === 0) return;
+
+    let remainingContextChars = Math.max(
+      0,
+      MAX_TOTAL_ATTACHMENT_CONTEXT_CHARS - currentAttachments.reduce((total, attachment) => total + attachment.content.length, 0)
+    );
+    const nextAttachments: ComposerAttachment[] = [];
+    for (const file of selectedFiles) {
+      const attachment = await createComposerAttachment(file, remainingContextChars);
+      if (attachment.status === 'ready') {
+        remainingContextChars = Math.max(0, remainingContextChars - attachment.content.length);
+      }
+      nextAttachments.push(attachment);
+    }
+    if (!isMountedRef.current || attachmentEpoch !== composerAttachmentEpochRef.current) {
+      nextAttachments.forEach(revokeAttachmentPreview);
+      return;
+    }
+    setComposerAttachments((current) => {
+      const availableSlots = Math.max(0, MAX_COMPOSER_ATTACHMENTS - current.length);
+      let remainingContextChars = Math.max(
+        0,
+        MAX_TOTAL_ATTACHMENT_CONTEXT_CHARS - current.reduce((total, attachment) => total + attachment.content.length, 0)
+      );
+      const acceptedAttachments = nextAttachments.slice(0, availableSlots).map((attachment) => {
+        const fittedAttachment = fitAttachmentToRemainingContext(attachment, remainingContextChars);
+        if (fittedAttachment.status === 'ready') {
+          remainingContextChars = Math.max(0, remainingContextChars - fittedAttachment.content.length);
+        }
+        return fittedAttachment;
+      });
+      nextAttachments.slice(availableSlots).forEach(revokeAttachmentPreview);
+      return [...current, ...acceptedAttachments];
+    });
+  };
+
+  const submitComposerMessage = async () => {
+    if (!hasComposerSubmitPayload || !canPost || isRunActive || isComposerRuntimeUnavailable || isComposerSubmittingRef.current) return;
+    const message = buildPromptWithComposerContext(inputValue, composerAttachments);
+    isComposerSubmittingRef.current = true;
+    try {
+      composerAttachmentEpochRef.current += 1;
+      const sendPromise = onSend(message, composerRuntimeSelection);
+      releaseComposerSubmitLockSoon();
+      await sendPromise;
+      clearComposerAttachments();
+    } catch (error) {
+      isComposerSubmittingRef.current = false;
+      throw error;
+    }
+  };
+
+  const handleAttachmentInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    await processComposerFiles(files);
+  };
+
+  const focusComposer = (): boolean => {
+    if (!canPost || isRunActive) return false;
+    composerTextareaRef.current?.focus({ preventScroll: true });
+    return document.activeElement === composerTextareaRef.current;
+  };
+
+  const scheduleComposerFocus = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (focusComposer()) pendingComposerFocusRef.current = false;
+      });
+    });
+  };
+
+  const requestComposerFocus = () => {
+    pendingComposerFocusRef.current = true;
+    scheduleComposerFocus();
+  };
+
+  const handleCreateSessionClick = () => {
+    clearComposerAttachments();
+    onCreateSession();
+    requestComposerFocus();
+  };
+
+  const handleComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey || event.metaKey || event.ctrlKey) return;
+    event.preventDefault();
+    void submitComposerMessage();
+  };
+
+  const handleModelAndEffortChange = (value: ReasoningEffort) => {
+    selectedEffortTouchedRef.current = true;
+    setSelectedEffort(value);
+    setIsModelMenuOpen(false);
+    setIsModelSubmenuOpen(false);
+  };
+
+  const handleModelChange = (option: ComposerModelOption) => {
+    if (!option.ready) return;
+    setSelectedProvider(option.provider);
+    setSelectedModel(option.model);
+    setIsModelMenuOpen(false);
+    setIsModelSubmenuOpen(false);
+  };
+
+  const handleChatWindowDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!isFileDragEvent(event)) return;
+    event.preventDefault();
+    setDragDepth((current) => current + 1);
+  };
+
+  const handleChatWindowDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!isFileDragEvent(event)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = canPost && !isRunActive ? 'copy' : 'none';
+  };
+
+  const handleChatWindowDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!isFileDragEvent(event)) return;
+    event.preventDefault();
+    setDragDepth((current) => Math.max(0, current - 1));
+  };
+
+  const handleChatWindowDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+    if (!isFileDragEvent(event)) return;
+    event.preventDefault();
+    setDragDepth(0);
+    await processComposerFiles(Array.from(event.dataTransfer.files || []));
+  };
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    setIsWorkspaceAiSettingsLoading(true);
+    setWorkspaceAiSettingsError('');
+    selectedEffortTouchedRef.current = false;
+    controlPlaneApi.getWorkspaceAiSettings(cluster.workspaceId)
+      .then((settings) => {
+        if (cancelled) return;
+        setWorkspaceAiSettings(settings);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setWorkspaceAiSettings(null);
+        setWorkspaceAiSettingsError(error instanceof Error ? error.message : t('workspaceAiSettings.loadFailed'));
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsWorkspaceAiSettingsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cluster.workspaceId, t]);
+
+  React.useEffect(() => {
+    if (!canChat) {
+      setAssistantCapabilitiesPreview(null);
+      setAssistantCapabilitiesPreviewError('');
+      setIsAssistantCapabilitiesPreviewLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsAssistantCapabilitiesPreviewLoading(true);
+    setAssistantCapabilitiesPreviewError('');
+    setAssistantCapabilitiesPreview(null);
+    controlPlaneApi.getTargetAssistantCapabilitiesPreview(cluster.workspaceId, cluster.id, requestedToolAccessMode)
+      .then((preview) => {
+        if (cancelled) return;
+        setAssistantCapabilitiesPreview(preview);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setAssistantCapabilitiesPreview(null);
+        setAssistantCapabilitiesPreviewError(error instanceof Error ? error.message : t('chat.capabilityPreviewUnavailable'));
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsAssistantCapabilitiesPreviewLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canChat, cluster.id, cluster.workspaceId, requestedToolAccessMode, t]);
+
+  React.useEffect(() => {
+    if (!workspaceAiSettings) return;
+
+    const currentOption = findComposerModelOption(composerModelOptions, selectedProvider, selectedModel);
+    const defaultOption = findComposerModelOption(
+      composerModelOptions,
+      workspaceAiSettings.defaultProvider,
+      workspaceAiSettings.defaultModel
+    );
+    const nextOption = (currentOption?.ready ? currentOption : undefined)
+      || (defaultOption?.ready ? defaultOption : undefined)
+      || selectableComposerModelOptions[0]
+      || currentOption
+      || defaultOption
+      || composerModelOptions[0];
+    if (nextOption && (nextOption.provider !== selectedProvider || nextOption.model !== selectedModel)) {
+      setSelectedProvider(nextOption.provider);
+      setSelectedModel(nextOption.model);
+    }
+
+    const nextEffort = resolveComposerReasoningEffort(workspaceAiSettings, selectedEffort, selectedEffortTouchedRef.current);
+    if (nextEffort !== selectedEffort) {
+      setSelectedEffort(nextEffort);
+    }
+  }, [composerModelOptions, selectableComposerModelOptions, selectedEffort, selectedModel, selectedProvider, workspaceAiSettings]);
 
   React.useEffect(() => {
     if (deleteTargetSessionId && !deleteTargetSession && !deletingSessionId) {
@@ -263,381 +551,97 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   }, [deleteTargetSession, deleteTargetSessionId, deletingSessionId]);
 
   React.useEffect(() => {
-    if (!isHistoryOpen) {
+    if (previousActiveSessionIdRef.current === activeSessionId) return;
+    previousActiveSessionIdRef.current = activeSessionId;
+    clearComposerAttachments();
+  }, [activeSessionId]);
+
+  React.useEffect(() => {
+    composerAttachmentsRef.current = composerAttachments;
+  }, [composerAttachments]);
+
+  React.useLayoutEffect(() => {
+    const textarea = composerTextareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 144)}px`;
+  }, [inputValue]);
+
+  React.useEffect(() => {
+    if (!pendingComposerFocusRef.current || !canPost || isRunActive) return;
+    scheduleComposerFocus();
+  }, [activeSessionId, canPost, isRunActive]);
+
+  React.useEffect(() => {
+    const wasRunActive = previousIsRunActiveRef.current;
+    previousIsRunActiveRef.current = isRunActive;
+    if (!wasRunActive || isRunActive || !canPost || isHistoryOpen || isModelMenuOpen || editingMessageId) return;
+    const activeElement = document.activeElement;
+    if (
+      activeElement &&
+      activeElement !== document.body &&
+      activeElement !== composerTextareaRef.current &&
+      !(activeElement instanceof Node && composerRootRef.current?.contains(activeElement))
+    ) {
       return;
     }
-    const usesOverlayHistory = window.matchMedia('(max-width: 1023px)').matches;
-    const restoreTarget = usesOverlayHistory && document.activeElement instanceof HTMLElement ? document.activeElement : historyButtonRef.current;
-    const focusTimer = usesOverlayHistory
-      ? window.setTimeout(() => {
-          historyPanelRef.current?.focus({ preventScroll: true });
-        }, 0)
-      : undefined;
+    scheduleComposerFocus();
+  }, [canPost, editingMessageId, isHistoryOpen, isModelMenuOpen, isRunActive]);
+
+  React.useEffect(() => {
+    if (!isModelMenuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const targetElement = event.target instanceof Node ? event.target : null;
+      if (targetElement && modelMenuRef.current?.contains(targetElement)) return;
+      setIsModelMenuOpen(false);
+      setIsModelSubmenuOpen(false);
+    };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (usesOverlayHistory && event.key === 'Tab') {
-        const panel = historyPanelRef.current;
-        if (!panel) return;
-
-        const focusableElements = getFocusableHistoryElements(panel);
-        const targetIndex = getHistoryFocusWrapIndex(
-          focusableElements.findIndex((element) => element === document.activeElement),
-          focusableElements.length,
-          event.shiftKey
-        );
-
-        if (targetIndex === null) return;
-        event.preventDefault();
-        event.stopPropagation();
-        focusableElements[targetIndex]?.focus({ preventScroll: true });
-      }
+      if (event.key !== 'Escape') return;
+      setIsModelMenuOpen(false);
+      setIsModelSubmenuOpen(false);
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      if (focusTimer !== undefined) window.clearTimeout(focusTimer);
-      window.removeEventListener('keydown', handleKeyDown);
-      if (usesOverlayHistory && restoreTarget && document.contains(restoreTarget)) {
-        restoreTarget.focus({ preventScroll: true });
-      }
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isHistoryOpen]);
+  }, [isModelMenuOpen]);
+
+  React.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      composerAttachmentsRef.current.forEach(revokeAttachmentPreview);
+    };
+  }, []);
+
+  useTargetChatHistoryFocus({ isHistoryOpen, historyButtonRef, historyPanelRef });
 
   return (
-    <div className="flex-1 flex min-w-0 overflow-hidden bg-ui-bg relative">
-      {!isPanel && !isHistoryOpen && (
-        <Tooltip content={historyControlLabel} side="right" className="absolute left-0 top-1/2 z-20 -translate-y-1/2">
-          <button
-            ref={historyButtonRef}
-            type="button"
-            onClick={() => setIsHistoryOpen(true)}
-            className="inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-            aria-label={historyControlLabel}
-            aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
-            aria-expanded={isHistoryOpen}
-            aria-pressed={isHistoryOpen}
-          >
-            <History className="h-4 w-4" />
-          </button>
-        </Tooltip>
-      )}
-      <AnimatePresence initial={false}>
-        {!isPanel && isHistoryOpen && (
-          <motion.aside
-            id={desktopHistoryPanelId}
-            aria-label={t('chat.history')}
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="relative hidden h-full shrink-0 overflow-visible border-r border-ui-border bg-ui-surface shadow-sm lg:flex"
-          >
-            <Tooltip content={historyControlLabel} side="right" className="absolute right-[-2.25rem] top-1/2 z-20 -translate-y-1/2">
-              <button
-                ref={historyButtonRef}
-                type="button"
-                onClick={() => setIsHistoryOpen(false)}
-                className="inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                aria-label={historyControlLabel}
-                aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
-                aria-expanded={isHistoryOpen}
-                aria-pressed={isHistoryOpen}
-              >
-                <History className="h-4 w-4" />
-              </button>
-            </Tooltip>
-            <div className="flex h-full w-80 shrink-0 flex-col overflow-hidden">
-              <ConversationHistory
-                appName={cluster.name}
-                sessions={sessions}
-                activeSessionId={activeSessionId}
-                sessionAssistantStatuses={sessionAssistantStatuses}
-                isSessionsLoading={isSessionsLoading}
-                onSelectSession={selectSession}
-                onDeleteSessionClick={openDeleteSessionModal}
-                canDeleteSessions={canDeleteSessions}
-                t={t}
-              />
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
-        <header className={`${isPanel ? 'sticky top-0 z-10 border-b border-ui-border bg-ui-surface px-5 py-4 sm:px-6' : 'bg-ui-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8'} transition-colors`}>
-          {isPanel ? (
-            <div>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h1 className="truncate text-xl font-semibold tracking-tight text-ui-text">{title}</h1>
-                  <p className="mt-1 text-xs font-medium text-ui-text-muted">
-                    {t('chat.panelDescription', { name: cluster.name })}
-                  </p>
-                </div>
-                {panelWindowControls}
-              </div>
-            </div>
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-              <div className="min-w-0">
-                <h1 className="type-route-title">{title}</h1>
-                <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: cluster.name })}</p>
-              </div>
-              <div className="flex w-full min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end">
-                <Tooltip content={newChatUnavailableReason} disabled={!newChatUnavailableReason}>
-                  <span className="inline-flex w-full sm:w-auto">
-                    <Button
-                      type="button"
-                      onClick={onCreateSession}
-                      disabled={!canChat}
-                      variant="secondary"
-                      size="md"
-                      className="w-full whitespace-nowrap sm:w-auto"
-                    >
-                      <Plus className="h-4 w-4" />
-                      {t('chat.newChat')}
-                    </Button>
-                  </span>
-                </Tooltip>
-              </div>
-            </div>
-          )}
-        </header>
-
-        <div
-          ref={transcriptRef}
-          onScroll={onChatScroll}
-          className={`flex-1 scroll-pb-10 overflow-y-auto bg-ui-bg custom-scrollbar ${isPanel ? 'px-5 py-5 sm:px-6 sm:py-6' : 'stable-scrollbar-gutter px-4 py-6 sm:px-6 lg:px-10 lg:py-8'}`}
-        >
-          {shouldShowTranscriptSkeleton ? (
-            <ChatTranscriptSkeleton isPanel={isPanel} label={t('chat.loadingConversation')} />
-          ) : hasConversationLoadError ? (
-            <ChatTranscriptLoadError
-              isPanel={isPanel}
-              title={t('chat.conversationLoadFailed')}
-              body={t('chat.conversationLoadFailedBody')}
-            />
-          ) : visibleMessages.length === 0 ? (
-            <ChatEmptyPrompt
-              isPanel={isPanel}
-              title={t(resolvedPromptTitleKey, { name: cluster.name })}
-              body={t(resolvedPromptBodyKey)}
-              suggestions={resolvedSuggestionKeys.map((suggestionKey) => ({ key: suggestionKey, label: t(suggestionKey) }))}
-              canSendSuggestion={canPost && !isRunActive}
-              onSendSuggestion={sendText}
-            />
-          ) : (
-            <div className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} mx-auto space-y-5 pb-2`}>
-              {hasEarlierMessages && (
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => void onLoadEarlierMessages()}
-                    disabled={isLoadingEarlierMessages}
-                    className="type-label rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isLoadingEarlierMessages ? t('chat.loadingEarlier') : t('chat.loadEarlier')}
-                  </button>
-                </div>
-              )}
-              {visibleMessages.map((message, messageIndex) => {
-                const isUser = message.role === 'user';
-                const isInFlightPlaceholder = !isUser && isInFlightAssistantPlaceholder(message);
-                const messageTrace = !isUser && message.runId ? runTracesByRunId[message.runId] : undefined;
-                const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;
-                const trace = activeRunTrace || messageTrace;
-                const traceRunId = trace?.runId || message.runId || message.id;
-                const previousMessage = messageIndex > 0 ? visibleMessages[messageIndex - 1] : undefined;
-                const messageKey = !isUser && previousMessage?.role === 'user' ? `assistant-turn-${previousMessage.id}` : message.id;
-                const hasLaterUserMessage = messageIndex < lastUserMessageIndex;
-                const traceToRender: LiveRunTrace | undefined =
-                  trace ||
-                  (isInFlightPlaceholder
-                    ? {
-                        runId: traceRunId,
-                        status: 'connecting',
-                        steps: [
-                          {
-                            id: `${traceRunId}-pending`,
-                            label: 'Preparing response',
-                            detail: 'Waiting for the first progress update.',
-                            status: 'info',
-                            timestamp: message.timestamp
-                          }
-                        ],
-                        toolCalls: []
-                      }
-                    : undefined);
-                const isStaleCancelledAssistantStatus =
-                  !isUser &&
-                  hasLaterUserMessage &&
-                  traceToRender?.status === 'cancelled';
-
-                if (!isUser) {
-                  return (
-                    <div key={messageKey} className="flex w-full justify-start">
-                      <AssistantTurn
-                        timestampLabel={formatMessageTime(message.timestamp)}
-                        content={message.content}
-                        isInFlightPlaceholder={isInFlightPlaceholder}
-                        markdownComponents={assistantMarkdownComponents}
-                        approval={message.approval}
-                        canApproveWriteActions={canApproveWriteActions}
-                        onApprove={onApprove}
-                        onReject={onReject}
-                        trace={traceToRender}
-                        traceRunId={traceRunId}
-                        isTraceExpanded={traceExpandedByRunId[traceRunId] ?? false}
-                        setTraceExpanded={(runId, expanded) => {
-                          setTraceExpandedByRunId((current) => ({ ...current, [runId]: expanded }));
-                        }}
-                        compactStatusOnly={isStaleCancelledAssistantStatus}
-                        t={t}
-                      />
-                    </div>
-                  );
-                }
-
-                const userTurnRunId = userTurnRunIdsByIndex.get(messageIndex);
-                const userTurnTrace = userTurnRunId ? runTracesByRunId[userTurnRunId] : undefined;
-                const canEditUserMessage =
-                  canPost &&
-                  !isRunActive &&
-                  messageIndex === lastUserMessageIndex &&
-                  Boolean(userTurnRunId) &&
-                  (userTurnTrace?.status === 'cancelled' || userTurnTrace?.status === 'failed');
-                const isEditingMessage = editingMessageId === message.id;
-
-                return (
-                  <UserMessageTurn
-                    key={message.id}
-                    message={message}
-                    markdownComponents={userMarkdownComponents}
-                    timestampLabel={formatMessageTime(message.timestamp)}
-                    canEdit={canEditUserMessage}
-                    isEditing={isEditingMessage}
-                    editValue={editingMessageValue}
-                    isSubmittingEdit={isSubmittingEdit}
-                    onEditValueChange={setEditingMessageValue}
-                    onStartEdit={() => startEditingMessage(message.id, message.content)}
-                    onCancelEdit={cancelEditingMessage}
-                    onSubmitEdit={() => void submitEditedMessage(message.id)}
-                    t={t}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <form
-          className={`${isPanel ? 'px-5 py-4 sm:px-6 sm:py-5' : 'p-4 sm:p-5'} border-t border-ui-border bg-ui-surface`}
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (isRunActive) return;
-            void onSend();
-          }}
-        >
-          <ChatComposerNotice
-            isPanel={isPanel}
-            conversationNotice={conversationNotice}
-            recentActivityWarning={recentActivityWarning}
-            onDismissRecentActivityWarning={onDismissRecentActivityWarning}
-            onOpenRecentActivitySession={onOpenRecentActivitySession}
-            t={t}
-          />
-          <div className={`${isPanel ? 'max-w-3xl gap-2 sm:gap-3' : 'max-w-4xl gap-2 sm:gap-3'} mx-auto flex items-center`}>
-            <div className={`${isPanel ? 'hidden min-[540px]:flex' : 'hidden sm:flex'} min-h-11 max-w-[13rem] items-center gap-2 rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text-muted`} aria-label={t('chat.targetContext', { name: cluster.name })}>
-              <MessageSquare className="h-4 w-4 shrink-0" />
-              <span className="truncate">{cluster.name}</span>
-            </div>
-            <input
-              value={inputValue}
-              onChange={(event) => onInputChange(event.target.value)}
-              className={`${isPanel ? 'min-h-12 rounded-md px-4 py-3 font-medium' : 'min-h-12 rounded-md px-4 py-3'} min-w-0 flex-1 border border-ui-border bg-ui-bg text-sm text-ui-text outline-none ring-accent/10 transition-colors placeholder:text-ui-text-muted/65 focus:border-accent/50 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60`}
-              placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: cluster.name }) : t(resolvedNoChatAccessKey)}
-              disabled={!canPost || isRunActive}
-            />
-            <Tooltip content={composerActionLabel}>
-              <Button
-                type={isRunActive ? 'button' : 'submit'}
-                onClick={isRunActive ? () => {
-                  if (canCancelActiveRun && !isCancellingRun) void onCancelRun();
-                } : undefined}
-                disabled={isRunActive ? !canCancelActiveRun || isCancellingRun : !canPost || !inputValue.trim()}
-                variant={isRunActive ? 'secondary' : 'primary'}
-                size="icon"
-                className={`h-12 w-12 shrink-0 ${isRunActive ? 'border-status-danger/25 bg-status-danger-soft text-status-danger-text hover:border-status-danger/40 hover:bg-status-danger-soft/80 focus-visible:ring-status-danger/20' : ''}`}
-                aria-label={composerActionLabel}
-              >
-                {isRunActive ? (isCancellingRun ? <Loader2 className="h-5 w-5 animate-spin" /> : <Square className="h-4 w-4 fill-current" />) : <Send className="h-5 w-5" />}
-              </Button>
-            </Tooltip>
-          </div>
-          <p className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} mx-auto mt-3 text-center text-[11px] font-medium text-ui-text-muted`}>
-            {canPost ? t(resolvedFooterKey) : t(resolvedFooterNoAccessKey)}
-          </p>
-        </form>
-      </div>
-
-      <AnimatePresence>
-        {!isPanel && isHistoryOpen && (
-          <motion.div
-            className="absolute inset-0 z-[110] lg:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="absolute inset-0 h-full w-full bg-ui-text/20 dark:bg-ui-bg/65" aria-hidden="true" />
-            <motion.aside
-              ref={historyPanelRef}
-              id={mobileHistoryPanelId}
-              role="dialog"
-              aria-modal="true"
-              aria-label={t('chat.history')}
-              tabIndex={-1}
-              initial={{ x: -24, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -24, opacity: 0 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute left-0 top-0 flex h-full w-[min(23rem,calc(100vw-2rem))] flex-col overflow-visible border-r border-ui-border bg-ui-surface shadow-xl outline-none"
-            >
-              <Tooltip content={historyControlLabel} side="right" className="absolute right-[-2.25rem] top-1/2 z-20 -translate-y-1/2">
-                <button
-                  type="button"
-                  onClick={() => setIsHistoryOpen(false)}
-                  className="inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                  aria-label={historyControlLabel}
-                >
-                  <History className="h-4 w-4" />
-                </button>
-              </Tooltip>
-              <ConversationHistory
-                appName={cluster.name}
-                sessions={sessions}
-                activeSessionId={activeSessionId}
-                sessionAssistantStatuses={sessionAssistantStatuses}
-                isSessionsLoading={isSessionsLoading}
-                onSelectSession={selectSession}
-                onDeleteSessionClick={openDeleteSessionModal}
-                canDeleteSessions={canDeleteSessions}
-                t={t}
-              />
-            </motion.aside>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {deleteTargetSession && (
-        <DeleteConversationDialog
-          sessionName={deleteTargetSession.name}
-          isDeleting={Boolean(deletingSessionId)}
-          error={deleteSessionError}
-          onClose={closeDeleteSessionModal}
-          onConfirm={confirmDeleteSession}
-          t={t}
-        />
-      )}
-    </div>
+    <TargetChatViewBody
+      {...{
+        activeRunId, activeSession, activeSessionId, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, canApproveWriteActions,
+        canCancelActiveRun, canChat, canDeleteSessions, canPost, cluster, composerActionLabel, composerAttachmentNotice,
+        composerAttachments, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, deleteSessionError, deleteTargetSession,
+        deletingSessionId, desktopHistoryPanelId, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
+        handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, historyButtonRef,
+        historyControlLabel, historyPanelRef, inputValue, isAssistantCapabilitiesPreviewLoading, isCancellingRun, isComposerRuntimeUnavailable, isFileDragActive, isHistoryOpen,
+        isLoadingEarlierMessages, isModelMenuOpen, isModelSubmenuOpen, isPanel, isRunActive, isSessionsLoading, isSubmittingEdit, isWorkspaceAiSettingsLoading,
+        lastUserMessageIndex, mobileHistoryPanelId, modelMenuPanelId, modelMenuRef, modelSelectorId, modelSubmenuButtonId, modelSubmenuPanelId, newChatUnavailableReason,
+        onApprove, onCancelRun, onChatScroll, onClose, onDismissRecentActivityWarning, onInputChange, onLoadEarlierMessages, onMaximize, onOpenRecentActivitySession, onReject,
+        recentActivityWarning, removeComposerAttachment, requestedToolAccessMode, resolvedDescriptionKey, resolvedFooterKey, resolvedFooterNoAccessKey, resolvedInputPlaceholderKey,
+        resolvedNoChatAccessKey, resolvedPromptBodyKey, resolvedPromptTitleKey, resolvedSuggestionKeys, runTracesByRunId, selectSession, selectedEffort, selectedEffortLabel,
+        selectedModel, selectedModelLabel, selectedProvider, sendText, sessionAssistantStatuses, sessions, setEditingMessageValue, setIsHistoryOpen,
+        setIsModelMenuOpen, setIsModelSubmenuOpen, setTraceExpandedByRunId, shouldShowTranscriptSkeleton, submitComposerMessage, t, title, traceExpandedByRunId,
+        transcriptRef, userMarkdownComponents, userTurnRunIdsByIndex, visibleMessages, workspaceAiSettingsError, startEditingMessage, cancelEditingMessage, closeDeleteSessionModal,
+        confirmDeleteSession, editingMessageId, editingMessageValue, isInFlightAssistantPlaceholder, openDeleteSessionModal, submitEditedMessage
+      }}
+    />
   );
+
 };

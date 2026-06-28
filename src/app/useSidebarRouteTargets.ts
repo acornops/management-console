@@ -28,7 +28,6 @@ interface SidebarRouteTargets {
   isVirtualMachineSidebar: boolean;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
-  selectedSidebarVmFindingCount: number;
 }
 
 export function useSidebarRouteTargets({
@@ -45,7 +44,6 @@ export function useSidebarRouteTargets({
   const routeVmWorkspaceId = route.kind === 'workspaceVirtualMachineDetail' ? route.workspaceId : null;
   const routeVmId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
   const [selectedSidebarVm, setSelectedSidebarVm] = useState<ControlPlaneVirtualMachine | null>(null);
-  const [selectedSidebarVmFindingCount, setSelectedSidebarVmFindingCount] = useState(0);
   const selectedSidebarVmId = selectedSidebarVm?.id || null;
   const selectedSidebarVmWorkspaceId = selectedSidebarVm?.workspaceId || null;
   const selectedSidebarCluster = useMemo(
@@ -83,7 +81,6 @@ export function useSidebarRouteTargets({
       if (selectedSidebarVm) {
         setSelectedSidebarVm(null);
       }
-      setSelectedSidebarVmFindingCount(0);
       return;
     }
     if (!user) {
@@ -100,14 +97,10 @@ export function useSidebarRouteTargets({
       return;
     }
     let cancelled = false;
-    void Promise.all([
-      cachedSidebarVm ? Promise.resolve(cachedSidebarVm) : controlPlaneApi.getVirtualMachine(routeVmWorkspaceId, routeVmId),
-      controlPlaneApi.listVirtualMachineFindings(routeVmWorkspaceId, routeVmId).catch(() => ({ items: [] }))
-    ])
-      .then(([vm, findings]) => {
+    void (cachedSidebarVm ? Promise.resolve(cachedSidebarVm) : controlPlaneApi.getVirtualMachine(routeVmWorkspaceId, routeVmId))
+      .then((vm) => {
         if (!cancelled) {
           setSelectedSidebarVm(vm);
-          setSelectedSidebarVmFindingCount(findings.items?.length || 0);
         }
       })
       .catch((error) => {
@@ -137,7 +130,6 @@ export function useSidebarRouteTargets({
     ) && canReadWorkspaceData(clusterSidebarWorkspace),
     isVirtualMachineSidebar: route.kind === 'workspaceVirtualMachineDetail' && canReadWorkspaceData(vmSidebarWorkspace),
     selectedSidebarCluster,
-    selectedSidebarVm: selectedSidebarVmForRoute,
-    selectedSidebarVmFindingCount
+    selectedSidebarVm: selectedSidebarVmForRoute
   };
 }

@@ -1,4 +1,5 @@
 import {
+  ChatRuntimeSelection,
   ProjectMember,
   User,
   Workspace,
@@ -29,6 +30,7 @@ import type {
   ControlPlaneAcceptedMessage,
   ControlPlaneIssueItem,
   ControlPlaneIssueObservationItem,
+  ControlPlaneTargetIssueSummary,
   ControlPlaneRun,
   ControlPlaneRunEvent,
   ControlPlaneRunToolApproval,
@@ -55,9 +57,9 @@ export type {
   ControlPlanePodLogs,
   ControlPlanePodLogsOptions,
   ControlPlaneResourcePageItem,
-  ControlPlaneFindingPageItem,
   ControlPlaneIssueItem,
   ControlPlaneIssueObservationItem,
+  ControlPlaneTargetIssueSummary,
   ControlPlaneRun,
   ControlPlaneRunEvent,
   ControlPlaneRunToolApproval,
@@ -292,6 +294,12 @@ export const controlPlaneApi = {
     );
   },
 
+  async getTargetIssueSummary(workspaceId: string, targetId: string): Promise<ControlPlaneTargetIssueSummary> {
+    return requestJson<ControlPlaneTargetIssueSummary>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/issues/summary`
+    );
+  },
+
   async listWorkspaceAuditEvents(
     workspaceId: string,
     options?: {
@@ -418,19 +426,6 @@ export const controlPlaneApi = {
     );
   },
 
-  async listVirtualMachineFindings(
-    workspaceId: string,
-    vmId: string,
-    options?: { limit?: number; cursor?: string }
-  ): Promise<PagedResult<Record<string, unknown>>> {
-    return requestJson<PagedResult<Record<string, unknown>>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/findings${pageQuery({
-        limit: options?.limit,
-        cursor: options?.cursor
-      })}`
-    );
-  },
-
   async getVirtualMachineMetricsHistory(workspaceId: string, vmId: string): Promise<{ points: Record<string, unknown>[] }> {
     return requestJson<{ points: Record<string, unknown>[] }>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/metrics/history?window=6h&limit=48`
@@ -515,11 +510,28 @@ export const controlPlaneApi = {
     sessionId: string,
     content: string,
     toolAccessMode?: 'read_only' | 'read_write',
-    clientMessageId?: string
+    clientMessageId?: string,
+    runtimeSelection?: ChatRuntimeSelection
   ): Promise<{ messageId: string; runId: string }> {
     const accepted = await requestJson<ControlPlaneAcceptedMessage>(
       `/api/v1/sessions/${encodeURIComponent(sessionId)}/messages`,
-      { method: 'POST', body: JSON.stringify({ content, toolAccessMode, clientMessageId }) }
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          content,
+          toolAccessMode,
+          clientMessageId,
+          ...(runtimeSelection
+            ? {
+                llm: {
+                  provider: runtimeSelection.provider,
+                  model: runtimeSelection.model,
+                  reasoningEffort: runtimeSelection.reasoningEffort
+                }
+              }
+            : {})
+        })
+      }
     );
     return { messageId: accepted.message_id, runId: accepted.run_id };
   },

@@ -99,7 +99,6 @@ for (const [docPath, implNeedle, label] of [
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/metrics/history`', 'getWorkspaceClusterMetricsHistory(', 'Batch cluster metrics history implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/metrics/history`', 'getClusterMetricsHistory(', 'Single cluster metrics history implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources`', 'listClusterResources(', 'List cluster resources implementation'],
-  ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/findings`', 'listClusterFindings(', 'List cluster findings implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters`', 'registerCluster(', 'Cluster registration implementation'],
   ['`DELETE /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}`', 'deleteCluster(', 'Delete cluster implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/rotate-agent-key`', '/rotate-agent-key', 'Rotate agent-key path'],
@@ -144,8 +143,7 @@ for (const snapshotNeedle of [
   'latestSnapshot',
   'summary',
   'resourceSummary',
-  'ControlPlaneResourcePageItem',
-  'ControlPlaneFindingPageItem'
+  'ControlPlaneResourcePageItem'
 ]) {
   expectIncludes(controlPlaneMapping, snapshotNeedle, 'Snapshot mapping');
 }

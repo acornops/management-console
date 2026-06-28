@@ -36,6 +36,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
   onDeleteSkill,
   onToggleSkill
 }) => {
+  const { t } = useTranslation();
   const actionMenuId = React.useId();
   const actionMenuButtonRef = React.useRef<HTMLButtonElement>(null);
   const actionMenuRef = React.useRef<HTMLDivElement>(null);
@@ -44,6 +45,16 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
   const isTogglingSkill = pendingToggleSkillId === skill.id;
   const isBlockedByOtherSkillToggle = Boolean(pendingToggleSkillId && !isTogglingSkill);
   const canToggleSkill = canEditSkills && !isBlockedByOtherSkillToggle && !isTogglingSkill;
+  const assistantState = !skill.enabled
+    ? 'disabled'
+    : skill.validationStatus === 'valid'
+      ? 'assistantVisible'
+      : 'needsFixes';
+  const assistantStateClass = assistantState === 'assistantVisible'
+    ? 'bg-status-success-soft text-status-success-text'
+    : assistantState === 'disabled'
+      ? 'bg-ui-bg text-ui-text-muted'
+      : 'bg-status-warning-soft text-status-warning-text';
   const updateActionMenuPosition = React.useCallback(() => {
     const trigger = actionMenuButtonRef.current;
     if (!trigger) return;
@@ -148,12 +159,8 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
         </div>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
-        <span className={`type-micro-label rounded-full px-2.5 py-1 ${
-          skill.validationStatus === 'valid'
-            ? 'bg-status-success-soft text-status-success-text'
-            : 'bg-status-warning-soft text-status-warning-text'
-        }`}>
-          {skill.validationStatus === 'valid' ? 'Valid' : 'Needs fixes'}
+        <span className={`type-micro-label rounded-full px-2.5 py-1 ${assistantStateClass}`}>
+          {t(`targetSkills.state.${assistantState}`)}
         </span>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
@@ -224,6 +231,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
 
   const summary = React.useMemo(() => ({
     total: skills.length,
+    assistantVisible: skills.filter((skill) => skill.enabled && skill.validationStatus === 'valid').length,
     enabled: skills.filter((skill) => skill.enabled).length,
     valid: skills.filter((skill) => skill.validationStatus === 'valid').length,
     needsFixes: skills.filter((skill) => skill.validationStatus !== 'valid').length,
@@ -259,33 +267,35 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
       <section data-target-skill-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
           <div className="px-5 py-3.5">
-            <h2 className="type-row-title">Skill inventory</h2>
-            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">Target-scoped prompt context for troubleshooting runs.</p>
+            <h2 className="type-row-title">{t('targetSkills.inventoryTitle')}</h2>
+            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">
+              {t('targetSkills.inventoryBody')}
+            </p>
           </div>
           <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Skills</p>
+            <p className="type-caption text-ui-text-muted">{t('targetSkills.skillsMetric')}</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.total}</p>
           </div>
           <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Enabled skills</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.enabled}</p>
-          </div>
-          <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Valid</p>
+            <p className="type-caption text-ui-text-muted">{t('targetSkills.assistantVisibleSkills')}</p>
             <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
-              {summary.valid}
+              {summary.assistantVisible}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
           </div>
           <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Needs fixes</p>
+            <p className="type-caption text-ui-text-muted">{t('targetSkills.enabledSkillsMetric')}</p>
+            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.enabled}</p>
+          </div>
+          <div className="px-5 py-3.5">
+            <p className="type-caption text-ui-text-muted">{t('targetSkills.needsFixes')}</p>
             <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
               {summary.needsFixes}
               <span className="h-2 w-2 rounded-full bg-status-warning" />
             </p>
           </div>
           <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Files</p>
+            <p className="type-caption text-ui-text-muted">{t('targetSkills.filesMetric')}</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.files}</p>
           </div>
         </div>
@@ -317,8 +327,8 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
           </span>
         </div>
         <div className="min-w-0">
-          <table className="w-full table-fixed text-left" aria-label="Target skills">
-            <caption className="sr-only">Target skills</caption>
+          <table className="w-full table-fixed text-left" aria-label={t('targetSkills.tableLabel')}>
+            <caption className="sr-only">{t('targetSkills.tableLabel')}</caption>
             <colgroup>
               <col className="w-[34%]" />
               <col className="w-[23%]" />
@@ -328,11 +338,11 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
             </colgroup>
             <thead>
               <tr className="border-b border-ui-border">
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Skill</th>
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Validation</th>
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Enabled</th>
-                <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">Files</th>
-                <th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">Actions</th>
+                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('targetSkills.skillColumn')}</th>
+                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('targetSkills.assistantStateColumn')}</th>
+                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('targetSkills.enabledColumn')}</th>
+                <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">{t('targetSkills.filesColumn')}</th>
+                <th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">{t('targetSkills.actionsColumn')}</th>
               </tr>
             </thead>
             <tbody>
@@ -349,9 +359,9 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
               )) : (
                 <tr>
                   <td colSpan={5} className="px-8 py-12 text-center">
-                    <p className="type-body">{skills.length === 0 ? 'No target skills configured.' : 'No skills match these filters.'}</p>
+                    <p className="type-body">{skills.length === 0 ? t('targetSkills.empty') : t('targetSkills.noSkillMatches')}</p>
                     <p className="type-caption mt-1 text-ui-text-muted">
-                      {skills.length === 0 ? 'Create or import a skill to add target-scoped prompt context.' : 'Adjust the search text or status filter.'}
+                      {skills.length === 0 ? t('targetSkills.emptyHelp') : t('targetSkills.noSkillMatchesHelp')}
                     </p>
                   </td>
                 </tr>

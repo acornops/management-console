@@ -43,8 +43,8 @@ describe('Target skills editor dialog', () => {
   it('keeps the inventory actions and toggle aligned to the MCP server table pattern', () => {
     expect(targetSkillsInventory).toContain('data-target-skill-primary-actions="true"');
     expect(targetSkillsInventory).toContain('<MoreVertical className="h-4 w-4" aria-hidden="true" />');
-    expect(targetSkillsInventory).toContain('<th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">Actions</th>');
-    expect(targetSkillsInventory).toContain('<th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Validation</th>');
+    expect(targetSkillsInventory).toContain("<th scope=\"col\" className=\"type-label px-4 py-5 text-right sm:px-6 lg:px-8\">{t('targetSkills.actionsColumn')}</th>");
+    expect(targetSkillsInventory).toContain("<th scope=\"col\" className=\"type-label px-4 py-5 sm:px-6 lg:px-8\">{t('targetSkills.assistantStateColumn')}</th>");
     expect(targetSkillsInventory).toContain("canEditSkills ? 'Edit skill' : 'View skill'");
     expect(targetSkillsInventory).toContain('role="switch"');
     expect(targetSkillsInventory).toContain("skill.enabled ? 'translate-x-[22px]' : 'translate-x-1'");

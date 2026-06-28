@@ -1,4 +1,5 @@
 import { 
+  BotMessageSquare,
   Terminal, 
   Activity, 
   Layout,
@@ -54,6 +55,7 @@ import {
 } from 'lucide-react';
 
 export const ICONS = {
+  BotMessageSquare,
   Terminal,
   Activity,
   Layout,

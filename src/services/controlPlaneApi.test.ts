@@ -156,6 +156,28 @@ describe('controlPlaneApi', () => {
     );
   });
 
+  it('builds target issue summary queries', async () => {
+    requestJson.mockResolvedValue({
+      total: 3,
+      active: 2,
+      recovering: 1,
+      critical: 1,
+      warning: 2,
+      info: 0
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.getTargetIssueSummary('workspace 1', 'target/1')).resolves.toEqual({
+      total: 3,
+      active: 2,
+      recovering: 1,
+      critical: 1,
+      warning: 2,
+      info: 0
+    });
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/workspaces/workspace%201/targets/target%2F1/issues/summary');
+  });
+
   it('builds issue detail and observation queries', async () => {
     requestJson
       .mockResolvedValueOnce({ id: 'issue/1', title: 'Pod unhealthy' })
@@ -205,6 +227,33 @@ describe('controlPlaneApi', () => {
     });
     expect(requestJson).toHaveBeenCalledWith('/api/v1/workspaces/workspace-1/kubernetes-clusters?limit=5&q=demo&status=online');
     expect(historySpy).not.toHaveBeenCalled();
+  });
+
+  it('requests target assistant capabilities preview for the selected run mode', async () => {
+    requestJson.mockResolvedValue({
+      workspaceId: 'workspace 1',
+      targetId: 'target/1',
+      targetType: 'virtual_machine',
+      toolAccessMode: 'read_write',
+      confirmationRequiredForWrite: true,
+      writeUnavailableReason: null,
+      toolSummary: {
+        totalAllowed: 1,
+        nativeAllowed: 0,
+        readAllowed: 0,
+        writeAllowed: 1
+      },
+      skillSummary: { totalAvailable: 0 },
+      tools: [],
+      skills: []
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await controlPlaneApi.getTargetAssistantCapabilitiesPreview('workspace 1', 'target/1', 'read_write');
+
+    expect(requestJson).toHaveBeenCalledWith(
+      '/api/v1/workspaces/workspace%201/targets/target%2F1/assistant/capabilities-preview?toolAccessMode=read_write'
+    );
   });
 
   it('builds batch metrics history queries and normalizes nullable points by cluster', async () => {

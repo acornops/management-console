@@ -4,6 +4,7 @@ import { Button } from '@/components/common/Button';
 import { ICONS, THEME_CLASSES } from '@/constants';
 import KubernetesClusterDetail from '@/features/kubernetes-cluster-detail/KubernetesClusterDetail';
 import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
+import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { KubernetesCluster, Workspace } from '@/types';
 import { ClusterSubview } from '@/utils/routes';
 
@@ -13,6 +14,7 @@ interface KubernetesClusterDetailPageProps {
   currentUserEmail?: string;
   activeSubview?: ClusterSubview;
   clusterChatController: TargetChatController | null;
+  issueSummary: ControlPlaneTargetIssueSummary | null;
   isDark: boolean;
   workspaces: Workspace[];
   onOpenInstallModal: (clusterId: string) => void;
@@ -33,6 +35,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   currentUserEmail,
   activeSubview,
   clusterChatController,
+  issueSummary,
   isDark,
   workspaces,
   onOpenInstallModal,
@@ -68,6 +71,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
             <KubernetesClusterDetail
               cluster={selectedCluster}
               chatController={clusterChatController}
+              issueSummary={issueSummary}
               requestedView={requestedClusterView}
               currentUserRole={
                 selectedWorkspace

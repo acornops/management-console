@@ -8,6 +8,7 @@ import { OverviewView } from '@/features/kubernetes-cluster-detail/components/de
 import { ResourcesView } from '@/features/kubernetes-cluster-detail/components/detail/views/ResourcesView';
 import { TargetSkillsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsView';
 import { TargetToolsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetToolsView';
+import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
 import { createMarkdownComponents } from '@/features/kubernetes-cluster-detail/lib/markdown';
 import { KubernetesClusterDetailProps, View } from '@/features/kubernetes-cluster-detail/types';
 import { fadeTransition } from '@/lib/motion';
@@ -84,6 +85,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   currentWorkspacePermissions,
   workspaceName,
   chatController,
+  issueSummary,
   isDark,
   onSyncTools,
   onUpdateName,
@@ -215,6 +217,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             {activeView === 'overview' && (
               <OverviewView
                 cluster={cluster}
+                issueSummary={issueSummary}
                 isDark={isDark}
                 onOpenCopilot={onOpenCopilot}
               />
@@ -263,6 +266,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 isConversationOwner={isActiveSessionOwner}
                 conversationNotice={conversationNotice}
                 recentActivityWarning={recentActivityWarning}
+                canRequestWriteRuns={canRequestWriteRuns}
                 canApproveWriteActions={canRequestWriteRuns}
                 canCancelRuns={canCancelRuns}
                 canDeleteSessions={canDeleteSessions}
@@ -282,7 +286,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 runTracesByRunId={runTracesByRunId}
                 sessionAssistantStatuses={sessionAssistantStatuses}
                 transcriptRef={transcriptRef}
-                footerKey={canRequestWriteRuns ? undefined : 'chat.footerReadOnlyRole'}
+                footerKey={resolveClusterChatFooterKey(cluster, canRequestWriteRuns)}
                 onChatScroll={handleChatScroll}
                 onLoadEarlierMessages={handleLoadEarlierMessages}
                 onInputChange={setInputValue}

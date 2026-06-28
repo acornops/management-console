@@ -486,13 +486,15 @@ export interface WorkspaceAuditEvent {
 
 export type LlmProvider = 'openai' | 'anthropic' | 'gemini';
 export type ReasoningSummaryMode = 'off' | 'auto' | 'concise' | 'detailed';
-export type ReasoningEffort = 'default' | 'low' | 'medium' | 'high';
+export type ReasoningEffort = 'off' | 'low' | 'medium' | 'high';
 
 export interface WorkspaceAiProviderStatus {
   provider: LlmProvider;
   configured: boolean;
   enabled: boolean;
 }
+
+export type LlmProviderModels = Record<LlmProvider, string[]>;
 
 export interface WorkspaceAiSettings {
   workspaceId: string;
@@ -504,8 +506,15 @@ export interface WorkspaceAiSettings {
   allowedReasoningEfforts: ReasoningEffort[];
   reasoningSummariesEnabled: boolean;
   allowedProviders: LlmProvider[];
+  allowedProviderModels: LlmProviderModels;
   allowedModels: string[];
   providers: WorkspaceAiProviderStatus[];
+}
+
+export interface ChatRuntimeSelection {
+  provider: LlmProvider;
+  model: string;
+  reasoningEffort: ReasoningEffort;
 }
 
 export interface MCPIntegration {

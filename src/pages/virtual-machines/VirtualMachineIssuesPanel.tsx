@@ -4,18 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { ICONS } from '@/constants';
 import { issueStatusTone } from '@/pages/issues/issueUi';
-import type { ControlPlaneIssueItem, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
-import {
-  findingSeverityTone,
-  getFindingSeverity
-} from '@/pages/virtual-machines/virtualMachineUi';
+import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
+import { issueSeverityTone } from '@/pages/virtual-machines/virtualMachineUi';
 
 interface VirtualMachineIssuesPanelProps {
-  selected: ControlPlaneVirtualMachine;
-  findings: Record<string, unknown>[];
   issues: ControlPlaneIssueItem[] | null;
+  issueSummary: ControlPlaneTargetIssueSummary | null;
   isLoading: boolean;
-  onOpenFindingTriage: (finding?: Record<string, unknown>) => void;
+  issueLoadFailed: boolean;
   onOpenIssueTriage: (issue: ControlPlaneIssueItem) => void;
 }
 
@@ -34,11 +30,10 @@ function issueSeverityRank(severity: ControlPlaneIssueItem['severity']): number 
 }
 
 export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps> = ({
-  selected,
-  findings,
   issues,
+  issueSummary,
   isLoading,
-  onOpenFindingTriage,
+  issueLoadFailed,
   onOpenIssueTriage
 }) => {
   const { t } = useTranslation();
@@ -48,14 +43,18 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
     return issueTimestamp(right) - issueTimestamp(left);
   });
   const hasIssueRows = issues !== null;
-  const useIssueCounts = hasIssueRows;
-  const issueCount = useIssueCounts ? reportedIssues.length : findings.length;
-  const criticalIssues = useIssueCounts
-    ? reportedIssues.filter((issue) => issue.severity === 'critical').length
-    : findings.filter((finding) => getFindingSeverity(finding) === 'critical').length;
-  const warningIssues = useIssueCounts
-    ? reportedIssues.filter((issue) => issue.severity === 'warning').length
-    : findings.filter((finding) => getFindingSeverity(finding) === 'warning').length;
+  const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);
+  const criticalIssues = issueSummary
+    ? issueSummary.critical
+    : hasIssueRows
+      ? reportedIssues.filter((issue) => issue.severity === 'critical').length
+    : 0;
+  const warningIssues = issueSummary
+    ? issueSummary.warning
+    : hasIssueRows
+      ? reportedIssues.filter((issue) => issue.severity === 'warning').length
+    : 0;
+  const shouldShowIssueLoadFailure = issueLoadFailed && (!issueSummary || issueSummary.total > 0);
 
   return (
     <section className="mb-10 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
@@ -121,7 +120,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       <p className="type-body mt-1">{issue.reason || issue.summary}</p>
                     </td>
                     <td className="px-5 py-4 align-top">
-                      <span className={`type-micro-label rounded-full px-2.5 py-1 ${findingSeverityTone(issue.severity)}`}>
+                      <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>
                         {t(`issues.severity.${issue.severity}`)}
                       </span>
                     </td>
@@ -147,7 +146,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
             {reportedIssues.map((issue) => (
               <article key={issue.id} className="p-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`type-micro-label rounded-full px-2.5 py-1 ${findingSeverityTone(issue.severity)}`}>
+                  <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>
                     {t(`issues.severity.${issue.severity}`)}
                   </span>
                   <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
@@ -167,7 +166,15 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
             ))}
           </div>
         </>
-      ) : hasIssueRows || findings.length === 0 ? (
+      ) : shouldShowIssueLoadFailure ? (
+        <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
+          <div className="rounded-md border border-status-warning/20 bg-status-warning-soft p-3 text-status-warning-text">
+            <ICONS.AlertTriangle className="h-5 w-5" />
+          </div>
+          <h2 className="type-row-title mt-4">{t('virtualMachines.overview.issueLoadFailedTitle')}</h2>
+          <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.issueLoadFailedBody')}</p>
+        </div>
+      ) : (
         <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
           <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
             <ICONS.CheckCircle2 className="h-5 w-5" />
@@ -175,75 +182,6 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
           <h2 className="type-row-title mt-4">{t('virtualMachines.overview.noIssuesTitle')}</h2>
           <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.noIssuesBody')}</p>
         </div>
-      ) : (
-        <>
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-ui-border">
-                  <th className="type-label px-5 py-3 text-left">{t('clusterOverview.finding')}</th>
-                  <th className="type-label px-5 py-3 text-left">{t('clusterOverview.severity')}</th>
-                  <th className="type-label px-5 py-3 text-left">{t('virtualMachines.overview.source')}</th>
-                  <th className="type-label px-5 py-3 text-left">{t('clusterOverview.updated')}</th>
-                  <th className="type-label px-5 py-3 text-right">{t('clusterOverview.action')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {findings.map((finding, index) => {
-                  const severity = getFindingSeverity(finding);
-                  return (
-                    <tr key={String(finding.findingId || index)} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                      <td className="max-w-[34rem] px-5 py-4">
-                        <p className="type-micro-label">{t('virtualMachines.overview.snapshotFinding')}</p>
-                        <h2 className="type-row-title mt-2">{String(finding.title || t('virtualMachines.overview.findingFallback'))}</h2>
-                        <p className="type-body mt-1">{String(finding.message || '')}</p>
-                      </td>
-                      <td className="px-5 py-4 align-top">
-                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${findingSeverityTone(severity)}`}>
-                          {t(`issues.severity.${severity}`)}
-                        </span>
-                      </td>
-                      <td className="type-caption px-5 py-4 align-top">
-                        {String(finding.source || finding.category || 'host')}
-                      </td>
-                      <td className="type-caption px-5 py-4 align-top">
-                        {String(finding.timestamp || selected.latestSnapshot?.timestamp || selected.updatedAt)}
-                      </td>
-                      <td className="px-5 py-4 align-top text-right">
-                        <Button onClick={() => onOpenFindingTriage(finding)} variant="accent" size="md">
-                          <Terminal className="h-4 w-4" />
-                          {t('clusterOverview.runTriage')}
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="divide-y divide-ui-border md:hidden">
-            {findings.map((finding, index) => {
-              const severity = getFindingSeverity(finding);
-              return (
-                <article key={String(finding.findingId || index)} className="p-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${findingSeverityTone(severity)}`}>
-                      {t(`issues.severity.${severity}`)}
-                    </span>
-                    <span className="type-caption">{String(finding.source || finding.category || 'host')}</span>
-                  </div>
-                  <h2 className="type-row-title mt-4">{String(finding.title || t('virtualMachines.overview.findingFallback'))}</h2>
-                  <p className="type-body mt-2">{String(finding.message || '')}</p>
-                  <Button onClick={() => onOpenFindingTriage(finding)} variant="accent" size="md" className="mt-4">
-                    <Terminal className="h-4 w-4" />
-                    {t('clusterOverview.runTriage')}
-                  </Button>
-                </article>
-              );
-            })}
-          </div>
-        </>
       )}
     </section>
   );

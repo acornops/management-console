@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ChevronRight, CircleDashed, MessageSquare, Wrench } from 'lucide-react';
+import { BookOpen, ChevronRight, CircleDashed, MessageSquare, Wrench } from 'lucide-react';
 import { formatRunUsageDetail, getTraceActivityLabel } from '@/features/kubernetes-cluster-detail/lib/trace-utils';
 import { LiveRunTrace, RunTraceTimelineEvent } from '@/features/kubernetes-cluster-detail/types';
 
@@ -14,6 +14,7 @@ interface TraceFooterProps {
 }
 
 function inferTimelineStepType(label: string): RunTraceTimelineEvent['type'] {
+  if (label.startsWith('Skill context ') || label.startsWith('Loading skill context:')) return 'skill';
   return label.startsWith('Tool call ') || label.startsWith('Approval ') ? 'tool' : 'step';
 }
 
@@ -80,6 +81,12 @@ function getTimelineEventMeta(event: RunTraceTimelineEvent): string {
     return 'Function tool';
   }
 
+  if (event.type === 'skill') {
+    if (event.status === 'success') return 'Skill context · Loaded';
+    if (event.status === 'error') return 'Skill context · Unavailable';
+    return 'Skill context';
+  }
+
   if (event.status === 'success') return 'Done';
   if (event.status === 'error') return 'Attention';
   return 'Progress';
@@ -100,6 +107,25 @@ function getTimelineMarkerClass(event: RunTraceTimelineEvent): string {
   return 'bg-accent';
 }
 
+function formatCountedLabel(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function formatCompactSkillSummary(skillLoads: LiveRunTrace['skillLoads'] = []): string | undefined {
+  if (skillLoads.length === 0) return undefined;
+
+  const loaded = skillLoads.filter((skillLoad) => skillLoad.status === 'loaded').length;
+  const failed = skillLoads.filter((skillLoad) => skillLoad.status === 'failed').length;
+  const loading = skillLoads.filter((skillLoad) => skillLoad.status === 'loading').length;
+  const parts = [
+    loaded > 0 ? `${formatCountedLabel(loaded, 'skill context', 'skill contexts')} loaded` : undefined,
+    failed > 0 ? `${formatCountedLabel(failed, 'skill context', 'skill contexts')} unavailable` : undefined,
+    loading > 0 ? `${formatCountedLabel(loading, 'skill context', 'skill contexts')} loading` : undefined
+  ].filter(Boolean);
+
+  return parts.join(', ');
+}
+
 /**
  * Shows compact and expandable reasoning details attached to one assistant message.
  */
@@ -116,6 +142,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   const isInProgress = trace.status === 'connecting' || trace.status === 'running';
   const statusLabel = getTraceActivityLabel(trace);
   const completedToolCalls = trace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length;
+  const skillLoads = trace.skillLoads || [];
   const reasoningSummaryCount = trace.reasoningSummaries?.length || 0;
   const compactReasoningSummary = isInProgress && !suppressCompactReasoningSummary
     ? trace.activeReasoningSummary?.trim()
@@ -129,11 +156,13 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
     trace.toolCalls.length > 0
       ? `${completedToolCalls} of ${trace.toolCalls.length} function calls complete`
       : 'No function tool calls';
+  const compactSkillSummary = formatCompactSkillSummary(skillLoads);
   const activitySummary = trace.status === 'connecting'
     ? 'Waiting for progress'
     : [
         `${trace.steps.length} steps`,
         reasoningSummaryCount > 0 ? `${reasoningSummaryCount} summaries` : undefined,
+        compactSkillSummary,
         compactToolSummary,
         trace.status === 'completed' ? usageDetail : undefined
       ].filter(Boolean).join(' · ');
@@ -215,6 +244,8 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                           <MessageSquare className={`h-3.5 w-3.5 ${getTimelineEventToneClass(event)}`} />
                         ) : event.type === 'tool' ? (
                           <Wrench className={`h-3.5 w-3.5 ${getTimelineEventToneClass(event)}`} />
+                        ) : event.type === 'skill' ? (
+                          <BookOpen className={`h-3.5 w-3.5 ${getTimelineEventToneClass(event)}`} />
                         ) : (
                           <span className={`h-2 w-2 rounded-full ${getTimelineMarkerClass(event)}`} />
                         )}

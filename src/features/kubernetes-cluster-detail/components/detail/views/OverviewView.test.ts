@@ -28,21 +28,30 @@ describe('cluster overview metric history loading', () => {
   });
 });
 
-describe('cluster overview findings command signal copy', () => {
-  it('keeps the findings header scoped while the body tells operators what to do next', () => {
+describe('cluster overview issue command signal copy', () => {
+  it('keeps the issue header scoped while the body tells operators what to do next', () => {
     expect(overviewView).toContain("t('clusterOverview.activeIssuesScope'");
     expect(overviewView).toContain("t('clusterOverview.activeIssuesBody', { issues: issueCount, critical: criticalIssues, warning: warningIssues })");
     expect(overviewView).not.toContain("t('clusterOverview.activeIssuesBody', { pods: podCount, resources: scopedResourceCount })");
   });
 
-  it('keeps loaded durable issues as the primary overview source instead of falling back to raw findings', () => {
-    expect(overviewView).toContain('const useIssueCounts = hasIssueRows;');
-    expect(overviewView).toContain(') : hasIssueRows ? (');
+  it('uses durable issues as the only overview issue source', () => {
+    expect(overviewView).toContain('const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);');
+    expect(overviewView).toContain("setIssueLoadStatus('error');");
+    expect(overviewView).not.toContain('listClusterFindings');
+    expect(overviewView).not.toContain('reportedFindings');
   });
 
-  it('labels durable issue rows separately from raw snapshot finding rows', () => {
+  it('uses exact durable issue summary counts for overview header pills when available', () => {
+    expect(overviewView).toContain('issueSummary: ControlPlaneTargetIssueSummary | null;');
+    expect(overviewView).toContain('? issueSummary.critical');
+    expect(overviewView).toContain('? issueSummary.warning');
+  });
+
+  it('renders durable issue rows without raw snapshot finding fallback rows', () => {
     expect(overviewView).toContain("t('clusterOverview.issue')");
-    expect(overviewView).toContain("t('clusterOverview.finding')");
-    expect(overviewView).toContain("t('issues.originFinding')");
+    expect(overviewView).not.toContain("t('clusterOverview.finding')");
+    expect(overviewView).not.toContain("t('issues.originFinding')");
+    expect(overviewView).toContain("t('clusterOverview.issueLoadFailedTitle')");
   });
 });

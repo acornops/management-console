@@ -13,7 +13,10 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
   it('does not retain credential form state across workspace changes', () => {
     expect(workspaceAiSettingsPage).toContain('const EMPTY_PROVIDER_KEYS');
     expect(workspaceAiSettingsPage).toContain('const workspaceIdRef = useRef(workspace.id);');
+    expect(workspaceAiSettingsPage).toContain('const isMountedRef = useRef(true);');
     expect(workspaceAiSettingsPage).toContain('workspaceIdRef.current = workspace.id;');
+    expect(workspaceAiSettingsPage).toContain('isMountedRef.current = true;');
+    expect(workspaceAiSettingsPage).toContain('isMountedRef.current = false;');
     expect(workspaceAiSettingsPage).toContain('const currentAiSettings = aiSettings?.workspaceId === workspace.id ? aiSettings : null;');
     expect(workspaceAiSettingsPage).toContain('setAiSettings(null);');
     expect(workspaceAiSettingsPage).toContain('setBehaviorDraft(DEFAULT_BEHAVIOR_DRAFT);');
@@ -28,13 +31,14 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
 
   it('ignores stale workspace mutation responses and serializes writes', () => {
     expect(workspaceAiSettingsPage).toContain('const isSaving = Boolean(savingAction);');
-    expect(workspaceAiSettingsPage.match(/workspaceIdRef\.current !== workspace\.id/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(workspaceAiSettingsPage).toContain('const isCurrentWorkspaceRequest = () => isMountedRef.current && workspaceIdRef.current === workspace.id;');
+    expect(workspaceAiSettingsPage.match(/!isCurrentWorkspaceRequest\(\)/g)?.length).toBeGreaterThanOrEqual(3);
     expect(workspaceAiSettingsPage).toContain('if (!canSaveBehavior || isSaving) return;');
     expect(workspaceAiSettingsPage).toContain('if (!apiKey || !canManageAiSettings || !currentAiSettings || isSaving) return;');
     expect(workspaceAiSettingsPage).toContain('if (!canManageAiSettings || !currentAiSettings || isSaving) return;');
     expect(workspaceAiSettingsPage).toContain("setSavingAction('behavior');");
     expect(workspaceAiSettingsPage).toContain('disabled={!canSaveBehavior || isSaving}');
-    expect(workspaceAiSettingsPage).toContain('if (workspaceIdRef.current === workspace.id) setSavingAction(\'\');');
+    expect(workspaceAiSettingsPage).toContain('if (isCurrentWorkspaceRequest()) setSavingAction(\'\');');
   });
 
   it('keeps credential state write-only and explicit about add versus rotate actions', () => {
@@ -56,11 +60,12 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).not.toContain('secretName');
   });
 
-  it('mirrors backend provider/model filtering with a custom-model fallback', () => {
-    expect(workspaceAiSettingsPage).toContain('const providerModels = allowedModels.filter((model) => modelBelongsToProvider(model, provider));');
-    expect(workspaceAiSettingsPage).toContain('return providerModels.length > 0 ? providerModels : allowedModels;');
+  it('uses provider-scoped model ownership from the control-plane contract', () => {
+    expect(workspaceAiSettingsPage).toContain('function modelsForProvider(settings: WorkspaceAiSettings | null, provider: LlmProvider): string[]');
+    expect(workspaceAiSettingsPage).toContain('return settings?.allowedProviderModels[provider] || [];');
     expect(workspaceAiSettingsPage).toContain('providerModels.includes(behaviorDraft.defaultModel)');
-    expect(workspaceAiSettingsPage).not.toContain("t('workspaceAiSettings.noProviderModels')");
+    expect(workspaceAiSettingsPage).not.toContain('function modelBelongsToAnyProvider(model: string): boolean');
+    expect(workspaceAiSettingsPage).not.toContain('modelBelongsToProvider');
   });
 
   it('uses one behavior save workflow for provider, model, and reasoning settings', () => {
@@ -73,9 +78,9 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain('reasoningSummaryMode: behaviorDraft.reasoningSummaryMode');
     expect(workspaceAiSettingsPage).toContain('reasoningEffort: behaviorDraft.reasoningEffort');
     expect(workspaceAiSettingsPage).toContain("showToast(t('workspaceAiSettings.settingsSaved'))");
+    expect(workspaceAiSettingsPage).toContain('className="w-full sm:w-36"');
+    expect(workspaceAiSettingsPage).toContain('<ICONS.RefreshCw className="h-4 w-4 animate-spin" />');
     expect(workspaceAiSettingsPage).not.toContain('const handleSaveDefaults = async () => {');
-    expect(workspaceAiSettingsPage).not.toContain('workspaceAiSettings.saveDefaults');
-    expect(workspaceAiSettingsPage).not.toContain('workspaceAiSettings.defaultsSaved');
   });
 
   it('keeps readiness and reasoning helper areas stable while values change', () => {
@@ -83,11 +88,16 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain("description={t('workspaceAiSettings.readinessBody')}");
     expect(workspaceAiSettingsPage).toContain('const readinessNotice = !canManageAiSettings');
     expect(workspaceAiSettingsPage).toContain('const savedDefaultProvider = currentAiSettings?.defaultProvider ?? behaviorDraft.defaultProvider;');
+    expect(workspaceAiSettingsPage).toContain('const savedReasoningEffort = currentAiSettings?.reasoningEffort ?? behaviorDraft.reasoningEffort;');
     expect(workspaceAiSettingsPage).toContain('providerStatusByProvider.get(savedDefaultProvider)');
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessReady')");
-    expect(workspaceAiSettingsPage).not.toContain('workspaceAiSettings.unsavedBehaviorChanges');
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningSummaryStatus'");
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningSummaryUnavailable')");
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningEffortStatus'");
+    expect(workspaceAiSettingsPage).toContain('t(reasoningEffortLabel(savedReasoningEffort))');
     expect(workspaceAiSettingsPage).toContain('className="min-h-14"');
-    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningEffortInactive')");
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningEffortOffHelp')");
+    expect(workspaceAiSettingsPage).toContain('<label className="block">\n                    <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">\n                      {t(\'workspaceAiSettings.reasoningEffortLabel\')}');
     expect(workspaceAiSettingsPage).toContain('className="mt-2 min-h-10 text-xs font-medium leading-5 text-ui-text-muted"');
   });
 

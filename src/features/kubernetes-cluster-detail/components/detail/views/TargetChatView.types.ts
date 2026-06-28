@@ -1,12 +1,13 @@
 import type React from 'react';
 import type { Components } from 'react-markdown';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
-import type { ChatMessage, ChatSession, KubernetesCluster } from '@/types';
+import type { ChatMessage, ChatRuntimeSelection, ChatSession, KubernetesCluster } from '@/types';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
 export interface TargetChatViewProps {
   target: KubernetesCluster;
   isDark: boolean;
+  titleKey?: string;
   descriptionKey?: string;
   promptTitleKey?: string;
   promptBodyKey?: string;
@@ -19,6 +20,7 @@ export interface TargetChatViewProps {
   isConversationOwner: boolean;
   conversationNotice: string | null;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
+  canRequestWriteRuns: boolean;
   canApproveWriteActions: boolean;
   canCancelRuns: boolean;
   canDeleteSessions: boolean;
@@ -40,13 +42,13 @@ export interface TargetChatViewProps {
   onChatScroll: () => void;
   onLoadEarlierMessages: () => void | Promise<void>;
   onInputChange: (value: string) => void;
-  onSend: (overrideInput?: string) => void | Promise<void>;
-  onEditLastUserMessage: (messageId: string, nextContent: string) => void | Promise<void>;
+  onSend: (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => void | Promise<void>;
+  onEditLastUserMessage: (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => void | Promise<void>;
   onApprove: (approvalId: string) => void | Promise<void>;
   onReject: (approvalId: string) => void | Promise<void>;
   onSelectSession: (sessionId: string) => void;
   onCreateSession: () => void;
-  onDismissRecentActivityWarning: () => void;
+  onDismissRecentActivityWarning: (sessionId: string) => void;
   onOpenRecentActivitySession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => Promise<void>;
   onCancelRun: () => Promise<void>;

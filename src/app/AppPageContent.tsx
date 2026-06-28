@@ -9,7 +9,7 @@ import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { fadeTransition } from '@/lib/motion';
 import type { SettingsTab } from '@/pages/SettingsPage';
@@ -168,6 +168,7 @@ interface AppPageContentProps {
   language: AppLanguageCode;
   languageOptions: AppLanguageOption[];
   route: AppRoute;
+  selectedTargetIssueSummary: ControlPlaneTargetIssueSummary | null;
   user: User;
   workspaceContext: Workspace | undefined;
   workspaceContextId: string | null;
@@ -215,6 +216,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   language,
   languageOptions,
   route,
+  selectedTargetIssueSummary,
   user,
   workspaceContext,
   workspaceContextId,
@@ -411,6 +413,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}
               onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
               pendingTargetPrompt={pendingVmTargetPrompt}
+              issueSummary={route.kind === 'workspaceVirtualMachineDetail' ? selectedTargetIssueSummary : null}
               onPendingTargetPromptConsumed={onPendingVmTargetPromptConsumed}
             />
           )}
@@ -470,6 +473,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               clusterChatController={clusterChatController}
               currentUserEmail={user.email}
               activeSubview={activeClusterSubview}
+              issueSummary={selectedTargetIssueSummary}
               isDark={isDark}
               workspaces={workspaces}
               onOpenInstallModal={onInstallAgent}

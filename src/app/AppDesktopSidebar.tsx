@@ -20,9 +20,9 @@ interface AppDesktopSidebarProps {
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;
   activeResourceNav: ActiveResourceNav;
-  selectedClusterFindingCount: number;
+  selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
-  selectedVmFindingCount: number;
+  selectedVmIssueCount: number;
   theme: 'light' | 'dark';
   isDark: boolean;
   isAccountMenuOpen: boolean;
@@ -61,9 +61,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   isClusterSidebar,
   isVirtualMachineSidebar,
   activeResourceNav,
-  selectedClusterFindingCount,
+  selectedClusterIssueCount,
   clusterAssistantNavStatus,
-  selectedVmFindingCount,
+  selectedVmIssueCount,
   theme,
   isDark,
   isAccountMenuOpen,
@@ -403,7 +403,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   ['mcpServers', 'clusterMcpServers', t('app.mcpServers'), ICONS.Server],
                   ['skills', 'clusterSkills', t('app.skills'), ICONS.BookOpen],
                   ['tools', 'clusterTools', t('app.tools'), ICONS.Wrench],
-                  ['chat', 'clusterChat', t('app.aiChat'), ICONS.Terminal]
+                  ['chat', 'clusterChat', t('app.clusterAssistant'), ICONS.BotMessageSquare]
                 ] as Array<[ClusterSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
                   <SidebarNavButton
                     key={tab}
@@ -412,7 +412,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
                     label={label}
                     onClick={() => onNavigateClusterSubview(tab)}
-                    badge={tab === 'overview' && selectedClusterFindingCount > 0 ? selectedClusterFindingCount : undefined}
+                    badge={tab === 'overview' && selectedClusterIssueCount > 0 ? selectedClusterIssueCount : undefined}
                     assistantStatus={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
                     assistantStatusLabel={tab === 'chat' && clusterAssistantNavStatus !== 'idle'
                       ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`)
@@ -460,7 +460,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   ['mcpServers', 'vmMcpServers', t('app.mcpServers'), ICONS.Server],
                   ['skills', 'vmSkills', t('app.skills'), ICONS.BookOpen],
                   ['tools', 'vmTools', t('app.tools'), ICONS.Wrench],
-                  ['chat', 'vmChat', t('app.aiChat'), ICONS.Terminal]
+                  ['chat', 'vmChat', t('app.vmAssistant'), ICONS.BotMessageSquare]
                 ] as Array<[VmSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
                   <SidebarNavButton
                     key={tab}
@@ -469,7 +469,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
                     label={label}
                     onClick={() => onNavigateVmSubview(tab)}
-                    badge={tab === 'overview' && selectedVmFindingCount > 0 ? selectedVmFindingCount : undefined}
+                    badge={tab === 'overview' && selectedVmIssueCount > 0 ? selectedVmIssueCount : undefined}
                   />
                 ))}
               </SidebarSection>
