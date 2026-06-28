@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, Check, ChevronDown, ChevronRight, FileText, Image as ImageIcon, Loader2, Plus, Square, X } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
-import { AssistantToolPreviewControl } from '@/features/kubernetes-cluster-detail/components/detail/views/AssistantToolPreviewControl';
+import { AssistantCapabilityPreviewControl } from '@/features/kubernetes-cluster-detail/components/detail/views/AssistantCapabilityPreviewControl';
 import { ChatComposerNotice } from '@/features/kubernetes-cluster-detail/components/detail/views/ChatComposerNotice';
 import { formatAttachmentSize, providerLabel } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
 import type { TargetChatViewBodyProps } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatViewBody';
@@ -11,8 +11,8 @@ import type { ReasoningEffort } from '@/types';
 
 type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
   | 'allowedReasoningOptions'
-  | 'assistantToolPreview'
-  | 'assistantToolPreviewError'
+  | 'assistantCapabilitiesPreview'
+  | 'assistantCapabilitiesPreviewError'
   | 'canChat'
   | 'canCancelActiveRun'
   | 'canPost'
@@ -32,7 +32,7 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
   | 'handleModelChange'
   | 'hasComposerSubmitPayload'
   | 'inputValue'
-  | 'isAssistantToolPreviewLoading'
+  | 'isAssistantCapabilitiesPreviewLoading'
   | 'isCancellingRun'
   | 'isComposerRuntimeUnavailable'
   | 'isModelMenuOpen'
@@ -70,8 +70,8 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
 
 export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   allowedReasoningOptions,
-  assistantToolPreview,
-  assistantToolPreviewError,
+  assistantCapabilitiesPreview,
+  assistantCapabilitiesPreviewError,
   canChat,
   canCancelActiveRun,
   canPost,
@@ -91,7 +91,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   handleModelChange,
   hasComposerSubmitPayload,
   inputValue,
-  isAssistantToolPreviewLoading,
+  isAssistantCapabilitiesPreviewLoading,
   isCancellingRun,
   isComposerRuntimeUnavailable,
   isModelMenuOpen,
@@ -228,11 +228,11 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 />
                 <span className="min-w-0 flex-1" aria-hidden="true" />
                 <div className="inline-flex h-8 items-center rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60">
-                  <AssistantToolPreviewControl
+                  <AssistantCapabilityPreviewControl
                     canChat={canChat}
-                    isLoading={isAssistantToolPreviewLoading}
-                    error={assistantToolPreviewError}
-                    preview={assistantToolPreview}
+                    isLoading={isAssistantCapabilitiesPreviewLoading}
+                    error={assistantCapabilitiesPreviewError}
+                    preview={assistantCapabilitiesPreview}
                     requestedToolAccessMode={requestedToolAccessMode}
                   />
                   <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />

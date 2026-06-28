@@ -22,7 +22,7 @@ import {
   useTargetChatHistoryFocus
 } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
 import type { ChatRuntimeSelection, LlmProvider, ReasoningEffort, WorkspaceAiSettings } from '@/types';
-import type { ControlPlaneTargetAssistantToolPreview } from '@/services/control-plane/types';
+import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   target,
@@ -91,9 +91,9 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const [workspaceAiSettings, setWorkspaceAiSettings] = React.useState<WorkspaceAiSettings | null>(null);
   const [isWorkspaceAiSettingsLoading, setIsWorkspaceAiSettingsLoading] = React.useState(true);
   const [workspaceAiSettingsError, setWorkspaceAiSettingsError] = React.useState('');
-  const [assistantToolPreview, setAssistantToolPreview] = React.useState<ControlPlaneTargetAssistantToolPreview | null>(null);
-  const [isAssistantToolPreviewLoading, setIsAssistantToolPreviewLoading] = React.useState(canChat);
-  const [assistantToolPreviewError, setAssistantToolPreviewError] = React.useState('');
+  const [assistantCapabilitiesPreview, setAssistantCapabilitiesPreview] = React.useState<ControlPlaneTargetAssistantCapabilitiesPreview | null>(null);
+  const [isAssistantCapabilitiesPreviewLoading, setIsAssistantCapabilitiesPreviewLoading] = React.useState(canChat);
+  const [assistantCapabilitiesPreviewError, setAssistantCapabilitiesPreviewError] = React.useState('');
   const [selectedProvider, setSelectedProvider] = React.useState<LlmProvider>('openai');
   const [selectedModel, setSelectedModel] = React.useState('');
   const [selectedEffort, setSelectedEffort] = React.useState<ReasoningEffort>('low');
@@ -483,29 +483,29 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
 
   React.useEffect(() => {
     if (!canChat) {
-      setAssistantToolPreview(null);
-      setAssistantToolPreviewError('');
-      setIsAssistantToolPreviewLoading(false);
+      setAssistantCapabilitiesPreview(null);
+      setAssistantCapabilitiesPreviewError('');
+      setIsAssistantCapabilitiesPreviewLoading(false);
       return;
     }
 
     let cancelled = false;
-    setIsAssistantToolPreviewLoading(true);
-    setAssistantToolPreviewError('');
-    setAssistantToolPreview(null);
-    controlPlaneApi.getTargetAssistantToolPreview(cluster.workspaceId, cluster.id, requestedToolAccessMode)
+    setIsAssistantCapabilitiesPreviewLoading(true);
+    setAssistantCapabilitiesPreviewError('');
+    setAssistantCapabilitiesPreview(null);
+    controlPlaneApi.getTargetAssistantCapabilitiesPreview(cluster.workspaceId, cluster.id, requestedToolAccessMode)
       .then((preview) => {
         if (cancelled) return;
-        setAssistantToolPreview(preview);
+        setAssistantCapabilitiesPreview(preview);
       })
       .catch((error) => {
         if (cancelled) return;
-        setAssistantToolPreview(null);
-        setAssistantToolPreviewError(error instanceof Error ? error.message : t('chat.toolPreviewUnavailable'));
+        setAssistantCapabilitiesPreview(null);
+        setAssistantCapabilitiesPreviewError(error instanceof Error ? error.message : t('chat.capabilityPreviewUnavailable'));
       })
       .finally(() => {
         if (cancelled) return;
-        setIsAssistantToolPreviewLoading(false);
+        setIsAssistantCapabilitiesPreviewLoading(false);
       });
 
     return () => {
@@ -627,12 +627,12 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   return (
     <TargetChatViewBody
       {...{
-        activeRunId, activeSession, activeSessionId, allowedReasoningOptions, assistantMarkdownComponents, assistantToolPreview, assistantToolPreviewError, canApproveWriteActions,
+        activeRunId, activeSession, activeSessionId, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, canApproveWriteActions,
         canCancelActiveRun, canChat, canDeleteSessions, canPost, cluster, composerActionLabel, composerAttachmentNotice,
         composerAttachments, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, deleteSessionError, deleteTargetSession,
         deletingSessionId, desktopHistoryPanelId, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
         handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, historyButtonRef,
-        historyControlLabel, historyPanelRef, inputValue, isAssistantToolPreviewLoading, isCancellingRun, isComposerRuntimeUnavailable, isFileDragActive, isHistoryOpen,
+        historyControlLabel, historyPanelRef, inputValue, isAssistantCapabilitiesPreviewLoading, isCancellingRun, isComposerRuntimeUnavailable, isFileDragActive, isHistoryOpen,
         isLoadingEarlierMessages, isModelMenuOpen, isModelSubmenuOpen, isPanel, isRunActive, isSessionsLoading, isSubmittingEdit, isWorkspaceAiSettingsLoading,
         lastUserMessageIndex, mobileHistoryPanelId, modelMenuPanelId, modelMenuRef, modelSelectorId, modelSubmenuButtonId, modelSubmenuPanelId, newChatUnavailableReason,
         onApprove, onCancelRun, onChatScroll, onClose, onDismissRecentActivityWarning, onInputChange, onLoadEarlierMessages, onMaximize, onOpenRecentActivitySession, onReject,

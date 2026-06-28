@@ -207,33 +207,30 @@ describe('controlPlaneApi', () => {
     expect(historySpy).not.toHaveBeenCalled();
   });
 
-  it('requests target assistant tool preview for the selected run mode', async () => {
+  it('requests target assistant capabilities preview for the selected run mode', async () => {
     requestJson.mockResolvedValue({
       workspaceId: 'workspace 1',
       targetId: 'target/1',
       targetType: 'virtual_machine',
       toolAccessMode: 'read_write',
-      targetSupportsWrite: true,
       confirmationRequiredForWrite: true,
-      approvalTimeoutSeconds: 60,
       writeUnavailableReason: null,
-      summary: {
+      toolSummary: {
         totalAllowed: 1,
-        functionAllowed: 1,
         nativeAllowed: 0,
         readAllowed: 0,
-        writeAllowed: 1,
-        configuredWrite: 1,
-        excludedWrite: 0
+        writeAllowed: 1
       },
-      items: []
+      skillSummary: { totalAvailable: 0 },
+      tools: [],
+      skills: []
     });
     const { controlPlaneApi } = await import('./controlPlaneApi');
 
-    await controlPlaneApi.getTargetAssistantToolPreview('workspace 1', 'target/1', 'read_write');
+    await controlPlaneApi.getTargetAssistantCapabilitiesPreview('workspace 1', 'target/1', 'read_write');
 
     expect(requestJson).toHaveBeenCalledWith(
-      '/api/v1/workspaces/workspace%201/targets/target%2F1/assistant/tool-preview?toolAccessMode=read_write'
+      '/api/v1/workspaces/workspace%201/targets/target%2F1/assistant/capabilities-preview?toolAccessMode=read_write'
     );
   });
 

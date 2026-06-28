@@ -411,6 +411,7 @@ describe('target chat polish contracts', () => {
     expect(assistantTurn).toContain('const hasTraceDetails = Boolean(');
     expect(assistantTurn).toContain('trace.steps.length > 0 ||');
     expect(assistantTurn).toContain('trace.toolCalls.length > 0 ||');
+    expect(assistantTurn).toContain('(trace.skillLoads?.length || 0) > 0 ||');
     expect(assistantTurn).toContain('(trace.reasoningSummaries?.length || 0) > 0 ||');
     expect(assistantTurn).toContain('(trace.timelineEvents?.length || 0) > 0');
     expect(assistantTurn).toContain('{!hasTraceDetails && !shouldRenderCompactStatusOnly && messageActions}');
@@ -449,10 +450,11 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('aria-controls={contentId}');
     expect(traceFooter).not.toContain('AnimatePresence initial={false} mode="wait"');
     expect(traceFooter).toContain('RunTraceTimelineEvent');
-    expect(traceFooter).toContain('MessageSquare, Wrench');
-    expect(traceFooter).toContain('import { ChevronRight, CircleDashed, MessageSquare, Wrench }');
+    expect(traceFooter).toContain('BookOpen, ChevronRight, CircleDashed, MessageSquare, Wrench');
+    expect(traceFooter).toContain('Skill context · Loaded');
     expect(traceFooter).not.toContain('ChevronDown');
     expect(traceFooter).toContain("function inferTimelineStepType(label: string): RunTraceTimelineEvent['type']");
+    expect(traceFooter).toContain("if (label.startsWith('Skill context ') || label.startsWith('Loading skill context:')) return 'skill';");
     expect(traceFooter).toContain("return label.startsWith('Tool call ') || label.startsWith('Approval ') ? 'tool' : 'step';");
     expect(traceFooter).toContain("function inferTimelineToolStatus(toolCall: LiveRunTrace['toolCalls'][number]): RunTraceTimelineEvent['status']");
     expect(traceFooter).toContain("if (toolCall.status === 'running') return 'info';");

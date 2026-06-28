@@ -14,7 +14,7 @@ import type {
   ControlPlaneClusterMetricsHistoryResponse,
   ControlPlaneClusterToolCatalog,
   ControlPlaneClusterToolCatalogItem,
-  ControlPlaneTargetAssistantToolPreview,
+  ControlPlaneTargetAssistantCapabilitiesPreview,
   ControlPlaneTargetSkillDetail,
   ControlPlaneTargetSkillsCatalog,
   ControlPlaneTargetToolsCatalog,
@@ -317,13 +317,13 @@ export const kubernetesClusterApi = {
     );
   },
 
-  async getTargetAssistantToolPreview(
+  async getTargetAssistantCapabilitiesPreview(
     workspaceId: string,
     targetId: string,
     toolAccessMode: 'read_only' | 'read_write'
-  ): Promise<ControlPlaneTargetAssistantToolPreview> {
-    return requestJson<ControlPlaneTargetAssistantToolPreview>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/assistant/tool-preview?toolAccessMode=${encodeURIComponent(toolAccessMode)}`
+  ): Promise<ControlPlaneTargetAssistantCapabilitiesPreview> {
+    return requestJson<ControlPlaneTargetAssistantCapabilitiesPreview>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/assistant/capabilities-preview?toolAccessMode=${encodeURIComponent(toolAccessMode)}`
     );
   },
 

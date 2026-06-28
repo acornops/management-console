@@ -1,4 +1,4 @@
-import { LiveRunTrace, RunTraceReasoningSummary, RunTraceStatus, RunTraceStep, RunTraceTimelineEvent, RunTraceToolCall, RunTraceUsage } from '@/features/kubernetes-cluster-detail/types';
+import { LiveRunTrace, RunTraceReasoningSummary, RunTraceSkillLoad, RunTraceStatus, RunTraceStep, RunTraceTimelineEvent, RunTraceToolCall, RunTraceUsage } from '@/features/kubernetes-cluster-detail/types';
 import { createLocalMessageId } from '@/features/kubernetes-cluster-detail/lib/helpers';
 
 const MAX_TRACE_STEPS = 200;
@@ -228,6 +228,7 @@ export function getTraceActivityLabel(trace: LiveRunTrace): string {
   }
   if (hasUnresolvedApproval) return 'Waiting for approval';
 
+  if ((trace.skillLoads || []).some((skillLoad) => skillLoad.status === 'loading')) return 'Loading skill context';
   if (trace.toolCalls.some((toolCall) => toolCall.status === 'running')) return 'Using tools';
 
   const latestStep = trace.steps.at(-1)?.label || '';
@@ -317,6 +318,40 @@ export function upsertToolCall(
   return {
     ...currentTrace,
     toolCalls: nextToolCalls
+  };
+}
+
+export function upsertSkillLoad(
+  currentTrace: LiveRunTrace,
+  skillRef: string,
+  patch: Partial<RunTraceSkillLoad>
+): LiveRunTrace {
+  const existingSkillLoads = currentTrace.skillLoads || [];
+  const existingIndex = existingSkillLoads.findIndex((skillLoad) => skillLoad.skillRef === skillRef);
+  let nextSkillLoads = [...existingSkillLoads];
+
+  if (existingIndex >= 0) {
+    nextSkillLoads[existingIndex] = {
+      ...nextSkillLoads[existingIndex],
+      ...patch
+    };
+  } else {
+    nextSkillLoads = [
+      ...nextSkillLoads,
+      {
+        skillRef,
+        name: patch.name || skillRef,
+        status: patch.status || 'loading',
+        skillId: patch.skillId,
+        fileCount: patch.fileCount,
+        totalBytes: patch.totalBytes
+      }
+    ];
+  }
+
+  return {
+    ...currentTrace,
+    skillLoads: nextSkillLoads
   };
 }
 

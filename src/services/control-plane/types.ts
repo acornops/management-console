@@ -12,8 +12,9 @@ export type {
   ControlPlaneIssueObservationItem
 } from './issueTypes';
 export type {
-  ControlPlaneTargetAssistantToolPreview,
-  ControlPlaneTargetAssistantToolPreviewItem,
+  ControlPlaneTargetAssistantCapabilitiesPreview,
+  ControlPlaneTargetAssistantCapabilitySkillPreviewItem,
+  ControlPlaneTargetAssistantCapabilityToolPreviewItem,
   ControlPlaneTargetToolConfig,
   ControlPlaneTargetToolDomainFilters,
   ControlPlaneTargetToolItem,

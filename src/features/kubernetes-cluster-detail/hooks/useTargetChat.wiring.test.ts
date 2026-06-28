@@ -11,7 +11,7 @@ describe('target chat controller wiring', () => {
   const appClusterChatRuntime = readFileSync(resolve(root, 'src/app/AppClusterChatRuntime.tsx'), 'utf8');
   const chatView = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'), 'utf8');
   const chatComposer = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatComposer.tsx'), 'utf8');
-  const assistantToolPreviewControl = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/AssistantToolPreviewControl.tsx'), 'utf8');
+  const assistantCapabilityPreviewControl = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/AssistantCapabilityPreviewControl.tsx'), 'utf8');
   const useTargetChat = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/useTargetChat.ts'), 'utf8');
   const targetChatState = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/targetChatState.ts'), 'utf8');
   const chatSubmit = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/hooks/chatSubmit.ts'), 'utf8');
@@ -37,15 +37,17 @@ describe('target chat controller wiring', () => {
     expect(chatComposer).toContain('disabled={isRunActive ? !canCancelActiveRun || isCancellingRun : !canPost || !hasComposerSubmitPayload || isComposerRuntimeUnavailable}');
   });
 
-  it('requests backend-backed tool preview with the same access mode as submissions', () => {
+  it('requests backend-backed capability preview with the same access mode as submissions', () => {
     expect(chatView).toContain("const requestedToolAccessMode = canRequestWriteRuns ? 'read_write' : 'read_only';");
-    expect(chatView).toContain('controlPlaneApi.getTargetAssistantToolPreview(cluster.workspaceId, cluster.id, requestedToolAccessMode)');
-    expect(chatView).toContain('setAssistantToolPreview(null);');
-    expect(chatView).toContain("t('chat.toolPreviewUnavailable')");
-    expect(chatComposer).toContain('<AssistantToolPreviewControl');
-    expect(assistantToolPreviewControl).toContain('preview?.summary.totalAllowed');
-    expect(assistantToolPreviewControl).toContain('preview && !error && !isLoading');
-    expect(assistantToolPreviewControl).toContain('setIsOpen(false);');
+    expect(chatView).toContain('controlPlaneApi.getTargetAssistantCapabilitiesPreview(cluster.workspaceId, cluster.id, requestedToolAccessMode)');
+    expect(chatView).toContain('setAssistantCapabilitiesPreview(null);');
+    expect(chatView).toContain("t('chat.capabilityPreviewUnavailable')");
+    expect(chatComposer).toContain('<AssistantCapabilityPreviewControl');
+    expect(assistantCapabilityPreviewControl).toContain('preview?.toolSummary.totalAllowed');
+    expect(assistantCapabilityPreviewControl).toContain('preview && !error && !isLoading');
+    expect(assistantCapabilityPreviewControl).toContain('const showToolPolicyNote = toolItems.length > 0 || Boolean(writeUnavailableLabel);');
+    expect(assistantCapabilityPreviewControl).toContain('{showToolPolicyNote && (');
+    expect(assistantCapabilityPreviewControl).toContain('setIsOpen(false);');
     expect(clusterDetail).toContain('canRequestWriteRuns={canRequestWriteRuns}');
     expect(clusterChatPanel).toContain('canRequestWriteRuns={canRequestWriteRuns}');
     expect(chatSubmit).toContain("canRequestWriteRuns ? 'read_write' : 'read_only'");

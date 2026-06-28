@@ -149,6 +149,37 @@ describe('chatRunTrace helpers', () => {
     });
   });
 
+  it('restores skill context events separately from tool calls', () => {
+    const trace = buildTraceFromRunEvents(createRun({ status: 'running' }), [
+      createEvent('skill_catalog_available', 1, { count: 1, skills: [{ skill_ref: 'skill_1', name: 'CNPG triage' }] }),
+      createEvent('skill_context_load_started', 2, { skill_ref: 'skill_1', name: 'CNPG triage' }),
+      createEvent('skill_context_loaded', 3, {
+        skill_ref: 'skill_1',
+        skill_id: 'target-skill-1',
+        name: 'CNPG triage',
+        file_count: 2,
+        total_bytes: 128,
+        content_hash: 'sha256:abc'
+      })
+    ]);
+
+    expect(trace.toolCalls).toEqual([]);
+    expect(trace.skillLoads).toEqual([
+      {
+        skillRef: 'skill_1',
+        skillId: 'target-skill-1',
+        name: 'CNPG triage',
+        status: 'loaded',
+        fileCount: 2,
+        totalBytes: 128
+      }
+    ]);
+    expect(trace.timelineEvents?.filter((event) => event.type === 'skill').map((event) => event.label)).toEqual([
+      'Loading skill context: CNPG triage',
+      'Skill context loaded: CNPG triage'
+    ]);
+  });
+
   it('creates and incrementally updates traces from streamed events', () => {
     let trace: LiveRunTrace = createBaseRunTrace('run-1', 'connecting');
     const seenSeq = new Set<number>();

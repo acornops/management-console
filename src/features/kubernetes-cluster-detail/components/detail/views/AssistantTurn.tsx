@@ -123,6 +123,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
     trace && (
       trace.steps.length > 0 ||
       trace.toolCalls.length > 0 ||
+      (trace.skillLoads?.length || 0) > 0 ||
       (trace.reasoningSummaries?.length || 0) > 0 ||
       (trace.timelineEvents?.length || 0) > 0
     )

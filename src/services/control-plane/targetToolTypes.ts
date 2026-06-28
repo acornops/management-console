@@ -33,7 +33,7 @@ export interface ControlPlaneTargetToolsCatalog {
   items: ControlPlaneTargetToolItem[];
 }
 
-export interface ControlPlaneTargetAssistantToolPreviewItem {
+export interface ControlPlaneTargetAssistantCapabilityToolPreviewItem {
   id: string;
   name: string;
   label?: string;
@@ -43,25 +43,31 @@ export interface ControlPlaneTargetAssistantToolPreviewItem {
   source: 'builtin' | 'mcp' | 'provider_native';
 }
 
-export interface ControlPlaneTargetAssistantToolPreview {
+export interface ControlPlaneTargetAssistantCapabilitySkillPreviewItem {
+  id: string;
+  name: string;
+  description: string;
+  source: 'manual' | 'git_import';
+}
+
+export interface ControlPlaneTargetAssistantCapabilitiesPreview {
   workspaceId: string;
   targetId: string;
   targetType: 'kubernetes' | 'virtual_machine';
   toolAccessMode: 'read_only' | 'read_write';
-  targetSupportsWrite: boolean;
   confirmationRequiredForWrite: boolean;
-  approvalTimeoutSeconds: number;
   writeUnavailableReason: 'run_read_only' | 'agent_write_disabled' | null;
-  summary: {
+  toolSummary: {
     totalAllowed: number;
-    functionAllowed: number;
     nativeAllowed: number;
     readAllowed: number;
     writeAllowed: number;
-    configuredWrite: number;
-    excludedWrite: number;
   };
-  items: ControlPlaneTargetAssistantToolPreviewItem[];
+  skillSummary: {
+    totalAvailable: number;
+  };
+  tools: ControlPlaneTargetAssistantCapabilityToolPreviewItem[];
+  skills: ControlPlaneTargetAssistantCapabilitySkillPreviewItem[];
 }
 
 export interface UpdateTargetToolInput {

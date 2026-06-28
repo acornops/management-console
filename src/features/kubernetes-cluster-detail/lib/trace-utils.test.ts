@@ -147,6 +147,10 @@ describe('trace-utils', () => {
     }))).toBe('Using tools');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
+      skillLoads: [{ skillRef: 'skill_1', name: 'CNPG triage', status: 'loading' }]
+    }))).toBe('Loading skill context');
+    expect(getTraceActivityLabel(createTrace({
+      status: 'running',
       steps: [{ id: 'step-1', label: 'Approval requested: restart_workload', status: 'info', timestamp: 1 }]
     }))).toBe('Waiting for approval');
     expect(getTraceActivityLabel(createTrace({

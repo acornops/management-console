@@ -36,6 +36,15 @@ export interface RunTraceToolCall {
   isError?: boolean;
 }
 
+export interface RunTraceSkillLoad {
+  skillRef: string;
+  skillId?: string;
+  name: string;
+  status: 'loading' | 'loaded' | 'failed';
+  fileCount?: number;
+  totalBytes?: number;
+}
+
 export interface RunTraceUsage {
   inputTokens: number;
   outputTokens: number;
@@ -55,7 +64,7 @@ export interface RunTraceReasoningSummary {
 
 export interface RunTraceTimelineEvent {
   id: string;
-  type: 'step' | 'reasoning' | 'tool';
+  type: 'step' | 'reasoning' | 'tool' | 'skill';
   label: string;
   detail?: string;
   status: 'info' | 'success' | 'error' | 'streaming' | 'completed' | 'unavailable';
@@ -69,6 +78,7 @@ export interface LiveRunTrace {
   status: RunTraceStatus;
   steps: RunTraceStep[];
   toolCalls: RunTraceToolCall[];
+  skillLoads?: RunTraceSkillLoad[];
   reasoningSummaries?: RunTraceReasoningSummary[];
   timelineEvents?: RunTraceTimelineEvent[];
   activeReasoningSummary?: string;

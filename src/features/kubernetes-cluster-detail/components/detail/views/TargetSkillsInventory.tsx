@@ -44,6 +44,16 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
   const isTogglingSkill = pendingToggleSkillId === skill.id;
   const isBlockedByOtherSkillToggle = Boolean(pendingToggleSkillId && !isTogglingSkill);
   const canToggleSkill = canEditSkills && !isBlockedByOtherSkillToggle && !isTogglingSkill;
+  const assistantState = !skill.enabled
+    ? 'Disabled'
+    : skill.validationStatus === 'valid'
+      ? 'Assistant-visible'
+      : 'Needs fixes';
+  const assistantStateClass = assistantState === 'Assistant-visible'
+    ? 'bg-status-success-soft text-status-success-text'
+    : assistantState === 'Disabled'
+      ? 'bg-ui-bg text-ui-text-muted'
+      : 'bg-status-warning-soft text-status-warning-text';
   const updateActionMenuPosition = React.useCallback(() => {
     const trigger = actionMenuButtonRef.current;
     if (!trigger) return;
@@ -148,12 +158,8 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
         </div>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
-        <span className={`type-micro-label rounded-full px-2.5 py-1 ${
-          skill.validationStatus === 'valid'
-            ? 'bg-status-success-soft text-status-success-text'
-            : 'bg-status-warning-soft text-status-warning-text'
-        }`}>
-          {skill.validationStatus === 'valid' ? 'Valid' : 'Needs fixes'}
+        <span className={`type-micro-label rounded-full px-2.5 py-1 ${assistantStateClass}`}>
+          {assistantState}
         </span>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
@@ -224,6 +230,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
 
   const summary = React.useMemo(() => ({
     total: skills.length,
+    assistantVisible: skills.filter((skill) => skill.enabled && skill.validationStatus === 'valid').length,
     enabled: skills.filter((skill) => skill.enabled).length,
     valid: skills.filter((skill) => skill.validationStatus === 'valid').length,
     needsFixes: skills.filter((skill) => skill.validationStatus !== 'valid').length,
@@ -260,22 +267,24 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
         <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
           <div className="px-5 py-3.5">
             <h2 className="type-row-title">Skill inventory</h2>
-            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">Target-scoped prompt context for troubleshooting runs.</p>
+            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">
+              Enabled valid skills appear in the composer and are frozen when a run starts. Changes affect future runs only.
+            </p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">Skills</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.total}</p>
           </div>
           <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Enabled skills</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.enabled}</p>
-          </div>
-          <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">Valid</p>
+            <p className="type-caption text-ui-text-muted">Assistant-visible</p>
             <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
-              {summary.valid}
+              {summary.assistantVisible}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
+          </div>
+          <div className="px-5 py-3.5">
+            <p className="type-caption text-ui-text-muted">Enabled skills</p>
+            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.enabled}</p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">Needs fixes</p>
@@ -329,7 +338,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
             <thead>
               <tr className="border-b border-ui-border">
                 <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Skill</th>
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Validation</th>
+                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Assistant state</th>
                 <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">Enabled</th>
                 <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">Files</th>
                 <th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">Actions</th>

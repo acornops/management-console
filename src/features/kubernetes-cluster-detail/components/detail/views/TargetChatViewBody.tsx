@@ -20,7 +20,7 @@ import {
 } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
 import type { ChatMessage, ChatSession, KubernetesCluster, ReasoningEffort } from '@/types';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
-import type { ControlPlaneTargetAssistantToolPreview } from '@/services/control-plane/types';
+import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 
 export interface TargetChatViewBodyProps {
   activeRunId: string | null;
@@ -28,8 +28,8 @@ export interface TargetChatViewBodyProps {
   activeSessionId: string | null;
   allowedReasoningOptions: Array<{ value: string; labelKey: string }>;
   assistantMarkdownComponents: Components;
-  assistantToolPreview: ControlPlaneTargetAssistantToolPreview | null;
-  assistantToolPreviewError: string;
+  assistantCapabilitiesPreview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
+  assistantCapabilitiesPreviewError: string;
   canApproveWriteActions: boolean;
   canCancelActiveRun: boolean;
   canChat: boolean;
@@ -65,7 +65,7 @@ export interface TargetChatViewBodyProps {
   historyControlLabel: string;
   historyPanelRef: React.RefObject<HTMLElement | null>;
   inputValue: string;
-  isAssistantToolPreviewLoading: boolean;
+  isAssistantCapabilitiesPreviewLoading: boolean;
   isCancellingRun: boolean;
   isComposerRuntimeUnavailable: boolean;
   isFileDragActive: boolean;
@@ -150,8 +150,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     activeSessionId,
     allowedReasoningOptions,
     assistantMarkdownComponents,
-    assistantToolPreview,
-    assistantToolPreviewError,
+    assistantCapabilitiesPreview,
+    assistantCapabilitiesPreviewError,
     canApproveWriteActions,
     canCancelActiveRun,
     canChat,
@@ -187,7 +187,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     historyControlLabel,
     historyPanelRef,
     inputValue,
-    isAssistantToolPreviewLoading,
+    isAssistantCapabilitiesPreviewLoading,
     isCancellingRun,
     isComposerRuntimeUnavailable,
     isFileDragActive,
@@ -523,8 +523,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
 
         <TargetChatComposer
           allowedReasoningOptions={allowedReasoningOptions}
-          assistantToolPreview={assistantToolPreview}
-          assistantToolPreviewError={assistantToolPreviewError}
+          assistantCapabilitiesPreview={assistantCapabilitiesPreview}
+          assistantCapabilitiesPreviewError={assistantCapabilitiesPreviewError}
           canChat={canChat}
           canCancelActiveRun={canCancelActiveRun}
           canPost={canPost}
@@ -544,7 +544,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           handleModelChange={handleModelChange}
           hasComposerSubmitPayload={hasComposerSubmitPayload}
           inputValue={inputValue}
-          isAssistantToolPreviewLoading={isAssistantToolPreviewLoading}
+          isAssistantCapabilitiesPreviewLoading={isAssistantCapabilitiesPreviewLoading}
           isCancellingRun={isCancellingRun}
           isComposerRuntimeUnavailable={isComposerRuntimeUnavailable}
           isModelMenuOpen={isModelMenuOpen}
