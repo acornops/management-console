@@ -19,7 +19,7 @@ export const SettingSection: React.FC<{
 
 export const PROVIDERS: LlmProvider[] = ['openai', 'anthropic', 'gemini'];
 export const REASONING_SUMMARY_MODES: ReasoningSummaryMode[] = ['off', 'auto', 'concise', 'detailed'];
-export const REASONING_EFFORTS: ReasoningEffort[] = ['default', 'low', 'medium', 'high'];
+export const REASONING_EFFORTS: ReasoningEffort[] = ['off', 'low', 'medium', 'high'];
 export const EMPTY_PROVIDER_KEYS: Record<LlmProvider, string> = {
   openai: '',
   anthropic: '',
@@ -42,7 +42,7 @@ export const DEFAULT_BEHAVIOR_DRAFT: BehaviorDraft = {
   defaultProvider: 'openai',
   defaultModel: 'gpt-5.5',
   reasoningSummaryMode: 'auto',
-  reasoningEffort: 'default'
+  reasoningEffort: 'low'
 };
 
 export function providerLabel(provider: LlmProvider): string {
@@ -59,16 +59,8 @@ export function reasoningEffortLabel(effort: ReasoningEffort): string {
   return `workspaceAiSettings.reasoningEffort.${effort}`;
 }
 
-function modelBelongsToProvider(model: string, provider: LlmProvider): boolean {
-  const normalized = model.toLowerCase();
-  if (provider === 'openai') return normalized.startsWith('gpt-') || normalized.startsWith('o');
-  if (provider === 'anthropic') return normalized.includes('claude');
-  return normalized.includes('gemini');
-}
-
-export function modelsForProvider(allowedModels: string[], provider: LlmProvider): string[] {
-  const providerModels = allowedModels.filter((model) => modelBelongsToProvider(model, provider));
-  return providerModels.length > 0 ? providerModels : allowedModels;
+export function modelsForProvider(settings: WorkspaceAiSettings | null, provider: LlmProvider): string[] {
+  return settings?.allowedProviderModels[provider] || [];
 }
 
 export function behaviorDraftFromSettings(settings: WorkspaceAiSettings): BehaviorDraft {
