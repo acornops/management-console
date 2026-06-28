@@ -15,7 +15,7 @@ Machine-readable contract data for this repo lives in `docs/contracts/manifest.j
 
 | This repo depends on | Why |
 | --- | --- |
-| Control plane | Browser auth/session flow, workspace and target data, Kubernetes cluster data, VM data, target tool settings, MCP server management, chat sessions, runs, and run event streaming |
+| Control plane | Browser auth/session flow, workspace and target data, Kubernetes cluster data, VM data, target tool settings, MCP server management, workspace agents, workflows, chat sessions, runs, and run event streaming |
 
 ## Shared Invariants
 
@@ -110,6 +110,8 @@ Workspace responses expose server-owned authorization fields:
 - `permissions.manage_targets`
 - `permissions.manage_mcp`
 - `permissions.manage_tools`
+- `permissions.manage_workflows`
+- `permissions.manage_agents`
 - `permissions.manage_ai_settings`
 - `permissions.manage_agent_keys`
 - `permissions.manage_webhooks`
@@ -125,6 +127,30 @@ Workspace responses expose server-owned authorization fields:
 The console treats `permissions.read_workspace_data` as the gate for operational workspace surfaces. Auditor summaries may include member context but must not drive cluster telemetry or operational navigation; `clusterCount` and operational quota usage are redacted to `0`. Member counts and `quota.members.used` require `permissions.read_members`. Workspace quota rows are rendered in Workspace Settings only.
 
 The management console keeps Kubernetes-specific lifecycle, install, inventory, namespace, and pod-log flows on the cluster APIs. The Virtual Machines page uses the VM APIs for Linux/systemd registration, inventory, findings, metrics, logs, MCP Servers, read-only chat, and VM Settings.
+
+### Workspace agents and workflows
+
+The management console depends on:
+
+- `GET /api/v1/workspaces/{workspaceId}/agents`
+- `POST /api/v1/workspaces/{workspaceId}/agents`
+- `GET /api/v1/agents/{agentId}?workspaceId={workspaceId}`
+- `PATCH /api/v1/agents/{agentId}`
+- `POST /api/v1/agents/{agentId}/versions`
+- `POST /api/v1/agents/{agentId}/test`
+- `GET /api/v1/agents/{agentId}/activity`
+- `POST /api/v1/agents/{agentId}/triggers`
+- `PATCH /api/v1/agents/{agentId}/triggers/{triggerId}`
+- `DELETE /api/v1/agents/{agentId}/triggers/{triggerId}`
+
+Agent definitions include `id`, `workspaceId`, `name`, `description?`,
+`instructions`, `status`, `source`, `version`, `ownerUserId`, `mcpServers[]`,
+`tools[]`, `skills[]`, `contextGrants[]`, `targetScope`, `approvalPolicy`,
+`trustPolicy`, `triggers[]`, and `activity`. Agent create/update/test/version
+and trigger mutations require `permissions.manage_agents`; list and detail views
+require workspace data read access. Workflow steps may include
+`assignedAgentIds[]`; the UI treats workflow capability edits as narrowing gates
+over assigned agents, not independent permission grants.
 
 The AI Settings page consumes `GET /api/v1/workspaces/{workspaceId}/ai-settings` to render AI assistant defaults, deployment allow-lists, and per-provider configured status for users with workspace data access. New and unset workspace AI settings default `reasoningSummaryMode` to `auto` when deployment policy allows reasoning summaries; admins can still set `off`. Users with `permissions.manage_ai_settings` may call `PATCH /api/v1/workspaces/{workspaceId}/ai-settings` to update the default provider/model, `PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` with write-only `{apiKey}` to add or rotate a provider credential, and `DELETE /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` to remove one. The console must never expect or display API key values, ciphertexts, or internal secret names; it only displays configured/not-configured status.
 
@@ -350,11 +376,50 @@ When a write approval is requested, the management console renders the approval 
 
 ### Workflow automation APIs
 
-Workflows are shared workspace resources, distinct from target troubleshooting chats. The management console consumes server-owned workflow definitions when the control plane is available and must not treat client-side hiding as authorization. The control plane compiles workflow MCP, tool, skill, data, and chat-history grants into server-issued run permissions before workflow execution can call tools or read granted data.
+Agents are planned durable workspace resources under Automation. The management console consumer model expects agents to own MCP servers, tools, skills, target scope, workspace context scope, approval defaults, trust policy, capability summaries, health, workflow usage, and audit history. Until the control-plane producer routes ship, the console uses a fallback agent catalog and must label that state honestly.
+
+Planned Agent consumer routes:
+
+- `GET /api/v1/workspaces/{workspaceId}/agents`
+- `POST /api/v1/workspaces/{workspaceId}/agents`
+- `GET /api/v1/agents/{agentId}?workspaceId={workspaceId}`
+- `PATCH /api/v1/agents/{agentId}`
+
+Agent records are workspace-scoped and include:
+
+- `agent.{id,workspaceId,name,description,status,providerType,ownerUserId,version,createdAt,updatedAt}`
+- `mcpServers[]`
+- `tools[]`
+- `skills[]`
+- `targetScope[]`
+- `contextScope[]`
+- `approvalPolicy`
+- `trustPolicy`
+- `capabilitySummary`
+- `capabilities[]` with `{source,providerAgentId?,resourceType,resourceScope,toolId?,operation,requiresApproval}`
+- `workflowsUsingAgent[]`
+- health, test, and audit-history summaries
+
+External provider agents use restricted trust defaults and cannot self-expand
+tools, MCP servers, skills, context grants, target scopes, approval policy, or
+external data access beyond server-owned catalogs.
+
+Workflows are shared workspace resources, distinct from target troubleshooting chats. The management console consumes server-owned workflow definitions when the control plane is available and must not treat client-side hiding as authorization. The control plane compiles agent-derived MCP, tool, skill, data, and chat-history grants into server-issued run permissions before workflow execution can call tools or read granted data.
 
 Public routes:
 
 - `GET /api/v1/workspaces/{workspaceId}/workflows`
+- `GET /api/v1/workspaces/{workspaceId}/mcp/servers`
+- `POST /api/v1/workspaces/{workspaceId}/mcp/servers`
+- `PATCH /api/v1/workspaces/{workspaceId}/mcp/servers/{serverId}`
+- `DELETE /api/v1/workspaces/{workspaceId}/mcp/servers/{serverId}`
+- `POST /api/v1/workspaces/{workspaceId}/mcp/servers/{serverId}/test-connection`
+- `GET /api/v1/workspaces/{workspaceId}/mcp/servers/{serverId}/tools`
+- `GET /api/v1/workspaces/{workspaceId}/workflow-schedules`
+- `POST /api/v1/workspaces/{workspaceId}/workflow-schedules`
+- `PATCH /api/v1/workflow-schedules/{scheduleId}`
+- `DELETE /api/v1/workflow-schedules/{scheduleId}`
+- `GET /api/v1/workspaces/{workspaceId}/approvals`
 - `GET /api/v1/workflows/{workflowId}`
 - `PATCH /api/v1/workflows/{workflowId}`
 - `GET /api/v1/workflows/{workflowId}/sessions`
@@ -367,13 +432,23 @@ Reserved create and delete authoring routes return `501 NOT_IMPLEMENTED` until f
 - `POST /api/v1/workspaces/{workspaceId}/workflows`
 - `DELETE /api/v1/workflows/{workflowId}`
 
-`PATCH /api/v1/workflows/{workflowId}` lets owners/admins edit server-owned workflow category and MCP scope. The management console sends workspace id, category, policy mode, approval requirements, and per-step MCP servers, allowed tools, context grants, and approval-required flags; the control plane authorizes with `manage_mcp`, audits the change, and applies it only to future compiled workflow sessions.
+`PATCH /api/v1/workflows/{workflowId}` lets workflow managers edit server-owned workflow category and capability gate. The management console sends workspace id, category, policy mode, approval requirements, and per-step allowed tools, context grants, and approval-required flags. MCP servers, tools, and skills must come from assigned agents; the workflow gate can narrow them but must not add capabilities that the assigned agents do not already provide. The control plane authorizes with `manage_workflows`, audits the change, and applies it only to future compiled workflow sessions.
+
+Workflow-scoped MCP server create and update responses are wrapped as `{ server }`; delete returns `204`. MCP server mutations require `manage_mcp`; workflow definition mutations require `manage_workflows`.
+
+Workflow schedules are real control-plane records. The schedules page lists `items` plus summary metrics from `GET /api/v1/workspaces/{workspaceId}/workflow-schedules`; create/edit/pause/delete actions use the schedule mutation routes and require `manage_workflows`. The console sends cron, timezone, enabled state, approved context grants, and workflow input defaults, but control-plane validation is authoritative. The control plane computes due times in the stored timezone and dispatches with a workflow runtime subject instead of the creator's current workspace role.
+
+The approvals page consumes `GET /api/v1/workspaces/{workspaceId}/approvals?status=pending|decided|all&limit=&cursor=`. Rows normalize target write-tool approvals and workflow approval gates and include `approvalId`, `runId`, `source`, `workflowId?`, `targetId?`, `summary`, `toolName`, `requestedBy`, `expiresAt`, `status`, and decision metadata. Approve/reject actions call `POST /api/v1/runs/{runId}/approvals/{approvalId}/decision` and are enabled only for users with `create_read_write_runs`.
 
 Workflow definitions are workspace-scoped and include:
 
 - `workflow.{id,workspaceId,name,description,status,category,createdBy,updatedAt}`
+- `primaryAgent.{agentId,role,required}`
+- `supportingAgents[].{agentId,role,required}`
 - `inputs[]` typed launch fields
-- `steps[]` ordered actions with required inputs, enabled skills, allowed MCP/tools, context grants, and approval gates
+- `targetSelectionPolicy` and `contextGrantPolicy`
+- `steps[]` ordered actions with required inputs, narrowed allowed tools, context grants, and approval gates
+- `capabilityGate` as a subset of assigned-agent capabilities
 - `policy.{mode,maxRuntime,approvalRequirements,retention}`
 - `presentation.{icon,launchCopy,defaultStarterPrompt}`
 
@@ -385,7 +460,7 @@ Execution bootstrap for workflow runs remains an internal control-plane to execu
 
 Default authorization direction:
 
-- Owners and admins configure shared workflows and workflow MCP scope.
+- Owners and admins configure shared agents, shared workflows, and workflow capability gates.
 - Operators can run permitted workflows according to the workflow's read-only or read-write policy.
 - Workflow access to other chat histories requires an explicit configured grant, such as selected and approved chat sessions.
 - Audit logs record workflow scope updates, session creation, runs, and approvals, and must extend to workflow create, delete, and cancel events as those routes ship.
