@@ -3,14 +3,19 @@ import { AppPaths, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
 export type ActivePrimaryNav = 'workspaces' | 'clusters';
 export type ActiveResourceNav =
   | 'overview'
+  | 'agents'
   | 'workflows'
+  | 'schedules'
+  | 'approvals'
   | 'clusters'
   | 'virtualMachines'
   | 'members'
   | 'workspaceAiSettings'
   | 'workspaceSettings'
   | 'workspaceAuditLog'
+  | 'accountSettings'
   | 'settings'
+  | 'help'
   | 'clusterOverview'
   | 'clusterResources'
   | 'clusterMcpServers'
@@ -30,7 +35,10 @@ export type ActiveResourceNav =
 export function getWorkspaceRouteId(route: AppRoute): string | null {
   if (
     route.kind === 'workspaceOverview' ||
+    route.kind === 'workspaceAgents' ||
     route.kind === 'workspaceWorkflows' ||
+    route.kind === 'workspaceSchedules' ||
+    route.kind === 'workspaceApprovals' ||
     route.kind === 'workspaceKubernetesClusters' ||
     route.kind === 'workspaceVirtualMachines' ||
     route.kind === 'workspaceVirtualMachineDetail' ||
@@ -59,7 +67,9 @@ export function getActivePrimaryNav(route: AppRoute): ActivePrimaryNav {
   if (
     route.kind === 'workspaces' ||
     route.kind === 'home' ||
+    route.kind === 'accountSettings' ||
     route.kind === 'settings' ||
+    route.kind === 'help' ||
     route.kind === 'workspaceInvitation'
   ) {
     return 'workspaces';
@@ -69,7 +79,10 @@ export function getActivePrimaryNav(route: AppRoute): ActivePrimaryNav {
 
 export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
   if (route.kind === 'workspaceOverview') return 'overview';
+  if (route.kind === 'workspaceAgents') return 'agents';
   if (route.kind === 'workspaceWorkflows') return 'workflows';
+  if (route.kind === 'workspaceSchedules') return 'schedules';
+  if (route.kind === 'workspaceApprovals') return 'approvals';
   if (route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters') return 'clusters';
   if (route.kind === 'workspaceVirtualMachines') return 'virtualMachines';
   if (route.kind === 'workspaceVirtualMachineDetail') {
@@ -83,10 +96,12 @@ export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
     return 'vmOverview';
   }
   if (route.kind === 'settings') return 'settings';
+  if (route.kind === 'help') return 'help';
   if (route.kind === 'workspaceAiSettings') return 'workspaceAiSettings';
   if (route.kind === 'workspaceSettings') return 'workspaceSettings';
   if (route.kind === 'workspaceAuditLog') return 'workspaceAuditLog';
   if (route.kind === 'workspaceMembers') return 'members';
+  if (route.kind === 'accountSettings') return 'accountSettings';
   if (route.kind === 'workspaceKubernetesClusterDiagnostics' || route.kind === 'kubernetesClusterDiagnostics') {
     const tab = route.tab || 'overview';
     if (tab === 'resources') return 'clusterResources';

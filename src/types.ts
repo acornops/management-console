@@ -300,6 +300,8 @@ export interface Workspace {
     manage_mcp: boolean;
     manage_tools: boolean;
     manage_skills: boolean;
+    manage_workflows: boolean;
+    manage_agents: boolean;
     manage_ai_settings: boolean;
     manage_agent_keys: boolean;
     manage_webhooks: boolean;
@@ -425,6 +427,8 @@ export type WorkspaceCapability =
   | 'manage_mcp'
   | 'manage_tools'
   | 'manage_skills'
+  | 'manage_workflows'
+  | 'manage_agents'
   | 'manage_ai_settings'
   | 'manage_agent_keys'
   | 'manage_webhooks'

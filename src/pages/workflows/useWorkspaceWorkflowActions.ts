@@ -2,7 +2,6 @@ import { getOptimisticWorkflowRunStatus, type WorkflowDefinition } from '@/pages
 import {
   cancelWorkflowRun,
   createWorkflow,
-  createWorkflowMcpServer,
   createWorkflowSession,
   decideWorkflowRunApproval,
   deleteWorkflow,
@@ -10,11 +9,9 @@ import {
   postWorkflowSessionMessage,
   updateWorkflow,
   updateWorkflowScope,
-  type WorkflowMcpServer,
   type WorkflowRunEvent
 } from '@/services/control-plane/workflowApi';
 import {
-  createMcpServerDraft,
   createScopeDraft,
   createWorkflowDraft,
   createWorkflowEditDraft,
@@ -30,7 +27,7 @@ type WorkflowActionsContext = Record<string, any>;
 
 export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   const {
-    workspace, workflows, setWorkflows, setWorkflowOptions, workflowMcpServers, setWorkflowMcpServers,
+    workspace, workflows, setWorkflows,
     selectedWorkflow, selectedWorkflowEditDraft, workflowMessage, workflowSessionIds, setWorkflowSessionIds,
     setCompiledScopes, setLaunchError, setLaunchingWorkflowId, setLaunchResult, setActiveTab, setApprovalRecords, setApprovalError,
     setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
@@ -39,7 +36,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
     setDeleteWorkflowId, setEditingWorkflowId, setUpdatingWorkflowId, setSelectedWorkflowId, setDeletingWorkflowId,
     createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
-    mcpServerDraft, setMcpServerDraft, setMcpServerError, setCreatingMcpServer
+    canManageWorkflowScope, launchBlocker
   } = ctx;
 
   function closeCreateWorkflowPanel(): void {
@@ -50,6 +47,10 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   async function launchSelectedWorkflow(): Promise<void> {
     if (!selectedWorkflow) return;
     setLaunchError('');
+    if (launchBlocker) {
+      setLaunchError(launchBlocker);
+      return;
+    }
     setLaunchingWorkflowId(selectedWorkflow.id);
     try {
       let effectiveSessionId = workflowSessionIds[selectedWorkflow.id];
@@ -86,7 +87,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
             ]
           }
         : workflow));
-      setActiveTab('chat');
+      setActiveTab('runs');
     } catch (error) {
       setLaunchError(error instanceof Error ? error.message : 'Unable to launch workflow');
     } finally {
@@ -171,7 +172,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     });
   }
 
-  function startEditingScopeTab(tab: 'mcp' | 'skills'): void {
+  function startEditingScopeTab(tab: 'capabilities'): void {
     setScopeSaveError(null);
     setScopeSaveResult(null);
     setIsEditingScopeTab(tab);
@@ -188,7 +189,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setIsEditingScopeTab('');
   }
 
-  async function saveWorkflowScope(tab: 'mcp' | 'skills'): Promise<void> {
+  async function saveWorkflowScope(tab: 'capabilities'): Promise<void> {
     if (!selectedWorkflow) return;
     const draft = scopeDrafts[selectedWorkflow.id] || createScopeDraft(selectedWorkflow);
     setScopeSaveError(null);
@@ -196,8 +197,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setSavingScope(selectedWorkflow.id);
     try {
       const updated = await updateWorkflowScope(workspace.id, selectedWorkflow.id, {
-        enabledMcpServers: splitLines(draft.enabledMcpServers),
-        enabledSkills: splitLines(draft.enabledSkills),
+        enabledMcpServers: selectedWorkflow.enabledMcpServers,
+        enabledSkills: selectedWorkflow.enabledSkills,
         policy: {
           mode: draft.policyMode,
           approvalRequirements: splitLines(draft.approvalRequirements)
@@ -206,6 +207,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
           const stepDraft = draft.steps[step.id];
           return {
             id: step.id,
+            assignedAgentIds: step.assignedAgentIds || [],
             allowedTools: splitLines(stepDraft?.allowedTools || ''),
             contextGrants: splitLines(stepDraft?.contextGrants || ''),
             approvalRequired: Boolean(stepDraft?.approvalRequired)
@@ -222,10 +224,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         return next;
       });
       setScopeDrafts((current) => ({ ...current, [selectedWorkflow.id]: createScopeDraft(mapped) }));
-      setScopeSaveResult({ tab, message: tab === 'mcp'
-        ? 'Workflow MCP scope saved. Future sessions will use the updated scope.'
-        : 'Workflow skills saved. Future sessions will use the updated scope.'
-      });
+      setScopeSaveResult({ tab, message: 'Workflow capability gate saved. Future sessions will use the narrowed access.' });
       setIsEditingScopeTab('');
     } catch (error) {
       setScopeSaveError({ tab, message: error instanceof Error ? error.message : 'Unable to save workflow scope' });
@@ -370,6 +369,10 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   async function createNewWorkflow(): Promise<void> {
+    if (!canManageWorkflowScope) {
+      setCreateError('You need manage_workflows to create workflows.');
+      return;
+    }
     const name = createDraft.name.trim();
     if (!name) return;
     setCreateError('');
@@ -377,6 +380,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     const enabledMcpServers = splitLines(createDraft.enabledMcpServers);
     const enabledSkills = splitLines(createDraft.enabledSkills);
     const allowedTools = splitLines(createDraft.allowedTools);
+    const assignedAgentIds = createDraft.primaryAgentId ? [createDraft.primaryAgentId] : [];
     try {
       const workflow = await createWorkflow(workspace.id, {
         name,
@@ -398,6 +402,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
           title: 'Run workflow prompt',
           requiredInputs: [],
           enabledSkills,
+          assignedAgentIds,
           allowedMcpServers: enabledMcpServers,
           allowedTools,
           contextGrants: ['workspace_metadata'],
@@ -407,7 +412,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       const mapped = mapApiWorkflowToDefinition(workflow, undefined, workspace.id);
       setWorkflows((current) => [mapped, ...current]);
       setSelectedWorkflowId(mapped.id);
-      setActiveTab('chat');
+      setActiveTab('overview');
       setCreateDraft(createWorkflowDraft());
       setCreatePanelOpen(false);
     } catch (error) {
@@ -417,39 +422,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     }
   }
 
-  async function addWorkflowMcpServer(): Promise<void> {
-    const name = mcpServerDraft.name.trim();
-    if (!name) return;
-    setMcpServerError('');
-    setCreatingMcpServer(true);
-    try {
-      const server = await createWorkflowMcpServer(workspace.id, {
-        name,
-        type: mcpServerDraft.type,
-        baseUrl: mcpServerDraft.baseUrl.trim() || undefined,
-        command: mcpServerDraft.command.trim() || undefined,
-        tools: splitLines(mcpServerDraft.tools)
-      });
-      setWorkflowMcpServers((current) => uniqueValues([...current.map((item) => item.id), server.id])
-        .map((id) => id === server.id ? server : current.find((item) => item.id === id))
-        .filter((item): item is WorkflowMcpServer => Boolean(item)));
-      setWorkflowOptions((current) => ({
-        ...current,
-        mcpServers: uniqueValues([...current.mcpServers.map((option) => option.value), server.id])
-          .map((value) => ({ value, label: value }))
-      }));
-      setMcpServerDraft(createMcpServerDraft());
-    } catch (error) {
-      setMcpServerError(error instanceof Error ? error.message : 'Unable to add MCP server');
-    } finally {
-      setCreatingMcpServer(false);
-    }
-  }
-
-
-
   return {
-    addWorkflowMcpServer,
     addWorkflowTag,
     cancelEditingScopeTab,
     cancelEditingWorkflow,

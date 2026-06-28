@@ -8,8 +8,11 @@ import { Workspace } from '@/types';
 
 interface WorkspaceSettingsPageProps {
   workspace: Workspace;
+  canReadMembers: boolean;
   canDeleteWorkspace: boolean;
   onDeleteWorkspace: (workspaceId: string) => void;
+  onSelectMembers: () => void;
+  embedded?: boolean;
 }
 
 const SettingSection: React.FC<{
@@ -52,19 +55,24 @@ function formatQuota(value: { used: number; limit: number } | undefined, fallbac
 
 export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
   workspace,
+  canReadMembers,
   canDeleteWorkspace,
-  onDeleteWorkspace
+  onDeleteWorkspace,
+  onSelectMembers,
+  embedded = false
 }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <motion.header {...headerMotion} className="mb-12">
-        <h1 className="type-route-title">{t('workspaceSettings.title')}</h1>
-        <p className="type-body mt-2 max-w-2xl">
-          {t('workspaceSettings.subtitle')}
-        </p>
-      </motion.header>
+    <div className={embedded ? '' : 'min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8'}>
+      {!embedded && (
+        <motion.header {...headerMotion} className="mb-12">
+          <h1 className="type-route-title">{t('workspaceSettings.title')}</h1>
+          <p className="type-body mt-2 max-w-2xl">
+            {t('workspaceSettings.subtitle')}
+          </p>
+        </motion.header>
+      )}
 
       <div className="max-w-4xl">
         <SettingSection
@@ -112,11 +120,30 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
             icon={ICONS.Users}
             label={t('workspaceSettings.members')}
             description={t('workspaceSettings.membersBody')}
+            action={(
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={onSelectMembers}
+                disabled={!canReadMembers}
+                className="w-full sm:w-auto"
+                title={canReadMembers ? t('workspaceSettings.manageMembers') : t('settingsPage.membersAccessRequired')}
+              >
+                <ICONS.Users className="h-4 w-4" aria-hidden="true" />
+                {t('workspaceSettings.manageMembers')}
+              </Button>
+            )}
           />
           <SettingRow
             icon={ICONS.Shield}
             label={t('workspaceSettings.rbac')}
             description={t('workspaceSettings.rbacBody')}
+            action={(
+              <span className="type-label inline-flex min-h-9 w-full items-center justify-center rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted sm:w-auto">
+                {t('workspaceSettings.inherited')}
+              </span>
+            )}
           />
         </SettingSection>
 

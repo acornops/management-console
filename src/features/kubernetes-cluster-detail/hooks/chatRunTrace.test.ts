@@ -46,7 +46,7 @@ function createEvent(
 describe('chatRunTrace helpers', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-05-25T00:00:00.000Z'));
   });
 

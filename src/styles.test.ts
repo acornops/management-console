@@ -530,6 +530,8 @@ describe('theme color contract', () => {
     expect(membersPage).toContain('confirmRemoveMember');
     expect(membersPage).toContain('setIsConfirmingRemove(true)');
     expect(membersPage).toContain('members.confirmRemoveAccess');
+    expect(membersPage).toContain('members.confirmRoleChange');
+    expect(membersPage).not.toContain('changeMemberRoleFromRow');
     expect(membersPage).not.toContain('variants={tableVariants} initial="hidden" animate="show"');
     expect(membersPage).not.toContain('variants={rowVariants}');
   });
@@ -560,7 +562,7 @@ describe('theme color contract', () => {
   });
 
   it('keeps table rows visibly highlighted on hover', () => {
-    expect(membersPage).toContain('className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45"');
+    expect(membersPage).toContain('transition-colors hover:bg-accent-soft/45');
     expect(clusterOverviewView).toContain('transition-colors last:border-b-0 hover:bg-ui-bg/70');
     expect(markdownComponents).toContain("import remarkGfm from 'remark-gfm';");
     expect(markdownComponents).toContain('export const markdownRemarkPlugins = [remarkGfm];');
@@ -573,6 +575,16 @@ describe('theme color contract', () => {
     expect(membersPage).not.toContain('min-w-[760px]');
     expect(auditLogPage).not.toContain('overflow-x-auto');
     expect(auditLogPage).not.toContain('min-w-[920px]');
+  });
+
+  it('keeps workspace member actions in the table rhythm on wide screens', () => {
+    expect(membersPage).not.toContain('minmax(1rem,1fr)_5.5rem');
+    expect(membersPage).not.toContain('<th className="hidden px-4 py-4 md:block" aria-hidden="true" />');
+    expect(membersPage).not.toContain('<td className="hidden md:block" aria-hidden="true" />');
+    expect(membersPage).toContain('table-fixed');
+    expect(membersPage).toContain('md:table-cell');
+    expect(membersPage).not.toContain('lg:grid-cols-[minmax(18rem,24rem)_9rem_8rem_9rem_4rem]');
+    expect(membersPage).toContain('<span className="sr-only">{t(\'members.manage\')}</span>');
   });
 
   it('keeps workspace member and audit log pages on the shared route margins', () => {

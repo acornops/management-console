@@ -15,7 +15,7 @@ import type {
   WorkflowRunSummary
 } from '@/services/control-plane/workflowApi';
 
-export const tabs: WorkflowTab[] = ['chat', 'runs', 'mcp', 'skills', 'settings'];
+export const tabs: WorkflowTab[] = ['overview', 'agents', 'targets', 'capabilities', 'runs', 'settings'];
 
 export type ScopeDraft = {
   category: string;
@@ -34,6 +34,7 @@ export type CreateWorkflowDraft = {
   name: string;
   description: string;
   starterPrompt: string;
+  primaryAgentId: string;
   enabledMcpServers: string;
   enabledSkills: string;
   allowedTools: string;
@@ -206,6 +207,7 @@ export function createWorkflowDraft(): CreateWorkflowDraft {
     name: '',
     description: '',
     starterPrompt: '',
+    primaryAgentId: '',
     enabledMcpServers: '',
     enabledSkills: '',
     allowedTools: ''
@@ -231,6 +233,12 @@ export function createMcpServerDraft(): McpServerDraft {
 }
 
 export function createFallbackWorkflowOptions(workflows: WorkflowDefinition[]): WorkflowOptionsCatalog {
+  const workflowAgentOptions = workflows.flatMap((workflow) => [
+    workflow.primaryAgent,
+    ...workflow.supportingAgents
+  ]);
+  const workflowAgentLabels = new Map(workflowAgentOptions.map((agent) => [agent.agentId, agent.name]));
+
   return {
     clusters: [
       { value: 'production-us-east', label: 'production-us-east' },
@@ -243,6 +251,10 @@ export function createFallbackWorkflowOptions(workflows: WorkflowDefinition[]): 
     mcpServers: uniqueValues(workflows.flatMap((workflow) => workflow.enabledMcpServers)).map((value) => ({ value, label: value })),
     mcpTools: uniqueValues(workflows.flatMap((workflow) => workflow.allowedTools)).map((value) => ({ value, label: value })),
     skills: uniqueValues(workflows.flatMap((workflow) => workflow.enabledSkills)).map((value) => ({ value, label: value })),
+    agents: uniqueValues(workflowAgentOptions.map((agent) => agent.agentId)).map((value) => ({
+      value,
+      label: workflowAgentLabels.get(value) || value
+    })),
     chatSessions: [
       { value: 'incident-chat-1042', label: 'Incident chat 1042' },
       { value: 'incident-chat-1043', label: 'Incident chat 1043' }
@@ -260,20 +272,101 @@ export function createFallbackWorkflowOptions(workflows: WorkflowDefinition[]): 
   };
 }
 
+function normalizeWorkflowOption(value: unknown): { value: string; label: string; description?: string; disabled?: boolean; disabledReason?: string } | null {
+  if (typeof value === 'string' && value.trim()) {
+    return { value: value.trim(), label: value.trim() };
+  }
+  if (!value || typeof value !== 'object') return null;
+  const option = value as { value?: unknown; label?: unknown; description?: unknown; disabled?: unknown; disabledReason?: unknown };
+  if (typeof option.value !== 'string' || !option.value.trim()) return null;
+  return {
+    value: option.value,
+    label: typeof option.label === 'string' && option.label.trim() ? option.label : option.value,
+    description: typeof option.description === 'string' ? option.description : undefined,
+    disabled: typeof option.disabled === 'boolean' ? option.disabled : undefined,
+    disabledReason: typeof option.disabledReason === 'string' ? option.disabledReason : undefined
+  };
+}
+
+function normalizeWorkflowOptionList(value: unknown, fallback: WorkflowOptionsCatalog[keyof WorkflowOptionsCatalog]): typeof fallback {
+  if (!Array.isArray(value)) return fallback;
+  const options = value.map(normalizeWorkflowOption).filter((option): option is NonNullable<typeof option> => Boolean(option));
+  return options.length > 0 ? options : fallback;
+}
+
+export function normalizeWorkflowOptionsCatalog(
+  catalog: unknown,
+  fallback: WorkflowOptionsCatalog
+): WorkflowOptionsCatalog {
+  const value = catalog && typeof catalog === 'object' ? catalog as Record<string, unknown> : {};
+  return {
+    clusters: normalizeWorkflowOptionList(value.clusters, fallback.clusters),
+    repositories: normalizeWorkflowOptionList(value.repositories, fallback.repositories),
+    mcpServers: normalizeWorkflowOptionList(value.mcpServers, fallback.mcpServers),
+    mcpTools: normalizeWorkflowOptionList(value.mcpTools, fallback.mcpTools),
+    skills: normalizeWorkflowOptionList(value.skills, fallback.skills),
+    agents: normalizeWorkflowOptionList(value.agents, fallback.agents),
+    chatSessions: normalizeWorkflowOptionList(value.chatSessions, fallback.chatSessions),
+    outputFormats: normalizeWorkflowOptionList(value.outputFormats, fallback.outputFormats),
+    approvalPolicies: normalizeWorkflowOptionList(value.approvalPolicies, fallback.approvalPolicies),
+    runtimeLimits: normalizeWorkflowOptionList(value.runtimeLimits, fallback.runtimeLimits),
+    retentionPolicies: normalizeWorkflowOptionList(value.retentionPolicies, fallback.retentionPolicies)
+  };
+}
+
 export function mapApiWorkflowToDefinition(
   workflow: WorkflowApiDefinition,
   fallback: WorkflowDefinition | undefined,
   workspaceId: string
 ): WorkflowDefinition {
-  const requiredInputs = uniqueValues(workflow.steps.flatMap((step) => step.requiredInputs));
-  const allowedTools = uniqueValues(workflow.steps.flatMap((step) => step.allowedTools));
+  const workflowSteps = Array.isArray(workflow.steps) && workflow.steps.length > 0
+    ? workflow.steps
+    : fallback?.steps.map((step) => ({
+        id: step.id,
+        title: step.title,
+        requiredInputs: step.requiredInputs,
+        assignedAgentIds: step.assignedAgentIds || [],
+        enabledSkills: step.enabledSkills,
+        allowedMcpServers: step.allowedMcpServers,
+        allowedTools: step.allowedTools,
+        contextGrants: step.contextGrants,
+        approvalRequired: step.approvalRequired,
+        outputArtifacts: step.outputArtifacts
+      })) || [];
+  const workflowPolicy = workflow.policy || {
+    mode: fallback?.policy.mode || 'read_only',
+    maxRuntimeSeconds: 0,
+    retentionDays: 0,
+    approvalRequirements: fallback?.policy.approvals || []
+  };
+  const workflowEnabledTools = Array.isArray(workflow.enabledTools)
+    ? workflow.enabledTools.filter((tool): tool is string => typeof tool === 'string')
+    : undefined;
+  const requiredInputs = uniqueValues(workflowSteps.flatMap((step) => step.requiredInputs || []));
+  const allowedTools = workflowEnabledTools && workflowEnabledTools.length > 0
+    ? uniqueValues(workflowEnabledTools)
+    : uniqueValues(workflowSteps.flatMap((step) => step.allowedTools || []));
   const enabledMcpServers = Array.isArray(workflow.enabledMcpServers)
     ? uniqueValues(workflow.enabledMcpServers)
-    : uniqueValues(workflow.steps.flatMap((step) => step.allowedMcpServers));
+    : uniqueValues(workflowSteps.flatMap((step) => step.allowedMcpServers || []));
   const enabledSkills = Array.isArray(workflow.enabledSkills)
     ? uniqueValues(workflow.enabledSkills)
-    : uniqueValues(workflow.steps.flatMap((step) => step.enabledSkills));
-  const contextGrants = uniqueValues(workflow.steps.flatMap((step) => step.contextGrants));
+    : uniqueValues(workflowSteps.flatMap((step) => step.enabledSkills || []));
+  const contextGrants = uniqueValues(workflowSteps.flatMap((step) => step.contextGrants || []));
+  const assignedAgentIds = uniqueValues(workflowSteps.flatMap((step) => step.assignedAgentIds || []));
+  const fallbackAssignments = [
+    ...(fallback?.primaryAgent ? [fallback.primaryAgent] : []),
+    ...(fallback?.supportingAgents || [])
+  ];
+  const apiAssignments = assignedAgentIds.map((agentId, index) => {
+    const fallbackAgent = fallbackAssignments.find((agent) => agent.agentId === agentId);
+    return fallbackAgent || {
+      agentId,
+      name: agentId.replace(/^agent-/, '').replaceAll('-', ' '),
+      role: index === 0 ? 'Primary agent' : 'Supporting agent',
+      required: index === 0
+    };
+  });
 
   return {
     id: workflow.id,
@@ -286,11 +379,15 @@ export function mapApiWorkflowToDefinition(
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
     lastRun: fallback?.lastRun || 'No runs yet',
     primaryAction: fallback?.primaryAction || 'Start workflow',
-    requiredPermissions: workflow.requiredPermissions,
+    primaryAgent: apiAssignments[0] || fallback?.primaryAgent || { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Primary agent', required: true },
+    supportingAgents: apiAssignments.length > 1 ? apiAssignments.slice(1) : fallback?.supportingAgents || [],
+    requiredPermissions: Array.isArray(workflow.requiredPermissions) ? workflow.requiredPermissions : fallback?.requiredPermissions || [],
     enabledMcpServers,
     allowedTools,
     enabledSkills,
     contextGrants,
+    targetSelection: fallback?.targetSelection || ['workspace context'],
+    disabledCapabilities: fallback?.disabledCapabilities || [],
     inputs: Array.isArray(workflow.inputs) && workflow.inputs.length > 0
       ? workflow.inputs.map((input) => ({
           name: input.name,
@@ -304,23 +401,24 @@ export function mapApiWorkflowToDefinition(
           type: 'text',
           required: true
         })),
-    steps: workflow.steps.map((step) => ({
+    steps: workflowSteps.map((step) => ({
       id: step.id,
       title: step.title,
       prompt: fallback?.steps.find((fallbackStep) => fallbackStep.id === step.id)?.prompt || step.title,
-      requiredInputs: step.requiredInputs,
-      enabledSkills: step.enabledSkills,
-      allowedTools: step.allowedTools,
-      allowedMcpServers: step.allowedMcpServers,
-      contextGrants: step.contextGrants,
-      approvalRequired: step.approvalRequired,
+      requiredInputs: step.requiredInputs || [],
+      assignedAgentIds: step.assignedAgentIds || [],
+      enabledSkills: step.enabledSkills || [],
+      allowedTools: step.allowedTools || [],
+      allowedMcpServers: step.allowedMcpServers || [],
+      contextGrants: step.contextGrants || [],
+      approvalRequired: Boolean(step.approvalRequired),
       outputArtifacts: step.outputArtifacts
     })),
     policy: {
-      mode: workflow.policy.mode,
-      maxRuntime: `${Math.round(workflow.policy.maxRuntimeSeconds / 60)} min`,
-      retention: `${workflow.policy.retentionDays} days`,
-      approvals: workflow.policy.approvalRequirements
+      mode: workflowPolicy.mode,
+      maxRuntime: workflowPolicy.maxRuntimeSeconds > 0 ? `${Math.round(workflowPolicy.maxRuntimeSeconds / 60)} min` : fallback?.policy.maxRuntime || '',
+      retention: workflowPolicy.retentionDays > 0 ? `${workflowPolicy.retentionDays} days` : fallback?.policy.retention || '',
+      approvals: workflowPolicy.approvalRequirements || []
     },
     scope: { type: 'workspace' },
     starterPrompt: workflow.starterPrompt || fallback?.starterPrompt || `Start ${workflow.name}.`,

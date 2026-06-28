@@ -11,8 +11,10 @@ const navCountBadge = readFileSync(resolve(root, 'src/app/NavCountBadge.tsx'), '
 describe('mobile navigation structure', () => {
   it('uses named sections instead of vague More groups', () => {
     expect(mobileNavigation).not.toContain("t('app.more')");
-    expect(mobileNavigation).toContain("t('app.primaryDestinations')");
-    expect(mobileNavigation).toContain("t('app.administration')");
+    expect(mobileNavigation).not.toContain("t('app.primaryDestinations')");
+    expect(mobileNavigation).toContain("t('app.inventory')");
+    expect(mobileNavigation).toContain("t('app.automation')");
+    expect(mobileNavigation).not.toContain("{t('app.administration')}");
     expect(mobileNavigation).toContain("['mcpServers', t('app.mcpServers'), ICONS.Server, 0]");
     expect(mobileNavigation).toContain("['skills', t('app.skills'), ICONS.BookOpen, 0]");
     expect(mobileNavigation).toContain("['tools', t('app.tools'), ICONS.Wrench, 0]");
@@ -47,26 +49,90 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).toContain("t('app.workspaceContext')");
     expect(mobileNavigation).toContain("t('app.userSettings')");
     expect(mobileNavigation).toContain("{t('app.auditLog')}");
-    expect(mobileNavigation).toContain("{t('app.aiSettings')}");
-    expect(mobileNavigation).toContain("{t('app.workspaceSettings')}");
-    expect(mobileNavigation).toContain("{hasWorkspaceDataAccess && (\n                            <button\n                              type=\"button\"\n                              onClick={() => {\n                                onSetMobileNavOpen(false);\n                                selectedWorkspaceId && navigate(AppPaths.workspaceAiSettings(selectedWorkspaceId));");
-    expect(mobileNavigation.indexOf("{t('app.auditLog')}")).toBeLessThan(
-      mobileNavigation.indexOf("{t('app.aiSettings')}")
+    expect(mobileNavigation).not.toContain("{t('app.aiSettings')}");
+    expect(mobileNavigation).toContain("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}");
+    expect(mobileNavigation).toContain("{t('app.help')}");
+    expect(mobileNavigation).not.toContain('navigate(AppPaths.workspaceAiSettings(selectedWorkspaceId));');
+    expect(mobileNavigation).toContain('AppPaths.workspaceSettings(selectedWorkspaceId)');
+    expect(mobileNavigation).toContain('AppPaths.workspaceMembers(selectedWorkspaceId)');
+    expect(mobileNavigation).toContain('navigate(workspaceSettingsPath);');
+    expect(mobileNavigation).toContain('navigate(AppPaths.help());');
+    expect(mobileNavigation).toContain('navigate(AppPaths.accountSettings());');
+    expect(mobileNavigation).toContain("activeResourceNav === 'accountSettings'");
+    expect(mobileNavigation).toContain("t('app.theme')");
+    expect(mobileNavigation.indexOf("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+      mobileNavigation.indexOf("{t('app.auditLog')}")
     );
-    expect(mobileNavigation.indexOf("{t('app.aiSettings')}")).toBeLessThan(
-      mobileNavigation.indexOf("{t('app.workspaceSettings')}")
+    expect(mobileNavigation.indexOf("{t('app.auditLog')}")).toBeLessThan(
+      mobileNavigation.indexOf("{t('app.help')}")
+    );
+  });
+
+  it('keeps audit logs in the bottom workspace utility group for auditor-only roles', () => {
+    const automationSection = mobileNavigation.slice(
+      mobileNavigation.indexOf("{t('app.automation')}"),
+      mobileNavigation.indexOf('navigate(workspaceSettingsPath);')
+    );
+    const utilitySection = mobileNavigation.slice(
+      mobileNavigation.indexOf('navigate(workspaceSettingsPath);'),
+      mobileNavigation.indexOf("t('app.userSettings')")
+    );
+
+    expect(automationSection).not.toContain("{t('app.auditLog')}");
+    expect(utilitySection).toContain("{t('app.auditLog')}");
+    expect(utilitySection.indexOf("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+      utilitySection.indexOf("{t('app.auditLog')}")
+    );
+    expect(utilitySection.indexOf("{t('app.auditLog')}")).toBeLessThan(
+      utilitySection.indexOf("{t('app.help')}")
+    );
+    expect(utilitySection).toContain('canReadWorkspaceAuditLog(selectedWorkspace)');
+  });
+
+  it('keeps console settings distinct from account settings on mobile', () => {
+    expect(mobileNavigation).toContain("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}");
+    expect(mobileNavigation).toContain("{t('app.accountSettings')}");
+    expect(mobileNavigation).toContain("aria-current={activeResourceNav === 'accountSettings' ? 'page' : undefined}");
+    expect(mobileNavigation).toContain("activeResourceNav === 'accountSettings'");
+    expect(mobileNavigation.indexOf("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+      mobileNavigation.indexOf("{t('app.accountSettings')}")
     );
   });
 
   it('links virtual machines after clusters in workspace resources', () => {
     expect(mobileNavigation).toContain("t('app.virtualMachines')");
     expect(mobileNavigation).toContain("['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0]");
+    expect(mobileNavigation).toContain("['agents', t('app.agents'), AppPaths.workspaceAgents, 0]");
+    expect(mobileNavigation).toContain("['schedules', t('app.schedules'), AppPaths.workspaceSchedules, 0]");
+    expect(mobileNavigation).toContain("['approvals', t('app.approvals'), AppPaths.workspaceApprovals, 0]");
     expect(mobileNavigation).not.toContain("title={t('app.virtualMachinesTooltip')}");
     expect(mobileNavigation).not.toContain("t('app.runbooks')");
     expect(mobileNavigation).not.toContain('AppPaths.workspaceRunbooks');
     expect(mobileNavigation.indexOf("['clusters', t('app.clusters')")).toBeLessThan(
       mobileNavigation.indexOf("t('app.virtualMachines')")
     );
+    expect(mobileNavigation).not.toContain("['members', t('app.members'), AppPaths.workspaceMembers, 0]");
+    expect(mobileNavigation.indexOf("['agents', t('app.agents')")).toBeLessThan(
+      mobileNavigation.indexOf("['workflows', t('app.workflows')")
+    );
+    expect(mobileNavigation.indexOf("['workflows', t('app.workflows')")).toBeLessThan(
+      mobileNavigation.indexOf("['schedules', t('app.schedules')")
+    );
+    expect(mobileNavigation.indexOf("['schedules', t('app.schedules')")).toBeLessThan(
+      mobileNavigation.indexOf("['approvals', t('app.approvals')")
+    );
+  });
+
+  it('keeps members navigation visible for read-members-only roles', () => {
+    expect(mobileNavigation).toContain('canReadWorkspaceMembers');
+    expect(mobileNavigation).toContain('const hasWorkspaceMemberAccess = canReadWorkspaceMembers(selectedWorkspace);');
+    expect(mobileNavigation).toContain('const workspaceSettingsPath = selectedWorkspaceId');
+    expect(mobileNavigation).toContain('? AppPaths.workspaceSettings(selectedWorkspaceId)');
+    expect(mobileNavigation).toContain(': AppPaths.workspaceMembers(selectedWorkspaceId)');
+    expect(mobileNavigation).toContain("activeResourceNav === 'settings'");
+    expect(mobileNavigation).toContain("activeResourceNav === 'workspaceSettings'");
+    expect(mobileNavigation).toContain("activeResourceNav === 'workspaceAiSettings'");
+    expect(mobileNavigation).toContain("activeResourceNav === 'members'");
   });
 
   it('keeps assistant activity as a compact trailing status indicator', () => {

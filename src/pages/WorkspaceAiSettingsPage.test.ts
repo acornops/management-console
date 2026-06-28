@@ -4,7 +4,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const root = resolve(__dirname, '../..');
-const workspaceAiSettingsPage = readFileSync(resolve(root, 'src/pages/WorkspaceAiSettingsPage.tsx'), 'utf8');
+const workspaceAiSettingsPage = [
+  readFileSync(resolve(root, 'src/pages/WorkspaceAiSettingsPage.tsx'), 'utf8'),
+  readFileSync(resolve(root, 'src/pages/WorkspaceAiSettingsPage.helpers.tsx'), 'utf8')
+].join('\n');
 
 describe('WorkspaceAiSettingsPage source contracts', () => {
   it('does not retain credential form state across workspace changes', () => {
@@ -86,6 +89,25 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain('className="min-h-14"');
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningEffortInactive')");
     expect(workspaceAiSettingsPage).toContain('className="mt-2 min-h-10 text-xs font-medium leading-5 text-ui-text-muted"');
+  });
+
+  it('turns AI readiness into a next-action guide instead of a passive status card', () => {
+    expect(workspaceAiSettingsPage).toContain('const readinessAction =');
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessAddCredentialAction')");
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessChooseProviderAction')");
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessReviewCredentialsAction')");
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.nextAction')");
+    expect(workspaceAiSettingsPage).toContain('onClick={() => readinessAction.onClick()}');
+  });
+
+  it('anchors in-page AI settings jumps without collapsing section margins', () => {
+    expect(workspaceAiSettingsPage).toContain('sectionRef?: React.Ref<HTMLElement>;');
+    expect(workspaceAiSettingsPage).toContain('<section ref={sectionRef} className={`mb-10 ${className} last:mb-0`}>');
+    expect(workspaceAiSettingsPage).toContain('sectionRef={behaviorSectionRef}');
+    expect(workspaceAiSettingsPage).toContain('sectionRef={credentialsSectionRef}');
+    expect(workspaceAiSettingsPage).toContain('className="scroll-mt-8"');
+    expect(workspaceAiSettingsPage).not.toContain('<div ref={behaviorSectionRef} className="scroll-mt-8">');
+    expect(workspaceAiSettingsPage).not.toContain('<div ref={credentialsSectionRef} className="scroll-mt-8">');
   });
 
   it('derives reasoning policy disablement from allowed summary modes', () => {

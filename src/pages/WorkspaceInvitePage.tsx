@@ -3,6 +3,8 @@ import { AlertTriangle, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { ControlPlaneWorkspaceInvitation } from '@/services/controlPlaneApi';
+import { formatRole } from '@/pages/workspace-members/memberUtils';
+import { RoleTemplatePreview } from '@/pages/workspace-members/RoleTemplatePreview';
 
 interface WorkspaceInvitePageProps {
   token: string;
@@ -10,10 +12,6 @@ interface WorkspaceInvitePageProps {
   onLoadInvitation: (token: string) => Promise<ControlPlaneWorkspaceInvitation>;
   onAcceptInvitation: (token: string) => Promise<void>;
   onGoToWorkspaces: () => void;
-}
-
-function formatRole(role: string): string {
-  return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
 function formatDate(value: string): string {
@@ -99,7 +97,7 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({
                   <p className="text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('invite.title')}</p>
                   <h1 className="mt-2 text-3xl font-bold tracking-tight text-ui-text">{invitation.workspaceName}</h1>
                   <p className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">
-                    {t('invite.invitedAs', { role: formatRole(invitation.role), time: formatDate(invitation.expiresAt) })}
+                    {t('invite.invitedAs', { role: formatRole(invitation.role, invitation.roleTemplate), time: formatDate(invitation.expiresAt) })}
                   </p>
                 </div>
               </div>
@@ -114,6 +112,11 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({
                   <span className="text-right font-bold text-ui-text">{currentUserEmail}</span>
                 </div>
               </div>
+
+              <RoleTemplatePreview
+                roleTemplate={invitation.roleTemplate}
+                emptyMessage={t('members.rolePreviewUnavailable')}
+              />
 
               {!isCurrentUserExpected && (
                 <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-sm font-semibold leading-6 text-status-warning-text">

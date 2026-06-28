@@ -50,4 +50,9 @@ describe('WorkspaceAuditLogPage audit operation rendering', () => {
     expect(auditLogPage).toContain('{formatActor(event)}');
     expect(auditLogPage).toContain('{formatObject(event)} · {event.object.type}');
   });
+
+  it('keeps the audit details row action on the shared tooltip primitive', () => {
+    expect(auditLogPage).toContain("<Tooltip content={t('auditLog.viewDetails')}>");
+    expect(auditLogPage).toContain("aria-label={t('auditLog.viewDetails')}");
+  });
 });

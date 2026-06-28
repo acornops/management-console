@@ -48,7 +48,9 @@ import {
   Smartphone,
   Languages,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Bot,
+  CircleHelp
 } from 'lucide-react';
 
 export const ICONS = {
@@ -101,7 +103,9 @@ export const ICONS = {
   Smartphone,
   Languages,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Bot,
+  CircleHelp
 };
 
 export const THEME_CLASSES = {

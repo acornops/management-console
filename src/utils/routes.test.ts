@@ -87,7 +87,10 @@ describe('routes', () => {
     expect(parseAppRoute('/')).toEqual({ kind: 'home' });
     expect(parseAppRoute('/workspaces')).toEqual({ kind: 'workspaces' });
     expect(parseAppRoute('/kubernetes-clusters')).toEqual({ kind: 'kubernetesClusters' });
+    expect(AppPaths.accountSettings()).toBe('/account');
+    expect(parseAppRoute(AppPaths.accountSettings())).toEqual({ kind: 'accountSettings' });
     expect(parseAppRoute(AppPaths.settings())).toEqual({ kind: 'settings' });
+    expect(parseAppRoute(AppPaths.help())).toEqual({ kind: 'help' });
     expect(parseAppRoute('/kubernetes-clusters/prod-cluster')).toEqual({
       kind: 'kubernetesClusterDiagnostics',
       clusterId: 'prod-cluster',
@@ -172,6 +175,21 @@ describe('routes', () => {
     });
     expect(parseAppRoute(AppPaths.workspaceWorkflows('team-alpha'))).toEqual({
       kind: 'workspaceWorkflows',
+      workspaceId: 'team-alpha'
+    });
+    expect(AppPaths.workspaceSchedules('team-alpha')).toBe('/workspaces/team-alpha/schedules');
+    expect(parseAppRoute(AppPaths.workspaceSchedules('team-alpha'))).toEqual({
+      kind: 'workspaceSchedules',
+      workspaceId: 'team-alpha'
+    });
+    expect(AppPaths.workspaceApprovals('team-alpha')).toBe('/workspaces/team-alpha/approvals');
+    expect(parseAppRoute(AppPaths.workspaceApprovals('team-alpha'))).toEqual({
+      kind: 'workspaceApprovals',
+      workspaceId: 'team-alpha'
+    });
+    expect(AppPaths.workspaceAgents('team-alpha')).toBe('/workspaces/team-alpha/agents');
+    expect(parseAppRoute(AppPaths.workspaceAgents('team-alpha'))).toEqual({
+      kind: 'workspaceAgents',
       workspaceId: 'team-alpha'
     });
     expect(parseAppRoute(AppPaths.workspaceMembers('team-alpha'))).toEqual({

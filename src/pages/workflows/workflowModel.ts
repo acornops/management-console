@@ -1,6 +1,6 @@
 export type WorkflowStatus = 'active' | 'draft' | 'paused';
 export type WorkflowCapabilityMode = 'read_only' | 'read_write';
-export type WorkflowTab = 'chat' | 'runs' | 'mcp' | 'skills' | 'settings';
+export type WorkflowTab = 'overview' | 'agents' | 'targets' | 'capabilities' | 'runs' | 'settings';
 
 export interface WorkflowInput {
   name: string;
@@ -14,6 +14,7 @@ export interface WorkflowStep {
   title: string;
   prompt: string;
   requiredInputs: string[];
+  assignedAgentIds?: string[];
   enabledSkills: string[];
   allowedMcpServers: string[];
   allowedTools: string[];
@@ -33,6 +34,13 @@ export interface WorkflowRunRecord {
   startedAt: string;
 }
 
+export interface WorkflowAgentAssignment {
+  agentId: string;
+  name: string;
+  role: string;
+  required: boolean;
+}
+
 export interface WorkflowDefinition {
   id: string;
   workspaceId: string;
@@ -44,11 +52,15 @@ export interface WorkflowDefinition {
   tags: string[];
   lastRun: string;
   primaryAction: string;
+  primaryAgent: WorkflowAgentAssignment;
+  supportingAgents: WorkflowAgentAssignment[];
   requiredPermissions: string[];
   enabledMcpServers: string[];
   allowedTools: string[];
   enabledSkills: string[];
   contextGrants: string[];
+  targetSelection: string[];
+  disabledCapabilities: string[];
   inputs: WorkflowInput[];
   steps: WorkflowStep[];
   policy: {
@@ -65,6 +77,8 @@ export interface WorkflowDefinition {
   runs: WorkflowRunRecord[];
 }
 
+export type WorkflowLaunchPermissions = Partial<Record<'create_sessions' | 'create_read_only_runs' | 'create_read_write_runs', boolean>>;
+
 const defaultWorkspaceId = 'current-workspace';
 
 export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceId): WorkflowDefinition[] {
@@ -80,11 +94,15 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       tags: ['cluster', 'triage', 'incident'],
       lastRun: 'Today 09:12',
       primaryAction: 'Start triage',
+      primaryAgent: { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Triage owner', required: true },
+      supportingAgents: [],
       requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
       enabledMcpServers: ['acornops-cluster-agent'],
       allowedTools: ['inventory.resources.list', 'events.search', 'logs.summarize', 'metrics.query'],
       enabledSkills: ['acornops-observability', 'acornops-target-boundary-design'],
       contextGrants: ['workspace_metadata', 'target_inventory'],
+      targetSelection: ['selected Kubernetes cluster'],
+      disabledCapabilities: ['write tools'],
       inputs: [],
       steps: [
         {
@@ -130,11 +148,17 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       tags: ['repository', 'configuration', 'pull-request'],
       lastRun: 'Yesterday',
       primaryAction: 'Start operation',
+      primaryAgent: { agentId: 'agent-release-coordinator', name: 'Repository Operator', role: 'Change owner', required: true },
+      supportingAgents: [
+        { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Context reviewer', required: false }
+      ],
       requiredPermissions: ['read_workspace_data', 'create_read_write_runs'],
       enabledMcpServers: ['github'],
       allowedTools: ['github.repositories.read', 'github.branches.list', 'github.prs.list', 'github.branches.create', 'github.prs.create'],
       enabledSkills: ['acornops-cross-repo-change', 'acornops-open-pr'],
       contextGrants: ['workspace_metadata'],
+      targetSelection: ['selected repository'],
+      disabledCapabilities: ['unapproved branch writes'],
       inputs: [],
       steps: [
         {
@@ -180,11 +204,17 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       tags: ['incident', 'chat-history', 'pdf'],
       lastRun: 'Jun 20',
       primaryAction: 'Generate report',
+      primaryAgent: { agentId: 'agent-incident-reporter', name: 'Incident Reporter', role: 'Report owner', required: true },
+      supportingAgents: [
+        { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Finding reviewer', required: false }
+      ],
       requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
       enabledMcpServers: ['workspace-chat', 'artifact-writer'],
       allowedTools: ['chat.sessions.read_selected', 'reports.pdf.generate'],
       enabledSkills: ['acornops-observability'],
       contextGrants: ['selected_chat_sessions'],
+      targetSelection: ['approved chat sessions'],
+      disabledCapabilities: ['broad workspace chat history'],
       inputs: [],
       steps: [
         {
@@ -270,9 +300,8 @@ export function getWorkflowById(workflows: WorkflowDefinition[], workflowId: str
 }
 
 export function getWorkflowToolScopeSummary(workflow: WorkflowDefinition): string {
-  const serverLabel = workflow.enabledMcpServers.length === 1 ? 'MCP server' : 'MCP servers';
   const toolLabel = workflow.allowedTools.length === 1 ? 'allowed tool' : 'allowed tools';
-  return `${workflow.enabledMcpServers.length} ${serverLabel}, ${workflow.allowedTools.length} ${toolLabel}`;
+  return `${workflow.primaryAgent.name}, ${workflow.allowedTools.length} ${toolLabel}, ${workflow.policy.mode.replace('_', ' ')}`;
 }
 
 export function getOptimisticWorkflowRunStatus(workflow: WorkflowDefinition): WorkflowRunRecord['status'] {
@@ -280,10 +309,29 @@ export function getOptimisticWorkflowRunStatus(workflow: WorkflowDefinition): Wo
   return requiresApproval ? 'waiting_approval' : 'dispatching';
 }
 
+export function getWorkflowLaunchBlocker(
+  workflow: WorkflowDefinition,
+  message: string,
+  permissions?: WorkflowLaunchPermissions
+): string | null {
+  if (workflow.status !== 'active') return 'Activate this workflow before launching it.';
+  if (!message.trim()) return 'Add a control message before launching.';
+  if (!workflow.primaryAgent.agentId) return 'Assign a primary agent before launching.';
+  if (!permissions?.create_sessions) return 'You need create_sessions to launch workflows.';
+  if (workflow.policy.mode === 'read_write' && !permissions.create_read_write_runs) {
+    return 'You need create_read_write_runs to launch this workflow.';
+  }
+  if (workflow.policy.mode === 'read_only' && !permissions.create_read_only_runs) {
+    return 'You need create_read_only_runs to launch this workflow.';
+  }
+  return null;
+}
+
 export function getWorkflowTabLabel(tab: WorkflowTab): string {
-  if (tab === 'chat') return 'Chat';
+  if (tab === 'overview') return 'Overview';
+  if (tab === 'agents') return 'Agents';
+  if (tab === 'targets') return 'Targets';
+  if (tab === 'capabilities') return 'Capability review';
   if (tab === 'runs') return 'Runs';
-  if (tab === 'mcp') return 'MCP';
-  if (tab === 'skills') return 'Skills';
   return 'Settings';
 }

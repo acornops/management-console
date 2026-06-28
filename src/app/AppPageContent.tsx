@@ -7,10 +7,12 @@ import { ICONS } from '@/constants';
 import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
+import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { fadeTransition } from '@/lib/motion';
+import type { SettingsTab } from '@/pages/SettingsPage';
 import { AppRoute, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 
@@ -23,29 +25,35 @@ const loadKubernetesClusterDetailPage = () =>
 const loadNotFoundPage = () =>
   import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }));
 
+const loadSettingsPage = () =>
+  import('@/pages/SettingsPage').then((module) => ({ default: module.SettingsPage }));
+
 const loadUserSettingsPage = () =>
   import('@/pages/UserSettingsPage').then((module) => ({ default: module.UserSettingsPage }));
+
+const loadHelpPage = () =>
+  import('@/pages/HelpPage').then((module) => ({ default: module.HelpPage }));
 
 const loadVirtualMachinesPage = () =>
   import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
 
+const loadWorkspaceAgentsPage = () =>
+  import('@/pages/WorkspaceAgentsPage').then((module) => ({ default: module.WorkspaceAgentsPage }));
+
 const loadWorkspaceWorkflowsPage = () =>
   import('@/pages/WorkspaceWorkflowsPage').then((module) => ({ default: module.WorkspaceWorkflowsPage }));
+
+const loadWorkspaceSchedulesPage = () =>
+  import('@/pages/WorkspaceSchedulesPage').then((module) => ({ default: module.WorkspaceSchedulesPage }));
+
+const loadWorkspaceApprovalsPage = () =>
+  import('@/pages/WorkspaceApprovalsPage').then((module) => ({ default: module.WorkspaceApprovalsPage }));
 
 const loadWorkspaceInvitePage = () =>
   import('@/pages/WorkspaceInvitePage').then((module) => ({ default: module.WorkspaceInvitePage }));
 
-const loadWorkspaceMembersPage = () =>
-  import('@/pages/WorkspaceMembersPage').then((module) => ({ default: module.WorkspaceMembersPage }));
-
 const loadWorkspaceOverviewPage = () =>
   import('@/pages/WorkspaceOverviewPage').then((module) => ({ default: module.WorkspaceOverviewPage }));
-
-const loadWorkspaceSettingsPage = () =>
-  import('@/pages/WorkspaceSettingsPage').then((module) => ({ default: module.WorkspaceSettingsPage }));
-
-const loadWorkspaceAiSettingsPage = () =>
-  import('@/pages/WorkspaceAiSettingsPage').then((module) => ({ default: module.WorkspaceAiSettingsPage }));
 
 const loadWorkspaceAuditLogPage = () =>
   import('@/pages/WorkspaceAuditLogPage').then((module) => ({ default: module.WorkspaceAuditLogPage }));
@@ -53,14 +61,16 @@ const loadWorkspaceAuditLogPage = () =>
 const KubernetesClustersPage = React.lazy(loadKubernetesClustersPage);
 const KubernetesClusterDetailPage = React.lazy(loadKubernetesClusterDetailPage);
 const NotFoundPage = React.lazy(loadNotFoundPage);
+const SettingsPage = React.lazy(loadSettingsPage);
 const UserSettingsPage = React.lazy(loadUserSettingsPage);
+const HelpPage = React.lazy(loadHelpPage);
 const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
+const WorkspaceAgentsPage = React.lazy(loadWorkspaceAgentsPage);
 const WorkspaceWorkflowsPage = React.lazy(loadWorkspaceWorkflowsPage);
+const WorkspaceSchedulesPage = React.lazy(loadWorkspaceSchedulesPage);
+const WorkspaceApprovalsPage = React.lazy(loadWorkspaceApprovalsPage);
 const WorkspaceInvitePage = React.lazy(loadWorkspaceInvitePage);
-const WorkspaceMembersPage = React.lazy(loadWorkspaceMembersPage);
 const WorkspaceOverviewPage = React.lazy(loadWorkspaceOverviewPage);
-const WorkspaceSettingsPage = React.lazy(loadWorkspaceSettingsPage);
-const WorkspaceAiSettingsPage = React.lazy(loadWorkspaceAiSettingsPage);
 const WorkspaceAuditLogPage = React.lazy(loadWorkspaceAuditLogPage);
 
 export function preloadAppRoutePage(route: AppRoute): void {
@@ -77,29 +87,42 @@ export function preloadAppRoutePage(route: AppRoute): void {
       void loadNotFoundPage();
       break;
     case 'settings':
+      void loadSettingsPage();
+      break;
+    case 'accountSettings':
       void loadUserSettingsPage();
+      break;
+    case 'help':
+      void loadHelpPage();
       break;
     case 'workspaceVirtualMachines':
     case 'workspaceVirtualMachineDetail':
       void loadVirtualMachinesPage();
       break;
+    case 'workspaceAgents':
+      void loadWorkspaceAgentsPage();
+      break;
     case 'workspaceWorkflows':
       void loadWorkspaceWorkflowsPage();
+      break;
+    case 'workspaceSchedules':
+      void loadWorkspaceSchedulesPage();
+      break;
+    case 'workspaceApprovals':
+      void loadWorkspaceApprovalsPage();
       break;
     case 'workspaceInvitation':
       void loadWorkspaceInvitePage();
       break;
     case 'workspaceMembers':
-      void loadWorkspaceMembersPage();
+      void loadSettingsPage();
       break;
     case 'workspaceOverview':
       void loadWorkspaceOverviewPage();
       break;
     case 'workspaceSettings':
-      void loadWorkspaceSettingsPage();
-      break;
     case 'workspaceAiSettings':
-      void loadWorkspaceAiSettingsPage();
+      void loadSettingsPage();
       break;
     case 'workspaceAuditLog':
       void loadWorkspaceAuditLogPage();
@@ -116,7 +139,10 @@ function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspa
     !workspaceContext &&
     (
       route.kind === 'workspaceOverview' ||
+      route.kind === 'workspaceAgents' ||
       route.kind === 'workspaceWorkflows' ||
+      route.kind === 'workspaceSchedules' ||
+      route.kind === 'workspaceApprovals' ||
       route.kind === 'workspaceMembers' ||
       route.kind === 'workspaceAiSettings' ||
       route.kind === 'workspaceSettings' ||
@@ -226,6 +252,63 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   const shouldShowCreateFirstWorkspace =
     ((route.kind === 'workspaces' || route.kind === 'home') && workspaces.length === 0) ||
     routeTargetsMissingWorkspace(route, workspaceContext, workspaces.length);
+  const activeSettingsTab: SettingsTab = route.kind === 'workspaceMembers'
+    ? 'members'
+    : route.kind === 'workspaceAiSettings'
+      ? 'ai'
+      : 'workspace';
+
+  const navigateWorkspaceSettingsTab = (tab: SettingsTab) => {
+    if (!workspaceContext) return;
+    if (tab === 'members') {
+      navigate(AppPaths.workspaceMembers(workspaceContext.id));
+      return;
+    }
+    if (tab === 'ai') {
+      navigate(AppPaths.workspaceAiSettings(workspaceContext.id));
+      return;
+    }
+    navigate(AppPaths.workspaceSettings(workspaceContext.id));
+  };
+
+  const createWorkspaceInvitation = async (input: { email: string; role: Workspace['members'][number]['role'] }) => {
+    if (!workspaceContext) {
+      throw new Error(t('settingsPage.noWorkspaceBody'));
+    }
+    const invitation = await controlPlaneApi.createWorkspaceInvitation(workspaceContext.id, input);
+    if (!invitation.token) {
+      throw new Error(t('app.invitationTokenMissing'));
+    }
+    const mappedInvitation = toWorkspaceInvitation(invitation);
+    onUpdateWorkspace(workspaceContext.id, {
+      invitations: mergeCreatedInvitation(workspaceContext.invitations || [], mappedInvitation)
+    });
+    return mappedInvitation;
+  };
+
+  const revokeWorkspaceInvitation = async (invitation: WorkspaceInvitation) => {
+    if (!workspaceContext) return;
+    await controlPlaneApi.revokeWorkspaceInvitation(workspaceContext.id, invitation.id);
+    await onRefreshWorkspaceInvitations(workspaceContext.id);
+  };
+
+  const updateWorkspaceMemberRole = async (member: Workspace['members'][number], role: Workspace['members'][number]['role']) => {
+    if (!workspaceContext) return;
+    if (!member.userId) {
+      throw new Error(t('app.memberUserIdMissing'));
+    }
+    await controlPlaneApi.updateWorkspaceMemberRole(workspaceContext.id, member.userId, role);
+    await onRefreshWorkspaceMembers(workspaceContext.id);
+  };
+
+  const removeWorkspaceMember = async (member: Workspace['members'][number]) => {
+    if (!workspaceContext) return;
+    if (!member.userId) {
+      throw new Error(t('app.memberUserIdMissing'));
+    }
+    await controlPlaneApi.deleteWorkspaceMember(workspaceContext.id, member.userId);
+    await onRefreshWorkspaceMembers(workspaceContext.id);
+  };
 
   return (
     <main className="flex-1 min-w-0 w-full max-w-full min-h-0 flex flex-col h-full overflow-hidden relative">
@@ -273,6 +356,20 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             <WorkspaceWorkflowsPage
               workspace={workspaceContext}
             />
+          )}
+
+          {route.kind === 'workspaceAgents' && workspaceContext && (
+            <WorkspaceAgentsPage
+              workspace={workspaceContext}
+            />
+          )}
+
+          {route.kind === 'workspaceSchedules' && workspaceContext && (
+            <WorkspaceSchedulesPage workspace={workspaceContext} />
+          )}
+
+          {route.kind === 'workspaceApprovals' && workspaceContext && (
+            <WorkspaceApprovalsPage workspace={workspaceContext} />
           )}
 
           {(route.kind === 'kubernetesClusters' || route.kind === 'workspaceKubernetesClusters') && (
@@ -328,58 +425,22 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
-          {route.kind === 'workspaceMembers' && workspaceContext && (
-            <WorkspaceMembersPage
+          {(route.kind === 'settings' || route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers') && (
+            <SettingsPage
               workspace={workspaceContext}
-              currentUserRole={getCurrentUserRoleForWorkspace(workspaceContext.id)}
-              canManageMembers={getWorkspacePermission(workspaceContext.id, 'manage_members')}
-              onCreateInvitation={async (input) => {
-                const invitation = await controlPlaneApi.createWorkspaceInvitation(workspaceContext.id, input);
-                if (!invitation.token) {
-                  throw new Error(t('app.invitationTokenMissing'));
-                }
-                const mappedInvitation = toWorkspaceInvitation(invitation);
-                onUpdateWorkspace(workspaceContext.id, {
-                  invitations: [
-                    mappedInvitation,
-                    ...(workspaceContext.invitations || []).filter((item) => item.id !== mappedInvitation.id)
-                  ]
-                });
-                return mappedInvitation;
-              }}
-              onRevokeInvitation={async (invitation) => {
-                await controlPlaneApi.revokeWorkspaceInvitation(workspaceContext.id, invitation.id);
-                await onRefreshWorkspaceInvitations(workspaceContext.id);
-              }}
-              onUpdateMemberRole={async (member, role) => {
-                if (!member.userId) {
-                  throw new Error(t('app.memberUserIdMissing'));
-                }
-                await controlPlaneApi.updateWorkspaceMemberRole(workspaceContext.id, member.userId, role);
-                await onRefreshWorkspaceMembers(workspaceContext.id);
-              }}
-              onRemoveMember={async (member) => {
-                if (!member.userId) {
-                  throw new Error(t('app.memberUserIdMissing'));
-                }
-                await controlPlaneApi.deleteWorkspaceMember(workspaceContext.id, member.userId);
-                await onRefreshWorkspaceMembers(workspaceContext.id);
-              }}
-            />
-          )}
-
-          {route.kind === 'workspaceSettings' && workspaceContext && (
-            <WorkspaceSettingsPage
-              workspace={workspaceContext}
-              canDeleteWorkspace={getWorkspacePermission(workspaceContext.id, 'delete_workspace')}
+              initialTab={activeSettingsTab}
+              canReadWorkspaceData={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'read_workspace_data') : false}
+              canReadMembers={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'read_members') : false}
+              canDeleteWorkspace={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'delete_workspace') : false}
+              canManageMembers={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'manage_members') : false}
+              canManageAiSettings={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'manage_ai_settings') : false}
+              currentUserRole={workspaceContext ? getCurrentUserRoleForWorkspace(workspaceContext.id) : undefined}
               onDeleteWorkspace={onOpenDeleteWorkspace}
-            />
-          )}
-
-          {route.kind === 'workspaceAiSettings' && workspaceContext && (
-            <WorkspaceAiSettingsPage
-              workspace={workspaceContext}
-              canManageAiSettings={getWorkspacePermission(workspaceContext.id, 'manage_ai_settings')}
+              onCreateInvitation={workspaceContext ? createWorkspaceInvitation : undefined}
+              onRevokeInvitation={workspaceContext ? revokeWorkspaceInvitation : undefined}
+              onUpdateMemberRole={workspaceContext ? updateWorkspaceMemberRole : undefined}
+              onRemoveMember={workspaceContext ? removeWorkspaceMember : undefined}
+              onSelectTab={navigateWorkspaceSettingsTab}
               showToast={showToast}
             />
           )}
@@ -388,7 +449,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             <WorkspaceAuditLogPage workspace={workspaceContext} />
           )}
 
-          {route.kind === 'settings' && (
+          {route.kind === 'accountSettings' && (
             <UserSettingsPage
               user={user}
               language={language}
@@ -396,6 +457,10 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onLogout={onLogout}
               onSetLanguage={onSetLanguage}
             />
+          )}
+
+          {route.kind === 'help' && (
+            <HelpPage />
           )}
 
           {(route.kind === 'kubernetesClusterDiagnostics' || route.kind === 'workspaceKubernetesClusterDiagnostics') && (

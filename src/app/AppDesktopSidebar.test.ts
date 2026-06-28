@@ -4,7 +4,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const root = resolve(__dirname, '../..');
-const desktopSidebar = readFileSync(resolve(root, 'src/app/AppDesktopSidebar.tsx'), 'utf8');
+const desktopSidebar = [
+  readFileSync(resolve(root, 'src/app/AppDesktopSidebar.tsx'), 'utf8'),
+  readFileSync(resolve(root, 'src/app/AppDesktopSidebarParts.tsx'), 'utf8')
+].join('\n');
 const assistantStatusIndicator = readFileSync(resolve(root, 'src/app/AssistantNavStatusIndicator.tsx'), 'utf8');
 const navCountBadge = readFileSync(resolve(root, 'src/app/NavCountBadge.tsx'), 'utf8');
 
@@ -26,9 +29,12 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('workspaceSwitcherButtonRef.current?.focus({ preventScroll: true });');
   });
 
-  it('places target settings in administration instead of operations', () => {
+  it('separates target settings with the same quiet divider used by workspace utilities', () => {
     expect(desktopSidebar).not.toContain("['settings', 'clusterSettings', t('app.clusterSettings'), ICONS.Settings]");
     expect(desktopSidebar).not.toContain("['settings', 'vmSettings', t('app.vmSettings'), ICONS.Settings]");
+    expect(desktopSidebar).not.toContain("<SidebarSection title={t('app.administration')} quiet>");
+    expect(desktopSidebar).toContain('<TargetSettingsDivider>');
+    expect(desktopSidebar).toContain('</TargetSettingsDivider>');
     expect(desktopSidebar).toContain("active={activeResourceNav === 'clusterSettings'}");
     expect(desktopSidebar).toContain("onClick={() => onNavigateClusterSubview('settings')}");
     expect(desktopSidebar).toContain("active={activeResourceNav === 'vmSettings'}");
@@ -68,23 +74,54 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedVmName}');
   });
 
-  it('separates frequent operational routes from quieter administration routes', () => {
-    expect(desktopSidebar).toContain("<SidebarSection title={t('app.operations')} compactAfter>");
-    expect(desktopSidebar).toContain("<SidebarSection title={t('app.administration')} quiet>");
+  it('groups workspace resources by inventory and automation intent', () => {
+    expect(desktopSidebar).toContain("<SidebarSection title={t('app.inventory')} compactAfter>");
+    expect(desktopSidebar).toContain("<SidebarSection title={t('app.automation')} compactAfter>");
+    expect(desktopSidebar).not.toContain("label={t('app.aiSettings')}");
+    expect(desktopSidebar).not.toContain('AppPaths.workspaceAiSettings(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain("label={t('app.agents')}");
+    expect(desktopSidebar).toContain('AppPaths.workspaceAgents(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain("label={t('app.schedules')}");
+    expect(desktopSidebar).toContain('AppPaths.workspaceSchedules(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain("label={t('app.approvals')}");
+    expect(desktopSidebar).toContain('AppPaths.workspaceApprovals(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}");
+    expect(desktopSidebar).toContain('AppPaths.workspaceSettings(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain('AppPaths.workspaceMembers(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain("label={t('app.help')}");
+    expect(desktopSidebar).toContain('AppPaths.help()');
+    expect(desktopSidebar).toContain('navigate(AppPaths.accountSettings());');
+    expect(desktopSidebar).toContain("t('app.accountSettings')");
+    expect(desktopSidebar).toContain("t('app.theme')");
+    expect(desktopSidebar).toContain("t('app.logout')");
+    expect(desktopSidebar).toContain("tracking-[0.08em]");
     expect(desktopSidebar).not.toContain("label={t('app.runbooks')}");
     expect(desktopSidebar).not.toContain('AppPaths.workspaceRunbooks');
-    expect(desktopSidebar.indexOf("label={t('app.members')}")).toBeGreaterThan(
-      desktopSidebar.indexOf("<SidebarSection title={t('app.administration')} quiet>")
+    expect(desktopSidebar).not.toContain("title={t('app.primaryDestinations')}");
+    expect(desktopSidebar.indexOf("label={t('app.clusters')}")).toBeGreaterThan(
+      desktopSidebar.indexOf("<SidebarSection title={t('app.inventory')} compactAfter>")
     );
-    expect(desktopSidebar).toContain("label={t('app.auditLog')}");
-    expect(desktopSidebar).toContain("label={t('app.aiSettings')}");
-    expect(desktopSidebar).toContain("label={t('app.workspaceSettings')}");
-    expect(desktopSidebar).toContain("active={activeResourceNav === 'workspaceAiSettings'}");
+    expect(desktopSidebar.indexOf("label={t('app.virtualMachines')}")).toBeGreaterThan(
+      desktopSidebar.indexOf("<SidebarSection title={t('app.inventory')} compactAfter>")
+    );
+    expect(desktopSidebar).not.toContain("label={t('app.members')}");
+    expect(desktopSidebar.indexOf("label={t('app.agents')}")).toBeGreaterThan(
+      desktopSidebar.indexOf("<SidebarSection title={t('app.automation')} compactAfter>")
+    );
+    expect(desktopSidebar.indexOf("label={t('app.workflows')}")).toBeGreaterThan(
+      desktopSidebar.indexOf("label={t('app.agents')}")
+    );
+    expect(desktopSidebar.indexOf("label={t('app.schedules')}")).toBeGreaterThan(
+      desktopSidebar.indexOf("label={t('app.workflows')}")
+    );
+    expect(desktopSidebar.indexOf("label={t('app.approvals')}")).toBeGreaterThan(
+      desktopSidebar.indexOf("label={t('app.schedules')}")
+    );
+    expect(desktopSidebar.indexOf("label={t('app.auditLog')}")).toBeGreaterThan(
+      desktopSidebar.indexOf("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")
+    );
     expect(desktopSidebar.indexOf("label={t('app.auditLog')}")).toBeLessThan(
-      desktopSidebar.indexOf("label={t('app.aiSettings')}")
-    );
-    expect(desktopSidebar.indexOf("label={t('app.aiSettings')}")).toBeLessThan(
-      desktopSidebar.indexOf("label={t('app.workspaceSettings')}")
+      desktopSidebar.indexOf("label={t('app.help')}")
     );
     expect(desktopSidebar.indexOf("label={t('app.aiChat')}")).toBeLessThan(
       desktopSidebar.indexOf("label={t('app.clusterSettings')}")
@@ -102,10 +139,68 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar.indexOf("label={t('app.clusterSettings')}")).toBeLessThan(
       desktopSidebar.indexOf("label={t('app.vmSettings')}")
     );
-    expect(desktopSidebar).toContain('quiet?: boolean');
     expect(desktopSidebar).toContain('compactAfter?: boolean');
-    expect(desktopSidebar).toContain('data-sidebar-section-quiet={quiet ? \'true\' : undefined}');
-    expect(desktopSidebar).toContain("quiet ? 'pt-0 pb-8' : compactAfter ? 'pb-4' : 'pb-10'");
+    expect(desktopSidebar).not.toContain('quiet?: boolean');
+    expect(desktopSidebar).not.toContain('data-sidebar-section-quiet={quiet ? \'true\' : undefined}');
+    expect(desktopSidebar).toContain("compactAfter ? 'pb-4' : 'pb-10'");
+  });
+
+  it('keeps members navigation visible for read-members-only roles', () => {
+    expect(desktopSidebar).toContain('canReadWorkspaceMembers');
+    expect(desktopSidebar).toContain('const hasWorkspaceMemberAccess = canReadWorkspaceMembers(selectedWorkspace);');
+    expect(desktopSidebar).toContain('const workspaceSettingsPath = selectedWorkspaceId');
+    expect(desktopSidebar).toContain('? AppPaths.workspaceSettings(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain(': AppPaths.workspaceMembers(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain('disabled={Boolean(selectedWorkspaceId) && !hasWorkspaceDataAccess && !hasWorkspaceMemberAccess}');
+  });
+
+  it('keeps audit logs in the bottom workspace utility group for auditor-only roles', () => {
+    const workspaceNavigation = desktopSidebar.slice(
+      desktopSidebar.indexOf("<SidebarSection title={t('app.automation')} compactAfter>"),
+      desktopSidebar.indexOf('{isClusterSidebar && (')
+    );
+    const automationSection = workspaceNavigation.slice(
+      0,
+      workspaceNavigation.indexOf('<TargetSettingsDivider>')
+    );
+    const utilitySection = workspaceNavigation.slice(
+      workspaceNavigation.indexOf('<TargetSettingsDivider>'),
+      workspaceNavigation.indexOf('</TargetSettingsDivider>')
+    );
+
+    expect(workspaceNavigation).toContain('<TargetSettingsDivider>');
+    expect(workspaceNavigation).toContain('</TargetSettingsDivider>');
+    expect(workspaceNavigation).not.toContain('mt-auto border-t border-ui-border');
+    expect(automationSection).not.toContain("label={t('app.auditLog')}");
+    expect(utilitySection).toContain("label={t('app.auditLog')}");
+    expect(utilitySection.indexOf("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+      utilitySection.indexOf("label={t('app.auditLog')}")
+    );
+    expect(utilitySection.indexOf("label={t('app.auditLog')}")).toBeLessThan(
+      utilitySection.indexOf("label={t('app.help')}")
+    );
+    expect(utilitySection).toContain('canReadWorkspaceAuditLog(selectedWorkspace)');
+  });
+
+  it('makes account settings visibly located in the bottom account bar', () => {
+    expect(desktopSidebar).toContain('const isAccountSettingsActive = activeResourceNav === \'accountSettings\';');
+    expect(desktopSidebar).toContain("data-account-settings-active={isAccountSettingsActive ? 'true' : undefined}");
+    expect(desktopSidebar).toContain("aria-current={isAccountSettingsActive ? 'page' : undefined}");
+    expect(desktopSidebar).toContain("aria-label={t('app.accountSettings')}");
+    expect(desktopSidebar).toContain("{t('app.accountSettings')}");
+    expect(desktopSidebar).not.toContain('text-[0.625rem] font-bold uppercase leading-4 tracking-[0.08em]');
+    expect(desktopSidebar).toContain("isAccountSettingsActive ? 'border-accent/30 bg-accent-soft shadow-sm'");
+    expect(desktopSidebar).toContain("isAccountSettingsActive ? 'bg-accent text-[oklch(0.99_0.004_86)]'");
+    expect(desktopSidebar).toContain("isAccountSettingsActive ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'");
+  });
+
+  it('labels console settings separately from account settings', () => {
+    expect(desktopSidebar).toContain("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}");
+    expect(desktopSidebar).toContain('AppPaths.settings()');
+    expect(desktopSidebar).toContain("t('app.accountSettings')");
+    expect(desktopSidebar.indexOf("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+      desktopSidebar.indexOf("data-account-settings-active={isAccountSettingsActive ? 'true' : undefined}")
+    );
   });
 
   it('renders compact assistant status indicators without adding nav-row text pills', () => {

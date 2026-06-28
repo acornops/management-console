@@ -5,6 +5,7 @@ export interface WorkflowApiStep {
   id: string;
   title: string;
   requiredInputs: string[];
+  assignedAgentIds?: string[];
   enabledSkills: string[];
   allowedMcpServers: string[];
   allowedTools: string[];
@@ -60,6 +61,7 @@ export interface WorkflowOptionsCatalog {
   mcpServers: WorkflowOption[];
   mcpTools: WorkflowOption[];
   skills: WorkflowOption[];
+  agents: WorkflowOption[];
   chatSessions: WorkflowOption[];
   outputFormats: WorkflowOption[];
   approvalPolicies: WorkflowOption[];
@@ -119,6 +121,75 @@ export interface WorkflowRunSummary {
 export type WorkflowRunApproval = ControlPlaneRunToolApproval;
 export type WorkflowRunEvent = ControlPlaneRunEvent;
 
+export interface WorkflowSchedule {
+  id: string;
+  workspaceId: string;
+  workflowId: string;
+  workflowVersion: number;
+  name: string;
+  status: 'enabled' | 'paused';
+  cron: string;
+  timezone: string;
+  inputDefaults: Record<string, unknown>;
+  approvedContextGrants: string[];
+  createdBy?: { userId: string; displayName?: string };
+  updatedBy?: { userId: string; displayName?: string };
+  createdAt: string;
+  updatedAt: string;
+  nextRunAt?: string;
+  lastRunAt?: string;
+  lastStatus?: 'dispatched' | 'failed' | 'auto_paused' | 'skipped';
+  lastError?: string;
+}
+
+export interface WorkflowScheduleSummary {
+  total: number;
+  active: number;
+  paused: number;
+  approvalGated: number;
+  nextRunAt?: string;
+}
+
+export interface WorkflowScheduleListResponse {
+  items: WorkflowSchedule[];
+  summary: WorkflowScheduleSummary;
+}
+
+export interface WorkflowScheduleInput {
+  workflowId: string;
+  name: string;
+  enabled?: boolean;
+  cron: string;
+  timezone: string;
+  inputDefaults?: Record<string, unknown>;
+  approvedContextGrants?: string[];
+}
+
+export type WorkflowScheduleUpdateInput = Partial<WorkflowScheduleInput>;
+
+export interface WorkspaceApprovalInboxRow {
+  approvalId: string;
+  runId: string;
+  source: 'target_tool' | 'workflow_gate';
+  workflowId?: string;
+  targetId?: string;
+  targetType?: string;
+  summary: string;
+  toolName: string;
+  requestedBy?: string;
+  expiresAt: string;
+  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  decision?: 'approved' | 'rejected';
+  decidedBy?: string;
+  decidedAt?: string;
+  requestedAt: string;
+}
+
+export interface WorkspaceApprovalInboxResponse {
+  items: WorkspaceApprovalInboxRow[];
+  nextCursor?: string;
+}
+
 export type WorkflowSessionSummary = WorkflowSessionResponse['session'] & {
   runs?: WorkflowRunSummary[];
 };
@@ -133,6 +204,7 @@ export interface WorkflowScopeUpdateInput {
   };
   steps?: Array<{
     id: string;
+    assignedAgentIds?: string[];
     allowedMcpServers?: string[];
     allowedTools?: string[];
     contextGrants?: string[];
@@ -172,6 +244,63 @@ export function listWorkspaceWorkflows(workspaceId: string): Promise<WorkflowApi
 export function listWorkflowOptions(workspaceId: string): Promise<WorkflowOptionsCatalog> {
   return requestJson<WorkflowOptionsCatalog>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/workflow-options`
+  );
+}
+
+export function listWorkspaceWorkflowSchedules(workspaceId: string): Promise<WorkflowScheduleListResponse> {
+  return requestJson<WorkflowScheduleListResponse>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/workflow-schedules`
+  );
+}
+
+export function createWorkflowSchedule(workspaceId: string, input: WorkflowScheduleInput): Promise<WorkflowSchedule> {
+  return requestJson<{ schedule: WorkflowSchedule }>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/workflow-schedules`,
+    {
+      method: 'POST',
+      body: JSON.stringify(input)
+    }
+  ).then((response) => response.schedule);
+}
+
+export function updateWorkflowSchedule(
+  workspaceId: string,
+  scheduleId: string,
+  input: WorkflowScheduleUpdateInput
+): Promise<WorkflowSchedule> {
+  return requestJson<{ schedule: WorkflowSchedule }>(
+    `/api/v1/workflow-schedules/${encodeURIComponent(scheduleId)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({
+        workspaceId,
+        ...input
+      })
+    }
+  ).then((response) => response.schedule);
+}
+
+export function deleteWorkflowSchedule(workspaceId: string, scheduleId: string): Promise<void> {
+  return requestJson<void>(
+    `/api/v1/workflow-schedules/${encodeURIComponent(scheduleId)}`,
+    {
+      method: 'DELETE',
+      body: JSON.stringify({ workspaceId })
+    }
+  ).then(() => undefined);
+}
+
+export function listWorkspaceApprovalInbox(
+  workspaceId: string,
+  params: { status?: 'pending' | 'decided' | 'all'; limit?: number; cursor?: string } = {}
+): Promise<WorkspaceApprovalInboxResponse> {
+  const search = new URLSearchParams();
+  if (params.status) search.set('status', params.status);
+  if (params.limit) search.set('limit', String(params.limit));
+  if (params.cursor) search.set('cursor', params.cursor);
+  const query = search.toString();
+  return requestJson<WorkspaceApprovalInboxResponse>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/approvals${query ? `?${query}` : ''}`
   );
 }
 

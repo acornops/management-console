@@ -17,6 +17,7 @@ import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('mapControlPlaneApprovalToPendingApproval', () => {
@@ -101,11 +102,14 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
     });
 
     it('prefers crypto randomUUID and falls back to local ids', () => {
-      const randomUuidSpy = vi.spyOn(globalThis.crypto, 'randomUUID');
-      randomUuidSpy.mockReturnValueOnce('12345678-1234-1234-1234-123456789abc');
-      expect(createConversationId()).toBe('12345678-1234-1234-1234-123456789abc');
+      vi.stubGlobal('crypto', {
+        randomUUID: vi
+          .fn<() => `${string}-${string}-${string}-${string}-${string}`>()
+          .mockReturnValueOnce('12345678-1234-1234-1234-123456789abc')
+          .mockReturnValueOnce('' as `${string}-${string}-${string}-${string}-${string}`)
+      });
 
-      randomUuidSpy.mockImplementationOnce(() => '' as `${string}-${string}-${string}-${string}-${string}`);
+      expect(createConversationId()).toBe('12345678-1234-1234-1234-123456789abc');
       expect(createConversationId()).toMatch(/^session-/);
     });
 

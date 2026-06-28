@@ -2,10 +2,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   cancelWorkflowRun,
+  createWorkflowSchedule,
   createWorkflow,
   createWorkflowMcpServer,
   createWorkflowSession,
   decideWorkflowRunApproval,
+  deleteWorkflowSchedule,
+  listWorkspaceApprovalInbox,
+  listWorkspaceWorkflowSchedules,
   deleteWorkflow,
   listWorkflowMcpServers,
   listWorkflowMcpServerTools,
@@ -17,6 +21,7 @@ import {
   postWorkflowSessionMessage,
   testWorkflowMcpServerConnection,
   updateWorkflow,
+  updateWorkflowSchedule,
   updateWorkflowMcpServer
 } from './workflowApi';
 
@@ -47,6 +52,7 @@ describe('workflow control-plane api', () => {
         mcpServers: [{ value: 'github', label: 'GitHub' }],
         mcpTools: [{ value: 'github.prs.create', label: 'github.prs.create' }],
         skills: [{ value: 'acornops-open-pr', label: 'acornops-open-pr' }],
+        agents: [{ value: 'agent-release-coordinator', label: 'Repository Operator' }],
         chatSessions: [],
         outputFormats: [{ value: 'pdf', label: 'PDF' }],
         approvalPolicies: [],
@@ -58,7 +64,8 @@ describe('workflow control-plane api', () => {
 
     await expect(listWorkflowOptions('workspace-1')).resolves.toMatchObject({
       mcpServers: [{ value: 'github', label: 'GitHub' }],
-      skills: [{ value: 'acornops-open-pr', label: 'acornops-open-pr' }]
+      skills: [{ value: 'acornops-open-pr', label: 'acornops-open-pr' }],
+      agents: [{ value: 'agent-release-coordinator', label: 'Repository Operator' }]
     });
 
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/workflow-options');
@@ -415,5 +422,93 @@ describe('workflow control-plane api', () => {
     });
     expect(new Headers(approvalCall[1]?.headers).get('x-csrf-token')).toBe('csrf-token-1');
     expect(JSON.parse(approvalCall[1]?.body as string)).toEqual({ decision: 'approved' });
+  });
+
+  it('manages workflow schedules through the workspace schedule endpoints', async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.endsWith('/api/v1/auth/csrf')) {
+        return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
+      }
+      if (url.endsWith('/api/v1/workspaces/workspace-1/workflow-schedules') && !init?.method) {
+        return Promise.resolve(new Response(JSON.stringify({
+          items: [{ id: 'schedule-1', workflowId: 'workflow-1', name: 'Daily triage' }],
+          summary: { active: 1, paused: 0, approvalGated: 1, nextRunAt: '2026-06-28T09:00:00.000Z' }
+        }), { status: 200 }));
+      }
+      if (url.endsWith('/api/v1/workspaces/workspace-1/workflow-schedules') && init?.method === 'POST') {
+        return Promise.resolve(new Response(JSON.stringify({ schedule: { id: 'schedule-1', name: 'Daily triage' } }), { status: 201 }));
+      }
+      if (url.endsWith('/api/v1/workflow-schedules/schedule-1') && init?.method === 'PATCH') {
+        return Promise.resolve(new Response(JSON.stringify({ schedule: { id: 'schedule-1', status: 'paused' } }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(null, { status: 204 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listWorkspaceWorkflowSchedules('workspace-1')).resolves.toMatchObject({
+      items: [{ id: 'schedule-1', name: 'Daily triage' }],
+      summary: { active: 1, approvalGated: 1 }
+    });
+    await expect(createWorkflowSchedule('workspace-1', {
+      workflowId: 'workflow-1',
+      name: 'Daily triage',
+      cron: '0 9 * * 1-5',
+      timezone: 'UTC',
+      inputDefaults: { clusterId: 'cluster-primary' },
+      approvedContextGrants: ['workspace_metadata']
+    })).resolves.toMatchObject({ id: 'schedule-1' });
+    await expect(updateWorkflowSchedule('workspace-1', 'schedule-1', { enabled: false })).resolves.toMatchObject({
+      id: 'schedule-1',
+      status: 'paused'
+    });
+    await expect(deleteWorkflowSchedule('workspace-1', 'schedule-1')).resolves.toBeUndefined();
+
+    expect(fetchMock.mock.calls.some((call) => call[0] === 'http://localhost:8081/api/v1/workspaces/workspace-1/workflow-schedules')).toBe(true);
+    const createCall = fetchMock.mock.calls.find((call) => call[1]?.method === 'POST' && String(call[0]).endsWith('/workflow-schedules'));
+    expect(JSON.parse(createCall?.[1]?.body as string)).toEqual({
+      workflowId: 'workflow-1',
+      name: 'Daily triage',
+      cron: '0 9 * * 1-5',
+      timezone: 'UTC',
+      inputDefaults: { clusterId: 'cluster-primary' },
+      approvedContextGrants: ['workspace_metadata']
+    });
+    const patchCall = fetchMock.mock.calls.find((call) => call[1]?.method === 'PATCH');
+    expect(JSON.parse(patchCall?.[1]?.body as string)).toEqual({ workspaceId: 'workspace-1', enabled: false });
+    const deleteCall = fetchMock.mock.calls.find((call) => call[1]?.method === 'DELETE');
+    expect(JSON.parse(deleteCall?.[1]?.body as string)).toEqual({ workspaceId: 'workspace-1' });
+  });
+
+  it('loads the unified workspace approval inbox and decides rows by run id', async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('/api/v1/auth/csrf')) {
+        return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
+      }
+      if (url.includes('/api/v1/workspaces/workspace-1/approvals')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          items: [{
+            approvalId: 'approval-1',
+            runId: 'run-1',
+            source: 'workflow_gate',
+            workflowId: 'workflow-1',
+            summary: 'Before write-capable tools',
+            toolName: 'workflow.approval_gate',
+            requestedBy: 'user-1',
+            expiresAt: '2026-06-28T09:05:00.000Z',
+            status: 'pending',
+            requestedAt: '2026-06-28T09:00:00.000Z'
+          }]
+        }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ id: 'approval-1', status: 'approved' }), { status: 200 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listWorkspaceApprovalInbox('workspace-1', { status: 'pending', limit: 25 })).resolves.toMatchObject({
+      items: [{ approvalId: 'approval-1', source: 'workflow_gate', runId: 'run-1' }]
+    });
+    await expect(decideWorkflowRunApproval('run-1', 'approval-1', 'approved')).resolves.toMatchObject({ status: 'approved' });
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/approvals?status=pending&limit=25');
   });
 });

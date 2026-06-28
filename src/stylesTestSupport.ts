@@ -84,7 +84,12 @@ export const traceFooter = readSource('src/features/kubernetes-cluster-detail/co
 export const markdownComponents = readSource('src/features/kubernetes-cluster-detail/lib/markdown.tsx');
 export const buttonComponent = readSource('src/components/common/Button.tsx');
 export const addClusterModal = readSource('src/components/kubernetes-clusters/AddClusterModal.tsx');
-export const membersPage = readSource('src/pages/WorkspaceMembersPage.tsx');
+export const membersPage = [
+  readSource('src/pages/WorkspaceMembersPage.tsx'),
+  readSource('src/pages/workspace-members/MemberRoleCell.tsx'),
+  readSource('src/pages/workspace-members/RoleChangeConfirmation.tsx'),
+  readSource('src/pages/workspace-members/WorkspaceMemberDetailsPanel.tsx')
+].join('\n');
 export const workspaceInviteModal = readSource('src/pages/workspace-members/WorkspaceInviteModal.tsx');
 export const loginAuthPanel = readSource('src/pages/login/LoginAuthPanel.tsx');
 export const loginPasswordAuthForm = readSource('src/pages/login/LoginPasswordAuthForm.tsx');

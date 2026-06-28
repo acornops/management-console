@@ -5,10 +5,15 @@ export type AppRoute =
   | { kind: 'home' }
   | { kind: 'workspaces' }
   | { kind: 'kubernetesClusters' }
+  | { kind: 'accountSettings' }
   | { kind: 'settings' }
+  | { kind: 'help' }
   | { kind: 'externalIntegrationLink'; token?: string; status?: 'linked' | 'expired' | 'cancelled' }
   | { kind: 'workspaceOverview'; workspaceId: string }
+  | { kind: 'workspaceAgents'; workspaceId: string }
   | { kind: 'workspaceWorkflows'; workspaceId: string }
+  | { kind: 'workspaceSchedules'; workspaceId: string }
+  | { kind: 'workspaceApprovals'; workspaceId: string }
   | { kind: 'workspaceMembers'; workspaceId: string }
   | { kind: 'workspaceAiSettings'; workspaceId: string }
   | { kind: 'workspaceSettings'; workspaceId: string }
@@ -99,7 +104,9 @@ export function parseAppRoute(path: string): AppRoute {
   if (pathname === '/') return { kind: 'home' };
   if (pathname === '/workspaces') return { kind: 'workspaces' };
   if (pathname === '/kubernetes-clusters') return { kind: 'kubernetesClusters' };
+  if (pathname === '/account') return { kind: 'accountSettings' };
   if (pathname === '/settings') return { kind: 'settings' };
+  if (pathname === '/help') return { kind: 'help' };
   if (pathname === '/integrations/external/link') {
     return {
       kind: 'externalIntegrationLink',
@@ -113,12 +120,15 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceInvitation', token: decodeParam(inviteMatch[1]) };
   }
 
-  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|workflows|members|ai-settings|settings|audit-log)$/);
+  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|workflows|schedules|approvals|members|ai-settings|settings|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
     if (section === 'overview') return { kind: 'workspaceOverview', workspaceId };
+    if (section === 'agents') return { kind: 'workspaceAgents', workspaceId };
     if (section === 'workflows') return { kind: 'workspaceWorkflows', workspaceId };
+    if (section === 'schedules') return { kind: 'workspaceSchedules', workspaceId };
+    if (section === 'approvals') return { kind: 'workspaceApprovals', workspaceId };
     if (section === 'ai-settings') return { kind: 'workspaceAiSettings', workspaceId };
     if (section === 'settings') return { kind: 'workspaceSettings', workspaceId };
     if (section === 'audit-log') return { kind: 'workspaceAuditLog', workspaceId };
@@ -188,10 +198,18 @@ export const AppPaths = {
   },
   workspaces: (): string => '/workspaces',
   kubernetesClusters: (): string => '/kubernetes-clusters',
+  accountSettings: (): string => '/account',
   settings: (): string => '/settings',
+  help: (): string => '/help',
   workspaceOverview: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/overview`,
+  workspaceAgents: (workspaceId: string): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/agents`,
   workspaceWorkflows: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/workflows`,
+  workspaceSchedules: (workspaceId: string): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/schedules`,
+  workspaceApprovals: (workspaceId: string): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/approvals`,
   workspaceMembers: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/members`,
   workspaceAiSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`,
   workspaceSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/settings`,

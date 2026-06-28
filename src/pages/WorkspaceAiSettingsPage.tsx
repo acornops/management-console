@@ -9,109 +9,36 @@ import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace, WorkspaceAiSettings } from '@/types';
+import {
+  behaviorDraftChanged,
+  behaviorDraftFromSettings,
+  DEFAULT_BEHAVIOR_DRAFT,
+  EMPTY_CREDENTIAL_ERRORS,
+  EMPTY_PROVIDER_KEYS,
+  modelsForProvider,
+  PROVIDERS,
+  providerLabel,
+  reasoningEffortLabel,
+  reasoningModeLabel,
+  reasoningPolicyDisabled,
+  REASONING_EFFORTS,
+  REASONING_SUMMARY_MODES,
+  SettingSection,
+  type BehaviorDraft
+} from '@/pages/WorkspaceAiSettingsPage.helpers';
 
 interface WorkspaceAiSettingsPageProps {
   workspace: Workspace;
   canManageAiSettings: boolean;
   showToast: (message: string) => void;
-}
-
-const SettingSection: React.FC<{
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}> = ({ title, description, children }) => (
-  <section className="mb-10 last:mb-0">
-    <div className="mb-6 px-1">
-      <h2 className="mb-1 text-xl font-bold tracking-tight text-ui-text">{title}</h2>
-      <p className="max-w-3xl text-sm leading-6 text-ui-text-muted">{description}</p>
-    </div>
-    <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
-  </section>
-);
-
-const PROVIDERS: LlmProvider[] = ['openai', 'anthropic', 'gemini'];
-const REASONING_SUMMARY_MODES: ReasoningSummaryMode[] = ['off', 'auto', 'concise', 'detailed'];
-const REASONING_EFFORTS: ReasoningEffort[] = ['default', 'low', 'medium', 'high'];
-const EMPTY_PROVIDER_KEYS: Record<LlmProvider, string> = {
-  openai: '',
-  anthropic: '',
-  gemini: ''
-};
-const EMPTY_CREDENTIAL_ERRORS: Record<LlmProvider, string> = {
-  openai: '',
-  anthropic: '',
-  gemini: ''
-};
-
-interface BehaviorDraft {
-  defaultProvider: LlmProvider;
-  defaultModel: string;
-  reasoningSummaryMode: ReasoningSummaryMode;
-  reasoningEffort: ReasoningEffort;
-}
-
-const DEFAULT_BEHAVIOR_DRAFT: BehaviorDraft = {
-  defaultProvider: 'openai',
-  defaultModel: 'gpt-5.5',
-  reasoningSummaryMode: 'auto',
-  reasoningEffort: 'default'
-};
-
-function providerLabel(provider: LlmProvider): string {
-  if (provider === 'openai') return 'OpenAI';
-  if (provider === 'anthropic') return 'Anthropic';
-  return 'Gemini';
-}
-
-function reasoningModeLabel(mode: ReasoningSummaryMode): string {
-  return `workspaceAiSettings.reasoningMode.${mode}`;
-}
-
-function reasoningEffortLabel(effort: ReasoningEffort): string {
-  return `workspaceAiSettings.reasoningEffort.${effort}`;
-}
-
-function modelBelongsToProvider(model: string, provider: LlmProvider): boolean {
-  const normalized = model.toLowerCase();
-  if (provider === 'openai') return normalized.startsWith('gpt-') || normalized.startsWith('o');
-  if (provider === 'anthropic') return normalized.includes('claude');
-  return normalized.includes('gemini');
-}
-
-function modelsForProvider(allowedModels: string[], provider: LlmProvider): string[] {
-  const providerModels = allowedModels.filter((model) => modelBelongsToProvider(model, provider));
-  return providerModels.length > 0 ? providerModels : allowedModels;
-}
-
-function behaviorDraftFromSettings(settings: WorkspaceAiSettings): BehaviorDraft {
-  return {
-    defaultProvider: settings.defaultProvider,
-    defaultModel: settings.defaultModel,
-    reasoningSummaryMode: settings.reasoningSummaryMode,
-    reasoningEffort: settings.reasoningEffort
-  };
-}
-
-function behaviorDraftChanged(settings: WorkspaceAiSettings, draft: BehaviorDraft): boolean {
-  return (
-    settings.defaultProvider !== draft.defaultProvider ||
-    settings.defaultModel !== draft.defaultModel ||
-    settings.reasoningSummaryMode !== draft.reasoningSummaryMode ||
-    settings.reasoningEffort !== draft.reasoningEffort
-  );
-}
-
-function reasoningPolicyDisabled(settings: WorkspaceAiSettings | null): boolean {
-  // The control plane collapses deployment-disabled summaries to allowed modes ["off"].
-  // reasoningSummariesEnabled is the effective current state, not the edit policy.
-  return Boolean(settings && !settings.allowedReasoningSummaryModes.some((mode) => mode !== 'off'));
+  embedded?: boolean;
 }
 
 export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({
   workspace,
   canManageAiSettings,
-  showToast
+  showToast,
+  embedded = false
 }) => {
   const { t } = useTranslation();
   const [aiSettings, setAiSettings] = useState<WorkspaceAiSettings | null>(null);
@@ -125,6 +52,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const [credentialEditorProvider, setCredentialEditorProvider] = useState<LlmProvider | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<LlmProvider | null>(null);
   const workspaceIdRef = useRef(workspace.id);
+  const behaviorSectionRef = useRef<HTMLElement>(null);
+  const credentialsSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,6 +142,30 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
             message: t('workspaceAiSettings.defaultCredentialMissingWarning', { provider: providerLabel(savedDefaultProvider) })
           }
         : { tone: 'neutral' as const, message: t('workspaceAiSettings.readinessReady') };
+  const readinessAction = savedDefaultProviderMissingCredential
+    ? {
+        label: t('workspaceAiSettings.readinessAddCredentialAction'),
+        onClick: () => {
+          setCredentialEditorProvider(savedDefaultProvider);
+          setDeleteCandidate(null);
+          setCredentialErrors((current) => ({ ...current, [savedDefaultProvider]: '' }));
+          setProviderKeys((current) => ({ ...current, [savedDefaultProvider]: '' }));
+          credentialsSectionRef.current?.scrollIntoView({ block: 'start' });
+        }
+      }
+    : savedDefaultProviderDisabled
+      ? {
+          label: t('workspaceAiSettings.readinessChooseProviderAction'),
+          onClick: () => {
+            const nextProvider = currentAiSettings?.allowedProviders[0];
+            if (nextProvider) handleDefaultProviderChange(nextProvider);
+            behaviorSectionRef.current?.scrollIntoView({ block: 'start' });
+          }
+        }
+      : {
+          label: t('workspaceAiSettings.readinessReviewCredentialsAction'),
+          onClick: () => credentialsSectionRef.current?.scrollIntoView({ block: 'start' })
+        };
 
   const handleDefaultProviderChange = (provider: LlmProvider) => {
     setBehaviorError('');
@@ -312,13 +265,15 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <motion.header {...headerMotion} className="mb-12">
-        <h1 className="type-route-title">{t('workspaceAiSettings.title')}</h1>
-        <p className="type-body mt-2 max-w-2xl">
-          {t('workspaceAiSettings.subtitle')}
-        </p>
-      </motion.header>
+    <div className={embedded ? '' : 'min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8'}>
+      {!embedded && (
+        <motion.header {...headerMotion} className="mb-12">
+          <h1 className="type-route-title">{t('workspaceAiSettings.title')}</h1>
+          <p className="type-body mt-2 max-w-2xl">
+            {t('workspaceAiSettings.subtitle')}
+          </p>
+        </motion.header>
+      )}
 
       <div className="max-w-4xl">
         {isLoadingAiSettings && (
@@ -364,12 +319,29 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
               </div>
               <div className="border-t border-ui-border bg-ui-bg/35 p-5">
                 <InlineAlert tone={readinessNotice.tone} className="min-h-14">{readinessNotice.message}</InlineAlert>
+                {canManageAiSettings && (
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="type-caption">{t('workspaceAiSettings.nextAction')}</p>
+                    <Button
+                      type="button"
+                      variant={savedDefaultProviderMissingCredential || savedDefaultProviderDisabled ? 'secondary' : 'tertiary'}
+                      size="sm"
+                      onClick={() => readinessAction.onClick()}
+                      className="w-full sm:w-auto"
+                    >
+                      <ICONS.ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      {readinessAction.label}
+                    </Button>
+                  </div>
+                )}
               </div>
             </SettingSection>
 
             <SettingSection
               title={t('workspaceAiSettings.behaviorTitle')}
               description={t('workspaceAiSettings.behaviorBody')}
+              sectionRef={behaviorSectionRef}
+              className="scroll-mt-8"
             >
               <div className="p-6">
                 <div className="mb-5 flex min-w-0 items-center gap-4">
@@ -495,6 +467,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
             <SettingSection
               title={t('workspaceAiSettings.credentialsTitle')}
               description={t('workspaceAiSettings.credentialsBody')}
+              sectionRef={credentialsSectionRef}
+              className="scroll-mt-8"
             >
               {displayedProviderStatuses.map((providerStatus) => {
                 const provider = providerStatus.provider;

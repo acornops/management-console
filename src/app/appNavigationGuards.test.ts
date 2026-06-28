@@ -17,6 +17,8 @@ function makeWorkspace(permissions: Workspace['permissions']): Workspace {
 describe('app navigation guards', () => {
   it('treats AI settings as a workspace data route', () => {
     expect(isWorkspaceDataRoute({ kind: 'workspaceAiSettings', workspaceId: 'workspace-1' })).toBe(true);
+    expect(isWorkspaceDataRoute({ kind: 'workspaceSchedules', workspaceId: 'workspace-1' })).toBe(true);
+    expect(isWorkspaceDataRoute({ kind: 'workspaceApprovals', workspaceId: 'workspace-1' })).toBe(true);
   });
 
   it('does not land users without workspace data access on AI settings', () => {
@@ -30,6 +32,8 @@ describe('app navigation guards', () => {
       manage_mcp: false,
       manage_tools: false,
       manage_skills: false,
+      manage_workflows: false,
+      manage_agents: false,
       manage_ai_settings: false,
       manage_agent_keys: false,
       manage_webhooks: false,

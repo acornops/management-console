@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { canManageWorkspaceMembers, canReadWorkspaceAuditLog, canReadWorkspaceData } from '@/app/workspacePermissions';
+import { canManageWorkspaceMembers, canReadWorkspaceAuditLog, canReadWorkspaceData, canReadWorkspaceMembers } from '@/app/workspacePermissions';
 import { Workspace } from '@/types';
 
 function workspace(input: Partial<Workspace>): Workspace {
@@ -28,6 +28,8 @@ describe('workspace permissions', () => {
         manage_mcp: false,
         manage_tools: false,
         manage_skills: false,
+        manage_workflows: false,
+        manage_agents: false,
         manage_ai_settings: false,
         manage_agent_keys: false,
         manage_webhooks: false,
@@ -41,6 +43,7 @@ describe('workspace permissions', () => {
     });
 
     expect(canReadWorkspaceData(auditorWithServerPermissions)).toBe(true);
+    expect(canReadWorkspaceMembers(auditorWithServerPermissions)).toBe(true);
     expect(canReadWorkspaceAuditLog(auditorWithServerPermissions)).toBe(false);
   });
 
@@ -48,6 +51,7 @@ describe('workspace permissions', () => {
     const ownerWorkspace = workspace({ currentUserRole: 'owner' });
 
     expect(canReadWorkspaceData(ownerWorkspace)).toBe(false);
+    expect(canReadWorkspaceMembers(ownerWorkspace)).toBe(false);
     expect(canReadWorkspaceAuditLog(ownerWorkspace)).toBe(false);
     expect(canManageWorkspaceMembers(ownerWorkspace)).toBe(false);
   });
@@ -67,6 +71,7 @@ describe('workspace permissions', () => {
     });
 
     expect(canReadWorkspaceData(customWorkspace)).toBe(false);
+    expect(canReadWorkspaceMembers(customWorkspace)).toBe(true);
     expect(canReadWorkspaceAuditLog(customWorkspace)).toBe(false);
     expect(canManageWorkspaceMembers(customWorkspace)).toBe(true);
   });

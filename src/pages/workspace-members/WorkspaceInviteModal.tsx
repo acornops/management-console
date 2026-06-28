@@ -8,6 +8,7 @@ import { Select, SelectOption } from '@/components/common/Select';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import { ProjectMember, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
+import { RoleTemplatePreview } from '@/pages/workspace-members/RoleTemplatePreview';
 
 interface WorkspaceInviteModalProps {
   canManageOwners: boolean;
@@ -40,6 +41,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
     label: formatRole(role.key, role),
     disabled: role.protected && !canManageOwners
   }));
+  const selectedInviteRoleTemplate = roleTemplates.find((role) => role.key === inviteRole);
 
   useEffect(() => {
     if (roleTemplates.some((role) => role.key === inviteRole)) return;
@@ -105,104 +107,113 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
       }}
     >
       <motion.div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="invite-member-title"
-      className="w-full max-w-xl rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
-      {...modalPanelMotion}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invite-member-title"
+        className="relative flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
+        {...modalPanelMotion}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-ui-border px-6 py-5">
-          <div>
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-ui-border px-5 py-4 sm:px-6 sm:py-5">
+          <div className="min-w-0">
             <h2 id="invite-member-title" className="text-lg font-bold tracking-tight text-ui-text">{t('members.inviteMember')}</h2>
             <p className="mt-1 text-xs font-medium text-ui-text-muted">{t('members.inviteBody')}</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong"
+            className="shrink-0 rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong"
             aria-label={t('members.closeInvite')}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={(event) => void createInvite(event)} className="space-y-5 p-6" noValidate>
-          <div className="rounded-lg border border-ui-border bg-ui-bg p-4 text-xs font-medium leading-5 text-ui-text-muted">
-            <p className="font-bold uppercase tracking-widest text-ui-text">{t('members.inviteHowItWorks')}</p>
-            <p className="mt-2">{t('members.inviteHowItWorksBody')}</p>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="workspace-invite-email" className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.email')}</label>
-            <input
-              id="workspace-invite-email"
-              type="email"
-              value={inviteEmail}
-              onChange={(event) => {
-                setInviteEmailError(undefined);
-                setInviteEmail(event.target.value);
-              }}
-              disabled={Boolean(createdInvite) || isCreatingInvite}
-              placeholder={t('members.emailPlaceholder')}
-              className={`w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm font-semibold text-ui-text outline-none ring-accent/10 transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70 ${inviteEmailError ? fieldInvalidClass : ''}`}
-              aria-invalid={Boolean(inviteEmailError)}
-              aria-describedby={inviteEmailError ? 'workspace-invite-email-error' : undefined}
-            />
-            <FieldValidationMessage id="workspace-invite-email-error" message={inviteEmailError} />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.role')}</label>
-            <Select<ProjectMember['role']>
-              value={inviteRole}
-              options={roleOptions}
-              onChange={setInviteRole}
-              disabled={Boolean(createdInvite) || isCreatingInvite}
-            />
-          </div>
-
-          {createdInvite && (
-            <div className="space-y-3 rounded-lg border border-ui-border bg-ui-bg p-4">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                <Link className="h-4 w-4 text-accent-strong" />
-                {t('members.inviteLink')}
+        <form onSubmit={(event) => void createInvite(event)} className="flex min-h-0 flex-1 flex-col" noValidate>
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 custom-scrollbar sm:p-6">
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1.2fr)_minmax(12rem,0.8fr)]">
+              <div className="space-y-2">
+                <label htmlFor="workspace-invite-email" className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.email')}</label>
+                <input
+                  id="workspace-invite-email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(event) => {
+                    setInviteEmailError(undefined);
+                    setInviteEmail(event.target.value);
+                  }}
+                  disabled={Boolean(createdInvite) || isCreatingInvite}
+                  placeholder={t('members.emailPlaceholder')}
+                  className={`w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm font-semibold text-ui-text outline-none ring-accent/10 transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70 ${inviteEmailError ? fieldInvalidClass : ''}`}
+                  aria-invalid={Boolean(inviteEmailError)}
+                  aria-describedby={inviteEmailError ? 'workspace-invite-email-error' : undefined}
+                />
+                <FieldValidationMessage id="workspace-invite-email-error" message={inviteEmailError} />
               </div>
-              {createdInvite.inviteLink ? (
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <input
-                    readOnly
-                    value={createdInvite.inviteLink}
-                    onFocus={(event) => event.currentTarget.select()}
-                    className="min-w-0 flex-1 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-sm font-semibold text-ui-text outline-none"
-                  />
-                  <Button onClick={() => void copyInviteLink()} variant="secondary" size="sm" className="uppercase tracking-widest">
-                    {hasCopiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    {hasCopiedInvite ? t('members.copied') : t('members.copy')}
-                  </Button>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 text-xs font-semibold leading-5 text-status-warning-text">
-                  {t('members.linkReturnedOnce')}
-                </div>
-              )}
-              <p className="text-xs font-medium leading-5 text-ui-text-muted">
-                {t('members.recipientMustUseEmail', { email: createdInvite.email, time: new Date(createdInvite.expiresAt).toLocaleString() })}
-              </p>
-            </div>
-          )}
 
-          {inviteErrorMessage && (
-            <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">
-              {inviteErrorMessage}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.role')}</label>
+                <Select<ProjectMember['role']>
+                  value={inviteRole}
+                  options={roleOptions}
+                  onChange={setInviteRole}
+                  disabled={Boolean(createdInvite) || isCreatingInvite}
+                />
+              </div>
             </div>
-          )}
 
-          <div className="flex gap-3 pt-1">
+            <RoleTemplatePreview
+              roleTemplate={selectedInviteRoleTemplate}
+              emptyMessage={t('members.rolePreviewUnavailable')}
+            />
+
+            <div className="border-t border-ui-border pt-4 text-xs font-medium leading-5 text-ui-text-muted">
+              <p className="font-bold uppercase tracking-widest text-ui-text">{t('members.inviteHowItWorks')}</p>
+              <p className="mt-1">{t('members.inviteHowItWorksBody')}</p>
+            </div>
+
+            {createdInvite && (
+              <div className="space-y-3 rounded-lg border border-ui-border bg-ui-bg p-4">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">
+                  <Link className="h-4 w-4 text-accent-strong" />
+                  {t('members.inviteLink')}
+                </div>
+                {createdInvite.inviteLink ? (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <input
+                      readOnly
+                      value={createdInvite.inviteLink}
+                      onFocus={(event) => event.currentTarget.select()}
+                      className="min-w-0 flex-1 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-sm font-semibold text-ui-text outline-none"
+                    />
+                    <Button onClick={() => void copyInviteLink()} variant="secondary" size="sm" className="uppercase tracking-widest">
+                      {hasCopiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {hasCopiedInvite ? t('members.copied') : t('members.copy')}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 text-xs font-semibold leading-5 text-status-warning-text">
+                    {t('members.linkReturnedOnce')}
+                  </div>
+                )}
+                <p className="text-xs font-medium leading-5 text-ui-text-muted">
+                  {t('members.recipientMustUseEmail', { email: createdInvite.email, time: new Date(createdInvite.expiresAt).toLocaleString() })}
+                </p>
+              </div>
+            )}
+
+            {inviteErrorMessage && (
+              <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">
+                {inviteErrorMessage}
+              </div>
+            )}
+          </div>
+
+          <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-ui-border bg-ui-surface px-5 py-4 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
             <Button
               onClick={onClose}
               variant="secondary"
               size="lg"
-              className="flex-1 text-xs uppercase tracking-widest"
+              className="w-full text-xs uppercase tracking-widest sm:w-auto sm:min-w-36"
             >
               {t('members.close')}
             </Button>
@@ -212,7 +223,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
                 disabled={isCreatingInvite || !roleTemplates.some((role) => role.key === inviteRole)}
                 variant="primary"
                 size="lg"
-                className="flex-1 text-xs uppercase tracking-widest"
+                className="w-full text-xs uppercase tracking-widest sm:w-auto sm:min-w-40"
               >
                 {isCreatingInvite && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t('members.createLink')}

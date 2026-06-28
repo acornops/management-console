@@ -14,12 +14,14 @@ describe('AppPageContent route loading', () => {
       'KubernetesClusterDetailPage',
       'NotFoundPage',
       'UserSettingsPage',
+      'SettingsPage',
+      'HelpPage',
       'VirtualMachinesPage',
+      'WorkspaceAgentsPage',
+      'WorkspaceApprovalsPage',
       'WorkspaceInvitePage',
-      'WorkspaceMembersPage',
-      'WorkspaceAiSettingsPage',
-      'WorkspaceOverviewPage',
-      'WorkspaceSettingsPage'
+      'WorkspaceSchedulesPage',
+      'WorkspaceOverviewPage'
     ]) {
       expect(appPageContent).toContain(`import('@/pages/${page}')`);
       expect(appPageContent).not.toContain(`import { ${page} } from '@/pages/${page}'`);
@@ -33,6 +35,34 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).toContain('export function preloadAppRoutePage(route: AppRoute): void');
     expect(appPageContent).toContain('case \'workspaceKubernetesClusterDiagnostics\':');
     expect(appPageContent).toContain('void loadKubernetesClusterDetailPage();');
+    expect(appPageContent).toContain('case \'settings\':');
+    expect(appPageContent).toContain('void loadSettingsPage();');
+    expect(appPageContent).toContain("route.kind === 'settings'");
+    expect(appPageContent).toContain("case 'workspaceMembers':");
+    expect(appPageContent).toContain("case 'workspaceSettings':");
+    expect(appPageContent).toContain("case 'workspaceAiSettings':");
+    expect(appPageContent).toContain("route.kind === 'settings' || route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers'");
+    expect(appPageContent).toContain('<SettingsPage');
+    expect(appPageContent).toContain('case \'accountSettings\':');
+    expect(appPageContent).toContain('void loadUserSettingsPage();');
+    expect(appPageContent).toContain("route.kind === 'accountSettings'");
+    expect(appPageContent).toContain('<UserSettingsPage');
+    expect(appPageContent).toContain('case \'workspaceAgents\':');
+    expect(appPageContent).toContain('void loadWorkspaceAgentsPage();');
+    expect(appPageContent).toContain("route.kind === 'workspaceAgents'");
+    expect(appPageContent).toContain('<WorkspaceAgentsPage');
+    expect(appPageContent).toContain('case \'help\':');
+    expect(appPageContent).toContain('void loadHelpPage();');
+    expect(appPageContent).toContain("route.kind === 'help'");
+    expect(appPageContent).toContain('<HelpPage');
+    expect(appPageContent).toContain('case \'workspaceSchedules\':');
+    expect(appPageContent).toContain('void loadWorkspaceSchedulesPage();');
+    expect(appPageContent).toContain("route.kind === 'workspaceSchedules'");
+    expect(appPageContent).toContain('<WorkspaceSchedulesPage');
+    expect(appPageContent).toContain('case \'workspaceApprovals\':');
+    expect(appPageContent).toContain('void loadWorkspaceApprovalsPage();');
+    expect(appPageContent).toContain("route.kind === 'workspaceApprovals'");
+    expect(appPageContent).toContain('<WorkspaceApprovalsPage');
     expect(appBootstrap).toContain("import { preloadAppRoutePage } from '@/app/AppPageContent';");
     expect(appBootstrap).toContain('preloadAppRoutePage(route);');
     expect(appPageContent).not.toContain('routePageLoaders');

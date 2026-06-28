@@ -537,6 +537,7 @@ const App: React.FC = () => {
       isDark={isDark}
       isDeletingWorkspace={isDeletingWorkspace}
       isMobileNavOpen={isMobileNavOpen}
+      isAccountMenuOpen={isAccountMenuOpen}
       isSidebarWorkspaceMenuOpen={isSidebarWorkspaceMenuOpen}
       language={language}
       languageOptions={getSupportedLanguages()}

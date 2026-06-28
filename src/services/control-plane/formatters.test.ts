@@ -14,7 +14,7 @@ import {
 
 describe('control-plane formatters', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-05-25T00:00:00.000Z'));
   });
 

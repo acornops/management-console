@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { WorkspaceRoleTemplate } from '@/types';
-import { getRoleCapabilityGroups } from './SupportedRolesList';
+import { getRoleCapabilityGroups, getRoleKindLabels } from './RoleTemplatePreview';
 
 const baseRole: WorkspaceRoleTemplate = {
   key: 'operator',
@@ -12,7 +12,7 @@ const baseRole: WorkspaceRoleTemplate = {
   sortOrder: 30
 };
 
-describe('SupportedRolesList', () => {
+describe('RoleTemplatePreview helpers', () => {
   it('uses control-plane capability groups as the display source of truth', () => {
     expect(getRoleCapabilityGroups({
       ...baseRole,
@@ -37,5 +37,10 @@ describe('SupportedRolesList', () => {
         sortOrder: 0
       }
     ]);
+  });
+
+  it('builds protected and custom badge labels without treating system roles as custom', () => {
+    expect(getRoleKindLabels({ ...baseRole, protected: true, kind: 'system' })).toEqual(['protectedRole', 'systemRole']);
+    expect(getRoleKindLabels({ ...baseRole, protected: false, kind: 'custom' })).toEqual(['customRole']);
   });
 });

@@ -113,6 +113,7 @@ interface AppShellProps {
   isDark: boolean;
   isDeletingWorkspace: boolean;
   isMobileNavOpen: boolean;
+  isAccountMenuOpen: boolean;
   isSidebarWorkspaceMenuOpen: boolean;
   language: AppLanguageCode;
   languageOptions: AppLanguageOption[];
@@ -212,6 +213,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   isDark,
   isDeletingWorkspace,
   isMobileNavOpen,
+  isAccountMenuOpen,
   isSidebarWorkspaceMenuOpen,
   language,
   languageOptions,
@@ -466,6 +468,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedVmFindingCount={selectedSidebarVmFindingCount}
         theme={theme}
         isDark={isDark}
+        isAccountMenuOpen={isAccountMenuOpen}
         isSidebarWorkspaceMenuOpen={isSidebarWorkspaceMenuOpen}
         sidebarAccountMenuRef={sidebarAccountMenuRef}
         sidebarWorkspaceMenuRef={sidebarWorkspaceMenuRef}
@@ -481,9 +484,11 @@ export const AppShell: React.FC<AppShellProps> = ({
         }}
         onOpenCreateWorkspace={() => setIsCreatingWorkspace(true)}
         onSelectWorkspaceContext={handleSelectWorkspaceContext}
-        onSetMobileNavOpen={setIsMobileNavOpen}
+        onSetAccountMenuOpen={setIsAccountMenuOpen}
         onSetSidebarWorkspaceMenuOpen={setIsSidebarWorkspaceMenuOpen}
         onToggleTheme={toggleTheme}
+        onLogout={() => void handleLogout()}
+        user={user}
       />
 
       <AppClusterChatRuntime
