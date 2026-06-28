@@ -4,13 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
-import { controlPlaneApi, ControlPlaneVirtualMachine, type ControlPlaneIssueItem } from '@/services/controlPlaneApi';
+import { controlPlaneApi, ControlPlaneVirtualMachine, type ControlPlaneIssueItem, type ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { AppPaths, AppRoute, VmSubview } from '@/utils/routes';
 import { Workspace } from '@/types';
 import {
   formatSnapshotTime,
-  getFindingSeverity,
   getVmStatusLabel,
   type VmConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
@@ -45,6 +44,7 @@ interface VirtualMachinesPageProps {
   onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
   onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
   pendingTargetPrompt?: PendingVmTargetPrompt | null;
+  issueSummary?: ControlPlaneTargetIssueSummary | null;
   onPendingTargetPromptConsumed?: () => void;
 }
 
@@ -72,13 +72,14 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   onUpsertWorkspaceVirtualMachine,
   onRemoveWorkspaceVirtualMachine,
   pendingTargetPrompt,
+  issueSummary,
   onPendingTargetPromptConsumed
 }) => {
   const { t } = useTranslation();
   const [inventory, setInventory] = React.useState<Record<string, unknown>[]>([]);
-  const [findings, setFindings] = React.useState<Record<string, unknown>[]>([]);
   const [issues, setIssues] = React.useState<ControlPlaneIssueItem[] | null>(null);
   const [isLoadingIssueEvidence, setIsLoadingIssueEvidence] = React.useState(false);
+  const [issueLoadFailed, setIssueLoadFailed] = React.useState(false);
   const [logs, setLogs] = React.useState<Record<string, unknown>[]>([]);
   const [resourceStatus, setResourceStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [resourceError, setResourceError] = React.useState<string | null>(null);
@@ -193,7 +194,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
 
   React.useEffect(() => {
     if (!selected) {
+      setIssues(null);
       setIsLoadingIssueEvidence(false);
+      setIssueLoadFailed(false);
       return;
     }
     if (isVmResourceSubview(view)) {
@@ -205,9 +208,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     if (view === 'overview') {
       let isCurrent = true;
       setIssues(null);
-      setFindings([]);
+      setIssueLoadFailed(false);
       setIsLoadingIssueEvidence(true);
-      const issueRequest = controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 })
+      void controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 })
         .then((page) => {
           if (!isCurrent) return;
           setIssues(page.items || []);
@@ -216,18 +219,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           console.error('Failed loading virtual machine issues', error);
           if (!isCurrent) return;
           setIssues(null);
-        });
-      const findingRequest = controlPlaneApi.listVirtualMachineFindings(workspace.id, selected.id)
-        .then((page) => {
-          if (!isCurrent) return;
-          setFindings(page.items || []);
+          setIssueLoadFailed(true);
         })
-        .catch((error) => {
-          console.error('Failed loading virtual machine findings', error);
-          if (!isCurrent) return;
-          setFindings([]);
-        });
-      void Promise.allSettled([issueRequest, findingRequest])
         .finally(() => {
           if (!isCurrent) return;
           setIsLoadingIssueEvidence(false);
@@ -250,6 +243,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       };
     }
     setIsLoadingIssueEvidence(false);
+    setIssueLoadFailed(false);
   }, [loadVmInventory, loadVmLogs, selected, view, workspace.id]);
 
   React.useEffect(() => {
@@ -363,16 +357,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     const tab: VmSubview = category === 'all' ? 'resources' : category;
     navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, selected.id, tab));
   }, [navigate, selected, workspace.id]);
-  const openVmTriage = React.useCallback((finding?: Record<string, unknown>) => {
+  const openVmTriage = React.useCallback(() => {
     if (!selected) return;
-    const prompt = finding
-      ? t('virtualMachines.overview.triageFindingPrompt', {
-        title: String(finding.title || t('virtualMachines.overview.findingFallback')),
-        severity: getFindingSeverity(finding),
-        source: String(finding.source || finding.category || 'host'),
-        message: String(finding.message || '')
-      })
-      : t('virtualMachines.overview.triageHostPrompt', { name: selected.name });
+    const prompt = t('virtualMachines.overview.triageHostPrompt', { name: selected.name });
     setPendingChatPrompt(prompt);
     navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, selected.id, 'chat'));
   }, [navigate, selected, t, workspace.id]);
@@ -486,11 +473,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         </header>
 
         <VirtualMachineIssuesPanel
-          selected={selected}
-          findings={findings}
           issues={issues}
+          issueSummary={issueSummary || null}
           isLoading={isLoadingIssueEvidence}
-          onOpenFindingTriage={openVmTriage}
+          issueLoadFailed={issueLoadFailed}
           onOpenIssueTriage={openVmIssueTriage}
         />
 

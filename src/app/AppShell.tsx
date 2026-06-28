@@ -12,6 +12,7 @@ import {
 } from '@/app/assistantNavStatus';
 import { ActivePrimaryNav, ActiveResourceNav, getClusterBackToWorkspacePath, getVirtualMachineBackToWorkspacePath } from '@/app/appRouteState';
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
+import { useTargetIssueSummary } from '@/app/useTargetIssueSummary';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
@@ -128,7 +129,6 @@ interface AppShellProps {
   route: AppRoute;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
-  selectedSidebarVmFindingCount: number;
   selectedWorkspace: Workspace | undefined;
   selectedWorkspaceId: string | null;
   setKubernetesClusters: React.Dispatch<React.SetStateAction<KubernetesCluster[]>>;
@@ -227,7 +227,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   route,
   selectedSidebarCluster,
   selectedSidebarVm,
-  selectedSidebarVmFindingCount,
   selectedWorkspace,
   selectedWorkspaceId,
   setKubernetesClusters,
@@ -271,8 +270,21 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [targetReturnContext, setTargetReturnContext] = React.useState<TargetReturnContext | null>(null);
   const previousRouteRef = React.useRef<AppRoute | null>(null);
   const selectedWorkspaceInitials = getWorkspaceInitials(selectedWorkspace?.name);
-  const selectedClusterFindingCount =
-    selectedSidebarCluster?.resourceSummary?.findingCount ?? selectedSidebarCluster?.alerts.length ?? 0;
+  const selectedIssueSummaryTarget = React.useMemo(() => {
+    if (isClusterSidebar && selectedSidebarCluster) {
+      return { workspaceId: selectedSidebarCluster.workspaceId, targetId: selectedSidebarCluster.id };
+    }
+    if (isVirtualMachineSidebar && selectedSidebarVm) {
+      return { workspaceId: selectedSidebarVm.workspaceId, targetId: selectedSidebarVm.id };
+    }
+    return null;
+  }, [isClusterSidebar, isVirtualMachineSidebar, selectedSidebarCluster, selectedSidebarVm]);
+  const selectedTargetIssueSummary = useTargetIssueSummary(
+    selectedIssueSummaryTarget,
+    isClusterSidebar || isVirtualMachineSidebar
+  );
+  const selectedClusterIssueCount = isClusterSidebar ? selectedTargetIssueSummary?.total ?? 0 : 0;
+  const selectedVmIssueCount = isVirtualMachineSidebar ? selectedTargetIssueSummary?.total ?? 0 : 0;
   const routeChatCluster = clusterContextId ? kubernetesClusters.find((app) => app.id === clusterContextId) || null : null;
   const chatRuntimeCluster = isClusterCopilotOpen && clusterCopilotCluster ? clusterCopilotCluster : routeChatCluster;
   const chatRuntimeWorkspace = chatRuntimeCluster ? workspaces.find((workspace) => workspace.id === chatRuntimeCluster.workspaceId) : undefined;
@@ -424,9 +436,9 @@ export const AppShell: React.FC<AppShellProps> = ({
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         isDark={isDark}
         isMobileNavOpen={isMobileNavOpen}
-        selectedClusterFindingCount={selectedClusterFindingCount}
+        selectedClusterIssueCount={selectedClusterIssueCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
-        selectedVmFindingCount={selectedSidebarVmFindingCount}
+        selectedVmIssueCount={selectedVmIssueCount}
         selectedSidebarCluster={selectedSidebarCluster}
         selectedSidebarVm={selectedSidebarVm}
         selectedWorkspace={selectedWorkspace}
@@ -461,9 +473,9 @@ export const AppShell: React.FC<AppShellProps> = ({
         isClusterSidebar={isClusterSidebar}
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         activeResourceNav={activeResourceNav}
-        selectedClusterFindingCount={selectedClusterFindingCount}
+        selectedClusterIssueCount={selectedClusterIssueCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
-        selectedVmFindingCount={selectedSidebarVmFindingCount}
+        selectedVmIssueCount={selectedVmIssueCount}
         theme={theme}
         isDark={isDark}
         isSidebarWorkspaceMenuOpen={isSidebarWorkspaceMenuOpen}
@@ -512,6 +524,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               language={language}
               languageOptions={languageOptions}
               route={route}
+              selectedTargetIssueSummary={selectedTargetIssueSummary}
               user={user}
               workspaceContext={workspaceContext}
               workspaceContextId={workspaceContextId}

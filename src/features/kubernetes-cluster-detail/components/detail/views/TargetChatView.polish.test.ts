@@ -248,6 +248,13 @@ describe('target chat polish contracts', () => {
     expect(chatView).not.toContain('disabled={!option.ready}');
     expect(chatView).not.toContain("t('workspaceAiSettings.providerDisabled')");
     expect(chatView).not.toContain("t('workspaceAiSettings.credentialMissingBadge')");
+    expect(chatView).toContain('const selectedEffortTouchedRef = React.useRef(false);');
+    expect(chatView).toContain('selectedEffortTouchedRef.current = true;');
+    expect(chatView).toContain('selectedEffortTouchedRef.current = false;');
+    expect(chatView).toContain('resolveComposerReasoningEffort(workspaceAiSettings, selectedEffort, selectedEffortTouchedRef.current)');
+    expect(chatView).toContain('export function resolveComposerReasoningEffort(');
+    expect(chatView).toContain('settings.allowedReasoningEfforts.includes(settings.reasoningEffort)');
+    expect(chatView).toContain('selectedEffortTouched && settings.allowedReasoningEfforts.includes(selectedEffort)');
     expect(chatView).toContain('!canPost || !hasComposerSubmitPayload || isComposerRuntimeUnavailable');
     expect(chatView).toContain('findComposerModelOption(composerModelOptions, selectedProvider, selectedModel)');
     expect(chatView).toContain('const composerRuntimeSelection: ChatRuntimeSelection | undefined');

@@ -85,6 +85,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   currentWorkspacePermissions,
   workspaceName,
   chatController,
+  issueSummary,
   isDark,
   onSyncTools,
   onUpdateName,
@@ -216,6 +217,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             {activeView === 'overview' && (
               <OverviewView
                 cluster={cluster}
+                issueSummary={issueSummary}
                 isDark={isDark}
                 onOpenCopilot={onOpenCopilot}
               />

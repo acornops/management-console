@@ -30,6 +30,7 @@ import type {
   ControlPlaneAcceptedMessage,
   ControlPlaneIssueItem,
   ControlPlaneIssueObservationItem,
+  ControlPlaneTargetIssueSummary,
   ControlPlaneRun,
   ControlPlaneRunEvent,
   ControlPlaneRunToolApproval,
@@ -56,9 +57,9 @@ export type {
   ControlPlanePodLogs,
   ControlPlanePodLogsOptions,
   ControlPlaneResourcePageItem,
-  ControlPlaneFindingPageItem,
   ControlPlaneIssueItem,
   ControlPlaneIssueObservationItem,
+  ControlPlaneTargetIssueSummary,
   ControlPlaneRun,
   ControlPlaneRunEvent,
   ControlPlaneRunToolApproval,
@@ -293,6 +294,12 @@ export const controlPlaneApi = {
     );
   },
 
+  async getTargetIssueSummary(workspaceId: string, targetId: string): Promise<ControlPlaneTargetIssueSummary> {
+    return requestJson<ControlPlaneTargetIssueSummary>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/issues/summary`
+    );
+  },
+
   async listWorkspaceAuditEvents(
     workspaceId: string,
     options?: {
@@ -416,19 +423,6 @@ export const controlPlaneApi = {
   async listVirtualMachineInventory(workspaceId: string, vmId: string): Promise<PagedResult<Record<string, unknown>>> {
     return requestJson<PagedResult<Record<string, unknown>>>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/resources`
-    );
-  },
-
-  async listVirtualMachineFindings(
-    workspaceId: string,
-    vmId: string,
-    options?: { limit?: number; cursor?: string }
-  ): Promise<PagedResult<Record<string, unknown>>> {
-    return requestJson<PagedResult<Record<string, unknown>>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/findings${pageQuery({
-        limit: options?.limit,
-        cursor: options?.cursor
-      })}`
     );
   },
 

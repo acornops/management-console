@@ -17,6 +17,7 @@ import {
   MAX_COMPOSER_ATTACHMENTS,
   MAX_TOTAL_ATTACHMENT_CONTEXT_CHARS,
   REASONING_OPTIONS,
+  resolveComposerReasoningEffort,
   revokeAttachmentPreview,
   SUGGESTION_KEYS,
   useTargetChatHistoryFocus
@@ -109,6 +110,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const composerAttachmentEpochRef = React.useRef(0);
   const isMountedRef = React.useRef(true);
   const modelMenuRef = React.useRef<HTMLDivElement>(null);
+  const selectedEffortTouchedRef = React.useRef(false);
   const previousIsRunActiveRef = React.useRef(isRunActive);
   const previousActiveSessionIdRef = React.useRef(activeSessionId);
   const pendingComposerFocusRef = React.useRef(false);
@@ -418,6 +420,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   };
 
   const handleModelAndEffortChange = (value: ReasoningEffort) => {
+    selectedEffortTouchedRef.current = true;
     setSelectedEffort(value);
     setIsModelMenuOpen(false);
     setIsModelSubmenuOpen(false);
@@ -461,6 +464,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
 
     setIsWorkspaceAiSettingsLoading(true);
     setWorkspaceAiSettingsError('');
+    selectedEffortTouchedRef.current = false;
     controlPlaneApi.getWorkspaceAiSettings(cluster.workspaceId)
       .then((settings) => {
         if (cancelled) return;
@@ -533,13 +537,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       setSelectedModel(nextOption.model);
     }
 
-    const nextEffort = workspaceAiSettings.allowedReasoningEfforts.includes(selectedEffort)
-      ? selectedEffort
-      : workspaceAiSettings.allowedReasoningEfforts.includes(workspaceAiSettings.reasoningEffort)
-        ? workspaceAiSettings.reasoningEffort
-        : workspaceAiSettings.allowedReasoningEfforts.includes('low')
-          ? 'low'
-          : workspaceAiSettings.allowedReasoningEfforts[0] || 'low';
+    const nextEffort = resolveComposerReasoningEffort(workspaceAiSettings, selectedEffort, selectedEffortTouchedRef.current);
     if (nextEffort !== selectedEffort) {
       setSelectedEffort(nextEffort);
     }

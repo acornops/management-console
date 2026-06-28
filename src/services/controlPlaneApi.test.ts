@@ -156,6 +156,28 @@ describe('controlPlaneApi', () => {
     );
   });
 
+  it('builds target issue summary queries', async () => {
+    requestJson.mockResolvedValue({
+      total: 3,
+      active: 2,
+      recovering: 1,
+      critical: 1,
+      warning: 2,
+      info: 0
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.getTargetIssueSummary('workspace 1', 'target/1')).resolves.toEqual({
+      total: 3,
+      active: 2,
+      recovering: 1,
+      critical: 1,
+      warning: 2,
+      info: 0
+    });
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/workspaces/workspace%201/targets/target%2F1/issues/summary');
+  });
+
   it('builds issue detail and observation queries', async () => {
     requestJson
       .mockResolvedValueOnce({ id: 'issue/1', title: 'Pod unhealthy' })

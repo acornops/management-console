@@ -7,9 +7,9 @@ export type {
   ControlPlaneWorkspaceMember
 } from './workspaceTypes';
 export type {
-  ControlPlaneFindingPageItem,
   ControlPlaneIssueItem,
-  ControlPlaneIssueObservationItem
+  ControlPlaneIssueObservationItem,
+  ControlPlaneTargetIssueSummary
 } from './issueTypes';
 export type {
   ControlPlaneTargetAssistantCapabilitiesPreview,

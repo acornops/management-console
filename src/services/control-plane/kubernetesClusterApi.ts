@@ -18,7 +18,6 @@ import type {
   ControlPlaneTargetSkillDetail,
   ControlPlaneTargetSkillsCatalog,
   ControlPlaneTargetToolsCatalog,
-  ControlPlaneFindingPageItem,
   ControlPlaneMcpServer,
   ControlPlaneMcpServerTestConnectionResponse,
   ControlPlanePodLogs,
@@ -102,24 +101,6 @@ export const kubernetesClusterApi = {
           kind: options?.kind,
           namespace: options?.namespace,
           health: options?.health
-        }
-      })}`
-    );
-  },
-
-  async listClusterFindings(
-    workspaceId: string,
-    clusterId: string,
-    options?: { limit?: number; cursor?: string; q?: string; severity?: string; namespace?: string }
-  ): Promise<PagedResult<ControlPlaneFindingPageItem>> {
-    return requestJson<PagedResult<ControlPlaneFindingPageItem>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}/findings${pageQuery({
-        limit: options?.limit,
-        cursor: options?.cursor,
-        q: options?.q,
-        filters: {
-          severity: options?.severity,
-          namespace: options?.namespace
         }
       })}`
     );

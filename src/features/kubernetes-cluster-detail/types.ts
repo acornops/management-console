@@ -1,5 +1,6 @@
 import { KubernetesCluster, ProjectMember, Workspace } from '@/types';
 import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
+import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 
 export interface KubernetesClusterDetailProps {
   cluster: KubernetesCluster;
@@ -8,6 +9,7 @@ export interface KubernetesClusterDetailProps {
   currentWorkspacePermissions?: Workspace['permissions'];
   workspaceName?: string;
   chatController: TargetChatController;
+  issueSummary: ControlPlaneTargetIssueSummary | null;
   isDark: boolean;
   onSyncTools?: (tools: KubernetesCluster['mcpTools']) => void;
   onUpdateName?: (name: string) => Promise<void> | void;

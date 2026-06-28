@@ -485,9 +485,9 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                   size="sm"
                   onClick={handleSaveBehavior}
                   disabled={!canSaveBehavior || isSaving}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-36"
                 >
-                  <ICONS.CheckCircle2 className="h-4 w-4" />
+                  {savingAction === 'behavior' ? <ICONS.RefreshCw className="h-4 w-4 animate-spin" /> : <ICONS.CheckCircle2 className="h-4 w-4" />}
                   {savingAction === 'behavior' ? t('workspaceAiSettings.saving') : t('workspaceAiSettings.saveBehavior')}
                 </Button>
               </div>

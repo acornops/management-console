@@ -51,14 +51,7 @@ export function formatSnapshotTime(vm: ControlPlaneVirtualMachine): string {
   return vm.latestSnapshot?.timestamp || vm.updatedAt || 'Waiting for agent';
 }
 
-export function getFindingSeverity(finding: Record<string, unknown>): 'critical' | 'warning' | 'info' {
-  const severity = String(finding.severity || '').toLowerCase();
-  if (severity === 'critical') return 'critical';
-  if (severity === 'warning') return 'warning';
-  return 'info';
-}
-
-export function findingSeverityTone(severity: 'critical' | 'warning' | 'info'): string {
+export function issueSeverityTone(severity: 'critical' | 'warning' | 'info'): string {
   if (severity === 'critical') return 'bg-status-danger-soft text-status-danger-text';
   if (severity === 'warning') return 'bg-status-warning-soft text-status-warning-text';
   return 'bg-sky-500/10 text-sky-600 dark:text-sky-300';

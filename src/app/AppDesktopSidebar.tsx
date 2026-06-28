@@ -48,9 +48,9 @@ interface AppDesktopSidebarProps {
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;
   activeResourceNav: ActiveResourceNav;
-  selectedClusterFindingCount: number;
+  selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
-  selectedVmFindingCount: number;
+  selectedVmIssueCount: number;
   theme: 'light' | 'dark';
   isDark: boolean;
   isSidebarWorkspaceMenuOpen: boolean;
@@ -89,9 +89,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   isClusterSidebar,
   isVirtualMachineSidebar,
   activeResourceNav,
-  selectedClusterFindingCount,
+  selectedClusterIssueCount,
   clusterAssistantNavStatus,
-  selectedVmFindingCount,
+  selectedVmIssueCount,
   theme,
   isDark,
   isSidebarWorkspaceMenuOpen,
@@ -389,7 +389,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
                     label={label}
                     onClick={() => onNavigateClusterSubview(tab)}
-                    badge={tab === 'overview' && selectedClusterFindingCount > 0 ? selectedClusterFindingCount : undefined}
+                    badge={tab === 'overview' && selectedClusterIssueCount > 0 ? selectedClusterIssueCount : undefined}
                     assistantStatus={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
                     assistantStatusLabel={tab === 'chat' && clusterAssistantNavStatus !== 'idle'
                       ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`)
@@ -446,7 +446,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
                     label={label}
                     onClick={() => onNavigateVmSubview(tab)}
-                    badge={tab === 'overview' && selectedVmFindingCount > 0 ? selectedVmFindingCount : undefined}
+                    badge={tab === 'overview' && selectedVmIssueCount > 0 ? selectedVmIssueCount : undefined}
                   />
                 ))}
               </SidebarSection>

@@ -5,12 +5,13 @@ import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
 import { issueStatusTone } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type { ControlPlaneFindingPageItem, ControlPlaneIssueItem } from '@/services/controlPlaneApi';
-import { Alert, ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
+import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
+import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState, getTelemetryFreshness, getTelemetryFreshnessLabel } from '@/utils/telemetry';
 
 interface OverviewViewProps {
   cluster: KubernetesCluster;
+  issueSummary: ControlPlaneTargetIssueSummary | null;
   isDark: boolean;
   onOpenCopilot?: (prompt?: string) => void;
 }
@@ -32,13 +33,13 @@ function formatRelativeTime(timestamp: number, now = Date.now()): string {
   return `${diffDays}d ago`;
 }
 
-function severityRank(severity: Alert['severity']): number {
+function severityRank(severity: ControlPlaneIssueItem['severity']): number {
   if (severity === 'critical') return 0;
   if (severity === 'warning') return 1;
   return 2;
 }
 
-function getSeverityTone(severity: Alert['severity']): string {
+function getSeverityTone(severity: ControlPlaneIssueItem['severity']): string {
   if (severity === 'critical') return 'bg-status-danger-soft text-status-danger-text';
   if (severity === 'warning') return 'bg-status-warning-soft text-status-warning-text';
   return 'bg-sky-500/10 text-sky-600 dark:text-sky-300';
@@ -50,21 +51,6 @@ function issueTimestamp(issue: ControlPlaneIssueItem): number {
 
 function issueFirstSeenTimestamp(issue: ControlPlaneIssueItem): number {
   return Date.parse(issue.firstSeenAt || issue.createdAt) || issueTimestamp(issue);
-}
-
-function mapFindingToAlert(finding: ControlPlaneFindingPageItem): Alert {
-  return {
-    id: finding.id,
-    severity: finding.severity,
-    title: finding.title,
-    message: finding.message,
-    timestamp: finding.timestamp,
-    namespace: finding.namespace,
-    objectKind: finding.objectKind,
-    objectName: finding.objectName,
-    reason: finding.reason,
-    source: 'snapshot'
-  };
 }
 
 interface MetricTimelinePoint {
@@ -91,6 +77,7 @@ function getPersistedMetricTimeline(points: ClusterMetricHistoryPoint[]): Metric
 
 export const OverviewView: React.FC<OverviewViewProps> = ({
   cluster,
+  issueSummary,
   onOpenCopilot
 }) => {
   const { t } = useTranslation();
@@ -116,8 +103,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     [persistedMetricTimeline]
   );
 
-  const [clusterFindings, setClusterFindings] = useState<Alert[] | null>(null);
   const [clusterIssues, setClusterIssues] = useState<ControlPlaneIssueItem[] | null>(null);
+  const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   useEffect(() => {
     let isCurrent = true;
 
@@ -151,26 +138,20 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
   useEffect(() => {
     let isCurrent = true;
-    setClusterFindings(null);
     setClusterIssues(null);
+    setIssueLoadStatus('loading');
 
     void controlPlaneApi.listTargetIssues(cluster.workspaceId, cluster.id, { limit: 50 })
       .then((page) => {
         if (!isCurrent) return;
         setClusterIssues(page.items);
+        setIssueLoadStatus('ready');
       })
       .catch((error) => {
         console.error('Failed loading cluster issues', error);
-        if (isCurrent) setClusterIssues(null);
-      });
-    void controlPlaneApi.listClusterFindings(cluster.workspaceId, cluster.id, { limit: 50 })
-      .then((page) => {
         if (!isCurrent) return;
-        setClusterFindings(page.items.map(mapFindingToAlert));
-      })
-      .catch((error) => {
-        console.error('Failed loading cluster findings', error);
-        if (isCurrent) setClusterFindings(null);
+        setClusterIssues(null);
+        setIssueLoadStatus('error');
       });
 
     return () => {
@@ -178,15 +159,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     };
   }, [cluster.id, cluster.workspaceId]);
 
-  const reportedFindings = useMemo(
-    () =>
-      [...(clusterFindings ?? cluster.alerts)].sort((left, right) => {
-        const severityDelta = severityRank(left.severity) - severityRank(right.severity);
-        if (severityDelta !== 0) return severityDelta;
-        return right.timestamp - left.timestamp;
-      }),
-    [cluster.alerts, clusterFindings]
-  );
   const reportedIssues = useMemo(
     () =>
       [...(clusterIssues || [])].sort((left, right) => {
@@ -197,23 +169,20 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     [clusterIssues]
   );
   const hasIssueRows = clusterIssues !== null;
-  const useIssueCounts = hasIssueRows;
-  const issueCount = useIssueCounts ? reportedIssues.length : cluster.resourceSummary?.findingCount ?? reportedFindings.length;
-  const criticalIssues = useIssueCounts
-    ? reportedIssues.filter((issue) => issue.severity === 'critical').length
-    : cluster.resourceSummary?.criticalFindingCount ?? reportedFindings.filter((finding) => finding.severity === 'critical').length;
-  const warningIssues = useIssueCounts
-    ? reportedIssues.filter((issue) => issue.severity === 'warning').length
-    : Math.max(
-      issueCount - criticalIssues,
-      reportedFindings.filter((finding) => finding.severity === 'warning').length
-    );
+  const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);
+  const criticalIssues = issueSummary
+    ? issueSummary.critical
+    : hasIssueRows
+      ? reportedIssues.filter((issue) => issue.severity === 'critical').length
+    : 0;
+  const warningIssues = issueSummary
+    ? issueSummary.warning
+    : hasIssueRows
+      ? reportedIssues.filter((issue) => issue.severity === 'warning').length
+    : 0;
+  const shouldShowIssueLoadFailure = issueLoadStatus === 'error' && (!issueSummary || issueSummary.total > 0);
   const scopedResourceCount = cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
-  const openTriage = (finding: Alert) => {
-    const prompt = `Triage "${finding.title}" on ${cluster.name}. Severity: ${finding.severity}. Namespace: ${finding.namespace || t('clusterOverview.clusterWide')}. Finding summary: ${finding.message}`;
-    onOpenCopilot?.(prompt);
-  };
   const openIssueTriage = (issue: ControlPlaneIssueItem) => {
     const prompt = `Triage "${issue.title}" on ${cluster.name}. Severity: ${issue.severity}. Status: ${issue.status}. Scope: ${issue.scopeName || issue.namespace || t('clusterOverview.clusterWide')}. Issue summary: ${issue.summary}`;
     onOpenCopilot?.(prompt);
@@ -263,7 +232,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
         </div>
 
-        {reportedIssues.length > 0 ? (
+        {issueLoadStatus === 'loading' ? (
+          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
+            <div className="rounded-md border border-ui-border bg-ui-bg p-3 text-accent-strong">
+              <Activity className="h-5 w-5 animate-pulse" />
+            </div>
+            <h2 className="type-row-title mt-4">{t('clusterOverview.loadingIssuesTitle')}</h2>
+            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.loadingIssuesBody')}</p>
+          </div>
+        ) : reportedIssues.length > 0 ? (
           <>
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
@@ -343,98 +320,22 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               ))}
             </div>
           </>
-        ) : hasIssueRows ? (
+        ) : shouldShowIssueLoadFailure ? (
           <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
-            <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
+            <div className="rounded-md border border-status-warning/20 bg-status-warning-soft p-3 text-status-warning-text">
               <AlertTriangle className="h-5 w-5" />
             </div>
-            <h2 className="type-row-title mt-4">{t('clusterOverview.noFindingsTitle')}</h2>
-            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.noFindingsBody')}</p>
-          </div>
-        ) : reportedFindings.length === 0 && issueCount > 0 ? (
-          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
-            <div className="rounded-md border border-accent/20 bg-accent-soft p-3 text-accent-strong">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <h2 className="type-row-title mt-4">{t('clusterOverview.findingsPagedTitle')}</h2>
-            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.findingsPagedBody', { count: issueCount })}</p>
-          </div>
-        ) : reportedFindings.length === 0 ? (
-          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
-            <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <h2 className="type-row-title mt-4">{t('clusterOverview.noFindingsTitle')}</h2>
-            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.noFindingsBody')}</p>
+            <h2 className="type-row-title mt-4">{t('clusterOverview.issueLoadFailedTitle')}</h2>
+            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.issueLoadFailedBody')}</p>
           </div>
         ) : (
-          <>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-ui-border">
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.finding')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.severity')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.namespace')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.updated')}</th>
-                    {onOpenCopilot && <th className="type-label px-5 py-3 text-right">{t('clusterOverview.action')}</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportedFindings.map((finding) => (
-                    <tr key={finding.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                      <td className="max-w-[34rem] px-5 py-4">
-                        <p className="type-micro-label">{t('issues.originFinding')}</p>
-                        <h2 className="type-row-title mt-2">{finding.title}</h2>
-                        <p className="type-body mt-1">{finding.message}</p>
-                      </td>
-                      <td className="px-5 py-4 align-top">
-                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(finding.severity)}`}>
-                          {t(`issues.severity.${finding.severity}`)}
-                        </span>
-                      </td>
-                      <td className="type-caption px-5 py-4 align-top">
-                        {finding.namespace || t('clusterOverview.clusterWide')}
-                      </td>
-                      <td className="type-caption px-5 py-4 align-top">
-                        {formatRelativeTime(finding.timestamp)}
-                      </td>
-                      {onOpenCopilot && (
-                        <td className="px-5 py-4 align-top text-right">
-                          <Button onClick={() => openTriage(finding)} variant="accent" size="md">
-                            <Terminal className="h-4 w-4" />
-                            {t('clusterOverview.runTriage')}
-                          </Button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
+            <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
+              <AlertTriangle className="h-5 w-5" />
             </div>
-
-            <div className="divide-y divide-ui-border md:hidden">
-              {reportedFindings.map((finding) => (
-                <article key={finding.id} className="p-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(finding.severity)}`}>
-                      {t(`issues.severity.${finding.severity}`)}
-                    </span>
-                    <span className="type-caption">{finding.namespace || t('clusterOverview.clusterWide')}</span>
-                    <span className="type-caption">{formatRelativeTime(finding.timestamp)}</span>
-                  </div>
-                  <h2 className="type-row-title mt-4">{finding.title}</h2>
-                  <p className="type-body mt-2">{finding.message}</p>
-                  {onOpenCopilot && (
-                    <Button onClick={() => openTriage(finding)} variant="accent" size="md" className="mt-4">
-                      <Terminal className="h-4 w-4" />
-                      {t('clusterOverview.runTriage')}
-                    </Button>
-                  )}
-                </article>
-              ))}
-            </div>
-          </>
+            <h2 className="type-row-title mt-4">{t('clusterOverview.noIssuesTitle')}</h2>
+            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.noIssuesBody')}</p>
+          </div>
         )}
       </section>
 

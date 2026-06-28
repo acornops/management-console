@@ -47,9 +47,9 @@ interface AppMobileNavigationProps {
   isVirtualMachineSidebar: boolean;
   isDark: boolean;
   isMobileNavOpen: boolean;
-  selectedClusterFindingCount: number;
+  selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
-  selectedVmFindingCount: number;
+  selectedVmIssueCount: number;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
   selectedWorkspace: Workspace | undefined;
@@ -77,9 +77,9 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   isVirtualMachineSidebar,
   isDark,
   isMobileNavOpen,
-  selectedClusterFindingCount,
+  selectedClusterIssueCount,
   clusterAssistantNavStatus,
-  selectedVmFindingCount,
+  selectedVmIssueCount,
   selectedSidebarCluster,
   selectedSidebarVm,
   selectedWorkspace,
@@ -238,7 +238,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         {t('app.backToWorkspace')}
                       </button>
                       {([
-                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterFindingCount],
+                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount],
                         ['resources', t('app.resources'), ICONS.Activity, 0],
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
                         ['skills', t('app.skills'), ICONS.BookOpen, 0],
@@ -314,7 +314,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         {t('app.backToWorkspace')}
                       </button>
                       {([
-                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmFindingCount],
+                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount],
                         ['resources', t('app.resources'), ICONS.Activity, 0],
                         ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
                         ['skills', t('app.skills'), ICONS.BookOpen, 0],

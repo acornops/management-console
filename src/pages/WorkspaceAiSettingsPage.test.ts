@@ -75,6 +75,8 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain('reasoningSummaryMode: behaviorDraft.reasoningSummaryMode');
     expect(workspaceAiSettingsPage).toContain('reasoningEffort: behaviorDraft.reasoningEffort');
     expect(workspaceAiSettingsPage).toContain("showToast(t('workspaceAiSettings.settingsSaved'))");
+    expect(workspaceAiSettingsPage).toContain('className="w-full sm:w-36"');
+    expect(workspaceAiSettingsPage).toContain('<ICONS.RefreshCw className="h-4 w-4 animate-spin" />');
     expect(workspaceAiSettingsPage).not.toContain('const handleSaveDefaults = async () => {');
   });
 

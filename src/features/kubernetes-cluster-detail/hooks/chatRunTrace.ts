@@ -156,6 +156,8 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const provider = typeof event.payload?.provider === 'string' ? event.payload.provider : undefined;
       const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
       trace = appendReasoningUnavailable(trace, reason, provider, model);
+    } else if (event.type === 'skill_catalog_available') {
+      trace = { ...trace, status: 'running' };
     } else if (event.type === 'tool_call_started') {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
@@ -331,6 +333,13 @@ export function createRunEventHandler(args: {
       const model = typeof event.payload?.model === 'string' ? event.payload.model : undefined;
       args.ensureStreamingMessage();
       updateTrace(appendReasoningUnavailable(trace, reason, provider, model));
+      return;
+    }
+
+    if (event.type === 'skill_catalog_available') {
+      if (trace.status === 'connecting') {
+        updateTrace({ ...trace, status: 'running' });
+      }
       return;
     }
 

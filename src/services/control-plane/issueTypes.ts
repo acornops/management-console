@@ -1,19 +1,5 @@
 import type { TargetType } from './types';
 
-export interface ControlPlaneFindingPageItem {
-  id: string;
-  severity: 'critical' | 'warning' | 'info';
-  title: string;
-  message: string;
-  timestamp: number;
-  namespace?: string;
-  objectKind?: string;
-  objectName?: string;
-  reason?: string;
-  clusterId: string;
-  clusterName: string;
-}
-
 export interface ControlPlaneIssueItem {
   id: string;
   workspaceId: string;
@@ -58,4 +44,13 @@ export interface ControlPlaneIssueObservationItem {
   reason?: string;
   evidence?: Record<string, unknown>;
   createdAt: string;
+}
+
+export interface ControlPlaneTargetIssueSummary {
+  total: number;
+  active: number;
+  recovering: number;
+  critical: number;
+  warning: number;
+  info: number;
 }

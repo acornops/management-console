@@ -315,3 +315,19 @@ export function findComposerModelOption(
 ): ComposerModelOption | undefined {
   return options.find((option) => option.provider === provider && option.model === model);
 }
+
+export function resolveComposerReasoningEffort(
+  settings: WorkspaceAiSettings,
+  selectedEffort: ReasoningEffort,
+  selectedEffortTouched: boolean
+): ReasoningEffort {
+  if (selectedEffortTouched && settings.allowedReasoningEfforts.includes(selectedEffort)) {
+    return selectedEffort;
+  }
+  if (settings.allowedReasoningEfforts.includes(settings.reasoningEffort)) {
+    return settings.reasoningEffort;
+  }
+  return settings.allowedReasoningEfforts.includes('low')
+    ? 'low'
+    : settings.allowedReasoningEfforts[0] || 'low';
+}

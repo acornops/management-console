@@ -415,8 +415,7 @@ const App: React.FC = () => {
     isClusterSidebar,
     isVirtualMachineSidebar,
     selectedSidebarCluster,
-    selectedSidebarVm,
-    selectedSidebarVmFindingCount
+    selectedSidebarVm
   } = useSidebarRouteTargets({
     route,
     user,
@@ -554,7 +553,6 @@ const App: React.FC = () => {
       route={route}
       selectedSidebarCluster={selectedSidebarCluster}
       selectedSidebarVm={selectedSidebarVm}
-      selectedSidebarVmFindingCount={selectedSidebarVmFindingCount}
       selectedWorkspace={selectedWorkspace}
       selectedWorkspaceId={selectedWorkspaceId}
       setKubernetesClusters={setKubernetesClusters}
