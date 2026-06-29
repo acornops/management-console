@@ -1,17 +1,16 @@
 import React from 'react';
-import { Button } from '@/components/common/Button';
 import { SelectOption } from '@/components/common/Select';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import {
   type AgentDefinition
 } from '@/pages/agents/agentModel';
 import {
   type AgentDefinitionApi,
+  type AgentActivityRecordApi,
   type AgentTriggerDefinitionApi
 } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
+import { formatRelativeTime, formatUserDateTime } from '@/utils/dateTime';
 
 export interface WorkspaceAgentsPageProps {
   workspace: Workspace;
@@ -39,9 +38,6 @@ export type AgentEditDraft = AgentDraft & {
 export type LocalNotice = { tone: 'success' | 'danger'; message: string };
 export type AgentCapabilityOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
 export type EventTriggerType = Extract<AgentTriggerDefinitionApi['type'], 'webhook' | 'audit_event' | 'target_event' | 'external_adapter'>;
-
-export const agentFormInputClassName = formInputClassName('mt-2');
-export const agentFormTextareaClassName = formTextareaClassName('mt-2');
 
 export const statusTone = (status: AgentDefinition['status']): 'success' | 'warning' | 'neutral' => {
   if (status === 'active') return 'success';
@@ -162,10 +158,15 @@ export const mapApiAgent = (item: AgentDefinitionApi, fallback: AgentDefinition,
     capabilities: item.capabilities || fallback.capabilities,
     workflowsUsingAgent: item.workflowsUsingAgent || fallback.workflowsUsingAgent,
     triggers: item.triggers || fallback.triggers,
+    activity: {
+      runCount: item.activity?.runCount ?? fallback.activity.runCount,
+      lastRunAt: item.activity?.lastRunAt || fallback.activity.lastRunAt,
+      lastStatus: (item.activity?.lastStatus as AgentDefinition['activity']['lastStatus'] | undefined) || fallback.activity.lastStatus
+    },
     auditHistory: fallback.auditHistory,
     health: {
       status: item.activity?.lastStatus === 'failed' ? 'degraded' : item.status === 'active' ? 'healthy' : fallback.health.status,
-      summary: item.activity?.lastRunAt ? `Last run ${item.activity.lastRunAt}` : fallback.health.summary
+      summary: item.activity?.lastRunAt ? `Last run ${formatRelativeTime(item.activity.lastRunAt, { fallback: item.activity.lastRunAt })}` : fallback.health.summary
     }
   };
 };
@@ -173,6 +174,26 @@ export const mapApiAgent = (item: AgentDefinitionApi, fallback: AgentDefinition,
 export const canManageWorkspaceAgents = (workspace: Workspace): boolean => {
   return workspace.permissions?.manage_agents === true;
 };
+
+export const summarizeAgentActivityRecord = (activity: AgentActivityRecordApi): string => `Activity ${activity.status} on v${activity.agentVersion}`;
+
+export const formatAgentTimestamp = (value: string | undefined, fallback = '-'): string =>
+  formatUserDateTime(value, { fallback: value || fallback });
+
+export const activityStateFromRecord = (
+  current: AgentDefinition['activity'],
+  activity: AgentActivityRecordApi | undefined,
+  activityCount: number
+): AgentDefinition['activity'] => activity
+  ? {
+    runCount: Math.max(current.runCount, activityCount),
+    lastRunAt: activity.updatedAt || activity.createdAt,
+    lastStatus: activity.status
+  }
+  : current;
+
+export const auditHistoryFromAgentActivity = (activity: AgentActivityRecordApi[]): AgentDefinition['auditHistory'] =>
+  activity.map((record) => ({ id: record.id, summary: summarizeAgentActivityRecord(record), occurredAt: record.updatedAt || record.createdAt }));
 
 export const formatAgentDisplayValue = (value: string): string =>
   value
@@ -225,19 +246,19 @@ export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEd
   if (listValuesChanged(agent.mcpServers, draft.mcpServers) || listValuesChanged(agent.tools, draft.tools) || listValuesChanged(agent.skills, draft.skills)) {
     changes.push('Capability sources changed');
   }
-  if (listValuesChanged(agent.targetScope, draft.targetScope)) changes.push('Target scope changed');
-  if (listValuesChanged(agent.contextScope, draft.contextScope)) changes.push('Context access changed');
+  if (listValuesChanged(agent.targetScope, draft.targetScope)) changes.push('Targets changed');
+  if (listValuesChanged(agent.contextScope, draft.contextScope)) changes.push('Data sources changed');
   if ((agent.approvalPolicy.writeActions === 'approval_required') !== draft.writeToolsRequireApproval) changes.push('Write approval rule changed');
   if (agent.trustPolicy.dataEgress.toLowerCase().includes('external') !== draft.allowExternalData) changes.push('External data rule changed');
   return changes.length > 0 ? changes : ['No changes to save.'];
 };
 
 export const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (
-  <div>
+  <div className="min-w-0">
     <div className="type-micro-label">{title}</div>
     <div className="mt-2 grid gap-1">
       {values.length > 0
-        ? values.map((value) => <span key={value} className="type-code truncate rounded-md bg-ui-bg px-2 py-1 text-xs text-ui-text-muted">{value}</span>)
+        ? values.map((value) => <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 text-xs text-ui-text-muted [overflow-wrap:anywhere]">{value}</span>)
         : <span className="type-caption text-ui-text-muted">No values configured.</span>}
     </div>
   </div>
@@ -268,13 +289,13 @@ export const AgentCapabilityOptionButtons: React.FC<{
 export const AgentAssignmentSummary: React.FC<{ agent: AgentDefinition }> = ({ agent }) => {
   const approvalCount = [agent.approvalPolicy.sensitiveActions, agent.approvalPolicy.writeActions].filter((value) => value === 'approval_required').length;
   const approvalSummary = approvalCount > 0
-    ? `${approvalCount} approval ${approvalCount === 1 ? 'gate' : 'gates'} configured`
-    : 'No approval gates configured';
+    ? `${approvalCount} approval ${approvalCount === 1 ? 'rule' : 'rules'} configured`
+    : 'No approvals required';
 
   return (
     <section aria-label="Assignment summary" className="mt-5">
       <div className="type-micro-label text-ui-text-muted">Assignment summary</div>
-      <dl className="mt-2 grid min-w-0 overflow-hidden rounded-md border border-ui-border bg-ui-bg sm:grid-cols-2 xl:grid-cols-4">
+      <dl className="mt-3 grid min-w-0 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <AgentReadinessFact label="Owner" value={agent.owner} />
         <AgentReadinessFact label="Health" value={formatAgentDisplayValue(agent.health.status)} />
         <AgentReadinessFact label="Provider" value={formatAgentDisplayValue(agent.providerType)} />
@@ -285,66 +306,18 @@ export const AgentAssignmentSummary: React.FC<{ agent: AgentDefinition }> = ({ a
 };
 
 const AgentReadinessFact: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="min-w-0 border-b border-ui-border px-3 py-2 last:border-b-0 sm:border-r sm:last:border-r-0 xl:border-b-0">
+  <div className="min-w-0">
     <dt className="type-micro-label text-ui-text-muted">{label}</dt>
     <dd className="mt-1 min-w-0 break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{value}</dd>
   </div>
 );
 
-export const AgentActivationChecklist: React.FC<{
-  agent: AgentDefinition;
-  onReviewAccess: () => void;
-  onRunReadiness: () => void;
-  readinessDisabled: boolean;
-}> = ({ agent, onReviewAccess, onRunReadiness, readinessDisabled }) => {
-  const hasScope = agent.targetScope.length > 0 && agent.contextScope.length > 0;
-  const hasWriteApproval = agent.approvalPolicy.writeActions === 'approval_required';
-  const hasReadinessRun = agent.auditHistory.some((entry) => entry.summary.includes('Test run') || entry.summary.includes('Test queued'));
-  const workflowLabel = agent.workflowsUsingAgent.length > 0
-    ? `${agent.workflowsUsingAgent.length} assigned workflow${agent.workflowsUsingAgent.length === 1 ? '' : 's'}`
-    : 'No assigned workflows';
-  const items = [
-    { label: 'Agent status is active', complete: agent.status === 'active', detail: formatAgentDisplayValue(agent.status) },
-    { label: 'Health check is healthy', complete: agent.health.status === 'healthy', detail: agent.health.summary },
-    { label: 'Target and context scope reviewed', complete: hasScope, detail: `${agent.targetScope.length} targets, ${agent.contextScope.length} context grants` },
-    { label: 'Write actions require approval', complete: hasWriteApproval, detail: formatPolicyValue(agent.approvalPolicy.writeActions) },
-    { label: 'Workflow impact checked', complete: agent.workflowsUsingAgent.length === 0, detail: workflowLabel },
-    { label: 'Run readiness test before launch', complete: hasReadinessRun, detail: hasReadinessRun ? 'Readiness activity recorded' : 'No readiness test in recent activity' }
-  ];
-
-  return (
-    <section aria-label="Agent activation checklist" className="border-b border-ui-border bg-ui-surface px-5 py-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <h3 className="type-panel-title">Activation checklist</h3>
-          <p className="type-caption mt-1 text-ui-text-muted">Check these before assigning the agent to a workflow run.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="tertiary" size="sm" onClick={onReviewAccess}>Review access</Button>
-          <Button type="button" variant="tertiary" size="sm" onClick={onRunReadiness} disabled={readinessDisabled}>Run readiness</Button>
-        </div>
-      </div>
-      <div className="mt-3 grid gap-2 lg:grid-cols-2">
-        {items.map((item) => (
-          <div key={item.label} className="flex min-w-0 items-start justify-between gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-ui-text">{item.label}</div>
-              <div className="type-caption mt-1 min-w-0 break-words text-ui-text-muted [overflow-wrap:anywhere]">{item.detail}</div>
-            </div>
-            <StatusBadge tone={item.complete ? 'success' : 'warning'}>{item.complete ? 'Done' : 'Review'}</StatusBadge>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-};
-
 export const TokenGroup: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (
-  <div>
+  <div className="min-w-0">
     <div className="type-micro-label">{title}</div>
     <div className="mt-2 flex flex-wrap gap-2">
       {values.length > 0
-        ? values.map((value) => <span key={value} className="rounded-md border border-ui-border bg-ui-bg px-2.5 py-1.5 text-xs font-bold text-ui-text-muted">{value}</span>)
+        ? values.map((value) => <span key={value} title={value} className="min-w-0 break-words rounded-md border border-ui-border bg-ui-bg px-2.5 py-1.5 text-xs font-bold text-ui-text-muted [overflow-wrap:anywhere]">{value}</span>)
         : <span className="type-caption text-ui-text-muted">No scope configured.</span>}
     </div>
   </div>

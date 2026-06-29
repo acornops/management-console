@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button } from '@/components/common/Button';
-import { PageSearchInput } from '@/components/common/PageSearchInput';
 import { SelectOption } from '@/components/common/Select';
-import { ICONS } from '@/constants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   createDefaultAgentDefinitions,
@@ -12,25 +9,9 @@ import {
   targetScopeFromTokens,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
-import { AgentReviewQueue, WorkspaceAgentsCatalog, type ReviewFilter } from '@/pages/WorkspaceAgentsCatalog';
-import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
-import { CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
-import {
-  canManageWorkspaceAgents,
-  createAgentEditDraft,
-  createFallbackAgentCapabilityOptions,
-  getAgentEditChangeSummary,
-  mapApiAgent,
-  normalizeAgentCapabilityOptions,
-  Notice,
-  splitInput,
-  type AgentCapabilityOptions,
-  type AgentDraft,
-  type AgentEditDraft,
-  type EventTriggerType,
-  type LocalNotice,
-  type WorkspaceAgentsPageProps
-} from '@/pages/WorkspaceAgentsPage.helpers';
+import { AgentReviewQueue, WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
+import { AgentActivityDrawer, AgentDetailsDrawer, CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
+import { Notice, activityStateFromRecord, auditHistoryFromAgentActivity, canManageWorkspaceAgents, createAgentEditDraft, createFallbackAgentCapabilityOptions, getAgentEditChangeSummary, mapApiAgent, normalizeAgentCapabilityOptions, splitInput, type AgentCapabilityOptions, type AgentDraft, type AgentEditDraft, type EventTriggerType, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createAgent as createWorkspaceAgent,
   createAgentTrigger,
@@ -44,12 +25,17 @@ import {
   testAgent as testWorkspaceAgent,
   updateAgent as updateWorkspaceAgent,
   updateAgentTrigger,
-  type AgentActivityRecordApi,
   type AgentTriggerDefinitionApi,
   type AgentVersionSnapshotApi
 } from '@/services/control-plane/agentApi';
 import { listWorkflowOptions } from '@/services/control-plane/workflowApi';
 import type { ProjectMember } from '@/types';
+import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
+
+const prefersReducedMotion = (): boolean =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace }) => {
   const fallbackAgents = useMemo(() => createDefaultAgentDefinitions(workspace.id), [workspace.id]);
@@ -58,13 +44,16 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [agentCapabilityOptions, setAgentCapabilityOptions] = useState<AgentCapabilityOptions>(fallbackCapabilityOptions);
   const [ownerUserOptions, setOwnerUserOptions] = useState<ProjectMember[]>(workspace.members || []);
   const [selectedAgentId, setSelectedAgentId] = useState(fallbackAgents[0]?.id || '');
+  const [expandedAgentId, setExpandedAgentId] = useState('');
   const [query, setQuery] = useState('');
-  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all');
+  const [catalogFilters, setCatalogFilters] = useState<AgentCatalogFilters>(defaultAgentCatalogFilters);
   const [agentLoadError, setAgentLoadError] = useState('');
   const [agentCapabilityLoadError, setAgentCapabilityLoadError] = useState('');
   const [ownerUserLoadError, setOwnerUserLoadError] = useState('');
   const [createPanelOpen, setCreatePanelOpen] = useState(false);
   const [editPanelOpen, setEditPanelOpen] = useState(false);
+  const [detailPanelOpen, setDetailPanelOpen] = useState(false);
+  const [activityPanelOpen, setActivityPanelOpen] = useState(false);
   const [editingAgentId, setEditingAgentId] = useState('');
   const [createDraft, setCreateDraft] = useState<AgentDraft>({ name: '', description: '', instructions: '', providerType: 'internal' });
   const [editDraft, setEditDraft] = useState<AgentEditDraft | null>(null);
@@ -85,10 +74,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [newManualTriggerName, setNewManualTriggerName] = useState('');
   const [newScheduleTriggerName, setNewScheduleTriggerName] = useState('');
   const [newScheduleTriggerCron, setNewScheduleTriggerCron] = useState('');
-  const [newScheduleTriggerTimezone, setNewScheduleTriggerTimezone] = useState('UTC');
-  const [newEventTriggerName, setNewEventTriggerName] = useState('');
-  const [newEventTriggerType, setNewEventTriggerType] = useState<EventTriggerType>('webhook');
+  const [newScheduleTriggerTimezone, setNewScheduleTriggerTimezone] = useState(getUserTimeZone);
+  const [newEventTriggerName, setNewEventTriggerName] = useState(''), [newEventTriggerType, setNewEventTriggerType] = useState<EventTriggerType>('webhook');
   const [newEventTriggerFilter, setNewEventTriggerFilter] = useState('');
+  const closeAgentDetailsButtonRef = React.useRef<HTMLButtonElement>(null);
   const canManageAgents = canManageWorkspaceAgents(workspace);
   React.useEffect(() => {
     let mounted = true;
@@ -146,21 +135,23 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   }, [workspace.id, workspace.members, workspace.permissions?.read_members]);
   const visibleAgents = useMemo(() => {
     const queriedAgents = filterAgentDefinitions(agents, query);
-    if (reviewFilter === 'all') return queriedAgents;
     return queriedAgents.filter((agent) => {
-      if (reviewFilter === 'attention') return getAgentReadinessLabel(agent) !== 'Ready';
-      if (reviewFilter === 'production') return getAgentReviewSignals(agent).includes('Broad target scope');
-      if (reviewFilter === 'write_gated') return agent.approvalPolicy.writeActions === 'approval_required';
-      return agent.workflowsUsingAgent.length === 0;
+      if (catalogFilters.focus === 'ready') return getAgentReadinessLabel(agent) === 'Ready';
+      if (catalogFilters.focus === 'action_needed') return getAgentReadinessLabel(agent) === 'Action needed';
+      if (catalogFilters.focus === 'in_use') return agent.workflowsUsingAgent.length > 0;
+      if (catalogFilters.focus === 'available') return agent.workflowsUsingAgent.length === 0;
+      if (catalogFilters.focus === 'broad_scope') return getAgentReviewSignals(agent).includes('Broad target scope');
+      if (catalogFilters.focus === 'write_gated') return agent.approvalPolicy.writeActions === 'approval_required';
+      return true;
     });
-  }, [agents, query, reviewFilter]);
+  }, [agents, query, catalogFilters]);
   const selectedAgent = visibleAgents.find((agent) => agent.id === selectedAgentId) || visibleAgents[0] || agents[0];
   const reviewQueue = useMemo(() => {
-    const agentsNeedingAttention = agents.filter((agent) => getAgentReadinessLabel(agent) !== 'Ready').length;
+    const agentsNeedingAttention = agents.filter((agent) => getAgentReadinessLabel(agent) === 'Action needed').length;
     const broadTargetScope = agents.filter((agent) => getAgentReviewSignals(agent).includes('Broad target scope')).length;
     const staleReadiness = agents.filter((agent) => getAgentReviewSignals(agent).includes('No recent readiness test')).length;
-    const disabledReferenced = agents.filter((agent) => agent.status === 'disabled' && agent.workflowsUsingAgent.length > 0).length;
-    return { agentsNeedingAttention, broadTargetScope, staleReadiness, disabledReferenced };
+    const agentsInUse = agents.filter((agent) => agent.workflowsUsingAgent.length > 0).length;
+    return { agentsNeedingAttention, broadTargetScope, staleReadiness, agentsInUse };
   }, [agents]);
   const selectedCompiledScopePreview = selectedAgent ? agentCompiledScopePreviews[selectedAgent.id] : undefined;
   const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
@@ -188,21 +179,22 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const updateSelectedAgent = (agentId: string, updater: (agent: AgentDefinition) => AgentDefinition) => {
     setAgents((current) => current.map((agent) => agent.id === agentId ? updater(agent) : agent));
   };
-  const testSelectedAgent = async () => {
-    if (!selectedAgent || !canManageAgents) return;
-    setTestingAgentId(selectedAgent.id);
+  const testAgentReadiness = async (agentToTest: AgentDefinition) => {
+    if (!canManageAgents) return;
+    setTestingAgentId(agentToTest.id);
     setLocalNotice(null);
     try {
-      const result = await testWorkspaceAgent(workspace.id, selectedAgent.id, {
-        approvedContextGrants: selectedAgent.contextScope,
+      const result = await testWorkspaceAgent(workspace.id, agentToTest.id, {
+        approvedContextGrants: agentToTest.contextScope,
         inputContext: { source: 'management_console' }
       });
-      setAgentCompiledScopePreviews((current) => ({ ...current, [selectedAgent.id]: result.compiledScope }));
-      setLocalNotice({ tone: 'success', message: `Readiness test queued for ${selectedAgent.name}. Check recent activity for ${result.activity.id}.` });
-      updateSelectedAgent(selectedAgent.id, (agent) => ({
+      setAgentCompiledScopePreviews((current) => ({ ...current, [agentToTest.id]: result.compiledScope }));
+      setLocalNotice({ tone: 'success', message: `Readiness test queued for ${agentToTest.name}. Check recent activity for ${result.activity.id}.` });
+      updateSelectedAgent(agentToTest.id, (agent) => ({
         ...agent,
+        activity: activityStateFromRecord(agent.activity, result.activity, agent.activity.runCount + 1),
         auditHistory: [{ id: result.activity.id, summary: `Test run ${result.activity.status}`, occurredAt: result.activity.createdAt }, ...agent.auditHistory],
-        health: { status: 'healthy', summary: `Test queued ${result.activity.createdAt}` }
+        health: { status: 'healthy', summary: `Test queued ${formatUserDateTime(result.activity.createdAt, { fallback: result.activity.createdAt })}` }
       }));
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Readiness test could not be queued.' });
@@ -210,6 +202,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setTestingAgentId('');
     }
   };
+  const testSelectedAgent = async () => selectedAgent && testAgentReadiness(selectedAgent);
   const resetCreateAgentDraft = () => {
     setCreateDraft({ name: '', description: '', instructions: '', providerType: 'internal' });
     setDraftMcpServers('');
@@ -217,16 +210,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     setDraftSkills('');
   };
   const closeCreateAgentDrawer = () => setCreatePanelOpen(false);
-  const handleCreateAgentDrawerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape') closeCreateAgentDrawer();
-  };
   const closeEditAgentDrawer = () => {
     setEditPanelOpen(false);
     setEditingAgentId('');
     setEditDraft(null);
-  };
-  const handleEditAgentDrawerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape') closeEditAgentDrawer();
   };
   const openEditAgentDrawer = (agent: AgentDefinition) => {
     setEditingAgentId(agent.id);
@@ -234,7 +221,26 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     setEditPanelOpen(true);
   };
   const reviewSelectedAgentAccess = () => {
-    document.getElementById('agent-access-policy')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    const accessPolicy = document.getElementById('agent-access-policy');
+    if (!accessPolicy) return;
+    accessPolicy.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    accessPolicy.focus({ preventScroll: true });
+  };
+  const openAgentManagement = (agent?: AgentDefinition) => {
+    if (agent) setSelectedAgentId(agent.id);
+    setDetailPanelOpen(true);
+  };
+  const openAgentActivity = (agent: AgentDefinition) => {
+    setSelectedAgentId(agent.id);
+    setActivityPanelOpen(true);
+  };
+  const selectAgentAssignmentRow = (agentId: string) => {
+    setSelectedAgentId(agentId);
+    setExpandedAgentId((current) => current === agentId ? '' : agentId);
+  };
+  const openEditAgentDrawerFromDetails = (agent: AgentDefinition) => {
+    setDetailPanelOpen(false);
+    openEditAgentDrawer(agent);
   };
   const saveSelectedAgentVersion = async () => {
     if (!selectedAgent || !canManageAgents) return;
@@ -288,7 +294,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setAgentVersionAction('');
     }
   };
-  const activitySummary = (activity: AgentActivityRecordApi): string => `Activity ${activity.status} on v${activity.agentVersion}`;
   const refreshSelectedAgentActivity = async () => {
     if (!selectedAgent) return;
     setAgentActivityAction(selectedAgent.id);
@@ -297,7 +302,8 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const activity = await listAgentActivity(workspace.id, selectedAgent.id);
       updateSelectedAgent(selectedAgent.id, (agent) => ({
         ...agent,
-        auditHistory: activity.map((record) => ({ id: record.id, summary: activitySummary(record), occurredAt: record.updatedAt || record.createdAt }))
+        activity: activityStateFromRecord(agent.activity, activity[0], activity.length),
+        auditHistory: auditHistoryFromAgentActivity(activity)
       }));
       setLocalNotice({ tone: 'success', message: 'Recent activity refreshed.' });
     } catch (error) {
@@ -330,12 +336,12 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         type: 'schedule',
         enabled: true,
         name: newScheduleTriggerName.trim() || 'Scheduled run',
-        schedule: { cron: newScheduleTriggerCron.trim(), timezone: newScheduleTriggerTimezone.trim() || 'UTC' }
+        schedule: { cron: newScheduleTriggerCron.trim(), timezone: newScheduleTriggerTimezone.trim() || getUserTimeZone() }
       });
       updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: [trigger, ...agent.triggers] }));
       setNewScheduleTriggerName('');
       setNewScheduleTriggerCron('');
-      setNewScheduleTriggerTimezone('UTC');
+      setNewScheduleTriggerTimezone(getUserTimeZone());
       setLocalNotice({ tone: 'success', message: 'Scheduled trigger added and enabled.' });
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not add the scheduled trigger.' });
@@ -514,29 +520,26 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setUpdatingAgentId('');
     }
   };
-
   return (
-    <div className="min-h-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar sm:px-6 lg:px-10 lg:py-8">
-      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0 flex-1">
-          <h1 className="type-route-title">Agents</h1>
-          <p className="type-body mt-3 max-w-2xl break-words text-ui-text-muted">Compare each agent's capability sources, target scope, and workflow impact before changing automation access.</p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <PageSearchInput value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by agent, tool, skill, scope, provider" aria-label="Search agents" className="lg:w-80" />
-          <Button type="button" variant="secondary" size="md" className="whitespace-nowrap" onClick={() => setCreatePanelOpen(true)} disabled={!canManageAgents}>
-            <ICONS.Plus className="h-4 w-4" />
-            Create agent
-          </Button>
-        </div>
-      </header>
+    <div className="min-h-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+      <WorkspaceAgentsRouteHeader
+        canManageAgents={canManageAgents}
+        onCreateAgent={() => setCreatePanelOpen(true)}
+        query={query}
+        setQuery={setQuery}
+      />
 
       {agentLoadError && <Notice>Control-plane agents did not load, so this page is showing the local catalog. Retry after control-plane access is restored.</Notice>}
       {agentCapabilityLoadError && <Notice>Capability catalog did not load; fields show IDs already attached to these agents.</Notice>}
       {ownerUserLoadError && <Notice>Workspace member list did not load; owner choices are limited to members already in this workspace view.</Notice>}
       {!canManageAgents && <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect agents, but need manage_agents permission to create or change them.</div>}
       {localNotice && (
-        <div className={`mb-4 rounded-md border px-3 py-2 text-xs font-semibold ${localNotice.tone === 'danger' ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}>
+        <div
+          role={localNotice.tone === 'danger' ? 'alert' : 'status'}
+          aria-live={localNotice.tone === 'danger' ? 'assertive' : 'polite'}
+          aria-atomic="true"
+          className={`mb-4 rounded-md border px-3 py-2 text-xs font-semibold ${localNotice.tone === 'danger' ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}
+        >
           {localNotice.message}
         </div>
       )}
@@ -554,7 +557,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           agentCapabilityOptions={agentCapabilityOptions}
           creatingAgent={creatingAgent}
           onClose={closeCreateAgentDrawer}
-          onKeyDown={handleCreateAgentDrawerKeyDown}
           onReset={resetCreateAgentDraft}
           onSave={() => void createControlPlaneAgent()}
         />
@@ -569,70 +571,80 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           editChangeSummary={editChangeSummary}
           updatingAgentId={updatingAgentId}
           onClose={closeEditAgentDrawer}
-          onKeyDown={handleEditAgentDrawerKeyDown}
           onSave={() => void saveAgentEdits()}
         />
       )}
 
       <AgentReviewQueue reviewQueue={reviewQueue} />
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+      <div className="grid min-w-0 gap-6">
         <WorkspaceAgentsCatalog
           agents={agents}
           visibleAgents={visibleAgents}
           selectedAgent={selectedAgent}
-          reviewFilter={reviewFilter}
-          onReviewFilterChange={setReviewFilter}
-          onSelectedAgentChange={setSelectedAgentId}
+          expandedAgentId={expandedAgentId}
+          canManageAgents={canManageAgents}
+          catalogFilters={catalogFilters}
+          onCatalogFiltersChange={setCatalogFilters}
+          onSelectedAgentChange={selectAgentAssignmentRow}
+          onEditAgent={openEditAgentDrawer}
+          onOpenActivity={openAgentActivity}
+          onOpenManagement={openAgentManagement}
         />
-
-        {selectedAgent && (
-          <WorkspaceAgentDetailPanel
-            selectedAgent={selectedAgent}
-            canManageAgents={canManageAgents}
-            testingAgentId={testingAgentId}
-            updatingAgentId={updatingAgentId}
-            agentVersionAction={agentVersionAction}
-            agentActivityAction={agentActivityAction}
-            agentTriggerAction={agentTriggerAction}
-            disableConfirmAgentId={disableConfirmAgentId}
-            setDisableConfirmAgentId={setDisableConfirmAgentId}
-            deleteConfirmAgentId={deleteConfirmAgentId}
-            setDeleteConfirmAgentId={setDeleteConfirmAgentId}
-            selectedCompiledScopePreview={selectedCompiledScopePreview}
-            agentVersionHistories={agentVersionHistories}
-            newManualTriggerName={newManualTriggerName}
-            setNewManualTriggerName={setNewManualTriggerName}
-            newScheduleTriggerName={newScheduleTriggerName}
-            setNewScheduleTriggerName={setNewScheduleTriggerName}
-            newScheduleTriggerCron={newScheduleTriggerCron}
-            setNewScheduleTriggerCron={setNewScheduleTriggerCron}
-            newScheduleTriggerTimezone={newScheduleTriggerTimezone}
-            setNewScheduleTriggerTimezone={setNewScheduleTriggerTimezone}
-            newEventTriggerName={newEventTriggerName}
-            setNewEventTriggerName={setNewEventTriggerName}
-            newEventTriggerType={newEventTriggerType}
-            setNewEventTriggerType={setNewEventTriggerType}
-            newEventTriggerFilter={newEventTriggerFilter}
-            setNewEventTriggerFilter={setNewEventTriggerFilter}
-            onTestSelectedAgent={() => void testSelectedAgent()}
-            onReviewSelectedAgentAccess={reviewSelectedAgentAccess}
-            onOpenEditAgentDrawer={openEditAgentDrawer}
-            onSaveSelectedAgentVersion={() => void saveSelectedAgentVersion()}
-            onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
-            onDisableSelectedAgent={() => void disableSelectedAgent()}
-            onDeleteSelectedAgent={() => void deleteSelectedAgent()}
-            onCreateManualTrigger={() => void createManualTrigger()}
-            onCreateScheduleTrigger={() => void createScheduleTrigger()}
-            onCreateEventTrigger={() => void createEventTrigger()}
-            onToggleAgentTrigger={(trigger) => void toggleAgentTrigger(trigger)}
-            onDeleteAgentTrigger={(trigger) => void deleteAgentTriggerForSelectedAgent(trigger)}
-            onRefreshSelectedAgentVersions={() => void refreshSelectedAgentVersions()}
-            onRestoreSelectedAgentVersion={(version) => void restoreSelectedAgentVersion(version)}
-            onRefreshSelectedAgentActivity={() => void refreshSelectedAgentActivity()}
-          />
-        )}
       </div>
+
+      {selectedAgent && (
+        <AgentDetailsDrawer
+          isOpen={detailPanelOpen}
+          onClose={() => setDetailPanelOpen(false)}
+          closeButtonRef={closeAgentDetailsButtonRef}
+          selectedAgent={selectedAgent}
+          chrome="drawer"
+          titleId="agent-details-title"
+          canManageAgents={canManageAgents}
+          testingAgentId={testingAgentId}
+          updatingAgentId={updatingAgentId}
+          agentVersionAction={agentVersionAction}
+          agentActivityAction={agentActivityAction}
+          agentTriggerAction={agentTriggerAction}
+          disableConfirmAgentId={disableConfirmAgentId}
+          setDisableConfirmAgentId={setDisableConfirmAgentId}
+          deleteConfirmAgentId={deleteConfirmAgentId}
+          setDeleteConfirmAgentId={setDeleteConfirmAgentId}
+          selectedCompiledScopePreview={selectedCompiledScopePreview}
+          agentVersionHistories={agentVersionHistories}
+          newManualTriggerName={newManualTriggerName}
+          setNewManualTriggerName={setNewManualTriggerName}
+          newScheduleTriggerName={newScheduleTriggerName}
+          setNewScheduleTriggerName={setNewScheduleTriggerName}
+          newScheduleTriggerCron={newScheduleTriggerCron}
+          setNewScheduleTriggerCron={setNewScheduleTriggerCron}
+          newScheduleTriggerTimezone={newScheduleTriggerTimezone}
+          setNewScheduleTriggerTimezone={setNewScheduleTriggerTimezone}
+          newEventTriggerName={newEventTriggerName}
+          setNewEventTriggerName={setNewEventTriggerName}
+          newEventTriggerType={newEventTriggerType}
+          setNewEventTriggerType={setNewEventTriggerType}
+          newEventTriggerFilter={newEventTriggerFilter}
+          setNewEventTriggerFilter={setNewEventTriggerFilter}
+          onTestSelectedAgent={() => void testSelectedAgent()}
+          onReviewSelectedAgentAccess={reviewSelectedAgentAccess}
+          onOpenEditAgentDrawer={openEditAgentDrawerFromDetails}
+          onSaveSelectedAgentVersion={() => void saveSelectedAgentVersion()}
+          onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
+          onDisableSelectedAgent={() => void disableSelectedAgent()}
+          onDeleteSelectedAgent={() => void deleteSelectedAgent()}
+          onCreateManualTrigger={() => void createManualTrigger()}
+          onCreateScheduleTrigger={() => void createScheduleTrigger()}
+          onCreateEventTrigger={() => void createEventTrigger()}
+          onToggleAgentTrigger={(trigger) => void toggleAgentTrigger(trigger)}
+          onDeleteAgentTrigger={(trigger) => void deleteAgentTriggerForSelectedAgent(trigger)}
+          onRefreshSelectedAgentVersions={() => void refreshSelectedAgentVersions()}
+          onRestoreSelectedAgentVersion={(version) => void restoreSelectedAgentVersion(version)}
+          onRefreshSelectedAgentActivity={() => void refreshSelectedAgentActivity()}
+        />
+      )}
+      {selectedAgent && <AgentActivityDrawer isOpen={activityPanelOpen} onClose={() => setActivityPanelOpen(false)} closeButtonRef={closeAgentDetailsButtonRef} agent={selectedAgent} agentActivityAction={agentActivityAction} onRefreshActivity={() => void refreshSelectedAgentActivity()} />}
     </div>
   );
 };
