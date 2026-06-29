@@ -536,6 +536,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('getTraceActivityLabel(trace)');
     expect(traceFooter).toContain('suppressCompactReasoningSummary?: boolean;');
     expect(traceFooter).toContain('compactStatusOnly?: boolean;');
+    expect(traceFooter).toContain('className?: string;');
     expect(traceFooter).toContain('suppressCompactReasoningSummary = false');
     expect(traceFooter).toContain('compactStatusOnly = false');
     expect(traceFooter).toContain('const compactReasoningSummary = isInProgress && !suppressCompactReasoningSummary');
@@ -549,7 +550,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain("'No function tool calls'");
     expect(traceFooter).toContain("const disclosureLabel = isExpanded ? 'Hide run details' : 'Show run details';");
     expect(traceFooter).toContain('const disclosureSummary = hasCompactReasoningSummary ? compactReasoningSummary : activitySummary;');
-    expect(traceFooter).toContain("${compactStatusOnly ? '' : 'mt-3'} w-full max-w-[72ch]");
+    expect(traceFooter).toContain("${compactStatusOnly ? '' : 'mt-3'} w-full ${className || 'max-w-[72ch]'}");
     expect(traceFooter).toContain('group min-h-10 items-center gap-2 py-2 pl-0 pr-2.5');
     expect(traceFooter).toContain('className={`-ml-1 shrink-0 text-ui-text-muted group-hover:text-ui-text');
     expect(traceFooter).toContain("'flex w-full rounded-md bg-ui-surface/45 text-ui-text hover:bg-ui-surface/75'");
@@ -603,6 +604,9 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).not.toContain('rounded-full px-2 py-0.5');
     expect(traceFooter).toContain('hidden={!isExpanded}');
     expect(traceFooter).toContain('max-h-80 divide-y divide-ui-border overflow-y-auto overscroll-contain');
+    expect(traceFooter).toContain('timelineScrollRef');
+    expect(traceFooter).toContain('timelineScrollRef.current.scrollTop = timelineScrollRef.current.scrollHeight;');
+    expect(traceFooter).toContain('const latestTimelineEventKey = timelineEvents.at(-1)');
     expect(traceFooter).not.toContain('Progress steps');
     expect(traceFooter).not.toContain('Reasoning Summaries');
     expect(traceFooter).not.toContain('Tool Activity');

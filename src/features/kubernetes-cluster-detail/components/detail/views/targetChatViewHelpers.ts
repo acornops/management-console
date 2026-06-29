@@ -1,5 +1,6 @@
 import React from 'react';
 import type { KubernetesCluster, LlmProvider, ReasoningEffort, WorkspaceAiProviderStatus, WorkspaceAiSettings } from '@/types';
+import { formatUserTime } from '@/utils/dateTime';
 
 export const SUGGESTION_KEYS = ['chat.suggestions.podTermination', 'chat.suggestions.serviceDns', 'chat.suggestions.crashLooping', 'chat.suggestions.mcpConnectivity'];
 const READABLE_ATTACHMENT_EXTENSIONS = new Set([
@@ -64,10 +65,7 @@ const historyFocusableSelector = [
 ].join(',');
 
 export function formatMessageTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return formatUserTime(timestamp, { fallback: '-' });
 }
 
 export function getFocusableHistoryElements(panel: HTMLElement): HTMLElement[] {

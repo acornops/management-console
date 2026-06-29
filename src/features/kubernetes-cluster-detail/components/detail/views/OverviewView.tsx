@@ -7,6 +7,7 @@ import { issueStatusTone } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
+import { formatRelativeTime as formatReadableRelativeTime, formatUserTime } from '@/utils/dateTime';
 import { formatLastUpdated, getAgentConnectionState, getTelemetryFreshness, getTelemetryFreshnessLabel } from '@/utils/telemetry';
 
 interface OverviewViewProps {
@@ -21,16 +22,11 @@ function getPodCount(cluster: KubernetesCluster): number {
 }
 
 function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return formatUserTime(timestamp, { fallback: '-' });
 }
 
 function formatRelativeTime(timestamp: number, now = Date.now()): string {
-  const diffMinutes = Math.max(1, Math.floor((now - timestamp) / 60000));
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return formatReadableRelativeTime(timestamp, { now });
 }
 
 function severityRank(severity: ControlPlaneIssueItem['severity']): number {

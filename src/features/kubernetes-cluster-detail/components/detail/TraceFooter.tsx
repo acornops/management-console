@@ -11,6 +11,7 @@ interface TraceFooterProps {
   setExpanded: (runId: string, expanded: boolean) => void;
   suppressCompactReasoningSummary?: boolean;
   compactStatusOnly?: boolean;
+  className?: string;
 }
 
 function inferTimelineStepType(label: string): RunTraceTimelineEvent['type'] {
@@ -135,7 +136,8 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   isExpanded,
   setExpanded,
   suppressCompactReasoningSummary = false,
-  compactStatusOnly = false
+  compactStatusOnly = false,
+  className
 }) => {
   const contentId = React.useId();
   const shouldReduceMotion = useReducedMotion();
@@ -152,6 +154,15 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   const compactStatusLabel = hasCompactReasoningSummary ? 'Working through' : statusLabel;
   const usageDetail = formatRunUsageDetail(trace.usage);
   const timelineEvents = buildTimelineEvents(trace);
+  const timelineScrollRef = React.useRef<HTMLDivElement>(null);
+  const latestTimelineEventKey = timelineEvents.at(-1)
+    ? [
+        timelineEvents.at(-1)?.id,
+        timelineEvents.at(-1)?.timestamp,
+        timelineEvents.at(-1)?.status,
+        timelineEvents.at(-1)?.detail || ''
+      ].join(':')
+    : '';
   const compactToolSummary =
     trace.toolCalls.length > 0
       ? `${completedToolCalls} of ${trace.toolCalls.length} function calls complete`
@@ -174,8 +185,13 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
       ? 'bg-status-danger'
       : 'bg-accent';
 
+  React.useLayoutEffect(() => {
+    if (!isExpanded || !isInProgress || !timelineScrollRef.current) return;
+    timelineScrollRef.current.scrollTop = timelineScrollRef.current.scrollHeight;
+  }, [isExpanded, isInProgress, latestTimelineEventKey, timelineEvents.length]);
+
   return (
-    <div className={`${compactStatusOnly ? '' : 'mt-3'} w-full max-w-[72ch]`}>
+    <div className={`${compactStatusOnly ? '' : 'mt-3'} w-full ${className || 'max-w-[72ch]'}`}>
       <button
         type="button"
         onClick={() => setExpanded(runId, !isExpanded)}
@@ -236,7 +252,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
           >
             <div className="max-h-80 overflow-hidden">
               {timelineEvents.length > 0 ? (
-                <div className="max-h-80 divide-y divide-ui-border overflow-y-auto overscroll-contain">
+                <div ref={timelineScrollRef} className="max-h-80 divide-y divide-ui-border overflow-y-auto overscroll-contain">
                   {timelineEvents.map((event) => (
                     <div key={event.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 px-3 py-2.5">
                       <span className="mt-0.5 flex h-5 w-5 items-center justify-center">

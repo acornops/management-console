@@ -37,6 +37,7 @@ import {
   toArray
 } from './formatters';
 import { mapResourceSignals } from './resourceSignals';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 export function mapClusterStatus(status: ControlPlaneCluster['status']): HealthStatus {
   if (status === 'online') return HealthStatus.GREEN;
@@ -335,8 +336,7 @@ function formatDuration(startTime?: string, completionTime?: string): string {
 }
 
 function formatSnapshotTimestamp(value?: string): string {
-  const timestamp = Date.parse(value || '');
-  return Number.isNaN(timestamp) ? '-' : new Date(timestamp).toLocaleString();
+  return formatUserDateTime(value, { fallback: '-' });
 }
 
 export function mapCronJobs(cronJobs: SnapshotResourceCronJob[] | undefined): Workload[] {

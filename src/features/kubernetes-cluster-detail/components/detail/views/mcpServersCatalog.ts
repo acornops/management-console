@@ -5,6 +5,7 @@ import {
   KubernetesCluster
 } from '@/types';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 type McpTool = KubernetesCluster['mcpTools'][number];
 
@@ -253,6 +254,5 @@ export function formatMcpMutationError(error: unknown, fallback: string): string
 }
 
 export function formatDiscoveryTimestamp(value: string): string {
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
+  return formatUserDateTime(value, { fallback: value });
 }

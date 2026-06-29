@@ -15,6 +15,7 @@ import {
   WorkloadExplorerItem
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { WorkloadsExplorerProps } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
+import { formatUserTime } from '@/utils/dateTime';
 
 const FOLLOW_LOGS_INTERVAL_MS = 7000;
 
@@ -358,7 +359,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                     </div>
                     <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-100/70">
                       {isFollowingLogs && <CheckCircle2 className="h-3.5 w-3.5 text-status-success-text" />}
-                      {podLogs?.fetchedAt ? t('workloads.fetchedAt', { time: new Date(podLogs.fetchedAt).toLocaleTimeString() }) : t('workloads.notLoaded')}
+                      {podLogs?.fetchedAt ? t('workloads.fetchedAt', { time: formatUserTime(podLogs.fetchedAt, { includeTimeZone: true }) }) : t('workloads.notLoaded')}
                     </div>
                   </div>
                   <pre className="max-h-[420px] min-h-[220px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-xs leading-5 text-slate-100 custom-scrollbar">

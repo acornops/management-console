@@ -2,9 +2,10 @@ import React from 'react';
 import { GitBranch, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { Checkbox } from '@/components/common/Checkbox';
+import { TextInput } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { formInputClassName } from '@/components/common/formControlStyles';
 import { controlPlaneApi, ControlPlaneTargetSkillDetail, ControlPlaneTargetSkillsCatalog, ImportTargetSkillInput } from '@/services/controlPlaneApi';
 import {
   buildSkillTemplate,
@@ -21,8 +22,6 @@ import {
 } from '@/features/kubernetes-cluster-detail/components/detail/views/targetSkillsViewModel';
 import { TargetSkillEditorDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillEditorDialog';
 import { TargetSkillsInventory } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsInventory';
-
-const skillImportInputClassName = formInputClassName();
 
 export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   cluster,
@@ -402,16 +401,16 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
           <div className="space-y-4 px-6 py-5">
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ui-text">GitHub URL</span>
-              <input value={importDraft.repoUrl} onChange={(event) => setImportDraft((current) => ({ ...current, repoUrl: event.target.value }))} placeholder="https://github.com/openai/skills/tree/main/skills/.curated/cli-creator" className={skillImportInputClassName} />
+              <TextInput value={importDraft.repoUrl} onChange={(event) => setImportDraft((current) => ({ ...current, repoUrl: event.target.value }))} placeholder="https://github.com/openai/skills/tree/main/skills/.curated/cli-creator" />
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-ui-text">Ref</span>
-                <input value={importDraft.ref || ''} onChange={(event) => setImportDraft((current) => ({ ...current, ref: event.target.value }))} placeholder="main" className={skillImportInputClassName} />
+                <TextInput value={importDraft.ref || ''} onChange={(event) => setImportDraft((current) => ({ ...current, ref: event.target.value }))} placeholder="main" />
               </label>
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-ui-text">Subpath</span>
-                <input value={importDraft.subpath || ''} onChange={(event) => setImportDraft((current) => ({ ...current, subpath: event.target.value }))} placeholder="skills/troubleshooting-cnpg" className={skillImportInputClassName} />
+                <TextInput value={importDraft.subpath || ''} onChange={(event) => setImportDraft((current) => ({ ...current, subpath: event.target.value }))} placeholder="skills/troubleshooting-cnpg" />
               </label>
             </div>
             <div className="rounded-lg border border-ui-border px-3 py-3">
@@ -453,7 +452,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
             <p>Reimport overwrites the local skill files with the stored GitHub source snapshot.</p>
             {selectedSkill?.source.syncStatus === 'modified' && (
               <label className="flex items-start gap-3 rounded-lg border border-ui-border px-3 py-3">
-                <input type="checkbox" checked={confirmForceReimport} onChange={(event) => setConfirmForceReimport(event.target.checked)} className="mt-1" />
+                <Checkbox checked={confirmForceReimport} onChange={(event) => setConfirmForceReimport(event.target.checked)} className="mt-1" />
                 <span>Confirm overwrite for locally modified imported skill.</span>
               </label>
             )}

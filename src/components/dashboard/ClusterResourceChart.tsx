@@ -3,6 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import type { KubernetesCluster } from '@/types';
+import { formatUserTime } from '@/utils/dateTime';
 
 export interface ClusterMetricPoint {
   timestamp: number;
@@ -11,7 +12,7 @@ export interface ClusterMetricPoint {
 }
 
 function formatShortTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return formatUserTime(timestamp, { fallback: '-' });
 }
 
 export const ClusterResourceChart: React.FC<{

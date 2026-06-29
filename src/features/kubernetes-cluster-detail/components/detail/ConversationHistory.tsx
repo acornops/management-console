@@ -5,6 +5,7 @@ import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ChatSession } from '@/types';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 interface ConversationHistoryProps {
   appName: string;
@@ -19,12 +20,7 @@ interface ConversationHistoryProps {
 }
 
 function formatSessionTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleString([], {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return formatUserDateTime(timestamp, { fallback: '-' });
 }
 
 function isRecentSession(timestamp: number): boolean {
