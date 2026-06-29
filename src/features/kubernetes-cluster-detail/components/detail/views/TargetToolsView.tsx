@@ -14,6 +14,7 @@ import type {
   TargetType
 } from '@/services/controlPlaneApi';
 import type { KubernetesCluster } from '@/types';
+import { KnowledgeBankDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankDialog';
 import { TargetToolRow } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetToolRow';
 import { formatError } from '@/features/kubernetes-cluster-detail/components/detail/views/targetSkillsViewModel';
 
@@ -111,6 +112,13 @@ function summarizeDomainFilters(tool: ControlPlaneTargetToolItem, t: (key: strin
   return t('tools.domainSummaryBlockedOnly', { count: blocked });
 }
 
+function summarizeToolConfig(tool: ControlPlaneTargetToolItem, t: (key: string, options?: Record<string, unknown>) => string): string {
+  if (tool.id !== 'knowledge_bank') return summarizeDomainFilters(tool, t);
+  if (tool.readiness && !tool.readiness.learningAvailable) return 'Learning paused';
+  const maxSnippets = tool.config.retrieval?.maxSnippetsPerRetrieval || 4;
+  return `Retrieves up to ${maxSnippets} snippets`;
+}
+
 function toolRuntimeKind(tool: ControlPlaneTargetToolItem): 'provider_native' | 'function' {
   return tool.runtimeKind || 'function';
 }
@@ -151,7 +159,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   const [toolSearch, setToolSearch] = React.useState('');
   const [toolFilter, setToolFilter] = React.useState<'all' | 'enabled' | 'disabled' | 'read' | 'write'>('all');
 
-  const canEditTools = Boolean(canManageTools && catalog?.permissions?.canEdit);
+  const canEditTools = Boolean(catalog?.permissions?.canEdit);
+  const canEditSelectedTool = Boolean(editingTool && canEditTools && (editingTool.permissions?.canEdit ?? true));
   const showPermissionNotice = catalog ? !canEditTools : !canManageTools;
   const toolFilterOptions: Array<SelectOption<typeof toolFilter>> = [
     { value: 'all', label: t('tools.filterAll') },
@@ -183,7 +192,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         tool.enabled ? t('tools.enabled') : t('tools.disabled'),
         toolCapabilityLabel(tool, t),
         toolRuntimeLabel(tool, t),
-        summarizeDomainFilters(tool, t)
+        summarizeToolConfig(tool, t)
       ].join(' ').toLowerCase();
       const matchesSearch = !normalizedSearch || searchableText.includes(normalizedSearch);
       const matchesFilter =
@@ -214,7 +223,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
 
   const openConfigure = (tool: ControlPlaneTargetToolItem) => {
     setEditingTool(tool);
-    setDraft(draftFromTool(tool));
+    setDraft(tool.id === 'knowledge_bank' ? null : draftFromTool(tool));
     setValidationError(null);
     setSavingError(null);
   };
@@ -257,7 +266,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   }, [t, validateDraft]);
 
   const saveTool = async () => {
-    if (!editingTool || !draft) return;
+    if (!editingTool || !draft || !canEditSelectedTool) return;
     setSavingError(null);
     setValidationError(draftRequest.error);
     if (!draftRequest.request) return;
@@ -282,7 +291,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   };
 
   const toggleTool = async (tool: ControlPlaneTargetToolItem, enabled: boolean) => {
-    if (!canEditTools || pendingToolId || enabled === tool.enabled) return;
+    const canEditTargetTool = canEditTools && (tool.permissions?.canEdit ?? true);
+    if (!canEditTargetTool || pendingToolId || enabled === tool.enabled) return;
     setPendingToolId(tool.id);
     setCatalogError(null);
     try {
@@ -456,7 +466,25 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         </>
       ) : null}
 
-      {editingTool && draft && (
+      {editingTool?.id === 'knowledge_bank' && (
+        <KnowledgeBankDialog
+          workspaceId={activeTarget.workspaceId}
+          targetId={activeTarget.targetId}
+          tool={editingTool}
+          canEdit={canEditTools && (editingTool.permissions?.canEdit ?? true)}
+          savingTool={saving}
+          onClose={closeConfigure}
+          onToolUpdated={(updatedTool) => {
+            setCatalog((current) => current ? {
+              ...current,
+              items: current.items.map((item) => item.id === updatedTool.id ? updatedTool : item)
+            } : current);
+            setEditingTool(updatedTool);
+          }}
+        />
+      )}
+
+      {editingTool && editingTool.id !== 'knowledge_bank' && draft && (
         <Dialog
           className="w-full max-w-2xl rounded-2xl border border-ui-border bg-ui-surface p-0 shadow-2xl"
           titleId="target-tool-config-title"
@@ -465,7 +493,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         >
           <div className="border-b border-ui-border px-6 py-5">
             <h2 id="target-tool-config-title" className="type-section-title">
-              {t(canEditTools ? 'tools.configureTitle' : 'tools.viewTitle', { tool: editingTool.label })}
+              {t(canEditSelectedTool ? 'tools.configureTitle' : 'tools.viewTitle', { tool: editingTool.label })}
             </h2>
             <p className="type-caption mt-1 text-ui-text-muted">
               {editingTool.description}
@@ -506,10 +534,10 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                     className={toolDomainTextareaClassName}
                     value={draft.allowedDomainsText}
                     disabled={saving}
-                    readOnly={!canEditTools}
+                    readOnly={!canEditSelectedTool}
                     placeholder={t('tools.allowedDomainsPlaceholder')}
                     onChange={(event) => {
-                      if (!canEditTools) return;
+                      if (!canEditSelectedTool) return;
                       setDraft((current) => current ? { ...current, allowedDomainsText: event.target.value } : current);
                       setValidationError(null);
                       setSavingError(null);
@@ -525,10 +553,10 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                     className={toolDomainTextareaClassName}
                     value={draft.blockedDomainsText}
                     disabled={saving}
-                    readOnly={!canEditTools}
+                    readOnly={!canEditSelectedTool}
                     placeholder={t('tools.blockedDomainsPlaceholder')}
                     onChange={(event) => {
-                      if (!canEditTools) return;
+                      if (!canEditSelectedTool) return;
                       setDraft((current) => current ? { ...current, blockedDomainsText: event.target.value } : current);
                       setValidationError(null);
                       setSavingError(null);
@@ -539,7 +567,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
             </section>
           </div>
           <div className="flex items-center justify-end gap-3 border-t border-ui-border px-6 py-4">
-            {canEditTools ? (
+            {canEditSelectedTool ? (
               <>
                 <Button variant="tertiary" onClick={closeConfigure} disabled={saving}>
                   {t('common.cancel')}

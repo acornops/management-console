@@ -1606,6 +1606,66 @@ export const en = {
       invalidDomain: '{{label}} contains an invalid domain: {{domain}}',
       duplicateDomain: '{{label}} contains a duplicate domain: {{domain}}',
       overlapDomain: '{{domain}} cannot be both allowed and blocked.'
+    },
+    knowledgeBank: {
+      title: 'Knowledge Bank',
+      loading: 'Loading Knowledge Bank',
+      loadFailed: 'Failed to load Knowledge Bank.',
+      saveEntryFailed: 'Failed to save Knowledge Bank entry.',
+      saveSettingsFailed: 'Failed to save Knowledge Bank settings.',
+      archiveFailed: 'Failed to archive Knowledge Bank entry.',
+      exportFailed: 'Failed to export Knowledge Bank.',
+      resetFailed: 'Failed to reset Knowledge Bank.',
+      resetConfirm: 'Reset this target Knowledge Bank? This permanently deletes current entries.',
+      newEntry: 'New entry',
+      export: 'Export',
+      reset: 'Reset',
+      saveEntry: 'Save entry',
+      saveSettings: 'Save settings',
+      archive: 'Archive',
+      close: 'Close',
+      targetOnly: 'Changes are saved to this target only.',
+      readOnly: 'Read-only access.',
+      noActivity: 'No Knowledge Bank activity yet.',
+      searchEntries: 'Search entries',
+      noEntries: 'No entries yet.',
+      noEntryMatches: 'No entries match this search.',
+      tabs: {
+        entries: 'Entries',
+        activity: 'Activity',
+        settings: 'Settings'
+      },
+      pause: {
+        aiSettingsMissing: 'AI provider credentials are not configured.',
+        providerNotAllowed: 'The selected provider is not allowed.',
+        modelNotAllowed: 'The selected model is not allowed.',
+        ready: 'Automatic learning is ready.'
+      },
+      status: {
+        active: 'Active',
+        pending: 'Pending',
+        archived: 'Archived'
+      },
+      model: {
+        workspaceDefault: 'Use workspace default',
+        custom: 'Custom model'
+      },
+      fields: {
+        enabled: 'Enabled',
+        title: 'Title',
+        status: 'Status',
+        confidence: 'Confidence',
+        tags: 'Tags',
+        evidenceSummary: 'Evidence summary',
+        bodyMarkdown: 'Knowledge Markdown',
+        checkpointModel: 'Checkpoint model',
+        provider: 'Provider',
+        model: 'Model',
+        idleCheckpointDelay: 'Idle checkpoint delay',
+        maxSnippets: 'Max snippets',
+        maxSnippetSize: 'Max snippet size',
+        observationsBeforeGeneralization: 'Observations before generalization'
+      }
     }
   },
   mcpServers: {

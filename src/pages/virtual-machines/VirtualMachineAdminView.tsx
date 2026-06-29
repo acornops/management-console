@@ -39,7 +39,7 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
       <TargetToolsView
         cluster={cluster}
         targetContext={targetContext}
-        canManageTools={Boolean(workspace.permissions?.manage_tools)}
+        canManageTools={Boolean(workspace.permissions?.manage_tools || workspace.permissions?.manage_knowledge_bank)}
       />
     );
   }
@@ -49,7 +49,7 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
       cluster={cluster}
       targetContext={targetContext}
       canManageMcp={Boolean(workspace.permissions?.manage_mcp)}
-      canManageTools={Boolean(workspace.permissions?.manage_tools)}
+      canManageTools={Boolean(workspace.permissions?.manage_tools || workspace.permissions?.manage_knowledge_bank)}
       canRequestWriteRuns={Boolean(workspace.permissions?.create_read_write_runs)}
     />
   );

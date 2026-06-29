@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Eye, Globe2, MoreVertical, Settings2 } from 'lucide-react';
+import { BookOpen, Eye, Globe2, MoreVertical, Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
@@ -34,7 +34,8 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   const [actionMenuStyle, setActionMenuStyle] = React.useState<React.CSSProperties | null>(null);
   const isTogglingTool = pendingToolId === tool.id;
   const isBlockedByOtherToolToggle = Boolean(pendingToolId && !isTogglingTool);
-  const canToggleTool = canEditTools && !isBlockedByOtherToolToggle && !isTogglingTool;
+  const canEditTool = canEditTools && (tool.permissions?.canEdit ?? true);
+  const canToggleTool = canEditTool && !isBlockedByOtherToolToggle && !isTogglingTool;
   const capabilityBadgeClassName = capability === 'write'
     ? 'bg-status-warning-soft text-status-warning-text'
     : 'bg-status-success-soft text-status-success-text';
@@ -98,12 +99,12 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
             }}
             className={menuOptionClassName()}
           >
-            {canEditTools ? (
+            {canEditTool ? (
               <Settings2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
             ) : (
               <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
             )}
-            <span>{canEditTools ? t('tools.configureTool') : t('tools.viewTool')}</span>
+            <span>{canEditTool ? t('tools.configureTool') : t('tools.viewTool')}</span>
           </button>
         </div>,
         document.body
@@ -115,7 +116,9 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
       <td className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
-            <Globe2 className="h-5 w-5 text-accent-strong" aria-hidden="true" />
+            {tool.id === 'knowledge_bank'
+              ? <BookOpen className="h-5 w-5 text-accent-strong" aria-hidden="true" />
+              : <Globe2 className="h-5 w-5 text-accent-strong" aria-hidden="true" />}
           </div>
           <div className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-ui-text">{tool.label}</span>

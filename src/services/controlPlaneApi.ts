@@ -76,6 +76,9 @@ export type {
   ControlPlaneTargetSkillsCatalog,
   ControlPlaneTargetToolItem,
   ControlPlaneTargetToolsCatalog,
+  ControlPlaneKnowledgeBankCatalog,
+  ControlPlaneKnowledgeBankEntry,
+  ControlPlaneKnowledgeBankEntryStatus,
   CreateTargetMcpServerInput,
   CreateTargetSkillInput,
   ImportTargetSkillInput,
@@ -88,7 +91,8 @@ export type {
   TargetMcpServerToolInput,
   UpdateTargetSkillInput,
   UpdateTargetMcpServerInput,
-  UpdateTargetToolInput
+  UpdateTargetToolInput,
+  KnowledgeBankEntryInput
 } from './control-plane/types';
 export type {
   ControlPlaneTargetChatActivity,

@@ -299,6 +299,7 @@ export interface Workspace {
     manage_targets: boolean;
     manage_mcp: boolean;
     manage_tools: boolean;
+    manage_knowledge_bank: boolean;
     manage_skills: boolean;
     manage_workflows: boolean;
     manage_agents: boolean;
@@ -426,6 +427,7 @@ export type WorkspaceCapability =
   | 'manage_targets'
   | 'manage_mcp'
   | 'manage_tools'
+  | 'manage_knowledge_bank'
   | 'manage_skills'
   | 'manage_workflows'
   | 'manage_agents'

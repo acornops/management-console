@@ -19,6 +19,10 @@ export type {
   ControlPlaneTargetToolDomainFilters,
   ControlPlaneTargetToolItem,
   ControlPlaneTargetToolsCatalog,
+  ControlPlaneKnowledgeBankCatalog,
+  ControlPlaneKnowledgeBankEntry,
+  ControlPlaneKnowledgeBankEntryStatus,
+  KnowledgeBankEntryInput,
   UpdateTargetToolInput
 } from './targetToolTypes';
 

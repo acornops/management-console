@@ -1605,6 +1605,66 @@ export const zh = {
       invalidDomain: '{{label}} 包含无效域名：{{domain}}',
       duplicateDomain: '{{label}} 包含重复域名：{{domain}}',
       overlapDomain: '{{domain}} 不能同时出现在允许和屏蔽列表中。'
+    },
+    knowledgeBank: {
+      title: '知识库',
+      loading: '正在加载知识库',
+      loadFailed: '知识库加载失败。',
+      saveEntryFailed: '保存知识库条目失败。',
+      saveSettingsFailed: '保存知识库设置失败。',
+      archiveFailed: '归档知识库条目失败。',
+      exportFailed: '导出知识库失败。',
+      resetFailed: '重置知识库失败。',
+      resetConfirm: '重置此目标的知识库？当前条目将被永久删除。',
+      newEntry: '新建条目',
+      export: '导出',
+      reset: '重置',
+      saveEntry: '保存条目',
+      saveSettings: '保存设置',
+      archive: '归档',
+      close: '关闭',
+      targetOnly: '更改仅保存到此目标。',
+      readOnly: '只读访问。',
+      noActivity: '暂无知识库活动。',
+      searchEntries: '搜索条目',
+      noEntries: '暂无条目。',
+      noEntryMatches: '没有条目匹配当前搜索。',
+      tabs: {
+        entries: '条目',
+        activity: '活动',
+        settings: '设置'
+      },
+      pause: {
+        aiSettingsMissing: '尚未配置 AI 提供商凭据。',
+        providerNotAllowed: '所选提供商未被允许。',
+        modelNotAllowed: '所选模型未被允许。',
+        ready: '自动学习已就绪。'
+      },
+      status: {
+        active: '活跃',
+        pending: '待定',
+        archived: '已归档'
+      },
+      model: {
+        workspaceDefault: '使用工作区默认值',
+        custom: '自定义模型'
+      },
+      fields: {
+        enabled: '已启用',
+        title: '标题',
+        status: '状态',
+        confidence: '置信度',
+        tags: '标签',
+        evidenceSummary: '证据摘要',
+        bodyMarkdown: '知识 Markdown',
+        checkpointModel: '检查点模型',
+        provider: '提供商',
+        model: '模型',
+        idleCheckpointDelay: '空闲检查点延迟',
+        maxSnippets: '最大片段数',
+        maxSnippetSize: '最大片段大小',
+        observationsBeforeGeneralization: '泛化前观察次数'
+      }
     }
   },
   mcpServers: {

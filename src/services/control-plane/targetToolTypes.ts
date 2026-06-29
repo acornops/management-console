@@ -4,7 +4,20 @@ export interface ControlPlaneTargetToolDomainFilters {
 }
 
 export interface ControlPlaneTargetToolConfig {
-  domainFilters: ControlPlaneTargetToolDomainFilters;
+  domainFilters?: ControlPlaneTargetToolDomainFilters;
+  learning?: {
+    idleCheckpointDelayMinutes: number;
+    minimumObservationsBeforeGeneralization: number;
+    checkpointModel: {
+      mode: 'workspace_default' | 'custom';
+      provider?: 'openai' | 'anthropic' | 'gemini';
+      model?: string;
+    };
+  };
+  retrieval?: {
+    maxSnippetsPerRetrieval: number;
+    maxSnippetSizeBytes: number;
+  };
 }
 
 export interface ControlPlaneTargetToolItem {
@@ -18,6 +31,13 @@ export interface ControlPlaneTargetToolItem {
     appearsInAssistantToolList?: boolean;
     appearsInRunEnabledTools?: boolean;
     appearsInToolCalls?: boolean;
+  };
+  readiness?: {
+    learningAvailable: boolean;
+    learningPausedReason: 'ai_settings_missing' | 'provider_not_allowed' | 'model_not_allowed' | null;
+  };
+  permissions?: {
+    canEdit: boolean;
   };
   config: ControlPlaneTargetToolConfig;
 }
@@ -73,4 +93,47 @@ export interface ControlPlaneTargetAssistantCapabilitiesPreview {
 export interface UpdateTargetToolInput {
   enabled: boolean;
   config?: ControlPlaneTargetToolConfig;
+}
+
+export type ControlPlaneKnowledgeBankEntryStatus = 'active' | 'pending' | 'archived';
+
+export interface ControlPlaneKnowledgeBankEntry {
+  id: string;
+  workspaceId: string;
+  targetId: string;
+  targetType: 'kubernetes' | 'virtual_machine';
+  title: string;
+  status: ControlPlaneKnowledgeBankEntryStatus;
+  bodyMarkdown: string;
+  frontmatter: Record<string, unknown>;
+  tags: string[];
+  signals: Record<string, unknown>;
+  scope: Record<string, unknown>;
+  evidenceSummary: string;
+  observationCount: number;
+  confidence: number;
+  firstObservedAt?: string;
+  lastObservedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ControlPlaneKnowledgeBankCatalog {
+  workspaceId: string;
+  targetId: string;
+  targetType: 'kubernetes' | 'virtual_machine';
+  permissions: {
+    canEdit: boolean;
+  };
+  items: ControlPlaneKnowledgeBankEntry[];
+}
+
+export interface KnowledgeBankEntryInput {
+  title: string;
+  status: ControlPlaneKnowledgeBankEntryStatus;
+  bodyMarkdown: string;
+  tags?: string[];
+  evidenceSummary?: string;
+  observationCount?: number;
+  confidence?: number;
 }

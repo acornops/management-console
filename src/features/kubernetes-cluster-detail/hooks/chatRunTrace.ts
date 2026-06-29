@@ -96,6 +96,26 @@ function applySkillContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent
   );
 }
 
+function applyKnowledgeContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent): LiveRunTrace {
+  const snippetCount = typeof event.payload?.snippet_count === 'number' ? event.payload.snippet_count : 0;
+  const snippets = Array.isArray(event.payload?.snippets) ? event.payload.snippets : [];
+  const titles = snippets
+    .map((snippet) => snippet && typeof snippet === 'object' && typeof snippet.title === 'string' ? snippet.title : '')
+    .filter(Boolean)
+    .slice(0, 4);
+  const detail = titles.length > 0
+    ? titles.join('\n')
+    : snippetCount > 0
+      ? `${snippetCount} snippets matched this run.`
+      : 'No matching Knowledge Bank snippets were used.';
+  return appendRunTraceStep(
+    { ...trace, status: trace.status === 'connecting' ? 'running' : trace.status },
+    'Knowledge Bank context',
+    snippetCount > 0 ? 'success' : 'info',
+    detail
+  );
+}
+
 export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPlaneRunEvent[]): LiveRunTrace {
   const restoredStep = {
     id: createLocalMessageId(),
@@ -158,6 +178,8 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       trace = appendReasoningUnavailable(trace, reason, provider, model);
     } else if (event.type === 'skill_catalog_available') {
       trace = { ...trace, status: 'running' };
+    } else if (event.type === 'knowledge_context_retrieved') {
+      trace = applyKnowledgeContextEvent(trace, event);
     } else if (event.type === 'tool_call_started') {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
@@ -340,6 +362,11 @@ export function createRunEventHandler(args: {
       if (trace.status === 'connecting') {
         updateTrace({ ...trace, status: 'running' });
       }
+      return;
+    }
+
+    if (event.type === 'knowledge_context_retrieved') {
+      updateTrace(applyKnowledgeContextEvent(trace, event));
       return;
     }
 
