@@ -221,46 +221,82 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                       >
                         {t('app.backToWorkspace')}
                       </button>
-                      {([
-                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount],
-                        ['resources', t('app.resources'), ICONS.Activity, 0],
-                        ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
-                        ['skills', t('app.skills'), ICONS.BookOpen, 0],
-                        ['tools', t('app.tools'), ICONS.Wrench, 0],
-                        ['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0]
-                      ] as Array<[ClusterSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
-                        <button
-                          key={tab}
-                          type="button"
-                          onClick={() => {
-                            onSetMobileNavOpen(false);
-                            onNavigateClusterSubview(tab);
-                          }}
-                          disabled={!selectedSidebarCluster}
-                          className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                            activeClusterSubview === tab
-                              ? 'bg-accent-soft text-accent-strong'
-                              : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          <span className="flex w-full items-center justify-between gap-3">
-                            <span className="flex min-w-0 items-center gap-2">
-                              <Icon className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate">{label}</span>
-                            </span>
-                            <span className="flex shrink-0 items-center gap-2">
-                              {badge > 0 && <NavCountBadge count={badge} />}
-                              <AssistantNavStatusIndicator
-                                status={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
-                                label={tab === 'chat' && clusterAssistantNavStatus !== 'idle'
-                                  ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`)
-                                  : undefined}
-                                withTooltip={false}
-                              />
-                            </span>
-                          </span>
-                        </button>
-                      ))}
+                      <div className="mt-3 border-t border-ui-border pt-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
+                          {t('app.operations')}
+                        </p>
+                        <div className="grid grid-cols-1 gap-1">
+                          {([
+                            ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount],
+                            ['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0],
+                            ['resources', t('app.resources'), ICONS.Activity, 0]
+                          ] as Array<[ClusterSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
+                            <button
+                              key={tab}
+                              type="button"
+                              onClick={() => {
+                                onSetMobileNavOpen(false);
+                                onNavigateClusterSubview(tab);
+                              }}
+                              disabled={!selectedSidebarCluster}
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                                activeClusterSubview === tab
+                                  ? 'bg-accent-soft text-accent-strong'
+                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
+                            >
+                              <span className="flex w-full items-center justify-between gap-3">
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="truncate">{label}</span>
+                                </span>
+                                <span className="flex shrink-0 items-center gap-2">
+                                  {badge > 0 && <NavCountBadge count={badge} />}
+                                  <AssistantNavStatusIndicator
+                                    status={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
+                                    label={tab === 'chat' && clusterAssistantNavStatus !== 'idle'
+                                      ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`)
+                                      : undefined}
+                                    withTooltip={false}
+                                  />
+                                </span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-3 border-t border-ui-border pt-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
+                          {t('app.capabilities')}
+                        </p>
+                        <div className="grid grid-cols-1 gap-1">
+                          {([
+                            ['mcpServers', t('app.mcpServers'), ICONS.Server],
+                            ['skills', t('app.skills'), ICONS.BookOpen],
+                            ['tools', t('app.tools'), ICONS.Wrench]
+                          ] as Array<[ClusterSubview, string, React.ElementType]>).map(([tab, label, Icon]) => (
+                            <button
+                              key={tab}
+                              type="button"
+                              onClick={() => {
+                                onSetMobileNavOpen(false);
+                                onNavigateClusterSubview(tab);
+                              }}
+                              disabled={!selectedSidebarCluster}
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                                activeClusterSubview === tab
+                                  ? 'bg-accent-soft text-accent-strong'
+                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                <Icon className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">{label}</span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <div className="mt-3 border-t border-ui-border pt-3">
                         <button
                           type="button"
@@ -294,39 +330,75 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                       >
                         {t('app.backToWorkspace')}
                       </button>
-                      {([
-                        ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount],
-                        ['resources', t('app.resources'), ICONS.Activity, 0],
-                        ['mcpServers', t('app.mcpServers'), ICONS.Server, 0],
-                        ['skills', t('app.skills'), ICONS.BookOpen, 0],
-                        ['tools', t('app.tools'), ICONS.Wrench, 0],
-                        ['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0]
-                      ] as Array<[VmSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
-                        <button
-                          key={tab}
-                          type="button"
-                          onClick={() => {
-                            onSetMobileNavOpen(false);
-                            onNavigateVmSubview(tab);
-                          }}
-                          disabled={!selectedSidebarVm}
-                          className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                            (tab === 'resources'
-                              ? activeVmSubview === 'resources' || activeVmSubview === 'services' || activeVmSubview === 'processes' || activeVmSubview === 'network' || activeVmSubview === 'logs'
-                              : activeVmSubview === tab)
-                              ? 'bg-accent-soft text-accent-strong'
-                              : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          <span className="flex w-full items-center justify-between gap-3">
-                            <span className="flex min-w-0 items-center gap-2">
-                              <Icon className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate">{label}</span>
-                            </span>
-                            {badge > 0 && <NavCountBadge count={badge} />}
-                          </span>
-                        </button>
-                      ))}
+                      <div className="mt-3 border-t border-ui-border pt-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
+                          {t('app.operations')}
+                        </p>
+                        <div className="grid grid-cols-1 gap-1">
+                          {([
+                            ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount],
+                            ['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0],
+                            ['resources', t('app.resources'), ICONS.Activity, 0]
+                          ] as Array<[VmSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
+                            <button
+                              key={tab}
+                              type="button"
+                              onClick={() => {
+                                onSetMobileNavOpen(false);
+                                onNavigateVmSubview(tab);
+                              }}
+                              disabled={!selectedSidebarVm}
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                                (tab === 'resources'
+                                  ? activeVmSubview === 'resources' || activeVmSubview === 'services' || activeVmSubview === 'processes' || activeVmSubview === 'network' || activeVmSubview === 'logs'
+                                  : activeVmSubview === tab)
+                                  ? 'bg-accent-soft text-accent-strong'
+                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
+                            >
+                              <span className="flex w-full items-center justify-between gap-3">
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="truncate">{label}</span>
+                                </span>
+                                {badge > 0 && <NavCountBadge count={badge} />}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-3 border-t border-ui-border pt-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
+                          {t('app.capabilities')}
+                        </p>
+                        <div className="grid grid-cols-1 gap-1">
+                          {([
+                            ['mcpServers', t('app.mcpServers'), ICONS.Server],
+                            ['skills', t('app.skills'), ICONS.BookOpen],
+                            ['tools', t('app.tools'), ICONS.Wrench]
+                          ] as Array<[VmSubview, string, React.ElementType]>).map(([tab, label, Icon]) => (
+                            <button
+                              key={tab}
+                              type="button"
+                              onClick={() => {
+                                onSetMobileNavOpen(false);
+                                onNavigateVmSubview(tab);
+                              }}
+                              disabled={!selectedSidebarVm}
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                                activeVmSubview === tab
+                                  ? 'bg-accent-soft text-accent-strong'
+                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                <Icon className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">{label}</span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <div className="mt-3 border-t border-ui-border pt-3">
                         <button
                           type="button"

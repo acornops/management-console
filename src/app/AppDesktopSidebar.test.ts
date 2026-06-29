@@ -35,6 +35,8 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).not.toContain("<SidebarSection title={t('app.administration')} quiet>");
     expect(desktopSidebar).toContain('<TargetSettingsDivider>');
     expect(desktopSidebar).toContain('</TargetSettingsDivider>');
+    expect(desktopSidebar).toContain('className="border-t border-ui-border px-0 pb-8 pt-4"');
+    expect(desktopSidebar).not.toContain('className="mx-4 border-t border-ui-border px-0 pb-8 pt-4"');
     expect(desktopSidebar).toContain("active={activeResourceNav === 'clusterSettings'}");
     expect(desktopSidebar).toContain("onClick={() => onNavigateClusterSubview('settings')}");
     expect(desktopSidebar).toContain("active={activeResourceNav === 'vmSettings'}");
@@ -126,12 +128,30 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar.indexOf("label={t('app.clusterAssistant')}")).toBeLessThan(
       desktopSidebar.indexOf("label={t('app.clusterSettings')}")
     );
+    expect(desktopSidebar).toContain("<SidebarSection title={t('app.operations')} compactAfter>");
+    expect(desktopSidebar).toContain("<SidebarSection title={t('app.capabilities')} compactAfter>");
+    expect(desktopSidebar).toContain("['overview', 'clusterOverview', t('app.overview'), ICONS.LayoutGrid]");
     expect(desktopSidebar).toContain("['chat', 'clusterChat', t('app.clusterAssistant'), ICONS.BotMessageSquare]");
+    expect(desktopSidebar).toContain("['resources', 'clusterResources', t('app.resources'), ICONS.Activity]");
+    expect(desktopSidebar).toContain("['overview', 'vmOverview', t('app.overview'), ICONS.LayoutGrid]");
     expect(desktopSidebar).toContain("['chat', 'vmChat', t('app.vmAssistant'), ICONS.BotMessageSquare]");
+    expect(desktopSidebar).toContain("['resources', 'vmResources', t('app.resources'), ICONS.Activity]");
     expect(desktopSidebar).toContain("['skills', 'clusterSkills', t('app.skills'), ICONS.BookOpen]");
     expect(desktopSidebar).toContain("['tools', 'clusterTools', t('app.tools'), ICONS.Wrench]");
     expect(desktopSidebar).toContain("['skills', 'vmSkills', t('app.skills'), ICONS.BookOpen]");
     expect(desktopSidebar).toContain("['tools', 'vmTools', t('app.tools'), ICONS.Wrench]");
+    expect(desktopSidebar.indexOf("['overview', 'clusterOverview', t('app.overview'), ICONS.LayoutGrid]")).toBeLessThan(
+      desktopSidebar.indexOf("['chat', 'clusterChat', t('app.clusterAssistant'), ICONS.BotMessageSquare]")
+    );
+    expect(desktopSidebar.indexOf("['chat', 'clusterChat', t('app.clusterAssistant'), ICONS.BotMessageSquare]")).toBeLessThan(
+      desktopSidebar.indexOf("['resources', 'clusterResources', t('app.resources'), ICONS.Activity]")
+    );
+    expect(desktopSidebar.indexOf("['overview', 'vmOverview', t('app.overview'), ICONS.LayoutGrid]")).toBeLessThan(
+      desktopSidebar.indexOf("['chat', 'vmChat', t('app.vmAssistant'), ICONS.BotMessageSquare]")
+    );
+    expect(desktopSidebar.indexOf("['chat', 'vmChat', t('app.vmAssistant'), ICONS.BotMessageSquare]")).toBeLessThan(
+      desktopSidebar.indexOf("['resources', 'vmResources', t('app.resources'), ICONS.Activity]")
+    );
     expect(desktopSidebar.indexOf("t('app.mcpServers')")).toBeLessThan(
       desktopSidebar.indexOf("t('app.skills')")
     );

@@ -399,11 +399,8 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
               <SidebarSection title={t('app.operations')} compactAfter>
                 {([
                   ['overview', 'clusterOverview', t('app.overview'), ICONS.LayoutGrid],
-                  ['resources', 'clusterResources', t('app.resources'), ICONS.Activity],
-                  ['mcpServers', 'clusterMcpServers', t('app.mcpServers'), ICONS.Server],
-                  ['skills', 'clusterSkills', t('app.skills'), ICONS.BookOpen],
-                  ['tools', 'clusterTools', t('app.tools'), ICONS.Wrench],
-                  ['chat', 'clusterChat', t('app.clusterAssistant'), ICONS.BotMessageSquare]
+                  ['chat', 'clusterChat', t('app.clusterAssistant'), ICONS.BotMessageSquare],
+                  ['resources', 'clusterResources', t('app.resources'), ICONS.Activity]
                 ] as Array<[ClusterSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
                   <SidebarNavButton
                     key={tab}
@@ -417,6 +414,23 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     assistantStatusLabel={tab === 'chat' && clusterAssistantNavStatus !== 'idle'
                       ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`)
                       : undefined}
+                  />
+                ))}
+              </SidebarSection>
+
+              <SidebarSection title={t('app.capabilities')} compactAfter>
+                {([
+                  ['mcpServers', 'clusterMcpServers', t('app.mcpServers'), ICONS.Server],
+                  ['skills', 'clusterSkills', t('app.skills'), ICONS.BookOpen],
+                  ['tools', 'clusterTools', t('app.tools'), ICONS.Wrench]
+                ] as Array<[ClusterSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
+                  <SidebarNavButton
+                    key={tab}
+                    active={activeResourceNav === nav}
+                    disabled={!selectedSidebarCluster}
+                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
+                    label={label}
+                    onClick={() => onNavigateClusterSubview(tab)}
                   />
                 ))}
               </SidebarSection>
@@ -456,11 +470,8 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
               <SidebarSection title={t('app.operations')} compactAfter>
                 {([
                   ['overview', 'vmOverview', t('app.overview'), ICONS.LayoutGrid],
-                  ['resources', 'vmResources', t('app.resources'), ICONS.Activity],
-                  ['mcpServers', 'vmMcpServers', t('app.mcpServers'), ICONS.Server],
-                  ['skills', 'vmSkills', t('app.skills'), ICONS.BookOpen],
-                  ['tools', 'vmTools', t('app.tools'), ICONS.Wrench],
-                  ['chat', 'vmChat', t('app.vmAssistant'), ICONS.BotMessageSquare]
+                  ['chat', 'vmChat', t('app.vmAssistant'), ICONS.BotMessageSquare],
+                  ['resources', 'vmResources', t('app.resources'), ICONS.Activity]
                 ] as Array<[VmSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
                   <SidebarNavButton
                     key={tab}
@@ -470,6 +481,23 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     label={label}
                     onClick={() => onNavigateVmSubview(tab)}
                     badge={tab === 'overview' && selectedVmIssueCount > 0 ? selectedVmIssueCount : undefined}
+                  />
+                ))}
+              </SidebarSection>
+
+              <SidebarSection title={t('app.capabilities')} compactAfter>
+                {([
+                  ['mcpServers', 'vmMcpServers', t('app.mcpServers'), ICONS.Server],
+                  ['skills', 'vmSkills', t('app.skills'), ICONS.BookOpen],
+                  ['tools', 'vmTools', t('app.tools'), ICONS.Wrench]
+                ] as Array<[VmSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
+                  <SidebarNavButton
+                    key={tab}
+                    active={activeResourceNav === nav}
+                    disabled={!selectedSidebarVm}
+                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
+                    label={label}
+                    onClick={() => onNavigateVmSubview(tab)}
                   />
                 ))}
               </SidebarSection>

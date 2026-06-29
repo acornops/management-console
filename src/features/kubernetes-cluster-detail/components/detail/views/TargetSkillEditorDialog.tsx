@@ -7,6 +7,7 @@ import { Dialog } from '@/components/common/Dialog';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import type { ControlPlaneTargetSkillDetail } from '@/services/controlPlaneApi';
 import { TargetSkillFileTree } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillFileTree';
+import { UnsavedChangesDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/UnsavedChangesDialog';
 import {
   sourceLabel,
   summarizeBytes,
@@ -64,6 +65,8 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
   onSubmit,
   onReimport
 }) => {
+  const pendingDiscardActionRef = React.useRef<(() => void) | null>(null);
+  const [showDiscardDialog, setShowDiscardDialog] = React.useState(false);
   const folderStateKey = `${mode}:${detail?.id || 'new'}:${step}:${resetVersion}`;
   const activeFile = files.find((file) => file.path === activeFilePath) || files[0] || null;
   const isCreateNameStep = mode === 'create' && step === 'name';
@@ -72,9 +75,29 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
     { id: 'files', label: 'Edit files' }
   ];
 
+  const requestDiscard = (action: () => void) => {
+    if (!dirty || !canEditSkills) {
+      action();
+      return;
+    }
+    pendingDiscardActionRef.current = action;
+    setShowDiscardDialog(true);
+  };
+
+  const cancelDiscard = () => {
+    pendingDiscardActionRef.current = null;
+    setShowDiscardDialog(false);
+  };
+
+  const confirmDiscard = () => {
+    const action = pendingDiscardActionRef.current;
+    pendingDiscardActionRef.current = null;
+    setShowDiscardDialog(false);
+    action?.();
+  };
+
   const guardedClose = () => {
-    if (dirty && canEditSkills && !window.confirm('Discard unsaved skill changes?')) return;
-    onClose();
+    requestDiscard(onClose);
   };
 
   const updateActiveFile = (content: string) => {
@@ -83,45 +106,46 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
   };
 
   return (
-    <Dialog
-      titleId="target-skill-editor-title"
-      closeDisabled={saving}
-      onClose={guardedClose}
-      className={`flex max-h-[88vh] w-full flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl ${
-        isCreateNameStep ? 'max-w-xl' : 'max-w-6xl'
-      }`}
-    >
-      <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
-        <div className="min-w-0">
-          <h3 id="target-skill-editor-title" className="type-panel-title">
-            {mode === 'create' ? 'Create target skill' : detail?.name || (canEditSkills ? 'Edit target skill' : 'View target skill')}
-          </h3>
-          {mode === 'create' ? (
-            <ModalStepIndicator steps={createSteps} currentStepId={step} className="mt-4" />
-          ) : (
-            <p className="type-caption mt-1 text-ui-text-muted">
-              {detail?.description || (canEditSkills ? 'Edit Markdown context for this target skill.' : 'Inspect Markdown context for this target skill.')}
-            </p>
-          )}
+    <>
+      <Dialog
+        titleId="target-skill-editor-title"
+        closeDisabled={saving || showDiscardDialog}
+        onClose={guardedClose}
+        className={`flex max-h-[88vh] w-full flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl ${
+          isCreateNameStep ? 'max-w-xl' : 'max-w-6xl'
+        }`}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
+          <div className="min-w-0">
+            <h3 id="target-skill-editor-title" className="type-panel-title">
+              {mode === 'create' ? 'Create target skill' : detail?.name || (canEditSkills ? 'Edit target skill' : 'View target skill')}
+            </h3>
+            {mode === 'create' ? (
+              <ModalStepIndicator steps={createSteps} currentStepId={step} className="mt-4" />
+            ) : (
+              <p className="type-caption mt-1 text-ui-text-muted">
+                {detail?.description || (canEditSkills ? 'Edit Markdown context for this target skill.' : 'Inspect Markdown context for this target skill.')}
+              </p>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {mode === 'edit' && detail?.source.type === 'git_import' && (
+              <Button variant="secondary" size="sm" disabled={!canEditSkills || saving} onClick={onReimport}>
+                <RefreshCcw className="h-4 w-4" />
+                Reimport
+              </Button>
+            )}
+            <button
+              type="button"
+              onClick={guardedClose}
+              disabled={saving}
+              className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
+              aria-label="Close skill editor"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {mode === 'edit' && detail?.source.type === 'git_import' && (
-            <Button variant="secondary" size="sm" disabled={!canEditSkills || saving} onClick={onReimport}>
-              <RefreshCcw className="h-4 w-4" />
-              Reimport
-            </Button>
-          )}
-          <button
-            type="button"
-            onClick={guardedClose}
-            disabled={saving}
-            className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
-            aria-label="Close skill editor"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">
         {isCreateNameStep ? (
@@ -251,6 +275,17 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
           </>
         )}
       </div>
-    </Dialog>
+      </Dialog>
+      {showDiscardDialog && (
+        <UnsavedChangesDialog
+          title="Discard unsaved changes?"
+          body="Your unsaved skill edits will be lost. This cannot be undone."
+          cancelLabel="Keep editing"
+          discardLabel="Discard changes"
+          onCancel={cancelDiscard}
+          onDiscard={confirmDiscard}
+        />
+      )}
+    </>
   );
 };

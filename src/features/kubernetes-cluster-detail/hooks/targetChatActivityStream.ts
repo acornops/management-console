@@ -25,10 +25,9 @@ import {
 } from '@/features/kubernetes-cluster-detail/hooks/targetChatState';
 import {
   buildTraceFromRunEvents,
-  hasTraceDetails,
   isRunInProgress,
   isRunTerminal,
-  mapRunStatusToTraceStatus
+  preferRicherRunTrace
 } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
 import { replaceCancelledRunAssistantMessages } from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
@@ -160,7 +159,7 @@ export function useTargetChatActivityStream(args: {
           terminalRunIds = new Set([run.id]);
           mappedMessages = replaceCancelledRunAssistantMessages(mappedMessages, run.id, runCancelledMessage);
         } else if (isRunTerminal(run.status)) {
-          traceUpdates[run.id] = buildTraceFromRunEvents(run, events);
+          traceUpdates[run.id] = preferRicherRunTrace(runTracesByRunIdRef.current[run.id], buildTraceFromRunEvents(run, events));
           terminalRunIds = new Set([run.id]);
           if (run.status === 'cancelled') {
             mappedMessages = replaceCancelledRunAssistantMessages(mappedMessages, run.id, runCancelledMessage);
@@ -184,12 +183,7 @@ export function useTargetChatActivityStream(args: {
           }
           const existingTrace = runTracesByRunIdRef.current[run.id];
           const restoredTrace = buildTraceFromRunEvents(run, events);
-          traceUpdates[run.id] = existingTrace && hasTraceDetails(existingTrace)
-            ? {
-                ...existingTrace,
-                status: mapRunStatusToTraceStatus(run.status)
-              }
-            : restoredTrace;
+          traceUpdates[run.id] = preferRicherRunTrace(existingTrace, restoredTrace);
         }
       }
 

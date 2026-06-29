@@ -19,7 +19,8 @@ import {
   hasTraceDetails,
   isRunInProgress,
   isRunTerminal,
-  isTraceInProgress
+  isTraceInProgress,
+  preferRicherRunTrace
 } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 import { replaceCancelledRunAssistantMessages } from '@/features/kubernetes-cluster-detail/hooks/chatRunCancellation';
@@ -463,7 +464,7 @@ export function useControlPlaneChatSessionSync(args: {
               continue;
             }
             const events = await controlPlaneApi.getRunEvents(run.id).catch(() => []);
-            terminalTraces[run.id] = buildTraceFromRunEvents(run, events);
+            terminalTraces[run.id] = preferRicherRunTrace(existingTrace, buildTraceFromRunEvents(run, events));
             if (run.status === 'cancelled') {
               cancelledRunIds.add(run.id);
             }
@@ -481,7 +482,7 @@ export function useControlPlaneChatSessionSync(args: {
             const run = await controlPlaneApi.getRun(message.runId);
             if (isRunTerminal(run.status)) {
               const events = await controlPlaneApi.getRunEvents(run.id).catch(() => []);
-              terminalTraces[run.id] = buildTraceFromRunEvents(run, events);
+              terminalTraces[run.id] = preferRicherRunTrace(runTracesByRunIdRef.current?.[run.id], buildTraceFromRunEvents(run, events));
               if (run.status === 'cancelled') {
                 cancelledRunIds.add(run.id);
               }

@@ -14,7 +14,10 @@ import type {
   TargetType
 } from '@/services/controlPlaneApi';
 import type { KubernetesCluster } from '@/types';
+import { KnowledgeBankActivityDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankActivityDialog';
 import { KnowledgeBankDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankDialog';
+import { KnowledgeBankResetDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankResetDialog';
+import { KnowledgeBankSettingsDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankSettingsDialog';
 import { TargetToolRow } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetToolRow';
 import { formatError } from '@/features/kubernetes-cluster-detail/components/detail/views/targetSkillsViewModel';
 
@@ -33,6 +36,8 @@ interface ToolDraft {
   allowedDomainsText: string;
   blockedDomainsText: string;
 }
+
+type KnowledgeBankAction = 'files' | 'settings' | 'activity' | 'reset';
 
 const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
 const toolDomainTextareaClassName = formTextareaClassName('mt-2');
@@ -151,6 +156,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   const [catalogLoading, setCatalogLoading] = React.useState(false);
   const [catalogError, setCatalogError] = React.useState<string | null>(null);
   const [editingTool, setEditingTool] = React.useState<ControlPlaneTargetToolItem | null>(null);
+  const [knowledgeBankAction, setKnowledgeBankAction] = React.useState<KnowledgeBankAction | null>(null);
   const [draft, setDraft] = React.useState<ToolDraft | null>(null);
   const [validationError, setValidationError] = React.useState<string | null>(null);
   const [savingError, setSavingError] = React.useState<string | null>(null);
@@ -224,6 +230,37 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   const openConfigure = (tool: ControlPlaneTargetToolItem) => {
     setEditingTool(tool);
     setDraft(tool.id === 'knowledge_bank' ? null : draftFromTool(tool));
+    setKnowledgeBankAction(tool.id === 'knowledge_bank' ? 'files' : null);
+    setValidationError(null);
+    setSavingError(null);
+  };
+
+  const exportKnowledgeBank = async (tool: ControlPlaneTargetToolItem) => {
+    setCatalogError(null);
+    try {
+      const text = await controlPlaneApi.exportKnowledgeBank(activeTarget.workspaceId, activeTarget.targetId);
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${tool.id}-${activeTarget.targetId}.md`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (error) {
+      setCatalogError(formatError(error, t('tools.knowledgeBank.exportFailed')));
+    }
+  };
+
+  const openKnowledgeBankAction = (tool: ControlPlaneTargetToolItem, action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => {
+    if (action === 'export') {
+      void exportKnowledgeBank(tool);
+      return;
+    }
+    setEditingTool(tool);
+    setDraft(null);
+    setKnowledgeBankAction(action);
     setValidationError(null);
     setSavingError(null);
   };
@@ -231,6 +268,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   const closeConfigure = () => {
     if (saving) return;
     setEditingTool(null);
+    setKnowledgeBankAction(null);
     setDraft(null);
     setValidationError(null);
     setSavingError(null);
@@ -447,6 +485,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                       canEditTools={canEditTools}
                       pendingToolId={pendingToolId}
                       onConfigure={openConfigure}
+                      onKnowledgeBankAction={openKnowledgeBankAction}
                       onToggleTool={(nextTool, enabled) => void toggleTool(nextTool, enabled)}
                     />
                   )) : (
@@ -466,12 +505,16 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         </>
       ) : null}
 
-      {editingTool?.id === 'knowledge_bank' && (
-        <KnowledgeBankDialog
+      {editingTool?.id === 'knowledge_bank' && knowledgeBankAction === 'files' && (
+        <KnowledgeBankDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} canEdit={canEditSelectedTool} savingTool={saving} onClose={closeConfigure} />
+      )}
+
+      {editingTool?.id === 'knowledge_bank' && knowledgeBankAction === 'settings' && (
+        <KnowledgeBankSettingsDialog
           workspaceId={activeTarget.workspaceId}
           targetId={activeTarget.targetId}
           tool={editingTool}
-          canEdit={canEditTools && (editingTool.permissions?.canEdit ?? true)}
+          canEdit={canEditSelectedTool}
           savingTool={saving}
           onClose={closeConfigure}
           onToolUpdated={(updatedTool) => {
@@ -482,6 +525,14 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
             setEditingTool(updatedTool);
           }}
         />
+      )}
+
+      {editingTool?.id === 'knowledge_bank' && knowledgeBankAction === 'activity' && (
+        <KnowledgeBankActivityDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} onClose={closeConfigure} />
+      )}
+
+      {editingTool?.id === 'knowledge_bank' && knowledgeBankAction === 'reset' && (
+        <KnowledgeBankResetDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} canEdit={canEditSelectedTool} onClose={closeConfigure} />
       )}
 
       {editingTool && editingTool.id !== 'knowledge_bank' && draft && (

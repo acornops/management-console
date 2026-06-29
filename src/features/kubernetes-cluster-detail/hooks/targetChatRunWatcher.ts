@@ -17,7 +17,8 @@ import {
   isRunInProgress,
   isTraceTerminal,
   mapRunStatusToTraceStatus,
-  isTraceInProgress
+  isTraceInProgress,
+  preferRicherRunTrace
 } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 
@@ -316,6 +317,10 @@ export function useWatchedRunStream(args: {
     });
 
     const replayRunEvents = (run: ControlPlaneRun, events: ControlPlaneRunEvent[]) => {
+      if (!isRunInProgress(run.status)) {
+        setTraceForRun(preferRicherRunTrace(trace, buildTraceFromRunEvents(run, events)));
+        return;
+      }
       if (events.length === 0) {
         setTraceForRun(buildTraceFromRunEvents(run, events));
         return;

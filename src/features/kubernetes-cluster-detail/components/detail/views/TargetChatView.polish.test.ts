@@ -230,8 +230,9 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('aria-controls={modelSubmenuPanelId}');
     expect(chatView).toContain('aria-labelledby={modelSubmenuButtonId}');
     expect(chatView).toContain('className="absolute bottom-full right-0 z-50 mb-3 w-64');
-    expect(chatView).toContain('sm:right-[calc(100%+0.5rem)]');
-    expect(chatView).not.toContain('sm:left-[calc(100%+0.5rem)]');
+    expect(chatView).toContain('sm:left-[calc(100%+0.5rem)]');
+    expect(chatView).toContain('sm:right-auto');
+    expect(chatView).not.toContain('sm:right-[calc(100%+0.5rem)]');
     expect(chatView).toContain('controlPlaneApi.getWorkspaceAiSettings(cluster.workspaceId)');
     expect(chatView).toContain('buildComposerModelOptions(workspaceAiSettings)');
     expect(chatView).toContain('function modelsForProvider(settings: WorkspaceAiSettings, provider: LlmProvider): string[]');

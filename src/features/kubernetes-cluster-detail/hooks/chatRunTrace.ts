@@ -43,6 +43,27 @@ export function hasTraceDetails(trace?: LiveRunTrace): boolean {
   );
 }
 
+export function traceDetailScore(trace?: LiveRunTrace): number {
+  if (!trace) return 0;
+  return (
+    trace.steps.length +
+    trace.toolCalls.length * 2 +
+    (trace.skillLoads?.length || 0) * 2 +
+    (trace.reasoningSummaries?.length || 0) * 2 +
+    (trace.timelineEvents?.length || 0) +
+    (trace.usage ? 1 : 0)
+  );
+}
+
+export function preferRicherRunTrace(existing: LiveRunTrace | undefined, restored: LiveRunTrace): LiveRunTrace {
+  if (!existing || traceDetailScore(existing) <= traceDetailScore(restored)) return restored;
+  return {
+    ...existing,
+    status: restored.status,
+    usage: restored.usage || existing.usage
+  };
+}
+
 export function mapRunStatusToTraceStatus(status: ControlPlaneRun['status']): LiveRunTrace['status'] {
   if (status === 'completed') return 'completed';
   if (status === 'failed') return 'failed';
@@ -98,20 +119,43 @@ function applySkillContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent
 
 function applyKnowledgeContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent): LiveRunTrace {
   const snippetCount = typeof event.payload?.snippet_count === 'number' ? event.payload.snippet_count : 0;
+  const retrievalStatus = typeof event.payload?.retrieval_status === 'string'
+    ? event.payload.retrieval_status
+    : snippetCount > 0 ? 'hit' : 'miss';
   const snippets = Array.isArray(event.payload?.snippets) ? event.payload.snippets : [];
   const titles = snippets
     .map((snippet) => snippet && typeof snippet === 'object' && typeof snippet.title === 'string' ? snippet.title : '')
     .filter(Boolean)
     .slice(0, 4);
-  const detail = titles.length > 0
-    ? titles.join('\n')
-    : snippetCount > 0
-      ? `${snippetCount} snippets matched this run.`
-      : 'No matching Knowledge Bank snippets were used.';
+  const detail = (() => {
+    if (retrievalStatus === 'hit') {
+      return titles.length > 0
+        ? `Matched:\n${titles.join('\n')}`
+        : `${snippetCount} active Knowledge Bank files matched this run.`;
+    }
+    if (retrievalStatus === 'miss') {
+      return 'No matching active Knowledge Bank files.';
+    }
+    if (retrievalStatus === 'disabled') {
+      return 'Knowledge Bank is disabled in this environment.';
+    }
+    if (retrievalStatus === 'skipped') {
+      return 'Knowledge Bank is turned off for this target.';
+    }
+    if (retrievalStatus === 'error') {
+      return 'Knowledge Bank retrieval failed; the run continued without snippets.';
+    }
+    return snippetCount > 0
+      ? `${snippetCount} active Knowledge Bank files matched this run.`
+      : 'No matching active Knowledge Bank files.';
+  })();
+  const status = retrievalStatus === 'hit'
+    ? 'success'
+    : retrievalStatus === 'error' ? 'error' : 'info';
   return appendRunTraceStep(
     { ...trace, status: trace.status === 'connecting' ? 'running' : trace.status },
-    'Knowledge Bank context',
-    snippetCount > 0 ? 'success' : 'info',
+    'Knowledge Bank searched',
+    status,
     detail
   );
 }

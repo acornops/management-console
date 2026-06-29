@@ -299,7 +299,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                                   exit={{ opacity: 0, x: -4, scale: 0.98 }}
                                   transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
                                   id={modelSubmenuPanelId}
-                                  className="absolute bottom-[calc(100%+0.5rem)] right-0 z-50 max-h-[min(24rem,calc(100vh-8rem))] w-56 overflow-y-auto rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 custom-scrollbar sm:bottom-0 sm:right-[calc(100%+0.5rem)]"
+                                  className="absolute bottom-[calc(100%+0.5rem)] right-0 z-50 max-h-[min(24rem,calc(100vh-8rem))] w-56 overflow-y-auto rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 custom-scrollbar sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto"
                                   role="group"
                                   aria-labelledby={modelSubmenuButtonId}
                                 >

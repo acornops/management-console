@@ -56,6 +56,13 @@ describe('target chat controller wiring', () => {
     expect(chatSubmit).toContain("canRequestWriteRuns ? 'read_write' : 'read_only'");
   });
 
+  it('matches the model submenu chevron direction to its desktop placement', () => {
+    expect(chatComposer).toContain('ChevronRight');
+    expect(chatComposer).toContain('sm:left-[calc(100%+0.5rem)]');
+    expect(chatComposer).toContain('sm:right-auto');
+    expect(chatComposer).not.toContain('ChevronLeft');
+  });
+
   it('uses cluster write confirmation policy for composer footer copy', () => {
     expect(clusterDetail).toContain('resolveClusterChatFooterKey(cluster, canRequestWriteRuns)');
     expect(clusterChatPanel).toContain('resolveClusterChatFooterKey(cluster, canRequestWriteRuns)');
@@ -197,8 +204,8 @@ describe('target chat controller wiring', () => {
     expect(targetChatActivityStream).toContain('streamAbortController?.abort();');
     expect(targetChatActivityStream).toContain('replaceCancelledRunAssistantMessages(mappedMessages, run.id, runCancelledMessage)');
     expect(targetChatActivityStream).toContain('const restoredTrace = buildTraceFromRunEvents(run, events);');
-    expect(targetChatActivityStream).toContain('existingTrace && hasTraceDetails(existingTrace)');
-    expect(targetChatActivityStream).toContain('status: mapRunStatusToTraceStatus(run.status)');
+    expect(targetChatActivityStream).toContain('preferRicherRunTrace(existingTrace, restoredTrace)');
+    expect(targetChatActivityStream).toContain('preferRicherRunTrace(runTracesByRunIdRef.current[run.id], buildTraceFromRunEvents(run, events))');
     expect(targetChatActivityStream).not.toContain('steps: [],\n                toolCalls: []');
     expect(targetChatActivityStream).toContain('createRecentActivitySessionPlaceholder(event.sessionId)');
     expect(targetChatActivityStream).toContain('shouldDiscoverActiveRunFromActivity(activeSessionIdRef.current, hydratedSession.id)');

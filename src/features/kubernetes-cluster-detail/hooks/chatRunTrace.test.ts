@@ -10,7 +10,9 @@ import {
   isRunTerminal,
   isTraceInProgress,
   isTraceTerminal,
-  mapRunStatusToTraceStatus
+  mapRunStatusToTraceStatus,
+  preferRicherRunTrace,
+  traceDetailScore
 } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
 
 function createRun(overrides: Partial<ControlPlaneRun> = {}): ControlPlaneRun {
@@ -79,6 +81,36 @@ describe('chatRunTrace helpers', () => {
     expect(mapRunStatusToTraceStatus('completed')).toBe('completed');
     expect(mapRunStatusToTraceStatus('failed')).toBe('failed');
     expect(mapRunStatusToTraceStatus('cancelled')).toBe('cancelled');
+  });
+
+  it('preserves a richer live trace when terminal replay is sparse', () => {
+    const liveTrace: LiveRunTrace = {
+      runId: 'run-1',
+      status: 'running',
+      steps: [
+        { id: 'step-1', label: 'Assistant started', status: 'info', timestamp: 1 },
+        { id: 'step-2', label: 'Reviewing context', status: 'info', timestamp: 2 },
+        { id: 'step-3', label: 'Tool call started: kubectl', status: 'info', timestamp: 3 }
+      ],
+      toolCalls: [{ callId: 'call-1', tool: 'kubectl', status: 'completed' }],
+      timelineEvents: [
+        { id: 'step-1', type: 'step', label: 'Assistant started', status: 'info', timestamp: 1 },
+        { id: 'step-2', type: 'step', label: 'Reviewing context', status: 'info', timestamp: 2 },
+        { id: 'tool-1', type: 'tool', label: 'Tool call completed: kubectl', status: 'success', timestamp: 3 }
+      ]
+    };
+    const sparseRestored = buildTraceFromRunEvents(createRun({ status: 'completed' }), [
+      createEvent('assistant_message_completed', 1, { usage: { input_tokens: 5, output_tokens: 3, tool_calls: 0 } }),
+      createEvent('run_completed', 2)
+    ]);
+
+    expect(traceDetailScore(liveTrace)).toBeGreaterThan(traceDetailScore(sparseRestored));
+    expect(preferRicherRunTrace(liveTrace, sparseRestored)).toMatchObject({
+      status: 'completed',
+      toolCalls: liveTrace.toolCalls,
+      timelineEvents: liveTrace.timelineEvents,
+      usage: sparseRestored.usage
+    });
   });
 
   it('rebuilds a live trace from persisted run events', () => {
@@ -178,6 +210,34 @@ describe('chatRunTrace helpers', () => {
       'Loading skill context: CNPG triage',
       'Skill context loaded: CNPG triage'
     ]);
+  });
+
+  it('renders Knowledge Bank retrieval outcomes in run details', () => {
+    const hitTrace = buildTraceFromRunEvents(createRun({ status: 'running' }), [
+      createEvent('knowledge_context_retrieved', 1, {
+        retrieval_status: 'hit',
+        snippet_count: 1,
+        snippets: [{ title: 'CrashLoopBackOff restart pattern' }]
+      })
+    ]);
+    const missTrace = buildTraceFromRunEvents(createRun({ status: 'running' }), [
+      createEvent('knowledge_context_retrieved', 1, {
+        retrieval_status: 'miss',
+        snippet_count: 0,
+        snippets: []
+      })
+    ]);
+
+    expect(hitTrace.steps.at(-1)).toMatchObject({
+      label: 'Knowledge Bank searched',
+      status: 'success',
+      detail: 'Matched:\nCrashLoopBackOff restart pattern'
+    });
+    expect(missTrace.steps.at(-1)).toMatchObject({
+      label: 'Knowledge Bank searched',
+      status: 'info',
+      detail: 'No matching active Knowledge Bank files.'
+    });
   });
 
   it('creates and incrementally updates traces from streamed events', () => {

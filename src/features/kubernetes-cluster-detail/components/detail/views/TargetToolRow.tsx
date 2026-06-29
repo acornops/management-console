@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, Eye, Globe2, MoreVertical, Settings2 } from 'lucide-react';
+import { Activity, BookOpen, Download, Eye, FileText, Globe2, MoreVertical, RotateCcw, Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
@@ -13,6 +13,7 @@ interface TargetToolRowProps {
   canEditTools: boolean;
   pendingToolId: string | null;
   onConfigure: (tool: ControlPlaneTargetToolItem) => void;
+  onKnowledgeBankAction?: (tool: ControlPlaneTargetToolItem, action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => void;
   onToggleTool: (tool: ControlPlaneTargetToolItem, enabled: boolean) => void;
 }
 
@@ -24,6 +25,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   canEditTools,
   pendingToolId,
   onConfigure,
+  onKnowledgeBankAction,
   onToggleTool
 }) => {
   const { t } = useTranslation();
@@ -40,19 +42,21 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
     ? 'bg-status-warning-soft text-status-warning-text'
     : 'bg-status-success-soft text-status-success-text';
 
+  const knowledgeBankActionCount = tool.id === 'knowledge_bank' ? (canEditTool ? 5 : 4) : 1;
+
   const updateActionMenuPosition = React.useCallback(() => {
     const trigger = actionMenuButtonRef.current;
     if (!trigger) return;
     const rect = trigger.getBoundingClientRect();
     const menuWidth = 224;
-    const menuHeight = 56;
+    const menuHeight = knowledgeBankActionCount * 40 + 16;
     const top = Math.min(rect.bottom + 6, window.innerHeight - menuHeight - 8);
     setActionMenuStyle({
       left: Math.max(8, rect.right - menuWidth),
       top: Math.max(8, top),
       width: menuWidth
     });
-  }, []);
+  }, [knowledgeBankActionCount]);
 
   React.useEffect(() => {
     if (!actionMenuOpen) return undefined;
@@ -81,6 +85,15 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   }, [actionMenuOpen, updateActionMenuPosition]);
 
   const closeActionMenu = () => setActionMenuOpen(false);
+  const invokeKnowledgeBankAction = (action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => {
+    closeActionMenu();
+    if (onKnowledgeBankAction) {
+      onKnowledgeBankAction(tool, action);
+      return;
+    }
+    onConfigure(tool);
+  };
+
   const actionMenu = actionMenuOpen && actionMenuStyle && typeof document !== 'undefined'
     ? createPortal(
         <div
@@ -90,22 +103,49 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
           className={menuSurfaceClassName('fixed z-[130] p-1')}
           style={actionMenuStyle}
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              closeActionMenu();
-              onConfigure(tool);
-            }}
-            className={menuOptionClassName()}
-          >
-            {canEditTool ? (
-              <Settings2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-            ) : (
-              <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-            )}
-            <span>{canEditTool ? t('tools.configureTool') : t('tools.viewTool')}</span>
-          </button>
+          {tool.id === 'knowledge_bank' ? (
+            <>
+              <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('files')} className={menuOptionClassName()}>
+                <FileText className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                <span>{canEditTool ? t('tools.knowledgeBank.editFiles') : t('tools.knowledgeBank.viewFiles')}</span>
+              </button>
+              <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('settings')} className={menuOptionClassName()}>
+                <Settings2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                <span>{t('tools.knowledgeBank.settings')}</span>
+              </button>
+              <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('activity')} className={menuOptionClassName()}>
+                <Activity className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                <span>{t('tools.knowledgeBank.activity')}</span>
+              </button>
+              <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('export')} className={menuOptionClassName()}>
+                <Download className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                <span>{t('tools.knowledgeBank.export')}</span>
+              </button>
+              {canEditTool && (
+                <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('reset')} className={menuOptionClassName({ className: 'text-status-danger-text hover:text-status-danger-text' })}>
+                  <RotateCcw className="h-4 w-4 shrink-0 text-status-danger-text" aria-hidden="true" />
+                  <span>{t('tools.knowledgeBank.resetAction')}</span>
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                closeActionMenu();
+                onConfigure(tool);
+              }}
+              className={menuOptionClassName()}
+            >
+              {canEditTool ? (
+                <Settings2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+              ) : (
+                <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+              )}
+              <span>{canEditTool ? t('tools.configureTool') : t('tools.viewTool')}</span>
+            </button>
+          )}
         </div>,
         document.body
       )

@@ -14,12 +14,31 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).not.toContain("t('app.primaryDestinations')");
     expect(mobileNavigation).toContain("t('app.inventory')");
     expect(mobileNavigation).toContain("t('app.automation')");
+    expect(mobileNavigation).toContain("t('app.operations')");
+    expect(mobileNavigation).toContain("t('app.capabilities')");
     expect(mobileNavigation).not.toContain("{t('app.administration')}");
-    expect(mobileNavigation).toContain("['mcpServers', t('app.mcpServers'), ICONS.Server, 0]");
-    expect(mobileNavigation).toContain("['skills', t('app.skills'), ICONS.BookOpen, 0]");
-    expect(mobileNavigation).toContain("['tools', t('app.tools'), ICONS.Wrench, 0]");
+    expect(mobileNavigation).toContain("['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount]");
+    expect(mobileNavigation).toContain("['resources', t('app.resources'), ICONS.Activity, 0]");
+    expect(mobileNavigation).toContain("['mcpServers', t('app.mcpServers'), ICONS.Server]");
+    expect(mobileNavigation).toContain("['skills', t('app.skills'), ICONS.BookOpen]");
+    expect(mobileNavigation).toContain("['tools', t('app.tools'), ICONS.Wrench]");
     expect(mobileNavigation).toContain("['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0]");
     expect(mobileNavigation).toContain("['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0]");
+    expect(mobileNavigation.indexOf("['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount]")).toBeLessThan(
+      mobileNavigation.indexOf("['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0]")
+    );
+    expect(mobileNavigation.indexOf("['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0]")).toBeLessThan(
+      mobileNavigation.indexOf("['resources', t('app.resources'), ICONS.Activity, 0]")
+    );
+    const vmTargetNavigation = mobileNavigation.slice(
+      mobileNavigation.indexOf("['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount]")
+    );
+    expect(vmTargetNavigation.indexOf("['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount]")).toBeLessThan(
+      vmTargetNavigation.indexOf("['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0]")
+    );
+    expect(vmTargetNavigation.indexOf("['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0]")).toBeLessThan(
+      vmTargetNavigation.indexOf("['resources', t('app.resources'), ICONS.Activity, 0]")
+    );
     expect(mobileNavigation.indexOf("t('app.mcpServers')")).toBeLessThan(
       mobileNavigation.indexOf("t('app.skills')")
     );
