@@ -10,6 +10,7 @@ import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import { headerMotion } from '@/lib/motion';
 import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlaneApi';
 import { User } from '@/types';
+import { formatUserDate } from '@/utils/dateTime';
 
 interface UserSettingsPageProps {
   user: User;
@@ -58,9 +59,7 @@ const inputClassName = formInputClassName();
 
 function formatDate(value?: string): string | undefined {
   if (!value) return undefined;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date);
+  return formatUserDate(value, { fallback: undefined });
 }
 
 function formatQuota(value: { used: number; limit: number } | undefined, fallback: string): string {

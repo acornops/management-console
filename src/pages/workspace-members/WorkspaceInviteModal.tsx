@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Check, Copy, Link, Loader2, X } from 'lucide-react';
+import { Check, Copy, Link, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
+import { Dialog } from '@/components/common/Dialog';
 import { FieldValidationMessage, fieldInvalidClass } from '@/components/common/FieldValidationMessage';
 import { Select, SelectOption } from '@/components/common/Select';
-import { formInputClassName } from '@/components/common/formControlStyles';
-import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import { ProjectMember, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { RoleTemplatePreview } from '@/pages/workspace-members/RoleTemplatePreview';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WorkspaceInviteModalProps {
   canManageOwners: boolean;
@@ -100,33 +100,22 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
   };
 
   return (
-    <motion.div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-ui-text/40 p-6 dark:bg-ui-bg/75"
-      {...modalOverlayMotion}
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <Dialog
+      titleId="invite-member-title"
+      onClose={onClose}
+      overlayClassName="z-[110] p-6"
+      className="relative flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
     >
-      <motion.div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="invite-member-title"
-        className="relative flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
-        {...modalPanelMotion}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-ui-border px-5 py-4 sm:px-6 sm:py-5">
           <div className="min-w-0">
             <h2 id="invite-member-title" className="text-lg font-bold tracking-tight text-ui-text">{t('members.inviteMember')}</h2>
             <p className="mt-1 text-xs font-medium text-ui-text-muted">{t('members.inviteBody')}</p>
           </div>
-          <button
+          <CloseButton
             onClick={onClose}
-            className="shrink-0 rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong"
+            className="shrink-0"
             aria-label={t('members.closeInvite')}
-          >
-            <X className="h-5 w-5" />
-          </button>
+          />
         </div>
 
         <form onSubmit={(event) => void createInvite(event)} className="flex min-h-0 flex-1 flex-col" noValidate>
@@ -134,7 +123,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1.2fr)_minmax(12rem,0.8fr)]">
               <div className="space-y-2">
                 <label htmlFor="workspace-invite-email" className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.email')}</label>
-                <input
+                <TextInput
                   id="workspace-invite-email"
                   type="email"
                   value={inviteEmail}
@@ -144,7 +133,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
                   }}
                   disabled={Boolean(createdInvite) || isCreatingInvite}
                   placeholder={t('members.emailPlaceholder')}
-                  className={formInputClassName(`px-4 ${inviteEmailError ? fieldInvalidClass : ''}`)}
+                  className={`px-4 ${inviteEmailError ? fieldInvalidClass : ''}`}
                   aria-invalid={Boolean(inviteEmailError)}
                   aria-describedby={inviteEmailError ? 'workspace-invite-email-error' : undefined}
                 />
@@ -180,11 +169,11 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
                 </div>
                 {createdInvite.inviteLink ? (
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
+                    <TextInput
                       readOnly
                       value={createdInvite.inviteLink}
                       onFocus={(event) => event.currentTarget.select()}
-                      className={formInputClassName('min-w-0 flex-1')}
+                      className="min-w-0 flex-1"
                     />
                     <Button onClick={() => void copyInviteLink()} variant="secondary" size="sm" className="uppercase tracking-widest">
                       {hasCopiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -197,7 +186,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
                   </div>
                 )}
                 <p className="text-xs font-medium leading-5 text-ui-text-muted">
-                  {t('members.recipientMustUseEmail', { email: createdInvite.email, time: new Date(createdInvite.expiresAt).toLocaleString() })}
+                  {t('members.recipientMustUseEmail', { email: createdInvite.email, time: formatUserDateTime(createdInvite.expiresAt) })}
                 </p>
               </div>
             )}
@@ -213,7 +202,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
             <Button
               onClick={onClose}
               variant="secondary"
-              size="lg"
+              size="sm"
               className="w-full text-xs uppercase tracking-widest sm:w-auto sm:min-w-36"
             >
               {t('members.close')}
@@ -223,7 +212,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
                 type="submit"
                 disabled={isCreatingInvite || !roleTemplates.some((role) => role.key === inviteRole)}
                 variant="primary"
-                size="lg"
+                size="sm"
                 className="w-full text-xs uppercase tracking-widest sm:w-auto sm:min-w-40"
               >
                 {isCreatingInvite && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -232,7 +221,6 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
             )}
           </div>
         </form>
-      </motion.div>
-    </motion.div>
+    </Dialog>
   );
 };

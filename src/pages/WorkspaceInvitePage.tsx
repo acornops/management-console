@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { ControlPlaneWorkspaceInvitation } from '@/services/controlPlaneApi';
 import { formatRole } from '@/pages/workspace-members/memberUtils';
 import { RoleTemplatePreview } from '@/pages/workspace-members/RoleTemplatePreview';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WorkspaceInvitePageProps {
   token: string;
@@ -15,13 +16,7 @@ interface WorkspaceInvitePageProps {
 }
 
 function formatDate(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
-  }).format(new Date(value));
+  return formatUserDateTime(value, { fallback: value });
 }
 
 function formatInviteError(error: unknown, fallback: string): string {

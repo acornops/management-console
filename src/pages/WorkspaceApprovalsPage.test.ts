@@ -30,4 +30,9 @@ describe('WorkspaceApprovalsPage control-plane surface', () => {
     expect(enLocale).toContain("emptyTitle: 'No approvals waiting'");
     expect(enLocale).toContain("permissionNotice: 'You need create_read_write_runs to approve write-capable workflow actions.'");
   });
+
+  it('uses medium shared button sizing for the page-level refresh action', () => {
+    expect(approvalsPage).toContain('<Button size="md" variant="secondary" onClick={() => void loadApprovals()}');
+    expect(approvalsPage).not.toContain('<Button size="sm" variant="secondary" onClick={() => void loadApprovals()}');
+  });
 });

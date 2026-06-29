@@ -11,6 +11,7 @@ import {
   listWorkspaceApprovalInbox,
   type WorkspaceApprovalInboxRow
 } from '@/services/control-plane/workflowApi';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
@@ -19,16 +20,7 @@ interface WorkspaceApprovalsPageProps {
 type ApprovalFilter = 'pending' | 'decided';
 
 function formatDateTime(value?: string): string {
-  if (!value) return 'None';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short'
-  }).format(date);
+  return formatUserDateTime(value, { fallback: value || 'None' });
 }
 
 function approvalTone(status: WorkspaceApprovalInboxRow['status']): React.ComponentProps<typeof StatusBadge>['tone'] {
@@ -110,7 +102,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
           <h1 className="type-route-title">{t('approvals.title')}</h1>
           <p className="type-body mt-2 max-w-2xl">{t('approvals.subtitle', { workspace: workspace.name })}</p>
         </div>
-        <Button size="sm" variant="secondary" onClick={() => void loadApprovals()} disabled={isLoadingApprovals}>
+        <Button size="md" variant="secondary" onClick={() => void loadApprovals()} disabled={isLoadingApprovals}>
           <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
           {t('common.refresh', { defaultValue: 'Refresh' })}
         </Button>

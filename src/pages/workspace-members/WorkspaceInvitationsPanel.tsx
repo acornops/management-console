@@ -5,6 +5,7 @@ import { Dialog } from '@/components/common/Dialog';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { WorkspaceInvitation } from '@/types';
 import { formatInvitationStatus, formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WorkspaceInvitationsPanelProps {
   invitations: WorkspaceInvitation[];
@@ -178,7 +179,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                 <div className="min-w-0">
                   <p className="type-row-title truncate">{invitation.email}</p>
                   <p className="type-label mt-1">
-                    {formatRole(invitation.role, invitation.roleTemplate)} · {formatInvitationStatus(invitation.status)} · {t('members.expires', { time: new Date(invitation.expiresAt).toLocaleString() })}
+                    {formatRole(invitation.role, invitation.roleTemplate)} · {formatInvitationStatus(invitation.status)} · {t('members.expires', { time: formatUserDateTime(invitation.expiresAt) })}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -262,7 +263,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               <p className="type-label">{t('members.email')}</p>
               <p className="type-row-title mt-1 break-all">{createdReplacementInvite.email}</p>
               <p className="type-label mt-2">
-                {formatRole(createdReplacementInvite.role, createdReplacementInvite.roleTemplate)} · {t('members.expires', { time: new Date(createdReplacementInvite.expiresAt).toLocaleString() })}
+                {formatRole(createdReplacementInvite.role, createdReplacementInvite.roleTemplate)} · {t('members.expires', { time: formatUserDateTime(createdReplacementInvite.expiresAt) })}
               </p>
             </div>
 
@@ -296,7 +297,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
             )}
 
             <p className="type-caption">
-              {t('members.recipientMustUseEmail', { email: createdReplacementInvite.email, time: new Date(createdReplacementInvite.expiresAt).toLocaleString() })}
+              {t('members.recipientMustUseEmail', { email: createdReplacementInvite.email, time: formatUserDateTime(createdReplacementInvite.expiresAt) })}
             </p>
 
             {replacementInviteErrorMessage && (

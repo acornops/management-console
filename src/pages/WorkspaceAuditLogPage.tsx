@@ -9,6 +9,7 @@ import { Tooltip } from '@/components/common/Tooltip';
 import { ICONS } from '@/constants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { Workspace, WorkspaceAuditCategory, WorkspaceAuditEvent } from '@/types';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WorkspaceAuditLogPageProps {
   workspace: Workspace;
@@ -461,7 +462,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                 {events.map((event) => (
                   <tr key={event.id} className="border-b border-ui-bg transition-colors hover:bg-accent-soft/35">
                     <td className="px-3 py-4 align-top sm:px-5">
-                      <span className="type-caption break-words text-ui-text">{new Date(event.occurredAt).toLocaleString()}</span>
+                      <span className="type-caption break-words text-ui-text">{formatUserDateTime(event.occurredAt)}</span>
                     </td>
                     <td className="px-3 py-4 align-top sm:px-5">
                       <p className="type-row-title break-words">{event.summary}</p>
@@ -551,7 +552,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
               </div>
               <dl className="divide-y divide-ui-border border-y border-ui-border">
                 {[
-                  [t('auditLog.time'), new Date(selectedEvent.occurredAt).toLocaleString()],
+                  [t('auditLog.time'), formatUserDateTime(selectedEvent.occurredAt)],
                   [t('auditLog.eventType'), selectedEvent.eventType],
                   [t('auditLog.operation'), formatOperation(selectedEvent, t)],
                   [t('auditLog.actor'), formatActor(selectedEvent)],
