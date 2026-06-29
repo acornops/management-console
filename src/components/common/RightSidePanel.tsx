@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import { sidePanelMotion } from '@/lib/motion';
 
@@ -9,6 +9,7 @@ interface RightSidePanelProps {
   className?: string;
   closeDisabled?: boolean;
   containerClassName?: string;
+  descriptionId?: string;
   initialFocusRef?: React.RefObject<HTMLElement | null>;
   isOpen: boolean;
   onClose: () => void;
@@ -61,6 +62,7 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
   className,
   closeDisabled = false,
   containerClassName: customContainerClassName,
+  descriptionId,
   initialFocusRef,
   isOpen,
   onClose,
@@ -69,6 +71,15 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
   titleId
 }) => {
   const panelRef = React.useRef<HTMLElement>(null);
+  const shouldReduceMotion = useReducedMotion();
+  const panelMotion = shouldReduceMotion
+    ? {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+      transition: { duration: 0.01 }
+    }
+    : sidePanelMotion;
 
   React.useEffect(() => {
     if (!isOpen) return undefined;
@@ -95,7 +106,7 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.14, ease: 'easeOut' }}
+            transition={shouldReduceMotion ? { duration: 0.01 } : { duration: 0.14, ease: 'easeOut' }}
             className={twMerge(overlayClassName, customOverlayClassName)}
             onMouseDown={(event) => {
               if (event.target === event.currentTarget && !closeDisabled) {
@@ -109,10 +120,11 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
             aria-modal="true"
             aria-label={ariaLabel}
             aria-labelledby={titleId}
+            aria-describedby={descriptionId}
             tabIndex={-1}
             className={twMerge(panelClassName, className)}
             style={style}
-            {...sidePanelMotion}
+            {...panelMotion}
             onKeyDown={(event) => {
               if (event.key === 'Escape' && !closeDisabled) {
                 event.preventDefault();

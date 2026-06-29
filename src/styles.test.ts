@@ -425,13 +425,14 @@ describe('theme color contract', () => {
   it('keeps button hierarchy restrained with orange reserved for accent actions', () => {
     expect(buttonComponent).toContain("type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'accent' | 'ghost' | 'icon' | 'danger'");
     expect(buttonComponent).toContain('primary: filledNeutralButtonClass');
-    expect(buttonComponent).toContain('bg-[oklch(0.18_0.006_70)]');
+    expect(buttonComponent).toContain('border border-ui-text bg-ui-text text-ui-bg');
     expect(buttonComponent).toContain("accent: 'border border-accent bg-accent");
-    expect(buttonComponent).toContain('text-[oklch(0.99_0.004_86)]');
+    expect(buttonComponent).toContain('text-ui-bg');
     expect(buttonComponent).toContain('hover:bg-accent-bright');
     expect(buttonComponent).toContain("secondary: 'border border-ui-border bg-ui-surface text-ui-text shadow-sm");
     expect(buttonComponent).toContain("tertiary: 'text-ui-text-muted");
     expect(buttonComponent).toContain('hover:bg-accent-soft hover:text-accent-strong');
+    expect(buttonComponent).not.toContain('bg-[oklch(0.18_0.006_70)]');
     expect(buttonComponent).not.toContain('text-white');
     expect(overviewPage).toContain('variant="secondary"');
     expect(membersPage).toMatch(/onClick=\{openInviteModal\}[\s\S]*?variant="secondary"/);

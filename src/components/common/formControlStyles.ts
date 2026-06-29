@@ -12,5 +12,9 @@ export function formInputClassName(className?: string): string {
 }
 
 export function formTextareaClassName(className?: string): string {
-  return twMerge(clsx(formControlBaseClassName, 'min-h-28 resize-y px-3.5 py-2.5 font-medium leading-6', className));
+  return twMerge(clsx(
+    formControlBaseClassName,
+    'min-h-32 resize-y bg-ui-bg/70 px-4 py-3 font-medium leading-6 shadow-[inset_0_1px_0_rgb(var(--surface-rgb)/0.95),inset_0_0_0_1px_rgb(var(--border-rgb)/0.35),0_1px_2px_rgb(var(--text-rgb)/0.04)] placeholder:leading-6 focus:bg-ui-surface',
+    className
+  ));
 }
