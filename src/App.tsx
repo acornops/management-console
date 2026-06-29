@@ -219,22 +219,17 @@ const App: React.FC = () => {
   }, [route, routeWorkspaceId, workspaceById, navigate]);
 
   useEffect(() => {
-    if (workspaces.length === 0) {
-      if (selectedWorkspaceId) {
-        setSelectedWorkspaceId(null);
-      }
-      return;
-    }
-    if (!selectedWorkspaceId || !workspaceById.has(selectedWorkspaceId)) {
-      setSelectedWorkspaceId(workspaces[0].id);
-    }
-  }, [workspaces, selectedWorkspaceId, workspaceById]);
+    setSelectedWorkspaceId((current) => {
+      if (workspaces.length === 0) return current ? null : current;
+      if (current && workspaceById.has(current)) return current;
+      return workspaces[0]?.id || null;
+    });
+  }, [workspaces, workspaceById]);
 
   useEffect(() => {
-    if (routeWorkspaceId && routeWorkspaceId !== selectedWorkspaceId) {
-      setSelectedWorkspaceId(routeWorkspaceId);
-    }
-  }, [routeWorkspaceId, selectedWorkspaceId]);
+    if (!routeWorkspaceId) return;
+    setSelectedWorkspaceId((current) => (current === routeWorkspaceId ? current : routeWorkspaceId));
+  }, [routeWorkspaceId]);
 
   useEffect(() => {
     if (!user || !workspaceContextId || workspaceById.has(workspaceContextId)) {
