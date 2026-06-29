@@ -38,6 +38,14 @@ const desktopSidebar = readFileSync(resolve(root, 'src/app/AppDesktopSidebar.tsx
 const mobileNavigation = readFileSync(resolve(root, 'src/app/AppMobileNavigation.tsx'), 'utf8');
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
 
+function expectSnippets(source: string, snippets: string[]): void {
+  snippets.forEach((snippet) => expect(source).toContain(snippet));
+}
+
+function expectMissingSnippets(source: string, snippets: string[]): void {
+  snippets.forEach((snippet) => expect(source).not.toContain(snippet));
+}
+
 describe('WorkspaceWorkflowsPage model', () => {
   it('ships governed workspace automation examples assigned to durable agents', () => {
     const workflows = createDefaultWorkflowDefinitions();
@@ -235,32 +243,9 @@ describe('WorkspaceWorkflowsPage model', () => {
   });
 
   it('supports operator instructions inside an expanded active workflow run', () => {
-    expect(workflowsPage).toContain('workflowRunMessages');
-    expect(workflowsPage).toContain('workflowRunMessageDrafts');
-    expect(workflowsPage).toContain('workflowSessionId={workflowSessionIds[selectedWorkflow.id] || \'\'}');
-    expect(workflowsPage).toContain('runMessagesByRunId={workflowRunMessages}');
-    expect(workflowsPage).toContain('Run discussion');
-    expect(workflowsPage).toContain('Send instruction');
-    expect(workflowsPage).toContain('This run cannot accept more instructions. Start a follow-up run or retry from the workflow action.');
-    expect(workflowsPage).toContain("discussionState === 'active'");
-    expect(workflowsPage).toContain("discussionState === 'waiting_session'");
-    expect(workflowsPage).toContain("run.status === 'failed'");
-    expect(workflowsPage).toContain('function WorkflowRunInstructionForm');
-    expect(workflowsPage).toContain('instructionTextareaRef');
-    expect(workflowsPage).toContain('textarea.style.height = `${Math.min(textarea.scrollHeight, 144)}px`;');
-    expect(workflowsPage).toContain('rounded-lg border border-ui-border bg-ui-surface');
-    expect(workflowsPage).toContain('resize-none overflow-y-auto border-0 bg-transparent');
-    expect(workflowsPage).toContain("event.key === 'Enter' && !event.shiftKey");
-    expect(workflowsPage).toContain('event.preventDefault();');
-    expect(workflowsPage).toContain('void workflowActions.sendWorkflowRunMessage(effectiveRunId, workflowSessionId);');
-    expect(workflowsPage).not.toContain('Message workflow');
-    expect(workflowsPage).not.toContain('Workflow conversation');
-    expect(workflowsPage).not.toContain('Session connected');
-    expect(workflowActions).toContain('async function sendWorkflowRunMessage(runId: string, sessionId: string): Promise<void>');
-    expect(workflowActions).toContain('await postWorkflowSessionMessage(workspace.id, sessionId, {');
-    expect(workflowActions).toContain('role: \'operator\'');
-    expect(workflowActions).toContain('status: \'sending\'');
-    expect(workflowActions).toContain('status: \'failed\'');
+    expectSnippets(workflowsPage, ['workflowRunMessages', 'workflowRunMessageDrafts', 'workflowSessionId={workflowSessionIds[selectedWorkflow.id] || \'\'}', 'runMessagesByRunId={workflowRunMessages}', 'Run discussion', 'Send instruction', 'This run cannot accept more instructions. Start a follow-up run or retry from the workflow action.', "discussionState === 'active'", "discussionState === 'waiting_session'", "run.status === 'failed'", 'function WorkflowRunInstructionForm', 'instructionTextareaRef', 'textarea.style.height = `${Math.min(textarea.scrollHeight, 144)}px`;', 'rounded-lg border border-ui-border bg-ui-surface', 'resize-none overflow-y-auto border-0 bg-transparent', "event.key === 'Enter' && !event.shiftKey", 'event.preventDefault();', 'void workflowActions.sendWorkflowRunMessage(effectiveRunId, workflowSessionId);']);
+    expectMissingSnippets(workflowsPage, ['Message workflow', 'Workflow conversation', 'Session connected']);
+    expectSnippets(workflowActions, ['async function sendWorkflowRunMessage(runId: string, sessionId: string): Promise<void>', 'await postWorkflowSessionMessage(workspace.id, sessionId, {', 'role: \'operator\'', 'status: \'sending\'', 'status: \'failed\'']);
   });
 
   it('derives run discussion state from run activity and session readiness', () => {
@@ -557,19 +542,7 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
   });
 
   it('removes redundant workflow helper copy from tab and section headers', () => {
-    expect(workflowsPage).not.toContain('description="Confirm the agent owner, runtime access, approval gates, and operator message before launching."');
-    expect(workflowsPage).not.toContain('description="Steps run in order. Each step uses assigned agents first, then the workflow gate narrows runtime access."');
-    expect(workflowsPage).not.toContain('description="The primary agent owns the run. Supporting agents contribute specialist capability."');
-    expect(workflowsPage).not.toContain('Workflow gate narrows assigned-agent capabilities.');
-    expect(workflowsPage).not.toContain('description="Edit the operator prompt used when launching this workflow."');
-    expect(workflowsPage).not.toContain('description="Review who owns the run and which specialist agents can contribute context or decisions."');
-    expect(workflowsPage).not.toContain('description="Compiled before run start. The workflow can read only this target scope and workspace context."');
-    expect(workflowsPage).not.toContain('description="Review previous executions, approvals, live trace details, and cancellation controls."');
-    expect(workflowsPage).not.toContain('description="Access is inherited from assigned agents, then narrowed by this workflow before each run starts."');
-    expect(workflowsPage).not.toContain('description="Manage workflow availability, starter prompt, tags, and user-authored workflow deletion."');
-    expect(workflowsPage).not.toContain('description="Control whether this workflow can start new runs."');
-    expect(workflowsPage).not.toContain('description="Edit the default prompt copied into the launch message."');
-    expect(workflowsPage).not.toContain('Only user-authored workflows can be deleted.');
+    expectMissingSnippets(workflowsPage, ['description="Confirm the agent owner, runtime access, approval gates, and operator message before launching."', 'description="Steps run in order. Each step uses assigned agents first, then the workflow gate narrows runtime access."', 'description="The primary agent owns the run. Supporting agents contribute specialist capability."', 'Workflow gate narrows assigned-agent capabilities.', 'description="Edit the operator prompt used when launching this workflow."', 'description="Review who owns the run and which specialist agents can contribute context or decisions."', 'description="Compiled before run start. The workflow can read only this target scope and workspace context."', 'description="Review previous executions, approvals, live trace details, and cancellation controls."', 'description="Access is inherited from assigned agents, then narrowed by this workflow before each run starts."', 'description="Manage workflow availability, starter prompt, tags, and user-authored workflow deletion."', 'description="Control whether this workflow can start new runs."', 'description="Edit the default prompt copied into the launch message."', 'Only user-authored workflows can be deleted.']);
   });
 
   it('keeps workflow settings spacing tight and avoids duplicate destructive labels', () => {
@@ -621,42 +594,11 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
   });
 
   it('reviews effective capabilities without configuring new MCP servers or skills directly on workflows', () => {
-    expect(workflowsPage).toContain('Capability review');
-    expect(workflowsPage).toContain('Inherited access');
-    expect(workflowsPage).toContain('Workflow restrictions');
-    expect(workflowsPage).toContain('const CapabilityReviewRow');
-    expect(workflowsPage).toContain('Primary agent');
-    expect(workflowsPage).toContain('Supporting agents');
-    expect(workflowsPage).toContain('Target context');
-    expect(workflowsPage).toContain('const WorkflowScopeRow');
-    expect(workflowsPage).not.toContain('<TokenGroup title="Target selection"');
-    expect(workflowsPage).not.toContain('<TokenGroup title="Context grants"');
-    expect(workflowsPage).not.toContain('<TokenGroup title="Assigned-agent MCP servers"');
-    expect(workflowsPage).not.toContain('<TokenGroup title="Assigned-agent skills"');
-    expect(workflowsPage).not.toContain('<TokenGroup title="Allowed tools"');
-    expect(workflowsPage).not.toContain('<TokenGroup title="Disabled by workflow gate"');
-    expect(workflowsPage).toContain('Workflow gate');
-    expect(workflowsPage).toContain('Approvals');
-    expect(workflowsPage).not.toContain('Add server');
-    expect(workflowsPage).not.toContain('selectedScopeDirty');
-    expect(workflowsPage).not.toContain('Edit capability gate');
-    expect(workflowsPage).not.toContain('Save capability gate');
-    expect(workflowsPage).toContain("scopeSaveResult?.tab === 'capabilities'");
-    expect(workflowsPage).not.toContain('Discard');
-    expect(workflowsPage).not.toContain('testWorkflowMcpServerConnection');
-    expect(workflowHelpers).toContain('role="switch"');
-    expect(workflowActions).toContain('Workflow capability gate saved. Future sessions will use the narrowed access.');
-    expect(workflowActions).toContain('setScopeSaveResult');
-    expect(workflowActions).toContain('enabledMcpServers: selectedWorkflow.enabledMcpServers');
-    expect(workflowActions).toContain('enabledSkills: selectedWorkflow.enabledSkills');
-    expect(workflowActions).toContain('assignedAgentIds');
-    expect(workflowActions).toContain("setActiveTab('overview')");
-    expect(workflowHelpers).toContain('primaryAgentId');
-    expect(workflowsPage).toContain('<WorkflowReadinessFact icon={ICONS.User} label="Owner" value={workflow.owner} />');
-    expect(workflowsPage).not.toContain('<WorkflowReadinessFact icon={ICONS.Bot} label="Owner" value={workflow.primaryAgent.name} />');
+    expectSnippets(workflowsPage, ['Capability review', 'Inherited access', 'Workflow restrictions', 'const CapabilityReviewRow', 'Primary agent', 'Supporting agents', 'Target context', 'const WorkflowScopeRow', 'Workflow gate', 'Approvals', "scopeSaveResult?.tab === 'capabilities'", '<WorkflowReadinessFact icon={ICONS.User} label="Owner" value={workflow.owner} />']);
+    expectMissingSnippets(workflowsPage, ['<TokenGroup title="Target selection"', '<TokenGroup title="Context grants"', '<TokenGroup title="Assigned-agent MCP servers"', '<TokenGroup title="Assigned-agent skills"', '<TokenGroup title="Allowed tools"', '<TokenGroup title="Disabled by workflow gate"', 'Add server', 'selectedScopeDirty', 'Edit capability gate', 'Save capability gate', 'Discard', 'testWorkflowMcpServerConnection', '<WorkflowReadinessFact icon={ICONS.Bot} label="Owner" value={workflow.primaryAgent.name} />', "['MCP servers', 'allowedMcpServers']", "['Allowed tools', 'allowedTools']"]);
+    expectSnippets(workflowActions, ['Workflow capability gate saved. Future sessions will use the narrowed access.', 'setScopeSaveResult', 'enabledMcpServers: selectedWorkflow.enabledMcpServers', 'enabledSkills: selectedWorkflow.enabledSkills', 'assignedAgentIds', "setActiveTab('overview')"]);
+    expectSnippets(workflowHelpers, ['role="switch"', 'primaryAgentId']);
     expect(workflowActions).not.toContain('category: draft.category');
-    expect(workflowsPage).not.toContain("['MCP servers', 'allowedMcpServers']");
-    expect(workflowsPage).not.toContain("['Allowed tools', 'allowedTools']");
   });
 
   it('lets operators edit and delete user-authored workflow definitions without category authoring', () => {

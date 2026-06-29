@@ -26,7 +26,6 @@ const createWorkflowSteps: Array<{ id: `${CreateWorkflowStep}`; label: string }>
   { id: '2', label: 'Capabilities' },
   { id: '3', label: 'Review' }
 ];
-
 function formatWorkflowTimestamp(value: string, fallback: string): string {
   return formatUserDateTime(value, { fallback });
 }
@@ -212,7 +211,6 @@ function pluralize(count: number, singular: string): string {
 const RequiredFieldMarker: React.FC = () => (
   <span className="text-status-danger-text" aria-hidden="true">*</span>
 );
-
 export const WorkflowCreateDrawer: React.FC<{
   createWorkflowStep: CreateWorkflowStep;
   setCreateWorkflowStep: React.Dispatch<React.SetStateAction<CreateWorkflowStep>>;
@@ -238,7 +236,6 @@ export const WorkflowCreateDrawer: React.FC<{
 }) => {
   const [stepNavigationError, setStepNavigationError] = React.useState('');
   const close = () => { onClose(); setCreateWorkflowStep(1); setStepNavigationError(''); };
-
   const primaryAgentOptions: Array<SelectOption<string>> = [
     { value: '', label: 'Choose an agent after creation' },
     ...workflowOptions.agents.map((agent) => ({ value: agent.value, label: agent.label }))
@@ -256,7 +253,6 @@ export const WorkflowCreateDrawer: React.FC<{
     setStepNavigationError('');
     setCreateWorkflowStep(nextStep);
   };
-
   return (
     <RightSidePanel
       isOpen
@@ -402,7 +398,6 @@ export const WorkflowCreateDrawer: React.FC<{
             </div>
           )}
         </div>
-
         <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
           <Button type="button" variant="tertiary" size="sm" onClick={() => { setCreateDraft(createWorkflowDraft()); setCreateWorkflowStep(1); setStepNavigationError(''); }}>Reset</Button>
           <div className="flex items-center gap-2">
@@ -420,7 +415,6 @@ export const WorkflowCreateDrawer: React.FC<{
     </RightSidePanel>
   );
 };
-
 export const WorkflowLaunchReadiness: React.FC<{
   workflow: WorkflowDefinition;
   launchBlocker: string | null;
@@ -457,7 +451,6 @@ export const WorkflowLaunchReadiness: React.FC<{
     </section>
   );
 };
-
 const WorkflowReadinessFact: React.FC<{
   icon: React.ElementType;
   label: string;
@@ -474,7 +467,6 @@ const WorkflowReadinessFact: React.FC<{
     </div>
   </div>
 );
-
 export const WorkflowTabPanel: React.FC<{
   tab: WorkflowTab;
   title: string;
@@ -493,14 +485,12 @@ export const WorkflowTabPanel: React.FC<{
     <div className="space-y-5">{children}</div>
   </section>
 );
-
 const WorkflowCreateReviewRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="grid gap-1 px-3 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
     <dt className="type-micro-label text-ui-text-muted">{label}</dt>
     <dd className="min-w-0 whitespace-pre-wrap break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{value}</dd>
   </div>
 );
-
 export const WorkflowSection: React.FC<{
   title: string;
   description?: string;
@@ -518,7 +508,6 @@ export const WorkflowSection: React.FC<{
     {children}
   </section>
 );
-
 export const AgentAssignmentList: React.FC<{
   className?: string;
   primaryAgent?: WorkflowAgentAssignment;
@@ -532,18 +521,15 @@ export const AgentAssignmentList: React.FC<{
       label: typeof supportingLabel === 'function' ? supportingLabel(agent) : supportingLabel
     }))
   ];
-
   if (rows.length === 0) {
     return <div className={`${className} py-3 text-sm font-medium text-ui-text-muted`}>No supporting agents assigned.</div>;
   }
-
   return (
     <div className={`${className} divide-y divide-ui-border`}>
       {rows.map(({ agent, label }) => <AgentAssignmentRow key={`${agent.agentId}:${label}`} agent={agent} label={label} />)}
     </div>
   );
 };
-
 export const WorkflowStepPath: React.FC<{
   steps: WorkflowStep[];
   primaryAgent: WorkflowAgentAssignment;
@@ -553,11 +539,9 @@ export const WorkflowStepPath: React.FC<{
     [primaryAgent.agentId, primaryAgent],
     ...supportingAgents.map((agent) => [agent.agentId, agent] as const)
   ]);
-
   if (steps.length === 0) {
     return <div className="mt-4 py-3 text-sm font-medium text-ui-text-muted">No workflow steps configured.</div>;
   }
-
   return (
     <ol className="mt-4 divide-y divide-ui-border">
       {steps.map((step, index) => {
@@ -632,7 +616,6 @@ export const WorkflowScopeRow: React.FC<{ label: string; values: string[]; empty
     </dd>
   </div>
 );
-
 function formatWorkflowScopeValue(value: string): string {
   return titleFromInputName(value).replace(/\bMcp\b/g, 'MCP');
 }

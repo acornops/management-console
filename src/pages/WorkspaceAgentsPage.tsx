@@ -31,7 +31,6 @@ import {
 import { listWorkflowOptions } from '@/services/control-plane/workflowApi';
 import type { ProjectMember } from '@/types';
 import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
-
 const prefersReducedMotion = (): boolean =>
   typeof window !== 'undefined' &&
   typeof window.matchMedia === 'function' &&

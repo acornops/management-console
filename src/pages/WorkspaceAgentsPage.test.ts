@@ -17,7 +17,6 @@ import {
   type AgentDefinition
 } from './agents/agentModel';
 import { formatUserDateTime } from '@/utils/dateTime';
-
 const root = resolve(__dirname, '../..');
 const agentsPage = [
   'src/pages/WorkspaceAgentsPage.tsx',

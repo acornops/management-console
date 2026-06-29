@@ -20,7 +20,6 @@ import {
   userMessageTurn,
   zhLocale
 } from '@/stylesTestSupport';
-
 describe('target chat polish contracts', () => {
   it('keeps desktop conversation history as a non-blocking route rail', () => {
     expect(chatView).toContain('setIsHistoryOpen(true)');
@@ -58,7 +57,6 @@ describe('target chat polish contracts', () => {
     expect(chatView).not.toContain("event.key === 'Escape'");
     expect(chatView).not.toContain('xl:w-80');
   });
-
   it('renders approvals as inline operational checkpoints', () => {
     expect(approvalCheckpoint).toContain('interface ApprovalCheckpointProps');
     expect(approvalCheckpoint).toContain('data-chat-approval-checkpoint="true"');
@@ -97,7 +95,6 @@ describe('target chat polish contracts', () => {
     expect(zhLocale).toContain("genericTarget: '对 {{target}} 运行 {{tool}}。'");
     expect(zhLocale).toContain("approveAction: '批准一次'");
   });
-
   it('keeps polish shared across transcript, composer, and trace surfaces', () => {
     expect(assistantTurn).toContain('data-chat-assistant-turn="true"');
     expect(assistantTurn).toContain('className="group w-full min-w-0 text-sm font-medium text-ui-text"');
