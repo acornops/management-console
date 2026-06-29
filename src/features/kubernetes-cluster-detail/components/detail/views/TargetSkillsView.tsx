@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { controlPlaneApi, ControlPlaneTargetSkillDetail, ControlPlaneTargetSkillsCatalog, ImportTargetSkillInput } from '@/services/controlPlaneApi';
 import {
   buildSkillTemplate,
@@ -20,6 +21,8 @@ import {
 } from '@/features/kubernetes-cluster-detail/components/detail/views/targetSkillsViewModel';
 import { TargetSkillEditorDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillEditorDialog';
 import { TargetSkillsInventory } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsInventory';
+
+const skillImportInputClassName = formInputClassName();
 
 export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   cluster,
@@ -399,16 +402,16 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
           <div className="space-y-4 px-6 py-5">
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ui-text">GitHub URL</span>
-              <input value={importDraft.repoUrl} onChange={(event) => setImportDraft((current) => ({ ...current, repoUrl: event.target.value }))} placeholder="https://github.com/openai/skills/tree/main/skills/.curated/cli-creator" className="w-full rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
+              <input value={importDraft.repoUrl} onChange={(event) => setImportDraft((current) => ({ ...current, repoUrl: event.target.value }))} placeholder="https://github.com/openai/skills/tree/main/skills/.curated/cli-creator" className={skillImportInputClassName} />
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-ui-text">Ref</span>
-                <input value={importDraft.ref || ''} onChange={(event) => setImportDraft((current) => ({ ...current, ref: event.target.value }))} placeholder="main" className="w-full rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
+                <input value={importDraft.ref || ''} onChange={(event) => setImportDraft((current) => ({ ...current, ref: event.target.value }))} placeholder="main" className={skillImportInputClassName} />
               </label>
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-ui-text">Subpath</span>
-                <input value={importDraft.subpath || ''} onChange={(event) => setImportDraft((current) => ({ ...current, subpath: event.target.value }))} placeholder="skills/troubleshooting-cnpg" className="w-full rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" />
+                <input value={importDraft.subpath || ''} onChange={(event) => setImportDraft((current) => ({ ...current, subpath: event.target.value }))} placeholder="skills/troubleshooting-cnpg" className={skillImportInputClassName} />
               </label>
             </div>
             <div className="rounded-lg border border-ui-border px-3 py-3">

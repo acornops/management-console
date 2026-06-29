@@ -232,7 +232,7 @@ export const Select = <T extends string | number>({
               })}
             >
               <span className="min-w-0 truncate">{option.label}</span>
-              {isSelected && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
+              {isSelected && <Check className="h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />}
             </button>
           );
         })}
@@ -265,8 +265,8 @@ export const Select = <T extends string | number>({
           'type-ui flex w-full items-center justify-between gap-3 rounded-md border bg-ui-surface text-ui-text shadow-sm outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60',
           sizeClasses[size],
           isOpen
-            ? 'border-accent/50 ring-2 ring-accent/10'
-            : 'border-ui-border hover:border-accent/30 hover:bg-ui-bg focus-visible:border-accent/40 focus-visible:ring-2 focus-visible:ring-accent/15'
+            ? 'border-accent/35 bg-ui-bg ring-2 ring-accent/10'
+            : 'border-ui-border hover:border-accent/25 hover:bg-ui-bg focus-visible:border-accent/35 focus-visible:ring-2 focus-visible:ring-accent/15'
         ))}
       >
         <span className={clsx('min-w-0 truncate text-left', !selectedOption && 'text-ui-text-muted')}>

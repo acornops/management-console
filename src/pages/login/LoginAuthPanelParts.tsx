@@ -1,9 +1,10 @@
 import React from 'react';
 import { ICONS } from '@/constants';
 import { FieldValidationMessage, fieldInvalidClass } from '@/components/common/FieldValidationMessage';
+import { formInputClassName } from '@/components/common/formControlStyles';
 
 export const fieldWrapClass = 'relative block';
-export const inputClass = 'w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2.5 text-sm text-ui-text outline-none transition-all placeholder:text-ui-text-muted/40 focus:border-accent-bright focus:ring-2 focus:ring-accent-bright/50 disabled:cursor-not-allowed disabled:opacity-60';
+export const inputClass = formInputClassName('px-4');
 export const iconInputClass = `${inputClass} pl-10`;
 export const passwordInputClass = `${iconInputClass} pr-11`;
 export const invalidInputClass = fieldInvalidClass;

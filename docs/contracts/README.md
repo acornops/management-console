@@ -135,7 +135,10 @@ The management console depends on:
 - `POST /api/v1/workspaces/{workspaceId}/agents`
 - `GET /api/v1/agents/{agentId}?workspaceId={workspaceId}`
 - `PATCH /api/v1/agents/{agentId}`
+- `DELETE /api/v1/agents/{agentId}`
+- `GET /api/v1/agents/{agentId}/versions`
 - `POST /api/v1/agents/{agentId}/versions`
+- `POST /api/v1/agents/{agentId}/versions/{versionId}/restore`
 - `POST /api/v1/agents/{agentId}/test`
 - `GET /api/v1/agents/{agentId}/activity`
 - `POST /api/v1/agents/{agentId}/triggers`
@@ -150,6 +153,15 @@ and trigger mutations require `permissions.manage_agents`; list and detail views
 require workspace data read access. Workflow steps may include
 `assignedAgentIds[]`; the UI treats workflow capability edits as narrowing gates
 over assigned agents, not independent permission grants.
+Agent routes outside the workspace path send `workspaceId` in the query string
+for reads and in the JSON body for mutations.
+The Agents page requests `includeInactive=true` when listing workspace agents so
+disabled or draft definitions remain visible for review and reactivation.
+Only unassigned custom agents may be deleted; system agents and agents still
+referenced by workflow steps must remain visible and actionable.
+Agent create, update, delete, version snapshot, restore, and trigger mutations
+emit workspace audit events with agent id, version, status, and trigger metadata
+when applicable.
 
 The AI Settings page consumes `GET /api/v1/workspaces/{workspaceId}/ai-settings` to render AI assistant defaults, deployment allow-lists, and per-provider configured status for users with workspace data access. New and unset workspace AI settings default `reasoningSummaryMode` to `auto` when deployment policy allows reasoning summaries; admins can still set `off`. Users with `permissions.manage_ai_settings` may call `PATCH /api/v1/workspaces/{workspaceId}/ai-settings` to update the default provider/model, `PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` with write-only `{apiKey}` to add or rotate a provider credential, and `DELETE /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}` to remove one. The console must never expect or display API key values, ciphertexts, or internal secret names; it only displays configured/not-configured status.
 

@@ -4,10 +4,13 @@ import {
   createAgent,
   createAgentTrigger,
   createAgentVersion,
+  deleteAgent,
   deleteAgentTrigger,
   getAgent,
   listAgentActivity,
+  listAgentVersions,
   listWorkspaceAgents,
+  restoreAgentVersion,
   testAgent,
   updateAgentTrigger,
   updateAgent
@@ -25,11 +28,11 @@ describe('agent control-plane api', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(listWorkspaceAgents('workspace-1')).resolves.toEqual([
+    await expect(listWorkspaceAgents('workspace-1', { includeInactive: true })).resolves.toEqual([
       { id: 'agent-1', workspaceId: 'workspace-1', name: 'Kubernetes Diagnostics' }
     ]);
 
-    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/agents');
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/agents?includeInactive=true');
   });
 
   it('creates and updates durable agents through workspace-scoped consumer payloads', async () => {
@@ -109,8 +112,14 @@ describe('agent control-plane api', () => {
       if (url.endsWith('/api/v1/auth/csrf')) {
         return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
       }
-      if (url.endsWith('/api/v1/agents/agent-1/versions')) {
+      if (url.endsWith('/api/v1/agents/agent-1/versions') && init?.method === 'POST') {
         return Promise.resolve(new Response(JSON.stringify({ version: { id: 'version-1', agentId: 'agent-1', workspaceId: 'workspace-1', version: 2, createdAt: 'now' } }), { status: 201 }));
+      }
+      if (url.includes('/api/v1/agents/agent-1/versions?workspaceId=workspace-1')) {
+        return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'version-1', agentId: 'agent-1', workspaceId: 'workspace-1', version: 2, createdAt: 'now' }] }), { status: 200 }));
+      }
+      if (url.endsWith('/api/v1/agents/agent-1/versions/version-1/restore')) {
+        return Promise.resolve(new Response(JSON.stringify({ agent: { id: 'agent-1', workspaceId: 'workspace-1', name: 'Restored agent', version: 3 } }), { status: 200 }));
       }
       if (url.endsWith('/api/v1/agents/agent-1/test')) {
         return Promise.resolve(new Response(JSON.stringify({ activity: { id: 'activity-1', agentId: 'agent-1', workspaceId: 'workspace-1', agentVersion: 2, status: 'queued', createdAt: 'now' }, compiledScope: { agentId: 'agent-1' } }), { status: 202 }));
@@ -124,18 +133,27 @@ describe('agent control-plane api', () => {
       if (url.endsWith('/api/v1/agents/agent-1/triggers/trigger-1') && init?.method === 'PATCH') {
         return Promise.resolve(new Response(JSON.stringify({ trigger: { id: 'trigger-1', type: 'schedule', enabled: false } }), { status: 200 }));
       }
+      if (url.endsWith('/api/v1/agents/agent-1') && init?.method === 'DELETE') {
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
       return Promise.resolve(new Response(null, { status: 204 }));
     });
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(createAgentVersion('workspace-1', 'agent-1')).resolves.toMatchObject({ id: 'version-1' });
+    await expect(listAgentVersions('workspace-1', 'agent-1')).resolves.toHaveLength(1);
+    await expect(restoreAgentVersion('workspace-1', 'agent-1', 'version-1')).resolves.toMatchObject({ version: 3 });
     await expect(testAgent('workspace-1', 'agent-1', { approvedContextGrants: ['workspace_metadata'] })).resolves.toMatchObject({ compiledScope: { agentId: 'agent-1' } });
     await expect(listAgentActivity('workspace-1', 'agent-1')).resolves.toHaveLength(1);
     await expect(createAgentTrigger('workspace-1', 'agent-1', { type: 'schedule', enabled: true })).resolves.toMatchObject({ id: 'trigger-1' });
     await expect(updateAgentTrigger('workspace-1', 'agent-1', 'trigger-1', { enabled: false })).resolves.toMatchObject({ enabled: false });
+    await expect(deleteAgent('workspace-1', 'agent-1')).resolves.toBeUndefined();
     await expect(deleteAgentTrigger('workspace-1', 'agent-1', 'trigger-1')).resolves.toBeUndefined();
 
     expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith('/api/v1/agents/agent-1/test'))).toBe(true);
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/api/v1/agents/agent-1/versions?workspaceId=workspace-1'))).toBe(true);
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith('/api/v1/agents/agent-1/versions/version-1/restore'))).toBe(true);
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith('/api/v1/agents/agent-1') && call[1]?.method === 'DELETE')).toBe(true);
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/api/v1/agents/agent-1/activity?workspaceId=workspace-1'))).toBe(true);
   });
 });

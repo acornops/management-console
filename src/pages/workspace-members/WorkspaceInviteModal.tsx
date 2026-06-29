@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { FieldValidationMessage, fieldInvalidClass } from '@/components/common/FieldValidationMessage';
 import { Select, SelectOption } from '@/components/common/Select';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import { ProjectMember, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
@@ -143,7 +144,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
                   }}
                   disabled={Boolean(createdInvite) || isCreatingInvite}
                   placeholder={t('members.emailPlaceholder')}
-                  className={`w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm font-semibold text-ui-text outline-none ring-accent/10 transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70 ${inviteEmailError ? fieldInvalidClass : ''}`}
+                  className={formInputClassName(`px-4 ${inviteEmailError ? fieldInvalidClass : ''}`)}
                   aria-invalid={Boolean(inviteEmailError)}
                   aria-describedby={inviteEmailError ? 'workspace-invite-email-error' : undefined}
                 />
@@ -183,7 +184,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
                       readOnly
                       value={createdInvite.inviteLink}
                       onFocus={(event) => event.currentTarget.select()}
-                      className="min-w-0 flex-1 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-sm font-semibold text-ui-text outline-none"
+                      className={formInputClassName('min-w-0 flex-1')}
                     />
                     <Button onClick={() => void copyInviteLink()} variant="secondary" size="sm" className="uppercase tracking-widest">
                       {hasCopiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}

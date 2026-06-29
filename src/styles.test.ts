@@ -287,6 +287,30 @@ describe('theme color contract', () => {
     expect(addClusterModal).not.toContain('kubernetesClusters');
   });
 
+  it('keeps workspace settings copy action-oriented and specific', () => {
+    [
+      "subtitle: 'Review workspace details, quota usage, member access, and deletion controls.'",
+      "organizationTitle: 'Workspace details'",
+      "organizationBody: 'Confirm the workspace name and plan used for quota and access decisions.'",
+      "workspaceName: 'Workspace name'",
+      "accessTitle: 'Members and roles'",
+      "membersBody: 'Open Members to invite users, remove access, or change roles.'",
+      "rbac: 'Role permissions'",
+      "rbacBody: 'Workspace role permissions come from control-plane role templates. Change a user\\'s role on the Members page.'",
+      "inherited: 'Set by role'",
+      "dangerTitle: 'Delete workspace'",
+      "dangerBody: 'Permanently removes this workspace, member access, saved settings, cluster registrations, VM registrations, diagnostics context, and chat history. Agents and in-cluster resources are not removed.'"
+    ].forEach((needle) => expect(enLocale).toContain(needle));
+
+    [
+      "organizationTitle: '工作区详情'",
+      "accessTitle: '成员和角色'",
+      "rbac: '角色权限'",
+      "inherited: '由角色决定'",
+      "dangerTitle: '删除工作区'"
+    ].forEach((needle) => expect(zhLocale).toContain(needle));
+  });
+
   it('keeps workload filter controls compact and aligned', () => {
     expect(resourceExplorerControls).toContain('h-9');
     expect(resourceExplorerControls).toContain('grid-cols-2');

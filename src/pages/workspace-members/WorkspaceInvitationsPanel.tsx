@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy, Loader2, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/common/Dialog';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { WorkspaceInvitation } from '@/types';
 import { formatInvitationStatus, formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 
@@ -14,6 +15,8 @@ interface WorkspaceInvitationsPanelProps {
   onLoadMoreInvitations?: () => void;
   onRevokeInvitation?: (invitation: WorkspaceInvitation) => Promise<void> | void;
 }
+
+const replacementInviteLinkInputClassName = formInputClassName('type-body min-w-0');
 
 export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps> = ({
   invitations,
@@ -274,7 +277,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                     readOnly
                     value={createdReplacementInvite.inviteLink}
                     onFocus={(event) => event.currentTarget.select()}
-                    className="type-body min-h-11 min-w-0 rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text outline-none focus-visible:border-accent/40 focus-visible:ring-2 focus-visible:ring-accent/10"
+                    className={replacementInviteLinkInputClassName}
                   />
                   <button
                     type="button"

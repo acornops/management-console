@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Select } from '@/components/common/Select';
 import type { SelectOption } from '@/components/common/Select';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import { ClusterToolCatalogServer } from '@/types';
 import { getMcpServerStatusDisplay, McpServerCard } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServerCard';
@@ -19,6 +20,8 @@ interface McpServersInventoryProps {
   onEdit: (server: ClusterToolCatalogServer) => void;
   onDelete: (server: ClusterToolCatalogServer) => void;
 }
+
+const mcpServerSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
 
 export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   servers,
@@ -126,7 +129,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
               value={serverSearch}
               onChange={(event) => setServerSearch(event.target.value)}
               placeholder={t('mcpServers.searchServers')}
-              className="w-full rounded-lg border border-transparent bg-ui-bg py-3 pl-11 pr-4 text-sm text-ui-text outline-none transition-colors placeholder:text-ui-text-muted/60 focus-visible:border-accent/30 focus-visible:ring-2 focus-visible:ring-accent/10"
+              className={mcpServerSearchInputClassName}
             />
           </div>
           <Select<typeof serverFilter>

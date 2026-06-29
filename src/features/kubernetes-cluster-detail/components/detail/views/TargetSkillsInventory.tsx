@@ -5,10 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
 import { Select } from '@/components/common/Select';
 import type { SelectOption } from '@/components/common/Select';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import type { ControlPlaneTargetSkillsCatalog } from '@/services/controlPlaneApi';
 import { sourceLabel, summarizeBytes, syncLabel } from '@/features/kubernetes-cluster-detail/components/detail/views/targetSkillsViewModel';
 
 type TargetSkillSummary = ControlPlaneTargetSkillsCatalog['items'][number];
+
+const targetSkillSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
 
 interface TargetSkillsInventoryProps {
   skills: TargetSkillSummary[];
@@ -312,7 +315,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
               value={skillSearch}
               onChange={(event) => setSkillSearch(event.target.value)}
               placeholder={t('targetSkills.searchSkills')}
-              className="w-full rounded-lg border border-transparent bg-ui-bg py-3 pl-11 pr-4 text-sm text-ui-text outline-none transition-colors placeholder:text-ui-text-muted/60 focus-visible:border-accent/30 focus-visible:ring-2 focus-visible:ring-accent/10"
+              className={targetSkillSearchInputClassName}
             />
           </div>
           <Select<typeof skillFilter>

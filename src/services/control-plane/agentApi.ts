@@ -1,7 +1,8 @@
 import { requestJson } from './http';
 
-export type AgentStatus = 'draft' | 'active' | 'paused' | 'disabled' | 'error';
+export type AgentStatus = 'draft' | 'active' | 'disabled';
 export type AgentProviderType = 'internal' | 'external';
+export type AgentTargetScopeApi = { type?: 'workspace' | 'selected_target'; targetTypes?: string[]; targetIds?: string[] };
 
 export interface AgentCapability {
   source: 'builtin_tool' | 'mcp_tool' | 'skill' | 'context' | 'target';
@@ -27,7 +28,7 @@ export interface AgentDefinitionApi {
   mcpServers?: string[];
   tools?: string[];
   skills?: string[];
-  targetScope?: string[] | { type?: string; targetTypes?: string[]; targetIds?: string[] };
+  targetScope?: string[] | AgentTargetScopeApi;
   contextScope?: string[];
   contextGrants?: string[];
   approvalPolicy?: Record<string, unknown>;
@@ -78,12 +79,15 @@ export interface AgentVersionSnapshotApi {
   agentId: string;
   workspaceId: string;
   version: number;
+  snapshot?: AgentDefinitionApi;
+  createdBy?: string;
   createdAt: string;
 }
 
-export function listWorkspaceAgents(workspaceId: string): Promise<AgentDefinitionApi[]> {
+export function listWorkspaceAgents(workspaceId: string, options: { includeInactive?: boolean } = {}): Promise<AgentDefinitionApi[]> {
+  const query = options.includeInactive ? '?includeInactive=true' : '';
   return requestJson<{ items: AgentDefinitionApi[] }>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents`
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents${query}`
   ).then((page) => page.items);
 }
 
@@ -120,6 +124,16 @@ export function updateAgent(
   ).then((response) => response.agent);
 }
 
+export function deleteAgent(workspaceId: string, agentId: string): Promise<void> {
+  return requestJson<void>(
+    `/api/v1/agents/${encodeURIComponent(agentId)}`,
+    {
+      method: 'DELETE',
+      body: JSON.stringify({ workspaceId })
+    }
+  );
+}
+
 export function createAgentVersion(workspaceId: string, agentId: string): Promise<AgentVersionSnapshotApi> {
   return requestJson<{ version: AgentVersionSnapshotApi }>(
     `/api/v1/agents/${encodeURIComponent(agentId)}/versions`,
@@ -128,6 +142,26 @@ export function createAgentVersion(workspaceId: string, agentId: string): Promis
       body: JSON.stringify({ workspaceId })
     }
   ).then((response) => response.version);
+}
+
+export function listAgentVersions(workspaceId: string, agentId: string): Promise<AgentVersionSnapshotApi[]> {
+  return requestJson<{ items: AgentVersionSnapshotApi[] }>(
+    `/api/v1/agents/${encodeURIComponent(agentId)}/versions?workspaceId=${encodeURIComponent(workspaceId)}`
+  ).then((response) => response.items);
+}
+
+export function restoreAgentVersion(
+  workspaceId: string,
+  agentId: string,
+  versionId: string
+): Promise<AgentDefinitionApi> {
+  return requestJson<{ agent: AgentDefinitionApi }>(
+    `/api/v1/agents/${encodeURIComponent(agentId)}/versions/${encodeURIComponent(versionId)}/restore`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ workspaceId })
+    }
+  ).then((response) => response.agent);
 }
 
 export function testAgent(

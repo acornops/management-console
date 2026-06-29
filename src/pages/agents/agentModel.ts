@@ -1,4 +1,4 @@
-import type { AgentCapability, AgentProviderType, AgentStatus, AgentTriggerDefinitionApi } from '@/services/control-plane/agentApi';
+import type { AgentCapability, AgentProviderType, AgentStatus, AgentTargetScopeApi, AgentTriggerDefinitionApi } from '@/services/control-plane/agentApi';
 
 export interface AgentDefinition {
   id: string;
@@ -7,7 +7,9 @@ export interface AgentDefinition {
   description: string;
   instructions: string;
   status: AgentStatus;
+  source?: 'system' | 'user';
   providerType: AgentProviderType;
+  ownerUserId?: string;
   owner: string;
   version: number;
   mcpServers: string[];
@@ -44,6 +46,7 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
       description: 'Read cluster inventory, events, logs, and metrics for incident triage.',
       instructions: 'Use read-only cluster inventory, event, log, and metric tools.',
       status: 'active',
+      source: 'system',
       providerType: 'internal',
       owner: 'Platform Engineering',
       version: 3,
@@ -85,6 +88,7 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
       description: 'Prepare repository changes and pull requests through approved GitHub tools.',
       instructions: 'Coordinate release checks and request approval before write tools.',
       status: 'active',
+      source: 'system',
       providerType: 'external',
       owner: 'Developer Experience',
       version: 2,
@@ -124,6 +128,7 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
       description: 'Read selected incident chats and generate timeline reports or PDF artifacts.',
       instructions: 'Use selected chat context only after approval and write the requested report artifact.',
       status: 'active',
+      source: 'system',
       providerType: 'internal',
       owner: 'SRE',
       version: 1,
@@ -162,6 +167,72 @@ export function getAgentCapabilitySummary(agent: AgentDefinition): string {
     ? 'approval required'
     : 'no approvals';
   return `${agent.mcpServers.length} MCP server${agent.mcpServers.length === 1 ? '' : 's'}, ${agent.tools.length} tools, ${agent.skills.length} skills, ${approvalCopy}`;
+}
+
+const titleCase = (value: string): string =>
+  value
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+export function getAgentReviewSignals(agent: AgentDefinition): string[] {
+  const signals: string[] = [];
+  if (agent.targetScope.some((scope) => scope.includes('*'))) signals.push('Broad target scope');
+  if (agent.approvalPolicy.writeActions === 'allowed') signals.push('Write tools can run without approval');
+  if (agent.workflowsUsingAgent.length > 0) {
+    signals.push(`${agent.workflowsUsingAgent.length} workflow${agent.workflowsUsingAgent.length === 1 ? '' : 's'} depend${agent.workflowsUsingAgent.length === 1 ? 's' : ''} on this definition`);
+  }
+  if (!agent.auditHistory.some((entry) => entry.summary.includes('Test run') || entry.summary.includes('Test queued')) && !agent.health.summary.toLowerCase().includes('passed')) {
+    signals.push('No recent readiness test');
+  }
+  return signals;
+}
+
+export function getAgentReadinessLabel(agent: AgentDefinition): 'Ready' | 'Needs review' | 'Blocked' | 'Disabled' {
+  if (agent.status === 'disabled') return 'Disabled';
+  if (agent.health.status === 'unknown') return 'Blocked';
+  if (agent.status !== 'active' || agent.health.status === 'degraded') return 'Needs review';
+  return getAgentReviewSignals(agent).length > 0 ? 'Needs review' : 'Ready';
+}
+
+export function getAgentAccessClass(agent: AgentDefinition): string {
+  const scopedResourceTypes = agent.targetScope.flatMap((scope) => {
+    const [resourceType] = scope.split(':', 1);
+    return resourceType && resourceType !== 'workspace' && resourceType !== 'scope' ? [resourceType] : [];
+  });
+  const resourceTypes = scopedResourceTypes.length > 0
+    ? Array.from(new Set(scopedResourceTypes))
+    : Array.from(new Set(agent.capabilities.map((capability) => capability.resourceType).filter(Boolean)));
+  const resourceLabel = resourceTypes.length === 1 ? titleCase(resourceTypes[0]) : resourceTypes.length > 1 ? 'Mixed resources' : 'Workspace';
+  if (agent.approvalPolicy.writeActions === 'blocked') return `${resourceLabel} read, write blocked`;
+  if (agent.approvalPolicy.writeActions === 'approval_required') return `${resourceLabel} read, write gated`;
+  return `${resourceLabel} read/write`;
+}
+
+export function targetScopeFromTokens(tokens: string[]): AgentTargetScopeApi {
+  const normalized = tokens.map((token) => token.trim()).filter(Boolean);
+  const explicitScope = normalized.find((token) => token.startsWith('scope:'))?.slice('scope:'.length);
+  const targetTypes = normalized.flatMap((token) => {
+    if (token.startsWith('target-type:')) return [token.slice('target-type:'.length)];
+    if (token.endsWith(':*')) return [token.slice(0, -2)];
+    return [];
+  });
+  const targetIds = normalized.flatMap((token) => {
+    if (token.startsWith('target:')) return [token.slice('target:'.length)];
+    const [kind, id] = token.split(':', 2);
+    if (kind && id && id !== '*' && kind !== 'scope' && kind !== 'target-type' && kind !== 'workspace') return [id];
+    return [];
+  });
+  const uniqueTargetTypes = Array.from(new Set(targetTypes));
+  const uniqueTargetIds = Array.from(new Set(targetIds));
+  if ((explicitScope === 'workspace' || normalized.includes('workspace:current') || normalized.includes('workspace')) && uniqueTargetTypes.length === 0 && uniqueTargetIds.length === 0) {
+    return { type: 'workspace' };
+  }
+  return {
+    type: 'selected_target',
+    ...(uniqueTargetTypes.length > 0 ? { targetTypes: uniqueTargetTypes } : {}),
+    ...(uniqueTargetIds.length > 0 ? { targetIds: uniqueTargetIds } : {})
+  };
 }
 
 export function filterAgentDefinitions(agents: AgentDefinition[], query: string): AgentDefinition[] {

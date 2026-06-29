@@ -1,8 +1,11 @@
 import React from 'react';
 import { Button } from '@/components/common/Button';
+import { Select, SelectOption } from '@/components/common/Select';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import type { WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
-import type { WorkflowAgentAssignment, WorkflowTab } from '@/pages/workflows/workflowModel';
+import type { WorkflowAgentAssignment, WorkflowDefinition, WorkflowStep, WorkflowTab } from '@/pages/workflows/workflowModel';
 import {
   createWorkflowDraft,
   titleFromInputName,
@@ -25,6 +28,13 @@ export const workflowTabIcons: Record<WorkflowTab, React.ElementType> = {
   runs: ICONS.Activity,
   settings: ICONS.Settings
 };
+
+const createWorkflowInputClass = formInputClassName('mt-2');
+const createWorkflowTextareaClass = formTextareaClassName('mt-2 min-h-36');
+
+function pluralize(count: number, singular: string): string {
+  return `${count} ${singular}${count === 1 ? '' : 's'}`;
+}
 
 export const WorkflowCreateDrawer: React.FC<{
   createWorkflowStep: CreateWorkflowStep;
@@ -57,6 +67,16 @@ export const WorkflowCreateDrawer: React.FC<{
   const handleWorkflowCreateDrawerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') close();
   };
+
+  const primaryAgentOptions: Array<SelectOption<string>> = [
+    { value: '', label: 'Choose an agent after creation' },
+    ...workflowOptions.agents.map((agent) => ({ value: agent.value, label: agent.label }))
+  ];
+  const createChecklist = [
+    createDraft.name.trim() ? 'Ready: workflow name' : 'Missing: workflow name',
+    createDraft.primaryAgentId ? 'Ready: primary agent selected' : 'Optional: primary agent can be assigned after save',
+    createDraft.starterPrompt.trim() ? 'Ready: starter prompt customized' : 'Default: starter prompt will use the workflow name'
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onKeyDown={handleWorkflowCreateDrawerKeyDown}>
@@ -95,6 +115,15 @@ export const WorkflowCreateDrawer: React.FC<{
           {!canManageWorkflowScope && <div className="mb-4 rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text-muted">You need manage_workflows to create workflows.</div>}
           {createError && <div className="mb-4 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{createError}</div>}
 
+          <section className="mb-5 rounded-md border border-ui-border bg-ui-bg px-3 py-3">
+            <h3 className="type-micro-label text-ui-text">Pre-save checklist</h3>
+            <ul className="mt-3 grid gap-2">
+              {createChecklist.map((item) => (
+                <li key={item} className="text-xs font-semibold text-ui-text-muted">{item}</li>
+              ))}
+            </ul>
+          </section>
+
           {createWorkflowStep === 1 && (
             <div className="space-y-5">
               <div>
@@ -103,15 +132,15 @@ export const WorkflowCreateDrawer: React.FC<{
               </div>
               <label className="block">
                 <span className="type-micro-label">Name</span>
-                <input value={createDraft.name} onChange={(event) => setCreateDraft((draft) => ({ ...draft, name: event.target.value }))} className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent" />
+                <input value={createDraft.name} onChange={(event) => setCreateDraft((draft) => ({ ...draft, name: event.target.value }))} className={createWorkflowInputClass} />
               </label>
               <label className="block">
                 <span className="type-micro-label">Description</span>
-                <input value={createDraft.description} onChange={(event) => setCreateDraft((draft) => ({ ...draft, description: event.target.value }))} placeholder="Example: Prepare an incident report from selected sessions" className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent" />
+                <input value={createDraft.description} onChange={(event) => setCreateDraft((draft) => ({ ...draft, description: event.target.value }))} placeholder="Example: Prepare an incident report from selected sessions" className={createWorkflowInputClass} />
               </label>
               <label className="block">
                 <span className="type-micro-label">Starting prompt</span>
-                <textarea value={createDraft.starterPrompt} onChange={(event) => setCreateDraft((draft) => ({ ...draft, starterPrompt: event.target.value }))} placeholder="Default message copied into each new run" className="mt-2 min-h-36 w-full resize-y rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-medium leading-6 text-ui-text outline-none focus:border-accent" />
+                <textarea value={createDraft.starterPrompt} onChange={(event) => setCreateDraft((draft) => ({ ...draft, starterPrompt: event.target.value }))} placeholder="Default message copied into each new run" className={createWorkflowTextareaClass} />
               </label>
             </div>
           )}
@@ -124,16 +153,13 @@ export const WorkflowCreateDrawer: React.FC<{
               </div>
               <label className="block rounded-md border border-ui-border bg-ui-bg p-3">
                 <span className="type-micro-label">Primary agent</span>
-                <select
+                <Select<string>
                   value={createDraft.primaryAgentId}
-                  onChange={(event) => setCreateDraft((draft) => ({ ...draft, primaryAgentId: event.target.value }))}
-                  className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent"
-                >
-                  <option value="">Choose an agent after creation</option>
-                  {workflowOptions.agents.map((agent) => (
-                    <option key={agent.value} value={agent.value}>{agent.label}</option>
-                  ))}
-                </select>
+                  options={primaryAgentOptions}
+                  onChange={(primaryAgentId) => setCreateDraft((draft) => ({ ...draft, primaryAgentId }))}
+                  className="mt-2"
+                  ariaLabel="Primary agent"
+                />
                 <span className="type-caption mt-2 block text-ui-text-muted">Custom agents created from the Agents page appear here once the control plane returns them in workflow options.</span>
               </label>
               <details className="rounded-md border border-ui-border bg-ui-bg px-3 py-2">
@@ -141,16 +167,16 @@ export const WorkflowCreateDrawer: React.FC<{
                 <div className="mt-4 grid gap-4">
                   <label className="block">
                     <span className="type-micro-label">MCP servers</span>
-                    <textarea value={createDraft.enabledMcpServers} onChange={(event) => setCreateDraft((draft) => ({ ...draft, enabledMcpServers: event.target.value }))} placeholder="One server id per line" className="mt-2 min-h-24 w-full resize-y rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-sm font-medium text-ui-text outline-none focus:border-accent" />
+                    <textarea value={createDraft.enabledMcpServers} onChange={(event) => setCreateDraft((draft) => ({ ...draft, enabledMcpServers: event.target.value }))} placeholder="One server id per line" className={createWorkflowTextareaClass} />
                   </label>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="block">
                       <span className="type-micro-label">Skills</span>
-                      <textarea value={createDraft.enabledSkills} onChange={(event) => setCreateDraft((draft) => ({ ...draft, enabledSkills: event.target.value }))} placeholder="One skill id per line" className="mt-2 min-h-28 w-full resize-y rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-sm font-medium text-ui-text outline-none focus:border-accent" />
+                      <textarea value={createDraft.enabledSkills} onChange={(event) => setCreateDraft((draft) => ({ ...draft, enabledSkills: event.target.value }))} placeholder="One skill id per line" className={createWorkflowTextareaClass} />
                     </label>
                     <label className="block">
                       <span className="type-micro-label">Tools</span>
-                      <textarea value={createDraft.allowedTools} onChange={(event) => setCreateDraft((draft) => ({ ...draft, allowedTools: event.target.value }))} placeholder="One tool id per line" className="mt-2 min-h-28 w-full resize-y rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-sm font-medium text-ui-text outline-none focus:border-accent" />
+                      <textarea value={createDraft.allowedTools} onChange={(event) => setCreateDraft((draft) => ({ ...draft, allowedTools: event.target.value }))} placeholder="One tool id per line" className={createWorkflowTextareaClass} />
                     </label>
                   </div>
                 </div>
@@ -196,6 +222,61 @@ export const WorkflowCreateDrawer: React.FC<{
   );
 };
 
+export const WorkflowLaunchReadiness: React.FC<{
+  workflow: WorkflowDefinition;
+  launchBlocker: string | null;
+  selectedAccessTools: string[];
+  compiled: boolean;
+  onReviewCapabilities: () => void;
+}> = ({ workflow, launchBlocker, selectedAccessTools, compiled, onReviewCapabilities }) => {
+  const approvalCount = workflow.policy.approvals.length;
+  const stepApprovalCount = workflow.steps.filter((step) => step.approvalRequired).length;
+  const totalApprovalSignals = approvalCount + stepApprovalCount;
+  const isReady = !launchBlocker;
+  const accessSummary = `${pluralize(selectedAccessTools.length, 'tool')} ${compiled ? 'compiled for this run' : 'available from the workflow gate'}`;
+  const approvalSummary = totalApprovalSignals > 0
+    ? `${pluralize(totalApprovalSignals, 'approval gate')} before sensitive steps continue`
+    : 'No approval gates configured';
+
+  return (
+    <section aria-label="Workflow launch readiness" className="border-b border-ui-border bg-ui-surface px-5 py-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)] xl:items-start">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge tone={isReady ? 'success' : 'warning'}>{isReady ? 'Ready to launch' : 'Needs attention before launch'}</StatusBadge>
+            <span className="type-caption font-semibold text-ui-text-muted">{workflow.policy.mode.replace('_', ' ')}</span>
+          </div>
+          <h3 className="mt-3 type-panel-title">Launch decision</h3>
+          <p aria-live="polite" aria-atomic="true" className="type-caption mt-1 max-w-3xl text-ui-text-muted">
+            {isReady
+              ? 'This workflow can start with the current owner, message, permissions, and runtime access.'
+              : `Resolve this before launch: ${launchBlocker}`}
+          </p>
+        </div>
+        <dl className="grid min-w-0 gap-3 sm:grid-cols-2">
+          <WorkflowReadinessFact label="Owner" value={workflow.primaryAgent.name} />
+          <WorkflowReadinessFact label="Runtime access" value={accessSummary} />
+          <WorkflowReadinessFact label="Approvals" value={approvalSummary} />
+          <WorkflowReadinessFact label="Last run" value={workflow.lastRun || 'No runs yet'} />
+        </dl>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
+        <span className="type-caption text-ui-text-muted">
+          Review the capability gate when the tool count, target scope, or approval model changes.
+        </span>
+        <Button type="button" variant="tertiary" size="sm" onClick={onReviewCapabilities}>Review capability gate</Button>
+      </div>
+    </section>
+  );
+};
+
+const WorkflowReadinessFact: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="min-w-0">
+    <dt className="type-micro-label text-ui-text-muted">{label}</dt>
+    <dd className="mt-1 min-w-0 break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{value}</dd>
+  </div>
+);
+
 export const WorkflowTabPanel: React.FC<{
   eyebrow: string;
   title: string;
@@ -203,7 +284,7 @@ export const WorkflowTabPanel: React.FC<{
   actions?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ eyebrow, title, description, actions, children }) => (
-  <section className="space-y-5 rounded-md border border-ui-border bg-ui-surface px-4 py-4 shadow-sm sm:px-5 sm:py-5">
+  <section className="space-y-5 px-1 py-1">
     <div className="flex flex-col gap-4 border-b border-ui-border pb-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="min-w-0">
         <p className="type-micro-label text-ui-text-muted">{eyebrow}</p>
@@ -263,6 +344,61 @@ export const AgentAssignmentList: React.FC<{
     <div className={`${className} divide-y divide-ui-border`}>
       {rows.map(({ agent, label }) => <AgentAssignmentRow key={`${agent.agentId}:${label}`} agent={agent} label={label} />)}
     </div>
+  );
+};
+
+export const WorkflowStepPath: React.FC<{
+  steps: WorkflowStep[];
+  primaryAgent: WorkflowAgentAssignment;
+  supportingAgents: WorkflowAgentAssignment[];
+}> = ({ steps, primaryAgent, supportingAgents }) => {
+  const agentsById = new Map([
+    [primaryAgent.agentId, primaryAgent],
+    ...supportingAgents.map((agent) => [agent.agentId, agent] as const)
+  ]);
+
+  if (steps.length === 0) {
+    return <div className="mt-4 py-3 text-sm font-medium text-ui-text-muted">No workflow steps configured.</div>;
+  }
+
+  return (
+    <ol className="mt-4 divide-y divide-ui-border">
+      {steps.map((step, index) => {
+        const assignedAgents = step.assignedAgentIds?.map((agentId) => agentsById.get(agentId)).filter((agent): agent is WorkflowAgentAssignment => Boolean(agent)) || [primaryAgent];
+        return (
+          <li key={step.id} className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[2.5rem_minmax(0,1fr)]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-xs font-bold text-ui-text-muted">
+              {index + 1}
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h4 className="type-row-title">{step.title}</h4>
+                  <p className="type-caption mt-1 max-w-3xl text-ui-text-muted">{step.prompt}</p>
+                </div>
+                <span className="shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 text-xs font-bold text-ui-text-muted">
+                  {step.approvalRequired ? 'Approval gate' : 'No approval gate'}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {assignedAgents.map((agent) => (
+                  <span key={agent.agentId} className="inline-flex min-h-7 items-center gap-1.5 rounded-md bg-accent-soft px-2.5 text-xs font-bold text-accent-strong">
+                    <ICONS.Bot className="h-3.5 w-3.5" />
+                    {agent.name}
+                  </span>
+                ))}
+                <span className="inline-flex min-h-7 items-center rounded-md bg-ui-surface-strong px-2.5 text-xs font-bold text-ui-text-muted">
+                  {step.allowedTools.length} tools
+                </span>
+                <span className="inline-flex min-h-7 items-center rounded-md bg-ui-surface-strong px-2.5 text-xs font-bold text-ui-text-muted">
+                  {step.contextGrants.length} context grants
+                </span>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 };
 

@@ -8,6 +8,7 @@ import { PageSearchInput } from '@/components/common/PageSearchInput';
 import { Select, SelectOption } from '@/components/common/Select';
 import { actionCardButtonClassName, cardClassName } from '@/components/common/Card';
 import { Dialog } from '@/components/common/Dialog';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { headerMotion } from '@/lib/motion';
 import { AppPaths } from '@/utils/routes';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
@@ -36,6 +37,8 @@ interface VirtualMachinesListViewProps {
   onDeleteVirtualMachine: (vm: ControlPlaneVirtualMachine) => Promise<void> | void;
   navigate: (path: string, options?: NavigateOptions) => void;
 }
+
+const deleteVmConfirmationInputClassName = formInputClassName('px-4 focus:border-status-danger/45 focus:ring-status-danger/20');
 
 export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = ({
   workspace,
@@ -386,7 +389,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                   disabled={isDeletingVm}
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3.5 text-sm text-ui-text outline-none transition focus:ring-2 focus:ring-status-danger/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className={deleteVmConfirmationInputClassName}
                 />
               </div>
               {deleteVmError && (

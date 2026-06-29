@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { InlineAlert } from '@/components/common/InlineAlert';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { Select, SelectOption } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -33,6 +35,8 @@ interface WorkspaceAiSettingsPageProps {
   showToast: (message: string) => void;
   embedded?: boolean;
 }
+
+const credentialInputClassName = formInputClassName('h-10 min-h-10 font-medium');
 
 export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({
   workspace,
@@ -108,6 +112,38 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     const allowedProviders = currentAiSettings?.allowedProviders || PROVIDERS;
     return allowedProviders.includes(behaviorDraft.defaultProvider) ? allowedProviders : [behaviorDraft.defaultProvider, ...allowedProviders];
   }, [behaviorDraft.defaultProvider, currentAiSettings?.allowedProviders]);
+  const providerOptions = useMemo<Array<SelectOption<LlmProvider>>>(
+    () => selectableProviders.map((provider) => ({
+      value: provider,
+      label: providerLabel(provider),
+      disabled: currentAiSettings ? !currentAiSettings.allowedProviders.includes(provider) : false
+    })),
+    [currentAiSettings, selectableProviders]
+  );
+  const modelOptions = useMemo<Array<SelectOption<string>>>(
+    () => selectableModels.map((model) => ({
+      value: model,
+      label: model,
+      disabled: !providerModels.includes(model)
+    })),
+    [providerModels, selectableModels]
+  );
+  const reasoningSummaryModeOptions = useMemo<Array<SelectOption<ReasoningSummaryMode>>>(
+    () => REASONING_SUMMARY_MODES.map((mode) => ({
+      value: mode,
+      label: t(reasoningModeLabel(mode)),
+      disabled: currentAiSettings ? !currentAiSettings.allowedReasoningSummaryModes.includes(mode) : false
+    })),
+    [currentAiSettings, t]
+  );
+  const reasoningEffortOptions = useMemo<Array<SelectOption<ReasoningEffort>>>(
+    () => REASONING_EFFORTS.map((effort) => ({
+      value: effort,
+      label: t(reasoningEffortLabel(effort)),
+      disabled: currentAiSettings ? !currentAiSettings.allowedReasoningEfforts.includes(effort) : false
+    })),
+    [currentAiSettings, t]
+  );
 
   const hasBehaviorChanges = Boolean(currentAiSettings && behaviorDraftChanged(currentAiSettings, behaviorDraft));
   const isReasoningPolicyDisabled = reasoningPolicyDisabled(currentAiSettings);
@@ -371,56 +407,41 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="block">
                     <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.provider')}</span>
-                    <select
-                      className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    <Select<LlmProvider>
                       value={behaviorDraft.defaultProvider}
-                      onChange={(event) => handleDefaultProviderChange(event.target.value as LlmProvider)}
+                      options={providerOptions}
+                      onChange={handleDefaultProviderChange}
                       disabled={!canManageAiSettings || !currentAiSettings || isSaving}
-                    >
-                      {selectableProviders.map((provider) => (
-                        <option key={provider} value={provider} disabled={!currentAiSettings.allowedProviders.includes(provider)}>
-                          {providerLabel(provider)}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel={t('workspaceAiSettings.provider')}
+                    />
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.model')}</span>
-                    <select
-                      className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    <Select<string>
                       value={behaviorDraft.defaultModel}
-                      onChange={(event) => {
+                      options={modelOptions}
+                      onChange={(defaultModel) => {
                         setBehaviorError('');
-                        setBehaviorDraft((current) => ({ ...current, defaultModel: event.target.value }));
+                        setBehaviorDraft((current) => ({ ...current, defaultModel }));
                       }}
                       disabled={!canManageAiSettings || !currentAiSettings || isSaving}
-                    >
-                      {selectableModels.map((model) => (
-                        <option key={model} value={model} disabled={!providerModels.includes(model)}>
-                          {model}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel={t('workspaceAiSettings.model')}
+                    />
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
                       {t('workspaceAiSettings.reasoningSummaryMode')}
                     </span>
-                    <select
-                      className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    <Select<ReasoningSummaryMode>
                       value={behaviorDraft.reasoningSummaryMode}
-                      onChange={(event) => {
+                      options={reasoningSummaryModeOptions}
+                      onChange={(reasoningSummaryMode) => {
                         setBehaviorError('');
-                        setBehaviorDraft((current) => ({ ...current, reasoningSummaryMode: event.target.value as ReasoningSummaryMode }));
+                        setBehaviorDraft((current) => ({ ...current, reasoningSummaryMode }));
                       }}
                       disabled={!canManageAiSettings || !currentAiSettings || isReasoningPolicyDisabled || isSaving}
-                    >
-                      {REASONING_SUMMARY_MODES.map((mode) => (
-                        <option key={mode} value={mode} disabled={!currentAiSettings.allowedReasoningSummaryModes.includes(mode)}>
-                          {t(reasoningModeLabel(mode))}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel={t('workspaceAiSettings.reasoningSummaryMode')}
+                    />
                     <p className="mt-2 text-xs font-medium leading-5 text-ui-text-muted">
                       {isReasoningPolicyDisabled
                         ? t('workspaceAiSettings.reasoningPolicyDisabled')
@@ -431,21 +452,16 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                     <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
                       {t('workspaceAiSettings.reasoningEffortLabel')}
                     </span>
-                    <select
-                      className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    <Select<ReasoningEffort>
                       value={behaviorDraft.reasoningEffort}
-                      onChange={(event) => {
+                      options={reasoningEffortOptions}
+                      onChange={(reasoningEffort) => {
                         setBehaviorError('');
-                        setBehaviorDraft((current) => ({ ...current, reasoningEffort: event.target.value as ReasoningEffort }));
+                        setBehaviorDraft((current) => ({ ...current, reasoningEffort }));
                       }}
                       disabled={!canManageAiSettings || !currentAiSettings || isSaving}
-                    >
-                      {REASONING_EFFORTS.map((effort) => (
-                        <option key={effort} value={effort} disabled={!currentAiSettings?.allowedReasoningEfforts.includes(effort)}>
-                          {t(reasoningEffortLabel(effort))}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel={t('workspaceAiSettings.reasoningEffortLabel')}
+                    />
                     <p className="mt-2 min-h-10 text-xs font-medium leading-5 text-ui-text-muted">
                       {behaviorDraft.reasoningSummaryMode === 'off'
                         ? t('workspaceAiSettings.reasoningEffortOffHelp')
@@ -584,7 +600,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                     { provider: providerLabel(provider) }
                                   )}
                                   placeholder={providerStatus.configured ? t('workspaceAiSettings.apiKeyRotatePlaceholder') : t('workspaceAiSettings.apiKeyAddPlaceholder')}
-                                  className="h-10 w-full rounded-lg border border-ui-border bg-ui-surface px-3 text-sm font-medium text-ui-text outline-none placeholder:text-ui-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                  className={credentialInputClassName}
                                   autoComplete="off"
                                 />
                               </label>

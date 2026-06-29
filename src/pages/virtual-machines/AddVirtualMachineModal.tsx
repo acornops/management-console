@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 
 interface AddVirtualMachineModalProps {
@@ -18,6 +19,8 @@ interface AddVirtualMachineModalProps {
   onProceedToInstructions: () => void | Promise<void>;
   onConfirmInstalled: () => void;
 }
+
+const vmNameInputClassName = formInputClassName('px-4 font-medium');
 
 export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
   isOpen,
@@ -93,7 +96,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                   value={vmName}
                   onChange={(event) => onVmNameChange(event.target.value)}
                   placeholder={t('virtualMachines.list.vmNamePlaceholder')}
-                  className="w-full rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-sm font-medium text-ui-text outline-none transition-all placeholder:text-ui-text-muted focus:border-accent/30 focus:ring-2 focus:ring-accent/10"
+                  className={vmNameInputClassName}
                 />
               </section>
 

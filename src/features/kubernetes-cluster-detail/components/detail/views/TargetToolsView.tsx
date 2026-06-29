@@ -6,6 +6,7 @@ import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { Select } from '@/components/common/Select';
 import type { SelectOption } from '@/components/common/Select';
+import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
   ControlPlaneTargetToolItem,
@@ -31,6 +32,9 @@ interface ToolDraft {
   allowedDomainsText: string;
   blockedDomainsText: string;
 }
+
+const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
+const toolDomainTextareaClassName = formTextareaClassName('mt-2');
 
 function splitDomainInput(value: string): string[] {
   return value
@@ -389,7 +393,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   value={toolSearch}
                   onChange={(event) => setToolSearch(event.target.value)}
                   placeholder={t('tools.searchTools')}
-                  className="w-full rounded-lg border border-transparent bg-ui-bg py-3 pl-11 pr-4 text-sm text-ui-text outline-none transition-colors placeholder:text-ui-text-muted/60 focus-visible:border-accent/30 focus-visible:ring-2 focus-visible:ring-accent/10"
+                  className={toolSearchInputClassName}
                 />
               </div>
               <Select<typeof toolFilter>
@@ -499,7 +503,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   <textarea
                     id="tool-allowed-domains"
                     rows={6}
-                    className="mt-2 w-full resize-y rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text shadow-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
+                    className={toolDomainTextareaClassName}
                     value={draft.allowedDomainsText}
                     disabled={saving}
                     readOnly={!canEditTools}
@@ -518,7 +522,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   <textarea
                     id="tool-blocked-domains"
                     rows={6}
-                    className="mt-2 w-full resize-y rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text shadow-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
+                    className={toolDomainTextareaClassName}
                     value={draft.blockedDomainsText}
                     disabled={saving}
                     readOnly={!canEditTools}

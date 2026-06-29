@@ -6,6 +6,7 @@ import { Button } from '@/components/common/Button';
 import { TableLoadingRows } from '@/components/common/Loading';
 import { Select, SelectOption } from '@/components/common/Select';
 import { Tooltip } from '@/components/common/Tooltip';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { fadeTransition, headerMotion } from '@/lib/motion';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
@@ -26,6 +27,8 @@ interface WorkspaceMembersPageProps {
   onUpdateMemberRole?: (member: ProjectMember, role: ProjectMember['role']) => Promise<void> | void;
   onRemoveMember?: (member: ProjectMember) => Promise<void> | void;
 }
+
+const memberSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
 
 export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   workspace,
@@ -373,7 +376,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder={t('members.searchPlaceholder')}
-              className="w-full rounded-lg border border-transparent bg-ui-bg py-3 pl-11 pr-4 text-sm text-ui-text outline-none transition-colors placeholder:text-ui-text-muted/60 focus-visible:border-accent/30 focus-visible:ring-2 focus-visible:ring-accent/10"
+              className={memberSearchInputClassName}
             />
           </div>
           <Select<typeof roleFilter>

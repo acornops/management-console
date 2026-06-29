@@ -184,11 +184,21 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).not.toContain('border border-ui-border bg-ui-bg p-3 ${roomy');
   });
 
+  it('gives workflow create text boxes a polished shared field treatment', () => {
+    expect(workflowsPage).toContain("import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';");
+    expect(workflowsPage).toContain("const createWorkflowInputClass = formInputClassName('mt-2');");
+    expect(workflowsPage).toContain("const createWorkflowTextareaClass = formTextareaClassName('mt-2 min-h-36');");
+    expect(workflowsPage).toContain('className={createWorkflowInputClass}');
+    expect(workflowsPage).toContain('className={createWorkflowTextareaClass}');
+    expect(workflowsPage).not.toContain('className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent"');
+  });
+
   it('renders every workflow subtab through the same operational panel pattern', () => {
     expect(workflowsPage).toContain('const WorkflowTabPanel');
     expect(workflowsPage).toContain('const WorkflowSection');
     expect(workflowsPage.match(/<WorkflowTabPanel\b/g) ?? []).toHaveLength(6);
     expect(workflowsPage).toContain('aria-label="Workflow section tabs"');
+    expect(workflowsPage).not.toContain('space-y-5 rounded-md border border-ui-border bg-ui-surface px-4 py-4 shadow-sm sm:px-5 sm:py-5');
     expect(workflowsPage).not.toContain('max-w-4xl');
     expect(workflowsPage).not.toContain('max-w-5xl');
   });
@@ -208,6 +218,51 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).not.toContain('aria-label="Workflow category filters"');
     expect(workflowsPage).not.toContain('Workflow categories');
     expect(workflowsPage).not.toContain('rounded-lg border border-ui-border bg-ui-surface p-3 shadow-sm');
+  });
+
+  it('uses guided launch-decision copy for high-stakes workflow starts', () => {
+    expect(workflowsPage).toContain('Review launch readiness before starting agent runs: assigned owner, target scope, capability gate, approvals, and last execution.');
+    expect(workflowsPage).toContain('Confirm the agent owner, runtime access, approval gates, and operator message before launching.');
+    expect(workflowsPage).toContain('Resolve this before launch:');
+  });
+
+  it('places launch readiness before workflow tabs', () => {
+    expect(workflowsPage).toContain('WorkflowLaunchReadiness');
+    expect(workflowsPage).toContain('aria-label="Workflow launch readiness"');
+    expect(workflowsPage).toContain('Launch decision');
+    expect(workflowsPage).toContain('Ready to launch');
+    expect(workflowsPage).toContain('Needs attention before launch');
+    expect(workflowsPage).toContain('Review capability gate');
+    expect(workflowsPage.indexOf('<WorkflowLaunchReadiness')).toBeLessThan(
+      workflowsPage.indexOf('aria-label="Workflow section tabs"')
+    );
+  });
+
+  it('removes duplicate workflow header facts already covered by launch readiness', () => {
+    expect(workflowsPage).not.toContain('Primary agent: {selectedWorkflow.primaryAgent.name}');
+    expect(workflowsPage).not.toContain('Supporting agents: {selectedWorkflow.supportingAgents.length}');
+    expect(workflowsPage).not.toContain('Last run: {selectedWorkflow.lastRun}');
+    expect(workflowsPage).not.toContain('h-12 w-12 shrink-0');
+  });
+
+  it('hardens launch and create decisions with explicit validation context', () => {
+    expect(workflowsPage).toContain('id="workflow-launch-blocker"');
+    expect(workflowsPage).toContain("aria-describedby={launchBlocker ? 'workflow-launch-blocker' : undefined}");
+    expect(workflowsPage).toContain('Pre-save checklist');
+    expect(workflowsPage).toContain('Missing: workflow name');
+    expect(workflowsPage).toContain('Ready: workflow name');
+  });
+
+  it('adapts workflow selection guidance for narrow screens', () => {
+    expect(workflowsPage).toContain('lg:hidden');
+    expect(workflowsPage).toContain('Selected workflow:');
+    expect(workflowsPage).toContain('Select a workflow to review launch readiness before launching.');
+    expect(workflowsPage).toContain('{selectedWorkflow.name}');
+  });
+
+  it('polishes launch readiness changes for assistive technology', () => {
+    expect(workflowsPage).toContain('aria-live="polite"');
+    expect(workflowsPage).toContain('aria-atomic="true"');
   });
 
   it('keeps workflow page actions in the route header like agents', () => {

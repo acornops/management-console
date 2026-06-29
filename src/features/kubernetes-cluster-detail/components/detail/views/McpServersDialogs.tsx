@@ -6,9 +6,14 @@ import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { Select, SelectOption } from '@/components/common/Select';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { ClusterToolCatalogItem, ClusterToolCatalogServer } from '@/types';
 import { getToolLabel, ServerFormState } from '@/features/kubernetes-cluster-detail/components/detail/views/mcpServersCatalog';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
+
+const mcpServerInputClassName = formInputClassName('px-4 font-medium');
+const mcpServerSecretInputClassName = formInputClassName('px-4 pr-11 font-medium');
+const mcpPublicHeaderInputClassName = formInputClassName('min-h-10 min-w-0 font-medium');
 
 export const McpServerFormDialog: React.FC<{
   mode: 'create' | 'edit';
@@ -223,7 +228,7 @@ export const McpServerFormDialog: React.FC<{
             <input
               value={form.name}
               onChange={(event) => onFormChange((current) => ({ ...current, name: event.target.value }))}
-              className="w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
+              className={mcpServerInputClassName}
             />
           </label>
           <label className="space-y-1">
@@ -233,7 +238,7 @@ export const McpServerFormDialog: React.FC<{
               onChange={(event) => onFormChange((current) => ({ ...current, url: event.target.value }))}
               placeholder={t('mcpServers.serverUrlPlaceholder')}
               disabled={urlReadOnly}
-              className="w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10 disabled:cursor-not-allowed disabled:opacity-70"
+              className={mcpServerInputClassName}
             />
           </label>
         </div>
@@ -285,7 +290,7 @@ export const McpServerFormDialog: React.FC<{
                     value={form.headerName}
                     onChange={(event) => onFormChange((current) => ({ ...current, headerName: event.target.value }))}
                     placeholder={t('mcpServers.headerNamePlaceholder')}
-                    className="w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
+                    className={mcpServerInputClassName}
                   />
                 </label>
               )}
@@ -299,7 +304,7 @@ export const McpServerFormDialog: React.FC<{
                     onChange={(event) => onFormChange((current) => ({ ...current, secretValue: event.target.value }))}
                     type={showSecretValue ? 'text' : 'password'}
                     autoComplete="off"
-                    className="w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 pr-11 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
+                    className={mcpServerSecretInputClassName}
                   />
                   <button
                     type="button"
@@ -353,13 +358,13 @@ export const McpServerFormDialog: React.FC<{
                       value={header.name}
                       onChange={(event) => updatePublicHeader(header.id, { name: event.target.value })}
                       placeholder={t('mcpServers.publicHeaderNamePlaceholder')}
-                      className="min-w-0 rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
+                      className={mcpPublicHeaderInputClassName}
                     />
                     <input
                       value={header.value}
                       onChange={(event) => updatePublicHeader(header.id, { value: event.target.value })}
                       placeholder={t('mcpServers.publicHeaderValuePlaceholder')}
-                      className="min-w-0 rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
+                      className={mcpPublicHeaderInputClassName}
                     />
                     <button
                       type="button"

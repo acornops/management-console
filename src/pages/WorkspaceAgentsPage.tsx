@@ -1,144 +1,101 @@
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/common/Button';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { SelectOption } from '@/components/common/Select';
 import { ICONS } from '@/constants';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   createDefaultAgentDefinitions,
   filterAgentDefinitions,
-  getAgentCapabilitySummary,
+  getAgentReadinessLabel,
+  getAgentReviewSignals,
+  targetScopeFromTokens,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
-import { createAgent as createWorkspaceAgent, listWorkspaceAgents, testAgent as testWorkspaceAgent, type AgentDefinitionApi } from '@/services/control-plane/agentApi';
-import type { Workspace } from '@/types';
-
-interface WorkspaceAgentsPageProps {
-  workspace: Workspace;
-}
-
-type AgentDraft = {
-  name: string;
-  description: string;
-  instructions: string;
-  providerType: AgentDefinition['providerType'];
-};
-
-type CreateAgentStep = 1 | 2 | 3;
-type LocalNotice = { tone: 'success' | 'danger'; message: string };
-
-const createAgentSteps: Array<{ step: CreateAgentStep; label: string; title: string; summary: string }> = [
-  { step: 1, label: 'Step 1', title: 'Identity', summary: 'Name and purpose' },
-  { step: 2, label: 'Step 2', title: 'Capabilities', summary: 'Tools and skills' },
-  { step: 3, label: 'Step 3', title: 'Review', summary: 'Confirm scope' }
-];
-
-const statusTone = (status: AgentDefinition['status']): 'success' | 'warning' | 'neutral' => {
-  if (status === 'active') return 'success';
-  if (status === 'draft' || status === 'paused') return 'warning';
-  return 'neutral';
-};
-
-const healthTone = (status: AgentDefinition['health']['status']): 'success' | 'warning' | 'neutral' => {
-  if (status === 'healthy') return 'success';
-  if (status === 'degraded') return 'warning';
-  return 'neutral';
-};
-
-const splitInput = (value: string): string[] =>
-  value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
-
-const targetScopeTokens = (scope: AgentDefinitionApi['targetScope']): string[] => {
-  if (Array.isArray(scope)) return scope;
-  if (!scope || typeof scope !== 'object') return ['workspace:current'];
-  return [
-    scope.type ? `scope:${scope.type}` : '',
-    ...(scope.targetTypes || []).map((targetType) => `target-type:${targetType}`),
-    ...(scope.targetIds || []).map((targetId) => `target:${targetId}`)
-  ].filter(Boolean);
-};
-
-const approvalPolicyFor = (policy: AgentDefinitionApi['approvalPolicy']): AgentDefinition['approvalPolicy'] => {
-  const mode = typeof policy?.mode === 'string' ? policy.mode : undefined;
-  return {
-    sensitiveActions: mode === 'none' ? 'allowed' : 'approval_required',
-    writeActions: policy?.writeToolsRequireApproval === false ? 'allowed' : 'approval_required'
-  };
-};
-
-const trustPolicyFor = (policy: AgentDefinitionApi['trustPolicy'], providerType: AgentDefinition['providerType']): AgentDefinition['trustPolicy'] => ({
-  boundary: typeof policy?.level === 'string' ? `${policy.level} trust boundary` : providerType === 'external' ? 'External provider requires approval' : 'Internal AcornOps runtime',
-  dataEgress: policy?.allowExternalData === true ? 'External data allowed by policy' : 'Workspace approved context only'
-});
-
-const mapApiAgent = (item: AgentDefinitionApi, fallback: AgentDefinition, workspaceName: string): AgentDefinition => {
-  const providerType = item.providerType || (item.source === 'system' ? 'internal' : fallback.providerType);
-  const contextScope = item.contextGrants || item.contextScope || fallback.contextScope;
-  return {
-    ...fallback,
-    id: item.id,
-    workspaceId: item.workspaceId,
-    name: item.name,
-    description: item.description || fallback.description,
-    instructions: item.instructions || fallback.instructions,
-    status: item.status || fallback.status,
-    providerType,
-    owner: item.ownerUserId || fallback.owner || workspaceName,
-    version: item.version || fallback.version,
-    mcpServers: item.mcpServers || [],
-    tools: item.tools || [],
-    skills: item.skills || [],
-    targetScope: targetScopeTokens(item.targetScope),
-    contextScope,
-    approvalPolicy: approvalPolicyFor(item.approvalPolicy),
-    trustPolicy: trustPolicyFor(item.trustPolicy, providerType),
-    capabilities: item.capabilities || fallback.capabilities,
-    workflowsUsingAgent: item.workflowsUsingAgent || fallback.workflowsUsingAgent,
-    triggers: item.triggers || fallback.triggers,
-    auditHistory: fallback.auditHistory,
-    health: {
-      status: item.activity?.lastStatus === 'failed' ? 'degraded' : item.status === 'active' ? 'healthy' : fallback.health.status,
-      summary: item.activity?.lastRunAt ? `Last run ${item.activity.lastRunAt}` : fallback.health.summary
-    }
-  };
-};
-
-const canManageWorkspaceAgents = (workspace: Workspace): boolean => {
-  const permissions = workspace.permissions as Workspace['permissions'] & {
-    manage_agents?: boolean;
-    manage_external_agents?: boolean;
-  };
-  return Boolean(permissions?.manage_agents || permissions?.manage_external_agents || permissions?.manage_mcp);
-};
+import { AgentReviewQueue, WorkspaceAgentsCatalog, type ReviewFilter } from '@/pages/WorkspaceAgentsCatalog';
+import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
+import { CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
+import {
+  canManageWorkspaceAgents,
+  createAgentEditDraft,
+  createFallbackAgentCapabilityOptions,
+  getAgentEditChangeSummary,
+  mapApiAgent,
+  normalizeAgentCapabilityOptions,
+  Notice,
+  splitInput,
+  type AgentCapabilityOptions,
+  type AgentDraft,
+  type AgentEditDraft,
+  type EventTriggerType,
+  type LocalNotice,
+  type WorkspaceAgentsPageProps
+} from '@/pages/WorkspaceAgentsPage.helpers';
+import {
+  createAgent as createWorkspaceAgent,
+  createAgentTrigger,
+  createAgentVersion as createWorkspaceAgentVersion,
+  deleteAgent as deleteWorkspaceAgent,
+  deleteAgentTrigger,
+  listAgentActivity,
+  listAgentVersions,
+  listWorkspaceAgents,
+  restoreAgentVersion,
+  testAgent as testWorkspaceAgent,
+  updateAgent as updateWorkspaceAgent,
+  updateAgentTrigger,
+  type AgentActivityRecordApi,
+  type AgentTriggerDefinitionApi,
+  type AgentVersionSnapshotApi
+} from '@/services/control-plane/agentApi';
+import { listWorkflowOptions } from '@/services/control-plane/workflowApi';
+import type { ProjectMember } from '@/types';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace }) => {
   const fallbackAgents = useMemo(() => createDefaultAgentDefinitions(workspace.id), [workspace.id]);
+  const fallbackCapabilityOptions = useMemo(() => createFallbackAgentCapabilityOptions(fallbackAgents), [fallbackAgents]);
   const [agents, setAgents] = useState<AgentDefinition[]>(fallbackAgents);
+  const [agentCapabilityOptions, setAgentCapabilityOptions] = useState<AgentCapabilityOptions>(fallbackCapabilityOptions);
+  const [ownerUserOptions, setOwnerUserOptions] = useState<ProjectMember[]>(workspace.members || []);
   const [selectedAgentId, setSelectedAgentId] = useState(fallbackAgents[0]?.id || '');
   const [query, setQuery] = useState('');
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all');
   const [agentLoadError, setAgentLoadError] = useState('');
+  const [agentCapabilityLoadError, setAgentCapabilityLoadError] = useState('');
+  const [ownerUserLoadError, setOwnerUserLoadError] = useState('');
   const [createPanelOpen, setCreatePanelOpen] = useState(false);
-  const [createAgentStep, setCreateAgentStep] = useState<CreateAgentStep>(1);
-  const [createDraft, setCreateDraft] = useState<AgentDraft>({
-    name: '',
-    description: '',
-    instructions: '',
-    providerType: 'internal'
-  });
+  const [editPanelOpen, setEditPanelOpen] = useState(false);
+  const [editingAgentId, setEditingAgentId] = useState('');
+  const [createDraft, setCreateDraft] = useState<AgentDraft>({ name: '', description: '', instructions: '', providerType: 'internal' });
+  const [editDraft, setEditDraft] = useState<AgentEditDraft | null>(null);
   const [draftMcpServers, setDraftMcpServers] = useState('');
   const [draftTools, setDraftTools] = useState('');
   const [draftSkills, setDraftSkills] = useState('');
   const [localNotice, setLocalNotice] = useState<LocalNotice | null>(null);
   const [testingAgentId, setTestingAgentId] = useState('');
+  const [agentCompiledScopePreviews, setAgentCompiledScopePreviews] = useState<Record<string, Record<string, unknown>>>({});
+  const [agentVersionHistories, setAgentVersionHistories] = useState<Record<string, AgentVersionSnapshotApi[]>>({});
   const [creatingAgent, setCreatingAgent] = useState(false);
+  const [updatingAgentId, setUpdatingAgentId] = useState('');
+  const [agentVersionAction, setAgentVersionAction] = useState('');
+  const [agentActivityAction, setAgentActivityAction] = useState('');
+  const [agentTriggerAction, setAgentTriggerAction] = useState('');
+  const [disableConfirmAgentId, setDisableConfirmAgentId] = useState('');
+  const [deleteConfirmAgentId, setDeleteConfirmAgentId] = useState('');
+  const [newManualTriggerName, setNewManualTriggerName] = useState('');
+  const [newScheduleTriggerName, setNewScheduleTriggerName] = useState('');
+  const [newScheduleTriggerCron, setNewScheduleTriggerCron] = useState('');
+  const [newScheduleTriggerTimezone, setNewScheduleTriggerTimezone] = useState('UTC');
+  const [newEventTriggerName, setNewEventTriggerName] = useState('');
+  const [newEventTriggerType, setNewEventTriggerType] = useState<EventTriggerType>('webhook');
+  const [newEventTriggerFilter, setNewEventTriggerFilter] = useState('');
   const canManageAgents = canManageWorkspaceAgents(workspace);
-
   React.useEffect(() => {
     let mounted = true;
     setAgents(fallbackAgents);
     setSelectedAgentId((current) => current || fallbackAgents[0]?.id || '');
     setAgentLoadError('');
-
-    listWorkspaceAgents(workspace.id)
+    listWorkspaceAgents(workspace.id, { includeInactive: true })
       .then((items) => {
         if (!mounted || items.length === 0) return;
         const mapped = items.map((item, index) => mapApiAgent(item, fallbackAgents[index % fallbackAgents.length], workspace.name));
@@ -146,20 +103,93 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         setSelectedAgentId((current) => mapped.some((agent) => agent.id === current) ? current : mapped[0].id);
       })
       .catch((error) => {
-        if (!mounted) return;
-        setAgentLoadError(error instanceof Error ? error.message : 'Unable to load workspace agents');
+        if (mounted) setAgentLoadError(error instanceof Error ? error.message : 'Unable to load workspace agents');
       });
-
     return () => {
       mounted = false;
     };
-  }, [fallbackAgents, workspace.id]);
-
-  const visibleAgents = useMemo(() => filterAgentDefinitions(agents, query), [agents, query]);
+  }, [fallbackAgents, workspace.id, workspace.name]);
+  React.useEffect(() => {
+    let mounted = true;
+    setAgentCapabilityOptions(fallbackCapabilityOptions);
+    setAgentCapabilityLoadError('');
+    listWorkflowOptions(workspace.id)
+      .then((catalog) => {
+        if (mounted) setAgentCapabilityOptions(normalizeAgentCapabilityOptions(catalog, fallbackCapabilityOptions));
+      })
+      .catch((error) => {
+        if (mounted) setAgentCapabilityLoadError(error instanceof Error ? error.message : 'Unable to load capability options');
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [fallbackCapabilityOptions, workspace.id]);
+  React.useEffect(() => {
+    let mounted = true;
+    setOwnerUserOptions(workspace.members || []);
+    setOwnerUserLoadError('');
+    if (workspace.permissions?.read_members !== true) {
+      return () => {
+        mounted = false;
+      };
+    }
+    controlPlaneApi.listWorkspaceMembers(workspace.id, { limit: 50 })
+      .then((page) => {
+        if (mounted) setOwnerUserOptions(page.items);
+      })
+      .catch((error) => {
+        if (mounted) setOwnerUserLoadError(error instanceof Error ? error.message : 'Unable to load workspace members');
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [workspace.id, workspace.members, workspace.permissions?.read_members]);
+  const visibleAgents = useMemo(() => {
+    const queriedAgents = filterAgentDefinitions(agents, query);
+    if (reviewFilter === 'all') return queriedAgents;
+    return queriedAgents.filter((agent) => {
+      if (reviewFilter === 'attention') return getAgentReadinessLabel(agent) !== 'Ready';
+      if (reviewFilter === 'production') return getAgentReviewSignals(agent).includes('Broad target scope');
+      if (reviewFilter === 'write_gated') return agent.approvalPolicy.writeActions === 'approval_required';
+      return agent.workflowsUsingAgent.length === 0;
+    });
+  }, [agents, query, reviewFilter]);
   const selectedAgent = visibleAgents.find((agent) => agent.id === selectedAgentId) || visibleAgents[0] || agents[0];
-
-  const testSelectedAgent = async () => {
+  const reviewQueue = useMemo(() => {
+    const agentsNeedingAttention = agents.filter((agent) => getAgentReadinessLabel(agent) !== 'Ready').length;
+    const broadTargetScope = agents.filter((agent) => getAgentReviewSignals(agent).includes('Broad target scope')).length;
+    const staleReadiness = agents.filter((agent) => getAgentReviewSignals(agent).includes('No recent readiness test')).length;
+    const disabledReferenced = agents.filter((agent) => agent.status === 'disabled' && agent.workflowsUsingAgent.length > 0).length;
+    return { agentsNeedingAttention, broadTargetScope, staleReadiness, disabledReferenced };
+  }, [agents]);
+  const selectedCompiledScopePreview = selectedAgent ? agentCompiledScopePreviews[selectedAgent.id] : undefined;
+  const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
+  const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
+  const ownerSelectOptions = useMemo<Array<SelectOption<string>>>(() => [
+    { value: '', label: 'Keep current owner' },
+    ...ownerUserOptions
+      .filter((member) => Boolean(member.userId))
+      .map((member) => ({ value: member.userId as string, label: `${member.name || member.email} (${member.role})` }))
+  ], [ownerUserOptions]);
+  React.useEffect(() => {
     if (!selectedAgent) return;
+    let mounted = true;
+    listAgentVersions(workspace.id, selectedAgent.id)
+      .then((versions) => {
+        if (mounted) setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: versions }));
+      })
+      .catch(() => {
+        if (mounted) setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: current[selectedAgent.id] || [] }));
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [selectedAgent?.id, workspace.id]);
+  const updateSelectedAgent = (agentId: string, updater: (agent: AgentDefinition) => AgentDefinition) => {
+    setAgents((current) => current.map((agent) => agent.id === agentId ? updater(agent) : agent));
+  };
+  const testSelectedAgent = async () => {
+    if (!selectedAgent || !canManageAgents) return;
     setTestingAgentId(selectedAgent.id);
     setLocalNotice(null);
     try {
@@ -167,55 +197,271 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         approvedContextGrants: selectedAgent.contextScope,
         inputContext: { source: 'management_console' }
       });
-      setLocalNotice({ tone: 'success', message: `${selectedAgent.name} test queued as ${result.activity.id}.` });
-      setAgents((current) => current.map((agent) => agent.id === selectedAgent.id
-        ? {
-            ...agent,
-            auditHistory: [
-              { id: result.activity.id, summary: `Test run ${result.activity.status}`, occurredAt: result.activity.createdAt },
-              ...agent.auditHistory
-            ],
-            health: { status: 'healthy', summary: `Test queued ${result.activity.createdAt}` }
-          }
-        : agent));
+      setAgentCompiledScopePreviews((current) => ({ ...current, [selectedAgent.id]: result.compiledScope }));
+      setLocalNotice({ tone: 'success', message: `Readiness test queued for ${selectedAgent.name}. Check recent activity for ${result.activity.id}.` });
+      updateSelectedAgent(selectedAgent.id, (agent) => ({
+        ...agent,
+        auditHistory: [{ id: result.activity.id, summary: `Test run ${result.activity.status}`, occurredAt: result.activity.createdAt }, ...agent.auditHistory],
+        health: { status: 'healthy', summary: `Test queued ${result.activity.createdAt}` }
+      }));
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Unable to test agent' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Readiness test could not be queued.' });
     } finally {
       setTestingAgentId('');
     }
   };
-
   const resetCreateAgentDraft = () => {
     setCreateDraft({ name: '', description: '', instructions: '', providerType: 'internal' });
     setDraftMcpServers('');
     setDraftTools('');
     setDraftSkills('');
-    setCreateAgentStep(1);
   };
-
-  const closeCreateAgentDrawer = () => {
-    setCreatePanelOpen(false);
-    setCreateAgentStep(1);
-  };
-
+  const closeCreateAgentDrawer = () => setCreatePanelOpen(false);
   const handleCreateAgentDrawerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') closeCreateAgentDrawer();
   };
-
-  const openCreateAgentDrawer = () => {
-    setCreatePanelOpen(true);
-    setCreateAgentStep(1);
+  const closeEditAgentDrawer = () => {
+    setEditPanelOpen(false);
+    setEditingAgentId('');
+    setEditDraft(null);
   };
-
+  const handleEditAgentDrawerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') closeEditAgentDrawer();
+  };
+  const openEditAgentDrawer = (agent: AgentDefinition) => {
+    setEditingAgentId(agent.id);
+    setEditDraft(createAgentEditDraft(agent));
+    setEditPanelOpen(true);
+  };
+  const reviewSelectedAgentAccess = () => {
+    document.getElementById('agent-access-policy')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
+  const saveSelectedAgentVersion = async () => {
+    if (!selectedAgent || !canManageAgents) return;
+    setAgentVersionAction(selectedAgent.id);
+    setLocalNotice(null);
+    try {
+      const version = await createWorkspaceAgentVersion(workspace.id, selectedAgent.id);
+      setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: [version, ...(current[selectedAgent.id] || []).filter((item) => item.id !== version.id)] }));
+      updateSelectedAgent(selectedAgent.id, (agent) => ({
+        ...agent,
+        version: version.version,
+        auditHistory: [{ id: version.id, summary: `Version snapshot saved as v${version.version}.`, occurredAt: version.createdAt }, ...agent.auditHistory]
+      }));
+      setLocalNotice({ tone: 'success', message: `Saved v${version.version} as the current rollback point.` });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not save a version snapshot for this agent.' });
+    } finally {
+      setAgentVersionAction('');
+    }
+  };
+  const refreshSelectedAgentVersions = async () => {
+    if (!selectedAgent) return;
+    setAgentVersionAction(`${selectedAgent.id}:history`);
+    setLocalNotice(null);
+    try {
+      const versions = await listAgentVersions(workspace.id, selectedAgent.id);
+      setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: versions }));
+      setLocalNotice({ tone: 'success', message: 'Version history refreshed.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not refresh version history.' });
+    } finally {
+      setAgentVersionAction('');
+    }
+  };
+  const restoreSelectedAgentVersion = async (version: AgentVersionSnapshotApi) => {
+    if (!selectedAgent || !canManageAgents) return;
+    setAgentVersionAction(`${selectedAgent.id}:restore:${version.id}`);
+    setLocalNotice(null);
+    try {
+      const restored = await restoreAgentVersion(workspace.id, selectedAgent.id, version.id);
+      const mapped = mapApiAgent(restored, selectedAgent, workspace.name);
+      setAgents((current) => current.map((agent) => agent.id === mapped.id ? {
+        ...mapped,
+        auditHistory: [{ id: `${version.id}:restore`, summary: `Restored from saved v${version.version}.`, occurredAt: new Date().toISOString() }, ...agent.auditHistory]
+      } : agent));
+      setSelectedAgentId(mapped.id);
+      setLocalNotice({ tone: 'success', message: `Restored v${version.version}. Run readiness before assigning this agent to workflows.` });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not restore that version.' });
+    } finally {
+      setAgentVersionAction('');
+    }
+  };
+  const activitySummary = (activity: AgentActivityRecordApi): string => `Activity ${activity.status} on v${activity.agentVersion}`;
+  const refreshSelectedAgentActivity = async () => {
+    if (!selectedAgent) return;
+    setAgentActivityAction(selectedAgent.id);
+    setLocalNotice(null);
+    try {
+      const activity = await listAgentActivity(workspace.id, selectedAgent.id);
+      updateSelectedAgent(selectedAgent.id, (agent) => ({
+        ...agent,
+        auditHistory: activity.map((record) => ({ id: record.id, summary: activitySummary(record), occurredAt: record.updatedAt || record.createdAt }))
+      }));
+      setLocalNotice({ tone: 'success', message: 'Recent activity refreshed.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not refresh recent activity.' });
+    } finally {
+      setAgentActivityAction('');
+    }
+  };
+  const createManualTrigger = async () => {
+    if (!selectedAgent || !canManageAgents) return;
+    setAgentTriggerAction(`${selectedAgent.id}:create`);
+    setLocalNotice(null);
+    try {
+      const trigger = await createAgentTrigger(workspace.id, selectedAgent.id, { type: 'manual', enabled: true, name: newManualTriggerName.trim() || 'Manual run' });
+      updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: [trigger, ...agent.triggers] }));
+      setNewManualTriggerName('');
+      setLocalNotice({ tone: 'success', message: 'Manual trigger added and enabled.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not add the manual trigger.' });
+    } finally {
+      setAgentTriggerAction('');
+    }
+  };
+  const createScheduleTrigger = async () => {
+    if (!selectedAgent || !canManageAgents || !newScheduleTriggerCron.trim()) return;
+    setAgentTriggerAction(`${selectedAgent.id}:schedule`);
+    setLocalNotice(null);
+    try {
+      const trigger = await createAgentTrigger(workspace.id, selectedAgent.id, {
+        type: 'schedule',
+        enabled: true,
+        name: newScheduleTriggerName.trim() || 'Scheduled run',
+        schedule: { cron: newScheduleTriggerCron.trim(), timezone: newScheduleTriggerTimezone.trim() || 'UTC' }
+      });
+      updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: [trigger, ...agent.triggers] }));
+      setNewScheduleTriggerName('');
+      setNewScheduleTriggerCron('');
+      setNewScheduleTriggerTimezone('UTC');
+      setLocalNotice({ tone: 'success', message: 'Scheduled trigger added and enabled.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not add the scheduled trigger.' });
+    } finally {
+      setAgentTriggerAction('');
+    }
+  };
+  const createEventTrigger = async () => {
+    if (!selectedAgent || !canManageAgents) return;
+    let eventFilter: Record<string, unknown> | undefined;
+    if (newEventTriggerFilter.trim()) {
+      try {
+        const parsed = JSON.parse(newEventTriggerFilter);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('invalid');
+        eventFilter = parsed as Record<string, unknown>;
+      } catch {
+        setLocalNotice({ tone: 'danger', message: 'Event filter must be a JSON object, for example {"eventType":"deployment.completed"}.' });
+        return;
+      }
+    }
+    setAgentTriggerAction(`${selectedAgent.id}:event`);
+    setLocalNotice(null);
+    try {
+      const trigger = await createAgentTrigger(workspace.id, selectedAgent.id, {
+        type: newEventTriggerType,
+        enabled: true,
+        name: newEventTriggerName.trim() || newEventTriggerType.replaceAll('_', ' '),
+        eventFilter
+      });
+      updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: [trigger, ...agent.triggers] }));
+      setNewEventTriggerName('');
+      setNewEventTriggerFilter('');
+      setLocalNotice({ tone: 'success', message: 'Event trigger added and enabled.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not add the event trigger.' });
+    } finally {
+      setAgentTriggerAction('');
+    }
+  };
+  const replaceAgentTrigger = (agent: AgentDefinition, trigger: AgentTriggerDefinitionApi): AgentDefinition => ({
+    ...agent,
+    triggers: agent.triggers.map((item) => item.id === trigger.id ? trigger : item)
+  });
+  const toggleAgentTrigger = async (trigger: AgentTriggerDefinitionApi) => {
+    if (!selectedAgent || !canManageAgents) return;
+    setAgentTriggerAction(`${selectedAgent.id}:${trigger.id}`);
+    setLocalNotice(null);
+    try {
+      const updated = await updateAgentTrigger(workspace.id, selectedAgent.id, trigger.id, { enabled: !trigger.enabled });
+      updateSelectedAgent(selectedAgent.id, (agent) => replaceAgentTrigger(agent, updated));
+      setLocalNotice({ tone: 'success', message: updated.enabled ? 'Trigger enabled for this agent.' : 'Trigger disabled for this agent.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update that trigger.' });
+    } finally {
+      setAgentTriggerAction('');
+    }
+  };
+  const deleteAgentTriggerForSelectedAgent = async (trigger: AgentTriggerDefinitionApi) => {
+    if (!selectedAgent || !canManageAgents) return;
+    setAgentTriggerAction(`${selectedAgent.id}:${trigger.id}`);
+    setLocalNotice(null);
+    try {
+      await deleteAgentTrigger(workspace.id, selectedAgent.id, trigger.id);
+      updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: agent.triggers.filter((item) => item.id !== trigger.id) }));
+      setLocalNotice({ tone: 'success', message: 'Trigger deleted. Workflow assignments were not changed.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not delete that trigger.' });
+    } finally {
+      setAgentTriggerAction('');
+    }
+  };
+  const disableSelectedAgent = async () => {
+    if (!selectedAgent || !canManageAgents) return;
+    setUpdatingAgentId(selectedAgent.id);
+    setLocalNotice(null);
+    try {
+      const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { status: 'disabled' });
+      updateSelectedAgent(selectedAgent.id, () => mapApiAgent(updated, selectedAgent, workspace.name));
+      setDisableConfirmAgentId('');
+      setLocalNotice({ tone: 'success', message: 'Agent disabled. Existing workflow assignments still reference it until you update them.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not disable this agent.' });
+    } finally {
+      setUpdatingAgentId('');
+    }
+  };
+  const reactivateSelectedAgent = async () => {
+    if (!selectedAgent || !canManageAgents) return;
+    setUpdatingAgentId(selectedAgent.id);
+    setLocalNotice(null);
+    try {
+      const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { status: 'active' });
+      updateSelectedAgent(selectedAgent.id, () => mapApiAgent(updated, selectedAgent, workspace.name));
+      setLocalNotice({ tone: 'success', message: 'Agent reactivated. Run readiness before assigning it to new workflows.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not reactivate this agent.' });
+    } finally {
+      setUpdatingAgentId('');
+    }
+  };
+  const deleteSelectedAgent = async () => {
+    if (!selectedAgent || !canManageAgents) return;
+    setUpdatingAgentId(selectedAgent.id);
+    setLocalNotice(null);
+    try {
+      await deleteWorkspaceAgent(workspace.id, selectedAgent.id);
+      const remainingAgents = agents.filter((agent) => agent.id !== selectedAgent.id);
+      setAgents(remainingAgents);
+      setSelectedAgentId(remainingAgents[0]?.id || '');
+      setDeleteConfirmAgentId('');
+      setLocalNotice({ tone: 'success', message: 'Agent deleted. Workflow assignments were not changed.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not delete this agent.' });
+    } finally {
+      setUpdatingAgentId('');
+    }
+  };
   const createControlPlaneAgent = async () => {
-    if (!createDraft.name.trim()) return;
+    if (!createDraft.name.trim() || !createDraft.description.trim()) return;
     setCreatingAgent(true);
     setLocalNotice(null);
     try {
       const created = await createWorkspaceAgent(workspace.id, {
         name: createDraft.name.trim(),
-        description: createDraft.description.trim() || 'Durable workspace agent configured from the console.',
-        instructions: createDraft.instructions.trim() || createDraft.description.trim() || `Operate as ${createDraft.name.trim()}.`,
+        description: createDraft.description.trim(),
+        instructions: createDraft.instructions.trim() || createDraft.description.trim(),
         providerType: createDraft.providerType,
         mcpServers: splitInput(draftMcpServers),
         tools: splitInput(draftTools),
@@ -227,13 +473,45 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const mapped = mapApiAgent(created, fallbackAgents[0], workspace.name);
       setAgents((current) => [mapped, ...current.filter((agent) => agent.id !== mapped.id)]);
       setSelectedAgentId(mapped.id);
-      setLocalNotice({ tone: 'success', message: 'Agent saved to control plane.' });
+      setLocalNotice({ tone: 'success', message: 'Agent saved with restricted trust and approval required for write tools.' });
       setCreatePanelOpen(false);
       resetCreateAgentDraft();
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Unable to create agent' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not save this agent.' });
     } finally {
       setCreatingAgent(false);
+    }
+  };
+  const saveAgentEdits = async () => {
+    if (!editingAgent || !editDraft || !editDraft.name.trim() || !editDraft.description.trim()) return;
+    setUpdatingAgentId(editingAgent.id);
+    setLocalNotice(null);
+    try {
+      const updated = await updateWorkspaceAgent(workspace.id, editingAgent.id, {
+        name: editDraft.name.trim(),
+        description: editDraft.description.trim(),
+        instructions: editDraft.instructions.trim() || editDraft.description.trim(),
+        providerType: editDraft.providerType,
+        status: editDraft.status,
+        ownerUserId: editDraft.ownerUserId.trim() || undefined,
+        mcpServers: splitInput(editDraft.mcpServers),
+        tools: splitInput(editDraft.tools),
+        skills: splitInput(editDraft.skills),
+        targetScope: targetScopeFromTokens(splitInput(editDraft.targetScope)),
+        contextGrants: splitInput(editDraft.contextScope),
+        approvalPolicy: { mode: 'before_write', writeToolsRequireApproval: editDraft.writeToolsRequireApproval },
+        trustPolicy: { level: 'restricted', allowExternalData: editDraft.allowExternalData }
+      });
+      const mappedOwner = ownerUserOptions.find((member) => member.userId === editDraft.ownerUserId.trim());
+      const mapped = { ...mapApiAgent(updated, editingAgent, workspace.name), owner: mappedOwner?.name || mappedOwner?.email || updated.ownerUserId || editingAgent.owner };
+      setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
+      setSelectedAgentId(mapped.id);
+      setLocalNotice({ tone: 'success', message: 'Agent updated. Review affected workflows before the next run.' });
+      closeEditAgentDrawer();
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update this agent.' });
+    } finally {
+      setUpdatingAgentId('');
     }
   };
 
@@ -242,37 +520,21 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 flex-1">
           <h1 className="type-route-title">Agents</h1>
-          <p className="type-body mt-3 max-w-4xl break-words text-ui-text-muted">
-            Durable agents own MCP servers, tools, skills, scopes, approvals, and trust policy. Workflows assign them and narrow runtime access.
-          </p>
+          <p className="type-body mt-3 max-w-2xl break-words text-ui-text-muted">Compare each agent's capability sources, target scope, and workflow impact before changing automation access.</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <PageSearchInput
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search agents, tools, skills, scopes"
-            aria-label="Search agents"
-            className="lg:w-80"
-          />
-          <Button type="button" variant="secondary" size="md" className="whitespace-nowrap" onClick={openCreateAgentDrawer} disabled={!canManageAgents}>
+          <PageSearchInput value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by agent, tool, skill, scope, provider" aria-label="Search agents" className="lg:w-80" />
+          <Button type="button" variant="secondary" size="md" className="whitespace-nowrap" onClick={() => setCreatePanelOpen(true)} disabled={!canManageAgents}>
             <ICONS.Plus className="h-4 w-4" />
             Create agent
           </Button>
         </div>
       </header>
 
-      {agentLoadError && (
-        <div className="mb-4 whitespace-normal break-words rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-xs font-semibold text-status-warning-text [overflow-wrap:anywhere]">
-          Control-plane Agent API did not return data. The fallback catalog remains available for configuration planning.
-        </div>
-      )}
-
-      {!canManageAgents && (
-        <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted">
-          You need manage_agents to create or edit agents.
-        </div>
-      )}
-
+      {agentLoadError && <Notice>Control-plane agents did not load, so this page is showing the local catalog. Retry after control-plane access is restored.</Notice>}
+      {agentCapabilityLoadError && <Notice>Capability catalog did not load; fields show IDs already attached to these agents.</Notice>}
+      {ownerUserLoadError && <Notice>Workspace member list did not load; owner choices are limited to members already in this workspace view.</Notice>}
+      {!canManageAgents && <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect agents, but need manage_agents permission to create or change them.</div>}
       {localNotice && (
         <div className={`mb-4 rounded-md border px-3 py-2 text-xs font-semibold ${localNotice.tone === 'danger' ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}>
           {localNotice.message}
@@ -280,316 +542,97 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       )}
 
       {createPanelOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end" onKeyDown={handleCreateAgentDrawerKeyDown}>
-          <button type="button" aria-label="Close create agent drawer" className="absolute inset-0 bg-ui-text/20" onClick={closeCreateAgentDrawer} />
-          <aside role="dialog" aria-modal="true" aria-labelledby="create-agent-title" aria-describedby="create-agent-description" className="relative flex h-full w-full max-w-2xl flex-col border-l border-ui-border bg-ui-surface shadow-2xl">
-            <div className="border-b border-ui-border bg-ui-bg px-5 py-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="type-micro-label text-ui-text-muted">Guided setup</p>
-                  <h2 id="create-agent-title" className="mt-1 type-section-title">Create agent</h2>
-                  <p id="create-agent-description" className="type-caption mt-2 text-ui-text-muted">Build the minimum durable agent definition, then refine policy after it exists.</p>
-                </div>
-                <Button type="button" variant="tertiary" size="sm" onClick={closeCreateAgentDrawer}>
-                  <ICONS.X className="h-4 w-4" />
-                  Close
-                </Button>
-              </div>
-              <ol aria-label="Create agent steps" className="mt-5 grid gap-2 sm:grid-cols-3">
-                {createAgentSteps.map((item) => (
-                  <li key={item.step}>
-                    <button
-                      type="button"
-                      onClick={() => setCreateAgentStep(item.step)}
-                      className={`w-full rounded-md border px-3 py-2 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${createAgentStep === item.step ? 'border-accent/45 bg-accent-soft/55 text-ui-text' : 'border-ui-border bg-ui-surface text-ui-text-muted hover:bg-ui-bg'}`}
-                    >
-                      <span className="type-micro-label block">{item.label}</span>
-                      <span className="mt-1 block text-sm font-semibold">{item.title}</span>
-                      <span className="type-caption mt-0.5 block">{item.summary}</span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
-              {createAgentStep === 1 && (
-                <div className="space-y-5">
-                  <div>
-                    <h3 className="type-panel-title">Identity</h3>
-                    <p className="type-caption mt-1 text-ui-text-muted">Name the agent by its operating role. Keep the purpose narrow enough that workflows can assign it confidently.</p>
-                  </div>
-                  <label className="block">
-                    <span className="type-micro-label">Name</span>
-                    <input value={createDraft.name} onChange={(event) => setCreateDraft((draft) => ({ ...draft, name: event.target.value }))} className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent" />
-                  </label>
-                  <label className="block">
-                    <span className="type-micro-label">Provider</span>
-                    <select value={createDraft.providerType} onChange={(event) => setCreateDraft((draft) => ({ ...draft, providerType: event.target.value as AgentDraft['providerType'] }))} className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent">
-                      <option value="internal">Internal</option>
-                      <option value="external">External</option>
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="type-micro-label">Purpose</span>
-                    <input value={createDraft.description} onChange={(event) => setCreateDraft((draft) => ({ ...draft, description: event.target.value }))} placeholder="Example: Triage Kubernetes incidents and summarize safe next steps" className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent" />
-                  </label>
-                </div>
-              )}
-
-              {createAgentStep === 2 && (
-                <div className="space-y-5">
-                  <div>
-                    <h3 className="type-panel-title">Capabilities</h3>
-                    <p className="type-caption mt-1 text-ui-text-muted">Add only the tool surface this agent should own. Workflow steps can narrow this later.</p>
-                  </div>
-                  <label className="block">
-                    <span className="type-micro-label">MCP servers</span>
-                    <textarea value={draftMcpServers} onChange={(event) => setDraftMcpServers(event.target.value)} placeholder="One server id per line" className="mt-2 min-h-24 w-full resize-y rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-medium text-ui-text outline-none focus:border-accent" />
-                  </label>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="type-micro-label">Tools</span>
-                      <textarea value={draftTools} onChange={(event) => setDraftTools(event.target.value)} placeholder="One tool id per line" className="mt-2 min-h-28 w-full resize-y rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-medium text-ui-text outline-none focus:border-accent" />
-                    </label>
-                    <label className="block">
-                      <span className="type-micro-label">Skills</span>
-                      <textarea value={draftSkills} onChange={(event) => setDraftSkills(event.target.value)} placeholder="One skill id per line" className="mt-2 min-h-28 w-full resize-y rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-medium text-ui-text outline-none focus:border-accent" />
-                    </label>
-                  </div>
-                  <details className="rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-                    <summary className="cursor-pointer text-sm font-semibold text-ui-text">Advanced instructions</summary>
-                    <label className="mt-3 block">
-                      <span className="type-micro-label">Operating instructions</span>
-                      <textarea value={createDraft.instructions} onChange={(event) => setCreateDraft((draft) => ({ ...draft, instructions: event.target.value }))} placeholder="Optional. Defaults to the purpose if left blank." className="mt-2 min-h-28 w-full resize-y rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-sm font-medium text-ui-text outline-none focus:border-accent" />
-                    </label>
-                  </details>
-                </div>
-              )}
-
-              {createAgentStep === 3 && (
-                <div className="space-y-5">
-                  <div>
-                    <h3 className="type-panel-title">Review</h3>
-                    <p className="type-caption mt-1 text-ui-text-muted">This creates a restricted workspace agent. Write-capable tools require approval by default.</p>
-                  </div>
-                  <dl className="divide-y divide-ui-border rounded-md border border-ui-border bg-ui-bg">
-                    <AgentReviewRow label="Name" value={createDraft.name || 'Unnamed agent'} />
-                    <AgentReviewRow label="Provider" value={createDraft.providerType} />
-                    <AgentReviewRow label="Purpose" value={createDraft.description || 'Durable workspace agent configured from the console.'} />
-                    <AgentReviewRow label="MCP servers" value={splitInput(draftMcpServers).join(', ') || 'None'} />
-                    <AgentReviewRow label="Tools" value={splitInput(draftTools).join(', ') || 'None'} />
-                    <AgentReviewRow label="Skills" value={splitInput(draftSkills).join(', ') || 'None'} />
-                    <AgentReviewRow label="Approval policy" value="Approval before write tools" />
-                  </dl>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
-              <Button type="button" variant="tertiary" size="sm" onClick={resetCreateAgentDraft}>Reset</Button>
-              <div className="flex items-center gap-2">
-                <Button type="button" variant="secondary" size="sm" onClick={() => setCreateAgentStep((step) => (step === 3 ? 2 : 1))} disabled={createAgentStep === 1}>Back</Button>
-                {createAgentStep < 3 ? (
-                  <Button type="button" variant="primary" size="sm" onClick={() => setCreateAgentStep((step) => (step === 1 ? 2 : 3))} disabled={createAgentStep === 1 && !createDraft.name.trim()}>Next</Button>
-                ) : (
-                  <Button type="button" variant="primary" size="sm" onClick={() => void createControlPlaneAgent()} disabled={creatingAgent || !createDraft.name.trim()}>
-                    <ICONS.Plus className="h-4 w-4" />
-                    {creatingAgent ? 'Saving...' : 'Save agent'}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </aside>
-        </div>
+        <CreateAgentDrawer
+          createDraft={createDraft}
+          setCreateDraft={setCreateDraft}
+          draftMcpServers={draftMcpServers}
+          setDraftMcpServers={setDraftMcpServers}
+          draftTools={draftTools}
+          setDraftTools={setDraftTools}
+          draftSkills={draftSkills}
+          setDraftSkills={setDraftSkills}
+          agentCapabilityOptions={agentCapabilityOptions}
+          creatingAgent={creatingAgent}
+          onClose={closeCreateAgentDrawer}
+          onKeyDown={handleCreateAgentDrawerKeyDown}
+          onReset={resetCreateAgentDraft}
+          onSave={() => void createControlPlaneAgent()}
+        />
+      )}
+      {editPanelOpen && editingAgent && editDraft && (
+        <EditAgentDrawer
+          editingAgent={editingAgent}
+          editDraft={editDraft}
+          setEditDraft={setEditDraft}
+          ownerSelectOptions={ownerSelectOptions}
+          agentCapabilityOptions={agentCapabilityOptions}
+          editChangeSummary={editChangeSummary}
+          updatingAgentId={updatingAgentId}
+          onClose={closeEditAgentDrawer}
+          onKeyDown={handleEditAgentDrawerKeyDown}
+          onSave={() => void saveAgentEdits()}
+        />
       )}
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
-        <section aria-label="Agent library" className="min-w-0 space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <div className="type-micro-label">{query.trim() ? 'Matching agents' : 'Agent library'}</div>
-            <div className="type-caption font-semibold text-ui-text-muted">{visibleAgents.length} of {agents.length} agents</div>
-          </div>
-          {visibleAgents.map((agent) => (
-            <button key={agent.id} type="button" onClick={() => setSelectedAgentId(agent.id)} className={`w-full rounded-lg border p-3.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${agent.id === selectedAgent?.id ? 'border-accent/45 bg-accent-soft/55' : 'border-ui-border bg-ui-surface hover:bg-ui-bg'}`}>
-              <span className="flex items-start justify-between gap-3">
-                <span className="min-w-0">
-                  <span className="type-row-title block text-ui-text">{agent.name}</span>
-                  <span className="type-caption mt-1 block leading-5 text-ui-text-muted">{agent.description}</span>
-                </span>
-                <StatusBadge tone={statusTone(agent.status)}>{agent.status}</StatusBadge>
-              </span>
-              <span className="type-caption mt-3 block truncate text-ui-text-muted">{getAgentCapabilitySummary(agent)}</span>
-            </button>
-          ))}
-          {visibleAgents.length === 0 && <div className="rounded-lg border border-ui-border bg-ui-surface p-6 text-sm font-semibold text-ui-text-muted">No agents match this search.</div>}
-        </section>
+      <AgentReviewQueue reviewQueue={reviewQueue} />
+
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+        <WorkspaceAgentsCatalog
+          agents={agents}
+          visibleAgents={visibleAgents}
+          selectedAgent={selectedAgent}
+          reviewFilter={reviewFilter}
+          onReviewFilterChange={setReviewFilter}
+          onSelectedAgentChange={setSelectedAgentId}
+        />
 
         {selectedAgent && (
-          <section className="min-w-0 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-            <div className="border-b border-ui-border bg-ui-bg px-5 py-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="flex min-w-0 gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-accent/25 bg-accent-soft text-accent-strong">
-                    <ICONS.Bot className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap gap-2">
-                      <StatusBadge tone={statusTone(selectedAgent.status)}>{selectedAgent.status}</StatusBadge>
-                      <StatusBadge tone="neutral">{selectedAgent.providerType}</StatusBadge>
-                      <StatusBadge tone={healthTone(selectedAgent.health.status)}>{selectedAgent.health.status}</StatusBadge>
-                    </div>
-                    <h2 className="mt-3 type-section-title">{selectedAgent.name}</h2>
-                    <p className="type-body mt-2 max-w-3xl text-ui-text-muted">{selectedAgent.description}</p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-start gap-3 lg:items-end">
-                  <Button type="button" variant="secondary" size="md" onClick={() => void testSelectedAgent()} disabled={testingAgentId === selectedAgent.id}>
-                    <ICONS.Activity className="h-4 w-4" />
-                    {testingAgentId === selectedAgent.id ? 'Testing...' : 'Test agent'}
-                  </Button>
-                  <div className="grid gap-1 text-sm font-semibold text-ui-text-muted lg:text-right">
-                    <span>Owner: {selectedAgent.owner}</span>
-                    <span>Version: v{selectedAgent.version}</span>
-                    <span>{selectedAgent.health.summary}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-5 bg-ui-bg/45 p-4 sm:p-5 2xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-              <div className="space-y-5">
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <h3 className="type-panel-title">Capability summary</h3>
-                  <p className="type-caption mt-2 text-ui-text-muted">{getAgentCapabilitySummary(selectedAgent)} derived from configured MCP servers, tools, skills, scopes, approvals, and trust policy.</p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <CapabilityList title="MCP servers" values={selectedAgent.mcpServers} />
-                    <CapabilityList title="Tools" values={selectedAgent.tools} />
-                    <CapabilityList title="Skills" values={selectedAgent.skills} />
-                  </div>
-                </section>
-
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <h3 className="type-panel-title">Capability entries</h3>
-                  <div className="mt-3 overflow-hidden rounded-md border border-ui-border">
-                    {selectedAgent.capabilities.map((capability, index) => (
-                      <div key={`${capability.source}-${capability.toolId || index}`} className="grid gap-2 border-b border-ui-border bg-ui-bg p-3 text-xs font-semibold text-ui-text-muted last:border-b-0 sm:grid-cols-[7rem_1fr_5rem_7rem]">
-                        <span>{capability.source}</span>
-                        <span className="type-code truncate">{capability.toolId || capability.resourceScope}</span>
-                        <span>{capability.operation}</span>
-                        <span>{capability.requiresApproval ? 'Requires approval' : 'No approval'}</span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <h3 className="type-panel-title">Workflows using this agent</h3>
-                  <div className="mt-3 grid gap-2">
-                    {selectedAgent.workflowsUsingAgent.length > 0
-                      ? selectedAgent.workflowsUsingAgent.map((workflow) => (
-                        <div key={workflow} className="flex items-center justify-between rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-                          <span className="text-sm font-semibold text-ui-text">{workflow}</span>
-                          <StatusBadge tone="success">Active</StatusBadge>
-                        </div>
-                      ))
-                      : <span className="type-caption text-ui-text-muted">No workflows assign this agent yet.</span>}
-                  </div>
-                </section>
-              </div>
-
-              <aside className="space-y-5">
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="type-panel-title">Health and tests</h3>
-                      <p className="type-caption mt-2 text-ui-text-muted">{selectedAgent.health.summary}</p>
-                    </div>
-                    <StatusBadge tone={healthTone(selectedAgent.health.status)}>{selectedAgent.health.status}</StatusBadge>
-                  </div>
-                  <Button type="button" variant="secondary" size="sm" className="mt-4" onClick={() => void testSelectedAgent()} disabled={testingAgentId === selectedAgent.id}>
-                    <ICONS.Activity className="h-4 w-4" />
-                    {testingAgentId === selectedAgent.id ? 'Testing...' : 'Run test'}
-                  </Button>
-                </section>
-
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <h3 className="type-panel-title">Target scope</h3>
-                  <TokenList values={selectedAgent.targetScope} />
-                  <h3 className="type-panel-title mt-5">Workspace context scope</h3>
-                  <TokenList values={selectedAgent.contextScope} />
-                </section>
-
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <h3 className="type-panel-title">Approval defaults</h3>
-                  <dl className="mt-3 grid gap-2 text-sm">
-                    <div className="flex justify-between gap-3"><dt className="text-ui-text-muted">Sensitive actions</dt><dd className="font-semibold text-ui-text">{selectedAgent.approvalPolicy.sensitiveActions.replaceAll('_', ' ')}</dd></div>
-                    <div className="flex justify-between gap-3"><dt className="text-ui-text-muted">Write actions</dt><dd className="font-semibold text-ui-text">{selectedAgent.approvalPolicy.writeActions.replaceAll('_', ' ')}</dd></div>
-                  </dl>
-                </section>
-
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <h3 className="type-panel-title">Trust policy</h3>
-                  <p className="type-caption mt-2 text-ui-text-muted">{selectedAgent.trustPolicy.boundary}</p>
-                  <p className="type-caption mt-2 text-ui-text-muted">{selectedAgent.trustPolicy.dataEgress}</p>
-                </section>
-
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <h3 className="type-panel-title">Triggers</h3>
-                  <div className="mt-3 grid gap-2">
-                    {selectedAgent.triggers.length > 0
-                      ? selectedAgent.triggers.map((trigger) => (
-                        <div key={trigger.id} className="flex items-center justify-between gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-                          <span className="text-sm font-semibold text-ui-text">{trigger.name || trigger.type.replaceAll('_', ' ')}</span>
-                          <StatusBadge tone={trigger.enabled ? 'success' : 'neutral'}>{trigger.enabled ? 'enabled' : 'disabled'}</StatusBadge>
-                        </div>
-                      ))
-                      : <span className="type-caption text-ui-text-muted">No triggers configured.</span>}
-                  </div>
-                </section>
-
-                <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-4">
-                  <h3 className="type-panel-title">Activity</h3>
-                  <div className="mt-3 grid gap-2">
-                    {selectedAgent.auditHistory.slice(0, 4).map((entry) => (
-                      <div key={entry.id} className="rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-                        <div className="text-sm font-semibold text-ui-text">{entry.summary}</div>
-                        <div className="type-caption mt-1 text-ui-text-muted">{entry.occurredAt}</div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </aside>
-            </div>
-          </section>
+          <WorkspaceAgentDetailPanel
+            selectedAgent={selectedAgent}
+            canManageAgents={canManageAgents}
+            testingAgentId={testingAgentId}
+            updatingAgentId={updatingAgentId}
+            agentVersionAction={agentVersionAction}
+            agentActivityAction={agentActivityAction}
+            agentTriggerAction={agentTriggerAction}
+            disableConfirmAgentId={disableConfirmAgentId}
+            setDisableConfirmAgentId={setDisableConfirmAgentId}
+            deleteConfirmAgentId={deleteConfirmAgentId}
+            setDeleteConfirmAgentId={setDeleteConfirmAgentId}
+            selectedCompiledScopePreview={selectedCompiledScopePreview}
+            agentVersionHistories={agentVersionHistories}
+            newManualTriggerName={newManualTriggerName}
+            setNewManualTriggerName={setNewManualTriggerName}
+            newScheduleTriggerName={newScheduleTriggerName}
+            setNewScheduleTriggerName={setNewScheduleTriggerName}
+            newScheduleTriggerCron={newScheduleTriggerCron}
+            setNewScheduleTriggerCron={setNewScheduleTriggerCron}
+            newScheduleTriggerTimezone={newScheduleTriggerTimezone}
+            setNewScheduleTriggerTimezone={setNewScheduleTriggerTimezone}
+            newEventTriggerName={newEventTriggerName}
+            setNewEventTriggerName={setNewEventTriggerName}
+            newEventTriggerType={newEventTriggerType}
+            setNewEventTriggerType={setNewEventTriggerType}
+            newEventTriggerFilter={newEventTriggerFilter}
+            setNewEventTriggerFilter={setNewEventTriggerFilter}
+            onTestSelectedAgent={() => void testSelectedAgent()}
+            onReviewSelectedAgentAccess={reviewSelectedAgentAccess}
+            onOpenEditAgentDrawer={openEditAgentDrawer}
+            onSaveSelectedAgentVersion={() => void saveSelectedAgentVersion()}
+            onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
+            onDisableSelectedAgent={() => void disableSelectedAgent()}
+            onDeleteSelectedAgent={() => void deleteSelectedAgent()}
+            onCreateManualTrigger={() => void createManualTrigger()}
+            onCreateScheduleTrigger={() => void createScheduleTrigger()}
+            onCreateEventTrigger={() => void createEventTrigger()}
+            onToggleAgentTrigger={(trigger) => void toggleAgentTrigger(trigger)}
+            onDeleteAgentTrigger={(trigger) => void deleteAgentTriggerForSelectedAgent(trigger)}
+            onRefreshSelectedAgentVersions={() => void refreshSelectedAgentVersions()}
+            onRestoreSelectedAgentVersion={(version) => void restoreSelectedAgentVersion(version)}
+            onRefreshSelectedAgentActivity={() => void refreshSelectedAgentActivity()}
+          />
         )}
       </div>
     </div>
   );
 };
-
-const AgentReviewRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="grid gap-1 px-3 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
-    <dt className="type-micro-label text-ui-text-muted">{label}</dt>
-    <dd className="min-w-0 break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{value}</dd>
-  </div>
-);
-
-const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (
-  <div>
-    <div className="type-micro-label">{title}</div>
-    <div className="mt-2 grid gap-1">
-      {values.length > 0
-        ? values.map((value) => <span key={value} className="type-code truncate rounded-md bg-ui-bg px-2 py-1 text-xs text-ui-text-muted">{value}</span>)
-        : <span className="type-caption text-ui-text-muted">None configured</span>}
-    </div>
-  </div>
-);
-
-const TokenList: React.FC<{ values: string[] }> = ({ values }) => (
-  <div className="mt-3 flex flex-wrap gap-2">
-    {values.length > 0
-      ? values.map((value) => <span key={value} className="rounded-md border border-ui-border bg-ui-bg px-2.5 py-1.5 text-xs font-bold text-ui-text-muted">{value}</span>)
-      : <span className="type-caption text-ui-text-muted">No scope configured.</span>}
-  </div>
-);

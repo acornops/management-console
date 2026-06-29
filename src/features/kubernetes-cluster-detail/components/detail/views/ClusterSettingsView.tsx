@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/common/Button';
 import { Select, SelectOption } from '@/components/common/Select';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState } from '@/utils/telemetry';
@@ -17,6 +18,8 @@ interface ClusterSettingsViewProps {
 }
 
 type WriteConfirmationPolicyValue = 'required' | 'not_required';
+
+const clusterSettingsInputClassName = formInputClassName('min-h-10');
 
 const SettingSection: React.FC<{
   title: string;
@@ -178,7 +181,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
                       cancelClusterNameEdit();
                     }
                   }}
-                  className="min-h-10 rounded-md border border-ui-border bg-ui-surface px-3 text-sm font-semibold text-ui-text shadow-sm outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+                  className={clusterSettingsInputClassName}
                   aria-label={t('clusterSettings.clusterName')}
                   aria-invalid={Boolean(clusterNameValidationError)}
                   aria-describedby={clusterNameValidationError || nameError ? 'cluster-name-edit-error' : undefined}

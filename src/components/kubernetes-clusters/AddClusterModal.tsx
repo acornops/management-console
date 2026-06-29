@@ -5,6 +5,7 @@ import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { parseNamespaceList } from '@/app/useAppSupport';
 
 interface AddClusterModalProps {
@@ -35,6 +36,9 @@ function helmSetJson(path: string, value: string[]): string {
 function helmSetString(path: string, value: string): string {
   return `  --set-string ${path}=${shellSingleQuote(value)}`;
 }
+
+const clusterNameInputClassName = formInputClassName('px-4 font-medium');
+const namespaceInputClassName = formInputClassName('text-xs font-medium');
 
 function updateInstallCommandNamespaceScope(command: string, includeValue: string, excludeValue: string): string {
   const include = parseNamespaceList(includeValue);
@@ -163,7 +167,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                     value={newClusterName}
                     onChange={(event) => onClusterNameChange(event.target.value)}
                     placeholder={t('clusterSetup.clusterNamePlaceholder')}
-                    className="w-full rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-sm font-medium text-ui-text outline-none transition-all placeholder:text-ui-text-muted focus:border-accent/30 focus:ring-2 focus:ring-accent/10"
+                    className={clusterNameInputClassName}
                   />
                 </section>
 
@@ -184,7 +188,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                       value={includeNamespaces}
                       onChange={(event) => onIncludeNamespacesChange(event.target.value)}
                       placeholder={t('clusterSetup.includeNamespacesPlaceholder')}
-                      className="w-full rounded-lg border border-ui-border bg-ui-bg px-3 py-2.5 text-xs font-medium text-ui-text outline-none transition-all placeholder:text-ui-text-muted focus:border-accent/30 focus:ring-2 focus:ring-accent/10"
+                      className={namespaceInputClassName}
                     />
                   </div>
                   <div>
@@ -195,7 +199,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                       value={excludeNamespaces}
                       onChange={(event) => onExcludeNamespacesChange(event.target.value)}
                       placeholder={t('clusterSetup.excludeNamespacesPlaceholder')}
-                      className="w-full rounded-lg border border-ui-border bg-ui-bg px-3 py-2.5 text-xs font-medium text-ui-text outline-none transition-all placeholder:text-ui-text-muted focus:border-accent/30 focus:ring-2 focus:ring-accent/10"
+                      className={namespaceInputClassName}
                     />
                   </div>
                 </section>

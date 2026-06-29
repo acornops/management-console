@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { Select, SelectOption } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
 import { Workspace } from '@/types';
@@ -41,6 +43,10 @@ const emptyDraft: ScheduleDraft = {
   approvedContextGrants: 'workspace_metadata',
   inputDefaultsText: '{}'
 };
+
+const scheduleFormInputClassName = formInputClassName('mt-2');
+const scheduleFormTextareaClassName = formTextareaClassName('mt-2');
+const scheduleCodeTextareaClassName = formTextareaClassName('mt-2 min-h-36 font-mono text-xs font-normal');
 
 function formatDateTime(value?: string): string {
   if (!value) return 'Not scheduled';
@@ -131,6 +137,10 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
   const schedules = schedulePage?.items || [];
   const summary = schedulePage?.summary || { total: 0, active: 0, paused: 0, approvalGated: 0 };
   const activeWorkflows = useMemo(() => workflows.filter((workflow) => workflow.status !== 'paused'), [workflows]);
+  const workflowOptions = useMemo<Array<SelectOption<string>>>(
+    () => workflows.map((workflow) => ({ value: workflow.id, label: workflow.name })),
+    [workflows]
+  );
 
   const openCreateDrawer = () => {
     setDraft({ ...emptyDraft, workflowId: activeWorkflows[0]?.id || workflows[0]?.id || '' });
@@ -351,22 +361,26 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
               {draftError && <div className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm font-semibold text-status-danger-text">{draftError}</div>}
               <label className="block text-sm font-semibold text-ui-text">
                 {t('schedules.form.workflow')}
-                <select value={draft.workflowId} onChange={(event) => setDraft((current) => ({ ...current, workflowId: event.target.value }))} className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent">
-                  {workflows.map((workflow) => <option key={workflow.id} value={workflow.id}>{workflow.name}</option>)}
-                </select>
+                <Select<string>
+                  value={draft.workflowId}
+                  options={workflowOptions}
+                  onChange={(workflowId) => setDraft((current) => ({ ...current, workflowId }))}
+                  className="mt-2"
+                  ariaLabel={t('schedules.form.workflow')}
+                />
               </label>
               <label className="block text-sm font-semibold text-ui-text">
                 {t('schedules.form.name')}
-                <input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent" />
+                <input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className={scheduleFormInputClassName} />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-ui-text">
                   {t('schedules.form.cron')}
-                  <input value={draft.cron} onChange={(event) => setDraft((current) => ({ ...current, cron: event.target.value }))} className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent" />
+                  <input value={draft.cron} onChange={(event) => setDraft((current) => ({ ...current, cron: event.target.value }))} className={scheduleFormInputClassName} />
                 </label>
                 <label className="block text-sm font-semibold text-ui-text">
                   {t('schedules.form.timezone')}
-                  <input value={draft.timezone} onChange={(event) => setDraft((current) => ({ ...current, timezone: event.target.value }))} className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent" />
+                  <input value={draft.timezone} onChange={(event) => setDraft((current) => ({ ...current, timezone: event.target.value }))} className={scheduleFormInputClassName} />
                 </label>
               </div>
               <label className="flex items-center gap-3 text-sm font-semibold text-ui-text">
@@ -375,11 +389,11 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
               </label>
               <label className="block text-sm font-semibold text-ui-text">
                 {t('schedules.form.approvedContextGrants')}
-                <textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className="mt-2 min-h-24 w-full resize-y rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-medium text-ui-text outline-none focus:border-accent" />
+                <textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className={scheduleFormTextareaClassName} />
               </label>
               <label className="block text-sm font-semibold text-ui-text">
                 {t('schedules.form.inputDefaults')}
-                <textarea value={draft.inputDefaultsText} onChange={(event) => setDraft((current) => ({ ...current, inputDefaultsText: event.target.value }))} className="mt-2 min-h-36 w-full resize-y rounded-md border border-ui-border bg-ui-bg px-3 py-2 font-mono text-xs text-ui-text outline-none focus:border-accent" />
+                <textarea value={draft.inputDefaultsText} onChange={(event) => setDraft((current) => ({ ...current, inputDefaultsText: event.target.value }))} className={scheduleCodeTextareaClassName} />
               </label>
             </div>
             <div className="flex justify-end gap-2 border-t border-ui-border px-5 py-4">

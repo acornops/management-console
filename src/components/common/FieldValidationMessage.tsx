@@ -1,8 +1,8 @@
 import React from 'react';
 import { ICONS } from '@/constants';
+import { formControlInvalidClassName } from '@/components/common/formControlStyles';
 
-export const fieldInvalidClass =
-  'border-status-danger/45 bg-status-danger-soft/20 focus:border-status-danger/60 focus:ring-status-danger/20';
+export const fieldInvalidClass = formControlInvalidClassName;
 
 export const FieldValidationMessage: React.FC<{ id: string; message?: string }> = ({ id, message }) => {
   if (!message) return null;

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { Select } from '@/components/common/Select';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import { headerMotion } from '@/lib/motion';
@@ -53,8 +54,7 @@ const SettingRow: React.FC<{
   </div>
 );
 
-const inputClassName =
-  'w-full rounded-lg border border-ui-border bg-ui-bg px-3 py-2.5 text-sm text-ui-text outline-none transition-colors placeholder:text-ui-text-muted focus:border-accent focus:ring-2 focus:ring-accent/15';
+const inputClassName = formInputClassName();
 
 function formatDate(value?: string): string | undefined {
   if (!value) return undefined;

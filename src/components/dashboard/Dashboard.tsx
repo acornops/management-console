@@ -7,6 +7,7 @@ import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { actionCardButtonClassName, cardClassName } from '@/components/common/Card';
 import { Dialog } from '@/components/common/Dialog';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { ClusterResourceChart, type ClusterMetricPoint } from '@/components/dashboard/ClusterResourceChart';
 import { PendingClusterSetup } from '@/components/dashboard/PendingClusterSetup';
 import { headerMotion } from '@/lib/motion';
@@ -28,6 +29,8 @@ interface DashboardProps {
   canDeleteKubernetesCluster?: (cluster: KubernetesCluster) => boolean;
   onDeleteKubernetesCluster?: (cluster: KubernetesCluster) => Promise<void> | void;
 }
+
+const deleteClusterConfirmationInputClassName = formInputClassName('px-4 focus:border-status-danger/45 focus:ring-status-danger/20');
 
 function getClusterStatusLabel(cluster: KubernetesCluster, requiresAgentInstall: boolean, t: (key: string) => string): string {
   const status = getEffectiveHealthStatus(cluster);
@@ -474,7 +477,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   disabled={isDeletingCluster}
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3.5 text-sm text-ui-text outline-none transition focus:ring-2 focus:ring-status-danger/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className={deleteClusterConfirmationInputClassName}
                 />
               </div>
               {deleteClusterError && (

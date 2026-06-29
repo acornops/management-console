@@ -5,6 +5,7 @@ import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModa
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { Button } from '@/components/common/Button';
 import { AppToast, ToastViewport } from '@/components/common/ToastViewport';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import { KubernetesCluster, User, Workspace } from '@/types';
@@ -80,6 +81,8 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
 }) => {
   const { t } = useTranslation();
   const [workspaceDeleteConfirmation, setWorkspaceDeleteConfirmation] = React.useState('');
+  const workspaceNameInputClassName = formInputClassName('px-4');
+  const workspaceDeleteInputClassName = formInputClassName('px-4 focus:border-status-danger/45 focus:ring-status-danger/20');
 
   React.useEffect(() => {
     setWorkspaceDeleteConfirmation('');
@@ -157,7 +160,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                     disabled={isDeletingWorkspace}
                     autoComplete="off"
                     spellCheck={false}
-                    className="w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text outline-none transition focus:ring-2 focus:ring-status-danger/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={workspaceDeleteInputClassName}
                   />
                 </div>
                 <div className="flex items-center justify-end gap-2 pt-1">
@@ -224,7 +227,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                   <input
                     value={newWorkspaceName}
                     onChange={(event) => onWorkspaceNameChange(event.target.value)}
-                    className="w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text outline-none focus:ring-2 focus:ring-accent/20"
+                    className={workspaceNameInputClassName}
                     placeholder={t('app.workspaceNamePlaceholder')}
                   />
                 </div>

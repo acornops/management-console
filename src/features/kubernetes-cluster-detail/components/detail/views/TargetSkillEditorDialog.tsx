@@ -4,6 +4,7 @@ import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { Dialog } from '@/components/common/Dialog';
+import { formInputClassName } from '@/components/common/formControlStyles';
 import type { ControlPlaneTargetSkillDetail } from '@/services/controlPlaneApi';
 import { TargetSkillFileTree } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillFileTree';
 import {
@@ -13,6 +14,8 @@ import {
   type SkillEditorMode,
   type SkillEditorStep
 } from '@/features/kubernetes-cluster-detail/components/detail/views/targetSkillsViewModel';
+
+const skillNameInputClassName = formInputClassName('px-4 font-medium');
 
 interface TargetSkillEditorDialogProps {
   mode: SkillEditorMode;
@@ -129,7 +132,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 value={createName}
                 onChange={(event) => onCreateNameChange(event.target.value)}
                 placeholder="Troubleshooting CNPG"
-                className="w-full rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-sm text-ui-text outline-none transition-all focus:ring-2 focus:ring-accent/10"
+                className={skillNameInputClassName}
               />
             </label>
             <p className="type-caption mt-3 text-ui-text-muted">
