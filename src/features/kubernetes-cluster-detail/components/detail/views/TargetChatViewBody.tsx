@@ -1,153 +1,28 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { TFunction } from 'i18next';
 import { History, Plus, Upload } from 'lucide-react';
-import type { Components } from 'react-markdown';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
 import { ConversationHistory } from '@/features/kubernetes-cluster-detail/components/detail/ConversationHistory';
 import { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 import { AssistantTurn } from '@/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn';
 import { TargetChatComposer } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatComposer';
+import { TargetChatGateDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatGateDialog';
 import { TargetChatPanelControls } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatPanelControls';
 import { ChatEmptyPrompt, ChatTranscriptLoadError, ChatTranscriptSkeleton } from '@/features/kubernetes-cluster-detail/components/detail/views/ChatTranscriptStates';
 import { DeleteConversationDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/DeleteConversationDialog';
 import { UserMessageTurn } from '@/features/kubernetes-cluster-detail/components/detail/views/UserMessageTurn';
 import {
-  ComposerAttachment,
-  ComposerModelOption,
   formatMessageTime
 } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
-import type { ChatMessage, ChatSession, KubernetesCluster, ReasoningEffort } from '@/types';
-import type { AssistantNavStatus } from '@/app/assistantNavStatus';
-import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
-
-export interface TargetChatViewBodyProps {
-  activeRunId: string | null;
-  activeSession: ChatSession | null;
-  activeSessionId: string | null;
-  allowedReasoningOptions: Array<{ value: string; labelKey: string }>;
-  assistantMarkdownComponents: Components;
-  assistantCapabilitiesPreview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
-  assistantCapabilitiesPreviewError: string;
-  canApproveWriteActions: boolean;
-  canCancelActiveRun: boolean;
-  canChat: boolean;
-  canDeleteSessions: boolean;
-  canPost: boolean;
-  cluster: KubernetesCluster;
-  composerActionLabel: string;
-  composerAttachmentNotice: string;
-  composerAttachments: ComposerAttachment[];
-  composerModelOptions: ComposerModelOption[];
-  composerRootRef: React.RefObject<HTMLDivElement | null>;
-  composerSubmitUnavailableReason: string;
-  composerTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  conversationNotice: string | null;
-  deleteSessionError: string | null;
-  deleteTargetSession: ChatSession | null;
-  deletingSessionId: string | null;
-  desktopHistoryPanelId: string;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  hasComposerSubmitPayload: boolean;
-  hasConversationLoadError: boolean;
-  hasEarlierMessages: boolean;
-  handleAttachmentInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void | Promise<void>;
-  handleChatWindowDragEnter: (event: React.DragEvent<HTMLDivElement>) => void;
-  handleChatWindowDragLeave: (event: React.DragEvent<HTMLDivElement>) => void;
-  handleChatWindowDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
-  handleChatWindowDrop: (event: React.DragEvent<HTMLDivElement>) => void | Promise<void>;
-  handleComposerKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  handleCreateSessionClick: () => void;
-  handleModelAndEffortChange: (value: ReasoningEffort) => void;
-  handleModelChange: (option: ComposerModelOption) => void;
-  historyButtonRef: React.RefObject<HTMLButtonElement | null>;
-  historyControlLabel: string;
-  historyPanelRef: React.RefObject<HTMLElement | null>;
-  inputValue: string;
-  isAssistantCapabilitiesPreviewLoading: boolean;
-  isCancellingRun: boolean;
-  isComposerRuntimeUnavailable: boolean;
-  isFileDragActive: boolean;
-  isHistoryOpen: boolean;
-  isLoadingEarlierMessages: boolean;
-  isModelMenuOpen: boolean;
-  isModelSubmenuOpen: boolean;
-  isPanel: boolean;
-  isRunActive: boolean;
-  isSessionsLoading: boolean;
-  isSubmittingEdit: boolean;
-  isWorkspaceAiSettingsLoading: boolean;
-  lastUserMessageIndex: number;
-  mobileHistoryPanelId: string;
-  modelMenuPanelId: string;
-  modelMenuRef: React.RefObject<HTMLDivElement | null>;
-  modelSelectorId: string;
-  modelSubmenuButtonId: string;
-  modelSubmenuPanelId: string;
-  newChatUnavailableReason: string;
-  onApprove: (approvalId: string) => void | Promise<void>;
-  onCancelRun: () => Promise<void>;
-  onChatScroll: () => void;
-  onDismissRecentActivityWarning: (sessionId: string) => void;
-  onInputChange: (value: string) => void;
-  onLoadEarlierMessages: () => void | Promise<void>;
-  onOpenRecentActivitySession: (sessionId: string) => void;
-  onReject: (approvalId: string) => void | Promise<void>;
-  onClose?: () => void;
-  onMaximize?: () => void;
-  recentActivityWarning: ChatSession['recentActivityWarning'] | null;
-  removeComposerAttachment: (attachmentId: string) => void;
-  requestedToolAccessMode: 'read_only' | 'read_write';
-  resolvedDescriptionKey: string;
-  resolvedFooterKey: string;
-  resolvedFooterNoAccessKey: string;
-  resolvedInputPlaceholderKey: string;
-  resolvedNoChatAccessKey: string;
-  resolvedPromptBodyKey: string;
-  resolvedPromptTitleKey: string;
-  resolvedSuggestionKeys: string[];
-  runTracesByRunId: Record<string, LiveRunTrace>;
-  selectSession: (sessionId: string) => void;
-  selectedEffort: ReasoningEffort;
-  selectedEffortLabel: string;
-  selectedModel: string;
-  selectedModelLabel: string;
-  selectedProvider: string;
-  sendText: (text: string) => void | Promise<void>;
-  sessionAssistantStatuses: Record<string, AssistantNavStatus>;
-  sessions: ChatSession[];
-  setEditingMessageValue: React.Dispatch<React.SetStateAction<string>>;
-  setIsHistoryOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsModelMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsModelSubmenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setTraceExpandedByRunId: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  shouldShowTranscriptSkeleton: boolean;
-  submitComposerMessage: () => void | Promise<void>;
-  t: TFunction;
-  title: string;
-  traceExpandedByRunId: Record<string, boolean>;
-  transcriptRef: (node: HTMLDivElement | null) => void;
-  userMarkdownComponents: Components;
-  userTurnRunIdsByIndex: Map<number, string | undefined>;
-  visibleMessages: ChatMessage[];
-  workspaceAiSettingsError: string;
-  startEditingMessage: (messageId: string, content: string) => void;
-  cancelEditingMessage: () => void;
-  closeDeleteSessionModal: () => void;
-  confirmDeleteSession: () => void | Promise<void>;
-  editingMessageId: string | null;
-  editingMessageValue: string;
-  isInFlightAssistantPlaceholder: (message: ChatMessage) => boolean;
-  openDeleteSessionModal: (sessionId: string) => void;
-  submitEditedMessage: (messageId: string) => void | Promise<void>;
-}
+import type { TargetChatViewBodyProps } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatViewBody.types';
 
 export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => {
   const {
     activeRunId,
     activeSession,
     activeSessionId,
+    aiSettingsGateReason,
     allowedReasoningOptions,
     assistantMarkdownComponents,
     assistantCapabilitiesPreview,
@@ -156,6 +31,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     canCancelActiveRun,
     canChat,
     canDeleteSessions,
+    canManageAiSettings,
     canPost,
     cluster,
     composerActionLabel,
@@ -214,6 +90,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     onDismissRecentActivityWarning,
     onInputChange,
     onLoadEarlierMessages,
+    onOpenAiSettings,
     onOpenRecentActivitySession,
     onReject,
     onClose,
@@ -264,38 +141,55 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     openDeleteSessionModal,
     submitEditedMessage
   } = props;
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const hasBlockingGate = Boolean(recentActivityWarning || aiSettingsGateReason);
+
+  React.useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    if (hasBlockingGate) {
+      content.setAttribute('inert', '');
+      return () => {
+        content.removeAttribute('inert');
+      };
+    }
+
+    content.removeAttribute('inert');
+  }, [hasBlockingGate]);
 
   return (
     <div
-      className="flex-1 flex min-w-0 overflow-hidden bg-ui-bg relative"
+      className="relative flex flex-1 min-w-0 overflow-hidden bg-ui-bg"
       onDragEnter={handleChatWindowDragEnter}
       onDragOver={handleChatWindowDragOver}
       onDragLeave={handleChatWindowDragLeave}
       onDrop={(event) => void handleChatWindowDrop(event)}
     >
-      <AnimatePresence>
-        {isFileDragActive && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-none absolute inset-0 z-[140] flex items-center justify-center bg-ui-bg/75 p-6 backdrop-blur-[2px]"
-          >
-            <div className="flex min-h-48 w-full max-w-2xl flex-col items-center justify-center rounded-2xl border border-dashed border-accent/50 bg-accent/10 px-8 py-10 text-center shadow-lg shadow-ui-text/5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-ui-surface text-accent-strong">
-                <Upload className="h-5 w-5" />
+      <div ref={contentRef} className="contents" aria-hidden={hasBlockingGate ? true : undefined}>
+        <AnimatePresence>
+          {isFileDragActive && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              className="pointer-events-none absolute inset-0 z-[140] flex items-center justify-center bg-ui-bg/75 p-6 backdrop-blur-[2px]"
+            >
+              <div className="flex min-h-48 w-full max-w-2xl flex-col items-center justify-center rounded-2xl border border-dashed border-accent/50 bg-accent/10 px-8 py-10 text-center shadow-lg shadow-ui-text/5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-ui-surface text-accent-strong">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <p className="mt-4 text-base font-semibold text-ui-text">
+                  {canPost && !isRunActive ? t('chat.dropFilesTitle') : t('chat.dropFilesUnavailableTitle')}
+                </p>
+                <p className="mt-2 max-w-md text-sm font-medium leading-6 text-ui-text-muted">
+                  {canPost && !isRunActive ? t('chat.dropFilesBody') : recentActivityWarning ? t('chat.chooseRecentActivityAction') : t(resolvedNoChatAccessKey)}
+                </p>
               </div>
-              <p className="mt-4 text-base font-semibold text-ui-text">
-                {canPost && !isRunActive ? t('chat.dropFilesTitle') : t('chat.dropFilesUnavailableTitle')}
-              </p>
-              <p className="mt-2 max-w-md text-sm font-medium leading-6 text-ui-text-muted">
-                {canPost && !isRunActive ? t('chat.dropFilesBody') : recentActivityWarning ? t('chat.chooseRecentActivityAction') : t(resolvedNoChatAccessKey)}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
       {!isPanel && !isHistoryOpen && (
         <Tooltip content={historyControlLabel} side="right" className="absolute left-0 top-1/2 z-20 -translate-y-1/2">
           <button
@@ -522,7 +416,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
         </div>
 
         <TargetChatComposer
-          activeSessionId={activeSessionId}
           allowedReasoningOptions={allowedReasoningOptions}
           assistantCapabilitiesPreview={assistantCapabilitiesPreview}
           assistantCapabilitiesPreviewError={assistantCapabilitiesPreviewError}
@@ -559,9 +452,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           modelSubmenuButtonId={modelSubmenuButtonId}
           modelSubmenuPanelId={modelSubmenuPanelId}
           onCancelRun={onCancelRun}
-          onDismissRecentActivityWarning={onDismissRecentActivityWarning}
           onInputChange={onInputChange}
-          onOpenRecentActivitySession={onOpenRecentActivitySession}
           recentActivityWarning={recentActivityWarning}
           removeComposerAttachment={removeComposerAttachment}
           requestedToolAccessMode={requestedToolAccessMode}
@@ -641,6 +532,23 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           t={t}
         />
       )}
+      </div>
+
+      <AnimatePresence>
+        {hasBlockingGate && (
+          <TargetChatGateDialog
+            activeSessionId={activeSessionId}
+            aiSettingsGateReason={aiSettingsGateReason}
+            canManageAiSettings={canManageAiSettings}
+            isPanel={isPanel}
+            recentActivityWarning={recentActivityWarning}
+            onDismissRecentActivityWarning={onDismissRecentActivityWarning}
+            onOpenAiSettings={onOpenAiSettings}
+            onOpenRecentActivitySession={onOpenRecentActivitySession}
+            t={t}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

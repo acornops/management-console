@@ -506,6 +506,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                 onUpdateKubernetesCluster(clusterId, { writeConfirmationPolicy });
                 showToast(t('clusterSetup.writeConfirmationsUpdated'));
               }}
+              onOpenAiSettings={(workspaceId) => navigate(AppPaths.workspaceAiSettings(workspaceId))}
               onNavigateBackToClusters={() =>
                 navigate(workspaceContextId ? AppPaths.workspaceKubernetesClusters(workspaceContextId) : AppPaths.kubernetesClusters())
               }

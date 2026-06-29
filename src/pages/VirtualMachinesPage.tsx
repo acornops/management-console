@@ -531,6 +531,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         currentUserId={currentUserId}
         isDark={isDark}
         initialInputValue={selectedTargetPrompt || pendingChatPrompt}
+        onOpenAiSettings={() => navigate(AppPaths.workspaceAiSettings(workspace.id))}
         onInitialInputConsumed={() => {
           if (selectedTargetPrompt) onPendingTargetPromptConsumed?.();
           setPendingChatPrompt('');

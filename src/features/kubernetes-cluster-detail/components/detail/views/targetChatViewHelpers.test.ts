@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   resolveClusterChatFooterKey,
+  resolveAiSettingsGateReason,
   resolveComposerReasoningEffort
 } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
 import { HealthStatus, type KubernetesCluster, type WorkspaceAiSettings } from '@/types';
@@ -68,6 +69,14 @@ describe('target chat view helpers', () => {
   it('uses the workspace reasoning effort default until the user changes the composer effort', () => {
     expect(resolveComposerReasoningEffort(aiSettings(), 'low', false)).toBe('medium');
     expect(resolveComposerReasoningEffort(aiSettings(), 'high', true)).toBe('high');
+  });
+
+  it('gates assistant chat when AI settings are unavailable or not configured', () => {
+    expect(resolveAiSettingsGateReason(false, false, '', true)).toBeNull();
+    expect(resolveAiSettingsGateReason(true, true, 'load failed', false)).toBeNull();
+    expect(resolveAiSettingsGateReason(true, false, 'load failed', false)).toBe('unavailable');
+    expect(resolveAiSettingsGateReason(true, false, '', true)).toBe('not_configured');
+    expect(resolveAiSettingsGateReason(true, false, '', false)).toBeNull();
   });
 
   it('falls back when the configured workspace reasoning effort is outside policy', () => {

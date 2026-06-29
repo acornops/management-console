@@ -4,13 +4,11 @@ import { ArrowUp, Check, ChevronDown, ChevronRight, FileText, Image as ImageIcon
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
 import { AssistantCapabilityPreviewControl } from '@/features/kubernetes-cluster-detail/components/detail/views/AssistantCapabilityPreviewControl';
-import { ChatComposerNotice } from '@/features/kubernetes-cluster-detail/components/detail/views/ChatComposerNotice';
 import { formatAttachmentSize, providerLabel } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
-import type { TargetChatViewBodyProps } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatViewBody';
+import type { TargetChatViewBodyProps } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatViewBody.types';
 import type { ReasoningEffort } from '@/types';
 
 type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
-  | 'activeSessionId'
   | 'allowedReasoningOptions'
   | 'assistantCapabilitiesPreview'
   | 'assistantCapabilitiesPreviewError'
@@ -47,9 +45,7 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
   | 'modelSubmenuButtonId'
   | 'modelSubmenuPanelId'
   | 'onCancelRun'
-  | 'onDismissRecentActivityWarning'
   | 'onInputChange'
-  | 'onOpenRecentActivitySession'
   | 'recentActivityWarning'
   | 'removeComposerAttachment'
   | 'requestedToolAccessMode'
@@ -70,7 +66,6 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
 >;
 
 export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
-  activeSessionId,
   allowedReasoningOptions,
   assistantCapabilitiesPreview,
   assistantCapabilitiesPreviewError,
@@ -107,9 +102,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   modelSubmenuButtonId,
   modelSubmenuPanelId,
   onCancelRun,
-  onDismissRecentActivityWarning,
   onInputChange,
-  onOpenRecentActivitySession,
   recentActivityWarning,
   removeComposerAttachment,
   requestedToolAccessMode,
@@ -130,10 +123,10 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
 }) => {
   const blockedComposerMessage = recentActivityWarning
     ? t('chat.chooseRecentActivityAction')
-    : t(resolvedNoChatAccessKey);
+    : conversationNotice || t(resolvedNoChatAccessKey);
   const blockedFooterMessage = recentActivityWarning
     ? t('chat.chooseRecentActivityAction')
-    : t(resolvedFooterNoAccessKey);
+    : conversationNotice || t(resolvedFooterNoAccessKey);
 
   return (
         <form
@@ -143,15 +136,6 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             void submitComposerMessage();
           }}
         >
-          <ChatComposerNotice
-            activeSessionId={activeSessionId}
-            isPanel={isPanel}
-            conversationNotice={conversationNotice}
-            recentActivityWarning={recentActivityWarning}
-            onDismissRecentActivityWarning={onDismissRecentActivityWarning}
-            onOpenRecentActivitySession={onOpenRecentActivitySession}
-            t={t}
-          />
           <div ref={composerRootRef} className={`${isPanel ? 'max-w-2xl' : 'max-w-3xl'} relative mx-auto`}>
             <div className="overflow-visible rounded-[1.375rem] border border-ui-border bg-ui-surface px-2 py-2 text-ui-text shadow-sm transition-colors focus-within:border-accent/45 focus-within:ring-2 focus-within:ring-accent/10 dark:bg-ui-surface-strong dark:shadow-ui-text/10">
               {(composerAttachments.length > 0 || composerAttachmentNotice) && (

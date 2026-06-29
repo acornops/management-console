@@ -58,8 +58,8 @@ export const userMessageTurn = readSource(
 export const approvalCheckpoint = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/ApprovalCheckpoint.tsx'
 );
-export const chatComposerNotice = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/ChatComposerNotice.tsx'
+export const chatGateDialog = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatGateDialog.tsx'
 );
 export const chatTranscriptStates = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/ChatTranscriptStates.tsx'

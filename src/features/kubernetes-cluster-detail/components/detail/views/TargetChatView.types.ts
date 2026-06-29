@@ -24,6 +24,7 @@ export interface TargetChatViewProps {
   canApproveWriteActions: boolean;
   canCancelRuns: boolean;
   canDeleteSessions: boolean;
+  canManageAiSettings: boolean;
   isRunActive: boolean;
   isSessionsLoading: boolean;
   isLoadingEarlierMessages: boolean;
@@ -41,6 +42,7 @@ export interface TargetChatViewProps {
   transcriptRef: (node: HTMLDivElement | null) => void;
   onChatScroll: () => void;
   onLoadEarlierMessages: () => void | Promise<void>;
+  onOpenAiSettings: () => void;
   onInputChange: (value: string) => void;
   onSend: (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => void | Promise<void>;
   onEditLastUserMessage: (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => void | Promise<void>;

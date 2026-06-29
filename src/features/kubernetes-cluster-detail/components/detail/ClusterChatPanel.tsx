@@ -19,6 +19,7 @@ interface ClusterChatPanelProps {
   isDark: boolean;
   onClose: () => void;
   onMaximize: () => void;
+  onOpenAiSettings: () => void;
   onInitialPromptHandled: () => void;
 }
 
@@ -30,6 +31,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
   isDark,
   onClose,
   onMaximize,
+  onOpenAiSettings,
   onInitialPromptHandled
 }) => {
   const handledPromptIdRef = React.useRef<number | null>(null);
@@ -40,6 +42,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
   const canRequestWriteRuns = Boolean(currentWorkspacePermissions?.create_read_write_runs);
   const canCancelRuns = Boolean(currentWorkspacePermissions?.cancel_runs);
   const canDeleteSessions = Boolean(currentWorkspacePermissions?.delete_sessions);
+  const canManageAiSettings = Boolean(currentWorkspacePermissions?.manage_ai_settings);
 
   const {
     sessions,
@@ -96,6 +99,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       canApproveWriteActions={canRequestWriteRuns}
       canCancelRuns={canCancelRuns}
       canDeleteSessions={canDeleteSessions}
+      canManageAiSettings={canManageAiSettings}
       isRunActive={isRunActive}
       isSessionsLoading={isSessionsLoading}
       isLoadingEarlierMessages={isLoadingEarlierMessages}
@@ -114,6 +118,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       footerKey={resolveClusterChatFooterKey(cluster, canRequestWriteRuns)}
       onChatScroll={handleChatScroll}
       onLoadEarlierMessages={handleLoadEarlierMessages}
+      onOpenAiSettings={onOpenAiSettings}
       onInputChange={setInputValue}
       onSend={handleSend}
       onEditLastUserMessage={handleEditLastUserMessage}

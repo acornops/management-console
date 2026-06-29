@@ -17,6 +17,7 @@ import {
   MAX_COMPOSER_ATTACHMENTS,
   MAX_TOTAL_ATTACHMENT_CONTEXT_CHARS,
   REASONING_OPTIONS,
+  resolveAiSettingsGateReason,
   resolveComposerReasoningEffort,
   revokeAttachmentPreview,
   SUGGESTION_KEYS,
@@ -24,7 +25,6 @@ import {
 } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
 import type { ChatRuntimeSelection, LlmProvider, ReasoningEffort, WorkspaceAiSettings } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
-
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   target,
   titleKey,
@@ -44,6 +44,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   canApproveWriteActions,
   canCancelRuns,
   canDeleteSessions,
+  canManageAiSettings,
   isRunActive,
   isSessionsLoading,
   isLoadingEarlierMessages,
@@ -61,6 +62,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   transcriptRef,
   onChatScroll,
   onLoadEarlierMessages,
+  onOpenAiSettings,
   onInputChange,
   onSend,
   onEditLastUserMessage,
@@ -128,8 +130,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     () => sessions.find((session) => session.id === deleteTargetSessionId) || null,
     [deleteTargetSessionId, sessions]
   );
-
-  const canPost = canChat && isConversationOwner && !recentActivityWarning;
+  const effectiveRecentActivityWarning = recentActivityWarning && (activeSessionId || recentActivityWarning.actionSessionId) ? recentActivityWarning : null;
+  const canPost = canChat && isConversationOwner && !effectiveRecentActivityWarning;
   const requestedToolAccessMode = canRequestWriteRuns ? 'read_write' : 'read_only';
   const lastUserMessageIndex = React.useMemo(() => {
     for (let index = visibleMessages.length - 1; index >= 0; index -= 1) {
@@ -180,6 +182,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     [composerModelOptions, selectedModel, selectedProvider]
   );
   const isComposerRuntimeBlocked = Boolean(workspaceAiSettings && !hasReadyComposerModel);
+  const aiSettingsGateReason = resolveAiSettingsGateReason(canChat, isWorkspaceAiSettingsLoading, workspaceAiSettingsError, isComposerRuntimeBlocked);
   const isComposerRuntimeUnavailable = Boolean(isWorkspaceAiSettingsLoading || workspaceAiSettingsError || (workspaceAiSettings && !selectedModelOption?.ready));
   const allowedReasoningOptions = React.useMemo(
     () => REASONING_OPTIONS.filter((option) => !workspaceAiSettings || workspaceAiSettings.allowedReasoningEfforts.includes(option.value as ReasoningEffort)),
@@ -625,16 +628,16 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   return (
     <TargetChatViewBody
       {...{
-        activeRunId, activeSession, activeSessionId, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, canApproveWriteActions,
-        canCancelActiveRun, canChat, canDeleteSessions, canPost, cluster, composerActionLabel, composerAttachmentNotice,
+        activeRunId, activeSession, activeSessionId, aiSettingsGateReason, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, canApproveWriteActions,
+        canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, cluster, composerActionLabel, composerAttachmentNotice,
         composerAttachments, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, deleteSessionError, deleteTargetSession,
         deletingSessionId, desktopHistoryPanelId, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
         handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, historyButtonRef,
         historyControlLabel, historyPanelRef, inputValue, isAssistantCapabilitiesPreviewLoading, isCancellingRun, isComposerRuntimeUnavailable, isFileDragActive, isHistoryOpen,
         isLoadingEarlierMessages, isModelMenuOpen, isModelSubmenuOpen, isPanel, isRunActive, isSessionsLoading, isSubmittingEdit, isWorkspaceAiSettingsLoading,
         lastUserMessageIndex, mobileHistoryPanelId, modelMenuPanelId, modelMenuRef, modelSelectorId, modelSubmenuButtonId, modelSubmenuPanelId, newChatUnavailableReason,
-        onApprove, onCancelRun, onChatScroll, onClose, onDismissRecentActivityWarning, onInputChange, onLoadEarlierMessages, onMaximize, onOpenRecentActivitySession, onReject,
-        recentActivityWarning, removeComposerAttachment, requestedToolAccessMode, resolvedDescriptionKey, resolvedFooterKey, resolvedFooterNoAccessKey, resolvedInputPlaceholderKey,
+        onApprove, onCancelRun, onChatScroll, onClose, onDismissRecentActivityWarning, onInputChange, onLoadEarlierMessages, onMaximize, onOpenAiSettings, onOpenRecentActivitySession, onReject,
+        recentActivityWarning: effectiveRecentActivityWarning, removeComposerAttachment, requestedToolAccessMode, resolvedDescriptionKey, resolvedFooterKey, resolvedFooterNoAccessKey, resolvedInputPlaceholderKey,
         resolvedNoChatAccessKey, resolvedPromptBodyKey, resolvedPromptTitleKey, resolvedSuggestionKeys, runTracesByRunId, selectSession, selectedEffort, selectedEffortLabel,
         selectedModel, selectedModelLabel, selectedProvider, sendText, sessionAssistantStatuses, sessions, setEditingMessageValue, setIsHistoryOpen,
         setIsModelMenuOpen, setIsModelSubmenuOpen, setTraceExpandedByRunId, shouldShowTranscriptSkeleton, submitComposerMessage, t, title, traceExpandedByRunId,
@@ -643,5 +646,4 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       }}
     />
   );
-
 };

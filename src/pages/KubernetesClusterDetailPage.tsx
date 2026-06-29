@@ -22,6 +22,7 @@ interface KubernetesClusterDetailPageProps {
   onUpdateClusterName: (clusterId: string, name: string) => void | Promise<void>;
   onUpdateClusterNamespaceScope: (clusterId: string, scope: { include: string[]; exclude: string[] }) => void | Promise<void>;
   onUpdateClusterWriteConfirmationPolicy: (clusterId: string, overrideRequired: boolean | null) => void | Promise<void>;
+  onOpenAiSettings: (workspaceId: string) => void;
   onNavigateBackToClusters: () => void;
   onOpenClusterChatPanel?: (cluster: KubernetesCluster, prompt?: string) => void;
 }
@@ -43,6 +44,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   onUpdateClusterName,
   onUpdateClusterNamespaceScope,
   onUpdateClusterWriteConfirmationPolicy,
+  onOpenAiSettings,
   onNavigateBackToClusters,
   onOpenClusterChatPanel
 }) => {
@@ -86,6 +88,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               onUpdateWriteConfirmationPolicy={(overrideRequired) =>
                 onUpdateClusterWriteConfirmationPolicy(selectedCluster.id, overrideRequired)
               }
+              onOpenAiSettings={() => onOpenAiSettings(selectedCluster.workspaceId)}
               onOpenCopilot={(prompt) => onOpenClusterChatPanel?.(selectedCluster, prompt)}
             />
           ) : selectedCluster && !requiresClusterAgentInstall ? (

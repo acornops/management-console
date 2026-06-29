@@ -3,7 +3,7 @@ import {
   approvalCheckpoint,
   appClusterChatRuntime,
   assistantTurn,
-  chatComposerNotice,
+  chatGateDialog,
   chatTranscriptStates,
   conversationAssistantStatuses,
   chatSessionSync,
@@ -240,7 +240,10 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('ready: configured && enabled');
     expect(chatView).toContain('const selectableComposerModelOptions = React.useMemo');
     expect(chatView).toContain('composerModelOptions: selectableComposerModelOptions');
+    expect(chatView).toContain('const effectiveRecentActivityWarning = recentActivityWarning && (activeSessionId || recentActivityWarning.actionSessionId) ? recentActivityWarning : null;');
+    expect(chatView).toContain('const canPost = canChat && isConversationOwner && !effectiveRecentActivityWarning;');
     expect(chatView).toContain('const isComposerRuntimeBlocked = Boolean(workspaceAiSettings && !hasReadyComposerModel);');
+    expect(chatView).toContain('resolveAiSettingsGateReason(canChat, isWorkspaceAiSettingsLoading, workspaceAiSettingsError, isComposerRuntimeBlocked)');
     expect(chatView).toContain('const isComposerRuntimeUnavailable = Boolean(isWorkspaceAiSettingsLoading || workspaceAiSettingsError || (workspaceAiSettings && !selectedModelOption?.ready));');
     expect(chatView).toContain('max-h-[min(24rem,calc(100vh-8rem))]');
     expect(chatView).toContain('overflow-y-auto');
@@ -349,35 +352,49 @@ describe('target chat polish contracts', () => {
     expect(userMessageTurn).toContain("{t('chat.cancelEdit')}");
     expect(chatView).not.toContain('<span>{t(\'chat.roleUser\')}</span>');
     expect(chatView).not.toContain('<span>{formatMessageTime(message.timestamp)}</span>');
-    expect(chatComposerNotice).toContain('AlertTriangle');
-    expect(chatComposerNotice).toContain('Info');
-    expect(chatComposerNotice).toContain("mx-auto -mb-2 space-y-2");
-    expect(chatComposerNotice).toContain('w-fit max-w-[92%] items-center gap-2.5 rounded-t-2xl border border-ui-border bg-ui-surface');
-    expect(chatComposerNotice).toContain('w-fit max-w-[94%] rounded-t-2xl border border-status-warning/35 bg-status-warning-soft/60');
-    expect(chatComposerNotice).not.toContain('truncate text-xs font-semibold leading-5 text-ui-text-muted');
-    expect(chatComposerNotice).toContain('break-words text-xs font-semibold leading-5');
-    expect(chatComposerNotice).toContain('const recentActivityWarningKey = recentActivityWarning');
-    expect(chatComposerNotice).toContain("activeSessionId || ''");
-    expect(chatComposerNotice).toContain('const [dismissingWarningKey, setDismissingWarningKey] = useState<string | null>(null);');
-    expect(chatComposerNotice).toContain("import { useLayoutEffect, useRef, useState } from 'react';");
-    expect(chatComposerNotice).toContain('useLayoutEffect(() => {');
-    expect(chatComposerNotice).toContain('setDismissingWarningKey(null);');
-    expect(chatComposerNotice).toContain('const dismissTimeoutRef = useRef<number | null>(null);');
-    expect(chatComposerNotice).toContain('window.clearTimeout(dismissTimeoutRef.current);');
-    expect(chatComposerNotice).toContain('dismissingWarningKey === recentActivityWarningKey');
-    expect(chatComposerNotice).toContain('dismissTimeoutRef.current = window.setTimeout(() => {');
-    expect(chatComposerNotice).toContain('dismissTimeoutRef.current !== null');
-    expect(chatComposerNotice).toContain('action(sessionId);');
-    expect(chatComposerNotice).toContain('const warningCardMotionClass = isDismissingPrompt');
-    expect(chatComposerNotice).toContain("'translate-y-[calc(100%+0.75rem)] scale-[0.98] opacity-0'");
-    expect(chatComposerNotice).toContain("const actionSessionId = recentActivityWarning?.actionSessionId;");
-    expect(chatComposerNotice).toContain('onClick={() => onOpenRecentActivitySession(actionSessionId)}');
-    expect(chatView).toContain('activeSessionId={activeSessionId}');
-    expect(chatComposerNotice).toContain('disabled={isDismissingPrompt || !activeSessionId}');
-    expect(chatComposerNotice).toContain('if (activeSessionId) dismissPromptThenRun(activeSessionId, onDismissRecentActivityWarning);');
-    expect(chatComposerNotice).not.toContain('chat.openingConversation');
-    expect(chatComposerNotice).not.toContain('chat.startingSeparateChat');
-    expect(chatComposerNotice).toContain('transition-[transform,opacity]');
+    expect(chatGateDialog).toContain('role="dialog"');
+    expect(chatGateDialog).toContain('const hasRecentActivityAction = Boolean(recentActivityWarning && (activeSessionId || actionSessionId));');
+    expect(chatGateDialog).toContain('const recentActivityBody = recentActivityWarning?.message.trim();');
+    expect(chatGateDialog).toContain('const recentActivityActionLabel = recentActivityWarning?.actionLabel?.trim();');
+    expect(chatGateDialog).toContain('const hasDialogAction = recentActivityWarning ? hasRecentActivityAction : canManageAiSettings;');
+    expect(chatGateDialog).toContain('aria-modal={hasDialogAction ? true : undefined}');
+    expect(chatGateDialog).toContain('const primaryActionRef = React.useRef<HTMLButtonElement>(null);');
+    expect(chatGateDialog).toContain('const shouldReduceMotion = useReducedMotion();');
+    expect(chatGateDialog).toContain('const restoreTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;');
+    expect(chatGateDialog).toContain('const primaryAction = primaryActionRef.current;');
+    expect(chatGateDialog).toContain('if (primaryAction && !primaryAction.disabled)');
+    expect(chatGateDialog).toContain('primaryAction.focus({ preventScroll: true });');
+    expect(chatGateDialog).toContain('dialogRef.current?.focus({ preventScroll: true });');
+    expect(chatGateDialog).toContain('restoreTarget.focus({ preventScroll: true });');
+    expect(chatGateDialog).toContain('Boolean(recentActivityWarning)');
+    expect(chatGateDialog).toContain('tabIndex={-1}');
+    expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0 }}');
+    expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}');
+    expect(chatGateDialog).toContain('bg-ui-bg/70 p-4 backdrop-blur-sm');
+    expect(chatGateDialog).toContain('rounded-lg border border-ui-border bg-ui-surface');
+    expect(chatGateDialog).toContain("t('chat.recentActivityActionTitle')");
+    expect(chatGateDialog).toContain("recentActivityBody || t('chat.chooseRecentActivityAction')");
+    expect(chatGateDialog).toContain("t('chat.aiSettingsRequiredTitle')");
+    expect(chatGateDialog).toContain("t('chat.aiSettingsRequiredManageBody')");
+    expect(chatGateDialog).toContain("t('chat.aiSettingsUnavailableManageBody')");
+    expect(chatGateDialog).toContain("t('chat.aiSettingsRequiredReadOnlyBody')");
+    expect(chatGateDialog).toContain('const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {');
+    expect(chatGateDialog).toContain("if (event.key !== 'Tab' || !hasDialogAction) return;");
+    expect(chatGateDialog).toContain('dialog.querySelectorAll<HTMLElement>(focusableSelector)');
+    expect(chatGateDialog).toContain("element.getAttribute('aria-hidden') === 'true'");
+    expect(chatGateDialog).toContain('window.getComputedStyle(element)');
+    expect(chatGateDialog).toContain('getDialogFocusWrapIndex({');
+    expect(chatGateDialog).toContain('focusableElements.findIndex((element) => element === document.activeElement)');
+    expect(chatGateDialog).toContain('(focusableElements[targetIndex] || dialog).focus({ preventScroll: true });');
+    expect(chatGateDialog).toContain('onClick={onOpenAiSettings}');
+    expect(chatGateDialog).toContain('onOpenRecentActivitySession(actionSessionId)');
+    expect(chatGateDialog).toContain("recentActivityActionLabel || t('chat.openConversation')");
+    expect(chatGateDialog).toContain('if (activeSessionId) onDismissRecentActivityWarning(activeSessionId);');
+    expect(chatGateDialog).not.toContain('translate-y-[calc(100%+0.75rem)]');
+    expect(chatView).toContain('const hasBlockingGate = Boolean(recentActivityWarning || aiSettingsGateReason);');
+    expect(chatView).toContain("content.setAttribute('inert', '')");
+    expect(chatView).toContain('aria-hidden={hasBlockingGate ? true : undefined}');
+    expect(chatView).toContain('recentActivityWarning: effectiveRecentActivityWarning');
     expect(chatView).toContain("const blockedComposerMessage = recentActivityWarning");
     expect(chatView).toContain("t('chat.chooseRecentActivityAction')");
     expect(chatView).toContain('placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: cluster.name }) : blockedComposerMessage}');

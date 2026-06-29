@@ -316,6 +316,19 @@ export function findComposerModelOption(
   return options.find((option) => option.provider === provider && option.model === model);
 }
 
+export type AiSettingsGateReason = 'not_configured' | 'unavailable' | null;
+
+export function resolveAiSettingsGateReason(
+  canChat: boolean,
+  isLoading: boolean,
+  error: string,
+  isRuntimeBlocked: boolean
+): AiSettingsGateReason {
+  if (!canChat || isLoading) return null;
+  if (error) return 'unavailable';
+  return isRuntimeBlocked ? 'not_configured' : null;
+}
+
 export function resolveComposerReasoningEffort(
   settings: WorkspaceAiSettings,
   selectedEffort: ReasoningEffort,

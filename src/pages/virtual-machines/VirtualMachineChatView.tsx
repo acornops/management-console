@@ -11,6 +11,7 @@ interface VirtualMachineChatViewProps {
   currentUserId: string;
   isDark: boolean;
   initialInputValue?: string;
+  onOpenAiSettings: () => void;
   onInitialInputConsumed?: () => void;
 }
 
@@ -56,6 +57,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
   currentUserId,
   isDark,
   initialInputValue,
+  onOpenAiSettings,
   onInitialInputConsumed
 }) => {
   const [chatSessions, setChatSessions] = React.useState<ChatSession[]>([]);
@@ -81,6 +83,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
   const canChat = Boolean(permissions?.create_sessions && permissions.create_read_only_runs);
   const canCancelRuns = Boolean(permissions?.cancel_runs);
   const canDeleteSessions = Boolean(permissions?.delete_sessions);
+  const canManageAiSettings = Boolean(permissions?.manage_ai_settings);
   const controller = useTargetChat({
     target,
     currentUserId,
@@ -121,6 +124,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       canApproveWriteActions={false}
       canCancelRuns={canCancelRuns}
       canDeleteSessions={canDeleteSessions}
+      canManageAiSettings={canManageAiSettings}
       isRunActive={controller.isRunActive}
       isSessionsLoading={controller.isSessionsLoading}
       isLoadingEarlierMessages={controller.isLoadingEarlierMessages}
@@ -137,6 +141,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       transcriptRef={controller.transcriptRef}
       onChatScroll={controller.handleChatScroll}
       onLoadEarlierMessages={controller.handleLoadEarlierMessages}
+      onOpenAiSettings={onOpenAiSettings}
       onInputChange={controller.setInputValue}
       onSend={controller.handleSend}
       onEditLastUserMessage={controller.handleEditLastUserMessage}

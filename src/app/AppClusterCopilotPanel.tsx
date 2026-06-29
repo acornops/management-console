@@ -111,6 +111,10 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
               onClose();
               navigate(AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'chat'));
             }}
+            onOpenAiSettings={() => {
+              onClose();
+              navigate(AppPaths.workspaceAiSettings(cluster.workspaceId));
+            }}
             onInitialPromptHandled={onInitialPromptHandled}
           />
         </>

@@ -91,6 +91,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   onUpdateName,
   onUpdateNamespaceScope,
   onUpdateWriteConfirmationPolicy,
+  onOpenAiSettings,
   onOpenCopilot,
   onActiveViewChange
 }) => {
@@ -103,6 +104,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   const canRequestWriteRuns = Boolean(currentWorkspacePermissions?.create_read_write_runs);
   const canCancelRuns = Boolean(currentWorkspacePermissions?.cancel_runs);
   const canDeleteSessions = Boolean(currentWorkspacePermissions?.delete_sessions);
+  const canManageAiSettings = Boolean(currentWorkspacePermissions?.manage_ai_settings);
   const canReadPodLogs = Boolean(currentWorkspacePermissions?.read_target_logs);
   const canManageTools = Boolean(currentWorkspacePermissions?.manage_tools);
   const canManageMcp = Boolean(currentWorkspacePermissions?.manage_mcp);
@@ -270,6 +272,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 canApproveWriteActions={canRequestWriteRuns}
                 canCancelRuns={canCancelRuns}
                 canDeleteSessions={canDeleteSessions}
+                canManageAiSettings={canManageAiSettings}
                 isRunActive={isRunActive}
                 isSessionsLoading={isSessionsLoading}
                 isLoadingEarlierMessages={isLoadingEarlierMessages}
@@ -289,6 +292,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 footerKey={resolveClusterChatFooterKey(cluster, canRequestWriteRuns)}
                 onChatScroll={handleChatScroll}
                 onLoadEarlierMessages={handleLoadEarlierMessages}
+                onOpenAiSettings={onOpenAiSettings}
                 onInputChange={setInputValue}
                 onSend={handleSend}
                 onEditLastUserMessage={handleEditLastUserMessage}
