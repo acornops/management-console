@@ -2,9 +2,9 @@ import React from 'react';
 import { Check, Copy, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
-import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 
 interface AddVirtualMachineModalProps {
@@ -19,8 +19,6 @@ interface AddVirtualMachineModalProps {
   onProceedToInstructions: () => void | Promise<void>;
   onConfirmInstalled: () => void;
 }
-
-const vmNameInputClassName = formInputClassName('px-4 font-medium');
 
 export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
   isOpen,
@@ -70,15 +68,13 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
           </h3>
           <ModalStepIndicator steps={connectSteps} currentStepId={creationStep} className="mt-4" />
         </div>
-        <button
+        <CloseButton
           type="button"
           onClick={onClose}
           disabled={isRegistering}
-          className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
+          className="shrink-0"
           aria-label={t('virtualMachines.list.closeAddDialog')}
-        >
-          <ICONS.X className="h-4 w-4" />
-        </button>
+        />
       </div>
 
       {creationStep === 'details' ? (
@@ -89,14 +85,14 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                 <label htmlFor="add-vm-name-input" className="block px-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
                   {t('virtualMachines.list.vmName')}
                 </label>
-                <input
+                <TextInput
                   id="add-vm-name-input"
                   ref={vmNameInputRef}
                   type="text"
                   value={vmName}
                   onChange={(event) => onVmNameChange(event.target.value)}
                   placeholder={t('virtualMachines.list.vmNamePlaceholder')}
-                  className={vmNameInputClassName}
+                  className="px-4 font-medium"
                 />
               </section>
 
@@ -157,14 +153,15 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                 <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
                   <div className="flex items-center justify-between gap-3 px-4 pt-4">
                     <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('virtualMachines.list.installInstructions')}</span>
-                    <button
+                    <Button
                       type="button"
+                      variant="icon"
+                      size="icon"
                       onClick={() => void copyInstallInstructions()}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-all hover:bg-ui-bg hover:text-ui-text"
                       aria-label={hasCopiedInstructions ? t('virtualMachines.list.copied') : t('virtualMachines.list.copy')}
                     >
                       {hasCopiedInstructions ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </button>
+                    </Button>
                   </div>
                   <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
                     <pre className="whitespace-pre">{installInstructions}</pre>

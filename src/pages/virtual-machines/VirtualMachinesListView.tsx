@@ -4,11 +4,11 @@ import { Trans, useTranslation } from 'react-i18next';
 import { MoreHorizontal, Server, Settings, Trash2 } from 'lucide-react';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
+import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
 import { Select, SelectOption } from '@/components/common/Select';
 import { actionCardButtonClassName, cardClassName } from '@/components/common/Card';
 import { Dialog } from '@/components/common/Dialog';
-import { formInputClassName } from '@/components/common/formControlStyles';
 import { headerMotion } from '@/lib/motion';
 import { AppPaths } from '@/utils/routes';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
@@ -37,8 +37,6 @@ interface VirtualMachinesListViewProps {
   onDeleteVirtualMachine: (vm: ControlPlaneVirtualMachine) => Promise<void> | void;
   navigate: (path: string, options?: NavigateOptions) => void;
 }
-
-const deleteVmConfirmationInputClassName = formInputClassName('px-4 focus:border-status-danger/45 focus:ring-status-danger/20');
 
 export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = ({
   workspace,
@@ -354,15 +352,12 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                   <p className="mt-0.5 text-[11px] font-semibold text-ui-text-muted">{t('virtualMachines.list.deleteVmSubtitle')}</p>
                 </div>
               </div>
-              <button
+              <CloseButton
                 type="button"
                 onClick={closeDeleteVmDialog}
                 disabled={isDeletingVm}
-                className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
                 aria-label={t('virtualMachines.list.closeDeleteVm')}
-              >
-                <ICONS.X className="h-4 w-4" />
-              </button>
+              />
             </div>
             <div className="space-y-4 px-7 py-6">
               <p className="text-sm leading-6 text-ui-text-muted">
@@ -382,14 +377,14 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                     components={{ name: <span className="font-extrabold text-status-danger-text" /> }}
                   />
                 </label>
-                <input
+                <TextInput
                   id="delete-vm-confirmation-input"
                   value={deleteVmConfirmation}
                   onChange={(event) => setDeleteVmConfirmation(event.target.value)}
                   disabled={isDeletingVm}
                   autoComplete="off"
                   spellCheck={false}
-                  className={deleteVmConfirmationInputClassName}
+                  className="px-4 focus:border-status-danger/45 focus:ring-status-danger/20"
                 />
               </div>
               {deleteVmError && (
@@ -399,22 +394,24 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
               )}
             </div>
             <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-7 py-5">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={closeDeleteVmDialog}
                 disabled={isDeletingVm}
-                className="rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title text-ui-text-muted transition-all hover:bg-ui-bg disabled:opacity-50"
               >
                 {t('app.cancel')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="danger"
+                size="sm"
                 onClick={() => void handleConfirmDeleteVm()}
                 disabled={isDeletingVm || deleteVmConfirmation !== deleteTargetVm.name}
-                className="rounded-lg bg-status-danger px-4 py-2 type-row-title text-[oklch(0.99_0.004_86)] transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeletingVm ? t('dashboard.deleting') : t('dashboard.delete')}
-              </button>
+              </Button>
             </div>
           </Dialog>
         )}

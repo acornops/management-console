@@ -6,6 +6,7 @@ import { ICONS } from '@/constants';
 import { issueStatusTone } from '@/pages/issues/issueUi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { issueSeverityTone } from '@/pages/virtual-machines/virtualMachineUi';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 interface VirtualMachineIssuesPanelProps {
   issues: ControlPlaneIssueItem[] | null;
@@ -113,7 +114,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                           {t(`issues.status.${issue.status}`)}
                         </span>
                         <span className="type-caption text-ui-text-muted">
-                          {t('overview.firstSeenLabel')}: {new Date(issueFirstSeenTimestamp(issue)).toLocaleString()}
+                          {t('overview.firstSeenLabel')}: {formatUserDateTime(issueFirstSeenTimestamp(issue))}
                         </span>
                       </div>
                       <h2 className="type-row-title mt-2">{issue.title}</h2>
@@ -128,7 +129,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       {issue.objectName || issue.objectKind || issue.reason || 'host'}
                     </td>
                     <td className="type-caption px-5 py-4 align-top">
-                      {new Date(issueTimestamp(issue)).toLocaleString()}
+                      {formatUserDateTime(issueTimestamp(issue))}
                     </td>
                     <td className="px-5 py-4 align-top text-right">
                       <Button onClick={() => onOpenIssueTriage(issue)} variant="accent" size="md">
@@ -154,7 +155,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                   </span>
                 </div>
                 <p className="type-caption mt-3 text-ui-text-muted">
-                  {t('overview.firstSeenLabel')}: {new Date(issueFirstSeenTimestamp(issue)).toLocaleString()}
+                  {t('overview.firstSeenLabel')}: {formatUserDateTime(issueFirstSeenTimestamp(issue))}
                 </p>
                 <h2 className="type-row-title mt-4">{issue.title}</h2>
                 <p className="type-body mt-2">{issue.reason || issue.summary}</p>

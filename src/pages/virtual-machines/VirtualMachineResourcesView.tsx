@@ -1,9 +1,10 @@
 import React from 'react';
-import { FileText, Network, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { ICONS } from '@/constants';
+import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 export type VmResourceCategory = 'all' | 'services' | 'processes' | 'network' | 'logs';
 
@@ -20,43 +21,7 @@ interface VirtualMachineResourcesViewProps {
   onRetry: () => void;
 }
 
-const resourceCategories: Array<{
-  id: VmResourceCategory;
-  labelKey: string;
-  descriptionKey: string;
-  icon: React.ElementType;
-}> = [
-  {
-    id: 'all',
-    labelKey: 'virtualMachines.resources.categories.all',
-    descriptionKey: 'virtualMachines.resources.categoryDescriptions.all',
-    icon: ICONS.Activity
-  },
-  {
-    id: 'services',
-    labelKey: 'virtualMachines.resources.categories.services',
-    descriptionKey: 'virtualMachines.resources.categoryDescriptions.services',
-    icon: ICONS.Layers
-  },
-  {
-    id: 'processes',
-    labelKey: 'virtualMachines.resources.categories.processes',
-    descriptionKey: 'virtualMachines.resources.categoryDescriptions.processes',
-    icon: ICONS.Terminal
-  },
-  {
-    id: 'network',
-    labelKey: 'virtualMachines.resources.categories.network',
-    descriptionKey: 'virtualMachines.resources.categoryDescriptions.network',
-    icon: Network
-  },
-  {
-    id: 'logs',
-    labelKey: 'virtualMachines.resources.categories.logs',
-    descriptionKey: 'virtualMachines.resources.categoryDescriptions.logs',
-    icon: FileText
-  }
-];
+const resourceCategories: ReadonlyArray<VmResourceCategory> = ['all', 'services', 'processes', 'network', 'logs'];
 
 function getInventoryCategory(item: Record<string, unknown>): VmResourceCategory | null {
   const category = String(item.category || '').toLowerCase();
@@ -130,37 +95,13 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           </div>
         </div>
 
-        <div className="grid gap-2 border-b border-ui-border p-3 md:grid-cols-5">
-          {resourceCategories.map((category) => {
-            const Icon = category.icon;
-            const active = activeCategory === category.id;
-            return (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => onCategoryChange(category.id)}
-                className={`min-h-[6.5rem] rounded-md border px-3 py-3 text-left transition-colors ${
-                  active
-                    ? 'border-accent/40 bg-accent-soft text-accent-strong'
-                    : 'border-ui-border bg-ui-bg text-ui-text hover:border-ui-text-muted/40 hover:bg-ui-surface'
-                }`}
-              >
-                <span className="flex items-center justify-between gap-3">
-                  <span className="flex min-w-0 items-center gap-2 text-sm font-bold">
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{t(category.labelKey)}</span>
-                  </span>
-                  <span className="rounded-full bg-ui-surface px-2 py-0.5 text-[11px] font-bold text-ui-text-muted">
-                    {counts[category.id]}
-                  </span>
-                </span>
-                <span className="mt-2 block text-xs font-medium leading-5 text-ui-text-muted">
-                  {t(category.descriptionKey)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <ResourceCategoryTabs<VmResourceCategory>
+          categories={resourceCategories}
+          active={activeCategory}
+          counts={counts}
+          labelPrefix="virtualMachines.resources.categories"
+          onSelect={onCategoryChange}
+        />
 
         {activeCategory === 'logs' ? (
           <div className="max-h-[calc(100vh-22rem)] overflow-auto">
@@ -184,7 +125,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
               <div className="divide-y divide-ui-border">
                 {logs.map((entry, index) => (
                   <article key={String(entry.entryId || index)} className="grid gap-2 px-4 py-3 text-sm md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)]">
-                    <span className="font-mono text-xs text-ui-text-muted">{String(entry.timestamp || '')}</span>
+                    <span className="font-mono text-xs text-ui-text-muted">{formatUserDateTime(String(entry.timestamp || ''), { fallback: String(entry.timestamp || '') })}</span>
                     <span className="truncate font-semibold text-ui-text">{String(entry.source || t('virtualMachines.resources.host'))}</span>
                     <span className="min-w-0 break-words text-ui-text-muted">{String(entry.message || '')}</span>
                   </article>

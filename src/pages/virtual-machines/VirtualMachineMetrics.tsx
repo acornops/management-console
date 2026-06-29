@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import { formatUserTime } from '@/utils/dateTime';
 
 export interface VmMetricTimelinePoint {
   timestamp: number;
@@ -10,7 +11,7 @@ export interface VmMetricTimelinePoint {
 }
 
 export function formatMetricTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return formatUserTime(timestamp, { fallback: '-' });
 }
 
 export function getVmMetricTimeline(points: Record<string, unknown>[]): VmMetricTimelinePoint[] {

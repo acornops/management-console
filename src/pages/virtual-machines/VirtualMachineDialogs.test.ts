@@ -17,6 +17,7 @@ const constants = readFileSync(resolve(root, 'src/constants.tsx'), 'utf8');
 describe('virtual machine onboarding dialog', () => {
   it('uses the shared dialog shell like the connect-cluster flow', () => {
     expect(addVirtualMachineModal).toContain("import { Dialog } from '@/components/common/Dialog'");
+    expect(addVirtualMachineModal).toContain("import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary'");
     expect(addVirtualMachineModal).toContain("import { ModalStepIndicator } from '@/components/common/ModalStepIndicator'");
     expect(addVirtualMachineModal).toContain('titleId="add-vm-title"');
     expect(addVirtualMachineModal).toContain('initialFocusRef={vmNameInputRef}');
@@ -130,12 +131,21 @@ describe('virtual machine onboarding dialog', () => {
 
   it('uses the shared dialog shell for delete-VM confirmation', () => {
     expect(virtualMachinesListView).toContain("import { Dialog } from '@/components/common/Dialog'");
+    expect(virtualMachinesListView).toContain("import { Button } from '@/components/common/Button'");
+    expect(virtualMachinesListView).toContain("import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary'");
     expect(virtualMachinesListView).not.toContain("import { Tooltip } from '@/components/common/Tooltip'");
     expect(virtualMachinesListView).toContain('titleId="delete-vm-title"');
     expect(virtualMachinesListView).toContain('closeDisabled={isDeletingVm}');
     expect(virtualMachinesListView).toContain('id="delete-vm-confirmation-input"');
     expect(virtualMachinesListView).toContain('i18nKey="virtualMachines.list.deleteVmConfirmationLabel"');
     expect(virtualMachinesListView).toContain('font-extrabold text-status-danger-text');
+    expect(virtualMachinesListView).toContain('<CloseButton\n                type="button"');
+    expect(virtualMachinesListView).toContain('<TextInput\n                  id="delete-vm-confirmation-input"');
+    expect(virtualMachinesListView).toContain('<Button\n                type="button"\n                variant="secondary"\n                size="sm"');
+    expect(virtualMachinesListView).toContain('<Button\n                type="button"\n                variant="danger"\n                size="sm"');
+    expect(virtualMachinesListView).not.toContain('rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface');
+    expect(virtualMachinesListView).not.toContain('rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title');
+    expect(virtualMachinesListView).not.toContain('rounded-lg bg-status-danger px-4 py-2 type-row-title');
   });
 
   it('uses the same lifecycle filter labels as the cluster page', () => {
