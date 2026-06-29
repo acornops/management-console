@@ -182,6 +182,14 @@ describe('routes', () => {
       kind: 'workspaceSchedules',
       workspaceId: 'team-alpha'
     });
+    expect(AppPaths.workspaceScheduleCreate('team-alpha', 'workflow/a')).toBe(
+      '/workspaces/team-alpha/schedules?create=schedule&workflowId=workflow%2Fa'
+    );
+    expect(parseAppRoute(AppPaths.workspaceScheduleCreate('team-alpha', 'workflow/a'))).toEqual({
+      kind: 'workspaceSchedules',
+      workspaceId: 'team-alpha',
+      createWorkflowId: 'workflow/a'
+    });
     expect(AppPaths.workspaceApprovals('team-alpha')).toBe('/workspaces/team-alpha/approvals');
     expect(parseAppRoute(AppPaths.workspaceApprovals('team-alpha'))).toEqual({
       kind: 'workspaceApprovals',

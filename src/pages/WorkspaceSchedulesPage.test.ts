@@ -33,4 +33,24 @@ describe('WorkspaceSchedulesPage control-plane surface', () => {
     expect(enLocale).toContain("emptyTitle: 'No workflow schedules'");
     expect(enLocale).toContain("permissionNotice: 'You need manage_workflows to create or edit schedules.'");
   });
+
+  it('opens the create drawer from a workflow route handoff with the workflow preselected', () => {
+    expect(schedulesPage).toContain('createWorkflowId?: string;');
+    expect(schedulesPage).toContain('const consumedCreateWorkflowIdRef = React.useRef<string | undefined>(undefined);');
+    expect(schedulesPage).toContain('openCreateDrawer(createWorkflowId);');
+    expect(schedulesPage).toContain("setDraft({ ...createEmptyDraft(), workflowId: workflowId || activeWorkflows[0]?.id || workflows[0]?.id || '' });");
+    expect(schedulesPage).toContain('<Button size="md" variant="primary" onClick={() => openCreateDrawer()}');
+  });
+
+  it('uses shared controls and consistent sizing for schedule actions', () => {
+    expect(schedulesPage).toContain("import { Checkbox } from '@/components/common/Checkbox'");
+    expect(schedulesPage).toContain('<Button size="md" variant="secondary" onClick={() => void refreshSchedules()}');
+    expect(schedulesPage).toContain('<Button size="md" variant="primary" onClick={() => openCreateDrawer()}');
+    expect(schedulesPage).toContain('<Checkbox checked={draft.enabled}');
+    expect(schedulesPage).toContain('<Button size="sm" variant="tertiary" onClick={closeDrawer}>');
+    expect(schedulesPage).toContain('<Button size="sm" variant="primary" onClick={() => void saveDraft()}');
+    expect(schedulesPage).toContain('<Button size="sm" variant="danger" onClick={() => void deleteSchedule(schedule)}');
+    expect(schedulesPage).not.toContain('<ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />\n                          {t(\'schedules.actions.delete\')}');
+    expect(schedulesPage).not.toContain('className="h-4 w-4 rounded border-ui-border text-accent focus:ring-accent"');
+  });
 });

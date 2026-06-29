@@ -34,6 +34,16 @@ export interface WorkflowRunRecord {
   startedAt: string;
 }
 
+export interface WorkflowRunMessage {
+  id: string;
+  runId: string;
+  role: 'operator' | 'agent' | 'system';
+  author: string;
+  content: string;
+  createdAt: string;
+  status: 'sending' | 'sent' | 'failed';
+}
+
 export interface WorkflowAgentAssignment {
   agentId: string;
   name: string;
@@ -48,6 +58,7 @@ export interface WorkflowDefinition {
   description: string;
   status: WorkflowStatus;
   source?: 'system' | 'user';
+  owner: string;
   category: string;
   tags: string[];
   lastRun: string;
@@ -90,6 +101,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       description: 'Investigate a selected cluster using inventory, events, logs, and metrics before recommending next steps.',
       status: 'active',
       source: 'system',
+      owner: 'AcornOps',
       category: 'cluster-triage',
       tags: ['cluster', 'triage', 'incident'],
       lastRun: 'Today 09:12',
@@ -144,6 +156,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       description: 'Perform a guided operation against a selected Git repository, such as adding configuration and opening a PR.',
       status: 'active',
       source: 'system',
+      owner: 'AcornOps',
       category: 'git-operations',
       tags: ['repository', 'configuration', 'pull-request'],
       lastRun: 'Yesterday',
@@ -200,6 +213,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       description: 'Read selected incident chat sessions and generate a PDF report with timeline, impact, and follow-up actions.',
       status: 'active',
       source: 'system',
+      owner: 'AcornOps',
       category: 'incident-review',
       tags: ['incident', 'chat-history', 'pdf'],
       lastRun: 'Jun 20',

@@ -10,10 +10,12 @@ import {
 } from '@/pages/workflows/workflowModel';
 import type {
   WorkflowApiDefinition,
+  WorkflowCreateInput,
   WorkflowOptionsCatalog,
   WorkflowRunEvent,
   WorkflowRunSummary
 } from '@/services/control-plane/workflowApi';
+import { formatElapsedDuration } from '@/utils/dateTime';
 
 export const tabs: WorkflowTab[] = ['overview', 'agents', 'targets', 'capabilities', 'runs', 'settings'];
 
@@ -35,6 +37,7 @@ export type CreateWorkflowDraft = {
   description: string;
   starterPrompt: string;
   primaryAgentId: string;
+  supportingAgentIds: string[];
   enabledMcpServers: string;
   enabledSkills: string;
   allowedTools: string;
@@ -44,6 +47,11 @@ export type WorkflowEditDraft = {
   name: string;
   description: string;
   starterPrompt: string;
+};
+
+export type AgentAssignmentDraft = {
+  primaryAgentId: string;
+  supportingAgentIds: string[];
 };
 
 export type McpServerDraft = {
@@ -151,6 +159,19 @@ export function isRunActive(status: WorkflowDefinition['runs'][number]['status']
   return status === 'queued' || status === 'dispatching' || status === 'running' || status === 'waiting_approval' || status === 'cancelling';
 }
 
+export function isTerminalRunStatus(status: WorkflowDefinition['runs'][number]['status']): boolean {
+  return status === 'completed' || status === 'failed' || status === 'cancelled';
+}
+
+export type RunDiscussionState = 'active' | 'waiting_session' | 'terminal';
+
+export function getRunDiscussionState(run: WorkflowDefinition['runs'][number], workflowSessionId: string): RunDiscussionState {
+  if (isRunActive(run.status)) {
+    return workflowSessionId ? 'active' : 'waiting_session';
+  }
+  return 'terminal';
+}
+
 export function workflowRunTraceStatus(status: WorkflowDefinition['runs'][number]['status']): LiveRunTrace['status'] {
   if (status === 'completed') return 'completed';
   if (status === 'failed') return 'failed';
@@ -208,9 +229,58 @@ export function createWorkflowDraft(): CreateWorkflowDraft {
     description: '',
     starterPrompt: '',
     primaryAgentId: '',
+    supportingAgentIds: [],
     enabledMcpServers: '',
     enabledSkills: '',
     allowedTools: ''
+  };
+}
+
+function uniqueInOrder(values: string[]): string[] {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    if (!value || seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  });
+}
+
+export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCreateInput {
+  const name = draft.name.trim();
+  const enabledMcpServers = splitLines(draft.enabledMcpServers);
+  const enabledSkills = splitLines(draft.enabledSkills);
+  const allowedTools = splitLines(draft.allowedTools);
+  const assignedAgentIds = uniqueInOrder([
+    draft.primaryAgentId,
+    ...draft.supportingAgentIds
+  ].map((agentId) => agentId.trim()));
+
+  return {
+    name,
+    description: draft.description.trim(),
+    tags: [],
+    starterPrompt: draft.starterPrompt.trim() || `Start ${name}.`,
+    inputs: [],
+    enabledMcpServers,
+    enabledSkills,
+    requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
+    policy: {
+      mode: 'read_only',
+      maxRuntimeSeconds: 900,
+      retentionDays: 90,
+      approvalRequirements: []
+    },
+    steps: [{
+      id: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'workflow'}-step`,
+      title: 'Run workflow prompt',
+      requiredInputs: [],
+      enabledSkills,
+      assignedAgentIds,
+      allowedMcpServers: enabledMcpServers,
+      allowedTools,
+      contextGrants: ['workspace_metadata'],
+      approvalRequired: false
+    }]
   };
 }
 
@@ -220,6 +290,20 @@ export function createWorkflowEditDraft(workflow: WorkflowDefinition): WorkflowE
     description: workflow.description,
     starterPrompt: workflow.starterPrompt
   };
+}
+
+export function createAgentAssignmentDraft(workflow: WorkflowDefinition): AgentAssignmentDraft {
+  return {
+    primaryAgentId: workflow.primaryAgent.agentId,
+    supportingAgentIds: workflow.supportingAgents.map((agent) => agent.agentId).filter(Boolean)
+  };
+}
+
+export function assignedAgentIdsFromDraft(draft: AgentAssignmentDraft): string[] {
+  return uniqueInOrder([
+    draft.primaryAgentId,
+    ...draft.supportingAgentIds
+  ].map((agentId) => agentId.trim()));
 }
 
 export function createMcpServerDraft(): McpServerDraft {
@@ -314,10 +398,43 @@ export function normalizeWorkflowOptionsCatalog(
   };
 }
 
+const unassignedPrimaryAgent = {
+  agentId: '',
+  name: 'Unassigned agent',
+  role: 'Primary agent',
+  required: true
+};
+
+function workflowOwnerLabel(
+  workflow: WorkflowApiDefinition,
+  fallback?: WorkflowDefinition,
+  ownerLabelsByUserId?: Map<string, string>
+): string {
+  const createdByUser = workflow.createdByUser;
+  if (createdByUser) {
+    return createdByUser.displayName || createdByUser.email || createdByUser.userId || createdByUser.id || fallback?.owner || 'Unknown user';
+  }
+  if (typeof workflow.createdBy === 'string' && workflow.createdBy.trim()) {
+    const ownerLabel = ownerLabelsByUserId?.get(workflow.createdBy);
+    if (ownerLabel) return ownerLabel;
+    return workflow.createdBy === 'system' ? 'AcornOps' : workflow.createdBy;
+  }
+  return fallback?.owner || (workflow.source === 'system' || fallback?.source === 'system' ? 'AcornOps' : 'Unknown user');
+}
+
+function titleCaseAgentId(agentId: string): string {
+  return agentId
+    .replace(/^agent-/, '')
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, (value) => value.toUpperCase());
+}
+
 export function mapApiWorkflowToDefinition(
   workflow: WorkflowApiDefinition,
   fallback: WorkflowDefinition | undefined,
-  workspaceId: string
+  workspaceId: string,
+  options?: WorkflowOptionsCatalog,
+  ownerLabelsByUserId?: Map<string, string>
 ): WorkflowDefinition {
   const workflowSteps = Array.isArray(workflow.steps) && workflow.steps.length > 0
     ? workflow.steps
@@ -353,16 +470,17 @@ export function mapApiWorkflowToDefinition(
     ? uniqueValues(workflow.enabledSkills)
     : uniqueValues(workflowSteps.flatMap((step) => step.enabledSkills || []));
   const contextGrants = uniqueValues(workflowSteps.flatMap((step) => step.contextGrants || []));
-  const assignedAgentIds = uniqueValues(workflowSteps.flatMap((step) => step.assignedAgentIds || []));
+  const assignedAgentIds = uniqueInOrder(workflowSteps.flatMap((step) => step.assignedAgentIds || []));
   const fallbackAssignments = [
     ...(fallback?.primaryAgent ? [fallback.primaryAgent] : []),
     ...(fallback?.supportingAgents || [])
   ];
+  const agentOptionLabels = new Map((options?.agents || []).map((agent) => [agent.value, agent.label]));
   const apiAssignments = assignedAgentIds.map((agentId, index) => {
     const fallbackAgent = fallbackAssignments.find((agent) => agent.agentId === agentId);
     return fallbackAgent || {
       agentId,
-      name: agentId.replace(/^agent-/, '').replaceAll('-', ' '),
+      name: agentOptionLabels.get(agentId) || titleCaseAgentId(agentId),
       role: index === 0 ? 'Primary agent' : 'Supporting agent',
       required: index === 0
     };
@@ -375,11 +493,12 @@ export function mapApiWorkflowToDefinition(
     description: workflow.description || fallback?.description || 'Workspace-scoped workflow served by control-plane.',
     status: workflow.status || 'active',
     source: workflow.source || fallback?.source,
+    owner: workflowOwnerLabel(workflow, fallback, ownerLabelsByUserId),
     category: typeof workflow.category === 'string' ? workflow.category : fallback?.category || 'cluster-triage',
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
     lastRun: fallback?.lastRun || 'No runs yet',
     primaryAction: fallback?.primaryAction || 'Start workflow',
-    primaryAgent: apiAssignments[0] || fallback?.primaryAgent || { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Primary agent', required: true },
+    primaryAgent: apiAssignments[0] || fallback?.primaryAgent || unassignedPrimaryAgent,
     supportingAgents: apiAssignments.length > 1 ? apiAssignments.slice(1) : fallback?.supportingAgents || [],
     requiredPermissions: Array.isArray(workflow.requiredPermissions) ? workflow.requiredPermissions : fallback?.requiredPermissions || [],
     enabledMcpServers,
@@ -447,9 +566,24 @@ export function mapWorkflowRunSummary(run: WorkflowRunSummary): WorkflowDefiniti
     runId: run.id,
     status,
     actor: run.createdBy || 'Operator',
-    duration: run.endedAt && run.startedAt ? 'Completed' : 'In progress',
+    duration: run.endedAt && run.startedAt ? formatElapsedDuration(run.startedAt, run.endedAt) : 'In progress',
     approvals: 0,
     output: run.assistantMessage?.content || (status === 'completed' ? 'Completed without assistant output.' : 'Workflow run is in progress.'),
     startedAt: run.requestedAt || run.startedAt || 'Unknown'
   };
+}
+
+function workflowRunKeys(run: WorkflowDefinition['runs'][number]): string[] {
+  return [run.id, run.runId].filter((value): value is string => Boolean(value));
+}
+
+export function mergeWorkflowRunsWithLocalDispatches(
+  serverRuns: WorkflowDefinition['runs'],
+  localDispatches: WorkflowDefinition['runs']
+): WorkflowDefinition['runs'] {
+  const serverRunKeys = new Set(serverRuns.flatMap(workflowRunKeys));
+  const pendingLocalRuns = localDispatches.filter((run) => (
+    workflowRunKeys(run).every((key) => !serverRunKeys.has(key))
+  ));
+  return [...pendingLocalRuns, ...serverRuns];
 }

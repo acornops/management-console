@@ -367,7 +367,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           )}
 
           {route.kind === 'workspaceSchedules' && workspaceContext && (
-            <WorkspaceSchedulesPage workspace={workspaceContext} />
+            <WorkspaceSchedulesPage workspace={workspaceContext} createWorkflowId={route.createWorkflowId} />
           )}
 
           {route.kind === 'workspaceApprovals' && workspaceContext && (

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { Checkbox } from '@/components/common/Checkbox';
 import { Select, SelectOption } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
@@ -18,9 +19,11 @@ import {
   type WorkflowSchedule,
   type WorkflowScheduleListResponse
 } from '@/services/control-plane/workflowApi';
+import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
 
 interface WorkspaceSchedulesPageProps {
   workspace: Workspace;
+  createWorkflowId?: string;
 }
 
 interface ScheduleDraft {
@@ -34,31 +37,22 @@ interface ScheduleDraft {
   inputDefaultsText: string;
 }
 
-const emptyDraft: ScheduleDraft = {
+const createEmptyDraft = (): ScheduleDraft => ({
   workflowId: '',
   name: '',
   cron: '0 9 * * 1-5',
-  timezone: 'UTC',
+  timezone: getUserTimeZone(),
   enabled: true,
   approvedContextGrants: 'workspace_metadata',
   inputDefaultsText: '{}'
-};
+});
 
 const scheduleFormInputClassName = formInputClassName('mt-2');
 const scheduleFormTextareaClassName = formTextareaClassName('mt-2');
 const scheduleCodeTextareaClassName = formTextareaClassName('mt-2 min-h-36 font-mono text-xs font-normal');
 
 function formatDateTime(value?: string): string {
-  if (!value) return 'Not scheduled';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short'
-  }).format(date);
+  return formatUserDateTime(value, { fallback: value || 'Not scheduled' });
 }
 
 function statusTone(status: WorkflowSchedule['status']): React.ComponentProps<typeof StatusBadge>['tone'] {
@@ -92,14 +86,15 @@ function parseJsonObject(value: string): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
-export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ workspace }) => {
+export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ workspace, createWorkflowId }) => {
   const { t } = useTranslation();
+  const consumedCreateWorkflowIdRef = React.useRef<string | undefined>(undefined);
   const [schedulePage, setSchedulePage] = useState<WorkflowScheduleListResponse | null>(null);
   const [workflows, setWorkflows] = useState<WorkflowApiDefinition[]>([]);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
   const [scheduleError, setScheduleError] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [draft, setDraft] = useState<ScheduleDraft>(emptyDraft);
+  const [draft, setDraft] = useState<ScheduleDraft>(() => createEmptyDraft());
   const [draftError, setDraftError] = useState('');
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [deletingScheduleId, setDeletingScheduleId] = useState('');
@@ -142,11 +137,17 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
     [workflows]
   );
 
-  const openCreateDrawer = () => {
-    setDraft({ ...emptyDraft, workflowId: activeWorkflows[0]?.id || workflows[0]?.id || '' });
+  const openCreateDrawer = (workflowId?: string) => {
+    setDraft({ ...createEmptyDraft(), workflowId: workflowId || activeWorkflows[0]?.id || workflows[0]?.id || '' });
     setDraftError('');
     setDrawerOpen(true);
   };
+
+  useEffect(() => {
+    if (!createWorkflowId || consumedCreateWorkflowIdRef.current === createWorkflowId) return;
+    consumedCreateWorkflowIdRef.current = createWorkflowId;
+    openCreateDrawer(createWorkflowId);
+  }, [createWorkflowId]);
 
   const openEditDrawer = (schedule: WorkflowSchedule) => {
     setDraft(scheduleToDraft(schedule));
@@ -237,11 +238,11 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
           <p className="type-body mt-2 max-w-2xl">{t('schedules.subtitle', { workspace: workspace.name })}</p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => void refreshSchedules()} disabled={isLoadingSchedules}>
+          <Button size="md" variant="secondary" onClick={() => void refreshSchedules()} disabled={isLoadingSchedules}>
             <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
             {t('common.refresh', { defaultValue: 'Refresh' })}
           </Button>
-          <Button size="sm" variant="primary" onClick={openCreateDrawer} disabled={!canManageSchedules}>
+          <Button size="md" variant="primary" onClick={() => openCreateDrawer()} disabled={!canManageSchedules}>
             <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
             {t('schedules.actions.create')}
           </Button>
@@ -330,7 +331,6 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
                           {schedule.status === 'enabled' ? t('schedules.actions.pause') : t('schedules.actions.resume')}
                         </Button>
                         <Button size="sm" variant="danger" onClick={() => void deleteSchedule(schedule)} disabled={!canManageSchedules || deletingScheduleId === schedule.id}>
-                          <ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />
                           {t('schedules.actions.delete')}
                         </Button>
                       </div>
@@ -384,7 +384,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
                 </label>
               </div>
               <label className="flex items-center gap-3 text-sm font-semibold text-ui-text">
-                <input type="checkbox" checked={draft.enabled} onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))} className="h-4 w-4 rounded border-ui-border text-accent focus:ring-accent" />
+                <Checkbox checked={draft.enabled} onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))} />
                 {t('schedules.form.enabled')}
               </label>
               <label className="block text-sm font-semibold text-ui-text">
@@ -397,8 +397,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
               </label>
             </div>
             <div className="flex justify-end gap-2 border-t border-ui-border px-5 py-4">
-              <Button variant="tertiary" onClick={closeDrawer}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
-              <Button variant="primary" onClick={() => void saveDraft()} disabled={savingSchedule || !draft.workflowId || !draft.name.trim()}>
+              <Button size="sm" variant="tertiary" onClick={closeDrawer}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
+              <Button size="sm" variant="primary" onClick={() => void saveDraft()} disabled={savingSchedule || !draft.workflowId || !draft.name.trim()}>
                 {savingSchedule ? t('schedules.form.saving') : t('schedules.form.save')}
               </Button>
             </div>

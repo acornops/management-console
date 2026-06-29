@@ -23,6 +23,9 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   name: string;
   description?: string;
   status?: 'active' | 'draft' | 'paused';
+  createdBy?: string;
+  createdByUser?: { id?: string; userId?: string; displayName?: string; email?: string };
+  createdAt?: string;
   category?: string;
   tags?: string[];
   inputs?: WorkflowApiInputDefinition[];

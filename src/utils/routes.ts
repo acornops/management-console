@@ -12,7 +12,7 @@ export type AppRoute =
   | { kind: 'workspaceOverview'; workspaceId: string }
   | { kind: 'workspaceAgents'; workspaceId: string }
   | { kind: 'workspaceWorkflows'; workspaceId: string }
-  | { kind: 'workspaceSchedules'; workspaceId: string }
+  | { kind: 'workspaceSchedules'; workspaceId: string; createWorkflowId?: string }
   | { kind: 'workspaceApprovals'; workspaceId: string }
   | { kind: 'workspaceMembers'; workspaceId: string }
   | { kind: 'workspaceAiSettings'; workspaceId: string }
@@ -127,7 +127,12 @@ export function parseAppRoute(path: string): AppRoute {
     if (section === 'overview') return { kind: 'workspaceOverview', workspaceId };
     if (section === 'agents') return { kind: 'workspaceAgents', workspaceId };
     if (section === 'workflows') return { kind: 'workspaceWorkflows', workspaceId };
-    if (section === 'schedules') return { kind: 'workspaceSchedules', workspaceId };
+    if (section === 'schedules') {
+      const createWorkflowId = params.get('create') === 'schedule' ? params.get('workflowId') || undefined : undefined;
+      return createWorkflowId
+        ? { kind: 'workspaceSchedules', workspaceId, createWorkflowId }
+        : { kind: 'workspaceSchedules', workspaceId };
+    }
     if (section === 'approvals') return { kind: 'workspaceApprovals', workspaceId };
     if (section === 'ai-settings') return { kind: 'workspaceAiSettings', workspaceId };
     if (section === 'settings') return { kind: 'workspaceSettings', workspaceId };
@@ -208,6 +213,8 @@ export const AppPaths = {
     `/workspaces/${encodeURIComponent(workspaceId)}/workflows`,
   workspaceSchedules: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/schedules`,
+  workspaceScheduleCreate: (workspaceId: string, workflowId: string): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/schedules?create=schedule&workflowId=${encodeURIComponent(workflowId)}`,
   workspaceApprovals: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/approvals`,
   workspaceMembers: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/members`,
