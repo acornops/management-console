@@ -58,7 +58,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
       titleId="add-vm-title"
       initialFocusRef={vmNameInputRef}
       closeDisabled={isRegistering}
-      className="relative flex max-h-[min(92vh,56rem)] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
+      className="relative flex max-h-[min(92vh,50rem)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
       onClose={onClose}
     >
       <div className="flex shrink-0 items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
@@ -79,40 +79,28 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
 
       {creationStep === 'details' ? (
         <>
-          <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 custom-scrollbar lg:grid-cols-[minmax(0,1fr)_19rem]">
-            <div className="space-y-5 rounded-lg border border-ui-border bg-ui-bg p-5">
-              <section className="space-y-3">
-                <label htmlFor="add-vm-name-input" className="block px-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
-                  {t('virtualMachines.list.vmName')}
-                </label>
-                <TextInput
-                  id="add-vm-name-input"
-                  ref={vmNameInputRef}
-                  type="text"
-                  value={vmName}
-                  onChange={(event) => onVmNameChange(event.target.value)}
-                  placeholder={t('virtualMachines.list.vmNamePlaceholder')}
-                  className="px-4 font-medium"
-                />
-              </section>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
+            <section className="space-y-3">
+              <label htmlFor="add-vm-name-input" className="block px-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
+                {t('virtualMachines.list.vmName')}
+              </label>
+              <TextInput
+                id="add-vm-name-input"
+                ref={vmNameInputRef}
+                type="text"
+                value={vmName}
+                onChange={(event) => onVmNameChange(event.target.value)}
+                placeholder={t('virtualMachines.list.vmNamePlaceholder')}
+                className="px-4 font-medium"
+              />
+            </section>
 
-              {errorMessage && (
-                <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-4 text-sm font-semibold text-status-danger-text">
-                  {errorMessage}
-                </div>
-              )}
-            </div>
-            <aside className="rounded-lg border border-ui-border bg-ui-surface p-5">
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent-strong">
-                  <ICONS.Terminal className="h-4 w-4" />
-                </span>
-                <div>
-                  <h4 className="type-row-title">{t('virtualMachines.list.installAgent')}</h4>
-                  <p className="type-caption mt-2 text-ui-text-muted">{t('virtualMachines.list.connectBody')}</p>
-                </div>
+            {errorMessage && (
+              <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-4 text-sm font-semibold text-status-danger-text">
+                {errorMessage}
               </div>
-            </aside>
+            )}
+
           </div>
           <div className="flex shrink-0 items-center justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
             <Button
@@ -138,54 +126,49 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
         </>
       ) : (
         <>
-          <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 custom-scrollbar lg:grid-cols-[minmax(0,1fr)_19rem]">
-            <div className="space-y-4">
-              <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
-                    <ICONS.Terminal className="h-4 w-4" />
-                  </span>
-                  <p>{t('virtualMachines.list.installBody')}</p>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
+            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
+                  <ICONS.Terminal className="h-4 w-4" />
+                </span>
+                <p>{t('virtualMachines.list.installBody')}</p>
+              </div>
+            </div>
+
+            {installInstructions ? (
+              <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
+                <div className="flex items-center justify-between gap-3 px-4 pt-4">
+                  <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('virtualMachines.list.installInstructions')}</span>
+                  <Button
+                    type="button"
+                    variant="icon"
+                    size="icon"
+                    onClick={() => void copyInstallInstructions()}
+                    aria-label={hasCopiedInstructions ? t('virtualMachines.list.copied') : t('virtualMachines.list.copy')}
+                  >
+                    {hasCopiedInstructions ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
+                  <pre className="whitespace-pre">{installInstructions}</pre>
                 </div>
               </div>
-
-              {installInstructions ? (
-                <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
-                  <div className="flex items-center justify-between gap-3 px-4 pt-4">
-                    <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('virtualMachines.list.installInstructions')}</span>
-                    <Button
-                      type="button"
-                      variant="icon"
-                      size="icon"
-                      onClick={() => void copyInstallInstructions()}
-                      aria-label={hasCopiedInstructions ? t('virtualMachines.list.copied') : t('virtualMachines.list.copy')}
-                    >
-                      {hasCopiedInstructions ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
-                    <pre className="whitespace-pre">{installInstructions}</pre>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
-                  {t('virtualMachines.list.missingInstallInstructions')}
-                </div>
-              )}
-            </div>
-            <aside className="space-y-4 rounded-lg border border-ui-border bg-ui-surface p-5">
+            ) : (
+              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
+                {t('virtualMachines.list.missingInstallInstructions')}
+              </div>
+            )}
+            <div className="rounded-lg border border-ui-border bg-ui-surface p-4">
               <div>
                 <p className="type-label text-ui-text-muted">{t('virtualMachines.list.vmName')}</p>
                 <p className="type-row-title mt-1 truncate" title={vmName}>{vmName}</p>
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-status-success/25 bg-status-success-soft px-4 py-3 text-xs font-extrabold text-status-success-text">
-                <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
-                {t('virtualMachines.list.waitingForAgent')}
-              </div>
-              <p className="type-caption text-ui-text-muted">
-                {t('virtualMachines.list.reopenHelp')}
-              </p>
-            </aside>
+            </div>
+            <div className="flex items-center gap-3 rounded-lg border border-status-success/25 bg-status-success-soft px-4 py-3 text-xs font-extrabold text-status-success-text">
+              <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
+              {t('virtualMachines.list.waitingForAgent')}
+            </div>
           </div>
           <div className="flex shrink-0 items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
             <Button

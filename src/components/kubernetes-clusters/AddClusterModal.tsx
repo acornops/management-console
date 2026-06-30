@@ -6,7 +6,9 @@ import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { formInputClassName } from '@/components/common/formControlStyles';
+import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
 import { parseNamespaceList } from '@/app/useAppSupport';
+import type { AgentAccessMode } from '@/services/control-plane/types';
 
 interface AddClusterModalProps {
   isOpen: boolean;
@@ -21,7 +23,7 @@ interface AddClusterModalProps {
   onClusterNameChange: (value: string) => void;
   onIncludeNamespacesChange: (value: string) => void;
   onExcludeNamespacesChange: (value: string) => void;
-  onProceedToInstructions: () => void;
+  onProceedToInstructions: (agentAccessMode: AgentAccessMode) => void;
   onConfirmInstalled: () => void | Promise<void>;
 }
 
@@ -40,7 +42,11 @@ function helmSetString(path: string, value: string): string {
 const clusterNameInputClassName = formInputClassName('px-4 font-medium');
 const namespaceInputClassName = formInputClassName('text-xs font-medium');
 
-function updateInstallCommandNamespaceScope(command: string, includeValue: string, excludeValue: string): string {
+export function updateInstallCommandNamespaceScope(
+  command: string,
+  includeValue: string,
+  excludeValue: string
+): string {
   const include = parseNamespaceList(includeValue);
   const exclude = parseNamespaceList(excludeValue);
   const excluded = new Set(exclude);
@@ -90,6 +96,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const [hasCopiedCommand, setHasCopiedCommand] = useState(false);
+  const [agentAccessMode, setAgentAccessMode] = useState<AgentAccessMode>('read_only');
   const clusterNameInputRef = React.useRef<HTMLInputElement>(null);
   const connectSteps = [
     { id: 'details', label: t('clusterSetup.stepConfigure') },
@@ -111,6 +118,12 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
     [clusterInstallCommand, excludeNamespaces, includeNamespaces]
   );
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setAgentAccessMode('read_only');
+    }
+  }, [isOpen]);
+
   if (!isOpen) {
     return null;
   }
@@ -131,7 +144,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
       titleId="add-cluster-title"
       initialFocusRef={clusterNameInputRef}
       closeDisabled={isCreatingCluster}
-      className="relative flex max-h-[min(92vh,56rem)] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
+      className="relative flex max-h-[min(92vh,50rem)] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
       onClose={onClose}
     >
         <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
@@ -154,8 +167,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
 
         {clusterCreationStep === 'details' ? (
           <>
-            <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 custom-scrollbar lg:grid-cols-[minmax(0,1fr)_19rem]">
-              <div className="space-y-5 rounded-lg border border-ui-border bg-ui-bg p-5">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
                 <section className="space-y-3">
                   <label htmlFor="add-cluster-name-input" className="block px-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
                     {t('clusterSetup.clusterName')}
@@ -171,7 +183,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                   />
                 </section>
 
-                <section className="space-y-3 rounded-lg border border-ui-border bg-ui-surface p-4">
+                <section className="space-y-3 rounded-lg border border-ui-border bg-ui-bg p-4">
                   <div>
                     <div className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
                       {t('clusterSetup.namespaceScope')}
@@ -203,18 +215,13 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                     />
                   </div>
                 </section>
-              </div>
-              <aside className="rounded-lg border border-ui-border bg-ui-surface p-5">
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent-strong">
-                    <ICONS.Terminal className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <h4 className="type-row-title">{t('clusterSetup.installAgent')}</h4>
-                    <p className="type-caption mt-2 text-ui-text-muted">{t('app.connectClusterHelmBody')}</p>
-                  </div>
-                </div>
-              </aside>
+
+                <ClusterAgentAccessModeSelector
+                  idPrefix="add-cluster"
+                  value={agentAccessMode}
+                  onChange={setAgentAccessMode}
+                  disabled={isCreatingCluster}
+                />
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
               <Button
@@ -227,7 +234,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                 {t('app.cancel')}
               </Button>
               <Button
-                onClick={onProceedToInstructions}
+                onClick={() => onProceedToInstructions(agentAccessMode)}
                 disabled={!newClusterName.trim() || isCreatingCluster}
                 variant="accent"
                 size="sm"
@@ -240,64 +247,59 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
           </>
         ) : (
           <>
-            <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 custom-scrollbar lg:grid-cols-[minmax(0,1fr)_19rem]">
-              <div className="space-y-4">
-                <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
-                      <ICONS.Terminal className="h-4 w-4" />
-                    </span>
-                    <p>{t('clusterSetup.installBody')}</p>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
+              <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
+                    <ICONS.Terminal className="h-4 w-4" />
+                  </span>
+                  <p>{t('clusterSetup.installBody')}</p>
+                </div>
+              </div>
+
+              {displayedInstallCommand ? (
+                <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
+                  <div className="flex items-center justify-between gap-3 px-4 pt-4">
+                    <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('clusterSetup.installCommand')}</span>
+                    <button
+                      type="button"
+                      onClick={() => void copyInstallCommand()}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-all hover:bg-ui-bg hover:text-ui-text"
+                      aria-label={hasCopiedCommand ? t('clusterSetup.copied') : t('clusterSetup.copy')}
+                    >
+                      {hasCopiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
+                    <pre className="whitespace-pre">{displayedInstallCommand}</pre>
                   </div>
                 </div>
-
-                {displayedInstallCommand ? (
-                  <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
-                    <div className="flex items-center justify-between gap-3 px-4 pt-4">
-                      <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('clusterSetup.installCommand')}</span>
-                      <button
-                        type="button"
-                        onClick={() => void copyInstallCommand()}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-all hover:bg-ui-bg hover:text-ui-text"
-                        aria-label={hasCopiedCommand ? t('clusterSetup.copied') : t('clusterSetup.copy')}
-                      >
-                        {hasCopiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
-                      <pre className="whitespace-pre">{displayedInstallCommand}</pre>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
-                    {t('clusterSetup.missingInstallCommand')}
-                  </div>
-                )}
-                {clusterInstallWarnings.length > 0 && (
-                  <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
-                    {clusterInstallWarnings.map((warning) => (
-                      <p key={warning}>{warning}</p>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <aside className="space-y-4 rounded-lg border border-ui-border bg-ui-surface p-5">
+              ) : (
+                <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
+                  {t('clusterSetup.missingInstallCommand')}
+                </div>
+              )}
+              {clusterInstallWarnings.length > 0 && (
+                <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
+                  {clusterInstallWarnings.map((warning) => (
+                    <p key={warning}>{warning}</p>
+                  ))}
+                </div>
+              )}
+              <div className="grid gap-3 rounded-lg border border-ui-border bg-ui-surface p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <div>
                   <p className="type-label text-ui-text-muted">{t('clusterSetup.clusterName')}</p>
                   <p className="type-row-title mt-1 truncate" title={newClusterName}>{newClusterName}</p>
                 </div>
-                <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-3">
+                <div>
                   <p className="type-label text-ui-text-muted">{t('clusterSetup.namespaceScope')}</p>
                   <p className="type-caption mt-1 text-ui-text-muted">{namespaceScopeSummary}</p>
                 </div>
-                <div className="flex items-center gap-3 rounded-lg border border-status-success/25 bg-status-success-soft px-4 py-3 text-xs font-extrabold text-status-success-text">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
-                  {t('clusterSetup.waitingForAgent')}
-                </div>
-                <p className="type-caption text-ui-text-muted">
-                  {t('clusterSetup.reopenHelp')}
-                </p>
-              </aside>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-status-success/25 bg-status-success-soft px-4 py-3 text-xs font-extrabold text-status-success-text">
+                <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
+                {t('clusterSetup.waitingForAgent')}
+              </div>
             </div>
             <div className="flex items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
               <Button

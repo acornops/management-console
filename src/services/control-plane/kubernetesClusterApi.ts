@@ -36,6 +36,7 @@ import type {
   PagedResult,
   RegisterClusterResponse,
   RotateAgentKeyResponse,
+  AgentAccessMode,
   TargetMcpServer,
   UpdateTargetSkillInput,
   TargetMcpServerTestConnectionResult,
@@ -172,7 +173,7 @@ export const kubernetesClusterApi = {
 
   async registerCluster(
     workspaceId: string,
-    input: { name: string; namespaceInclude?: string[]; namespaceExclude?: string[] }
+    input: { name: string; namespaceInclude?: string[]; namespaceExclude?: string[]; agentAccessMode?: AgentAccessMode }
   ): Promise<{ cluster: KubernetesCluster; agentKey: string; installCommand: string; installWarnings: string[] }> {
     const result = await requestJson<RegisterClusterResponse>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`,
@@ -180,6 +181,7 @@ export const kubernetesClusterApi = {
         method: 'POST',
         body: JSON.stringify({
           name: input.name,
+          agentAccessMode: input.agentAccessMode || 'read_only',
           namespaceInclude: input.namespaceInclude || [],
           namespaceExclude: input.namespaceExclude || []
         })
@@ -255,11 +257,12 @@ export const kubernetesClusterApi = {
 
   async rotateClusterAgentKey(
     workspaceId: string,
-    clusterId: string
+    clusterId: string,
+    options: { agentAccessMode?: AgentAccessMode } = {}
   ): Promise<{ clusterId: string; agentKey: string; keyVersion: number; installCommand: string; installWarnings: string[] }> {
     const result = await requestJson<RotateAgentKeyResponse>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}/rotate-agent-key`,
-      { method: 'POST' }
+      { method: 'POST', body: JSON.stringify({ agentAccessMode: options.agentAccessMode || 'read_only' }) }
     );
     return {
       clusterId: result.clusterId,

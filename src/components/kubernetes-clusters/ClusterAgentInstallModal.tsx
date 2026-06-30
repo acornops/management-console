@@ -3,8 +3,10 @@ import { Check, Copy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
+import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
 import { ICONS } from '@/constants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import type { AgentAccessMode } from '@/services/control-plane/types';
 import { KubernetesCluster } from '@/types';
 
 interface ClusterAgentInstallModalProps {
@@ -21,6 +23,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
   const { t } = useTranslation();
   const [agentKey, setAgentKey] = React.useState<string | null>(null);
   const [keyVersion, setKeyVersion] = React.useState<number | null>(null);
+  const [agentAccessMode, setAgentAccessMode] = React.useState<AgentAccessMode>('read_only');
   const [installCommand, setInstallCommand] = React.useState('');
   const [installWarnings, setInstallWarnings] = React.useState<string[]>([]);
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -28,22 +31,23 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const generateCommandButtonRef = React.useRef<HTMLButtonElement>(null);
 
-  const command = React.useMemo(() => {
-    if (installCommand) return installCommand;
-    if (!agentKey) return '';
-    return [
-      'helm upgrade --install acornops-agent acornops/acornops-agent',
-      `  --set clusterName='${cluster.name.replace(/'/g, `'\\''`)}'`,
-      `  --set apiKey='${agentKey.replace(/'/g, `'\\''`)}'`
-    ].join(' \\\n');
-  }, [agentKey, cluster.name, installCommand]);
+  const command = React.useMemo(() => installCommand, [installCommand]);
+
+  const handleAccessModeChange = (nextMode: AgentAccessMode) => {
+    setAgentAccessMode(nextMode);
+    setAgentKey(null);
+    setKeyVersion(null);
+    setInstallCommand('');
+    setInstallWarnings([]);
+    setErrorMessage(null);
+  };
 
   const handleGenerate = async () => {
     if (isGenerating) return;
     setIsGenerating(true);
     setErrorMessage(null);
     try {
-      const rotated = await controlPlaneApi.rotateClusterAgentKey(cluster.workspaceId, cluster.id);
+      const rotated = await controlPlaneApi.rotateClusterAgentKey(cluster.workspaceId, cluster.id, { agentAccessMode });
       setAgentKey(rotated.agentKey);
       setKeyVersion(rotated.keyVersion);
       setInstallCommand(rotated.installCommand);
@@ -101,6 +105,13 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
             </div>
           )}
 
+          <ClusterAgentAccessModeSelector
+            idPrefix="install-cluster"
+            value={agentAccessMode}
+            onChange={handleAccessModeChange}
+            disabled={isGenerating}
+          />
+
           {command && (
             <div className="rounded-xl border border-ui-border bg-ui-bg shadow-sm">
               <div className="flex items-center justify-between gap-3 px-4 pt-4">
@@ -121,6 +132,12 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
             </div>
           )}
 
+          {agentKey && !command && (
+            <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
+              {t('clusterSetup.missingInstallCommand')}
+            </div>
+          )}
+
           {installWarnings.length > 0 && (
             <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
               {installWarnings.map((warning) => (
@@ -129,7 +146,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
             </div>
           )}
 
-          {!command && (
+          {!agentKey && !command && (
             <p className="text-xs font-medium text-ui-text-muted">
               {t('clusterSetup.generateCommandHelp')}
             </p>

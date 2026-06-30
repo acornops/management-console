@@ -6,6 +6,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { AppRoute, AppPaths } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { parseNamespaceList } from '@/app/useAppSupport';
+import type { AgentAccessMode } from '@/services/control-plane/types';
 
 function workspaceLandingPath(workspace: Workspace): string {
   if (canReadWorkspaceData(workspace)) {
@@ -142,7 +143,7 @@ export function useWorkspaceClusterActions(args: {
     setClusterInstallWarnings([]);
   };
 
-  const handleProceedToInstructions = async () => {
+  const handleProceedToInstructions = async (selectedAgentAccessMode: AgentAccessMode = 'read_only') => {
     if (!newClusterName.trim() || !targetWorkspaceIdForClusterAdd) return;
 
     setIsCreatingCluster(true);
@@ -151,6 +152,7 @@ export function useWorkspaceClusterActions(args: {
         targetWorkspaceIdForClusterAdd,
         {
           name: newClusterName.trim(),
+          agentAccessMode: selectedAgentAccessMode,
           namespaceInclude: parseNamespaceList(includeNamespaces),
           namespaceExclude: parseNamespaceList(excludeNamespaces)
         }

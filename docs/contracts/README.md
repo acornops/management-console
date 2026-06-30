@@ -208,7 +208,7 @@ Virtual machine detail responses include `virtualMachine.latestSnapshot.{targetI
 
 Pod logs are fetched lazily from `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs`. The workload drawer must treat follow mode as opt-in polling and stop polling when the drawer is closed or the logs tab is left.
 
-`installInstructions.command` is owned by the control plane. The management console displays it as returned and does not hardcode chart paths, release names, or Helm value names in control-plane mode. Agent write-mode guidance is advisory unless a control-plane-owned install or upgrade command is present in the target metadata.
+`installInstructions.command` is owned by the control plane. The management console must not hardcode chart paths, release names, or read-write Helm values in control-plane mode, but the connect-cluster modal may re-render the selected namespace scope before copy. Kubernetes cluster registration and agent-key rotation may send `agentAccessMode = "read_only" | "read_write"`; omitted or unknown values default to `read_only`. Read-write install instructions returned by the control plane must include `--set rbac.write.enabled=true`.
 
 `GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}` returns cluster metadata, `writeConfirmationPolicy`, `latestSnapshot.{clusterId,workspaceId,timestamp}`, and `summary.{resourceCount,findingCount,criticalFindingCount,namespaceCount,nodeCount,resourceFamilyCounts,resourceKindCounts}`. It must not return full `latestSnapshot.data` to the browser.
 

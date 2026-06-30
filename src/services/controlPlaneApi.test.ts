@@ -229,6 +229,67 @@ describe('controlPlaneApi', () => {
     expect(historySpy).not.toHaveBeenCalled();
   });
 
+  it('sends the selected agent access mode when registering a cluster', async () => {
+    requestJson.mockResolvedValue({
+      cluster: { id: 'cluster-1', workspaceId: 'workspace-1', name: 'payments-prod', status: 'unknown' },
+      agentKey: 'agent-key',
+      installInstructions: {
+        command: 'helm upgrade --install acornops-agent chart --set rbac.write.enabled=true',
+        warnings: []
+      }
+    });
+    mapControlPlaneClusterToKubernetesCluster.mockReturnValue({ id: 'cluster-1', name: 'payments-prod' });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(
+      controlPlaneApi.registerCluster('workspace-1', {
+        name: 'payments-prod',
+        agentAccessMode: 'read_write',
+        namespaceInclude: ['payments'],
+        namespaceExclude: ['sandbox']
+      })
+    ).resolves.toMatchObject({
+      cluster: { id: 'cluster-1' },
+      installCommand: 'helm upgrade --install acornops-agent chart --set rbac.write.enabled=true'
+    });
+
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/workspaces/workspace-1/kubernetes-clusters', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'payments-prod',
+        agentAccessMode: 'read_write',
+        namespaceInclude: ['payments'],
+        namespaceExclude: ['sandbox']
+      })
+    });
+  });
+
+  it('sends the selected agent access mode when rotating a cluster agent key', async () => {
+    requestJson.mockResolvedValue({
+      clusterId: 'cluster-1',
+      agentKey: 'agent-key',
+      keyVersion: 2,
+      installInstructions: {
+        command: 'helm upgrade --install acornops-agent chart --set rbac.write.enabled=true',
+        warnings: []
+      }
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(
+      controlPlaneApi.rotateClusterAgentKey('workspace-1', 'cluster-1', { agentAccessMode: 'read_write' })
+    ).resolves.toMatchObject({
+      clusterId: 'cluster-1',
+      keyVersion: 2,
+      installCommand: 'helm upgrade --install acornops-agent chart --set rbac.write.enabled=true'
+    });
+
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/workspaces/workspace-1/kubernetes-clusters/cluster-1/rotate-agent-key', {
+      method: 'POST',
+      body: JSON.stringify({ agentAccessMode: 'read_write' })
+    });
+  });
+
   it('requests target assistant capabilities preview for the selected run mode', async () => {
     requestJson.mockResolvedValue({
       workspaceId: 'workspace 1',

@@ -8,6 +8,7 @@ import { AppToast, ToastViewport } from '@/components/common/ToastViewport';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
+import type { AgentAccessMode } from '@/services/control-plane/types';
 import { KubernetesCluster, User, Workspace } from '@/types';
 
 interface AppDialogsProps {
@@ -39,7 +40,7 @@ interface AppDialogsProps {
   onDismissToast: (id: string) => void;
   onExcludeNamespacesChange: (value: string) => void;
   onIncludeNamespacesChange: (value: string) => void;
-  onProceedToClusterInstructions: () => void;
+  onProceedToClusterInstructions: (agentAccessMode: AgentAccessMode) => void;
   onSetDeletingWorkspace: (value: boolean) => void;
   onWorkspaceNameChange: (value: string) => void;
   showToast: (message: string) => void;

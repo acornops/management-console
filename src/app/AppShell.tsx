@@ -18,6 +18,7 @@ import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import type { controlPlaneApi as ControlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { AgentAccessMode } from '@/services/control-plane/types';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 import { AppPaths, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
 
@@ -100,7 +101,7 @@ interface AppShellProps {
   handleDeleteWorkspace: (workspaceId: string) => Promise<void>;
   handleInitiateAddCluster: (workspaceId: string) => void;
   handleLogout: () => Promise<void>;
-  handleProceedToInstructions: () => Promise<void>;
+  handleProceedToInstructions: (agentAccessMode?: AgentAccessMode) => Promise<void>;
   handleSelectWorkspaceContext: (workspaceId: string) => void;
   includeNamespaces: string;
   installAgentCluster: KubernetesCluster | null;
@@ -614,7 +615,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onDismissToast={dismissToast}
         onExcludeNamespacesChange={setExcludeNamespaces}
         onIncludeNamespacesChange={setIncludeNamespaces}
-        onProceedToClusterInstructions={() => void handleProceedToInstructions()}
+        onProceedToClusterInstructions={(agentAccessMode) => void handleProceedToInstructions(agentAccessMode)}
         onSetDeletingWorkspace={setIsDeletingWorkspace}
         onWorkspaceNameChange={setNewWorkspaceName}
         showToast={showToast}

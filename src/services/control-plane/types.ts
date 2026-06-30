@@ -521,6 +521,8 @@ export interface ControlPlaneAgentInstallInstructions {
   warnings: string[];
 }
 
+export type AgentAccessMode = 'read_only' | 'read_write';
+
 export interface ControlPlaneSession extends ControlPlaneTargetScope {
   id: string;
   workspaceId: string;
