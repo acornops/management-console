@@ -135,11 +135,11 @@ export const Select = <T extends string | number>({
       closeMenu();
     };
 
-    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('mousedown', handlePointerDown, true);
     window.addEventListener('resize', handleResize);
     window.addEventListener('scroll', handleResize, true);
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('mousedown', handlePointerDown, true);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleResize, true);
     };

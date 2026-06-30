@@ -1,22 +1,12 @@
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { TFunction } from 'i18next';
-import { canReadWorkspaceAuditLog, canReadWorkspaceData } from '@/app/workspacePermissions';
+import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { AppRoute, AppPaths } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { parseNamespaceList } from '@/app/useAppSupport';
 import type { AgentAccessMode } from '@/services/control-plane/types';
-
-function workspaceLandingPath(workspace: Workspace): string {
-  if (canReadWorkspaceData(workspace)) {
-    return AppPaths.workspaceOverview(workspace.id);
-  }
-  if (canReadWorkspaceAuditLog(workspace)) {
-    return AppPaths.workspaceAuditLog(workspace.id);
-  }
-  return AppPaths.workspaceMembers(workspace.id);
-}
 
 export function getPostWorkspaceDeleteNavigationPath({
   kubernetesClusters,
@@ -78,7 +68,6 @@ export function useWorkspaceClusterActions(args: {
 
   const [isAddingCluster, setIsAddingCluster] = useState(false);
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
-  const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [targetWorkspaceIdForClusterAdd, setTargetWorkspaceIdForClusterAdd] = useState<string | null>(null);
   const [clusterCreationStep, setClusterCreationStep] = useState<'details' | 'instructions'>('details');
   const [newClusterName, setNewClusterName] = useState('');
@@ -101,24 +90,26 @@ export function useWorkspaceClusterActions(args: {
     );
   };
 
-  const handleCreateWorkspace = (workspace: Omit<Workspace, 'id' | 'clusterIds'>) => {
-    void (async () => {
-      try {
-        if (!user) return;
-        const createdWorkspace = await controlPlaneApi.createWorkspace(workspace.name, user);
-        setWorkspaces((prev) =>
-          prev.some((existing) => existing.id === createdWorkspace.id)
-            ? prev
-            : [...prev, createdWorkspace]
-        );
-        setUser(await controlPlaneApi.getCurrentUser());
-        setSelectedWorkspaceId(createdWorkspace.id);
-        navigate(AppPaths.workspaceOverview(createdWorkspace.id), { replace: true });
-      } catch (err) {
-        console.error('Failed creating workspace in control plane', err);
-      showToast(err instanceof Error ? err.message.replace(/^Control plane request failed \(\d+\):\s*/, '') : t('app.failedCreateWorkspace'));
-      }
-    })();
+  const handleCreateWorkspace = async (name: string): Promise<Workspace> => {
+    if (!user) {
+      throw new Error(t('app.failedCreateWorkspace'));
+    }
+
+    try {
+      const createdWorkspace = await controlPlaneApi.createWorkspace(name, user);
+      setWorkspaces((prev) =>
+        prev.some((existing) => existing.id === createdWorkspace.id)
+          ? prev
+          : [...prev, createdWorkspace]
+      );
+      setUser(await controlPlaneApi.getCurrentUser());
+      setSelectedWorkspaceId(createdWorkspace.id);
+      navigate(AppPaths.workspaceOverview(createdWorkspace.id), { replace: true });
+      return createdWorkspace;
+    } catch (err) {
+      console.error('Failed creating workspace in control plane', err);
+      throw err instanceof Error ? err : new Error(t('app.failedCreateWorkspace'));
+    }
   };
 
   const navigateToKubernetesCluster = (cluster: KubernetesCluster) => {
@@ -284,12 +275,10 @@ export function useWorkspaceClusterActions(args: {
     isCreatingWorkspace,
     navigateToKubernetesCluster,
     newClusterName,
-    newWorkspaceName,
     setClusterCreationStep,
     setExcludeNamespaces,
     setIncludeNamespaces,
     setIsCreatingWorkspace,
-    setNewClusterName,
-    setNewWorkspaceName
+    setNewClusterName
   };
 }

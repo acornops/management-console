@@ -3,13 +3,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
 import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModal';
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
-import { Button } from '@/components/common/Button';
+import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
 import { AppToast, ToastViewport } from '@/components/common/ToastViewport';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import type { AgentAccessMode } from '@/services/control-plane/types';
-import { KubernetesCluster, User, Workspace } from '@/types';
+import { KubernetesCluster, ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 
 interface AppDialogsProps {
   clusterCreationStep: 'details' | 'instructions';
@@ -20,15 +20,14 @@ interface AppDialogsProps {
   includeNamespaces: string;
   installAgentCluster: KubernetesCluster | null;
   installAgentWorkspace: Workspace | undefined;
+  currentUserEmail: string;
   isAddingCluster: boolean;
   isCreatingCluster: boolean;
   isCreatingWorkspace: boolean;
   isDark: boolean;
   isDeletingWorkspace: boolean;
   newClusterName: string;
-  newWorkspaceName: string;
   toasts: AppToast[];
-  user: User;
   onClusterNameChange: (value: string) => void;
   onCloseAddCluster: () => void;
   onCloseInstallAgent: () => void;
@@ -36,13 +35,17 @@ interface AppDialogsProps {
   onCloseWorkspaceDelete: () => void;
   onConfirmClusterInstalled: () => void;
   onConfirmDeleteWorkspace: (workspace: Workspace) => Promise<void>;
-  onCreateWorkspace: (workspace: Omit<Workspace, 'id' | 'clusterIds'>) => void;
+  onCreateWorkspace: (name: string) => Promise<Workspace>;
+  onCreateWorkspaceInvitation: (
+    workspaceId: string,
+    input: { email: string; role: ProjectMember['role'] }
+  ) => Promise<WorkspaceInvitation>;
   onDismissToast: (id: string) => void;
   onExcludeNamespacesChange: (value: string) => void;
   onIncludeNamespacesChange: (value: string) => void;
+  onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
   onProceedToClusterInstructions: (agentAccessMode: AgentAccessMode) => void;
   onSetDeletingWorkspace: (value: boolean) => void;
-  onWorkspaceNameChange: (value: string) => void;
   showToast: (message: string) => void;
 }
 
@@ -55,15 +58,14 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   includeNamespaces,
   installAgentCluster,
   installAgentWorkspace,
+  currentUserEmail,
   isAddingCluster,
   isCreatingCluster,
   isCreatingWorkspace,
   isDark,
   isDeletingWorkspace,
   newClusterName,
-  newWorkspaceName,
   toasts,
-  user,
   onClusterNameChange,
   onCloseAddCluster,
   onCloseInstallAgent,
@@ -72,17 +74,17 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onConfirmClusterInstalled,
   onConfirmDeleteWorkspace,
   onCreateWorkspace,
+  onCreateWorkspaceInvitation,
   onDismissToast,
   onExcludeNamespacesChange,
   onIncludeNamespacesChange,
+  onLoadWorkspaceRoles,
   onProceedToClusterInstructions,
   onSetDeletingWorkspace,
-  onWorkspaceNameChange,
   showToast
 }) => {
   const { t } = useTranslation();
   const [workspaceDeleteConfirmation, setWorkspaceDeleteConfirmation] = React.useState('');
-  const workspaceNameInputClassName = formInputClassName('px-4');
   const workspaceDeleteInputClassName = formInputClassName('px-4 focus:border-status-danger/45 focus:ring-status-danger/20');
 
   React.useEffect(() => {
@@ -198,68 +200,14 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           </motion.div>
         )}
 
-        {isCreatingWorkspace && (
-          <motion.div
-            {...modalOverlayMotion}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ui-text/45 dark:bg-ui-bg/75"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
-                onCloseWorkspaceCreate();
-              }
-            }}
-          >
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="create-workspace-title"
-              {...modalPanelMotion}
-              className="relative w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
-              onMouseDown={(event) => event.stopPropagation()}
-            >
-              <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
-                <h3 id="create-workspace-title" className="font-bold tracking-tight text-ui-text">{t('app.createWorkspace')}</h3>
-                <button onClick={onCloseWorkspaceCreate} className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong" aria-label={t('app.closeCreateWorkspaceDialog')}>
-                  <ICONS.X className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="space-y-4 p-6">
-                <div>
-                  <label className="mb-1.5 block px-1 text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('app.workspaceName')}</label>
-                  <input
-                    value={newWorkspaceName}
-                    onChange={(event) => onWorkspaceNameChange(event.target.value)}
-                    className={workspaceNameInputClassName}
-                    placeholder={t('app.workspaceNamePlaceholder')}
-                  />
-                </div>
-                <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
-                  <Button onClick={onCloseWorkspaceCreate} variant="secondary" size="md">
-                    {t('app.cancel')}
-                  </Button>
-                  <Button
-                    disabled={!newWorkspaceName.trim()}
-                    onClick={() => {
-                      const name = newWorkspaceName.trim();
-                      if (!name) return;
-                      onCreateWorkspace({
-                        name,
-                        description: '',
-                        members: [{ name: user.name, email: user.email, role: 'owner', source: 'Internal' }]
-                      });
-                      onWorkspaceNameChange('');
-                      onCloseWorkspaceCreate();
-                    }}
-                    variant="accent"
-                    size="md"
-                  >
-                    <ICONS.Plus className="h-4 w-4" />
-                    {t('app.createWorkspaceAction')}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
+        <CreateWorkspaceModal
+          isOpen={isCreatingWorkspace}
+          currentUserEmail={currentUserEmail}
+          onClose={onCloseWorkspaceCreate}
+          onCreateWorkspace={onCreateWorkspace}
+          onLoadWorkspaceRoles={onLoadWorkspaceRoles}
+          onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}
+        />
       </AnimatePresence>
 
       <AnimatePresence>

@@ -71,17 +71,18 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).toContain("t('app.userSettings')");
     expect(mobileNavigation).toContain("{t('app.auditLog')}");
     expect(mobileNavigation).not.toContain("{t('app.aiSettings')}");
-    expect(mobileNavigation).toContain("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}");
+    expect(mobileNavigation).toContain("{selectedWorkspaceId && (");
+    expect(mobileNavigation).toContain("{t('app.workspaceSettings')}");
+    expect(mobileNavigation).not.toContain("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.settings')}");
     expect(mobileNavigation).toContain("{t('app.help')}");
     expect(mobileNavigation).not.toContain('navigate(AppPaths.workspaceAiSettings(selectedWorkspaceId));');
     expect(mobileNavigation).toContain('AppPaths.workspaceSettings(selectedWorkspaceId)');
-    expect(mobileNavigation).toContain('AppPaths.workspaceMembers(selectedWorkspaceId)');
     expect(mobileNavigation).toContain('navigate(workspaceSettingsPath);');
     expect(mobileNavigation).toContain('navigate(AppPaths.help());');
     expect(mobileNavigation).toContain('navigate(AppPaths.accountSettings());');
     expect(mobileNavigation).toContain("activeResourceNav === 'accountSettings'");
     expect(mobileNavigation).toContain("t('app.theme')");
-    expect(mobileNavigation.indexOf("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+    expect(mobileNavigation.indexOf("{t('app.workspaceSettings')}")).toBeLessThan(
       mobileNavigation.indexOf("{t('app.auditLog')}")
     );
     expect(mobileNavigation.indexOf("{t('app.auditLog')}")).toBeLessThan(
@@ -101,7 +102,7 @@ describe('mobile navigation structure', () => {
 
     expect(automationSection).not.toContain("{t('app.auditLog')}");
     expect(utilitySection).toContain("{t('app.auditLog')}");
-    expect(utilitySection.indexOf("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+    expect(utilitySection.indexOf("{t('app.workspaceSettings')}")).toBeLessThan(
       utilitySection.indexOf("{t('app.auditLog')}")
     );
     expect(utilitySection.indexOf("{t('app.auditLog')}")).toBeLessThan(
@@ -110,12 +111,15 @@ describe('mobile navigation structure', () => {
     expect(utilitySection).toContain('canReadWorkspaceAuditLog(selectedWorkspace)');
   });
 
-  it('keeps console settings distinct from account settings on mobile', () => {
-    expect(mobileNavigation).toContain("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}");
+  it('only shows workspace utility navigation after a workspace is selected on mobile', () => {
+    expect(mobileNavigation).toContain("{selectedWorkspaceId && (");
+    expect(mobileNavigation).toContain("{t('app.workspaceSettings')}");
+    expect(mobileNavigation).not.toContain("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.settings')}");
+    expect(mobileNavigation).not.toContain("t('app.consoleSettings')");
     expect(mobileNavigation).toContain("{t('app.accountSettings')}");
     expect(mobileNavigation).toContain("aria-current={activeResourceNav === 'accountSettings' ? 'page' : undefined}");
     expect(mobileNavigation).toContain("activeResourceNav === 'accountSettings'");
-    expect(mobileNavigation.indexOf("{selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+    expect(mobileNavigation.indexOf("{t('app.workspaceSettings')}")).toBeLessThan(
       mobileNavigation.indexOf("{t('app.accountSettings')}")
     );
   });
@@ -144,13 +148,15 @@ describe('mobile navigation structure', () => {
     );
   });
 
-  it('keeps members navigation visible for read-members-only roles', () => {
-    expect(mobileNavigation).toContain('canReadWorkspaceMembers');
-    expect(mobileNavigation).toContain('const hasWorkspaceMemberAccess = canReadWorkspaceMembers(selectedWorkspace);');
+  it('keeps workspace settings visible as the self-service fallback for limited roles', () => {
+    expect(mobileNavigation).not.toContain('canReadWorkspaceMembers');
+    expect(mobileNavigation).toContain("import { workspaceLandingPath } from '@/app/appNavigationGuards';");
     expect(mobileNavigation).toContain('const workspaceSettingsPath = selectedWorkspaceId');
     expect(mobileNavigation).toContain('? AppPaths.workspaceSettings(selectedWorkspaceId)');
-    expect(mobileNavigation).toContain(': AppPaths.workspaceMembers(selectedWorkspaceId)');
-    expect(mobileNavigation).toContain("activeResourceNav === 'settings'");
+    expect(mobileNavigation).not.toContain(': AppPaths.workspaceMembers(selectedWorkspaceId)');
+    expect(mobileNavigation).toContain('disabled={!selectedWorkspaceId}');
+    expect(mobileNavigation).toContain('? workspaceLandingPath(selectedWorkspace)');
+    expect(mobileNavigation).not.toContain("activeResourceNav === 'settings'");
     expect(mobileNavigation).toContain("activeResourceNav === 'workspaceSettings'");
     expect(mobileNavigation).toContain("activeResourceNav === 'workspaceAiSettings'");
     expect(mobileNavigation).toContain("activeResourceNav === 'members'");

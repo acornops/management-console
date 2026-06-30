@@ -15,7 +15,7 @@ import { useWorkspaceClusterActions } from '@/app/useWorkspaceClusterActions';
 import { useWorkspaceVirtualMachineCache } from '@/app/useWorkspaceVirtualMachineCache';
 import { useRecentInvestigationSync } from '@/app/useRecentInvestigationSync';
 import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from '@/app/appWorkspaceSummaries';
-import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
+import { isWorkspaceDataRoute, legacySettingsRedirectPath, workspaceLandingPath } from '@/app/appNavigationGuards';
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
 import { readLanguagePreference, readThemePreference } from '@/app/preferences';
@@ -152,13 +152,11 @@ const App: React.FC = () => {
     isCreatingWorkspace,
     navigateToKubernetesCluster,
     newClusterName,
-    newWorkspaceName,
     setClusterCreationStep,
     setExcludeNamespaces,
     setIncludeNamespaces,
     setIsCreatingWorkspace,
-    setNewClusterName,
-    setNewWorkspaceName
+    setNewClusterName
   } = useWorkspaceClusterActions({
     kubernetesClusters,
     navigate,
@@ -314,6 +312,14 @@ const App: React.FC = () => {
     }
     return;
   }, [route.kind, selectedWorkspaceId, workspaceById, workspaces, navigate]);
+
+  useEffect(() => {
+    if (!user || route.kind !== 'settings') {
+      return;
+    }
+
+    navigate(legacySettingsRedirectPath({ selectedWorkspaceId, workspaceById, workspaces }), { replace: true });
+  }, [user, route.kind, selectedWorkspaceId, workspaceById, workspaces, navigate]);
 
   useEffect(() => {
     if (route.kind !== 'kubernetesClusterDiagnostics') {
@@ -522,6 +528,8 @@ const App: React.FC = () => {
       includeNamespaces={includeNamespaces}
       installAgentCluster={installAgentCluster}
       installAgentWorkspace={installAgentWorkspace}
+      currentUserEmail={user.email}
+      invitationTokenMissingMessage={t('app.invitationTokenMissing')}
       isAddingCluster={isAddingCluster}
       isClusterCopilotOpen={isClusterCopilotOpen}
       isClusterSidebar={isClusterSidebar}
@@ -539,7 +547,6 @@ const App: React.FC = () => {
       navigate={navigate}
       navigateToKubernetesCluster={navigateToKubernetesCluster}
       newClusterName={newClusterName}
-      newWorkspaceName={newWorkspaceName}
       openClusterCopilot={openClusterCopilot}
       onConversationDeleted={(sessionName, targetName) => {
         showToast(t('app.deletedConversation', { sessionName, targetName }));
@@ -570,7 +577,6 @@ const App: React.FC = () => {
       setIsSidebarWorkspaceMenuOpen={setIsSidebarWorkspaceMenuOpen}
       setLanguage={setLanguage}
       setNewClusterName={setNewClusterName}
-      setNewWorkspaceName={setNewWorkspaceName}
       setWorkspaces={setWorkspaces}
       showToast={showToast}
       sidebarAccountMenuRef={sidebarAccountMenuRef}

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { TFunction } from 'i18next';
 import { AppToast } from '@/components/common/ToastViewport';
-import { canManageWorkspaceMembers, canReadWorkspaceAuditLog, canReadWorkspaceData } from '@/app/workspacePermissions';
+import { workspaceLandingPath } from '@/app/appNavigationGuards';
+import { canManageWorkspaceMembers, canReadWorkspaceData } from '@/app/workspacePermissions';
 import { ControlPlaneWorkspaceInvitation, controlPlaneApi } from '@/services/controlPlaneApi';
 import { EmailVerificationRequiredError } from '@/services/control-plane/authApi';
 import { AppRoute, AppPaths } from '@/utils/routes';
@@ -32,16 +33,6 @@ function attachClusterIds(workspaces: Workspace[], kubernetesClusters: Kubernete
     clusterIds: Array.from(new Set([...(workspace.clusterIds || []), ...(clusterIdsByWorkspace.get(workspace.id) || [])])),
     clusterCount: workspace.clusterCount ?? clusterIdsByWorkspace.get(workspace.id)?.length ?? 0
   }));
-}
-
-function workspaceLandingPath(workspace: Workspace): string {
-  if (canReadWorkspaceData(workspace)) {
-    return AppPaths.workspaceOverview(workspace.id);
-  }
-  if (canReadWorkspaceAuditLog(workspace)) {
-    return AppPaths.workspaceAuditLog(workspace.id);
-  }
-  return AppPaths.workspaceMembers(workspace.id);
 }
 
 export function useAppSupport(args: {
@@ -241,7 +232,7 @@ export function useAppSupport(args: {
     setKubernetesClusters(fetchedClusters);
     setWorkspaces(attachClusterIds(fetchedWorkspaces, fetchedClusters));
     setSelectedWorkspaceId(result.workspaceId);
-    navigate(acceptedWorkspace ? workspaceLandingPath(acceptedWorkspace) : AppPaths.workspaceMembers(result.workspaceId), { replace: true });
+    navigate(acceptedWorkspace ? workspaceLandingPath(acceptedWorkspace) : AppPaths.workspaceSettings(result.workspaceId), { replace: true });
     showToast(t('app.invitationAccepted'));
   }, [navigate, setKubernetesClusters, setSelectedWorkspaceId, setUser, setWorkspaces, t]);
 

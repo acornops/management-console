@@ -204,7 +204,6 @@ export const AppPaths = {
   workspaces: (): string => '/workspaces',
   kubernetesClusters: (): string => '/kubernetes-clusters',
   accountSettings: (): string => '/account',
-  settings: (): string => '/settings',
   help: (): string => '/help',
   workspaceOverview: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/overview`,
   workspaceAgents: (workspaceId: string): string =>

@@ -5,7 +5,8 @@ import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import { NavCountBadge } from '@/app/NavCountBadge';
 import { Dialog } from '@/components/common/Dialog';
 import { ICONS } from '@/constants';
-import { canReadWorkspaceAuditLog, canReadWorkspaceData, canReadWorkspaceMembers } from '@/app/workspacePermissions';
+import { workspaceLandingPath } from '@/app/appNavigationGuards';
+import { canReadWorkspaceAuditLog, canReadWorkspaceData } from '@/app/workspacePermissions';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
@@ -78,23 +79,15 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   const mobileNavTitleId = React.useId();
   const mobileNavPanelId = React.useId();
   const hasWorkspaceDataAccess = canReadWorkspaceData(selectedWorkspace);
-  const hasWorkspaceMemberAccess = canReadWorkspaceMembers(selectedWorkspace);
   const isWorkspaceSettingsActive =
-    activeResourceNav === 'settings' ||
     activeResourceNav === 'workspaceSettings' ||
     activeResourceNav === 'workspaceAiSettings' ||
     activeResourceNav === 'members';
   const workspaceSettingsPath = selectedWorkspaceId
-    ? hasWorkspaceDataAccess
-      ? AppPaths.workspaceSettings(selectedWorkspaceId)
-      : AppPaths.workspaceMembers(selectedWorkspaceId)
-    : AppPaths.settings();
+    ? AppPaths.workspaceSettings(selectedWorkspaceId)
+    : AppPaths.workspaces();
   const workspaceHomePath = selectedWorkspace
-    ? hasWorkspaceDataAccess
-      ? AppPaths.workspaceOverview(selectedWorkspace.id)
-      : canReadWorkspaceAuditLog(selectedWorkspace)
-        ? AppPaths.workspaceAuditLog(selectedWorkspace.id)
-        : AppPaths.workspaceMembers(selectedWorkspace.id)
+    ? workspaceLandingPath(selectedWorkspace)
     : AppPaths.workspaces();
 
   return (
@@ -422,14 +415,14 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                     </>
                   ) : (
                     <>
-                      {(hasWorkspaceDataAccess || hasWorkspaceMemberAccess) && (
+                      {hasWorkspaceDataAccess && (
                         <>
                           <div className="mt-3 border-t border-ui-border pt-3">
                             <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
                               {t('app.inventory')}
                             </p>
                             <div className="grid grid-cols-1 gap-1">
-                              {hasWorkspaceDataAccess && ([
+                              {([
                                 ['clusters', t('app.clusters'), AppPaths.workspaceKubernetesClusters, 0],
                                 ['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0]
                               ] as const).map(([nav, label, pathForWorkspace, badge]) => (
@@ -494,56 +487,58 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           </div>
                         </>
                       )}
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <div className="grid grid-cols-1 gap-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSetMobileNavOpen(false);
-                              navigate(workspaceSettingsPath);
-                            }}
-                            disabled={Boolean(selectedWorkspaceId) && !hasWorkspaceDataAccess && !hasWorkspaceMemberAccess}
-                            className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                              isWorkspaceSettingsActive
-                                ? 'bg-accent-soft text-accent-strong'
-                                : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                            } disabled:cursor-not-allowed disabled:opacity-50`}
-                          >
-                            {selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}
-                          </button>
-                          {canReadWorkspaceAuditLog(selectedWorkspace) && (
+                      {selectedWorkspaceId && (
+                        <div className="mt-3 border-t border-ui-border pt-3">
+                          <div className="grid grid-cols-1 gap-1">
                             <button
                               type="button"
                               onClick={() => {
                                 onSetMobileNavOpen(false);
-                                selectedWorkspaceId && navigate(AppPaths.workspaceAuditLog(selectedWorkspaceId));
+                                navigate(workspaceSettingsPath);
                               }}
                               disabled={!selectedWorkspaceId}
                               className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                                activeResourceNav === 'workspaceAuditLog'
+                                isWorkspaceSettingsActive
                                   ? 'bg-accent-soft text-accent-strong'
                                   : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
-                              {t('app.auditLog')}
+                              {t('app.workspaceSettings')}
                             </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSetMobileNavOpen(false);
-                              navigate(AppPaths.help());
-                            }}
-                            className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                              activeResourceNav === 'help'
-                                ? 'bg-accent-soft text-accent-strong'
-                                : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                            }`}
-                          >
-                            {t('app.help')}
-                          </button>
+                            {canReadWorkspaceAuditLog(selectedWorkspace) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onSetMobileNavOpen(false);
+                                  selectedWorkspaceId && navigate(AppPaths.workspaceAuditLog(selectedWorkspaceId));
+                                }}
+                                disabled={!selectedWorkspaceId}
+                                className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                                  activeResourceNav === 'workspaceAuditLog'
+                                    ? 'bg-accent-soft text-accent-strong'
+                                    : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                                } disabled:cursor-not-allowed disabled:opacity-50`}
+                              >
+                                {t('app.auditLog')}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onSetMobileNavOpen(false);
+                                navigate(AppPaths.help());
+                              }}
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                                activeResourceNav === 'help'
+                                  ? 'bg-accent-soft text-accent-strong'
+                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              }`}
+                            >
+                              {t('app.help')}
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </>
                   )}
                 </div>

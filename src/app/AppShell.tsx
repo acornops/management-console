@@ -12,6 +12,7 @@ import {
 } from '@/app/assistantNavStatus';
 import { ActivePrimaryNav, ActiveResourceNav, getClusterBackToWorkspacePath, getVirtualMachineBackToWorkspacePath } from '@/app/appRouteState';
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
+import { useCreateWorkspaceInviteSetup } from '@/app/useCreateWorkspaceInviteSetup';
 import { useTargetIssueSummary } from '@/app/useTargetIssueSummary';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
@@ -96,7 +97,7 @@ interface AppShellProps {
   getWorkspacePermission: (workspaceId: string, permission: keyof NonNullable<Workspace['permissions']>) => boolean;
   handleCancelAddCluster: () => void;
   handleConfirmAddCluster: () => Promise<void>;
-  handleCreateWorkspace: (workspace: Omit<Workspace, 'id' | 'clusterIds'>) => void;
+  handleCreateWorkspace: (name: string) => Promise<Workspace>;
   handleDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
   handleDeleteWorkspace: (workspaceId: string) => Promise<void>;
   handleInitiateAddCluster: (workspaceId: string) => void;
@@ -106,6 +107,8 @@ interface AppShellProps {
   includeNamespaces: string;
   installAgentCluster: KubernetesCluster | null;
   installAgentWorkspace: Workspace | undefined;
+  currentUserEmail: string;
+  invitationTokenMissingMessage: string;
   isAddingCluster: boolean;
   isClusterCopilotOpen: boolean;
   isClusterSidebar: boolean;
@@ -123,7 +126,6 @@ interface AppShellProps {
   navigate: (path: string, options?: RouterNavigateOptions) => void;
   navigateToKubernetesCluster: (cluster: KubernetesCluster) => void;
   newClusterName: string;
-  newWorkspaceName: string;
   openClusterCopilot: (cluster: KubernetesCluster, prompt?: string) => void;
   onConversationDeleted: (sessionName: string, targetName: string) => void;
   refreshWorkspaceInvitations: (workspaceId: string) => Promise<void>;
@@ -152,7 +154,6 @@ interface AppShellProps {
   setIsSidebarWorkspaceMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setLanguage: (language: AppLanguageCode) => void;
   setNewClusterName: React.Dispatch<React.SetStateAction<string>>;
-  setNewWorkspaceName: React.Dispatch<React.SetStateAction<string>>;
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>;
   showToast: (message: string) => void;
   sidebarAccountMenuRef: React.RefObject<HTMLDivElement | null>;
@@ -205,6 +206,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   includeNamespaces,
   installAgentCluster,
   installAgentWorkspace,
+  currentUserEmail,
+  invitationTokenMissingMessage,
   isAddingCluster,
   isClusterCopilotOpen,
   isClusterSidebar,
@@ -222,7 +225,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   navigate,
   navigateToKubernetesCluster,
   newClusterName,
-  newWorkspaceName,
   openClusterCopilot,
   onConversationDeleted,
   refreshWorkspaceInvitations,
@@ -251,7 +253,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   setIsSidebarWorkspaceMenuOpen,
   setLanguage,
   setNewClusterName,
-  setNewWorkspaceName,
   setWorkspaces,
   showToast,
   sidebarAccountMenuRef,
@@ -268,6 +269,15 @@ export const AppShell: React.FC<AppShellProps> = ({
   workspaceContextId,
   workspaces
 }) => {
+  const { loadWorkspaceRoles, createWorkspaceInvitation } = useCreateWorkspaceInviteSetup({
+    invitationTokenMissingMessage,
+    setWorkspaces,
+    toWorkspaceInvitation
+  });
+  const handleLeaveWorkspaceSuccess = React.useCallback((workspaceId: string) => {
+    setWorkspaces((current) => current.filter((workspace) => workspace.id !== workspaceId));
+  }, [setWorkspaces]);
+
   const backToWorkspaceId = selectedSidebarCluster?.workspaceId || workspaceContextId || selectedWorkspaceId;
   const vmBackToWorkspaceId = selectedSidebarVm?.workspaceId || workspaceContextId || selectedWorkspaceId;
   const [targetReturnContext, setTargetReturnContext] = React.useState<TargetReturnContext | null>(null);
@@ -559,6 +569,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               onRefreshWorkspaceMembers={refreshWorkspaceMembers}
               onDeleteCluster={handleDeleteCluster}
               onOpenDeleteWorkspace={setDeleteWorkspaceId}
+              onLeaveWorkspaceSuccess={handleLeaveWorkspaceSuccess}
               onLogout={() => void handleLogout()}
               onSetLanguage={setLanguage}
               showToast={showToast}
@@ -595,15 +606,14 @@ export const AppShell: React.FC<AppShellProps> = ({
         includeNamespaces={includeNamespaces}
         installAgentCluster={installAgentCluster}
         installAgentWorkspace={installAgentWorkspace}
+        currentUserEmail={currentUserEmail}
         isAddingCluster={isAddingCluster}
         isCreatingCluster={isCreatingCluster}
         isCreatingWorkspace={isCreatingWorkspace}
         isDark={isDark}
         isDeletingWorkspace={isDeletingWorkspace}
         newClusterName={newClusterName}
-        newWorkspaceName={newWorkspaceName}
         toasts={toasts}
-        user={user}
         onClusterNameChange={setNewClusterName}
         onCloseAddCluster={handleCancelAddCluster}
         onCloseInstallAgent={() => setInstallAgentClusterId(null)}
@@ -612,12 +622,13 @@ export const AppShell: React.FC<AppShellProps> = ({
         onConfirmClusterInstalled={() => void handleConfirmAddCluster()}
         onConfirmDeleteWorkspace={(workspace) => handleDeleteWorkspace(workspace.id)}
         onCreateWorkspace={handleCreateWorkspace}
+        onCreateWorkspaceInvitation={createWorkspaceInvitation}
         onDismissToast={dismissToast}
         onExcludeNamespacesChange={setExcludeNamespaces}
         onIncludeNamespacesChange={setIncludeNamespaces}
+        onLoadWorkspaceRoles={loadWorkspaceRoles}
         onProceedToClusterInstructions={(agentAccessMode) => void handleProceedToInstructions(agentAccessMode)}
         onSetDeletingWorkspace={setIsDeletingWorkspace}
-        onWorkspaceNameChange={setNewWorkspaceName}
         showToast={showToast}
       />
     </div>

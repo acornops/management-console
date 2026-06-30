@@ -16,6 +16,15 @@ const workspace = (id: string): Workspace => ({
   permissions: { read_workspace_data: true } as Workspace['permissions']
 });
 
+const limitedWorkspace = (id: string): Workspace => ({
+  ...workspace(id),
+  permissions: {
+    read_workspace_data: false,
+    read_members: false,
+    read_audit_log: false
+  } as Workspace['permissions']
+});
+
 const cluster = (id: string, workspaceId: string): KubernetesCluster => ({
   id,
   name: id,
@@ -61,6 +70,15 @@ describe('getPostWorkspaceDeleteNavigationPath', () => {
       route: { kind: 'workspaceSettings', workspaceId: 'workspace-a' },
       workspaces: [workspace('workspace-a'), workspace('workspace-b')]
     })).toBe('/workspaces/workspace-b/overview');
+  });
+
+  it('returns workspace settings when the fallback workspace only supports self-service leave', () => {
+    expect(getPostWorkspaceDeleteNavigationPath({
+      kubernetesClusters: [],
+      deletedWorkspaceId: 'workspace-a',
+      route: { kind: 'workspaceSettings', workspaceId: 'workspace-a' },
+      workspaces: [workspace('workspace-a'), limitedWorkspace('workspace-b')]
+    })).toBe('/workspaces/workspace-b/settings');
   });
 
   it('moves away from stale cluster routes when their workspace was deleted', () => {

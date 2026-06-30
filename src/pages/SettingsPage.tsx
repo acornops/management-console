@@ -28,7 +28,7 @@ function getTabUnavailableReason({
 }: TabUnavailableInput): string | undefined {
   if (!hasWorkspace) return t('settingsPage.selectWorkspaceForTab');
   if (tab === 'members' && !canReadMembers) return t('settingsPage.membersAccessRequired');
-  if ((tab === 'workspace' || tab === 'ai') && !canReadWorkspaceData) return t('settingsPage.workspaceAccessRequired');
+  if (tab === 'ai' && !canReadWorkspaceData) return t('settingsPage.workspaceAccessRequired');
   return undefined;
 }
 
@@ -42,6 +42,7 @@ interface SettingsPageProps {
   canManageAiSettings: boolean;
   currentUserRole?: ProjectMember['role'];
   onDeleteWorkspace: (workspaceId: string) => void;
+  onLeaveWorkspace?: () => Promise<void>;
   onCreateInvitation?: (input: { email: string; role: ProjectMember['role'] }) => Promise<WorkspaceInvitation>;
   onRevokeInvitation?: (invitation: WorkspaceInvitation) => Promise<void> | void;
   onUpdateMemberRole?: (member: ProjectMember, role: ProjectMember['role']) => Promise<void> | void;
@@ -60,6 +61,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   canManageAiSettings,
   currentUserRole = 'viewer',
   onDeleteWorkspace,
+  onLeaveWorkspace,
   onCreateInvitation,
   onRevokeInvitation,
   onUpdateMemberRole,
@@ -69,7 +71,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = React.useState<SettingsTab>(initialTab);
-  const workspaceTabsDisabled = !workspace || !canReadWorkspaceData;
+  const workspaceTabDisabled = !workspace;
+  const aiTabDisabled = !workspace || !canReadWorkspaceData;
   const membersTabDisabled = !workspace || !canReadMembers;
   const hasWorkspace = Boolean(workspace);
 
@@ -82,10 +85,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       setActiveTab('workspace');
       return;
     }
-    if ((activeTab === 'workspace' || activeTab === 'ai') && workspaceTabsDisabled && !membersTabDisabled) {
-      setActiveTab('members');
+    if (activeTab === 'ai' && aiTabDisabled) {
+      setActiveTab('workspace');
     }
-  }, [activeTab, membersTabDisabled, workspaceTabsDisabled]);
+  }, [activeTab, aiTabDisabled, membersTabDisabled]);
 
   const tabs: Array<{
     id: SettingsTab;
@@ -164,13 +167,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </section>
       )}
 
-      {activeTab === 'workspace' && workspace && !workspaceTabsDisabled && (
+      {activeTab === 'workspace' && workspace && !workspaceTabDisabled && (
         <WorkspaceSettingsPage
           embedded
           workspace={workspace}
+          canReadWorkspaceData={canReadWorkspaceData}
           canReadMembers={canReadMembers}
           canDeleteWorkspace={canDeleteWorkspace}
+          currentUserRole={currentUserRole}
           onDeleteWorkspace={onDeleteWorkspace}
+          onLeaveWorkspace={onLeaveWorkspace}
           onSelectMembers={() => handleSelectTab('members')}
         />
       )}
@@ -188,7 +194,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         />
       )}
 
-      {activeTab === 'ai' && workspace && !workspaceTabsDisabled && (
+      {activeTab === 'ai' && workspace && !aiTabDisabled && (
         <WorkspaceAiSettingsPage
           embedded
           workspace={workspace}

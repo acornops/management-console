@@ -2,7 +2,8 @@ import React from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { canReadWorkspaceAuditLog, canReadWorkspaceData, canReadWorkspaceMembers } from '@/app/workspacePermissions';
+import { workspaceLandingPath } from '@/app/appNavigationGuards';
+import { canReadWorkspaceAuditLog, canReadWorkspaceData } from '@/app/workspacePermissions';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
@@ -91,28 +92,21 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   const accountMenuLabelId = React.useId();
   const accountMenuPopoverId = React.useId();
   const hasWorkspaceDataAccess = canReadWorkspaceData(selectedWorkspace);
-  const hasWorkspaceMemberAccess = canReadWorkspaceMembers(selectedWorkspace);
+  const hasWorkspaces = workspaces.length > 0;
   const selectedWorkspaceName = selectedWorkspace?.name || t('app.noWorkspace');
   const selectedClusterName = selectedSidebarCluster?.name || t('app.unknownCluster');
   const selectedVmName = selectedSidebarVm?.name || t('app.unknownVirtualMachine');
   const userInitials = getUserInitials(user);
   const isAccountSettingsActive = activeResourceNav === 'accountSettings';
   const isWorkspaceSettingsActive =
-    activeResourceNav === 'settings' ||
     activeResourceNav === 'workspaceSettings' ||
     activeResourceNav === 'workspaceAiSettings' ||
     activeResourceNav === 'members';
   const workspaceSettingsPath = selectedWorkspaceId
-    ? hasWorkspaceDataAccess
-      ? AppPaths.workspaceSettings(selectedWorkspaceId)
-      : AppPaths.workspaceMembers(selectedWorkspaceId)
-    : AppPaths.settings();
+    ? AppPaths.workspaceSettings(selectedWorkspaceId)
+    : AppPaths.workspaces();
   const workspaceHomePath = selectedWorkspace
-    ? hasWorkspaceDataAccess
-      ? AppPaths.workspaceOverview(selectedWorkspace.id)
-      : canReadWorkspaceAuditLog(selectedWorkspace)
-        ? AppPaths.workspaceAuditLog(selectedWorkspace.id)
-        : AppPaths.workspaceMembers(selectedWorkspace.id)
+    ? workspaceLandingPath(selectedWorkspace)
     : AppPaths.workspaces();
 
   const closeWorkspaceSwitcher = React.useCallback(
@@ -186,39 +180,57 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
             {!isClusterSidebar && !isVirtualMachineSidebar && (
               <>
                 <div className="relative min-w-0 px-4 mb-8 mt-2" ref={sidebarWorkspaceMenuRef}>
-                  <motion.button
-                    ref={workspaceSwitcherButtonRef}
-                    type="button"
-                    onClick={() => onSetSidebarWorkspaceMenuOpen((current) => !current)}
-                    onKeyDown={handleWorkspaceSwitcherKeyDown}
-                    disabled={workspaces.length === 0}
-                    className="w-full flex items-center justify-between p-3 rounded-lg border border-transparent text-left outline-none transition-all hover:bg-ui-bg hover:border-ui-border focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50 group"
-                    aria-controls={workspaceSwitcherPopoverId}
-                    aria-expanded={isSidebarWorkspaceMenuOpen}
-                    aria-label={t('app.selectWorkspace')}
-                    title={selectedWorkspace ? t('app.selectWorkspace') : t('app.noWorkspacesAvailable')}
-                  >
-                    <span className="flex min-w-0 items-center gap-3">
-                      <span className="w-8 h-8 rounded bg-accent-soft flex items-center justify-center shrink-0">
-                        <span className="text-accent-strong font-bold font-mono text-xs">{selectedWorkspaceInitials}</span>
-                      </span>
-                      <span className="min-w-0 flex flex-col items-start transition-all">
-                        <span className="type-micro-label">{t('app.workspace')}</span>
-                        <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm font-bold leading-tight text-ui-text" title={selectedWorkspaceName}>
-                          {selectedWorkspaceName}
+                  {hasWorkspaces ? (
+                    <motion.button
+                      ref={workspaceSwitcherButtonRef}
+                      type="button"
+                      onClick={() => onSetSidebarWorkspaceMenuOpen((current) => !current)}
+                      onKeyDown={handleWorkspaceSwitcherKeyDown}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border border-transparent text-left outline-none transition-all hover:bg-ui-bg hover:border-ui-border focus-visible:ring-2 focus-visible:ring-accent/20 group"
+                      aria-controls={workspaceSwitcherPopoverId}
+                      aria-expanded={isSidebarWorkspaceMenuOpen}
+                      aria-label={t('app.selectWorkspace')}
+                      title={t('app.selectWorkspace')}
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="w-8 h-8 rounded bg-accent-soft flex items-center justify-center shrink-0">
+                          <span className="text-accent-strong font-bold font-mono text-xs">{selectedWorkspaceInitials}</span>
+                        </span>
+                        <span className="min-w-0 flex flex-col items-start transition-all">
+                          <span className="type-micro-label">{t('app.workspace')}</span>
+                          <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm font-bold leading-tight text-ui-text" title={selectedWorkspaceName}>
+                            {selectedWorkspaceName}
+                          </span>
                         </span>
                       </span>
-                    </span>
-                    <motion.div
-                      animate={{ rotate: isSidebarWorkspaceMenuOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="shrink-0"
+                      <motion.div
+                        animate={{ rotate: isSidebarWorkspaceMenuOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="shrink-0"
+                      >
+                        <ICONS.ChevronDown className="w-4 h-4 text-ui-text-muted transition-all group-hover:text-ui-text" />
+                      </motion.div>
+                    </motion.button>
+                  ) : (
+                    <div
+                      className="w-full flex items-center justify-between p-3 rounded-lg border border-transparent text-left"
+                      title={t('app.noWorkspacesAvailable')}
                     >
-                      <ICONS.ChevronDown className="w-4 h-4 text-ui-text-muted transition-all group-hover:text-ui-text" />
-                    </motion.div>
-                  </motion.button>
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="w-8 h-8 rounded bg-ui-bg flex items-center justify-center shrink-0">
+                          <span className="text-ui-text-muted font-bold font-mono text-xs">{selectedWorkspaceInitials}</span>
+                        </span>
+                        <span className="min-w-0 flex flex-col items-start">
+                          <span className="type-micro-label">{t('app.workspace')}</span>
+                          <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm font-bold leading-tight text-ui-text-muted" title={selectedWorkspaceName}>
+                            {selectedWorkspaceName}
+                          </span>
+                        </span>
+                      </span>
+                    </div>
+                  )}
                   <AnimatePresence>
-                    {isSidebarWorkspaceMenuOpen && (
+                    {hasWorkspaces && isSidebarWorkspaceMenuOpen && (
                       <motion.div
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -292,9 +304,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   </AnimatePresence>
                 </div>
 
-                <SidebarSection title={t('app.inventory')} compactAfter>
-                  {hasWorkspaceDataAccess && (
-                    <>
+                {hasWorkspaceDataAccess && (
+                  <>
+                    <SidebarSection title={t('app.inventory')} compactAfter>
                       <SidebarNavButton
                         active={activeResourceNav === 'clusters'}
                         disabled={!selectedWorkspaceId}
@@ -309,13 +321,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                         label={t('app.virtualMachines')}
                         onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceVirtualMachines(selectedWorkspaceId))}
                       />
-                    </>
-                  )}
-                </SidebarSection>
+                    </SidebarSection>
 
-                <SidebarSection title={t('app.automation')} compactAfter>
-                  {hasWorkspaceDataAccess && (
-                    <>
+                    <SidebarSection title={t('app.automation')} compactAfter>
                       <SidebarNavButton
                         active={activeResourceNav === 'agents'}
                         disabled={!selectedWorkspaceId}
@@ -344,35 +352,37 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                         label={t('app.approvals')}
                         onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceApprovals(selectedWorkspaceId))}
                       />
-                    </>
-                  )}
-                </SidebarSection>
+                    </SidebarSection>
+                  </>
+                )}
 
-                <TargetSettingsDivider>
-                  <SidebarNavButton
-                    active={isWorkspaceSettingsActive}
-                    disabled={Boolean(selectedWorkspaceId) && !hasWorkspaceDataAccess && !hasWorkspaceMemberAccess}
-                    icon={<ICONS.Settings className={navIconClass(isWorkspaceSettingsActive)} />}
-                    label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}
-                    onClick={() => navigate(workspaceSettingsPath)}
-                  />
-                  {canReadWorkspaceAuditLog(selectedWorkspace) && (
+                {selectedWorkspaceId && (
+                  <TargetSettingsDivider>
                     <SidebarNavButton
-                      active={activeResourceNav === 'workspaceAuditLog'}
+                      active={isWorkspaceSettingsActive}
                       disabled={!selectedWorkspaceId}
-                      icon={<ICONS.Shield className={navIconClass(activeResourceNav === 'workspaceAuditLog')} />}
-                      label={t('app.auditLog')}
-                      onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceAuditLog(selectedWorkspaceId))}
+                      icon={<ICONS.Settings className={navIconClass(isWorkspaceSettingsActive)} />}
+                      label={t('app.workspaceSettings')}
+                      onClick={() => navigate(workspaceSettingsPath)}
                     />
-                  )}
-                  <SidebarNavButton
-                    active={activeResourceNav === 'help'}
-                    disabled={false}
-                    icon={<ICONS.CircleHelp className={navIconClass(activeResourceNav === 'help')} />}
-                    label={t('app.help')}
-                    onClick={() => navigate(AppPaths.help())}
-                  />
-                </TargetSettingsDivider>
+                    {canReadWorkspaceAuditLog(selectedWorkspace) && (
+                      <SidebarNavButton
+                        active={activeResourceNav === 'workspaceAuditLog'}
+                        disabled={!selectedWorkspaceId}
+                        icon={<ICONS.Shield className={navIconClass(activeResourceNav === 'workspaceAuditLog')} />}
+                        label={t('app.auditLog')}
+                        onClick={() => selectedWorkspaceId && navigate(AppPaths.workspaceAuditLog(selectedWorkspaceId))}
+                      />
+                    )}
+                    <SidebarNavButton
+                      active={activeResourceNav === 'help'}
+                      disabled={false}
+                      icon={<ICONS.CircleHelp className={navIconClass(activeResourceNav === 'help')} />}
+                      label={t('app.help')}
+                      onClick={() => navigate(AppPaths.help())}
+                    />
+                  </TargetSettingsDivider>
+                )}
               </>
             )}
 

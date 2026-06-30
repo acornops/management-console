@@ -29,6 +29,14 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('workspaceSwitcherButtonRef.current?.focus({ preventScroll: true });');
   });
 
+  it('renders a static workspace context instead of a dead dropdown when no workspaces exist', () => {
+    expect(desktopSidebar).toContain('const hasWorkspaces = workspaces.length > 0;');
+    expect(desktopSidebar).toContain('{hasWorkspaces ? (');
+    expect(desktopSidebar).toContain('{hasWorkspaces && isSidebarWorkspaceMenuOpen && (');
+    expect(desktopSidebar).toContain('title={t(\'app.noWorkspacesAvailable\')}');
+    expect(desktopSidebar).not.toContain('disabled={workspaces.length === 0}');
+  });
+
   it('separates target settings with the same quiet divider used by workspace utilities', () => {
     expect(desktopSidebar).not.toContain("['settings', 'clusterSettings', t('app.clusterSettings'), ICONS.Settings]");
     expect(desktopSidebar).not.toContain("['settings', 'vmSettings', t('app.vmSettings'), ICONS.Settings]");
@@ -77,6 +85,7 @@ describe('desktop sidebar workspace switcher', () => {
   });
 
   it('groups workspace resources by inventory and automation intent', () => {
+    expect(desktopSidebar).toContain('{hasWorkspaceDataAccess && (');
     expect(desktopSidebar).toContain("<SidebarSection title={t('app.inventory')} compactAfter>");
     expect(desktopSidebar).toContain("<SidebarSection title={t('app.automation')} compactAfter>");
     expect(desktopSidebar).not.toContain("label={t('app.aiSettings')}");
@@ -87,9 +96,8 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('AppPaths.workspaceSchedules(selectedWorkspaceId)');
     expect(desktopSidebar).toContain("label={t('app.approvals')}");
     expect(desktopSidebar).toContain('AppPaths.workspaceApprovals(selectedWorkspaceId)');
-    expect(desktopSidebar).toContain("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}");
+    expect(desktopSidebar).toContain("label={t('app.workspaceSettings')}");
     expect(desktopSidebar).toContain('AppPaths.workspaceSettings(selectedWorkspaceId)');
-    expect(desktopSidebar).toContain('AppPaths.workspaceMembers(selectedWorkspaceId)');
     expect(desktopSidebar).toContain("label={t('app.help')}");
     expect(desktopSidebar).toContain('AppPaths.help()');
     expect(desktopSidebar).toContain('navigate(AppPaths.accountSettings());');
@@ -120,7 +128,7 @@ describe('desktop sidebar workspace switcher', () => {
       desktopSidebar.indexOf("label={t('app.schedules')}")
     );
     expect(desktopSidebar.indexOf("label={t('app.auditLog')}")).toBeGreaterThan(
-      desktopSidebar.indexOf("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")
+      desktopSidebar.indexOf("label={t('app.workspaceSettings')}")
     );
     expect(desktopSidebar.indexOf("label={t('app.auditLog')}")).toBeLessThan(
       desktopSidebar.indexOf("label={t('app.help')}")
@@ -167,18 +175,19 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain("compactAfter ? 'pb-4' : 'pb-10'");
   });
 
-  it('keeps members navigation visible for read-members-only roles', () => {
-    expect(desktopSidebar).toContain('canReadWorkspaceMembers');
-    expect(desktopSidebar).toContain('const hasWorkspaceMemberAccess = canReadWorkspaceMembers(selectedWorkspace);');
+  it('keeps workspace settings visible as the self-service fallback for limited roles', () => {
+    expect(desktopSidebar).not.toContain('canReadWorkspaceMembers');
+    expect(desktopSidebar).toContain("import { workspaceLandingPath } from '@/app/appNavigationGuards';");
     expect(desktopSidebar).toContain('const workspaceSettingsPath = selectedWorkspaceId');
     expect(desktopSidebar).toContain('? AppPaths.workspaceSettings(selectedWorkspaceId)');
-    expect(desktopSidebar).toContain(': AppPaths.workspaceMembers(selectedWorkspaceId)');
-    expect(desktopSidebar).toContain('disabled={Boolean(selectedWorkspaceId) && !hasWorkspaceDataAccess && !hasWorkspaceMemberAccess}');
+    expect(desktopSidebar).not.toContain(': AppPaths.workspaceMembers(selectedWorkspaceId)');
+    expect(desktopSidebar).toContain('disabled={!selectedWorkspaceId}');
+    expect(desktopSidebar).toContain('? workspaceLandingPath(selectedWorkspace)');
   });
 
   it('keeps audit logs in the bottom workspace utility group for auditor-only roles', () => {
     const workspaceNavigation = desktopSidebar.slice(
-      desktopSidebar.indexOf("<SidebarSection title={t('app.automation')} compactAfter>"),
+      desktopSidebar.indexOf('{hasWorkspaceDataAccess && ('),
       desktopSidebar.indexOf('{isClusterSidebar && (')
     );
     const automationSection = workspaceNavigation.slice(
@@ -192,10 +201,11 @@ describe('desktop sidebar workspace switcher', () => {
 
     expect(workspaceNavigation).toContain('<TargetSettingsDivider>');
     expect(workspaceNavigation).toContain('</TargetSettingsDivider>');
+    expect(workspaceNavigation).toContain('{selectedWorkspaceId && (');
     expect(workspaceNavigation).not.toContain('mt-auto border-t border-ui-border');
     expect(automationSection).not.toContain("label={t('app.auditLog')}");
     expect(utilitySection).toContain("label={t('app.auditLog')}");
-    expect(utilitySection.indexOf("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+    expect(utilitySection.indexOf("label={t('app.workspaceSettings')}")).toBeLessThan(
       utilitySection.indexOf("label={t('app.auditLog')}")
     );
     expect(utilitySection.indexOf("label={t('app.auditLog')}")).toBeLessThan(
@@ -216,11 +226,14 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain("isAccountSettingsActive ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'");
   });
 
-  it('labels console settings separately from account settings', () => {
-    expect(desktopSidebar).toContain("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}");
-    expect(desktopSidebar).toContain('AppPaths.settings()');
+  it('only shows workspace utility navigation after a workspace is selected', () => {
+    expect(desktopSidebar).toContain('{selectedWorkspaceId && (');
+    expect(desktopSidebar).toContain("label={t('app.workspaceSettings')}");
+    expect(desktopSidebar).not.toContain("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.settings')}");
+    expect(desktopSidebar).not.toContain("t('app.consoleSettings')");
+    expect(desktopSidebar).not.toContain('AppPaths.settings()');
     expect(desktopSidebar).toContain("t('app.accountSettings')");
-    expect(desktopSidebar.indexOf("label={selectedWorkspaceId ? t('app.workspaceSettings') : t('app.consoleSettings')}")).toBeLessThan(
+    expect(desktopSidebar.indexOf("label={t('app.workspaceSettings')}")).toBeLessThan(
       desktopSidebar.indexOf("data-account-settings-active={isAccountSettingsActive ? 'true' : undefined}")
     );
   });

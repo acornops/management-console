@@ -1,6 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { getBoundaryEnabledOptionIndex, getNextEnabledOptionIndex, SelectOption } from './Select';
+
+const root = resolve(__dirname, '../../..');
+const selectSource = readFileSync(resolve(root, 'src/components/common/Select.tsx'), 'utf8');
 
 const options: Array<SelectOption<string>> = [
   { value: 'viewer', label: 'Viewer' },
@@ -33,5 +38,12 @@ describe('Select keyboard navigation helpers', () => {
     expect(getNextEnabledOptionIndex(disabledOptions, 0, 1)).toBe(-1);
     expect(getBoundaryEnabledOptionIndex(disabledOptions, 'first')).toBe(-1);
     expect(getBoundaryEnabledOptionIndex(disabledOptions, 'last')).toBe(-1);
+  });
+});
+
+describe('Select source contracts', () => {
+  it('listens for outside pointer events in capture phase so dialogs cannot swallow dismissal clicks', () => {
+    expect(selectSource).toContain("document.addEventListener('mousedown', handlePointerDown, true);");
+    expect(selectSource).toContain("document.removeEventListener('mousedown', handlePointerDown, true);");
   });
 });

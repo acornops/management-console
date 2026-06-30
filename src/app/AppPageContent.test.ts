@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(__dirname, '../..');
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
 const appBootstrap = readFileSync(resolve(root, 'src/app/useAppBootstrap.ts'), 'utf8');
+const app = readFileSync(resolve(root, 'src/App.tsx'), 'utf8');
 
 describe('AppPageContent route loading', () => {
   it('lazy imports route page bodies so initial navigation keeps the app bundle lean', () => {
@@ -35,13 +36,11 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).toContain('export function preloadAppRoutePage(route: AppRoute): void');
     expect(appPageContent).toContain('case \'workspaceKubernetesClusterDiagnostics\':');
     expect(appPageContent).toContain('void loadKubernetesClusterDetailPage();');
-    expect(appPageContent).toContain('case \'settings\':');
-    expect(appPageContent).toContain('void loadSettingsPage();');
-    expect(appPageContent).toContain("route.kind === 'settings'");
+    expect(appPageContent).not.toContain('case \'settings\':');
     expect(appPageContent).toContain("case 'workspaceMembers':");
     expect(appPageContent).toContain("case 'workspaceSettings':");
     expect(appPageContent).toContain("case 'workspaceAiSettings':");
-    expect(appPageContent).toContain("route.kind === 'settings' || route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers'");
+    expect(appPageContent).toContain("route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers'");
     expect(appPageContent).toContain('<SettingsPage');
     expect(appPageContent).toContain('case \'accountSettings\':');
     expect(appPageContent).toContain('void loadUserSettingsPage();');
@@ -74,5 +73,43 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).not.toContain('<AnimatePresence mode="wait">');
     expect(appPageContent).not.toContain('key={pageKey}');
     expect(appPageContent).not.toContain('pageKey');
+  });
+
+  it('treats the top-level settings route as redirect-only legacy input', () => {
+    expect(app).toContain("route.kind !== 'settings'");
+    expect(app).toContain('legacySettingsRedirectPath({ selectedWorkspaceId, workspaceById, workspaces })');
+    expect(appPageContent).not.toContain("route.kind === 'settings' ||");
+  });
+
+  it('lets the current user leave a workspace without member-management permissions', () => {
+    expect(appPageContent).toContain('const leaveWorkspace = async () => {');
+    expect(appPageContent).toContain('isKnownOnlyWorkspaceOwner(currentUserRole, workspaceContext.memberCount)');
+    expect(appPageContent).toContain('shouldPreflightWorkspaceOwnerLeave(currentUserRole)');
+    expect(appPageContent).toContain("getWorkspacePermission(workspaceContext.id, 'read_members')");
+    expect(appPageContent).toContain("controlPlaneApi.listWorkspaceMembers(workspaceContext.id, { limit: 2, role: 'owner' })");
+    expect(appPageContent).toContain('hasAnotherWorkspaceOwner(ownersPage.items)');
+    expect(appPageContent).toContain('controlPlaneApi.deleteWorkspaceMember(workspaceContext.id, user.id)');
+    expect(appPageContent).toContain('formatMemberMutationError(');
+    expect(appPageContent).toContain("t('workspaceSettings.leaveOnlyOwnerError')");
+    expect(appPageContent).toContain('workspacesAfterLeave(workspaces, workspaceContext.id)');
+    expect(appPageContent).toContain('onLeaveWorkspaceSuccess(workspaceContext.id)');
+    expect(appPageContent).toContain('navigate(nextWorkspace ? workspaceLandingPath(nextWorkspace) : AppPaths.workspaces(), { replace: true })');
+    expect(appPageContent).toContain("showToast(t('workspaceSettings.leaveSuccess'");
+    expect(appPageContent).toContain('onLeaveWorkspace={workspaceContext ? leaveWorkspace : undefined}');
+  });
+
+  it('presents the no-workspace state as a guided setup path instead of a sparse blank page', () => {
+    expect(appPageContent).toContain('aria-labelledby="create-first-workspace-title"');
+    expect(appPageContent).toContain("route.kind === 'workspaces' || route.kind === 'home' || route.kind === 'settings'");
+    expect(appPageContent).toContain("t('app.createFirstWorkspaceKicker')");
+    expect(appPageContent).toContain("t('app.createFirstWorkspaceStepWorkspace')");
+    expect(appPageContent).toContain("t('app.createFirstWorkspaceStepMembers')");
+    expect(appPageContent).toContain("t('app.createFirstWorkspaceStepChat')");
+    expect(appPageContent).toContain('ICONS.BotMessageSquare');
+    expect(appPageContent).not.toContain("t('app.createFirstWorkspaceStepTargets')");
+    expect(appPageContent).toContain("t('app.createFirstWorkspaceInviteHint')");
+    expect(appPageContent).toContain("t('app.createWorkspaceAction')");
+    expect(appPageContent).toContain('sm:grid-cols-3');
+    expect(appPageContent).not.toContain("t('app.newWorkspace')}</Button>");
   });
 });

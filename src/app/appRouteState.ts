@@ -14,7 +14,6 @@ export type ActiveResourceNav =
   | 'workspaceSettings'
   | 'workspaceAuditLog'
   | 'accountSettings'
-  | 'settings'
   | 'help'
   | 'clusterOverview'
   | 'clusterResources'
@@ -95,7 +94,6 @@ export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
     if (tab === 'chat') return 'vmChat';
     return 'vmOverview';
   }
-  if (route.kind === 'settings') return 'settings';
   if (route.kind === 'help') return 'help';
   if (route.kind === 'workspaceAiSettings') return 'workspaceAiSettings';
   if (route.kind === 'workspaceSettings') return 'workspaceSettings';

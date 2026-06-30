@@ -8,11 +8,19 @@ import type { TargetChatController } from '@/features/kubernetes-cluster-detail/
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
+import { formatMemberMutationError } from '@/pages/workspace-members/memberUtils';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { fadeTransition } from '@/lib/motion';
 import type { SettingsTab } from '@/pages/SettingsPage';
+import { workspaceLandingPath } from '@/app/appNavigationGuards';
+import {
+  hasAnotherWorkspaceOwner,
+  isKnownOnlyWorkspaceOwner,
+  shouldPreflightWorkspaceOwnerLeave,
+  workspacesAfterLeave
+} from '@/app/workspaceLeave';
 import { AppRoute, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 
@@ -85,9 +93,6 @@ export function preloadAppRoutePage(route: AppRoute): void {
       break;
     case 'notFound':
       void loadNotFoundPage();
-      break;
-    case 'settings':
-      void loadSettingsPage();
       break;
     case 'accountSettings':
       void loadUserSettingsPage();
@@ -197,6 +202,7 @@ interface AppPageContentProps {
   onRefreshWorkspaceMembers: (workspaceId: string) => Promise<void>;
   onDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
   onOpenDeleteWorkspace: (workspaceId: string) => void;
+  onLeaveWorkspaceSuccess: (workspaceId: string) => void;
   onLogout: () => void;
   onSetLanguage: (language: AppLanguageCode) => void;
   showToast: (message: string) => void;
@@ -245,6 +251,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   onRefreshWorkspaceMembers,
   onDeleteCluster,
   onOpenDeleteWorkspace,
+  onLeaveWorkspaceSuccess,
   onLogout,
   onSetLanguage,
   showToast,
@@ -252,7 +259,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
 }) => {
   const { t } = useTranslation();
   const shouldShowCreateFirstWorkspace =
-    ((route.kind === 'workspaces' || route.kind === 'home') && workspaces.length === 0) ||
+    ((route.kind === 'workspaces' || route.kind === 'home' || route.kind === 'settings') && workspaces.length === 0) ||
     routeTargetsMissingWorkspace(route, workspaceContext, workspaces.length);
   const activeSettingsTab: SettingsTab = route.kind === 'workspaceMembers'
     ? 'members'
@@ -312,6 +319,35 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
     await onRefreshWorkspaceMembers(workspaceContext.id);
   };
 
+  const leaveWorkspace = async () => {
+    if (!workspaceContext) return;
+    const currentUserRole = getCurrentUserRoleForWorkspace(workspaceContext.id);
+    try {
+      if (isKnownOnlyWorkspaceOwner(currentUserRole, workspaceContext.memberCount)) {
+        throw new Error(t('workspaceSettings.leaveOnlyOwnerError'));
+      }
+      if (shouldPreflightWorkspaceOwnerLeave(currentUserRole) && getWorkspacePermission(workspaceContext.id, 'read_members')) {
+        const ownersPage = await controlPlaneApi.listWorkspaceMembers(workspaceContext.id, { limit: 2, role: 'owner' });
+        if (!hasAnotherWorkspaceOwner(ownersPage.items)) {
+          throw new Error(t('workspaceSettings.leaveOnlyOwnerError'));
+        }
+      }
+      await controlPlaneApi.deleteWorkspaceMember(workspaceContext.id, user.id);
+    } catch (error) {
+      throw new Error(formatMemberMutationError(
+        error,
+        t('workspaceSettings.leaveFailed'),
+        t('workspaceSettings.leaveOnlyOwnerError')
+      ));
+    }
+
+    const remainingWorkspaces = workspacesAfterLeave(workspaces, workspaceContext.id);
+    const nextWorkspace = remainingWorkspaces[0];
+    onLeaveWorkspaceSuccess(workspaceContext.id);
+    navigate(nextWorkspace ? workspaceLandingPath(nextWorkspace) : AppPaths.workspaces(), { replace: true });
+    showToast(t('workspaceSettings.leaveSuccess', { workspace: workspaceContext.name }));
+  };
+
   return (
     <main className="flex-1 min-w-0 w-full max-w-full min-h-0 flex flex-col h-full overflow-hidden relative">
       <motion.div
@@ -319,18 +355,44 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
         className="flex-1 min-w-0 w-full max-w-full min-h-0 h-full overflow-hidden flex flex-col"
       >
         {shouldShowCreateFirstWorkspace && (
-          <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-y-auto bg-ui-bg p-12 text-center custom-scrollbar">
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-xl border border-ui-border bg-ui-surface shadow-sm">
-              <ICONS.LayoutGrid className="h-7 w-7 text-accent-strong" />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-ui-text">{t('app.createFirstWorkspace')}</h1>
-            <p className="mt-3 max-w-md text-sm font-medium leading-6 text-ui-text-muted">
-              {t('app.createFirstWorkspaceBody')}
-            </p>
-            <Button onClick={onCreateWorkspaceClick} variant="primary" size="lg" className="mt-8">
-              <ICONS.Plus className="h-4 w-4" />
-              {t('app.newWorkspace')}
-            </Button>
+          <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-y-auto bg-ui-bg px-6 py-10 text-center custom-scrollbar sm:px-10 lg:pb-24">
+            <section aria-labelledby="create-first-workspace-title" className="w-full max-w-3xl">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-ui-border bg-ui-surface shadow-sm">
+                <ICONS.LayoutGrid className="h-6 w-6 text-accent-strong" aria-hidden="true" />
+              </div>
+              <p className="type-label mb-3 text-accent-strong">{t('app.createFirstWorkspaceKicker')}</p>
+              <h1 id="create-first-workspace-title" className="type-route-title text-ui-text">{t('app.createFirstWorkspace')}</h1>
+              <p className="type-body mx-auto mt-3 max-w-xl text-ui-text-muted">
+                {t('app.createFirstWorkspaceBody')}
+              </p>
+
+              <ol className="mx-auto mt-7 grid max-w-2xl overflow-hidden rounded-lg border border-ui-border bg-ui-surface text-left shadow-sm sm:grid-cols-3">
+                {([
+                  ['workspace', ICONS.LayoutGrid, t('app.createFirstWorkspaceStepWorkspace'), t('app.createFirstWorkspaceStepWorkspaceBody')],
+                  ['members', ICONS.Users, t('app.createFirstWorkspaceStepMembers'), t('app.createFirstWorkspaceStepMembersBody')],
+                  ['chat', ICONS.BotMessageSquare, t('app.createFirstWorkspaceStepChat'), t('app.createFirstWorkspaceStepChatBody')]
+                ] as const).map(([id, Icon, title, body], index) => (
+                  <li key={id} className="border-b border-ui-border p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+                    <div className="flex items-center gap-2">
+                      <span className="type-label flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
+                        {index + 1}
+                      </span>
+                      <Icon className="h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
+                    </div>
+                    <p className="type-row-title mt-3 text-ui-text">{title}</p>
+                    <p className="type-caption mt-1 text-ui-text-muted">{body}</p>
+                  </li>
+                ))}
+              </ol>
+
+              <Button onClick={onCreateWorkspaceClick} variant="primary" size="lg" className="mt-8">
+                <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+                {t('app.createWorkspaceAction')}
+              </Button>
+              <p className="type-caption mx-auto mt-4 max-w-lg text-ui-text-muted">
+                {t('app.createFirstWorkspaceInviteHint')}
+              </p>
+            </section>
           </div>
         )}
 
@@ -428,7 +490,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
-          {(route.kind === 'settings' || route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers') && (
+          {(route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers') && (
             <SettingsPage
               workspace={workspaceContext}
               initialTab={activeSettingsTab}
@@ -439,6 +501,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               canManageAiSettings={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'manage_ai_settings') : false}
               currentUserRole={workspaceContext ? getCurrentUserRoleForWorkspace(workspaceContext.id) : undefined}
               onDeleteWorkspace={onOpenDeleteWorkspace}
+              onLeaveWorkspace={workspaceContext ? leaveWorkspace : undefined}
               onCreateInvitation={workspaceContext ? createWorkspaceInvitation : undefined}
               onRevokeInvitation={workspaceContext ? revokeWorkspaceInvitation : undefined}
               onUpdateMemberRole={workspaceContext ? updateWorkspaceMemberRole : undefined}
