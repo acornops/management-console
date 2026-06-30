@@ -6,9 +6,12 @@ import { describe, expect, it } from 'vitest';
 import {
   appendWorkflowSearchTag,
   createDefaultWorkflowDefinitions,
+  findWorkflowByRouteTarget,
   filterWorkflowDefinitions,
   getWorkflowById,
   getWorkflowLaunchBlocker,
+  getWorkflowRouteQuery,
+  getWorkflowRouteSelectionTarget,
   getOptimisticWorkflowRunStatus,
   getWorkflowTabLabel,
   getWorkflowToolScopeSummary,
@@ -20,6 +23,7 @@ import {
   buildWorkflowCreateInput,
   createWorkflowDraft,
   createFallbackWorkflowOptions,
+  getWorkflowScopeOptionsForAgents,
   getRunDiscussionState,
   isTerminalRunStatus,
   mapApiWorkflowToDefinition,
@@ -30,6 +34,7 @@ const root = resolve(__dirname, '../..');
 const workflowsPage = [
   readFileSync(resolve(root, 'src/pages/WorkspaceWorkflowsPage.tsx'), 'utf8'),
   readFileSync(resolve(root, 'src/pages/WorkspaceWorkflowsPage.components.tsx'), 'utf8'),
+  readFileSync(resolve(root, 'src/pages/WorkspaceWorkflowsPage.scope.tsx'), 'utf8'),
   readFileSync(resolve(root, 'src/pages/WorkspaceWorkflowsPage.panels.tsx'), 'utf8')
 ].join('\n');
 const workflowActions = readFileSync(resolve(root, 'src/pages/workflows/useWorkspaceWorkflowActions.ts'), 'utf8');
@@ -50,10 +55,9 @@ describe('WorkspaceWorkflowsPage model', () => {
   it('ships governed workspace automation examples assigned to durable agents', () => {
     const workflows = createDefaultWorkflowDefinitions();
     const agentIds = new Set(createDefaultAgentDefinitions().map((agent) => agent.id));
-    const assignedAgentIds = workflows.flatMap((workflow) => [
-      workflow.primaryAgent.agentId,
-      ...workflow.supportingAgents.map((agent) => agent.agentId),
-      ...workflow.steps.flatMap((step) => step.assignedAgentIds || [])
+    const workflowAgentIds = workflows.flatMap((workflow) => [
+      ...workflow.agents.map((agent) => agent.agentId),
+      ...workflow.steps.flatMap((step) => step.agentIds || [])
     ]).filter(Boolean);
 
     expect(workflows.map((workflow) => workflow.id)).toEqual([
@@ -61,12 +65,12 @@ describe('WorkspaceWorkflowsPage model', () => {
       'repository-operation',
       'incident-report-pdf'
     ]);
-    expect(assignedAgentIds.every((agentId) => agentIds.has(agentId))).toBe(true);
+    expect(workflowAgentIds.every((agentId) => agentIds.has(agentId))).toBe(true);
     expect(workflows.every((workflow) => workflow.scope.type === 'workspace')).toBe(true);
-    expect(workflows.every((workflow) => workflow.primaryAgent.agentId)).toBe(true);
-    expect(workflows.some((workflow) => workflow.supportingAgents.length > 0)).toBe(true);
+    expect(workflows.every((workflow) => workflow.orchestrator.agentId === 'agent-workflow-orchestrator')).toBe(true);
+    expect(workflows.every((workflow) => workflow.agents.length > 0)).toBe(true);
     expect(workflows.some((workflow) => workflow.contextGrants.includes('selected_chat_sessions'))).toBe(true);
-    expect(workflows.some((workflow) => workflow.primaryAgent.name === 'Repository Operator')).toBe(true);
+    expect(workflows.some((workflow) => workflow.agents.some((agent) => agent.name === 'Repository Operator'))).toBe(true);
   });
 
   it('filters the workflow library by name, enabled skills, MCP scope, and permission copy', () => {
@@ -90,6 +94,23 @@ describe('WorkspaceWorkflowsPage model', () => {
     expect(appendWorkflowSearchTag('incident pdf', 'pdf')).toBe('incident pdf');
   });
 
+  it('hydrates workflow search and selection from agent catalog backlinks', () => {
+    const workflows = createDefaultWorkflowDefinitions('workspace-1');
+
+    expect(getWorkflowRouteQuery('?workflow=Repository%20operation&q=Repository%20operation')).toBe('Repository operation');
+    expect(getWorkflowRouteSelectionTarget('?workflow=Repository%20operation&q=Repository%20operation')).toBe('Repository operation');
+    expect(findWorkflowByRouteTarget(workflows, 'Repository operation')?.id).toBe('repository-operation');
+    expect(findWorkflowByRouteTarget(workflows, 'repository-operation')?.name).toBe('Repository operation');
+    expect(findWorkflowByRouteTarget(workflows, 'missing')).toBeUndefined();
+  });
+
+  it('uses URL route state to open the workflow selected from agent backlinks', () => {
+    expect(workflowsPage).toContain('getWorkflowRouteQuery(window.location.search)');
+    expect(workflowsPage).toContain('getWorkflowRouteSelectionTarget(window.location.search)');
+    expect(workflowsPage).toContain('findWorkflowByRouteTarget(fallbackWorkflows, initialWorkflowTarget)');
+    expect(workflowsPage).toContain('findWorkflowByRouteTarget(mapped, initialWorkflowTarget)');
+  });
+
   it('summarizes effective capabilities as workflow gates over assigned agents', () => {
     const workflows = createDefaultWorkflowDefinitions();
     const triageWorkflow = getWorkflowById(workflows, 'cluster-triage');
@@ -99,9 +120,9 @@ describe('WorkspaceWorkflowsPage model', () => {
   });
 
   it('keeps workflow detail tabs aligned with agent assignment and capability review', () => {
-    const tabs: WorkflowTab[] = ['overview', 'agents', 'targets', 'capabilities', 'runs', 'settings'];
+    const tabs: WorkflowTab[] = ['overview', 'agents', 'capabilities', 'runs', 'settings'];
 
-    expect(tabs.map(getWorkflowTabLabel)).toEqual(['Overview', 'Agents', 'Targets', 'Capability review', 'Runs', 'Settings']);
+    expect(tabs.map(getWorkflowTabLabel)).toEqual(['Overview', 'Agents', 'Capability review', 'Runs', 'Settings']);
   });
 
   it('uses bottom-underline workflow detail tabs instead of boxed pills', () => {
@@ -120,7 +141,7 @@ describe('WorkspaceWorkflowsPage model', () => {
     expect(getOptimisticWorkflowRunStatus(getWorkflowById(workflows, 'incident-report-pdf') as WorkflowDefinition)).toBe('waiting_approval');
   });
 
-  it('blocks workflow launch until status, message, agent assignment, and run permissions are ready', () => {
+  it('blocks workflow launch until status, message, and run permissions are ready', () => {
     const [readOnlyWorkflow] = createDefaultWorkflowDefinitions();
     const readWriteWorkflow = getWorkflowById(createDefaultWorkflowDefinitions(), 'repository-operation') as WorkflowDefinition;
     const permissions = {
@@ -132,19 +153,17 @@ describe('WorkspaceWorkflowsPage model', () => {
     expect(getWorkflowLaunchBlocker(readOnlyWorkflow, 'Start triage', permissions)).toBeNull();
     expect(getWorkflowLaunchBlocker({ ...readOnlyWorkflow, status: 'paused' }, 'Start triage', permissions)).toBe('Activate this workflow before launching it.');
     expect(getWorkflowLaunchBlocker(readOnlyWorkflow, '   ', permissions)).toBe('Add a control message before launching.');
-    expect(getWorkflowLaunchBlocker({ ...readOnlyWorkflow, primaryAgent: { ...readOnlyWorkflow.primaryAgent, agentId: '' } }, 'Start triage', permissions)).toBe('Assign a primary agent before launching.');
     expect(getWorkflowLaunchBlocker(readOnlyWorkflow, 'Start triage', { ...permissions, create_sessions: false })).toBe('You need create_sessions to launch workflows.');
     expect(getWorkflowLaunchBlocker(readWriteWorkflow, 'Start operation', permissions)).toBe('You need create_read_write_runs to launch this workflow.');
   });
 
-  it('builds user-authored workflow payloads with primary and supporting agents', () => {
+  it('builds user-authored workflow payloads with selected agents', () => {
     const draft = {
       ...createWorkflowDraft(),
       name: 'Incident follow up',
       description: 'Coordinate the after-action workflow.',
       starterPrompt: 'Prepare the follow up.',
-      primaryAgentId: 'agent-incident-owner',
-      supportingAgentIds: ['agent-cluster-triage', 'agent-release-coordinator'],
+      agentIds: ['agent-incident-owner', 'agent-cluster-triage', 'agent-release-coordinator'],
       enabledMcpServers: 'github',
       enabledSkills: 'acornops-open-pr',
       allowedTools: 'github.prs.create'
@@ -152,13 +171,38 @@ describe('WorkspaceWorkflowsPage model', () => {
 
     const input = buildWorkflowCreateInput(draft);
 
-    expect(input.steps?.[0]?.assignedAgentIds).toEqual([
+    expect(input.steps?.[0]?.agentIds).toEqual([
       'agent-incident-owner',
       'agent-cluster-triage',
       'agent-release-coordinator'
     ]);
     expect(input.starterPrompt).toBe('Prepare the follow up.');
     expect(input.steps?.[0]?.id).toBe('incident-follow-up-step');
+    expect(input.steps?.[0]?.title).toBe('Generate run plan');
+  });
+
+  it('derives workflow create scope choices from selected agents', () => {
+    const agents = createDefaultAgentDefinitions();
+    const globalCatalog = createFallbackWorkflowOptions(createDefaultWorkflowDefinitions());
+
+    const repositoryOnly = getWorkflowScopeOptionsForAgents(['agent-release-coordinator'], agents, globalCatalog);
+    expect(repositoryOnly.mcpServers.map((option) => option.value)).toEqual(['github']);
+    expect(repositoryOnly.mcpTools.map((option) => option.value)).toEqual([
+      'github.branches.create',
+      'github.branches.list',
+      'github.prs.create',
+      'github.prs.list',
+      'github.repositories.read'
+    ]);
+    expect(repositoryOnly.skills.map((option) => option.value)).toEqual([
+      'acornops-cross-repo-change',
+      'acornops-open-pr'
+    ]);
+    expect(repositoryOnly.mcpTools.map((option) => option.value)).not.toContain('inventory.resources.list');
+
+    const repositoryWithTriage = getWorkflowScopeOptionsForAgents(['agent-release-coordinator', 'agent-cluster-triage'], agents, globalCatalog);
+    expect(repositoryWithTriage.mcpServers.map((option) => option.value)).toEqual(['acornops-cluster-agent', 'github']);
+    expect(repositoryWithTriage.skills.map((option) => option.value)).toContain('acornops-target-boundary-design');
   });
 
   it('maps API workflow agent IDs through the workflow options catalog instead of lowercasing IDs', () => {
@@ -180,7 +224,7 @@ describe('WorkspaceWorkflowsPage model', () => {
         id: 'repository-step',
         title: 'Run repository step',
         requiredInputs: [],
-        assignedAgentIds: ['agent-release-coordinator', 'agent-cluster-triage'],
+        agentIds: ['agent-release-coordinator', 'agent-cluster-triage'],
         enabledSkills: [],
         allowedMcpServers: [],
         allowedTools: [],
@@ -195,8 +239,7 @@ describe('WorkspaceWorkflowsPage model', () => {
       ]
     });
 
-    expect(workflow.primaryAgent.name).toBe('Repository Operator');
-    expect(workflow.supportingAgents.map((agent) => agent.name)).toEqual(['Kubernetes Diagnostics']);
+    expect(workflow.agents.map((agent) => agent.name)).toEqual(['Repository Operator', 'Kubernetes Diagnostics']);
   });
 
   it('keeps locally dispatched workflow runs visible until session polling confirms them', () => {
@@ -279,34 +322,35 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(appPageContent).toContain('<WorkspaceWorkflowsPage');
   });
 
-  it('presents workflows as agent assignment, target context, capability review, and governed runs', () => {
+  it('presents workflows as agent selection, capability review, and governed runs', () => {
     expect(workflowsPage).toContain("activeTab === 'overview'");
     expect(workflowsPage).toContain("activeTab === 'agents'");
-    expect(workflowsPage).toContain("activeTab === 'targets'");
     expect(workflowsPage).toContain("activeTab === 'capabilities'");
     expect(workflowsPage).toContain("activeTab === 'runs'");
     expect(workflowsPage).toContain("activeTab === 'settings'");
-    expect(workflowsPage).toContain('Assigned agents');
+    expect(workflowsPage).not.toContain("activeTab === 'targets'");
+    expect(workflowsPage).not.toContain("tab=\"targets\"");
+    expect(workflowHelpers).toContain("export const tabs: WorkflowTab[] = ['overview', 'agents', 'capabilities', 'runs', 'settings'];");
+    expect(workflowsPage).toContain('Workflow agents');
     expect(workflowsPage).toContain('Review agents');
-    expect(workflowsPage).toContain('Runtime access');
-    expect(workflowsPage).toContain('Workflow gate');
+    expect(workflowsPage).not.toContain('Runtime access');
+    expect(workflowsPage).not.toContain('Workflow gate');
     expect(workflowsPage).toContain("variant=\"accent\"");
     expect(workflowsPage).toContain('Create workflow');
     expect(workflowsPage).toContain('createWorkflowStep');
     expect(workflowsPage).toContain('canManageWorkflowScope={canManageWorkflowScope}');
     expect(workflowsPage).toContain("import { ModalStepIndicator } from '@/components/common/ModalStepIndicator'");
-    expect(workflowsPage).toContain('Create workflow steps');
-    expect(workflowsPage).toContain('createDraft.primaryAgentId');
-    expect(workflowsPage).toContain('createDraft.supportingAgentIds');
-    expect(workflowsPage).toContain('Primary agent');
-    expect(workflowsPage).toContain('Supporting agents');
-    expect(workflowsPage).toContain('selectedAgentAssignmentDraft');
+    expect(workflowsPage).toContain('Create workflow setup');
+    expect(workflowsPage).toContain('createDraft.agentIds');
+    expect(workflowsPage).toContain('Coordinator: System Orchestrator');
+    expect(workflowsPage).toContain('Selected agents');
+    expect(workflowsPage).toContain('selectedAgentSelectionDraft');
     expect(workflowsPage).toContain('Edit agents');
-    expect(workflowsPage).toContain('Save agent assignment');
-    expect(workflowActions).toContain('saveAgentAssignments');
-    expect(workflowActions).toContain('assignedAgentIds: selectedAgentIds');
-    expect(workflowsPage).toContain('Identity');
-    expect(workflowsPage).toContain('Capabilities');
+    expect(workflowsPage).toContain('Save agents');
+    expect(workflowActions).toContain('saveAgentSelection');
+    expect(workflowActions).toContain('agentIds: selectedAgentIds');
+    expect(workflowsPage).toContain('Describe');
+    expect(workflowsPage).toContain('Access');
     expect(workflowsPage).toContain('Review');
     expect(workflowsPage).toContain('<ModalStepIndicator');
     expect(workflowsPage).toContain('steps={createWorkflowSteps}');
@@ -318,8 +362,9 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).not.toContain('sm:grid-cols-3');
     expect(workflowsPage).not.toContain('aria-current={createWorkflowStep === item.step ?');
     expect(workflowsPage).toContain('Advanced scope');
+    expect(workflowsPage).toContain('Workflow prompt');
     expect(workflowsPage).toContain('<RightSidePanel');
-    expect(workflowsPage).toContain('descriptionId="create-workflow-description"');
+    expect(workflowsPage).not.toContain('descriptionId="create-workflow-description"');
     expect(workflowsPage).not.toContain('handleWorkflowCreateDrawerKeyDown');
     expect(workflowsPage).toContain('Close create workflow drawer');
     expect(workflowsPage).not.toContain('<summary className="cursor-pointer text-sm font-semibold text-ui-text">Advanced scope</summary>');
@@ -351,7 +396,7 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain('WorkflowLoadFallbackNotice');
     expect(workflowsPage).toContain('if (!workflowCatalogReady || !selectedWorkflow) return;');
     expect(workflowsPage).toContain('}, [selectedWorkflow?.id, workspace.id, workflowCatalogReady]);');
-    expect(workflowsPage).toContain('}, [fallbackWorkflows, workspace.id, workflowCatalogReloadKey, workflowOwnerLabelsByUserId]);');
+    expect(workflowsPage).toContain('}, [fallbackWorkflows, initialWorkflowTarget, workspace.id, workflowCatalogReloadKey, workflowOwnerLabelsByUserId]);');
   });
 
   it('updates pending workflow run refs synchronously before session polling can overwrite runs', () => {
@@ -366,35 +411,49 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).not.toContain('pendingWorkflowRunsRef.current = pendingWorkflowRuns;');
   });
 
-  it('keeps assigned-agent summaries flat instead of nesting boxed rows inside boxed sections', () => {
+  it('keeps selected-agent summaries flat instead of nesting boxed rows inside boxed sections', () => {
     expect(workflowsPage).toContain('const AgentAssignmentList');
     expect(workflowsPage).toContain('divide-y divide-ui-border');
-    expect(workflowsPage).toContain('No supporting agents assigned.');
-    expect(workflowsPage).not.toContain('rounded-md border border-ui-border bg-ui-bg p-3 text-sm font-semibold text-ui-text-muted">No supporting agents assigned.');
+    expect(workflowsPage).toContain('No workflow agents selected.');
+    expect(workflowsPage).not.toContain('rounded-md border border-ui-border bg-ui-bg p-3 text-sm font-semibold text-ui-text-muted">No workflow agents selected.');
     expect(workflowsPage).not.toContain('border border-ui-border bg-ui-bg p-3 ${roomy');
   });
 
-  it('gives workflow create text boxes a polished shared field treatment', () => {
-    expect(workflowsPage).toContain("import { CloseButton, Textarea, TextInput } from '@/components/common/ComponentVocabulary';");
-    expect(workflowsPage).toContain("import { RightSidePanel } from '@/components/common/RightSidePanel';");
-    expect(workflowsPage).toContain('<RightSidePanel');
-    expect(workflowsPage).toContain('<CloseButton onClick={close} label="Close create workflow drawer" />');
-    expect(workflowsPage).toContain('<TextInput');
-    expect(workflowsPage).toContain('id="create-workflow-name-input"');
-    expect(workflowsPage).toContain('value={createDraft.name}');
-    expect(workflowsPage).toContain('<TextInput id="create-workflow-description-input" value={createDraft.description}');
-    expect(workflowsPage).toContain('<Textarea id="create-workflow-starter-prompt-input" value={createDraft.starterPrompt}');
-    expect(workflowsPage).toContain('<Textarea value={createDraft.enabledMcpServers}');
-    expect(workflowsPage).not.toContain('createWorkflowInputClass');
-    expect(workflowsPage).not.toContain('createWorkflowTextareaClass');
-    expect(workflowsPage).not.toContain("import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';");
-    expect(workflowsPage).not.toContain('className="mt-2 min-h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm font-semibold text-ui-text outline-none focus:border-accent"');
+  it('uses selected-agent capability restrictors instead of freeform advanced scope text boxes', () => {
+    expect(workflowsPage).toContain('const WorkflowScopeMultiSelect');
+    expect(workflowsPage).toContain('getWorkflowScopeOptionsForAgents(agentIdsFromDraft(createDraft), workflowAgents, workflowOptions)');
+    expect(workflowsPage).toContain('options={createWorkflowScopeOptions.mcpServers}');
+    expect(workflowsPage).toContain('options={createWorkflowScopeOptions.skills}');
+    expect(workflowsPage).toContain('options={createWorkflowScopeOptions.mcpTools}');
+    expect(workflowsPage).toContain('Available from selected agents');
+    expect(workflowsPage).toContain('Workflows can only restrict capabilities inherited from selected agents.');
+    expect(workflowsPage).toContain('label="Restrict MCP servers"');
+    expect(workflowsPage).toContain('label="Restrict skills"');
+    expect(workflowsPage).toContain('label="Restrict tools"');
+    expect(workflowsPage).toContain('disabled={options.length === 0}');
+    expect(workflowsPage).toContain('aria-disabled={options.length === 0}');
+    expect(workflowsPage).toContain('Select an agent with MCP servers before adding restrictions.');
+    expect(workflowsPage).toContain('Select an agent with skills before adding restrictions.');
+    expect(workflowsPage).toContain('Select an agent with tools before adding restrictions.');
+    expect(workflowsPage).toContain('setLineValue(draft.enabledMcpServers, option.value, checked)');
+    expect(workflowsPage).toContain('setLineValue(draft.enabledSkills, option.value, checked)');
+    expect(workflowsPage).toContain('setLineValue(draft.allowedTools, option.value, checked)');
+    expect(workflowsPage).not.toContain('Advanced scope narrows the capabilities inherited from the selected agents.');
+    expect(workflowsPage).not.toContain('Choose agents with MCP servers before narrowing this scope.');
+    expect(workflowsPage).not.toContain('Choose agents with skills before narrowing this scope.');
+    expect(workflowsPage).not.toContain('Choose agents with tools before narrowing this scope.');
+    expect(workflowsPage).not.toContain('<Textarea value={createDraft.enabledMcpServers}');
+    expect(workflowsPage).not.toContain('<Textarea value={createDraft.enabledSkills}');
+    expect(workflowsPage).not.toContain('<Textarea value={createDraft.allowedTools}');
+    expect(workflowsPage).not.toContain('One server id per line');
+    expect(workflowsPage).not.toContain('One skill id per line');
+    expect(workflowsPage).not.toContain('One tool id per line');
   });
 
   it('renders every workflow subtab through the same operational panel pattern', () => {
     expect(workflowsPage).toContain('const WorkflowTabPanel');
     expect(workflowsPage).toContain('const WorkflowSection');
-    expect(workflowsPage.match(/activeTab === '/g) ?? []).toHaveLength(6);
+    expect(workflowsPage.match(/activeTab === '/g) ?? []).toHaveLength(5);
     expect(workflowsPage).toContain('ariaLabel="Workflow section tabs"');
     expect(workflowsPage).toContain('tab="overview"');
     expect(workflowsPage).toContain('role="tabpanel"');
@@ -406,35 +465,20 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).not.toContain('max-w-5xl');
   });
 
-  it('keeps workflow discovery search-only without the category filter row', () => {
-    expect(workflowsPage).toContain('placeholder="Search workflows, agents, tools, tags"');
-    expect(workflowsPage).toContain('{visibleWorkflows.length} of {workflows.length} workflows');
-    expect(workflowsPage).toContain('aria-label="Workflow library"');
-    expect(workflowsPage).toContain('Workflow library');
-    expect(workflowsPage).toContain('<div className="type-caption font-semibold text-ui-text-muted">{visibleWorkflows.length} of {workflows.length} workflows</div>');
-    expect(workflowsPage).not.toContain("query.trim() ? 'Matching workflows' : 'Workflow library'");
-    expect(workflowsPage).not.toContain('type-caption mt-1 font-semibold text-ui-text-muted">{visibleWorkflows.length} of {workflows.length} workflows');
-    expect(workflowsPage).not.toContain('border-y border-ui-border/80 bg-ui-surface-strong/65');
-    expect(workflowsPage).not.toContain('className="bg-ui-surface pl-9 shadow-sm lg:w-full"');
-    expect(workflowsPage).toContain('No workflows match this search.');
-    expect(workflowsPage).not.toContain('aria-label="Workflow category filters"');
-    expect(workflowsPage).not.toContain('Workflow categories');
-    expect(workflowsPage).not.toContain('rounded-lg border border-ui-border bg-ui-surface p-3 shadow-sm');
-  });
-
   it('keeps workflow library rows compact and aligned on narrow screens', () => {
-    expect(workflowsPage).toContain('className="min-w-0 space-y-3 lg:sticky lg:top-6"');
-    expect(workflowsPage).toContain("style={{ maxWidth: 'calc(100vw - 2rem)' }}");
+    expect(workflowsPage).toContain('min-w-0 w-full max-w-full space-y-3 lg:sticky lg:top-6 ${className}');
+    expect(workflowsPage).not.toContain("style={{ maxWidth: 'calc(100vw - 2rem)' }}");
     expect(workflowsPage).toContain('flex flex-col gap-1 px-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3');
     expect(workflowsPage).toContain('grid gap-x-3 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto]');
     expect(workflowsPage).toContain('shrink-0 self-start');
     expect(workflowsPage).toContain('border-t border-ui-border/70 pt-2.5');
     expect(workflowsPage).toContain('type-caption mt-1 block whitespace-normal leading-5 text-ui-text-muted');
-    expect(workflowsPage).toContain('{workflow.supportingAgents.length} agents');
-    expect(workflowsPage).toContain('{workflow.allowedTools.length} tools');
+    expect(workflowsPage).toContain("{pluralize(workflow.agents.length, 'agent')}");
+    expect(workflowsPage).toContain("{pluralize(workflow.allowedTools.length, 'tool')}");
+    expect(workflowsPage).toContain('<span aria-hidden="true" className="text-ui-text-muted">·</span>');
+    expect(workflowsPage).not.toContain('{workflow.allowedTools.length} tools');
     expect(workflowsPage).not.toContain('p-3.5 text-left');
     expect(workflowsPage).not.toContain('type-caption mt-1 block break-words leading-5 text-ui-text-muted [overflow-wrap:anywhere]');
-    expect(workflowsPage).not.toContain('supporting agents, {workflow.allowedTools.length} allowed tools');
   });
 
   it('uses guided launch-decision copy for high-stakes workflow starts', () => {
@@ -444,30 +488,9 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain('Resolve this before launch:');
   });
 
-  it('places launch readiness before workflow tabs', () => {
-    expect(workflowsPage).toContain('WorkflowLaunchReadiness');
-    expect(workflowsPage).toContain('aria-label="Workflow launch readiness"');
-    expect(workflowsPage).toContain('Needs attention before launch');
-    expect(workflowsPage).toContain('className="grid min-w-0 gap-x-8 gap-y-3 sm:grid-cols-2 xl:grid-cols-4"');
-    expect(workflowsPage).toContain('icon={ICONS.User}');
-    expect(workflowsPage).toContain('icon={ICONS.Wrench}');
-    expect(workflowsPage).toContain('icon={ICONS.Shield}');
-    expect(workflowsPage).toContain('icon={ICONS.Clock}');
-    expect(workflowsPage).toContain("const accessValue = pluralize(selectedAccessTools.length, 'tool');");
-    expect(workflowsPage).toContain("const noApprovalSummary = 'No approval gates configured';");
-    expect(workflowsPage).toContain("const approvalValue = totalApprovalSignals > 0 ? pluralize(totalApprovalSignals, 'gate') : 'No gates';");
-    expect(workflowsPage).toContain("const lastRunValue = workflow.lastRun ? formatWorkflowTimestamp(workflow.lastRun, workflow.lastRun) : 'Not run';");
-    expect(workflowsPage).toContain('{launchBlocker && <StatusBadge tone="warning">Needs attention before launch</StatusBadge>}');
-    expect(workflowsPage).not.toContain('onReviewCapabilities');
-    expect(workflowsPage).not.toContain('Review capability gate');
-    expect(workflowsPage).not.toContain('Ready to launch');
-    expect(workflowsPage).not.toContain('isReady ?');
-    expect(workflowsPage).not.toContain('Launch decision');
-    expect(workflowsPage).not.toContain('This workflow can start with the current owner, message, permissions, and runtime access.');
-    expect(workflowsPage).not.toContain('Review the capability gate when the tool count, target scope, or approval model changes.');
-    expect(workflowsPage.indexOf('<WorkflowLaunchReadiness')).toBeLessThan(
-      workflowsPage.indexOf('ariaLabel="Workflow section tabs"')
-    );
+  it('renders workflow access mode as a badge instead of loose header text', () => {
+    expect(workflowsPage).toContain("<StatusBadge tone=\"neutral\">{selectedWorkflow.policy.mode.replace('_', ' ')}</StatusBadge>");
+    expect(workflowsPage).not.toContain('<span className="type-caption font-semibold text-ui-text-muted">{selectedWorkflow.policy.mode.replace(\'_\', \' \')}</span>');
   });
 
   it('makes workflow review shortcuts visible secondary buttons with icons', () => {
@@ -482,19 +505,17 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).not.toContain('<div className="bg-ui-surface px-3">\n              <SegmentedTabs<WorkflowTab>\n                activeValue={activeTab}\n                ariaLabel="Workflow section tabs"\n                items={workflowTabItems}');
   });
 
-  it('removes redundant workflow tab eyebrow labels', () => {
-    expect(workflowsPage).not.toContain('<p className="type-micro-label text-ui-text-muted">{eyebrow}</p>');
-    expect(workflowsPage).not.toContain('eyebrow="Run setup"');
-    expect(workflowsPage).not.toContain('eyebrow="Assignment"');
-    expect(workflowsPage).not.toContain('eyebrow="Runtime context"');
-    expect(workflowsPage).not.toContain('eyebrow="Audit trail"');
-    expect(workflowsPage).not.toContain('eyebrow="Access gate"');
-    expect(workflowsPage).not.toContain('eyebrow="Definition"');
+  it('offers workflow launch from the header and the overview message flow', () => {
+    expect((workflowsPage.match(/Launch workflow/g) || [])).toHaveLength(2);
+    expect((workflowsPage.match(/workflowActions\.launchSelectedWorkflow\(\)/g) || [])).toHaveLength(2);
+    expect((workflowsPage.match(/disabled=\{launchingWorkflowId === selectedWorkflow\.id \|\| Boolean\(launchBlocker\)\}/g) || [])).toHaveLength(2);
+    expect(workflowsPage).toContain('<div className="flex justify-start">');
+    expect(workflowsPage).toContain('<Button variant="primary" size="md" onClick={() => void workflowActions.launchSelectedWorkflow()}');
+    expect(workflowsPage).not.toContain('Launch with the message above.');
+    expect(workflowsPage).not.toContain('rounded-md border border-ui-border bg-ui-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between');
   });
 
-  it('removes duplicate workflow header facts already covered by launch readiness', () => {
-    expect(workflowsPage).not.toContain('Primary agent: {selectedWorkflow.primaryAgent.name}');
-    expect(workflowsPage).not.toContain('Supporting agents: {selectedWorkflow.supportingAgents.length}');
+  it('removes duplicate workflow header facts', () => {
     expect(workflowsPage).not.toContain('Last run: {selectedWorkflow.lastRun}');
     expect(workflowsPage).not.toContain('h-12 w-12 shrink-0');
   });
@@ -519,9 +540,28 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain('{selectedWorkflow.name}');
   });
 
+  it('puts selected workflow detail before the library on phones while preserving desktop master-detail order', () => {
+    expect(workflowsPage).toContain('className?: string;');
+    expect(workflowsPage).toContain('className="order-2 xl:order-1"');
+    expect(workflowsPage).toContain('className="order-1 min-w-0 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm xl:order-2"');
+    expect(workflowsPage.indexOf('{selectedWorkflow && (')).toBeLessThan(
+      workflowsPage.indexOf('<WorkflowLibraryList')
+    );
+  });
+
   it('polishes launch readiness changes for assistive technology', () => {
     expect(workflowsPage).toContain('aria-live="polite"');
     expect(workflowsPage).toContain('aria-atomic="true"');
+  });
+
+  it('announces workflow action results and exposes selected workflow controls', () => {
+    expectSnippets(workflowsPage, ['role="status" aria-live="polite" aria-atomic="true"', 'role="alert" aria-live="assertive"', 'aria-current={workflow.id === selectedWorkflow?.id ? \'true\' : undefined}', 'aria-pressed={workflow.id === selectedWorkflow?.id}', 'aria-label={`Select workflow ${workflow.name}${workflow.id === selectedWorkflow?.id ? \', selected\' : \'\'}`}', '<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />', '<Square className="h-3.5 w-3.5 fill-current" aria-hidden="true" />']);
+  });
+
+  it('lazy-loads scheduling from the workflow route chunk', () => {
+    expect(workflowsPage).toContain("const WorkflowScheduleCreateDrawer = React.lazy(() => import('@/pages/WorkflowScheduleCreateDrawer')");
+    expect(workflowsPage).toContain('<React.Suspense fallback={null}>');
+    expect(workflowsPage).not.toContain("import { WorkflowScheduleCreateDrawer } from '@/pages/WorkflowScheduleCreateDrawer';");
   });
 
   it('keeps workflow creation global and workflow search local to the library', () => {
@@ -541,31 +581,12 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain('className="grid gap-5 bg-ui-bg/45 p-4 sm:p-5');
   });
 
-  it('removes redundant workflow helper copy from tab and section headers', () => {
-    expectMissingSnippets(workflowsPage, ['description="Confirm the agent owner, runtime access, approval gates, and operator message before launching."', 'description="Steps run in order. Each step uses assigned agents first, then the workflow gate narrows runtime access."', 'description="The primary agent owns the run. Supporting agents contribute specialist capability."', 'Workflow gate narrows assigned-agent capabilities.', 'description="Edit the operator prompt used when launching this workflow."', 'description="Review who owns the run and which specialist agents can contribute context or decisions."', 'description="Compiled before run start. The workflow can read only this target scope and workspace context."', 'description="Review previous executions, approvals, live trace details, and cancellation controls."', 'description="Access is inherited from assigned agents, then narrowed by this workflow before each run starts."', 'description="Manage workflow availability, starter prompt, tags, and user-authored workflow deletion."', 'description="Control whether this workflow can start new runs."', 'description="Edit the default prompt copied into the launch message."', 'Only user-authored workflows can be deleted.']);
-  });
-
-  it('keeps workflow settings spacing tight and avoids duplicate destructive labels', () => {
-    expect(workflowsPage).toContain('<WorkflowSection title="Availability">\n                    <div className="mt-3 flex items-center justify-between gap-4 rounded-md border border-ui-border bg-ui-bg px-4 py-3">');
-    expect(workflowsPage).toContain('title="Starter prompt"');
-    expect(workflowsPage).toContain('<div className="mt-2 grid gap-3">');
-    expect(workflowsPage).not.toContain('<div className="mt-3 grid gap-3">');
-    expect(workflowsPage).toContain('Default run message');
-    expect(workflowsPage).toContain('The starter prompt is copied into the launch message for new workflow sessions.');
-    expect(workflowsPage).toContain('aria-label="Edit workflow details"');
-    expect(workflowsPage).not.toContain('<WorkflowSection title="Delete workflow">');
-  });
-
-  it('keeps the route wrapper inside the app shell on mobile', () => {
-    expect(workflowsPage).toContain('className="min-h-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8"');
-    expect(workflowsPage).not.toContain('w-[100vw] max-w-[100vw]');
-  });
-
   it('reserves accent buttons for launch while using shared type tokens', () => {
     expect(workflowsPage).toContain('<h2 className="mt-3 type-section-title break-words [overflow-wrap:anywhere]">{selectedWorkflow.name}</h2>');
     expect(workflowsPage).not.toContain('text-2xl font-semibold tracking-normal');
     expect(workflowsPage.match(/variant="accent"/g) ?? []).toHaveLength(1);
-    expect(workflowsPage).toContain('<Button variant="accent" size="md" onClick={() => void workflowActions.launchSelectedWorkflow()}');
+    expect(workflowsPage.match(/<Button variant="accent" size="md" onClick=\{\(\) => void workflowActions\.launchSelectedWorkflow\(\)\}/g) ?? []).toHaveLength(1);
+    expect(workflowsPage.match(/<Button variant="primary" size="md" onClick=\{\(\) => void workflowActions\.launchSelectedWorkflow\(\)\}/g) ?? []).toHaveLength(1);
     expect(workflowsPage).toContain('const [scheduleWorkflowId, setScheduleWorkflowId] = useState(\'\');');
     expect(workflowsPage).toContain('<Button variant="secondary" size="md" onClick={() => setScheduleWorkflowId(selectedWorkflow.id)}');
     expect(workflowsPage).toContain('Schedule workflow');
@@ -594,10 +615,11 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
   });
 
   it('reviews effective capabilities without configuring new MCP servers or skills directly on workflows', () => {
-    expectSnippets(workflowsPage, ['Capability review', 'Inherited access', 'Workflow restrictions', 'const CapabilityReviewRow', 'Primary agent', 'Supporting agents', 'Target context', 'const WorkflowScopeRow', 'Workflow gate', 'Approvals', "scopeSaveResult?.tab === 'capabilities'", '<WorkflowReadinessFact icon={ICONS.User} label="Owner" value={workflow.owner} />']);
-    expectMissingSnippets(workflowsPage, ['<TokenGroup title="Target selection"', '<TokenGroup title="Context grants"', '<TokenGroup title="Assigned-agent MCP servers"', '<TokenGroup title="Assigned-agent skills"', '<TokenGroup title="Allowed tools"', '<TokenGroup title="Disabled by workflow gate"', 'Add server', 'selectedScopeDirty', 'Edit capability gate', 'Save capability gate', 'Discard', 'testWorkflowMcpServerConnection', '<WorkflowReadinessFact icon={ICONS.Bot} label="Owner" value={workflow.primaryAgent.name} />', "['MCP servers', 'allowedMcpServers']", "['Allowed tools', 'allowedTools']"]);
-    expectSnippets(workflowActions, ['Workflow capability gate saved. Future sessions will use the narrowed access.', 'setScopeSaveResult', 'enabledMcpServers: selectedWorkflow.enabledMcpServers', 'enabledSkills: selectedWorkflow.enabledSkills', 'assignedAgentIds', "setActiveTab('overview')"]);
-    expectSnippets(workflowHelpers, ['role="switch"', 'primaryAgentId']);
+    expectSnippets(workflowsPage, ['Capability review', 'Inherited access', 'Workflow restrictions', 'const AgentCapabilityReviewList', 'getWorkflowAgentCapabilityReview(workflow, agents)', 'agents={workflowAgents}', 'Capability rules', 'Coordinator: System Orchestrator', 'Selected agents', 'Approvals', "scopeSaveResult?.tab === 'capabilities'"]);
+    expectMissingSnippets(workflowsPage, ['Target context', 'const WorkflowScopeRow', 'values={workflow.enabledMcpServers}', 'values={workflow.enabledSkills}', 'values={workflow.allowedTools}']);
+    expectMissingSnippets(workflowsPage, ['<TokenGroup title="Target selection"', '<TokenGroup title="Context grants"', '<TokenGroup title="Selected-agent MCP servers"', '<TokenGroup title="Selected-agent skills"', '<TokenGroup title="Allowed tools"', '<TokenGroup title="Disabled by workflow gate"', 'Add server', 'selectedScopeDirty', 'Edit capability gate', 'Save capability gate', 'Discard', 'testWorkflowMcpServerConnection', '<WorkflowReadinessFact icon={ICONS.User} label="Owner" value={workflow.owner} />', "['MCP servers', 'allowedMcpServers']", "['Allowed tools', 'allowedTools']"]);
+    expectSnippets(workflowActions, ['Workflow capability gate saved. Future sessions will use the narrowed access.', 'setScopeSaveResult', 'enabledMcpServers: selectedWorkflow.enabledMcpServers', 'enabledSkills: selectedWorkflow.enabledSkills', 'agentIds', "setActiveTab('overview')"]);
+    expectSnippets(workflowHelpers, ['role="switch"', 'agentIds']);
     expect(workflowActions).not.toContain('category: draft.category');
   });
 
@@ -621,13 +643,4 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).not.toContain('WORKFLOW_CATEGORY_INVALID');
   });
 
-  it('lets operators add and remove workflow tags without changing MCP scope categories', () => {
-    expect(workflowsPage).toContain('addWorkflowTag');
-    expect(workflowsPage).toContain('removeWorkflowTag');
-    expect(workflowsPage).toContain('Workflow tags');
-    expect(workflowsPage).toContain('Add tag');
-    expect(workflowsPage).toContain('aria-hidden="true"');
-    expect(workflowsPage).toContain('aria-label={`Remove workflow tag ${tag}`}');
-    expect(workflowsPage).not.toContain('onClick={() => workflowActions.removeWorkflowTag(selectedWorkflow.id, tag)} className="rounded-md border border-ui-border bg-ui-bg px-2.5 py-1.5 text-xs font-bold text-ui-text-muted"');
-  });
 });

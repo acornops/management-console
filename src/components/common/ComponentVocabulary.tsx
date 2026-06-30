@@ -124,11 +124,20 @@ export const SegmentedTabs = <T extends string,>({
 }: SegmentedTabsProps<T>) => {
   const tabs = getSegmentedTabModel({ items, activeValue });
   const enabledTabs = tabs.filter((tab) => !tab.disabled);
+  const focusSegmentedTab = (value: T) => {
+    if (!idBase) return;
+    window.requestAnimationFrame(() => {
+      document.getElementById(`${idBase}-${value}-tab`)?.focus({ preventScroll: true });
+    });
+  };
   const selectRelativeTab = (value: T, offset: number) => {
     const index = enabledTabs.findIndex((tab) => tab.value === value);
     if (index < 0 || enabledTabs.length === 0) return;
     const nextTab = enabledTabs[(index + offset + enabledTabs.length) % enabledTabs.length];
-    if (nextTab) onValueChange(nextTab.value);
+    if (nextTab) {
+      onValueChange(nextTab.value);
+      focusSegmentedTab(nextTab.value);
+    }
   };
 
   return (
@@ -153,11 +162,17 @@ export const SegmentedTabs = <T extends string,>({
               selectRelativeTab(tab.value, -1);
             } else if (event.key === 'Home') {
               event.preventDefault();
-              if (enabledTabs[0]) onValueChange(enabledTabs[0].value);
+              if (enabledTabs[0]) {
+                onValueChange(enabledTabs[0].value);
+                focusSegmentedTab(enabledTabs[0].value);
+              }
             } else if (event.key === 'End') {
               event.preventDefault();
               const lastTab = enabledTabs[enabledTabs.length - 1];
-              if (lastTab) onValueChange(lastTab.value);
+              if (lastTab) {
+                onValueChange(lastTab.value);
+                focusSegmentedTab(lastTab.value);
+              }
             }
           }}
           className={segmentedTabButtonClassName({ isActive: tab.isActive })}

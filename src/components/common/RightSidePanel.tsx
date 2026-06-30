@@ -24,6 +24,28 @@ interface FocusWrapInput {
   shiftKey: boolean;
 }
 
+interface InertableElement {
+  getAttribute(name: string): string | null;
+  hasAttribute(name: string): boolean;
+  removeAttribute(name: string): void;
+  setAttribute(name: string, value: string): void;
+}
+
+interface BackgroundTreeElement extends InertableElement {
+  children: ArrayLike<unknown>;
+  contains(element: any): boolean;
+  parentElement: BackgroundTreeElement | null;
+}
+
+interface BackgroundInertSnapshot<T extends InertableElement> {
+  ariaHidden: string | null;
+  element: T;
+  inert: string | null;
+  references: number;
+}
+
+const backgroundInertSnapshots = new WeakMap<InertableElement, BackgroundInertSnapshot<InertableElement>>();
+
 const containerClassName = 'fixed inset-0 z-[100] flex justify-end';
 const overlayClassName = 'absolute inset-0 bg-ui-text/25 dark:bg-ui-bg/70';
 const panelClassName =
@@ -56,6 +78,94 @@ function getFocusablePanelElements(panel: HTMLElement): HTMLElement[] {
   });
 }
 
+function isBackgroundTreeElement(element: unknown): element is BackgroundTreeElement {
+  if (!element || typeof element !== 'object') return false;
+
+  const candidate = element as Partial<BackgroundTreeElement>;
+  return (
+    typeof candidate.contains === 'function' &&
+    typeof candidate.getAttribute === 'function' &&
+    typeof candidate.hasAttribute === 'function' &&
+    typeof candidate.removeAttribute === 'function' &&
+    typeof candidate.setAttribute === 'function' &&
+    candidate.children !== undefined
+  );
+}
+
+export function getRightSidePanelBackgroundTargets<T extends BackgroundTreeElement>(container: T | null, stopAt?: T | null): T[] {
+  const targets = new Set<T>();
+  let current = container;
+
+  while (container && current?.parentElement && current.parentElement !== stopAt) {
+    const parent = current.parentElement;
+
+    Array.from(parent.children).forEach((child) => {
+      if (!isBackgroundTreeElement(child) || child === current || child.contains(container)) return;
+      targets.add(child as T);
+    });
+
+    current = parent as T;
+  }
+
+  return Array.from(targets);
+}
+
+export function applyRightSidePanelBackgroundInert<T extends InertableElement>(elements: T[]): () => void {
+  const uniqueElements = Array.from(new Set(elements));
+  const appliedElements = uniqueElements.map((element) => {
+    const existingSnapshot = backgroundInertSnapshots.get(element);
+    if (existingSnapshot) {
+      existingSnapshot.references += 1;
+      return element;
+    }
+
+    backgroundInertSnapshots.set(element, {
+      ariaHidden: element.getAttribute('aria-hidden'),
+      element,
+      inert: element.getAttribute('inert'),
+      references: 1
+    });
+    return element;
+  });
+
+  appliedElements.forEach((element) => {
+    element.setAttribute('aria-hidden', 'true');
+    element.setAttribute('inert', '');
+  });
+
+  let restored = false;
+  return () => {
+    if (restored) return;
+    restored = true;
+
+    appliedElements.forEach((element) => {
+      const snapshot = backgroundInertSnapshots.get(element);
+      if (!snapshot) return;
+
+      snapshot.references -= 1;
+      if (snapshot.references > 0) {
+        element.setAttribute('aria-hidden', 'true');
+        element.setAttribute('inert', '');
+        return;
+      }
+
+      if (snapshot.ariaHidden === null) {
+        element.removeAttribute('aria-hidden');
+      } else {
+        element.setAttribute('aria-hidden', snapshot.ariaHidden);
+      }
+
+      if (snapshot.inert === null) {
+        element.removeAttribute('inert');
+      } else {
+        element.setAttribute('inert', snapshot.inert);
+      }
+
+      backgroundInertSnapshots.delete(element);
+    });
+  };
+}
+
 export const RightSidePanel: React.FC<RightSidePanelProps> = ({
   ariaLabel,
   children,
@@ -70,6 +180,7 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
   style,
   titleId
 }) => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const panelRef = React.useRef<HTMLElement>(null);
   const shouldReduceMotion = useReducedMotion();
   const panelMotion = shouldReduceMotion
@@ -98,10 +209,16 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
     };
   }, [initialFocusRef, isOpen]);
 
+  React.useEffect(() => {
+    if (!isOpen) return undefined;
+
+    return applyRightSidePanelBackgroundInert(getRightSidePanelBackgroundTargets(containerRef.current, document.body));
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className={twMerge(containerClassName, customContainerClassName)}>
+        <div ref={containerRef} className={twMerge(containerClassName, customContainerClassName)}>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -17,4 +17,9 @@ describe('ModalStepIndicator', () => {
     expect(modalStepIndicator).toContain('min-h-11');
     expect(modalStepIndicator).toContain('focus-visible:ring-accent/25');
   });
+
+  it('keeps active step marker color on shared semantic tokens', () => {
+    expect(modalStepIndicator).toContain("active ? 'bg-accent text-ui-bg'");
+    expect(modalStepIndicator).not.toContain('text-[oklch(');
+  });
 });

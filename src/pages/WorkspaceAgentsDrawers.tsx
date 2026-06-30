@@ -13,7 +13,6 @@ import {
   appendUniqueToken,
   createAgentEditDraft,
   formatAgentTimestamp,
-  providerTypeOptions,
   statusOptions,
   type AgentCapabilityOptions,
   type AgentDraft,
@@ -44,6 +43,132 @@ const createAgentSteps: Array<{ id: `${CreateAgentStep}`; label: string }> = [
   { id: '3', label: 'Review' }
 ];
 
+type AgentCapabilityOption = AgentCapabilityOptions['mcpServers'][number];
+
+const splitCapabilityInput = (value: string): string[] =>
+  Array.from(new Set(value.split(/\n|,/).map((item) => item.trim()).filter(Boolean)));
+
+const joinCapabilityInput = (values: string[]): string => values.join('\n');
+
+const toggleCapabilityValue = (values: string[], value: string, checked: boolean): string[] => {
+  if (checked) return values.includes(value) ? values : [...values, value];
+  return values.filter((item) => item !== value);
+};
+
+const capabilityServerToolPrefixes: Record<string, string[]> = {
+  'acornops-cluster-agent': ['events.', 'inventory.', 'logs.', 'metrics.'],
+  github: ['github.'],
+  'workspace-chat': ['chat.'],
+  'artifact-writer': ['reports.']
+};
+
+const normalizeCapabilityIdPrefix = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '');
+
+const getToolOptionsForSelectedMcpServers = (
+  selectedMcpServers: string[],
+  options: AgentCapabilityOptions['mcpTools']
+): AgentCapabilityOptions['mcpTools'] => {
+  if (selectedMcpServers.length === 0) return [];
+  const prefixes = selectedMcpServers.flatMap((server) => {
+    const normalized = normalizeCapabilityIdPrefix(server);
+    return capabilityServerToolPrefixes[server] || capabilityServerToolPrefixes[normalized] || [`${normalized}.`];
+  });
+  return options.filter((option) => prefixes.some((prefix) => option.value.toLowerCase().startsWith(prefix)));
+};
+
+const capabilityOptionLabelFor = (value: string, options: AgentCapabilityOption[]): string =>
+  options.find((option) => option.value === value)?.label || value;
+
+interface AgentCapabilityMultiSelectProps {
+  label: string;
+  selectedValues: string[];
+  options: AgentCapabilityOption[];
+  searchPlaceholder: string;
+  emptyMessage: string;
+  onSelectedValuesChange: (nextValues: string[]) => void;
+}
+
+const AgentCapabilityMultiSelect: React.FC<AgentCapabilityMultiSelectProps> = ({
+  label,
+  selectedValues,
+  options,
+  searchPlaceholder,
+  emptyMessage,
+  onSelectedValuesChange
+}) => {
+  const [query, setQuery] = React.useState('');
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredOptions = options.filter((option) => {
+    if (!normalizedQuery) return true;
+    return [option.label, option.value, option.description || ''].some((value) => value.toLowerCase().includes(normalizedQuery));
+  });
+  const selectedCountLabel = selectedValues.length === 0 ? 'None selected' : `${selectedValues.length} selected`;
+
+  return (
+    <fieldset className="min-w-0">
+      <legend className="type-micro-label">{label}</legend>
+      <details className="group mt-2 rounded-md border border-ui-border bg-ui-surface">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
+          <span className="min-w-0 break-words">Choose {label.toLowerCase()}</span>
+          <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-ui-text-muted">
+            {selectedCountLabel}
+            <ICONS.ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </span>
+        </summary>
+        <div className="border-t border-ui-border p-3">
+          <TextInput
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={searchPlaceholder}
+            className="h-9"
+            disabled={options.length === 0}
+          />
+          <div className="mt-3 max-h-48 overflow-y-auto rounded-md border border-ui-border bg-ui-bg custom-scrollbar">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => {
+                const checked = selectedValues.includes(option.value);
+                return (
+                  <label key={option.value} className="flex cursor-pointer items-start gap-3 border-b border-ui-border px-3 py-2 text-sm font-semibold text-ui-text last:border-b-0 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
+                    <Checkbox
+                      checked={checked}
+                      disabled={option.disabled}
+                      onChange={(event) => onSelectedValuesChange(toggleCapabilityValue(selectedValues, option.value, event.target.checked))}
+                      className="mt-0.5 shrink-0"
+                    />
+                    <span className="min-w-0">
+                      <span className="block break-words [overflow-wrap:anywhere]">{option.label}</span>
+                      {option.description && <span className="type-caption mt-0.5 block break-words text-ui-text-muted [overflow-wrap:anywhere]">{option.description}</span>}
+                      {option.disabledReason && <span className="type-caption mt-0.5 block break-words text-status-warning-text [overflow-wrap:anywhere]">{option.disabledReason}</span>}
+                    </span>
+                  </label>
+                );
+              })
+            ) : (
+              <div className="px-3 py-4 text-sm font-semibold text-ui-text-muted">{emptyMessage}</div>
+            )}
+          </div>
+          {selectedValues.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {selectedValues.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onSelectedValuesChange(selectedValues.filter((item) => item !== value))}
+                  className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-xs font-semibold text-ui-text shadow-sm hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  title={`Remove ${capabilityOptionLabelFor(value, options)}`}
+                >
+                  <span className="min-w-0 truncate">{capabilityOptionLabelFor(value, options)}</span>
+                  <ICONS.X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </details>
+    </fieldset>
+  );
+};
+
 export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
   createDraft,
   setCreateDraft,
@@ -61,6 +186,19 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
 }) => {
   const [createAgentStep, setCreateAgentStep] = React.useState<CreateAgentStep>(1);
   const [stepNavigationError, setStepNavigationError] = React.useState('');
+  const selectedMcpServers = React.useMemo(() => splitCapabilityInput(draftMcpServers), [draftMcpServers]);
+  const selectedTools = React.useMemo(() => splitCapabilityInput(draftTools), [draftTools]);
+  const toolOptions = React.useMemo(
+    () => getToolOptionsForSelectedMcpServers(selectedMcpServers, agentCapabilityOptions.mcpTools),
+    [agentCapabilityOptions.mcpTools, selectedMcpServers]
+  );
+  React.useEffect(() => {
+    if (!draftTools.trim()) return;
+    const availableToolIds = new Set(toolOptions.map((option) => option.value));
+    const catalogToolIds = new Set(agentCapabilityOptions.mcpTools.map((option) => option.value));
+    const nextTools = selectedTools.filter((tool) => !catalogToolIds.has(tool) || availableToolIds.has(tool));
+    if (nextTools.length !== selectedTools.length) setDraftTools(joinCapabilityInput(nextTools));
+  }, [agentCapabilityOptions.mcpTools, draftTools, selectedTools, setDraftTools, toolOptions]);
   const identityError = () => {
     if (!createDraft.name.trim() && !createDraft.description.trim()) return 'Step 1 is not done. Enter an agent name and assignment purpose before continuing.';
     if (!createDraft.name.trim()) return 'Step 1 is not done. Enter an agent name before continuing.';
@@ -95,9 +233,6 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
     { label: 'Skills', value: draftSkills.trim() || 'None' },
     { label: 'Instructions', value: createDraft.instructions.trim() || createDraft.description.trim() || 'Assignment purpose will be used.' }
   ];
-  const providerLabel = providerTypeOptions.find((option) => option.value === createDraft.providerType)?.label;
-  const providerReviewValue = typeof providerLabel === 'string' ? providerLabel : createDraft.providerType;
-
   return (
     <RightSidePanel
       isOpen
@@ -142,16 +277,6 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
                 />
               </label>
               <label className="block">
-                <span className="type-micro-label">Provider</span>
-                <Select<AgentDraft['providerType']>
-                  value={createDraft.providerType}
-                  options={providerTypeOptions}
-                  onChange={(providerType) => setCreateDraft((draft) => ({ ...draft, providerType }))}
-                  className="mt-2"
-                  ariaLabel="Provider"
-                />
-              </label>
-              <label className="block">
                 <span className="type-micro-label">Assignment purpose</span>
                 <TextInput
                   value={createDraft.description}
@@ -171,38 +296,58 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
             <div className="space-y-4">
               <div>
                 <h3 className="type-panel-title">Capabilities</h3>
-                <p className="type-caption mt-1 text-ui-text-muted">Choose server-owned options to avoid typos. You can also paste approved IDs.</p>
+                <p className="type-caption mt-1 text-ui-text-muted">Select capabilities from the catalog. Paste approved IDs only when the option is not listed.</p>
               </div>
-              <label className="block">
-                <span className="type-micro-label">MCP servers</span>
-                <Textarea value={draftMcpServers} onChange={(event) => setDraftMcpServers(event.target.value)} placeholder="One MCP server ID per line" />
-              </label>
-              <AgentCapabilityOptionButtons
+              {agentCapabilityOptions.mcpServers.length === 0 && agentCapabilityOptions.mcpTools.length === 0 && agentCapabilityOptions.skills.length === 0 && (
+                <div className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-sm font-semibold text-status-warning-text">
+                  Capability options did not load. Existing IDs remain visible; new edits may have fewer picker choices.
+                </div>
+              )}
+              <AgentCapabilityMultiSelect
+                label="MCP servers"
+                selectedValues={splitCapabilityInput(draftMcpServers)}
                 options={agentCapabilityOptions.mcpServers}
-                onSelect={(value) => setDraftMcpServers((current) => appendUniqueToken(current, value))}
+                searchPlaceholder="Search MCP servers"
+                emptyMessage="No MCP servers are available from the catalog."
+                onSelectedValuesChange={(nextValues) => setDraftMcpServers(joinCapabilityInput(nextValues))}
               />
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block">
-                    <span className="type-micro-label">Tools</span>
-                    <Textarea value={draftTools} onChange={(event) => setDraftTools(event.target.value)} placeholder="One tool ID per line" />
-                  </label>
-                  <AgentCapabilityOptionButtons
-                    options={agentCapabilityOptions.mcpTools}
-                    onSelect={(value) => setDraftTools((current) => appendUniqueToken(current, value))}
-                  />
-                </div>
-                <div>
-                  <label className="block">
-                    <span className="type-micro-label">Skills</span>
-                    <Textarea value={draftSkills} onChange={(event) => setDraftSkills(event.target.value)} placeholder="One skill ID per line" />
-                  </label>
-                  <AgentCapabilityOptionButtons
-                    options={agentCapabilityOptions.skills}
-                    onSelect={(value) => setDraftSkills((current) => appendUniqueToken(current, value))}
-                  />
-                </div>
+                <AgentCapabilityMultiSelect
+                  label="Tools"
+                  selectedValues={splitCapabilityInput(draftTools)}
+                  options={toolOptions}
+                  searchPlaceholder="Search tools"
+                  emptyMessage={selectedMcpServers.length === 0 ? 'Choose MCP servers before choosing tools.' : 'No tools are available for the selected MCP servers.'}
+                  onSelectedValuesChange={(nextValues) => setDraftTools(joinCapabilityInput(nextValues))}
+                />
+                <AgentCapabilityMultiSelect
+                  label="Skills"
+                  selectedValues={splitCapabilityInput(draftSkills)}
+                  options={agentCapabilityOptions.skills}
+                  searchPlaceholder="Search skills"
+                  emptyMessage="No skills are available from the catalog."
+                  onSelectedValuesChange={(nextValues) => setDraftSkills(joinCapabilityInput(nextValues))}
+                />
               </div>
+              <details className="rounded-md border border-ui-border bg-ui-bg px-3 py-2">
+                <summary className="cursor-pointer text-sm font-semibold text-ui-text hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">Paste approved IDs</summary>
+                <div className="mt-4 grid gap-4">
+                  <label className="block">
+                    <span className="type-micro-label">MCP servers</span>
+                    <Textarea value={draftMcpServers} onChange={(event) => setDraftMcpServers(event.target.value)} placeholder="One MCP server ID per line" />
+                  </label>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="type-micro-label">Tools</span>
+                      <Textarea value={draftTools} onChange={(event) => setDraftTools(event.target.value)} placeholder="One tool ID per line" />
+                    </label>
+                    <label className="block">
+                      <span className="type-micro-label">Skills</span>
+                      <Textarea value={draftSkills} onChange={(event) => setDraftSkills(event.target.value)} placeholder="One skill ID per line" />
+                    </label>
+                  </div>
+                </div>
+              </details>
               <label className="block">
                 <span className="type-micro-label">Operating instructions</span>
                 <Textarea value={createDraft.instructions} onChange={(event) => setCreateDraft((draft) => ({ ...draft, instructions: event.target.value }))} placeholder="Optional. If empty, the assignment purpose becomes the instructions." />
@@ -218,7 +363,6 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
               </div>
               <dl className="divide-y divide-ui-border rounded-md border border-ui-border bg-ui-bg">
                 <AgentCreateReviewRow label="Name" value={createDraft.name || 'Unnamed agent'} />
-                <AgentCreateReviewRow label="Provider" value={providerReviewValue} />
                 <AgentCreateReviewRow label="Assignment purpose" value={createDraft.description || 'Required before save'} />
                 {capabilitySummary.map((item) => <AgentCreateReviewRow key={item.label} label={item.label} value={item.value} />)}
                 <AgentCreateReviewRow label="Trust" value="Restricted trust" />
@@ -312,22 +456,10 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
               />
             </label>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="type-micro-label">Provider</span>
-              <Select<AgentEditDraft['providerType']>
-                value={editDraft.providerType}
-                options={providerTypeOptions}
-                onChange={(providerType) => setEditDraft((draft) => draft && ({ ...draft, providerType }))}
-                className="mt-2"
-                ariaLabel="Provider"
-              />
-            </label>
-            <label className="block">
-              <span className="type-micro-label">Assignment purpose</span>
-              <TextInput value={editDraft.description} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, description: event.target.value }))} className="mt-2" />
-            </label>
-          </div>
+          <label className="block">
+            <span className="type-micro-label">Assignment purpose</span>
+            <TextInput value={editDraft.description} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, description: event.target.value }))} className="mt-2" />
+          </label>
           <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
             <label className="block">
               <span className="type-micro-label">Agent owner</span>
@@ -349,7 +481,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
           </label>
 
           <details open className="rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-            <summary className="cursor-pointer text-sm font-semibold text-ui-text">Access and capabilities</summary>
+            <summary className="cursor-pointer text-sm font-semibold text-ui-text">Capabilities</summary>
             <div className="mt-4 space-y-4">
               <div className="border-b border-ui-border pb-4">
                 <h3 className="type-micro-label">Capability catalog</h3>
@@ -385,16 +517,6 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
                   />
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="type-micro-label">Targets</span>
-                  <Textarea value={editDraft.targetScope} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, targetScope: event.target.value }))} placeholder="One scope per line" />
-                </label>
-                <label className="block">
-                  <span className="type-micro-label">Data available</span>
-                  <Textarea value={editDraft.contextScope} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, contextScope: event.target.value }))} placeholder="One context grant per line" />
-                </label>
-              </div>
             </div>
           </details>
 
@@ -404,10 +526,6 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
               <label className="flex items-start gap-3 text-sm font-semibold text-ui-text">
                 <Checkbox checked={editDraft.writeToolsRequireApproval} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, writeToolsRequireApproval: event.target.checked }))} className="mt-1" />
                 <span>Require approval for write tools</span>
-              </label>
-              <label className="flex items-start gap-3 text-sm font-semibold text-ui-text">
-                <Checkbox checked={editDraft.allowExternalData} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, allowExternalData: event.target.checked }))} className="mt-1" />
-                <span>Allow external data access</span>
               </label>
             </div>
           </section>

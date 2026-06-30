@@ -30,7 +30,7 @@ describe('WorkspaceWorkflowsPage ownership', () => {
         id: 'created-workflow-step',
         title: 'Run workflow prompt',
         requiredInputs: [],
-        assignedAgentIds: [],
+        agentIds: [],
         enabledSkills: [],
         allowedMcpServers: [],
         allowedTools: [],
@@ -40,12 +40,8 @@ describe('WorkspaceWorkflowsPage ownership', () => {
     }, undefined, 'workspace-1', undefined, new Map([['user-1', 'Ning Zhang']]));
 
     expect(workflow.owner).toBe('Ning Zhang');
-    expect(workflow.primaryAgent).toEqual({
-      agentId: '',
-      name: 'Unassigned agent',
-      role: 'Primary agent',
-      required: true
-    });
+    expect(workflow.orchestrator.agentId).toBe('agent-workflow-orchestrator');
+    expect(workflow.agents).toEqual([]);
   });
 
   it('loads workspace members before resolving workflow owner IDs', () => {

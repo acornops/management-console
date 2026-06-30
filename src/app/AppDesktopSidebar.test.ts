@@ -45,7 +45,7 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('</TargetSettingsDivider>');
     expect(desktopSidebar).toContain('className="border-t border-ui-border px-4 pb-8 pt-4"');
     expect(desktopSidebar).not.toContain('className="border-t border-ui-border px-0 pb-8 pt-4"');
-    expect(desktopSidebar).not.toContain('className="mx-4 border-t border-ui-border px-4 pb-8 pt-4"');
+    expect(desktopSidebar).not.toContain('className="mx-4 border-t border-ui-border px-0 pb-8 pt-4"');
     expect(desktopSidebar).toContain("active={activeResourceNav === 'clusterSettings'}");
     expect(desktopSidebar).toContain("onClick={() => onNavigateClusterSubview('settings')}");
     expect(desktopSidebar).toContain("active={activeResourceNav === 'vmSettings'}");

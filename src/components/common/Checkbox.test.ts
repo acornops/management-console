@@ -7,9 +7,10 @@ describe('Checkbox', () => {
     const className = checkboxClassName({ className: 'mt-1' });
 
     expect(className).toContain('h-4 w-4');
-    expect(className).toContain('rounded');
+    expect(className).toContain('ui-checkbox');
+    expect(className).toContain('rounded-[5px]');
+    expect(className).toContain('border');
     expect(className).toContain('border-ui-border');
-    expect(className).toContain('text-accent');
     expect(className).toContain('focus-visible:ring-2');
     expect(className).toContain('focus-visible:ring-accent/25');
     expect(className).toContain('disabled:cursor-not-allowed');

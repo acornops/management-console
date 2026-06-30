@@ -82,6 +82,10 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).toContain('navigate(AppPaths.accountSettings());');
     expect(mobileNavigation).toContain("activeResourceNav === 'accountSettings'");
     expect(mobileNavigation).toContain("t('app.theme')");
+    expect(mobileNavigation).toContain('className="flex min-h-11 items-center gap-3"');
+    expect(mobileNavigation).toContain(
+      'className="flex min-h-11 min-w-11 items-center justify-center p-2 text-ui-text-muted transition-colors hover:text-accent-strong"'
+    );
     expect(mobileNavigation.indexOf("{t('app.workspaceSettings')}")).toBeLessThan(
       mobileNavigation.indexOf("{t('app.auditLog')}")
     );

@@ -17,7 +17,7 @@ import type {
 } from '@/services/control-plane/workflowApi';
 import { formatElapsedDuration } from '@/utils/dateTime';
 
-export const tabs: WorkflowTab[] = ['overview', 'agents', 'targets', 'capabilities', 'runs', 'settings'];
+export const tabs: WorkflowTab[] = ['overview', 'agents', 'capabilities', 'runs', 'settings'];
 
 export type ScopeDraft = {
   category: string;
@@ -36,8 +36,7 @@ export type CreateWorkflowDraft = {
   name: string;
   description: string;
   starterPrompt: string;
-  primaryAgentId: string;
-  supportingAgentIds: string[];
+  agentIds: string[];
   enabledMcpServers: string;
   enabledSkills: string;
   allowedTools: string;
@@ -49,9 +48,8 @@ export type WorkflowEditDraft = {
   starterPrompt: string;
 };
 
-export type AgentAssignmentDraft = {
-  primaryAgentId: string;
-  supportingAgentIds: string[];
+export type AgentSelectionDraft = {
+  agentIds: string[];
 };
 
 export type McpServerDraft = {
@@ -228,8 +226,7 @@ export function createWorkflowDraft(): CreateWorkflowDraft {
     name: '',
     description: '',
     starterPrompt: '',
-    primaryAgentId: '',
-    supportingAgentIds: [],
+    agentIds: [],
     enabledMcpServers: '',
     enabledSkills: '',
     allowedTools: ''
@@ -250,10 +247,7 @@ export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCr
   const enabledMcpServers = splitLines(draft.enabledMcpServers);
   const enabledSkills = splitLines(draft.enabledSkills);
   const allowedTools = splitLines(draft.allowedTools);
-  const assignedAgentIds = uniqueInOrder([
-    draft.primaryAgentId,
-    ...draft.supportingAgentIds
-  ].map((agentId) => agentId.trim()));
+  const agentIds = uniqueInOrder(draft.agentIds.map((agentId) => agentId.trim()));
 
   return {
     name,
@@ -272,10 +266,10 @@ export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCr
     },
     steps: [{
       id: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'workflow'}-step`,
-      title: 'Run workflow prompt',
+      title: 'Generate run plan',
       requiredInputs: [],
       enabledSkills,
-      assignedAgentIds,
+      agentIds,
       allowedMcpServers: enabledMcpServers,
       allowedTools,
       contextGrants: ['workspace_metadata'],
@@ -292,18 +286,14 @@ export function createWorkflowEditDraft(workflow: WorkflowDefinition): WorkflowE
   };
 }
 
-export function createAgentAssignmentDraft(workflow: WorkflowDefinition): AgentAssignmentDraft {
+export function createAgentSelectionDraft(workflow: WorkflowDefinition): AgentSelectionDraft {
   return {
-    primaryAgentId: workflow.primaryAgent.agentId,
-    supportingAgentIds: workflow.supportingAgents.map((agent) => agent.agentId).filter(Boolean)
+    agentIds: workflow.agents.map((agent) => agent.agentId).filter(Boolean)
   };
 }
 
-export function assignedAgentIdsFromDraft(draft: AgentAssignmentDraft): string[] {
-  return uniqueInOrder([
-    draft.primaryAgentId,
-    ...draft.supportingAgentIds
-  ].map((agentId) => agentId.trim()));
+export function agentIdsFromDraft(draft: AgentSelectionDraft | CreateWorkflowDraft): string[] {
+  return uniqueInOrder(draft.agentIds.map((agentId) => agentId.trim()));
 }
 
 export function createMcpServerDraft(): McpServerDraft {
@@ -317,10 +307,7 @@ export function createMcpServerDraft(): McpServerDraft {
 }
 
 export function createFallbackWorkflowOptions(workflows: WorkflowDefinition[]): WorkflowOptionsCatalog {
-  const workflowAgentOptions = workflows.flatMap((workflow) => [
-    workflow.primaryAgent,
-    ...workflow.supportingAgents
-  ]);
+  const workflowAgentOptions = workflows.flatMap((workflow) => workflow.agents);
   const workflowAgentLabels = new Map(workflowAgentOptions.map((agent) => [agent.agentId, agent.name]));
 
   return {
@@ -353,6 +340,38 @@ export function createFallbackWorkflowOptions(workflows: WorkflowDefinition[]): 
     ],
     runtimeLimits: [],
     retentionPolicies: []
+  };
+}
+
+type WorkflowScopeAgentSource = {
+  id: string;
+  mcpServers: string[];
+  tools: string[];
+  skills: string[];
+};
+
+type WorkflowScopeOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
+
+function optionsForAgentValues(
+  values: string[],
+  catalogOptions: WorkflowOptionsCatalog['mcpServers']
+): WorkflowOptionsCatalog['mcpServers'] {
+  const catalogByValue = new Map(catalogOptions.map((option) => [option.value, option]));
+  return uniqueValues(values).map((value) => catalogByValue.get(value) || { value, label: value });
+}
+
+export function getWorkflowScopeOptionsForAgents(
+  agentIds: string[],
+  agents: WorkflowScopeAgentSource[],
+  catalog: WorkflowOptionsCatalog
+): WorkflowScopeOptions {
+  const agentsById = new Map(agents.map((agent) => [agent.id, agent]));
+  const selectedAgents = uniqueInOrder(agentIds).map((agentId) => agentsById.get(agentId)).filter((agent): agent is WorkflowScopeAgentSource => Boolean(agent));
+
+  return {
+    mcpServers: optionsForAgentValues(selectedAgents.flatMap((agent) => agent.mcpServers), catalog.mcpServers),
+    mcpTools: optionsForAgentValues(selectedAgents.flatMap((agent) => agent.tools), catalog.mcpTools),
+    skills: optionsForAgentValues(selectedAgents.flatMap((agent) => agent.skills), catalog.skills)
   };
 }
 
@@ -398,10 +417,10 @@ export function normalizeWorkflowOptionsCatalog(
   };
 }
 
-const unassignedPrimaryAgent = {
-  agentId: '',
-  name: 'Unassigned agent',
-  role: 'Primary agent',
+const defaultOrchestrator = {
+  agentId: 'agent-workflow-orchestrator',
+  name: 'System Orchestrator',
+  role: 'Coordinator',
   required: true
 };
 
@@ -442,7 +461,7 @@ export function mapApiWorkflowToDefinition(
         id: step.id,
         title: step.title,
         requiredInputs: step.requiredInputs,
-        assignedAgentIds: step.assignedAgentIds || [],
+        agentIds: step.agentIds || [],
         enabledSkills: step.enabledSkills,
         allowedMcpServers: step.allowedMcpServers,
         allowedTools: step.allowedTools,
@@ -470,19 +489,16 @@ export function mapApiWorkflowToDefinition(
     ? uniqueValues(workflow.enabledSkills)
     : uniqueValues(workflowSteps.flatMap((step) => step.enabledSkills || []));
   const contextGrants = uniqueValues(workflowSteps.flatMap((step) => step.contextGrants || []));
-  const assignedAgentIds = uniqueInOrder(workflowSteps.flatMap((step) => step.assignedAgentIds || []));
-  const fallbackAssignments = [
-    ...(fallback?.primaryAgent ? [fallback.primaryAgent] : []),
-    ...(fallback?.supportingAgents || [])
-  ];
+  const agentIds = uniqueInOrder(workflowSteps.flatMap((step) => step.agentIds || []));
+  const fallbackAssignments = fallback?.agents || [];
   const agentOptionLabels = new Map((options?.agents || []).map((agent) => [agent.value, agent.label]));
-  const apiAssignments = assignedAgentIds.map((agentId, index) => {
+  const apiAssignments = agentIds.map((agentId) => {
     const fallbackAgent = fallbackAssignments.find((agent) => agent.agentId === agentId);
     return fallbackAgent || {
       agentId,
       name: agentOptionLabels.get(agentId) || titleCaseAgentId(agentId),
-      role: index === 0 ? 'Primary agent' : 'Supporting agent',
-      required: index === 0
+      role: 'Agent',
+      required: false
     };
   });
 
@@ -498,14 +514,16 @@ export function mapApiWorkflowToDefinition(
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
     lastRun: fallback?.lastRun || 'No runs yet',
     primaryAction: fallback?.primaryAction || 'Start workflow',
-    primaryAgent: apiAssignments[0] || fallback?.primaryAgent || unassignedPrimaryAgent,
-    supportingAgents: apiAssignments.length > 1 ? apiAssignments.slice(1) : fallback?.supportingAgents || [],
+    orchestrator: fallback?.orchestrator || {
+      ...defaultOrchestrator,
+      agentId: workflow.orchestratorAgentId || defaultOrchestrator.agentId
+    },
+    agents: apiAssignments.length > 0 ? apiAssignments : fallback?.agents || [],
     requiredPermissions: Array.isArray(workflow.requiredPermissions) ? workflow.requiredPermissions : fallback?.requiredPermissions || [],
     enabledMcpServers,
     allowedTools,
     enabledSkills,
     contextGrants,
-    targetSelection: fallback?.targetSelection || ['workspace context'],
     disabledCapabilities: fallback?.disabledCapabilities || [],
     inputs: Array.isArray(workflow.inputs) && workflow.inputs.length > 0
       ? workflow.inputs.map((input) => ({
@@ -525,7 +543,7 @@ export function mapApiWorkflowToDefinition(
       title: step.title,
       prompt: fallback?.steps.find((fallbackStep) => fallbackStep.id === step.id)?.prompt || step.title,
       requiredInputs: step.requiredInputs || [],
-      assignedAgentIds: step.assignedAgentIds || [],
+      agentIds: step.agentIds || [],
       enabledSkills: step.enabledSkills || [],
       allowedTools: step.allowedTools || [],
       allowedMcpServers: step.allowedMcpServers || [],

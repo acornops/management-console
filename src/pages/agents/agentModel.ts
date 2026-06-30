@@ -42,6 +42,8 @@ export interface AgentDefinition {
 }
 
 const defaultWorkspaceId = 'current-workspace';
+const defaultDevOwnerUserId = 'user-1';
+const defaultDevOwnerName = 'Dev User';
 
 export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId): AgentDefinition[] {
   return [
@@ -54,7 +56,8 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
       status: 'active',
       source: 'system',
       providerType: 'internal',
-      owner: 'Platform Engineering',
+      ownerUserId: defaultDevOwnerUserId,
+      owner: defaultDevOwnerName,
       version: 3,
       mcpServers: ['acornops-cluster-agent'],
       tools: ['inventory.resources.list', 'events.search', 'logs.summarize', 'metrics.query'],
@@ -101,7 +104,8 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
       status: 'active',
       source: 'system',
       providerType: 'external',
-      owner: 'Developer Experience',
+      ownerUserId: defaultDevOwnerUserId,
+      owner: defaultDevOwnerName,
       version: 2,
       mcpServers: ['github'],
       tools: ['github.repositories.read', 'github.branches.list', 'github.prs.list', 'github.branches.create', 'github.prs.create'],
@@ -147,7 +151,8 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
       status: 'active',
       source: 'system',
       providerType: 'internal',
-      owner: 'SRE',
+      ownerUserId: defaultDevOwnerUserId,
+      owner: defaultDevOwnerName,
       version: 1,
       mcpServers: ['workspace-chat', 'artifact-writer'],
       tools: ['chat.sessions.read_selected', 'reports.pdf.generate'],
@@ -300,6 +305,15 @@ export function getAgentReadinessLabel(agent: AgentDefinition): 'Ready' | 'Actio
   if (agent.status === 'disabled') return 'Disabled';
   if (agent.health.status === 'unknown') return 'Blocked';
   return getAgentReviewSignals(agent).length > 0 ? 'Action needed' : 'Ready';
+}
+
+export function getAgentEligibilityLabel(agent: AgentDefinition): 'Ready' | 'Needs test' | 'Needs review' | 'Blocked' | 'Disabled' {
+  if (agent.status === 'disabled') return 'Disabled';
+  if (agent.health.status === 'unknown') return 'Needs test';
+  const signals = getAgentReviewSignals(agent);
+  if (signals.includes('No recent readiness test')) return 'Needs test';
+  if (signals.length > 0) return 'Needs review';
+  return 'Ready';
 }
 
 export function getAgentAccessClass(agent: AgentDefinition): string {

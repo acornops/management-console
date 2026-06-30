@@ -51,6 +51,15 @@ describe('common component vocabulary primitives', () => {
     expect(segmentedTabButtonClassName({ isActive: false })).toContain('border-transparent');
   });
 
+  it('moves focus to tabs selected through keyboard navigation', () => {
+    const componentVocabulary = readFileSync(resolve(root, 'src/components/common/ComponentVocabulary.tsx'), 'utf8');
+
+    expect(componentVocabulary).toContain('const focusSegmentedTab = (value: T) => {');
+    expect(componentVocabulary).toContain('window.requestAnimationFrame(() => {');
+    expect(componentVocabulary).toContain('document.getElementById(`${idBase}-${value}-tab`)?.focus({ preventScroll: true });');
+    expect(componentVocabulary).toContain('focusSegmentedTab(nextTab.value);');
+  });
+
   it('builds accessible filter toggle models with pressed state and stable button sizing', () => {
     const filters = getFilterToggleModel({
       items: [

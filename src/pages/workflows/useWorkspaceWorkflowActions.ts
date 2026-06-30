@@ -12,8 +12,8 @@ import {
   type WorkflowRunEvent
 } from '@/services/control-plane/workflowApi';
 import {
-  assignedAgentIdsFromDraft,
-  createAgentAssignmentDraft,
+  agentIdsFromDraft,
+  createAgentSelectionDraft,
   createScopeDraft,
   buildWorkflowCreateInput,
   createWorkflowDraft,
@@ -41,8 +41,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
     setDeleteWorkflowId, setEditingWorkflowId, setUpdatingWorkflowId, setSelectedWorkflowId, setDeletingWorkflowId,
     createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
-    canManageWorkflowScope, launchBlocker, workflowOptions, agentAssignmentDrafts, setAgentAssignmentDrafts,
-    setEditingAgentAssignmentsId, setAgentAssignmentError, setAgentAssignmentResult, setSavingAgentAssignmentsId,
+    canManageWorkflowScope, launchBlocker, workflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
+    setEditingAgentSelectionId, setAgentSelectionError, setAgentSelectionResult, setSavingAgentSelectionId,
     ownerLabelsByUserId: providedOwnerLabelsByUserId
   } = ctx;
   const ownerLabelEntries: Array<[string, string]> = (workspace.members || [])
@@ -371,7 +371,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
           const stepDraft = draft.steps[step.id];
           return {
             id: step.id,
-            assignedAgentIds: step.assignedAgentIds || [],
+            agentIds: step.agentIds || [],
             allowedTools: splitLines(stepDraft?.allowedTools || ''),
             contextGrants: splitLines(stepDraft?.contextGrants || ''),
             approvalRequired: Boolean(stepDraft?.approvalRequired)
@@ -468,45 +468,41 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     });
   }
 
-  function startEditingAgentAssignments(workflow: WorkflowDefinition): void {
-    setAgentAssignmentDrafts((current) => ({ ...current, [workflow.id]: current[workflow.id] || createAgentAssignmentDraft(workflow) }));
-    setAgentAssignmentError('');
-    setAgentAssignmentResult('');
-    setEditingAgentAssignmentsId(workflow.id);
+  function startEditingAgentSelection(workflow: WorkflowDefinition): void {
+    setAgentSelectionDrafts((current) => ({ ...current, [workflow.id]: current[workflow.id] || createAgentSelectionDraft(workflow) }));
+    setAgentSelectionError('');
+    setAgentSelectionResult('');
+    setEditingAgentSelectionId(workflow.id);
   }
 
-  function cancelEditingAgentAssignments(workflow: WorkflowDefinition): void {
-    setAgentAssignmentDrafts((current) => ({ ...current, [workflow.id]: createAgentAssignmentDraft(workflow) }));
-    setAgentAssignmentError('');
-    setEditingAgentAssignmentsId('');
+  function cancelEditingAgentSelection(workflow: WorkflowDefinition): void {
+    setAgentSelectionDrafts((current) => ({ ...current, [workflow.id]: createAgentSelectionDraft(workflow) }));
+    setAgentSelectionError('');
+    setEditingAgentSelectionId('');
   }
 
-  function updateAgentAssignmentDraft(workflowId: string, update: Partial<ReturnType<typeof createAgentAssignmentDraft>>): void {
-    setAgentAssignmentResult('');
-    setAgentAssignmentDrafts((current) => {
+  function updateAgentSelectionDraft(workflowId: string, update: Partial<ReturnType<typeof createAgentSelectionDraft>>): void {
+    setAgentSelectionResult('');
+    setAgentSelectionDrafts((current) => {
       const workflow = workflows.find((item) => item.id === workflowId);
-      const currentDraft = current[workflowId] || (workflow ? createAgentAssignmentDraft(workflow) : undefined);
+      const currentDraft = current[workflowId] || (workflow ? createAgentSelectionDraft(workflow) : undefined);
       if (!currentDraft) return current;
       return { ...current, [workflowId]: { ...currentDraft, ...update } };
     });
   }
 
-  async function saveAgentAssignments(): Promise<void> {
+  async function saveAgentSelection(): Promise<void> {
     if (!selectedWorkflow) return;
-    const draft = agentAssignmentDrafts[selectedWorkflow.id] || createAgentAssignmentDraft(selectedWorkflow);
-    const selectedAgentIds = assignedAgentIdsFromDraft(draft);
-    if (!draft.primaryAgentId.trim()) {
-      setAgentAssignmentError('Choose a primary agent before saving.');
-      return;
-    }
-    setAgentAssignmentError('');
-    setAgentAssignmentResult('');
-    setSavingAgentAssignmentsId(selectedWorkflow.id);
+    const draft = agentSelectionDrafts[selectedWorkflow.id] || createAgentSelectionDraft(selectedWorkflow);
+    const selectedAgentIds = agentIdsFromDraft(draft);
+    setAgentSelectionError('');
+    setAgentSelectionResult('');
+    setSavingAgentSelectionId(selectedWorkflow.id);
     try {
       const updated = await updateWorkflow(workspace.id, selectedWorkflow.id, {
         steps: selectedWorkflow.steps.map((step) => ({
           id: step.id,
-          assignedAgentIds: selectedAgentIds
+          agentIds: selectedAgentIds
         }))
       });
       const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId);
@@ -518,13 +514,13 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         delete next[selectedWorkflow.id];
         return next;
       });
-      setAgentAssignmentDrafts((current) => ({ ...current, [selectedWorkflow.id]: createAgentAssignmentDraft(mapped) }));
-      setAgentAssignmentResult('Agent assignment saved. Future workflow sessions will use the updated agents.');
-      setEditingAgentAssignmentsId('');
+      setAgentSelectionDrafts((current) => ({ ...current, [selectedWorkflow.id]: createAgentSelectionDraft(mapped) }));
+      setAgentSelectionResult('Workflow agents saved. Future workflow sessions will use the updated agents.');
+      setEditingAgentSelectionId('');
     } catch (error) {
-      setAgentAssignmentError(error instanceof Error ? error.message : 'Unable to save agent assignment');
+      setAgentSelectionError(error instanceof Error ? error.message : 'Unable to save workflow agents');
     } finally {
-      setSavingAgentAssignmentsId('');
+      setSavingAgentSelectionId('');
     }
   }
 
@@ -618,7 +614,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
 
   return {
     addWorkflowTag,
-    cancelEditingAgentAssignments,
+    cancelEditingAgentSelection,
     cancelEditingScopeTab,
     cancelEditingWorkflow,
     closeCreateWorkflowPanel,
@@ -627,19 +623,19 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     deleteSelectedWorkflow,
     launchSelectedWorkflow,
     removeWorkflowTag,
-    saveAgentAssignments,
+    saveAgentSelection,
     saveWorkflowDefinition,
     saveWorkflowScope,
     setStepScopeValue,
     setWorkflowScopeValue,
     startEditingScopeTab,
-    startEditingAgentAssignments,
+    startEditingAgentSelection,
     startEditingWorkflow,
     sendWorkflowRunMessage,
     stopWorkflowRun,
     toggleRunLogs,
     toggleWorkflowActive,
-    updateAgentAssignmentDraft,
+    updateAgentSelectionDraft,
     updateWorkflowRunMessageDraft,
     updateWorkflowEditDraft
   };

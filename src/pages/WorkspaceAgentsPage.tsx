@@ -3,38 +3,27 @@ import { SelectOption } from '@/components/common/Select';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   createDefaultAgentDefinitions,
-  filterAgentDefinitions,
-  getAgentReadinessLabel,
-  getAgentReviewSignals,
   targetScopeFromTokens,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
 import { AgentReviewQueue, WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
 import { AgentActivityDrawer, AgentDetailsDrawer, CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
-import { Notice, activityStateFromRecord, auditHistoryFromAgentActivity, canManageWorkspaceAgents, createAgentEditDraft, createFallbackAgentCapabilityOptions, getAgentEditChangeSummary, mapApiAgent, normalizeAgentCapabilityOptions, splitInput, type AgentCapabilityOptions, type AgentDraft, type AgentEditDraft, type EventTriggerType, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
+import { Notice, activityStateFromRecord, auditHistoryFromAgentActivity, canManageWorkspaceAgents, createAgentEditDraft, createFallbackAgentCapabilityOptions, filterVisibleAgents, getAgentEditChangeSummary, getAgentReviewQueueSummary, mapApiAgent, normalizeAgentCapabilityOptions, splitInput, withAgentAuditHistoryEntry, type AgentCapabilityOptions, type AgentDraft, type AgentEditDraft, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createAgent as createWorkspaceAgent,
-  createAgentTrigger,
   createAgentVersion as createWorkspaceAgentVersion,
   deleteAgent as deleteWorkspaceAgent,
-  deleteAgentTrigger,
   listAgentActivity,
   listAgentVersions,
   listWorkspaceAgents,
   restoreAgentVersion,
   testAgent as testWorkspaceAgent,
   updateAgent as updateWorkspaceAgent,
-  updateAgentTrigger,
-  type AgentTriggerDefinitionApi,
   type AgentVersionSnapshotApi
 } from '@/services/control-plane/agentApi';
 import { listWorkflowOptions } from '@/services/control-plane/workflowApi';
 import type { ProjectMember } from '@/types';
-import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
-const prefersReducedMotion = (): boolean =>
-  typeof window !== 'undefined' &&
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+import { formatUserDateTime } from '@/utils/dateTime';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace }) => {
   const fallbackAgents = useMemo(() => createDefaultAgentDefinitions(workspace.id), [workspace.id]);
@@ -61,23 +50,20 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [draftSkills, setDraftSkills] = useState('');
   const [localNotice, setLocalNotice] = useState<LocalNotice | null>(null);
   const [testingAgentId, setTestingAgentId] = useState('');
-  const [agentCompiledScopePreviews, setAgentCompiledScopePreviews] = useState<Record<string, Record<string, unknown>>>({});
   const [agentVersionHistories, setAgentVersionHistories] = useState<Record<string, AgentVersionSnapshotApi[]>>({});
   const [creatingAgent, setCreatingAgent] = useState(false);
   const [updatingAgentId, setUpdatingAgentId] = useState('');
   const [agentVersionAction, setAgentVersionAction] = useState('');
   const [agentActivityAction, setAgentActivityAction] = useState('');
-  const [agentTriggerAction, setAgentTriggerAction] = useState('');
   const [disableConfirmAgentId, setDisableConfirmAgentId] = useState('');
   const [deleteConfirmAgentId, setDeleteConfirmAgentId] = useState('');
-  const [newManualTriggerName, setNewManualTriggerName] = useState('');
-  const [newScheduleTriggerName, setNewScheduleTriggerName] = useState('');
-  const [newScheduleTriggerCron, setNewScheduleTriggerCron] = useState('');
-  const [newScheduleTriggerTimezone, setNewScheduleTriggerTimezone] = useState(getUserTimeZone);
-  const [newEventTriggerName, setNewEventTriggerName] = useState(''), [newEventTriggerType, setNewEventTriggerType] = useState<EventTriggerType>('webhook');
-  const [newEventTriggerFilter, setNewEventTriggerFilter] = useState('');
   const closeAgentDetailsButtonRef = React.useRef<HTMLButtonElement>(null);
   const canManageAgents = canManageWorkspaceAgents(workspace);
+  const ownerLabelsByUserId = useMemo(() => new Map(
+    ownerUserOptions
+      .filter((member) => member.userId)
+      .map((member) => [member.userId as string, member.name || member.email])
+  ), [ownerUserOptions]);
   React.useEffect(() => {
     let mounted = true;
     setAgents(fallbackAgents);
@@ -86,7 +72,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     listWorkspaceAgents(workspace.id, { includeInactive: true })
       .then((items) => {
         if (!mounted || items.length === 0) return;
-        const mapped = items.map((item, index) => mapApiAgent(item, fallbackAgents[index % fallbackAgents.length], workspace.name));
+        const mapped = items.map((item, index) => mapApiAgent(item, fallbackAgents[index % fallbackAgents.length], workspace.name, ownerLabelsByUserId));
         setAgents(mapped);
         setSelectedAgentId((current) => mapped.some((agent) => agent.id === current) ? current : mapped[0].id);
       })
@@ -96,7 +82,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     return () => {
       mounted = false;
     };
-  }, [fallbackAgents, workspace.id, workspace.name]);
+  }, [fallbackAgents, ownerLabelsByUserId, workspace.id, workspace.name]);
   React.useEffect(() => {
     let mounted = true;
     setAgentCapabilityOptions(fallbackCapabilityOptions);
@@ -132,27 +118,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       mounted = false;
     };
   }, [workspace.id, workspace.members, workspace.permissions?.read_members]);
-  const visibleAgents = useMemo(() => {
-    const queriedAgents = filterAgentDefinitions(agents, query);
-    return queriedAgents.filter((agent) => {
-      if (catalogFilters.focus === 'ready') return getAgentReadinessLabel(agent) === 'Ready';
-      if (catalogFilters.focus === 'action_needed') return getAgentReadinessLabel(agent) === 'Action needed';
-      if (catalogFilters.focus === 'in_use') return agent.workflowsUsingAgent.length > 0;
-      if (catalogFilters.focus === 'available') return agent.workflowsUsingAgent.length === 0;
-      if (catalogFilters.focus === 'broad_scope') return getAgentReviewSignals(agent).includes('Broad target scope');
-      if (catalogFilters.focus === 'write_gated') return agent.approvalPolicy.writeActions === 'approval_required';
-      return true;
-    });
-  }, [agents, query, catalogFilters]);
+  const visibleAgents = useMemo(() => filterVisibleAgents(agents, query, catalogFilters), [agents, query, catalogFilters]);
   const selectedAgent = visibleAgents.find((agent) => agent.id === selectedAgentId) || visibleAgents[0] || agents[0];
-  const reviewQueue = useMemo(() => {
-    const agentsNeedingAttention = agents.filter((agent) => getAgentReadinessLabel(agent) === 'Action needed').length;
-    const broadTargetScope = agents.filter((agent) => getAgentReviewSignals(agent).includes('Broad target scope')).length;
-    const staleReadiness = agents.filter((agent) => getAgentReviewSignals(agent).includes('No recent readiness test')).length;
-    const agentsInUse = agents.filter((agent) => agent.workflowsUsingAgent.length > 0).length;
-    return { agentsNeedingAttention, broadTargetScope, staleReadiness, agentsInUse };
-  }, [agents]);
-  const selectedCompiledScopePreview = selectedAgent ? agentCompiledScopePreviews[selectedAgent.id] : undefined;
+  const reviewQueue = useMemo(() => getAgentReviewQueueSummary(agents), [agents]);
   const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
   const ownerSelectOptions = useMemo<Array<SelectOption<string>>>(() => [
@@ -187,7 +155,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         approvedContextGrants: agentToTest.contextScope,
         inputContext: { source: 'management_console' }
       });
-      setAgentCompiledScopePreviews((current) => ({ ...current, [agentToTest.id]: result.compiledScope }));
       setLocalNotice({ tone: 'success', message: `Readiness test queued for ${agentToTest.name}. Check recent activity for ${result.activity.id}.` });
       updateSelectedAgent(agentToTest.id, (agent) => ({
         ...agent,
@@ -218,12 +185,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     setEditingAgentId(agent.id);
     setEditDraft(createAgentEditDraft(agent));
     setEditPanelOpen(true);
-  };
-  const reviewSelectedAgentAccess = () => {
-    const accessPolicy = document.getElementById('agent-access-policy');
-    if (!accessPolicy) return;
-    accessPolicy.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-    accessPolicy.focus({ preventScroll: true });
   };
   const openAgentManagement = (agent?: AgentDefinition) => {
     if (agent) setSelectedAgentId(agent.id);
@@ -280,7 +241,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     setLocalNotice(null);
     try {
       const restored = await restoreAgentVersion(workspace.id, selectedAgent.id, version.id);
-      const mapped = mapApiAgent(restored, selectedAgent, workspace.name);
+      const mapped = mapApiAgent(restored, selectedAgent, workspace.name, ownerLabelsByUserId);
       setAgents((current) => current.map((agent) => agent.id === mapped.id ? {
         ...mapped,
         auditHistory: [{ id: `${version.id}:restore`, summary: `Restored from saved v${version.version}.`, occurredAt: new Date().toISOString() }, ...agent.auditHistory]
@@ -311,114 +272,13 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setAgentActivityAction('');
     }
   };
-  const createManualTrigger = async () => {
-    if (!selectedAgent || !canManageAgents) return;
-    setAgentTriggerAction(`${selectedAgent.id}:create`);
-    setLocalNotice(null);
-    try {
-      const trigger = await createAgentTrigger(workspace.id, selectedAgent.id, { type: 'manual', enabled: true, name: newManualTriggerName.trim() || 'Manual run' });
-      updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: [trigger, ...agent.triggers] }));
-      setNewManualTriggerName('');
-      setLocalNotice({ tone: 'success', message: 'Manual trigger added and enabled.' });
-    } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not add the manual trigger.' });
-    } finally {
-      setAgentTriggerAction('');
-    }
-  };
-  const createScheduleTrigger = async () => {
-    if (!selectedAgent || !canManageAgents || !newScheduleTriggerCron.trim()) return;
-    setAgentTriggerAction(`${selectedAgent.id}:schedule`);
-    setLocalNotice(null);
-    try {
-      const trigger = await createAgentTrigger(workspace.id, selectedAgent.id, {
-        type: 'schedule',
-        enabled: true,
-        name: newScheduleTriggerName.trim() || 'Scheduled run',
-        schedule: { cron: newScheduleTriggerCron.trim(), timezone: newScheduleTriggerTimezone.trim() || getUserTimeZone() }
-      });
-      updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: [trigger, ...agent.triggers] }));
-      setNewScheduleTriggerName('');
-      setNewScheduleTriggerCron('');
-      setNewScheduleTriggerTimezone(getUserTimeZone());
-      setLocalNotice({ tone: 'success', message: 'Scheduled trigger added and enabled.' });
-    } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not add the scheduled trigger.' });
-    } finally {
-      setAgentTriggerAction('');
-    }
-  };
-  const createEventTrigger = async () => {
-    if (!selectedAgent || !canManageAgents) return;
-    let eventFilter: Record<string, unknown> | undefined;
-    if (newEventTriggerFilter.trim()) {
-      try {
-        const parsed = JSON.parse(newEventTriggerFilter);
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('invalid');
-        eventFilter = parsed as Record<string, unknown>;
-      } catch {
-        setLocalNotice({ tone: 'danger', message: 'Event filter must be a JSON object, for example {"eventType":"deployment.completed"}.' });
-        return;
-      }
-    }
-    setAgentTriggerAction(`${selectedAgent.id}:event`);
-    setLocalNotice(null);
-    try {
-      const trigger = await createAgentTrigger(workspace.id, selectedAgent.id, {
-        type: newEventTriggerType,
-        enabled: true,
-        name: newEventTriggerName.trim() || newEventTriggerType.replaceAll('_', ' '),
-        eventFilter
-      });
-      updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: [trigger, ...agent.triggers] }));
-      setNewEventTriggerName('');
-      setNewEventTriggerFilter('');
-      setLocalNotice({ tone: 'success', message: 'Event trigger added and enabled.' });
-    } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not add the event trigger.' });
-    } finally {
-      setAgentTriggerAction('');
-    }
-  };
-  const replaceAgentTrigger = (agent: AgentDefinition, trigger: AgentTriggerDefinitionApi): AgentDefinition => ({
-    ...agent,
-    triggers: agent.triggers.map((item) => item.id === trigger.id ? trigger : item)
-  });
-  const toggleAgentTrigger = async (trigger: AgentTriggerDefinitionApi) => {
-    if (!selectedAgent || !canManageAgents) return;
-    setAgentTriggerAction(`${selectedAgent.id}:${trigger.id}`);
-    setLocalNotice(null);
-    try {
-      const updated = await updateAgentTrigger(workspace.id, selectedAgent.id, trigger.id, { enabled: !trigger.enabled });
-      updateSelectedAgent(selectedAgent.id, (agent) => replaceAgentTrigger(agent, updated));
-      setLocalNotice({ tone: 'success', message: updated.enabled ? 'Trigger enabled for this agent.' : 'Trigger disabled for this agent.' });
-    } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update that trigger.' });
-    } finally {
-      setAgentTriggerAction('');
-    }
-  };
-  const deleteAgentTriggerForSelectedAgent = async (trigger: AgentTriggerDefinitionApi) => {
-    if (!selectedAgent || !canManageAgents) return;
-    setAgentTriggerAction(`${selectedAgent.id}:${trigger.id}`);
-    setLocalNotice(null);
-    try {
-      await deleteAgentTrigger(workspace.id, selectedAgent.id, trigger.id);
-      updateSelectedAgent(selectedAgent.id, (agent) => ({ ...agent, triggers: agent.triggers.filter((item) => item.id !== trigger.id) }));
-      setLocalNotice({ tone: 'success', message: 'Trigger deleted. Workflow assignments were not changed.' });
-    } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not delete that trigger.' });
-    } finally {
-      setAgentTriggerAction('');
-    }
-  };
   const disableSelectedAgent = async () => {
     if (!selectedAgent || !canManageAgents) return;
     setUpdatingAgentId(selectedAgent.id);
     setLocalNotice(null);
     try {
       const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { status: 'disabled' });
-      updateSelectedAgent(selectedAgent.id, () => mapApiAgent(updated, selectedAgent, workspace.name));
+      updateSelectedAgent(selectedAgent.id, () => withAgentAuditHistoryEntry(mapApiAgent(updated, selectedAgent, workspace.name, ownerLabelsByUserId), 'Agent disabled'));
       setDisableConfirmAgentId('');
       setLocalNotice({ tone: 'success', message: 'Agent disabled. Existing workflow assignments still reference it until you update them.' });
     } catch (error) {
@@ -433,7 +293,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     setLocalNotice(null);
     try {
       const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { status: 'active' });
-      updateSelectedAgent(selectedAgent.id, () => mapApiAgent(updated, selectedAgent, workspace.name));
+      updateSelectedAgent(selectedAgent.id, () => withAgentAuditHistoryEntry(mapApiAgent(updated, selectedAgent, workspace.name, ownerLabelsByUserId), 'Agent reactivated'));
       setLocalNotice({ tone: 'success', message: 'Agent reactivated. Run readiness before assigning it to new workflows.' });
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not reactivate this agent.' });
@@ -451,7 +311,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setAgents(remainingAgents);
       setSelectedAgentId(remainingAgents[0]?.id || '');
       setDeleteConfirmAgentId('');
-      setLocalNotice({ tone: 'success', message: 'Agent deleted. Workflow assignments were not changed.' });
+      setLocalNotice({ tone: 'success', message: 'Agent deleted.' });
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not delete this agent.' });
     } finally {
@@ -475,7 +335,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         approvalPolicy: { mode: 'before_write', writeToolsRequireApproval: true },
         trustPolicy: { level: 'restricted', allowExternalData: false }
       });
-      const mapped = mapApiAgent(created, fallbackAgents[0], workspace.name);
+      const mapped = mapApiAgent(created, fallbackAgents[0], workspace.name, ownerLabelsByUserId);
       setAgents((current) => [mapped, ...current.filter((agent) => agent.id !== mapped.id)]);
       setSelectedAgentId(mapped.id);
       setLocalNotice({ tone: 'success', message: 'Agent saved with restricted trust and approval required for write tools.' });
@@ -508,7 +368,8 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         trustPolicy: { level: 'restricted', allowExternalData: editDraft.allowExternalData }
       });
       const mappedOwner = ownerUserOptions.find((member) => member.userId === editDraft.ownerUserId.trim());
-      const mapped = { ...mapApiAgent(updated, editingAgent, workspace.name), owner: mappedOwner?.name || mappedOwner?.email || updated.ownerUserId || editingAgent.owner };
+      const mappedBase = mapApiAgent(updated, editingAgent, workspace.name, ownerLabelsByUserId);
+      const mapped = withAgentAuditHistoryEntry({ ...mappedBase, owner: mappedOwner?.name || mappedOwner?.email || mappedBase.owner }, 'Agent definition updated');
       setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
       setSelectedAgentId(mapped.id);
       setLocalNotice({ tone: 'success', message: 'Agent updated. Review affected workflows before the next run.' });
@@ -528,10 +389,22 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         setQuery={setQuery}
       />
 
-      {agentLoadError && <Notice>Control-plane agents did not load, so this page is showing the local catalog. Retry after control-plane access is restored.</Notice>}
-      {agentCapabilityLoadError && <Notice>Capability catalog did not load; fields show IDs already attached to these agents.</Notice>}
-      {ownerUserLoadError && <Notice>Workspace member list did not load; owner choices are limited to members already in this workspace view.</Notice>}
-      {!canManageAgents && <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect agents, but need manage_agents permission to create or change them.</div>}
+      {agentLoadError && (
+        <Notice title="Local fallback catalog">
+          Control-plane agents did not load. You can keep reviewing bundled fallback agents, but saved definitions and live activity may be stale.
+        </Notice>
+      )}
+      {agentCapabilityLoadError && (
+        <Notice title="Capability options unavailable">
+          Capability options did not load. Existing IDs remain visible; new edits may have fewer picker choices.
+        </Notice>
+      )}
+      {ownerUserLoadError && (
+        <Notice title="Owner choices limited">
+          Workspace members did not load. Owner choices are limited to members already available in this workspace view.
+        </Notice>
+      )}
+      {!canManageAgents && <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect agents. Ask a workspace manager for manage_agents permission to create or change them.</div>}
       {localNotice && (
         <div
           role={localNotice.tone === 'danger' ? 'alert' : 'status'}
@@ -605,39 +478,17 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           updatingAgentId={updatingAgentId}
           agentVersionAction={agentVersionAction}
           agentActivityAction={agentActivityAction}
-          agentTriggerAction={agentTriggerAction}
           disableConfirmAgentId={disableConfirmAgentId}
           setDisableConfirmAgentId={setDisableConfirmAgentId}
           deleteConfirmAgentId={deleteConfirmAgentId}
           setDeleteConfirmAgentId={setDeleteConfirmAgentId}
-          selectedCompiledScopePreview={selectedCompiledScopePreview}
           agentVersionHistories={agentVersionHistories}
-          newManualTriggerName={newManualTriggerName}
-          setNewManualTriggerName={setNewManualTriggerName}
-          newScheduleTriggerName={newScheduleTriggerName}
-          setNewScheduleTriggerName={setNewScheduleTriggerName}
-          newScheduleTriggerCron={newScheduleTriggerCron}
-          setNewScheduleTriggerCron={setNewScheduleTriggerCron}
-          newScheduleTriggerTimezone={newScheduleTriggerTimezone}
-          setNewScheduleTriggerTimezone={setNewScheduleTriggerTimezone}
-          newEventTriggerName={newEventTriggerName}
-          setNewEventTriggerName={setNewEventTriggerName}
-          newEventTriggerType={newEventTriggerType}
-          setNewEventTriggerType={setNewEventTriggerType}
-          newEventTriggerFilter={newEventTriggerFilter}
-          setNewEventTriggerFilter={setNewEventTriggerFilter}
           onTestSelectedAgent={() => void testSelectedAgent()}
-          onReviewSelectedAgentAccess={reviewSelectedAgentAccess}
           onOpenEditAgentDrawer={openEditAgentDrawerFromDetails}
           onSaveSelectedAgentVersion={() => void saveSelectedAgentVersion()}
           onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
           onDisableSelectedAgent={() => void disableSelectedAgent()}
           onDeleteSelectedAgent={() => void deleteSelectedAgent()}
-          onCreateManualTrigger={() => void createManualTrigger()}
-          onCreateScheduleTrigger={() => void createScheduleTrigger()}
-          onCreateEventTrigger={() => void createEventTrigger()}
-          onToggleAgentTrigger={(trigger) => void toggleAgentTrigger(trigger)}
-          onDeleteAgentTrigger={(trigger) => void deleteAgentTriggerForSelectedAgent(trigger)}
           onRefreshSelectedAgentVersions={() => void refreshSelectedAgentVersions()}
           onRestoreSelectedAgentVersion={(version) => void restoreSelectedAgentVersion(version)}
           onRefreshSelectedAgentActivity={() => void refreshSelectedAgentActivity()}

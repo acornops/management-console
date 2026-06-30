@@ -95,7 +95,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
       <div className="management-console-mobile-navigation relative z-40 h-16 shrink-0 items-center justify-between border-b border-ui-border bg-ui-surface px-4">
         <button
           type="button"
-          className="flex items-center gap-3"
+          className="flex min-h-11 items-center gap-3"
           onClick={() => navigate(workspaceHomePath)}
           aria-label={t('app.goHome')}
         >
@@ -115,7 +115,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
             onSetMobileNavOpen((current) => !current);
             onSetAccountMenuOpen(false);
           }}
-          className="p-2 text-ui-text-muted transition-colors hover:text-accent-strong"
+          className="flex min-h-11 min-w-11 items-center justify-center p-2 text-ui-text-muted transition-colors hover:text-accent-strong"
           aria-label={t('app.openNavigation')}
           aria-controls={mobileNavPanelId}
           aria-expanded={isMobileNavOpen}

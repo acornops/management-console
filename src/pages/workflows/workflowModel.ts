@@ -1,6 +1,6 @@
 export type WorkflowStatus = 'active' | 'draft' | 'paused';
 export type WorkflowCapabilityMode = 'read_only' | 'read_write';
-export type WorkflowTab = 'overview' | 'agents' | 'targets' | 'capabilities' | 'runs' | 'settings';
+export type WorkflowTab = 'overview' | 'agents' | 'capabilities' | 'runs' | 'settings';
 
 export interface WorkflowInput {
   name: string;
@@ -14,7 +14,7 @@ export interface WorkflowStep {
   title: string;
   prompt: string;
   requiredInputs: string[];
-  assignedAgentIds?: string[];
+  agentIds?: string[];
   enabledSkills: string[];
   allowedMcpServers: string[];
   allowedTools: string[];
@@ -44,7 +44,7 @@ export interface WorkflowRunMessage {
   status: 'sending' | 'sent' | 'failed';
 }
 
-export interface WorkflowAgentAssignment {
+export interface WorkflowAgentReference {
   agentId: string;
   name: string;
   role: string;
@@ -63,14 +63,13 @@ export interface WorkflowDefinition {
   tags: string[];
   lastRun: string;
   primaryAction: string;
-  primaryAgent: WorkflowAgentAssignment;
-  supportingAgents: WorkflowAgentAssignment[];
+  orchestrator: WorkflowAgentReference;
+  agents: WorkflowAgentReference[];
   requiredPermissions: string[];
   enabledMcpServers: string[];
   allowedTools: string[];
   enabledSkills: string[];
   contextGrants: string[];
-  targetSelection: string[];
   disabledCapabilities: string[];
   inputs: WorkflowInput[];
   steps: WorkflowStep[];
@@ -82,7 +81,6 @@ export interface WorkflowDefinition {
   };
   scope: {
     type: 'workspace';
-    targetRef?: string;
   };
   starterPrompt: string;
   runs: WorkflowRunRecord[];
@@ -92,13 +90,20 @@ export type WorkflowLaunchPermissions = Partial<Record<'create_sessions' | 'crea
 
 const defaultWorkspaceId = 'current-workspace';
 
+const defaultSystemOrchestrator: WorkflowAgentReference = {
+  agentId: 'agent-workflow-orchestrator',
+  name: 'System Orchestrator',
+  role: 'Coordinator',
+  required: true
+};
+
 export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceId): WorkflowDefinition[] {
   return [
     {
       id: 'cluster-triage',
       workspaceId,
       name: 'Cluster triage',
-      description: 'Investigate a selected cluster using inventory, events, logs, and metrics before recommending next steps.',
+      description: 'Investigate cluster signals using inventory, events, logs, and metrics before recommending next steps.',
       status: 'active',
       source: 'system',
       owner: 'AcornOps',
@@ -106,26 +111,28 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       tags: ['cluster', 'triage', 'incident'],
       lastRun: 'Today 09:12',
       primaryAction: 'Start triage',
-      primaryAgent: { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Triage owner', required: true },
-      supportingAgents: [],
+      orchestrator: defaultSystemOrchestrator,
+      agents: [
+        { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Triage capability', required: true }
+      ],
       requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
       enabledMcpServers: ['acornops-cluster-agent'],
       allowedTools: ['inventory.resources.list', 'events.search', 'logs.summarize', 'metrics.query'],
       enabledSkills: ['acornops-observability', 'acornops-target-boundary-design'],
-      contextGrants: ['workspace_metadata', 'target_inventory'],
-      targetSelection: ['selected Kubernetes cluster'],
+      contextGrants: ['workspace_metadata'],
       disabledCapabilities: ['write tools'],
       inputs: [],
       steps: [
         {
           id: 'triage-selected-cluster',
-          title: 'Triage selected cluster',
-          prompt: 'Inspect the selected cluster and summarize likely causes, blast radius, and recommended operator actions.',
+          title: 'Triage cluster signals',
+          prompt: 'Inspect available cluster diagnostic signals and summarize likely causes, blast radius, and recommended operator actions.',
           requiredInputs: [],
+          agentIds: ['agent-cluster-triage'],
           enabledSkills: ['acornops-observability', 'acornops-target-boundary-design'],
           allowedMcpServers: ['acornops-cluster-agent'],
           allowedTools: ['inventory.resources.list', 'events.search', 'logs.summarize', 'metrics.query'],
-          contextGrants: ['workspace_metadata', 'target_inventory'],
+          contextGrants: ['workspace_metadata'],
           approvalRequired: false
         }
       ],
@@ -136,7 +143,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
         approvals: []
       },
       scope: { type: 'workspace' },
-      starterPrompt: 'Triage the selected cluster. Start by showing the compiled read scope.',
+      starterPrompt: 'Triage the available cluster diagnostic signals. Start by showing the compiled read scope.',
       runs: [
         {
           id: 'wf-run-4812',
@@ -161,16 +168,16 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       tags: ['repository', 'configuration', 'pull-request'],
       lastRun: 'Yesterday',
       primaryAction: 'Start operation',
-      primaryAgent: { agentId: 'agent-release-coordinator', name: 'Repository Operator', role: 'Change owner', required: true },
-      supportingAgents: [
-        { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Context reviewer', required: false }
+      orchestrator: defaultSystemOrchestrator,
+      agents: [
+        { agentId: 'agent-release-coordinator', name: 'Repository Operator', role: 'Repository capability', required: true },
+        { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Context capability', required: false }
       ],
       requiredPermissions: ['read_workspace_data', 'create_read_write_runs'],
       enabledMcpServers: ['github'],
       allowedTools: ['github.repositories.read', 'github.branches.list', 'github.prs.list', 'github.branches.create', 'github.prs.create'],
       enabledSkills: ['acornops-cross-repo-change', 'acornops-open-pr'],
       contextGrants: ['workspace_metadata'],
-      targetSelection: ['selected repository'],
       disabledCapabilities: ['unapproved branch writes'],
       inputs: [],
       steps: [
@@ -179,6 +186,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
           title: 'Prepare repository change',
           prompt: 'Inspect the selected repository, prepare a branch and PR plan, and request approval before write-capable actions.',
           requiredInputs: [],
+          agentIds: ['agent-release-coordinator'],
           enabledSkills: ['acornops-cross-repo-change', 'acornops-open-pr'],
           allowedMcpServers: ['github'],
           allowedTools: ['github.repositories.read', 'github.branches.list', 'github.prs.list', 'github.branches.create', 'github.prs.create'],
@@ -193,7 +201,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
         approvals: ['Before creating branches', 'Before opening pull requests']
       },
       scope: { type: 'workspace' },
-      starterPrompt: 'Add the requested configuration to the selected repository. Confirm the target repo and intended change before using write tools.',
+      starterPrompt: 'Add the requested configuration to the selected repository. Confirm the repository and intended change before using write tools.',
       runs: [
         {
           id: 'wf-run-4771',
@@ -218,16 +226,16 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       tags: ['incident', 'chat-history', 'pdf'],
       lastRun: 'Jun 20',
       primaryAction: 'Generate report',
-      primaryAgent: { agentId: 'agent-incident-reporter', name: 'Incident Reporter', role: 'Report owner', required: true },
-      supportingAgents: [
-        { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Finding reviewer', required: false }
+      orchestrator: defaultSystemOrchestrator,
+      agents: [
+        { agentId: 'agent-incident-reporter', name: 'Incident Reporter', role: 'Report capability', required: true },
+        { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Finding capability', required: false }
       ],
       requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
       enabledMcpServers: ['workspace-chat', 'artifact-writer'],
       allowedTools: ['chat.sessions.read_selected', 'reports.pdf.generate'],
       enabledSkills: ['acornops-observability'],
       contextGrants: ['selected_chat_sessions'],
-      targetSelection: ['approved chat sessions'],
       disabledCapabilities: ['broad workspace chat history'],
       inputs: [],
       steps: [
@@ -236,6 +244,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
           title: 'Generate incident report',
           prompt: 'Read selected incident chats, extract the timeline and evidence, then generate a PDF report artifact.',
           requiredInputs: [],
+          agentIds: ['agent-incident-reporter'],
           enabledSkills: ['acornops-observability'],
           allowedMcpServers: ['workspace-chat', 'artifact-writer'],
           allowedTools: ['chat.sessions.read_selected', 'reports.pdf.generate'],
@@ -285,6 +294,29 @@ export function appendWorkflowSearchTag(query: string, tag: string): string {
   return [current, tag].filter(Boolean).join(' ');
 }
 
+function workflowRouteParams(search: string): URLSearchParams {
+  return new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+}
+
+function normalizeWorkflowRouteTarget(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+export function getWorkflowRouteQuery(search: string): string {
+  return workflowRouteParams(search).get('q')?.trim() || '';
+}
+
+export function getWorkflowRouteSelectionTarget(search: string): string {
+  const params = workflowRouteParams(search);
+  return (
+    params.get('workflow') ||
+    params.get('workflowId') ||
+    params.get('selectedWorkflow') ||
+    params.get('q') ||
+    ''
+  ).trim();
+}
+
 export function filterWorkflowDefinitions(workflows: WorkflowDefinition[], query: string): WorkflowDefinition[] {
   const queryTokens = parseWorkflowSearchTokens(query);
   if (queryTokens.length === 0) return workflows;
@@ -313,9 +345,18 @@ export function getWorkflowById(workflows: WorkflowDefinition[], workflowId: str
   return workflows.find((workflow) => workflow.id === workflowId);
 }
 
+export function findWorkflowByRouteTarget(workflows: WorkflowDefinition[], target: string): WorkflowDefinition | undefined {
+  const normalizedTarget = normalizeWorkflowRouteTarget(target);
+  if (!normalizedTarget) return undefined;
+  return workflows.find((workflow) => (
+    normalizeWorkflowRouteTarget(workflow.id) === normalizedTarget ||
+    normalizeWorkflowRouteTarget(workflow.name) === normalizedTarget
+  ));
+}
+
 export function getWorkflowToolScopeSummary(workflow: WorkflowDefinition): string {
   const toolLabel = workflow.allowedTools.length === 1 ? 'allowed tool' : 'allowed tools';
-  return `${workflow.primaryAgent.name}, ${workflow.allowedTools.length} ${toolLabel}, ${workflow.policy.mode.replace('_', ' ')}`;
+  return `${workflow.agents[0]?.name || workflow.orchestrator.name}, ${workflow.allowedTools.length} ${toolLabel}, ${workflow.policy.mode.replace('_', ' ')}`;
 }
 
 export function getOptimisticWorkflowRunStatus(workflow: WorkflowDefinition): WorkflowRunRecord['status'] {
@@ -330,7 +371,6 @@ export function getWorkflowLaunchBlocker(
 ): string | null {
   if (workflow.status !== 'active') return 'Activate this workflow before launching it.';
   if (!message.trim()) return 'Add a control message before launching.';
-  if (!workflow.primaryAgent.agentId) return 'Assign a primary agent before launching.';
   if (!permissions?.create_sessions) return 'You need create_sessions to launch workflows.';
   if (workflow.policy.mode === 'read_write' && !permissions.create_read_write_runs) {
     return 'You need create_read_write_runs to launch this workflow.';
@@ -344,7 +384,6 @@ export function getWorkflowLaunchBlocker(
 export function getWorkflowTabLabel(tab: WorkflowTab): string {
   if (tab === 'overview') return 'Overview';
   if (tab === 'agents') return 'Agents';
-  if (tab === 'targets') return 'Targets';
   if (tab === 'capabilities') return 'Capability review';
   if (tab === 'runs') return 'Runs';
   return 'Settings';

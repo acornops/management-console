@@ -22,7 +22,7 @@ export const ModalStepIndicator: React.FC<{
         const selectable = Boolean(!active && onStepSelect);
         const marker = (
           <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] ${
-            active ? 'bg-accent text-[oklch(0.99_0.004_86)]' : complete ? 'bg-accent-soft text-accent-strong' : 'border border-ui-border bg-ui-surface'
+            active ? 'bg-accent text-ui-bg' : complete ? 'bg-accent-soft text-accent-strong' : 'border border-ui-border bg-ui-surface'
           }`}>
             {complete ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : index + 1}
           </span>

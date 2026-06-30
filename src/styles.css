@@ -122,6 +122,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.ui-checkbox {
+  appearance: none;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 0.58rem 0.58rem;
+}
+
+.ui-checkbox:checked {
+  border-color: rgb(var(--brand-orange-rgb) / 0.72);
+  background-color: var(--surface);
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M4 8.25 6.75 11 12.25 5' stroke='%23e65f2f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+}
+
 .loading-bar-sweep {
   animation: loading-bar-sweep 1.25s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   transform: translateX(-110%);

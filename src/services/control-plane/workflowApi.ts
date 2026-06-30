@@ -5,7 +5,7 @@ export interface WorkflowApiStep {
   id: string;
   title: string;
   requiredInputs: string[];
-  assignedAgentIds?: string[];
+  agentIds?: string[];
   enabledSkills: string[];
   allowedMcpServers: string[];
   allowedTools: string[];
@@ -27,6 +27,7 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   createdByUser?: { id?: string; userId?: string; displayName?: string; email?: string };
   createdAt?: string;
   category?: string;
+  orchestratorAgentId?: string;
   tags?: string[];
   inputs?: WorkflowApiInputDefinition[];
   enabledMcpServers?: string[];
@@ -207,7 +208,7 @@ export interface WorkflowScopeUpdateInput {
   };
   steps?: Array<{
     id: string;
-    assignedAgentIds?: string[];
+    agentIds?: string[];
     allowedMcpServers?: string[];
     allowedTools?: string[];
     contextGrants?: string[];

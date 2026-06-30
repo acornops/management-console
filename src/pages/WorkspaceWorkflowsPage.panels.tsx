@@ -14,13 +14,18 @@ import {
 } from '@/pages/WorkspaceWorkflowsPage.components';
 import type { WorkflowDefinition, WorkflowRunMessage } from '@/pages/workflows/workflowModel';
 import {
+  getWorkflowAgentCapabilityReview,
+  type WorkflowAgentCapabilityReview
+} from '@/pages/workflows/workflowAgentCapabilities';
+import {
   getRunDiscussionState,
   isRunActive,
   runStatusTone,
   workflowRunToTrace,
-  type AgentAssignmentDraft,
+  type AgentSelectionDraft,
   type ScopeDraft
 } from '@/pages/workflows/workflowPageHelpers';
+import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import type { WorkflowRunApproval, WorkflowRunEvent, WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
@@ -97,90 +102,88 @@ function WorkflowRunInstructionForm({
 
 export const WorkflowAgentsPanel: React.FC<{
   workflow: WorkflowDefinition;
-  selectedAgentAssignmentDraft?: AgentAssignmentDraft;
+  selectedAgentSelectionDraft?: AgentSelectionDraft;
   activeAgentOptions: WorkflowAgentOption[];
-  supportingAgentOptions: WorkflowAgentOption[];
-  isEditingAgentAssignments: boolean;
+  isEditingAgentSelection: boolean;
   canManageWorkflowScope: boolean;
-  savingAgentAssignmentsId: string;
-  agentAssignmentError: string;
-  agentAssignmentResult: string;
-  workflowActions: Pick<WorkflowActions, 'startEditingAgentAssignments' | 'updateAgentAssignmentDraft' | 'cancelEditingAgentAssignments' | 'saveAgentAssignments'>;
+  savingAgentSelectionId: string;
+  agentSelectionError: string;
+  agentSelectionResult: string;
+  workflowActions: Pick<WorkflowActions, 'startEditingAgentSelection' | 'updateAgentSelectionDraft' | 'cancelEditingAgentSelection' | 'saveAgentSelection'>;
 }> = ({
   workflow,
-  selectedAgentAssignmentDraft,
+  selectedAgentSelectionDraft,
   activeAgentOptions,
-  supportingAgentOptions,
-  isEditingAgentAssignments,
+  isEditingAgentSelection,
   canManageWorkflowScope,
-  savingAgentAssignmentsId,
-  agentAssignmentError,
-  agentAssignmentResult,
+  savingAgentSelectionId,
+  agentSelectionError,
+  agentSelectionResult,
   workflowActions
 }) => (
   <WorkflowTabPanel
     tab="agents"
     title="Agents"
-    actions={!isEditingAgentAssignments && (
-      <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentAssignments(workflow)} disabled={!canManageWorkflowScope}>
+    actions={!isEditingAgentSelection && (
+      <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflowScope}>
         <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
         Edit agents
       </Button>
     )}
   >
-    {agentAssignmentError && <div className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{agentAssignmentError}</div>}
-    {agentAssignmentResult && <div className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{agentAssignmentResult}</div>}
-    {isEditingAgentAssignments && selectedAgentAssignmentDraft ? (
-      <WorkflowSection title="Agent assignment">
-        <div className="mt-3 grid gap-4">
-          <label className="block">
-            <span className="type-micro-label text-ui-text-muted">Primary agent</span>
-            <Select<string>
-              value={selectedAgentAssignmentDraft.primaryAgentId}
-              options={activeAgentOptions.map((agent) => ({ value: agent.value, label: agent.label, disabled: agent.disabled }))}
-              onChange={(primaryAgentId) => workflowActions.updateAgentAssignmentDraft(workflow.id, {
-                primaryAgentId,
-                supportingAgentIds: selectedAgentAssignmentDraft.supportingAgentIds.filter((agentId) => agentId !== primaryAgentId)
+    {agentSelectionError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{agentSelectionError}</div>}
+    {agentSelectionResult && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{agentSelectionResult}</div>}
+    <WorkflowSection title="Coordinator: System Orchestrator">
+      <AgentAssignmentList className="mt-3" agents={[workflow.orchestrator]} labelForAgent={() => 'Read-only'} />
+    </WorkflowSection>
+    {isEditingAgentSelection && selectedAgentSelectionDraft ? (
+      <WorkflowSection title="Selected agents">
+        <div className="mt-4 grid gap-4">
+          <fieldset>
+            <legend className="sr-only">Workflow agents</legend>
+            <div className="flex items-center justify-between gap-3 border-b border-ui-border pb-2">
+              <span className="type-micro-label text-ui-text-muted">Workflow agents</span>
+              <span className="type-caption font-semibold text-ui-text-muted">
+                {selectedAgentSelectionDraft.agentIds.length} selected
+              </span>
+            </div>
+            <div className="divide-y divide-ui-border border-b border-ui-border">
+              {activeAgentOptions.map((agent) => {
+                const checked = selectedAgentSelectionDraft.agentIds.includes(agent.value);
+                return (
+                  <label
+                    key={agent.value}
+                    className={`grid min-h-12 cursor-pointer grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 py-3 text-sm transition-colors ${agent.disabled ? 'cursor-not-allowed opacity-55' : 'hover:bg-ui-bg/60'}`}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      disabled={agent.disabled}
+                      onChange={(event) => workflowActions.updateAgentSelectionDraft(workflow.id, {
+                        agentIds: event.target.checked
+                          ? [...selectedAgentSelectionDraft.agentIds, agent.value]
+                          : selectedAgentSelectionDraft.agentIds.filter((agentId) => agentId !== agent.value)
+                      })}
+                    />
+                    <span className="min-w-0">
+                      <span className="block min-w-0 break-words font-semibold [overflow-wrap:anywhere]">{agent.label}</span>
+                    </span>
+                  </label>
+                );
               })}
-              ariaLabel="Primary workflow agent"
-              className="mt-2"
-            />
-          </label>
-          <fieldset className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
-            <legend className="type-micro-label px-1 text-ui-text-muted">Supporting agents</legend>
-            <div className="mt-2 grid gap-2">
-              {supportingAgentOptions.map((agent) => (
-                <label key={agent.value} className="flex min-h-10 items-center gap-3 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-sm font-semibold text-ui-text">
-                  <Checkbox
-                    checked={selectedAgentAssignmentDraft.supportingAgentIds.includes(agent.value)}
-                    onChange={(event) => workflowActions.updateAgentAssignmentDraft(workflow.id, {
-                      supportingAgentIds: event.target.checked
-                        ? [...selectedAgentAssignmentDraft.supportingAgentIds, agent.value]
-                        : selectedAgentAssignmentDraft.supportingAgentIds.filter((agentId) => agentId !== agent.value)
-                    })}
-                  />
-                  <span className="min-w-0 break-words [overflow-wrap:anywhere]">{agent.label}</span>
-                </label>
-              ))}
             </div>
           </fieldset>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="tertiary" size="sm" onClick={() => workflowActions.cancelEditingAgentAssignments(workflow)} disabled={savingAgentAssignmentsId === workflow.id}>Cancel</Button>
-            <Button type="button" variant="primary" size="sm" onClick={() => void workflowActions.saveAgentAssignments()} disabled={!canManageWorkflowScope || savingAgentAssignmentsId === workflow.id || !selectedAgentAssignmentDraft.primaryAgentId}>
-              {savingAgentAssignmentsId === workflow.id ? 'Saving...' : 'Save agent assignment'}
+          <div className="flex justify-end gap-2 border-t border-ui-border pt-4">
+            <Button type="button" variant="tertiary" size="sm" onClick={() => workflowActions.cancelEditingAgentSelection(workflow)} disabled={savingAgentSelectionId === workflow.id}>Cancel</Button>
+            <Button type="button" variant="primary" size="sm" onClick={() => void workflowActions.saveAgentSelection()} disabled={!canManageWorkflowScope || savingAgentSelectionId === workflow.id}>
+              {savingAgentSelectionId === workflow.id ? 'Saving...' : 'Save agents'}
             </Button>
           </div>
         </div>
       </WorkflowSection>
     ) : (
-      <>
-        <WorkflowSection title="Primary agent">
-          <AgentAssignmentList className="mt-3" primaryAgent={workflow.primaryAgent} supportingAgents={[]} />
-        </WorkflowSection>
-        <WorkflowSection title="Supporting agents">
-          <AgentAssignmentList className="mt-3" supportingAgents={workflow.supportingAgents} supportingLabel={(agent) => agent.required ? 'Required' : 'Optional'} />
-        </WorkflowSection>
-      </>
+      <WorkflowSection title="Selected agents">
+        <AgentAssignmentList className="mt-3" agents={workflow.agents} labelForAgent={(agent) => agent.required ? 'Selected' : 'Optional'} />
+      </WorkflowSection>
     )}
   </WorkflowTabPanel>
 );
@@ -221,7 +224,7 @@ export const WorkflowRunsPanel: React.FC<{
   setExpandedRunLogId
 }) => (
   <WorkflowTabPanel tab="runs" title="Runs">
-    {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <div key={message} className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{message}</div>)}
+    {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <div key={message} role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{message}</div>)}
     {workflow.runs.length > 0 ? workflow.runs.map((run) => {
       const effectiveRunId = run.runId || run.id;
       const approvals = run.runId ? approvalRecords[run.runId] || [] : [];
@@ -243,7 +246,7 @@ export const WorkflowRunsPanel: React.FC<{
             </div>
             {isRunActive(run.status) && (
               <Button type="button" size="icon" variant="secondary" onClick={() => void workflowActions.stopWorkflowRun(effectiveRunId)} aria-label="Stop workflow run" disabled={cancelRunAction === effectiveRunId}>
-                {cancelRunAction === effectiveRunId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-3.5 w-3.5 fill-current" />}
+                {cancelRunAction === effectiveRunId ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Square className="h-3.5 w-3.5 fill-current" aria-hidden="true" />}
               </Button>
             )}
           </div>
@@ -307,7 +310,7 @@ export const WorkflowRunsPanel: React.FC<{
                   workflowSessionId={workflowSessionId}
                 />
               )}
-              {runMessageError && <div className="mt-2 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{runMessageError}</div>}
+              {runMessageError && <div role="alert" aria-live="assertive" className="mt-2 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{runMessageError}</div>}
             </section>
           )}
         </article>
@@ -316,59 +319,101 @@ export const WorkflowRunsPanel: React.FC<{
   </WorkflowTabPanel>
 );
 
+const AgentCapabilityGroup: React.FC<{
+  label: string;
+  values: string[];
+  emptyLabel: string;
+  technical?: boolean;
+}> = ({ label, values, emptyLabel, technical = false }) => (
+  <div className="min-w-0">
+    <dt className="type-micro-label text-ui-text-muted">{label}</dt>
+    <dd className="mt-1 min-w-0">
+      {values.length > 0 ? (
+        <ul className="grid gap-1.5">
+          {values.map((value) => (
+            <li key={value} className={technical ? 'break-words font-mono text-sm leading-6 text-ui-text [overflow-wrap:anywhere]' : 'break-words text-sm font-medium leading-6 text-ui-text [overflow-wrap:anywhere]'}>
+              {value}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <span className="text-sm font-medium text-ui-text-muted">{emptyLabel}</span>
+      )}
+    </dd>
+  </div>
+);
+
+const AgentCapabilityReviewList: React.FC<{
+  agentReviews: WorkflowAgentCapabilityReview[];
+}> = ({ agentReviews }) => {
+  if (agentReviews.length === 0) {
+    return <div className="mt-2 border-y border-ui-border py-4 text-sm font-medium text-ui-text-muted">No assigned agents to review.</div>;
+  }
+  return (
+    <div className="mt-2 divide-y divide-ui-border border-y border-ui-border">
+      {agentReviews.map((agent) => (
+        <section key={agent.agentId} className="grid gap-4 py-4 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-8">
+          <div className="min-w-0">
+            <h4 className="type-row-title break-words [overflow-wrap:anywhere]">{agent.name}</h4>
+            <p className="type-caption mt-1 text-ui-text-muted">{agent.required ? 'Required agent' : 'Optional agent'}</p>
+            <p className="type-caption mt-1 break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.role}</p>
+          </div>
+          {agent.missingAgentData ? (
+            <div className="text-sm font-medium text-ui-text-muted">Agent capability data is not available in the current catalog.</div>
+          ) : (
+            <dl className="grid min-w-0 gap-4 md:grid-cols-2">
+              <AgentCapabilityGroup label="MCP servers" values={agent.mcpServers} emptyLabel="No MCP servers." technical />
+              <AgentCapabilityGroup label="Skills" values={agent.skills} emptyLabel="No skills." />
+              <AgentCapabilityGroup label="Allowed tools" values={agent.tools} emptyLabel="No tools." technical />
+              <AgentCapabilityGroup label="Approvals" values={agent.approvalPolicy} emptyLabel="No approval policy." />
+              <div className="md:col-span-2">
+                <AgentCapabilityGroup label="Capability rules" values={agent.capabilityRules} emptyLabel="No capability rules." technical />
+              </div>
+            </dl>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+};
+
 export const WorkflowCapabilitiesPanel: React.FC<{
   workflow: WorkflowDefinition;
+  agents: AgentDefinition[];
   scopeDraft: ScopeDraft;
   scopeSaveError: { tab: 'capabilities'; message: string } | null;
   scopeSaveResult: { tab: 'capabilities'; message: string } | null;
-}> = ({ workflow, scopeDraft: _scopeDraft, scopeSaveError, scopeSaveResult }) => (
-  <WorkflowTabPanel
-    tab="capabilities"
-    title="Capability review"
-  >
-    {scopeSaveError?.tab === 'capabilities' && <div className="mt-4 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{scopeSaveError.message}</div>}
-    {scopeSaveResult?.tab === 'capabilities' && <div className="mt-4 rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{scopeSaveResult.message}</div>}
+}> = ({ workflow, agents, scopeDraft: _scopeDraft, scopeSaveError, scopeSaveResult }) => {
+  const agentReviews = getWorkflowAgentCapabilityReview(workflow, agents);
 
-    <WorkflowSection title="Inherited access">
-      <dl className="mt-2 divide-y divide-ui-border">
-        <CapabilityReviewRow
-          label="MCP servers"
-          description="Servers exposed by the assigned agents."
-          values={workflow.enabledMcpServers}
-          emptyLabel="No MCP servers assigned."
-          technical
-        />
-        <CapabilityReviewRow
-          label="Skills"
-          description="Agent skills available to the workflow."
-          values={workflow.enabledSkills}
-          emptyLabel="No skills assigned."
-        />
-        <CapabilityReviewRow
-          label="Allowed tools"
-          description="The callable tool surface after agent assignment."
-          values={workflow.allowedTools}
-          emptyLabel="No tools allowed."
-          technical
-        />
-      </dl>
-    </WorkflowSection>
+  return (
+    <WorkflowTabPanel
+      tab="capabilities"
+      title="Capability review"
+    >
+      {scopeSaveError?.tab === 'capabilities' && <div role="alert" aria-live="assertive" className="mt-4 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{scopeSaveError.message}</div>}
+      {scopeSaveResult?.tab === 'capabilities' && <div role="status" aria-live="polite" aria-atomic="true" className="mt-4 rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{scopeSaveResult.message}</div>}
 
-    <WorkflowSection title="Workflow restrictions">
-      <dl className="mt-2 divide-y divide-ui-border">
-        <CapabilityReviewRow
-          label="Blocked capabilities"
-          description="Capabilities removed by the workflow gate."
-          values={workflow.disabledCapabilities}
-          emptyLabel="No capabilities blocked by this workflow."
-        />
-        <CapabilityReviewRow
-          label="Approvals"
-          description="Operator decisions required before write-sensitive steps continue."
-          values={workflow.policy.approvals}
-          emptyLabel="No approval constraints configured."
-        />
-      </dl>
-    </WorkflowSection>
-  </WorkflowTabPanel>
-);
+      <WorkflowSection title="Inherited access">
+        <AgentCapabilityReviewList agentReviews={agentReviews} />
+      </WorkflowSection>
+
+      <WorkflowSection title="Workflow restrictions">
+        <dl className="mt-2 divide-y divide-ui-border">
+          <CapabilityReviewRow
+            label="Blocked capabilities"
+            description="Capabilities removed by the workflow gate."
+            values={workflow.disabledCapabilities}
+            emptyLabel="No capabilities blocked by this workflow."
+          />
+          <CapabilityReviewRow
+            label="Approvals"
+            description="Operator decisions required before write-sensitive steps continue."
+            values={workflow.policy.approvals}
+            emptyLabel="No approval constraints configured."
+          />
+        </dl>
+      </WorkflowSection>
+    </WorkflowTabPanel>
+  );
+};

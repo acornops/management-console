@@ -1,12 +1,14 @@
 import React from 'react';
 import { SelectOption } from '@/components/common/Select';
 import {
+  filterAgentDefinitions,
+  getAgentEligibilityLabel,
+  getAgentReviewSignals,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
 import {
   type AgentDefinitionApi,
-  type AgentActivityRecordApi,
-  type AgentTriggerDefinitionApi
+  type AgentActivityRecordApi
 } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
@@ -37,7 +39,13 @@ export type AgentEditDraft = AgentDraft & {
 
 export type LocalNotice = { tone: 'success' | 'danger'; message: string };
 export type AgentCapabilityOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
-export type EventTriggerType = Extract<AgentTriggerDefinitionApi['type'], 'webhook' | 'audit_event' | 'target_event' | 'external_adapter'>;
+export type AgentCatalogFocus = 'all' | 'needs_review' | 'needs_test' | 'ready';
+export type AgentReviewQueueSummary = {
+  agentsNeedingAttention: number;
+  broadTargetScope: number;
+  staleReadiness: number;
+  agentsInUse: number;
+};
 
 export const statusTone = (status: AgentDefinition['status']): 'success' | 'warning' | 'neutral' => {
   if (status === 'active') return 'success';
@@ -127,14 +135,21 @@ const approvalPolicyFor = (policy: AgentDefinitionApi['approvalPolicy']): AgentD
   };
 };
 
-const trustPolicyFor = (policy: AgentDefinitionApi['trustPolicy'], providerType: AgentDefinition['providerType']): AgentDefinition['trustPolicy'] => ({
-  boundary: typeof policy?.level === 'string' ? `${policy.level} trust boundary` : providerType === 'external' ? 'External provider requires approval' : 'Internal AcornOps runtime',
-  dataEgress: policy?.allowExternalData === true ? 'External data allowed by policy' : 'Workspace approved context only'
+const trustPolicyFor = (policy: AgentDefinitionApi['trustPolicy']): AgentDefinition['trustPolicy'] => ({
+  boundary: typeof policy?.level === 'string' ? `${policy.level} trust boundary` : 'Restricted workspace trust boundary',
+  dataEgress: policy?.allowExternalData === true ? 'Additional data access allowed by policy' : 'Workspace approved context only'
 });
 
-export const mapApiAgent = (item: AgentDefinitionApi, fallback: AgentDefinition, workspaceName: string): AgentDefinition => {
+export const mapApiAgent = (
+  item: AgentDefinitionApi,
+  fallback: AgentDefinition,
+  workspaceName: string,
+  ownerLabelsByUserId: Map<string, string> = new Map()
+): AgentDefinition => {
   const providerType = item.providerType || (item.source === 'system' ? 'internal' : fallback.providerType);
   const contextScope = item.contextGrants || item.contextScope || fallback.contextScope;
+  const ownerUserId = item.ownerUserId || fallback.ownerUserId;
+  const owner = ownerUserId ? ownerLabelsByUserId.get(ownerUserId) || (ownerUserId === 'user-1' ? 'Dev User' : ownerUserId) : fallback.owner || workspaceName;
   return {
     ...fallback,
     id: item.id,
@@ -145,8 +160,8 @@ export const mapApiAgent = (item: AgentDefinitionApi, fallback: AgentDefinition,
     status: item.status || fallback.status,
     source: item.source || fallback.source,
     providerType,
-    ownerUserId: item.ownerUserId || fallback.ownerUserId,
-    owner: item.ownerUserId || fallback.owner || workspaceName,
+    ownerUserId,
+    owner,
     version: item.version || fallback.version,
     mcpServers: item.mcpServers || [],
     tools: item.tools || [],
@@ -154,7 +169,7 @@ export const mapApiAgent = (item: AgentDefinitionApi, fallback: AgentDefinition,
     targetScope: targetScopeTokens(item.targetScope),
     contextScope,
     approvalPolicy: approvalPolicyFor(item.approvalPolicy),
-    trustPolicy: trustPolicyFor(item.trustPolicy, providerType),
+    trustPolicy: trustPolicyFor(item.trustPolicy),
     capabilities: item.capabilities || fallback.capabilities,
     workflowsUsingAgent: item.workflowsUsingAgent || fallback.workflowsUsingAgent,
     triggers: item.triggers || fallback.triggers,
@@ -171,9 +186,50 @@ export const mapApiAgent = (item: AgentDefinitionApi, fallback: AgentDefinition,
   };
 };
 
+export const withAgentAuditHistoryEntry = (
+  agent: AgentDefinition,
+  summary: string,
+  occurredAt = new Date().toISOString()
+): AgentDefinition => ({
+  ...agent,
+  auditHistory: [
+    {
+      id: `agent-audit-${occurredAt}-${summary.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
+      summary,
+      occurredAt
+    },
+    ...agent.auditHistory
+  ]
+});
+
 export const canManageWorkspaceAgents = (workspace: Workspace): boolean => {
   return workspace.permissions?.manage_agents === true;
 };
+
+export function filterVisibleAgents(
+  agents: AgentDefinition[],
+  query: string,
+  filters: { focus: AgentCatalogFocus }
+): AgentDefinition[] {
+  return filterAgentDefinitions(agents, query).filter((agent) => {
+    if (filters.focus === 'needs_review') return getAgentEligibilityLabel(agent) === 'Needs review';
+    if (filters.focus === 'needs_test') return getAgentEligibilityLabel(agent) === 'Needs test';
+    if (filters.focus === 'ready') return getAgentEligibilityLabel(agent) === 'Ready';
+    return true;
+  });
+}
+
+export function getAgentReviewQueueSummary(agents: AgentDefinition[]): AgentReviewQueueSummary {
+  return {
+    agentsNeedingAttention: agents.filter((agent) => {
+      const eligibility = getAgentEligibilityLabel(agent);
+      return eligibility === 'Needs test' || eligibility === 'Needs review' || eligibility === 'Blocked';
+    }).length,
+    broadTargetScope: agents.filter((agent) => getAgentReviewSignals(agent).includes('Broad target scope')).length,
+    staleReadiness: agents.filter((agent) => getAgentReviewSignals(agent).includes('No recent readiness test')).length,
+    agentsInUse: agents.filter((agent) => agent.workflowsUsingAgent.length > 0).length
+  };
+}
 
 export const summarizeAgentActivityRecord = (activity: AgentActivityRecordApi): string => `Activity ${activity.status} on v${activity.agentVersion}`;
 
@@ -201,22 +257,10 @@ export const formatAgentDisplayValue = (value: string): string =>
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 export const formatPolicyValue = (value: string): string => formatAgentDisplayValue(value);
 
-export const providerTypeOptions: Array<SelectOption<AgentDefinition['providerType']>> = [
-  { value: 'internal', label: 'Internal' },
-  { value: 'external', label: 'External' }
-];
-
 export const statusOptions: Array<SelectOption<AgentDefinition['status']>> = [
   { value: 'draft', label: 'Draft' },
   { value: 'active', label: 'Active' },
   { value: 'disabled', label: 'Disabled' }
-];
-
-export const eventTriggerTypeOptions: Array<SelectOption<EventTriggerType>> = [
-  { value: 'webhook', label: 'Webhook' },
-  { value: 'audit_event', label: 'Audit event' },
-  { value: 'target_event', label: 'Target event' },
-  { value: 'external_adapter', label: 'External adapter' }
 ];
 
 export const createAgentEditDraft = (agent: AgentDefinition): AgentEditDraft => ({
@@ -242,14 +286,10 @@ export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEd
   }
   if (agent.status !== draft.status) changes.push(`Status will change to ${draft.status}`);
   if ((agent.ownerUserId || '') !== draft.ownerUserId.trim()) changes.push('Owner changed');
-  if (agent.providerType !== draft.providerType) changes.push('Provider changed');
   if (listValuesChanged(agent.mcpServers, draft.mcpServers) || listValuesChanged(agent.tools, draft.tools) || listValuesChanged(agent.skills, draft.skills)) {
     changes.push('Capability sources changed');
   }
-  if (listValuesChanged(agent.targetScope, draft.targetScope)) changes.push('Targets changed');
-  if (listValuesChanged(agent.contextScope, draft.contextScope)) changes.push('Data sources changed');
   if ((agent.approvalPolicy.writeActions === 'approval_required') !== draft.writeToolsRequireApproval) changes.push('Write approval rule changed');
-  if (agent.trustPolicy.dataEgress.toLowerCase().includes('external') !== draft.allowExternalData) changes.push('External data rule changed');
   return changes.length > 0 ? changes : ['No changes to save.'];
 };
 
@@ -295,10 +335,9 @@ export const AgentAssignmentSummary: React.FC<{ agent: AgentDefinition }> = ({ a
   return (
     <section aria-label="Assignment summary" className="mt-5">
       <div className="type-micro-label text-ui-text-muted">Assignment summary</div>
-      <dl className="mt-3 grid min-w-0 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+      <dl className="mt-3 grid min-w-0 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         <AgentReadinessFact label="Owner" value={agent.owner} />
         <AgentReadinessFact label="Health" value={formatAgentDisplayValue(agent.health.status)} />
-        <AgentReadinessFact label="Provider" value={formatAgentDisplayValue(agent.providerType)} />
         <AgentReadinessFact label="Approvals" value={approvalSummary} />
       </dl>
     </section>
@@ -312,19 +351,9 @@ const AgentReadinessFact: React.FC<{ label: string; value: string }> = ({ label,
   </div>
 );
 
-export const TokenGroup: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (
-  <div className="min-w-0">
-    <div className="type-micro-label">{title}</div>
-    <div className="mt-2 flex flex-wrap gap-2">
-      {values.length > 0
-        ? values.map((value) => <span key={value} title={value} className="min-w-0 break-words rounded-md border border-ui-border bg-ui-bg px-2.5 py-1.5 text-xs font-bold text-ui-text-muted [overflow-wrap:anywhere]">{value}</span>)
-        : <span className="type-caption text-ui-text-muted">No scope configured.</span>}
-    </div>
-  </div>
-);
-
-export const Notice: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <div className="mb-4 whitespace-normal break-words rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-xs font-semibold text-status-warning-text [overflow-wrap:anywhere]">
-    {children}
-  </div>
+export const Notice: React.FC<React.PropsWithChildren<{ title?: string }>> = ({ children, title }) => (
+  <section role="status" className="mb-4 whitespace-normal break-words rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-xs font-semibold text-status-warning-text [overflow-wrap:anywhere]">
+    {title && <div className="type-micro-label text-status-warning-text">{title}</div>}
+    <div className={title ? 'mt-1' : ''}>{children}</div>
+  </section>
 );
