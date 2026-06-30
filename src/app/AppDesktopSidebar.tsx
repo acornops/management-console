@@ -388,7 +388,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
           {isClusterSidebar && (
             <>
-              <div className="px-4 mb-4 pt-2">
+              <div className="px-4 mb-8 pt-2">
                 <motion.button
                   type="button"
                   onClick={onBackToWorkspaceSidebar}
@@ -459,7 +459,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
           {isVirtualMachineSidebar && (
             <>
-              <div className="px-4 mb-4 pt-2">
+              <div className="px-4 mb-8 pt-2">
                 <motion.button
                   type="button"
                   onClick={onBackToWorkspaceSidebar}

@@ -31,7 +31,7 @@ export const SidebarSection: React.FC<{
 );
 
 export const TargetSettingsDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="border-t border-ui-border px-0 pb-8 pt-4">
+  <div className="border-t border-ui-border px-4 pb-8 pt-4">
     <div className="space-y-0.5">{children}</div>
   </div>
 );

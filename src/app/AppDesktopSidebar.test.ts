@@ -43,8 +43,9 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).not.toContain("<SidebarSection title={t('app.administration')} quiet>");
     expect(desktopSidebar).toContain('<TargetSettingsDivider>');
     expect(desktopSidebar).toContain('</TargetSettingsDivider>');
-    expect(desktopSidebar).toContain('className="border-t border-ui-border px-0 pb-8 pt-4"');
-    expect(desktopSidebar).not.toContain('className="mx-4 border-t border-ui-border px-0 pb-8 pt-4"');
+    expect(desktopSidebar).toContain('className="border-t border-ui-border px-4 pb-8 pt-4"');
+    expect(desktopSidebar).not.toContain('className="border-t border-ui-border px-0 pb-8 pt-4"');
+    expect(desktopSidebar).not.toContain('className="mx-4 border-t border-ui-border px-4 pb-8 pt-4"');
     expect(desktopSidebar).toContain("active={activeResourceNav === 'clusterSettings'}");
     expect(desktopSidebar).toContain("onClick={() => onNavigateClusterSubview('settings')}");
     expect(desktopSidebar).toContain("active={activeResourceNav === 'vmSettings'}");
@@ -80,6 +81,8 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain("<ICONS.ChevronLeft className=\"w-3.5 h-3.5\" />");
     expect(desktopSidebar).toContain("<div className=\"type-micro-label mb-1\">{t('app.activeCluster')}</div>");
     expect(desktopSidebar).toContain("<div className=\"type-micro-label mb-1\">{t('app.activeVirtualMachine')}</div>");
+    expect(desktopSidebar.match(/className="px-4 mb-8 pt-2"/g)).toHaveLength(2);
+    expect(desktopSidebar).not.toContain('className="px-4 mb-4 pt-2"');
     expect(desktopSidebar).toContain('className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedClusterName}');
     expect(desktopSidebar).toContain('className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedVmName}');
   });
