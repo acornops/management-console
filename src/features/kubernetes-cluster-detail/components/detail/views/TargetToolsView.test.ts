@@ -5,16 +5,16 @@ import { describe, expect, it } from 'vitest';
 
 const targetToolsView = readFileSync(resolve(__dirname, 'TargetToolsView.tsx'), 'utf8');
 const targetToolRow = readFileSync(resolve(__dirname, 'TargetToolRow.tsx'), 'utf8');
-const knowledgeBankDialog = readFileSync(resolve(__dirname, 'KnowledgeBankDialog.tsx'), 'utf8');
-const knowledgeBankActivityDialog = readFileSync(resolve(__dirname, 'KnowledgeBankActivityDialog.tsx'), 'utf8');
-const knowledgeBankResetDialog = readFileSync(resolve(__dirname, 'KnowledgeBankResetDialog.tsx'), 'utf8');
-const knowledgeBankSettingsDialog = readFileSync(resolve(__dirname, 'KnowledgeBankSettingsDialog.tsx'), 'utf8');
-const knowledgeBankSettingsPanel = readFileSync(resolve(__dirname, 'KnowledgeBankSettingsPanel.tsx'), 'utf8');
-const knowledgeBankViewModel = readFileSync(resolve(__dirname, 'knowledgeBankDialogViewModel.ts'), 'utf8');
+const targetInsightsDialog = readFileSync(resolve(__dirname, 'TargetInsightsDialog.tsx'), 'utf8');
+const targetInsightsActivityDialog = readFileSync(resolve(__dirname, 'TargetInsightsActivityDialog.tsx'), 'utf8');
+const targetInsightsResetDialog = readFileSync(resolve(__dirname, 'TargetInsightsResetDialog.tsx'), 'utf8');
+const targetInsightsSettingsDialog = readFileSync(resolve(__dirname, 'TargetInsightsSettingsDialog.tsx'), 'utf8');
+const targetInsightsSettingsPanel = readFileSync(resolve(__dirname, 'TargetInsightsSettingsPanel.tsx'), 'utf8');
+const targetInsightsViewModel = readFileSync(resolve(__dirname, 'targetInsightsDialogViewModel.ts'), 'utf8');
 const targetSkillEditorDialog = readFileSync(resolve(__dirname, 'TargetSkillEditorDialog.tsx'), 'utf8');
 const unsavedChangesDialog = readFileSync(resolve(__dirname, 'UnsavedChangesDialog.tsx'), 'utf8');
 const enLocale = readFileSync(resolve(__dirname, '../../../../../i18n/locales/en.js'), 'utf8');
-const knowledgeBankSpec = readFileSync(resolve(__dirname, '../../../../../../docs/product-specs/knowledge-bank-console.md'), 'utf8');
+const targetInsightsSpec = readFileSync(resolve(__dirname, '../../../../../../docs/product-specs/target-insights-console.md'), 'utf8');
 
 describe('TargetToolsView inventory polish', () => {
   it('keeps the top summary capability-focused and leaves domain filters in the dialog', () => {
@@ -50,8 +50,8 @@ describe('TargetToolsView inventory polish', () => {
     expect(targetToolRow).toContain('onConfigure(tool)');
     expect(targetToolRow).not.toContain("menuOptionClassName({ disabled: !canEditTools })");
     expect(targetToolRow).not.toContain('if (!canEditTools) return;');
-    expect(targetToolsView).toContain("tool.id === 'knowledge_bank' ? null : draftFromTool(tool)");
-    expect(targetToolsView).toContain("<KnowledgeBankDialog");
+    expect(targetToolsView).toContain("tool.id === 'target_insights' ? null : draftFromTool(tool)");
+    expect(targetToolsView).toContain("<TargetInsightsDialog");
     expect(targetToolsView).toContain("const canEditSelectedTool = Boolean(editingTool && canEditTools && (editingTool.permissions?.canEdit ?? true));");
     expect(targetToolsView).toContain("t(canEditSelectedTool ? 'tools.configureTitle' : 'tools.viewTitle'");
     expect(targetToolsView).toContain('{editingTool.description}');
@@ -68,47 +68,47 @@ describe('TargetToolsView inventory polish', () => {
     expect(targetToolRow).not.toContain('line-clamp-2 text-xs leading-5 text-ui-text-muted">{tool.description}');
   });
 
-  it('presents Knowledge Bank as files instead of entries', () => {
-    expect(knowledgeBankViewModel).toContain('function buildKnowledgeFilePath');
-    expect(knowledgeBankViewModel).toContain('knowledge-bank/${entry.status}/${slug}.md');
-    expect(knowledgeBankDialog).toContain('data-knowledge-bank-folder={`knowledge-bank/${status}`}');
-    expect(knowledgeBankDialog).toContain("import { Tooltip } from '@/components/common/Tooltip';");
-    expect(knowledgeBankDialog).toContain('<FilePlus2 className="h-3.5 w-3.5" />');
-    expect(knowledgeBankDialog).toContain('<Tooltip content={t(`tools.knowledgeBank.folderHelp.${status}`)} side="right"');
-    expect(knowledgeBankDialog).toContain("t(`tools.knowledgeBank.folder.${status}`)");
-    expect(knowledgeBankDialog).toContain("t(`tools.knowledgeBank.folderHelp.${status}`)");
-    expect(knowledgeBankDialog).toContain("t('tools.knowledgeBank.emptyFolder')");
-    expect(knowledgeBankDialog).toContain('statusFiles.length > 0 ? statusFiles.map');
-    expect(knowledgeBankDialog).not.toContain('<span>knowledge-bank/{status}</span>');
-    expect(knowledgeBankDialog).not.toContain("t('tools.knowledgeBank.filesHelp')");
-    expect(knowledgeBankDialog).toContain("t('tools.knowledgeBank.newFile')");
-    expect(knowledgeBankDialog).toContain("t('tools.knowledgeBank.noFiles')");
+  it('presents Insights as files instead of entries', () => {
+    expect(targetInsightsViewModel).toContain('function buildInsightFilePath');
+    expect(targetInsightsViewModel).toContain('insights/${entry.status}/${slug}.md');
+    expect(targetInsightsDialog).toContain('data-target-insights-folder={`insights/${status}`}');
+    expect(targetInsightsDialog).toContain("import { Tooltip } from '@/components/common/Tooltip';");
+    expect(targetInsightsDialog).toContain('<FilePlus2 className="h-3.5 w-3.5" />');
+    expect(targetInsightsDialog).toContain('<Tooltip content={t(`tools.targetInsights.folderHelp.${status}`)} side="right"');
+    expect(targetInsightsDialog).toContain("t(`tools.targetInsights.folder.${status}`)");
+    expect(targetInsightsDialog).toContain("t(`tools.targetInsights.folderHelp.${status}`)");
+    expect(targetInsightsDialog).toContain("t('tools.targetInsights.emptyFolder')");
+    expect(targetInsightsDialog).toContain('statusFiles.length > 0 ? statusFiles.map');
+    expect(targetInsightsDialog).not.toContain('<span>insights/{status}</span>');
+    expect(targetInsightsDialog).not.toContain("t('tools.targetInsights.filesHelp')");
+    expect(targetInsightsDialog).toContain("t('tools.targetInsights.newFile')");
+    expect(targetInsightsDialog).toContain("t('tools.targetInsights.noFiles')");
     expect(enLocale).toContain("active: 'active'");
     expect(enLocale).toContain("pending: 'pending'");
     expect(enLocale).toContain("archived: 'archived'");
-    expect(enLocale).toContain("noFiles: 'No knowledge files yet.'");
+    expect(enLocale).toContain("noFiles: 'No insight files yet.'");
     expect(enLocale).not.toContain("entries: 'Entries'");
     expect(enLocale).not.toContain("newEntry: 'New entry'");
     expect(enLocale).not.toContain("saveEntry: 'Save entry'");
   });
 
-  it('keeps the Knowledge Bank editor header compact', () => {
-    expect(knowledgeBankDialog).toContain('selectedFileName');
-    expect(knowledgeBankDialog).toContain('selectedStatus');
-    expect(knowledgeBankDialog).toContain('${selectedFileName} (${t(`tools.knowledgeBank.status.${selectedStatus}`)})');
-    expect(knowledgeBankDialog).not.toContain('<p className="type-label truncate text-ui-text">{selectedFilePath}</p>');
-    expect(knowledgeBankDialog).not.toContain('fileEditorHelp');
-    expect(knowledgeBankDialog).not.toContain("t('tools.knowledgeBank.details')");
-    expect(knowledgeBankDialog).not.toContain('formatDateTime');
-    expect(knowledgeBankSpec).toContain('should not show the full virtual path in the editor header');
-    expect(knowledgeBankSpec).toContain('should not include a default details section');
+  it('keeps the Insights editor header compact', () => {
+    expect(targetInsightsDialog).toContain('selectedFileName');
+    expect(targetInsightsDialog).toContain('selectedStatus');
+    expect(targetInsightsDialog).toContain('${selectedFileName} (${t(`tools.targetInsights.status.${selectedStatus}`)})');
+    expect(targetInsightsDialog).not.toContain('<p className="type-label truncate text-ui-text">{selectedFilePath}</p>');
+    expect(targetInsightsDialog).not.toContain('fileEditorHelp');
+    expect(targetInsightsDialog).not.toContain("t('tools.targetInsights.details')");
+    expect(targetInsightsDialog).not.toContain('formatDateTime');
+    expect(targetInsightsSpec).toContain('should not show the full virtual path in the editor header');
+    expect(targetInsightsSpec).toContain('should not include a default details section');
   });
 
-  it('uses in-app confirmation dialogs for unsaved skill and Knowledge Bank edits', () => {
+  it('uses in-app confirmation dialogs for unsaved skill and Insights edits', () => {
     expect(targetSkillEditorDialog).not.toContain('window.confirm');
-    expect(knowledgeBankDialog).not.toContain('window.confirm');
+    expect(targetInsightsDialog).not.toContain('window.confirm');
     expect(targetSkillEditorDialog).toContain('<UnsavedChangesDialog');
-    expect(knowledgeBankDialog).toContain('<UnsavedChangesDialog');
+    expect(targetInsightsDialog).toContain('<UnsavedChangesDialog');
     expect(unsavedChangesDialog).toContain("import { Dialog } from '@/components/common/Dialog';");
     expect(unsavedChangesDialog).toContain('variant="danger"');
     expect(enLocale).toContain("discardTitle: 'Discard unsaved changes?'");
@@ -117,74 +117,74 @@ describe('TargetToolsView inventory polish', () => {
     expect(enLocale).not.toContain('discardConfirm');
   });
 
-  it('opens focused Knowledge Bank modals from row actions instead of panes', () => {
-    expect(targetToolRow).toContain("invokeKnowledgeBankAction('files')");
-    expect(targetToolRow).toContain("invokeKnowledgeBankAction('settings')");
-    expect(targetToolRow).toContain("invokeKnowledgeBankAction('activity')");
-    expect(targetToolRow).toContain("invokeKnowledgeBankAction('export')");
-    expect(targetToolRow).toContain("invokeKnowledgeBankAction('reset')");
-    expect(targetToolsView).toContain("knowledgeBankAction === 'files'");
-    expect(targetToolsView).toContain("knowledgeBankAction === 'settings'");
-    expect(targetToolsView).toContain("knowledgeBankAction === 'activity'");
-    expect(targetToolsView).toContain("knowledgeBankAction === 'reset'");
-    expect(targetToolsView).toContain('controlPlaneApi.exportKnowledgeBank');
+  it('opens focused Insights modals from row actions instead of panes', () => {
+    expect(targetToolRow).toContain("invokeTargetInsightsAction('files')");
+    expect(targetToolRow).toContain("invokeTargetInsightsAction('settings')");
+    expect(targetToolRow).toContain("invokeTargetInsightsAction('activity')");
+    expect(targetToolRow).toContain("invokeTargetInsightsAction('export')");
+    expect(targetToolRow).toContain("invokeTargetInsightsAction('reset')");
+    expect(targetToolsView).toContain("targetInsightsAction === 'files'");
+    expect(targetToolsView).toContain("targetInsightsAction === 'settings'");
+    expect(targetToolsView).toContain("targetInsightsAction === 'activity'");
+    expect(targetToolsView).toContain("targetInsightsAction === 'reset'");
+    expect(targetToolsView).toContain('controlPlaneApi.exportTargetInsights');
     expect(targetToolsView).toContain('document.body.appendChild(link)');
     expect(targetToolsView).toContain('window.setTimeout(() => URL.revokeObjectURL(url), 0)');
-    expect(knowledgeBankDialog).not.toContain("view === 'activity'");
-    expect(knowledgeBankDialog).not.toContain("view === 'settings'");
+    expect(targetInsightsDialog).not.toContain("view === 'activity'");
+    expect(targetInsightsDialog).not.toContain("view === 'settings'");
   });
 
-  it('keeps Knowledge Bank file edits focused on title and Markdown body', () => {
-    expect(knowledgeBankViewModel).toContain('interface FileDraft');
-    expect(knowledgeBankViewModel).toContain('title: string;');
-    expect(knowledgeBankViewModel).toContain('bodyMarkdown: string;');
-    expect(knowledgeBankViewModel).toContain('draft.title.trim() !== entry.title');
-    expect(knowledgeBankDialog).toContain("status: 'active'");
-    expect(knowledgeBankDialog).toContain('const title = draft.title.trim();');
-    expect(knowledgeBankDialog).toContain('title !== selectedEntry.title ? { title } : {}');
-    expect(knowledgeBankDialog).toContain('draft.bodyMarkdown !== selectedEntry.bodyMarkdown ? { bodyMarkdown: draft.bodyMarkdown } : {}');
-    expect(knowledgeBankDialog).not.toContain('tagsText');
-    expect(knowledgeBankDialog).not.toContain('draft.confidence');
-    expect(knowledgeBankDialog).not.toContain('draft.status');
+  it('keeps Insights file edits focused on title and Markdown body', () => {
+    expect(targetInsightsViewModel).toContain('interface FileDraft');
+    expect(targetInsightsViewModel).toContain('title: string;');
+    expect(targetInsightsViewModel).toContain('bodyMarkdown: string;');
+    expect(targetInsightsViewModel).toContain('draft.title.trim() !== entry.title');
+    expect(targetInsightsDialog).toContain("status: 'active'");
+    expect(targetInsightsDialog).toContain('const title = draft.title.trim();');
+    expect(targetInsightsDialog).toContain('title !== selectedEntry.title ? { title } : {}');
+    expect(targetInsightsDialog).toContain('draft.bodyMarkdown !== selectedEntry.bodyMarkdown ? { bodyMarkdown: draft.bodyMarkdown } : {}');
+    expect(targetInsightsDialog).not.toContain('tagsText');
+    expect(targetInsightsDialog).not.toContain('draft.confidence');
+    expect(targetInsightsDialog).not.toContain('draft.status');
   });
 
-  it('does not expose skill-style folder creation for Knowledge Bank files', () => {
-    expect(knowledgeBankDialog).not.toContain('TargetSkillFileTree');
-    expect(knowledgeBankDialog).not.toContain('onFilesChange');
-    expect(knowledgeBankDialog).not.toContain('newFolder');
-    expect(knowledgeBankDialog).not.toContain('createFolder');
-    expect(knowledgeBankSpec).toContain('Users cannot create custom folders, subfolders, or arbitrary file paths');
-    expect(knowledgeBankSpec).toContain('folders are fixed system groups derived from entry status');
+  it('does not expose skill-style folder creation for Insights files', () => {
+    expect(targetInsightsDialog).not.toContain('TargetSkillFileTree');
+    expect(targetInsightsDialog).not.toContain('onFilesChange');
+    expect(targetInsightsDialog).not.toContain('newFolder');
+    expect(targetInsightsDialog).not.toContain('createFolder');
+    expect(targetInsightsSpec).toContain('Users cannot create custom folders, subfolders, or arbitrary file paths');
+    expect(targetInsightsSpec).toContain('folders are fixed system groups derived from entry status');
   });
 
-  it('uses file actions for Knowledge Bank status transitions', () => {
-    expect(knowledgeBankDialog).toContain("updateFileStatus('promote')");
-    expect(knowledgeBankDialog).toContain("updateFileStatus('archive')");
-    expect(knowledgeBankDialog).toContain("updateFileStatus('restore')");
-    expect(knowledgeBankDialog).toContain('controlPlaneApi.promoteKnowledgeBankEntry');
-    expect(knowledgeBankDialog).toContain('controlPlaneApi.archiveKnowledgeBankEntry');
+  it('uses file actions for Insights status transitions', () => {
+    expect(targetInsightsDialog).toContain("updateFileStatus('promote')");
+    expect(targetInsightsDialog).toContain("updateFileStatus('archive')");
+    expect(targetInsightsDialog).toContain("updateFileStatus('restore')");
+    expect(targetInsightsDialog).toContain('controlPlaneApi.promoteTargetInsightsEntry');
+    expect(targetInsightsDialog).toContain('controlPlaneApi.archiveTargetInsightsEntry');
     expect(enLocale).toContain("promote: 'Promote to Active'");
     expect(enLocale).toContain("restore: 'Restore'");
   });
 
-  it('keeps Knowledge Bank settings compact but complete', () => {
-    expect(knowledgeBankSettingsPanel).toContain("checked={settingsDraft.enabled}");
-    expect(knowledgeBankSettingsPanel).toContain("t('tools.knowledgeBank.fields.enabled')");
-    expect(knowledgeBankSettingsPanel).toContain("t('tools.knowledgeBank.fields.checkpointModel')");
-    expect(knowledgeBankSettingsDialog).toContain("t('tools.knowledgeBank.fields.idleCheckpointDelay')");
-    expect(knowledgeBankSettingsDialog).toContain("t('tools.knowledgeBank.fields.maxSnippets')");
-    expect(knowledgeBankSettingsDialog).toContain("t('tools.knowledgeBank.fields.maxSnippetSize')");
-    expect(knowledgeBankSettingsDialog).toContain("t('tools.knowledgeBank.fields.observationsBeforeGeneralization')");
-    expect(knowledgeBankSettingsPanel).not.toContain("t('tools.knowledgeBank.reset')");
-    expect(knowledgeBankSettingsPanel).not.toContain("t('tools.knowledgeBank.export')");
+  it('keeps Insights settings compact but complete', () => {
+    expect(targetInsightsSettingsPanel).toContain("checked={settingsDraft.enabled}");
+    expect(targetInsightsSettingsPanel).toContain("t('tools.targetInsights.fields.enabled')");
+    expect(targetInsightsSettingsPanel).toContain("t('tools.targetInsights.fields.checkpointModel')");
+    expect(targetInsightsSettingsDialog).toContain("t('tools.targetInsights.fields.idleCheckpointDelay')");
+    expect(targetInsightsSettingsDialog).toContain("t('tools.targetInsights.fields.maxSnippets')");
+    expect(targetInsightsSettingsDialog).toContain("t('tools.targetInsights.fields.maxSnippetSize')");
+    expect(targetInsightsSettingsDialog).toContain("t('tools.targetInsights.fields.observationsBeforeGeneralization')");
+    expect(targetInsightsSettingsPanel).not.toContain("t('tools.targetInsights.reset')");
+    expect(targetInsightsSettingsPanel).not.toContain("t('tools.targetInsights.export')");
   });
 
-  it('keeps Knowledge Bank activity and reset as separate dialogs', () => {
-    expect(knowledgeBankActivityDialog).toContain('controlPlaneApi.listKnowledgeBankActivity');
-    expect(knowledgeBankActivityDialog).toContain("t('tools.knowledgeBank.activityTitle')");
-    expect(knowledgeBankResetDialog).toContain('controlPlaneApi.resetKnowledgeBank');
-    expect(knowledgeBankResetDialog).toContain('if (!canEdit) return;');
+  it('keeps Insights activity and reset as separate dialogs', () => {
+    expect(targetInsightsActivityDialog).toContain('controlPlaneApi.listTargetInsightsActivity');
+    expect(targetInsightsActivityDialog).toContain("t('tools.targetInsights.activityTitle')");
+    expect(targetInsightsResetDialog).toContain('controlPlaneApi.resetTargetInsights');
+    expect(targetInsightsResetDialog).toContain('if (!canEdit) return;');
     expect(targetToolsView).toContain('canEdit={canEditSelectedTool}');
-    expect(knowledgeBankResetDialog).toContain("t('tools.knowledgeBank.resetWarningTitle')");
+    expect(targetInsightsResetDialog).toContain("t('tools.targetInsights.resetWarningTitle')");
   });
 });

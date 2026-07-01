@@ -15,8 +15,8 @@ import type {
   ControlPlaneClusterToolCatalog,
   ControlPlaneClusterToolCatalogItem,
   ControlPlaneTargetAssistantCapabilitiesPreview,
-  ControlPlaneKnowledgeBankCatalog,
-  ControlPlaneKnowledgeBankEntry,
+  ControlPlaneTargetInsightsCatalog,
+  ControlPlaneTargetInsightsEntry,
   ControlPlaneWorkspaceAuditEvent,
   ControlPlaneTargetSkillDetail,
   ControlPlaneTargetSkillsCatalog,
@@ -31,7 +31,7 @@ import type {
   ControlPlaneSessionListPage,
   ControlPlaneWorkspaceClusterMetricsHistoryResponse,
   CreateTargetMcpServerInput,
-  KnowledgeBankEntryInput,
+  TargetInsightsEntryInput,
   ImportTargetSkillInput,
   PagedResult,
   RegisterClusterResponse,
@@ -327,11 +327,11 @@ export const kubernetesClusterApi = {
     );
   },
 
-  async listKnowledgeBankEntries(
+  async listTargetInsightsEntries(
     workspaceId: string,
     targetId: string,
     options?: { status?: string; q?: string; limit?: number }
-  ): Promise<ControlPlaneKnowledgeBankCatalog> {
+  ): Promise<ControlPlaneTargetInsightsCatalog> {
     const query = pageQuery({
       limit: options?.limit,
       filters: {
@@ -339,71 +339,71 @@ export const kubernetesClusterApi = {
         q: options?.q
       }
     });
-    return requestJson<ControlPlaneKnowledgeBankCatalog>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/knowledge-bank${query}`
+    return requestJson<ControlPlaneTargetInsightsCatalog>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/target-insights${query}`
     );
   },
 
-  async createKnowledgeBankEntry(
+  async createTargetInsightsEntry(
     workspaceId: string,
     targetId: string,
-    input: KnowledgeBankEntryInput
-  ): Promise<ControlPlaneKnowledgeBankEntry> {
-    return requestJson<ControlPlaneKnowledgeBankEntry>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/knowledge-bank/entries`,
+    input: TargetInsightsEntryInput
+  ): Promise<ControlPlaneTargetInsightsEntry> {
+    return requestJson<ControlPlaneTargetInsightsEntry>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/target-insights/entries`,
       { method: 'POST', body: JSON.stringify(input) }
     );
   },
 
-  async updateKnowledgeBankEntry(
+  async updateTargetInsightsEntry(
     workspaceId: string,
     targetId: string,
     entryId: string,
-    input: Partial<KnowledgeBankEntryInput>
-  ): Promise<ControlPlaneKnowledgeBankEntry> {
-    return requestJson<ControlPlaneKnowledgeBankEntry>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/knowledge-bank/entries/${encodeURIComponent(entryId)}`,
+    input: Partial<TargetInsightsEntryInput>
+  ): Promise<ControlPlaneTargetInsightsEntry> {
+    return requestJson<ControlPlaneTargetInsightsEntry>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/target-insights/entries/${encodeURIComponent(entryId)}`,
       { method: 'PATCH', body: JSON.stringify(input) }
     );
   },
 
-  async promoteKnowledgeBankEntry(
+  async promoteTargetInsightsEntry(
     workspaceId: string,
     targetId: string,
     entryId: string
-  ): Promise<ControlPlaneKnowledgeBankEntry> {
-    return requestJson<ControlPlaneKnowledgeBankEntry>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/knowledge-bank/entries/${encodeURIComponent(entryId)}/promote`,
+  ): Promise<ControlPlaneTargetInsightsEntry> {
+    return requestJson<ControlPlaneTargetInsightsEntry>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/target-insights/entries/${encodeURIComponent(entryId)}/promote`,
       { method: 'POST' }
     );
   },
 
-  async archiveKnowledgeBankEntry(
+  async archiveTargetInsightsEntry(
     workspaceId: string,
     targetId: string,
     entryId: string
-  ): Promise<ControlPlaneKnowledgeBankEntry> {
-    return requestJson<ControlPlaneKnowledgeBankEntry>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/knowledge-bank/entries/${encodeURIComponent(entryId)}/archive`,
+  ): Promise<ControlPlaneTargetInsightsEntry> {
+    return requestJson<ControlPlaneTargetInsightsEntry>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/target-insights/entries/${encodeURIComponent(entryId)}/archive`,
       { method: 'POST' }
     );
   },
 
-  async resetKnowledgeBank(workspaceId: string, targetId: string): Promise<{ status: string; deletedEntries: number; deletedCheckpoints: number }> {
+  async resetTargetInsights(workspaceId: string, targetId: string): Promise<{ status: string; deletedEntries: number; deletedCheckpoints: number }> {
     return requestJson<{ status: string; deletedEntries: number; deletedCheckpoints: number }>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/knowledge-bank/reset`,
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/target-insights/reset`,
       { method: 'POST' }
     );
   },
 
-  async listKnowledgeBankActivity(workspaceId: string, targetId: string): Promise<{ items: ControlPlaneWorkspaceAuditEvent[] }> {
+  async listTargetInsightsActivity(workspaceId: string, targetId: string): Promise<{ items: ControlPlaneWorkspaceAuditEvent[] }> {
     return requestJson<{ items: ControlPlaneWorkspaceAuditEvent[] }>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/knowledge-bank/activity`
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/target-insights/activity`
     );
   },
 
-  async exportKnowledgeBank(workspaceId: string, targetId: string): Promise<string> {
-    const response = await fetch(`${getControlPlaneBaseUrl()}/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/knowledge-bank/export`, {
+  async exportTargetInsights(workspaceId: string, targetId: string): Promise<string> {
+    const response = await fetch(`${getControlPlaneBaseUrl()}/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/target-insights/export`, {
       method: 'GET',
       credentials: 'include'
     });

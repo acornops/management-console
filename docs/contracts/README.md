@@ -109,7 +109,7 @@ Workspace responses expose server-owned authorization fields:
 - `permissions.manage_targets`
 - `permissions.manage_mcp`
 - `permissions.manage_tools`
-- `permissions.manage_knowledge_bank`
+- `permissions.manage_target_insights`
 - `permissions.manage_workflows`
 - `permissions.manage_agents`
 - `permissions.manage_ai_settings`
@@ -239,14 +239,14 @@ The management console depends on:
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/assistant/capabilities-preview?toolAccessMode=read_only|read_write`
 - `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}`
-- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/knowledge-bank`
-- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/knowledge-bank/entries`
-- `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/knowledge-bank/entries/{entryId}`
-- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/knowledge-bank/entries/{entryId}/promote`
-- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/knowledge-bank/entries/{entryId}/archive`
-- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/knowledge-bank/reset`
-- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/knowledge-bank/activity`
-- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/knowledge-bank/export`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights`
+- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/entries`
+- `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/entries/{entryId}`
+- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/entries/{entryId}/promote`
+- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/entries/{entryId}/archive`
+- `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/reset`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/activity`
+- `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/export`
 - `PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`
 - `GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools`
@@ -262,7 +262,7 @@ The management console depends on:
 - `DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`
 - `POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}/reimport`
 
-Built-in tools and MCP-discovered tools use distinct target-scoped APIs. Kubernetes clusters and virtual machines both use the target MCP, Skills, and Tools surfaces. The Tools tab shows only AcornOps built-in tools such as `web_search` and `knowledge_bank`; MCP-discovered tools remain on the MCP Servers page. Built-in tool rows include per-item permissions because web search and Knowledge Bank use different management capabilities.
+Built-in tools and MCP-discovered tools use distinct target-scoped APIs. Kubernetes clusters and virtual machines both use the target MCP, Skills, and Tools surfaces. The Tools tab shows only AcornOps built-in tools such as `web_search` and `target_insights`; MCP-discovered tools remain on the MCP Servers page. Built-in tool rows include per-item permissions because web search and Insights use different management capabilities.
 
 The UI depends on these MCP catalog fields staying stable:
 
@@ -283,12 +283,12 @@ The UI depends on these built-in Tools catalog fields staying stable:
 - `permissions.editableRoles`
 - `items[].{id,label,enabled,description,capability,runtimeKind,visibility,config,permissions.{canEdit},readiness?}`
 - `web_search.config.domainFilters.{allowedDomains,blockedDomains}`
-- `knowledge_bank.config.learning.{idleCheckpointDelayMinutes,minimumObservationsBeforeGeneralization,checkpointModel}` and `knowledge_bank.config.retrieval.{maxSnippetsPerRetrieval,maxSnippetSizeBytes}`
-- `knowledge_bank.readiness.{learningAvailable,learningPausedReason}`
+- `target_insights.config.learning.{idleCheckpointDelayMinutes,minimumObservationsBeforeGeneralization,checkpointModel}` and `target_insights.config.retrieval.{maxSnippetsPerRetrieval,maxSnippetSizeBytes}`
+- `target_insights.readiness.{learningAvailable,learningPausedReason}`
 - Built-in tool settings are patched through `/tools/{toolId}` with `{enabled, config?}`.
-- Knowledge Bank entry APIs return `{workspaceId,targetId,targetType,permissions.{canEdit},items[]}` for lists and entry objects with Markdown body, frontmatter, status, tags, normalized signals, scope, evidence summary, observation count, confidence, and timestamps.
+- Insights entry APIs return `{workspaceId,targetId,targetType,permissions.{canEdit},items[]}` for lists and entry objects with Markdown body, frontmatter, status, tags, normalized signals, scope, evidence summary, observation count, confidence, and timestamps.
 
-The UI must treat catalog `permissions.canEdit` as "can edit at least one built-in target tool" and each row's `permissions.canEdit` as the authoritative control for toggles and dialogs. `permissions.manage_tools` controls non-Knowledge-Bank built-in tools; `permissions.manage_knowledge_bank` controls Knowledge Bank entries and settings.
+The UI must treat catalog `permissions.canEdit` as "can edit at least one built-in target tool" and each row's `permissions.canEdit` as the authoritative control for toggles and dialogs. `permissions.manage_tools` controls non-Target-Insights built-in tools; `permissions.manage_target_insights` controls Insights entries and settings.
 
 The UI depends on these target Skills fields staying stable:
 
@@ -378,7 +378,7 @@ Current event types used by the UI:
 - `assistant_reasoning_summary_delta`
 - `assistant_reasoning_summary_completed`
 - `assistant_reasoning_summary_unavailable`
-- `knowledge_context_retrieved`
+- `target_insights_context_retrieved`
 - `tool_call_started`
 - `tool_call_completed`
 - `tool_approval_requested` with optional `payload.summary`

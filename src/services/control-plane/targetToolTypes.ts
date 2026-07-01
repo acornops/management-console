@@ -95,15 +95,15 @@ export interface UpdateTargetToolInput {
   config?: ControlPlaneTargetToolConfig;
 }
 
-export type ControlPlaneKnowledgeBankEntryStatus = 'active' | 'pending' | 'archived';
+export type ControlPlaneTargetInsightsEntryStatus = 'active' | 'pending' | 'archived';
 
-export interface ControlPlaneKnowledgeBankEntry {
+export interface ControlPlaneTargetInsightsEntry {
   id: string;
   workspaceId: string;
   targetId: string;
   targetType: 'kubernetes' | 'virtual_machine';
   title: string;
-  status: ControlPlaneKnowledgeBankEntryStatus;
+  status: ControlPlaneTargetInsightsEntryStatus;
   bodyMarkdown: string;
   frontmatter: Record<string, unknown>;
   tags: string[];
@@ -118,19 +118,19 @@ export interface ControlPlaneKnowledgeBankEntry {
   updatedAt: string;
 }
 
-export interface ControlPlaneKnowledgeBankCatalog {
+export interface ControlPlaneTargetInsightsCatalog {
   workspaceId: string;
   targetId: string;
   targetType: 'kubernetes' | 'virtual_machine';
   permissions: {
     canEdit: boolean;
   };
-  items: ControlPlaneKnowledgeBankEntry[];
+  items: ControlPlaneTargetInsightsEntry[];
 }
 
-export interface KnowledgeBankEntryInput {
+export interface TargetInsightsEntryInput {
   title: string;
-  status: ControlPlaneKnowledgeBankEntryStatus;
+  status: ControlPlaneTargetInsightsEntryStatus;
   bodyMarkdown: string;
   tags?: string[];
   evidenceSummary?: string;

@@ -13,7 +13,7 @@ interface TargetToolRowProps {
   canEditTools: boolean;
   pendingToolId: string | null;
   onConfigure: (tool: ControlPlaneTargetToolItem) => void;
-  onKnowledgeBankAction?: (tool: ControlPlaneTargetToolItem, action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => void;
+  onTargetInsightsAction?: (tool: ControlPlaneTargetToolItem, action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => void;
   onToggleTool: (tool: ControlPlaneTargetToolItem, enabled: boolean) => void;
 }
 
@@ -25,7 +25,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   canEditTools,
   pendingToolId,
   onConfigure,
-  onKnowledgeBankAction,
+  onTargetInsightsAction,
   onToggleTool
 }) => {
   const { t } = useTranslation();
@@ -42,21 +42,21 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
     ? 'bg-status-warning-soft text-status-warning-text'
     : 'bg-status-success-soft text-status-success-text';
 
-  const knowledgeBankActionCount = tool.id === 'knowledge_bank' ? (canEditTool ? 5 : 4) : 1;
+  const targetInsightsActionCount = tool.id === 'target_insights' ? (canEditTool ? 5 : 4) : 1;
 
   const updateActionMenuPosition = React.useCallback(() => {
     const trigger = actionMenuButtonRef.current;
     if (!trigger) return;
     const rect = trigger.getBoundingClientRect();
     const menuWidth = 224;
-    const menuHeight = knowledgeBankActionCount * 40 + 16;
+    const menuHeight = targetInsightsActionCount * 40 + 16;
     const top = Math.min(rect.bottom + 6, window.innerHeight - menuHeight - 8);
     setActionMenuStyle({
       left: Math.max(8, rect.right - menuWidth),
       top: Math.max(8, top),
       width: menuWidth
     });
-  }, [knowledgeBankActionCount]);
+  }, [targetInsightsActionCount]);
 
   React.useEffect(() => {
     if (!actionMenuOpen) return undefined;
@@ -85,10 +85,10 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   }, [actionMenuOpen, updateActionMenuPosition]);
 
   const closeActionMenu = () => setActionMenuOpen(false);
-  const invokeKnowledgeBankAction = (action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => {
+  const invokeTargetInsightsAction = (action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => {
     closeActionMenu();
-    if (onKnowledgeBankAction) {
-      onKnowledgeBankAction(tool, action);
+    if (onTargetInsightsAction) {
+      onTargetInsightsAction(tool, action);
       return;
     }
     onConfigure(tool);
@@ -103,28 +103,28 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
           className={menuSurfaceClassName('fixed z-[130] p-1')}
           style={actionMenuStyle}
         >
-          {tool.id === 'knowledge_bank' ? (
+          {tool.id === 'target_insights' ? (
             <>
-              <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('files')} className={menuOptionClassName()}>
+              <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('files')} className={menuOptionClassName()}>
                 <FileText className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                <span>{canEditTool ? t('tools.knowledgeBank.editFiles') : t('tools.knowledgeBank.viewFiles')}</span>
+                <span>{canEditTool ? t('tools.targetInsights.editFiles') : t('tools.targetInsights.viewFiles')}</span>
               </button>
-              <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('settings')} className={menuOptionClassName()}>
+              <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('settings')} className={menuOptionClassName()}>
                 <Settings2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                <span>{t('tools.knowledgeBank.settings')}</span>
+                <span>{t('tools.targetInsights.settings')}</span>
               </button>
-              <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('activity')} className={menuOptionClassName()}>
+              <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('activity')} className={menuOptionClassName()}>
                 <Activity className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                <span>{t('tools.knowledgeBank.activity')}</span>
+                <span>{t('tools.targetInsights.activity')}</span>
               </button>
-              <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('export')} className={menuOptionClassName()}>
+              <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('export')} className={menuOptionClassName()}>
                 <Download className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                <span>{t('tools.knowledgeBank.export')}</span>
+                <span>{t('tools.targetInsights.export')}</span>
               </button>
               {canEditTool && (
-                <button type="button" role="menuitem" onClick={() => invokeKnowledgeBankAction('reset')} className={menuOptionClassName({ className: 'text-status-danger-text hover:text-status-danger-text' })}>
+                <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('reset')} className={menuOptionClassName({ className: 'text-status-danger-text hover:text-status-danger-text' })}>
                   <RotateCcw className="h-4 w-4 shrink-0 text-status-danger-text" aria-hidden="true" />
-                  <span>{t('tools.knowledgeBank.resetAction')}</span>
+                  <span>{t('tools.targetInsights.resetAction')}</span>
                 </button>
               )}
             </>
@@ -156,7 +156,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
       <td className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
-            {tool.id === 'knowledge_bank'
+            {tool.id === 'target_insights'
               ? <BookOpen className="h-5 w-5 text-accent-strong" aria-hidden="true" />
               : <Globe2 className="h-5 w-5 text-accent-strong" aria-hidden="true" />}
           </div>

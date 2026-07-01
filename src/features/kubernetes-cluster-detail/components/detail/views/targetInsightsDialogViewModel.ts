@@ -1,11 +1,11 @@
 import type {
-  ControlPlaneKnowledgeBankCatalog,
-  ControlPlaneKnowledgeBankEntry,
+  ControlPlaneTargetInsightsCatalog,
+  ControlPlaneTargetInsightsEntry,
   ControlPlaneTargetToolItem
 } from '@/services/controlPlaneApi';
 import type { WorkspaceAiSettings } from '@/types';
 
-export type KnowledgeFileStatus = ControlPlaneKnowledgeBankEntry['status'];
+export type InsightFileStatus = ControlPlaneTargetInsightsEntry['status'];
 export type LearningReadiness = NonNullable<ControlPlaneTargetToolItem['readiness']>;
 
 export interface FileDraft {
@@ -13,11 +13,11 @@ export interface FileDraft {
   bodyMarkdown: string;
 }
 
-export interface KnowledgeFile {
-  entry: ControlPlaneKnowledgeBankEntry;
+export interface InsightFile {
+  entry: ControlPlaneTargetInsightsEntry;
   path: string;
   fileName: string;
-  status: KnowledgeFileStatus;
+  status: InsightFileStatus;
   searchableText: string;
 }
 
@@ -32,7 +32,7 @@ export interface SettingsDraft {
   model: string;
 }
 
-export const statusOrder: KnowledgeFileStatus[] = ['active', 'pending', 'archived'];
+export const statusOrder: InsightFileStatus[] = ['active', 'pending', 'archived'];
 
 export function slugifyTitle(value: string): string {
   return value
@@ -43,13 +43,13 @@ export function slugifyTitle(value: string): string {
     .slice(0, 72);
 }
 
-export function buildKnowledgeFilePath(entry: ControlPlaneKnowledgeBankEntry): string {
-  const slug = slugifyTitle(entry.title) || `knowledge-file-${entry.id.slice(0, 8)}`;
-  return `knowledge-bank/${entry.status}/${slug}.md`;
+export function buildInsightFilePath(entry: ControlPlaneTargetInsightsEntry): string {
+  const slug = slugifyTitle(entry.title) || `insight-file-${entry.id.slice(0, 8)}`;
+  return `insights/${entry.status}/${slug}.md`;
 }
 
-export function entryToKnowledgeFile(entry: ControlPlaneKnowledgeBankEntry): KnowledgeFile {
-  const path = buildKnowledgeFilePath(entry);
+export function entryToInsightFile(entry: ControlPlaneTargetInsightsEntry): InsightFile {
+  const path = buildInsightFilePath(entry);
   return {
     entry,
     path,
@@ -60,28 +60,28 @@ export function entryToKnowledgeFile(entry: ControlPlaneKnowledgeBankEntry): Kno
       entry.status,
       entry.evidenceSummary,
       entry.bodyMarkdown,
-      buildKnowledgeFilePath(entry),
+      buildInsightFilePath(entry),
       ...(entry.tags || [])
     ].join(' ').toLowerCase()
   };
 }
 
-export function draftFromEntry(entry: ControlPlaneKnowledgeBankEntry | null): FileDraft {
+export function draftFromEntry(entry: ControlPlaneTargetInsightsEntry | null): FileDraft {
   return {
     title: entry?.title || '',
     bodyMarkdown: entry?.bodyMarkdown || ''
   };
 }
 
-export function hasDraftChanges(entry: ControlPlaneKnowledgeBankEntry | null, draft: FileDraft): boolean {
+export function hasDraftChanges(entry: ControlPlaneTargetInsightsEntry | null, draft: FileDraft): boolean {
   if (!entry) return Boolean(draft.title.trim() || draft.bodyMarkdown.trim());
   return draft.title.trim() !== entry.title || draft.bodyMarkdown !== entry.bodyMarkdown;
 }
 
 export function applySavedEntryToCatalog(
-  catalog: ControlPlaneKnowledgeBankCatalog | null,
-  savedEntry: ControlPlaneKnowledgeBankEntry
-): ControlPlaneKnowledgeBankCatalog | null {
+  catalog: ControlPlaneTargetInsightsCatalog | null,
+  savedEntry: ControlPlaneTargetInsightsEntry
+): ControlPlaneTargetInsightsCatalog | null {
   if (!catalog) return catalog;
   const exists = catalog.items.some((entry) => entry.id === savedEntry.id);
   return {
@@ -93,10 +93,10 @@ export function applySavedEntryToCatalog(
 }
 
 export function pauseReasonKey(reason: ControlPlaneTargetToolItem['readiness'] extends infer R ? R extends { learningPausedReason: infer P } ? P : never : never): string {
-  if (reason === 'ai_settings_missing') return 'tools.knowledgeBank.pause.aiSettingsMissing';
-  if (reason === 'provider_not_allowed') return 'tools.knowledgeBank.pause.providerNotAllowed';
-  if (reason === 'model_not_allowed') return 'tools.knowledgeBank.pause.modelNotAllowed';
-  return 'tools.knowledgeBank.pause.ready';
+  if (reason === 'ai_settings_missing') return 'tools.targetInsights.pause.aiSettingsMissing';
+  if (reason === 'provider_not_allowed') return 'tools.targetInsights.pause.providerNotAllowed';
+  if (reason === 'model_not_allowed') return 'tools.targetInsights.pause.modelNotAllowed';
+  return 'tools.targetInsights.pause.ready';
 }
 
 export function resolveLearningReadiness(tool: ControlPlaneTargetToolItem, aiSettings: WorkspaceAiSettings | null): LearningReadiness | undefined {

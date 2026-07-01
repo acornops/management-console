@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkspaceAiSettings } from '@/types';
-import type { SettingsDraft } from '@/features/kubernetes-cluster-detail/components/detail/views/knowledgeBankDialogViewModel';
+import type { SettingsDraft } from '@/features/kubernetes-cluster-detail/components/detail/views/targetInsightsDialogViewModel';
 
-interface KnowledgeBankSettingsPanelProps {
+interface TargetInsightsSettingsPanelProps {
   settingsDraft: SettingsDraft;
   aiSettings: WorkspaceAiSettings | null;
   selectableModels: string[];
@@ -19,7 +19,7 @@ interface KnowledgeBankSettingsPanelProps {
   onSettingsDraftChange: React.Dispatch<React.SetStateAction<SettingsDraft>>;
 }
 
-export const KnowledgeBankSettingsPanel: React.FC<KnowledgeBankSettingsPanelProps> = ({
+export const TargetInsightsSettingsPanel: React.FC<TargetInsightsSettingsPanelProps> = ({
   settingsDraft,
   aiSettings,
   selectableModels,
@@ -41,18 +41,18 @@ export const KnowledgeBankSettingsPanel: React.FC<KnowledgeBankSettingsPanelProp
             onChange={(event) => onSettingsDraftChange((current) => ({ ...current, enabled: event.target.checked }))}
             className="h-4 w-4 rounded border-ui-border text-accent focus:ring-accent/20"
           />
-          <span className="type-label">{t('tools.knowledgeBank.fields.enabled')}</span>
+          <span className="type-label">{t('tools.targetInsights.fields.enabled')}</span>
         </label>
         <label className="block">
-          <span className="type-label">{t('tools.knowledgeBank.fields.checkpointModel')}</span>
+          <span className="type-label">{t('tools.targetInsights.fields.checkpointModel')}</span>
           <select className="mt-2 h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm outline-none" value={settingsDraft.checkpointModelMode} disabled={!canEdit || settingsSaving} onChange={(event) => onSettingsDraftChange((current) => ({ ...current, checkpointModelMode: event.target.value as typeof current.checkpointModelMode }))}>
-            <option value="workspace_default">{t('tools.knowledgeBank.model.workspaceDefault')}</option>
-            <option value="custom">{t('tools.knowledgeBank.model.custom')}</option>
+            <option value="workspace_default">{t('tools.targetInsights.model.workspaceDefault')}</option>
+            <option value="custom">{t('tools.targetInsights.model.custom')}</option>
           </select>
         </label>
         {settingsDraft.checkpointModelMode === 'custom' && (
           <label className="block">
-            <span className="type-label">{t('tools.knowledgeBank.fields.provider')}</span>
+            <span className="type-label">{t('tools.targetInsights.fields.provider')}</span>
             <select className="mt-2 h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm outline-none" value={settingsDraft.provider} disabled={!canEdit || settingsSaving} onChange={(event) => onSettingsDraftChange((current) => ({ ...current, provider: event.target.value as typeof current.provider, model: '' }))}>
               {(aiSettings?.allowedProviders || ['openai', 'anthropic', 'gemini']).map((provider) => <option key={provider} value={provider}>{provider}</option>)}
             </select>
@@ -60,7 +60,7 @@ export const KnowledgeBankSettingsPanel: React.FC<KnowledgeBankSettingsPanelProp
         )}
         {settingsDraft.checkpointModelMode === 'custom' && (
           <label className="block">
-            <span className="type-label">{t('tools.knowledgeBank.fields.model')}</span>
+            <span className="type-label">{t('tools.targetInsights.fields.model')}</span>
             <select className="mt-2 h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm outline-none" value={settingsDraft.model || selectableModels[0] || ''} disabled={!canEdit || settingsSaving} onChange={(event) => onSettingsDraftChange((current) => ({ ...current, model: event.target.value }))}>
               {selectableModels.map((model) => <option key={model} value={model}>{model}</option>)}
             </select>

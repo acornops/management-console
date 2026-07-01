@@ -22,7 +22,7 @@ This `docs/` tree is the repository-local system of record for agent-readable de
 
 - [Product Spec Index](/docs/product-specs/index.md)
 - [Component Charter](/docs/product-specs/component-charter.md)
-- [Knowledge Bank Console Surface](/docs/product-specs/knowledge-bank-console.md)
+- [Insights Console Surface](/docs/product-specs/target-insights-console.md)
 
 ## Plans And Debt
 

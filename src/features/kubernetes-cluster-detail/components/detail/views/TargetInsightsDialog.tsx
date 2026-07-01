@@ -7,26 +7,26 @@ import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { Tooltip } from '@/components/common/Tooltip';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
-  ControlPlaneKnowledgeBankCatalog,
+  ControlPlaneTargetInsightsCatalog,
   ControlPlaneTargetToolItem,
-  KnowledgeBankEntryInput
+  TargetInsightsEntryInput
 } from '@/services/controlPlaneApi';
 import { formatError } from '@/features/kubernetes-cluster-detail/components/detail/views/targetSkillsViewModel';
 import { UnsavedChangesDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/UnsavedChangesDialog';
 import {
   applySavedEntryToCatalog,
-  buildKnowledgeFilePath,
+  buildInsightFilePath,
   draftFromEntry,
-  entryToKnowledgeFile,
+  entryToInsightFile,
   hasDraftChanges,
   slugifyTitle,
   statusOrder,
   type FileDraft,
-  type KnowledgeFile,
-  type KnowledgeFileStatus
-} from '@/features/kubernetes-cluster-detail/components/detail/views/knowledgeBankDialogViewModel';
+  type InsightFile,
+  type InsightFileStatus
+} from '@/features/kubernetes-cluster-detail/components/detail/views/targetInsightsDialogViewModel';
 
-interface KnowledgeBankDialogProps {
+interface TargetInsightsDialogProps {
   workspaceId: string;
   targetId: string;
   tool: ControlPlaneTargetToolItem;
@@ -35,7 +35,7 @@ interface KnowledgeBankDialogProps {
   onClose: () => void;
 }
 
-export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
+export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
   workspaceId,
   targetId,
   tool,
@@ -46,7 +46,7 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
   const { t } = useTranslation();
   const titleInputRef = React.useRef<HTMLInputElement>(null);
   const pendingDiscardActionRef = React.useRef<(() => void) | null>(null);
-  const [catalog, setCatalog] = React.useState<ControlPlaneKnowledgeBankCatalog | null>(null);
+  const [catalog, setCatalog] = React.useState<ControlPlaneTargetInsightsCatalog | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [selectedEntryId, setSelectedEntryId] = React.useState<string | null>(null);
@@ -60,7 +60,7 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
     () => catalog?.items.find((entry) => entry.id === selectedEntryId) || null,
     [catalog, selectedEntryId]
   );
-  const files = React.useMemo(() => (catalog?.items || []).map(entryToKnowledgeFile), [catalog]);
+  const files = React.useMemo(() => (catalog?.items || []).map(entryToInsightFile), [catalog]);
   const filteredFiles = React.useMemo(() => {
     const query = fileSearch.trim().toLowerCase();
     if (!query) return files;
@@ -68,10 +68,10 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
   }, [fileSearch, files]);
   const filesByStatus = React.useMemo(() => Object.fromEntries(
     statusOrder.map((status) => [status, filteredFiles.filter((file) => file.status === status)])
-  ) as Record<KnowledgeFileStatus, KnowledgeFile[]>, [filteredFiles]);
+  ) as Record<InsightFileStatus, InsightFile[]>, [filteredFiles]);
   const hasOpenDraft = Boolean(selectedEntry || creatingNewFile);
   const selectedFileName = selectedEntry
-    ? buildKnowledgeFilePath(selectedEntry).split('/').pop() || 'knowledge-file.md'
+    ? buildInsightFilePath(selectedEntry).split('/').pop() || 'insight-file.md'
     : `${slugifyTitle(draft.title) || 'new-file'}.md`;
   const selectedStatus = selectedEntry?.status || 'active';
   const draftDirty = hasOpenDraft && hasDraftChanges(selectedEntry, draft);
@@ -107,14 +107,14 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
     setLoading(true);
     setError('');
     try {
-      const entries = await controlPlaneApi.listKnowledgeBankEntries(workspaceId, targetId, { limit: 100 });
+      const entries = await controlPlaneApi.listTargetInsightsEntries(workspaceId, targetId, { limit: 100 });
       setCatalog(entries);
       const first = entries.items[0] || null;
       setSelectedEntryId(first?.id || null);
       setCreatingNewFile(false);
       setDraft(draftFromEntry(first));
     } catch (err) {
-      setError(formatError(err, t('tools.knowledgeBank.loadFailed')));
+      setError(formatError(err, t('tools.targetInsights.loadFailed')));
     } finally {
       setLoading(false);
     }
@@ -128,7 +128,7 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
     if (creatingNewFile) titleInputRef.current?.focus();
   }, [creatingNewFile]);
 
-  const selectFile = (file: KnowledgeFile) => {
+  const selectFile = (file: InsightFile) => {
     if (file.entry.id === selectedEntryId && !creatingNewFile) return;
     requestDiscard(() => {
       setSelectedEntryId(file.entry.id);
@@ -158,21 +158,21 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
     setError('');
     try {
       const saved = selectedEntry
-        ? await controlPlaneApi.updateKnowledgeBankEntry(workspaceId, targetId, selectedEntry.id, {
+        ? await controlPlaneApi.updateTargetInsightsEntry(workspaceId, targetId, selectedEntry.id, {
             ...(title !== selectedEntry.title ? { title } : {}),
             ...(draft.bodyMarkdown !== selectedEntry.bodyMarkdown ? { bodyMarkdown: draft.bodyMarkdown } : {})
           })
-        : await controlPlaneApi.createKnowledgeBankEntry(workspaceId, targetId, {
+        : await controlPlaneApi.createTargetInsightsEntry(workspaceId, targetId, {
             title,
             status: 'active',
             bodyMarkdown: draft.bodyMarkdown
-          } satisfies KnowledgeBankEntryInput);
+          } satisfies TargetInsightsEntryInput);
       setCatalog((current) => applySavedEntryToCatalog(current, saved));
       setSelectedEntryId(saved.id);
       setCreatingNewFile(false);
       setDraft(draftFromEntry(saved));
     } catch (err) {
-      setError(formatError(err, t('tools.knowledgeBank.saveFileFailed')));
+      setError(formatError(err, t('tools.targetInsights.saveFileFailed')));
     } finally {
       setFileSaving(false);
     }
@@ -184,18 +184,18 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
     setError('');
     try {
       const saved = action === 'archive'
-        ? await controlPlaneApi.archiveKnowledgeBankEntry(workspaceId, targetId, selectedEntry.id)
-        : await controlPlaneApi.promoteKnowledgeBankEntry(workspaceId, targetId, selectedEntry.id);
+        ? await controlPlaneApi.archiveTargetInsightsEntry(workspaceId, targetId, selectedEntry.id)
+        : await controlPlaneApi.promoteTargetInsightsEntry(workspaceId, targetId, selectedEntry.id);
       setCatalog((current) => applySavedEntryToCatalog(current, saved));
       setSelectedEntryId(saved.id);
       setCreatingNewFile(false);
       setDraft(draftFromEntry(saved));
     } catch (err) {
       const key = action === 'archive'
-        ? 'tools.knowledgeBank.archiveFileFailed'
+        ? 'tools.targetInsights.archiveFileFailed'
         : action === 'restore'
-          ? 'tools.knowledgeBank.restoreFileFailed'
-          : 'tools.knowledgeBank.promoteFileFailed';
+          ? 'tools.targetInsights.restoreFileFailed'
+          : 'tools.targetInsights.promoteFileFailed';
       setError(formatError(err, t(key)));
     } finally {
       setFileSaving(false);
@@ -213,47 +213,47 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
     <aside className="flex min-h-0 flex-col border-b border-ui-border bg-ui-bg lg:border-b-0 lg:border-r">
       <div className="border-b border-ui-border px-4 py-3">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="type-row-title">{t('tools.knowledgeBank.files')}</h4>
+          <h4 className="type-row-title">{t('tools.targetInsights.files')}</h4>
           <button
             type="button"
             className="rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
             disabled={!canMutateFile}
             onClick={startNewFile}
-            title={t('tools.knowledgeBank.newFile')}
-            aria-label={t('tools.knowledgeBank.newFile')}
+            title={t('tools.targetInsights.newFile')}
+            aria-label={t('tools.targetInsights.newFile')}
           >
             <FilePlus2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
       <div className="border-b border-ui-border p-3">
-        <label htmlFor="knowledge-bank-file-search" className="sr-only">{t('tools.knowledgeBank.searchFiles')}</label>
+        <label htmlFor="target-insights-file-search" className="sr-only">{t('tools.targetInsights.searchFiles')}</label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
           <input
-            id="knowledge-bank-file-search"
+            id="target-insights-file-search"
             type="text"
             value={fileSearch}
             onChange={(event) => setFileSearch(event.target.value)}
-            placeholder={t('tools.knowledgeBank.searchFiles')}
+            placeholder={t('tools.targetInsights.searchFiles')}
             className="w-full rounded-md border border-ui-border bg-ui-surface py-2 pl-9 pr-3 text-sm text-ui-text outline-none transition-colors placeholder:text-ui-text-muted/60 focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
           />
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 custom-scrollbar">
         {filteredFiles.length === 0 && hasSearchQuery && !creatingNewFile ? (
-          <p className="type-caption rounded-md px-2 py-3 text-ui-text-muted">{t('tools.knowledgeBank.noFileMatches')}</p>
+          <p className="type-caption rounded-md px-2 py-3 text-ui-text-muted">{t('tools.targetInsights.noFileMatches')}</p>
         ) : (
           <div className="space-y-3">
             {statusOrder.map((status) => {
               const statusFiles = filesByStatus[status];
               return (
-                <div key={status} data-knowledge-bank-folder={`knowledge-bank/${status}`}>
-                  <Tooltip content={t(`tools.knowledgeBank.folderHelp.${status}`)} side="right" className="mb-1">
+                <div key={status} data-target-insights-folder={`insights/${status}`}>
+                  <Tooltip content={t(`tools.targetInsights.folderHelp.${status}`)} side="right" className="mb-1">
                     <div className="flex items-center gap-1.5 px-1 text-xs font-semibold text-ui-text">
                       <ChevronDown className="h-3.5 w-3.5" />
                       <Folder className="h-3.5 w-3.5" />
-                      <span>{t(`tools.knowledgeBank.folder.${status}`)}</span>
+                      <span>{t(`tools.targetInsights.folder.${status}`)}</span>
                     </div>
                   </Tooltip>
                   <div className="space-y-1">
@@ -279,7 +279,7 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
                         <span className="truncate">{file.fileName}</span>
                       </button>
                     )) : status !== 'active' || !creatingNewFile ? (
-                      <p className="type-caption py-1.5 pl-7 pr-2 text-ui-text-muted/75">{t('tools.knowledgeBank.emptyFolder')}</p>
+                      <p className="type-caption py-1.5 pl-7 pr-2 text-ui-text-muted/75">{t('tools.targetInsights.emptyFolder')}</p>
                     ) : null}
                   </div>
                 </div>
@@ -298,11 +298,11 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
         <>
           <Button variant="secondary" size="sm" onClick={() => updateFileStatus('promote')} disabled={!canMutateFile}>
             <CheckCircle2 className="h-4 w-4" />
-            {t('tools.knowledgeBank.promote')}
+            {t('tools.targetInsights.promote')}
           </Button>
           <Button variant="tertiary" size="sm" onClick={() => updateFileStatus('archive')} disabled={!canMutateFile}>
             <Archive className="h-4 w-4" />
-            {t('tools.knowledgeBank.archive')}
+            {t('tools.targetInsights.archive')}
           </Button>
         </>
       );
@@ -311,14 +311,14 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
       return (
         <Button variant="secondary" size="sm" onClick={() => updateFileStatus('restore')} disabled={!canMutateFile}>
           <CheckCircle2 className="h-4 w-4" />
-          {t('tools.knowledgeBank.restore')}
+          {t('tools.targetInsights.restore')}
         </Button>
       );
     }
     return (
       <Button variant="tertiary" size="sm" onClick={() => updateFileStatus('archive')} disabled={!canMutateFile}>
         <Archive className="h-4 w-4" />
-        {t('tools.knowledgeBank.archive')}
+        {t('tools.targetInsights.archive')}
       </Button>
     );
   };
@@ -326,14 +326,14 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
   return (
     <>
       <Dialog
-        titleId="knowledge-bank-dialog-title"
+        titleId="target-insights-dialog-title"
         closeDisabled={fileSaving || savingTool || showDiscardDialog}
         onClose={guardedClose}
         className="flex max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl"
       >
       <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
         <div className="min-w-0">
-          <h3 id="knowledge-bank-dialog-title" className="type-panel-title">{t('tools.knowledgeBank.title')}</h3>
+          <h3 id="target-insights-dialog-title" className="type-panel-title">{t('tools.targetInsights.title')}</h3>
           <p className="type-caption mt-1 text-ui-text-muted">{tool.description}</p>
         </div>
         <button
@@ -341,7 +341,7 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
           onClick={guardedClose}
           disabled={fileSaving || savingTool}
           className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
-          aria-label={t('tools.knowledgeBank.close')}
+          aria-label={t('tools.targetInsights.close')}
         >
           <X className="h-4 w-4" />
         </button>
@@ -350,7 +350,7 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
       <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">
         {loading ? (
           <div className="flex min-h-[34rem] items-center justify-center">
-            <InlineLoadingIndicator label={t('tools.knowledgeBank.loading')} />
+            <InlineLoadingIndicator label={t('tools.targetInsights.loading')} />
           </div>
         ) : (
           <div className="grid min-h-[34rem] gap-0 overflow-hidden rounded-lg border border-ui-border bg-ui-bg lg:grid-cols-[17rem_minmax(0,1fr)]">
@@ -360,8 +360,8 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
                 <div className="min-w-0">
                   <p className="type-label truncate text-ui-text">
                     {hasOpenDraft
-                      ? `${selectedFileName} (${t(`tools.knowledgeBank.status.${selectedStatus}`)})`
-                      : t('tools.knowledgeBank.files')}
+                      ? `${selectedFileName} (${t(`tools.targetInsights.status.${selectedStatus}`)})`
+                      : t('tools.targetInsights.files')}
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-end gap-2">{renderStatusActions()}</div>
@@ -374,14 +374,14 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
               {hasOpenDraft ? (
                 <div className="min-h-0 flex-1 space-y-3 p-4">
                   <label className="block">
-                    <span className="type-label">{t('tools.knowledgeBank.fields.title')}</span>
+                    <span className="type-label">{t('tools.targetInsights.fields.title')}</span>
                     <input
                       ref={titleInputRef}
                       className="mt-2 w-full rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-70"
                       value={draft.title}
                       readOnly={!canEdit}
                       onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
-                      placeholder={t('tools.knowledgeBank.titlePlaceholder')}
+                      placeholder={t('tools.targetInsights.titlePlaceholder')}
                     />
                   </label>
                   <textarea
@@ -390,18 +390,18 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
                     onChange={(event) => setDraft((current) => ({ ...current, bodyMarkdown: event.target.value }))}
                     className="min-h-[22rem] w-full flex-1 resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono text-sm leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
                     spellCheck={false}
-                    placeholder={t('tools.knowledgeBank.bodyPlaceholder')}
+                    placeholder={t('tools.targetInsights.bodyPlaceholder')}
                   />
                 </div>
               ) : (
                 <div className="flex min-h-[28rem] flex-1 items-center justify-center px-6 text-center">
                   <div className="max-w-sm">
-                    <p className="type-row-title">{t('tools.knowledgeBank.noFiles')}</p>
-                    <p className="type-caption mt-2 text-ui-text-muted">{t('tools.knowledgeBank.noFilesHelp')}</p>
+                    <p className="type-row-title">{t('tools.targetInsights.noFiles')}</p>
+                    <p className="type-caption mt-2 text-ui-text-muted">{t('tools.targetInsights.noFilesHelp')}</p>
                     {canEdit && (
                       <Button variant="secondary" size="sm" className="mt-4" onClick={startNewFile}>
                         <FilePlus2 className="h-4 w-4" />
-                        {t('tools.knowledgeBank.newFile')}
+                        {t('tools.targetInsights.newFile')}
                       </Button>
                     )}
                   </div>
@@ -422,11 +422,11 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
           </>
         ) : (
           <>
-            <Button variant="secondary" size="sm" onClick={resetDraft} disabled={!draftDirty || fileSaving || savingTool}>{t('tools.knowledgeBank.resetChanges')}</Button>
+            <Button variant="secondary" size="sm" onClick={resetDraft} disabled={!draftDirty || fileSaving || savingTool}>{t('tools.targetInsights.resetChanges')}</Button>
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={fileSaving || savingTool}>{t('tools.knowledgeBank.cancel')}</Button>
+              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={fileSaving || savingTool}>{t('tools.targetInsights.cancel')}</Button>
               <Button variant="accent" size="sm" onClick={() => void saveFile()} disabled={!hasOpenDraft || fileSaving || !draftDirty || !draft.title.trim()}>
-                {fileSaving ? t('common.saving') : t('tools.knowledgeBank.saveChanges')}
+                {fileSaving ? t('common.saving') : t('tools.targetInsights.saveChanges')}
               </Button>
             </div>
           </>
@@ -435,10 +435,10 @@ export const KnowledgeBankDialog: React.FC<KnowledgeBankDialogProps> = ({
       </Dialog>
       {showDiscardDialog && (
         <UnsavedChangesDialog
-          title={t('tools.knowledgeBank.discardTitle')}
-          body={t('tools.knowledgeBank.discardBody')}
-          cancelLabel={t('tools.knowledgeBank.keepEditing')}
-          discardLabel={t('tools.knowledgeBank.discardChanges')}
+          title={t('tools.targetInsights.discardTitle')}
+          body={t('tools.targetInsights.discardBody')}
+          cancelLabel={t('tools.targetInsights.keepEditing')}
+          discardLabel={t('tools.targetInsights.discardChanges')}
           onCancel={cancelDiscard}
           onDiscard={confirmDiscard}
         />

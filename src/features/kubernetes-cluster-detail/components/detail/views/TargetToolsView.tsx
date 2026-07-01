@@ -14,10 +14,10 @@ import type {
   TargetType
 } from '@/services/controlPlaneApi';
 import type { KubernetesCluster } from '@/types';
-import { KnowledgeBankActivityDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankActivityDialog';
-import { KnowledgeBankDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankDialog';
-import { KnowledgeBankResetDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankResetDialog';
-import { KnowledgeBankSettingsDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/KnowledgeBankSettingsDialog';
+import { TargetInsightsActivityDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetInsightsActivityDialog';
+import { TargetInsightsDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetInsightsDialog';
+import { TargetInsightsResetDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetInsightsResetDialog';
+import { TargetInsightsSettingsDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetInsightsSettingsDialog';
 import { TargetToolRow } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetToolRow';
 import { formatError } from '@/features/kubernetes-cluster-detail/components/detail/views/targetSkillsViewModel';
 
@@ -37,7 +37,7 @@ interface ToolDraft {
   blockedDomainsText: string;
 }
 
-type KnowledgeBankAction = 'files' | 'settings' | 'activity' | 'reset';
+type TargetInsightsAction = 'files' | 'settings' | 'activity' | 'reset';
 
 const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
 const toolDomainTextareaClassName = formTextareaClassName('mt-2');
@@ -118,7 +118,7 @@ function summarizeDomainFilters(tool: ControlPlaneTargetToolItem, t: (key: strin
 }
 
 function summarizeToolConfig(tool: ControlPlaneTargetToolItem, t: (key: string, options?: Record<string, unknown>) => string): string {
-  if (tool.id !== 'knowledge_bank') return summarizeDomainFilters(tool, t);
+  if (tool.id !== 'target_insights') return summarizeDomainFilters(tool, t);
   if (tool.readiness && !tool.readiness.learningAvailable) return 'Learning paused';
   const maxSnippets = tool.config.retrieval?.maxSnippetsPerRetrieval || 4;
   return `Retrieves up to ${maxSnippets} snippets`;
@@ -156,7 +156,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   const [catalogLoading, setCatalogLoading] = React.useState(false);
   const [catalogError, setCatalogError] = React.useState<string | null>(null);
   const [editingTool, setEditingTool] = React.useState<ControlPlaneTargetToolItem | null>(null);
-  const [knowledgeBankAction, setKnowledgeBankAction] = React.useState<KnowledgeBankAction | null>(null);
+  const [targetInsightsAction, setTargetInsightsAction] = React.useState<TargetInsightsAction | null>(null);
   const [draft, setDraft] = React.useState<ToolDraft | null>(null);
   const [validationError, setValidationError] = React.useState<string | null>(null);
   const [savingError, setSavingError] = React.useState<string | null>(null);
@@ -229,16 +229,16 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
 
   const openConfigure = (tool: ControlPlaneTargetToolItem) => {
     setEditingTool(tool);
-    setDraft(tool.id === 'knowledge_bank' ? null : draftFromTool(tool));
-    setKnowledgeBankAction(tool.id === 'knowledge_bank' ? 'files' : null);
+    setDraft(tool.id === 'target_insights' ? null : draftFromTool(tool));
+    setTargetInsightsAction(tool.id === 'target_insights' ? 'files' : null);
     setValidationError(null);
     setSavingError(null);
   };
 
-  const exportKnowledgeBank = async (tool: ControlPlaneTargetToolItem) => {
+  const exportTargetInsights = async (tool: ControlPlaneTargetToolItem) => {
     setCatalogError(null);
     try {
-      const text = await controlPlaneApi.exportKnowledgeBank(activeTarget.workspaceId, activeTarget.targetId);
+      const text = await controlPlaneApi.exportTargetInsights(activeTarget.workspaceId, activeTarget.targetId);
       const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -249,18 +249,18 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch (error) {
-      setCatalogError(formatError(error, t('tools.knowledgeBank.exportFailed')));
+      setCatalogError(formatError(error, t('tools.targetInsights.exportFailed')));
     }
   };
 
-  const openKnowledgeBankAction = (tool: ControlPlaneTargetToolItem, action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => {
+  const openTargetInsightsAction = (tool: ControlPlaneTargetToolItem, action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => {
     if (action === 'export') {
-      void exportKnowledgeBank(tool);
+      void exportTargetInsights(tool);
       return;
     }
     setEditingTool(tool);
     setDraft(null);
-    setKnowledgeBankAction(action);
+    setTargetInsightsAction(action);
     setValidationError(null);
     setSavingError(null);
   };
@@ -268,7 +268,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   const closeConfigure = () => {
     if (saving) return;
     setEditingTool(null);
-    setKnowledgeBankAction(null);
+    setTargetInsightsAction(null);
     setDraft(null);
     setValidationError(null);
     setSavingError(null);
@@ -485,7 +485,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                       canEditTools={canEditTools}
                       pendingToolId={pendingToolId}
                       onConfigure={openConfigure}
-                      onKnowledgeBankAction={openKnowledgeBankAction}
+                      onTargetInsightsAction={openTargetInsightsAction}
                       onToggleTool={(nextTool, enabled) => void toggleTool(nextTool, enabled)}
                     />
                   )) : (
@@ -505,12 +505,12 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         </>
       ) : null}
 
-      {editingTool?.id === 'knowledge_bank' && knowledgeBankAction === 'files' && (
-        <KnowledgeBankDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} canEdit={canEditSelectedTool} savingTool={saving} onClose={closeConfigure} />
+      {editingTool?.id === 'target_insights' && targetInsightsAction === 'files' && (
+        <TargetInsightsDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} canEdit={canEditSelectedTool} savingTool={saving} onClose={closeConfigure} />
       )}
 
-      {editingTool?.id === 'knowledge_bank' && knowledgeBankAction === 'settings' && (
-        <KnowledgeBankSettingsDialog
+      {editingTool?.id === 'target_insights' && targetInsightsAction === 'settings' && (
+        <TargetInsightsSettingsDialog
           workspaceId={activeTarget.workspaceId}
           targetId={activeTarget.targetId}
           tool={editingTool}
@@ -527,15 +527,15 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         />
       )}
 
-      {editingTool?.id === 'knowledge_bank' && knowledgeBankAction === 'activity' && (
-        <KnowledgeBankActivityDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} onClose={closeConfigure} />
+      {editingTool?.id === 'target_insights' && targetInsightsAction === 'activity' && (
+        <TargetInsightsActivityDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} onClose={closeConfigure} />
       )}
 
-      {editingTool?.id === 'knowledge_bank' && knowledgeBankAction === 'reset' && (
-        <KnowledgeBankResetDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} canEdit={canEditSelectedTool} onClose={closeConfigure} />
+      {editingTool?.id === 'target_insights' && targetInsightsAction === 'reset' && (
+        <TargetInsightsResetDialog workspaceId={activeTarget.workspaceId} targetId={activeTarget.targetId} tool={editingTool} canEdit={canEditSelectedTool} onClose={closeConfigure} />
       )}
 
-      {editingTool && editingTool.id !== 'knowledge_bank' && draft && (
+      {editingTool && editingTool.id !== 'target_insights' && draft && (
         <Dialog
           className="w-full max-w-2xl rounded-2xl border border-ui-border bg-ui-surface p-0 shadow-2xl"
           titleId="target-tool-config-title"

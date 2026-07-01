@@ -212,16 +212,16 @@ describe('chatRunTrace helpers', () => {
     ]);
   });
 
-  it('renders Knowledge Bank retrieval outcomes in run details', () => {
+  it('renders Insights retrieval outcomes in run details', () => {
     const hitTrace = buildTraceFromRunEvents(createRun({ status: 'running' }), [
-      createEvent('knowledge_context_retrieved', 1, {
+      createEvent('target_insights_context_retrieved', 1, {
         retrieval_status: 'hit',
         snippet_count: 1,
         snippets: [{ title: 'CrashLoopBackOff restart pattern' }]
       })
     ]);
     const missTrace = buildTraceFromRunEvents(createRun({ status: 'running' }), [
-      createEvent('knowledge_context_retrieved', 1, {
+      createEvent('target_insights_context_retrieved', 1, {
         retrieval_status: 'miss',
         snippet_count: 0,
         snippets: []
@@ -229,14 +229,14 @@ describe('chatRunTrace helpers', () => {
     ]);
 
     expect(hitTrace.steps.at(-1)).toMatchObject({
-      label: 'Knowledge Bank searched',
+      label: 'Insights searched',
       status: 'success',
       detail: 'Matched:\nCrashLoopBackOff restart pattern'
     });
     expect(missTrace.steps.at(-1)).toMatchObject({
-      label: 'Knowledge Bank searched',
+      label: 'Insights searched',
       status: 'info',
-      detail: 'No matching active Knowledge Bank files.'
+      detail: 'No matching active Insights files.'
     });
   });
 

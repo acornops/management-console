@@ -117,7 +117,7 @@ function applySkillContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent
   );
 }
 
-function applyKnowledgeContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent): LiveRunTrace {
+function applyTargetInsightsContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent): LiveRunTrace {
   const snippetCount = typeof event.payload?.snippet_count === 'number' ? event.payload.snippet_count : 0;
   const retrievalStatus = typeof event.payload?.retrieval_status === 'string'
     ? event.payload.retrieval_status
@@ -131,30 +131,30 @@ function applyKnowledgeContextEvent(trace: LiveRunTrace, event: ControlPlaneRunE
     if (retrievalStatus === 'hit') {
       return titles.length > 0
         ? `Matched:\n${titles.join('\n')}`
-        : `${snippetCount} active Knowledge Bank files matched this run.`;
+        : `${snippetCount} active Insights files matched this run.`;
     }
     if (retrievalStatus === 'miss') {
-      return 'No matching active Knowledge Bank files.';
+      return 'No matching active Insights files.';
     }
     if (retrievalStatus === 'disabled') {
-      return 'Knowledge Bank is disabled in this environment.';
+      return 'Insights is disabled in this environment.';
     }
     if (retrievalStatus === 'skipped') {
-      return 'Knowledge Bank is turned off for this target.';
+      return 'Insights is turned off for this target.';
     }
     if (retrievalStatus === 'error') {
-      return 'Knowledge Bank retrieval failed; the run continued without snippets.';
+      return 'Insights retrieval failed; the run continued without snippets.';
     }
     return snippetCount > 0
-      ? `${snippetCount} active Knowledge Bank files matched this run.`
-      : 'No matching active Knowledge Bank files.';
+      ? `${snippetCount} active Insights files matched this run.`
+      : 'No matching active Insights files.';
   })();
   const status = retrievalStatus === 'hit'
     ? 'success'
     : retrievalStatus === 'error' ? 'error' : 'info';
   return appendRunTraceStep(
     { ...trace, status: trace.status === 'connecting' ? 'running' : trace.status },
-    'Knowledge Bank searched',
+    'Insights searched',
     status,
     detail
   );
@@ -222,8 +222,8 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       trace = appendReasoningUnavailable(trace, reason, provider, model);
     } else if (event.type === 'skill_catalog_available') {
       trace = { ...trace, status: 'running' };
-    } else if (event.type === 'knowledge_context_retrieved') {
-      trace = applyKnowledgeContextEvent(trace, event);
+    } else if (event.type === 'target_insights_context_retrieved') {
+      trace = applyTargetInsightsContextEvent(trace, event);
     } else if (event.type === 'tool_call_started') {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
@@ -409,8 +409,8 @@ export function createRunEventHandler(args: {
       return;
     }
 
-    if (event.type === 'knowledge_context_retrieved') {
-      updateTrace(applyKnowledgeContextEvent(trace, event));
+    if (event.type === 'target_insights_context_retrieved') {
+      updateTrace(applyTargetInsightsContextEvent(trace, event));
       return;
     }
 
