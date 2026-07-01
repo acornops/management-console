@@ -5,6 +5,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import { TraceFooter } from '@/features/kubernetes-cluster-detail/components/detail/TraceFooter';
 import { ApprovalCheckpoint } from '@/features/kubernetes-cluster-detail/components/detail/views/ApprovalCheckpoint';
 import { MessageActions } from '@/features/kubernetes-cluster-detail/components/detail/views/MessageActions';
+import { ThinkingAcorn } from '@/features/kubernetes-cluster-detail/components/detail/views/ThinkingAcorn';
 import { markdownRemarkPlugins } from '@/features/kubernetes-cluster-detail/lib/markdown';
 import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
 import type { PendingApproval } from '@/types';
@@ -77,9 +78,10 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   }, [inlineWorkingText]);
 
   const workingLine = inlineWorkingText ? (
-    <div className={isInFlightPlaceholder ? `flex min-h-8 items-center ${assistantColumnClass}` : `mt-4 border-t border-ui-border/80 pt-2 ${assistantColumnClass}`}>
+    <div className={isInFlightPlaceholder ? `flex min-h-10 items-center gap-2 ${assistantColumnClass}` : `mt-4 flex min-h-10 items-center gap-2 border-t border-ui-border/80 pt-2 ${assistantColumnClass}`}>
+      <ThinkingAcorn reducedMotion={shouldReduceMotion === true} />
       <p
-        className={`type-caption relative block truncate text-ui-text-muted ${
+        className={`type-caption relative block min-w-0 flex-1 truncate text-ui-text-muted ${
           shouldShowWorkingShimmer ? 'reasoning-summary-active' : ''
         }`}
         title={inlineWorkingText}

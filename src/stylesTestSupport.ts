@@ -49,6 +49,9 @@ export const chatView = [
 export const assistantTurn = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn.tsx'
 );
+export const thinkingAcorn = readSource(
+  'src/features/kubernetes-cluster-detail/components/detail/views/ThinkingAcorn.tsx'
+);
 export const messageActions = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/MessageActions.tsx'
 );

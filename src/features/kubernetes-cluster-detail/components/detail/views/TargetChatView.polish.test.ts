@@ -432,11 +432,11 @@ describe('target chat polish contracts', () => {
     expect(assistantTurn).toContain(".replace(/\\*\\*(.*?)\\*\\*/g, '$1')");
     expect(assistantTurn).toContain('const workingLine = inlineWorkingText ? (');
     expect(assistantTurn).toContain("const assistantColumnClass = 'w-full max-w-[72ch]';");
-    expect(assistantTurn).toContain("isInFlightPlaceholder ? `flex min-h-8 items-center ${assistantColumnClass}` : `mt-4 border-t border-ui-border/80 pt-2 ${assistantColumnClass}`");
+    expect(assistantTurn).toContain("isInFlightPlaceholder ? `flex min-h-10 items-center gap-2 ${assistantColumnClass}` : `mt-4 flex min-h-10 items-center gap-2 border-t border-ui-border/80 pt-2 ${assistantColumnClass}`");
     expect(assistantTurn).toContain('const copyText = content.trim() || inlineWorkingText;');
     expect(assistantTurn).not.toContain("t('chat.reasoningSummary')");
     expect(assistantTurn).not.toContain('type-micro-label mb-2 text-ui-text-muted');
-    expect(assistantTurn).toContain('type-caption relative block truncate text-ui-text-muted');
+    expect(assistantTurn).toContain('type-caption relative block min-w-0 flex-1 truncate text-ui-text-muted');
     expect(assistantTurn).toContain("shouldShowWorkingShimmer ? 'reasoning-summary-active' : ''");
     expect(assistantTurn).toContain('<span>{stableWorkingText}</span>');
     expect(assistantTurn).toContain('title={inlineWorkingText}');

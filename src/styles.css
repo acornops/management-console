@@ -158,6 +158,23 @@ body {
   will-change: background-position;
 }
 
+.thinking-acorn {
+  display: inline-flex;
+  width: 2.4rem;
+  min-width: 2.4rem;
+  height: 1.7rem;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.thinking-acorn > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .login-evidence-glow {
   background:
     linear-gradient(90deg, transparent 0 52%, rgb(var(--surface-rgb) / 0.72) 88%),
