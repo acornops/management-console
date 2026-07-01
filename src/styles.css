@@ -160,12 +160,14 @@ body {
 
 .thinking-acorn {
   display: inline-flex;
-  width: 2.4rem;
-  min-width: 2.4rem;
-  height: 1.7rem;
+  width: 1.4rem;
+  min-width: 1.4rem;
+  height: 1rem;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  color: rgb(var(--text-muted-rgb) / 0.9);
+  opacity: 0.5;
   pointer-events: none;
 }
 

@@ -4,8 +4,9 @@ import { assistantTurn, styles, thinkingAcorn } from '@/stylesTestSupport';
 describe('thinking acorn polish contract', () => {
   it('renders the supplied rolling acorn as a compact decorative thinking indicator', () => {
     expect(styles).toContain('.thinking-acorn {');
-    expect(styles).toContain('width: 2.4rem;');
-    expect(styles).toContain('height: 1.7rem;');
+    expect(styles).toContain('width: 1.4rem;');
+    expect(styles).toContain('height: 1rem;');
+    expect(styles).toContain('opacity: 0.5;');
     expect(styles).toContain('.thinking-acorn > svg');
     expect(styles).not.toContain('@keyframes thinking-squirrel-walk');
     expect(styles).not.toContain('@keyframes thinking-acorn-roll');
@@ -16,6 +17,8 @@ describe('thinking acorn polish contract', () => {
     expect(thinkingAcorn).toContain('<title\\b[^>]*>[\\s\\S]*?<\\/title>');
     expect(thinkingAcorn).toContain('<desc\\b[^>]*>[\\s\\S]*?<\\/desc>');
     expect(thinkingAcorn).toContain(".replace(/\\sid=([\"'])[^\"']*\\1/g, '')");
+    expect(thinkingAcorn).toContain('const getMutedAcornFillOpacity = (hexColor: string): string => {');
+    expect(thinkingAcorn).toContain('fill="currentColor" fill-opacity="${getMutedAcornFillOpacity(fillColor)}"');
     expect(thinkingAcorn).toContain('focusable="false"');
     expect(thinkingAcorn).toContain('const staticAcornSvgMarkup = animatedAcornSvgMarkup.replace');
     expect(thinkingAcorn).toContain('/\\s*<animate(?:Transform)?\\b[^>]*\\/>/g');

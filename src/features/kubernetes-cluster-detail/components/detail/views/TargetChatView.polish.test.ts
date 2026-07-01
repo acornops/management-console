@@ -428,6 +428,8 @@ describe('target chat polish contracts', () => {
     expect(assistantTurn).toContain(': { duration: 0.24, ease: [0.16, 1, 0.3, 1] };');
     expect(assistantTurn).toContain('const shouldShowWorkingShimmer = Boolean(inlineWorkingText && isAssistantWorking && shouldReduceMotion !== true);');
     expect(assistantTurn).toContain('const workingShimmerDurationSeconds = activeReasoningSummary ? 5 : 3.8;');
+    expect(styles).toContain('color: rgb(var(--text-muted-rgb) / 0.9);');
+    expect(styles).toContain('rgb(var(--brand-orange-bright-rgb) / 0.52) 48%');
     expect(assistantTurn).toContain('previousWorkingTextRef.current = inlineWorkingText;');
     expect(assistantTurn).toContain(".replace(/\\*\\*(.*?)\\*\\*/g, '$1')");
     expect(assistantTurn).toContain('const workingLine = inlineWorkingText ? (');
