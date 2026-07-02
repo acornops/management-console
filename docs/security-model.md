@@ -3,7 +3,7 @@
 ## Trust Boundaries
 
 - The browser authenticates to the control plane with cookies, not embedded service tokens.
-- The management console must not call execution-engine, llm-gateway, or k8s-agent directly.
+- The management console must not call execution-engine, llm-gateway, or agentk directly.
 - Tool and MCP mutability depends on control-plane role and policy decisions, not client-side guesses.
 
 ## Secrets

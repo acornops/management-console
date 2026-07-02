@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { updateInstallCommandNamespaceScope } from './AddClusterModal';
 
 const baseCommand = [
-  "helm upgrade --install 'acornops-agent' 'oci://ghcr.io/acornops/charts/acornops-k8s-agent'",
+  "helm upgrade --install 'acornops-agent' 'oci://ghcr.io/acornops/charts/acornops-agentk'",
   "  --namespace 'acornops'",
   '  --create-namespace',
   "  --set-string clusterName='payments-prod'",

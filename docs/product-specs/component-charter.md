@@ -9,7 +9,7 @@
 
 ## Non-Goals
 
-- Direct calls to execution-engine, llm-gateway, k8s-agent, or vm-agent
+- Direct calls to execution-engine, llm-gateway, agentk, or agentv
 - Server-side auth or tenancy decisions
 - Server-side workflow permission compilation or execution
 - Owning the source of truth for target state

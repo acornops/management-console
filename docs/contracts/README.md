@@ -1,6 +1,6 @@
 # Management Console Contracts
 
-This repo has one direct runtime dependency: the control plane. The management console must not call execution-engine, llm-gateway, or k8s-agent directly.
+This repo has one direct runtime dependency: the control plane. The management console must not call execution-engine, llm-gateway, or agentk directly.
 Machine-readable contract data for this repo lives in `docs/contracts/manifest.json` and is checked alongside this document.
 
 ## Full Platform Matrix
@@ -8,7 +8,7 @@ Machine-readable contract data for this repo lives in `docs/contracts/manifest.j
 - Management console -> control plane
 - Control plane <-> execution-engine
 - Control plane <-> llm-gateway
-- Control plane <-> k8s-agent
+- Control plane <-> agentk
 - Execution-engine -> llm-gateway
 
 ## Platform Dependency Summary
