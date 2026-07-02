@@ -8,64 +8,12 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ProjectMember, Workspace } from '@/types';
 import { createDefaultAgentDefinitions, type AgentDefinition } from '@/pages/agents/agentModel';
 import { mapApiAgent } from '@/pages/WorkspaceAgentsPage.helpers';
-import {
-  createDefaultWorkflowDefinitions,
-  findWorkflowByRouteTarget,
-  filterWorkflowDefinitions,
-  getWorkflowLaunchBlocker,
-  getWorkflowRouteQuery,
-  getWorkflowRouteSelectionTarget,
-  getWorkflowTabLabel,
-  type WorkflowDefinition,
-  type WorkflowRunMessage,
-  type WorkflowTab
-} from '@/pages/workflows/workflowModel';
-import {
-  listWorkflowOptions,
-  listWorkflowRunEvents,
-  listWorkflowRunApprovals,
-  listWorkflowSessions,
-  listWorkspaceWorkflows,
-  type WorkflowApiDefinition,
-  type WorkflowOptionsCatalog,
-  type WorkflowRunApproval,
-  type WorkflowRunEvent
-} from '@/services/control-plane/workflowApi';
+import { createDefaultWorkflowDefinitions, findWorkflowByRouteTarget, filterWorkflowDefinitions, getWorkflowLaunchBlocker, getWorkflowRouteQuery, getWorkflowRouteSelectionTarget, getWorkflowTabLabel, type WorkflowDefinition, type WorkflowRunMessage, type WorkflowTab } from '@/pages/workflows/workflowModel';
+import { listWorkflowOptions, listWorkflowRunEvents, listWorkflowRunApprovals, listWorkflowSessions, listWorkspaceWorkflows, type WorkflowApiDefinition, type WorkflowOptionsCatalog, type WorkflowRunApproval, type WorkflowRunEvent } from '@/services/control-plane/workflowApi';
 import { listWorkspaceAgents } from '@/services/control-plane/agentApi';
-import {
-  ScopeSwitch,
-  agentIdsFromDraft,
-  createAgentSelectionDraft,
-  createFallbackWorkflowOptions,
-  createScopeDraft,
-  createWorkflowDraft,
-  createWorkflowEditDraft,
-  getWorkflowScopeOptionsForAgents,
-  isRunActive,
-  mapApiWorkflowToDefinition,
-  mapWorkflowRunSummary,
-  mergeWorkflowRunsWithLocalDispatches,
-  normalizeWorkflowOptionsCatalog,
-  tabs,
-  uniqueValues,
-  workflowStatusTone,
-  type AgentSelectionDraft,
-  type CreateWorkflowDraft,
-  type ScopeDraft,
-  type WorkflowEditDraft
-} from '@/pages/workflows/workflowPageHelpers';
+import { ScopeSwitch, agentIdsFromDraft, createAgentSelectionDraft, createFallbackWorkflowOptions, createScopeDraft, createWorkflowDraft, createWorkflowEditDraft, getWorkflowScopeOptionsForAgents, isRunActive, mapApiWorkflowToDefinition, mapWorkflowRunSummary, mergeWorkflowRunsWithLocalDispatches, normalizeWorkflowOptionsCatalog, tabs, uniqueValues, workflowStatusTone, type AgentSelectionDraft, type CreateWorkflowDraft, type ScopeDraft, type WorkflowEditDraft } from '@/pages/workflows/workflowPageHelpers';
 import { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
-import {
-  AgentAssignmentList,
-  WorkflowDeleteDialog,
-  WorkflowLibraryList,
-  WorkflowLoadFallbackNotice,
-  WorkflowModeBadge,
-  WorkflowRouteHeader,
-  WorkflowSection,
-  WorkflowTabPanel,
-  workflowTabIcons
-} from '@/pages/WorkspaceWorkflowsPage.components';
+import { AgentAssignmentList, WorkflowDeleteDialog, WorkflowLibraryList, WorkflowLoadFallbackNotice, WorkflowModeBadge, WorkflowRouteHeader, WorkflowSection, WorkflowTabPanel, workflowTabIcons } from '@/pages/WorkspaceWorkflowsPage.components';
 import { WorkflowCreateDrawer, type CreateWorkflowStep } from '@/pages/WorkspaceWorkflowsPage.createDrawer';
 import { WorkflowAgentsPanel, WorkflowCapabilitiesPanel, WorkflowRunsPanel } from '@/pages/WorkspaceWorkflowsPage.panels';
 
