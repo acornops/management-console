@@ -470,39 +470,33 @@ export const zh = {
       installInstructions: '安装命令'
     },
     resources: {
-      hostResources: '主机资源',
       pageDescription: '查看 {{name}} 上报的主机资源清单、服务、进程、网络状态和日志。',
-      description: '查看虚拟机 agent 上报的最新主机资源清单和只读证据。',
-      serviceCount: '{{count}} 个服务',
-      processCount: '{{count}} 个进程',
-      networkCount: '{{count}} 个网络项',
+      search: '搜索资源',
       loadFailed: '加载虚拟机资源清单失败。',
       logsLoadFailed: '加载虚拟机日志失败。',
       loading: '正在加载虚拟机资源清单',
       loadingLogs: '正在加载虚拟机日志',
       noInventory: '此视图没有返回资源清单。',
       noLogs: '此虚拟机没有返回日志。',
+      noSearchResults: '没有虚拟机资源匹配当前搜索。',
       host: '主机',
       name: '名称',
       category: '类别',
       status: '状态',
       detail: '详情',
+      logTime: '时间',
+      logSource: '来源',
+      logMessage: '消息',
       noAdditionalDetail: '没有其他详情',
       inventory: '资源清单',
       item: '条目',
       categories: {
+        label: '虚拟机资源类别',
         all: '全部资源清单',
         services: '服务',
         processes: '进程',
         network: '网络',
         logs: '日志'
-      },
-      categoryDescriptions: {
-        all: '最新服务、进程和网络资源清单。',
-        services: '虚拟机 agent 上报的 systemd 单元。',
-        processes: '最新快照中的运行时进程资源清单。',
-        network: '接口、监听器和主机连接数据。',
-        logs: '近期只读 journal 和 syslog 摘录。'
       }
     }
   },
@@ -1297,47 +1291,27 @@ export const zh = {
     emptyStorage: '没有匹配当前筛选条件的存储资源。',
     emptyCluster: '没有匹配当前筛选条件的集群资源。',
     emptyUnhealthyPods: '没有匹配当前筛选条件的异常 Pod。',
+    emptyFiltered: '没有资源匹配当前搜索和筛选条件。',
     drawerTitle: '{{kind}}：{{name}}',
     filters: {
       triageShortcut: '分诊',
+      search: '搜索资源',
       unhealthyPods: '仅异常',
       unhealthyPodsCount: '仅显示异常 Pod。发现 {{count}} 个异常 Pod。',
-      category: '类别',
-      namespaceHelp: '仅列出一个命名空间上报的资源。',
-      categoryHelp: '将结果缩小到所选资源类型。',
-      namespaceChip: '命名空间：{{value}}',
-      unhealthyPodsChip: '异常 Pod',
-      categoryChip: '类别：{{value}}',
-      clearFilter: '清除{{filter}}',
-      reset: '重置'
-    },
-    filtersInventory: {
-      title: '筛选与清单'
-    },
-    summary: {
-      unhealthyPodsCategory: '异常 Pod',
-      namespaced: '{{count}} 项 {{category}} · {{namespace}}',
-      clusterScoped: '{{count}} 项 {{category}} · 集群范围',
-      visibleOfTotal: '显示 {{visible}} / {{total}} 个已上报{{family}}',
-      oneActiveFilter: '1 个活跃筛选',
-      activeFilters: '{{count}} 个活跃筛选'
-    },
-    inventory: {
-      visible: '可见',
-      healthy: '健康',
-      attention: '需关注',
-      resourceMix: '构成',
-      allNamespaces: '全部命名空间',
-      namespace: '命名空间：{{namespace}}',
-      clusterScoped: '集群范围',
-      noResources: '暂无资源'
+      category: '类别'
     },
     row: {
       kind: '类型',
       scope: '范围',
       cluster: '集群'
     },
+    table: {
+      resource: '资源',
+      metrics: '指标',
+      status: '状态'
+    },
     families: {
+      label: '资源类别',
       workloads: '工作负载',
       network: '网络',
       storage: '存储',

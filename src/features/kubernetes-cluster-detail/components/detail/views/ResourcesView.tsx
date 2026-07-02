@@ -19,6 +19,7 @@ type ResourceQuery = {
   kind?: string;
   namespace?: string;
   health?: string;
+  q?: string;
 };
 
 export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPodLogs = false, onAnalyzePod }) => {
@@ -39,7 +40,8 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
       current.family === query.family &&
       current.kind === query.kind &&
       current.namespace === query.namespace &&
-      current.health === query.health
+      current.health === query.health &&
+      current.q === query.q
         ? current
         : query
     );
@@ -61,7 +63,8 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
         family: resourceQuery.family,
         kind: resourceQuery.kind,
         namespace: resourceQuery.namespace,
-        health: resourceQuery.health
+        health: resourceQuery.health,
+        q: resourceQuery.q
       });
       if (requestId !== requestSeqRef.current) return;
       setResourceItems((current) => mode === 'append' ? [...current, ...page.items] : page.items);

@@ -33,6 +33,7 @@ import {
   membersPage,
   mobileNavigation,
   overviewPage,
+  resourceCategoryTabs,
   resourceExplorerControls,
   resourceExplorerLayout,
   resourcesView,
@@ -153,7 +154,7 @@ describe('theme color contract', () => {
     });
     expect(designDocsIndex).toContain('[Typography](/docs/design-docs/typography.md)');
     expect(buttonComponent).toContain("'type-ui inline-flex");
-    expect(resourceExplorerControls).toContain("'type-label flex h-9");
+    expect(resourceExplorerControls).toContain("'type-label flex h-11");
     expect(resourceExplorerLayout).toContain('className="type-micro-label');
     expect(markdownComponents).toContain('type-code');
   });
@@ -282,39 +283,62 @@ describe('theme color contract', () => {
   });
 
   it('keeps workload filter controls compact and aligned', () => {
-    expect(resourceExplorerControls).toContain('h-9');
-    expect(resourceExplorerControls).toContain('grid-cols-2');
-    expect(resourceExplorerControls).toContain('sm:min-w-[8.5rem]');
+    expect(resourceExplorerControls).toContain('data-resource-search-filter-bar="true"');
+    expect(resourceExplorerControls).toContain('id="resource-search"');
+    expect(resourceCategoryTabs).toContain('role="tablist"');
+    expect(resourceCategoryTabs).toContain('role="tab"');
+    expect(resourceCategoryTabs).toContain('aria-selected={tab.isActive}');
+    expect(resourceCategoryTabs).not.toContain('aria-pressed');
+    expect(resourceCategoryTabs).not.toContain('attentionCounts');
+    expect(resourceCategoryTabs).not.toContain('reservesAttentionSlot');
+    expect(resourceCategoryTabs).not.toContain('min-w-[4.5rem]');
+    expect(resourceCategoryTabs).toContain('tabIndex={tab.isActive ? 0 : -1}');
+    expect(resourceCategoryTabs).toContain("event.key === 'ArrowRight'");
+    expect(workloadsExplorer).toContain('<ResourceCategoryTabs<ResourceFamily>');
+    expect(workloadsExplorer).toContain("labelPrefix=\"resources.families\"");
+    expect(resourceCategoryTabs).not.toContain('min-w-[8.5rem]');
+    expect(resourceCategoryTabs).toContain('whitespace-nowrap');
+    expect(resourceCategoryTabs).toContain('border-b-2');
     expect(resourceExplorerControls).not.toContain('rounded-lg px-5 py-2');
     expect(workloadsExplorer).toContain("const SHOW_UNHEALTHY_ONLY_STORAGE_KEY = 'acornops_resources_show_unhealthy_only'");
     expect(workloadsExplorer).toContain('return true;');
+    expect(workloadsExplorer).toContain("const [resourceSearchTerm, setResourceSearchTerm] = useState('');");
+    expect(workloadsExplorer).toContain('matchesResourceSearch(resourceSearchTerm');
+    expect(workloadsExplorer).toContain('q: resourceSearchTerm.trim() || undefined');
     expect(resourceExplorerControls).toContain('aria-label={t(\'resources.filters.unhealthyPodsCount\'');
-    expect(workloadsExplorer).toContain('t(resultSummaryParts.summaryKey');
     expect(workloadsExplorer).toContain('getDefaultExplorerSelection(unhealthyPodCount)');
-    expect(workloadsExplorer).toContain('buildResourceInventorySummary({');
-    expect(resourceExplorerControls).toContain('<ResourceInventoryStrip summary={inventorySummary} />');
     expect(workloadsExplorer).toContain('flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden');
     expect(appPageContent).toContain('flex-1 min-w-0 w-full max-w-full');
     expect(workloadsExplorerSurface).toContain('<ResourceMetaPair label={t(\'resources.row.kind\')}');
     expect(workloadsExplorerSurface).toContain('<ResourceStatusPill status={workload.status} healthy={isHealthy} />');
     expect(resourceExplorerControls).toContain("showUnhealthyPodsOnly ? 'bg-accent' : 'bg-ui-border'");
-    expect(resourceExplorerControls).toContain('data-resource-filter-summary="true"');
-    expect(resourceExplorerControls).toContain('data-resource-advanced-controls="true"');
-    expect(resourceExplorerControls).toContain('lg:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)]');
-    expect(resourceExplorerControls).toContain('type-row-title min-w-0 break-words');
-    expect(resourceExplorerControls).toContain("t('resources.summary.visibleOfTotal'");
-    expect(resourceExplorerControls).toContain('activeFilterCount === 1');
-    expect(resourceExplorerControls).toContain('className="mt-3 border-t border-ui-border pt-3"');
-    expect(resourceExplorerControls).toContain('const showActiveFilterActions = activeFilters.length > 0 || canResetFilters');
+    expect(workloadsExplorerSurface).toContain('sortAttentionFirst');
+    expect(workloadsExplorerSurface).toContain('(workload) => !isHealthyStatus(workload.status)');
+    expect(workloadsExplorerSurface).toContain("(ingress) => !hasReportedValue(ingress.address)");
+    expect(workloadsExplorerSurface).toContain('(pvc) => !isHealthyStatus(pvc.status)');
+    expect(workloadsExplorerSurface).toContain('(node) => !isHealthyStatus(node.status)');
+    expect(workloadsExplorerSurface).toContain('healthy={isHealthyStatus(namespace.status)}');
+    expect(resourceExplorerControls).toContain('lg:grid-cols-[minmax(16rem,1fr)_minmax(11rem,14rem)_minmax(11rem,14rem)_minmax(9rem,max-content)]');
+    expect(resourceExplorerControls).toContain("t('resources.clusterScoped')");
+    expect(resourceExplorerControls).toContain('const resourceScopeDisplayClassName =');
+    expect(resourceExplorerControls).not.toContain("formInputClassName(\n  'flex h-11 min-h-11 items-center");
+    expect(resourceExplorerControls).toContain('children || <div className="hidden min-w-[9rem] lg:block"');
+    expect(resourceExplorerControls).not.toContain("t('resources.filtersInventory.title')");
+    expect(resourceExplorerControls).not.toContain("t('resources.summary.visibleOfTotal'");
+    expect(resourceExplorerControls).not.toContain('const showActiveFilterActions = activeFilters.length > 0 || canResetFilters');
     expect(resourceExplorerControls).not.toContain('mt-3 border-t border-ui-border pt-3 text-xs font-bold uppercase');
     expect(workloadsExplorerSurface).toContain('ResourceList');
     expect(workloadsExplorer).not.toContain('grid grid-cols-1 gap-3');
-    expect(workloadsExplorer).not.toContain('grid grid-cols-1 gap-4');
     expect(workloadsExplorer).not.toContain('rounded-xl border border-ui-border bg-ui-surface p-3 shadow-sm');
     expect(workloadExplorerParts).toContain('export const resourceRowGridClass =');
+    expect(workloadExplorerParts).toContain('export const resourceRowHeaderClass =');
     expect(workloadExplorerParts).toContain('xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)]');
     expect(workloadsExplorerSurface).toContain('resourceRowGridClass,');
     expect(resourceExplorerLayout).toContain('resourceRowGridClass,');
+    expect(resourceExplorerLayout).toContain('data-resource-list-header="true"');
+    expect(resourceExplorerLayout).toContain("t('resources.table.resource')");
+    expect(resourceExplorerLayout).toContain("t('resources.table.metrics')");
+    expect(resourceExplorerLayout).toContain("t('resources.table.status')");
     expect(workloadExplorerParts).toContain('export const resourceMetricGridClass =');
     expect(workloadExplorerParts).toContain(
       'xl:grid-cols-[minmax(0,1fr)_minmax(3.75rem,max-content)]'
@@ -343,15 +367,14 @@ describe('theme color contract', () => {
     expect(resourceExplorerLayout).toContain('type-ui inline-flex shrink-0 items-center gap-1');
     expect(resourceExplorerLayout).toContain('type-panel-title break-words [overflow-wrap:anywhere]');
     expect(resourceExplorerLayout).toContain('type-row-title break-words');
-    expect(resourceExplorerLayout).toContain('grid grid-cols-2 gap-2');
-    expect(resourceExplorerLayout).toContain('min-w-0 overflow-hidden rounded-md border border-ui-border/70');
     expect(resourceExplorerLayout).not.toContain('sm:grid-cols-[repeat(3,minmax(0,7rem))_minmax(12rem,1fr)_minmax(10rem,max-content)]');
     expect(resourceExplorerLayout).not.toContain('truncate text-sm font-bold text-ui-text');
     expect(workloadsExplorer).not.toContain('lg:p-12');
     expect(workloadsExplorer).not.toContain('text-xl font-bold text-ui-text');
     expect(workloadsExplorer).not.toContain('h-1 w-1 rounded-full bg-ui-text-muted opacity-30');
-    expect(resourceExplorerLayout).toContain('data-resource-inventory-strip="true"');
-    expect(resourceExplorerLayout).toContain('data-resource-kind-chip="true"');
+    expect(resourceExplorerLayout).not.toContain('ResourceInventoryStrip');
+    expect(resourceExplorerLayout).not.toContain('data-resource-inventory-strip="true"');
+    expect(resourceExplorerLayout).not.toContain('data-resource-kind-chip="true"');
     expect(resourceExplorerLayout).toContain('data-resource-list="true"');
     expect(resourceExplorerLayout).toContain('min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface divide-y divide-ui-border');
     expect(workloadExplorerParts).toContain('ResourceMetaPair');
@@ -359,24 +382,47 @@ describe('theme color contract', () => {
     expect(resourceExplorerLayout).toContain('ResourceMetricInline');
     expect(resourceExplorerLayout).toContain('data-resource-metric-inline="true"');
     expect(workloadExplorerParts).not.toContain('export const Metric');
+    expect(workloadExplorerParts).not.toContain('getResourceExplorerFilterState');
+    expect(workloadExplorerParts).not.toContain('buildResourceInventorySummary');
+    expect(workloadExplorerParts).not.toContain('ResourceInventorySummary');
     expect(workloadExplorerParts).toContain('ResourceStatusPill');
     expect(resourceExplorerLayout).toContain('ChevronRight');
+    expect(enLocale).toContain("search: 'Search resources'");
+    expect(enLocale).toContain("label: 'Resource families'");
     expect(enLocale).toContain("unhealthyPods: 'Unhealthy only'");
     expect(enLocale).toContain("unhealthyPodsCount: 'Show unhealthy pods only. {{count}} unhealthy pods found.'");
-    expect(enLocale).toContain("unhealthyPodsCategory: 'Unhealthy pods'");
-    expect(enLocale).toContain("namespaced: '{{count}} {{category}} · {{namespace}}'");
-    expect(enLocale).toContain("clusterScoped: '{{count}} {{category}} · Cluster-scoped'");
-    expect(enLocale).toContain("attention: 'Attention'");
-    expect(enLocale).toContain("resourceMix: 'Mix'");
     expect(enLocale).toContain("kind: 'Kind'");
+    expect(enLocale).toContain("resource: 'Resource'");
+    expect(enLocale).toContain("metrics: 'Metrics'");
+    expect(enLocale).toContain("status: 'Status'");
+    expect(enLocale).toContain("logTime: 'Time'");
+    expect(enLocale).toContain("logSource: 'Source'");
+    expect(enLocale).toContain("logMessage: 'Message'");
+    expect(enLocale).toContain("emptyFiltered: 'No resources match the current search and filters.'");
+    expect(enLocale).toContain("noSearchResults: 'No VM resources match the current search.'");
+    expect(enLocale).not.toContain('filtersInventory');
+    expect(enLocale).not.toContain('searchChip');
+    expect(enLocale).not.toContain('resourceMix');
+    expect(enLocale).not.toContain('categoryDescriptions');
+    expect(enLocale).not.toContain('serviceCount');
+    expect(zhLocale).toContain("search: '搜索资源'");
+    expect(zhLocale).toContain("label: '资源类别'");
     expect(zhLocale).toContain("unhealthyPods: '仅异常'");
     expect(zhLocale).toContain("unhealthyPodsCount: '仅显示异常 Pod。发现 {{count}} 个异常 Pod。'");
-    expect(zhLocale).toContain("unhealthyPodsCategory: '异常 Pod'");
-    expect(zhLocale).toContain("namespaced: '{{count}} 项 {{category}} · {{namespace}}'");
-    expect(zhLocale).toContain("clusterScoped: '{{count}} 项 {{category}} · 集群范围'");
-    expect(zhLocale).toContain("attention: '需关注'");
-    expect(zhLocale).toContain("resourceMix: '构成'");
     expect(zhLocale).toContain("kind: '类型'");
+    expect(zhLocale).toContain("resource: '资源'");
+    expect(zhLocale).toContain("metrics: '指标'");
+    expect(zhLocale).toContain("status: '状态'");
+    expect(zhLocale).toContain("logTime: '时间'");
+    expect(zhLocale).toContain("logSource: '来源'");
+    expect(zhLocale).toContain("logMessage: '消息'");
+    expect(zhLocale).toContain("emptyFiltered: '没有资源匹配当前搜索和筛选条件。'");
+    expect(zhLocale).toContain("noSearchResults: '没有虚拟机资源匹配当前搜索。'");
+    expect(zhLocale).not.toContain('filtersInventory');
+    expect(zhLocale).not.toContain('searchChip');
+    expect(zhLocale).not.toContain('resourceMix');
+    expect(zhLocale).not.toContain('categoryDescriptions');
+    expect(zhLocale).not.toContain('serviceCount');
   });
 
   it('keeps high-frequency task lists free of broad layout choreography', () => {
@@ -444,16 +490,16 @@ describe('theme color contract', () => {
   it('keeps contextual help concise at jargon-heavy controls', () => {
     expect(mcpServerCard).toContain("t('mcpServers.healthCheckHelp')");
     expect(mcpServerToolsDialog).toContain("t('mcpServers.toolAccessSummaryBody')");
-    expect(resourceExplorerControls).toContain("t('resources.filters.namespaceHelp')");
-    expect(resourceExplorerControls).toContain("t('resources.filters.categoryHelp')");
+    expect(resourceExplorerControls).toContain("t('resources.filters.search')");
+    expect(resourceExplorerControls).toContain("ariaLabel={t('resources.filters.category')}");
     expect(enLocale).toContain("healthCheckHelp: 'Checks connectivity and refreshes discovered tools.'");
     expect(enLocale).toContain("toolAccessSummaryBody: 'Tools available from this MCP server.'");
-    expect(enLocale).toContain("namespaceHelp: 'Limits the list to resources reported in one namespace.'");
-    expect(enLocale).toContain("categoryHelp: 'Narrows results to the selected resource type.'");
+    expect(enLocale).toContain("search: 'Search resources'");
+    expect(enLocale).toContain("category: 'Category'");
     expect(zhLocale).toContain("healthCheckHelp: '检查连接并刷新已发现的工具。'");
     expect(zhLocale).toContain("toolAccessSummaryBody: '此 MCP 服务器提供的工具。'");
-    expect(zhLocale).toContain("namespaceHelp: '仅列出一个命名空间上报的资源。'");
-    expect(zhLocale).toContain("categoryHelp: '将结果缩小到所选资源类型。'");
+    expect(zhLocale).toContain("search: '搜索资源'");
+    expect(zhLocale).toContain("category: '类别'");
   });
 
   it('keeps MCP server management as an explicit inventory surface', () => {

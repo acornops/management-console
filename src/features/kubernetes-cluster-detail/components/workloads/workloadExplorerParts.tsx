@@ -58,6 +58,7 @@ export interface WorkloadsExplorerProps {
     kind?: string;
     namespace?: string;
     health?: string;
+    q?: string;
   }) => void;
   onLoadMoreResources?: () => void;
   onLoadPodLogs?: (workload: WorkloadExplorerItem, options: ControlPlanePodLogsOptions) => Promise<ControlPlanePodLogs>;
@@ -74,79 +75,6 @@ export interface ResourceExplorerSelection {
   activeResourceFamily: ResourceFamily;
   activeCategory: 'All' | Workload['type'];
   showUnhealthyPodsOnly: boolean;
-}
-
-export interface ResourceExplorerSummaryParts {
-  summaryKey: 'resources.summary.namespaced' | 'resources.summary.clusterScoped';
-  familyLabelKey: string;
-  categoryLabelKey: string;
-  namespace?: string;
-  visibleCount: number;
-}
-
-export interface ResourceExplorerSummaryInput {
-  activeResourceFamily: ResourceFamily;
-  activeCategory: string;
-  selectedNamespace: string;
-  showNamespaceFilter: boolean;
-  showUnhealthyPodsOnly: boolean;
-  visibleCount: number;
-}
-
-export interface ResourceInventoryItem {
-  kind: string;
-  status: string;
-  healthy?: boolean;
-  namespace?: string;
-}
-
-export interface ResourceInventoryKindCount {
-  kind: string;
-  count: number;
-}
-
-export interface ResourceInventorySummary {
-  visibleCount: number;
-  healthyCount: number;
-  attentionCount: number;
-  kindCounts: ResourceInventoryKindCount[];
-  namespaceScopeKey:
-    | 'resources.inventory.allNamespaces'
-    | 'resources.inventory.namespace'
-    | 'resources.inventory.clusterScoped';
-  namespace?: string;
-}
-
-export interface ResourceInventorySummaryInput {
-  resources: ResourceInventoryItem[];
-  selectedNamespace: string;
-  showNamespaceFilter: boolean;
-}
-
-export interface ResourceExplorerFilterStateInput {
-  activeResourceFamily: ResourceFamily;
-  activeCategory: string;
-  activeNetworkCategory: NetworkResourceCategory;
-  activeStorageCategory: StorageResourceCategory;
-  activeClusterCategory: ClusterResourceCategory;
-  selectedNamespace: string;
-  showNamespaceFilter: boolean;
-  showUnhealthyPodsOnly: boolean;
-}
-
-export type ResourceExplorerActiveFilterId = 'namespace' | 'unhealthyPods' | 'category';
-
-export interface ResourceExplorerActiveFilter {
-  id: ResourceExplorerActiveFilterId;
-  labelKey: string;
-  value?: string;
-  valueLabelKey?: string;
-}
-
-export interface ResourceExplorerFilterState {
-  activeFilters: ResourceExplorerActiveFilter[];
-  activeFilterCount: number;
-  canResetFilters: boolean;
 }
 
 export type WorkloadCategoryCounts = Record<'All' | Workload['type'], number>;
@@ -203,124 +131,6 @@ export function buildWorkloadCategoryCounts({
   return counts;
 }
 
-export function getResourceExplorerResultSummaryParts({
-  activeResourceFamily,
-  activeCategory,
-  selectedNamespace,
-  showNamespaceFilter,
-  showUnhealthyPodsOnly,
-  visibleCount
-}: ResourceExplorerSummaryInput): ResourceExplorerSummaryParts {
-  const categoryLabelKey = showUnhealthyPodsOnly
-    ? 'resources.summary.unhealthyPodsCategory'
-    : activeResourceFamily === 'workloads'
-      ? `workloads.categories.${activeCategory}`
-      : `resources.categories.${activeCategory}`;
-
-  return {
-    summaryKey: showNamespaceFilter ? 'resources.summary.namespaced' : 'resources.summary.clusterScoped',
-    familyLabelKey: `resources.families.${activeResourceFamily}`,
-    categoryLabelKey,
-    ...(showNamespaceFilter ? { namespace: selectedNamespace } : {}),
-    visibleCount
-  };
-}
-
-export function getResourceExplorerFilterState({
-  activeResourceFamily,
-  activeCategory,
-  activeNetworkCategory,
-  activeStorageCategory,
-  activeClusterCategory,
-  selectedNamespace,
-  showNamespaceFilter,
-  showUnhealthyPodsOnly
-}: ResourceExplorerFilterStateInput): ResourceExplorerFilterState {
-  const activeFilters: ResourceExplorerActiveFilter[] = [];
-
-  if (showNamespaceFilter && selectedNamespace !== 'All') {
-    activeFilters.push({
-      id: 'namespace',
-      labelKey: 'resources.filters.namespaceChip',
-      value: selectedNamespace
-    });
-  }
-
-  if (showUnhealthyPodsOnly) {
-    activeFilters.push({
-      id: 'unhealthyPods',
-      labelKey: 'resources.filters.unhealthyPodsChip'
-    });
-  } else if (activeResourceFamily === 'workloads' && activeCategory !== 'All') {
-    activeFilters.push({
-      id: 'category',
-      labelKey: 'resources.filters.categoryChip',
-      valueLabelKey: `workloads.categories.${activeCategory}`
-    });
-  }
-
-  if (activeResourceFamily === 'network' && activeNetworkCategory !== 'All') {
-    activeFilters.push({
-      id: 'category',
-      labelKey: 'resources.filters.categoryChip',
-      valueLabelKey: `resources.categories.${activeNetworkCategory}`
-    });
-  }
-
-  if (activeResourceFamily === 'storage' && activeStorageCategory !== 'All') {
-    activeFilters.push({
-      id: 'category',
-      labelKey: 'resources.filters.categoryChip',
-      valueLabelKey: `resources.categories.${activeStorageCategory}`
-    });
-  }
-
-  if (activeResourceFamily === 'cluster' && activeClusterCategory !== 'All') {
-    activeFilters.push({
-      id: 'category',
-      labelKey: 'resources.filters.categoryChip',
-      valueLabelKey: `resources.categories.${activeClusterCategory}`
-    });
-  }
-
-  return {
-    activeFilters,
-    activeFilterCount: activeFilters.length,
-    canResetFilters: activeFilters.length > 1
-  };
-}
-
-export function buildResourceInventorySummary({
-  resources,
-  selectedNamespace,
-  showNamespaceFilter
-}: ResourceInventorySummaryInput): ResourceInventorySummary {
-  const kindCountMap = new Map<string, number>();
-  let healthyCount = 0;
-
-  resources.forEach((resource) => {
-    kindCountMap.set(resource.kind, (kindCountMap.get(resource.kind) || 0) + 1);
-    if (resource.healthy ?? isHealthyStatus(resource.status)) healthyCount += 1;
-  });
-
-  const kindCounts = Array.from(kindCountMap, ([kind, count]) => ({ kind, count }))
-    .sort((a, b) => b.count - a.count || a.kind.localeCompare(b.kind));
-  const namespaceScopeKey = showNamespaceFilter
-    ? selectedNamespace === 'All'
-      ? 'resources.inventory.allNamespaces'
-      : 'resources.inventory.namespace'
-    : 'resources.inventory.clusterScoped';
-
-  return {
-    visibleCount: resources.length,
-    healthyCount,
-    attentionCount: resources.length - healthyCount,
-    kindCounts,
-    namespaceScopeKey,
-    ...(namespaceScopeKey === 'resources.inventory.namespace' ? { namespace: selectedNamespace } : {})
-  };
-}
-
 function countByNamespace(items: Array<{ namespace: string }>): Map<string, number> {
   const counts = new Map<string, number>();
   items.forEach((item) => {
@@ -373,6 +183,9 @@ export function classNames(...values: Array<string | false | undefined>): string
 export const resourceRowGridClass =
   'group grid w-full min-w-0 max-w-full grid-cols-1 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ui-bg/70 sm:px-5 sm:py-4 xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5';
 
+export const resourceRowHeaderClass =
+  'hidden w-full min-w-0 max-w-full bg-ui-bg/60 px-4 py-3 sm:px-5 xl:grid xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5';
+
 export const resourceRowActionClass =
   'flex min-w-0 flex-wrap items-center justify-start gap-3 xl:flex-nowrap xl:justify-end xl:justify-self-end';
 
@@ -418,6 +231,13 @@ export function isUnhealthyPod(workload: Workload): boolean {
 export function hasReportedValue(value: string | number | undefined | null): boolean {
   if (value === null || value === undefined) return false;
   return String(value).trim() !== '' && String(value).trim() !== '-';
+}
+
+export function sortAttentionFirst<T>(items: T[], hasAttention: (item: T) => boolean): T[] {
+  return items
+    .map((item, index) => ({ item, index, hasAttention: hasAttention(item) }))
+    .sort((first, second) => Number(second.hasAttention) - Number(first.hasAttention) || first.index - second.index)
+    .map(({ item }) => item);
 }
 
 export function formatOptionalNumber(value: number | undefined): string {

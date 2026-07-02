@@ -470,39 +470,33 @@ export const en = {
       installInstructions: 'Install command'
     },
     resources: {
-      hostResources: 'Host resources',
       pageDescription: 'Review host inventory, services, processes, network state, and logs reported by {{name}}.',
-      description: 'Review the latest host inventory and read-only evidence reported by the VM agent.',
-      serviceCount: '{{count}} services',
-      processCount: '{{count}} processes',
-      networkCount: '{{count}} network',
+      search: 'Search resources',
       loadFailed: 'Failed loading VM inventory.',
       logsLoadFailed: 'Failed loading VM logs.',
       loading: 'Loading VM inventory',
       loadingLogs: 'Loading VM logs',
       noInventory: 'No inventory returned for this view.',
       noLogs: 'No logs returned for this VM.',
+      noSearchResults: 'No VM resources match the current search.',
       host: 'host',
       name: 'Name',
       category: 'Category',
       status: 'Status',
       detail: 'Detail',
+      logTime: 'Time',
+      logSource: 'Source',
+      logMessage: 'Message',
       noAdditionalDetail: 'No additional detail',
       inventory: 'inventory',
       item: 'item',
       categories: {
+        label: 'VM resource categories',
         all: 'All inventory',
         services: 'Services',
         processes: 'Processes',
         network: 'Network',
         logs: 'Logs'
-      },
-      categoryDescriptions: {
-        all: 'Latest services, processes, and network inventory.',
-        services: 'systemd units reported by the VM agent.',
-        processes: 'Runtime process inventory from the latest snapshot.',
-        network: 'Interfaces, listeners, and host connectivity data.',
-        logs: 'Recent read-only journal and syslog excerpts.'
       }
     }
   },
@@ -1297,47 +1291,27 @@ export const en = {
     emptyStorage: 'No storage resources match the current filters.',
     emptyCluster: 'No cluster resources match the current filters.',
     emptyUnhealthyPods: 'No unhealthy pods match the current filters.',
+    emptyFiltered: 'No resources match the current search and filters.',
     drawerTitle: '{{kind}}: {{name}}',
     filters: {
       triageShortcut: 'Triage',
+      search: 'Search resources',
       unhealthyPods: 'Unhealthy only',
       unhealthyPodsCount: 'Show unhealthy pods only. {{count}} unhealthy pods found.',
-      category: 'Category',
-      namespaceHelp: 'Limits the list to resources reported in one namespace.',
-      categoryHelp: 'Narrows results to the selected resource type.',
-      namespaceChip: 'Namespace: {{value}}',
-      unhealthyPodsChip: 'Unhealthy pods',
-      categoryChip: 'Category: {{value}}',
-      clearFilter: 'Clear {{filter}}',
-      reset: 'Reset'
-    },
-    filtersInventory: {
-      title: 'Filters & inventory'
-    },
-    summary: {
-      unhealthyPodsCategory: 'Unhealthy pods',
-      namespaced: '{{count}} {{category}} · {{namespace}}',
-      clusterScoped: '{{count}} {{category}} · Cluster-scoped',
-      visibleOfTotal: 'Showing {{visible}} of {{total}} reported {{family}}',
-      oneActiveFilter: '1 active filter',
-      activeFilters: '{{count}} active filters'
-    },
-    inventory: {
-      visible: 'Visible',
-      healthy: 'Healthy',
-      attention: 'Attention',
-      resourceMix: 'Mix',
-      allNamespaces: 'All namespaces',
-      namespace: 'Namespace: {{namespace}}',
-      clusterScoped: 'Cluster-scoped',
-      noResources: 'No resources'
+      category: 'Category'
     },
     row: {
       kind: 'Kind',
       scope: 'Scope',
       cluster: 'Cluster'
     },
+    table: {
+      resource: 'Resource',
+      metrics: 'Metrics',
+      status: 'Status'
+    },
     families: {
+      label: 'Resource families',
       workloads: 'Workloads',
       network: 'Network',
       storage: 'Storage',

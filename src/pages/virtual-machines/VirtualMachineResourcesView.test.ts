@@ -10,13 +10,24 @@ const virtualMachineResourcesView = readFileSync(
 );
 
 describe('VirtualMachineResourcesView resource filters', () => {
-  it('uses the shared compact category tabs instead of large description cards', () => {
+  it('uses shared tabs and a resource search bar instead of large description cards', () => {
     expect(virtualMachineResourcesView).toContain("import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs'");
     expect(virtualMachineResourcesView).toContain('<ResourceCategoryTabs<VmResourceCategory>');
     expect(virtualMachineResourcesView).toContain("labelPrefix=\"virtualMachines.resources.categories\"");
     expect(virtualMachineResourcesView).toContain('counts={counts}');
+    expect(virtualMachineResourcesView).not.toContain('attentionCounts=');
+    expect(virtualMachineResourcesView).toContain('data-vm-resource-search-filter-bar="true"');
+    expect(virtualMachineResourcesView).toContain('id="vm-resource-search"');
+    expect(virtualMachineResourcesView).toContain('matchesSearch(resourceSearchTerm');
+    expect(virtualMachineResourcesView).toContain('sortInventoryAttentionFirst');
+    expect(virtualMachineResourcesView).toContain("t('virtualMachines.resources.logTime')");
+    expect(virtualMachineResourcesView).toContain("t('virtualMachines.resources.logSource')");
+    expect(virtualMachineResourcesView).toContain("t('virtualMachines.resources.logMessage')");
+    expect(virtualMachineResourcesView).toContain('filteredLogs.map');
+    expect(virtualMachineResourcesView).toContain('min-h-[14rem]');
     expect(virtualMachineResourcesView).not.toContain('descriptionKey:');
     expect(virtualMachineResourcesView).not.toContain('min-h-[6.5rem]');
     expect(virtualMachineResourcesView).not.toContain('virtualMachines.resources.categoryDescriptions');
+    expect(virtualMachineResourcesView).not.toContain('serviceCount');
   });
 });

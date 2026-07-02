@@ -25,6 +25,7 @@ import {
   getWorkloadMetrics,
   hasReportedValue,
   isHealthyStatus,
+  sortAttentionFirst,
   resourceMetricGridClass,
   resourceRowActionClass,
   resourceRowGridClass
@@ -38,18 +39,19 @@ import {
 import type { ControlPlanePodLogs, ControlPlanePodLogsOptions } from '@/services/controlPlaneApi';
 
 interface WorkloadsSectionProps {
+  emptyMessage?: string;
   items: WorkloadExplorerItem[];
   onSelect: (workload: WorkloadExplorerItem) => void;
   showUnhealthyOnly: boolean;
 }
 
-export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ items, onSelect, showUnhealthyOnly }) => {
+export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage, items, onSelect, showUnhealthyOnly }) => {
   const { t } = useTranslation();
 
   return (
     <ResourceList
       items={items}
-      emptyMessage={t(showUnhealthyOnly ? 'resources.emptyUnhealthyPods' : 'workloads.emptyWorkloads')}
+      emptyMessage={emptyMessage || t(showUnhealthyOnly ? 'resources.emptyUnhealthyPods' : 'workloads.emptyWorkloads')}
       renderItem={(workload) => {
         const isHealthy = isHealthyStatus(workload.status);
         const metrics = getWorkloadMetrics(workload);
@@ -108,26 +110,27 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ items, onSel
 
 interface NetworkSectionProps {
   activeCategory: NetworkResourceCategory;
+  emptyMessage?: string;
   ingresses: IngressExplorerItem[];
   onSelect: (resource: InfrastructureResource) => void;
   services: ServiceExplorerItem[];
 }
 
-export const NetworkSection: React.FC<NetworkSectionProps> = ({ activeCategory, ingresses, onSelect, services }) => {
+export const NetworkSection: React.FC<NetworkSectionProps> = ({ activeCategory, emptyMessage, ingresses, onSelect, services }) => {
   const { t } = useTranslation();
-  const items = [
+  const items = sortAttentionFirst([
     ...(activeCategory === 'All' || activeCategory === 'Service'
       ? services.map((item) => ({ kind: 'service' as const, item }))
       : []),
     ...(activeCategory === 'All' || activeCategory === 'Ingress'
       ? ingresses.map((item) => ({ kind: 'ingress' as const, item }))
       : [])
-  ];
+  ], (resource) => resource.kind === 'ingress' && !hasReportedValue(resource.item.address));
 
   return (
     <ResourceList
       items={items}
-      emptyMessage={t('resources.emptyNetwork')}
+      emptyMessage={emptyMessage || t('resources.emptyNetwork')}
       renderItem={(resource) => {
         if (resource.kind === 'service') {
           const service = resource.item;
@@ -170,18 +173,19 @@ export const NetworkSection: React.FC<NetworkSectionProps> = ({ activeCategory, 
 
 interface StorageSectionProps {
   activeCategory: StorageResourceCategory;
+  emptyMessage?: string;
   items: PVCExplorerItem[];
   onSelect: (resource: InfrastructureResource) => void;
 }
 
-export const StorageSection: React.FC<StorageSectionProps> = ({ activeCategory, items, onSelect }) => {
+export const StorageSection: React.FC<StorageSectionProps> = ({ activeCategory, emptyMessage, items, onSelect }) => {
   const { t } = useTranslation();
   const visibleItems = activeCategory === 'All' || activeCategory === 'PersistentVolumeClaim' ? items : [];
 
   return (
     <ResourceList
-      items={visibleItems}
-      emptyMessage={t('resources.emptyStorage')}
+      items={sortAttentionFirst(visibleItems, (pvc) => !isHealthyStatus(pvc.status))}
+      emptyMessage={emptyMessage || t('resources.emptyStorage')}
       renderItem={(pvc) => (
         <InfrastructureRow
           key={`${pvc.clusterName}-${pvc.id}`}
@@ -202,26 +206,27 @@ export const StorageSection: React.FC<StorageSectionProps> = ({ activeCategory, 
 
 interface ClusterSectionProps {
   activeCategory: ClusterResourceCategory;
+  emptyMessage?: string;
   namespaces: NamespaceExplorerItem[];
   nodes: NodeExplorerItem[];
   onSelect: (resource: InfrastructureResource) => void;
 }
 
-export const ClusterSection: React.FC<ClusterSectionProps> = ({ activeCategory, namespaces, nodes, onSelect }) => {
+export const ClusterSection: React.FC<ClusterSectionProps> = ({ activeCategory, emptyMessage, namespaces, nodes, onSelect }) => {
   const { t } = useTranslation();
-  const items = [
+  const items = sortAttentionFirst([
     ...(activeCategory === 'All' || activeCategory === 'Node'
       ? nodes.map((item) => ({ kind: 'node' as const, item }))
       : []),
     ...(activeCategory === 'All' || activeCategory === 'Namespace'
       ? namespaces.map((item) => ({ kind: 'namespace' as const, item }))
       : [])
-  ];
+  ], (resource) => !isHealthyStatus(resource.item.status));
 
   return (
     <ResourceList
       items={items}
-      emptyMessage={t('resources.emptyCluster')}
+      emptyMessage={emptyMessage || t('resources.emptyCluster')}
       renderItem={(resource) => {
         if (resource.kind === 'node') {
           const node = resource.item;
@@ -251,7 +256,7 @@ export const ClusterSection: React.FC<ClusterSectionProps> = ({ activeCategory, 
             namespace={t('resources.clusterScoped')}
             clusterName={namespace.clusterName}
             status={namespace.status}
-            healthy
+            healthy={isHealthyStatus(namespace.status)}
             metrics={getNamespaceMetrics(namespace)}
             onClick={() => onSelect({ kind: 'namespace', item: namespace })}
           />

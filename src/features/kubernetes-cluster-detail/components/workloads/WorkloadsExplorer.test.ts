@@ -7,40 +7,40 @@ const root = resolve(__dirname, '../../../../..');
 const explorer = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer.tsx'), 'utf8');
 const explorerLists = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorerLists.tsx'), 'utf8');
 const controls = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/workloads/ResourceExplorerControls.tsx'), 'utf8');
+const resourceCategoryTabs = readFileSync(resolve(root, 'src/components/common/ResourceCategoryTabs.tsx'), 'utf8');
 const explorerSurface = `${explorer}\n${explorerLists}`;
 
 describe('WorkloadsExplorer adaptive triage layout', () => {
-  it('keeps the active filter summary visible outside the expandable controls panel', () => {
-    expect(controls).toContain('data-resource-filter-summary="true"');
-    expect(controls).toContain('data-resource-advanced-controls="true"');
-    expect(controls.indexOf('data-resource-filter-summary="true"')).toBeLessThan(
-      controls.indexOf('data-resource-advanced-controls="true"')
-    );
-  });
-
-  it('places filters and inventory behind one aria-expanded panel toggle', () => {
-    expect(controls).toContain("t('resources.filtersInventory.title')");
-    expect(controls).toContain('aria-expanded={isOpen}');
-    expect(controls).toContain('aria-controls="resource-filters-inventory-panel"');
-    expect(controls).toContain('id="resource-filters-inventory-panel"');
-    expect(controls).toContain('<SlidersHorizontal');
-    expect(controls).toContain('<ResourceInventoryStrip summary={inventorySummary} />');
-  });
-
-  it('keeps family tabs and the workload triage shortcut outside advanced controls', () => {
-    expect(explorerSurface).toContain('<ResourceFamilyTabs');
+  it('keeps family tabs, search filters, and the workload triage shortcut as the only resource controls', () => {
+    expect(explorerSurface).toContain('<ResourceCategoryTabs<ResourceFamily>');
+    expect(explorerSurface).toContain('<ResourceSearchFilterBar');
     expect(explorerSurface).toContain('<WorkloadTriageShortcut');
-    expect(explorerSurface).toContain('<ResourceFiltersInventoryPanel');
-    expect(explorerSurface.indexOf('<ResourceFamilyTabs')).toBeLessThan(
-      explorerSurface.indexOf('<ResourceFiltersInventoryPanel')
+    expect(explorerSurface.indexOf('<ResourceCategoryTabs<ResourceFamily>')).toBeLessThan(
+      explorerSurface.indexOf('<ResourceSearchFilterBar')
     );
-    expect(explorerSurface.indexOf('<WorkloadTriageShortcut')).toBeLessThan(
-      explorerSurface.indexOf('<ResourceFiltersInventoryPanel')
-    );
+    expect(explorerSurface).not.toContain('<ResourceFiltersInventoryPanel');
+    expect(explorerSurface).not.toContain('<ResourceFamilyTabs');
+    expect(controls).not.toContain('data-resource-advanced-controls="true"');
+    expect(controls).not.toContain("t('resources.filtersInventory.title')");
   });
 
-  it('top-aligns the triage shortcut with expanded filters on wide screens', () => {
-    expect(explorerSurface).toContain('lg:flex-row lg:items-start');
+  it('renders resource families as accessible top-level tabs', () => {
+    expect(explorerSurface).toContain("import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs'");
+    expect(explorerSurface).toContain("labelPrefix=\"resources.families\"");
+    expect(explorerSurface).toContain("ariaLabel={t('resources.families.label')}");
+    expect(explorerSurface).toContain('counts={resourceFamilyCountsForTabs}');
+    expect(explorerSurface).not.toContain('attentionCounts=');
+  });
+
+  it('keeps issue visibility in the rows by sorting attention resources first', () => {
+    expect(resourceCategoryTabs).not.toContain('reservesAttentionSlot');
+    expect(resourceCategoryTabs).not.toContain("t('resources.families.issueCount'");
+    expect(explorerSurface).toContain('sortAttentionFirst');
+    expect(explorerSurface).toContain('(workload) => !isHealthyStatus(workload.status)');
+    expect(explorerSurface).toContain("(ingress) => !hasReportedValue(ingress.address)");
+    expect(explorerSurface).toContain('(pvc) => !isHealthyStatus(pvc.status)');
+    expect(explorerSurface).toContain('(node) => !isHealthyStatus(node.status)');
+    expect(explorerSurface).toContain('healthy={isHealthyStatus(namespace.status)}');
   });
 
   it('keeps the triage shortcut inside narrow containers', () => {
@@ -50,29 +50,21 @@ describe('WorkloadsExplorer adaptive triage layout', () => {
   });
 
   it('keeps the visible filter controls distilled', () => {
-    expect(controls).toContain('type-row-title min-w-0 break-words');
-    expect(controls).toContain("t('resources.summary.visibleOfTotal'");
-    expect(controls).toContain('activeFilterCount === 1');
-    expect(explorer).toContain('visibleResourceCount={visibleResourceCount}');
-    expect(explorer).toContain('totalResourceCount={totalResourceCount}');
-    expect(controls).toContain('className="mt-3 border-t border-ui-border pt-3"');
-    expect(controls).toContain('const showActiveFilterActions = activeFilters.length > 0 || canResetFilters');
+    expect(controls).toContain('data-resource-search-filter-bar="true"');
+    expect(controls).toContain('id="resource-search"');
+    expect(controls).toContain("t('resources.filters.search')");
+    expect(controls).toContain('<Search className=');
+    expect(controls).toContain('lg:grid-cols-[minmax(16rem,1fr)_minmax(11rem,14rem)_minmax(11rem,14rem)_minmax(9rem,max-content)]');
+    expect(controls).toContain("t('resources.clusterScoped')");
+    expect(controls).toContain('children || <div className="hidden min-w-[9rem] lg:block"');
+    expect(controls).not.toContain("t('resources.summary.visibleOfTotal'");
+    expect(explorer).not.toContain('visibleResourceCount={visibleResourceCount}');
+    expect(controls).not.toContain('const showActiveFilterActions = activeFilters.length > 0 || canResetFilters');
     expect(controls).not.toContain('mt-3 border-t border-ui-border pt-3 text-xs font-bold uppercase');
     expect(explorerSurface).not.toContain('rounded-xl border border-ui-border bg-ui-surface p-3 shadow-sm');
   });
 
-  it('keeps active filter chips and reset inside advanced controls', () => {
-    expect(controls).toContain('activeFilters');
-    expect(controls).toContain('data-resource-filter-chip="true"');
-    expect(controls).toContain('onResetFilters');
-    expect(controls).toContain("t('resources.filters.reset')");
-    expect(controls).not.toContain("t('resources.filters.activeCount'");
-    expect(controls.indexOf('{activeFilterChips}')).toBeGreaterThan(
-      controls.indexOf('data-resource-advanced-controls="true"')
-    );
-  });
-
-  it('uses a Select for category filtering instead of expanded category tabs', () => {
+  it('uses a persistent Select for category filtering instead of expanded category tabs', () => {
     expect(controls).toContain('categoryOptions');
     expect(controls).toContain('data-resource-category-select="true"');
     expect(controls).toContain('<Select<ResourceCategoryValue>');
@@ -87,7 +79,7 @@ describe('WorkloadsExplorer adaptive triage layout', () => {
     expect(explorerSurface).not.toContain("setActiveCategory(current ? 'All' : 'Pod')");
   });
 
-  it('passes namespace-scoped workload category counts to the filters panel', () => {
+  it('passes namespace-scoped workload category counts to the search filter bar', () => {
     expect(explorerSurface).toContain('workloadCategoryCounts');
     expect(explorerSurface).toContain('buildWorkloadCategoryCounts');
     expect(explorerSurface).toContain('workloadCategoryCounts={workloadCategoryCounts}');
@@ -98,36 +90,17 @@ describe('WorkloadsExplorer adaptive triage layout', () => {
   it('restores authoritative resource family counts without the pagination hide path', () => {
     expect(explorerSurface).toContain('resourceFamilyCounts?.workloads ?? workloads.length');
     expect(explorerSurface).toContain('resourceKindCounts?.[kind]');
-    expect(controls).toContain('<span className="type-data ml-2 text-xs text-ui-text-muted">{family.count}</span>');
+    expect(resourceCategoryTabs).toContain('<span className="type-data text-xs text-ui-text-muted">');
     expect(explorerSurface).not.toContain('hideFamilyCounts');
     expect(controls).not.toContain('hideCounts');
-    expect(explorerSurface).not.toContain('resourceSearchTerm');
   });
 
-  it('uses accent styling only for the unhealthy pod active chip', () => {
-    expect(controls).toContain("filter.id === 'unhealthyPods'");
-    expect(controls).toContain('border-accent/20 bg-accent-soft');
-    expect(controls).toContain('border-ui-border bg-ui-bg text-ui-text-muted');
-  });
-
-  it('wires individual active filter clear callbacks', () => {
-    expect(controls).toContain('onClearNamespaceFilter');
-    expect(controls).toContain('onClearUnhealthyPodsFilter');
-    expect(controls).toContain('onClearCategoryFilter');
-    expect(explorerSurface).toContain("setSelectedNamespace('All')");
-    expect(explorerSurface).toContain('setShowUnhealthyPodsOnly(false)');
-    expect(explorerSurface).toContain('clearCurrentCategoryFilter');
-  });
-
-  it('clears secondary filters without changing the selected resource family', () => {
-    expect(explorerSurface).toContain('const resetResourceFilters = () => {');
-    expect(explorerSurface).toContain("setSelectedNamespace('All')");
-    expect(explorerSurface).toContain("setActiveCategory('All')");
-    expect(explorerSurface).toContain("setActiveNetworkCategory('All')");
-    expect(explorerSurface).toContain("setActiveStorageCategory('All')");
-    expect(explorerSurface).toContain("setActiveClusterCategory('All')");
-    expect(explorerSurface).toContain('setShowUnhealthyPodsOnly(false)');
-    expect(explorerSurface).not.toContain("setActiveResourceFamily('workloads')");
+  it('wires resource search into loaded rows and backend resource queries', () => {
+    expect(explorerSurface).toContain('const [resourceSearchTerm, setResourceSearchTerm] = useState(\'\');');
+    expect(explorerSurface).toContain('matchesResourceSearch(resourceSearchTerm');
+    expect(explorerSurface).toContain('searchTerm={resourceSearchTerm}');
+    expect(explorerSurface).toContain('q: resourceSearchTerm.trim() || undefined');
+    expect(controls).not.toContain('onClearSearchFilter');
   });
 
   it('prevents the triage switch knob from escaping a compressed track', () => {
@@ -148,6 +121,25 @@ describe('WorkloadsExplorer adaptive triage layout', () => {
     expect(resourceLayout).toContain('type="button"');
     expect(resourceLayout).toContain('aria-label={`${t(\'workloads.details\')}: ${title}`}');
     expect(explorerSurface).toContain('aria-label={`${t(\'workloads.details\')}: ${workload.name}`}');
+  });
+
+  it('keeps table headers on populated Kubernetes resource lists', () => {
+    const resourceLayout = readFileSync(
+      resolve(root, 'src/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout.tsx'),
+      'utf8'
+    );
+    const parts = readFileSync(
+      resolve(root, 'src/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts.tsx'),
+      'utf8'
+    );
+
+    expect(resourceLayout).toContain('data-resource-list-header="true"');
+    expect(resourceLayout).toContain("t('resources.table.resource')");
+    expect(resourceLayout).toContain("t('resources.table.metrics')");
+    expect(resourceLayout).toContain("t('resources.table.status')");
+    expect(resourceLayout).toContain('resourceRowHeaderClass');
+    expect(parts).toContain('export const resourceRowHeaderClass =');
+    expect(parts).toContain('xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)]');
   });
 
   it('allocates desktop resource rows around identity first and compact operational columns', () => {

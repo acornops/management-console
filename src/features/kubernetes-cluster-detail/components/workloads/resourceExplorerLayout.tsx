@@ -4,78 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
 import {
   classNames,
-  ResourceInventorySummary,
   ResourceMetaPair,
   ResourceStatusPill,
   resourceMetricGridClass,
   resourceRowActionClass,
   resourceRowGridClass,
-  workloadCategories
+  resourceRowHeaderClass
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
-import { Workload } from '@/types';
-
-function getKindLabelKey(kind: string): string {
-  return workloadCategories.includes(kind as 'All' | Workload['type'])
-    ? `workloads.categories.${kind}`
-    : `resources.categories.${kind}`;
-}
-
-export const ResourceInventoryStrip: React.FC<{ summary: ResourceInventorySummary }> = ({ summary }) => {
-  const { t } = useTranslation();
-  const namespaceScope = t(summary.namespaceScopeKey, { namespace: summary.namespace });
-
-  return (
-    <div
-      data-resource-inventory-strip="true"
-      className="mt-3 border-t border-ui-border pt-3 text-xs"
-    >
-      <div className="grid grid-cols-2 gap-2 bg-ui-bg/60 p-2 sm:grid-cols-3 lg:grid-cols-[repeat(3,minmax(0,7rem))_minmax(12rem,1fr)] xl:grid-cols-[repeat(3,minmax(0,7rem))_minmax(12rem,1fr)_minmax(10rem,max-content)]">
-        <div className="min-w-0 overflow-hidden rounded-md border border-ui-border/70 bg-ui-surface/70 px-3 py-2">
-          <p className="type-micro-label">
-            {t('resources.inventory.visible')}
-          </p>
-          <p className="type-data mt-0.5 text-base">{summary.visibleCount}</p>
-        </div>
-        <div className="min-w-0 overflow-hidden rounded-md border border-ui-border/70 bg-ui-surface/70 px-3 py-2">
-          <p className="type-micro-label text-status-success-text">
-            {t('resources.inventory.healthy')}
-          </p>
-          <p className="type-data mt-0.5 text-base text-status-success-text">{summary.healthyCount}</p>
-        </div>
-        <div className="min-w-0 overflow-hidden rounded-md border border-ui-border/70 bg-ui-surface/70 px-3 py-2">
-          <p className="type-micro-label text-status-warning-text">
-            {t('resources.inventory.attention')}
-          </p>
-          <p className="type-data mt-0.5 text-base text-status-warning-text">{summary.attentionCount}</p>
-        </div>
-        <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-1.5 overflow-hidden rounded-md border border-ui-border/70 bg-ui-surface/70 px-3 py-2 sm:col-span-3 lg:col-span-1">
-          <span className="type-micro-label mr-1">
-            {t('resources.inventory.resourceMix')}
-          </span>
-          {summary.kindCounts.length > 0 ? (
-            summary.kindCounts.slice(0, 4).map((kindCount) => (
-              <span
-                key={kindCount.kind}
-                data-resource-kind-chip="true"
-                className="type-micro-label inline-flex items-center gap-1 rounded-full bg-ui-surface px-2 py-1"
-              >
-                {t(getKindLabelKey(kindCount.kind), { defaultValue: kindCount.kind })}
-                <span className="type-data text-xs text-ui-text">{kindCount.count}</span>
-              </span>
-            ))
-          ) : (
-            <span className="type-caption">{t('resources.inventory.noResources')}</span>
-          )}
-        </div>
-        <div className="col-span-2 flex min-w-0 items-center overflow-hidden rounded-md border border-ui-border/70 bg-ui-surface/70 px-3 py-2 sm:col-span-3 lg:col-span-4 xl:col-span-1">
-          <span className="type-micro-label truncate" title={namespaceScope}>
-            {namespaceScope}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export const ResourceMetricInline: React.FC<{ label: string; value: string }> = ({ label, value }) => {
   const { t } = useTranslation();
@@ -103,18 +38,25 @@ export const ResourceList = <T,>({
   items: T[];
   emptyMessage: string;
   renderItem: (item: T) => React.ReactNode;
-}) => (
-  items.length === 0 ? (
+}) => {
+  const { t } = useTranslation();
+
+  return items.length === 0 ? (
     <EmptyState message={emptyMessage} />
   ) : (
     <div
       data-resource-list="true"
       className="min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface divide-y divide-ui-border"
     >
+      <div data-resource-list-header="true" className={resourceRowHeaderClass}>
+        <span className="type-label">{t('resources.table.resource')}</span>
+        <span className="type-label">{t('resources.table.metrics')}</span>
+        <span className="type-label justify-self-end text-right">{t('resources.table.status')}</span>
+      </div>
       {items.map(renderItem)}
     </div>
-  )
-);
+  );
+};
 
 export const ResourceDetailsAction: React.FC = () => {
   const { t } = useTranslation();

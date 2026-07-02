@@ -89,6 +89,7 @@ export const clusterSettingsView = readSource(
 export const traceFooter = readSource('src/features/kubernetes-cluster-detail/components/detail/TraceFooter.tsx');
 export const markdownComponents = readSource('src/features/kubernetes-cluster-detail/lib/markdown.tsx');
 export const buttonComponent = readSource('src/components/common/Button.tsx');
+export const resourceCategoryTabs = readSource('src/components/common/ResourceCategoryTabs.tsx');
 export const addClusterModal = readSource('src/components/kubernetes-clusters/AddClusterModal.tsx');
 export const membersPage = [
   readSource('src/pages/WorkspaceMembersPage.tsx'),
