@@ -7,9 +7,9 @@ import {
   type AgentDefinition
 } from '@/pages/agents/agentModel';
 import { AgentActivityDrawer } from '@/pages/WorkspaceAgentActivityDrawer';
-import { AgentReviewQueue, WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
+import { WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
 import { AgentDetailsDrawer, CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
-import { Notice, activityStateFromRecord, auditHistoryFromAgentActivity, canManageWorkspaceAgents, createAgentEditDraft, createFallbackAgentCapabilityOptions, filterVisibleAgents, getAgentEditChangeSummary, getAgentReviewQueueSummary, mapApiAgent, normalizeAgentCapabilityOptions, splitInput, withAgentAuditHistoryEntry, type AgentCapabilityOptions, type AgentDraft, type AgentEditDraft, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
+import { Notice, activityStateFromRecord, auditHistoryFromAgentActivity, canManageWorkspaceAgents, createAgentEditDraft, createFallbackAgentCapabilityOptions, filterVisibleAgents, getAgentEditChangeSummary, isWorkspaceCatalogAgent, mapApiAgent, normalizeAgentCapabilityOptions, splitInput, withAgentAuditHistoryEntry, type AgentCapabilityOptions, type AgentDraft, type AgentEditDraft, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createAgent as createWorkspaceAgent,
   createAgentVersion as createWorkspaceAgentVersion,
@@ -39,6 +39,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [agentLoadError, setAgentLoadError] = useState('');
   const [agentCapabilityLoadError, setAgentCapabilityLoadError] = useState('');
   const [ownerUserLoadError, setOwnerUserLoadError] = useState('');
+  const [agentCatalogReloadKey, setAgentCatalogReloadKey] = useState(0);
+  const [capabilityOptionsReloadKey, setCapabilityOptionsReloadKey] = useState(0);
+  const [ownerUsersReloadKey, setOwnerUsersReloadKey] = useState(0);
   const [createPanelOpen, setCreatePanelOpen] = useState(false);
   const [editPanelOpen, setEditPanelOpen] = useState(false);
   const [detailPanelOpen, setDetailPanelOpen] = useState(false);
@@ -83,7 +86,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     return () => {
       mounted = false;
     };
-  }, [fallbackAgents, ownerLabelsByUserId, workspace.id, workspace.name]);
+  }, [agentCatalogReloadKey, fallbackAgents, ownerLabelsByUserId, workspace.id, workspace.name]);
   React.useEffect(() => {
     let mounted = true;
     setAgentCapabilityOptions(fallbackCapabilityOptions);
@@ -98,7 +101,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     return () => {
       mounted = false;
     };
-  }, [fallbackCapabilityOptions, workspace.id]);
+  }, [capabilityOptionsReloadKey, fallbackCapabilityOptions, workspace.id]);
   React.useEffect(() => {
     let mounted = true;
     setOwnerUserOptions(workspace.members || []);
@@ -118,10 +121,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     return () => {
       mounted = false;
     };
-  }, [workspace.id, workspace.members, workspace.permissions?.read_members]);
-  const visibleAgents = useMemo(() => filterVisibleAgents(agents, query, catalogFilters), [agents, query, catalogFilters]);
-  const selectedAgent = visibleAgents.find((agent) => agent.id === selectedAgentId) || visibleAgents[0] || agents[0];
-  const reviewQueue = useMemo(() => getAgentReviewQueueSummary(agents), [agents]);
+  }, [ownerUsersReloadKey, workspace.id, workspace.members, workspace.permissions?.read_members]);
+  const workspaceCatalogAgents = useMemo(() => agents.filter(isWorkspaceCatalogAgent), [agents]);
+  const visibleAgents = useMemo(() => filterVisibleAgents(workspaceCatalogAgents, query, catalogFilters), [workspaceCatalogAgents, query, catalogFilters]);
+  const selectedAgent = visibleAgents.find((agent) => agent.id === selectedAgentId) || visibleAgents[0] || workspaceCatalogAgents[0];
   const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
   const ownerSelectOptions = useMemo<Array<SelectOption<string>>>(() => [
@@ -382,7 +385,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     }
   };
   return (
-    <div className="min-h-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <div className="min-h-0 min-w-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-3 py-5 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
       <WorkspaceAgentsRouteHeader
         canManageAgents={canManageAgents}
         onCreateAgent={() => setCreatePanelOpen(true)}
@@ -391,18 +394,18 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       />
 
       {agentLoadError && (
-        <Notice title="Local fallback catalog">
-          Control-plane agents did not load. You can keep reviewing bundled fallback agents, but saved definitions and live activity may be stale.
+        <Notice title="Local fallback catalog" actionLabel="Retry agents" onAction={() => setAgentCatalogReloadKey((value) => value + 1)}>
+          Fallback data is active. Control-plane agents did not load, so saved definitions and live activity may be stale. Live control-plane data was last requested from this workspace route.
         </Notice>
       )}
       {agentCapabilityLoadError && (
-        <Notice title="Capability options unavailable">
-          Capability options did not load. Existing IDs remain visible; new edits may have fewer picker choices.
+        <Notice title="Capability options unavailable" actionLabel="Retry capabilities" onAction={() => setCapabilityOptionsReloadKey((value) => value + 1)}>
+          Fallback data is active. Capability options did not load, so existing IDs remain visible but new edits may have fewer picker choices. Live control-plane data was last requested from workflow options.
         </Notice>
       )}
       {ownerUserLoadError && (
-        <Notice title="Owner choices limited">
-          Workspace members did not load. Owner choices are limited to members already available in this workspace view.
+        <Notice title="Owner choices limited" actionLabel="Retry members" onAction={() => setOwnerUsersReloadKey((value) => value + 1)}>
+          Fallback data is active. Workspace members did not load, so owner choices are limited to members already available in this workspace view. Live control-plane data was last requested from member records.
         </Notice>
       )}
       {!canManageAgents && <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect agents. Ask a workspace manager for manage_agents permission to create or change them.</div>}
@@ -448,21 +451,20 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         />
       )}
 
-      <AgentReviewQueue reviewQueue={reviewQueue} />
-
-      <div className="grid min-w-0 gap-6">
+      <div className="grid min-w-0 w-full max-w-full gap-6">
         <WorkspaceAgentsCatalog
-          agents={agents}
+          agents={workspaceCatalogAgents}
           visibleAgents={visibleAgents}
           selectedAgent={selectedAgent}
           expandedAgentId={expandedAgentId}
           canManageAgents={canManageAgents}
+          testingAgentId={testingAgentId}
           catalogFilters={catalogFilters}
           onCatalogFiltersChange={setCatalogFilters}
           onSelectedAgentChange={selectAgentAssignmentRow}
           onEditAgent={openEditAgentDrawer}
-          onOpenActivity={openAgentActivity}
           onOpenManagement={openAgentManagement}
+          onTestAgent={(agent) => void testAgentReadiness(agent)}
         />
       </div>
 

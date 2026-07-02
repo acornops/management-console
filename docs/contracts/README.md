@@ -468,6 +468,8 @@ Workflow-scoped MCP server create and update responses are wrapped as `{ server 
 
 Workflow schedules are real control-plane records. The schedules page lists `items` plus summary metrics from `GET /api/v1/workspaces/{workspaceId}/workflow-schedules`; create/edit/pause/delete actions use the schedule mutation routes and require `manage_workflows`. The console sends cron, timezone, enabled state, approved context grants, and workflow input defaults, but control-plane validation is authoritative. The control plane computes due times in the stored timezone and dispatches with a workflow runtime subject instead of the creator's current workspace role.
 
+Workflow authoring option catalogs come from `GET /api/v1/workspaces/{workspaceId}/workflow-options`. The management console must treat this catalog as the authoritative source for selectable agents, MCP servers, tools, skills, approval policies, runtime limits, and retention policies.
+
 The approvals page consumes `GET /api/v1/workspaces/{workspaceId}/approvals?status=pending|decided|all&limit=&cursor=`. Rows normalize target write-tool approvals and workflow approval gates and include `approvalId`, `runId`, `source`, `workflowId?`, `targetId?`, `summary`, `toolName`, `requestedBy`, `expiresAt`, `status`, and decision metadata. Approve/reject actions call `POST /api/v1/runs/{runId}/approvals/{approvalId}/decision` and are enabled only for users with `create_read_write_runs`.
 
 Workflow definitions are workspace-scoped and include:

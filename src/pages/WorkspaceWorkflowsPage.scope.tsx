@@ -72,7 +72,7 @@ export const WorkflowScopeMultiSelect: React.FC<{
                 const selectedOption = optionByValue.get(selectedValue);
                 const chipLabel = selectedOption?.label || selectedValue;
                 return (
-                  <button key={selectedValue} type="button" onClick={() => onToggle(selectedOption || { value: selectedValue, label: selectedValue }, false)} className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full border border-ui-border bg-ui-surface px-2.5 py-1 text-xs font-bold text-ui-text-muted transition-colors hover:border-accent/40 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
+                  <button key={selectedValue} type="button" onClick={() => onToggle(selectedOption || { value: selectedValue, label: selectedValue }, false)} className="inline-flex min-h-11 max-w-full items-center gap-1 rounded-full border border-ui-border bg-ui-surface px-2.5 py-1 text-xs font-bold text-ui-text-muted transition-colors hover:border-accent/40 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 sm:min-h-8">
                     <span className="min-w-0 truncate">{chipLabel}</span>
                     <ICONS.X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   </button>

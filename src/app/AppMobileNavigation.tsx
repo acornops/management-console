@@ -102,7 +102,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
           <div className="text-left font-sans text-lg leading-none tracking-tighter">
             <span className="font-bold text-brand-brown">acorn</span>
-            <span className="font-bold text-accent-bright">ops</span>
+            <span className="font-bold text-accent-readable">ops</span>
             <span className="type-micro-label mt-1 block max-w-[10rem] truncate">
               {selectedWorkspace?.name || t('app.noWorkspace')}
             </span>

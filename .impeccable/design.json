@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-06-29T06:22:39Z",
+  "generatedAt": "2026-07-02T00:00:00Z",
   "title": "Design System: AcornOps Management Console",
   "extensions": {
     "colorMeta": {
@@ -108,6 +108,51 @@
           "oklch(0.90 0.06 20)",
           "oklch(0.96 0.035 20)"
         ]
+      },
+      "logo-brown": {
+        "role": "brand",
+        "displayName": "Logo Brown",
+        "canonical": "oklch(0.43 0.026 61)",
+        "tonalRamp": [
+          "oklch(0.20 0.02 61)",
+          "oklch(0.30 0.024 61)",
+          "oklch(0.43 0.026 61)",
+          "oklch(0.53 0.027 61)",
+          "oklch(0.66 0.022 61)",
+          "oklch(0.78 0.018 74)",
+          "oklch(0.88 0.014 80)",
+          "oklch(0.95 0.012 86)"
+        ]
+      },
+      "logo-cream": {
+        "role": "brand",
+        "displayName": "Logo Cream",
+        "canonical": "oklch(0.95 0.012 86)",
+        "tonalRamp": [
+          "oklch(0.35 0.02 80)",
+          "oklch(0.48 0.02 80)",
+          "oklch(0.62 0.018 82)",
+          "oklch(0.74 0.016 84)",
+          "oklch(0.84 0.014 85)",
+          "oklch(0.91 0.013 86)",
+          "oklch(0.95 0.012 86)",
+          "oklch(0.98 0.008 86)"
+        ]
+      },
+      "brand-brown-dark": {
+        "role": "brand",
+        "displayName": "Deep Brown-Navy",
+        "canonical": "oklch(0.278 0.03 250)",
+        "tonalRamp": [
+          "oklch(0.14 0.02 250)",
+          "oklch(0.20 0.025 250)",
+          "oklch(0.278 0.03 250)",
+          "oklch(0.38 0.03 250)",
+          "oklch(0.50 0.028 250)",
+          "oklch(0.66 0.022 250)",
+          "oklch(0.82 0.014 250)",
+          "oklch(0.93 0.008 250)"
+        ]
       }
     },
     "typographyMeta": {
@@ -123,9 +168,21 @@
         "displayName": "Panel Title",
         "purpose": "Panel headings and compact section headers."
       },
+      "data": {
+        "displayName": "Data Readout",
+        "purpose": "Metric and count readouts with tabular lining numerals."
+      },
       "body": {
         "displayName": "Interface Body",
         "purpose": "Descriptions, helper text, and operational copy."
+      },
+      "ui": {
+        "displayName": "UI Control Text",
+        "purpose": "Buttons, tabs, menu items, and inline actions."
+      },
+      "caption": {
+        "displayName": "Quiet Caption",
+        "purpose": "Secondary captions and helper text below the label style."
       },
       "label": {
         "displayName": "Operational Label",
@@ -173,6 +230,21 @@
         "name": "ease-out-expo",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
         "purpose": "Dialog and trace row entry transitions."
+      },
+      {
+        "name": "reasoning-sheen",
+        "value": "reasoning-summary-text-sheen 3.8s cubic-bezier(0.22, 1, 0.36, 1) infinite",
+        "purpose": "Orange sheen swept across reasoning text while a model is actively reasoning. The only sanctioned animated background-clip: text."
+      },
+      {
+        "name": "loading-bar-sweep",
+        "value": "loading-bar-sweep 1.25s cubic-bezier(0.22, 1, 0.36, 1) infinite",
+        "purpose": "Indeterminate progress sweep for pending loads."
+      },
+      {
+        "name": "pending-agent-step-pulse",
+        "value": "pending-agent-step-pulse 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite",
+        "purpose": "Warning-tinted ring pulse marking a pending step in an agent run trace."
       },
       {
         "name": "reduced-motion",
@@ -263,13 +335,14 @@
   ],
   "narrative": {
     "northStar": "The Operator's Ledger",
-    "overview": "The AcornOps Management Console is a product interface for operators and developers who need to inspect workspace state, trace execution, and make deliberate changes without losing context. The visual system should feel like a ledger: warm, orderly, precise, and built for repeated reading under pressure.\n\nThe system is restrained by design. Warm neutral surfaces carry most of the experience, orange appears only when the interface needs a signal, and dense operational surfaces stay readable through hierarchy, spacing, borders, and stable component behavior. It rejects decorative SaaS patterns, route-breaking cleverness, opaque local state, direct backend calls outside the control-plane client boundary, and visual treatments that compete with diagnostics or trace readability.",
+    "overview": "The AcornOps Management Console is a product interface for operators and developers who need to inspect workspace state, trace execution, and make deliberate changes without losing context. The visual system should feel like a ledger: warm, orderly, precise, and built for repeated reading under pressure.\n\nThe system is restrained by design. Warm neutral surfaces carry most of the experience, orange appears only when the interface needs a signal, and dense operational surfaces stay readable through hierarchy, spacing, borders, and stable component behavior. It rejects decorative SaaS patterns, route-breaking cleverness, opaque local state, direct backend calls outside the control-plane client boundary, and visual treatments that compete with diagnostics or trace readability.\n\nThe ledger reads in two lights. A light theme and a dark theme share one warm hue family and one orange signal, both expressed entirely through design tokens, so the same operator can work in a bright room or a dim one without the interface changing character.",
     "keyCharacteristics": [
       "Warm neutral shell with one controlled orange signal.",
       "Dense but readable pages for repeated operational scanning.",
       "Familiar product controls with predictable keyboard and focus behavior.",
       "Borders and tonal layers before shadow.",
-      "Motion only when it explains state."
+      "Motion only when it explains state.",
+      "Dual light and dark themes, driven entirely by design tokens."
     ],
     "rules": [
       {
@@ -279,7 +352,12 @@
       },
       {
         "name": "The Warm Neutral Rule",
-        "body": "Backgrounds and borders stay warm and quiet. Do not introduce cool slate, blue-gray, or generic dashboard neutrals.",
+        "body": "Backgrounds and borders stay warm and quiet. Do not introduce cool slate, blue-gray, or generic dashboard neutrals. The one sanctioned cool token is brand-brown-dark, and only for brand illustration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Token Theme Rule",
+        "body": "Never hardcode a color. Every surface, text, border, and status color resolves through a design token so it adapts across the light and dark themes. A literal hex or RGB in a component is a defect.",
         "section": "colors"
       },
       {
@@ -306,6 +384,11 @@
         "name": "The No Glass Rule",
         "body": "Blur-backed panels and glass cards are prohibited for this product.",
         "section": "elevation"
+      },
+      {
+        "name": "The Motion Explains State Rule",
+        "body": "Every animation maps to a real state: working, pending, loading, resolving. If an animation would run while nothing is happening, it is decoration and is prohibited. All motion respects prefers-reduced-motion.",
+        "section": "elevation"
       }
     ],
     "dos": [
@@ -315,7 +398,8 @@
       "Do use predictable controls, visible labels, visible focus states, and stable dimensions.",
       "Do reserve orange for actions, selected state, focus, and meaningful state.",
       "Do keep dense pages readable through borders, spacing rhythm, typography, and progressive disclosure.",
-      "Do respect reduced-motion preferences."
+      "Do drive every color through a design token so both the light and dark themes resolve correctly.",
+      "Do respect reduced-motion preferences, and give every functional animation a reduced-motion fallback."
     ],
     "donts": [
       "Don't use decorative SaaS patterns.",
@@ -324,9 +408,10 @@
       "Don't make direct backend calls outside the control-plane client boundary.",
       "Don't use visual treatments that compete with diagnostics or trace readability.",
       "Don't use orange as a generic accent; reserve orange filled buttons for workflow launch or activation.",
-      "Don't use glassmorphism, gradient text, decorative bokeh, or ornamental orbs.",
+      "Don't use glassmorphism, gradient text, decorative bokeh, or ornamental orbs. The only sanctioned animated background-clip: text is the reasoning sheen (reasoning-summary-active), which signals live reasoning state; never extend it to static or decorative text.",
       "Don't use border-left or border-right wider than 1px as a colored accent on cards, list items, callouts, or alerts.",
-      "Don't make status, role, permission, or health depend on color alone."
+      "Don't make status, role, permission, or health depend on color alone.",
+      "Don't hardcode a hex or RGB color in a component; it breaks the dark theme. Resolve through a token instead."
     ]
   }
 }

@@ -160,74 +160,44 @@ describe('theme color contract', () => {
 
   it('keeps login anchored to triage instead of decorative SaaS motion', () => {
     expect(loginPage).toContain('LoginPreview');
-    expect(loginPreview).toContain('data-login-visual-variant="a3"');
-    expect(loginPreview).toContain('Service health');
-    expect(loginPreview).toContain('Service restart loop');
-    expect(loginPreview).toContain('login-health-indicator');
+    [
+      'data-login-visual-variant="evidence-run"', 'Evidence run', 'Observe', 'Correlate', 'Resolve',
+      "order: '01'", "order: '02'", "order: '03'", 'Kubernetes restart loop', 'SquirrelRunner', 'AcornToken',
+      '<svg', 'viewBox="0 0 82 66"', 'login-squirrel-tail', 'login-squirrel-face', 'login-squirrel-svg',
+      'login-evidence-glow', 'login-path-rail', 'login-path-node', 'login-signal-card', 'login-resolution-card',
+      'useReducedMotion', 'useAnimate', 'data-rail', 'data-node', 'data-acorn', 'data-signal', 'data-squirrel',
+      'data-resolution', 'data-detail'
+    ].forEach((needle) => expect(loginPreview).toContain(needle));
     expect(loginPreview).not.toContain('Payments API');
     expect(loginPreview).not.toContain('Payment restart loop');
-    expect(loginPreview).toContain('visualEvidenceTrace.map');
-    expect(loginPreview).toContain('CrashLoopBackOff spike');
-    expect(loginPreview).toContain('Memory limit reduced');
-    expect(loginPreview).toContain('Service path clear');
-    expect(loginPreview).toContain('login-evidence-node');
-    expect(loginPreview).toContain('login-evidence-signal');
-    expect(loginPreview).toContain('login-evidence-signal-y');
-    expect(loginPreview).toContain('login-evidence-trace');
-    expect(loginPreview).toContain('login-evidence-trace-row');
-    expect(loginPreview).toContain('login-evidence-run-card');
-    expect(loginPreview).toContain('login-evidence-note-card');
-    expect(loginPreview).not.toContain('login-evidence-primary-card');
-    expect(loginPreview).not.toContain('login-evidence-signal-late');
-    expect(loginPreview).not.toContain('login-evidence-signal-y-late');
-    expect(loginPreview).not.toContain('login-evidence-icon');
-    expect(loginPreview).not.toContain('login-evidence-badge');
-    expect(loginPreview).not.toContain('login-evidence-status');
-    expect(loginPreview).not.toContain('login-evidence-line');
-    expect(loginPreview).not.toContain('login-evidence-card-sweep');
-    expect(loginPreview).not.toContain('login-evidence-scan');
-    expect(loginPreview).toContain('top-[7rem]');
-    expect(loginPreview).toContain('min-h-[31rem]');
-    expect(loginPreview).toContain('top-[21rem]');
-    expect(loginPreview).toContain('login-evidence-signal absolute z-0');
-    expect(loginPreview).toContain('login-evidence-signal-y absolute z-0');
-    expect(loginPreview).toContain('login-evidence-node absolute z-10');
-    expect(loginPreview).toContain('login-evidence-trace absolute z-10');
-    expect(loginPreview).not.toContain('bg-[linear-gradient(to_right');
-    expect(loginPreview).not.toContain('ambientSignals.map');
-    expect(loginPreview).not.toContain('login-ambient-signal');
-    expect(loginPreview).not.toContain('overflow-hidden rounded-lg border border-ui-border bg-ui-bg/45');
-    expect(loginPreview).not.toContain('Triage focus');
-    expect(styles).toContain('login-evidence-node');
-    expect(styles).toContain('login-evidence-rule');
-    expect(styles).toContain('login-evidence-signal');
-    expect(styles).toContain('login-evidence-signal-y');
-    expect(styles).toContain('login-evidence-trace');
-    expect(styles).toContain('login-health-indicator');
-    expect(styles).toContain('login-health-breathe');
-    expect(styles).toContain('login-evidence-run-card');
-    expect(styles).toContain('login-evidence-note-card');
-    expect(styles).toContain('login-run-card-shift');
-    expect(styles).toContain('login-note-card-shift');
-    expect(styles).not.toContain('login-evidence-primary-card');
-    expect(styles).not.toContain('login-card-shift');
-    expect(styles).toContain('login-signal-travel');
-    expect(styles).toContain('login-signal-drop');
-    expect(styles).toContain('login-trace-row-enter');
-    expect(styles).not.toContain('login-health-search');
+    [
+      'evidenceAcorns.map', 'CrashLoopBackOff spike', 'Memory limit reduced', 'Service path clear',
+      'limit change', 'probe healthy', 'Fix ready', 'p-4', 'w-44', 'className="type-row-title',
+      '{item.order} {item.stage}', 'min-h-[32rem]', 'login-resolution-card absolute z-[16]'
+    ].forEach((needle) => expect(loginPreview).toContain(needle));
+    // The old moonwalking single-loop squirrel, its per-stage CSS delay, and earlier
+    // visual iterations must be gone.
+    [
+      'login-acorn-runner', 'viewBox="0 0 128 88"', "'--login-stage-delay'", 'bottom-[-0.35rem]',
+      'login-evidence-node', 'login-evidence-signal', 'login-evidence-signal-y', 'login-evidence-trace',
+      'login-evidence-trace-row', 'login-evidence-run-card', 'login-evidence-note-card',
+      'bg-[linear-gradient(to_right', 'ambientSignals.map', 'login-ambient-signal',
+      'overflow-hidden rounded-lg border border-ui-border bg-ui-bg/45', 'Triage focus'
+    ].forEach((needle) => expect(loginPreview).not.toContain(needle));
+    [
+      'login-squirrel-svg', 'login-squirrel-tail', 'login-squirrel-face', 'login-evidence-glow',
+      'login-evidence-glow-breathe', 'login-path-rail', 'login-path-node', 'login-signal-card',
+      'login-resolution-card'
+    ].forEach((needle) => expect(styles).toContain(needle));
+    [
+      'login-acorn-runner', 'login-runner-path', 'login-tail-balance', 'login-stage-focus',
+      'login-resolution-settle', 'login-pack-settle', 'login-squirrel-pack', 'login-squirrel-shadow',
+      'login-squirrel-body', 'login-squirrel-head', 'login-evidence-node', 'login-evidence-rule',
+      'login-evidence-signal', 'login-evidence-signal-y', 'login-evidence-trace', 'login-health-indicator',
+      'login-health-breathe', 'login-run-card-shift', 'login-note-card-shift', 'login-signal-travel',
+      'login-signal-drop', 'login-trace-row-enter'
+    ].forEach((needle) => expect(styles).not.toContain(needle));
     expect(styles).not.toContain('steps(1, end)');
-    expect(styles).not.toContain('login-evidence-signal-late');
-    expect(styles).not.toContain('login-evidence-signal-y-late');
-    expect(styles).not.toContain('login-node-drift');
-    expect(styles).not.toContain('login-note-breathe');
-    expect(styles).not.toContain('login-icon-attention');
-    expect(styles).not.toContain('login-badge-live');
-    expect(styles).not.toContain('login-trace-float');
-    expect(styles).not.toContain('login-status-pulse');
-    expect(styles).not.toContain('login-line-resolve');
-    expect(styles).not.toContain('login-card-sweep');
-    expect(styles).not.toContain('login-trace-scan');
-    expect(styles).not.toContain('login-row-focus');
     expect(styles).toContain('background: rgb(var(--surface-rgb) / 1);');
     expect(styles).not.toContain('login-ambient-float');
     expect(styles).not.toContain('.login-visual-slide:not(:first-child)');

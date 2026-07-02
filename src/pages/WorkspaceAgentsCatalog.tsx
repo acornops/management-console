@@ -3,7 +3,6 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/common/Button';
 import { FilterToggleGroup, type CompactControlItem } from '@/components/common/ComponentVocabulary';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import { getAgentEligibilityLabel, getAgentReviewSignals, type AgentDefinition } from '@/pages/agents/agentModel';
 import { formatAgentTimestamp } from '@/pages/WorkspaceAgentsPage.helpers';
@@ -29,13 +28,13 @@ export const WorkspaceAgentsRouteHeader: React.FC<{
   query: string;
   setQuery: React.Dispatch<React.SetStateAction<string>>;
 }> = ({ canManageAgents, onCreateAgent, query, setQuery }) => (
-  <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+  <header className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
     <div className="min-w-0 flex-1">
       <h1 className="type-route-title">Agents</h1>
       <p className="type-body mt-3 max-w-none break-words text-ui-text-muted">Browse workspace agent profiles and manage the capabilities workflows can use.</p>
     </div>
-    <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-      <PageSearchInput value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search agents, workflows, tools" aria-label="Search agents" className="min-w-0 lg:w-80" />
+    <div className="flex w-full min-w-0 max-w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+      <PageSearchInput value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search agents, workflows, tools" aria-label="Search agents" className="w-full min-w-0 lg:w-80" />
       <Button type="button" variant="secondary" size="md" className="w-full justify-center whitespace-nowrap sm:w-auto" onClick={onCreateAgent} disabled={!canManageAgents}>
         <ICONS.Plus className="h-4 w-4" />
         New agent
@@ -61,22 +60,54 @@ type AgentApprovalPolicyAction = AgentDefinition['approvalPolicy']['writeActions
 function getApprovalPolicyChip(label: 'Write' | 'Sensitive', action: AgentApprovalPolicyAction) {
   if (action === 'blocked') {
     return {
-      label: `${label} blocked`,
+      scopeLabel: label,
+      label: 'Blocked',
       Icon: ICONS.Lock,
-      className: 'text-status-danger-text'
+      className: 'border-status-danger/25 bg-status-danger-soft text-status-danger-text'
     };
   }
   if (action === 'approval_required') {
     return {
-      label: `${label} approval`,
+      scopeLabel: label,
+      label: 'Approval required',
       Icon: ICONS.Shield,
-      className: 'text-status-warning-text'
+      className: 'border-status-warning/25 bg-status-warning-soft text-status-warning-text'
     };
   }
   return {
-    label: `${label} allowed`,
+    scopeLabel: label,
+    label: 'Allowed',
     Icon: ICONS.CheckCircle2,
-    className: 'text-status-success-text'
+    className: 'border-status-success/25 bg-status-success-soft text-status-success-text'
+  };
+}
+
+function getAgentEligibilityVisual(eligibility: string) {
+  if (eligibility === 'Ready') {
+    return {
+      Icon: ICONS.CheckCircle2,
+      badgeClassName: 'border-status-success/25 bg-status-success-soft text-status-success-text',
+      reasonClassName: 'text-ui-text-muted'
+    };
+  }
+  if (eligibility === 'Needs test') {
+    return {
+      Icon: ICONS.Activity,
+      badgeClassName: 'border-status-warning/25 bg-status-warning-soft text-status-warning-text',
+      reasonClassName: 'font-semibold text-status-warning-text'
+    };
+  }
+  if (eligibility === 'Needs review') {
+    return {
+      Icon: ICONS.Shield,
+      badgeClassName: 'border-status-danger/25 bg-status-danger-soft text-status-danger-text',
+      reasonClassName: 'font-semibold text-status-danger-text'
+    };
+  }
+  return {
+    Icon: ICONS.Lock,
+    badgeClassName: 'border-ui-border bg-ui-bg text-ui-text-muted',
+    reasonClassName: 'text-ui-text-muted'
   };
 }
 
@@ -85,11 +116,22 @@ function getAgentEligibilityReason(agent: AgentDefinition): string {
   const signals = getAgentReviewSignals(agent);
   if (eligibility === 'Ready') return agent.health.summary;
   if (eligibility === 'Disabled') return 'Definition disabled';
-  if (eligibility === 'Needs test') return signals.includes('No recent readiness test') ? 'No test recorded' : agent.health.summary;
-  if (signals.includes('Broad target scope')) return 'Access review';
-  if (signals.includes('Write tools can run without approval')) return 'Ungated writes';
+  if (eligibility === 'Needs test') return signals.includes('No recent readiness test') ? 'No recent test' : agent.health.summary;
+  if (signals.includes('Broad target scope')) return 'Review target access';
+  if (signals.includes('Write tools can run without approval')) return 'Require write approval';
   if (signals.length > 0) return signals[0];
   return agent.health.summary;
+}
+
+function getAgentNextStep(agent: AgentDefinition): string {
+  const eligibility = getAgentEligibilityLabel(agent);
+  const signals = getAgentReviewSignals(agent);
+  if (eligibility === 'Ready') return 'Ready for workflow assignment';
+  if (eligibility === 'Disabled') return 'Reactivate before assignment';
+  if (signals.includes('No recent readiness test')) return 'Open profile, then run readiness';
+  if (signals.includes('Broad target scope')) return 'Open profile and narrow target scope';
+  if (signals.includes('Write tools can run without approval')) return 'Edit policy before assignment';
+  return 'Open profile to resolve assignment blockers';
 }
 
 function getAgentMetadataItems(agent: AgentDefinition): string[] {
@@ -122,7 +164,7 @@ function getAgentWorkflowUsageSummary(agent: AgentDefinition): { countLabel: str
   };
 }
 
-const catalogGridClass = 'grid min-w-0 gap-x-4 gap-y-3 px-4 py-3.5 xl:grid-cols-[minmax(0,1.45fr)_minmax(9rem,0.58fr)_minmax(10rem,0.68fr)_2rem] xl:items-center xl:gap-x-5';
+const catalogGridClass = 'grid min-w-0 gap-x-3 gap-y-3 px-3 py-3 sm:px-4 sm:py-3.5 xl:grid-cols-[minmax(0,1.35fr)_minmax(9rem,0.52fr)_minmax(9rem,0.52fr)_minmax(11rem,max-content)_2rem] xl:items-center xl:gap-x-5';
 
 interface CatalogCellProps {
   label: string;
@@ -163,10 +205,13 @@ const ApprovalPolicyStack: React.FC<{ agent: AgentDefinition }> = ({ agent }) =>
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1" aria-label={getAgentApprovalCheckSummary(agent)}>
-      {chips.map(({ label, Icon, className }) => (
-        <span key={label} className={`inline-flex max-w-full items-center gap-1.5 text-xs font-bold leading-none ${className}`}>
-          <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 truncate">{label}</span>
+      {chips.map(({ scopeLabel, label, Icon, className }) => (
+        <span key={`${scopeLabel}-${label}`} className="inline-flex max-w-full items-center gap-1.5">
+          <span className="type-micro-label shrink-0 text-ui-text-muted">{scopeLabel}</span>
+          <span title={`${scopeLabel}: ${label}`} className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 text-[0.68rem] font-bold uppercase leading-none tracking-widest ${className}`}>
+            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 truncate">{label}</span>
+          </span>
         </span>
       ))}
     </div>
@@ -174,56 +219,71 @@ const ApprovalPolicyStack: React.FC<{ agent: AgentDefinition }> = ({ agent }) =>
 };
 
 const AgentReadinessCell: React.FC<{
+  agent: AgentDefinition;
   eligibility: string;
   eligibilityReason: string;
-}> = ({ eligibility, eligibilityReason }) => (
-  <div className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-x-2 gap-y-1">
-    <StatusBadge tone={eligibility === 'Ready' ? 'success' : eligibility === 'Disabled' ? 'neutral' : 'warning'}>{eligibility}</StatusBadge>
-    <span className={`type-caption min-w-0 break-words [overflow-wrap:anywhere] ${eligibility === 'Ready' ? 'text-ui-text-muted' : 'font-semibold text-status-warning-text'}`}>{eligibilityReason}</span>
-  </div>
-);
-
-interface AgentReviewQueueProps {
-  reviewQueue: {
-    agentsNeedingAttention: number;
-    broadTargetScope: number;
-    staleReadiness: number;
-    agentsInUse: number;
-  };
-}
-
-const ReviewQueueSignal: React.FC<{
-  label: string;
-  value: number;
-}> = ({ label, value }) => (
-  <div className="min-w-0">
-    <dt className="type-micro-label text-current">{label}</dt>
-    <dd className="mt-1 text-sm font-semibold text-ui-text">{value}</dd>
-  </div>
-);
-
-export const AgentReviewQueue: React.FC<AgentReviewQueueProps> = ({ reviewQueue }) => {
-  const hasAttention = reviewQueue.agentsNeedingAttention > 0;
-  const queueTextClassName = hasAttention ? 'text-ui-text' : 'text-ui-text-muted';
+}> = ({ agent, eligibility, eligibilityReason }) => {
+  const visual = getAgentEligibilityVisual(eligibility);
+  const Icon = visual.Icon;
 
   return (
-    <section
-      aria-label="Profile queue"
-      className="mb-4 rounded-lg border border-ui-border bg-ui-surface px-4 py-3"
-    >
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <div className={`type-micro-label ${queueTextClassName}`}>Profile queue</div>
-          <div className="mt-1 type-panel-title text-ui-text">{reviewQueue.agentsNeedingAttention} profiles need review</div>
-          <p className={`type-caption mt-1 max-w-2xl ${queueTextClassName}`}>Resolve stale tests, access review, or ungated write access before workflow assignment.</p>
-        </div>
-        <dl className={`grid min-w-0 gap-x-5 gap-y-3 sm:grid-cols-3 md:min-w-[28rem] md:text-right ${queueTextClassName}`}>
-          <ReviewQueueSignal label="Access review" value={reviewQueue.broadTargetScope} />
-          <ReviewQueueSignal label="No recent test" value={reviewQueue.staleReadiness} />
-          <ReviewQueueSignal label="Assigned" value={reviewQueue.agentsInUse} />
-        </dl>
+    <div className="grid min-w-0 gap-1">
+      <div className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-x-2 gap-y-1">
+        <AgentEligibilityBadge eligibility={eligibility} />
+        <span className={`type-caption min-w-0 break-words [overflow-wrap:anywhere] ${visual.reasonClassName}`}>{eligibilityReason}</span>
       </div>
-    </section>
+      <span className="type-caption min-w-0 break-words text-ui-text-muted [overflow-wrap:anywhere]">
+        <Icon className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
+        {getAgentNextStep(agent)}
+      </span>
+    </div>
+  );
+};
+
+const AgentEligibilityBadge: React.FC<{ eligibility: string }> = ({ eligibility }) => {
+  const visual = getAgentEligibilityVisual(eligibility);
+  const Icon = visual.Icon;
+
+  return (
+    <span className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 text-[0.68rem] font-bold uppercase leading-none tracking-widest ${visual.badgeClassName}`}>
+      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <span className="min-w-0 truncate">{eligibility}</span>
+    </span>
+  );
+};
+
+const AgentRowActionCell: React.FC<{
+  agent: AgentDefinition;
+  canManageAgents: boolean;
+  eligibility: string;
+  isTesting: boolean;
+  onOpenManagement: (agent: AgentDefinition) => void;
+  onTestAgent: (agent: AgentDefinition) => void;
+}> = ({ agent, canManageAgents, eligibility, isTesting, onOpenManagement, onTestAgent }) => {
+  if (eligibility === 'Needs test') {
+    return (
+      <Button type="button" variant="secondary" size="sm" className="w-full justify-center xl:w-auto" onClick={() => onTestAgent(agent)} disabled={!canManageAgents || isTesting}>
+        <ICONS.Activity className="h-4 w-4" />
+        {isTesting ? 'Queuing...' : 'Run readiness'}
+      </Button>
+    );
+  }
+
+  if (eligibility === 'Ready') {
+    return (
+      <Button type="button" variant="tertiary" size="sm" className="w-full justify-center xl:w-auto" onClick={() => onOpenManagement(agent)}>
+        <ICONS.CheckCircle2 className="h-4 w-4" />
+        Ready for assignment
+      </Button>
+    );
+  }
+
+  const label = eligibility === 'Needs review' ? 'Review access' : 'Review before assignment';
+  return (
+    <Button type="button" variant="secondary" size="sm" className="w-full justify-center xl:w-auto" onClick={() => onOpenManagement(agent)} disabled={!canManageAgents}>
+      <ICONS.Shield className="h-4 w-4" />
+      {label}
+    </Button>
   );
 };
 
@@ -233,12 +293,13 @@ interface WorkspaceAgentsCatalogProps {
   selectedAgent?: AgentDefinition;
   expandedAgentId: string;
   canManageAgents: boolean;
+  testingAgentId: string;
   catalogFilters: AgentCatalogFilters;
   onCatalogFiltersChange: (filters: AgentCatalogFilters) => void;
   onSelectedAgentChange: (agentId: string) => void;
   onEditAgent: (agent: AgentDefinition) => void;
-  onOpenActivity: (agent: AgentDefinition) => void;
   onOpenManagement: (agent: AgentDefinition) => void;
+  onTestAgent: (agent: AgentDefinition) => void;
 }
 
 export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
@@ -247,12 +308,13 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   selectedAgent,
   expandedAgentId,
   canManageAgents,
+  testingAgentId,
   catalogFilters,
   onCatalogFiltersChange,
   onSelectedAgentChange,
   onEditAgent,
-  onOpenActivity,
-  onOpenManagement
+  onOpenManagement,
+  onTestAgent
 }) => {
   const shouldReduceMotion = useReducedMotion();
   const updateCatalogFilter = <Key extends keyof AgentCatalogFilters>(key: Key, value: AgentCatalogFilters[Key]) => {
@@ -266,23 +328,23 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   ], [agents]);
   const hasActiveFilters = hasActiveAgentCatalogFilters(catalogFilters);
   return (
-  <section aria-label="Agent catalog" className="min-w-0 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-ui-border px-4 py-4">
-      <div className="min-w-0">
+  <section aria-label="Agent catalog" className="min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+    <div className="flex min-w-0 w-full max-w-full flex-wrap items-start justify-between gap-3 border-b border-ui-border px-4 py-4">
+      <div className="min-w-0 max-w-full">
         <div className="type-panel-title">Workspace agent profiles</div>
         <p className="type-caption mt-1 max-w-2xl text-ui-text-muted">Browse capability ownership, workflow usage, and assignment eligibility. Open a profile for approvals, versions, and activity.</p>
       </div>
       <div className="rounded-full border border-ui-border bg-ui-bg px-3 py-1 text-xs font-bold text-ui-text-muted">{visibleAgents.length} of {agents.length} agents</div>
     </div>
-    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-ui-border bg-ui-bg/70 px-4 py-3" aria-label="Agent catalog filters">
-      <div className="grid min-w-0 flex-1 gap-1.5">
+    <div className="flex min-w-0 w-full max-w-full flex-wrap items-end justify-between gap-3 border-b border-ui-border bg-ui-bg/70 px-4 py-3" aria-label="Agent catalog filters">
+      <div className="grid min-w-0 max-w-full flex-1 gap-1.5">
         <span className="type-micro-label text-ui-text-muted">Focus</span>
         <FilterToggleGroup<AgentFocusFilter>
           activeValue={catalogFilters.focus}
           items={focusOptions}
           onValueChange={(value) => updateCatalogFilter('focus', value)}
           ariaLabel="Agent focus filter"
-          className="flex-wrap overflow-visible"
+          className="grid w-full grid-cols-2 items-stretch gap-2 min-[520px]:flex min-[520px]:w-auto [&>button]:min-w-0 [&>button]:justify-center"
         />
       </div>
       {hasActiveFilters && (
@@ -298,56 +360,74 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
       )}
     </div>
     {visibleAgents.length > 0 ? (
-      <div className="min-w-0">
+      <div className="min-w-0 w-full max-w-full">
         <div aria-hidden="true" className="hidden border-b border-ui-border bg-ui-bg/65 xl:block">
           <div className={catalogGridClass}>
-            {['Agent', 'Eligibility', 'Workflows', ''].map((column) => (
+            {['Agent', 'Eligibility', 'Workflows', 'Assignment action', ''].map((column) => (
               <div key={column} className="type-micro-label min-w-0 text-ui-text-muted">
                 {column}
               </div>
             ))}
           </div>
         </div>
-        <ul role="list" aria-label="Agent catalog list" className="grid gap-3 bg-ui-bg/45 p-3 xl:block xl:bg-transparent xl:p-0">
+        <ul role="list" aria-label="Agent catalog list" className="grid min-w-0 w-full max-w-full gap-3 bg-ui-bg/45 p-3 xl:block xl:bg-transparent xl:p-0">
           {visibleAgents.map((agent) => {
             const eligibility = getAgentEligibilityLabel(agent);
             const selected = agent.id === selectedAgent?.id;
             const expanded = agent.id === expandedAgentId;
             const eligibilityReason = getAgentEligibilityReason(agent);
             return (
-              <li key={agent.id} className={`rounded-md border bg-ui-surface xl:rounded-none xl:border-x-0 xl:border-t-0 xl:last:border-b-0 ${expanded ? 'border-ui-border bg-ui-surface shadow-sm xl:mb-3' : 'border-ui-border'}`}>
-                <button
-                  type="button"
-                  aria-expanded={expanded}
-                  aria-controls={`agent-assignment-detail-${agent.id}`}
-                  aria-current={selected ? 'true' : undefined}
-                  onClick={() => onSelectedAgentChange(agent.id)}
-                  className={`${catalogGridClass} group w-full cursor-pointer text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${selected ? 'bg-ui-bg/65 outline outline-1 -outline-offset-1 outline-ui-border' : 'hover:bg-ui-bg/70'}`}
-                >
+              <li key={agent.id} className={`min-w-0 max-w-full overflow-hidden rounded-md border bg-ui-surface xl:rounded-none xl:border-x-0 xl:border-t-0 xl:last:border-b-0 ${expanded ? 'border-accent/25 bg-ui-surface shadow-sm ring-1 ring-accent/10 xl:mb-3' : 'border-ui-border'}`}>
+                <div className={`${catalogGridClass} transition-colors ${selected ? 'bg-accent-soft/55 outline outline-1 -outline-offset-1 outline-accent/35 ring-1 ring-accent/15' : 'hover:bg-ui-bg/70'}`}>
                   <CatalogCell label="Agent">
-                    <div className="block min-w-0 text-left">
-                      <span className="type-panel-title block min-w-0 break-words text-ui-text group-hover:text-accent-strong [overflow-wrap:anywhere]">{agent.name}</span>
+                    <button
+                      type="button"
+                      aria-expanded={expanded}
+                      aria-controls={`agent-assignment-detail-${agent.id}`}
+                      aria-current={selected ? 'true' : undefined}
+                      onClick={() => onSelectedAgentChange(agent.id)}
+                      className="group block w-full min-w-0 rounded-md text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                    >
+                      <span className="type-row-title block min-w-0 break-words text-ui-text group-hover:text-accent-strong [overflow-wrap:anywhere]">{agent.name}</span>
                       <span className="type-caption mt-1 block min-w-0 break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.description}</span>
                       <AgentMetadataLine agent={agent} />
-                    </div>
+                    </button>
                   </CatalogCell>
                   <CatalogCell label="Eligibility">
-                    <AgentReadinessCell eligibility={eligibility} eligibilityReason={eligibilityReason} />
+                    <AgentReadinessCell agent={agent} eligibility={eligibility} eligibilityReason={eligibilityReason} />
                   </CatalogCell>
                   <CatalogCell label="Workflows">
                     <AgentWorkflowUsageCell agent={agent} />
                   </CatalogCell>
-                  <CatalogCell label="Expand" className="flex justify-end">
-                    <motion.span
-                      aria-hidden="true"
-                      animate={shouldReduceMotion ? { rotate: 0 } : { rotate: expanded ? 180 : 0 }}
-                      transition={shouldReduceMotion ? { duration: 0.01 } : { duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface text-ui-text-muted"
-                    >
-                      <ICONS.ChevronDown className="h-4 w-4" />
-                    </motion.span>
+                  <CatalogCell label="Assignment action">
+                    <AgentRowActionCell
+                      agent={agent}
+                      canManageAgents={canManageAgents}
+                      eligibility={eligibility}
+                      isTesting={testingAgentId === agent.id}
+                      onOpenManagement={onOpenManagement}
+                      onTestAgent={onTestAgent}
+                    />
                   </CatalogCell>
-                </button>
+                  <CatalogCell label="Expand" className="flex justify-end">
+                    <button
+                      type="button"
+                      aria-label={`${expanded ? 'Collapse' : 'Expand'} ${agent.name} evidence`}
+                      aria-expanded={expanded}
+                      aria-controls={`agent-assignment-detail-${agent.id}`}
+                      onClick={() => onSelectedAgentChange(agent.id)}
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface text-ui-text-muted transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 sm:h-9 sm:w-9"
+                    >
+                      <motion.span
+                        aria-hidden="true"
+                        animate={shouldReduceMotion ? { rotate: 0 } : { rotate: expanded ? 180 : 0 }}
+                        transition={shouldReduceMotion ? { duration: 0.01 } : { duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <ICONS.ChevronDown className="h-4 w-4" />
+                      </motion.span>
+                    </button>
+                  </CatalogCell>
+                </div>
                 <AnimatePresence initial={false}>
                   {expanded && (
                   <motion.div
@@ -357,32 +437,27 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                     animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
                     exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
                     transition={shouldReduceMotion ? { duration: 0.01 } : { duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                    className="border-t border-ui-border bg-ui-surface px-4 py-4 sm:px-5"
+                    className="border-t border-accent/20 bg-ui-bg/85 px-3 py-4 sm:px-5"
                   >
                     <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.34fr)]">
-                      <section className="min-w-0" aria-label={`${agent.name} recent evidence`}>
+                      <section className="min-w-0 rounded-md border border-ui-border bg-ui-surface p-3 shadow-sm sm:p-4" aria-label={`${agent.name} recent evidence`}>
                         <div className="flex flex-col gap-4 border-b border-ui-border pb-4 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0">
                             <h3 className="type-panel-title">Recent evidence</h3>
                             <p className="type-caption mt-1 max-w-3xl text-ui-text-muted">Latest profile evidence and activity that affect assignment. Open agent management for configuration, versions, and full activity.</p>
                           </div>
-                          <div className="min-w-0 shrink-0" aria-label={`${agent.name} expanded actions`}>
-                            <div className="type-micro-label mb-2 text-ui-text-muted">Profile actions</div>
-                            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                              <Button type="button" variant="secondary" size="sm" onClick={() => onEditAgent(agent)} disabled={!canManageAgents}>
+                          <div className="min-w-0 shrink-0 lg:min-w-[18rem]" aria-label={`${agent.name} expanded actions`}>
+                            <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                              <Button type="button" variant="secondary" size="sm" className="w-full justify-center sm:w-auto" onClick={() => onEditAgent(agent)} disabled={!canManageAgents}>
                                 <ICONS.Pencil className="h-4 w-4" />
                                 Edit agent
                               </Button>
                               {canManageAgents && (
-                                <Button type="button" variant="tertiary" size="sm" onClick={() => onOpenManagement(agent)}>
+                                <Button type="button" variant="secondary" size="sm" className="w-full justify-center sm:w-auto" onClick={() => onOpenManagement(agent)}>
                                   <ICONS.Settings className="h-4 w-4" />
-                                  Manage agent
+                                  Profile & activity
                                 </Button>
                               )}
-                              <Button type="button" variant="tertiary" size="sm" onClick={() => onOpenActivity(agent)}>
-                                <ICONS.Eye className="h-4 w-4" />
-                                View activity
-                              </Button>
                             </div>
                           </div>
                         </div>
@@ -479,7 +554,7 @@ const WorkflowBacklinkList: React.FC<{ agent: AgentDefinition }> = ({ agent }) =
           href={workflowCatalogHref(agent.workspaceId, workflow)}
           aria-label={`Open workflow ${workflow}`}
           title={`Open ${workflow} in Workflows`}
-          className="inline-flex min-h-8 max-w-full items-center rounded-md border border-ui-border bg-ui-surface px-2.5 text-xs font-bold text-ui-text-muted transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          className="inline-flex min-h-11 max-w-full items-center rounded-md border border-ui-border bg-ui-surface px-2.5 text-xs font-bold text-ui-text-muted transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
         >
           <span className="min-w-0 truncate">{workflow}</span>
         </a>

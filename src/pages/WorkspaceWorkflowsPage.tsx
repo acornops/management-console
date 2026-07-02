@@ -1,14 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/common/Button';
+import { Checkbox } from '@/components/common/Checkbox';
 import { SegmentedTabs, Textarea, TextInput } from '@/components/common/ComponentVocabulary';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ProjectMember, Workspace } from '@/types';
-import {
-  createDefaultAgentDefinitions,
-  type AgentDefinition
-} from '@/pages/agents/agentModel';
+import { createDefaultAgentDefinitions, type AgentDefinition } from '@/pages/agents/agentModel';
 import { mapApiAgent } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createDefaultWorkflowDefinitions,
@@ -59,20 +57,19 @@ import {
 import { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import {
   AgentAssignmentList,
-  WorkflowCreateDrawer,
   WorkflowDeleteDialog,
   WorkflowLibraryList,
   WorkflowLoadFallbackNotice,
+  WorkflowModeBadge,
   WorkflowRouteHeader,
   WorkflowSection,
   WorkflowTabPanel,
-  workflowTabIcons,
-  type CreateWorkflowStep
+  workflowTabIcons
 } from '@/pages/WorkspaceWorkflowsPage.components';
+import { WorkflowCreateDrawer, type CreateWorkflowStep } from '@/pages/WorkspaceWorkflowsPage.createDrawer';
 import { WorkflowAgentsPanel, WorkflowCapabilitiesPanel, WorkflowRunsPanel } from '@/pages/WorkspaceWorkflowsPage.panels';
 
-const WorkflowScheduleCreateDrawer = React.lazy(() => import('@/pages/WorkflowScheduleCreateDrawer')
-  .then((module) => ({ default: module.WorkflowScheduleCreateDrawer })));
+const WorkflowScheduleCreateDrawer = React.lazy(() => import('@/pages/WorkflowScheduleCreateDrawer').then((module) => ({ default: module.WorkflowScheduleCreateDrawer })));
 
 interface WorkspaceWorkflowsPageProps {
   workspace: Workspace;
@@ -100,7 +97,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
   const filteredWorkflows = useMemo(() => filterWorkflowDefinitions(workflows, query), [query, workflows]);
   const visibleWorkflows = filteredWorkflows;
   const [selectedWorkflowId, setSelectedWorkflowId] = useState(initialWorkflow?.id || '');
-  const selectedWorkflow = visibleWorkflows.find((workflow) => workflow.id === selectedWorkflowId) || visibleWorkflows[0] || filteredWorkflows[0] || workflows[0];
+  const selectedWorkflow = visibleWorkflows.find((workflow) => workflow.id === selectedWorkflowId) || visibleWorkflows[0] || (!query.trim() ? workflows[0] : undefined);
   const [activeTab, setActiveTab] = useState<WorkflowTab>('overview');
   const [, setIsEditingScopeTab] = useState<'' | 'capabilities'>('');
   const [workflowLoadError, setWorkflowLoadError] = useState('');
@@ -110,6 +107,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
   const [workflowSessionIds, setWorkflowSessionIds] = useState<Record<string, string>>({});
   const [compiledScopes, setCompiledScopes] = useState<Record<string, Record<string, unknown>>>({});
   const [launchingWorkflowId, setLaunchingWorkflowId] = useState('');
+  const [launchAcknowledgedId, setLaunchAcknowledgedId] = useState('');
   const [launchError, setLaunchError] = useState('');
   const [launchResult, setLaunchResult] = useState<{ workflowId: string; runId: string; workflowRunId: string } | null>(null);
   const [pendingWorkflowRuns, setPendingWorkflowRunsState] = useState<Record<string, WorkflowDefinition['runs']>>({});
@@ -234,6 +232,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
   React.useEffect(() => {
     if (!selectedWorkflow) return;
     setWorkflowMessage(selectedWorkflow.starterPrompt);
+    setLaunchAcknowledgedId('');
     setScopeDrafts((current) => ({
       ...current,
       [selectedWorkflow.id]: current[selectedWorkflow.id] || createScopeDraft(selectedWorkflow)
@@ -280,9 +279,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
     return () => { mounted = false; };
   }, [selectedWorkflow?.id, workspace.id, workflowCatalogReady]);
 
-  const selectedRunIds = useMemo(() => (
-    selectedWorkflow?.runs.map((run) => run.runId).filter((runId): runId is string => Boolean(runId)) || []
-  ), [selectedWorkflow?.runs]);
+  const selectedRunIds = useMemo(() => selectedWorkflow?.runs.map((run) => run.runId).filter((runId): runId is string => Boolean(runId)) || [], [selectedWorkflow?.runs]);
   const selectedRunIdsKey = selectedRunIds.join('|');
 
   React.useEffect(() => {
@@ -346,6 +343,15 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
     ? getWorkflowLaunchBlocker(selectedWorkflow, workflowMessage, workspace.permissions)
     : 'Select a workflow before launching.';
   const isEditingWorkflow = Boolean(selectedWorkflow && editingWorkflowId === selectedWorkflow.id);
+  const isWriteCapableSelected = Boolean(selectedWorkflow) && selectedWorkflow!.policy.mode !== 'read_only';
+  const needsLaunchAcknowledgement = isWriteCapableSelected && launchAcknowledgedId !== selectedWorkflow?.id;
+  const workflowDeleteBlocker = !selectedWorkflow
+    ? ''
+    : !canManageWorkflowScope
+      ? 'You need manage_workflows to delete workflows.'
+      : selectedWorkflow.source !== 'user'
+        ? 'Built-in workflows cannot be deleted. Only user-authored workflows can be removed.'
+        : '';
   const selectedWorkflowEditDraft = selectedWorkflow
     ? workflowEditDrafts[selectedWorkflow.id] || createWorkflowEditDraft(selectedWorkflow)
     : undefined;
@@ -416,7 +422,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge tone={workflowStatusTone(selectedWorkflow.status)}>{selectedWorkflow.status}</StatusBadge>
-                    <StatusBadge tone="neutral">{selectedWorkflow.policy.mode.replace('_', ' ')}</StatusBadge>
+                    <WorkflowModeBadge mode={selectedWorkflow.policy.mode} />
                   </div>
                   <h2 className="mt-3 type-section-title break-words [overflow-wrap:anywhere]">{selectedWorkflow.name}</h2>
                   <p className="type-body mt-2 max-w-3xl break-words text-ui-text-muted [overflow-wrap:anywhere]">{selectedWorkflow.description}</p>
@@ -431,15 +437,33 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
                   )}
                 </div>
                 <div className="flex flex-col items-start gap-2 lg:items-end">
-                  <Button variant="accent" size="md" onClick={() => void workflowActions.launchSelectedWorkflow()} disabled={launchingWorkflowId === selectedWorkflow.id || Boolean(launchBlocker)} title={launchBlocker || undefined} aria-describedby={launchBlocker ? 'workflow-launch-blocker' : undefined}>
+                  <Button variant="accent" size="md" onClick={() => void workflowActions.launchSelectedWorkflow()} disabled={launchingWorkflowId === selectedWorkflow.id || Boolean(launchBlocker) || needsLaunchAcknowledgement} title={launchBlocker || undefined} aria-describedby={launchBlocker ? 'workflow-launch-blocker' : undefined}>
                     <ICONS.Send className="h-4 w-4" aria-hidden="true" />
                     {launchingWorkflowId === selectedWorkflow.id ? 'Starting...' : 'Launch workflow'}
                   </Button>
-                  <Button variant="secondary" size="md" onClick={() => setScheduleWorkflowId(selectedWorkflow.id)} disabled={!canManageWorkflowScope}>
+                  {isWriteCapableSelected && !launchBlocker && (
+                    <label className="flex max-w-64 items-start gap-2 text-left">
+                      <Checkbox
+                        checked={launchAcknowledgedId === selectedWorkflow.id}
+                        onChange={(event) => setLaunchAcknowledgedId(event.target.checked ? selectedWorkflow.id : '')}
+                        aria-label="Acknowledge that this workflow runs write-capable tools"
+                        className="mt-0.5 shrink-0"
+                      />
+                      <span className="type-caption font-semibold text-status-warning-text">This workflow can run write-capable tools against live systems. Confirm before launch.</span>
+                    </label>
+                  )}
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={() => setScheduleWorkflowId(selectedWorkflow.id)}
+                    disabled={!canManageWorkflowScope}
+                    aria-describedby={!canManageWorkflowScope ? 'workflow-schedule-blocker' : undefined}
+                  >
                     <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
                     Schedule workflow
                   </Button>
                   {launchBlocker && <span id="workflow-launch-blocker" className="max-w-64 text-left text-xs font-semibold text-ui-text-muted lg:text-right">Resolve this before launch: {launchBlocker}</span>}
+                  {!canManageWorkflowScope && <span id="workflow-schedule-blocker" className="max-w-64 text-left text-xs font-semibold text-ui-text-muted lg:text-right">You need manage_workflows to schedule workflows.</span>}
                 </div>
               </div>
             </div>
@@ -457,9 +481,10 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
 
             <div className="grid gap-5 bg-ui-bg/45 p-4 sm:p-5">
               {activeTab === 'overview' && (
-                <WorkflowTabPanel tab="overview" title="Overview">
+                <WorkflowTabPanel tab="overview" title="Overview" description="Review assigned agents and the operator message used for the next run.">
                   <WorkflowSection
                     title="Assigned agents"
+                    description="The coordinator plans the run. Selected agents provide the allowed skills, tools, and context."
                     action={(
                       <Button type="button" variant="secondary" size="sm" onClick={() => setActiveTab('agents')}>
                         <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
@@ -473,18 +498,16 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
                       labelForAgent={(agent) => agent.agentId === selectedWorkflow.orchestrator.agentId ? 'Coordinator' : 'Selected'}
                     />
                   </WorkflowSection>
-                  <WorkflowSection title="Control message">
+                  <WorkflowSection
+                    title="Control message"
+                    description="This is the instruction sent when the workflow starts. Keep it specific enough for audit review and follow-up."
+                  >
                     <Textarea aria-label="Control message" value={workflowMessage} onChange={(event) => setWorkflowMessage(event.target.value)} className="mt-3 min-h-32" />
+                    <p className="type-caption mt-2 text-ui-text-muted">Changing this message affects only the next launch, not the saved workflow default.</p>
                   </WorkflowSection>
-                  {selectedCompiledScope && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-accent/25 bg-accent-soft p-3 text-xs font-semibold text-accent-strong">{selectedAccessTools.length} tools compiled for this run.</div>}
+                  {selectedCompiledScope && <div role="status" aria-live="polite" aria-atomic="true" title="Compiled scope: the exact tool set available after applying agent access, workflow gates, and approvals." className="rounded-md border border-accent/25 bg-accent-soft p-3 text-xs font-semibold text-accent-strong">{selectedAccessTools.length} tools compiled for this run.</div>}
                   {launchError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{launchError}</div>}
                   {launchResult?.workflowId === selectedWorkflow.id && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">Run {launchResult.workflowRunId || launchResult.runId} dispatched.</div>}
-                  <div className="flex justify-start">
-                    <Button variant="primary" size="md" onClick={() => void workflowActions.launchSelectedWorkflow()} disabled={launchingWorkflowId === selectedWorkflow.id || Boolean(launchBlocker)} title={launchBlocker || undefined} aria-describedby={launchBlocker ? 'workflow-launch-blocker' : undefined}>
-                      <ICONS.Send className="h-4 w-4" aria-hidden="true" />
-                      {launchingWorkflowId === selectedWorkflow.id ? 'Starting...' : 'Launch workflow'}
-                    </Button>
-                  </div>
                 </WorkflowTabPanel>
               )}
 
@@ -531,10 +554,11 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
                 <WorkflowTabPanel
                   tab="settings"
                   title="Settings"
+                  description="Edit saved defaults, pause new runs, manage tags, or delete user-authored workflow definitions with confirmation."
                 >
                   {(workflowUpdateError || workflowUpdateResult || deleteWorkflowError) && <div role={workflowUpdateError || deleteWorkflowError ? 'alert' : 'status'} aria-live={workflowUpdateError || deleteWorkflowError ? 'assertive' : 'polite'} aria-atomic="true" className={`rounded-md border px-3 py-2 text-xs font-semibold ${workflowUpdateError || deleteWorkflowError ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}>{workflowUpdateError || deleteWorkflowError || workflowUpdateResult}</div>}
                   <WorkflowSection title="Availability">
-                    <div className="mt-3 flex items-center justify-between gap-4 rounded-md border border-ui-border bg-ui-bg px-4 py-3">
+                    <div className="mt-3 flex items-center justify-between gap-4 rounded-md bg-ui-bg px-4 py-3">
                       <div>
                         <h4 className="type-row-title">{selectedWorkflow.status === 'active' ? 'Active' : 'Inactive'}</h4>
                         <p className="type-caption mt-1 text-ui-text-muted">Toggle availability for new runs.</p>
@@ -572,7 +596,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
                           </div>
                         </>
                       ) : (
-                        <div className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">
+                        <div className="rounded-md bg-ui-bg px-4 py-3">
                           <div className="type-micro-label text-ui-text-muted">Message</div>
                           <p className="mt-2 text-sm font-semibold leading-6 text-ui-text">{selectedWorkflow.starterPrompt}</p>
                           <p className="type-caption mt-2 text-ui-text-muted">Used to start new workflow sessions.</p>
@@ -591,15 +615,20 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
                     ))}</div>
                     <div className="mt-3 flex gap-2"><TextInput value={newWorkflowTag} onChange={(event) => setNewWorkflowTag(event.target.value)} placeholder="Add tag" className="min-h-10 flex-1" /><Button variant="secondary" size="sm" onClick={() => workflowActions.addWorkflowTag(selectedWorkflow.id)} disabled={!newWorkflowTag.trim()}>Add tag</Button></div>
                   </WorkflowSection>
-                  <section aria-label="Delete workflow" className="min-w-0 border-t border-status-danger/25 pt-5">
-                    <div className="flex flex-col gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
+                  <details aria-label="Delete workflow" className="group min-w-0 border-t border-status-danger/25 pt-5">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-md text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 [&::-webkit-details-marker]:hidden">
+                      <span className="type-row-title">Danger zone</span>
+                      <ICONS.ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                    </summary>
+                    <div className="mt-3 flex flex-col gap-3 rounded-lg bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
                         <h4 className="type-row-title">Delete workflow</h4>
                         <p className="type-caption mt-1 max-w-2xl">Permanently removes this user-authored workflow definition. Past runs remain in audit history.</p>
+                        {workflowDeleteBlocker && <p id="workflow-delete-blocker" className="type-caption mt-2 max-w-2xl font-semibold">{workflowDeleteBlocker}</p>}
                       </div>
-                      <Button variant="danger" size="sm" onClick={() => { setDeleteWorkflowId(selectedWorkflow.id); setDeleteWorkflowConfirmation(''); }} disabled={!canManageWorkflowScope || selectedWorkflow.source !== 'user'}>Delete workflow</Button>
+                      <Button variant="danger" size="sm" onClick={() => { setDeleteWorkflowId(selectedWorkflow.id); setDeleteWorkflowConfirmation(''); }} disabled={Boolean(workflowDeleteBlocker)} title={workflowDeleteBlocker || undefined} aria-describedby={workflowDeleteBlocker ? 'workflow-delete-blocker' : undefined}>Delete workflow</Button>
                     </div>
-                  </section>
+                  </details>
                 </WorkflowTabPanel>
               )}
             </div>

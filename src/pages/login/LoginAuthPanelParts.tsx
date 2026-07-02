@@ -8,8 +8,8 @@ export const inputClass = formInputClassName('px-4');
 export const iconInputClass = `${inputClass} pl-10`;
 export const passwordInputClass = `${iconInputClass} pr-11`;
 export const invalidInputClass = fieldInvalidClass;
-export const primaryButtonClass = 'flex w-full items-center justify-center gap-2 rounded-lg border border-ui-text bg-ui-text px-4 py-3 text-sm font-bold text-ui-bg transition-colors hover:bg-ui-text/90 disabled:cursor-not-allowed disabled:opacity-60';
-export const secondaryButtonClass = 'w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2.5 text-sm font-bold text-ui-text transition-colors hover:bg-ui-surface disabled:cursor-not-allowed disabled:opacity-60';
+export const primaryButtonClass = 'flex w-full items-center justify-center gap-2 rounded-lg border border-ui-text bg-ui-text px-4 py-3 text-sm font-bold text-ui-bg transition-colors hover:bg-ui-text/90 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60';
+export const secondaryButtonClass = 'w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2.5 text-sm font-bold text-ui-text transition-colors hover:bg-ui-surface focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60';
 
 export function NoticeCard({
   icon,
@@ -160,7 +160,7 @@ export function OidcLoginButton({
       type="button"
       onClick={onLogin}
       disabled={isAuthLoading}
-      className={`mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm font-bold transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
         passwordAuthEnabled
           ? 'bg-ui-bg text-ui-text hover:bg-ui-surface'
           : 'bg-ui-text text-ui-bg hover:bg-ui-text/90'
@@ -197,7 +197,7 @@ export function SignupSwitchFooter({
           type="button"
           onClick={onSwitch}
           disabled={isAuthLoading}
-          className="font-bold text-accent-bright transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-sm font-bold text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {actionLabel}
         </button>

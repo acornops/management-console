@@ -21,14 +21,14 @@ describe('WorkspaceAgentsPage responsive polish', () => {
     expect(agentsPage).toContain('placeholder="Search agents, workflows, tools"');
     expect(agentsPage).not.toContain('placeholder="Search agents, workflows, tools, scope"');
     expect(agentsPage).toContain('{visibleAgents.length} of {agents.length} agents');
-    expect(agentsPage).toContain('className="grid min-w-0 gap-6"');
+    expect(agentsPage).toContain('className="grid min-w-0 w-full max-w-full gap-6"');
     expect(agentsPage).toContain('titleId="agent-details-title"');
     expect(agentsPage).toContain('<RightSidePanel');
     expect(agentsPage).toContain('className="block w-full max-w-[min(100vw,64rem)] overflow-y-auto bg-ui-surface p-0"');
     expect(agentsPage).toContain('chrome="drawer"');
     expect(agentsPage).toContain('role="list"');
     expect(agentsPage).toContain('aria-hidden="true"');
-    expect(agentsPage).toContain('xl:grid-cols-[minmax(0,1.45fr)_minmax(9rem,0.58fr)_minmax(10rem,0.68fr)_2rem]');
+    expect(agentsPage).toContain('xl:grid-cols-[minmax(0,1.35fr)_minmax(9rem,0.52fr)_minmax(9rem,0.52fr)_minmax(11rem,max-content)_2rem]');
     expect(agentsPage).not.toContain('overflow-x-auto custom-scrollbar');
     expect(agentsPage).not.toContain('min-w-[66rem]');
     expect(agentsPage).not.toContain('table-fixed');
@@ -45,9 +45,19 @@ describe('WorkspaceAgentsPage responsive polish', () => {
     expect(agentsCatalog).not.toContain('label="Skills"');
     expect(agentsPage).toContain('Capabilities');
     expect(agentsPage).toContain('Policy snapshot');
-    expect(agentsPage).toContain("expanded ? 'border-ui-border bg-ui-surface shadow-sm xl:mb-3'");
-    expect(agentsPage).toContain("selected ? 'bg-ui-bg/65 outline outline-1 -outline-offset-1 outline-ui-border'");
-    expect(agentsPage).toContain('border-t border-ui-border bg-ui-surface px-4 py-4 sm:px-5');
+    expect(agentsPage).toContain("expanded ? 'border-accent/25 bg-ui-surface shadow-sm ring-1 ring-accent/10 xl:mb-3'");
+    expect(agentsPage).toContain("selected ? 'bg-accent-soft/55 outline outline-1 -outline-offset-1 outline-accent/35 ring-1 ring-accent/15'");
+    expect(agentsPage).toContain('border-t border-accent/20 bg-ui-bg/85 px-3 py-4 sm:px-5');
+    expect(agentsPage).toContain('rounded-md border border-ui-border bg-ui-surface p-3 shadow-sm sm:p-4');
+  });
+
+  it('keeps the catalog usable on narrow mobile widths', () => {
+    expect(agentsPage).toContain('bg-ui-bg px-3 py-5 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
+    expect(agentsPage).toContain('gap-x-3 gap-y-3 px-3 py-3 sm:px-4 sm:py-3.5');
+    expect(agentsPage).toContain('grid w-full grid-cols-2 items-stretch gap-2 min-[520px]:flex min-[520px]:w-auto');
+    expect(agentsPage).toContain('[&>button]:min-w-0 [&>button]:justify-center');
+    expect(agentsPage).toContain('inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md');
+    expect(agentsPage).not.toContain('inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md');
   });
 
   it('formats enum badges as polished labels instead of raw lowercase values', () => {

@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/common/Button';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
-import { getAgentDecisionSummary, getAgentNextActionLabel, getAgentReadinessLabel, getAgentReviewSignals, type AgentDefinition } from '@/pages/agents/agentModel';
+import { getAgentDecisionSummary, getAgentReadinessLabel, type AgentDefinition } from '@/pages/agents/agentModel';
 import type { AgentVersionSnapshotApi } from '@/services/control-plane/agentApi';
 import {
   CapabilityList,
@@ -61,8 +61,6 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
 }) => {
   const readiness = getAgentReadinessLabel(selectedAgent);
   const decisionSummary = getAgentDecisionSummary(selectedAgent);
-  const nextActionLabel = getAgentNextActionLabel(selectedAgent);
-  const actionSignals = getAgentReviewSignals(selectedAgent);
 
   return (
   <section className={chrome === 'drawer' ? 'min-w-0 bg-ui-surface' : 'min-w-0 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm xl:sticky xl:top-6'}>
@@ -78,6 +76,10 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
           <p className="type-caption mt-2 max-w-3xl break-words font-semibold text-ui-text [overflow-wrap:anywhere]">{decisionSummary.line}</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
+          <Button type="button" variant="secondary" size="sm" onClick={onTestSelectedAgent} disabled={!canManageAgents || testingAgentId === selectedAgent.id}>
+            <ICONS.Activity className="h-4 w-4" />
+            {testingAgentId === selectedAgent.id ? 'Queuing...' : 'Run readiness'}
+          </Button>
           <Button type="button" variant="primary" size="sm" onClick={() => onOpenEditAgentDrawer(selectedAgent)} disabled={!canManageAgents || updatingAgentId === selectedAgent.id}>
             <ICONS.Pencil className="h-4 w-4" />
             Edit agent
@@ -95,41 +97,6 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
           )}
         </div>
       </div>
-    </div>
-
-    <div className="grid border-b border-ui-border lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)]">
-      <section className="border-b border-ui-border px-5 py-4 lg:border-b-0 lg:border-r">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h3 className="type-micro-label text-ui-text-muted">Can this agent run safely?</h3>
-            <p className="mt-2 text-sm font-semibold text-ui-text">{nextActionLabel}</p>
-            <p className="type-caption mt-1 break-words text-ui-text-muted [overflow-wrap:anywhere]">{decisionSummary.line}</p>
-          </div>
-          <Button type="button" variant="secondary" size="sm" onClick={onTestSelectedAgent} disabled={!canManageAgents || testingAgentId === selectedAgent.id}>
-            <ICONS.Activity className="h-4 w-4" />
-            {testingAgentId === selectedAgent.id ? 'Queuing...' : 'Run readiness'}
-          </Button>
-        </div>
-        <div className="mt-4">
-          <div className="type-micro-label text-ui-text-muted">Before assignment</div>
-          <div className="mt-2 grid gap-2">
-            {(actionSignals.length > 0 ? actionSignals : ['No blockers before assignment']).map((signal) => (
-              <div key={signal} className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm">
-                <span className="font-semibold text-ui-text">{signal}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-5 py-4">
-        <h3 className="type-micro-label text-ui-text-muted">Assignment impact</h3>
-        <dl className="mt-3 grid gap-2 text-sm">
-          <div className="flex min-w-0 justify-between gap-3"><dt className="text-ui-text-muted">Workflow</dt><dd className="min-w-0 break-words text-right font-semibold text-ui-text [overflow-wrap:anywhere]">{selectedAgent.workflowsUsingAgent.length > 0 ? selectedAgent.workflowsUsingAgent.join(', ') : 'No assigned workflows'}</dd></div>
-          <div className="flex min-w-0 justify-between gap-3"><dt className="text-ui-text-muted">Version</dt><dd className="font-semibold text-ui-text">v{selectedAgent.version}</dd></div>
-          <div className="flex min-w-0 justify-between gap-3"><dt className="text-ui-text-muted">Write approval</dt><dd className="font-semibold text-ui-text">{formatPolicyValue(selectedAgent.approvalPolicy.writeActions)}</dd></div>
-        </dl>
-      </section>
     </div>
 
     {selectedAgent.source === 'user' && (
@@ -190,8 +157,8 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
       </section>
     )}
 
-    <details className="border-b border-ui-border bg-ui-surface">
-      <summary className="cursor-pointer px-5 py-3 text-sm font-semibold text-ui-text hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">Manage agent</summary>
+    <details className="border-b border-ui-border bg-ui-surface" open>
+      <summary className="cursor-pointer px-5 py-3 text-sm font-semibold text-ui-text hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">Configuration</summary>
       <div className="grid gap-6 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)]">
       <section className="min-w-0">
         <h3 className="type-panel-title">Capabilities</h3>

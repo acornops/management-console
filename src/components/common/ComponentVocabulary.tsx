@@ -221,7 +221,7 @@ export function filterToggleButtonClassName({
   return twMerge(clsx(
     'type-ui inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50',
     isActive
-      ? 'border-accent/35 bg-ui-surface text-accent-strong shadow-sm'
+      ? 'border-accent/35 bg-ui-surface text-ui-text shadow-sm'
       : 'border-ui-border bg-ui-bg text-ui-text-muted hover:bg-ui-surface hover:text-ui-text',
     className
   ));

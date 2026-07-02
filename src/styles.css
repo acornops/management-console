@@ -9,6 +9,7 @@
   --brand-orange: oklch(0.712 0.187 39.7);
   --brand-orange-bright: oklch(0.755 0.154 42.2);
   --brand-orange-strong: oklch(0.651 0.179 38.9);
+  --brand-orange-readable: oklch(0.48 0.145 38.9);
   --brand-orange-soft: oklch(0.96 0.035 52);
   --bg: oklch(0.985 0.006 85);
   --surface: oklch(0.996 0.004 85);
@@ -27,6 +28,7 @@
   --brand-orange-rgb: 255 112 59;
   --brand-orange-strong-rgb: 230 95 47;
   --brand-orange-bright-rgb: 255 139 92;
+  --brand-orange-readable-rgb: 172 65 24;
   --brand-orange-soft-rgb: 255 236 221;
   --metric-blue: oklch(0.52 0.085 244);
   --metric-blue-rgb: 58 110 150;
@@ -59,6 +61,7 @@
   --brand-orange: oklch(0.712 0.187 39.7);
   --brand-orange-bright: oklch(0.755 0.154 42.2);
   --brand-orange-strong: oklch(0.78 0.13 42);
+  --brand-orange-readable: oklch(0.82 0.12 42);
   --brand-orange-soft: oklch(0.29 0.055 38);
   --bg: oklch(0.18 0.008 60);
   --surface: oklch(0.225 0.008 58);
@@ -77,6 +80,7 @@
   --brand-orange-rgb: 255 112 59;
   --brand-orange-strong-rgb: 255 154 112;
   --brand-orange-bright-rgb: 255 139 92;
+  --brand-orange-readable-rgb: 255 169 130;
   --brand-orange-soft-rgb: 66 33 22;
   --metric-blue: oklch(0.68 0.085 244);
   --metric-blue-rgb: 105 158 201;
@@ -177,65 +181,56 @@ body {
   height: 100%;
 }
 
+/* Ambient depth behind the evidence run. Motion is driven by Framer Motion; this
+   layer only breathes. */
 .login-evidence-glow {
-  background:
-    linear-gradient(90deg, transparent 0 52%, rgb(var(--surface-rgb) / 0.72) 88%),
-    radial-gradient(circle at 84% 18%, rgb(var(--brand-orange-rgb) / 0.11), transparent 34%);
+  position: absolute;
+  inset: -8% 0 12% 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(58% 52% at 56% 44%, rgb(var(--brand-orange-rgb) / 0.1), transparent 70%);
+  animation: login-evidence-glow-breathe 6s ease-in-out infinite;
 }
 
-.login-health-indicator {
-  animation: login-health-breathe 5.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-  box-shadow: 0 0 0 0 rgb(var(--status-warning-rgb) / 0);
+.login-squirrel-svg {
+  display: block;
+  height: auto;
+  overflow: visible;
+  width: 100%;
 }
 
-.login-evidence-rule {
-  background: rgb(var(--border-rgb) / 0.82);
+.login-squirrel-tail {
+  transform-origin: 22% 40%;
 }
 
-.login-evidence-node,
-.login-evidence-note,
-.login-evidence-trace {
+.login-squirrel-face {
+  filter: drop-shadow(0 0.08rem 0 rgb(var(--text-rgb) / 0.05));
+}
+
+.login-path-rail {
+  background: linear-gradient(90deg, rgb(var(--brand-orange-rgb) / 0), rgb(var(--brand-orange-rgb) / 0.55), rgb(var(--brand-orange-rgb) / 0));
+}
+
+.login-path-node {
+  background: rgb(var(--surface-rgb) / 1);
+  border: 2px solid rgb(var(--brand-orange-rgb) / 0.56);
+  box-shadow: 0 0 0 0 rgb(var(--brand-orange-rgb) / 0);
+  transform-origin: center;
+  will-change: transform, box-shadow;
+}
+
+.login-signal-card {
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.login-resolution-card {
   border: 1px solid rgb(var(--border-rgb) / 0.96);
   border-radius: 0.5rem;
-  box-shadow: 0 12px 28px rgb(var(--text-rgb) / 0.08);
-}
-
-.login-evidence-node,
-.login-evidence-note {
-  background: rgb(var(--surface-rgb) / 0.86);
-}
-
-.login-evidence-trace {
   background: rgb(var(--surface-rgb) / 1);
-}
-
-.login-evidence-run-card {
-  animation: login-run-card-shift 12s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-  will-change: transform;
-}
-
-.login-evidence-note-card {
-  animation: login-note-card-shift 12s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-  will-change: transform;
-}
-
-.login-evidence-signal {
-  animation: login-signal-travel 10s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  box-shadow: 0 12px 28px rgb(var(--text-rgb) / 0.08);
+  transform-origin: center;
   will-change: transform, opacity;
-}
-
-.login-evidence-signal-y {
-  animation: login-signal-drop 10.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-  will-change: transform, opacity;
-}
-
-.login-evidence-trace {
-  animation: login-trace-settle 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  overflow: hidden;
-}
-
-.login-evidence-trace-row {
-  animation: login-trace-row-enter 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes loading-bar-sweep {
@@ -284,127 +279,16 @@ body {
   }
 }
 
-@keyframes login-health-breathe {
+@keyframes login-evidence-glow-breathe {
   0%,
   100% {
-    opacity: 0.68;
-    transform: scale(0.92);
-    box-shadow: 0 0 0 0 rgb(var(--status-warning-rgb) / 0);
-  }
-
-  34% {
-    opacity: 1;
+    opacity: 0.85;
     transform: scale(1);
-    box-shadow: 0 0 0 0.16rem rgb(var(--status-warning-rgb) / 0.1);
   }
 
-  52%,
-  72% {
-    opacity: 0.82;
-    transform: scale(0.96);
-    box-shadow: 0 0 0 0.02rem rgb(var(--status-warning-rgb) / 0);
-  }
-}
-
-@keyframes login-run-card-shift {
-  0%,
-  22% {
-    transform: translate3d(0, 0, 0);
-  }
-
-  34%,
-  58% {
-    transform: translate3d(8px, 0, 0);
-  }
-
-  72%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes login-note-card-shift {
-  0%,
-  26% {
-    transform: translate3d(0, 0, 0);
-  }
-
-  38%,
-  62% {
-    transform: translate3d(-8px, 4px, 0);
-  }
-
-  76%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes login-signal-travel {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 0, 0) scale(0.7);
-  }
-
-  18% {
+  50% {
     opacity: 1;
-    transform: translate3d(3rem, 0, 0) scale(1);
-  }
-
-  72% {
-    opacity: 1;
-    transform: translate3d(24rem, 0, 0) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate3d(26rem, 0, 0) scale(0.82);
-  }
-}
-
-@keyframes login-signal-drop {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 0, 0) scale(0.72);
-  }
-
-  14% {
-    opacity: 1;
-    transform: translate3d(0, 2.5rem, 0) scale(1);
-  }
-
-  78% {
-    opacity: 1;
-    transform: translate3d(0, 18rem, 0) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate3d(0, 20rem, 0) scale(0.82);
-  }
-}
-
-@keyframes login-trace-settle {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 0.75rem, 0);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes login-trace-row-enter {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 0.45rem, 0);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: scale(1.03);
   }
 }
 
@@ -527,14 +411,15 @@ body {
     box-shadow: none;
   }
 
-  .login-health-indicator,
-  .login-evidence-run-card,
-  .login-evidence-note-card,
-  .login-evidence-signal,
-  .login-evidence-signal-y,
-  .login-evidence-trace,
-  .login-evidence-trace-row,
-  .login-evidence-status {
+  .login-evidence-glow {
+    animation: none !important;
+    opacity: 0.9;
+  }
+
+  .login-squirrel-svg,
+  .login-signal-card,
+  .login-path-node,
+  .login-resolution-card {
     animation: none !important;
     opacity: 1;
     transform: none;

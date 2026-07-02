@@ -68,4 +68,19 @@ describe('WorkspaceAgentsPage helpers', () => {
     expect(filterVisibleAgents(candidates, '', { focus: 'needs_test' }).map((agent) => agent.id)).toEqual(['agent-incident-reporter']);
     expect(filterVisibleAgents(candidates, '', { focus: 'ready' }).map((agent) => agent.id)).toEqual(['agent-cluster-triage']);
   });
+
+  it('excludes the system workflow orchestrator from workspace agent catalog results', () => {
+    const [workspaceAgent] = createDefaultAgentDefinitions('workspace-1');
+    const systemOrchestrator = {
+      ...workspaceAgent,
+      id: 'agent-workflow-orchestrator',
+      name: 'System Orchestrator',
+      owner: 'AcornOps',
+      ownerUserId: 'system'
+    };
+
+    expect(filterVisibleAgents([systemOrchestrator, workspaceAgent], '', { focus: 'all' }).map((agent) => agent.id)).toEqual([
+      'agent-cluster-triage'
+    ]);
+  });
 });

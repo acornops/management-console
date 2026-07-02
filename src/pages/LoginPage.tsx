@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Tooltip } from '@/components/common/Tooltip';
@@ -69,12 +68,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </button>
       </Tooltip>
 
-      <main className="relative z-10 flex min-h-[100dvh] flex-1 flex-col items-center justify-center px-4 py-6 sm:p-8 lg:min-h-0 lg:items-end lg:pr-28 xl:pr-32 2xl:pr-36">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, type: 'spring', stiffness: 100 }}
+      <main className="relative z-10 flex min-h-[100dvh] w-full flex-1 flex-col items-center justify-center px-4 py-6 sm:p-8 lg:min-h-0 lg:items-end lg:pr-28 xl:pr-32 2xl:pr-36">
+        <div
           className="w-full max-w-[26rem]"
+          style={{ maxWidth: 'min(26rem, calc(100vw - 2rem))' }}
         >
           <div className="mb-8 flex justify-center">
             <div className="flex items-center gap-3">
@@ -102,17 +99,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             onRequestPasswordReset={onRequestPasswordReset}
             onResetPassword={onResetPassword}
           />
-        </motion.div>
+        </div>
       </main>
 
-      <motion.aside
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
+      <aside
         className="relative hidden flex-1 items-center justify-start overflow-hidden border-l border-ui-border bg-ui-surface-strong lg:flex lg:pl-16 lg:pr-8 xl:pl-20 xl:pr-10 2xl:pl-24 2xl:pr-12"
       >
         <LoginPreview />
-      </motion.aside>
+      </aside>
     </div>
   );
 };

@@ -169,7 +169,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
           <div className="font-sans text-xl leading-none tracking-tighter antialiased">
             <span className="font-bold text-brand-brown">acorn</span>
-            <span className="font-bold text-accent-bright">ops</span>
+            <span className="font-bold text-accent-readable">ops</span>
           </div>
         </motion.button>
       </motion.div>

@@ -3,7 +3,6 @@ import { SelectOption } from '@/components/common/Select';
 import {
   filterAgentDefinitions,
   getAgentEligibilityLabel,
-  getAgentReviewSignals,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
 import {
@@ -40,12 +39,6 @@ export type AgentEditDraft = AgentDraft & {
 export type LocalNotice = { tone: 'success' | 'danger'; message: string };
 export type AgentCapabilityOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
 export type AgentCatalogFocus = 'all' | 'needs_review' | 'needs_test' | 'ready';
-export type AgentReviewQueueSummary = {
-  agentsNeedingAttention: number;
-  broadTargetScope: number;
-  staleReadiness: number;
-  agentsInUse: number;
-};
 
 export const statusTone = (status: AgentDefinition['status']): 'success' | 'warning' | 'neutral' => {
   if (status === 'active') return 'success';
@@ -206,29 +199,23 @@ export const canManageWorkspaceAgents = (workspace: Workspace): boolean => {
   return workspace.permissions?.manage_agents === true;
 };
 
+const systemLevelAgentIds = new Set(['agent-workflow-orchestrator']);
+
+export const isWorkspaceCatalogAgent = (agent: AgentDefinition): boolean => {
+  return !systemLevelAgentIds.has(agent.id);
+};
+
 export function filterVisibleAgents(
   agents: AgentDefinition[],
   query: string,
   filters: { focus: AgentCatalogFocus }
 ): AgentDefinition[] {
-  return filterAgentDefinitions(agents, query).filter((agent) => {
+  return filterAgentDefinitions(agents.filter(isWorkspaceCatalogAgent), query).filter((agent) => {
     if (filters.focus === 'needs_review') return getAgentEligibilityLabel(agent) === 'Needs review';
     if (filters.focus === 'needs_test') return getAgentEligibilityLabel(agent) === 'Needs test';
     if (filters.focus === 'ready') return getAgentEligibilityLabel(agent) === 'Ready';
     return true;
   });
-}
-
-export function getAgentReviewQueueSummary(agents: AgentDefinition[]): AgentReviewQueueSummary {
-  return {
-    agentsNeedingAttention: agents.filter((agent) => {
-      const eligibility = getAgentEligibilityLabel(agent);
-      return eligibility === 'Needs test' || eligibility === 'Needs review' || eligibility === 'Blocked';
-    }).length,
-    broadTargetScope: agents.filter((agent) => getAgentReviewSignals(agent).includes('Broad target scope')).length,
-    staleReadiness: agents.filter((agent) => getAgentReviewSignals(agent).includes('No recent readiness test')).length,
-    agentsInUse: agents.filter((agent) => agent.workflowsUsingAgent.length > 0).length
-  };
 }
 
 export const summarizeAgentActivityRecord = (activity: AgentActivityRecordApi): string => `Activity ${activity.status} on v${activity.agentVersion}`;
@@ -351,9 +338,22 @@ const AgentReadinessFact: React.FC<{ label: string; value: string }> = ({ label,
   </div>
 );
 
-export const Notice: React.FC<React.PropsWithChildren<{ title?: string }>> = ({ children, title }) => (
-  <section role="status" className="mb-4 whitespace-normal break-words rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-xs font-semibold text-status-warning-text [overflow-wrap:anywhere]">
-    {title && <div className="type-micro-label text-status-warning-text">{title}</div>}
-    <div className={title ? 'mt-1' : ''}>{children}</div>
+export const Notice: React.FC<React.PropsWithChildren<{ title?: string; actionLabel?: string; onAction?: () => void }>> = ({ actionLabel, children, onAction, title }) => (
+  <section role="status" className="mb-4 whitespace-normal break-words rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted shadow-sm [overflow-wrap:anywhere]">
+    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        {title && <div className="type-micro-label text-ui-text">{title}</div>}
+        <div className={title ? 'mt-1' : ''}>{children}</div>
+      </div>
+      {actionLabel && onAction && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="min-h-8 shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 text-xs font-bold text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
   </section>
 );

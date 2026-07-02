@@ -1,19 +1,11 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
+import { readFileSync } from 'node:fs'; import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
 const root = resolve(__dirname, '../..');
 const agentsPage = [
-  'src/pages/WorkspaceAgentsPage.tsx',
-  'src/pages/WorkspaceAgentsPage.helpers.tsx',
-  'src/pages/WorkspaceAgentsCatalog.tsx',
-  'src/pages/WorkspaceAgentsDrawers.tsx',
-  'src/pages/WorkspaceAgentActivityDrawer.tsx',
-  'src/pages/WorkspaceAgentDetailPanel.tsx'
-]
-  .map((filePath) => readFileSync(resolve(root, filePath), 'utf8'))
-  .join('\n');
+  'src/pages/WorkspaceAgentsPage.tsx', 'src/pages/WorkspaceAgentsPage.helpers.tsx',
+  'src/pages/WorkspaceAgentsCatalog.tsx', 'src/pages/WorkspaceAgentsDrawers.tsx',
+  'src/pages/WorkspaceAgentActivityDrawer.tsx', 'src/pages/WorkspaceAgentDetailPanel.tsx'
+].map((filePath) => readFileSync(resolve(root, filePath), 'utf8')).join('\n');
 const agentsCatalog = readFileSync(resolve(root, 'src/pages/WorkspaceAgentsCatalog.tsx'), 'utf8');
 const componentVocabulary = readFileSync(resolve(root, 'src/components/common/ComponentVocabulary.tsx'), 'utf8');
 
@@ -21,14 +13,13 @@ describe('WorkspaceAgentsPage surface', () => {
   it('uses a lightweight operator catalog with drawer-based management', () => {
     expect(agentsPage).toContain('Browse workspace agent profiles and manage the capabilities workflows can use.');
     expect(agentsPage).toContain('type-body mt-3 max-w-none break-words text-ui-text-muted');
-    expect(agentsPage).toContain('Profile queue');
-    expect(agentsPage).toContain('profiles need review');
-    expect(agentsPage).toContain('Resolve stale tests, access review, or ungated write access before workflow assignment.');
     expect(agentsPage).toContain('border-ui-border bg-ui-surface');
     expect(agentsPage).not.toContain('border-status-warning/35 bg-status-warning-soft/70');
     expect(agentsPage).not.toContain('broad scope');
     expect(agentsPage).toContain('No recent test');
     expect(agentsPage).toContain('assigned');
+    expect(agentsPage).not.toContain('profiles need review');
+    expect(agentsPage).not.toContain('Resolve stale tests, access review, or ungated write access before workflow assignment.');
     expect(agentsPage).not.toContain('{reviewQueue.agentsNeedingAttention} need attention');
     expect(agentsPage).toContain('Workspace agent profiles');
     expect(agentsPage).toContain('Browse capability ownership, workflow usage, and assignment eligibility. Open a profile for approvals, versions, and activity.');
@@ -37,7 +28,8 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsCatalog).not.toContain('formatActivityStatusLabel(activitySummary.status)');
     expect(agentsCatalog).not.toContain('activitySummary.lastRun');
     expect(agentsCatalog).not.toContain('>{activitySummary.line}</div>');
-    expect(agentsPage).toContain('View activity');
+    expect(agentsCatalog).not.toContain('View activity');
+    expect(agentsCatalog).toContain('Profile & activity');
     expect(agentsPage).toContain('CatalogCell label="Eligibility"');
     expect(agentsPage).not.toContain('CatalogCell label="Readiness"');
     expect(agentsPage).toContain('CatalogCell label="Workflows"');
@@ -80,7 +72,13 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).toContain('getAgentEligibilityReason');
     expect(agentsPage).not.toContain('getAgentCapabilityGroups');
     expect(agentsPage).toContain('getAgentWorkflowUsageSummary');
-    expect(agentsPage).toContain('{eligibility}</StatusBadge>');
+    expect(agentsPage).toContain('AgentEligibilityBadge');
+    expect(agentsPage).toContain("getAgentEligibilityVisual(eligibility)");
+    expect(agentsPage).toContain("'Needs review'");
+    expect(agentsPage).toContain('border-status-danger/25 bg-status-danger-soft text-status-danger-text');
+    expect(agentsPage).toContain('border-status-warning/25 bg-status-warning-soft text-status-warning-text');
+    expect(agentsPage).toContain('border-status-success/25 bg-status-success-soft text-status-success-text');
+    expect(agentsPage).toContain('border-ui-border bg-ui-bg text-ui-text-muted');
     expect(agentsPage).toContain('Recent evidence');
     expect(agentsPage).toContain('Policy snapshot');
     expect(agentsCatalog).not.toContain('Assignment checks');
@@ -104,14 +102,15 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).toContain('Write actions blocked; sensitive actions require approval');
     expect(agentsPage).toContain('Sensitive and write actions require approval');
     expect(agentsPage).toContain('ApprovalPolicyStack');
-    expect(agentsPage).toContain("getApprovalPolicyChip('Write', agent.approvalPolicy.writeActions)");
-    expect(agentsPage).toContain("getApprovalPolicyChip('Sensitive', agent.approvalPolicy.sensitiveActions)");
+    ["getApprovalPolicyChip('Write', agent.approvalPolicy.writeActions)", "getApprovalPolicyChip('Sensitive', agent.approvalPolicy.sensitiveActions)"].forEach((snippet) => expect(agentsPage).toContain(snippet));
+    ["scopeLabel: label", "label: 'Blocked'", "label: 'Approval required'", "label: 'Allowed'"].forEach((snippet) => expect(agentsCatalog).toContain(snippet));
+    ['label: `${label} blocked`', 'label: `${label} approval`', 'label: `${label} allowed`'].forEach((snippet) => expect(agentsCatalog).not.toContain(snippet));
     expect(agentsPage).toContain('ICONS.Lock');
     expect(agentsPage).toContain('ICONS.Shield');
     expect(agentsPage).toContain('ICONS.CheckCircle2');
-    expect(agentsPage).toContain("className: 'text-status-danger-text'");
-    expect(agentsPage).toContain("className: 'text-status-warning-text'");
-    expect(agentsPage).toContain("className: 'text-status-success-text'");
+    expect(agentsPage).toContain("className: 'border-status-danger/25 bg-status-danger-soft text-status-danger-text'");
+    expect(agentsPage).toContain("className: 'border-status-warning/25 bg-status-warning-soft text-status-warning-text'");
+    expect(agentsPage).toContain("className: 'border-status-success/25 bg-status-success-soft text-status-success-text'");
     expect(agentsPage).toContain('<ApprovalPolicyStack agent={agent} />');
     expect(agentsPage).not.toContain('Target access');
     expect(agentsPage).not.toContain('Context access');
@@ -123,7 +122,9 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).not.toContain('capability entries');
     expect(agentsPage).not.toContain('Tools allowed');
     expect(agentsPage).not.toContain('Profile</div>');
-    expect(agentsPage).toContain('Manage agent');
+    expect(agentsPage).toContain('Open profile');
+    expect(agentsPage).toContain('Configuration');
+    expect(agentsPage).not.toContain('Manage agent');
     expect(agentsPage).not.toContain('More actions');
     expect(agentsPage).not.toContain('Access, triggers, and history');
     expect(agentsPage).not.toContain('Primary action');
@@ -151,7 +152,9 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).toContain('items.push(`v${agent.version}`);');
     expect(agentsPage).toContain('AgentMetadataLine');
     expect(agentsPage).toContain('<AgentMetadataLine agent={agent} />');
-    expect(agentsPage).toContain("eligibility === 'Ready' ? 'text-ui-text-muted' : 'font-semibold text-status-warning-text'");
+    expect(agentsPage).toContain('visual.reasonClassName');
+    expect(agentsPage).toContain('type-row-title block min-w-0 break-words text-ui-text group-hover:text-accent-strong [overflow-wrap:anywhere]');
+    expect(agentsPage).not.toContain('type-panel-title block min-w-0 break-words text-ui-text group-hover:text-accent-strong [overflow-wrap:anywhere]');
     expect(agentsPage).not.toContain('AgentReviewReason');
     expect(agentsPage).not.toContain('AgentMetadataStrip');
     expect(agentsPage).not.toContain('metadataClassNames');
@@ -170,15 +173,17 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).toContain('href={workflowCatalogHref(agent.workspaceId, workflow)}');
     expect(agentsPage).toContain('aria-label={`Open workflow ${workflow}`}');
     expect(agentsPage).toContain('title={`Open ${workflow} in Workflows`}');
-    expect(agentsPage).toContain("['Agent', 'Eligibility', 'Workflows', '']");
+    expect(agentsPage).toContain("['Agent', 'Eligibility', 'Workflows', 'Assignment action', '']");
     expect(agentsPage).toContain('AgentWorkflowUsageCell');
     expect(agentsPage).toContain('<AgentWorkflowUsageCell agent={agent} />');
     expect(agentsPage).not.toContain('AgentWorkflowUsageLine');
     expect(agentsPage).not.toContain('<AgentWorkflowUsageLine agent={agent} />');
     expect(agentsPage).toContain('AgentReadinessCell');
-    expect(agentsPage).toContain('<AgentReadinessCell eligibility={eligibility} eligibilityReason={eligibilityReason} />');
-    expect(agentsPage).toContain('gap-x-4 gap-y-3 px-4 py-3.5');
-    expect(agentsPage).toContain('xl:grid-cols-[minmax(0,1.45fr)_minmax(9rem,0.58fr)_minmax(10rem,0.68fr)_2rem]');
+    expect(agentsPage).toContain('function getAgentNextStep(agent: AgentDefinition): string');
+    expect(agentsPage).toContain("if (signals.includes('No recent readiness test')) return 'Open profile, then run readiness';");
+    expect(agentsPage).toContain('<AgentReadinessCell agent={agent} eligibility={eligibility} eligibilityReason={eligibilityReason} />');
+    expect(agentsPage).toContain('gap-x-3 gap-y-3 px-3 py-3 sm:px-4 sm:py-3.5');
+    expect(agentsPage).toContain('xl:grid-cols-[minmax(0,1.35fr)_minmax(9rem,0.52fr)_minmax(9rem,0.52fr)_minmax(11rem,max-content)_2rem]');
     expect(agentsPage).toContain('inline-flex min-w-0 max-w-full flex-wrap items-center gap-x-2 gap-y-1');
     expect(agentsPage).toContain('type-caption min-w-0 break-words [overflow-wrap:anywhere]');
     expect(agentsPage).not.toContain('max-w-[14rem] truncate');
@@ -250,7 +255,7 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).toContain('openEditAgentDrawer');
     expect(agentsPage).toContain('onEditAgent={openEditAgentDrawer}');
     expect(agentsPage).toContain('onEditAgent: (agent: AgentDefinition) => void;');
-    expect(agentsPage).toContain('<Button type="button" variant="secondary" size="sm" onClick={() => onEditAgent(agent)} disabled={!canManageAgents}>');
+    expect(agentsPage).toContain('<Button type="button" variant="secondary" size="sm" className="w-full justify-center sm:w-auto" onClick={() => onEditAgent(agent)} disabled={!canManageAgents}>');
     expect(agentsPage).toContain('value={editDraft.name} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, name: event.target.value }))} className="mt-2"');
     expect(agentsPage).toContain('value={editDraft.description} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, description: event.target.value }))} className="mt-2"');
     expect(agentsPage).toContain('saveAgentEdits');
@@ -333,16 +338,17 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).not.toContain('Trigger deleted. Workflow assignments were not changed.');
   });
 
-  it('opens activity as a run-style list instead of the management detail drawer', () => {
+  it('keeps activity reachable through the management profile drawer', () => {
     expect(agentsPage).toContain('AgentActivityDrawer');
     expect(agentsPage).toContain('const [activityPanelOpen, setActivityPanelOpen] = useState(false);');
-    expect(agentsPage).toContain('onOpenActivity={openAgentActivity}');
+    expect(agentsPage).not.toContain('onOpenActivity={openAgentActivity}');
     expect(agentsPage).toContain('onOpenManagement={openAgentManagement}');
     expect(agentsPage).toContain('Agent activity');
     expect(agentsPage).toContain('Run history');
     expect(agentsPage).toContain('Close agent activity');
     expect(agentsPage).toContain('onRefreshActivity');
-    expect(agentsPage).toContain('View activity');
+    expect(agentsCatalog).not.toContain('View activity');
+    expect(agentsCatalog).toContain('Profile & activity');
   });
 
   it('does not expose workflow trigger controls from agent profiles', () => {
@@ -385,13 +391,13 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).not.toContain('Target and context scope reviewed');
     expect(agentsPage).not.toContain('Workflow impact checked');
     expect(agentsPage).not.toContain('Run readiness test before launch');
-    expect(agentsPage).toContain('Can this agent run safely?');
-    expect(agentsPage).toContain('Before assignment');
-    expect(agentsPage).toContain('No blockers before assignment');
-    expect(agentsPage).toContain('Assignment impact');
+    expect(agentsPage).not.toContain('Can this agent run safely?');
+    expect(agentsPage).not.toContain('Before assignment');
+    expect(agentsPage).not.toContain('No blockers before assignment');
+    expect(agentsPage).not.toContain('Assignment impact');
     expect(agentsPage).not.toContain('Access evidence');
     expect(agentsPage).toContain('decisionSummary.line');
-    expect(agentsPage).toContain('nextActionLabel');
+    expect(agentsPage).not.toContain('nextActionLabel');
     expect(agentsPage).not.toContain('actionLabelFor');
     expect(agentsPage).not.toContain('runActionFor');
     expect(agentsPage).not.toContain('Actions before assignment');
@@ -449,11 +455,11 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).toContain('placeholder="Search agents, workflows, tools"');
     expect(agentsPage).not.toContain('placeholder="Search agents, workflows, tools, scope"');
     expect(agentsPage).toContain('Local fallback catalog');
-    expect(agentsPage).toContain('Control-plane agents did not load. You can keep reviewing bundled fallback agents, but saved definitions and live activity may be stale.');
+    expect(agentsPage).toContain('Fallback data is active. Control-plane agents did not load, so saved definitions and live activity may be stale. Live control-plane data was last requested from this workspace route.');
     expect(agentsPage).toContain('Capability options unavailable');
-    expect(agentsPage).toContain('Capability options did not load. Existing IDs remain visible; new edits may have fewer picker choices.');
+    expect(agentsPage).toContain('Fallback data is active. Capability options did not load, so existing IDs remain visible but new edits may have fewer picker choices. Live control-plane data was last requested from workflow options.');
     expect(agentsPage).toContain('Owner choices limited');
-    expect(agentsPage).toContain('Workspace members did not load. Owner choices are limited to members already available in this workspace view.');
+    expect(agentsPage).toContain('Fallback data is active. Workspace members did not load, so owner choices are limited to members already available in this workspace view. Live control-plane data was last requested from member records.');
     expect(agentsPage).toContain('You can inspect agents. Ask a workspace manager for manage_agents permission to create or change them.');
     expect(agentsPage).toContain('Name the agent and its assignment purpose. It saves with restricted trust and approval required for write tools.');
     expect(agentsPage).toContain('Assignment purpose');
@@ -471,33 +477,40 @@ describe('WorkspaceAgentsPage surface', () => {
   });
 
   it('uses expandable assignment rows before dense agent detail panels', () => {
-    expect(agentsPage).toContain('{eligibility}</StatusBadge>');
+    expect(agentsPage).toContain('<AgentEligibilityBadge eligibility={eligibility} />');
     expect(agentsPage).toContain('Recent evidence');
     expect(agentsPage).toContain('Policy snapshot');
-    expect(agentsPage).toContain('View activity');
-    expect(agentsPage).toContain('Manage agent');
+    expect(agentsCatalog).not.toContain('View activity');
+    expect(agentsCatalog).toContain('Profile & activity');
     expect(agentsPage).not.toContain('Profile</div>');
     expect(agentsPage).not.toContain('Workflow controls');
   });
 
   it('keeps expanded profile rows visually quiet and integrated with the catalog', () => {
-    expect(agentsPage).toContain("selected ? 'bg-ui-bg/65 outline outline-1 -outline-offset-1 outline-ui-border'");
-    expect(agentsPage).toContain("expanded ? 'border-ui-border bg-ui-surface shadow-sm xl:mb-3'");
-    expect(agentsPage).toContain('border-t border-ui-border bg-ui-surface px-4 py-4 sm:px-5');
+    expect(agentsPage).toContain("selected ? 'bg-accent-soft/55 outline outline-1 -outline-offset-1 outline-accent/35 ring-1 ring-accent/15'");
+    expect(agentsPage).toContain("expanded ? 'border-accent/25 bg-ui-surface shadow-sm ring-1 ring-accent/10 xl:mb-3'");
+    expect(agentsPage).toContain('border-t border-accent/20 bg-ui-bg/85 px-3 py-4 sm:px-5');
     expect(agentsPage).toContain('Latest profile evidence');
-    expect(agentsPage).toContain('Profile actions');
+    expect(agentsPage).not.toContain('Profile actions');
+    expect(agentsPage).toContain('grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end');
+    expect(agentsCatalog).not.toContain('onOpenActivity(agent)');
+    expect(agentsCatalog).toContain('<Button type="button" variant="secondary" size="sm" className="w-full justify-center sm:w-auto" onClick={() => onOpenManagement(agent)}>');
     expect(agentsPage).toContain('rounded-md border border-ui-border bg-ui-bg/65 px-4 py-3');
+    expect(agentsPage).toContain('rounded-md border border-ui-border bg-ui-surface p-3 shadow-sm sm:p-4');
     expect(agentsPage).not.toContain("selected ? 'bg-accent-soft/80 outline outline-1 -outline-offset-1 outline-accent/35'");
     expect(agentsPage).not.toContain("expanded ? 'border-accent/35 shadow-sm xl:mb-4'");
     expect(agentsPage).not.toContain('border-y border-accent/20 bg-ui-bg/70');
     expect(agentsPage).not.toContain('Use this preview to decide whether the agent is ready for workflow assignment.');
   });
 
-  it('keeps collapsed agent rows free of extra action buttons', () => {
+  it('keeps collapsed agent rows actionable without nesting row buttons', () => {
     expect(agentsPage).toContain('type="button"');
     expect(agentsPage).toContain("aria-expanded={expanded}");
     expect(agentsPage).toContain('aria-controls={`agent-assignment-detail-${agent.id}`}');
-    expect(agentsPage).toContain("className={`${catalogGridClass} group w-full cursor-pointer text-left transition-colors");
+    expect(agentsPage).toContain('AgentRowActionCell');
+    expect(agentsPage).toContain('CatalogCell label="Assignment action"');
+    expect(agentsPage).toContain("className={`${catalogGridClass} transition-colors");
+    expect(agentsPage).toContain('className="group block w-full min-w-0 rounded-md text-left');
     expect(agentsPage).toContain('useReducedMotion');
     expect(agentsPage).toContain('animate={shouldReduceMotion ? { rotate: 0 } : { rotate: expanded ? 180 : 0 }}');
     expect(agentsPage).toContain('<ICONS.ChevronDown className="h-4 w-4" />');
@@ -529,8 +542,8 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).toContain('onClick={() => onSelectedAgentChange(agent.id)}');
     expect(agentsPage).toContain("setExpandedAgentId((current) => current === agentId ? '' : agentId);");
     expect(agentsPage).toContain('{canManageAgents && (');
-    expect(agentsPage).toContain('<Button type="button" variant="tertiary" size="sm" onClick={() => onOpenManagement(agent)}>');
-    expect(agentsPage).toContain('Manage agent');
+    expect(agentsPage).toContain('<Button type="button" variant="secondary" size="sm" className="w-full justify-center sm:w-auto" onClick={() => onOpenManagement(agent)}>');
+    expect(agentsPage).toContain('Open profile');
     expect(agentsPage).not.toContain('onOpenDetails={(agent)');
   });
 
@@ -542,9 +555,10 @@ describe('WorkspaceAgentsPage surface', () => {
   });
 
   it('keeps agent readiness compact and registry-like instead of launch-panel-like', () => {
-    expect(agentsPage).toContain('Profile queue');
     expect(agentsPage).toContain('Workspace agent profiles');
     expect(agentsPage).toContain('aria-expanded={expanded}');
+    expect(agentsPage).not.toContain('Profile queue');
+    expect(agentsPage).not.toContain('Assignment readiness');
     expect(agentsPage).not.toContain('<h3 className="mt-3 type-panel-title">Assignment readiness</h3>');
     expect(agentsPage).not.toContain('Agent registry summary');
   });
@@ -564,8 +578,9 @@ describe('WorkspaceAgentsPage surface', () => {
   });
 
   it('keeps access and history flattened with section dividers and shared controls', () => {
-    expect(agentsPage).toContain('Manage agent');
+    expect(agentsPage).toContain('Configuration');
     expect(agentsPage).toContain('Capabilities');
+    expect(agentsPage).toContain('<details className="border-b border-ui-border bg-ui-surface" open>');
     expect(agentsPage).not.toContain('Workflow controls');
     expect(agentsPage).not.toContain('Workflow assignments');
     expect(agentsPage).not.toContain('No workflows use this agent yet.');
@@ -627,12 +642,13 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(agentsPage).not.toContain('type-code truncate rounded-md bg-ui-bg px-2 py-1 text-xs text-ui-text-muted');
   });
 
-  it('uses the shared warning treatment for fallback catalog errors', () => {
+  it('keeps fallback catalog errors recoverable without overpowering the route', () => {
     expect(agentsPage).toContain('Local fallback catalog');
-    expect(agentsPage).toContain('Control-plane agents did not load. You can keep reviewing bundled fallback agents, but saved definitions and live activity may be stale.');
-    expect(agentsPage).toContain('border-status-warning/30 bg-status-warning-soft px-3 py-2 text-xs font-semibold text-status-warning-text');
+    expect(agentsPage).toContain('Fallback data is active. Control-plane agents did not load, so saved definitions and live activity may be stale. Live control-plane data was last requested from this workspace route.');
+    expect(agentsPage).toContain('actionLabel="Retry agents"');
+    expect(agentsPage).toContain('border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted shadow-sm');
     expect(agentsPage).toContain('role="status"');
-    expect(agentsPage).not.toContain('agentLoadError && (\n        <div className="mb-4 whitespace-normal break-words rounded-md border border-ui-border bg-ui-surface');
+    expect(agentsPage).not.toContain('border-status-warning/30 bg-status-warning-soft px-3 py-2 text-xs font-semibold text-status-warning-text');
   });
 
   it('keeps typography and action colors aligned with the workflow surface', () => {
@@ -642,7 +658,7 @@ describe('WorkspaceAgentsPage surface', () => {
   });
 
   it('keeps the route wrapper inside the app shell on mobile', () => {
-    expect(agentsPage).toContain('className="min-h-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8"');
+    expect(agentsPage).toContain('className="min-h-0 min-w-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-3 py-5 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8"');
     expect(agentsPage).not.toContain('w-[100vw] max-w-[100vw]');
   });
 });
