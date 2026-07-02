@@ -18,4 +18,9 @@ describe('MetricChart layout', () => {
     expect(metricChart).toContain('const maxValue = Math.max(maxObservedValue * 1.12, 1);');
     expect(metricChart).not.toContain('x={4}');
   });
+
+  it('uses loading copy only for the active loading state', () => {
+    expect(metricChart).toContain('{isLoading ? loadingTitle : emptyTitle}');
+    expect(metricChart).not.toContain('points.length === 0 && !isLoading ? emptyTitle : loadingTitle');
+  });
 });

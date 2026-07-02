@@ -98,11 +98,11 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-ui-border">
-                  <th className="type-label px-5 py-3 text-left">{t('clusterOverview.issue')}</th>
-                  <th className="type-label px-5 py-3 text-left">{t('clusterOverview.severity')}</th>
+                  <th className="type-label px-5 py-3 text-left">{t('virtualMachines.overview.issue')}</th>
+                  <th className="type-label px-5 py-3 text-left">{t('virtualMachines.overview.severity')}</th>
                   <th className="type-label px-5 py-3 text-left">{t('virtualMachines.overview.source')}</th>
                   <th className="type-label px-5 py-3 text-left">{t('overview.lastSeenLabel')}</th>
-                  <th className="type-label px-5 py-3 text-right">{t('clusterOverview.action')}</th>
+                  <th className="type-label px-5 py-3 text-right">{t('virtualMachines.overview.action')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,7 +134,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                     <td className="px-5 py-4 align-top text-right">
                       <Button onClick={() => onOpenIssueTriage(issue)} variant="accent" size="md">
                         <Terminal className="h-4 w-4" />
-                        {t('clusterOverview.runTriage')}
+                        {t('virtualMachines.overview.runTriage')}
                       </Button>
                     </td>
                   </tr>
@@ -161,7 +161,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                 <p className="type-body mt-2">{issue.reason || issue.summary}</p>
                 <Button onClick={() => onOpenIssueTriage(issue)} variant="accent" size="md" className="mt-4">
                   <Terminal className="h-4 w-4" />
-                  {t('clusterOverview.runTriage')}
+                  {t('virtualMachines.overview.runTriage')}
                 </Button>
               </article>
             ))}

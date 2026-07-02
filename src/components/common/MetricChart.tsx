@@ -36,7 +36,7 @@ export const MetricChart: React.FC<{
         </div>
         <div className="flex h-[240px] flex-col items-center justify-center border-y border-dashed border-ui-border bg-ui-bg/60 px-6 text-center">
           <p className="type-label">
-            {points.length === 0 && !isLoading ? emptyTitle : loadingTitle}
+            {isLoading ? loadingTitle : emptyTitle}
           </p>
           <p className="type-body mt-2 max-w-sm">
             {emptyDescription}
@@ -74,7 +74,8 @@ export const MetricChart: React.FC<{
         <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full overflow-visible" role="img" aria-label={title}>
           {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
             const y = plotTop + (1 - tick) * plotHeight;
-            const label = tick === 0 ? '0' : `${(maxValue * tick).toFixed(maxValue >= 10 ? 0 : 1)} ${unit}`;
+            const valueLabel = (maxValue * tick).toFixed(maxValue >= 10 ? 0 : 1);
+            const label = tick === 0 ? '0' : unit ? `${valueLabel} ${unit}` : valueLabel;
             return (
               <g key={tick}>
                 <line x1={plotLeft} y1={y} x2={plotRight} y2={y} stroke="var(--border)" strokeDasharray="3 3" />

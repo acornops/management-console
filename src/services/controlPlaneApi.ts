@@ -23,7 +23,12 @@ import {
   listTargetsForWorkspace
 } from './control-plane/targetApi';
 import { userFromControlPlane } from './control-plane/userMappers';
-import type { ControlPlaneVirtualMachine, RegisterVirtualMachineResponse } from './control-plane/virtualMachineTypes';
+import { mapVirtualMachineMetricsHistoryResponse } from './control-plane/virtualMachineMetricMappers';
+import type {
+  ControlPlaneVirtualMachine,
+  ControlPlaneVirtualMachineMetricsHistoryResponse,
+  RegisterVirtualMachineResponse
+} from './control-plane/virtualMachineTypes';
 import { mapWorkspace, mapWorkspaceMember } from './control-plane/workspaceMappers';
 import type {
   ControlPlaneAcceptWorkspaceInvitationResult,
@@ -98,6 +103,10 @@ export type {
   UpdateTargetToolInput,
   TargetInsightsEntryInput
 } from './control-plane/types';
+export type {
+  ControlPlaneVirtualMachineMetricHistoryPoint,
+  ControlPlaneVirtualMachineMetricsHistoryResponse
+} from './control-plane/virtualMachineTypes';
 export type {
   ControlPlaneTargetChatActivity,
   ControlPlaneTargetChatActivityEvent
@@ -434,10 +443,11 @@ export const controlPlaneApi = {
     );
   },
 
-  async getVirtualMachineMetricsHistory(workspaceId: string, vmId: string): Promise<{ points: Record<string, unknown>[] }> {
-    return requestJson<{ points: Record<string, unknown>[] }>(
+  async getVirtualMachineMetricsHistory(workspaceId: string, vmId: string): Promise<ControlPlaneVirtualMachineMetricsHistoryResponse> {
+    const response = await requestJson<ControlPlaneVirtualMachineMetricsHistoryResponse>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/metrics/history?window=6h&limit=48`
     );
+    return mapVirtualMachineMetricsHistoryResponse(response);
   },
 
   async getVirtualMachineLogs(workspaceId: string, vmId: string, options?: { q?: string; source?: string }): Promise<{ entries?: Record<string, unknown>[] }> {

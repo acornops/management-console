@@ -359,6 +359,16 @@ describe('controlPlaneApi', () => {
     expect(requestJson).not.toHaveBeenCalled();
   });
 
+  it('builds VM metrics history queries', async () => {
+    requestJson.mockResolvedValue({ workspaceId: 'workspace 1', targetId: 'vm/1', windowMs: 1, points: [] });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.getVirtualMachineMetricsHistory('workspace 1', 'vm/1')).resolves.toMatchObject({ targetId: 'vm/1' });
+    expect(requestJson).toHaveBeenCalledWith(
+      '/api/v1/workspaces/workspace%201/virtual-machines/vm%2F1/metrics/history?window=6h&limit=48'
+    );
+  });
+
   it('builds metrics and pod log queries and normalizes nullable history points', async () => {
     requestJson
       .mockResolvedValueOnce({

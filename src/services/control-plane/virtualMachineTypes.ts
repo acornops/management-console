@@ -29,3 +29,28 @@ export interface RegisterVirtualMachineResponse {
   keyVersion: number;
   installInstructions: string;
 }
+
+export interface ControlPlaneVirtualMachineMetricHistoryPoint {
+  timestamp: string;
+  loadAverage1m: number | null;
+  loadAverage5m: number | null;
+  loadAverage15m: number | null;
+  cpuUsagePercent: number | null;
+  memoryUsedBytes: number | null;
+  memoryTotalBytes: number | null;
+  memoryFreeBytes: number | null;
+  memoryUsedPercent: number | null;
+  swapUsedBytes: number | null;
+  swapTotalBytes: number | null;
+  swapUsedPercent: number | null;
+  rootDiskUsedBytes: number | null;
+  rootDiskTotalBytes: number | null;
+  rootDiskUsedPercent: number | null;
+}
+
+export interface ControlPlaneVirtualMachineMetricsHistoryResponse {
+  workspaceId: string;
+  targetId: string;
+  windowMs: number;
+  points: ControlPlaneVirtualMachineMetricHistoryPoint[];
+}

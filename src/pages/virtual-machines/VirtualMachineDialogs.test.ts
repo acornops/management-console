@@ -117,8 +117,16 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachineMetrics).toContain("value: vm.summary ? vm.summary.findingCount : '-'");
     expect(virtualMachineMetrics).not.toContain("label: t('virtualMachines.list.memory')");
     expect(virtualMachineMetrics).not.toContain("label: t('virtualMachines.list.cpu')");
-    expect(virtualMachineMetrics).toContain('const usableMetricPointCount = safePoints.filter');
+    expect(virtualMachineMetrics).toContain('const loadPointCount = safePoints.filter');
+    expect(virtualMachineMetrics).toContain('const memoryPointCount = safePoints.filter');
+    expect(virtualMachineMetrics).toContain('const usableMetricPointCount = Math.max(loadPointCount, memoryPointCount);');
     expect(virtualMachineMetrics).toContain('if (usableMetricPointCount < 2)');
+    expect(virtualMachineMetrics).toContain('grid min-w-0 grid-cols-2 gap-3');
+    expect(virtualMachineMetrics).toContain("aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}");
+    expect(virtualMachineMetrics).toContain('point.loadAverage1m');
+    expect(virtualMachineMetrics).toContain('point.memoryUsedPercent');
+    expect(virtualMachineMetrics).toContain("t('virtualMachines.list.load1m')");
+    expect(virtualMachineMetrics).toContain("'virtualMachines.list.waitingForAnotherVmSample'");
     expect(virtualMachineMetrics).toContain('const paddingX = 2;');
     expect(virtualMachineMetrics).toContain('const labelY = 102;');
     expect(virtualMachineMetrics).toContain('className="h-full min-h-0 w-full overflow-visible"');
@@ -182,8 +190,9 @@ describe('virtual machine onboarding dialog', () => {
   });
 
   it('renders durable VM issues without raw snapshot finding fallback rows', () => {
-    expect(virtualMachineIssuesPanel).toContain("t('clusterOverview.issue')");
-    expect(virtualMachineIssuesPanel).not.toContain("t('clusterOverview.finding')");
+    expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.issue')");
+    expect(virtualMachineIssuesPanel).toContain("t('virtualMachines.overview.runTriage')");
+    expect(virtualMachineIssuesPanel).not.toContain("t('clusterOverview.");
     expect(virtualMachineIssuesPanel).not.toContain("t('virtualMachines.overview.snapshotFinding')");
   });
 

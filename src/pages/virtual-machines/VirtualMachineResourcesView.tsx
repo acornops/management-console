@@ -27,18 +27,52 @@ const vmResourceSearchInputClassName = formInputClassName('h-11 py-3 pl-11 pr-4 
 
 function getInventoryCategory(item: Record<string, unknown>): VmResourceCategory | null {
   const category = String(item.category || '').toLowerCase();
-  if (category === 'services' || category === 'processes' || category === 'network') {
+  if (category === 'services' || category === 'processes' || category === 'network' || category === 'logs') {
     return category;
   }
   return null;
 }
 
 function getInventoryStatus(item: Record<string, unknown>): string {
-  return String(item.status || item.location || item.kind || '');
+  const payload = getInventoryPayload(item);
+  const serviceState = [payload.activeState, payload.subState].filter(Boolean).join(' / ');
+  return String(item.status || serviceState || item.location || item.kind || '');
 }
 
 function getInventoryDetail(item: Record<string, unknown>): string {
-  return String(item.detail || item.description || item.command || item.address || item.path || '');
+  const payload = getInventoryPayload(item);
+  const category = getInventoryCategory(item);
+  if (category === 'services') {
+    return [payload.description, payload.loadState].filter(Boolean).map(String).join(' · ');
+  }
+  if (category === 'processes') {
+    return [
+      payload.command,
+      payload.user ? `user ${payload.user}` : '',
+      payload.pid ? `pid ${payload.pid}` : ''
+    ].filter(Boolean).map(String).join(' · ');
+  }
+  if (category === 'network') {
+    const address = payload.localAddress || payload.address;
+    return [
+      payload.protocol,
+      address && payload.port ? `${address}:${payload.port}` : address,
+      payload.process
+    ].filter(Boolean).map(String).join(' · ');
+  }
+  if (category === 'logs') {
+    return [
+      payload.unit || payload.source,
+      payload.message
+    ].filter(Boolean).map(String).join(' · ');
+  }
+  return String(item.detail || payload.description || payload.command || payload.address || payload.path || '');
+}
+
+function getInventoryPayload(item: Record<string, unknown>): Record<string, unknown> {
+  return item.item && typeof item.item === 'object' && !Array.isArray(item.item)
+    ? item.item as Record<string, unknown>
+    : item;
 }
 
 function getSearchTokens(value: string): string[] {
@@ -278,7 +312,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                         <span className="text-xs font-semibold text-ui-text-muted">{getInventoryStatus(item)}</span>
                       </div>
                       <h3 className="mt-3 truncate text-sm font-bold text-ui-text">{String(item.name || t('virtualMachines.resources.item'))}</h3>
-                      <p className="mt-1 text-sm font-medium leading-6 text-ui-text-muted">{getInventoryDetail(item) || String(item.kind || t('virtualMachines.resources.noAdditionalDetail'))}</p>
+                      <p className="mt-1 break-words text-sm font-medium leading-6 text-ui-text-muted">{getInventoryDetail(item) || String(item.kind || t('virtualMachines.resources.noAdditionalDetail'))}</p>
                     </article>
                   ))}
                 </div>

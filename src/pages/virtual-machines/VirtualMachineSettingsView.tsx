@@ -105,6 +105,11 @@ export const VirtualMachineSettingsView: React.FC<{
             label={t('virtualMachines.settings.allowedLogs')}
             description={allowedLogs}
           />
+          <SettingRow
+            icon={ICONS.Clock}
+            label={t('virtualMachines.settings.snapshotCadence')}
+            description={t('virtualMachines.settings.defaultSnapshotCadence')}
+          />
         </SettingSection>
 
         <SettingSection

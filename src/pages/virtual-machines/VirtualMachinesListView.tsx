@@ -13,7 +13,7 @@ import { headerMotion } from '@/lib/motion';
 import { AppPaths } from '@/utils/routes';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
-import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { ControlPlaneVirtualMachine, ControlPlaneVirtualMachineMetricHistoryPoint } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { getVmMetricTimeline, VmCardResourceChart } from '@/pages/virtual-machines/VirtualMachineMetrics';
 import { PendingVirtualMachineSetup } from '@/pages/virtual-machines/PendingVirtualMachineSetup';
@@ -30,7 +30,7 @@ interface VirtualMachinesListViewProps {
   isLoading: boolean;
   query: string;
   status: VmConnectionFilter;
-  metricHistoryByVmId: Record<string, Record<string, unknown>[]>;
+  metricHistoryByVmId: Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>;
   canManageTargets: boolean;
   onQueryChange: (value: string) => void;
   onStatusChange: (value: VmConnectionFilter) => void;
