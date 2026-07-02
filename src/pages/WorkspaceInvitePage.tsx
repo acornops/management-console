@@ -3,6 +3,7 @@ import { AlertTriangle, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { ControlPlaneWorkspaceInvitation } from '@/services/controlPlaneApi';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { formatRole } from '@/pages/workspace-members/memberUtils';
 import { RoleTemplatePreview } from '@/pages/workspace-members/RoleTemplatePreview';
 import { formatUserDateTime } from '@/utils/dateTime';
@@ -20,8 +21,7 @@ function formatDate(value: string): string {
 }
 
 function formatInviteError(error: unknown, fallback: string): string {
-  const rawMessage = error instanceof Error ? error.message : fallback;
-  return rawMessage.replace(/^Control plane request failed \(\d+\):\s*/i, '') || fallback;
+  return formatControlPlaneError(error, fallback, { area: 'members' });
 }
 
 export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({

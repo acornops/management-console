@@ -4,6 +4,7 @@ import type {
   CreateTargetSkillInput,
   TargetType
 } from '@/services/controlPlaneApi';
+import { formatControlPlaneError, type ControlPlaneErrorArea } from '@/services/control-plane/errorFormatting';
 import type { KubernetesCluster } from '@/types';
 
 export interface TargetSkillsViewProps {
@@ -62,8 +63,8 @@ ${body.trim()}
 `;
 }
 
-export function formatError(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
+export function formatError(error: unknown, fallback: string, area: ControlPlaneErrorArea = 'targetSkills'): string {
+  return formatControlPlaneError(error, fallback, { area });
 }
 
 export function sortDraftFiles(files: SkillDraftFile[]): SkillDraftFile[] {

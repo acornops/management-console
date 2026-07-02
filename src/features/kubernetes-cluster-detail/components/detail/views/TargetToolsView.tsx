@@ -217,7 +217,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       setCatalog(await controlPlaneApi.listTargetTools(activeTarget.workspaceId, activeTarget.targetId));
     } catch (error) {
       setCatalog(null);
-      setCatalogError(formatError(error, t('tools.loadFailed')));
+      setCatalogError(formatError(error, t('tools.loadFailed'), 'targetTools'));
     } finally {
       setCatalogLoading(false);
     }
@@ -249,7 +249,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch (error) {
-      setCatalogError(formatError(error, t('tools.targetInsights.exportFailed')));
+      setCatalogError(formatError(error, t('tools.targetInsights.exportFailed'), 'targetInsights'));
     }
   };
 
@@ -322,7 +322,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       } : current);
       closeConfigure();
     } catch (error) {
-      setSavingError(formatError(error, t('tools.saveFailed')));
+      setSavingError(formatError(error, t('tools.saveFailed'), 'targetTools'));
     } finally {
       setSaving(false);
     }
@@ -345,7 +345,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         items: current.items.map((item) => item.id === updated.id ? updated : item)
       } : current);
     } catch (error) {
-      setCatalogError(formatError(error, t('tools.saveFailed')));
+      setCatalogError(formatError(error, t('tools.saveFailed'), 'targetTools'));
     } finally {
       setPendingToolId(null);
     }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { TargetChatViewBody } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatViewBody';
 import type { TargetChatViewProps } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.types';
@@ -250,7 +251,6 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     setDeleteSessionError(null);
     setDeleteTargetSessionId(sessionId);
   };
-
   const selectSession = (sessionId: string) => {
     if (sessionId !== activeSessionId) clearComposerAttachments();
     onSelectSession(sessionId);
@@ -271,7 +271,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       await onDeleteSession(deleteTargetSession.id);
       setDeleteTargetSessionId(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('chat.failedDelete');
+      const message = formatControlPlaneError(error, t('chat.failedDelete'));
       setDeleteSessionError(message);
       console.error('Failed deleting conversation', error);
     } finally {
@@ -476,7 +476,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       .catch((error) => {
         if (cancelled) return;
         setWorkspaceAiSettings(null);
-        setWorkspaceAiSettingsError(error instanceof Error ? error.message : t('workspaceAiSettings.loadFailed'));
+        setWorkspaceAiSettingsError(formatControlPlaneError(error, t('workspaceAiSettings.loadFailed'), { area: 'aiSettings' }));
       })
       .finally(() => {
         if (cancelled) return;
@@ -508,7 +508,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       .catch((error) => {
         if (cancelled) return;
         setAssistantCapabilitiesPreview(null);
-        setAssistantCapabilitiesPreviewError(error instanceof Error ? error.message : t('chat.capabilityPreviewUnavailable'));
+        setAssistantCapabilitiesPreviewError(formatControlPlaneError(error, t('chat.capabilityPreviewUnavailable'), { area: 'targetTools' }));
       })
       .finally(() => {
         if (cancelled) return;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { TFunction } from 'i18next';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { AppRoute, AppPaths } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace } from '@/types';
@@ -174,7 +175,7 @@ export function useWorkspaceClusterActions(args: {
       setClusterCreationStep('instructions');
     } catch (err) {
       console.error('Failed registering cluster in control plane', err);
-      showToast(err instanceof Error ? err.message.replace(/^Control plane request failed \(\d+\):\s*/, '') : t('app.failedRegisterCluster'));
+      showToast(formatControlPlaneError(err, t('app.failedRegisterCluster'), { area: 'cluster' }));
     } finally {
       setIsCreatingCluster(false);
     }

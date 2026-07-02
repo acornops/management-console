@@ -103,7 +103,7 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
 
   it('turns AI readiness into a next-action guide instead of a passive status card', () => {
     expect(workspaceAiSettingsPage).toContain('const readinessAction =');
-    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessAddCredentialAction')");
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessAddCredentialAction', { provider: providerLabel(savedDefaultProvider) })");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessChooseProviderAction')");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessReviewCredentialsAction')");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.nextAction')");

@@ -1,4 +1,5 @@
 import { User } from '@/types';
+import { formatControlPlaneError } from './errorFormatting';
 import { ControlPlaneRequestError, getControlPlaneUrl, requestJson } from './http';
 import {
   ControlPlaneAuthConfig,
@@ -22,8 +23,7 @@ export class EmailVerificationRequiredError extends Error {
 }
 
 function stripControlPlaneErrorPrefix(error: unknown, fallback: string): string {
-  if (!(error instanceof Error)) return fallback;
-  return error.message.replace(/^Control plane request failed \(\d+\):\s*/, '') || fallback;
+  return formatControlPlaneError(error, fallback, { area: 'auth' });
 }
 
 export const controlPlaneAuthApi = {
@@ -145,7 +145,7 @@ export const controlPlaneAuthApi = {
       });
     } catch (error) {
       if (error instanceof ControlPlaneRequestError && error.code) {
-        const next = new Error(error.message);
+        const next = new Error(formatControlPlaneError(error, 'Password reset failed.', { area: 'auth' }));
         next.name = error.code;
         throw next;
       }

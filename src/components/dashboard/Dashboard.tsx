@@ -11,6 +11,7 @@ import { formInputClassName } from '@/components/common/formControlStyles';
 import { ClusterResourceChart, type ClusterMetricPoint } from '@/components/dashboard/ClusterResourceChart';
 import { PendingClusterSetup } from '@/components/dashboard/PendingClusterSetup';
 import { headerMotion } from '@/lib/motion';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   getAgentConnectionState,
@@ -200,7 +201,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       await onDeleteKubernetesCluster(deleteTargetCluster);
       closeDeleteClusterDialog();
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('dashboard.deleteClusterFailed');
+      const message = formatControlPlaneError(error, t('dashboard.deleteClusterFailed'), { area: 'cluster' });
       setDeleteClusterError(message);
     } finally {
       setIsDeletingCluster(false);

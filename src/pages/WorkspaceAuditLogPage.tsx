@@ -7,6 +7,7 @@ import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { Select, SelectOption } from '@/components/common/Select';
 import { Tooltip } from '@/components/common/Tooltip';
 import { ICONS } from '@/constants';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { Workspace, WorkspaceAuditCategory, WorkspaceAuditEvent } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
@@ -225,7 +226,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
       setNextCursor(page.nextCursor);
     } catch (error) {
       if (requestId !== requestSeqRef.current) return;
-      setErrorMessage(error instanceof Error ? error.message : t('auditLog.loadFailed'));
+      setErrorMessage(formatControlPlaneError(error, t('auditLog.loadFailed')));
     } finally {
       if (requestId === requestSeqRef.current) {
         setIsLoading(false);

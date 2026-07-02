@@ -294,8 +294,9 @@ The UI depends on these target Skills fields staying stable:
 
 - `items[].{id,name,description,enabled,validationStatus,validationErrors}`
 - `items[].bundleStats.{fileCount,totalBytes}`
-- `items[].source.{type,repoUrl?,ref?,subpath?,commitSha?,syncStatus}`
+- `items[].source.{type,provider?,repoUrl?,apiBaseUrl?,ref?,subpath?,commitSha?,syncStatus}`
 - `GET /skills/{skillId}` returns `files[].{path,content,sizeBytes}`.
+- GitHub and GitLab skill import and reimport fetch repository content in the browser, then submit `{files,source}` snapshots to the control plane for validation and storage. The selected provider determines whether custom hosts use GitHub Enterprise `/api/v3` or GitLab `/api/v4` routes. The importing browser must be able to reach the Git host API and the host must allow browser API requests from the console origin. `source.apiBaseUrl` is optional and is used when a deployment API cannot be derived as GitHub `/api/v3` or GitLab `/api/v4` from the repository host.
 
 Current mutation policy exposed through the catalog:
 

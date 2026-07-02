@@ -11,6 +11,7 @@ import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
 import { issueStatusTone } from '@/pages/issues/issueUi';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi, type ControlPlaneIssueItem, type ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { type KubernetesCluster, type Workspace } from '@/types';
 import { readRecentInvestigation } from '@/pages/workspace-overview/recentInvestigation';
@@ -117,7 +118,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
         console.error('Failed loading workspace issues', error);
         if (requestId !== issueRequestSeqRef.current) return;
         setWorkspaceIssues([]);
-        setIssueLoadError(error instanceof Error ? error.message : t('overview.clusterIssuesUnavailable'));
+        setIssueLoadError(formatControlPlaneError(error, t('overview.clusterIssuesUnavailable')));
       })
       .finally(() => {
         if (requestId !== issueRequestSeqRef.current) return;

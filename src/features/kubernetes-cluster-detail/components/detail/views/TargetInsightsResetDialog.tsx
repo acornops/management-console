@@ -34,7 +34,7 @@ export const TargetInsightsResetDialog: React.FC<TargetInsightsResetDialogProps>
       await controlPlaneApi.resetTargetInsights(workspaceId, targetId);
       onClose();
     } catch (err) {
-      setError(formatError(err, t('tools.targetInsights.resetFailed')));
+      setError(formatError(err, t('tools.targetInsights.resetFailed'), 'targetInsights'));
     } finally {
       setSaving(false);
     }

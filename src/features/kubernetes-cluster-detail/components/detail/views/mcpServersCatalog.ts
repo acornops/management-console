@@ -4,7 +4,7 @@ import {
   ClusterToolCatalogServer,
   KubernetesCluster
 } from '@/types';
-import { ControlPlaneRequestError } from '@/services/control-plane/http';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 type McpTool = KubernetesCluster['mcpTools'][number];
@@ -236,21 +236,7 @@ export function isManagedMcpServer(server: Pick<ClusterToolCatalogServer, 'type'
 }
 
 export function formatMcpMutationError(error: unknown, fallback: string): string {
-  if (error instanceof ControlPlaneRequestError) {
-    const formErrors = error.details?.formErrors;
-    const fieldErrors = error.details?.fieldErrors;
-    const detail = [
-      ...(Array.isArray(formErrors) ? formErrors : []),
-      ...(fieldErrors && typeof fieldErrors === 'object'
-        ? Object.entries(fieldErrors).flatMap(([field, messages]) =>
-            Array.isArray(messages) ? messages.map((message) => `${field}: ${message}`) : []
-          )
-        : [])
-    ].find((message): message is string => typeof message === 'string' && message.trim().length > 0);
-    if (detail) return detail;
-  }
-  const raw = error instanceof Error ? error.message : fallback;
-  return raw.replace(/^Control plane request failed \(\d+\):\s*/i, '') || fallback;
+  return formatControlPlaneError(error, fallback, { area: 'mcp' });
 }
 
 export function formatDiscoveryTimestamp(value: string): string {

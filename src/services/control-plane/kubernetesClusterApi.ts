@@ -33,6 +33,7 @@ import type {
   CreateTargetMcpServerInput,
   TargetInsightsEntryInput,
   ImportTargetSkillInput,
+  ReimportTargetSkillInput,
   PagedResult,
   RegisterClusterResponse,
   RotateAgentKeyResponse,
@@ -545,7 +546,7 @@ export const kubernetesClusterApi = {
     workspaceId: string,
     targetId: string,
     skillId: string,
-    input: { force?: boolean } = {}
+    input: ReimportTargetSkillInput
   ): Promise<ControlPlaneTargetSkillDetail> {
     return requestJson<ControlPlaneTargetSkillDetail>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills/${encodeURIComponent(skillId)}/reimport`,

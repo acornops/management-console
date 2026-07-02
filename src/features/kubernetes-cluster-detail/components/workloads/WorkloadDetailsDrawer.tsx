@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw
 import { useTranslation } from 'react-i18next';
 import { Button, buttonClassName } from '@/components/common/Button';
 import { Select, SelectOption } from '@/components/common/Select';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlanePodLogs } from '@/services/controlPlaneApi';
 import { DetailRow, ResourceMetricInline, SidePanel } from '@/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout';
 import {
@@ -84,8 +85,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
       setPodLogs(result);
     } catch (error) {
       if (logsRequestIdRef.current !== requestId) return;
-      const raw = error instanceof Error ? error.message : t('workloads.logLoadFailed');
-      const message = raw.replace(/^Control plane request failed \(\d+\):\s*/i, '') || t('workloads.logLoadFailed');
+      const message = formatControlPlaneError(error, t('workloads.logLoadFailed'), { area: 'cluster' });
       setPodLogsError(message);
       if (mode === 'follow') {
         followFailuresRef.current += 1;

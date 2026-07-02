@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 
 import {
@@ -202,7 +203,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
       });
       onClose();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : t('clusterSetup.updateScopeFailed'));
+      setErrorMessage(formatControlPlaneError(error, t('clusterSetup.updateScopeFailed'), { area: 'cluster' }));
     } finally {
       setIsSaving(false);
     }

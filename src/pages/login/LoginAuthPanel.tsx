@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { EmailField, ErrorMessage, NoticeCard, OidcLoginButton, PasswordField, SignupSwitchFooter, primaryButtonClass, secondaryButtonClass } from '@/pages/login/LoginAuthPanelParts';
 import { LoginPasswordAuthForm } from '@/pages/login/LoginPasswordAuthForm';
 import { isPlausibleAuthEmailToken, isValidEmailAddress, routeToken } from '@/pages/login/loginAuthPanelState';
@@ -202,8 +203,7 @@ export function LoginAuthPanel({
         }
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('login.authFailed');
-      setError(message.replace(/^Control plane request failed \(\d+\):\s*/, ''));
+      setError(formatControlPlaneError(err, t('login.authFailed'), { area: 'auth' }));
     }
   };
 
@@ -218,8 +218,7 @@ export function LoginAuthPanel({
         notice: result.resendAfterSeconds ? undefined : t('login.resetEmailSent')
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('login.authFailed');
-      setError(message.replace(/^Control plane request failed \(\d+\):\s*/, ''));
+      setError(formatControlPlaneError(err, t('login.authFailed'), { area: 'auth' }));
     }
   };
 
@@ -262,8 +261,7 @@ export function LoginAuthPanel({
       } else if (code === 'PASSWORD_RESET_TOKEN_INVALID') {
         setResetLinkState('invalid');
       } else {
-        const message = err instanceof Error ? err.message : t('login.authFailed');
-        setError(message.replace(/^Control plane request failed \(\d+\):\s*/, ''));
+        setError(formatControlPlaneError(err, t('login.authFailed'), { area: 'auth' }));
         setResetLinkState(code === 'PASSWORD_POLICY_VIOLATION' ? 'form' : 'error');
       }
     }
@@ -297,8 +295,7 @@ export function LoginAuthPanel({
         setVerifyLinkState('idle');
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : t('login.authFailed');
-      setError(message.replace(/^Control plane request failed \(\d+\):\s*/, ''));
+      setError(formatControlPlaneError(err, t('login.authFailed'), { area: 'auth' }));
     }
   };
 

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { WorkloadsExplorer } from '@/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer';
 import type { ResourceFamily } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { mapClusterResourcePageItems } from '@/services/control-plane/clusterMappers';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlanePodLogsOptions, controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneResourcePageItem } from '@/services/controlPlaneApi';
 import { KubernetesCluster } from '@/types';
@@ -67,7 +68,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
       setNextCursor(page.nextCursor);
     } catch (error) {
       if (requestId !== requestSeqRef.current) return;
-      setResourceListError(error instanceof Error ? error.message : t('resources.loadFailed'));
+      setResourceListError(formatControlPlaneError(error, t('resources.loadFailed'), { area: 'cluster' }));
       if (mode === 'replace') {
         setResourceItems([]);
         setNextCursor(undefined);

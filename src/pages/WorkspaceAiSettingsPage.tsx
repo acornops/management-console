@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace, WorkspaceAiSettings } from '@/types';
 import {
@@ -88,7 +89,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       })
       .catch((error) => {
         if (cancelled) return;
-        setLoadError(error instanceof Error ? error.message : t('workspaceAiSettings.loadFailed'));
+        setLoadError(formatControlPlaneError(error, t('workspaceAiSettings.loadFailed'), { area: 'aiSettings' }));
       })
       .finally(() => {
         if (!cancelled) setIsLoadingAiSettings(false);
@@ -190,7 +191,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
         : { tone: 'neutral' as const, message: t('workspaceAiSettings.readinessReady') };
   const readinessAction = savedDefaultProviderMissingCredential
     ? {
-        label: t('workspaceAiSettings.readinessAddCredentialAction'),
+        label: t('workspaceAiSettings.readinessAddCredentialAction', { provider: providerLabel(savedDefaultProvider) }),
         onClick: () => {
           setCredentialEditorProvider(savedDefaultProvider);
           setDeleteCandidate(null);
@@ -242,7 +243,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       showToast(t('workspaceAiSettings.settingsSaved'));
     } catch (error) {
       if (!isCurrentWorkspaceRequest()) return;
-      setBehaviorError(error instanceof Error ? error.message : t('workspaceAiSettings.saveFailed'));
+      setBehaviorError(formatControlPlaneError(error, t('workspaceAiSettings.saveFailed'), { area: 'aiSettings' }));
     } finally {
       if (isCurrentWorkspaceRequest()) setSavingAction('');
     }
@@ -280,7 +281,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       if (!isCurrentWorkspaceRequest()) return;
       setCredentialErrors((current) => ({
         ...current,
-        [provider]: error instanceof Error ? error.message : t('workspaceAiSettings.saveFailed')
+        [provider]: formatControlPlaneError(error, t('workspaceAiSettings.saveFailed'), { area: 'aiSettings' })
       }));
     } finally {
       if (isCurrentWorkspaceRequest()) setSavingAction('');
@@ -303,7 +304,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       if (!isCurrentWorkspaceRequest()) return;
       setCredentialErrors((current) => ({
         ...current,
-        [provider]: error instanceof Error ? error.message : t('workspaceAiSettings.saveFailed')
+        [provider]: formatControlPlaneError(error, t('workspaceAiSettings.saveFailed'), { area: 'aiSettings' })
       }));
     } finally {
       if (isCurrentWorkspaceRequest()) setSavingAction('');

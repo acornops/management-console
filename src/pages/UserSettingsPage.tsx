@@ -8,6 +8,7 @@ import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import { headerMotion } from '@/lib/motion';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlaneApi';
 import { User } from '@/types';
 import { formatUserDate } from '@/utils/dateTime';
@@ -164,7 +165,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
       setAuthMethods(await controlPlaneApi.getAuthMethods());
       setSecurityError(null);
     } catch (error) {
-      setSecurityError(error instanceof Error ? error.message : t('settings.authMethodsError'));
+      setSecurityError(formatControlPlaneError(error, t('settings.authMethodsError'), { area: 'auth' }));
     }
   }, [t]);
 
@@ -194,7 +195,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
       closeSecurityDialog();
       await refreshAuthMethods();
     } catch (error) {
-      setDialogError(error instanceof Error ? error.message : t('settings.passwordChangeFailed'));
+      setDialogError(formatControlPlaneError(error, t('settings.passwordChangeFailed'), { area: 'auth' }));
     } finally {
       setIsSubmittingSecurity(false);
     }
@@ -211,7 +212,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
       });
       window.location.assign(url);
     } catch (error) {
-      setDialogError(error instanceof Error ? error.message : t('settings.ssoLinkFailed'));
+      setDialogError(formatControlPlaneError(error, t('settings.ssoLinkFailed'), { area: 'auth' }));
       setIsSubmittingSecurity(false);
     }
   };

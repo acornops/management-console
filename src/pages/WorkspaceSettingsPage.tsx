@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { ICONS } from '@/constants';
 import { isKnownOnlyWorkspaceOwner } from '@/app/workspaceLeave';
 import { headerMotion } from '@/lib/motion';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ProjectMember, Workspace } from '@/types';
 
 interface WorkspaceSettingsPageProps {
@@ -107,7 +108,10 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
     try {
       await onLeaveWorkspace();
     } catch (error) {
-      setLeaveError(error instanceof Error ? error.message : t('workspaceSettings.leaveFailed'));
+      setLeaveError(formatControlPlaneError(error, t('workspaceSettings.leaveFailed'), {
+        area: 'members',
+        ownerConflictMessage: t('workspaceSettings.leaveOnlyOwnerError')
+      }));
       setIsLeaving(false);
     }
   };

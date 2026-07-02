@@ -1,4 +1,5 @@
 import { ChatMessage } from '@/types';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import {
   buildChatFailureMessage,
@@ -14,7 +15,7 @@ function formatChatSubmitFailureMessage(error: unknown, workspaceId: string, fal
   }
 
   if (error instanceof Error) {
-    return error.message;
+    return formatControlPlaneError(error, fallbackMessage, { area: 'cluster' });
   }
 
   return fallbackMessage;

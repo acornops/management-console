@@ -35,7 +35,7 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
         if (!cancelled) setActivity(body.items || []);
       })
       .catch((err) => {
-        if (!cancelled) setError(formatError(err, t('tools.targetInsights.activityFailed')));
+        if (!cancelled) setError(formatError(err, t('tools.targetInsights.activityFailed'), 'targetInsights'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

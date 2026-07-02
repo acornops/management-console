@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Select, SelectOption } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState } from '@/utils/telemetry';
 
@@ -133,7 +134,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
       await onUpdateName?.(trimmedDraftName);
       setIsEditingName(false);
     } catch (error) {
-      setNameError(error instanceof Error ? error.message : t('clusterSettings.clusterNameUpdateFailed'));
+      setNameError(formatControlPlaneError(error, t('clusterSettings.clusterNameUpdateFailed'), { area: 'cluster' }));
     } finally {
       setIsSavingName(false);
     }

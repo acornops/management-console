@@ -7,6 +7,7 @@ interface ControlPlaneTargetScope {
 }
 
 export type TargetSkillSourceType = 'manual' | 'git_import';
+export type TargetSkillImportProvider = 'github' | 'gitlab';
 export type TargetSkillValidationStatus = 'valid' | 'invalid';
 export type TargetSkillSyncStatus = 'not_applicable' | 'current' | 'modified';
 
@@ -18,7 +19,9 @@ export interface ControlPlaneTargetSkillFile {
 
 export interface ControlPlaneTargetSkillSource {
   type: TargetSkillSourceType;
+  provider?: TargetSkillImportProvider;
   repoUrl?: string;
+  apiBaseUrl?: string;
   ref?: string;
   subpath?: string;
   commitSha?: string;
@@ -63,10 +66,30 @@ export interface CreateTargetSkillInput {
   }>;
 }
 
-export interface ImportTargetSkillInput {
+export interface GitTargetSkillImportInput {
+  provider: TargetSkillImportProvider;
   repoUrl: string;
+  apiBaseUrl?: string;
   ref?: string;
   subpath?: string;
+}
+
+export interface GitTargetSkillImportSource {
+  provider: TargetSkillImportProvider;
+  repoUrl: string;
+  apiBaseUrl?: string;
+  ref: string;
+  subpath?: string;
+  commitSha?: string;
+}
+
+export interface ImportTargetSkillInput {
+  files: CreateTargetSkillInput['files'];
+  source: GitTargetSkillImportSource;
+}
+
+export interface ReimportTargetSkillInput extends ImportTargetSkillInput {
+  force?: boolean;
 }
 
 export interface UpdateTargetSkillInput {

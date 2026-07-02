@@ -172,7 +172,7 @@ describe('Target skills editor dialog', () => {
   });
 
   it('imports skills as enabled without showing an import toggle', () => {
-    expect(targetSkillsView).toContain('Imported snapshot');
+    expect(targetSkillsView).toContain("t('targetSkills.importedSnapshot')");
     expect(targetSkillsView).not.toContain('Enabled automatically');
     expect(targetSkillsView).not.toContain('Enable after import');
     expect(targetSkillsView).not.toContain('Imported bundles remain editable local snapshots.');

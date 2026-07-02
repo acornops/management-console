@@ -114,7 +114,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
       setCreatingNewFile(false);
       setDraft(draftFromEntry(first));
     } catch (err) {
-      setError(formatError(err, t('tools.targetInsights.loadFailed')));
+      setError(formatError(err, t('tools.targetInsights.loadFailed'), 'targetInsights'));
     } finally {
       setLoading(false);
     }
@@ -172,7 +172,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
       setCreatingNewFile(false);
       setDraft(draftFromEntry(saved));
     } catch (err) {
-      setError(formatError(err, t('tools.targetInsights.saveFileFailed')));
+      setError(formatError(err, t('tools.targetInsights.saveFileFailed'), 'targetInsights'));
     } finally {
       setFileSaving(false);
     }
@@ -196,7 +196,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
         : action === 'restore'
           ? 'tools.targetInsights.restoreFileFailed'
           : 'tools.targetInsights.promoteFileFailed';
-      setError(formatError(err, t(key)));
+      setError(formatError(err, t(key), 'targetInsights'));
     } finally {
       setFileSaving(false);
     }

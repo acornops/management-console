@@ -114,6 +114,7 @@ describe('target chat controller wiring', () => {
     expect(chatSubmit).toContain('pendingTraceRunId,');
     expect(chatSubmitFailures).toContain('isBlankAssistantMessage(message)');
     expect(chatSubmitFailures).toContain('AI Settings](#${AppPaths.workspaceAiSettings(workspaceId)}');
+    expect(chatSubmitFailures).toContain('formatControlPlaneError(error, fallbackMessage');
   });
 
   it('merges session refreshes with the latest selected session id', () => {

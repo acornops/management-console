@@ -12,6 +12,7 @@ import { Dialog } from '@/components/common/Dialog';
 import { headerMotion } from '@/lib/motion';
 import { AppPaths } from '@/utils/routes';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { getVmMetricTimeline, VmCardResourceChart } from '@/pages/virtual-machines/VirtualMachineMetrics';
@@ -102,7 +103,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
       await onDeleteVirtualMachine(deleteTargetVm);
       closeDeleteVmDialog();
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('virtualMachines.list.deleteVmFailed');
+      const message = formatControlPlaneError(error, t('virtualMachines.list.deleteVmFailed'), { area: 'virtualMachines' });
       setDeleteVmError(message);
     } finally {
       setIsDeletingVm(false);

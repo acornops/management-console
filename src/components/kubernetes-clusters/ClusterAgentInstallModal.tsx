@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
 import { ICONS } from '@/constants';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { AgentAccessMode } from '@/services/control-plane/types';
 import { KubernetesCluster } from '@/types';
@@ -53,7 +54,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
       setInstallCommand(rotated.installCommand);
       setInstallWarnings(rotated.installWarnings);
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('clusterSetup.generateFailed');
+      const message = formatControlPlaneError(error, t('clusterSetup.generateFailed'), { area: 'cluster' });
       setErrorMessage(message);
     } finally {
       setIsGenerating(false);

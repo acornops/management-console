@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi, ControlPlaneVirtualMachine, type ControlPlaneIssueItem, type ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { AppPaths, AppRoute, VmSubview } from '@/utils/routes';
@@ -172,7 +173,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     } catch (error) {
       console.error('Failed loading virtual machine inventory', error);
       setInventory([]);
-      setResourceError(error instanceof Error ? error.message : t('virtualMachines.resources.loadFailed'));
+      setResourceError(formatControlPlaneError(error, t('virtualMachines.resources.loadFailed'), { area: 'virtualMachines' }));
       setResourceStatus('error');
     }
   }, [t, workspace.id]);
@@ -187,7 +188,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     } catch (error) {
       console.error('Failed loading virtual machine logs', error);
       setLogs([]);
-      setLogsError(error instanceof Error ? error.message : t('virtualMachines.resources.logsLoadFailed'));
+      setLogsError(formatControlPlaneError(error, t('virtualMachines.resources.logsLoadFailed'), { area: 'virtualMachines' }));
       setLogsStatus('error');
     }
   }, [t, workspace.id]);
@@ -321,7 +322,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       setVmCreationStep('instructions');
     } catch (error) {
       console.error('Failed registering virtual machine in control plane', error);
-      setVmCreationError(error instanceof Error ? error.message.replace(/^Control plane request failed \(\d+\):\s*/, '') : t('virtualMachines.list.registerFailed'));
+      setVmCreationError(formatControlPlaneError(error, t('virtualMachines.list.registerFailed'), { area: 'virtualMachines' }));
     } finally {
       setIsRegisteringVm(false);
     }

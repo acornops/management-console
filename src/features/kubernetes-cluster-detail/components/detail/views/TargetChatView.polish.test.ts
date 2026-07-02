@@ -5,8 +5,7 @@ import {
   assistantTurn,
   chatGateDialog,
   chatTranscriptStates,
-  conversationAssistantStatuses,
-  chatSessionSync,
+  conversationAssistantStatuses, chatSessionSync,
   chatSubmit,
   chatView,
   conversationHistory,
@@ -15,8 +14,7 @@ import {
   messageActions,
   styles,
   targetChatRunWatcher,
-  traceFooter,
-  useTargetChat,
+  traceFooter, useTargetChat,
   userMessageTurn,
   zhLocale
 } from '@/stylesTestSupport';

@@ -149,7 +149,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       }
       return loadedCatalog;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed loading MCP server catalog.';
+      const message = formatMcpMutationError(error, 'Failed loading MCP server catalog.');
       setCatalogError(message);
       setCatalog(null);
       return null;
@@ -193,7 +193,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           nextCursor: mode === 'append' ? current[serverId]?.nextCursor : undefined,
           loadingInitial: false,
           loadingMore: false,
-          error: error instanceof Error ? error.message : t('mcpServers.loadToolsFailed')
+          error: formatMcpMutationError(error, t('mcpServers.loadToolsFailed'))
         }
       }));
     }

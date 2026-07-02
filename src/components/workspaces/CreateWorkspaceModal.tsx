@@ -84,7 +84,7 @@ function defaultInviteRole(roles: WorkspaceRoleTemplate[]): ProjectMember['role'
   return roles.find((role) => !role.protected)?.key || roles[0]?.key || '';
 }
 
-function formatControlPlaneError(error: unknown, fallback: string): string {
+function formatWorkspaceCreationError(error: unknown, fallback: string): string {
   return formatMemberMutationError(error, fallback);
 }
 
@@ -234,7 +234,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       setCreatedWorkspace(workspace);
       setStep('members');
     } catch (error) {
-      setCreateError(formatControlPlaneError(error, t('app.failedCreateWorkspace')));
+      setCreateError(formatWorkspaceCreationError(error, t('app.failedCreateWorkspace')));
     } finally {
       setIsCreatingWorkspace(false);
     }
@@ -318,7 +318,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       if (result.status === 'fulfilled') {
         successes.set(result.value.rowId, result.value.invitation);
       } else {
-        failures.set(row.id, formatControlPlaneError(result.reason, t('members.createInviteFailed')));
+        failures.set(row.id, formatWorkspaceCreationError(result.reason, t('members.createInviteFailed')));
       }
     });
 

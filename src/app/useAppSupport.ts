@@ -4,6 +4,7 @@ import { TFunction } from 'i18next';
 import { AppToast } from '@/components/common/ToastViewport';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canManageWorkspaceMembers, canReadWorkspaceData } from '@/app/workspacePermissions';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlaneWorkspaceInvitation, controlPlaneApi } from '@/services/controlPlaneApi';
 import { EmailVerificationRequiredError } from '@/services/control-plane/authApi';
 import { AppRoute, AppPaths } from '@/utils/routes';
@@ -244,7 +245,7 @@ export function useAppSupport(args: {
       });
     } catch (err) {
       console.error('Login failed', err);
-      showToast(err instanceof Error ? err.message.replace(/^Control plane request failed \(\d+\):\s*/, '') : 'Login failed.');
+      showToast(formatControlPlaneError(err, 'Login failed.', { area: 'auth' }));
     } finally {
       setIsAuthLoading(false);
     }

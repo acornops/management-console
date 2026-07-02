@@ -128,7 +128,7 @@ export const TargetInsightsSettingsDialog: React.FC<TargetInsightsSettingsDialog
       onToolUpdated(updated);
       onClose();
     } catch (err) {
-      setError(formatError(err, t('tools.targetInsights.saveSettingsFailed')));
+      setError(formatError(err, t('tools.targetInsights.saveSettingsFailed'), 'targetInsights'));
     } finally {
       setSettingsSaving(false);
     }

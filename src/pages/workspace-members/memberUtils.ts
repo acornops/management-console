@@ -1,3 +1,4 @@
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ProjectMember, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 
 export function formatRole(role: string, template?: WorkspaceRoleTemplate): string {
@@ -18,7 +19,8 @@ export function getInitials(member: ProjectMember): string {
 }
 
 export function formatMemberMutationError(error: unknown, fallback: string, ownerConflictMessage = fallback): string {
-  const rawMessage = error instanceof Error ? error.message : fallback;
+  const formatted = formatControlPlaneError(error, fallback, { area: 'members', ownerConflictMessage });
+  const rawMessage = formatted || fallback;
   const jsonMatch = rawMessage.match(/\{[\s\S]*\}$/);
   const jsonText = rawMessage.trim().startsWith('{') ? rawMessage.trim() : jsonMatch?.[0];
 
@@ -47,5 +49,5 @@ export function formatMemberMutationError(error: unknown, fallback: string, owne
     return ownerConflictMessage;
   }
 
-  return rawMessage.replace(/^Control plane request failed \(\d+\):\s*/i, '') || fallback;
+  return rawMessage || fallback;
 }
