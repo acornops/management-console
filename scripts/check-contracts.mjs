@@ -41,14 +41,14 @@ const controlPlaneMapping = [
   read('src/services/control-plane/types.ts')
 ].join('\n');
 const clusterChat = [
-  read('src/features/kubernetes-cluster-detail/hooks/useTargetChat.ts'),
-  read('src/features/kubernetes-cluster-detail/hooks/chatRunTrace.ts'),
-  read('src/features/kubernetes-cluster-detail/hooks/chatSessionSync.ts'),
-  read('src/features/kubernetes-cluster-detail/hooks/chatSubmit.ts')
+  read('src/features/targets/chat/hooks/useTargetChat.ts'),
+  read('src/features/targets/chat/hooks/chatRunTrace.ts'),
+  read('src/features/targets/chat/hooks/chatSessionSync.ts'),
+  read('src/features/targets/chat/hooks/chatSubmit.ts')
 ].join('\n');
 const mcpServersSurface = [
-  read('src/features/kubernetes-cluster-detail/components/detail/views/McpServersView.tsx'),
-  read('src/features/kubernetes-cluster-detail/components/detail/views/mcpServersCatalog.ts')
+  read('src/features/targets/admin/McpServersView.tsx'),
+  read('src/features/targets/admin/mcpServersCatalog.ts')
 ].join('\n');
 const controlPlaneContract = manifest.counterparts?.['control-plane'];
 

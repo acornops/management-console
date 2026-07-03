@@ -1,9 +1,10 @@
 import React from 'react';
-import { TargetChatView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatView';
-import { useTargetChat } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
-import { createMarkdownComponents } from '@/features/kubernetes-cluster-detail/lib/markdown';
-import { controlPlaneApi, type ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
-import { ChatSession, HealthStatus, KubernetesCluster, Workspace } from '@/types';
+import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
+import { useTargetChat } from '@/features/targets/chat/hooks/useTargetChat';
+import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
+import { toVirtualMachineTargetDescriptor } from '@/features/targets/targetDescriptor';
+import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import { ChatSession, Workspace } from '@/types';
 
 interface VirtualMachineChatViewProps {
   vm: ControlPlaneVirtualMachine;
@@ -21,35 +22,6 @@ const suggestionKeys = [
   'virtualMachines.chat.suggestions.networkListeners',
   'virtualMachines.chat.suggestions.processHealth'
 ];
-
-function toVirtualMachineChatTarget(
-  vm: ControlPlaneVirtualMachine,
-  chatSessions: ChatSession[]
-): KubernetesCluster {
-  return {
-    id: vm.id,
-    name: vm.name,
-    cluster: vm.hostname || vm.name,
-    namespace: 'host',
-    workspaceId: vm.workspaceId,
-    agentConnectionState: vm.status === 'online' ? 'connected' : 'disconnected',
-    owners: [],
-    gitlabPipelines: [],
-    status: vm.status === 'online' ? HealthStatus.GREEN : vm.status === 'degraded' ? HealthStatus.YELLOW : HealthStatus.RED,
-    podStats: { running: 0, failed: 0, pending: 0 },
-    metrics: { cpu: 'n/a', memory: 'n/a' },
-    lastUpdate: vm.latestSnapshot?.timestamp || vm.updatedAt,
-    mcpTools: [],
-    chatSessions,
-    workloads: [],
-    nodes: [],
-    namespaces: [],
-    services: [],
-    ingresses: [],
-    pvcs: [],
-    alerts: []
-  };
-}
 
 export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
   vm,
@@ -69,15 +41,8 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
     return session && session.trim().length > 0 ? session : null;
   }, [vm.id]);
   const target = React.useMemo(
-    () => toVirtualMachineChatTarget(vm, chatSessions),
+    () => toVirtualMachineTargetDescriptor(vm, chatSessions),
     [chatSessions, vm]
-  );
-  const sessionApi = React.useMemo(
-    () => ({
-      createSession: controlPlaneApi.createTargetSession,
-      listSessions: controlPlaneApi.listTargetSessions
-    }),
-    []
   );
   const permissions = workspace.permissions;
   const canChat = Boolean(permissions?.create_sessions && permissions.create_read_only_runs);
@@ -91,8 +56,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
     canRequestWriteRuns: false,
     isChatActive: true,
     initialActiveSessionId,
-    onUpdateSessions: setChatSessions,
-    sessionApi
+    onUpdateSessions: setChatSessions
   });
   const { setInputValue } = controller;
 

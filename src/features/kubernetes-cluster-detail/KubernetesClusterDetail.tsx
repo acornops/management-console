@@ -1,16 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { TargetChatView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatView';
+import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
 import { ClusterSettingsView } from '@/features/kubernetes-cluster-detail/components/detail/views/ClusterSettingsView';
-import { McpServersView } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServersView';
+import { McpServersView } from '@/features/targets/admin/McpServersView';
 import { NamespaceScopeDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/NamespaceScopeDialog';
 import { OverviewView } from '@/features/kubernetes-cluster-detail/components/detail/views/OverviewView';
 import { ResourcesView } from '@/features/kubernetes-cluster-detail/components/detail/views/ResourcesView';
-import { TargetSkillsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsView';
-import { TargetToolsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetToolsView';
-import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
-import { createMarkdownComponents } from '@/features/kubernetes-cluster-detail/lib/markdown';
+import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
+import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
+import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/clusterChatFooter';
+import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
 import { KubernetesClusterDetailProps, View } from '@/features/kubernetes-cluster-detail/types';
+import { toKubernetesTargetDescriptor } from '@/features/targets/targetDescriptor';
 import { fadeTransition } from '@/lib/motion';
 
 interface KubernetesClusterDetailLocationState {
@@ -112,6 +113,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   const [isNamespaceScopeDialogOpen, setIsNamespaceScopeDialogOpen] = useState(false);
   const assistantMarkdownComponents = useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = useMemo(() => createMarkdownComponents('user'), []);
+  const target = useMemo(() => toKubernetesTargetDescriptor(cluster), [cluster]);
 
   const {
     sessions,
@@ -227,12 +229,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             {activeView === 'resources' && <ResourcesView cluster={cluster} canReadPodLogs={canReadPodLogs} onAnalyzePod={analyzePod} />}
             {activeView === 'mcpServers' && (
               <McpServersView
-                cluster={cluster}
-                targetContext={{
-                  workspaceId: cluster.workspaceId,
-                  targetId: cluster.id,
-                  targetType: 'kubernetes'
-                }}
+                target={target}
                 canManageMcp={canManageMcp}
                 canManageTools={canManageTools}
                 canRequestWriteRuns={canRequestWriteRuns}
@@ -241,23 +238,13 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             )}
             {activeView === 'skills' && (
               <TargetSkillsView
-                cluster={cluster}
-                targetContext={{
-                  workspaceId: cluster.workspaceId,
-                  targetId: cluster.id,
-                  targetType: 'kubernetes'
-                }}
+                target={target}
                 canManageSkills={Boolean(currentWorkspacePermissions?.manage_skills)}
               />
             )}
             {activeView === 'tools' && (
               <TargetToolsView
-                cluster={cluster}
-                targetContext={{
-                  workspaceId: cluster.workspaceId,
-                  targetId: cluster.id,
-                  targetType: 'kubernetes'
-                }}
+                target={target}
                 canManageTools={canManageTools}
               />
             )}
@@ -282,7 +269,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 inputValue={inputValue}
                 sessions={sessions}
                 activeSessionId={activeSessionId}
-                target={cluster}
+                target={target}
                 assistantMarkdownComponents={assistantMarkdownComponents}
                 userMarkdownComponents={userMarkdownComponents}
                 visibleMessages={visibleMessages}

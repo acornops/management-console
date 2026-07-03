@@ -1,5 +1,5 @@
-import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
-import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
+import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
+import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { ChatSession } from '@/types';
 
 export type AssistantNavStatus = 'idle' | 'working' | 'review' | 'done';

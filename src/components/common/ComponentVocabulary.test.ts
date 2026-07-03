@@ -86,7 +86,7 @@ describe('authenticated surface component vocabulary', () => {
   const addVirtualMachineModal = readFileSync(resolve(root, 'src/pages/virtual-machines/AddVirtualMachineModal.tsx'), 'utf8');
   const virtualMachinesListView = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachinesListView.tsx'), 'utf8');
   const targetSkillsView = readFileSync(
-    resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsView.tsx'),
+    resolve(root, 'src/features/targets/admin/TargetSkillsView.tsx'),
     'utf8'
   );
 

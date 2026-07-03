@@ -6,7 +6,7 @@ import {
   isTerminalAssistantStatus
 } from '@/app/assistantNavStatus';
 import type { ChatSession } from '@/types';
-import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
+import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 
 function controller(overrides: Partial<TargetChatController> = {}): TargetChatController {
   return {

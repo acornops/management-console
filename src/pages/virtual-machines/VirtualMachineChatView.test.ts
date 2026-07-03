@@ -11,9 +11,10 @@ describe('VirtualMachineChatView wiring', () => {
   it('uses the shared target chat shell with VM target sessions', () => {
     expect(source).toContain("import { TargetChatView }");
     expect(source).toContain("import { useTargetChat }");
-    expect(source).toContain('createSession: controlPlaneApi.createTargetSession');
-    expect(source).toContain('listSessions: controlPlaneApi.listTargetSessions');
+    expect(source).toContain("import { toVirtualMachineTargetDescriptor }");
+    expect(source).toContain('() => toVirtualMachineTargetDescriptor(vm, chatSessions)');
     expect(source).toContain('target,');
+    expect(source).not.toContain('sessionApi');
     expect(source).toContain('<TargetChatView');
     expect(source).toContain('titleKey="virtualMachines.chat.title"');
   });
@@ -24,5 +25,6 @@ describe('VirtualMachineChatView wiring', () => {
     expect(source).toContain('canApproveWriteActions={false}');
     expect(source).not.toContain('useClusterChat');
     expect(source).not.toContain('controlPlaneApi.createSession');
+    expect(source).not.toContain('KubernetesCluster');
   });
 });

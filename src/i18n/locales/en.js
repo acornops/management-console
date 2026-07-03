@@ -1149,7 +1149,7 @@ export const en = {
     },
     footer: 'Read operations can run automatically. Write behavior follows the target policy.',
     footerApprovalRequired: 'Read operations can run automatically. Write actions require explicit approval before execution.',
-    footerApprovalNotRequired: 'Read and write operations can run automatically under this cluster policy.',
+    footerApprovalNotRequired: 'Read and write operations can run automatically under this target policy.',
     footerReadOnlyRole: 'Read-only mode: your workspace role can run read checks, but cannot start write-capable assistant runs.',
     footerNoAccess: 'Contact your workspace administrator to upgrade your permissions.',
     failedDelete: 'Failed deleting conversation.',

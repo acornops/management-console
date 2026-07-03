@@ -1,8 +1,9 @@
 import React from 'react';
-import { TargetChatView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetChatView';
-import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers';
-import { createMarkdownComponents } from '@/features/kubernetes-cluster-detail/lib/markdown';
-import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
+import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
+import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/clusterChatFooter';
+import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
+import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
+import { toKubernetesTargetDescriptor } from '@/features/targets/targetDescriptor';
 import { KubernetesCluster, Workspace } from '@/types';
 
 interface InitialPrompt {
@@ -37,6 +38,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
   const handledPromptIdRef = React.useRef<number | null>(null);
   const assistantMarkdownComponents = React.useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = React.useMemo(() => createMarkdownComponents('user'), []);
+  const target = React.useMemo(() => toKubernetesTargetDescriptor(cluster), [cluster]);
 
   const canChat = Boolean(currentWorkspacePermissions?.create_sessions && currentWorkspacePermissions.create_read_only_runs);
   const canRequestWriteRuns = Boolean(currentWorkspacePermissions?.create_read_write_runs);
@@ -89,7 +91,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
 
   return (
     <TargetChatView
-      target={cluster}
+      target={target}
       isDark={isDark}
       canChat={canChat}
       isConversationOwner={isActiveSessionOwner}

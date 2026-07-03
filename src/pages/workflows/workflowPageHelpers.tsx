@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { buildTraceFromRunEvents } from '@/features/kubernetes-cluster-detail/hooks/chatRunTrace';
-import type { LiveRunTrace } from '@/features/kubernetes-cluster-detail/types';
+import { buildTraceFromRunEvents } from '@/features/targets/chat/hooks/chatRunTrace';
+import type { LiveRunTrace } from '@/features/targets/chat/types';
 import {
   createDefaultWorkflowDefinitions,
   type WorkflowDefinition,

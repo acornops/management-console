@@ -9,12 +9,12 @@ import { describe, expect, it } from 'vitest';
 
 const root = resolve(__dirname, '../..');
 const appDialogs = readFileSync(resolve(root, 'src/app/AppDialogs.tsx'), 'utf8');
-const chatView = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'), 'utf8');
+const chatView = readFileSync(resolve(root, 'src/features/targets/chat/components/TargetChatView.tsx'), 'utf8');
 const dashboard = readFileSync(resolve(root, 'src/components/dashboard/Dashboard.tsx'), 'utf8');
 const enLocale = readFileSync(resolve(root, 'src/i18n/locales/en.js'), 'utf8');
 const virtualMachinesListView = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachinesListView.tsx'), 'utf8');
 const mcpServersDialogs = readFileSync(
-  resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/views/McpServersDialogs.tsx'),
+  resolve(root, 'src/features/targets/admin/McpServersDialogs.tsx'),
   'utf8'
 );
 

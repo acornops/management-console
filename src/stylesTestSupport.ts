@@ -16,7 +16,7 @@ export const workspaceSettingsPage = readSource('src/pages/WorkspaceSettingsPage
 export const desktopSidebar = readSource('src/app/AppDesktopSidebar.tsx');
 export const mobileNavigation = readSource('src/app/AppMobileNavigation.tsx');
 export const appShell = readSource('src/app/AppShell.tsx');
-export const appClusterChatRuntime = readSource('src/app/AppClusterChatRuntime.tsx');
+export const appTargetChatRuntime = readSource('src/app/AppClusterChatRuntime.tsx');
 export const appPageContent = readSource('src/app/AppPageContent.tsx');
 export const appDialogs = readSource('src/app/AppDialogs.tsx');
 export const workloadExplorerParts = readSource(
@@ -26,59 +26,59 @@ export const resourceExplorerLayout = readSource(
   'src/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout.tsx'
 );
 export const mcpServersView = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/McpServersView.tsx'
+  'src/features/targets/admin/McpServersView.tsx'
 );
 export const mcpServerCard = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/McpServerCard.tsx'
+  'src/features/targets/admin/McpServerCard.tsx'
 );
 export const mcpServersDialogs = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/McpServersDialogs.tsx'
+  'src/features/targets/admin/McpServersDialogs.tsx'
 );
 export const mcpServerToolsDialog = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/McpServerToolsDialog.tsx'
+  'src/features/targets/admin/McpServerToolsDialog.tsx'
 );
 export const mcpServersInventory = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/McpServersInventory.tsx'
+  'src/features/targets/admin/McpServersInventory.tsx'
 );
 export const chatView = [
-  readSource('src/features/kubernetes-cluster-detail/components/detail/views/TargetChatView.tsx'),
-  readSource('src/features/kubernetes-cluster-detail/components/detail/views/TargetChatViewBody.tsx'),
-  readSource('src/features/kubernetes-cluster-detail/components/detail/views/TargetChatComposer.tsx'),
-  readSource('src/features/kubernetes-cluster-detail/components/detail/views/targetChatViewHelpers.ts')
+  readSource('src/features/targets/chat/components/TargetChatView.tsx'),
+  readSource('src/features/targets/chat/components/TargetChatViewBody.tsx'),
+  readSource('src/features/targets/chat/components/TargetChatComposer.tsx'),
+  readSource('src/features/targets/chat/components/targetChatViewHelpers.ts')
 ].join('\n');
 export const assistantTurn = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/AssistantTurn.tsx'
+  'src/features/targets/chat/components/AssistantTurn.tsx'
 );
 export const thinkingAcorn = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/ThinkingAcorn.tsx'
+  'src/features/targets/chat/components/ThinkingAcorn.tsx'
 );
 export const messageActions = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/MessageActions.tsx'
+  'src/features/targets/chat/components/MessageActions.tsx'
 );
 export const userMessageTurn = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/UserMessageTurn.tsx'
+  'src/features/targets/chat/components/UserMessageTurn.tsx'
 );
 export const approvalCheckpoint = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/ApprovalCheckpoint.tsx'
+  'src/features/targets/chat/components/ApprovalCheckpoint.tsx'
 );
 export const chatGateDialog = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/TargetChatGateDialog.tsx'
+  'src/features/targets/chat/components/TargetChatGateDialog.tsx'
 );
 export const chatTranscriptStates = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/views/ChatTranscriptStates.tsx'
+  'src/features/targets/chat/components/ChatTranscriptStates.tsx'
 );
 export const conversationHistory = readSource(
-  'src/features/kubernetes-cluster-detail/components/detail/ConversationHistory.tsx'
+  'src/features/targets/chat/components/ConversationHistory.tsx'
 );
-export const chatSubmit = readSource('src/features/kubernetes-cluster-detail/hooks/chatSubmit.ts');
-export const chatSessionSync = readSource('src/features/kubernetes-cluster-detail/hooks/chatSessionSync.ts');
+export const chatSubmit = readSource('src/features/targets/chat/hooks/chatSubmit.ts');
+export const chatSessionSync = readSource('src/features/targets/chat/hooks/chatSessionSync.ts');
 export const conversationAssistantStatuses = readSource(
-  'src/features/kubernetes-cluster-detail/hooks/useConversationAssistantStatuses.ts'
+  'src/features/targets/chat/hooks/useConversationAssistantStatuses.ts'
 );
-export const useTargetChat = readSource('src/features/kubernetes-cluster-detail/hooks/useTargetChat.ts');
-export const targetChatRunWatcher = readSource('src/features/kubernetes-cluster-detail/hooks/targetChatRunWatcher.ts');
+export const useTargetChat = readSource('src/features/targets/chat/hooks/useTargetChat.ts');
+export const targetChatRunWatcher = readSource('src/features/targets/chat/hooks/targetChatRunWatcher.ts');
 export const useTargetChatScrollAnchor = readSource(
-  'src/features/kubernetes-cluster-detail/hooks/useTargetChatScrollAnchor.ts'
+  'src/features/targets/chat/hooks/useTargetChatScrollAnchor.ts'
 );
 export const clusterOverviewView = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx'
@@ -86,8 +86,8 @@ export const clusterOverviewView = readSource(
 export const clusterSettingsView = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/ClusterSettingsView.tsx'
 );
-export const traceFooter = readSource('src/features/kubernetes-cluster-detail/components/detail/TraceFooter.tsx');
-export const markdownComponents = readSource('src/features/kubernetes-cluster-detail/lib/markdown.tsx');
+export const traceFooter = readSource('src/features/targets/chat/components/TraceFooter.tsx');
+export const markdownComponents = readSource('src/features/targets/chat/lib/markdown.tsx');
 export const buttonComponent = readSource('src/components/common/Button.tsx');
 export const resourceCategoryTabs = readSource('src/components/common/ResourceCategoryTabs.tsx');
 export const addClusterModal = readSource('src/components/kubernetes-clusters/AddClusterModal.tsx');

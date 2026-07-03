@@ -1,7 +1,8 @@
 import React from 'react';
-import { useTargetChat } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
-import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
-import { useConversationAssistantStatuses } from '@/features/kubernetes-cluster-detail/hooks/useConversationAssistantStatuses';
+import { useTargetChat } from '@/features/targets/chat/hooks/useTargetChat';
+import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
+import { useConversationAssistantStatuses } from '@/features/targets/chat/hooks/useConversationAssistantStatuses';
+import { toKubernetesTargetDescriptor } from '@/features/targets/targetDescriptor';
 import { ChatSession, KubernetesCluster, Workspace } from '@/types';
 import { deriveAssistantRuntimeStatus, type AssistantNavStatus } from '@/app/assistantNavStatus';
 
@@ -36,9 +37,10 @@ const AppClusterChatRuntimeInner: React.FC<AppClusterChatRuntimeInnerProps> = ({
 }) => {
   const canChat = Boolean(currentWorkspacePermissions?.create_sessions && currentWorkspacePermissions.create_read_only_runs);
   const canRequestWriteRuns = Boolean(currentWorkspacePermissions?.create_read_write_runs);
+  const target = React.useMemo(() => toKubernetesTargetDescriptor(cluster), [cluster]);
 
   const controller = useTargetChat({
-    target: cluster,
+    target,
     currentUserId,
     canChat,
     canRequestWriteRuns,

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { PageLoadingFallback } from '@/components/common/Loading';
 import { ICONS } from '@/constants';
-import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
+import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';

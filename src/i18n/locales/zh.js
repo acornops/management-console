@@ -1149,7 +1149,7 @@ export const zh = {
     },
     footer: '只读操作可自动执行。写操作遵循目标策略。',
     footerApprovalRequired: '只读操作可自动执行。写操作必须经过明确批准后才会执行。',
-    footerApprovalNotRequired: '根据此集群策略，只读和写操作都可以自动执行。',
+    footerApprovalNotRequired: '根据此目标策略，只读和写操作都可以自动执行。',
     footerReadOnlyRole: '只读模式：你的工作区角色可以运行只读检查，但不能开始具备写能力的助手运行。',
     footerNoAccess: '请联系工作区管理员提升权限。',
     failedDelete: '删除会话失败。',

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { ICONS, THEME_CLASSES } from '@/constants';
 import KubernetesClusterDetail from '@/features/kubernetes-cluster-detail/KubernetesClusterDetail';
-import type { TargetChatController } from '@/features/kubernetes-cluster-detail/hooks/useTargetChat';
+import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { KubernetesCluster, Workspace } from '@/types';
 import { ClusterSubview } from '@/utils/routes';

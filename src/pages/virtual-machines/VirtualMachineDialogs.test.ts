@@ -15,7 +15,7 @@ const virtualMachineUi = readFileSync(resolve(root, 'src/pages/virtual-machines/
 const constants = readFileSync(resolve(root, 'src/constants.tsx'), 'utf8');
 
 describe('virtual machine onboarding dialog', () => {
-  it('uses the shared dialog shell like the connect-cluster flow', () => {
+  it('uses the shared dialog shell for VM connection', () => {
     expect(addVirtualMachineModal).toContain("import { Dialog } from '@/components/common/Dialog'");
     expect(addVirtualMachineModal).toContain("import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary'");
     expect(addVirtualMachineModal).toContain("import { ModalStepIndicator } from '@/components/common/ModalStepIndicator'");
@@ -62,7 +62,7 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachinesPage).not.toContain("navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, targetVmId, 'settings'))");
   });
 
-  it('uses the cluster-style list actions for VM onboarding and agent setup', () => {
+  it('uses card list actions for VM onboarding and agent setup', () => {
     expect(virtualMachinesListView).not.toContain('data-vm-register-card');
     expect(virtualMachinesListView).not.toContain('registerVmCard');
     expect(virtualMachinesListView).toContain("import { actionCardButtonClassName, cardClassName } from '@/components/common/Card'");
@@ -104,7 +104,7 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachinesListView).toContain('onOpenRegisterVm');
   });
 
-  it('keeps VM telemetry cards aligned with the cluster card treatment', () => {
+  it('keeps VM telemetry cards aligned with the shared card treatment', () => {
     expect(virtualMachineMetrics).toContain('className="grid h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)_4.25rem]"');
     expect(virtualMachineMetrics).toContain("const chartBodyClassName = 'grid min-h-0 grid-rows-[auto_minmax(0,1fr)] pb-3';");
     expect(virtualMachineMetrics).toContain('grid h-[4.25rem] grid-cols-3 divide-x divide-ui-border border-t border-ui-border pt-5');
@@ -156,7 +156,7 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachinesListView).not.toContain('rounded-lg bg-status-danger px-4 py-2 type-row-title');
   });
 
-  it('uses the same lifecycle filter labels as the cluster page', () => {
+  it('uses the shared lifecycle filter labels', () => {
     expect(virtualMachinesListView).toContain("t('dashboard.allStates')");
     expect(virtualMachinesListView).toContain("t('dashboard.connected')");
     expect(virtualMachinesListView).toContain("t('dashboard.disconnected')");

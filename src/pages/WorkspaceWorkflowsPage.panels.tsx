@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/common/Checkbox';
 import { Select } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
-import { TraceFooter } from '@/features/kubernetes-cluster-detail/components/detail/TraceFooter';
+import { TraceFooter } from '@/features/targets/chat/components/TraceFooter';
 import {
   AgentAssignmentList,
   CapabilityReviewRow,

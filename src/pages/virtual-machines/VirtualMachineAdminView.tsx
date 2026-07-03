@@ -1,10 +1,10 @@
 import React from 'react';
-import { McpServersView } from '@/features/kubernetes-cluster-detail/components/detail/views/McpServersView';
-import { TargetSkillsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetSkillsView';
-import { TargetToolsView } from '@/features/kubernetes-cluster-detail/components/detail/views/TargetToolsView';
+import { McpServersView } from '@/features/targets/admin/McpServersView';
+import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
+import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
+import { toVirtualMachineTargetDescriptor } from '@/features/targets/targetDescriptor';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
-import { toClusterShim } from '@/pages/virtual-machines/virtualMachineClusterShim';
 
 interface VirtualMachineAdminViewProps {
   view: 'mcpServers' | 'skills' | 'tools';
@@ -17,18 +17,15 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
   virtualMachine,
   workspace
 }) => {
-  const cluster = toClusterShim(virtualMachine);
-  const targetContext = {
-    workspaceId: workspace.id,
-    targetId: virtualMachine.id,
-    targetType: 'virtual_machine' as const
-  };
+  const target = toVirtualMachineTargetDescriptor({
+    ...virtualMachine,
+    workspaceId: workspace.id
+  });
 
   if (view === 'skills') {
     return (
       <TargetSkillsView
-        cluster={cluster}
-        targetContext={targetContext}
+        target={target}
         canManageSkills={Boolean(workspace.permissions?.manage_skills)}
       />
     );
@@ -37,8 +34,7 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
   if (view === 'tools') {
     return (
       <TargetToolsView
-        cluster={cluster}
-        targetContext={targetContext}
+        target={target}
         canManageTools={Boolean(workspace.permissions?.manage_tools || workspace.permissions?.manage_target_insights)}
       />
     );
@@ -46,8 +42,7 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
 
   return (
     <McpServersView
-      cluster={cluster}
-      targetContext={targetContext}
+      target={target}
       canManageMcp={Boolean(workspace.permissions?.manage_mcp)}
       canManageTools={Boolean(workspace.permissions?.manage_tools || workspace.permissions?.manage_target_insights)}
       canRequestWriteRuns={Boolean(workspace.permissions?.create_read_write_runs)}
