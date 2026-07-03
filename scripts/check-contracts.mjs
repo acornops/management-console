@@ -188,6 +188,8 @@ expectIncludes(doc, '{ cluster, agentKey, installInstructions }', 'Cluster regis
 expectIncludes(doc, '{ clusterId, agentKey, keyVersion, installInstructions }', 'Rotate agent-key response doc');
 expectIncludes(doc, '`currentUserRole`', 'Workspace current-user role doc');
 expectIncludes(doc, '`permissions.manage_members`', 'Workspace membership permission doc');
+expectIncludes(doc, 'The UI must not fabricate a member row', 'Workspace membership fabrication doc');
+expectIncludes(doc, 'GET /api/v1/workspaces/{workspaceId}/roles', 'Workspace roles endpoint doc');
 expectIncludes(doc, '`permissions.read_audit_log`', 'Workspace audit-log permission doc');
 expectIncludes(doc, '`operation`', 'Workspace audit operation field doc');
 expectIncludes(doc, '`objectType`', 'Workspace audit object-type filter doc');

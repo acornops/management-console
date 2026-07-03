@@ -27,6 +27,8 @@ The management console is the browser client for the control-plane API. Keep thi
 - Cluster registration returns `{ cluster, agentKey, installInstructions }`.
 - Agent-key rotation returns `{ clusterId, agentKey, keyVersion, installInstructions }`.
 - Workspace payloads include `currentUserRole` and permissions from the control plane; the console must not fabricate current-user membership locally.
+- The UI must not fabricate a member row when the control-plane member list is empty or unavailable.
+- Role templates come from `GET /api/v1/workspaces/{workspaceId}/roles`; invite and member-role controls must use that catalog.
 
 ## Shared Invariants
 
