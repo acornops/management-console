@@ -22,6 +22,7 @@ function expectIncludes(content, needle, message) {
 const readme = read('README.md');
 const doc = read('docs/contracts/README.md');
 const manifest = JSON.parse(read('docs/contracts/manifest.json'));
+const manifestText = JSON.stringify(manifest);
 const controlPlaneApi = read('src/services/controlPlaneApi.ts');
 const controlPlaneAuthApi = read('src/services/control-plane/authApi.ts');
 const kubernetesClusterApi = read('src/services/control-plane/kubernetesClusterApi.ts');
@@ -57,12 +58,18 @@ expect(manifest.repo === 'management-console', 'Manifest repo');
 
 for (const heading of [
   '# Management Console Contracts',
+  '## Source Of Truth',
   '## Full Platform Matrix',
   '## Platform Dependency Summary',
   '## Shared Invariants',
-  '## Control-Plane Contract'
+  '## Control-Plane Boundary Notes',
+  '## Change Checklist'
 ]) {
   expectIncludes(doc, heading, 'Contract doc heading');
+}
+
+function docToken(value) {
+  return value.replace(/^`|`$/g, '');
 }
 
 for (const [docPath, implNeedle, label] of [
@@ -130,11 +137,9 @@ for (const [docPath, implNeedle, label] of [
   ['`GET /api/v1/runs/{runId}/stream`', '/stream', 'Run stream path'],
   ['`POST /api/v1/runs/{runId}/cancel`', 'method: \'POST\'', 'Run cancel method']
 ]) {
-  expectIncludes(doc, docPath, `${label} doc`);
+  expectIncludes(manifestText, docToken(docPath), `${label} manifest`);
   expectIncludes(controlPlaneApiSurface, implNeedle, `${label} implementation`);
 }
-
-expectIncludes(doc, '`GET /api/v1/auth/oidc/callback`', 'OIDC callback doc');
 
 expectIncludes(controlPlaneApiSurface, "credentials: 'include'", 'Cookie-backed auth');
 expectIncludes(doc, '`credentials: include`', 'Cookie-backed auth doc');
@@ -149,7 +154,7 @@ for (const snapshotNeedle of [
 }
 
 for (const field of controlPlaneContract.snapshotFields) {
-  expectIncludes(doc, field, 'Snapshot field doc');
+  expectIncludes(manifestText, field, 'Snapshot field manifest');
 }
 
 for (const catalogField of [
@@ -167,12 +172,12 @@ for (const catalogField of [
   'allowedDomains',
   'blockedDomains'
 ]) {
-  expectIncludes(doc, catalogField, 'Catalog field doc');
+  expectIncludes(manifestText, catalogField, 'Catalog field manifest');
   expectIncludes(controlPlaneMapping, catalogField, 'Catalog field implementation');
 }
 
 for (const eventType of controlPlaneContract.eventTypes) {
-  expectIncludes(doc, `\`${eventType}\``, 'Run event doc');
+  expectIncludes(manifestText, eventType, 'Run event manifest');
   expectIncludes(clusterChat, `event.type === '${eventType}'`, 'Run event handling');
 }
 
@@ -206,15 +211,15 @@ expectIncludes(mcpServersSurface, 'editableRoles: []', 'Local catalog must not h
 expectIncludes(clusterChat, "canRequestWriteRuns ? 'read_write' : 'read_only'", 'Write-tool intent implementation');
 
 for (const field of controlPlaneContract.responseFields.runEventFrame) {
-  expectIncludes(doc, `\`${field}\``, 'Run event frame doc');
+  expectIncludes(manifestText, field, 'Run event frame manifest');
 }
 
 for (const field of controlPlaneContract.requestFields.postMessage) {
-  expectIncludes(doc, `\`${field}\``, 'Post message request doc');
+  expectIncludes(manifestText, field, 'Post message request manifest');
 }
 
 for (const field of controlPlaneContract.responseFields.postMessageAccepted) {
-  expectIncludes(doc, `\`${field}\``, 'Post message response doc');
+  expectIncludes(manifestText, field, 'Post message response manifest');
 }
 
 if (failures.length > 0) {
