@@ -35,9 +35,7 @@ function clusterMatchesCatalogState(cluster: KubernetesCluster, query: string, s
 function mergeClustersById(primary: KubernetesCluster[], secondary: KubernetesCluster[]): KubernetesCluster[] {
   const byId = new Map<string, KubernetesCluster>();
   for (const cluster of primary) byId.set(cluster.id, cluster);
-  for (const cluster of secondary) {
-    if (!byId.has(cluster.id)) byId.set(cluster.id, cluster);
-  }
+  for (const cluster of secondary) byId.set(cluster.id, cluster);
   return [...byId.values()];
 }
 

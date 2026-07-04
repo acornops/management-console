@@ -227,6 +227,7 @@ describe('cluster catalog and inspector layout', () => {
     expect(dashboard).not.toContain("import { controlPlaneApi } from '@/services/controlPlaneApi'");
     expect(kubernetesClustersPage).toContain('function clusterMatchesCatalogState');
     expect(kubernetesClustersPage).toContain('function mergeClustersById');
+    expect(kubernetesClustersPage).toContain('for (const cluster of secondary) byId.set(cluster.id, cluster);');
     expect(kubernetesClustersPage).toContain('loadedClusterPageItems');
     expect(kubernetesClustersPage).toContain('const hasActiveFilter = Boolean(query.trim()) || status !== \'all\';');
     expect(kubernetesClustersPage).toContain('setLoadedClusterPageItems((current) =>');
