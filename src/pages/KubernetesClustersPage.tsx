@@ -95,10 +95,9 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     { value: 'not_installed', label: t('dashboard.notInstalled') }
   ];
   const apiStatus =
-    status === 'connected' ? 'online' :
-      status === 'disconnected' ? 'offline' :
-        status === 'not_installed' ? 'unknown' :
-          undefined;
+    status === 'disconnected' ? 'offline' :
+      status === 'not_installed' ? 'unknown' :
+        undefined;
   const hasActiveFilter = Boolean(query.trim()) || status !== 'all';
 
   const setCatalogState = useCallback((nextState: ClusterCatalogRouteState) => {

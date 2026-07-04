@@ -230,6 +230,7 @@ describe('cluster catalog and inspector layout', () => {
     expect(kubernetesClustersPage).toContain('for (const cluster of secondary) byId.set(cluster.id, cluster);');
     expect(kubernetesClustersPage).toContain('loadedClusterPageItems');
     expect(kubernetesClustersPage).toContain('const hasActiveFilter = Boolean(query.trim()) || status !== \'all\';');
+    expect(kubernetesClustersPage).not.toContain("status === 'connected' ? 'online'");
     expect(kubernetesClustersPage).toContain('setLoadedClusterPageItems((current) =>');
     expect(kubernetesClustersPage).toContain('onAppendWorkspaceKubernetesClusters?.(workspaceId, page.items);');
     expect(kubernetesClustersPage).toContain('hasActiveClusterFilter={hasActiveFilter}');
