@@ -249,11 +249,11 @@ export function useWorkspaceClusterActions(args: {
     showToast(t('app.deletedCluster', { name: clusterName }));
 
     if (route.kind === 'workspaceKubernetesClusterDiagnostics' && route.clusterId === cluster.id) {
-      navigate(AppPaths.workspaceKubernetesClusters(cluster.workspaceId), { replace: true });
+      navigate(AppPaths.workspaceKubernetesClusters(cluster.workspaceId, route.catalogState), { replace: true });
       return;
     }
     if (route.kind === 'kubernetesClusterDiagnostics' && route.clusterId === cluster.id) {
-      navigate(AppPaths.kubernetesClusters(), { replace: true });
+      navigate(AppPaths.kubernetesClusters(route.catalogState), { replace: true });
     }
   };
 

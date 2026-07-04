@@ -45,7 +45,11 @@ function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRo
         targetId: nextRoute.clusterId,
         targetType: 'kubernetes',
         workspaceId: nextRoute.workspaceId,
-        path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId)
+        path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId, {
+          q: previousRoute.q,
+          status: previousRoute.status,
+          selectedClusterId: nextRoute.clusterId
+        })
       };
     }
   }
@@ -338,6 +342,13 @@ export const AppShell: React.FC<AppShellProps> = ({
       return targetReturnContext.path;
     }
 
+    if (route.kind === 'workspaceKubernetesClusterDiagnostics') {
+      return AppPaths.workspaceKubernetesClusters(route.workspaceId, {
+        ...route.catalogState,
+        selectedClusterId: route.clusterId
+      });
+    }
+
     return isVirtualMachineSidebar
       ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId)
       : getClusterBackToWorkspacePath(backToWorkspaceId);
@@ -345,6 +356,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     backToWorkspaceId,
     isClusterSidebar,
     isVirtualMachineSidebar,
+    route,
     selectedSidebarCluster,
     selectedSidebarVm,
     targetReturnContext,
@@ -377,24 +389,6 @@ export const AppShell: React.FC<AppShellProps> = ({
       return isTerminalAssistantStatus(current) ? current : 'idle';
     });
   }, []);
-
-  const replaceWorkspaceKubernetesClusters = React.useCallback((workspaceId: string, nextClusters: KubernetesCluster[]) => {
-    setKubernetesClusters((current) => [
-      ...current.filter((cluster) => cluster.workspaceId !== workspaceId),
-      ...nextClusters
-    ]);
-    setWorkspaces((current) =>
-      current.map((workspace) =>
-        workspace.id === workspaceId
-          ? {
-              ...workspace,
-              clusterIds: nextClusters.map((cluster) => cluster.id),
-              clusterCount: workspace.clusterCount ?? nextClusters.length
-            }
-          : workspace
-      )
-    );
-  }, [setKubernetesClusters, setWorkspaces]);
 
   const appendWorkspaceKubernetesClusters = React.useCallback((workspaceId: string, nextClusters: KubernetesCluster[]) => {
     setKubernetesClusters((current) => {
@@ -464,7 +458,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onLogout={() => void handleLogout()}
         onNavigateClusterSubview={(tab) => {
           if (!selectedSidebarCluster) return;
-          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab));
+          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab, route.kind === 'workspaceKubernetesClusterDiagnostics' ? route.catalogState : undefined));
         }}
         onNavigateVmSubview={(tab) => {
           if (!selectedSidebarVm) return;
@@ -499,7 +493,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}
         onNavigateClusterSubview={(tab) => {
           if (!selectedSidebarCluster) return;
-          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab));
+          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab, route.kind === 'workspaceKubernetesClusterDiagnostics' ? route.catalogState : undefined));
         }}
         onNavigateVmSubview={(tab) => {
           if (!selectedSidebarVm) return;
@@ -555,7 +549,6 @@ export const AppShell: React.FC<AppShellProps> = ({
               onInitiateAddCluster={handleInitiateAddCluster}
               onInstallAgent={setInstallAgentClusterId}
               onUpdateKubernetesCluster={updateKubernetesCluster}
-              onReplaceWorkspaceKubernetesClusters={replaceWorkspaceKubernetesClusters}
               onAppendWorkspaceKubernetesClusters={appendWorkspaceKubernetesClusters}
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
               onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}

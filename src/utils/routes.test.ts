@@ -132,6 +132,61 @@ describe('routes', () => {
     });
   });
 
+  it('round-trips Kubernetes cluster catalog state in listing routes', () => {
+    const workspacePath = AppPaths.workspaceKubernetesClusters('team alpha', {
+      q: 'dev cluster',
+      status: 'connected',
+      selectedClusterId: 'cluster/one'
+    });
+
+    expect(workspacePath).toBe(
+      '/workspaces/team%20alpha/kubernetes-clusters?q=dev+cluster&status=connected&cluster=cluster%2Fone'
+    );
+    expect(parseAppRoute(workspacePath)).toEqual({
+      kind: 'workspaceKubernetesClusters',
+      workspaceId: 'team alpha',
+      q: 'dev cluster',
+      status: 'connected',
+      selectedClusterId: 'cluster/one'
+    });
+
+    expect(AppPaths.kubernetesClusters({
+      q: 'prod',
+      status: 'disconnected',
+      selectedClusterId: 'cluster-two'
+    })).toBe('/kubernetes-clusters?q=prod&status=disconnected&cluster=cluster-two');
+    expect(parseAppRoute('/kubernetes-clusters?q=prod&status=disconnected&cluster=cluster-two')).toEqual({
+      kind: 'kubernetesClusters',
+      q: 'prod',
+      status: 'disconnected',
+      selectedClusterId: 'cluster-two'
+    });
+  });
+
+  it('round-trips catalog return state in Kubernetes cluster detail routes', () => {
+    const path = AppPaths.workspaceKubernetesClusterDiagnostics('team-alpha', 'cluster-one', 'overview', {
+      q: 'dev',
+      status: 'not_installed'
+    });
+
+    expect(path).toBe('/workspaces/team-alpha/kubernetes-clusters/cluster-one/overview?catalogQ=dev&catalogStatus=not_installed');
+    expect(parseAppRoute(path)).toEqual({
+      kind: 'workspaceKubernetesClusterDiagnostics',
+      workspaceId: 'team-alpha',
+      clusterId: 'cluster-one',
+      tab: 'overview',
+      catalogState: {
+        q: 'dev',
+        status: 'not_installed'
+      }
+    });
+
+    expect(AppPaths.kubernetesClusterDiagnostics('cluster-one', 'chat', {
+      q: 'prod',
+      status: 'connected'
+    })).toBe('/kubernetes-clusters/cluster-one/chat?catalogQ=prod&catalogStatus=connected');
+  });
+
   it('parses workspace invitation routes', () => {
     const path = AppPaths.workspaceInvitation('wi_token/with space');
 

@@ -307,11 +307,11 @@ const App: React.FC = () => {
         ? selectedWorkspaceId
         : workspaces[0]?.id;
     if (targetWorkspaceId) {
-      navigate(AppPaths.workspaceKubernetesClusters(targetWorkspaceId), { replace: true });
+      navigate(AppPaths.workspaceKubernetesClusters(targetWorkspaceId, { q: route.q, status: route.status, selectedClusterId: route.selectedClusterId }), { replace: true });
       return;
     }
     return;
-  }, [route.kind, selectedWorkspaceId, workspaceById, workspaces, navigate]);
+  }, [route.kind, route.kind === 'kubernetesClusters' ? route.q : undefined, route.kind === 'kubernetesClusters' ? route.status : undefined, route.kind === 'kubernetesClusters' ? route.selectedClusterId : undefined, selectedWorkspaceId, workspaceById, workspaces, navigate]);
 
   useEffect(() => {
     if (!user || route.kind !== 'settings') {
@@ -332,7 +332,7 @@ const App: React.FC = () => {
       if (cluster.workspaceId !== selectedWorkspaceId) {
         setSelectedWorkspaceId(cluster.workspaceId);
       }
-      navigate(AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, route.tab), { replace: true });
+      navigate(AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, route.tab, route.catalogState), { replace: true });
       return;
     }
 
@@ -362,7 +362,7 @@ const App: React.FC = () => {
               };
             })
           );
-          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(app.workspaceId, app.id, route.tab), { replace: true });
+          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(app.workspaceId, app.id, route.tab, route.catalogState), { replace: true });
         })
         .catch(() => {
           if (cancelled) return;
@@ -371,7 +371,7 @@ const App: React.FC = () => {
               ? selectedWorkspaceId
               : workspaces[0]?.id;
           if (fallbackWorkspaceId) {
-            navigate(AppPaths.workspaceKubernetesClusters(fallbackWorkspaceId), { replace: true });
+            navigate(AppPaths.workspaceKubernetesClusters(fallbackWorkspaceId, { selectedClusterId: route.clusterId }), { replace: true });
           }
         });
       return () => {
@@ -384,20 +384,11 @@ const App: React.FC = () => {
         ? selectedWorkspaceId
         : workspaces[0]?.id;
     if (fallbackWorkspaceId) {
-      navigate(AppPaths.workspaceKubernetesClusters(fallbackWorkspaceId), { replace: true });
+      navigate(AppPaths.workspaceKubernetesClusters(fallbackWorkspaceId, { selectedClusterId: route.clusterId }), { replace: true });
       return;
     }
     return;
-  }, [
-    route.kind,
-    route.kind === 'kubernetesClusterDiagnostics' ? route.clusterId : undefined,
-    route.kind === 'kubernetesClusterDiagnostics' ? route.tab : undefined,
-    kubernetesClusterById,
-    selectedWorkspaceId,
-    workspaceById,
-    workspaces,
-    navigate
-  ]);
+  }, [route.kind, route.kind === 'kubernetesClusterDiagnostics' ? route.clusterId : undefined, route.kind === 'kubernetesClusterDiagnostics' ? route.tab : undefined, route.kind === 'kubernetesClusterDiagnostics' ? route.catalogState?.q : undefined, route.kind === 'kubernetesClusterDiagnostics' ? route.catalogState?.status : undefined, kubernetesClusterById, selectedWorkspaceId, workspaceById, workspaces, navigate]);
 
   useEffect(() => {
     setIsMobileNavOpen(false);
