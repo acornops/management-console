@@ -8,9 +8,12 @@ const appShell = readFileSync(resolve(root, 'src/app/AppShell.tsx'), 'utf8');
 
 describe('AppShell cluster page callbacks', () => {
   it('keeps workspace cluster merge callbacks stable across parent renders', () => {
-    expect(appShell).toContain('const replaceWorkspaceKubernetesClusters = React.useCallback');
     expect(appShell).toContain('const appendWorkspaceKubernetesClusters = React.useCallback');
+    expect(appShell).toContain('const byId = new Map(workspaceKubernetesClusters.map((cluster) => [cluster.id, cluster]));');
+    expect(appShell).toContain('for (const cluster of nextClusters) byId.set(cluster.id, cluster);');
     expect(appShell).toContain('}, [setKubernetesClusters, setWorkspaces]);');
+    expect(appShell).not.toContain('const replaceWorkspaceKubernetesClusters = React.useCallback');
+    expect(appShell).not.toContain('onReplaceWorkspaceKubernetesClusters={');
   });
 
   it('keeps assistant completion indicators unseen-aware instead of always showing old terminal traces', () => {
@@ -29,10 +32,17 @@ describe('AppShell cluster page callbacks', () => {
     expect(appShell).toContain("previousRoute?.kind === 'workspaceOverview'");
     expect(appShell).toContain('path: AppPaths.workspaceOverview(nextRoute.workspaceId)');
     expect(appShell).toContain("previousRoute?.kind === 'workspaceKubernetesClusters'");
-    expect(appShell).toContain('path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId)');
+    expect(appShell).toContain('path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId, {');
+    expect(appShell).toContain('q: previousRoute.q,');
+    expect(appShell).toContain('status: previousRoute.status,');
+    expect(appShell).toContain('selectedClusterId: nextRoute.clusterId');
     expect(appShell).toContain("previousRoute?.kind === 'workspaceVirtualMachines'");
     expect(appShell).toContain('path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId)');
     expect(appShell).toContain('const getBackToWorkspacePath = React.useCallback');
+    expect(appShell).toContain("if (route.kind === 'workspaceKubernetesClusterDiagnostics')");
+    expect(appShell).toContain('...route.catalogState,');
+    expect(appShell).toContain('selectedClusterId: route.clusterId');
     expect(appShell).toContain('onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}');
+    expect(appShell).toContain("AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab, route.kind === 'workspaceKubernetesClusterDiagnostics' ? route.catalogState : undefined)");
   });
 });

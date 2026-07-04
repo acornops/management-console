@@ -31,8 +31,8 @@ export function getTelemetryFreshness(cluster: KubernetesCluster, now = Date.now
   return 'offline';
 }
 
-export function formatLastUpdated(lastUpdate: string): string {
-  return formatRelativeTime(lastUpdate, { fallback: 'unknown' });
+export function formatLastUpdated(lastUpdate: string, now = Date.now()): string {
+  return formatRelativeTime(lastUpdate, { fallback: 'unknown', now });
 }
 
 export function getTelemetryFreshnessLabel(freshness: TelemetryFreshness): string {

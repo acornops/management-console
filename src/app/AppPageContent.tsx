@@ -21,7 +21,7 @@ import {
   shouldPreflightWorkspaceOwnerLeave,
   workspacesAfterLeave
 } from '@/app/workspaceLeave';
-import { AppRoute, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
+import { AppRoute, AppPaths, ClusterCatalogReturnState, ClusterCatalogRouteState, ClusterSubview, VmSubview } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 
 const loadKubernetesClustersPage = () =>
@@ -188,7 +188,6 @@ interface AppPageContentProps {
   onInitiateAddCluster: (workspaceId: string) => void;
   onInstallAgent: (clusterId: string) => void;
   onUpdateKubernetesCluster: (clusterId: string, updates: Partial<KubernetesCluster>) => void;
-  onReplaceWorkspaceKubernetesClusters: (workspaceId: string, nextClusters: KubernetesCluster[]) => void;
   onAppendWorkspaceKubernetesClusters: (workspaceId: string, nextClusters: KubernetesCluster[]) => void;
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
   onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
@@ -238,7 +237,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   onInitiateAddCluster,
   onInstallAgent,
   onUpdateKubernetesCluster,
-  onReplaceWorkspaceKubernetesClusters,
   onAppendWorkspaceKubernetesClusters,
   onReplaceWorkspaceVirtualMachines,
   onUpsertWorkspaceVirtualMachine,
@@ -268,6 +266,68 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
     : route.kind === 'workspaceAiSettings'
       ? 'ai'
       : 'workspace';
+  const clusterCatalogState: ClusterCatalogRouteState | undefined =
+    route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters'
+      ? {
+          q: route.q,
+          status: route.status,
+          selectedClusterId: route.selectedClusterId
+        }
+      : undefined;
+  const clusterCatalogReturnState: ClusterCatalogReturnState | undefined =
+    route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters'
+      ? { q: route.q, status: route.status }
+      : undefined;
+
+  const navigateClusterCatalogState = (nextState: ClusterCatalogRouteState) => {
+    if (route.kind === 'workspaceKubernetesClusters') {
+      navigate(AppPaths.workspaceKubernetesClusters(route.workspaceId, nextState), { replace: true });
+      return;
+    }
+    if (route.kind === 'kubernetesClusters') {
+      navigate(AppPaths.kubernetesClusters(nextState), { replace: true });
+    }
+  };
+
+  const selectKubernetesClusterFromCatalog = (cluster: KubernetesCluster) => {
+    if (route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters') {
+      navigate(AppPaths.workspaceKubernetesClusterDiagnostics(
+        cluster.workspaceId,
+        cluster.id,
+        undefined,
+        clusterCatalogReturnState
+      ));
+      return;
+    }
+    navigateToKubernetesCluster(cluster);
+  };
+
+  const openClusterSettingsFromCatalog = (cluster: KubernetesCluster) => {
+    navigate(AppPaths.workspaceKubernetesClusterDiagnostics(
+      cluster.workspaceId,
+      cluster.id,
+      'settings',
+      clusterCatalogReturnState
+    ));
+  };
+
+  const navigateBackToClusterCatalog = () => {
+    if (route.kind === 'workspaceKubernetesClusterDiagnostics') {
+      navigate(AppPaths.workspaceKubernetesClusters(route.workspaceId, {
+        ...route.catalogState,
+        selectedClusterId: route.clusterId
+      }));
+      return;
+    }
+    if (route.kind === 'kubernetesClusterDiagnostics') {
+      navigate(AppPaths.kubernetesClusters({
+        ...route.catalogState,
+        selectedClusterId: route.clusterId
+      }));
+      return;
+    }
+    navigate(workspaceContextId ? AppPaths.workspaceKubernetesClusters(workspaceContextId) : AppPaths.kubernetesClusters());
+  };
 
   const navigateWorkspaceSettingsTab = (tab: SettingsTab) => {
     if (!workspaceContext) return;
@@ -445,11 +505,11 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               workspaceId={route.kind === 'workspaceKubernetesClusters' ? route.workspaceId : undefined}
               workspaceName={route.kind === 'workspaceKubernetesClusters' ? workspaceContext?.name : undefined}
               totalClusterCount={route.kind === 'workspaceKubernetesClusters' ? workspaceContext?.clusterCount : undefined}
-              onSelectKubernetesCluster={navigateToKubernetesCluster}
+              catalogState={clusterCatalogState}
+              onCatalogStateChange={navigateClusterCatalogState}
+              onSelectKubernetesCluster={selectKubernetesClusterFromCatalog}
               onInstallAgent={onInstallAgent}
-              onOpenClusterSettings={(cluster) =>
-                navigate(AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'settings'))
-              }
+              onOpenClusterSettings={openClusterSettingsFromCatalog}
               onAddCluster={
                 route.kind === 'workspaceKubernetesClusters' && getWorkspacePermission(route.workspaceId, 'manage_targets')
                   ? () => onInitiateAddCluster(route.workspaceId)
@@ -457,7 +517,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               }
               canDeleteKubernetesCluster={(cluster) => getWorkspacePermission(cluster.workspaceId, 'manage_targets')}
               onDeleteKubernetesCluster={onDeleteCluster}
-              onReplaceWorkspaceKubernetesClusters={onReplaceWorkspaceKubernetesClusters}
               onAppendWorkspaceKubernetesClusters={onAppendWorkspaceKubernetesClusters}
             />
           )}
@@ -573,9 +632,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                 showToast(t('clusterSetup.writeConfirmationsUpdated'));
               }}
               onOpenAiSettings={(workspaceId) => navigate(AppPaths.workspaceAiSettings(workspaceId))}
-              onNavigateBackToClusters={() =>
-                navigate(workspaceContextId ? AppPaths.workspaceKubernetesClusters(workspaceContextId) : AppPaths.kubernetesClusters())
-              }
+              onNavigateBackToClusters={navigateBackToClusterCatalog}
               onOpenClusterChatPanel={onOpenClusterChatPanel}
             />
           )}

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  formatCompactRelativeTime,
   formatElapsedDuration,
   formatRelativeTime,
   formatUserDate,
@@ -30,6 +31,15 @@ describe('dateTime utilities', () => {
     expect(formatRelativeTime('2026-06-29T13:34:00.000Z', { now })).toBe('1 minute ago');
     expect(formatRelativeTime('2026-06-29T12:35:00.000Z', { now })).toBe('1 hour ago');
     expect(formatRelativeTime('2026-06-28T13:35:00.000Z', { now })).toBe('1 day ago');
+  });
+
+  it('formats compact relative time for dense chart axes', () => {
+    const now = Date.parse('2026-06-29T13:35:00.000Z');
+
+    expect(formatCompactRelativeTime('2026-06-29T13:34:59.000Z', { now })).toBe('now');
+    expect(formatCompactRelativeTime('2026-06-29T13:34:39.000Z', { now })).toBe('21s ago');
+    expect(formatCompactRelativeTime('2026-06-29T12:50:00.000Z', { now })).toBe('45m ago');
+    expect(formatCompactRelativeTime('2026-06-29T12:35:00.000Z', { now })).toBe('1h ago');
   });
 
   it('formats elapsed duration between timestamps', () => {

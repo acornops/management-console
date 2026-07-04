@@ -1,10 +1,22 @@
 export type ClusterSubview = 'overview' | 'resources' | 'mcpServers' | 'skills' | 'tools' | 'health' | 'chat' | 'settings';
 export type VmSubview = 'overview' | 'resources' | 'services' | 'processes' | 'network' | 'logs' | 'mcpServers' | 'skills' | 'tools' | 'chat' | 'settings';
+export type ClusterCatalogStatusFilter = 'all' | 'connected' | 'disconnected' | 'not_installed';
+
+export interface ClusterCatalogRouteState {
+  q?: string;
+  status?: ClusterCatalogStatusFilter;
+  selectedClusterId?: string;
+}
+
+export interface ClusterCatalogReturnState {
+  q?: string;
+  status?: ClusterCatalogStatusFilter;
+}
 
 export type AppRoute =
   | { kind: 'home' }
   | { kind: 'workspaces' }
-  | { kind: 'kubernetesClusters' }
+  | ({ kind: 'kubernetesClusters' } & ClusterCatalogRouteState)
   | { kind: 'accountSettings' }
   | { kind: 'settings' }
   | { kind: 'help' }
@@ -18,12 +30,12 @@ export type AppRoute =
   | { kind: 'workspaceAiSettings'; workspaceId: string }
   | { kind: 'workspaceSettings'; workspaceId: string }
   | { kind: 'workspaceAuditLog'; workspaceId: string }
-  | { kind: 'workspaceKubernetesClusters'; workspaceId: string }
+  | ({ kind: 'workspaceKubernetesClusters'; workspaceId: string } & ClusterCatalogRouteState)
   | { kind: 'workspaceVirtualMachines'; workspaceId: string }
   | { kind: 'workspaceVirtualMachineDetail'; workspaceId: string; vmId: string; tab?: VmSubview }
   | { kind: 'workspaceInvitation'; token: string }
-  | { kind: 'kubernetesClusterDiagnostics'; clusterId: string; tab?: ClusterSubview }
-  | { kind: 'workspaceKubernetesClusterDiagnostics'; workspaceId: string; clusterId: string; tab?: ClusterSubview }
+  | { kind: 'kubernetesClusterDiagnostics'; clusterId: string; tab?: ClusterSubview; catalogState?: ClusterCatalogReturnState }
+  | { kind: 'workspaceKubernetesClusterDiagnostics'; workspaceId: string; clusterId: string; tab?: ClusterSubview; catalogState?: ClusterCatalogReturnState }
   | { kind: 'notFound'; path: string };
 
 function parseClusterSubview(value?: string): ClusterSubview | undefined {
@@ -95,6 +107,62 @@ function parseExternalIntegrationLinkStatus(value: string | null): 'linked' | 'e
   return undefined;
 }
 
+function parseClusterCatalogStatus(value: string | null): ClusterCatalogStatusFilter | undefined {
+  if (
+    value === 'all' ||
+    value === 'connected' ||
+    value === 'disconnected' ||
+    value === 'not_installed'
+  ) {
+    return value;
+  }
+  return undefined;
+}
+
+function cleanQueryParam(value: string | null): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed || undefined;
+}
+
+function parseClusterCatalogRouteState(params: URLSearchParams): ClusterCatalogRouteState {
+  const q = cleanQueryParam(params.get('q'));
+  const status = parseClusterCatalogStatus(params.get('status'));
+  const selectedClusterId = cleanQueryParam(params.get('cluster'));
+  return {
+    ...(q ? { q } : {}),
+    ...(status ? { status } : {}),
+    ...(selectedClusterId ? { selectedClusterId } : {})
+  };
+}
+
+function parseClusterCatalogReturnState(params: URLSearchParams): ClusterCatalogReturnState | undefined {
+  const state = {
+    q: cleanQueryParam(params.get('catalogQ')),
+    status: parseClusterCatalogStatus(params.get('catalogStatus'))
+  };
+  return state.q || state.status ? state : undefined;
+}
+
+function appendQuery(path: string, params: URLSearchParams): string {
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
+function withClusterCatalogRouteState(path: string, state?: ClusterCatalogRouteState): string {
+  const params = new URLSearchParams();
+  if (state?.q?.trim()) params.set('q', state.q.trim());
+  if (state?.status && state.status !== 'all') params.set('status', state.status);
+  if (state?.selectedClusterId?.trim()) params.set('cluster', state.selectedClusterId.trim());
+  return appendQuery(path, params);
+}
+
+function withClusterCatalogReturnState(path: string, state?: ClusterCatalogReturnState): string {
+  const params = new URLSearchParams();
+  if (state?.q?.trim()) params.set('catalogQ', state.q.trim());
+  if (state?.status && state.status !== 'all') params.set('catalogStatus', state.status);
+  return appendQuery(path, params);
+}
+
 /**
  * Parses a management console route path into a typed route union.
  */
@@ -103,7 +171,7 @@ export function parseAppRoute(path: string): AppRoute {
 
   if (pathname === '/') return { kind: 'home' };
   if (pathname === '/workspaces') return { kind: 'workspaces' };
-  if (pathname === '/kubernetes-clusters') return { kind: 'kubernetesClusters' };
+  if (pathname === '/kubernetes-clusters') return { kind: 'kubernetesClusters', ...parseClusterCatalogRouteState(params) };
   if (pathname === '/account') return { kind: 'accountSettings' };
   if (pathname === '/settings') return { kind: 'settings' };
   if (pathname === '/help') return { kind: 'help' };
@@ -144,7 +212,8 @@ export function parseAppRoute(path: string): AppRoute {
   if (workspaceKubernetesClustersMatch) {
     return {
       kind: 'workspaceKubernetesClusters',
-      workspaceId: decodeParam(workspaceKubernetesClustersMatch[1])
+      workspaceId: decodeParam(workspaceKubernetesClustersMatch[1]),
+      ...parseClusterCatalogRouteState(params)
     };
   }
 
@@ -172,20 +241,24 @@ export function parseAppRoute(path: string): AppRoute {
     /^\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|skills|tools|health|chat|settings))?$/
   );
   if (workspaceKubernetesClusterDiagnosticsMatch) {
+    const catalogState = parseClusterCatalogReturnState(params);
     return {
       kind: 'workspaceKubernetesClusterDiagnostics',
       workspaceId: decodeParam(workspaceKubernetesClusterDiagnosticsMatch[1]),
       clusterId: decodeParam(workspaceKubernetesClusterDiagnosticsMatch[2]),
-      tab: parseClusterSubview(workspaceKubernetesClusterDiagnosticsMatch[3])
+      tab: parseClusterSubview(workspaceKubernetesClusterDiagnosticsMatch[3]),
+      ...(catalogState ? { catalogState } : {})
     };
   }
 
   const kubernetesClusterDiagnosticsMatch = pathname.match(/^\/kubernetes-clusters\/([^/]+)(?:\/(overview|resources|mcp-servers|skills|tools|health|chat|settings))?$/);
   if (kubernetesClusterDiagnosticsMatch) {
+    const catalogState = parseClusterCatalogReturnState(params);
     return {
       kind: 'kubernetesClusterDiagnostics',
       clusterId: decodeParam(kubernetesClusterDiagnosticsMatch[1]),
-      tab: parseClusterSubview(kubernetesClusterDiagnosticsMatch[2])
+      tab: parseClusterSubview(kubernetesClusterDiagnosticsMatch[2]),
+      ...(catalogState ? { catalogState } : {})
     };
   }
 
@@ -202,7 +275,7 @@ export const AppPaths = {
     return `${window.location.origin}${basePath}/#/invites/${encodeURIComponent(token)}`;
   },
   workspaces: (): string => '/workspaces',
-  kubernetesClusters: (): string => '/kubernetes-clusters',
+  kubernetesClusters: (state?: ClusterCatalogRouteState): string => withClusterCatalogRouteState('/kubernetes-clusters', state),
   accountSettings: (): string => '/account',
   help: (): string => '/help',
   workspaceOverview: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/overview`,
@@ -220,19 +293,20 @@ export const AppPaths = {
   workspaceAiSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`,
   workspaceSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/settings`,
   workspaceAuditLog: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/audit-log`,
-  workspaceKubernetesClusters: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`,
+  workspaceKubernetesClusters: (workspaceId: string, state?: ClusterCatalogRouteState): string =>
+    withClusterCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`, state),
   workspaceVirtualMachines: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`,
   workspaceVirtualMachineDetail: (workspaceId: string, vmId: string, tab?: VmSubview): string => {
     const base = `/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}`;
     return tab ? `${base}/${vmSubviewPathSegment(tab)}` : base;
   },
-  kubernetesClusterDiagnostics: (clusterId: string, tab?: ClusterSubview): string => {
+  kubernetesClusterDiagnostics: (clusterId: string, tab?: ClusterSubview, catalogState?: ClusterCatalogReturnState): string => {
     const base = `/kubernetes-clusters/${encodeURIComponent(clusterId)}`;
-    return tab ? `${base}/${clusterSubviewPathSegment(tab)}` : base;
+    return withClusterCatalogReturnState(tab ? `${base}/${clusterSubviewPathSegment(tab)}` : base, catalogState);
   },
-  workspaceKubernetesClusterDiagnostics: (workspaceId: string, clusterId: string, tab?: ClusterSubview): string => {
+  workspaceKubernetesClusterDiagnostics: (workspaceId: string, clusterId: string, tab?: ClusterSubview, catalogState?: ClusterCatalogReturnState): string => {
     const base = `/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}`;
-    return tab ? `${base}/${clusterSubviewPathSegment(tab)}` : base;
+    return withClusterCatalogReturnState(tab ? `${base}/${clusterSubviewPathSegment(tab)}` : base, catalogState);
   }
 };
