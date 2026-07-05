@@ -39,6 +39,13 @@ function mergeClustersById(primary: KubernetesCluster[], secondary: KubernetesCl
   return [...byId.values()];
 }
 
+function withoutRecordKey<T>(record: Record<string, T>, key: string): Record<string, T> {
+  if (!Object.prototype.hasOwnProperty.call(record, key)) return record;
+  const next = { ...record };
+  delete next[key];
+  return next;
+}
+
 interface KubernetesClustersPageProps {
   kubernetesClusters: KubernetesCluster[];
   workspaceId?: string;
@@ -78,6 +85,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
   const requestSeqRef = useRef(0);
   const metricHistoryRequestSeqRef = useRef(0);
   const issueSummaryRequestSeqRef = useRef(0);
+  const deletedClusterIdsRef = useRef(new Set<string>());
   const [localCatalogState, setLocalCatalogState] = useState<ClusterCatalogRouteState>({});
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
@@ -134,6 +142,21 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     updateCatalogState({ selectedClusterId: clusterId });
   }, [updateCatalogState]);
 
+  const handleDeleteKubernetesCluster = useCallback(async (cluster: KubernetesCluster) => {
+    if (!onDeleteKubernetesCluster) return;
+
+    await onDeleteKubernetesCluster(cluster);
+    deletedClusterIdsRef.current.add(cluster.id);
+    setLoadedClusterPageItems((current) =>
+      current ? current.filter((item) => item.id !== cluster.id) : current
+    );
+    setMetricHistoryByClusterId((current) => withoutRecordKey(current, cluster.id));
+    setIssueSummaryByClusterId((current) => withoutRecordKey(current, cluster.id));
+    if (activeCatalogState.selectedClusterId === cluster.id) {
+      updateCatalogState({ selectedClusterId: undefined });
+    }
+  }, [activeCatalogState.selectedClusterId, onDeleteKubernetesCluster, updateCatalogState]);
+
   const loadClusters = useCallback(async (mode: 'replace' | 'append', cursor?: string) => {
     if (!workspaceId) return;
     const requestId = ++requestSeqRef.current;
@@ -147,11 +170,12 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
         status: apiStatus
       });
       if (requestId !== requestSeqRef.current) return;
+      const livePageItems = page.items.filter((cluster) => !deletedClusterIdsRef.current.has(cluster.id));
       setNextCursor(page.nextCursor);
       setLoadedClusterPageItems((current) =>
-        mode === 'replace' ? page.items : mergeClustersById(current || [], page.items)
+        mode === 'replace' ? livePageItems : mergeClustersById(current || [], livePageItems)
       );
-      onAppendWorkspaceKubernetesClusters?.(workspaceId, page.items);
+      onAppendWorkspaceKubernetesClusters?.(workspaceId, livePageItems);
     } catch (error) {
       console.error('Failed loading clusters', error);
     } finally {
@@ -161,6 +185,10 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
       }
     }
   }, [apiStatus, onAppendWorkspaceKubernetesClusters, query, workspaceId]);
+
+  useEffect(() => {
+    deletedClusterIdsRef.current.clear();
+  }, [workspaceId]);
 
   useEffect(() => {
     setLoadedClusterPageItems(null);
@@ -301,6 +329,12 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     return mergedClusters.filter((cluster) => clusterMatchesCatalogState(cluster, query, status));
   }, [clientFilteredClusters, loadedClusterPageItems, query, status]);
 
+  const summaryClusters = useMemo(() => (
+    loadedClusterPageItems
+      ? mergeClustersById(loadedClusterPageItems, kubernetesClusters)
+      : kubernetesClusters
+  ), [kubernetesClusters, loadedClusterPageItems]);
+
   const clustersWithMetricHistory = useMemo(
     () => visibleClusters.map((cluster) =>
       getAgentConnectionState(cluster) === 'connected' && Object.prototype.hasOwnProperty.call(metricHistoryByClusterId, cluster.id)
@@ -315,6 +349,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto custom-scrollbar xl:overflow-hidden">
         <Dashboard
           kubernetesClusters={clustersWithMetricHistory}
+          summaryKubernetesClusters={summaryClusters}
           onSelectKubernetesCluster={onSelectKubernetesCluster}
           onInstallAgent={onInstallAgent}
           onOpenClusterSettings={onOpenClusterSettings}
@@ -362,7 +397,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
           ) : undefined}
           onAddCluster={onAddCluster}
           canDeleteKubernetesCluster={canDeleteKubernetesCluster}
-          onDeleteKubernetesCluster={onDeleteKubernetesCluster}
+          onDeleteKubernetesCluster={onDeleteKubernetesCluster ? handleDeleteKubernetesCluster : undefined}
         />
       </div>
     </div>

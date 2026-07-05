@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
@@ -9,6 +9,8 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { AgentAccessMode } from '@/services/control-plane/types';
 import { KubernetesCluster } from '@/types';
+
+const GENERATE_COMMAND_SPINNER_DELAY_MS = 500;
 
 interface ClusterAgentInstallModalProps {
   cluster: KubernetesCluster;
@@ -28,11 +30,26 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
   const [installCommand, setInstallCommand] = React.useState('');
   const [installWarnings, setInstallWarnings] = React.useState<string[]>([]);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [showGenerateSpinner, setShowGenerateSpinner] = React.useState(false);
   const [isCopying, setIsCopying] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const generateCommandButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const command = React.useMemo(() => installCommand, [installCommand]);
+  const generateCommandLabel = command ? t('clusterSetup.regenerateCommand') : t('clusterSetup.generateCommand');
+
+  React.useEffect(() => {
+    if (!isGenerating) {
+      setShowGenerateSpinner(false);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowGenerateSpinner(true);
+    }, GENERATE_COMMAND_SPINNER_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [isGenerating]);
 
   const handleAccessModeChange = (nextMode: AgentAccessMode) => {
     setAgentAccessMode(nextMode);
@@ -168,8 +185,18 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           >
             {t('app.close')}
           </button>
-          <Button ref={generateCommandButtonRef} onClick={handleGenerate} disabled={isGenerating} variant="primary" size="sm">
-            {isGenerating ? t('clusterSetup.generating') : command ? t('clusterSetup.regenerateCommand') : t('clusterSetup.generateCommand')}
+          <Button
+            ref={generateCommandButtonRef}
+            onClick={handleGenerate}
+            variant="primary"
+            size="sm"
+            className={isGenerating ? 'cursor-wait' : ''}
+            aria-busy={isGenerating}
+            aria-disabled={isGenerating}
+            aria-label={isGenerating ? t('clusterSetup.generating') : generateCommandLabel}
+          >
+            {showGenerateSpinner && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {generateCommandLabel}
           </Button>
         </div>
     </Dialog>

@@ -54,6 +54,11 @@ describe('getPostWorkspaceDeleteNavigationPath', () => {
     expect(actionsSource).toContain(': [result.cluster.id, ...workspace.clusterIds],');
   });
 
+  it('keeps cluster deletion successful when the follow-up workspace summary refresh fails', () => {
+    expect(actionsSource).toContain("console.warn('Failed refreshing workspace summary after deleting cluster', err);");
+    expect(actionsSource).toContain('setInstallAgentClusterId((current) => (current === cluster.id ? null : current));');
+  });
+
   it('returns the workspace list route after deleting the last workspace on a workspace route', () => {
     expect(getPostWorkspaceDeleteNavigationPath({
       kubernetesClusters: [],

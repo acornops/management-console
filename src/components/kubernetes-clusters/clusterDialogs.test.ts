@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(__dirname, '../../..');
 const addClusterModal = readFileSync(resolve(root, 'src/components/kubernetes-clusters/AddClusterModal.tsx'), 'utf8');
 const installAgentModal = readFileSync(resolve(root, 'src/components/kubernetes-clusters/ClusterAgentInstallModal.tsx'), 'utf8');
+const accessModeSelector = readFileSync(resolve(root, 'src/components/kubernetes-clusters/ClusterAgentAccessModeSelector.tsx'), 'utf8');
 const appShell = readFileSync(resolve(root, 'src/app/AppShell.tsx'), 'utf8');
 const kubernetesClusterApi = readFileSync(resolve(root, 'src/services/control-plane/kubernetesClusterApi.ts'), 'utf8');
 const workspaceClusterActions = readFileSync(resolve(root, 'src/app/useWorkspaceClusterActions.ts'), 'utf8');
@@ -69,7 +70,7 @@ describe('cluster dialog accessibility contracts', () => {
   });
 
   it('uses the shared dialog shell for the install-agent flow', () => {
-    expect(installAgentModal).toContain("import { Check, Copy } from 'lucide-react'");
+    expect(installAgentModal).toContain("import { Check, Copy, Loader2 } from 'lucide-react'");
     expect(installAgentModal).toContain("import { Dialog } from '@/components/common/Dialog'");
     expect(installAgentModal).toContain("import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector'");
     expect(installAgentModal).toContain('titleId="install-agent-title"');
@@ -81,10 +82,32 @@ describe('cluster dialog accessibility contracts', () => {
     expect(installAgentModal).toContain("t('clusterSetup.installCommand')");
     expect(installAgentModal).toContain('rotateClusterAgentKey(cluster.workspaceId, cluster.id, { agentAccessMode })');
     expect(installAgentModal).toContain('<ClusterAgentAccessModeSelector');
+    expect(installAgentModal).toContain('GENERATE_COMMAND_SPINNER_DELAY_MS = 500');
+    expect(installAgentModal).toContain('const [showGenerateSpinner, setShowGenerateSpinner] = React.useState(false);');
+    expect(installAgentModal).toContain('window.setTimeout(() =>');
+    expect(installAgentModal).toContain('setShowGenerateSpinner(true);');
+    expect(installAgentModal).toContain('const generateCommandLabel = command ? t(\'clusterSetup.regenerateCommand\') : t(\'clusterSetup.generateCommand\');');
+    expect(installAgentModal).toContain("className={isGenerating ? 'cursor-wait' : ''}");
+    expect(installAgentModal).toContain('aria-busy={isGenerating}');
+    expect(installAgentModal).toContain('aria-disabled={isGenerating}');
+    expect(installAgentModal).toContain('{showGenerateSpinner && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}');
+    expect(installAgentModal).not.toContain('min-w-[10.75rem]');
+    expect(installAgentModal).not.toContain('absolute left-3');
+    expect(installAgentModal).not.toContain('\n            disabled={isGenerating}\n            variant="primary"');
     expect(installAgentModal).toContain('inline-flex h-9 w-9');
     expect(installAgentModal).toContain('max-h-[18rem] overflow-auto');
     expect(installAgentModal).not.toContain('rounded-xl bg-code-bg p-4');
     expect(installAgentModal).not.toContain("t('clusterSetup.copyCommand')");
+  });
+
+  it('keeps agent access loading state visually stable', () => {
+    expect(accessModeSelector).toContain('transition-colors');
+    expect(accessModeSelector).toContain('aria-disabled={disabled}');
+    expect(accessModeSelector).toContain('if (!disabled) onChange(mode.value);');
+    expect(accessModeSelector).toContain("disabled ? 'cursor-not-allowed' : ''");
+    expect(accessModeSelector).not.toContain('\n                disabled={disabled}\n                onChange');
+    expect(accessModeSelector).not.toContain('opacity-60');
+    expect(accessModeSelector).not.toContain('transition-all');
   });
 
   it('uses the shared dialog shell and labelled token controls for namespace scope', () => {

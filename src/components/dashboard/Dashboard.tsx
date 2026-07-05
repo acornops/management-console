@@ -19,6 +19,7 @@ import {
 
 interface DashboardProps {
   kubernetesClusters: KubernetesCluster[];
+  summaryKubernetesClusters?: KubernetesCluster[];
   onSelectKubernetesCluster: (cluster: KubernetesCluster) => void;
   onInstallAgent?: (clusterId: string) => void;
   workspaceName?: string;
@@ -49,6 +50,7 @@ function getPostureLabel(hasNonGreen: boolean, t: (key: string) => string): stri
 
 const Dashboard: React.FC<DashboardProps> = ({
   kubernetesClusters,
+  summaryKubernetesClusters,
   onSelectKubernetesCluster,
   onInstallAgent,
   workspaceName,
@@ -71,24 +73,25 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [isDeletingCluster, setIsDeletingCluster] = useState(false);
   const [deleteClusterConfirmation, setDeleteClusterConfirmation] = useState('');
   const [openClusterActionMenuId, setOpenClusterActionMenuId] = useState<string | null>(null);
-  const setupRequiredClusters = kubernetesClusters.filter((cluster) => getAgentConnectionState(cluster) === 'not_installed').length;
-  const hasNonGreen = kubernetesClusters.some((cluster) => {
+  const summaryClusters = summaryKubernetesClusters ?? kubernetesClusters;
+  const setupRequiredClusters = summaryClusters.filter((cluster) => getAgentConnectionState(cluster) === 'not_installed').length;
+  const hasNonGreen = summaryClusters.some((cluster) => {
     const issueSummary = issueSummaryByClusterId[cluster.id];
     return Number(issueSummary?.total || 0) > 0 || getEffectiveHealthStatus(cluster) !== HealthStatus.GREEN || getAgentConnectionState(cluster) !== 'connected';
   });
-  const criticalClusters = kubernetesClusters.filter((cluster) => {
+  const criticalClusters = summaryClusters.filter((cluster) => {
     const agentState = getAgentConnectionState(cluster);
     const issueSummary = issueSummaryByClusterId[cluster.id];
     return agentState !== 'not_installed' && (Number(issueSummary?.critical || 0) > 0 || getEffectiveHealthStatus(cluster) === HealthStatus.RED || agentState === 'disconnected');
   }).length;
-  const warningClusters = kubernetesClusters.filter((cluster) => {
+  const warningClusters = summaryClusters.filter((cluster) => {
     const agentState = getAgentConnectionState(cluster);
     const issueSummary = issueSummaryByClusterId[cluster.id];
     return agentState !== 'not_installed' && Number(issueSummary?.critical || 0) === 0 && (Number(issueSummary?.warning || 0) > 0 || getEffectiveHealthStatus(cluster) === HealthStatus.YELLOW);
   }).length;
-  const connectedClusters = kubernetesClusters.filter((cluster) => getAgentConnectionState(cluster) === 'connected').length;
-  const clusterCount = totalClusterCount ?? kubernetesClusters.length;
-  const hasUnloadedClusters = clusterCount > kubernetesClusters.length;
+  const connectedClusters = summaryClusters.filter((cluster) => getAgentConnectionState(cluster) === 'connected').length;
+  const clusterCount = totalClusterCount ?? summaryClusters.length;
+  const hasUnloadedClusters = clusterCount > summaryClusters.length;
   const selectedClusterId = controlledSelectedClusterId ?? internalSelectedClusterId;
   const setSelectedClusterId = controlledOnSelectedClusterIdChange ?? setInternalSelectedClusterId;
   const selectedCluster = kubernetesClusters.find((cluster) => cluster.id === selectedClusterId);
@@ -205,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <div className="px-4 py-3">
               <dt className="type-caption">{t('dashboard.active')}</dt>
-              <dd className="type-data mt-1 text-metric-blue">{connectedClusters}/{kubernetesClusters.length}</dd>
+              <dd className="type-data mt-1 text-metric-blue">{connectedClusters}/{clusterCount}</dd>
             </div>
           </dl>
         </div>
