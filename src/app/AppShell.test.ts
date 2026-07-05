@@ -34,14 +34,14 @@ describe('AppShell cluster page callbacks', () => {
     expect(appShell).toContain("previousRoute?.kind === 'workspaceKubernetesClusters'");
     expect(appShell).toContain('path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId, {');
     expect(appShell).toContain('q: previousRoute.q,');
-    expect(appShell).toContain('status: previousRoute.status,');
-    expect(appShell).toContain('selectedClusterId: nextRoute.clusterId');
+    expect(appShell).toContain('status: previousRoute.status');
+    expect(appShell).not.toContain('selectedClusterId: nextRoute.clusterId');
     expect(appShell).toContain("previousRoute?.kind === 'workspaceVirtualMachines'");
     expect(appShell).toContain('path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId)');
     expect(appShell).toContain('const getBackToWorkspacePath = React.useCallback');
     expect(appShell).toContain("if (route.kind === 'workspaceKubernetesClusterDiagnostics')");
-    expect(appShell).toContain('...route.catalogState,');
-    expect(appShell).toContain('selectedClusterId: route.clusterId');
+    expect(appShell).toContain('return AppPaths.workspaceKubernetesClusters(route.workspaceId, route.catalogState);');
+    expect(appShell).not.toContain('selectedClusterId: route.clusterId');
     expect(appShell).toContain('onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}');
     expect(appShell).toContain("AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab, route.kind === 'workspaceKubernetesClusterDiagnostics' ? route.catalogState : undefined)");
   });

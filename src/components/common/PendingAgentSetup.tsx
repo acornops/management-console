@@ -13,6 +13,7 @@ interface PendingAgentSetupProps {
   onInstallAgent?: (targetId: string) => void;
   showAction?: boolean;
   showFooter?: boolean;
+  footerVariant?: 'default' | 'compact';
 }
 
 export const PendingAgentSetup: React.FC<PendingAgentSetupProps> = ({
@@ -24,13 +25,15 @@ export const PendingAgentSetup: React.FC<PendingAgentSetupProps> = ({
   actionDataAttribute,
   onInstallAgent,
   showAction = true,
-  showFooter = true
+  showFooter = true,
+  footerVariant = 'default'
 }) => {
   const actionDataProps = { [actionDataAttribute]: 'install' };
   const gridRowsClassName = showFooter ? 'grid-rows-[minmax(0,1fr)_minmax(4.25rem,auto)]' : 'grid-rows-[minmax(0,1fr)]';
   const panelClassName = showFooter
     ? `grid min-h-0 min-w-0 flex-1 ${gridRowsClassName}`
     : `grid h-[238px] min-w-0 shrink-0 overflow-hidden rounded-md border border-ui-border bg-ui-bg/35 ${gridRowsClassName}`;
+  const compactFooter = footerVariant === 'compact';
 
   return (
     <div className={panelClassName}>
@@ -50,9 +53,9 @@ export const PendingAgentSetup: React.FC<PendingAgentSetupProps> = ({
       </ol>
 
       {showFooter && (
-        <div className="pointer-events-auto min-h-[4.25rem] border-t border-ui-border py-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <p className="max-w-md text-sm font-semibold leading-5 text-ui-text-muted">{message}</p>
+        <div className={`pointer-events-auto min-h-[4.25rem] border-t border-ui-border ${compactFooter ? 'flex items-center justify-center py-4' : 'py-5'}`}>
+          <div className={compactFooter ? 'flex justify-center' : 'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'}>
+            {!compactFooter && <p className="max-w-md text-sm font-semibold leading-5 text-ui-text-muted">{message}</p>}
             {showAction && (
               <Button
                 {...actionDataProps}
@@ -61,7 +64,7 @@ export const PendingAgentSetup: React.FC<PendingAgentSetupProps> = ({
                 disabled={!onInstallAgent}
                 variant="primary"
                 size="sm"
-                className="w-full whitespace-nowrap sm:w-fit"
+                className={compactFooter ? 'whitespace-nowrap' : 'w-full whitespace-nowrap sm:w-fit'}
               >
                 <Wrench className="h-3.5 w-3.5" />
                 {actionLabel}

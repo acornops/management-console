@@ -60,8 +60,8 @@ export const ClusterTelemetryPanel: React.FC<{ cluster: KubernetesCluster; now?:
   ];
 
   return (
-    <section data-cluster-telemetry-panel="true" aria-label={t('dashboard.telemetryAria', { name: cluster.name })} className="shrink-0 overflow-hidden rounded-md border border-ui-border bg-ui-bg/35">
-      <dl className="grid min-w-0 grid-cols-2 overflow-hidden border-b border-ui-border bg-ui-surface">
+    <section data-cluster-telemetry-panel="true" aria-label={t('dashboard.telemetryAria', { name: cluster.name })} className="shrink-0 overflow-hidden rounded-md bg-ui-bg/35">
+      <dl className="grid min-w-0 grid-cols-2 overflow-hidden border-b border-ui-border bg-ui-surface/70">
         {metricItems.map(({ label, value, Icon, markerClassName }, index) => (
           <div
             key={label}
@@ -77,8 +77,8 @@ export const ClusterTelemetryPanel: React.FC<{ cluster: KubernetesCluster; now?:
         ))}
       </dl>
 
-      <div className="min-w-0 bg-ui-surface px-3 py-3">
-        <div className="relative h-[132px] min-w-0 overflow-hidden rounded-md border border-ui-border bg-ui-bg/45 px-2.5 py-2">
+      <div className="min-w-0 px-3 py-3">
+        <div className="relative h-[132px] min-w-0 overflow-hidden px-2.5 py-2">
           <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="h-full w-full" role="img" aria-label={t('dashboard.telemetryAria', { name: cluster.name })}>
             <line x1="0" x2="180" y1="18" y2="18" className="stroke-ui-border/60" strokeWidth="1" />
             <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/60" strokeWidth="1" />

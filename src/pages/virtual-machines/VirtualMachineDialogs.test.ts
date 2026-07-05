@@ -89,7 +89,8 @@ describe('virtual machine onboarding dialog', () => {
     expect(pendingAgentSetup).toContain('before:from-status-success/50 before:via-ui-border before:to-ui-border');
     expect(pendingAgentSetup).toContain("showFooter = true");
     expect(pendingAgentSetup).toContain("grid-rows-[minmax(0,1fr)_minmax(4.25rem,auto)]");
-    expect(pendingAgentSetup).toContain('className="pointer-events-auto min-h-[4.25rem] border-t border-ui-border py-5"');
+    expect(pendingAgentSetup).toContain("footerVariant = 'default'");
+    expect(pendingAgentSetup).toContain("compactFooter ? 'flex items-center justify-center py-4' : 'py-5'");
     expect(pendingVirtualMachineSetup).toContain("t('virtualMachines.list.vmRegistered')");
     expect(pendingVirtualMachineSetup).toContain("t('virtualMachines.list.installAgentMessage')");
     expect(pendingAgentSetup).toContain('max-w-md text-sm font-semibold leading-5 text-ui-text-muted');

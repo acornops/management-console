@@ -120,15 +120,13 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     const nextState: ClusterCatalogRouteState = {
       q: query || undefined,
       status: status === 'all' ? undefined : status,
-      selectedClusterId: activeCatalogState.selectedClusterId,
       ...patch
     };
     setCatalogState({
       q: nextState.q?.trim() || undefined,
-      status: nextState.status && nextState.status !== 'all' ? nextState.status : undefined,
-      selectedClusterId: nextState.selectedClusterId?.trim() || undefined
+      status: nextState.status && nextState.status !== 'all' ? nextState.status : undefined
     });
-  }, [activeCatalogState.selectedClusterId, query, setCatalogState, status]);
+  }, [query, setCatalogState, status]);
 
   const handleQueryChange = useCallback((nextQuery: string) => {
     updateCatalogState({ q: nextQuery || undefined });
@@ -136,10 +134,6 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
 
   const handleStatusChange = useCallback((nextStatus: ClusterCatalogStatusFilter) => {
     updateCatalogState({ status: nextStatus === 'all' ? undefined : nextStatus });
-  }, [updateCatalogState]);
-
-  const handleSelectedClusterIdChange = useCallback((clusterId: string | undefined) => {
-    updateCatalogState({ selectedClusterId: clusterId });
   }, [updateCatalogState]);
 
   const handleDeleteKubernetesCluster = useCallback(async (cluster: KubernetesCluster) => {
@@ -152,10 +146,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     );
     setMetricHistoryByClusterId((current) => withoutRecordKey(current, cluster.id));
     setIssueSummaryByClusterId((current) => withoutRecordKey(current, cluster.id));
-    if (activeCatalogState.selectedClusterId === cluster.id) {
-      updateCatalogState({ selectedClusterId: undefined });
-    }
-  }, [activeCatalogState.selectedClusterId, onDeleteKubernetesCluster, updateCatalogState]);
+  }, [onDeleteKubernetesCluster]);
 
   const loadClusters = useCallback(async (mode: 'replace' | 'append', cursor?: string) => {
     if (!workspaceId) return;
@@ -346,7 +337,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto custom-scrollbar xl:overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto custom-scrollbar">
         <Dashboard
           kubernetesClusters={clustersWithMetricHistory}
           summaryKubernetesClusters={summaryClusters}
@@ -357,8 +348,6 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
           totalClusterCount={totalClusterCount}
           issueSummaryByClusterId={issueSummaryByClusterId}
           hasActiveClusterFilter={hasActiveFilter}
-          selectedClusterId={activeCatalogState.selectedClusterId}
-          onSelectedClusterIdChange={handleSelectedClusterIdChange}
           controls={workspaceId ? (
             <>
               <label htmlFor="cluster-search" className="sr-only">
@@ -369,13 +358,12 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
                 value={query}
                 onChange={(event) => handleQueryChange(event.target.value)}
                 placeholder={t('dashboard.searchClusters')}
-                className="h-9 min-h-9 rounded-md text-xs font-medium lg:w-full"
+                className="lg:w-full"
               />
               <Select<typeof status>
                 value={status}
                 options={statusOptions}
                 onChange={handleStatusChange}
-                size="sm"
                 className="min-w-0"
                 ariaLabel={t('dashboard.filterClustersByState')}
               />

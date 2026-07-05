@@ -50,8 +50,7 @@ function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRo
         workspaceId: nextRoute.workspaceId,
         path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId, {
           q: previousRoute.q,
-          status: previousRoute.status,
-          selectedClusterId: nextRoute.clusterId
+          status: previousRoute.status
         })
       };
     }
@@ -350,10 +349,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     }
 
     if (route.kind === 'workspaceKubernetesClusterDiagnostics') {
-      return AppPaths.workspaceKubernetesClusters(route.workspaceId, {
-        ...route.catalogState,
-        selectedClusterId: route.clusterId
-      });
+      return AppPaths.workspaceKubernetesClusters(route.workspaceId, route.catalogState);
     }
 
     return isVirtualMachineSidebar

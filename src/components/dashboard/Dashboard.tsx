@@ -28,8 +28,6 @@ interface DashboardProps {
   hasActiveClusterFilter?: boolean;
   controls?: React.ReactNode;
   catalogFooter?: React.ReactNode;
-  selectedClusterId?: string;
-  onSelectedClusterIdChange?: (clusterId: string | undefined) => void;
   onAddCluster?: () => void;
   onOpenClusterSettings?: (cluster: KubernetesCluster) => void;
   canDeleteKubernetesCluster?: (cluster: KubernetesCluster) => boolean;
@@ -59,15 +57,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   hasActiveClusterFilter = false,
   controls,
   catalogFooter,
-  selectedClusterId: controlledSelectedClusterId,
-  onSelectedClusterIdChange: controlledOnSelectedClusterIdChange,
   onAddCluster,
   onOpenClusterSettings,
   canDeleteKubernetesCluster,
   onDeleteKubernetesCluster
 }) => {
   const { t } = useTranslation();
-  const [internalSelectedClusterId, setInternalSelectedClusterId] = useState<string | undefined>();
   const [deleteTargetCluster, setDeleteTargetCluster] = useState<KubernetesCluster | null>(null);
   const [deleteClusterError, setDeleteClusterError] = useState<string | null>(null);
   const [isDeletingCluster, setIsDeletingCluster] = useState(false);
@@ -92,19 +87,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const connectedClusters = summaryClusters.filter((cluster) => getAgentConnectionState(cluster) === 'connected').length;
   const clusterCount = totalClusterCount ?? summaryClusters.length;
   const hasUnloadedClusters = clusterCount > summaryClusters.length;
-  const selectedClusterId = controlledSelectedClusterId ?? internalSelectedClusterId;
-  const setSelectedClusterId = controlledOnSelectedClusterIdChange ?? setInternalSelectedClusterId;
-  const selectedCluster = kubernetesClusters.find((cluster) => cluster.id === selectedClusterId);
-
-  useEffect(() => {
-    if (kubernetesClusters.length === 0) {
-      setSelectedClusterId(undefined);
-      return;
-    }
-    if (selectedClusterId && !kubernetesClusters.some((cluster) => cluster.id === selectedClusterId)) {
-      setSelectedClusterId(undefined);
-    }
-  }, [kubernetesClusters, selectedClusterId, setSelectedClusterId]);
 
   useEffect(() => {
     if (!openClusterActionMenuId) return undefined;
@@ -217,14 +199,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       {kubernetesClusters.length > 0 || hasActiveClusterFilter ? (
         <ClusterCatalog
           kubernetesClusters={kubernetesClusters}
-          clusterCount={clusterCount}
+          totalClusterCount={clusterCount}
           hasActiveFilter={hasActiveClusterFilter}
           issueSummaryByClusterId={issueSummaryByClusterId}
           controls={controls}
           footer={catalogFooter}
-          selectedCluster={selectedCluster}
           openClusterActionMenuId={openClusterActionMenuId}
-          onSelectedClusterIdChange={setSelectedClusterId}
           onToggleClusterActionMenu={(clusterId) => setOpenClusterActionMenuId((current) => current === clusterId ? null : clusterId)}
           onOpenDelete={openDeleteClusterDialog}
           onSelectKubernetesCluster={onSelectKubernetesCluster}

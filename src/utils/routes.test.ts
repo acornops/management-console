@@ -135,31 +135,27 @@ describe('routes', () => {
   it('round-trips Kubernetes cluster catalog state in listing routes', () => {
     const workspacePath = AppPaths.workspaceKubernetesClusters('team alpha', {
       q: 'dev cluster',
-      status: 'connected',
-      selectedClusterId: 'cluster/one'
+      status: 'connected'
     });
 
     expect(workspacePath).toBe(
-      '/workspaces/team%20alpha/kubernetes-clusters?q=dev+cluster&status=connected&cluster=cluster%2Fone'
+      '/workspaces/team%20alpha/kubernetes-clusters?q=dev+cluster&status=connected'
     );
     expect(parseAppRoute(workspacePath)).toEqual({
       kind: 'workspaceKubernetesClusters',
       workspaceId: 'team alpha',
       q: 'dev cluster',
-      status: 'connected',
-      selectedClusterId: 'cluster/one'
+      status: 'connected'
     });
 
     expect(AppPaths.kubernetesClusters({
       q: 'prod',
-      status: 'disconnected',
-      selectedClusterId: 'cluster-two'
-    })).toBe('/kubernetes-clusters?q=prod&status=disconnected&cluster=cluster-two');
+      status: 'disconnected'
+    })).toBe('/kubernetes-clusters?q=prod&status=disconnected');
     expect(parseAppRoute('/kubernetes-clusters?q=prod&status=disconnected&cluster=cluster-two')).toEqual({
       kind: 'kubernetesClusters',
       q: 'prod',
-      status: 'disconnected',
-      selectedClusterId: 'cluster-two'
+      status: 'disconnected'
     });
   });
 

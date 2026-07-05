@@ -5,7 +5,6 @@ export type ClusterCatalogStatusFilter = 'all' | 'connected' | 'disconnected' | 
 export interface ClusterCatalogRouteState {
   q?: string;
   status?: ClusterCatalogStatusFilter;
-  selectedClusterId?: string;
 }
 
 export interface ClusterCatalogReturnState {
@@ -127,11 +126,9 @@ function cleanQueryParam(value: string | null): string | undefined {
 function parseClusterCatalogRouteState(params: URLSearchParams): ClusterCatalogRouteState {
   const q = cleanQueryParam(params.get('q'));
   const status = parseClusterCatalogStatus(params.get('status'));
-  const selectedClusterId = cleanQueryParam(params.get('cluster'));
   return {
     ...(q ? { q } : {}),
-    ...(status ? { status } : {}),
-    ...(selectedClusterId ? { selectedClusterId } : {})
+    ...(status ? { status } : {})
   };
 }
 
@@ -152,7 +149,6 @@ function withClusterCatalogRouteState(path: string, state?: ClusterCatalogRouteS
   const params = new URLSearchParams();
   if (state?.q?.trim()) params.set('q', state.q.trim());
   if (state?.status && state.status !== 'all') params.set('status', state.status);
-  if (state?.selectedClusterId?.trim()) params.set('cluster', state.selectedClusterId.trim());
   return appendQuery(path, params);
 }
 

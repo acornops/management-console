@@ -270,8 +270,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
     route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters'
       ? {
           q: route.q,
-          status: route.status,
-          selectedClusterId: route.selectedClusterId
+          status: route.status
         }
       : undefined;
   const clusterCatalogReturnState: ClusterCatalogReturnState | undefined =
@@ -313,17 +312,11 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
 
   const navigateBackToClusterCatalog = () => {
     if (route.kind === 'workspaceKubernetesClusterDiagnostics') {
-      navigate(AppPaths.workspaceKubernetesClusters(route.workspaceId, {
-        ...route.catalogState,
-        selectedClusterId: route.clusterId
-      }));
+      navigate(AppPaths.workspaceKubernetesClusters(route.workspaceId, route.catalogState));
       return;
     }
     if (route.kind === 'kubernetesClusterDiagnostics') {
-      navigate(AppPaths.kubernetesClusters({
-        ...route.catalogState,
-        selectedClusterId: route.clusterId
-      }));
+      navigate(AppPaths.kubernetesClusters(route.catalogState));
       return;
     }
     navigate(workspaceContextId ? AppPaths.workspaceKubernetesClusters(workspaceContextId) : AppPaths.kubernetesClusters());
