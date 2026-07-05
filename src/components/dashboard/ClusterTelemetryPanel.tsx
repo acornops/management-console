@@ -7,6 +7,20 @@ import { formatCompactRelativeTime } from '@/utils/dateTime';
 
 type SparklinePoint = { timestamp: number; value: number };
 
+const DEFAULT_SPARKLINE_GAP_MS = 15 * 60 * 1000;
+const SPARKLINE_GAP_MULTIPLIER = 2.5;
+
+function getSparklineGapThreshold(points: SparklinePoint[]): number {
+  const intervals = points
+    .slice(1)
+    .map((point, index) => point.timestamp - points[index].timestamp)
+    .filter((interval) => Number.isFinite(interval) && interval > 0)
+    .sort((left, right) => left - right);
+  if (intervals.length === 0) return DEFAULT_SPARKLINE_GAP_MS;
+  const medianInterval = intervals[Math.floor(intervals.length / 2)];
+  return Math.max(DEFAULT_SPARKLINE_GAP_MS, medianInterval * SPARKLINE_GAP_MULTIPLIER);
+}
+
 function buildSparklinePath(points: SparklinePoint[], startTimestamp: number, endTimestamp: number, width = 180, height = 92): string {
   if (points.length === 0) return '';
   const finitePoints = points.filter((point) => Number.isFinite(point.timestamp) && Number.isFinite(point.value));
@@ -16,11 +30,14 @@ function buildSparklinePath(points: SparklinePoint[], startTimestamp: number, en
   const max = Math.max(...values);
   const range = max - min;
   const timeRange = endTimestamp - startTimestamp;
+  const gapThreshold = getSparklineGapThreshold(finitePoints);
   return finitePoints.map((point, index) => {
     const x = timeRange <= 0 ? width / 2 : ((point.timestamp - startTimestamp) / timeRange) * width;
     const normalized = range === 0 ? 0.5 : (point.value - min) / range;
     const y = height - normalized * height;
-    return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    const previousPoint = finitePoints[index - 1];
+    const command = !previousPoint || point.timestamp - previousPoint.timestamp > gapThreshold ? 'M' : 'L';
+    return `${command} ${x.toFixed(1)} ${y.toFixed(1)}`;
   }).join(' ');
 }
 

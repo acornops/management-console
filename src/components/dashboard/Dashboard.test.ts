@@ -160,8 +160,12 @@ describe('cluster catalog and inspector layout', () => {
     expect(clusterTelemetryPanel).toContain('viewBox="0 0 180 108"');
     expect(clusterTelemetryPanel).toContain('role="img"');
     expect(clusterTelemetryPanel).toContain('type SparklinePoint = { timestamp: number; value: number };');
+    expect(clusterTelemetryPanel).toContain('const DEFAULT_SPARKLINE_GAP_MS = 15 * 60 * 1000;');
+    expect(clusterTelemetryPanel).toContain('const SPARKLINE_GAP_MULTIPLIER = 2.5;');
+    expect(clusterTelemetryPanel).toContain('function getSparklineGapThreshold(points: SparklinePoint[]): number');
     expect(clusterTelemetryPanel).toContain('function buildSparklinePath(points: SparklinePoint[], startTimestamp: number, endTimestamp: number');
     expect(clusterTelemetryPanel).toContain('const x = timeRange <= 0 ? width / 2 : ((point.timestamp - startTimestamp) / timeRange) * width;');
+    expect(clusterTelemetryPanel).toContain("const command = !previousPoint || point.timestamp - previousPoint.timestamp > gapThreshold ? 'M' : 'L';");
     expect(clusterTelemetryPanel).not.toContain('const TelemetryLane: React.FC');
     expect(clusterTelemetryPanel).not.toContain('function getMetricRange');
     expect(clusterTelemetryPanel).not.toContain('formatCpuAxisValue');
