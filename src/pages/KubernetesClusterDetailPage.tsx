@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
 import { ICONS, THEME_CLASSES } from '@/constants';
 import KubernetesClusterDetail from '@/features/kubernetes-cluster-detail/KubernetesClusterDetail';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
@@ -17,7 +16,6 @@ interface KubernetesClusterDetailPageProps {
   issueSummary: ControlPlaneTargetIssueSummary | null;
   isDark: boolean;
   workspaces: Workspace[];
-  onOpenInstallModal: (clusterId: string) => void;
   onSyncClusterTools: (clusterId: string, tools: KubernetesCluster['mcpTools']) => void;
   onUpdateClusterName: (clusterId: string, name: string) => void | Promise<void>;
   onUpdateClusterNamespaceScope: (clusterId: string, scope: { include: string[]; exclude: string[] }) => void | Promise<void>;
@@ -39,7 +37,6 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   issueSummary,
   isDark,
   workspaces,
-  onOpenInstallModal,
   onSyncClusterTools,
   onUpdateClusterName,
   onUpdateClusterNamespaceScope,
@@ -65,11 +62,19 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   const requiresClusterAgentInstall = selectedCluster && selectedClusterAgentState === 'not_installed';
   const requestedClusterView = activeSubview === 'health' ? 'overview' : activeSubview;
 
+  React.useEffect(() => {
+    if (requiresClusterAgentInstall) {
+      onNavigateBackToClusters();
+    }
+  }, [requiresClusterAgentInstall, onNavigateBackToClusters]);
+
   return (
     <div className="h-full min-h-0 flex flex-col overflow-hidden">
       <div className="flex-1 min-h-0 flex overflow-hidden">
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-          {selectedCluster && clusterChatController && (!requiresClusterAgentInstall || requestedClusterView === 'settings') ? (
+          {selectedCluster && requiresClusterAgentInstall ? (
+            <div className="flex-1 bg-ui-bg" />
+          ) : selectedCluster && clusterChatController ? (
             <KubernetesClusterDetail
               cluster={selectedCluster}
               chatController={clusterChatController}
@@ -93,26 +98,6 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
             />
           ) : selectedCluster && !requiresClusterAgentInstall ? (
             <div className="flex-1 bg-ui-bg" />
-          ) : selectedCluster && requiresClusterAgentInstall ? (
-            <div className="flex-1 flex flex-col items-center justify-center bg-ui-bg p-8 text-center">
-              <div className="mb-8 max-w-xl rounded-xl border border-ui-border bg-ui-surface p-10 shadow-sm">
-                <ICONS.Wrench className="mx-auto mb-5 h-14 w-14 text-status-warning-text" />
-                <h2 className="mb-3 text-2xl font-bold text-ui-text">{t('diagnostics.installAgentTitle')}</h2>
-                <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-ui-text-muted">
-                  {t('diagnostics.installAgentBody')}
-                </p>
-                <Button onClick={() => onOpenInstallModal(selectedCluster.id)} variant="accent" size="sm">
-                  <ICONS.Wrench className="w-4 h-4" />
-                  {t('diagnostics.openInstallCommand')}
-                </Button>
-              </div>
-              <button
-                onClick={onNavigateBackToClusters}
-                className={`${THEME_CLASSES.primary.text} font-semibold flex items-center gap-2 hover:gap-3 transition-all`}
-              >
-                {t('diagnostics.returnToClusters')} <ICONS.ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center bg-ui-bg p-8 text-center">
               <div className="mb-8 rounded-xl border border-ui-border bg-ui-surface p-10 shadow-sm">

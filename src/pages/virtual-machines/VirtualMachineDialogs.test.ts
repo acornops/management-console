@@ -87,8 +87,9 @@ describe('virtual machine onboarding dialog', () => {
     expect(pendingAgentSetup).toContain('pending-agent-step-pulse');
     expect(pendingAgentSetup).toContain('ring-[3px] ring-status-success-soft/55');
     expect(pendingAgentSetup).toContain('before:from-status-success/50 before:via-ui-border before:to-ui-border');
-    expect(pendingAgentSetup).toContain('<div className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)_4.25rem]">');
-    expect(pendingAgentSetup).toContain('className="pointer-events-auto h-[4.25rem] border-t border-ui-border pt-5"');
+    expect(pendingAgentSetup).toContain("showFooter = true");
+    expect(pendingAgentSetup).toContain("grid-rows-[minmax(0,1fr)_minmax(4.25rem,auto)]");
+    expect(pendingAgentSetup).toContain('className="pointer-events-auto min-h-[4.25rem] border-t border-ui-border py-5"');
     expect(pendingVirtualMachineSetup).toContain("t('virtualMachines.list.vmRegistered')");
     expect(pendingVirtualMachineSetup).toContain("t('virtualMachines.list.installAgentMessage')");
     expect(pendingAgentSetup).toContain('max-w-md text-sm font-semibold leading-5 text-ui-text-muted');

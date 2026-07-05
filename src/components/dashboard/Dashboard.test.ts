@@ -11,12 +11,14 @@ const clusterTelemetryModel = readFileSync(resolve(root, 'src/components/dashboa
 const kubernetesClustersPage = readFileSync(resolve(root, 'src/pages/KubernetesClustersPage.tsx'), 'utf8');
 const pendingAgentSetup = readFileSync(resolve(root, 'src/components/common/PendingAgentSetup.tsx'), 'utf8');
 const pendingClusterSetup = readFileSync(resolve(root, 'src/components/dashboard/PendingClusterSetup.tsx'), 'utf8');
+const styles = readFileSync(resolve(root, 'src/styles.css'), 'utf8');
 
 describe('cluster catalog and inspector layout', () => {
   it('uses a restrained inventory summary modeled after target inventory surfaces', () => {
     expect(dashboard).toContain('data-cluster-inventory-summary="true"');
     expect(dashboard).toContain("md:grid-cols-[minmax(15rem,1.35fr)_repeat(4,minmax(7rem,1fr))]");
-    expect(dashboard).toContain("t(hasUnloadedClusters ? 'dashboard.loadedStatus' : 'dashboard.globalStatus'");
+    expect(dashboard).toContain("t('dashboard.clusterInventoryTitle')");
+    expect(dashboard).toContain("t(hasUnloadedClusters ? 'dashboard.loadedClusterInventoryBody' : 'dashboard.clusterInventoryBody')");
     expect(dashboard).toContain("t('dashboard.clusters')");
     expect(dashboard).toContain("t('dashboard.attention')");
     expect(dashboard).toContain("t('dashboard.setupRequired')");
@@ -34,7 +36,13 @@ describe('cluster catalog and inspector layout', () => {
     expect(clusterCatalog).toContain('data-cluster-catalog-cards="true"');
     expect(clusterCatalog).toContain('data-cluster-card-scroll-region="true"');
     expect(clusterCatalog).toContain('const ClusterCatalogCard: React.FC');
-    expect(clusterCatalog).toContain('flex min-h-0 flex-col gap-2.5 overflow-y-auto px-1 pb-1 custom-scrollbar stable-scrollbar-gutter xl:flex-1');
+    expect(clusterCatalog).toContain('grid min-w-0 shrink-0 gap-2">');
+    expect(clusterCatalog).toContain('flex min-h-0 flex-col gap-2.5 overflow-y-auto pb-1 pr-2 custom-scrollbar stable-scrollbar-gutter xl:flex-1');
+    expect(clusterCatalog).toContain('cluster-catalog-scrollbar');
+    expect(styles).toContain('.cluster-catalog-scrollbar::-webkit-scrollbar');
+    expect(styles).toContain('width: 1px;');
+    expect(styles).toContain('.cluster-catalog-scrollbar::-webkit-scrollbar-thumb');
+    expect(styles).toContain('rgb(var(--text-muted-rgb) / 22%)');
     expect(clusterCatalog).toContain('xl:items-stretch xl:overflow-hidden');
     expect(clusterCatalog).toContain('xl:h-full xl:min-h-0 xl:overflow-hidden');
     expect(clusterCatalog).not.toContain('xl:h-full xl:flex-1 xl:overflow-y-auto');
@@ -51,12 +59,13 @@ describe('cluster catalog and inspector layout', () => {
     expect(clusterCatalog).toContain('aria-pressed={selected}');
     expect(clusterCatalog).toContain('onSelectedClusterIdChange(cluster.id)');
     expect(clusterCatalog).toContain('aria-label={`Select cluster ${cluster.name}${selected ? \', selected\' : \'\'}`}');
-    expect(clusterCatalog).toContain('data-cluster-row-action="view"');
+    expect(clusterCatalog).toContain("data-cluster-row-action={requiresAgentInstall ? 'install-agent' : 'view'}");
     expect(clusterCatalog).toContain("import { Tooltip } from '@/components/common/Tooltip'");
-    expect(clusterCatalog).toContain("<Tooltip content={t('dashboard.viewCluster')}>");
-    expect(clusterCatalog).toContain("aria-label={t('dashboard.viewClusterNamed', { name: cluster.name })}");
+    expect(clusterCatalog).toContain("requiresAgentInstall ? t('dashboard.installAgent') : t('dashboard.viewCluster')");
+    expect(clusterCatalog).toContain("requiresAgentInstall ? t('dashboard.installAgentNamed', { name: cluster.name }) : t('dashboard.viewClusterNamed', { name: cluster.name })");
     expect(clusterCatalog).not.toContain("title={t('dashboard.viewClusterNamed', { name: cluster.name })}");
     expect(clusterCatalog).toContain('type-row-title block min-w-0 break-words text-ui-text');
+    expect(clusterCatalog).toContain('flex min-w-0 items-center gap-2.5');
     expect(clusterCatalog).toContain('items-center gap-1.5 sm:justify-end');
     expect(clusterCatalog).toContain('inline-flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-surface');
     expect(clusterCatalog).not.toContain('data-cluster-title-action="view"');
@@ -133,6 +142,8 @@ describe('cluster catalog and inspector layout', () => {
     expect(clusterCatalog).toContain('<ClusterTelemetryPanel cluster={cluster} now={now} />');
     expect(clusterTelemetryPanel).toContain('export const ClusterTelemetryPanel: React.FC');
     expect(clusterTelemetryPanel).toContain('data-cluster-telemetry-panel="true"');
+    expect(clusterTelemetryPanel).toContain('const hasCpuTrend = cpuPoints.length >= 2;');
+    expect(clusterTelemetryPanel).toContain('const hasMemoryTrend = memoryPoints.length >= 2;');
     expect(clusterTelemetryPanel).not.toContain('formatRelativeTime');
     expect(clusterTelemetryPanel).toContain('formatCompactRelativeTime');
     expect(clusterTelemetryPanel).toContain('formatCompactRelativeTime(timeline[0].timestamp, { now })');
@@ -163,6 +174,8 @@ describe('cluster catalog and inspector layout', () => {
     expect(clusterTelemetryModel).toContain('cluster.metricHistory');
     expect(clusterTelemetryPanel).toContain('className="stroke-accent-strong"');
     expect(clusterTelemetryPanel).toContain('className="stroke-metric-blue"');
+    expect(clusterTelemetryPanel).toContain('{hasCpuTrend && cpuPath &&');
+    expect(clusterTelemetryPanel).toContain('{hasMemoryTrend && memoryPath &&');
     expect(clusterCatalog).toContain("t('dashboard.scopeAndSafeguards')");
     expect(clusterCatalog).toContain("t('app.inventory')");
     expect(clusterCatalog).toContain('function interactiveAttentionClass');
@@ -178,8 +191,10 @@ describe('cluster catalog and inspector layout', () => {
     expect(clusterCatalog).toContain('function getResourceFamilyCount');
     expect(clusterCatalog).toContain('cluster.resourceSummary?.resourceFamilyCounts?.[family]');
     expect(clusterCatalog).toContain('const resourceFamilyItems = buildResourceFamilyItems(cluster, t);');
-    expect(clusterCatalog).toContain('data-cluster-display-action="view"');
+    expect(clusterCatalog).toContain("data-cluster-display-action={requiresAgentInstall ? 'install-agent' : 'view'}");
+    expect(clusterCatalog).toContain('variant="accent"');
     expect(clusterCatalog).toContain('data-cluster-issue-banner-action="view-overview"');
+    expect(clusterCatalog).toContain('data-cluster-setup-banner-action="install-agent"');
     expect(clusterCatalog).toContain("aria-label={t('dashboard.viewClusterIssuesNamed', { name: cluster.name })}");
     expect(clusterCatalog).not.toContain('<span className="type-micro-label shrink-0 text-ui-text-muted">{t(\'dashboard.viewCluster\')}</span>');
     expect(clusterCatalog).toContain('ml-[3.125rem] min-w-0');
@@ -200,15 +215,22 @@ describe('cluster catalog and inspector layout', () => {
     expect(pendingClusterSetup).toContain('actionDataAttribute="data-cluster-setup-action"');
     expect(clusterCatalog).toContain('<PendingClusterSetup clusterId={cluster.id} onInstallAgent={onInstallAgent} />');
     expect(pendingClusterSetup).toContain('<PendingAgentSetup');
-    expect(pendingAgentSetup).toContain('className="pointer-events-auto h-[4.25rem] border-t border-ui-border pt-5"');
+    expect(pendingAgentSetup).toContain('className="pointer-events-auto min-h-[4.25rem] border-t border-ui-border py-5"');
     expect(clusterCatalog).toContain("t('dashboard.viewCluster')");
-    expect(clusterCatalog).toContain('data-cluster-row-action="view"');
+    expect(clusterCatalog).toContain("data-cluster-row-action={requiresAgentInstall ? 'install-agent' : 'view'}");
     expect(clusterCatalog).toContain('<ICONS.Eye className="h-4 w-4" aria-hidden="true" />');
+    expect(clusterCatalog).toContain('<ICONS.Wrench className="h-4 w-4" aria-hidden="true" />');
+    expect(clusterCatalog).toContain("data-cluster-display-action={requiresAgentInstall ? 'install-agent' : 'view'}");
+    expect(clusterCatalog).toContain("onInstallAgent?.(cluster.id)");
+    expect(pendingClusterSetup).toContain('showAction={false}');
+    expect(pendingClusterSetup).toContain('showFooter={false}');
+    expect(pendingAgentSetup).toContain('h-[238px] min-w-0 shrink-0 overflow-hidden rounded-md border border-ui-border bg-ui-bg/35');
     expect(clusterCatalog).not.toContain('data-cluster-overflow-action="view"');
     expect(clusterCatalog).toContain('onSelectKubernetesCluster(cluster);');
     expect(pendingClusterSetup).toContain("t('dashboard.installAgent')");
     expect(clusterCatalog).toContain('data-cluster-overflow-action="toggle"');
     expect(clusterCatalog).toContain('data-cluster-overflow-action="settings"');
+    expect(clusterCatalog).toContain('onOpenSettings={requiresAgentInstall ? undefined : onOpenSettings}');
     expect(clusterCatalog).toContain('data-cluster-overflow-action="delete"');
     expect(clusterCatalog).toContain('onClose={() =>');
     expect(clusterCatalog).toContain('aria-haspopup="menu"');
@@ -242,6 +264,11 @@ describe('cluster catalog and inspector layout', () => {
     expect(clusterCatalog).toContain("t('dashboard.noMatchingClusters')");
     expect(kubernetesClustersPage).toContain("controlPlaneApi.getWorkspaceClusterMetricsHistory(targetWorkspaceId, clusterIds, { window: '6h', limit: 48 })");
     expect(kubernetesClustersPage).toContain('metricHistoryByClusterId');
+    expect(kubernetesClustersPage).toContain('setMetricHistoryByClusterId({});');
+    expect(kubernetesClustersPage).toContain('const activeConnectedClusterIds = new Set(connectedClusters.map((cluster) => cluster.id));');
+    expect(kubernetesClustersPage).toContain('}, [metricHistoryFetchKey]);');
+    expect(kubernetesClustersPage).not.toContain('}, [kubernetesClusters, metricHistoryFetchKey]);');
+    expect(kubernetesClustersPage).toContain("getAgentConnectionState(cluster) === 'connected' && Object.prototype.hasOwnProperty.call(metricHistoryByClusterId, cluster.id)");
     expect(kubernetesClustersPage).toContain('controlPlaneApi.getTargetIssueSummary(cluster.workspaceId, cluster.id)');
     expect(kubernetesClustersPage).toContain('issueSummaryByClusterId');
     expect(kubernetesClustersPage).toContain('CLUSTER_ISSUE_SUMMARY_REFRESH_MS = 30000');
@@ -266,7 +293,7 @@ describe('cluster catalog and inspector layout', () => {
 
   it('keeps long cluster names readable with exact-name title access', () => {
     expect(clusterCatalog).toContain('title={cluster.name}>{cluster.name}</span>');
-    expect(clusterCatalog).toContain('data-cluster-row-action="view"');
+    expect(clusterCatalog).toContain("data-cluster-row-action={requiresAgentInstall ? 'install-agent' : 'view'}");
     expect(clusterCatalog).not.toContain('data-cluster-title-action="view"');
     expect(clusterCatalog).not.toContain('cursor-pointer rounded-sm');
     expect(clusterCatalog).toContain('<span className="type-row-title block min-w-0 break-words text-ui-text [overflow-wrap:anywhere]" title={cluster.name}>{cluster.name}</span>');

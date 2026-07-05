@@ -459,6 +459,23 @@ select {
   background: rgb(var(--brand-orange-rgb) / 40%);
 }
 
+.cluster-catalog-scrollbar {
+  scrollbar-color: rgb(var(--text-muted-rgb) / 28%) transparent;
+}
+
+.cluster-catalog-scrollbar::-webkit-scrollbar {
+  width: 1px;
+  height: 1px;
+}
+
+.cluster-catalog-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(var(--text-muted-rgb) / 22%);
+}
+
+.cluster-catalog-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--text-muted-rgb) / 38%);
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

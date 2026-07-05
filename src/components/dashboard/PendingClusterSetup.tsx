@@ -23,6 +23,8 @@ export const PendingClusterSetup: React.FC<PendingClusterSetupProps> = ({
       actionLabel={t('dashboard.installAgent')}
       actionDataAttribute="data-cluster-setup-action"
       onInstallAgent={onInstallAgent}
+      showAction={false}
+      showFooter={false}
     />
   );
 };

@@ -598,7 +598,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               issueSummary={selectedTargetIssueSummary}
               isDark={isDark}
               workspaces={workspaces}
-              onOpenInstallModal={onInstallAgent}
               onSyncClusterTools={(clusterId, tools) => onUpdateKubernetesCluster(clusterId, { mcpTools: tools })}
               onUpdateClusterName={async (clusterId, name) => {
                 const cluster = kubernetesClusters.find((item) => item.id === clusterId);

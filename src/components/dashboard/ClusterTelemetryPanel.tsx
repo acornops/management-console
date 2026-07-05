@@ -27,7 +27,9 @@ function buildSparklinePath(points: SparklinePoint[], startTimestamp: number, en
 export const ClusterTelemetryPanel: React.FC<{ cluster: KubernetesCluster; now?: number }> = ({ cluster, now }) => {
   const { t } = useTranslation();
   const { timeline, cpuPoints, memoryPoints, cpuDisplay, memoryDisplay } = getClusterTelemetrySnapshot(cluster);
-  const hasTrend = cpuPoints.length >= 2 || memoryPoints.length >= 2;
+  const hasCpuTrend = cpuPoints.length >= 2;
+  const hasMemoryTrend = memoryPoints.length >= 2;
+  const hasTrend = hasCpuTrend || hasMemoryTrend;
   const hasAnyMetric = cpuPoints.length > 0 || memoryPoints.length > 0;
   const startTimestamp = timeline[0]?.timestamp ?? 0;
   const endTimestamp = timeline[timeline.length - 1]?.timestamp ?? startTimestamp;
@@ -64,8 +66,8 @@ export const ClusterTelemetryPanel: React.FC<{ cluster: KubernetesCluster; now?:
             <line x1="0" x2="180" y1="18" y2="18" className="stroke-ui-border/60" strokeWidth="1" />
             <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/60" strokeWidth="1" />
             <line x1="0" x2="180" y1="90" y2="90" className="stroke-ui-border/60" strokeWidth="1" />
-            {hasTrend && cpuPath && <path d={cpuPath} fill="none" className="stroke-accent-strong" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" transform="translate(0 8)" />}
-            {hasTrend && memoryPath && <path d={memoryPath} fill="none" className="stroke-metric-blue" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" opacity="0.78" transform="translate(0 8)" />}
+            {hasCpuTrend && cpuPath && <path d={cpuPath} fill="none" className="stroke-accent-strong" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" transform="translate(0 8)" />}
+            {hasMemoryTrend && memoryPath && <path d={memoryPath} fill="none" className="stroke-metric-blue" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" opacity="0.78" transform="translate(0 8)" />}
           </svg>
           {!hasTrend && (
             <div className="absolute inset-0 flex items-center justify-center px-3 text-center">

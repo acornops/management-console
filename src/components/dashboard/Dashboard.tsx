@@ -62,10 +62,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [deleteClusterConfirmation, setDeleteClusterConfirmation] = useState('');
   const [openClusterActionMenuId, setOpenClusterActionMenuId] = useState<string | null>(null);
   const setupRequiredClusters = kubernetesClusters.filter((cluster) => getAgentConnectionState(cluster) === 'not_installed').length;
-  const hasNonGreen = kubernetesClusters.some((cluster) => {
-    const issueSummary = issueSummaryByClusterId[cluster.id];
-    return Number(issueSummary?.total || 0) > 0 || getEffectiveHealthStatus(cluster) !== HealthStatus.GREEN || getAgentConnectionState(cluster) !== 'connected';
-  });
   const criticalClusters = kubernetesClusters.filter((cluster) => {
     const agentState = getAgentConnectionState(cluster);
     const issueSummary = issueSummaryByClusterId[cluster.id];
@@ -148,7 +144,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8 xl:h-full xl:overflow-hidden">
-      <motion.header {...headerMotion} className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <motion.header {...headerMotion} className="mb-2 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <h1 className="type-route-title">
             {t('dashboard.title')}
@@ -171,11 +167,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       <section data-cluster-inventory-summary="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(4,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
           <div className="px-5 py-3.5">
-            <h2 className="type-row-title">{t(hasUnloadedClusters ? 'dashboard.loadedStatus' : 'dashboard.globalStatus', { status: hasNonGreen ? t('dashboard.attention') : t('dashboard.optimal') })}</h2>
+            <h2 className="type-row-title">{t('dashboard.clusterInventoryTitle')}</h2>
             <p className="type-caption mt-1 min-h-10 text-ui-text-muted">
-              {criticalClusters + warningClusters + setupRequiredClusters > 0
-                ? t('dashboard.attentionSummary', { count: criticalClusters + warningClusters + setupRequiredClusters })
-                : t('dashboard.activeSummary', { connected: connectedClusters, total: kubernetesClusters.length })}
+              {t(hasUnloadedClusters ? 'dashboard.loadedClusterInventoryBody' : 'dashboard.clusterInventoryBody')}
             </p>
           </div>
           <div className="px-5 py-3.5">
