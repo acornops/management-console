@@ -249,10 +249,12 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
   useEffect(() => {
     const connectedClusters = kubernetesClusters.filter((cluster) => getAgentConnectionState(cluster) === 'connected');
     if (connectedClusters.length === 0) {
+      setMetricHistoryByClusterId({});
       return;
     }
 
     const requestId = ++metricHistoryRequestSeqRef.current;
+    const activeConnectedClusterIds = new Set(connectedClusters.map((cluster) => cluster.id));
     const clusterIdsByWorkspaceId = new Map<string, string[]>();
     connectedClusters.forEach((cluster) => {
       const clusterIds = clusterIdsByWorkspaceId.get(cluster.workspaceId) || [];
@@ -267,17 +269,25 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     )
       .then((historyResults) => {
         if (requestId !== metricHistoryRequestSeqRef.current) return;
-        setMetricHistoryByClusterId((current) => ({
-          ...current,
-          ...Object.assign({}, ...historyResults)
-        }));
+        setMetricHistoryByClusterId((current) => {
+          const next: Record<string, ClusterMetricHistoryPoint[]> = {};
+          for (const clusterId of activeConnectedClusterIds) {
+            if (Object.prototype.hasOwnProperty.call(current, clusterId)) {
+              next[clusterId] = current[clusterId];
+            }
+          }
+          return {
+            ...next,
+            ...Object.assign({}, ...historyResults)
+          };
+        });
       })
       .catch((error) => {
         if (requestId === metricHistoryRequestSeqRef.current) {
           console.error('Failed loading cluster metric history', error);
         }
       });
-  }, [kubernetesClusters, metricHistoryFetchKey]);
+  }, [metricHistoryFetchKey]);
 
   const clientFilteredClusters = useMemo(
     () => kubernetesClusters.filter((cluster) => clusterMatchesCatalogState(cluster, query, status)),
@@ -293,7 +303,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
 
   const clustersWithMetricHistory = useMemo(
     () => visibleClusters.map((cluster) =>
-      Object.prototype.hasOwnProperty.call(metricHistoryByClusterId, cluster.id)
+      getAgentConnectionState(cluster) === 'connected' && Object.prototype.hasOwnProperty.call(metricHistoryByClusterId, cluster.id)
         ? { ...cluster, metricHistory: metricHistoryByClusterId[cluster.id] }
         : cluster
     ),

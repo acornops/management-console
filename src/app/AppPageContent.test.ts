@@ -7,6 +7,7 @@ const root = resolve(__dirname, '../..');
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
 const appBootstrap = readFileSync(resolve(root, 'src/app/useAppBootstrap.ts'), 'utf8');
 const app = readFileSync(resolve(root, 'src/App.tsx'), 'utf8');
+const kubernetesClusterDetailPage = readFileSync(resolve(root, 'src/pages/KubernetesClusterDetailPage.tsx'), 'utf8');
 
 describe('AppPageContent route loading', () => {
   it('lazy imports route page bodies so initial navigation keeps the app bundle lean', () => {
@@ -73,6 +74,15 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).not.toContain('<AnimatePresence mode="wait">');
     expect(appPageContent).not.toContain('key={pageKey}');
     expect(appPageContent).not.toContain('pageKey');
+  });
+
+  it('redirects setup-required cluster detail routes back to the catalog', () => {
+    expect(kubernetesClusterDetailPage).toContain('if (requiresClusterAgentInstall) {');
+    expect(kubernetesClusterDetailPage).toContain('onNavigateBackToClusters();');
+    expect(kubernetesClusterDetailPage).not.toContain('onOpenInstallModal');
+    expect(kubernetesClusterDetailPage).not.toContain("t('diagnostics.installAgentTitle')");
+    expect(kubernetesClusterDetailPage).not.toContain("t('diagnostics.openInstallCommand')");
+    expect(appPageContent).not.toContain('onOpenInstallModal={onInstallAgent}');
   });
 
   it('treats the top-level settings route as redirect-only legacy input', () => {

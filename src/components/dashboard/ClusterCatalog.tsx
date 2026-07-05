@@ -287,6 +287,7 @@ const ClusterCatalogCard: React.FC<{
   canDeleteCluster: boolean;
   onOpenDelete: (cluster: KubernetesCluster) => void;
   onSelectKubernetesCluster: (cluster: KubernetesCluster) => void;
+  onInstallAgent?: (clusterId: string) => void;
 }> = ({
   cluster,
   issueSummary,
@@ -298,7 +299,8 @@ const ClusterCatalogCard: React.FC<{
   onOpenSettings,
   canDeleteCluster,
   onOpenDelete,
-  onSelectKubernetesCluster
+  onSelectKubernetesCluster,
+  onInstallAgent
 }) => {
   const { t } = useTranslation();
   const agentState = getAgentConnectionState(cluster);
@@ -331,7 +333,7 @@ const ClusterCatalogCard: React.FC<{
       />
       <div className="pointer-events-none relative z-10 grid min-w-0 gap-2.5 px-3.5 py-3">
         <div className="grid min-w-0 gap-x-3 gap-y-1.5 sm:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="flex min-w-0 items-start gap-2.5">
+          <div className="flex min-w-0 items-center gap-2.5">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong">
               <ICONS.Layers className="h-4 w-4" aria-hidden="true" />
             </span>
@@ -342,18 +344,9 @@ const ClusterCatalogCard: React.FC<{
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:justify-end">
             <ClusterStatusPill cluster={cluster} requiresAgentInstall={requiresAgentInstall} label={statusLabel} />
-            <Tooltip content={t('dashboard.viewCluster')}>
-              <button
-                data-cluster-row-action="view"
-                type="button"
-                className="pointer-events-auto relative z-20 inline-flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:border-accent/30 hover:bg-ui-bg hover:text-accent-strong active:bg-ui-bg/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                aria-label={t('dashboard.viewClusterNamed', { name: cluster.name })}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onSelectKubernetesCluster(cluster);
-                }}
-              >
-                <ICONS.Eye className="h-4 w-4" aria-hidden="true" />
+            <Tooltip content={requiresAgentInstall ? t('dashboard.installAgent') : t('dashboard.viewCluster')}>
+              <button data-cluster-row-action={requiresAgentInstall ? 'install-agent' : 'view'} type="button" disabled={requiresAgentInstall && !onInstallAgent} className="pointer-events-auto relative z-20 inline-flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:border-accent/30 hover:bg-ui-bg hover:text-accent-strong active:bg-ui-bg/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-55" aria-label={requiresAgentInstall ? t('dashboard.installAgentNamed', { name: cluster.name }) : t('dashboard.viewClusterNamed', { name: cluster.name })} onClick={(event) => { event.stopPropagation(); requiresAgentInstall ? onInstallAgent?.(cluster.id) : onSelectKubernetesCluster(cluster); }}>
+                {requiresAgentInstall ? <ICONS.Wrench className="h-4 w-4" aria-hidden="true" /> : <ICONS.Eye className="h-4 w-4" aria-hidden="true" />}
               </button>
             </Tooltip>
             <ClusterActionMenu
@@ -368,7 +361,7 @@ const ClusterCatalogCard: React.FC<{
                   onToggleClusterActionMenu(cluster.id);
                 }
               }}
-              onOpenSettings={onOpenSettings}
+              onOpenSettings={requiresAgentInstall ? undefined : onOpenSettings}
               canDeleteCluster={canDeleteCluster}
               onOpenDelete={onOpenDelete}
             />
@@ -425,9 +418,9 @@ const ClusterInspector: React.FC<{
               <ClusterMetadataLine cluster={cluster} t={t} />
             </div>
           </div>
-          <Button data-cluster-display-action="view" type="button" size="sm" variant="secondary" className="shrink-0" onClick={() => onSelectKubernetesCluster(cluster)} aria-label={t('dashboard.viewClusterNamed', { name: cluster.name })}>
-            <ICONS.Eye className="h-4 w-4" aria-hidden="true" />
-            {t('dashboard.viewCluster')}
+          <Button data-cluster-display-action={requiresAgentInstall ? 'install-agent' : 'view'} type="button" size="sm" variant="primary" className="shrink-0" onClick={() => { requiresAgentInstall ? onInstallAgent?.(cluster.id) : onSelectKubernetesCluster(cluster); }} disabled={requiresAgentInstall && !onInstallAgent} aria-label={requiresAgentInstall ? t('dashboard.installAgentNamed', { name: cluster.name }) : t('dashboard.viewClusterNamed', { name: cluster.name })}>
+            {requiresAgentInstall ? <ICONS.Wrench className="h-4 w-4" aria-hidden="true" /> : <ICONS.Eye className="h-4 w-4" aria-hidden="true" />}
+            {requiresAgentInstall ? t('dashboard.installAgent') : t('dashboard.viewCluster')}
           </Button>
         </div>
       </div>
@@ -435,6 +428,13 @@ const ClusterInspector: React.FC<{
       <div className="flex min-h-0 flex-col gap-3 px-5 py-4 xl:flex-1 xl:overflow-hidden">
         {issueCount > 0 ? (
           <button data-cluster-issue-banner-action="view-overview" type="button" className={`shrink-0 rounded-md border px-3.5 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${interactiveAttentionClass(attentionTone)}`} onClick={() => onSelectKubernetesCluster(cluster)} aria-label={t('dashboard.viewClusterIssuesNamed', { name: cluster.name })}>
+            <span className="flex min-w-0 items-start gap-2.5">
+              <ICONS.AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="type-caption block min-w-0 font-semibold">{statusReason}</span>
+            </span>
+          </button>
+        ) : requiresAgentInstall ? (
+          <button data-cluster-setup-banner-action="install-agent" type="button" disabled={!onInstallAgent} className={`shrink-0 rounded-md border px-3.5 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-60 ${attentionToneClass(attentionTone)} hover:border-accent/30 hover:bg-ui-bg hover:text-ui-text`} onClick={() => onInstallAgent?.(cluster.id)} aria-label={t('dashboard.installAgentNamed', { name: cluster.name })}>
             <span className="flex min-w-0 items-start gap-2.5">
               <ICONS.AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <span className="type-caption block min-w-0 font-semibold">{statusReason}</span>
@@ -580,7 +580,7 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
   return (
     <div className="grid min-w-0 gap-5 xl:h-full xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(28rem,0.82fr)_minmax(30rem,0.88fr)] xl:items-stretch xl:overflow-hidden">
       <section data-cluster-catalog-cards="true" aria-label={t('dashboard.clusterCatalog')} className="flex min-w-0 w-full max-w-full flex-col gap-2.5 xl:h-full xl:min-h-0 xl:overflow-hidden">
-        <div className="grid min-w-0 shrink-0 gap-2 px-1">
+        <div className="grid min-w-0 shrink-0 gap-2">
           <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <div className="min-w-0">
               <h2 className="type-row-title text-ui-text">{t('dashboard.clusterCatalog')}</h2>
@@ -595,7 +595,7 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
             </div>
           )}
         </div>
-        <div data-cluster-card-scroll-region="true" className="flex min-h-0 flex-col gap-2.5 overflow-y-auto px-1 pb-1 custom-scrollbar stable-scrollbar-gutter xl:flex-1 xl:pr-2">
+        <div data-cluster-card-scroll-region="true" className="flex min-h-0 flex-col gap-2.5 overflow-y-auto pb-1 pr-2 custom-scrollbar stable-scrollbar-gutter xl:flex-1 cluster-catalog-scrollbar xl:pr-3">
           {kubernetesClusters.length === 0 && <ClusterCatalogEmptyState filtered={hasActiveFilter} />}
           {kubernetesClusters.map((cluster) => {
             const selected = cluster.id === selectedCluster?.id;
@@ -614,6 +614,7 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
                 canDeleteCluster={canDeleteCluster}
                 onOpenDelete={onOpenDelete}
                 onSelectKubernetesCluster={onSelectKubernetesCluster}
+                onInstallAgent={onInstallAgent}
               />
             );
           })}
