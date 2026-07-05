@@ -36,7 +36,7 @@ export const ClusterAgentAccessModeSelector: React.FC<ClusterAgentAccessModeSele
   const labelId = `${idPrefix}-agent-access-mode-label`;
 
   return (
-    <fieldset aria-labelledby={labelId} className="rounded-lg border border-ui-border bg-ui-bg p-4">
+    <fieldset aria-labelledby={labelId} aria-disabled={disabled} className="rounded-lg border border-ui-border bg-ui-bg p-4">
       <div id={labelId} className="px-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
         {t('clusterSetup.accessMode')}
       </div>
@@ -50,11 +50,11 @@ export const ClusterAgentAccessModeSelector: React.FC<ClusterAgentAccessModeSele
               key={mode.value}
               htmlFor={inputId}
               className={[
-                'flex min-h-[4.25rem] cursor-pointer gap-3 rounded-md border px-3 py-2.5 transition-all',
+                'flex min-h-[4.25rem] cursor-pointer gap-3 rounded-md border px-3 py-2.5 transition-colors',
                 checked
                   ? 'border-accent/45 bg-accent-soft/60 text-ui-text'
                   : 'border-ui-border bg-ui-surface text-ui-text hover:bg-ui-bg',
-                disabled ? 'cursor-not-allowed opacity-60' : ''
+                disabled ? 'cursor-not-allowed' : ''
               ].join(' ')}
             >
               <input
@@ -63,8 +63,10 @@ export const ClusterAgentAccessModeSelector: React.FC<ClusterAgentAccessModeSele
                 name={`${idPrefix}-agent-access-mode`}
                 value={mode.value}
                 checked={checked}
-                disabled={disabled}
-                onChange={() => onChange(mode.value)}
+                aria-disabled={disabled}
+                onChange={() => {
+                  if (!disabled) onChange(mode.value);
+                }}
                 className="mt-1 h-4 w-4 shrink-0 accent-[rgb(var(--brand-orange-rgb))]"
               />
               <span className="min-w-0">

@@ -616,7 +616,6 @@ export const en = {
     descriptionGlobal: 'Manage and monitor your Kubernetes clusters across all providers.',
     clusterInventoryTitle: 'Cluster Inventory',
     clusterInventoryBody: 'Registered clusters available for telemetry and diagnostics.',
-    loadedClusterInventoryBody: 'Loaded cluster records available for telemetry and diagnostics.',
     clusters: 'Clusters',
     attention: 'Attention',
     optimal: 'Optimal',

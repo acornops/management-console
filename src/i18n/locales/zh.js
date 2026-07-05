@@ -616,7 +616,6 @@ export const zh = {
     descriptionGlobal: '跨云厂商管理和监控你的 Kubernetes 集群。',
     clusterInventoryTitle: '集群库存',
     clusterInventoryBody: '已登记的集群可用于遥测和诊断。',
-    loadedClusterInventoryBody: '已加载的集群记录可用于遥测和诊断。',
     clusters: '集群',
     attention: '需要关注',
     optimal: '正常',

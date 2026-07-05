@@ -244,7 +244,11 @@ export function useWorkspaceClusterActions(args: {
           : workspace
       )
     );
-    await refreshWorkspaceSummary(cluster.workspaceId);
+    try {
+      await refreshWorkspaceSummary(cluster.workspaceId);
+    } catch (err) {
+      console.warn('Failed refreshing workspace summary after deleting cluster', err);
+    }
     setInstallAgentClusterId((current) => (current === cluster.id ? null : current));
     showToast(t('app.deletedCluster', { name: clusterName }));
 
