@@ -11,18 +11,21 @@ export const menuOptionClassName = ({
   selected = false,
   active = false,
   disabled = false,
+  destructive = false,
   className
 }: {
   selected?: boolean;
   active?: boolean;
   disabled?: boolean;
+  destructive?: boolean;
   className?: string;
 } = {}) =>
   twMerge(clsx(
     'type-ui flex min-h-9 w-full items-center gap-3 rounded-sm px-3 py-2 text-left outline-none transition-colors',
     selected && 'bg-ui-bg text-ui-text',
     !selected && active && 'bg-ui-bg text-ui-text',
-    !selected && !active && 'text-ui-text hover:bg-ui-bg',
+    !selected && !active && !destructive && 'text-ui-text hover:bg-ui-bg',
+    destructive && 'text-status-danger-text hover:bg-status-danger-soft',
     disabled && 'cursor-not-allowed opacity-45',
     className
   ));

@@ -77,12 +77,16 @@ export const zh = {
   },
   app: {
     workspace: '工作区',
+    workspaceNavigation: '工作区导航',
+    workspaceNavigation: '工作区导航',
     switchWorkspace: '切换工作区',
     noWorkspace: '暂无工作区',
     newWorkspace: '新建工作区',
     overview: '概览',
     agents: 'Agent',
     workflows: '工作流',
+    library: '工作流库',
+    workspaceNavigation: '工作区导航',
     schedules: '计划',
     approvals: '审批',
     clusters: 'Kubernetes 集群',
@@ -94,6 +98,8 @@ export const zh = {
     capabilities: '能力',
     inventory: '资源清单',
     automation: '自动化',
+    governance: '治理',
+    utilities: '实用工具',
     cluster: '集群',
     vm: '虚拟机',
     activeCluster: '当前集群',
@@ -883,6 +889,43 @@ export const zh = {
     leaveSuccess: '你已离开 {{workspace}}。',
     dangerTitle: '删除工作区',
     dangerBody: '会永久移除此工作区、成员访问权限、保存的设置、集群注册、虚拟机注册、诊断上下文和聊天历史。Agent 和集群内资源不会被移除。'
+  },
+  workspaceMcp: {
+    title: '工作区 MCP 服务器',
+    description: '连接通用 HTTP MCP 服务器、审核发现的工具，并控制可分配给 Agent 的能力。',
+    name: '服务器名称',
+    url: '服务器 URL',
+    auth: '身份验证',
+    authNone: '无',
+    authBearer: 'Bearer 令牌',
+    authHeader: '自定义请求头',
+    credential: '凭据',
+    credentialHelp: '仅可写入；API 永远不会返回已保存的值。',
+    rotateCredential: '新凭据',
+    rotate: '轮换凭据',
+    headerName: '请求头名称',
+    add: '添加 MCP 服务器',
+    loading: '正在加载工作区 MCP 服务器...',
+    empty: '尚未配置工作区 MCP 服务器。',
+    readOnly: '你的角色可以查看这些服务器，但不能更改凭据或工具访问权限。',
+    loadFailed: '无法加载工作区 MCP 服务器。',
+    actionFailed: '无法更新 MCP 服务器。',
+    status: '状态：{{status}}',
+    credentialSet: '已配置凭据',
+    credentialNotSet: '未配置凭据',
+    test: '测试并发现工具',
+    disable: '停用',
+    enable: '启用',
+    delete: '删除',
+    enabled: '已启用',
+    read: '读取',
+    write: '写入',
+    capabilityFor: '{{name}} 的能力级别',
+    noTools: '尚未发现任何工具。'
+  },
+  workflowCatalog: {
+    inlineFailure: '部分 Agent 或 MCP 能力无法加载。',
+    openMcpSettings: '打开 MCP 设置'
   },
   workspaceAiSettings: {
     title: 'AI 设置',
@@ -2005,6 +2048,40 @@ export const zh = {
     deleteBody: '删除 "{{name}}" 会移除此目标的 MCP 服务器连接和已发现的工具映射，且无法恢复。',
     deleteConsoleBoundary: '这不会删除外部 MCP 服务、控制平面之外的凭据或目标资源。',
     deleteAction: '删除'
+  },
+  agentsWorkflows: {
+    agents: {
+      title: 'Agents', description: '浏览 Agent 预设，并检查工作流可用的能力。', catalogLabel: 'Agent 目录', catalogHeading: 'Agent 目录',
+      toolbarLabel: 'Agent 目录搜索和筛选', searchPlaceholder: '搜索 Agent、工作流或能力', searchLabel: '搜索 Agent', statusFilterLabel: '按状态筛选 Agent',
+      resultCount: '显示 {{visible}} 个，共 {{total}} 个 Agent', newAgent: '新建 Agent', createPermission: '需要 manage_agents 权限才能创建 Agent。', emptyTitle: '此工作区暂无 Agent', emptyBody: '创建 Agent 预设，为工作流提供能力。', emptyReadOnlyBody: '工作区管理员创建 Agent 后，它们会显示在这里。',
+      noResultsTitle: '没有匹配的 Agent', noResultsBody: '请调整搜索或状态筛选。', filters: { all: '全部' },
+      status: { active: '已启用', draft: '草稿', disabled: '已停用' }, tabs: { overview: '概览', capabilities: '能力', activity: '活动', versions: '版本' },
+      fields: { identity: 'Agent', status: '状态', capabilities: '能力', assignment: '工作流分配' },
+      ownerVersion: '{{owner}} · v{{version}}', openProfile: '打开 {{name}} Agent 资料',
+      capabilityCounts: {
+        mcpServer: '{{count}} 个 MCP 服务器', tool: '{{count}} 个工具', skill: '{{count}} 个技能',
+        mcpServer_one: '{{count}} 个 MCP 服务器', mcpServer_other: '{{count}} 个 MCP 服务器',
+        tool_one: '{{count}} 个工具', tool_other: '{{count}} 个工具',
+        skill_one: '{{count}} 个技能', skill_other: '{{count}} 个技能'
+      },
+      workflowAssignment: {
+        count: '{{count}} 个工作流',
+        count_one: '{{count}} 个工作流', count_other: '{{count}} 个工作流', none: '未分配工作流',
+        overflow: '+{{count}}', open: '在工作流中打开 {{name}}'
+      },
+      runTest: '运行测试', edit: '编辑 Agent', reactivate: '重新启用', dangerZone: '危险操作', retryAll: '全部重试', unavailable: '部分实时数据暂不可用'
+    },
+    schedule: {
+      title: '计划工作流', description: '选择易读的周期，审核访问范围，然后确认接下来的运行时间。', close: '关闭计划工作流抽屉',
+      workflow: '工作流', noWorkflow: '未选择工作流', name: '计划名称', defaultName: '{{name}} 计划', frequency: '频率',
+      frequency_daily: '每天', frequency_weekdays: '工作日', frequency_weekly: '每周', frequency_custom: '自定义', time: '时间', timezone: '时区', local: '本地', weekdays: '运行日期',
+      monday: '星期一', tuesday: '星期二', wednesday: '星期三', thursday: '星期四', friday: '星期五', saturday: '星期六', sunday: '星期日',
+      inputs: '工作流输入', inputsHelp: '这些值会提供给每次计划运行。保存前必须填写所有必填值。',
+      context: '上下文访问', contextHelp: '仅批准此周期运行所需的上下文。', contextGrantHelp: '工作流可在每次计划运行时读取此上下文。',
+      previewing: '正在检查计划…', previewPending: '完成计划设置后可查看接下来的运行时间。', previewUnavailable: '计划预览暂不可用。',
+      advanced: '高级 Cron 和 JSON', cron: 'Cron 表达式', json: '输入默认值 JSON', invalidJson: '输入默认值必须是 JSON 对象。',
+      enabled: '创建后立即启用计划', cancel: '取消', create: '创建计划', creating: '正在创建…', createError: '无法创建工作流计划'
+    }
   },
   nodes: {
     title: '集群节点',

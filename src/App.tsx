@@ -14,6 +14,7 @@ import { useSidebarRouteTargets } from '@/app/useSidebarRouteTargets';
 import { useWorkspaceClusterActions } from '@/app/useWorkspaceClusterActions';
 import { useWorkspaceVirtualMachineCache } from '@/app/useWorkspaceVirtualMachineCache';
 import { useRecentInvestigationSync } from '@/app/useRecentInvestigationSync';
+import { useThemeTransition } from '@/hooks/useThemeTransition';
 import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from '@/app/appWorkspaceSummaries';
 import { isWorkspaceDataRoute, legacySettingsRedirectPath, workspaceLandingPath } from '@/app/appNavigationGuards';
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
@@ -133,6 +134,7 @@ const App: React.FC = () => {
     setUser,
     setWorkspaces
   });
+  const handleToggleTheme = useThemeTransition(toggleTheme);
   const {
     clusterCreationStep,
     clusterInstallCommand,
@@ -485,11 +487,10 @@ const App: React.FC = () => {
         onResendVerification={handleResendVerification}
         onRequestPasswordReset={handleRequestPasswordReset}
         onResetPassword={handleResetPassword}
-        onToggleTheme={toggleTheme}
+        onToggleTheme={handleToggleTheme}
       />
     );
   }
-
   const installAgentCluster = installAgentClusterId ? kubernetesClusterById.get(installAgentClusterId) || null : null;
   const installAgentWorkspace = installAgentCluster ? workspaceById.get(installAgentCluster.workspaceId) : undefined;
   return (
@@ -584,7 +585,7 @@ const App: React.FC = () => {
       theme={theme}
       toasts={toasts}
       toWorkspaceInvitation={toWorkspaceInvitation}
-      toggleTheme={toggleTheme}
+      toggleTheme={handleToggleTheme}
       updateKubernetesCluster={updateKubernetesCluster}
       updateWorkspace={updateWorkspace}
       user={user}

@@ -6,27 +6,28 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(__dirname, '../..');
 const workspaceAiSettingsPage = [
   readFileSync(resolve(root, 'src/pages/WorkspaceAiSettingsPage.tsx'), 'utf8'),
-  readFileSync(resolve(root, 'src/pages/WorkspaceAiSettingsPage.helpers.tsx'), 'utf8')
+  readFileSync(resolve(root, 'src/pages/WorkspaceAiSettingsPage.helpers.tsx'), 'utf8'),
+  readFileSync(resolve(root, 'src/hooks/useWorkspaceAiSettingsResource.ts'), 'utf8')
 ].join('\n');
 
 describe('WorkspaceAiSettingsPage source contracts', () => {
-  it('does not retain credential form state across workspace changes', () => {
+  it('keeps credential drafts tab-local while hydrating each workspace once', () => {
     expect(workspaceAiSettingsPage).toContain('const EMPTY_PROVIDER_KEYS');
     expect(workspaceAiSettingsPage).toContain('const workspaceIdRef = useRef(workspace.id);');
     expect(workspaceAiSettingsPage).toContain('const isMountedRef = useRef(true);');
-    expect(workspaceAiSettingsPage).toContain('workspaceIdRef.current = workspace.id;');
+    expect(workspaceAiSettingsPage).toContain('const hydratedWorkspaceIdRef = useRef<string | null>');
     expect(workspaceAiSettingsPage).toContain('isMountedRef.current = true;');
     expect(workspaceAiSettingsPage).toContain('isMountedRef.current = false;');
-    expect(workspaceAiSettingsPage).toContain('const currentAiSettings = aiSettings?.workspaceId === workspace.id ? aiSettings : null;');
-    expect(workspaceAiSettingsPage).toContain('setAiSettings(null);');
-    expect(workspaceAiSettingsPage).toContain('setBehaviorDraft(DEFAULT_BEHAVIOR_DRAFT);');
+    expect(workspaceAiSettingsPage).toContain('const currentAiSettings = aiSettingsResource.settings?.workspaceId === workspace.id');
+    expect(workspaceAiSettingsPage).toContain('hydratedWorkspaceIdRef.current === workspace.id');
+    expect(workspaceAiSettingsPage).toContain('setBehaviorDraft(behaviorDraftFromSettings(currentAiSettings));');
     expect(workspaceAiSettingsPage).toContain('setProviderKeys(EMPTY_PROVIDER_KEYS);');
     expect(workspaceAiSettingsPage).toContain('setCredentialErrors(EMPTY_CREDENTIAL_ERRORS);');
     expect(workspaceAiSettingsPage).toContain('setCredentialEditorProvider(null);');
     expect(workspaceAiSettingsPage).toContain('setDeleteCandidate(null);');
     expect(workspaceAiSettingsPage).toContain('setSavingAction(\'\');');
     expect(workspaceAiSettingsPage).toContain('}, [workspace.id]);');
-    expect(workspaceAiSettingsPage).not.toContain('}, [t, workspace.id]);');
+    expect(workspaceAiSettingsPage).not.toContain('controlPlaneApi.getWorkspaceAiSettings(workspace.id)');
   });
 
   it('ignores stale workspace mutation responses and serializes writes', () => {
@@ -39,6 +40,25 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain("setSavingAction('behavior');");
     expect(workspaceAiSettingsPage).toContain('disabled={!canSaveBehavior || isSaving}');
     expect(workspaceAiSettingsPage).toContain('if (isCurrentWorkspaceRequest()) setSavingAction(\'\');');
+    expect(workspaceAiSettingsPage).toContain('activeWorkspaceIdRef.current === targetWorkspaceId');
+    expect(workspaceAiSettingsPage).toContain('inFlightRequestsRef.current.get(targetWorkspaceId) === requestSequence');
+  });
+
+  it('shows an accessible reduced-motion skeleton only for an uncached load and makes failures retryable', () => {
+    expect(workspaceAiSettingsPage).toContain('aiSettingsResource.isLoading && !currentAiSettings');
+    expect(workspaceAiSettingsPage).toContain('<WorkspaceAiSettingsSkeleton label={t(\'workspaceAiSettings.loading\')} />');
+    expect(workspaceAiSettingsPage).toContain('role="status" aria-live="polite" aria-busy="true"');
+    expect(workspaceAiSettingsPage).toContain('className="sr-only">{label}</span>');
+    expect(workspaceAiSettingsPage).toContain('motion-safe:animate-pulse');
+    expect(workspaceAiSettingsPage).toContain('onClick={aiSettingsResource.retry}');
+    expect(workspaceAiSettingsPage).toContain("{t('common.retry')}");
+    expect(workspaceAiSettingsPage).not.toContain('InlineLoadingIndicator');
+  });
+
+  it('feeds every successful mutation into the retained snapshot without rehydrating credential mutations', () => {
+    expect(workspaceAiSettingsPage.match(/aiSettingsResource\.update\(updated\);/g)).toHaveLength(3);
+    expect(workspaceAiSettingsPage).toContain('hydratedWorkspaceIdRef.current = workspace.id;');
+    expect(workspaceAiSettingsPage).toContain('setBehaviorDraft(behaviorDraftFromSettings(updated));');
   });
 
   it('keeps credential state write-only and explicit about add versus rotate actions', () => {

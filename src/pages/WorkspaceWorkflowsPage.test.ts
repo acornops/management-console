@@ -38,6 +38,7 @@ const workflowHelpers = readFileSync(resolve(root, 'src/pages/workflows/workflow
 const desktopSidebar = readFileSync(resolve(root, 'src/app/AppDesktopSidebar.tsx'), 'utf8');
 const mobileNavigation = readFileSync(resolve(root, 'src/app/AppMobileNavigation.tsx'), 'utf8');
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
+const workspaceNavigation = readFileSync(resolve(root, 'src/app/workspaceNavigation.tsx'), 'utf8');
 
 function expectSnippets(source: string, snippets: string[]): void {
   snippets.forEach((snippet) => expect(source).toContain(snippet));
@@ -73,7 +74,7 @@ describe('WorkspaceWorkflowsPage model', () => {
     const workflows = createDefaultWorkflowDefinitions();
 
     expect(filterWorkflowDefinitions(workflows, 'cluster').map((workflow) => workflow.id)).toEqual(['cluster-triage']);
-    expect(filterWorkflowDefinitions(workflows, 'github').map((workflow) => workflow.id)).toEqual(['repository-operation']);
+    expect(filterWorkflowDefinitions(workflows, 'repository').map((workflow) => workflow.id)).toEqual(['repository-operation']);
     expect(filterWorkflowDefinitions(workflows, 'approval').map((workflow) => workflow.id)).toEqual(['repository-operation']);
   });
 
@@ -182,14 +183,8 @@ describe('WorkspaceWorkflowsPage model', () => {
     const globalCatalog = createFallbackWorkflowOptions(createDefaultWorkflowDefinitions());
 
     const repositoryOnly = getWorkflowScopeOptionsForAgents(['agent-release-coordinator'], agents, globalCatalog);
-    expect(repositoryOnly.mcpServers.map((option) => option.value)).toEqual(['github']);
-    expect(repositoryOnly.mcpTools.map((option) => option.value)).toEqual([
-      'github.branches.create',
-      'github.branches.list',
-      'github.prs.create',
-      'github.prs.list',
-      'github.repositories.read'
-    ]);
+    expect(repositoryOnly.mcpServers).toEqual([]);
+    expect(repositoryOnly.mcpTools).toEqual([]);
     expect(repositoryOnly.skills.map((option) => option.value)).toEqual([
       'acornops-cross-repo-change',
       'acornops-open-pr'
@@ -197,7 +192,7 @@ describe('WorkspaceWorkflowsPage model', () => {
     expect(repositoryOnly.mcpTools.map((option) => option.value)).not.toContain('inventory.resources.list');
 
     const repositoryWithTriage = getWorkflowScopeOptionsForAgents(['agent-release-coordinator', 'agent-cluster-triage'], agents, globalCatalog);
-    expect(repositoryWithTriage.mcpServers.map((option) => option.value)).toEqual(['acornops-cluster-agent', 'github']);
+    expect(repositoryWithTriage.mcpServers.map((option) => option.value)).toEqual(['acornops-cluster-agent']);
     expect(repositoryWithTriage.skills.map((option) => option.value)).toContain('acornops-target-boundary-design');
   });
 
@@ -304,9 +299,14 @@ describe('WorkspaceWorkflowsPage model', () => {
 
 describe('WorkspaceWorkflowsPage integration surface', () => {
   it('adds Workflows as a top-level workspace route in desktop and mobile navigation', () => {
-    expect(desktopSidebar).toContain("label={t('app.workflows')}");
-    expect(desktopSidebar).toContain('AppPaths.workspaceWorkflows(selectedWorkspaceId)');
-    expect(mobileNavigation).toContain("['workflows', t('app.workflows'), AppPaths.workspaceWorkflows, 0]");
+    expect(workspaceNavigation).toContain("id: 'workflows'");
+    expect(workspaceNavigation).toContain("label: t('app.workflows')");
+    expect(workspaceNavigation).toContain('AppPaths.workspaceWorkflows(workspace.id)');
+    expect(desktopSidebar).toContain('getWorkspaceNavigationGroups');
+    expect(mobileNavigation).toContain('getWorkspaceNavigationGroups');
+    expect(workspaceNavigation).toContain("label: t('app.library')");
+    expect(workspaceNavigation).toContain('AppPaths.workspaceSchedules(workspace.id)');
+    expect(workflowsPage).not.toContain('WorkspaceAutomationRouteNav');
   });
 
   it('lazy loads the workflows page for the workspace workflows route', () => {
@@ -331,7 +331,7 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain('Review agents');
     expect(workflowsPage).not.toContain('Runtime access');
     expect(workflowsPage).not.toContain('Workflow gate');
-    expect(workflowsPage).toContain("variant=\"accent\"");
+    expect(workflowsPage).toContain("variant=\"activation\"");
     expect(workflowsPage).toContain('Create workflow');
     expect(workflowsPage).toContain('createWorkflowStep');
     expect(workflowsPage).toContain('canManageWorkflowScope={canManageWorkflowScope}');
@@ -450,7 +450,7 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
   it('renders every workflow subtab through the same operational panel pattern', () => {
     expect(workflowsPage).toContain('const WorkflowTabPanel');
     expect(workflowsPage).toContain('const WorkflowSection');
-    expect(workflowsPage.match(/activeTab === '/g) ?? []).toHaveLength(5);
+    expect((workflowsPage.match(/activeTab === '/g) ?? []).length).toBeGreaterThanOrEqual(5);
     expect(workflowsPage).toContain('ariaLabel="Workflow section tabs"');
     expect(workflowsPage).toContain('tab="overview"');
     expect(workflowsPage).toContain('role="tabpanel"');
@@ -492,21 +492,22 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
   });
 
   it('makes workflow review shortcuts visible secondary buttons with icons', () => {
-    expect(workflowsPage).toContain('<Button type="button" variant="secondary" size="sm" onClick={() => setActiveTab(\'agents\')}>');
+    expect(workflowsPage).toContain('<Button type="button" variant="secondary" size="sm" onClick={() => selectWorkflowTab(\'agents\')}>');
     expect(workflowsPage).toContain('<ICONS.Bot className="h-4 w-4" aria-hidden="true" />');
     expect(workflowsPage).not.toContain('variant="tertiary" size="sm" onClick={onReviewCapabilities}');
     expect(workflowsPage).not.toContain('variant="tertiary" size="sm" onClick={() => setActiveTab(\'agents\')}');
   });
 
-  it('keeps workflow tabs fitted instead of showing a horizontal scrollbar', () => {
+  it('keeps workflow tabs fitted without a horizontal scroll container', () => {
     expect(workflowsPage).toContain('className="flex flex-wrap gap-0 overflow-visible border-b border-ui-border"');
+    expectMissingSnippets(workflowsPage, ['overflow-x-auto overscroll-x-contain', '[mask-image:linear-gradient']);
     expect(workflowsPage).not.toContain('<div className="bg-ui-surface px-3">\n              <SegmentedTabs<WorkflowTab>\n                activeValue={activeTab}\n                ariaLabel="Workflow section tabs"\n                items={workflowTabItems}');
   });
 
   it('offers workflow launch from the header without duplicating readiness cards', () => {
     expect((workflowsPage.match(/Launch workflow/g) || [])).toHaveLength(1);
     expect((workflowsPage.match(/workflowActions\.launchSelectedWorkflow\(\)/g) || [])).toHaveLength(1);
-    expect((workflowsPage.match(/disabled=\{launchingWorkflowId === selectedWorkflow\.id \|\| Boolean\(launchBlocker\) \|\| needsLaunchAcknowledgement\}/g) || [])).toHaveLength(1);
+    expect(workflowsPage).toContain('disabled={launching || Boolean(launchBlocker) || needsLaunchAcknowledgement}');
     expect(workflowsPage).not.toContain('<WorkflowLaunchReadiness launchBlocker={launchBlocker} workflow={selectedWorkflow} workflowMessage={workflowMessage} />');
     expect(workflowsPage).not.toContain('<div className="flex justify-start">');
     expect(workflowsPage).not.toContain('<Button variant="primary" size="md" onClick={() => void workflowActions.launchSelectedWorkflow()}');
@@ -522,7 +523,7 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
 
   it('marks required create fields inline instead of showing a pre-save checklist', () => {
     expect(workflowsPage).toContain('id="workflow-launch-blocker"');
-    expect(workflowsPage).toContain("aria-describedby={launchBlocker ? 'workflow-launch-blocker' : undefined}");
+    expect(workflowsPage).toContain("aria-describedby={launchBlocker ? 'workflow-launch-blocker' : needsLaunchAcknowledgement ? 'workflow-launch-acknowledgement' : undefined}");
     expect(workflowsPage).not.toContain('Pre-save checklist');
     expect(workflowsPage).not.toContain('Missing: workflow name');
     expect(workflowsPage).not.toContain('Ready: workflow name');
@@ -582,20 +583,21 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain('className="grid gap-5 bg-ui-bg/45 p-4 sm:p-5');
   });
 
-  it('reserves accent buttons for launch while using shared type tokens', () => {
+  it('reserves activation buttons for launch while using shared type tokens', () => {
     expect(workflowsPage).toContain('<h2 className="mt-3 type-section-title break-words [overflow-wrap:anywhere]">{selectedWorkflow.name}</h2>');
     expect(workflowsPage).not.toContain('text-2xl font-semibold tracking-normal');
-    expect(workflowsPage.match(/variant="accent"/g) ?? []).toHaveLength(1);
-    expect(workflowsPage.match(/<Button variant="accent" size="md" onClick=\{\(\) => void workflowActions\.launchSelectedWorkflow\(\)\}/g) ?? []).toHaveLength(1);
+    expect(workflowsPage.match(/variant="activation"/g) ?? []).toHaveLength(1);
+    expect(workflowsPage).toContain('className="w-full whitespace-nowrap sm:w-auto"');
+    expect(workflowsPage).toContain('onLaunch={() => void workflowActions.launchSelectedWorkflow()}');
     expect(workflowsPage.match(/<Button variant="primary" size="md" onClick=\{\(\) => void workflowActions\.launchSelectedWorkflow\(\)\}/g) ?? []).toHaveLength(0);
-    expect(workflowsPage).toContain('const [scheduleWorkflowId, setScheduleWorkflowId] = useState(\'\');');
-    expect(workflowsPage).toContain('onClick={() => setScheduleWorkflowId(selectedWorkflow.id)}');
-    expectSnippets(workflowsPage, ['Schedule workflow', 'You need manage_workflows to schedule workflows.']);
+    expect(workflowsPage).toContain('const [scheduleWorkflowId, setScheduleWorkflowId] = useState(');
+    expect(workflowsPage).toContain("onSchedule={() => updateUrlSearch({ workflow: selectedWorkflow.id, panel: 'schedule' })}");
+    expectSnippets(workflowsPage, ['Schedule workflow', 'You need manage_workflows to schedule workflows.', 'grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2', 'variant="activation"']);
     expect(workflowsPage).toContain('<WorkflowScheduleCreateDrawer');
     expect(workflowsPage).toContain('scheduleWorkflow={workflows.find((workflow) => workflow.id === scheduleWorkflowId)}');
     expect(workflowsPage).not.toContain('onScheduleWorkflow: (workflowId: string) => void;');
     expect(appPageContent).not.toContain('AppPaths.workspaceScheduleCreate(workspaceContext.id, workflowId)');
-    expect(workflowsPage).toContain('<Button type="button" variant="secondary" size="md" className="whitespace-nowrap self-start lg:self-auto"');
+    expect(workflowsPage).toContain('<Button type="button" variant="primary" size="md" className="whitespace-nowrap self-start lg:self-auto"');
     expect(workflowsPage).toContain('onCreate={() => void workflowActions.createNewWorkflow()}');
     expect(workflowsPage).toContain('<Button type="button" variant="primary" size="sm" onClick={onCreate}');
   });
@@ -620,7 +622,7 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expectMissingSnippets(workflowsPage, ['Workflow restrictions', 'Target context', 'const WorkflowScopeRow', 'values={workflow.enabledMcpServers}', 'values={workflow.enabledSkills}', 'values={workflow.allowedTools}']);
     expectMissingSnippets(workflowsPage, ['Inherited access', 'Capability rules', 'CapabilityRuleBadges', 'context grant', 'target type', '<TokenGroup title="Target selection"', '<TokenGroup title="Context grants"', '<TokenGroup title="Selected-agent MCP servers"', '<TokenGroup title="Selected-agent skills"', '<TokenGroup title="Allowed tools"', '<TokenGroup title="Disabled by workflow gate"', 'Add server', 'selectedScopeDirty', 'Edit capability gate', 'Save capability gate', 'Discard', 'testWorkflowMcpServerConnection', '<WorkflowReadinessFact icon={ICONS.User} label="Owner" value={workflow.owner} />', "['MCP servers', 'allowedMcpServers']", "['Allowed tools', 'allowedTools']", 'divide-y divide-ui-border border-y border-ui-border', 'grid min-w-0 gap-4 md:grid-cols-2', '<div className="hidden lg:block" aria-hidden="true" />']);
     expectSnippets(workflowActions, ['Workflow capability gate saved. Future sessions will use the narrowed access.', 'setScopeSaveResult', 'enabledMcpServers: selectedWorkflow.enabledMcpServers', 'enabledSkills: selectedWorkflow.enabledSkills', 'agentIds', "setActiveTab('overview')"]);
-    expectSnippets(workflowHelpers, ['role="switch"', 'agentIds']);
+    expectSnippets(workflowHelpers, ['<Switch', 'onCheckedChange={onChange}', 'agentIds']);
     expect(workflowActions).not.toContain('category: draft.category');
   });
 

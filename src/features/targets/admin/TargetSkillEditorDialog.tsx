@@ -243,7 +243,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
             <span />
             <div className="flex justify-end gap-3">
               <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>Cancel</Button>
-              <Button variant="accent" size="sm" onClick={onCreateNameNext} disabled={!createName.trim() || saving}>Next</Button>
+              <Button variant="primary" size="sm" onClick={onCreateNameNext} disabled={!createName.trim() || saving}>Next</Button>
             </div>
           </>
         ) : mode === 'create' ? (
@@ -251,7 +251,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
             <span />
             <div className="flex justify-end gap-3">
               <Button variant="secondary" size="sm" onClick={() => onStepChange('name')} disabled={saving}>Back</Button>
-              <Button variant="accent" size="sm" onClick={onSubmit} disabled={!canEditSkills || saving}>
+              <Button variant="primary" size="sm" onClick={onSubmit} disabled={!canEditSkills || saving}>
                 {saving ? 'Creating...' : 'Create Skill'}
               </Button>
             </div>
@@ -268,7 +268,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
             <Button variant="secondary" size="sm" onClick={onReset} disabled={!dirty || saving || loading}>Reset changes</Button>
             <div className="flex justify-end gap-3">
               <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>Cancel</Button>
-              <Button variant="accent" size="sm" onClick={onSubmit} disabled={!canEditSkills || !dirty || saving || loading}>
+              <Button variant="primary" size="sm" onClick={onSubmit} disabled={!canEditSkills || !dirty || saving || loading}>
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>

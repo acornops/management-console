@@ -57,11 +57,16 @@ export interface WorkflowOption {
   description?: string;
   disabled?: boolean;
   disabledReason?: string;
+  provenance?: {
+    source: 'workspace' | 'target';
+    provider?: 'github' | 'gitlab';
+    targetId?: string;
+    targetName?: string;
+  };
 }
 
 export interface WorkflowOptionsCatalog {
   clusters: WorkflowOption[];
-  repositories: WorkflowOption[];
   mcpServers: WorkflowOption[];
   mcpTools: WorkflowOption[];
   skills: WorkflowOption[];
@@ -71,32 +76,46 @@ export interface WorkflowOptionsCatalog {
   approvalPolicies: WorkflowOption[];
   runtimeLimits: WorkflowOption[];
   retentionPolicies: WorkflowOption[];
+  sourceAvailability: Record<string, {
+    status: 'available' | 'empty' | 'unavailable' | 'error';
+    message?: string;
+    retryable?: boolean;
+    errorCode?: string;
+  }>;
 }
 
 export interface WorkflowMcpServer {
   id: string;
+  workspaceId: string;
+  scope: 'workspace';
   name: string;
-  type?: string;
-  status?: string;
-  baseUrl?: string;
-  command?: string;
-  args?: string[];
-  environment?: Record<string, string>;
-  toolCount?: number;
-  tools?: string[];
+  url: string;
+  enabled: boolean;
+  authType: 'none' | 'bearer_token' | 'custom_header';
+  authHeaderName?: string;
+  credentialConfigured: boolean;
+  publicHeaders: Record<string, string>;
+  status: 'connected' | 'disabled' | 'not_checked' | 'error';
+  lastCheckedAt?: string;
+  discoveryError?: string;
+  tools: WorkflowMcpTool[];
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface WorkflowMcpServerInput {
-  id?: string;
+export interface WorkflowMcpTool {
   name: string;
-  type?: string;
-  baseUrl?: string;
-  command?: string;
-  args?: string[];
-  environment?: Record<string, string>;
-  tools?: string[];
+  title: string;
+  capability: 'read' | 'write';
+  enabled: boolean;
+}
+
+export interface WorkflowMcpServerInput {
+  name: string;
+  url: string;
+  enabled?: boolean;
+  auth?: { type: WorkflowMcpServer['authType']; credential?: string; headerName?: string };
+  publicHeaders?: Record<string, string>;
 }
 
 export interface WorkflowSessionResponse {
@@ -171,6 +190,13 @@ export interface WorkflowScheduleInput {
 
 export type WorkflowScheduleUpdateInput = Partial<WorkflowScheduleInput>;
 
+export interface WorkflowSchedulePreview {
+  valid: boolean;
+  summary: string;
+  nextRunTimes: string[];
+  errors: Array<{ field: string; message: string }>;
+}
+
 export interface WorkspaceApprovalInboxRow {
   approvalId: string;
   runId: string;
@@ -191,7 +217,22 @@ export interface WorkspaceApprovalInboxRow {
 
 export interface WorkspaceApprovalInboxResponse {
   items: WorkspaceApprovalInboxRow[];
+  pendingCount?: number;
   nextCursor?: string;
+}
+
+export function normalizeWorkspaceApprovalInboxResponse(value: unknown): WorkspaceApprovalInboxResponse {
+  const response = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  const pendingCount = typeof response.pendingCount === 'number' && Number.isInteger(response.pendingCount) && response.pendingCount >= 0
+    ? response.pendingCount
+    : undefined;
+  return {
+    items: Array.isArray(response.items) ? response.items as WorkspaceApprovalInboxRow[] : [],
+    ...(pendingCount === undefined ? {} : { pendingCount }),
+    ...(typeof response.nextCursor === 'string' ? { nextCursor: response.nextCursor } : {})
+  };
 }
 
 export type WorkflowSessionSummary = WorkflowSessionResponse['session'] & {
@@ -267,6 +308,13 @@ export function createWorkflowSchedule(workspaceId: string, input: WorkflowSched
   ).then((response) => response.schedule);
 }
 
+export function previewWorkflowSchedule(workspaceId: string, input: WorkflowScheduleInput): Promise<WorkflowSchedulePreview> {
+  return requestJson<WorkflowSchedulePreview>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/workflow-schedules/preview`,
+    { method: 'POST', body: JSON.stringify(input) }
+  );
+}
+
 export function updateWorkflowSchedule(
   workspaceId: string,
   scheduleId: string,
@@ -303,9 +351,9 @@ export function listWorkspaceApprovalInbox(
   if (params.limit) search.set('limit', String(params.limit));
   if (params.cursor) search.set('cursor', params.cursor);
   const query = search.toString();
-  return requestJson<WorkspaceApprovalInboxResponse>(
+  return requestJson<unknown>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/approvals${query ? `?${query}` : ''}`
-  );
+  ).then(normalizeWorkspaceApprovalInboxResponse);
 }
 
 export function createWorkflow(workspaceId: string, input: WorkflowCreateInput): Promise<WorkflowApiDefinition> {
@@ -392,12 +440,22 @@ export function testWorkflowMcpServerConnection(workspaceId: string, serverId: s
   );
 }
 
-export function listWorkflowMcpServerTools(workspaceId: string, serverId: string): Promise<string[]> {
-  return requestJson<{ items: Array<string | { name?: string; id?: string }> }>(
+export function listWorkflowMcpServerTools(workspaceId: string, serverId: string): Promise<WorkflowMcpTool[]> {
+  return requestJson<{ items: WorkflowMcpTool[] }>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers/${encodeURIComponent(serverId)}/tools`
-  ).then((page) => page.items
-    .map((tool) => typeof tool === 'string' ? tool : tool.name || tool.id || '')
-    .filter(Boolean));
+  ).then((page) => page.items);
+}
+
+export function updateWorkflowMcpTool(
+  workspaceId: string,
+  serverId: string,
+  toolName: string,
+  patch: { enabled: boolean; capability: 'read' | 'write' }
+): Promise<WorkflowMcpTool> {
+  return requestJson<{ tool: WorkflowMcpTool }>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers/${encodeURIComponent(serverId)}/tools/${encodeURIComponent(toolName)}`,
+    { method: 'PATCH', body: JSON.stringify(patch) }
+  ).then((response) => response.tool);
 }
 
 export function listWorkflowSessions(

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Switch } from '@/components/common/FormControls';
 import { createPortal } from 'react-dom';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -167,28 +168,16 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
         </span>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={skill.enabled}
+        <Switch
+          checked={skill.enabled}
           aria-disabled={!canToggleSkill}
-          aria-label={`${skill.enabled ? 'Disable' : 'Enable'} ${skill.name}`}
+          label={`${skill.enabled ? 'Disable' : 'Enable'} ${skill.name}`}
           disabled={!canEditSkills}
-          onClick={() => {
+          onCheckedChange={(enabled) => {
             if (!canToggleSkill) return;
-            onToggleSkill(skill.id, !skill.enabled);
+            onToggleSkill(skill.id, enabled);
           }}
-          className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-colors duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-55 aria-disabled:cursor-not-allowed ${
-            skill.enabled ? 'border-status-success bg-status-success' : 'border-ui-border bg-ui-text-muted/45'
-          }`}
-        >
-          <span className="sr-only">{skill.enabled ? 'Enabled' : 'Disabled'}</span>
-          <span
-            className={`absolute top-1 h-5 w-5 rounded-full bg-ui-surface shadow-sm transition-transform duration-200 ease-out ${
-              skill.enabled ? 'translate-x-[22px]' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        />
       </td>
       <td className="hidden px-4 py-6 text-xs text-ui-text-muted sm:px-6 md:table-cell lg:px-8">
         {skill.bundleStats.fileCount} files, {summarizeBytes(skill.bundleStats.totalBytes)}

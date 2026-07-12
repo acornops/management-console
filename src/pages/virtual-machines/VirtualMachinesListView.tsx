@@ -6,6 +6,7 @@ import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select, SelectOption } from '@/components/common/Select';
 import { actionCardButtonClassName, cardClassName } from '@/components/common/Card';
 import { Dialog } from '@/components/common/Dialog';
@@ -111,16 +112,10 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   };
 
   return (
-    <section className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <div className="flex flex-col gap-8">
-        <motion.header {...headerMotion} className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            <h1 className="type-route-title">{t('virtualMachines.title')}</h1>
-            <p className="type-body mt-2 max-w-md">
-              {t('virtualMachines.list.description')}
-            </p>
-          </div>
-          <div className="flex w-full min-w-0 flex-col gap-3 lg:w-auto lg:max-w-2xl lg:flex-row lg:items-center lg:justify-end">
+        <PageHeader title={t('virtualMachines.title')} description={t('virtualMachines.list.description')} actions={
+          <>
             <label htmlFor="vm-search" className="sr-only">{t('virtualMachines.list.search')}</label>
             <PageSearchInput
               id="vm-search"
@@ -136,13 +131,13 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
               ariaLabel={t('virtualMachines.list.filterByState')}
             />
             {canManageTargets && (
-              <Button onClick={onOpenRegisterVm} variant="secondary" size="md" className="whitespace-nowrap">
+              <Button onClick={onOpenRegisterVm} variant="primary" size="md" className="whitespace-nowrap">
                 <ICONS.Plus className="h-4 w-4" />
                 {t('virtualMachines.list.connectVm')}
               </Button>
             )}
-          </div>
-        </motion.header>
+          </>
+        } />
 
         <section className={cardClassName({ className: 'overflow-hidden' })}>
           <div className={`grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,0.7fr)] lg:items-center ${getVmPostureClass(attentionCount)}`}>
@@ -327,7 +322,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
               {isLoading ? t('virtualMachines.list.loadingBody') : t('virtualMachines.list.emptyBody')}
             </p>
             {!isLoading && canManageTargets && (
-              <Button onClick={onOpenRegisterVm} variant="accent" size="md" className="mt-6">
+              <Button onClick={onOpenRegisterVm} variant="primary" size="md" className="mt-6">
                 <ICONS.Plus className="h-4 w-4" />
                 {t('virtualMachines.list.connectVm')}
               </Button>
@@ -417,6 +412,6 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
           </Dialog>
         )}
       </AnimatePresence>
-    </section>
+    </PageShell>
   );
 };

@@ -47,7 +47,7 @@ describe('common component vocabulary primitives', () => {
       { value: 'overview', label: 'Overview', count: 2, icon: undefined, isActive: false, ariaSelected: false },
       { value: 'runs', label: 'Runs', count: undefined, icon: 'activity', isActive: true, ariaSelected: true }
     ]);
-    expect(segmentedTabButtonClassName({ isActive: true })).toContain('border-accent');
+    expect(segmentedTabButtonClassName({ isActive: true })).toContain('border-transparent');
     expect(segmentedTabButtonClassName({ isActive: false })).toContain('border-transparent');
   });
 
@@ -58,6 +58,15 @@ describe('common component vocabulary primitives', () => {
     expect(componentVocabulary).toContain('window.requestAnimationFrame(() => {');
     expect(componentVocabulary).toContain('document.getElementById(`${idBase}-${value}-tab`)?.focus({ preventScroll: true });');
     expect(componentVocabulary).toContain('focusSegmentedTab(nextTab.value);');
+  });
+
+  it('scopes one shared active indicator to each segmented tablist', () => {
+    const componentVocabulary = readFileSync(resolve(root, 'src/components/common/ComponentVocabulary.tsx'), 'utf8');
+
+    expect(componentVocabulary).toContain('<LayoutGroup id={layoutGroupId}>');
+    expect(componentVocabulary).toContain('{tab.isActive && <ActiveTabIndicator />}');
+    expect(componentVocabulary).toContain('aria-selected={tab.ariaSelected}');
+    expect(componentVocabulary).toContain('tabIndex={tab.isActive ? 0 : -1}');
   });
 
   it('builds accessible filter toggle models with pressed state and stable button sizing', () => {

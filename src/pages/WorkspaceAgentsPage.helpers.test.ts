@@ -1,7 +1,22 @@
+import i18next from 'i18next';
 import { describe, expect, it } from 'vitest';
 
+import { en } from '@/i18n/locales/en';
+import { zh } from '@/i18n/locales/zh';
 import { createDefaultAgentDefinitions } from '@/pages/agents/agentModel';
-import { filterVisibleAgents, mapApiAgent, withAgentAuditHistoryEntry } from '@/pages/WorkspaceAgentsPage.helpers';
+import { getAgentCapabilitySummary, getAgentWorkflowAssignmentSummary } from '@/pages/WorkspaceAgentsCatalog';
+import { createAgentEditDraft, filterVisibleAgents, isAgentEditDraftDirty, mapApiAgent, withAgentAuditHistoryEntry } from '@/pages/WorkspaceAgentsPage.helpers';
+
+async function catalogTranslator(language: 'en' | 'zh') {
+  const instance = i18next.createInstance();
+  await instance.init({
+    lng: language,
+    fallbackLng: 'en',
+    resources: { en: { translation: en }, zh: { translation: zh } },
+    interpolation: { escapeValue: false }
+  });
+  return instance.t.bind(instance);
+}
 
 describe('WorkspaceAgentsPage helpers', () => {
   it('resolves API agent owner IDs through loaded workspace members', () => {
@@ -42,31 +57,30 @@ describe('WorkspaceAgentsPage helpers', () => {
     expect(updated.auditHistory.slice(1)).toEqual(fallbackAgent.auditHistory);
   });
 
-  it('keeps catalog focus filters to assignment readiness states', () => {
+  it('detects unchanged and changed edit drafts', () => {
+    const [agent] = createDefaultAgentDefinitions('workspace-1');
+    const draft = createAgentEditDraft(agent);
+    expect(isAgentEditDraftDirty(agent, draft)).toBe(false);
+    expect(isAgentEditDraftDirty(agent, { ...draft, name: `${draft.name} updated` })).toBe(true);
+  });
+
+  it('sorts by server status and name, then filters by server status', () => {
     const agents = createDefaultAgentDefinitions('workspace-1');
     const readyAgent = {
       ...agents[0],
       targetScope: ['kubernetes:prod-cluster'],
       workflowsUsingAgent: ['Cluster triage']
     };
-    const reviewAgent = {
-      ...agents[1],
-      targetScope: ['repository:*'],
-      health: { status: 'healthy' as const, summary: 'Last test passed 1 minute ago' },
-      auditHistory: [
-        { id: 'agent-release-test', summary: 'Test run completed', occurredAt: '2026-07-01T00:00:00.000Z' }
-      ]
-    };
-    const candidates = [readyAgent, reviewAgent, agents[2]];
+    const reviewAgent = { ...agents[1], status: 'disabled' as const };
+    const draftAgent = { ...agents[2], status: 'draft' as const };
+    const candidates = [readyAgent, reviewAgent, draftAgent];
 
     expect(filterVisibleAgents(candidates, '', { focus: 'all' }).map((agent) => agent.id)).toEqual([
-      'agent-cluster-triage',
-      'agent-release-coordinator',
-      'agent-incident-reporter'
+      'agent-cluster-triage', 'agent-incident-reporter', 'agent-release-coordinator'
     ]);
-    expect(filterVisibleAgents(candidates, '', { focus: 'needs_review' }).map((agent) => agent.id)).toEqual(['agent-release-coordinator']);
-    expect(filterVisibleAgents(candidates, '', { focus: 'needs_test' }).map((agent) => agent.id)).toEqual(['agent-incident-reporter']);
-    expect(filterVisibleAgents(candidates, '', { focus: 'ready' }).map((agent) => agent.id)).toEqual(['agent-cluster-triage']);
+    expect(filterVisibleAgents(candidates, '', { focus: 'active' }).map((agent) => agent.id)).toEqual(['agent-cluster-triage']);
+    expect(filterVisibleAgents(candidates, '', { focus: 'draft' }).map((agent) => agent.id)).toEqual(['agent-incident-reporter']);
+    expect(filterVisibleAgents(candidates, '', { focus: 'disabled' }).map((agent) => agent.id)).toEqual(['agent-release-coordinator']);
   });
 
   it('excludes the system workflow orchestrator from workspace agent catalog results', () => {
@@ -82,5 +96,39 @@ describe('WorkspaceAgentsPage helpers', () => {
     expect(filterVisibleAgents([systemOrchestrator, workspaceAgent], '', { focus: 'all' }).map((agent) => agent.id)).toEqual([
       'agent-cluster-triage'
     ]);
+  });
+
+  it('localizes singular and plural capability counts', async () => {
+    const [agent] = createDefaultAgentDefinitions('workspace-1');
+    const counts = { ...agent, mcpServers: [], tools: ['inventory.list'], skills: ['triage', 'reporting'] };
+    const enT = await catalogTranslator('en');
+    const zhT = await catalogTranslator('zh');
+
+    expect(getAgentCapabilitySummary(counts, enT)).toBe('0 MCP servers · 1 tool · 2 skills');
+    expect(getAgentCapabilitySummary(counts, zhT)).toBe('0 个 MCP 服务器 · 1 个工具 · 2 个技能');
+  });
+
+  it('summarizes zero, one, and many workflow assignments with compact overflow', async () => {
+    const [agent] = createDefaultAgentDefinitions('workspace-1');
+    const t = await catalogTranslator('en');
+
+    expect(getAgentWorkflowAssignmentSummary({ ...agent, workflowsUsingAgent: [] }, t)).toEqual({
+      countLabel: '0 workflows',
+      emptyLabel: 'No assigned workflows',
+      firstWorkflow: undefined,
+      overflowLabel: undefined
+    });
+    expect(getAgentWorkflowAssignmentSummary({ ...agent, workflowsUsingAgent: ['Cluster triage'] }, t)).toEqual({
+      countLabel: '1 workflow',
+      emptyLabel: undefined,
+      firstWorkflow: 'Cluster triage',
+      overflowLabel: undefined
+    });
+    expect(getAgentWorkflowAssignmentSummary({ ...agent, workflowsUsingAgent: ['Cluster triage', 'Audit access', 'Report incident'] }, t)).toEqual({
+      countLabel: '3 workflows',
+      emptyLabel: undefined,
+      firstWorkflow: 'Cluster triage',
+      overflowLabel: '+2'
+    });
   });
 });

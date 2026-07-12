@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
 import React, { useRef } from 'react';
+import { LayoutGroup } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { twMerge } from 'tailwind-merge';
+import { ActiveTabIndicator } from '@/components/common/ActiveTabIndicator';
 
 export interface ResourceCategoryTabModel<T extends string> {
   value: T;
@@ -49,6 +51,7 @@ export const ResourceCategoryTabs = <T extends string,>({
   ariaLabel?: string;
 }) => {
   const { t } = useTranslation();
+  const layoutGroupId = React.useId();
   const tabs = getResourceCategoryTabModel({
     categories,
     active,
@@ -80,12 +83,13 @@ export const ResourceCategoryTabs = <T extends string,>({
   };
 
   return (
-    <div
-      role="tablist"
-      aria-label={ariaLabel}
-      className={twMerge(clsx('flex w-full max-w-full items-center overflow-x-auto border-b border-ui-border', className))}
-    >
-      {tabs.map((tab, index) => (
+    <LayoutGroup id={layoutGroupId}>
+      <div
+        role="tablist"
+        aria-label={ariaLabel}
+        className={twMerge(clsx('flex w-full max-w-full items-center overflow-x-auto border-b border-ui-border', className))}
+      >
+        {tabs.map((tab, index) => (
         <button
           key={tab.value}
           ref={(element) => { tabRefs.current[index] = element; }}
@@ -96,9 +100,9 @@ export const ResourceCategoryTabs = <T extends string,>({
           onClick={() => onSelect(tab.value)}
           onKeyDown={(event) => handleTabKeyDown(event, index)}
           className={twMerge(clsx(
-            'inline-flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-4 text-xs font-bold uppercase tracking-[0.04em] text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25',
+            'relative inline-flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-4 text-xs font-bold uppercase tracking-[0.04em] text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25',
             tab.isActive
-              ? 'border-accent text-accent-strong'
+              ? 'border-transparent text-accent-strong'
               : 'border-transparent hover:text-ui-text'
           ))}
         >
@@ -108,8 +112,10 @@ export const ResourceCategoryTabs = <T extends string,>({
               {tab.count}
             </span>
           )}
+          {tab.isActive && <ActiveTabIndicator />}
         </button>
-      ))}
-    </div>
+        ))}
+      </div>
+    </LayoutGroup>
   );
 };

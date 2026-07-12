@@ -132,7 +132,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       {formatUserDateTime(issueTimestamp(issue))}
                     </td>
                     <td className="px-5 py-4 align-top text-right">
-                      <Button onClick={() => onOpenIssueTriage(issue)} variant="accent" size="md">
+                      <Button onClick={() => onOpenIssueTriage(issue)} variant="primary" size="md">
                         <Terminal className="h-4 w-4" />
                         {t('virtualMachines.overview.runTriage')}
                       </Button>
@@ -159,7 +159,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                 </p>
                 <h2 className="type-row-title mt-4">{issue.title}</h2>
                 <p className="type-body mt-2">{issue.reason || issue.summary}</p>
-                <Button onClick={() => onOpenIssueTriage(issue)} variant="accent" size="md" className="mt-4">
+                <Button onClick={() => onOpenIssueTriage(issue)} variant="primary" size="md" className="mt-4">
                   <Terminal className="h-4 w-4" />
                   {t('virtualMachines.overview.runTriage')}
                 </Button>

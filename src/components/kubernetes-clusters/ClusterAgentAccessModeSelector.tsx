@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AgentAccessMode } from '@/services/control-plane/types';
+import { Radio } from '@/components/common/FormControls';
 
 interface ClusterAgentAccessModeSelectorProps {
   value: AgentAccessMode;
@@ -57,15 +58,14 @@ export const ClusterAgentAccessModeSelector: React.FC<ClusterAgentAccessModeSele
                 disabled ? 'cursor-not-allowed opacity-60' : ''
               ].join(' ')}
             >
-              <input
+              <Radio
                 id={inputId}
-                type="radio"
                 name={`${idPrefix}-agent-access-mode`}
                 value={mode.value}
                 checked={checked}
                 disabled={disabled}
                 onChange={() => onChange(mode.value)}
-                className="mt-1 h-4 w-4 shrink-0 accent-[rgb(var(--brand-orange-rgb))]"
+                className="mt-1"
               />
               <span className="min-w-0">
                 <span className="block text-sm font-bold text-ui-text">{t(mode.labelKey)}</span>

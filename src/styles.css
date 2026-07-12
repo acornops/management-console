@@ -52,6 +52,33 @@
   --status-danger-rgb: 193 49 64;
   --status-danger-soft-rgb: 255 233 232;
   --status-danger-text-rgb: 154 28 46;
+  --route-padding-x: 1rem;
+  --route-padding-y: 1.5rem;
+  --header-content-gap: 2rem;
+  --section-gap: 1.5rem;
+  --surface-padding: 1rem;
+  --table-row-padding-y: 0.875rem;
+  --control-height-compact: 2.25rem;
+  --control-height-default: 2.75rem;
+  --overlay-padding-x: 1.25rem;
+  --overlay-padding-y: 1rem;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --route-padding-x: 1.5rem;
+    --surface-padding: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --route-padding-x: 2.5rem;
+    --route-padding-y: 2rem;
+    --section-gap: 2rem;
+    --overlay-padding-x: 1.5rem;
+    --overlay-padding-y: 1.25rem;
+  }
 }
 
 .dark {
@@ -126,6 +153,45 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Theme changes recolour the page in place: token-driven surfaces ease through
+   their own colour transitions (see the html rule above) while live motion — the
+   login "Squirrel Chasing Acorns" illustration — keeps running, never paused and
+   never snapshotted. A single decorative ripple expands from the clicked toggle
+   to acknowledge the switch. It is non-occluding (translucent, pointer-events:
+   none) so it never hides the illustration, and it removes itself on animationend. */
+.theme-reveal-ripple {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--theme-reveal-x) var(--theme-reveal-y),
+    rgb(var(--brand-orange-rgb) / 0.16),
+    rgb(var(--brand-orange-rgb) / 0.06) 45%,
+    transparent 72%
+  );
+  clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+  will-change: clip-path, opacity;
+  animation: theme-reveal-ripple 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes theme-reveal-ripple {
+  0% {
+    clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    clip-path: circle(var(--theme-reveal-radius) at var(--theme-reveal-x) var(--theme-reveal-y));
+    opacity: 0;
+  }
+}
+
 .ui-checkbox {
   appearance: none;
   background-position: center;
@@ -181,56 +247,97 @@ body {
   height: 100%;
 }
 
-/* Ambient depth behind the evidence run. Motion is driven by Framer Motion; this
-   layer only breathes. */
-.login-evidence-glow {
-  position: absolute;
-  inset: -8% 0 12% 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(58% 52% at 56% 44%, rgb(var(--brand-orange-rgb) / 0.1), transparent 70%);
-  animation: login-evidence-glow-breathe 6s ease-in-out infinite;
+/* The login illustration is an operational story, not an app preview. A squirrel
+   bounds after a trail of acorns while triage step cards float alongside the
+   chase. Colours resolve to theme tokens so the scene reads in light and dark;
+   this CSS supplies only the ambient motion, which rests under reduced motion. */
+.login-hunt-panel {
+  background:
+    radial-gradient(
+      125% 105% at 72% 16%,
+      color-mix(in oklab, rgb(var(--surface-strong-rgb)), rgb(var(--brand-orange-rgb)) 6%) 0%,
+      rgb(var(--surface-strong-rgb)) 52%,
+      rgb(var(--bg-rgb)) 100%
+    );
 }
 
-.login-squirrel-svg {
+.login-hunt-bloom {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: login-hunt-bloom 9s ease-in-out infinite;
+}
+
+.login-hunt-scene {
   display: block;
   height: auto;
   overflow: visible;
   width: 100%;
 }
 
-.login-squirrel-tail {
-  transform-origin: 22% 40%;
+.login-hunt-squirrel {
+  transform-box: fill-box;
+  transform-origin: 50% 70%;
+  will-change: transform;
+  animation: login-hunt-bound 0.65s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-.login-squirrel-face {
-  filter: drop-shadow(0 0.08rem 0 rgb(var(--text-rgb) / 0.05));
+.login-hunt-tail {
+  transform-box: fill-box;
+  transform-origin: 55% 88%;
+  will-change: transform;
+  animation: login-hunt-tail-wave 0.65s cubic-bezier(0.45, 0, 0.55, 1) infinite 0.08s;
 }
 
-.login-path-rail {
-  background: linear-gradient(90deg, rgb(var(--brand-orange-rgb) / 0), rgb(var(--brand-orange-rgb) / 0.55), rgb(var(--brand-orange-rgb) / 0));
+.login-hunt-leg-front {
+  transform-box: fill-box;
+  will-change: transform;
+  animation: login-hunt-front-reach 0.65s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-.login-path-node {
-  background: rgb(var(--surface-rgb) / 1);
-  border: 2px solid rgb(var(--brand-orange-rgb) / 0.56);
-  box-shadow: 0 0 0 0 rgb(var(--brand-orange-rgb) / 0);
+.login-hunt-leg-hind {
+  transform-box: fill-box;
+  will-change: transform;
+  animation: login-hunt-hind-kick 0.65s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.login-hunt-shadow {
+  transform-box: fill-box;
   transform-origin: center;
-  will-change: transform, box-shadow;
+  animation: login-hunt-shadow 0.65s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-.login-signal-card {
-  transform-origin: center;
-  will-change: transform, opacity;
+.login-hunt-streak {
+  animation: login-hunt-streak 0.65s ease-out infinite;
 }
 
-.login-resolution-card {
-  border: 1px solid rgb(var(--border-rgb) / 0.96);
-  border-radius: 0.5rem;
-  background: rgb(var(--surface-rgb) / 1);
-  box-shadow: 0 12px 28px rgb(var(--text-rgb) / 0.08);
+.login-hunt-trail {
+  animation: login-hunt-trail 2.2s linear infinite;
+}
+
+.login-hunt-dust {
+  transform-box: fill-box;
   transform-origin: center;
-  will-change: transform, opacity;
+  animation: login-hunt-puff 0.65s ease-out infinite;
+}
+
+.login-hunt-acorn {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  will-change: transform;
+  animation: login-hunt-hop 1.4s ease-in-out infinite;
+}
+
+.login-hunt-card {
+  will-change: transform;
+  animation: login-hunt-card-float 5.5s ease-in-out infinite;
+}
+
+.login-hunt-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: login-hunt-dot 2.2s ease-in-out infinite;
 }
 
 @keyframes loading-bar-sweep {
@@ -279,16 +386,148 @@ body {
   }
 }
 
-@keyframes login-evidence-glow-breathe {
+@keyframes login-hunt-bound {
   0%,
   100% {
-    opacity: 0.85;
+    transform: translate(8px, -16px) rotate(-6deg);
+  }
+
+  50% {
+    transform: translate(0, 2px) rotate(4deg);
+  }
+}
+
+@keyframes login-hunt-front-reach {
+  0%,
+  100% {
+    transform: rotate(-34deg);
+  }
+
+  50% {
+    transform: rotate(14deg);
+  }
+}
+
+@keyframes login-hunt-hind-kick {
+  0%,
+  100% {
+    transform: rotate(8deg);
+  }
+
+  50% {
+    transform: rotate(-20deg);
+  }
+}
+
+@keyframes login-hunt-tail-wave {
+  0%,
+  100% {
+    transform: rotate(7deg);
+  }
+
+  50% {
+    transform: rotate(-7deg);
+  }
+}
+
+@keyframes login-hunt-shadow {
+  0%,
+  100% {
+    opacity: 0.13;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 0.24;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes login-hunt-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1.05, 0.95);
+  }
+
+  12% {
+    transform: translateY(-3px) scale(1, 1);
+  }
+
+  50% {
+    transform: translateY(-15px) scale(0.98, 1.02);
+  }
+
+  88% {
+    transform: translateY(-3px) scale(1, 1);
+  }
+}
+
+@keyframes login-hunt-card-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes login-hunt-puff {
+  0% {
+    opacity: 0.42;
+    transform: scale(0.3);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes login-hunt-trail {
+  to {
+    stroke-dashoffset: -44;
+  }
+}
+
+@keyframes login-hunt-dot {
+  0%,
+  100% {
+    opacity: 1;
     transform: scale(1);
   }
 
   50% {
-    opacity: 1;
-    transform: scale(1.03);
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes login-hunt-bloom {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes login-hunt-streak {
+  0% {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+
+  25% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50px);
   }
 }
 
@@ -411,18 +650,29 @@ body {
     box-shadow: none;
   }
 
-  .login-evidence-glow {
+  .login-hunt-bloom,
+  .login-hunt-squirrel,
+  .login-hunt-tail,
+  .login-hunt-leg-front,
+  .login-hunt-leg-hind,
+  .login-hunt-shadow,
+  .login-hunt-acorn,
+  .login-hunt-card,
+  .login-hunt-dot,
+  .login-hunt-trail {
     animation: none !important;
-    opacity: 0.9;
+    transform: none;
   }
 
-  .login-squirrel-svg,
-  .login-signal-card,
-  .login-path-node,
-  .login-resolution-card {
+  .login-hunt-streak,
+  .login-hunt-dust {
     animation: none !important;
-    opacity: 1;
-    transform: none;
+    opacity: 0;
+  }
+
+  .theme-reveal-ripple {
+    animation: none !important;
+    opacity: 0;
   }
 }
 

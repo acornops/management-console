@@ -91,10 +91,19 @@ spacing:
   lg: "16px"
   xl: "20px"
   route-x: "40px"
+  route-y: "32px"
+  header-content: "32px"
+  section: "32px"
+  surface: "20px"
+  row-y: "14px"
+  control-compact: "36px"
+  control-default: "44px"
+  overlay-x: "24px"
+  overlay-y: "20px"
 components:
   button-primary:
     backgroundColor: "{colors.ink-text}"
-    textColor: "{colors.paper-surface}"
+    textColor: "{colors.warm-canvas}"
     rounded: "{rounded.sm}"
     padding: "10px 16px"
   button-secondary:
@@ -102,9 +111,9 @@ components:
     textColor: "{colors.ink-text}"
     rounded: "{rounded.sm}"
     padding: "10px 16px"
-  button-accent:
+  button-activation:
     backgroundColor: "{colors.signal-orange}"
-    textColor: "{colors.paper-surface}"
+    textColor: "{colors.warm-canvas}"
     rounded: "{rounded.sm}"
     padding: "10px 16px"
   search-field:
@@ -114,7 +123,7 @@ components:
     height: "44px"
   status-chip:
     backgroundColor: "{colors.success-soft}"
-    textColor: "{colors.success}"
+    textColor: "{colors.success-text}"
     rounded: "{rounded.pill}"
     padding: "2px 8px"
   surface-card:
@@ -122,6 +131,15 @@ components:
     textColor: "{colors.ink-text}"
     rounded: "{rounded.md}"
     padding: "16px"
+  navigation-item:
+    backgroundColor: "{colors.warm-canvas}"
+    textColor: "{colors.ink-text}"
+    rounded: "{rounded.sm}"
+    height: "40px"
+  segmented-tab-active:
+    textColor: "{colors.signal-orange-strong}"
+    padding: "8px 12px"
+    height: "44px"
 ---
 
 # Design System: AcornOps Management Console
@@ -140,6 +158,7 @@ The ledger reads in two lights. A light theme and a dark theme share one warm hu
 - Warm neutral shell with one controlled orange signal.
 - Dense but readable pages for repeated operational scanning.
 - Familiar product controls with predictable keyboard and focus behavior.
+- Route-stable navigation that changes structure, not meaning, across breakpoints.
 - Borders and tonal layers before shadow.
 - Motion only when it explains state.
 - Dual light and dark themes, driven entirely by design tokens.
@@ -176,6 +195,10 @@ The palette is warm, inspectable, and intentionally quiet. The canonical source 
 ### Dual Theme
 
 The console ships both a light and a dark theme, toggled by a `dark` class on the root (`darkMode: 'class'`). Both are defined as OKLCH tokens in `:root` and `.dark` within `src/styles.css`, each mirrored to an `-rgb` triple so Tailwind alpha utilities resolve in either theme. The light theme is the warm-canvas ledger described above. The dark theme keeps the same warm hue family: near-black warm surfaces (`bg` near `oklch(0.18 0.008 60)`), lifted warm panels, and lightened orange, metric, and semantic ramps tuned for contrast on dark surfaces. Orange stays the single signal in both themes.
+
+On the login screen and authenticated desktop and mobile navigation, supported browsers reveal the new theme outward from the clicked theme control through the View Transition API. The token change is captured as one composited surface, the clicked sun or moon control crosses state, and the ambient login illustration pauses during capture. Reduced-motion users and browsers without View Transitions receive the new theme immediately with no morph.
+
+The reveal lasts `320ms` with the standard quartic ease-out and the control swaps in `160ms`. A second toggle cancels and cleans up the active reveal before starting the next one.
 
 ### Named Rules
 
@@ -221,8 +244,7 @@ The console is flat by default. Depth comes from warm surfaces, borders, and lay
 ### Shadow Vocabulary
 - **Subtle Surface** (`shadow-sm`, approximately `0 1px 2px rgb(0 0 0 / 0.05)`): Cards, secondary buttons, small panels.
 - **Dialog Lift** (`shadow-2xl`): Modal and drawer panels only.
-- **Evidence Card Lift** (`0 12px 28px rgb(var(--text-rgb) / 0.08)`): Login evidence illustration surfaces and other rare demonstration surfaces.
-- **Focus Ring** (`0 0 0 2px rgb(var(--brand-orange-rgb) / 0.20 to 0.25)`): Keyboard focus and focused fields.
+- **Focus Ring** (`0 0 0 2px rgb(var(--brand-orange-rgb) / 0.15 to 0.25)`): Keyboard focus and focused fields.
 
 ### Named Rules
 
@@ -237,11 +259,28 @@ The console is flat by default. Depth comes from warm surfaces, borders, and lay
 Buttons are compact, predictable, and text-led. They use lucide icons when an icon clarifies the command.
 
 - **Shape:** Gently curved rectangles (`6px`).
-- **Primary:** Filled neutral, near-ink background with paper text. Use for the strongest action on a utilitarian screen.
-- **Accent:** Controlled orange fill for activation moments only.
+- **Primary:** Filled neutral, near-ink background with canvas text. Use for the strongest action on a utilitarian screen.
+- **Activation:** Controlled orange fill for workflow launch and activation moments only. Create, Add, Invite, Save, Continue, and routine Run actions use neutral Primary.
 - **Secondary:** Paper surface, warm border, ink text, small shadow.
 - **Tertiary / Ghost:** Text-muted default, soft orange wash on hover.
-- **Hover / Focus:** Color and border transitions at about `200ms`; focus uses a visible orange ring.
+- **Sizing:** Default controls are at least `44px` high; compact controls may reduce to `36px` from the `sm` breakpoint upward.
+- **Hover / Focus / Disabled:** Color and border transitions run at about `200ms`; keyboard focus uses a visible orange ring; disabled controls keep their dimensions, reduce to `50%` opacity, and use a not-allowed cursor.
+
+### Route composition and spacing
+
+Authenticated routes compose through `PageShell` and `PageHeader`. `PageShell` owns scrolling, responsive route margins, width constraints, and embedded mode. `PageHeader` owns route title hierarchy, description width, context or breadcrumbs, action wrapping, and responsive alignment.
+
+The canonical rhythm is token-driven:
+
+- Route padding: `16px / 24px` on mobile, `24px / 24px` from `sm`, and `40px / 32px` from `lg`.
+- Header-to-content gap: `32px`.
+- Section gap: `24px` on compact viewports and `32px` from `lg`.
+- Surface padding: `16px` on mobile and `20px` from `sm`.
+- Dense table row vertical padding: `14px`.
+- Controls: `44px` by default; `36px` compact controls only from `sm` upward.
+- Dialog and drawer padding: `20px / 16px` on compact viewports and `24px / 20px` from `lg`.
+
+Individual pages retain information architecture suited to the task. Split panes, resource explorers, chat transcripts, metric layouts, and tables may differ. Route chrome, title hierarchy, action semantics, control behavior, state treatment, spacing tokens, and overlay anatomy do not differ. Embedded surfaces must be documented in `scripts/design-system-exceptions.json` and still use shared controls and state patterns.
 
 ### Chips
 
@@ -260,23 +299,30 @@ Cards are used for repeated items, dialogs, framed tools, and list groups. Page 
 - **Shadow Strategy:** `shadow-sm` only when the card must separate from a similarly colored surface.
 - **Border:** Warm border is the primary container boundary.
 - **Internal Padding:** Usually `16px` to `20px`; dense rows can use `12px`.
+- **Interactive State:** Hover and focus-within may strengthen the border with a low-opacity orange and lift the surface tonally. Do not add a larger shadow.
 
 ### Inputs / Fields
 
 Inputs are quiet and stable.
 
-- **Style:** Warm border, paper or canvas fill, `8px` radius for search fields and `6px` to `8px` for form fields.
-- **Focus:** Orange ring or border shift, never a heavy glow.
-- **Error / Disabled:** Semantic text and soft semantic backgrounds; disabled uses opacity plus cursor change.
+- **Style:** Warm border, paper fill, `8px` radius, subtle inset highlight, and a stable `44px` minimum height.
+- **Hover / Focus:** Hover strengthens the orange border to `25%`; focus uses a `45%` border and a `15%` two-pixel ring, never a heavy glow.
+- **Error / Disabled:** Invalid fields use danger border and soft danger fill; disabled fields retain layout, reduce to `60%` opacity, and use a not-allowed cursor.
 
 ### Navigation
 
-Navigation is familiar product chrome: desktop sidebar, mobile top navigation, route-stable links, and compact context switchers.
+Navigation is familiar product chrome driven by one route model. Workspace destinations are grouped as inventory, automation, governance, and utilities, with permission-aware omissions. Workspace, target, workflow, and settings destinations remain real links so copy, open-in-new-tab, and browser history continue to work.
 
-- **Default:** Muted text on neutral surfaces.
-- **Hover:** Soft orange wash and stronger orange text.
-- **Active:** Clear selected state with text, background, and sometimes a badge. Do not rely on color alone.
-- **Mobile:** Use standard dialog/drawer patterns with focus trapping and explicit close controls.
+- **Desktop (`1024px` and wider):** A fixed `256px` sidebar uses `40px` rows, `6px` corners, muted text, and grouped section labels. Hover shifts to the canvas surface and stronger ink. Active rows use the same canvas surface, semibold ink, an orange icon, `aria-current`, and an optional count badge.
+- **Mobile (below `1024px`):** A `64px` top bar opens a bounded dialog navigation panel. The panel preserves the desktop groups and destinations, traps focus, exposes an explicit close control, and returns focus to the trigger.
+- **State:** Focus uses the standard orange ring. Press feedback may scale to `0.98`; it becomes instant under reduced motion. Status and approval counts reserve stable space when their appearance would otherwise shift labels.
+
+### Tabs and Filters
+
+Tabs and filters share the canonical compact-control vocabulary rather than page-local pills.
+
+- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed, and keyboard navigable with arrow, Home, and End keys. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard quartic ease-out and snaps instantly under reduced motion.
+- **Filters:** `44px` high with `6px` corners, a visible border, `aria-pressed`, and optional stable counts. Active filters remain neutral paper controls with a stronger orange border, not filled orange pills.
 
 ### Dialogs and Drawers
 
@@ -284,7 +330,7 @@ Dialogs are reserved for confirmation, replacement invites, credential display, 
 
 - **Shape:** `12px` for dialog panels, `8px` to `12px` for drawer surfaces.
 - **Overlay:** Text-color scrim in light mode, darker bg scrim in dark mode.
-- **Motion:** Framer Motion state transitions only. No page-load choreography.
+- **Motion:** Framer Motion state transitions only. No page-load choreography. Reduced-motion variants complete in `0.01s` or immediately.
 - **Focus:** Initial focus and focus wrap are required.
 
 ### Status & Signal Motion
@@ -295,11 +341,18 @@ Motion is a state channel, never decoration. A small vocabulary of functional in
 - **Reasoning Sheen** (`reasoning-summary-active`): A slow orange sheen swept across reasoning-summary text while a model is actively reasoning. This is the single sanctioned use of animated `background-clip: text`; it signals live reasoning state and falls back to solid `currentColor` under reduced motion. It is not decorative gradient text and does not license gradient text anywhere else.
 - **Loading Sweep** (`loading-bar-sweep`): An indeterminate progress sweep for pending loads.
 - **Pending Step Pulse** (`pending-agent-step-pulse`): A soft warning-tinted ring pulse marking a pending step in an agent run trace.
-- **Login Evidence Choreography** (`login-evidence-glow`, `login-path-*`, `login-signal-card`, `login-resolution-card`): The login page's evidence-run illustration, the one place ambient motion is allowed, and only on an unauthenticated brand surface.
+- **Theme Reveal** (`theme-reveal`): A `320ms` radial reveal originating at the theme control, with a `160ms` control swap. Unsupported browsers and reduced-motion users switch instantly.
+- **Active Tab Indicator** (`active-tab-indicator`): A shared `2px` underline that moves between related tabs in `200ms`; reduced motion removes the travel.
+
+### Login Brand Illustration
+
+The desktop login surface may carry the themed “Squirrel Chasing Acorns” operational story: a squirrel follows evidence through Observe, Correlate, and Resolve cards. This is the one reusable permission for ambient brand motion. It appears only on the unauthenticated brand surface at `1024px` and wider, uses theme and semantic tokens, pauses during theme capture, and becomes a static composition under reduced motion. Its proportional card geometry, SVG paths, gradients, and local shadow are illustration details, not system tokens or app-component patterns.
 
 ### Named Rules
 
 **The Motion Explains State Rule.** Every animation maps to a real state: working, pending, loading, resolving. If an animation would run while nothing is happening, it is decoration and is prohibited. All motion respects `prefers-reduced-motion`.
+
+**The Fresh Data Rule.** Shared-element motion is limited to stable application chrome such as theme controls and active tab indicators. Do not morph routes, list rows, charts, or list-to-detail content because operational data may have changed between states. See [Focused Application Motion](/docs/design-docs/motion.md).
 
 ## 6. Do's and Don'ts
 

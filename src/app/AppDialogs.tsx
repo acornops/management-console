@@ -190,7 +190,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                       }
                     }}
                     disabled={isDeletingWorkspace || workspaceDeleteConfirmation !== deleteTargetWorkspace.name}
-                    className="rounded-lg bg-status-danger px-4 py-2 text-xs font-extrabold text-[oklch(0.99_0.004_86)] shadow-lg shadow-status-danger/20 transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-lg bg-status-danger px-4 py-2 text-xs font-extrabold text-ui-bg shadow-lg shadow-status-danger/20 transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isDeletingWorkspace ? t('app.deleting') : t('app.deleteWorkspace')}
                   </button>

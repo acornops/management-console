@@ -1,5 +1,6 @@
 import React from 'react';
 import { Loader2, SendHorizontal, Square } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { Select } from '@/components/common/Select';
@@ -443,7 +444,11 @@ export const WorkflowCapabilitiesPanel: React.FC<{
   scopeDraft: ScopeDraft;
   scopeSaveError: { tab: 'capabilities'; message: string } | null;
   scopeSaveResult: { tab: 'capabilities'; message: string } | null;
-}> = ({ workflow, agents, scopeDraft: _scopeDraft, scopeSaveError, scopeSaveResult }) => {
+  catalogFailures: string[];
+  onRetryCatalog: () => void;
+  onOpenMcpSettings: () => void;
+}> = ({ workflow, agents, scopeDraft: _scopeDraft, scopeSaveError, scopeSaveResult, catalogFailures, onRetryCatalog, onOpenMcpSettings }) => {
+  const { t } = useTranslation();
   const agentReviews = getWorkflowAgentCapabilityReview(workflow, agents);
 
   return (
@@ -454,6 +459,12 @@ export const WorkflowCapabilitiesPanel: React.FC<{
     >
       {scopeSaveError?.tab === 'capabilities' && <div role="alert" aria-live="assertive" className="mt-4 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{scopeSaveError.message}</div>}
       {scopeSaveResult?.tab === 'capabilities' && <div role="status" aria-live="polite" aria-atomic="true" className="mt-4 rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{scopeSaveResult.message}</div>}
+      {catalogFailures.length > 0 && (
+        <div role="alert" className="flex flex-col gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 text-sm text-status-warning-text sm:flex-row sm:items-center sm:justify-between">
+          <span>{t('workflowCatalog.inlineFailure')} {catalogFailures.join(' ')}</span>
+          <span className="flex flex-wrap gap-2"><Button type="button" variant="secondary" size="sm" onClick={onRetryCatalog}>{t('common.retry')}</Button><Button type="button" variant="secondary" size="sm" onClick={onOpenMcpSettings}>{t('workflowCatalog.openMcpSettings')}</Button></span>
+        </div>
+      )}
 
       <AgentCapabilityReviewList agentReviews={agentReviews} />
 

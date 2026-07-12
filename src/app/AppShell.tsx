@@ -1,4 +1,5 @@
 import React from 'react';
+import type { MouseEventHandler } from 'react';
 import { AppClusterChatRuntime } from '@/app/AppClusterChatRuntime';
 import { AppClusterCopilotPanel } from '@/app/AppClusterCopilotPanel';
 import { AppDesktopSidebar } from '@/app/AppDesktopSidebar';
@@ -14,6 +15,8 @@ import { ActivePrimaryNav, ActiveResourceNav, getClusterBackToWorkspacePath, get
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
 import { useCreateWorkspaceInviteSetup } from '@/app/useCreateWorkspaceInviteSetup';
 import { useTargetIssueSummary } from '@/app/useTargetIssueSummary';
+import { canReadWorkspaceData } from '@/app/workspacePermissions';
+import { useWorkspaceApprovalSummary } from '@/hooks/useWorkspaceApprovalSummary';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
@@ -161,7 +164,7 @@ interface AppShellProps {
   theme: 'light' | 'dark';
   toasts: Array<{ id: string; message: string }>;
   toWorkspaceInvitation: (invitation: Awaited<ReturnType<typeof ControlPlaneApi.createWorkspaceInvitation>>) => WorkspaceInvitation;
-  toggleTheme: () => void;
+  toggleTheme: MouseEventHandler<HTMLButtonElement>;
   updateKubernetesCluster: (clusterId: string, updates: Partial<KubernetesCluster>) => void;
   updateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   user: User;
@@ -283,6 +286,10 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [targetReturnContext, setTargetReturnContext] = React.useState<TargetReturnContext | null>(null);
   const previousRouteRef = React.useRef<AppRoute | null>(null);
   const selectedWorkspaceInitials = getWorkspaceInitials(selectedWorkspace?.name);
+  const approvalSummary = useWorkspaceApprovalSummary(
+    selectedWorkspaceId,
+    canReadWorkspaceData(selectedWorkspace)
+  );
   const selectedIssueSummaryTarget = React.useMemo(() => {
     if (isClusterSidebar && selectedSidebarCluster) {
       return { workspaceId: selectedSidebarCluster.workspaceId, targetId: selectedSidebarCluster.id };
@@ -445,6 +452,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         activeVmSubview={activeVmSubview}
         activePrimaryNav={activePrimaryNav}
         activeResourceNav={activeResourceNav}
+        pendingApprovalCount={approvalSummary.pendingCount}
         isClusterSidebar={isClusterSidebar}
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         isDark={isDark}
@@ -486,6 +494,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         isClusterSidebar={isClusterSidebar}
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         activeResourceNav={activeResourceNav}
+        pendingApprovalCount={approvalSummary.pendingCount}
         selectedClusterIssueCount={selectedClusterIssueCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmIssueCount={selectedVmIssueCount}
@@ -567,6 +576,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               onPendingVmTargetPromptConsumed={consumePendingVmTargetPrompt}
               onRefreshWorkspaceInvitations={refreshWorkspaceInvitations}
               onRefreshWorkspaceMembers={refreshWorkspaceMembers}
+              onRefreshApprovalSummary={approvalSummary.refresh}
               onDeleteCluster={handleDeleteCluster}
               onOpenDeleteWorkspace={setDeleteWorkspaceId}
               onLeaveWorkspaceSuccess={handleLeaveWorkspaceSuccess}

@@ -6,9 +6,10 @@ import {
   targetScopeFromTokens,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
-import { AgentActivityDrawer } from '@/pages/WorkspaceAgentActivityDrawer';
 import { WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
-import { AgentDetailsDrawer, CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
+import { PageShell } from '@/components/common/PageComposition';
+import { AgentWorkspaceDrawer, CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
+import { agentProfileTabs, type AgentProfileTab } from '@/pages/WorkspaceAgentDetailPanel';
 import { Notice, activityStateFromRecord, auditHistoryFromAgentActivity, canManageWorkspaceAgents, createAgentEditDraft, createFallbackAgentCapabilityOptions, filterVisibleAgents, getAgentEditChangeSummary, isWorkspaceCatalogAgent, mapApiAgent, normalizeAgentCapabilityOptions, splitInput, withAgentAuditHistoryEntry, type AgentCapabilityOptions, type AgentDraft, type AgentEditDraft, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createAgent as createWorkspaceAgent,
@@ -24,28 +25,33 @@ import {
 } from '@/services/control-plane/agentApi';
 import { listWorkflowOptions } from '@/services/control-plane/workflowApi';
 import type { ProjectMember } from '@/types';
-import { formatUserDateTime } from '@/utils/dateTime';
+import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace }) => {
+  const urlSearch = useUrlSearchState();
+  const initialUrlSearch = React.useMemo(() => new URLSearchParams(window.location.search), []);
   const fallbackAgents = useMemo(() => createDefaultAgentDefinitions(workspace.id), [workspace.id]);
   const fallbackCapabilityOptions = useMemo(() => createFallbackAgentCapabilityOptions(fallbackAgents), [fallbackAgents]);
   const [agents, setAgents] = useState<AgentDefinition[]>(fallbackAgents);
   const [agentCapabilityOptions, setAgentCapabilityOptions] = useState<AgentCapabilityOptions>(fallbackCapabilityOptions);
   const [ownerUserOptions, setOwnerUserOptions] = useState<ProjectMember[]>(workspace.members || []);
-  const [selectedAgentId, setSelectedAgentId] = useState(fallbackAgents[0]?.id || '');
-  const [expandedAgentId, setExpandedAgentId] = useState('');
-  const [query, setQuery] = useState('');
-  const [catalogFilters, setCatalogFilters] = useState<AgentCatalogFilters>(defaultAgentCatalogFilters);
+  const [selectedAgentId, setSelectedAgentId] = useState(initialUrlSearch.get('agent') || fallbackAgents[0]?.id || '');
+  const [query, setQuery] = useState(initialUrlSearch.get('q') || '');
+  const initialFocus = initialUrlSearch.get('focus');
+  const [catalogFilters, setCatalogFilters] = useState<AgentCatalogFilters>({
+    focus: initialFocus === 'active' || initialFocus === 'draft' || initialFocus === 'disabled' ? initialFocus : 'all'
+  });
   const [agentLoadError, setAgentLoadError] = useState('');
   const [agentCapabilityLoadError, setAgentCapabilityLoadError] = useState('');
   const [ownerUserLoadError, setOwnerUserLoadError] = useState('');
   const [agentCatalogReloadKey, setAgentCatalogReloadKey] = useState(0);
   const [capabilityOptionsReloadKey, setCapabilityOptionsReloadKey] = useState(0);
   const [ownerUsersReloadKey, setOwnerUsersReloadKey] = useState(0);
-  const [createPanelOpen, setCreatePanelOpen] = useState(false);
-  const [editPanelOpen, setEditPanelOpen] = useState(false);
-  const [detailPanelOpen, setDetailPanelOpen] = useState(false);
-  const [activityPanelOpen, setActivityPanelOpen] = useState(false);
+  const [createPanelOpen, setCreatePanelOpen] = useState(initialUrlSearch.get('panel') === 'create');
+  const [editPanelOpen, setEditPanelOpen] = useState(initialUrlSearch.get('panel') === 'edit');
+  const [detailPanelOpen, setDetailPanelOpen] = useState(initialUrlSearch.get('panel') === 'profile' || initialUrlSearch.get('panel') === 'activity');
+  const initialAgentTab = initialUrlSearch.get('panel') === 'activity' ? 'activity' : initialUrlSearch.get('agentTab');
+  const [agentTab, setAgentTab] = useState<AgentProfileTab>(agentProfileTabs.includes(initialAgentTab as AgentProfileTab) ? initialAgentTab as AgentProfileTab : 'overview');
   const [editingAgentId, setEditingAgentId] = useState('');
   const [createDraft, setCreateDraft] = useState<AgentDraft>({ name: '', description: '', instructions: '', providerType: 'internal' });
   const [editDraft, setEditDraft] = useState<AgentEditDraft | null>(null);
@@ -63,6 +69,24 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [deleteConfirmAgentId, setDeleteConfirmAgentId] = useState('');
   const closeAgentDetailsButtonRef = React.useRef<HTMLButtonElement>(null);
   const canManageAgents = canManageWorkspaceAgents(workspace);
+  React.useEffect(() => {
+    const panel = urlSearch.get('panel');
+    const routeAgentId = urlSearch.get('agent');
+    const routeFocus = urlSearch.get('focus');
+    if (routeAgentId) setSelectedAgentId(routeAgentId);
+    setQuery(urlSearch.get('q') || '');
+    setCatalogFilters({
+      focus: routeFocus === 'active' || routeFocus === 'draft' || routeFocus === 'disabled' ? routeFocus : 'all'
+    });
+    setCreatePanelOpen(panel === 'create');
+    setEditPanelOpen(panel === 'edit');
+    setDetailPanelOpen(panel === 'profile' || panel === 'activity');
+    const routeTab = panel === 'activity' ? 'activity' : urlSearch.get('agentTab');
+    setAgentTab(agentProfileTabs.includes(routeTab as AgentProfileTab) ? routeTab as AgentProfileTab : 'overview');
+    if (panel === 'activity' && routeAgentId) updateUrlSearch({ panel: 'profile', agent: routeAgentId, agentTab: 'activity' }, { replace: true });
+    if (panel === 'profile' && routeTab && !agentProfileTabs.includes(routeTab as AgentProfileTab)) updateUrlSearch({ panel: null, agent: null, agentTab: null }, { replace: true });
+    if (panel === 'edit' && routeAgentId) setEditingAgentId(routeAgentId);
+  }, [urlSearch]);
   const ownerLabelsByUserId = useMemo(() => new Map(
     ownerUserOptions
       .filter((member) => member.userId)
@@ -78,7 +102,12 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         if (!mounted || items.length === 0) return;
         const mapped = items.map((item, index) => mapApiAgent(item, fallbackAgents[index % fallbackAgents.length], workspace.name, ownerLabelsByUserId));
         setAgents(mapped);
-        setSelectedAgentId((current) => mapped.some((agent) => agent.id === current) ? current : mapped[0].id);
+        setSelectedAgentId((current) => current || mapped[0].id);
+        const currentSearch = new URLSearchParams(window.location.search);
+        const routeAgentId = currentSearch.get('agent');
+        if (routeAgentId && !mapped.some((agent) => agent.id === routeAgentId) && ['profile', 'edit', 'activity'].includes(currentSearch.get('panel') || '')) {
+          updateUrlSearch({ panel: null, agent: null, agentTab: null }, { replace: true });
+        }
       })
       .catch((error) => {
         if (mounted) setAgentLoadError(error instanceof Error ? error.message : 'Unable to load workspace agents');
@@ -124,9 +153,28 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   }, [ownerUsersReloadKey, workspace.id, workspace.members, workspace.permissions?.read_members]);
   const workspaceCatalogAgents = useMemo(() => agents.filter(isWorkspaceCatalogAgent), [agents]);
   const visibleAgents = useMemo(() => filterVisibleAgents(workspaceCatalogAgents, query, catalogFilters), [workspaceCatalogAgents, query, catalogFilters]);
-  const selectedAgent = visibleAgents.find((agent) => agent.id === selectedAgentId) || visibleAgents[0] || workspaceCatalogAgents[0];
+  const selectedAgent = workspaceCatalogAgents.find((agent) => agent.id === selectedAgentId);
   const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
+  const createDirty = Boolean(createDraft.name || createDraft.description || createDraft.instructions || draftMcpServers || draftTools || draftSkills);
+  const editDirty = editChangeSummary.length > 0;
+  React.useEffect(() => {
+    if (!createDirty && !editDirty) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+    const guardHistoryExit = () => {
+      if (!window.confirm('Discard unsaved changes?')) window.history.forward();
+    };
+    window.addEventListener('beforeunload', warnBeforeUnload);
+    window.addEventListener('popstate', guardHistoryExit);
+    return () => {
+      window.removeEventListener('beforeunload', warnBeforeUnload);
+      window.removeEventListener('popstate', guardHistoryExit);
+    };
+  }, [createDirty, editDirty]);
+  React.useEffect(() => {
+    if (!editPanelOpen || !editingAgent || editDraft) return;
+    setEditDraft(createAgentEditDraft(editingAgent));
+  }, [editDraft, editPanelOpen, editingAgent]);
   const ownerSelectOptions = useMemo<Array<SelectOption<string>>>(() => [
     { value: '', label: 'Keep current owner' },
     ...ownerUserOptions
@@ -150,7 +198,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const updateSelectedAgent = (agentId: string, updater: (agent: AgentDefinition) => AgentDefinition) => {
     setAgents((current) => current.map((agent) => agent.id === agentId ? updater(agent) : agent));
   };
-  const testAgentReadiness = async (agentToTest: AgentDefinition) => {
+  const testAgent = async (agentToTest: AgentDefinition) => {
     if (!canManageAgents) return;
     setTestingAgentId(agentToTest.id);
     setLocalNotice(null);
@@ -159,51 +207,47 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         approvedContextGrants: agentToTest.contextScope,
         inputContext: { source: 'management_console' }
       });
-      setLocalNotice({ tone: 'success', message: `Readiness test queued for ${agentToTest.name}. Check recent activity for ${result.activity.id}.` });
+      setLocalNotice({ tone: 'success', message: `Test queued for ${agentToTest.name}. Check Activity for ${result.activity.id}.` });
       updateSelectedAgent(agentToTest.id, (agent) => ({
         ...agent,
         activity: activityStateFromRecord(agent.activity, result.activity, agent.activity.runCount + 1),
-        auditHistory: [{ id: result.activity.id, summary: `Test run ${result.activity.status}`, occurredAt: result.activity.createdAt }, ...agent.auditHistory],
-        health: { status: 'healthy', summary: `Test queued ${formatUserDateTime(result.activity.createdAt, { fallback: result.activity.createdAt })}` }
+        auditHistory: [{ id: result.activity.id, summary: `Test run ${result.activity.status}`, occurredAt: result.activity.createdAt }, ...agent.auditHistory]
       }));
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Readiness test could not be queued.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Test could not be queued.' });
     } finally {
       setTestingAgentId('');
     }
   };
-  const testSelectedAgent = async () => selectedAgent && testAgentReadiness(selectedAgent);
+  const testSelectedAgent = async () => selectedAgent && testAgent(selectedAgent);
   const resetCreateAgentDraft = () => {
     setCreateDraft({ name: '', description: '', instructions: '', providerType: 'internal' });
     setDraftMcpServers('');
     setDraftTools('');
     setDraftSkills('');
   };
-  const closeCreateAgentDrawer = () => setCreatePanelOpen(false);
-  const closeEditAgentDrawer = () => {
-    setEditPanelOpen(false);
+  const confirmDiscard = (dirty: boolean) => !dirty || window.confirm('Discard unsaved changes?');
+  const closeCreateAgentDrawer = () => {
+    if (!confirmDiscard(createDirty)) return;
+    resetCreateAgentDraft();
+    updateUrlSearch({ panel: null });
+  };
+  const closeEditAgentDrawer = (saved = false) => {
+    if (!saved && !confirmDiscard(editDirty)) return;
+    updateUrlSearch({ panel: 'profile', agent: editingAgentId, agentTab });
     setEditingAgentId('');
     setEditDraft(null);
   };
   const openEditAgentDrawer = (agent: AgentDefinition) => {
     setEditingAgentId(agent.id);
     setEditDraft(createAgentEditDraft(agent));
-    setEditPanelOpen(true);
+    updateUrlSearch({ agent: agent.id, panel: 'edit' });
   };
   const openAgentManagement = (agent?: AgentDefinition) => {
     if (agent) setSelectedAgentId(agent.id);
-    setDetailPanelOpen(true);
-  };
-  const openAgentActivity = (agent: AgentDefinition) => {
-    setSelectedAgentId(agent.id);
-    setActivityPanelOpen(true);
-  };
-  const selectAgentAssignmentRow = (agentId: string) => {
-    setSelectedAgentId(agentId);
-    setExpandedAgentId((current) => current === agentId ? '' : agentId);
+    updateUrlSearch({ agent: agent?.id || selectedAgentId, panel: 'profile', agentTab: agentTab });
   };
   const openEditAgentDrawerFromDetails = (agent: AgentDefinition) => {
-    setDetailPanelOpen(false);
     openEditAgentDrawer(agent);
   };
   const saveSelectedAgentVersion = async () => {
@@ -251,7 +295,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         auditHistory: [{ id: `${version.id}:restore`, summary: `Restored from saved v${version.version}.`, occurredAt: new Date().toISOString() }, ...agent.auditHistory]
       } : agent));
       setSelectedAgentId(mapped.id);
-      setLocalNotice({ tone: 'success', message: `Restored v${version.version}. Run readiness before assigning this agent to workflows.` });
+      setLocalNotice({ tone: 'success', message: `Restored v${version.version}.` });
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not restore that version.' });
     } finally {
@@ -298,7 +342,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     try {
       const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { status: 'active' });
       updateSelectedAgent(selectedAgent.id, () => withAgentAuditHistoryEntry(mapApiAgent(updated, selectedAgent, workspace.name, ownerLabelsByUserId), 'Agent reactivated'));
-      setLocalNotice({ tone: 'success', message: 'Agent reactivated. Run readiness before assigning it to new workflows.' });
+      setLocalNotice({ tone: 'success', message: 'Agent reactivated.' });
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not reactivate this agent.' });
     } finally {
@@ -343,7 +387,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setAgents((current) => [mapped, ...current.filter((agent) => agent.id !== mapped.id)]);
       setSelectedAgentId(mapped.id);
       setLocalNotice({ tone: 'success', message: 'Agent saved with restricted trust and approval required for write tools.' });
-      setCreatePanelOpen(false);
+      updateUrlSearch({ panel: null });
       resetCreateAgentDraft();
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not save this agent.' });
@@ -377,7 +421,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
       setSelectedAgentId(mapped.id);
       setLocalNotice({ tone: 'success', message: 'Agent updated. Review affected workflows before the next run.' });
-      closeEditAgentDrawer();
+      closeEditAgentDrawer(true);
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update this agent.' });
     } finally {
@@ -385,27 +429,15 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     }
   };
   return (
-    <div className="min-h-0 min-w-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-3 py-5 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <WorkspaceAgentsRouteHeader
         canManageAgents={canManageAgents}
-        onCreateAgent={() => setCreatePanelOpen(true)}
-        query={query}
-        setQuery={setQuery}
+        onCreateAgent={() => updateUrlSearch({ panel: 'create', agent: null, agentTab: null })}
       />
 
-      {agentLoadError && (
-        <Notice title="Local fallback catalog" actionLabel="Retry agents" onAction={() => setAgentCatalogReloadKey((value) => value + 1)}>
-          Fallback data is active. Control-plane agents did not load, so saved definitions and live activity may be stale. Live control-plane data was last requested from this workspace route.
-        </Notice>
-      )}
-      {agentCapabilityLoadError && (
-        <Notice title="Capability options unavailable" actionLabel="Retry capabilities" onAction={() => setCapabilityOptionsReloadKey((value) => value + 1)}>
-          Fallback data is active. Capability options did not load, so existing IDs remain visible but new edits may have fewer picker choices. Live control-plane data was last requested from workflow options.
-        </Notice>
-      )}
-      {ownerUserLoadError && (
-        <Notice title="Owner choices limited" actionLabel="Retry members" onAction={() => setOwnerUsersReloadKey((value) => value + 1)}>
-          Fallback data is active. Workspace members did not load, so owner choices are limited to members already available in this workspace view. Live control-plane data was last requested from member records.
+      {(agentLoadError || agentCapabilityLoadError || ownerUserLoadError) && (
+        <Notice title="Some live data is unavailable" actionLabel="Retry all" onAction={() => { setAgentCatalogReloadKey((value) => value + 1); setCapabilityOptionsReloadKey((value) => value + 1); setOwnerUsersReloadKey((value) => value + 1); }}>
+          <details><summary className="cursor-pointer">Fallback data keeps the catalog available. Show details</summary><ul className="mt-2 list-disc pl-5">{agentLoadError && <li>Agent definitions and activity may be stale.</li>}{agentCapabilityLoadError && <li>Capability picker choices may be incomplete.</li>}{ownerUserLoadError && <li>Owner choices are limited to cached members.</li>}</ul></details>
         </Notice>
       )}
       {!canManageAgents && <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect agents. Ask a workspace manager for manage_agents permission to create or change them.</div>}
@@ -433,7 +465,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           agentCapabilityOptions={agentCapabilityOptions}
           creatingAgent={creatingAgent}
           onClose={closeCreateAgentDrawer}
-          onReset={resetCreateAgentDraft}
           onSave={() => void createControlPlaneAgent()}
         />
       )}
@@ -456,25 +487,27 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           agents={workspaceCatalogAgents}
           visibleAgents={visibleAgents}
           selectedAgent={selectedAgent}
-          expandedAgentId={expandedAgentId}
+          drawerOpen={detailPanelOpen}
           canManageAgents={canManageAgents}
-          testingAgentId={testingAgentId}
+          query={query}
+          onQueryChange={(next) => { setQuery(next); updateUrlSearch({ q: next || null }, { replace: true }); }}
           catalogFilters={catalogFilters}
-          onCatalogFiltersChange={setCatalogFilters}
-          onSelectedAgentChange={selectAgentAssignmentRow}
-          onEditAgent={openEditAgentDrawer}
+          onCatalogFiltersChange={(filters) => {
+            setCatalogFilters(filters);
+            updateUrlSearch({ focus: filters.focus === 'all' ? null : filters.focus }, { replace: true });
+          }}
           onOpenManagement={openAgentManagement}
-          onTestAgent={(agent) => void testAgentReadiness(agent)}
         />
       </div>
 
       {selectedAgent && (
-        <AgentDetailsDrawer
+        <AgentWorkspaceDrawer
           isOpen={detailPanelOpen}
-          onClose={() => setDetailPanelOpen(false)}
+          onClose={() => updateUrlSearch({ panel: null, agent: null, agentTab: null })}
           closeButtonRef={closeAgentDetailsButtonRef}
           selectedAgent={selectedAgent}
-          chrome="drawer"
+          activeTab={agentTab}
+          onTabChange={(tab) => { setAgentTab(tab); updateUrlSearch({ panel: 'profile', agent: selectedAgent.id, agentTab: tab }, { replace: true }); }}
           titleId="agent-details-title"
           canManageAgents={canManageAgents}
           testingAgentId={testingAgentId}
@@ -497,7 +530,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           onRefreshSelectedAgentActivity={() => void refreshSelectedAgentActivity()}
         />
       )}
-      {selectedAgent && <AgentActivityDrawer isOpen={activityPanelOpen} onClose={() => setActivityPanelOpen(false)} closeButtonRef={closeAgentDetailsButtonRef} agent={selectedAgent} agentActivityAction={agentActivityAction} onRefreshActivity={() => void refreshSelectedAgentActivity()} />}
-    </div>
+    </PageShell>
   );
 };

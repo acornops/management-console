@@ -2,11 +2,13 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { ICONS } from '@/constants';
 import { isKnownOnlyWorkspaceOwner } from '@/app/workspaceLeave';
 import { headerMotion } from '@/lib/motion';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ProjectMember, Workspace } from '@/types';
+import { WorkspaceMcpSettings } from '@/pages/WorkspaceMcpSettings';
 
 interface WorkspaceSettingsPageProps {
   workspace: Workspace;
@@ -117,14 +119,9 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
   };
 
   return (
-    <div className={embedded ? '' : 'min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8'}>
+    <PageShell embedded={embedded}>
       {!embedded && (
-        <motion.header {...headerMotion} className="mb-12">
-          <h1 className="type-route-title">{t('workspaceSettings.title')}</h1>
-          <p className="type-body mt-2 max-w-2xl">
-            {t('workspaceSettings.subtitle')}
-          </p>
-        </motion.header>
+        <PageHeader title={t('workspaceSettings.title')} description={t('workspaceSettings.subtitle')} />
       )}
 
       <div className="max-w-4xl">
@@ -145,6 +142,11 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                 description={workspace.plan?.name || t('workspaceSettings.planUnavailable')}
               />
             </SettingSection>
+
+            <WorkspaceMcpSettings
+              workspaceId={workspace.id}
+              canManage={Boolean(workspace.permissions?.manage_mcp)}
+            />
 
             <SettingSection
               title={t('workspaceSettings.quotasTitle')}
@@ -302,6 +304,6 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
           </DangerPanel>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 };

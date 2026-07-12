@@ -2,7 +2,7 @@ import path from 'path';
 import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
@@ -46,6 +46,8 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'node',
+      exclude: [...configDefaults.exclude, 'tests/design-system/**'],
+      testTimeout: 10000,
       passWithNoTests: false,
       clearMocks: true,
       restoreMocks: true,

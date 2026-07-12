@@ -13,6 +13,7 @@ describe('WorkspaceApprovalsPage control-plane surface', () => {
   it('loads the unified inbox and decides approvals through run-scoped decisions', () => {
     expect(approvalsPage).toContain('listWorkspaceApprovalInbox');
     expect(approvalsPage).toContain('decideWorkflowRunApproval');
+    expect(approvalsPage).toContain('await onApprovalDecision?.();');
     expect(approvalsPage).toContain("useState<ApprovalFilter>('pending')");
     expect(approvalsPage).toContain("(['pending', 'decided'] as ApprovalFilter[])");
     expect(workflowApi).toContain('/approvals');

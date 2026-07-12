@@ -1,13 +1,15 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { LayoutGroup } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '@/components/common/Tooltip';
 import { ICONS } from '@/constants';
-import { headerMotion } from '@/lib/motion';
+import { useWorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';
 import type { ProjectMember, Workspace, WorkspaceInvitation } from '@/types';
 import { WorkspaceAiSettingsPage } from '@/pages/WorkspaceAiSettingsPage';
 import { WorkspaceMembersPage } from '@/pages/WorkspaceMembersPage';
 import { WorkspaceSettingsPage } from '@/pages/WorkspaceSettingsPage';
+import { ActiveTabIndicator } from '@/components/common/ActiveTabIndicator';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 
 export type SettingsTab = 'workspace' | 'members' | 'ai';
 
@@ -70,11 +72,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   showToast
 }) => {
   const { t } = useTranslation();
+  const settingsTabsLayoutGroupId = React.useId();
   const [activeTab, setActiveTab] = React.useState<SettingsTab>(initialTab);
   const workspaceTabDisabled = !workspace;
   const aiTabDisabled = !workspace || !canReadWorkspaceData;
   const membersTabDisabled = !workspace || !canReadMembers;
   const hasWorkspace = Boolean(workspace);
+  const aiSettingsResource = useWorkspaceAiSettingsResource(
+    workspace?.id,
+    activeTab === 'ai' && !aiTabDisabled
+  );
 
   React.useEffect(() => {
     setActiveTab(initialTab);
@@ -114,14 +121,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <motion.header {...headerMotion} className="mb-8">
-        <h1 className="type-route-title">{t('settingsPage.title')}</h1>
-        <p className="type-body mt-2 max-w-2xl">{t('settingsPage.subtitle')}</p>
-      </motion.header>
+    <PageShell>
+      <PageHeader title={t('settingsPage.title')} description={t('settingsPage.subtitle')} />
 
-      <div className="mb-8 flex max-w-4xl flex-wrap gap-2 border-b border-ui-border">
-        {tabs.map(({ id, label, icon: Icon }) => {
+      <LayoutGroup id={settingsTabsLayoutGroupId}>
+        <div className="mb-8 flex max-w-4xl flex-wrap gap-2 border-b border-ui-border">
+          {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
           const unavailableReason = getTabUnavailableReason({
             tab: id,
@@ -137,9 +142,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 onClick={() => handleSelectTab(id)}
                 aria-disabled={Boolean(unavailableReason)}
                 aria-pressed={isActive}
-                className={`-mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 text-sm font-bold transition-colors ${
+                className={`relative -mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 text-sm font-bold transition-colors ${
                   isActive
-                    ? 'border-accent text-accent-strong'
+                    ? 'border-transparent text-accent-strong'
                     : unavailableReason
                       ? 'border-transparent text-ui-text-muted/60'
                       : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text'
@@ -147,11 +152,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
                 {label}
+                {isActive && <ActiveTabIndicator />}
               </button>
             </Tooltip>
           );
-        })}
-      </div>
+          })}
+        </div>
+      </LayoutGroup>
 
       {!workspace && (
         <section className="max-w-4xl rounded-xl border border-ui-border bg-ui-surface p-6 shadow-sm">
@@ -199,9 +206,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           embedded
           workspace={workspace}
           canManageAiSettings={canManageAiSettings}
+          aiSettingsResource={aiSettingsResource}
           showToast={showToast}
         />
       )}
-    </div>
+    </PageShell>
   );
 };

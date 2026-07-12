@@ -1,373 +1,332 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { type AnimationSequence, useAnimate, useReducedMotion } from 'framer-motion';
-import { ICONS } from '@/constants';
+import { type CSSProperties } from 'react';
 
 /**
- * Right-side login visual: an "evidence run" where a squirrel scampers along the
- * troubleshooting path, gathering a scattered acorn (signal) at each node until the
- * fix is ready. Acorns are the AcornOps brand identity; a squirrel chasing acorns is
- * the metaphor for finding the evidence that resolves an incident.
+ * Login illustration: "Squirrel Chasing Acorns".
  *
- * Motion is one coherent ~9s loop driven by Framer Motion. It fades out and back in
- * so the loop is seamless (no snap-back). Honours reduced-motion by rendering the
- * final, gathered state with no animation.
+ * A squirrel bounds after a trail of acorns while three triage step cards
+ * (observe -> correlate -> resolve) float alongside the chase. The scene is a
+ * faithful port of the Claude Design "Squirrel Chasing Acorns v2" concept,
+ * adapted to the workspace design system: every colour resolves to a theme
+ * token so it reads correctly in light and dark, and the ambient CSS motion is
+ * neutralised under `prefers-reduced-motion`.
  */
 
-const EASE = [0.22, 1, 0.36, 1] as const;
+type SignalTone = 'warning' | 'accent' | 'success';
 
-const evidenceAcorns = [
+interface StepCard {
+  readonly order: string;
+  readonly phase: string;
+  readonly title: string;
+  readonly detail: string;
+  readonly signal: string;
+  readonly tone: SignalTone;
+  readonly x: number;
+  readonly y: number;
+  readonly delay: string;
+}
+
+const stepCards: readonly StepCard[] = [
   {
     order: '01',
-    stage: 'Observe',
-    label: 'Pod events',
-    value: 'CrashLoopBackOff spike',
-    state: 'restart surge',
-    detail: 'restart surge',
-    toneClass: 'border-status-warning/25 bg-status-warning-soft text-status-warning-text',
-    className: 'left-0 bottom-[2.5rem]',
-    posClass: 'left-[4.75rem] bottom-[11rem]'
+    phase: 'OBSERVE',
+    title: 'Pod events',
+    detail: 'CrashLoopBackOff spike',
+    signal: 'Restart surge',
+    tone: 'warning',
+    x: 380,
+    y: 470,
+    delay: '0s'
   },
   {
     order: '02',
-    stage: 'Correlate',
-    label: 'Deploy diff',
-    value: 'Memory limit reduced',
-    state: 'limit change',
-    detail: 'rollout window',
-    toneClass: 'border-accent/25 bg-accent-soft text-accent-strong',
-    className: 'left-[13.75rem] bottom-[4.85rem]',
-    posClass: 'left-1/2 -translate-x-1/2 bottom-[11rem]'
+    phase: 'CORRELATE',
+    title: 'Deploy diff',
+    detail: 'Memory limit reduced',
+    signal: 'Limit change',
+    tone: 'accent',
+    x: 524,
+    y: 252,
+    delay: '0.9s'
   },
   {
     order: '03',
-    stage: 'Resolve',
-    label: 'Endpoints',
-    value: 'Service path clear',
-    state: 'probe healthy',
-    detail: 'blast radius',
-    toneClass: 'border-status-success/25 bg-status-success-soft text-status-success-text',
-    className: 'right-0 bottom-[2.5rem]',
-    posClass: 'right-[4.75rem] bottom-[11rem]'
+    phase: 'RESOLVE',
+    title: 'Endpoints',
+    detail: 'Service path clear',
+    signal: 'Probe healthy',
+    tone: 'success',
+    x: 656,
+    y: 34,
+    delay: '1.8s'
   }
 ] as const;
 
-function SquirrelRunner() {
+const toneDot: Record<SignalTone, string> = {
+  warning: 'bg-status-warning',
+  accent: 'bg-accent',
+  success: 'bg-status-success'
+};
+
+const toneText: Record<SignalTone, string> = {
+  warning: 'text-status-warning-text',
+  accent: 'text-accent-readable',
+  success: 'text-status-success-text'
+};
+
+// Base card metrics (design units). CARD_SCALE grows every dimension uniformly so
+// the cards enlarge proportionally. Cards are placed by explicit top-left anchor
+// (card.x/card.y) into non-overlapping vertical bands, so they never collide.
+const CARD_W = 190;
+const CARD_H = 150;
+const CARD_SCALE = 1.32;
+const CARD_RENDER_W = CARD_W * CARD_SCALE;
+const CARD_RENDER_H = CARD_H * CARD_SCALE;
+
+// Every acorn is anchored to its step card by one shared offset: it sits in the
+// left gutter (ACORN_GUTTER px clear of the card's left edge) and is vertically
+// centred on the card. All three therefore hold an identical relationship to
+// their card and form a line parallel to the evenly-stepped cards; the scale
+// tapers with distance for depth. The dotted trail below threads through every
+// acorn centre.
+const ACORN_GUTTER = 52;
+const acornStyles = [
+  { scale: 1, delay: '0s' },
+  { scale: 0.85, delay: '0.45s' },
+  { scale: 0.72, delay: '0.9s' }
+] as const;
+const acorns = stepCards.map((card, index) => ({
+  x: card.x - ACORN_GUTTER,
+  y: card.y + CARD_RENDER_H / 2,
+  ...acornStyles[index]
+}));
+
+function StepCardFrame({ card }: { card: StepCard }) {
+  const width = CARD_RENDER_W;
+  const height = CARD_RENDER_H;
+  const px = (n: number) => `${n * CARD_SCALE}px`;
+
   return (
-    <svg
-      className="login-squirrel-svg"
-      viewBox="0 0 82 66"
-      fill="none"
-      aria-hidden="true"
-      style={
-        {
-          '--sq': 'rgb(var(--logo-brown-rgb))',
-          '--sq-dark': 'color-mix(in oklab, rgb(var(--logo-brown-rgb)), #000 24%)',
-          '--sq-lite': 'color-mix(in oklab, rgb(var(--logo-brown-rgb)), #fff 18%)'
-        } as CSSProperties
-      }
-    >
-      {/* bushy tail */}
-      <path
-        className="login-squirrel-tail"
-        d="M29 52 C16 53 5 44 3 26 C1 11 13 1 31 1 C41 1 49 9 46 18 C44 25 38 24 36 19 C34 28 33 37 30 45 C29 48 29 50 29 52 Z"
-        fill="var(--sq)"
-      />
-      <path
-        d="M14 30 C13 20 20 11 30 9"
-        stroke="var(--sq-lite)"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      {/* back leg */}
-      <path d="M36 49 C34 53 33 55 31 56" stroke="var(--sq-dark)" strokeWidth="5.5" strokeLinecap="round" />
-      {/* body */}
-      <ellipse cx="44" cy="43" rx="16" ry="12.5" fill="var(--sq)" transform="rotate(-7 44 43)" />
-      {/* belly */}
-      <ellipse cx="49" cy="49" rx="8.5" ry="6" fill="rgb(var(--surface-strong-rgb))" opacity="0.5" />
-      {/* head */}
-      <circle cx="60" cy="32" r="9.8" fill="var(--sq)" />
-      {/* snout */}
-      <ellipse className="login-squirrel-face" cx="68" cy="35" rx="4.6" ry="3.8" fill="var(--sq)" />
-      {/* ear */}
-      <circle cx="57" cy="21" r="4.3" fill="var(--sq)" />
-      <circle cx="57" cy="21.5" r="2" fill="var(--sq-lite)" />
-      {/* front leg */}
-      <path d="M62 44 C65 48 67 50 69 51" stroke="var(--sq-dark)" strokeWidth="5" strokeLinecap="round" />
-      {/* eye + nose */}
-      <circle cx="62.5" cy="29" r="1.7" fill="rgb(var(--text-rgb))" />
-      <circle cx="71.5" cy="35" r="1.7" fill="rgb(var(--brand-orange-rgb))" />
-    </svg>
+    <foreignObject x={card.x} y={card.y} width={width} height={height} style={{ overflow: 'visible' }}>
+      <div
+        className="login-hunt-card box-border flex flex-col border border-ui-border bg-ui-surface"
+        style={{
+          width: `${width}px`,
+          gap: px(5),
+          borderRadius: px(16),
+          padding: `${px(15)} ${px(18)} ${px(14)}`,
+          animationDelay: card.delay,
+          boxShadow: `0 ${px(8)} ${px(22)} rgb(var(--logo-brown-rgb) / 0.12)`
+        }}
+      >
+        <div className="flex items-baseline" style={{ gap: px(8) }}>
+          <span className="font-bold text-accent-strong" style={{ fontSize: px(13) }}>{card.order}</span>
+          <span className="font-semibold tracking-[0.18em] text-ui-text-muted" style={{ fontSize: px(9.5) }}>
+            {card.phase}
+          </span>
+        </div>
+        <div className="font-semibold text-ui-text" style={{ fontSize: px(15.5) }}>{card.title}</div>
+        <div className="text-ui-text-muted" style={{ fontSize: px(12) }}>{card.detail}</div>
+        <div className="flex items-center" style={{ gap: px(7), marginTop: px(3) }}>
+          <span className={`rounded-full ${toneDot[card.tone]}`} style={{ width: px(7), height: px(7) }} />
+          <span className={`font-semibold ${toneText[card.tone]}`} style={{ fontSize: px(11.5) }}>{card.signal}</span>
+        </div>
+      </div>
+    </foreignObject>
   );
 }
 
-function AcornToken() {
-  return (
-    <svg width="16" height="20" viewBox="0 0 28 32" fill="none" aria-hidden="true">
-      <path d="M13.5 3 C13.5 0.5 15.5 0.5 15 3" stroke="#6b3b1a" strokeWidth="1.8" strokeLinecap="round" />
-      <path
-        d="M4 11 C4 5 9 2.5 14 2.5 C19 2.5 24 5 24 11 C24 13.2 22 14.5 19.5 14.5 L8.5 14.5 C6 14.5 4 13.2 4 11 Z"
-        fill="#6b3b1a"
-      />
-      <path
-        d="M6.5 14.5 L21.5 14.5 C21.5 23 17.5 30 14 30 C10.5 30 6.5 23 6.5 14.5 Z"
-        fill="rgb(var(--brand-orange-rgb))"
-      />
-      <ellipse cx="11" cy="20" rx="1.6" ry="3.2" fill="rgb(var(--surface-rgb))" opacity="0.32" />
-    </svg>
-  );
+export interface LoginPreviewProps {
+  showCards?: boolean;
+  showTagline?: boolean;
 }
 
-export function LoginPreview() {
-  const prefersReducedMotion = useReducedMotion();
-  const [scope, animate] = useAnimate();
-  const homeRef = useRef<HTMLSpanElement>(null);
-  const nodeRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  const [nodeOffsets, setNodeOffsets] = useState<number[] | null>(null);
-
-  // Measure each node's horizontal centre relative to the squirrel's home so the
-  // runner tracks the path regardless of the panel width.
-  useLayoutEffect(() => {
-    if (prefersReducedMotion) return;
-    const home = homeRef.current;
-    const root = scope.current;
-    if (!home || !root) return;
-
-    const measure = () => {
-      const homeBox = home.getBoundingClientRect();
-      const homeCentre = homeBox.left + homeBox.width / 2;
-      const offsets = nodeRefs.current.map((node) => {
-        if (!node) return 0;
-        const box = node.getBoundingClientRect();
-        return box.left + box.width / 2 - homeCentre;
-      });
-      setNodeOffsets(offsets);
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(root);
-    return () => observer.disconnect();
-  }, [prefersReducedMotion, scope]);
-
-  useEffect(() => {
-    if (prefersReducedMotion || !nodeOffsets || !scope.current) return;
-
-    const RUN = 0.9; // squirrel travel per segment
-    const STAGE_GAP = 1.9; // time between stage starts
-    const firstStage = 1.05;
-    const fixStart = firstStage + STAGE_GAP * 2 + 1.35; // after the third gather
-    const outStart = fixStart + 1.25;
-
-    const sequence: AnimationSequence = [
-      // --- reset to the "scattered, undiscovered" state (instant) ---
-      ['[data-rail]', { scaleX: 0, opacity: 0.9 }, { duration: 0, at: 0 }],
-      ['[data-squirrel]', { x: 0, y: 0, opacity: 0 }, { duration: 0, at: 0 }],
-      ['[data-acorn]', { opacity: 0.32, scale: 1, y: 0 }, { duration: 0, at: 0 }],
-      ['[data-node]', { boxShadow: '0 0 0 0 rgb(var(--brand-orange-rgb) / 0)', scale: 1 }, { duration: 0, at: 0 }],
-      ['[data-signal]', { opacity: 0, y: 14, scale: 0.98 }, { duration: 0, at: 0 }],
-      ['[data-resolution]', { opacity: 0.4, y: 12, scale: 0.98 }, { duration: 0, at: 0 }],
-      ['[data-detail]', { opacity: 0.25, scale: 0.6 }, { duration: 0, at: 0 }],
-      // --- setup: the path draws in, the squirrel arrives ---
-      ['[data-rail]', { scaleX: 1, opacity: 1 }, { duration: 0.6, ease: EASE, at: 0 }],
-      ['[data-squirrel]', { opacity: 1 }, { duration: 0.4, ease: 'easeOut', at: 0.3 }]
-    ];
-
-    evidenceAcorns.forEach((_, index) => {
-      const start = firstStage + STAGE_GAP * index;
-      // run to the node
-      sequence.push([
-        '[data-squirrel]',
-        { x: nodeOffsets[index] },
-        { duration: RUN, ease: EASE, at: start }
-      ]);
-      // the acorn brightens as the squirrel approaches, then is gathered
-      sequence.push([`[data-acorn="${index}"]`, { opacity: 1 }, { duration: 0.3, at: start + 0.15 }]);
-      sequence.push([
-        `[data-acorn="${index}"]`,
-        { scale: [1, 1.2, 0.15], y: [0, -4, 14], opacity: [1, 1, 0] },
-        { duration: 0.5, ease: EASE, at: start + RUN - 0.15 }
-      ]);
-      // the node ignites
-      sequence.push([
-        `[data-node="${index}"]`,
-        { boxShadow: '0 0 0 6px rgb(var(--brand-orange-rgb) / 0.14)', scale: [1, 1.15, 1.06] },
-        { duration: 0.45, ease: EASE, at: start + RUN - 0.1 }
-      ]);
-      // the matching signal card rises in
-      sequence.push([
-        `[data-signal="${index}"]`,
-        { opacity: 1, y: 0, scale: [0.98, 1.02, 1] },
-        { duration: 0.55, ease: EASE, at: start + RUN }
-      ]);
-      // earlier cards recede so the active one leads
-      if (index > 0) {
-        sequence.push([
-          `[data-signal="${index - 1}"]`,
-          { opacity: 0.62, scale: 0.965 },
-          { duration: 0.4, ease: EASE, at: start + RUN }
-        ]);
-      }
-    });
-
-    // --- fix ready: a small hop, the resolution blooms, checks light up ---
-    sequence.push(['[data-squirrel]', { y: [0, -10, 0] }, { duration: 0.55, ease: EASE, at: fixStart }]);
-    // the full body of gathered evidence shines behind the resolution
-    sequence.push([
-      '[data-signal]',
-      { opacity: 1, scale: 1 },
-      { duration: 0.45, ease: EASE, at: fixStart }
-    ]);
-    sequence.push([
-      '[data-resolution]',
-      { opacity: 1, y: 0, scale: [0.98, 1.01, 1] },
-      { duration: 0.6, ease: EASE, at: fixStart }
-    ]);
-    [0, 1, 2].forEach((dot) => {
-      sequence.push([
-        `[data-detail="${dot}"]`,
-        { opacity: 1, scale: [0.6, 1.25, 1] },
-        { duration: 0.35, ease: EASE, at: fixStart + 0.25 + dot * 0.12 }
-      ]);
-    });
-
-    // --- loop out: everything eases back to rest, then the loop restarts seamlessly ---
-    sequence.push(['[data-squirrel]', { opacity: 0 }, { duration: 0.5, ease: 'easeIn', at: outStart }]);
-    sequence.push(['[data-signal]', { opacity: 0, y: 14, scale: 0.98 }, { duration: 0.5, ease: EASE, at: outStart }]);
-    sequence.push(['[data-acorn]', { opacity: 0.32, scale: 1, y: 0 }, { duration: 0.45, ease: EASE, at: outStart }]);
-    sequence.push([
-      '[data-node]',
-      { boxShadow: '0 0 0 0 rgb(var(--brand-orange-rgb) / 0)', scale: 1 },
-      { duration: 0.45, ease: EASE, at: outStart }
-    ]);
-    sequence.push(['[data-resolution]', { opacity: 0.4, y: 12, scale: 0.98 }, { duration: 0.5, ease: EASE, at: outStart }]);
-    sequence.push(['[data-detail]', { opacity: 0.25, scale: 0.6 }, { duration: 0.4, at: outStart }]);
-    sequence.push(['[data-rail]', { scaleX: 0, opacity: 0.9 }, { duration: 0.45, ease: EASE, at: outStart + 0.1 }]);
-
-    const controls = animate(sequence, { repeat: Infinity, repeatDelay: 0.35 });
-    const bob = animate('[data-squirrel-bob]', { y: [0, -2.5, 0] }, { duration: 0.52, repeat: Infinity, ease: 'easeInOut' });
-
-    return () => {
-      controls.stop();
-      bob.stop();
-    };
-  }, [prefersReducedMotion, nodeOffsets, animate, scope]);
-
-  // Static styles used before animation begins (and permanently under reduced motion).
-  const initial = (animated: CSSProperties, rest: CSSProperties): CSSProperties =>
-    prefersReducedMotion ? rest : animated;
-
-  const railStyle: CSSProperties = { transformOrigin: 'left center', ...initial({ transform: 'scaleX(0)' }, {}) };
-  const homePosClass = prefersReducedMotion ? 'right-[2.5rem] bottom-[12.9rem]' : 'left-[2.25rem] bottom-[12.9rem]';
-
+export function LoginPreview({ showCards = true, showTagline = true }: LoginPreviewProps = {}) {
   return (
     <div
-      ref={scope}
-      data-login-visual-variant="evidence-run"
-      className="relative z-10 w-full max-w-[42rem] px-6 py-10 xl:px-10"
+      data-login-visual-variant="hunt-chase"
+      className="relative z-10 flex min-h-[40rem] w-full max-w-[42rem] flex-col px-9 py-9"
       aria-hidden="true"
     >
-      <div className="login-evidence-glow" aria-hidden="true" />
+      <div
+        className="login-hunt-bloom -right-16 -top-20 h-[300px] w-[300px]"
+        style={{ background: 'radial-gradient(circle, rgb(var(--logo-cream-rgb) / 0.38), transparent 68%)' }}
+      />
+      <div
+        className="login-hunt-bloom -bottom-[70px] -left-[50px] h-[260px] w-[260px]"
+        style={{
+          background: 'radial-gradient(circle, rgb(var(--brand-orange-rgb) / 0.1), transparent 70%)',
+          animationDuration: '11s'
+        }}
+      />
 
-      <div className="relative z-10 mb-10 max-w-[30rem]">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-ui-border bg-ui-surface px-3 py-1 text-ui-text-muted">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-          <span className="type-caption">Evidence run</span>
-        </div>
-        <h2 className="type-section-title">Kubernetes restart loop</h2>
-        <p className="type-body mt-2">
-          AcornOps gathers scattered cluster signals into a readable path from symptom to fix.
-        </p>
-      </div>
+      <svg
+        viewBox="0 0 920 700"
+        preserveAspectRatio="xMidYMid meet"
+        className="login-hunt-scene relative z-[1] my-2 min-h-0 w-full grow"
+        aria-hidden="true"
+        style={
+          {
+            '--fur': 'rgb(var(--brand-orange-rgb))',
+            '--fur-bright': 'rgb(var(--brand-orange-bright-rgb))',
+            '--fur-strong': 'rgb(var(--brand-orange-strong-rgb))',
+            '--fur-deep': 'color-mix(in oklab, rgb(var(--brand-orange-strong-rgb)), rgb(var(--text-rgb)) 24%)',
+            '--belly': 'rgb(var(--logo-cream-rgb))',
+            '--ink': 'rgb(var(--code-bg-rgb))',
+            '--smile': 'rgb(var(--text-muted-rgb))',
+            '--acorn-body': 'color-mix(in oklab, rgb(var(--brand-orange-bright-rgb)), rgb(var(--logo-cream-rgb)) 42%)',
+            '--acorn-shade': 'rgb(var(--brand-orange-strong-rgb))',
+            '--acorn-cap': 'rgb(var(--logo-brown-rgb))',
+            '--acorn-line': 'color-mix(in oklab, rgb(var(--logo-brown-rgb)), rgb(var(--text-rgb)) 34%)',
+            '--hunt': 'rgb(var(--status-warning-rgb))',
+            '--dust': 'color-mix(in oklab, rgb(var(--surface-strong-rgb)), rgb(var(--logo-brown-rgb)) 14%)',
+            '--shadow-fur': 'rgb(var(--logo-brown-rgb))'
+          } as CSSProperties
+        }
+      >
+        <defs>
+          <linearGradient id="login-hunt-body" x1="0" y1="0" x2="0.25" y2="1">
+            <stop offset="0" stopColor="var(--fur-bright)" />
+            <stop offset="1" stopColor="var(--fur-strong)" />
+          </linearGradient>
+          <linearGradient id="login-hunt-tail-fill" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="var(--fur-bright)" />
+            <stop offset="1" stopColor="var(--fur-deep)" />
+          </linearGradient>
+          <filter id="login-hunt-mblur" x="-40%" y="-70%" width="180%" height="240%">
+            <feGaussianBlur stdDeviation="8 1.4" />
+          </filter>
+          <filter id="login-hunt-softsh" x="-40%" y="-80%" width="180%" height="260%">
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
+          <symbol id="login-hunt-acorn" viewBox="0 0 60 82">
+            <path d="M9 34 Q9 21 30 21 Q51 21 51 34 Q51 58 30 76 Q9 58 9 34 Z" fill="var(--acorn-body)" />
+            <path d="M30 21 Q51 21 51 34 Q51 58 30 76 Q41 52 41 35 Q41 23 30 21 Z" fill="var(--acorn-shade)" opacity="0.55" />
+            <ellipse cx="21" cy="42" rx="5" ry="8.5" fill="var(--belly)" opacity="0.6" />
+            <path d="M5 30 Q5 9 30 7 Q55 9 55 30 Q55 36 30 36 Q5 36 5 30 Z" fill="var(--acorn-cap)" />
+            <path
+              d="M14 13 L20 34 M24 11 L31 35 M35 11 L42 34 M45 13 L50 32"
+              stroke="var(--acorn-line)"
+              strokeWidth="1.5"
+              opacity="0.5"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path d="M8 20 L52 20 M9 27 L51 27" stroke="var(--acorn-line)" strokeWidth="1.3" opacity="0.38" fill="none" strokeLinecap="round" />
+            <rect x="27" y="0" width="6" height="10" rx="3" fill="var(--acorn-cap)" />
+          </symbol>
+        </defs>
 
-      <div className="relative z-10 min-h-[32rem]">
-        <div className="absolute left-0 top-5 z-10 w-56 rounded-lg border border-ui-border bg-ui-surface p-5 shadow-sm">
-          <p className="type-micro-label">Troubleshooting path</p>
-          <p className="type-caption mt-2 text-ui-text-muted">Events, rollout history, service probes, and blast radius stay together.</p>
-        </div>
+        {/* soft drop shadow under the squirrel, synced to the bound */}
+        <g transform="translate(-22 8) rotate(-8 190 650)">
+          <ellipse cx="190" cy="650" rx="95" ry="11" fill="var(--shadow-fur)" opacity="0.18" filter="url(#login-hunt-softsh)" className="login-hunt-shadow" />
+        </g>
 
-        <div className="login-path-rail absolute left-12 right-12 bottom-[11.65rem] z-0 h-[2px] rounded" data-rail style={railStyle} />
+        {/* motion-blur speed streaks trailing behind */}
+        <g filter="url(#login-hunt-mblur)" transform="translate(-22 8) rotate(-10 90 560)">
+          <rect x="-18" y="512" width="106" height="6" rx="3" fill="var(--fur)" opacity="0.4" className="login-hunt-streak" />
+          <rect x="-30" y="548" width="120" height="6" rx="3" fill="var(--fur-bright)" opacity="0.36" className="login-hunt-streak" style={{ animationDelay: '0.18s' }} />
+          <rect x="-10" y="584" width="98" height="6" rx="3" fill="var(--fur)" opacity="0.32" className="login-hunt-streak" style={{ animationDelay: '0.34s' }} />
+          <rect x="2" y="530" width="82" height="5" rx="2.5" fill="var(--belly)" opacity="0.42" className="login-hunt-streak" style={{ animationDelay: '0.25s' }} />
+        </g>
 
-        {/* path nodes + the acorn that waits at each one */}
-        {evidenceAcorns.map((item, index) => (
-          <span key={item.stage} className={`absolute z-[15] ${item.posClass}`}>
-            <span
-              ref={(el) => {
-                nodeRefs.current[index] = el;
-              }}
-              data-node={index}
-              className="login-path-node flex h-6 w-6 items-center justify-center rounded-full"
-            >
-              <span className="type-micro-label text-[0.58rem] leading-none text-accent-strong">{item.order}</span>
-            </span>
-            <span
-              data-acorn={index}
-              className="absolute -top-7 left-1/2 block -translate-x-1/2"
-              style={initial({ opacity: 0.32 }, {})}
-            >
-              <AcornToken />
-            </span>
-          </span>
+        {/* dotted chase trail threading straight through the three acorn centres */}
+        <path
+          d="M 278 608 Q 307 606, 328 569 Q 477 511, 472 351 Q 466 198, 604 133 Q 651 133, 664 88"
+          fill="none"
+          stroke="var(--hunt)"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray="0.1 20"
+          opacity="0.5"
+          className="login-hunt-trail"
+        />
+
+        {/* kicked-up dust at push-off */}
+        <g transform="translate(158,656)">
+          <circle r="9" fill="var(--dust)" className="login-hunt-dust" style={{ animationDelay: '0.3s' }} />
+        </g>
+        <g transform="translate(120,648)">
+          <circle r="7" fill="var(--dust)" className="login-hunt-dust" style={{ animationDelay: '0.55s' }} />
+        </g>
+
+        {/* the squirrel, mid bounding gallop toward the acorns */}
+        <g transform="translate(8,436) scale(1.12) rotate(-10 150 110)">
+          <g className="login-hunt-squirrel">
+            {/* bushy tail streaming behind */}
+            <g className="login-hunt-tail">
+              <path d="M 74 124 C 44 116, 30 90, 42 62" fill="none" stroke="url(#login-hunt-tail-fill)" strokeWidth="38" strokeLinecap="round" />
+              <path d="M 42 62 C 52 34, 84 26, 105 43" fill="none" stroke="url(#login-hunt-tail-fill)" strokeWidth="26" strokeLinecap="round" />
+              <path d="M 68 112 C 50 104, 42 90, 46 72" fill="none" stroke="var(--belly)" strokeWidth="12" strokeLinecap="round" opacity="0.45" />
+            </g>
+
+            {/* far legs (behind the body) */}
+            <g className="login-hunt-leg-hind" style={{ transformOrigin: '91% 3%' }}>
+              <path d="M90 130 C 80 148, 68 160, 54 168 C 45 172, 46 180, 56 178 C 72 174, 88 160, 98 144 Z" fill="var(--fur-deep)" />
+              <ellipse cx="56" cy="174" rx="11" ry="5" fill="var(--fur-deep)" />
+            </g>
+            <g className="login-hunt-leg-front" style={{ transformOrigin: '10% 5%' }}>
+              <path d="M176 122 C 188 138, 202 150, 214 156 C 222 160, 220 168, 210 165 C 196 160, 182 148, 172 134 Z" fill="var(--fur-strong)" />
+              <ellipse cx="213" cy="160" rx="8" ry="6" fill="var(--fur-strong)" />
+            </g>
+
+            {/* body */}
+            <path d="M 196 116 C 192 88, 160 70, 124 76 C 90 82, 66 100, 68 124 C 70 148, 94 160, 126 160 C 158 160, 184 146, 196 116 Z" fill="url(#login-hunt-body)" />
+            <ellipse cx="94" cy="130" rx="24" ry="21" fill="var(--fur-strong)" opacity="0.45" />
+            <ellipse cx="138" cy="144" rx="38" ry="14" fill="var(--belly)" />
+
+            {/* near hind leg */}
+            <g className="login-hunt-leg-hind" style={{ transformOrigin: '88% 4%' }}>
+              <path d="M98 134 C 88 152, 76 164, 62 172 C 52 177, 53 185, 64 182 C 82 177, 98 164, 108 150 Z" fill="var(--fur-strong)" />
+              <ellipse cx="64" cy="179" rx="13" ry="5.5" fill="var(--fur)" />
+              <path d="M55 180 h5 M64 182 h4 M72 181 h4" stroke="var(--fur-strong)" strokeWidth="2" strokeLinecap="round" />
+            </g>
+
+            {/* head */}
+            <circle cx="214" cy="88" r="28" fill="url(#login-hunt-body)" />
+            <path d="M196 64 Q194 42 208 40 Q214 56 205 66 Z" fill="var(--fur-strong)" />
+            <ellipse cx="203" cy="52" rx="4" ry="6" fill="var(--fur-bright)" />
+            <path d="M218 60 Q224 36 238 40 Q240 58 228 66 Z" fill="var(--fur)" />
+            <ellipse cx="230" cy="50" rx="4.5" ry="6.5" fill="var(--belly)" />
+            <ellipse cx="232" cy="102" rx="17" ry="14" fill="var(--belly)" />
+            <ellipse cx="224" cy="105" rx="8" ry="5" fill="var(--fur-bright)" opacity="0.45" />
+            <circle cx="218" cy="84" r="7.5" fill="var(--ink)" />
+            <circle cx="220.5" cy="81" r="2.8" fill="var(--belly)" />
+            <circle cx="216" cy="87" r="1.4" fill="var(--belly)" opacity="0.7" />
+            <ellipse cx="247" cy="97" rx="5" ry="4.2" fill="var(--ink)" />
+            <path d="M247 102 Q243 108 236 106" fill="none" stroke="var(--smile)" strokeWidth="2" strokeLinecap="round" />
+
+            {/* near front leg reaching forward */}
+            <g className="login-hunt-leg-front" style={{ transformOrigin: '8% 6%' }}>
+              <path d="M182 118 C 196 134, 212 148, 226 155 C 236 160, 234 170, 222 167 C 205 162, 188 148, 178 132 Z" fill="var(--fur)" />
+              <ellipse cx="225" cy="161" rx="9" ry="6.5" fill="var(--belly)" />
+              <path d="M220 164 q6 2 12 1 M221 168 q6 1 11 0" fill="none" stroke="var(--fur-strong)" strokeWidth="2" strokeLinecap="round" />
+            </g>
+          </g>
+        </g>
+
+        {/* troubleshooting step cards along the chase */}
+        {showCards && stepCards.map((card) => <StepCardFrame key={card.order} card={card} />)}
+
+        {/* bouncing acorns between the steps, on top and clear of the cards */}
+        {acorns.map((acorn) => (
+          <g key={`${acorn.x}-${acorn.y}`} transform={`translate(${acorn.x},${acorn.y}) scale(${acorn.scale})`}>
+            <g className="login-hunt-acorn" style={{ animationDelay: acorn.delay }}>
+              <use href="#login-hunt-acorn" width="60" height="82" x="-30" y="-41" />
+            </g>
+          </g>
         ))}
+      </svg>
 
-        {/* the squirrel that runs the path */}
-        <span ref={homeRef} className={`absolute z-[25] w-[4.6rem] ${homePosClass}`}>
-          <span data-squirrel className="block will-change-transform">
-            <span data-squirrel-bob className="block">
-              <SquirrelRunner />
-            </span>
-          </span>
-        </span>
-
-        {/* evidence signal cards, revealed as each acorn is gathered */}
-        {evidenceAcorns.map((item, index) => (
-          <div
-            key={item.label}
-            data-signal={index}
-            className={`login-signal-card absolute z-20 w-44 rounded-lg border bg-ui-surface p-4 shadow-sm ${item.className}`}
-            style={initial({ opacity: 0, transform: 'translateY(14px) scale(0.98)' }, {})}
-          >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <span className="type-micro-label rounded-full border border-ui-border bg-ui-bg px-2.5 py-1 text-ui-text-muted">
-                {item.order} {item.stage}
-              </span>
-              <span className="block h-5 w-4 rounded-[50%_50%_45%_45%] bg-accent shadow-sm shadow-accent/20" />
-            </div>
-            <p className="type-row-title min-w-0 text-ui-text">{item.label}</p>
-            <p className="type-caption mt-1 min-w-0 truncate text-ui-text-muted">{item.value}</p>
-            <span className={`type-micro-label mt-3 inline-flex rounded-full border px-2.5 py-1 ${item.toneClass}`}>
-              {item.state}
-            </span>
-          </div>
-        ))}
-
-        <div
-          data-resolution
-          className="login-resolution-card absolute z-[16] right-4 top-[3rem] w-56 p-4"
-          style={initial({ opacity: 0.4, transform: 'translateY(12px) scale(0.98)' }, {})}
-        >
-          <div className="mb-4 flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-status-success/25 bg-status-success-soft text-status-success-text">
-              <ICONS.CheckCircle2 className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="type-panel-title">Fix ready</p>
-              <p className="type-caption mt-1 text-ui-text-muted">raise memory limit</p>
-            </div>
-          </div>
-          <div className="grid gap-2">
-            {evidenceAcorns.map((item, index) => (
-              <div key={item.detail} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-                <span className="type-caption min-w-0 truncate text-ui-text-muted">{item.detail}</span>
-                <span
-                  data-detail={index}
-                  className="h-1.5 w-1.5 rounded-full bg-status-success"
-                  style={initial({ opacity: 0.25 }, {})}
-                />
-              </div>
-            ))}
-          </div>
+      {showTagline && (
+        <div className="relative z-[2] max-w-[36rem]">
+          <h2 className="text-[1.9rem] font-semibold leading-[1.16] tracking-[-0.02em] text-ui-text">
+            collecting <span className="text-accent-strong">acorns</span> for everything ops
+          </h2>
+          <p className="mt-3 max-w-[31rem] text-base leading-relaxed text-ui-text-muted">
+            Turn operational knowledge into AI-powered workflows.
+          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }

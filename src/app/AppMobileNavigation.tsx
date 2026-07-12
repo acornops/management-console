@@ -1,4 +1,5 @@
 import React from 'react';
+import type { MouseEventHandler } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
@@ -6,7 +7,8 @@ import { NavCountBadge } from '@/app/NavCountBadge';
 import { Dialog } from '@/components/common/Dialog';
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
-import { canReadWorkspaceAuditLog, canReadWorkspaceData } from '@/app/workspacePermissions';
+import { canReadWorkspaceData } from '@/app/workspacePermissions';
+import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
@@ -18,6 +20,7 @@ interface AppMobileNavigationProps {
   activeVmSubview: VmSubview;
   activePrimaryNav: ActivePrimaryNav;
   activeResourceNav: ActiveResourceNav;
+  pendingApprovalCount?: number;
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;
   isDark: boolean;
@@ -40,7 +43,7 @@ interface AppMobileNavigationProps {
   onSelectWorkspaceContext: (workspaceId: string) => void;
   onSetAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onSetMobileNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onToggleTheme: () => void;
+  onToggleTheme: MouseEventHandler<HTMLButtonElement>;
 }
 
 export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
@@ -48,6 +51,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   activeVmSubview,
   activePrimaryNav,
   activeResourceNav,
+  pendingApprovalCount,
   isClusterSidebar,
   isVirtualMachineSidebar,
   isDark,
@@ -79,16 +83,15 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   const mobileNavTitleId = React.useId();
   const mobileNavPanelId = React.useId();
   const hasWorkspaceDataAccess = canReadWorkspaceData(selectedWorkspace);
-  const isWorkspaceSettingsActive =
-    activeResourceNav === 'workspaceSettings' ||
-    activeResourceNav === 'workspaceAiSettings' ||
-    activeResourceNav === 'members';
-  const workspaceSettingsPath = selectedWorkspaceId
-    ? AppPaths.workspaceSettings(selectedWorkspaceId)
-    : AppPaths.workspaces();
   const workspaceHomePath = selectedWorkspace
     ? workspaceLandingPath(selectedWorkspace)
     : AppPaths.workspaces();
+  const workspaceNavigationGroups = getWorkspaceNavigationGroups({
+    workspace: selectedWorkspace,
+    activeResourceNav,
+    pendingApprovalCount,
+    t
+  });
 
   return (
     <>
@@ -102,7 +105,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
           <div className="text-left font-sans text-lg leading-none tracking-tighter">
             <span className="font-bold text-brand-brown">acorn</span>
-            <span className="font-bold text-accent-readable">ops</span>
+            <span className="font-bold text-accent-bright">ops</span>
             <span className="type-micro-label mt-1 block max-w-[10rem] truncate">
               {selectedWorkspace?.name || t('app.noWorkspace')}
             </span>
@@ -415,130 +418,63 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                     </>
                   ) : (
                     <>
-                      {hasWorkspaceDataAccess && (
-                        <>
-                          <div className="mt-3 border-t border-ui-border pt-3">
-                            <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                              {t('app.inventory')}
-                            </p>
-                            <div className="grid grid-cols-1 gap-1">
-                              {([
-                                ['clusters', t('app.clusters'), AppPaths.workspaceKubernetesClusters, 0],
-                                ['virtualMachines', t('app.virtualMachines'), AppPaths.workspaceVirtualMachines, 0]
-                              ] as const).map(([nav, label, pathForWorkspace, badge]) => (
-                                  <button
-                                    key={nav}
-                                    type="button"
-                                    onClick={() => {
-                                      onSetMobileNavOpen(false);
-                                      selectedWorkspaceId && navigate(pathForWorkspace(selectedWorkspaceId));
-                                    }}
-                                    disabled={!selectedWorkspaceId}
-                                    className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                                      activeResourceNav === nav
-                                        ? 'bg-accent-soft text-accent-strong'
-                                        : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                                    } disabled:cursor-not-allowed disabled:opacity-50`}
-                                  >
-                                    <span className="flex w-full items-center justify-between gap-3">
-                                      <span>{label}</span>
-                                      {badge > 0 && <NavCountBadge count={badge} />}
-                                    </span>
-                                  </button>
-                                ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                      {hasWorkspaceDataAccess && (
-                        <>
-                          <div className="mt-3 border-t border-ui-border pt-3">
-                            <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                              {t('app.automation')}
-                            </p>
-                            <div className="grid grid-cols-1 gap-1">
-                              {([
-                                ['agents', t('app.agents'), AppPaths.workspaceAgents, 0],
-                                ['workflows', t('app.workflows'), AppPaths.workspaceWorkflows, 0],
-                                ['schedules', t('app.schedules'), AppPaths.workspaceSchedules, 0],
-                                ['approvals', t('app.approvals'), AppPaths.workspaceApprovals, 0]
-                              ] as const).map(([nav, label, pathForWorkspace, badge]) => (
-                                <button
-                                  key={nav}
-                                  type="button"
-                                  onClick={() => {
-                                    onSetMobileNavOpen(false);
-                                    selectedWorkspaceId && navigate(pathForWorkspace(selectedWorkspaceId));
-                                  }}
-                                  disabled={!selectedWorkspaceId}
-                                  className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                                    activeResourceNav === nav
-                                      ? 'bg-accent-soft text-accent-strong'
-                                      : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                                  } disabled:cursor-not-allowed disabled:opacity-50`}
-                                >
-                                  <span className="flex w-full items-center justify-between gap-3">
-                                    <span>{label}</span>
-                                    {badge > 0 && <NavCountBadge count={badge} />}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                      {selectedWorkspaceId && (
-                        <div className="mt-3 border-t border-ui-border pt-3">
-                          <div className="grid grid-cols-1 gap-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                navigate(workspaceSettingsPath);
-                              }}
-                              disabled={!selectedWorkspaceId}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                                isWorkspaceSettingsActive
-                                  ? 'bg-accent-soft text-accent-strong'
-                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              {t('app.workspaceSettings')}
-                            </button>
-                            {canReadWorkspaceAuditLog(selectedWorkspace) && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  onSetMobileNavOpen(false);
-                                  selectedWorkspaceId && navigate(AppPaths.workspaceAuditLog(selectedWorkspaceId));
-                                }}
-                                disabled={!selectedWorkspaceId}
-                                className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                                  activeResourceNav === 'workspaceAuditLog'
-                                    ? 'bg-accent-soft text-accent-strong'
-                                    : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                                } disabled:cursor-not-allowed disabled:opacity-50`}
-                              >
-                                {t('app.auditLog')}
-                              </button>
+                      <nav aria-label={t('app.workspaceNavigation')} className="space-y-3">
+                        {workspaceNavigationGroups.map((group) => (
+                          <section key={group.id} aria-label={group.label || t('app.overview')} className={group.id === 'primary' ? '' : 'border-t border-ui-border pt-3'}>
+                            {group.label && (
+                              <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">{group.label}</p>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                navigate(AppPaths.help());
-                              }}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
-                                activeResourceNav === 'help'
-                                  ? 'bg-accent-soft text-accent-strong'
-                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              }`}
-                            >
-                              {t('app.help')}
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                            <div className="grid grid-cols-1 gap-1">
+                              {group.items.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                  <div key={item.id} className={item.children ? 'rounded-md bg-ui-bg pb-1' : undefined}>
+                                    <a
+                                      href={appHref(item.path)}
+                                      onClick={(event) => handleAppLinkClick(event, item.path, navigate, () => onSetMobileNavOpen(false))}
+                                      aria-current={(item.current ?? item.active) ? 'page' : undefined}
+                                      className={`flex min-h-11 items-center justify-between rounded-md px-3 py-2 text-left text-xs transition-colors duration-[160ms] motion-reduce:duration-0 ${
+                                        item.active
+                                          ? 'bg-ui-bg font-semibold text-ui-text'
+                                          : 'font-medium text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                                      }`}
+                                    >
+                                      <span className="flex min-w-0 items-center gap-3">
+                                        <Icon className={`h-[18px] w-[18px] shrink-0 ${item.active ? 'text-accent-strong' : 'text-ui-text-muted'}`} />
+                                        <span className="truncate">{item.label}</span>
+                                      </span>
+                                      {item.id === 'approvals' && (
+                                        <span className="ml-2 inline-flex min-w-8 shrink-0 justify-end" aria-hidden={item.badge === undefined || item.badge <= 0 ? 'true' : undefined}>
+                                          {typeof item.badge === 'number' ? <NavCountBadge count={item.badge} /> : null}
+                                        </span>
+                                      )}
+                                    </a>
+                                    {item.children && (
+                                      <div className="mt-0.5 grid grid-cols-1 gap-1 pl-3">
+                                        {item.children.map((child) => (
+                                          <a
+                                            key={child.id}
+                                            href={appHref(child.path)}
+                                            onClick={(event) => handleAppLinkClick(event, child.path, navigate, () => onSetMobileNavOpen(false))}
+                                            aria-current={child.current ? 'page' : undefined}
+                                            className={`relative flex min-h-11 items-center rounded-md px-3 py-2 pl-7 text-left text-xs transition-colors duration-[160ms] motion-reduce:duration-0 ${
+                                              child.current
+                                                ? 'bg-ui-surface font-semibold text-ui-text shadow-sm before:absolute before:left-3 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full before:bg-accent-strong'
+                                                : 'font-medium text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                                            }`}
+                                          >
+                                            <span className="truncate">{child.label}</span>
+                                          </a>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </section>
+                        ))}
+                      </nav>
                     </>
                   )}
                 </div>

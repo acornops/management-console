@@ -1,8 +1,10 @@
 import React from 'react';
 import { Button } from '@/components/common/Button';
+import { Checkbox } from '@/components/common/Checkbox';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
+import { PageHeader } from '@/components/common/PageComposition';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import { appendWorkflowSearchTag, type WorkflowAgentReference, type WorkflowDefinition, type WorkflowTab } from '@/pages/workflows/workflowModel';
@@ -28,19 +30,17 @@ export const WorkflowRouteHeader: React.FC<{
   canManageWorkflowScope: boolean;
   onCreateClick: () => void;
 }> = ({ canManageWorkflowScope, onCreateClick }) => (
-  <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-    <div>
-      <h1 className="type-route-title">Workflows</h1>
-      <p className="type-body mt-3 max-w-2xl text-ui-text-muted">Create, launch, and audit governed workspace automations with visible agent access and approval gates.</p>
-    </div>
-    <div className="flex flex-col items-start gap-2 lg:items-end">
-      <Button type="button" variant="secondary" size="md" className="whitespace-nowrap self-start lg:self-auto" onClick={onCreateClick} disabled={!canManageWorkflowScope} title={!canManageWorkflowScope ? 'You need manage_workflows to create workflows.' : undefined}>
+  <PageHeader
+    title="Workflows"
+    description="Create, launch, and audit governed workspace automations with visible agent access and approval gates."
+    actions={<div className="flex flex-col items-start gap-2 lg:items-end">
+      <Button type="button" variant="primary" size="md" className="whitespace-nowrap self-start lg:self-auto" onClick={onCreateClick} disabled={!canManageWorkflowScope} title={!canManageWorkflowScope ? 'You need manage_workflows to create workflows.' : undefined}>
         <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
         Create workflow
       </Button>
       {!canManageWorkflowScope && <span className="type-caption max-w-64 font-semibold text-ui-text-muted lg:text-right">Ask a workspace manager for manage_workflows to create or edit workflow definitions.</span>}
-    </div>
-  </header>
+    </div>}
+  />
 );
 
 export const WorkflowLoadFallbackNotice: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
@@ -64,6 +64,51 @@ function workflowModeTone(mode: string): 'success' | 'warning' | 'danger' {
 
 export const WorkflowModeBadge: React.FC<{ mode: string }> = ({ mode }) => (
   <StatusBadge tone={workflowModeTone(mode)}>{workflowModeLabel(mode)}</StatusBadge>
+);
+
+export const WorkflowLaunchActions: React.FC<{
+  canManageWorkflowScope: boolean;
+  isWriteCapable: boolean;
+  launchAcknowledged: boolean;
+  launchBlocker: string | null;
+  launching: boolean;
+  needsLaunchAcknowledgement: boolean;
+  onAcknowledgementChange: (checked: boolean) => void;
+  onLaunch: () => void;
+  onSchedule: () => void;
+  tags: string[];
+}> = ({ canManageWorkflowScope, isWriteCapable, launchAcknowledged, launchBlocker, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onLaunch, onSchedule, tags }) => (
+  <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+    <div className="min-w-0">
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-2" aria-label="Selected workflow tags">
+          {tags.map((tag) => (
+            <span key={tag} className="inline-flex min-h-7 items-center rounded-md border border-ui-border bg-ui-surface px-2.5 text-xs font-bold text-ui-text-muted">{tag}</span>
+          ))}
+        </div>
+      )}
+      {isWriteCapable && !launchBlocker && (
+        <label id="workflow-launch-acknowledgement" className={`${tags.length > 0 ? 'mt-2' : ''} flex min-h-11 cursor-pointer items-center gap-2 text-ui-text-muted transition-colors hover:text-ui-text focus-within:text-ui-text`}>
+          <Checkbox checked={launchAcknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="shrink-0" />
+          <span className="type-caption font-semibold">I understand this workflow can modify live systems.</span>
+        </label>
+      )}
+      {launchBlocker && <span id="workflow-launch-blocker" className={`${tags.length > 0 ? 'mt-2' : ''} block text-xs font-semibold text-ui-text-muted`}>Resolve this before launch: {launchBlocker}</span>}
+    </div>
+    <div className="grid gap-1 sm:justify-items-end">
+      <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2">
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onSchedule} disabled={!canManageWorkflowScope} aria-describedby={!canManageWorkflowScope ? 'workflow-schedule-blocker' : undefined}>
+          <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
+          Schedule workflow
+        </Button>
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onLaunch} disabled={launching || Boolean(launchBlocker) || needsLaunchAcknowledgement} title={launchBlocker || undefined} aria-describedby={launchBlocker ? 'workflow-launch-blocker' : needsLaunchAcknowledgement ? 'workflow-launch-acknowledgement' : undefined}>
+          <ICONS.Send className="h-4 w-4" aria-hidden="true" />
+          {launching ? 'Starting...' : 'Launch workflow'}
+        </Button>
+      </div>
+      {!canManageWorkflowScope && <p id="workflow-schedule-blocker" className="text-xs font-semibold text-ui-text-muted sm:text-right">You need manage_workflows to schedule workflows.</p>}
+    </div>
+  </div>
 );
 
 export const WorkflowLibraryList: React.FC<{

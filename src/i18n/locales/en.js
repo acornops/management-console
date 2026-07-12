@@ -77,12 +77,16 @@ export const en = {
   },
   app: {
     workspace: 'Workspace',
+    workspaceNavigation: 'Workspace navigation',
+    workspaceNavigation: 'Workspace navigation',
     switchWorkspace: 'Switch Workspace',
     noWorkspace: 'No workspaces',
     newWorkspace: 'New Workspace',
     overview: 'Overview',
     agents: 'Agents',
     workflows: 'Workflows',
+    library: 'Library',
+    workspaceNavigation: 'Workspace navigation',
     schedules: 'Schedules',
     approvals: 'Approvals',
     clusters: 'Kubernetes Clusters',
@@ -94,6 +98,8 @@ export const en = {
     capabilities: 'Capabilities',
     inventory: 'Inventory',
     automation: 'Automation',
+    governance: 'Governance',
+    utilities: 'Utilities',
     cluster: 'Cluster',
     vm: 'VM',
     activeCluster: 'Active Cluster',
@@ -883,6 +889,43 @@ export const en = {
     leaveSuccess: 'You left {{workspace}}.',
     dangerTitle: 'Delete workspace',
     dangerBody: 'Permanently removes this workspace, member access, saved settings, cluster registrations, VM registrations, diagnostics context, and chat history. Agents and in-cluster resources are not removed.'
+  },
+  workspaceMcp: {
+    title: 'Workspace MCP servers',
+    description: 'Connect generic HTTP MCP servers, review discovered tools, and control which capabilities agents may receive.',
+    name: 'Server name',
+    url: 'Server URL',
+    auth: 'Authentication',
+    authNone: 'None',
+    authBearer: 'Bearer token',
+    authHeader: 'Custom header',
+    credential: 'Credential',
+    credentialHelp: 'Write-only. The saved value is never returned by the API.',
+    rotateCredential: 'New credential',
+    rotate: 'Rotate credential',
+    headerName: 'Header name',
+    add: 'Add MCP server',
+    loading: 'Loading workspace MCP servers...',
+    empty: 'No workspace MCP servers are configured.',
+    readOnly: 'Your role can review these servers but cannot change credentials or tool access.',
+    loadFailed: 'Unable to load workspace MCP servers.',
+    actionFailed: 'Unable to update the MCP server.',
+    status: 'Status: {{status}}',
+    credentialSet: 'Credential configured',
+    credentialNotSet: 'No credential configured',
+    test: 'Test and discover',
+    disable: 'Disable',
+    enable: 'Enable',
+    delete: 'Delete',
+    enabled: 'Enabled',
+    read: 'Read',
+    write: 'Write',
+    capabilityFor: 'Capability for {{name}}',
+    noTools: 'No tools have been discovered yet.'
+  },
+  workflowCatalog: {
+    inlineFailure: 'Some agent or MCP capabilities could not be loaded.',
+    openMcpSettings: 'Open MCP settings'
   },
   workspaceAiSettings: {
     title: 'AI Settings',
@@ -2005,6 +2048,40 @@ export const en = {
     deleteBody: 'Deleting "{{name}}" removes this MCP server connection and its discovered tool mappings for the target. The server connection cannot be recovered.',
     deleteConsoleBoundary: 'This does not delete the external MCP service, credentials outside the control plane, or target resources.',
     deleteAction: 'Delete'
+  },
+  agentsWorkflows: {
+    agents: {
+      title: 'Agents', description: 'Browse agent presets and inspect the capabilities available to workflows.', catalogLabel: 'Agent catalog', catalogHeading: 'Agent catalog',
+      toolbarLabel: 'Agent catalog search and filters', searchPlaceholder: 'Search agents, workflows, or capabilities', searchLabel: 'Search agents', statusFilterLabel: 'Filter agents by status',
+      resultCount: '{{visible}} of {{total}} agents', newAgent: 'New agent', createPermission: 'You need manage_agents to create agents.', emptyTitle: 'No agents in this workspace', emptyBody: 'Create an agent preset to make capabilities available to workflows.', emptyReadOnlyBody: 'Agents will appear here after a workspace manager creates them.',
+      noResultsTitle: 'No agents match', noResultsBody: 'Adjust the search or status filter.', filters: { all: 'All' },
+      status: { active: 'Active', draft: 'Draft', disabled: 'Disabled' }, tabs: { overview: 'Overview', capabilities: 'Capabilities', activity: 'Activity', versions: 'Versions' },
+      fields: { identity: 'Agent', status: 'Status', capabilities: 'Capabilities', assignment: 'Assignment' },
+      ownerVersion: '{{owner}} · v{{version}}', openProfile: 'Open {{name}} agent profile',
+      capabilityCounts: {
+        mcpServer: '{{count}} MCP servers', tool: '{{count}} tools', skill: '{{count}} skills',
+        mcpServer_one: '{{count}} MCP server', mcpServer_other: '{{count}} MCP servers',
+        tool_one: '{{count}} tool', tool_other: '{{count}} tools',
+        skill_one: '{{count}} skill', skill_other: '{{count}} skills'
+      },
+      workflowAssignment: {
+        count: '{{count}} workflows',
+        count_one: '{{count}} workflow', count_other: '{{count}} workflows', none: 'No assigned workflows',
+        overflow: '+{{count}}', open: 'Open {{name}} in Workflows'
+      },
+      runTest: 'Run test', edit: 'Edit agent', reactivate: 'Reactivate', dangerZone: 'Danger zone', retryAll: 'Retry all', unavailable: 'Some live data is unavailable'
+    },
+    schedule: {
+      title: 'Schedule workflow', description: 'Choose a readable cadence, review access, then confirm the next runs.', close: 'Close schedule workflow drawer',
+      workflow: 'Workflow', noWorkflow: 'No workflow selected', name: 'Schedule name', defaultName: '{{name}} schedule', frequency: 'Frequency',
+      frequency_daily: 'Daily', frequency_weekdays: 'Weekdays', frequency_weekly: 'Weekly', frequency_custom: 'Custom', time: 'Time', timezone: 'Timezone', local: 'local', weekdays: 'Run on',
+      monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
+      inputs: 'Workflow inputs', inputsHelp: 'These values are supplied to every scheduled run. Required values must be complete before saving.',
+      context: 'Context access', contextHelp: 'Approve only the context this recurring run needs.', contextGrantHelp: 'The workflow may read this context on every scheduled run.',
+      previewing: 'Checking schedule...', previewPending: 'Complete the schedule to see upcoming runs.', previewUnavailable: 'Schedule preview is unavailable.',
+      advanced: 'Advanced cron and JSON', cron: 'Cron expression', json: 'Input defaults JSON', invalidJson: 'Input defaults must be a JSON object.',
+      enabled: 'Start this schedule enabled', cancel: 'Cancel', create: 'Create schedule', creating: 'Creating...', createError: 'Unable to create workflow schedule'
+    }
   },
   nodes: {
     title: 'Cluster Nodes',

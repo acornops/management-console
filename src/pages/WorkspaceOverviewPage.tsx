@@ -8,6 +8,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
 import { issueStatusTone } from '@/pages/issues/issueUi';
@@ -326,7 +327,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             )}
           </div>
           <div className="flex w-full shrink-0 flex-col gap-2 self-start sm:w-auto sm:flex-row lg:justify-end">
-            <Button onClick={() => runTriage(item)} variant="accent" size="sm" className="w-full justify-center sm:w-auto">
+            <Button onClick={() => runTriage(item)} variant="primary" size="sm" className="w-full justify-center sm:w-auto">
               <Terminal className="h-4 w-4" />
               {t('overview.runTriageIssue')}
             </Button>
@@ -341,12 +342,8 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   };
 
   return (
-    <div className="min-h-0 w-full max-w-full flex-1 overflow-x-hidden overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <motion.header {...headerMotion} className="mb-8 flex min-w-0 flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0 max-w-3xl">
-          <h1 className="type-route-title">{t('overview.title')}</h1>
-          <p className="type-body mt-2 break-words">{t('overview.summaryFor')}</p>
-        </div>
+    <PageShell>
+      <PageHeader title={t('overview.title')} description={t('overview.summaryFor')} actions={
         <dl className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end">
           {summaryStats.map((item) => (
             <div key={item.label} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm sm:w-fit">
@@ -355,7 +352,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             </div>
           ))}
         </dl>
-      </motion.header>
+      } />
 
       <section
         data-overview-quick-actions="true"
@@ -437,6 +434,6 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
           connectedVirtualMachineCards
         )}
       </div>
-    </div>
+    </PageShell>
   );
 };

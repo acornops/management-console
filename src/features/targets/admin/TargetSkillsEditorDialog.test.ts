@@ -46,8 +46,8 @@ describe('Target skills editor dialog', () => {
     expect(targetSkillsInventory).toContain("<th scope=\"col\" className=\"type-label px-4 py-5 text-right sm:px-6 lg:px-8\">{t('targetSkills.actionsColumn')}</th>");
     expect(targetSkillsInventory).toContain("<th scope=\"col\" className=\"type-label px-4 py-5 sm:px-6 lg:px-8\">{t('targetSkills.assistantStateColumn')}</th>");
     expect(targetSkillsInventory).toContain("canEditSkills ? 'Edit skill' : 'View skill'");
-    expect(targetSkillsInventory).toContain('role="switch"');
-    expect(targetSkillsInventory).toContain("skill.enabled ? 'translate-x-[22px]' : 'translate-x-1'");
+    expect(targetSkillsInventory).toContain('<Switch');
+    expect(targetSkillsInventory).toContain('onToggleSkill(skill.id, enabled)');
     expect(targetSkillsInventory).not.toContain('ScopeSwitch');
     expect(targetSkillsInventory).not.toContain("{selected ? 'Selected' : 'Open'}");
   });

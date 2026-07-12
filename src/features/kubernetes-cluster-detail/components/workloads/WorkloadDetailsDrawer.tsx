@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw
 import { useTranslation } from 'react-i18next';
 import { Button, buttonClassName } from '@/components/common/Button';
 import { Select, SelectOption } from '@/components/common/Select';
+import { Checkbox } from '@/components/common/Checkbox';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlanePodLogs } from '@/services/controlPlaneApi';
 import { DetailRow, ResourceMetricInline, SidePanel } from '@/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout';
@@ -224,7 +225,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                     onAnalyzePod(selectedWorkload);
                     closeDrawer();
                   }}
-                  variant="accent"
+                  variant="primary"
                   size="lg"
                   className="flex-1 py-4 text-xs uppercase tracking-widest"
                 >
@@ -305,12 +306,10 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
 
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                     <label className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={logPrevious}
                         onChange={(event) => setLogPrevious(event.target.checked)}
                         disabled={isPodLogsLoading}
-                        className="h-4 w-4 rounded border-ui-border text-accent-strong focus:ring-accent/20"
                       />
                       {t('workloads.previousContainer')}
                     </label>
@@ -332,7 +331,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                           if (!isFollowingLogs) void loadPodLogs('follow');
                         }}
                         className={buttonClassName({
-                          variant: isFollowingLogs ? 'accent' : 'secondary',
+                          variant: isFollowingLogs ? 'primary' : 'secondary',
                           size: 'sm',
                           className: 'uppercase tracking-widest'
                         })}

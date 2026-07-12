@@ -7,6 +7,7 @@ import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { actionCardButtonClassName, cardClassName } from '@/components/common/Card';
 import { Dialog } from '@/components/common/Dialog';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ClusterResourceChart, type ClusterMetricPoint } from '@/components/dashboard/ClusterResourceChart';
 import { PendingClusterSetup } from '@/components/dashboard/PendingClusterSetup';
@@ -209,27 +210,19 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8 flex flex-col gap-8">
-      <motion.header {...headerMotion} className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <h1 className="type-route-title">
-            {t('dashboard.title')}
-          </h1>
-          <p className="type-body mt-2 max-w-md">
-            {workspaceName
-              ? t('dashboard.descriptionWorkspace')
-              : t('dashboard.descriptionGlobal')}
-          </p>
-        </div>
-        <div className="flex w-full min-w-0 flex-col gap-3 lg:w-auto lg:max-w-2xl lg:flex-row lg:items-center lg:justify-end">
+    <PageShell>
+      <PageHeader
+        title={t('dashboard.title')}
+        description={workspaceName ? t('dashboard.descriptionWorkspace') : t('dashboard.descriptionGlobal')}
+        actions={<>
           {controls}
           {onAddCluster && (
-            <Button onClick={onAddCluster} variant="secondary" size="md" className="whitespace-nowrap">
+            <Button onClick={onAddCluster} variant="primary" size="md" className="whitespace-nowrap">
               <ICONS.Plus className="w-4 h-4" /> {t('dashboard.addCluster')}
             </Button>
           )}
-        </div>
-      </motion.header>
+        </>}
+      />
       <section className={cardClassName({ className: 'overflow-hidden' })}>
         <div
           className={`grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,0.7fr)] lg:items-center ${getPostureClass(criticalClusters, warningClusters)}`}
@@ -416,7 +409,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <h3 className="text-lg font-bold text-ui-text">{t('dashboard.noClusters')}</h3>
           <p className="mt-2 max-w-sm text-sm text-ui-text-muted">{t('dashboard.noClustersBody')}</p>
           {onAddCluster && (
-            <Button onClick={onAddCluster} variant="accent" size="md" className="mt-6">
+            <Button onClick={onAddCluster} variant="primary" size="md" className="mt-6">
               <ICONS.Plus className="w-4 h-4" /> {t('dashboard.addFirstCluster')}
             </Button>
           )}
@@ -500,7 +493,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 type="button"
                 onClick={() => void handleConfirmDeleteCluster()}
                 disabled={isDeletingCluster || deleteClusterConfirmation !== deleteTargetCluster.name}
-                className="rounded-lg bg-status-danger px-4 py-2 type-row-title text-[oklch(0.99_0.004_86)] transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-status-danger px-4 py-2 type-row-title text-ui-bg transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeletingCluster ? t('dashboard.deleting') : t('dashboard.delete')}
               </button>
@@ -508,7 +501,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </Dialog>
       )}
       </AnimatePresence>
-    </div>
+    </PageShell>
   );
 };
 

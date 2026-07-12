@@ -1,4 +1,5 @@
 import React from 'react';
+import type { MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Tooltip } from '@/components/common/Tooltip';
@@ -26,7 +27,7 @@ interface LoginPageProps {
   onResendVerification: (email: string) => Promise<{ resendAfterSeconds?: number }>;
   onRequestPasswordReset: (email: string) => Promise<{ resendAfterSeconds?: number }>;
   onResetPassword: (token: string, password: string) => Promise<void>;
-  onToggleTheme: () => void;
+  onToggleTheme: MouseEventHandler<HTMLButtonElement>;
 }
 
 /**
@@ -50,7 +51,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onToggleTheme
 }) => {
   const { t } = useTranslation();
-
   return (
     <div className={`relative flex min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-ui-bg text-ui-text transition-colors duration-200 lg:grid lg:grid-cols-2 lg:overflow-hidden ${isDark ? 'dark' : ''}`}>
       <Tooltip
@@ -61,7 +61,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         <button
           type="button"
           onClick={onToggleTheme}
-          className="rounded-lg border border-ui-border bg-ui-surface/90 p-2.5 text-ui-text-muted shadow-sm transition-all hover:bg-ui-surface-strong hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
+          className="rounded-lg border border-ui-border bg-ui-surface/90 p-2.5 text-ui-text-muted shadow-sm transition-all duration-150 hover:bg-ui-surface-strong hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-95"
           aria-label={isDark ? t('login.switchLight') : t('login.switchDark')}
         >
           {isDark ? <ICONS.Sun className="h-4 w-4" /> : <ICONS.Moon className="h-4 w-4" />}
@@ -103,7 +103,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       </main>
 
       <aside
-        className="relative hidden flex-1 items-center justify-start overflow-hidden border-l border-ui-border bg-ui-surface-strong lg:flex lg:pl-16 lg:pr-8 xl:pl-20 xl:pr-10 2xl:pl-24 2xl:pr-12"
+        className="login-hunt-panel relative hidden flex-1 items-center justify-start overflow-hidden lg:flex lg:pl-16 lg:pr-8 xl:pl-20 xl:pr-10 2xl:pl-24 2xl:pr-12"
       >
         <LoginPreview />
       </aside>

@@ -101,7 +101,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
                 <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-ui-text-muted">
                   {t('diagnostics.installAgentBody')}
                 </p>
-                <Button onClick={() => onOpenInstallModal(selectedCluster.id)} variant="accent" size="sm">
+                <Button onClick={() => onOpenInstallModal(selectedCluster.id)} variant="primary" size="sm">
                   <ICONS.Wrench className="w-4 h-4" />
                   {t('diagnostics.openInstallCommand')}
                 </Button>

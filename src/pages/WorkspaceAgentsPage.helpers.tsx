@@ -2,7 +2,6 @@ import React from 'react';
 import { SelectOption } from '@/components/common/Select';
 import {
   filterAgentDefinitions,
-  getAgentEligibilityLabel,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
 import {
@@ -11,7 +10,7 @@ import {
 } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
-import { formatRelativeTime, formatUserDateTime } from '@/utils/dateTime';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 export interface WorkspaceAgentsPageProps {
   workspace: Workspace;
@@ -38,29 +37,18 @@ export type AgentEditDraft = AgentDraft & {
 
 export type LocalNotice = { tone: 'success' | 'danger'; message: string };
 export type AgentCapabilityOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
-export type AgentCatalogFocus = 'all' | 'needs_review' | 'needs_test' | 'ready';
+export type AgentCatalogFocus = 'all' | 'active' | 'draft' | 'disabled';
 
-export const statusTone = (status: AgentDefinition['status']): 'success' | 'warning' | 'neutral' => {
+export const statusTone = (status: AgentDefinition['status']): 'success' | 'warning' | 'danger' => {
   if (status === 'active') return 'success';
   if (status === 'draft') return 'warning';
-  return 'neutral';
-};
-
-export const healthTone = (status: AgentDefinition['health']['status']): 'success' | 'warning' | 'neutral' => {
-  if (status === 'healthy') return 'success';
-  if (status === 'degraded') return 'warning';
-  return 'neutral';
+  return 'danger';
 };
 
 export const splitInput = (value: string): string[] =>
   value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
 
 const joinInput = (values: string[]): string => values.join('\n');
-
-export const appendUniqueToken = (current: string, value: string): string => {
-  const values = splitInput(current);
-  return joinInput(values.includes(value) ? values : [...values, value]);
-};
 
 const uniqueStrings = (values: string[]): string[] => Array.from(new Set(values.filter(Boolean)));
 
@@ -171,11 +159,7 @@ export const mapApiAgent = (
       lastRunAt: item.activity?.lastRunAt || fallback.activity.lastRunAt,
       lastStatus: (item.activity?.lastStatus as AgentDefinition['activity']['lastStatus'] | undefined) || fallback.activity.lastStatus
     },
-    auditHistory: fallback.auditHistory,
-    health: {
-      status: item.activity?.lastStatus === 'failed' ? 'degraded' : item.status === 'active' ? 'healthy' : fallback.health.status,
-      summary: item.activity?.lastRunAt ? `Last run ${formatRelativeTime(item.activity.lastRunAt, { fallback: item.activity.lastRunAt })}` : fallback.health.summary
-    }
+    auditHistory: fallback.auditHistory
   };
 };
 
@@ -210,12 +194,10 @@ export function filterVisibleAgents(
   query: string,
   filters: { focus: AgentCatalogFocus }
 ): AgentDefinition[] {
-  return filterAgentDefinitions(agents.filter(isWorkspaceCatalogAgent), query).filter((agent) => {
-    if (filters.focus === 'needs_review') return getAgentEligibilityLabel(agent) === 'Needs review';
-    if (filters.focus === 'needs_test') return getAgentEligibilityLabel(agent) === 'Needs test';
-    if (filters.focus === 'ready') return getAgentEligibilityLabel(agent) === 'Ready';
-    return true;
-  });
+  const statusOrder: Record<AgentDefinition['status'], number> = { active: 0, draft: 1, disabled: 2 };
+  return filterAgentDefinitions(agents.filter(isWorkspaceCatalogAgent), query)
+    .filter((agent) => filters.focus === 'all' || agent.status === filters.focus)
+    .sort((left, right) => statusOrder[left.status] - statusOrder[right.status] || left.name.localeCompare(right.name));
 }
 
 export const summarizeAgentActivityRecord = (activity: AgentActivityRecordApi): string => `Activity ${activity.status} on v${activity.agentVersion}`;
@@ -277,8 +259,10 @@ export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEd
     changes.push('Capability sources changed');
   }
   if ((agent.approvalPolicy.writeActions === 'approval_required') !== draft.writeToolsRequireApproval) changes.push('Write approval rule changed');
-  return changes.length > 0 ? changes : ['No changes to save.'];
+  return changes;
 };
+
+export const isAgentEditDraftDirty = (agent: AgentDefinition, draft: AgentEditDraft): boolean => getAgentEditChangeSummary(agent, draft).length > 0;
 
 export const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (
   <div className="min-w-0">
@@ -288,53 +272,6 @@ export const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ 
         ? values.map((value) => <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 text-xs text-ui-text-muted [overflow-wrap:anywhere]">{value}</span>)
         : <span className="type-caption text-ui-text-muted">No values configured.</span>}
     </div>
-  </div>
-);
-
-export const AgentCapabilityOptionButtons: React.FC<{
-  options: AgentCapabilityOptions['mcpServers'];
-  onSelect: (value: string) => void;
-}> = ({ options, onSelect }) => (
-  <div className="mt-2 flex flex-wrap gap-2" aria-label="Capability catalog options">
-    {options.length > 0
-      ? options.slice(0, 8).map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          className="max-w-full rounded-md border border-ui-border bg-ui-surface px-2.5 py-1.5 text-left text-xs font-bold text-ui-text-muted transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-60"
-          onClick={() => onSelect(option.value)}
-          disabled={option.disabled}
-          title={option.disabledReason || option.description || option.label}
-        >
-          <span className="block max-w-44 truncate">{option.label}</span>
-        </button>
-      ))
-      : <span className="type-caption text-ui-text-muted">No catalog options loaded. Paste an approved ID if needed.</span>}
-  </div>
-);
-
-export const AgentAssignmentSummary: React.FC<{ agent: AgentDefinition }> = ({ agent }) => {
-  const approvalCount = [agent.approvalPolicy.sensitiveActions, agent.approvalPolicy.writeActions].filter((value) => value === 'approval_required').length;
-  const approvalSummary = approvalCount > 0
-    ? `${approvalCount} approval ${approvalCount === 1 ? 'rule' : 'rules'} configured`
-    : 'No approvals required';
-
-  return (
-    <section aria-label="Assignment summary" className="mt-5">
-      <div className="type-micro-label text-ui-text-muted">Assignment summary</div>
-      <dl className="mt-3 grid min-w-0 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
-        <AgentReadinessFact label="Owner" value={agent.owner} />
-        <AgentReadinessFact label="Health" value={formatAgentDisplayValue(agent.health.status)} />
-        <AgentReadinessFact label="Approvals" value={approvalSummary} />
-      </dl>
-    </section>
-  );
-};
-
-const AgentReadinessFact: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="min-w-0">
-    <dt className="type-micro-label text-ui-text-muted">{label}</dt>
-    <dd className="mt-1 min-w-0 break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{value}</dd>
   </div>
 );
 

@@ -425,7 +425,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
             <Button variant="secondary" size="sm" onClick={resetDraft} disabled={!draftDirty || fileSaving || savingTool}>{t('tools.targetInsights.resetChanges')}</Button>
             <div className="flex justify-end gap-3">
               <Button variant="secondary" size="sm" onClick={guardedClose} disabled={fileSaving || savingTool}>{t('tools.targetInsights.cancel')}</Button>
-              <Button variant="accent" size="sm" onClick={() => void saveFile()} disabled={!hasOpenDraft || fileSaving || !draftDirty || !draft.title.trim()}>
+              <Button variant="primary" size="sm" onClick={() => void saveFile()} disabled={!hasOpenDraft || fileSaving || !draftDirty || !draft.title.trim()}>
                 {fileSaving ? t('common.saving') : t('tools.targetInsights.saveChanges')}
               </Button>
             </div>

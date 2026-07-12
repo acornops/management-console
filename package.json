@@ -7,6 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "build:analyze": "ANALYZE=true vite build",
+    "design:catalog": "vite --host 127.0.0.1 --open /design-system.html",
+    "design:check": "node scripts/check-design-system.mjs",
+    "design:snapshots": "playwright test",
+    "design:snapshots:update": "playwright test --update-snapshots",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "test": "vitest run",
@@ -16,8 +20,8 @@
     "membership:check": "node scripts/check-workspace-membership.mjs",
     "contracts:check": "node scripts/check-contracts.mjs",
     "harness:check": "node scripts/check-harness.mjs",
-    "validate": "npm run lint && npm run test && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes",
-    "validate:ci": "npm run lint && npm run test:coverage && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes"
+    "validate": "npm run design:check && npm run lint && npm run test && npm run design:snapshots && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes",
+    "validate:ci": "npm run design:check && npm run lint && npm run test:coverage && npm run design:snapshots && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -32,6 +36,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^4.1.5",

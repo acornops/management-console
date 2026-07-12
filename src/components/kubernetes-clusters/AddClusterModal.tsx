@@ -236,7 +236,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
               <Button
                 onClick={() => onProceedToInstructions(agentAccessMode)}
                 disabled={!newClusterName.trim() || isCreatingCluster}
-                variant="accent"
+                variant="primary"
                 size="sm"
                 className="rounded-lg"
               >
@@ -304,7 +304,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
             <div className="flex items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
               <Button
                 onClick={() => void onConfirmInstalled()}
-                variant="accent"
+                variant="primary"
                 size="sm"
                 className="rounded-lg"
               >

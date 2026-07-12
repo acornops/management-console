@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import {
   controlPlaneApi,
@@ -479,13 +480,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
 
   if (view === 'overview') {
     return (
-      <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-        <header className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="type-route-title">{t('virtualMachines.overview.title')}</h1>
-            <p className="type-body mt-2">{t('virtualMachines.overview.latestTelemetryFor', { name: selected.name })}</p>
-          </div>
-          <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end">
+      <PageShell>
+        <PageHeader title={t('virtualMachines.overview.title')} description={t('virtualMachines.overview.latestTelemetryFor', { name: selected.name })} actions={
+          <>
             <Button onClick={() => openVmTriage()} variant="secondary" size="md" className="whitespace-nowrap">
               <Terminal className="h-4 w-4" />
               {t('virtualMachines.overview.openAssistant')}
@@ -494,8 +491,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
               <div className={`h-2 w-2 rounded-full ${selected.status === 'online' ? 'bg-status-success' : selected.status === 'degraded' ? 'bg-status-warning' : 'bg-status-danger'}`} />
               <span className="type-label">{getVmStatusLabel(selected.status, t)} · {formatSnapshotTime(selected)}</span>
             </div>
-          </div>
-        </header>
+          </>
+        } />
 
         <VirtualMachineIssuesPanel
           issues={issues}
@@ -546,7 +543,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
             </div>
           ))}
         </div>
-      </div>
+      </PageShell>
     );
   }
 

@@ -277,7 +277,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       </td>
                       {onOpenCopilot && (
                         <td className="px-5 py-4 align-top text-right">
-                          <Button onClick={() => openIssueTriage(issue)} variant="accent" size="md">
+                          <Button onClick={() => openIssueTriage(issue)} variant="primary" size="md">
                             <Terminal className="h-4 w-4" />
                             {t('clusterOverview.runTriage')}
                           </Button>
@@ -307,7 +307,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <h2 className="type-row-title mt-4">{issue.title}</h2>
                   <p className="type-body mt-2">{issue.reason || issue.summary}</p>
                   {onOpenCopilot && (
-                    <Button onClick={() => openIssueTriage(issue)} variant="accent" size="md" className="mt-4">
+                    <Button onClick={() => openIssueTriage(issue)} variant="primary" size="md" className="mt-4">
                       <Terminal className="h-4 w-4" />
                       {t('clusterOverview.runTriage')}
                     </Button>

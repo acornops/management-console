@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
@@ -128,7 +129,7 @@ const SecurityDialog: React.FC<{
         <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
           {cancelLabel}
         </Button>
-        <Button type="submit" variant="accent" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
           {isSubmitting ? savingLabel : submitLabel}
         </Button>
       </div>
@@ -218,12 +219,9 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
   };
 
   return (
-    <div className={embedded ? '' : 'min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8'}>
+    <PageShell embedded={embedded} width="narrow">
       {!embedded && (
-        <motion.header {...headerMotion} className="mb-12">
-          <h1 className="mb-2 text-3xl font-bold tracking-tight text-ui-text">{t('settings.title')}</h1>
-          <p className="font-medium text-ui-text-muted">{t('settings.subtitle')}</p>
-        </motion.header>
+        <PageHeader title={t('settings.title')} description={t('settings.subtitle')} />
       )}
 
       <div className="max-w-4xl">
@@ -381,6 +379,6 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
           <PasswordField id="sso-current-password" label={t('settings.currentPassword')} value={currentPassword} autoComplete="current-password" onChange={setCurrentPassword} />
         </SecurityDialog>
       )}
-    </div>
+    </PageShell>
   );
 };

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-02T00:00:00Z",
+  "generatedAt": "2026-07-12T12:11:28Z",
   "title": "Design System: AcornOps Management Console",
   "extensions": {
     "colorMeta": {
@@ -205,14 +205,14 @@
         "purpose": "Modal and drawer panels only."
       },
       {
-        "name": "evidence-card",
-        "value": "0 12px 28px rgb(var(--text-rgb) / 0.08)",
-        "purpose": "Rare demonstration or evidence surfaces."
+        "name": "focus-ring-control",
+        "value": "0 0 0 2px rgb(var(--brand-orange-rgb) / 0.25)",
+        "purpose": "Keyboard focus on buttons, tabs, navigation, and other compact controls."
       },
       {
-        "name": "focus-ring",
-        "value": "0 0 0 2px rgb(var(--brand-orange-rgb) / 0.25)",
-        "purpose": "Keyboard focus and focused fields."
+        "name": "focus-ring-field",
+        "value": "0 0 0 2px rgb(var(--brand-orange-rgb) / 0.15)",
+        "purpose": "Focused text fields, paired with a stronger orange border."
       }
     ],
     "motion": [
@@ -230,6 +230,26 @@
         "name": "ease-out-expo",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
         "purpose": "Dialog and trace row entry transitions."
+      },
+      {
+        "name": "sidebar-navigation",
+        "value": "160ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Desktop and mobile navigation color changes; reduced motion removes the duration."
+      },
+      {
+        "name": "theme-reveal",
+        "value": "theme-reveal 320ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        "purpose": "Radial theme reveal originating at the clicked theme control."
+      },
+      {
+        "name": "theme-control-swap",
+        "value": "160ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Sun or moon control cross-state transition during a theme reveal."
+      },
+      {
+        "name": "active-tab-indicator",
+        "value": "200ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Shared two-pixel indicator movement between related tabs; reduced motion makes it immediate."
       },
       {
         "name": "reasoning-sheen",
@@ -258,12 +278,20 @@
         "value": "640px"
       },
       {
+        "name": "md",
+        "value": "768px"
+      },
+      {
         "name": "lg",
         "value": "1024px"
       },
       {
         "name": "xl",
         "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
       }
     ]
   },
@@ -274,7 +302,7 @@
       "refersTo": "button-primary",
       "description": "Strong neutral product action for utilitarian screens.",
       "html": "<button class=\"ds-btn-primary\">Save changes</button>",
-      "css": ".ds-btn-primary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid oklch(0.20 0.006 70); background: oklch(0.18 0.006 70); color: oklch(0.97 0.006 86); border-radius: 6px; padding: 10px 16px; font: 500 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px oklch(0.18 0.006 70 / 0.15); transition: background-color 200ms ease, border-color 200ms ease; } .ds-btn-primary:hover { background: oklch(0.13 0.006 70); border-color: oklch(0.13 0.006 70); } .ds-btn-primary:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; }"
+      "css": ".ds-btn-primary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--text); background: var(--text); color: var(--bg); border-radius: 6px; padding: 10px 16px; font: 500 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(var(--text-rgb) / 0.15); transition: background-color 200ms ease, border-color 200ms ease; } .ds-btn-primary:hover { background: rgb(var(--text-rgb) / 0.90); border-color: rgb(var(--text-rgb) / 0.90); } .ds-btn-primary:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; } .ds-btn-primary:disabled { cursor: not-allowed; opacity: 0.5; }"
     },
     {
       "name": "Secondary Button",
@@ -282,7 +310,7 @@
       "refersTo": "button-secondary",
       "description": "Default page and toolbar action with bordered paper surface.",
       "html": "<button class=\"ds-btn-secondary\">Open target</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 10px 16px; font: 500 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); transition: background-color 200ms ease, border-color 200ms ease; } .ds-btn-secondary:hover { background: var(--bg); border-color: rgb(var(--brand-orange-rgb) / 0.30); } .ds-btn-secondary:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; }"
+      "css": ".ds-btn-secondary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 10px 16px; font: 500 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); transition: background-color 200ms ease, border-color 200ms ease; } .ds-btn-secondary:hover { background: var(--bg); border-color: rgb(var(--brand-orange-rgb) / 0.30); } .ds-btn-secondary:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; } .ds-btn-secondary:disabled { cursor: not-allowed; opacity: 0.5; }"
     },
     {
       "name": "Accent Button",
@@ -290,7 +318,7 @@
       "refersTo": "button-accent",
       "description": "Activation button for workflow launch or equivalent high-signal action.",
       "html": "<button class=\"ds-btn-accent\">Launch workflow</button>",
-      "css": ".ds-btn-accent { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--brand-orange); background: var(--brand-orange); color: oklch(0.99 0.004 86); border-radius: 6px; padding: 10px 16px; font: 500 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(var(--brand-orange-rgb) / 0.20); transition: background-color 200ms ease, border-color 200ms ease; } .ds-btn-accent:hover { background: var(--brand-orange-bright); border-color: var(--brand-orange-bright); } .ds-btn-accent:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; }"
+      "css": ".ds-btn-accent { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--brand-orange); background: var(--brand-orange); color: var(--bg); border-radius: 6px; padding: 10px 16px; font: 500 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px rgb(var(--brand-orange-rgb) / 0.20); transition: background-color 200ms ease, border-color 200ms ease; } .ds-btn-accent:hover { background: var(--brand-orange-bright); border-color: var(--brand-orange-bright); } .ds-btn-accent:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; } .ds-btn-accent:disabled { cursor: not-allowed; opacity: 0.5; }"
     },
     {
       "name": "Search Field",
@@ -298,7 +326,7 @@
       "refersTo": "search-field",
       "description": "Stable page search input with paper fill and orange focus ring.",
       "html": "<input class=\"ds-search-field\" type=\"search\" value=\"cluster health\" aria-label=\"Search\" />",
-      "css": ".ds-search-field { height: 44px; width: 280px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 0 12px; font: 400 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; outline: none; transition: box-shadow 200ms ease, border-color 200ms ease; } .ds-search-field:hover { border-color: rgb(var(--brand-orange-rgb) / 0.30); } .ds-search-field:focus-visible { box-shadow: 0 0 0 2px rgb(var(--brand-orange-rgb) / 0.20); }"
+      "css": ".ds-search-field { min-height: 44px; width: 280px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 0 14px; font: 600 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; outline: none; box-shadow: inset 0 1px 0 rgb(var(--surface-rgb) / 0.90), 0 1px 2px rgb(var(--text-rgb) / 0.05); transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease; } .ds-search-field:hover { border-color: rgb(var(--brand-orange-rgb) / 0.25); } .ds-search-field:focus, .ds-search-field:focus-visible { border-color: rgb(var(--brand-orange-rgb) / 0.45); box-shadow: 0 0 0 2px rgb(var(--brand-orange-rgb) / 0.15); } .ds-search-field:disabled { cursor: not-allowed; opacity: 0.6; }"
     },
     {
       "name": "Status Badge",
@@ -312,25 +340,25 @@
       "name": "Surface Card",
       "kind": "card",
       "refersTo": "surface-card",
-      "description": "Operational card surface with warm border and subtle structural shadow.",
-      "html": "<article class=\"ds-surface-card\"><h3>Agent library</h3><p>3 agents, 11 capabilities, 2 workflow assignments</p></article>",
-      "css": ".ds-surface-card { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; } .ds-surface-card h3 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: 0; } .ds-surface-card p { margin: 4px 0 0; color: var(--text-muted); font-size: 14px; line-height: 24px; font-weight: 400; }"
+      "description": "Interactive operational card with warm border and tonal hover state.",
+      "html": "<a class=\"ds-surface-card\" href=\"#agent-library\"><strong class=\"ds-surface-card-title\">Agent library</strong><span class=\"ds-surface-card-copy\">3 agents, 11 capabilities, 2 workflow assignments</span></a>",
+      "css": ".ds-surface-card { display: block; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; text-decoration: none; transition: background-color 200ms ease, border-color 200ms ease; } .ds-surface-card:hover, .ds-surface-card:focus-within { border-color: rgb(var(--brand-orange-rgb) / 0.30); background: rgb(var(--surface-strong-rgb) / 0.45); } .ds-surface-card:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; } .ds-surface-card-title { display: block; font-size: 16px; line-height: 24px; font-weight: 600; } .ds-surface-card-copy { display: block; margin-top: 4px; color: var(--text-muted); font-size: 14px; line-height: 24px; font-weight: 400; }"
     },
     {
       "name": "Navigation Item",
       "kind": "nav",
-      "refersTo": "navigation",
-      "description": "Compact sidebar navigation row with muted default state and soft signal hover.",
-      "html": "<button class=\"ds-nav-item\"><span>Workflows</span><span>4</span></button>",
-      "css": ".ds-nav-item { width: 100%; display: flex; min-height: 40px; align-items: center; justify-content: space-between; border: 0; background: transparent; color: var(--text-muted); border-radius: 8px; padding: 8px 16px; font: 500 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; transition: background-color 200ms ease, color 200ms ease; } .ds-nav-item:hover { background: rgb(var(--brand-orange-soft-rgb) / 0.55); color: var(--brand-orange-strong); } .ds-nav-item:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; }"
+      "refersTo": "navigation-item",
+      "description": "Route-stable sidebar row with neutral hover and explicit active state.",
+      "html": "<a class=\"ds-nav-item\" href=\"#workflows\" aria-current=\"page\"><svg class=\"ds-nav-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3v12M18 9v12M6 15c0 3 3 3 6 3s6 0 6 3M6 9c0-3 3-3 6-3s6 0 6 3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><span class=\"ds-nav-label\">Workflows</span><span class=\"ds-nav-count\">4</span></a>",
+      "css": ".ds-nav-item { width: 100%; display: flex; height: 40px; align-items: center; gap: 12px; border: 0; background: transparent; color: var(--text-muted); border-radius: 6px; padding: 0 12px; font: 500 14px/20px Outfit, ui-sans-serif, system-ui, sans-serif; text-decoration: none; transition: background-color 160ms ease, color 160ms ease; } .ds-nav-item:hover { background: var(--bg); color: var(--text); } .ds-nav-item:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: 2px; } .ds-nav-item[aria-current=\"page\"] { background: var(--bg); color: var(--text); font-weight: 600; } .ds-nav-item[aria-current=\"page\"] .ds-nav-icon { color: var(--brand-orange-strong); } .ds-nav-icon { width: 18px; height: 18px; flex: none; color: rgb(var(--text-muted-rgb) / 0.60); } .ds-nav-label { min-width: 0; flex: 1; } .ds-nav-count { min-width: 32px; border-radius: 999px; background: var(--status-danger); color: var(--bg); padding: 3px 6px; text-align: center; font-size: 9px; line-height: 14px; font-weight: 700; }"
     },
     {
-      "name": "Dialog Panel",
-      "kind": "custom",
-      "refersTo": "dialog-panel",
-      "description": "Focused modal surface with warm border, strong lift, and explicit title.",
-      "html": "<section class=\"ds-dialog-panel\"><h2>Create agent</h2><p>Name, provider, and purpose are enough to save a restricted agent.</p></section>",
-      "css": ".ds-dialog-panel { max-width: 520px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 12px; padding: 24px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); font-family: Outfit, ui-sans-serif, system-ui, sans-serif; } .ds-dialog-panel h2 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; } .ds-dialog-panel p { margin: 8px 0 0; color: var(--text-muted); font-size: 12px; line-height: 20px; font-weight: 450; }"
+      "name": "Segmented Tabs",
+      "kind": "nav",
+      "refersTo": "segmented-tab-active",
+      "description": "Keyboard-navigable compact tabs with a shared two-pixel active indicator.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"Agent views\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Overview<span class=\"ds-tab-count\">12</span></button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Runs<span class=\"ds-tab-count\">4</span></button></div>",
+      "css": ".ds-tabs { display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); } .ds-tab { position: relative; display: inline-flex; min-height: 44px; flex: none; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--text-muted); padding: 8px 12px; font: 700 12px/16px Outfit, ui-sans-serif, system-ui, sans-serif; transition: color 200ms ease; } .ds-tab:hover { color: var(--text); } .ds-tab:focus-visible { outline: 2px solid rgb(var(--brand-orange-rgb) / 0.25); outline-offset: -2px; } .ds-tab[aria-selected=\"true\"] { color: var(--brand-orange-strong); } .ds-tab[aria-selected=\"true\"]::after { content: \"\"; position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: var(--brand-orange); } .ds-tab-count { border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); border-radius: 999px; padding: 2px 6px; font-size: 10px; line-height: 10px; font-weight: 600; }"
     }
   ],
   "narrative": {
@@ -340,6 +368,7 @@
       "Warm neutral shell with one controlled orange signal.",
       "Dense but readable pages for repeated operational scanning.",
       "Familiar product controls with predictable keyboard and focus behavior.",
+      "Route-stable navigation that changes structure, not meaning, across breakpoints.",
       "Borders and tonal layers before shadow.",
       "Motion only when it explains state.",
       "Dual light and dark themes, driven entirely by design tokens."
@@ -352,7 +381,7 @@
       },
       {
         "name": "The Warm Neutral Rule",
-        "body": "Backgrounds and borders stay warm and quiet. Do not introduce cool slate, blue-gray, or generic dashboard neutrals. The one sanctioned cool token is brand-brown-dark, and only for brand illustration.",
+        "body": "Backgrounds and borders stay warm and quiet. Do not introduce cool slate, blue-gray, or generic dashboard neutrals. The one sanctioned cool token is `brand-brown-dark`, and only for brand illustration.",
         "section": "colors"
       },
       {
@@ -387,8 +416,13 @@
       },
       {
         "name": "The Motion Explains State Rule",
-        "body": "Every animation maps to a real state: working, pending, loading, resolving. If an animation would run while nothing is happening, it is decoration and is prohibited. All motion respects prefers-reduced-motion.",
-        "section": "elevation"
+        "body": "Every animation maps to a real state: working, pending, loading, resolving. If an animation would run while nothing is happening, it is decoration and is prohibited. All motion respects `prefers-reduced-motion`.",
+        "section": "components"
+      },
+      {
+        "name": "The Fresh Data Rule",
+        "body": "Shared-element motion is limited to stable application chrome such as theme controls and active tab indicators. Do not morph routes, list rows, charts, or list-to-detail content because operational data may have changed between states. See [Focused Application Motion](/docs/design-docs/motion.md).",
+        "section": "components"
       }
     ],
     "dos": [

@@ -174,8 +174,8 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
         { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Context capability', required: false }
       ],
       requiredPermissions: ['read_workspace_data', 'create_read_write_runs'],
-      enabledMcpServers: ['github'],
-      allowedTools: ['github.repositories.read', 'github.branches.list', 'github.prs.list', 'github.branches.create', 'github.prs.create'],
+      enabledMcpServers: [],
+      allowedTools: [],
       enabledSkills: ['acornops-cross-repo-change', 'acornops-open-pr'],
       contextGrants: ['workspace_metadata'],
       disabledCapabilities: ['unapproved branch writes'],
@@ -188,8 +188,8 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
           requiredInputs: [],
           agentIds: ['agent-release-coordinator'],
           enabledSkills: ['acornops-cross-repo-change', 'acornops-open-pr'],
-          allowedMcpServers: ['github'],
-          allowedTools: ['github.repositories.read', 'github.branches.list', 'github.prs.list', 'github.branches.create', 'github.prs.create'],
+          allowedMcpServers: [],
+          allowedTools: [],
           contextGrants: ['workspace_metadata'],
           approvalRequired: true
         }

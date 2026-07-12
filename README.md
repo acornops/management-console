@@ -149,6 +149,7 @@ The build-time path base is configurable with `VITE_APP_BASE_PATH`:
 
 The management console is control-plane backed. Configure:
 
+- `VITE_APP_DATA_MODE=control-plane` when building or running a deployable console image.
 - `VITE_CONTROL_PLANE_API_BASE_URL` for password auth, SSO, workspace, target, Kubernetes cluster, resource, MCP server, and chat APIs. For the full local stack and production edge, leave it empty to use same-origin `/api` routing from the management-console host. The production nginx CSP permits same-origin API calls by default; standalone cross-origin API builds require a matching custom CSP.
 
 When running the full platform through `acornops-deployment`, configure these values in the deployment env file instead of creating a component-local `.env`.
@@ -158,6 +159,7 @@ The management console expects:
 - login, signup, forgot-password, and reset-password forms call the control-plane password auth endpoints,
 - SSO login redirects to the control-plane OIDC login endpoint,
 - session is managed by control-plane cookie,
+- browser API requests include credentials; cross-origin deployments must allow the console origin and credentialed requests in control-plane CORS,
 - workspaces and clusters are fetched from control-plane APIs.
 
 ## Runtime Languages

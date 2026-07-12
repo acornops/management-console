@@ -26,8 +26,8 @@ describe('WorkspaceSchedulesPage control-plane surface', () => {
     expect(schedulesPage).toContain('scheduleError');
     expect(schedulesPage).toContain('schedules.emptyTitle');
     expect(schedulesPage).toContain('schedules.permissionNotice');
-    expect(schedulesPage).toContain('role="dialog"');
-    expect(schedulesPage).toContain('aria-labelledby="schedule-drawer-title"');
+    expect(schedulesPage).toContain('<DrawerFrame');
+    expect(schedulesPage).toContain('titleId="schedule-drawer-title"');
     expect(schedulesPage).toContain('approvedContextGrants');
     expect(schedulesPage).toContain('inputDefaultsText');
     expect(enLocale).toContain("emptyTitle: 'No workflow schedules'");
@@ -52,5 +52,10 @@ describe('WorkspaceSchedulesPage control-plane surface', () => {
     expect(schedulesPage).toContain('<Button size="sm" variant="danger" onClick={() => void deleteSchedule(schedule)}');
     expect(schedulesPage).not.toContain('<ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />\n                          {t(\'schedules.actions.delete\')}');
     expect(schedulesPage).not.toContain('className="h-4 w-4 rounded border-ui-border text-accent focus:ring-accent"');
+  });
+
+  it('does not render the removed page-level workflow tabs', () => {
+    expect(schedulesPage).not.toContain('WorkspaceAutomationRouteNav');
+    expect(schedulesPage).not.toContain('aria-label="Workflow views"');
   });
 });

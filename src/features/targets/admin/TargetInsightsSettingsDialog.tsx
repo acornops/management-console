@@ -190,7 +190,7 @@ export const TargetInsightsSettingsDialog: React.FC<TargetInsightsSettingsDialog
         ) : (
           <>
             <Button variant="secondary" size="sm" onClick={onClose} disabled={settingsSaving || savingTool}>{t('tools.targetInsights.cancel')}</Button>
-            <Button variant="accent" size="sm" onClick={() => void saveSettings()} disabled={loading || settingsSaving || savingTool}>
+            <Button variant="primary" size="sm" onClick={() => void saveSettings()} disabled={loading || settingsSaving || savingTool}>
               {settingsSaving ? t('common.saving') : t('tools.targetInsights.saveSettings')}
             </Button>
           </>

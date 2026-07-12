@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/common/Checkbox';
 import { TextInput } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { Select } from '@/components/common/Select';
 import { controlPlaneApi, ControlPlaneTargetSkillDetail, ControlPlaneTargetSkillsCatalog, GitTargetSkillImportInput } from '@/services/controlPlaneApi';
 import { GitSkillImportError, importTargetSkillFromGit } from '@/services/gitSkillImport';
 import {
@@ -417,14 +418,15 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
           <div className="space-y-4 px-6 py-5">
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.provider')}</span>
-              <select
-                className="h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm text-ui-text outline-none focus:border-ui-accent"
+              <Select
                 value={importDraft.provider}
-                onChange={(event) => setImportDraft((current) => ({ ...current, provider: event.target.value as GitTargetSkillImportInput['provider'] }))}
-              >
-                <option value="github">{t('targetSkills.providerGithub')}</option>
-                <option value="gitlab">{t('targetSkills.providerGitlab')}</option>
-              </select>
+                options={[
+                  { value: 'github', label: t('targetSkills.providerGithub') },
+                  { value: 'gitlab', label: t('targetSkills.providerGitlab') }
+                ]}
+                onChange={(provider) => setImportDraft((current) => ({ ...current, provider }))}
+                ariaLabel={t('targetSkills.provider')}
+              />
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.repositoryUrl')}</span>
@@ -453,7 +455,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
           </div>
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
             <Button variant="secondary" size="sm" onClick={closeImportDialog}>{t('common.cancel')}</Button>
-            <Button variant="accent" size="sm" onClick={() => void handleImport()} disabled={!importDraft.repoUrl.trim() || editorSaving}>{editorSaving ? t('targetSkills.importing') : t('targetSkills.importSkill')}</Button>
+            <Button variant="primary" size="sm" onClick={() => void handleImport()} disabled={!importDraft.repoUrl.trim() || editorSaving}>{editorSaving ? t('targetSkills.importing') : t('targetSkills.importSkill')}</Button>
           </div>
         </Dialog>
       )}
@@ -468,7 +470,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
           </div>
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
             <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteSkillId(null)}>{t('common.cancel')}</Button>
-            <Button variant="accent" size="sm" onClick={() => void handleDelete()} disabled={pendingDangerAction === confirmDeleteSkillId}>
+            <Button variant="danger" size="sm" onClick={() => void handleDelete()} disabled={pendingDangerAction === confirmDeleteSkillId}>
               {pendingDangerAction === confirmDeleteSkillId ? t('targetSkills.deleting') : t('targetSkills.deleteSkill')}
             </Button>
           </div>
@@ -492,7 +494,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
             <Button variant="secondary" size="sm" onClick={() => setConfirmReimportSkillId(null)}>{t('common.cancel')}</Button>
             <Button
-              variant="accent"
+              variant="primary"
               size="sm"
               onClick={() => void handleReimport()}
               disabled={pendingDangerAction === confirmReimportSkillId || (selectedSkill?.source.syncStatus === 'modified' && !confirmForceReimport)}

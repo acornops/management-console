@@ -9,9 +9,6 @@ import { ICONS } from '@/constants';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
 import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
 import {
-  AgentCapabilityOptionButtons,
-  appendUniqueToken,
-  createAgentEditDraft,
   statusOptions,
   type AgentCapabilityOptions,
   type AgentDraft,
@@ -30,7 +27,6 @@ interface CreateAgentDrawerProps {
   agentCapabilityOptions: AgentCapabilityOptions;
   creatingAgent: boolean;
   onClose: () => void;
-  onReset: () => void;
   onSave: () => void;
 }
 
@@ -87,7 +83,7 @@ interface AgentCapabilityMultiSelectProps {
   onSelectedValuesChange: (nextValues: string[]) => void;
 }
 
-const AgentCapabilityMultiSelect: React.FC<AgentCapabilityMultiSelectProps> = ({
+export const AgentCapabilityMultiSelect: React.FC<AgentCapabilityMultiSelectProps> = ({
   label,
   selectedValues,
   options,
@@ -180,7 +176,6 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
   agentCapabilityOptions,
   creatingAgent,
   onClose,
-  onReset,
   onSave
 }) => {
   const [createAgentStep, setCreateAgentStep] = React.useState<CreateAgentStep>(1);
@@ -209,11 +204,6 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
     setCreateAgentStep(1);
     setStepNavigationError('');
   };
-  const reset = () => {
-    onReset();
-    setCreateAgentStep(1);
-    setStepNavigationError('');
-  };
   const goToCreateAgentStep = (nextStep: CreateAgentStep) => {
     if (nextStep > 1) {
       const nextError = identityError();
@@ -238,7 +228,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
       onClose={close}
       titleId="create-agent-title"
       descriptionId="create-agent-description"
-      className="max-w-xl"
+      className="max-w-3xl"
     >
       <div className="border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-start justify-between gap-4">
@@ -373,7 +363,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
-        <Button type="button" variant="tertiary" size="sm" onClick={reset}>Reset</Button>
+        <Button type="button" variant="tertiary" size="sm" onClick={close}>Cancel</Button>
         <div className="flex items-center gap-2">
           <Button type="button" variant="secondary" size="sm" onClick={() => goToCreateAgentStep(createAgentStep === 3 ? 2 : 1)} disabled={createAgentStep === 1}>Back</Button>
           {createAgentStep < 3 ? (
@@ -396,6 +386,23 @@ const AgentCreateReviewRow: React.FC<{ label: string; value: string }> = ({ labe
     <dd className="min-w-0 whitespace-pre-wrap break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{value}</dd>
   </div>
 );
+
+const EditAgentCapabilityPicker: React.FC<{
+  draft: AgentEditDraft;
+  options: AgentCapabilityOptions;
+  setDraft: React.Dispatch<React.SetStateAction<AgentEditDraft | null>>;
+}> = ({ draft, options, setDraft }) => {
+  const selectedServers = splitCapabilityInput(draft.mcpServers);
+  const toolOptions = getToolOptionsForSelectedMcpServers(selectedServers, options.mcpTools);
+  const setValues = (key: 'mcpServers' | 'tools' | 'skills', values: string[]) => setDraft((current) => current && ({ ...current, [key]: joinCapabilityInput(values) }));
+  return <div className="space-y-4">
+    <AgentCapabilityMultiSelect label="MCP servers" selectedValues={selectedServers} options={options.mcpServers} searchPlaceholder="Search MCP servers" emptyMessage="No MCP servers are available from the catalog." onSelectedValuesChange={(values) => setValues('mcpServers', values)} />
+    <div className="grid gap-4 sm:grid-cols-2">
+      <AgentCapabilityMultiSelect label="Tools" selectedValues={splitCapabilityInput(draft.tools)} options={toolOptions} searchPlaceholder="Search tools" emptyMessage={selectedServers.length ? 'No tools are available for the selected MCP servers.' : 'Choose MCP servers before choosing tools.'} onSelectedValuesChange={(values) => setValues('tools', values)} />
+      <AgentCapabilityMultiSelect label="Skills" selectedValues={splitCapabilityInput(draft.skills)} options={options.skills} searchPlaceholder="Search skills" emptyMessage="No skills are available from the catalog." onSelectedValuesChange={(values) => setValues('skills', values)} />
+    </div>
+  </div>;
+};
 
 interface EditAgentDrawerProps {
   editingAgent: AgentDefinition;
@@ -425,7 +432,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
     onClose={onClose}
     titleId="edit-agent-title"
     descriptionId="edit-agent-description"
-    className="max-w-xl"
+    className="block w-full max-w-[min(100vw,64rem)]"
   >
       <div className="border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-start justify-between gap-4">
@@ -479,44 +486,9 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             <Textarea value={editDraft.instructions} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, instructions: event.target.value }))} />
           </label>
 
-          <details open className="rounded-md border border-ui-border bg-ui-bg px-3 py-2">
+          <details open className="border-y border-ui-border py-3">
             <summary className="cursor-pointer text-sm font-semibold text-ui-text">Capabilities</summary>
-            <div className="mt-4 space-y-4">
-              <div className="border-b border-ui-border pb-4">
-                <h3 className="type-micro-label">Capability catalog</h3>
-                <p className="type-caption mt-1 text-ui-text-muted">Use catalog options to avoid typos.</p>
-              </div>
-              <label className="block">
-                <span className="type-micro-label">MCP servers</span>
-                <Textarea value={editDraft.mcpServers} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, mcpServers: event.target.value }))} placeholder="One MCP server ID per line" />
-              </label>
-              <AgentCapabilityOptionButtons
-                options={agentCapabilityOptions.mcpServers}
-                onSelect={(value) => setEditDraft((draft) => draft && ({ ...draft, mcpServers: appendUniqueToken(draft.mcpServers, value) }))}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block">
-                    <span className="type-micro-label">Tools</span>
-                    <Textarea value={editDraft.tools} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, tools: event.target.value }))} placeholder="One tool ID per line" />
-                  </label>
-                  <AgentCapabilityOptionButtons
-                    options={agentCapabilityOptions.mcpTools}
-                    onSelect={(value) => setEditDraft((draft) => draft && ({ ...draft, tools: appendUniqueToken(draft.tools, value) }))}
-                  />
-                </div>
-                <div>
-                  <label className="block">
-                    <span className="type-micro-label">Skills</span>
-                    <Textarea value={editDraft.skills} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, skills: event.target.value }))} placeholder="One skill ID per line" />
-                  </label>
-                  <AgentCapabilityOptionButtons
-                    options={agentCapabilityOptions.skills}
-                    onSelect={(value) => setEditDraft((draft) => draft && ({ ...draft, skills: appendUniqueToken(draft.skills, value) }))}
-                  />
-                </div>
-              </div>
-            </div>
+            <div className="mt-4"><EditAgentCapabilityPicker draft={editDraft} options={agentCapabilityOptions} setDraft={setEditDraft} /></div>
           </details>
 
           <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
@@ -529,19 +501,19 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             </div>
           </section>
 
-          <section className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-3 text-status-warning-text">
+          {editChangeSummary.length > 0 && <section className="border-y border-ui-border py-4">
             <h3 className="type-micro-label">Changes before save</h3>
             <ul className="mt-3 grid gap-2 text-sm font-semibold">
               {editChangeSummary.map((change) => <li key={change}>{change}</li>)}
             </ul>
-          </section>
+          </section>}
 
-          <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
+          <section className="border-y border-ui-border py-4">
             <h3 className="type-micro-label">Affected workflows</h3>
             <div className="mt-3 grid gap-2">
               {editingAgent.workflowsUsingAgent.length > 0
                 ? editingAgent.workflowsUsingAgent.map((workflow) => (
-                  <span key={workflow} className="rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-sm font-semibold text-ui-text">{workflow}</span>
+                  <a key={workflow} href={`/workspaces/${editingAgent.workspaceId}/workflows?${new URLSearchParams({ q: workflow }).toString()}`} className="text-sm font-semibold text-accent-strong underline-offset-4 hover:underline">{workflow}</a>
                 ))
                 : <span className="type-caption text-ui-text-muted">No workflows currently assign this agent.</span>}
             </div>
@@ -550,8 +522,8 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
-        <Button type="button" variant="tertiary" size="sm" onClick={() => setEditDraft(createAgentEditDraft(editingAgent))}>Reset</Button>
-        <Button type="button" variant="primary" size="sm" onClick={onSave} disabled={updatingAgentId === editingAgent.id || !editDraft.name.trim() || !editDraft.description.trim()}>
+        <Button type="button" variant="tertiary" size="sm" onClick={onClose}>Cancel</Button>
+        <Button type="button" variant="primary" size="sm" onClick={onSave} disabled={updatingAgentId === editingAgent.id || !editDraft.name.trim() || !editDraft.description.trim() || editChangeSummary.length === 0}>
           <ICONS.CheckCircle2 className="h-4 w-4" />
           {updatingAgentId === editingAgent.id ? 'Saving...' : 'Save changes'}
         </Button>
@@ -559,13 +531,13 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
   </RightSidePanel>
 );
 
-interface AgentDetailsDrawerProps extends React.ComponentProps<typeof WorkspaceAgentDetailPanel> {
+interface AgentWorkspaceDrawerProps extends React.ComponentProps<typeof WorkspaceAgentDetailPanel> {
   closeButtonRef: React.RefObject<HTMLButtonElement | null>;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const AgentDetailsDrawer: React.FC<AgentDetailsDrawerProps> = ({
+export const AgentWorkspaceDrawer: React.FC<AgentWorkspaceDrawerProps> = ({
   closeButtonRef,
   isOpen,
   onClose,

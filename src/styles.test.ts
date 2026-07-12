@@ -33,6 +33,7 @@ import {
   membersPage,
   mobileNavigation,
   overviewPage,
+  pageComposition,
   resourceCategoryTabs,
   resourceExplorerControls,
   resourceExplorerLayout,
@@ -161,45 +162,57 @@ describe('theme color contract', () => {
 
   it('keeps login anchored to triage instead of decorative SaaS motion', () => {
     expect(loginPage).toContain('LoginPreview');
+    // Theme toggles recolour in place and play a decorative ripple; the illustration
+    // is never paused or snapshotted, so it keeps bounding through the switch.
+    expect(styles).toContain('.theme-reveal-ripple {');
+    expect(styles).toContain('@keyframes theme-reveal-ripple');
+    expect(styles).not.toContain('animation-play-state: paused');
+    expect(styles).not.toContain('::view-transition');
+    // The right sidebar is a full-bleed gradient (no card border); the illustration
+    // sits directly on it.
+    expect(loginPage).toContain('login-hunt-panel');
+    // The right-sidebar illustration is the "Squirrel Chasing Acorns" chase: a
+    // squirrel bounding after acorns past three ops triage step cards.
     [
-      'data-login-visual-variant="evidence-run"', 'Evidence run', 'Observe', 'Correlate', 'Resolve',
-      "order: '01'", "order: '02'", "order: '03'", 'Kubernetes restart loop', 'SquirrelRunner', 'AcornToken',
-      '<svg', 'viewBox="0 0 82 66"', 'login-squirrel-tail', 'login-squirrel-face', 'login-squirrel-svg',
-      'login-evidence-glow', 'login-path-rail', 'login-path-node', 'login-signal-card', 'login-resolution-card',
-      'useReducedMotion', 'useAnimate', 'data-rail', 'data-node', 'data-acorn', 'data-signal', 'data-squirrel',
-      'data-resolution', 'data-detail'
+      'data-login-visual-variant="hunt-chase"', 'collecting ', 'for everything ops',
+      'Turn operational knowledge into AI-powered workflows.',
+      "order: '01'", "order: '02'", "order: '03'", 'OBSERVE', 'CORRELATE', 'RESOLVE',
+      'Pod events', 'CrashLoopBackOff spike', 'Deploy diff', 'Memory limit reduced',
+      'Endpoints', 'Service path clear', 'Restart surge', 'Limit change', 'Probe healthy',
+      '<svg', 'viewBox="0 0 920 700"', 'preserveAspectRatio', 'foreignObject',
+      'login-hunt-scene', 'login-hunt-squirrel', 'login-hunt-tail',
+      'login-hunt-leg-front', 'login-hunt-leg-hind', 'login-hunt-shadow', 'login-hunt-streak',
+      'login-hunt-trail', 'login-hunt-dust', 'login-hunt-acorn', 'login-hunt-card',
+      'login-hunt-bloom'
     ].forEach((needle) => expect(loginPreview).toContain(needle));
-    expect(loginPreview).not.toContain('Payments API');
-    expect(loginPreview).not.toContain('Payment restart loop');
+    // Colours must resolve through theme tokens (works in light + dark), never hardcoded.
+    expect(loginPreview).toContain('rgb(var(--brand-orange');
+    expect(loginPreview).toContain('status-warning');
+    expect(loginPreview).toContain('status-success');
+    // The earlier alert-debug / evidence-run treatments must stay gone.
     [
-      'evidenceAcorns.map', 'CrashLoopBackOff spike', 'Memory limit reduced', 'Service path clear',
-      'limit change', 'probe healthy', 'Fix ready', 'p-4', 'w-44', 'className="type-row-title',
-      '{item.order} {item.stage}', 'min-h-[32rem]', 'login-resolution-card absolute z-[16]'
-    ].forEach((needle) => expect(loginPreview).toContain(needle));
-    // The old moonwalking single-loop squirrel, its per-stage CSS delay, and earlier
-    // visual iterations must be gone.
-    [
-      'login-acorn-runner', 'viewBox="0 0 128 88"', "'--login-stage-delay'", 'bottom-[-0.35rem]',
-      'login-evidence-node', 'login-evidence-signal', 'login-evidence-signal-y', 'login-evidence-trace',
-      'login-evidence-trace-row', 'login-evidence-run-card', 'login-evidence-note-card',
-      'bg-[linear-gradient(to_right', 'ambientSignals.map', 'login-ambient-signal',
-      'overflow-hidden rounded-lg border border-ui-border bg-ui-bg/45', 'Triage focus'
+      'data-login-visual-variant="alert-debug"', 'An alert is only the beginning.', 'Live incident triage',
+      'DebugSquirrel', 'AcornEvidence', 'useAnimate', 'useReducedMotion', 'ResizeObserver',
+      'data-login-visual-variant="evidence-run"', 'SquirrelRunner', 'AcornToken',
+      'login-debug-squirrel', 'login-incident-panel', 'login-squirrel-tail', 'login-acorn-runner',
+      'Payments API', 'Payment restart loop', 'Triage focus'
     ].forEach((needle) => expect(loginPreview).not.toContain(needle));
     [
-      'login-squirrel-svg', 'login-squirrel-tail', 'login-squirrel-face', 'login-evidence-glow',
-      'login-evidence-glow-breathe', 'login-path-rail', 'login-path-node', 'login-signal-card',
-      'login-resolution-card'
+      'login-hunt-panel', 'login-hunt-scene', 'login-hunt-squirrel', 'login-hunt-tail',
+      'login-hunt-leg-front', 'login-hunt-leg-hind', 'login-hunt-shadow', 'login-hunt-streak',
+      'login-hunt-trail', 'login-hunt-dust', 'login-hunt-acorn', 'login-hunt-card', 'login-hunt-dot',
+      'login-hunt-bloom', 'login-hunt-bound', 'login-hunt-tail-wave', 'login-hunt-front-reach',
+      'login-hunt-hind-kick', 'login-hunt-hop', 'login-hunt-card-float', 'login-hunt-puff'
     ].forEach((needle) => expect(styles).toContain(needle));
     [
-      'login-acorn-runner', 'login-runner-path', 'login-tail-balance', 'login-stage-focus',
-      'login-resolution-settle', 'login-pack-settle', 'login-squirrel-pack', 'login-squirrel-shadow',
-      'login-squirrel-body', 'login-squirrel-head', 'login-evidence-node', 'login-evidence-rule',
-      'login-evidence-signal', 'login-evidence-signal-y', 'login-evidence-trace', 'login-health-indicator',
-      'login-health-breathe', 'login-run-card-shift', 'login-note-card-shift', 'login-signal-travel',
-      'login-signal-drop', 'login-trace-row-enter'
+      'login-debug-glow', 'login-debug-glow-breathe', 'login-debug-scene', 'login-incident-panel',
+      'login-debug-squirrel', 'login-squirrel-tail', 'login-squirrel-body', 'login-squirrel-head',
+      'login-squirrel-paws', 'login-squirrel-mouth', 'login-squirrel-eye', 'login-squirrel-blink',
+      'login-debug-acorn', 'login-acorn-runner', 'login-evidence-node', 'login-signal-travel'
     ].forEach((needle) => expect(styles).not.toContain(needle));
     expect(styles).not.toContain('steps(1, end)');
-    expect(styles).toContain('background: rgb(var(--surface-rgb) / 1);');
+    expect(loginPreview.match(/#[0-9a-f]{3,8}\b/i)).toBeNull();
+    expect(styles).toContain('rgb(var(--surface-strong-rgb))');
     expect(styles).not.toContain('login-ambient-float');
     expect(styles).not.toContain('.login-visual-slide:not(:first-child)');
     expect(loginPage).toContain('min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto');
@@ -245,8 +258,9 @@ describe('theme color contract', () => {
     expect(appShell).toContain('h-[100dvh] min-h-0');
     expect(desktopSidebar).toContain('h-full min-h-0 w-64 shrink-0');
     expect(desktopSidebar).toContain('min-h-0 flex-1 overflow-y-auto');
-    expect(userSettingsPage).toContain('min-h-0 flex-1 overflow-y-auto');
-    expect(workspaceSettingsPage).toContain('min-h-0 flex-1 overflow-y-auto');
+    expect(pageComposition).toContain('min-h-0 flex-1 overflow-x-hidden overflow-y-auto');
+    expect(userSettingsPage).toContain('<PageShell');
+    expect(workspaceSettingsPage).toContain('<PageShell');
     expect(clusterSettingsView).toContain('min-h-0 flex-1 overflow-y-auto');
   });
   it('renders quota visibility only in settings surfaces', () => {
@@ -406,11 +420,11 @@ describe('theme color contract', () => {
     expect(workspaceSettingsPage).not.toContain('variants={itemVariants}');
   });
 
-  it('keeps button hierarchy restrained with orange reserved for accent actions', () => {
-    expect(buttonComponent).toContain("type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'accent' | 'ghost' | 'icon' | 'danger'");
+  it('keeps button hierarchy restrained with orange reserved for activation actions', () => {
+    expect(buttonComponent).toContain("export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'danger' | 'activation'");
     expect(buttonComponent).toContain('primary: filledNeutralButtonClass');
     expect(buttonComponent).toContain('border border-ui-text bg-ui-text text-ui-bg');
-    expect(buttonComponent).toContain("accent: 'border border-accent bg-accent");
+    expect(buttonComponent).toContain("activation: 'border border-accent bg-accent");
     expect(buttonComponent).toContain('text-ui-bg');
     expect(buttonComponent).toContain('hover:bg-accent-bright');
     expect(buttonComponent).toContain("secondary: 'border border-ui-border bg-ui-surface text-ui-text shadow-sm");
@@ -419,9 +433,9 @@ describe('theme color contract', () => {
     expect(buttonComponent).not.toContain('bg-[oklch(0.18_0.006_70)]');
     expect(buttonComponent).not.toContain('text-white');
     expect(overviewPage).toContain('variant="secondary"');
-    expect(membersPage).toMatch(/onClick=\{openInviteModal\}[\s\S]*?variant="secondary"/);
+    expect(membersPage).toMatch(/onClick=\{openInviteModal\}[\s\S]*?variant="primary"/);
     expect(addClusterModal).not.toContain('text-slate-950');
-    expect(addClusterModal).toContain('variant="accent"');
+    expect(addClusterModal).toContain('variant="primary"');
   });
 
   it('separates warning severity color from the orange workflow accent', () => {
@@ -437,7 +451,7 @@ describe('theme color contract', () => {
   });
 
   it('keeps app page-header action buttons at the medium size', () => {
-    expect(dashboardPage).toContain('<Button onClick={onAddCluster} variant="secondary" size="md" className="whitespace-nowrap">');
+    expect(dashboardPage).toContain('<Button onClick={onAddCluster} variant="primary" size="md" className="whitespace-nowrap">');
     expect(overviewPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
     expect(mcpServersView).toContain(
       '<Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md" className="whitespace-nowrap">'
@@ -483,17 +497,19 @@ describe('theme color contract', () => {
   });
 
   it('keeps app page-header titles at the standard page scale', () => {
-    expect(dashboardPage).toContain('type-route-title');
-    expect(overviewPage).toContain('type-route-title');
-    expect(membersPage).toContain('type-route-title');
-    expect(userSettingsPage).toContain('mb-2 text-3xl font-bold tracking-tight text-ui-text');
-    expect(workspaceSettingsPage).toContain('type-route-title');
+    expect(pageComposition).toContain('type-route-title');
+    expect(dashboardPage).toContain('<PageHeader');
+    expect(overviewPage).toContain('<PageHeader');
+    expect(membersPage).toContain('<PageHeader');
+    expect(userSettingsPage).toContain('<PageHeader');
+    expect(workspaceSettingsPage).toContain('<PageHeader');
   });
 
   it('keeps primary workspace pages on the shared full-width shell', () => {
     expect(styles).toContain('scrollbar-gutter: stable both-edges;');
-    expect(overviewPage).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
-    expect(dashboardPage).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
+    expect(pageComposition).toContain('px-[var(--route-padding-x)] py-[var(--route-padding-y)] custom-scrollbar stable-scrollbar-gutter');
+    expect(overviewPage).toContain('<PageShell>');
+    expect(dashboardPage).toContain('<PageShell>');
     expect(overviewPage).not.toContain('max-w-[90rem]');
     expect(dashboardPage).not.toContain('max-w-[90rem]');
   });
@@ -594,9 +610,8 @@ describe('theme color contract', () => {
   });
 
   it('keeps workspace member and audit log pages on the shared route margins', () => {
-    const sharedRouteShell = 'min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8';
-    expect(membersPage).toContain(sharedRouteShell);
-    expect(auditLogPage).toContain(sharedRouteShell);
+    expect(membersPage).toContain('<PageShell embedded={embedded}>');
+    expect(auditLogPage).toContain('<PageShell>');
     expect(auditLogPage).not.toContain('mx-auto max-w-7xl px-5 py-8 lg:px-8');
     expect(auditLogPage).not.toContain('overflow-hidden border-y border-ui-border bg-ui-surface');
   });

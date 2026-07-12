@@ -1,4 +1,5 @@
 import React from 'react';
+import { Switch } from '@/components/common/FormControls';
 import { createPortal } from 'react-dom';
 import {
   Edit3,
@@ -257,31 +258,17 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
       </td>
 
       <td className="px-4 py-6 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={server.enabled}
+        <Switch
+          checked={server.enabled}
           aria-disabled={!canToggleServer}
-          aria-label={t(server.enabled ? 'mcpServers.disableServerNamed' : 'mcpServers.enableServerNamed', { name: server.name })}
+          label={t(server.enabled ? 'mcpServers.disableServerNamed' : 'mcpServers.enableServerNamed', { name: server.name })}
           title={!server.canToggle ? t('mcpServers.serverRecordMissing') : undefined}
           disabled={!canEditServers || !server.canToggle}
-          onClick={() => {
+          onCheckedChange={(enabled) => {
             if (!canToggleServer) return;
-            onToggleServer(server, !server.enabled);
+            onToggleServer(server, enabled);
           }}
-          className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-colors duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-55 aria-disabled:cursor-not-allowed ${
-            server.enabled ? 'border-status-success bg-status-success' : 'border-ui-border bg-ui-text-muted/45'
-          }`}
-        >
-          <span className="sr-only">
-            {t(server.enabled ? 'mcpServers.enabled' : 'mcpServers.disabled')}
-          </span>
-          <span
-            className={`absolute top-1 h-5 w-5 rounded-full bg-ui-surface shadow-sm transition-transform duration-200 ease-out ${
-              server.enabled ? 'translate-x-[22px]' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        />
       </td>
 
       <td className="hidden px-4 py-6 sm:px-6 md:table-cell lg:px-8">

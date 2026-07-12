@@ -2,6 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkspaceAiSettings } from '@/types';
 import type { SettingsDraft } from '@/features/targets/admin/targetInsightsDialogViewModel';
+import { Checkbox } from '@/components/common/Checkbox';
+import { Select } from '@/components/common/Select';
 
 interface TargetInsightsSettingsPanelProps {
   settingsDraft: SettingsDraft;
@@ -34,36 +36,30 @@ export const TargetInsightsSettingsPanel: React.FC<TargetInsightsSettingsPanelPr
     <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="flex min-h-10 items-center gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={settingsDraft.enabled}
             disabled={!canEdit || settingsSaving}
             onChange={(event) => onSettingsDraftChange((current) => ({ ...current, enabled: event.target.checked }))}
-            className="h-4 w-4 rounded border-ui-border text-accent focus:ring-accent/20"
           />
           <span className="type-label">{t('tools.targetInsights.fields.enabled')}</span>
         </label>
         <label className="block">
           <span className="type-label">{t('tools.targetInsights.fields.checkpointModel')}</span>
-          <select className="mt-2 h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm outline-none" value={settingsDraft.checkpointModelMode} disabled={!canEdit || settingsSaving} onChange={(event) => onSettingsDraftChange((current) => ({ ...current, checkpointModelMode: event.target.value as typeof current.checkpointModelMode }))}>
-            <option value="workspace_default">{t('tools.targetInsights.model.workspaceDefault')}</option>
-            <option value="custom">{t('tools.targetInsights.model.custom')}</option>
-          </select>
+          <Select value={settingsDraft.checkpointModelMode} options={[
+            { value: 'workspace_default', label: t('tools.targetInsights.model.workspaceDefault') },
+            { value: 'custom', label: t('tools.targetInsights.model.custom') }
+          ]} disabled={!canEdit || settingsSaving} onChange={(checkpointModelMode) => onSettingsDraftChange((current) => ({ ...current, checkpointModelMode }))} className="mt-2" ariaLabel={t('tools.targetInsights.fields.checkpointModel')} />
         </label>
         {settingsDraft.checkpointModelMode === 'custom' && (
           <label className="block">
             <span className="type-label">{t('tools.targetInsights.fields.provider')}</span>
-            <select className="mt-2 h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm outline-none" value={settingsDraft.provider} disabled={!canEdit || settingsSaving} onChange={(event) => onSettingsDraftChange((current) => ({ ...current, provider: event.target.value as typeof current.provider, model: '' }))}>
-              {(aiSettings?.allowedProviders || ['openai', 'anthropic', 'gemini']).map((provider) => <option key={provider} value={provider}>{provider}</option>)}
-            </select>
+            <Select value={settingsDraft.provider} options={(aiSettings?.allowedProviders || ['openai', 'anthropic', 'gemini']).map((provider) => ({ value: provider, label: provider }))} disabled={!canEdit || settingsSaving} onChange={(provider) => onSettingsDraftChange((current) => ({ ...current, provider, model: '' }))} className="mt-2" ariaLabel={t('tools.targetInsights.fields.provider')} />
           </label>
         )}
         {settingsDraft.checkpointModelMode === 'custom' && (
           <label className="block">
             <span className="type-label">{t('tools.targetInsights.fields.model')}</span>
-            <select className="mt-2 h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm outline-none" value={settingsDraft.model || selectableModels[0] || ''} disabled={!canEdit || settingsSaving} onChange={(event) => onSettingsDraftChange((current) => ({ ...current, model: event.target.value }))}>
-              {selectableModels.map((model) => <option key={model} value={model}>{model}</option>)}
-            </select>
+            <Select value={settingsDraft.model || selectableModels[0] || ''} options={selectableModels.map((model) => ({ value: model, label: model }))} disabled={!canEdit || settingsSaving} onChange={(model) => onSettingsDraftChange((current) => ({ ...current, model }))} className="mt-2" ariaLabel={t('tools.targetInsights.fields.model')} />
           </label>
         )}
         {numericSettingsFields.map((field) => (

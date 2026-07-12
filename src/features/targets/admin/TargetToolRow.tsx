@@ -1,4 +1,5 @@
 import React from 'react';
+import { Switch } from '@/components/common/FormControls';
 import { createPortal } from 'react-dom';
 import { Activity, BookOpen, Download, Eye, FileText, Globe2, MoreVertical, RotateCcw, Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -173,28 +174,16 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
         </span>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={tool.enabled}
+        <Switch
+          checked={tool.enabled}
           aria-disabled={!canToggleTool}
-          aria-label={t(tool.enabled ? 'tools.disableNamed' : 'tools.enableNamed', { tool: tool.label })}
+          label={t(tool.enabled ? 'tools.disableNamed' : 'tools.enableNamed', { tool: tool.label })}
           disabled={!canToggleTool}
-          onClick={() => {
+          onCheckedChange={(enabled) => {
             if (!canToggleTool) return;
-            onToggleTool(tool, !tool.enabled);
+            onToggleTool(tool, enabled);
           }}
-          className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-colors duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-55 aria-disabled:cursor-not-allowed ${
-            tool.enabled ? 'border-status-success bg-status-success' : 'border-ui-border bg-ui-text-muted/45'
-          }`}
-        >
-          <span className="sr-only">{tool.enabled ? t('tools.enabled') : t('tools.disabled')}</span>
-          <span
-            className={`absolute top-1 h-5 w-5 rounded-full bg-ui-surface shadow-sm transition-transform duration-200 ease-out ${
-              tool.enabled ? 'translate-x-[22px]' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        />
       </td>
       <td className="hidden px-4 py-6 text-xs text-ui-text-muted sm:px-6 md:table-cell lg:px-8">
         <span className="type-micro-label rounded-full bg-ui-bg px-2.5 py-1 text-ui-text-muted">

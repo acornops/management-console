@@ -611,7 +611,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 <Button variant="tertiary" onClick={closeConfigure} disabled={saving}>
                   {t('common.cancel')}
                 </Button>
-                <Button variant="accent" onClick={() => void saveTool()} disabled={saving || Boolean(draftRequest.error)}>
+                <Button variant="primary" onClick={() => void saveTool()} disabled={saving || Boolean(draftRequest.error)}>
                   {saving ? t('tools.saving') : t('tools.save')}
                 </Button>
               </>

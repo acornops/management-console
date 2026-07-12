@@ -6,6 +6,11 @@ const origin = `http://${host}:${port}`;
 const routes = [
   '/',
   '/workspaces',
+  '/workspaces/smoke-workspace/overview',
+  '/workspaces/smoke-workspace/workflows',
+  '/workspaces/smoke-workspace/schedules',
+  '/workspaces/smoke-workspace/schedules?create=schedule&workflowId=smoke-workflow',
+  '/workspaces/smoke-workspace/approvals',
   '/settings',
   '/workspaces/smoke-workspace/virtual-machines',
   '/workspaces/smoke-workspace/virtual-machines/smoke-vm/mcp-servers',

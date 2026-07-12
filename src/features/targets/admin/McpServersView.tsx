@@ -538,7 +538,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         <div className="rounded-xl border border-ui-border bg-ui-surface p-10 text-center shadow-sm">
           <p className="type-body">{t('mcpServers.empty')}</p>
           {canEditServers && (
-            <Button onClick={openCreateServerModal} variant="accent" size="sm" className="mt-6">
+            <Button onClick={openCreateServerModal} variant="primary" size="sm" className="mt-6">
               <Plus className="h-4 w-4" />
               {t('mcpServers.addFirst')}
             </Button>

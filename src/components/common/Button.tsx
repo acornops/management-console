@@ -2,7 +2,7 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'accent' | 'ghost' | 'icon' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'danger' | 'activation';
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 const baseButtonClass =
@@ -15,8 +15,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary: filledNeutralButtonClass,
   secondary: 'border border-ui-border bg-ui-surface text-ui-text shadow-sm hover:bg-ui-bg hover:border-accent/30',
   tertiary: 'text-ui-text-muted hover:bg-accent-soft hover:text-accent-strong',
-  accent: 'border border-accent bg-accent text-ui-bg shadow-sm shadow-accent/20 hover:bg-accent-bright hover:border-accent-bright',
-  ghost: 'text-ui-text-muted hover:bg-brand-orange-soft hover:text-accent-strong',
+  activation: 'border border-accent bg-accent text-ui-bg shadow-sm shadow-accent/20 hover:bg-accent-bright hover:border-accent-bright',
   icon: 'border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm hover:bg-ui-bg hover:text-accent-strong',
   danger: 'border border-status-danger bg-status-danger text-ui-bg hover:bg-status-danger-text'
 };

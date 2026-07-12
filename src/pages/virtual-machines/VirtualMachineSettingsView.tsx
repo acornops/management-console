@@ -2,6 +2,7 @@ import React from 'react';
 import { KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { ICONS } from '@/constants';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
@@ -51,13 +52,8 @@ export const VirtualMachineSettingsView: React.FC<{
   const allowedLogs = vm.allowedLogSources?.join(', ') || t('virtualMachines.settings.defaultAllowedLogs');
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <header className="mb-8">
-        <h1 className="type-route-title">{t('virtualMachines.settings.title')}</h1>
-        <p className="type-body mt-2">
-          {t('virtualMachines.settings.subtitle', { name: vm.name })}
-        </p>
-      </header>
+    <PageShell>
+      <PageHeader title={t('virtualMachines.settings.title')} description={t('virtualMachines.settings.subtitle', { name: vm.name })} />
 
       <div className="max-w-4xl">
         <SettingSection
@@ -137,6 +133,6 @@ export const VirtualMachineSettingsView: React.FC<{
           )}
         </SettingSection>
       </div>
-    </div>
+    </PageShell>
   );
 };

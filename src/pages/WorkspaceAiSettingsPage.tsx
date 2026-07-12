@@ -1,17 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { InlineAlert } from '@/components/common/InlineAlert';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select, SelectOption } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
-import { headerMotion } from '@/lib/motion';
+import type { WorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace, WorkspaceAiSettings } from '@/types';
+import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace } from '@/types';
 import {
   behaviorDraftChanged,
   behaviorDraftFromSettings,
@@ -27,12 +26,14 @@ import {
   REASONING_EFFORTS,
   REASONING_SUMMARY_MODES,
   SettingSection,
+  WorkspaceAiSettingsSkeleton,
   type BehaviorDraft
 } from '@/pages/WorkspaceAiSettingsPage.helpers';
 
 interface WorkspaceAiSettingsPageProps {
   workspace: Workspace;
   canManageAiSettings: boolean;
+  aiSettingsResource: WorkspaceAiSettingsResource;
   showToast: (message: string) => void;
   embedded?: boolean;
 }
@@ -42,15 +43,18 @@ const credentialInputClassName = formInputClassName('h-10 min-h-10 font-medium')
 export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({
   workspace,
   canManageAiSettings,
+  aiSettingsResource,
   showToast,
   embedded = false
 }) => {
   const { t } = useTranslation();
-  const [aiSettings, setAiSettings] = useState<WorkspaceAiSettings | null>(null);
-  const [loadError, setLoadError] = useState('');
+  const currentAiSettings = aiSettingsResource.settings?.workspaceId === workspace.id
+    ? aiSettingsResource.settings
+    : null;
   const [behaviorError, setBehaviorError] = useState('');
-  const [isLoadingAiSettings, setIsLoadingAiSettings] = useState(false);
-  const [behaviorDraft, setBehaviorDraft] = useState<BehaviorDraft>(DEFAULT_BEHAVIOR_DRAFT);
+  const [behaviorDraft, setBehaviorDraft] = useState<BehaviorDraft>(() => (
+    currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : DEFAULT_BEHAVIOR_DRAFT
+  ));
   const [providerKeys, setProviderKeys] = useState<Record<LlmProvider, string>>(EMPTY_PROVIDER_KEYS);
   const [credentialErrors, setCredentialErrors] = useState<Record<LlmProvider, string>>(EMPTY_CREDENTIAL_ERRORS);
   const [savingAction, setSavingAction] = useState('');
@@ -60,6 +64,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const behaviorSectionRef = useRef<HTMLElement>(null);
   const credentialsSectionRef = useRef<HTMLElement>(null);
   const isMountedRef = useRef(true);
+  const hydratedWorkspaceIdRef = useRef<string | null>(currentAiSettings ? workspace.id : null);
+  workspaceIdRef.current = workspace.id;
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -69,37 +75,21 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    workspaceIdRef.current = workspace.id;
-    setAiSettings(null);
-    setIsLoadingAiSettings(true);
-    setLoadError('');
     setBehaviorError('');
-    setBehaviorDraft(DEFAULT_BEHAVIOR_DRAFT);
+    setBehaviorDraft(currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : DEFAULT_BEHAVIOR_DRAFT);
+    hydratedWorkspaceIdRef.current = currentAiSettings ? workspace.id : null;
     setProviderKeys(EMPTY_PROVIDER_KEYS);
     setCredentialErrors(EMPTY_CREDENTIAL_ERRORS);
     setCredentialEditorProvider(null);
     setDeleteCandidate(null);
     setSavingAction('');
-    controlPlaneApi.getWorkspaceAiSettings(workspace.id)
-      .then((settings) => {
-        if (cancelled) return;
-        setAiSettings(settings);
-        setBehaviorDraft(behaviorDraftFromSettings(settings));
-      })
-      .catch((error) => {
-        if (cancelled) return;
-        setLoadError(formatControlPlaneError(error, t('workspaceAiSettings.loadFailed'), { area: 'aiSettings' }));
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoadingAiSettings(false);
-      });
-    return () => {
-      cancelled = true;
-    };
   }, [workspace.id]);
 
-  const currentAiSettings = aiSettings?.workspaceId === workspace.id ? aiSettings : null;
+  useEffect(() => {
+    if (!currentAiSettings || hydratedWorkspaceIdRef.current === workspace.id) return;
+    setBehaviorDraft(behaviorDraftFromSettings(currentAiSettings));
+    hydratedWorkspaceIdRef.current = workspace.id;
+  }, [currentAiSettings, workspace.id]);
 
   const providerModels = useMemo(() => {
     return modelsForProvider(currentAiSettings, behaviorDraft.defaultProvider);
@@ -238,7 +228,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
         reasoningEffort: behaviorDraft.reasoningEffort
       });
       if (!isCurrentWorkspaceRequest()) return;
-      setAiSettings(updated);
+      aiSettingsResource.update(updated);
       setBehaviorDraft(behaviorDraftFromSettings(updated));
       showToast(t('workspaceAiSettings.settingsSaved'));
     } catch (error) {
@@ -271,7 +261,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       const wasConfigured = currentAiSettings.providers.some((status) => status.provider === provider && status.configured);
       const updated = await controlPlaneApi.saveWorkspaceAiProviderCredential(workspace.id, provider, apiKey);
       if (!isCurrentWorkspaceRequest()) return;
-      setAiSettings(updated);
+      aiSettingsResource.update(updated);
       setProviderKeys((current) => ({ ...current, [provider]: '' }));
       setCredentialEditorProvider(null);
       showToast(t(wasConfigured ? 'workspaceAiSettings.keyRotated' : 'workspaceAiSettings.keyAdded', {
@@ -295,7 +285,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     try {
       const updated = await controlPlaneApi.deleteWorkspaceAiProviderCredential(workspace.id, provider);
       if (!isCurrentWorkspaceRequest()) return;
-      setAiSettings(updated);
+      aiSettingsResource.update(updated);
       setDeleteCandidate(null);
       setCredentialEditorProvider(null);
       setProviderKeys((current) => ({ ...current, [provider]: '' }));
@@ -312,26 +302,33 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   };
 
   return (
-    <div className={embedded ? '' : 'min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8'}>
+    <PageShell embedded={embedded}>
       {!embedded && (
-        <motion.header {...headerMotion} className="mb-12">
-          <h1 className="type-route-title">{t('workspaceAiSettings.title')}</h1>
-          <p className="type-body mt-2 max-w-2xl">
-            {t('workspaceAiSettings.subtitle')}
-          </p>
-        </motion.header>
+        <PageHeader title={t('workspaceAiSettings.title')} description={t('workspaceAiSettings.subtitle')} />
       )}
 
       <div className="max-w-4xl">
-        {isLoadingAiSettings && (
-          <InlineLoadingIndicator label={t('workspaceAiSettings.loading')} className="mb-8" />
+        {aiSettingsResource.isLoading && !currentAiSettings && (
+          <WorkspaceAiSettingsSkeleton label={t('workspaceAiSettings.loading')} />
         )}
 
-        {!isLoadingAiSettings && loadError && (
-          <InlineAlert tone="danger" className="mb-8">{loadError}</InlineAlert>
+        {!aiSettingsResource.isLoading && !currentAiSettings && aiSettingsResource.error && (
+          <div className="mb-8">
+            <InlineAlert tone="danger">{aiSettingsResource.error}</InlineAlert>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="mt-3"
+              onClick={aiSettingsResource.retry}
+            >
+              <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
+              {t('common.retry')}
+            </Button>
+          </div>
         )}
 
-        {!isLoadingAiSettings && currentAiSettings && (
+        {currentAiSettings && (
           <>
             <SettingSection
               title={t('workspaceAiSettings.readinessTitle')}
@@ -643,6 +640,6 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
           </>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 };

@@ -21,15 +21,14 @@ describe('McpServerCard desktop density', () => {
     expect(mcpServerCard).toContain("t('mcpServers.managedByAcornOps')");
     expect(mcpServerCard).toContain('const isManagedServer = isManagedMcpServer(server);');
     expect(mcpServerCard).toContain("const serverSubtitle = isManagedServer ? t('mcpServers.managedByAcornOps') : server.url");
-    expect(mcpServerCard).toContain("role=\"switch\"");
-    expect(mcpServerCard).toContain("onToggleServer(server, !server.enabled)");
+    expect(mcpServerCard).toContain('<Switch');
+    expect(mcpServerCard).toContain('onToggleServer(server, enabled)');
     expect(mcpServerCard).toContain('isBlockedByOtherServerToggle');
     expect(mcpServerCard).toContain('server.canToggle');
     expect(mcpServerCard).toContain('disabled={!canEditServers || !server.canToggle}');
     expect(mcpServerCard).toContain("t('mcpServers.serverRecordMissing')");
     expect(mcpServerCard).toContain('if (!canToggleServer) return;');
-    expect(mcpServerCard).toContain('transition-colors duration-200 ease-out');
-    expect(mcpServerCard).toContain('transition-transform duration-200 ease-out');
+    expect(mcpServerCard).toContain("from '@/components/common/FormControls'");
     expect(mcpServerCard).toContain("server.lastDiscoveryAt");
     expect(mcpServerCard).toContain("formatDiscoveryTimestamp(server.lastDiscoveryAt)");
     expect(mcpServerCard).toContain("t('mcpServers.notChecked')");

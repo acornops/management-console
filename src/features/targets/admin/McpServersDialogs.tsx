@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { Switch } from '@/components/common/FormControls';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { Select, SelectOption } from '@/components/common/Select';
@@ -106,21 +107,12 @@ export const McpServerFormDialog: React.FC<{
         <span className={`type-micro-label w-fit rounded-full px-2 py-1 ${tool.capability === 'write' ? 'bg-status-warning-soft text-status-warning-text' : 'bg-status-success-soft text-status-success-text'}`}>
           {tool.capability === 'write' ? t('mcpServers.capabilityWrite') : t('mcpServers.capabilityRead')}
         </span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={tool.enabledConfigured}
+        <Switch
+          checked={tool.enabledConfigured}
           disabled={!canManageTools || pendingTool || pending}
-          onClick={() => onToggleReviewTool?.(tool, !tool.enabledConfigured)}
-          className={`relative h-7 w-12 shrink-0 rounded-full border transition-all disabled:cursor-not-allowed disabled:opacity-50 ${tool.enabledConfigured ? 'border-status-success bg-status-success' : 'border-ui-border bg-ui-bg'}`}
-          aria-label={t(tool.enabledConfigured ? 'mcpServers.disableToolNamed' : 'mcpServers.enableToolNamed', { name: getToolLabel(tool) })}
-        >
-          <motion.span
-            className="absolute left-1 top-1 h-5 w-5 rounded-full bg-ui-surface shadow-sm"
-            animate={{ x: tool.enabledConfigured ? 18 : 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          />
-        </button>
+          onCheckedChange={(enabled) => onToggleReviewTool?.(tool, enabled)}
+          label={t(tool.enabledConfigured ? 'mcpServers.disableToolNamed' : 'mcpServers.enableToolNamed', { name: getToolLabel(tool) })}
+        />
       </div>
     );
   };
@@ -261,21 +253,11 @@ export const McpServerFormDialog: React.FC<{
           <label className="space-y-1">
             <span className="type-label px-1">{t('mcpServers.enabled')}</span>
             <div className="flex h-[44px] items-center">
-              <button
-                type="button"
-                onClick={() => onFormChange((current) => ({ ...current, enabled: !current.enabled }))}
-                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                  form.enabled ? 'bg-accent' : 'bg-ui-text-muted'
-                }`}
-                role="switch"
-                aria-checked={form.enabled}
-              >
-                <motion.span
-                  className="inline-block h-5 w-5 rounded-full bg-ui-surface shadow-sm"
-                  animate={{ x: form.enabled ? 24 : 4 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
-              </button>
+              <Switch
+                checked={form.enabled}
+                onCheckedChange={(enabled) => onFormChange((current) => ({ ...current, enabled }))}
+                label={t('mcpServers.enabled')}
+              />
             </div>
           </label>
         </div>
@@ -416,7 +398,7 @@ export const McpServerFormDialog: React.FC<{
 
       <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
         {isReviewStep ? (
-          <Button onClick={onFinishReview || onClose} disabled={pending} variant="accent" size="sm">
+          <Button onClick={onFinishReview || onClose} disabled={pending} variant="primary" size="sm">
             {t('mcpServers.finish')}
           </Button>
         ) : (
@@ -432,7 +414,7 @@ export const McpServerFormDialog: React.FC<{
             <Button
               onClick={onSubmit}
               disabled={pending || !isValid}
-              variant="accent"
+              variant="primary"
               size="sm"
             >
               {pending
@@ -517,7 +499,7 @@ export const DeleteMcpServerDialog: React.FC<{
           type="button"
           onClick={onDelete}
           disabled={pending}
-          className="type-ui rounded-lg bg-status-danger px-4 py-2 text-[oklch(0.99_0.004_86)] transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
+          className="type-ui rounded-lg bg-status-danger px-4 py-2 text-ui-bg transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? t('app.deleting') : t('mcpServers.deleteAction')}
         </button>

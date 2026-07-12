@@ -19,6 +19,7 @@ import {
   listWorkflowSessions,
   listWorkspaceWorkflows,
   postWorkflowSessionMessage,
+  previewWorkflowSchedule,
   testWorkflowMcpServerConnection,
   updateWorkflow,
   updateWorkflowSchedule,
@@ -192,7 +193,7 @@ describe('workflow control-plane api', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(listWorkflowMcpServers('workspace-1')).resolves.toEqual([{ id: 'github', name: 'GitHub' }]);
-    await expect(createWorkflowMcpServer('workspace-1', { name: 'PagerDuty' })).resolves.toEqual({ id: 'pagerduty', name: 'PagerDuty' });
+    await expect(createWorkflowMcpServer('workspace-1', { name: 'PagerDuty', url: 'https://mcp.example.com' })).resolves.toEqual({ id: 'pagerduty', name: 'PagerDuty' });
     await expect(updateWorkflowMcpServer('workspace-1', 'pagerduty', { name: 'PagerDuty API' })).resolves.toEqual({ id: 'pagerduty', name: 'PagerDuty API' });
     await expect(testWorkflowMcpServerConnection('workspace-1', 'pagerduty')).resolves.toEqual({ ok: true });
     await expect(listWorkflowMcpServerTools('workspace-1', 'pagerduty')).resolves.toEqual(['pagerduty.incidents.read']);
@@ -438,6 +439,14 @@ describe('workflow control-plane api', () => {
       if (url.endsWith('/api/v1/workspaces/workspace-1/workflow-schedules') && init?.method === 'POST') {
         return Promise.resolve(new Response(JSON.stringify({ schedule: { id: 'schedule-1', name: 'Daily triage' } }), { status: 201 }));
       }
+      if (url.endsWith('/api/v1/workspaces/workspace-1/workflow-schedules/preview') && init?.method === 'POST') {
+        return Promise.resolve(new Response(JSON.stringify({
+          valid: true,
+          summary: 'Weekdays at 09:00 (UTC)',
+          nextRunTimes: ['2026-06-29T09:00:00.000Z'],
+          errors: []
+        }), { status: 200 }));
+      }
       if (url.endsWith('/api/v1/workflow-schedules/schedule-1') && init?.method === 'PATCH') {
         return Promise.resolve(new Response(JSON.stringify({ schedule: { id: 'schedule-1', status: 'paused' } }), { status: 200 }));
       }
@@ -457,6 +466,14 @@ describe('workflow control-plane api', () => {
       inputDefaults: { clusterId: 'cluster-primary' },
       approvedContextGrants: ['workspace_metadata']
     })).resolves.toMatchObject({ id: 'schedule-1' });
+    await expect(previewWorkflowSchedule('workspace-1', {
+      workflowId: 'workflow-1',
+      name: 'Daily triage',
+      cron: '0 9 * * 1-5',
+      timezone: 'UTC',
+      inputDefaults: { clusterId: 'cluster-primary' },
+      approvedContextGrants: ['workspace_metadata']
+    })).resolves.toMatchObject({ valid: true, summary: 'Weekdays at 09:00 (UTC)' });
     await expect(updateWorkflowSchedule('workspace-1', 'schedule-1', { enabled: false })).resolves.toMatchObject({
       id: 'schedule-1',
       status: 'paused'
@@ -486,6 +503,7 @@ describe('workflow control-plane api', () => {
       }
       if (url.includes('/api/v1/workspaces/workspace-1/approvals')) {
         return Promise.resolve(new Response(JSON.stringify({
+          pendingCount: 17,
           items: [{
             approvalId: 'approval-1',
             runId: 'run-1',
@@ -505,10 +523,26 @@ describe('workflow control-plane api', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(listWorkspaceApprovalInbox('workspace-1', { status: 'pending', limit: 25 })).resolves.toMatchObject({
+      pendingCount: 17,
       items: [{ approvalId: 'approval-1', source: 'workflow_gate', runId: 'run-1' }]
     });
     await expect(decideWorkflowRunApproval('run-1', 'approval-1', 'approved')).resolves.toMatchObject({ status: 'approved' });
 
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/approvals?status=pending&limit=25');
+  });
+
+  it('hides unavailable pending counts from older or invalid producers', async () => {
+    const responses = [
+      { items: [], pendingCount: '4' },
+      { items: [], pendingCount: -1 },
+      { items: [] }
+    ];
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify(responses.shift()), { status: 200 })
+    )));
+
+    await expect(listWorkspaceApprovalInbox('workspace-1')).resolves.toEqual({ items: [] });
+    await expect(listWorkspaceApprovalInbox('workspace-1')).resolves.toEqual({ items: [] });
+    await expect(listWorkspaceApprovalInbox('workspace-1')).resolves.toEqual({ items: [] });
   });
 });

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { Switch } from '@/components/common/FormControls';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import type { TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { getToolLabel, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
@@ -108,21 +109,12 @@ export const McpServerToolsDialog: React.FC<{
             <p className="type-caption mt-0.5 text-status-warning-text">{t('mcpServers.approvalRequired')}</p>
           )}
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={configuredEnabled}
+        <Switch
+          checked={configuredEnabled}
           disabled={!canManageTools || pending}
-          onClick={() => setConfiguredOverrides((current) => ({ ...current, [tool.name]: !configuredEnabled }))}
-          className={`relative h-7 w-12 shrink-0 rounded-full border transition-all disabled:cursor-not-allowed disabled:opacity-50 ${configuredEnabled ? 'border-status-success bg-status-success' : 'border-ui-border bg-ui-bg'}`}
-          aria-label={t(configuredEnabled ? 'mcpServers.disableToolNamed' : 'mcpServers.enableToolNamed', { name: getToolLabel(tool) })}
-        >
-          <motion.span
-            className="absolute left-1 top-1 h-5 w-5 rounded-full bg-ui-surface shadow-sm"
-            animate={{ x: configuredEnabled ? 18 : 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          />
-        </button>
+          onCheckedChange={(enabled) => setConfiguredOverrides((current) => ({ ...current, [tool.name]: enabled }))}
+          label={t(configuredEnabled ? 'mcpServers.disableToolNamed' : 'mcpServers.enableToolNamed', { name: getToolLabel(tool) })}
+        />
       </div>
     );
   };
@@ -239,7 +231,7 @@ export const McpServerToolsDialog: React.FC<{
           </button>
           <div className="flex items-center gap-3">
             <Button onClick={onClose} disabled={isSavingTools} variant="secondary" size="sm">{t('app.cancel')}</Button>
-            <Button onClick={() => void handleSaveTools()} disabled={!canManageTools || isSavingTools || changedTools.length === 0} variant="accent" size="sm">
+            <Button onClick={() => void handleSaveTools()} disabled={!canManageTools || isSavingTools || changedTools.length === 0} variant="primary" size="sm">
               {isSavingTools ? t('mcpServers.saving') : t('mcpServers.saveChanges')}
             </Button>
           </div>

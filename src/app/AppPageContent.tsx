@@ -200,6 +200,7 @@ interface AppPageContentProps {
   onPendingVmTargetPromptConsumed: () => void;
   onRefreshWorkspaceInvitations: (workspaceId: string) => Promise<void>;
   onRefreshWorkspaceMembers: (workspaceId: string) => Promise<void>;
+  onRefreshApprovalSummary: () => Promise<void>;
   onDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
   onOpenDeleteWorkspace: (workspaceId: string) => void;
   onLeaveWorkspaceSuccess: (workspaceId: string) => void;
@@ -249,6 +250,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   onPendingVmTargetPromptConsumed,
   onRefreshWorkspaceInvitations,
   onRefreshWorkspaceMembers,
+  onRefreshApprovalSummary,
   onDeleteCluster,
   onOpenDeleteWorkspace,
   onLeaveWorkspaceSuccess,
@@ -419,6 +421,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           {route.kind === 'workspaceWorkflows' && workspaceContext && (
             <WorkspaceWorkflowsPage
               workspace={workspaceContext}
+              navigate={navigate}
             />
           )}
 
@@ -433,7 +436,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           )}
 
           {route.kind === 'workspaceApprovals' && workspaceContext && (
-            <WorkspaceApprovalsPage workspace={workspaceContext} />
+            <WorkspaceApprovalsPage workspace={workspaceContext} onApprovalDecision={onRefreshApprovalSummary} />
           )}
 
           {(route.kind === 'kubernetesClusters' || route.kind === 'workspaceKubernetesClusters') && (

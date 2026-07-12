@@ -1,4 +1,5 @@
 import React from 'react';
+import { Switch } from '@/components/common/FormControls';
 import { motion } from 'framer-motion';
 import { buildTraceFromRunEvents } from '@/features/targets/chat/hooks/chatRunTrace';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
@@ -12,6 +13,7 @@ import type {
   WorkflowApiDefinition,
   WorkflowCreateInput,
   WorkflowOptionsCatalog,
+  WorkflowOption,
   WorkflowRunEvent,
   WorkflowRunSummary
 } from '@/services/control-plane/workflowApi';
@@ -78,23 +80,12 @@ export const ScopeSwitch: React.FC<{
   label: string;
   onChange: (checked: boolean) => void;
 }> = ({ checked, disabled, label, onChange }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={label}
+  <Switch
+    checked={checked}
+    label={label}
     disabled={disabled}
-    onClick={() => onChange(!checked)}
-    className={`relative h-7 w-12 shrink-0 rounded-full border transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
-      checked ? 'border-status-success bg-status-success' : 'border-ui-border bg-ui-bg'
-    }`}
-  >
-    <motion.span
-      className="absolute left-1 top-1 h-5 w-5 rounded-full bg-ui-surface shadow-sm"
-      animate={{ x: checked ? 18 : 0 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-    />
-  </button>
+    onCheckedChange={onChange}
+  />
 );
 
 export function titleFromInputName(name: string): string {
@@ -306,30 +297,14 @@ export function createMcpServerDraft(): McpServerDraft {
   };
 }
 
-export function createFallbackWorkflowOptions(workflows: WorkflowDefinition[]): WorkflowOptionsCatalog {
-  const workflowAgentOptions = workflows.flatMap((workflow) => workflow.agents);
-  const workflowAgentLabels = new Map(workflowAgentOptions.map((agent) => [agent.agentId, agent.name]));
-
+export function createFallbackWorkflowOptions(_workflows: WorkflowDefinition[]): WorkflowOptionsCatalog {
   return {
-    clusters: [
-      { value: 'production-us-east', label: 'production-us-east' },
-      { value: 'staging-us-west', label: 'staging-us-west' }
-    ],
-    repositories: [
-      { value: 'acornops/control-plane', label: 'acornops/control-plane' },
-      { value: 'acornops/management-console', label: 'acornops/management-console' }
-    ],
-    mcpServers: uniqueValues(workflows.flatMap((workflow) => workflow.enabledMcpServers)).map((value) => ({ value, label: value })),
-    mcpTools: uniqueValues(workflows.flatMap((workflow) => workflow.allowedTools)).map((value) => ({ value, label: value })),
-    skills: uniqueValues(workflows.flatMap((workflow) => workflow.enabledSkills)).map((value) => ({ value, label: value })),
-    agents: uniqueValues(workflowAgentOptions.map((agent) => agent.agentId)).map((value) => ({
-      value,
-      label: workflowAgentLabels.get(value) || value
-    })),
-    chatSessions: [
-      { value: 'incident-chat-1042', label: 'Incident chat 1042' },
-      { value: 'incident-chat-1043', label: 'Incident chat 1043' }
-    ],
+    clusters: [],
+    mcpServers: [],
+    mcpTools: [],
+    skills: [],
+    agents: [],
+    chatSessions: [],
     outputFormats: [
       { value: 'pdf', label: 'PDF' },
       { value: 'markdown', label: 'Markdown' }
@@ -339,7 +314,15 @@ export function createFallbackWorkflowOptions(workflows: WorkflowDefinition[]): 
       { value: 'read_write', label: 'Read/write with approvals' }
     ],
     runtimeLimits: [],
-    retentionPolicies: []
+    retentionPolicies: [],
+    sourceAvailability: {
+      clusters: { status: 'unavailable', message: 'Target catalog is unavailable.' },
+      mcpServers: { status: 'unavailable', message: 'MCP catalog has not loaded.' },
+      mcpTools: { status: 'unavailable', message: 'MCP catalog has not loaded.' },
+      skills: { status: 'unavailable', message: 'Skill catalog has not loaded.' },
+      agents: { status: 'unavailable', message: 'Agent catalog has not loaded.' },
+      chatSessions: { status: 'unavailable', message: 'Chat session catalog is unavailable.' }
+    }
   };
 }
 
@@ -375,26 +358,29 @@ export function getWorkflowScopeOptionsForAgents(
   };
 }
 
-function normalizeWorkflowOption(value: unknown): { value: string; label: string; description?: string; disabled?: boolean; disabledReason?: string } | null {
+function normalizeWorkflowOption(value: unknown): WorkflowOption | null {
   if (typeof value === 'string' && value.trim()) {
     return { value: value.trim(), label: value.trim() };
   }
   if (!value || typeof value !== 'object') return null;
-  const option = value as { value?: unknown; label?: unknown; description?: unknown; disabled?: unknown; disabledReason?: unknown };
+  const option = value as { value?: unknown; label?: unknown; description?: unknown; disabled?: unknown; disabledReason?: unknown; provenance?: unknown };
   if (typeof option.value !== 'string' || !option.value.trim()) return null;
   return {
     value: option.value,
     label: typeof option.label === 'string' && option.label.trim() ? option.label : option.value,
     description: typeof option.description === 'string' ? option.description : undefined,
     disabled: typeof option.disabled === 'boolean' ? option.disabled : undefined,
-    disabledReason: typeof option.disabledReason === 'string' ? option.disabledReason : undefined
+    disabledReason: typeof option.disabledReason === 'string' ? option.disabledReason : undefined,
+    provenance: option.provenance && typeof option.provenance === 'object'
+      ? option.provenance as WorkflowOption['provenance']
+      : undefined
   };
 }
 
-function normalizeWorkflowOptionList(value: unknown, fallback: WorkflowOptionsCatalog[keyof WorkflowOptionsCatalog]): typeof fallback {
+function normalizeWorkflowOptionList(value: unknown, fallback: WorkflowOption[]): WorkflowOption[] {
   if (!Array.isArray(value)) return fallback;
   const options = value.map(normalizeWorkflowOption).filter((option): option is NonNullable<typeof option> => Boolean(option));
-  return options.length > 0 ? options : fallback;
+  return options;
 }
 
 export function normalizeWorkflowOptionsCatalog(
@@ -404,7 +390,6 @@ export function normalizeWorkflowOptionsCatalog(
   const value = catalog && typeof catalog === 'object' ? catalog as Record<string, unknown> : {};
   return {
     clusters: normalizeWorkflowOptionList(value.clusters, fallback.clusters),
-    repositories: normalizeWorkflowOptionList(value.repositories, fallback.repositories),
     mcpServers: normalizeWorkflowOptionList(value.mcpServers, fallback.mcpServers),
     mcpTools: normalizeWorkflowOptionList(value.mcpTools, fallback.mcpTools),
     skills: normalizeWorkflowOptionList(value.skills, fallback.skills),
@@ -413,7 +398,10 @@ export function normalizeWorkflowOptionsCatalog(
     outputFormats: normalizeWorkflowOptionList(value.outputFormats, fallback.outputFormats),
     approvalPolicies: normalizeWorkflowOptionList(value.approvalPolicies, fallback.approvalPolicies),
     runtimeLimits: normalizeWorkflowOptionList(value.runtimeLimits, fallback.runtimeLimits),
-    retentionPolicies: normalizeWorkflowOptionList(value.retentionPolicies, fallback.retentionPolicies)
+    retentionPolicies: normalizeWorkflowOptionList(value.retentionPolicies, fallback.retentionPolicies),
+    sourceAvailability: value.sourceAvailability && typeof value.sourceAvailability === 'object'
+      ? value.sourceAvailability as WorkflowOptionsCatalog['sourceAvailability']
+      : fallback.sourceAvailability
   };
 }
 

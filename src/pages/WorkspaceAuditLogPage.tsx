@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { TableLoadingRows } from '@/components/common/Loading';
 import { PageSearchInput, pageSearchInputClassName } from '@/components/common/PageSearchInput';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { Select, SelectOption } from '@/components/common/Select';
 import { Tooltip } from '@/components/common/Tooltip';
@@ -281,19 +282,13 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="type-route-title">{t('auditLog.title')}</h1>
-            <p className="type-body mt-2">{t('auditLog.description')}</p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <PageShell>
+        <PageHeader title={t('auditLog.title')} description={t('auditLog.description')} actions={
             <Button variant="secondary" size="md" onClick={() => loadEvents()} disabled={isLoading} className="whitespace-nowrap">
               <ICONS.Clock className="h-4 w-4" />
               {t('auditLog.refresh')}
             </Button>
-          </div>
-        </div>
+        } />
 
         {errorMessage && (
           <div className="mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-semibold text-status-danger-text">
@@ -573,6 +568,6 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
             </>
           )}
         </RightSidePanel>
-      </div>
+      </PageShell>
   );
 };

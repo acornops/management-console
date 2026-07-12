@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 const root = resolve(__dirname, '../..');
 const settingsPage = readFileSync(resolve(root, 'src/pages/SettingsPage.tsx'), 'utf8');
+const aiSettingsResource = readFileSync(resolve(root, 'src/hooks/useWorkspaceAiSettingsResource.ts'), 'utf8');
 const workspaceSettingsPage = readFileSync(resolve(root, 'src/pages/WorkspaceSettingsPage.tsx'), 'utf8');
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
 
@@ -38,6 +39,17 @@ describe('SettingsPage workspace tabs', () => {
     expect(settingsPage).toContain('onSelectTab?.(tab);');
     expect(settingsPage).toContain('canReadMembers={canReadMembers}');
     expect(settingsPage).toContain('onSelectMembers={() => handleSelectTab(\'members\')}');
+  });
+
+  it('retains a workspace-keyed AI settings resource in the mounted settings shell', () => {
+    expect(settingsPage).toContain("import { useWorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';");
+    expect(settingsPage).toContain('const aiSettingsResource = useWorkspaceAiSettingsResource(');
+    expect(settingsPage).toContain("activeTab === 'ai' && !aiTabDisabled");
+    expect(settingsPage).toContain('aiSettingsResource={aiSettingsResource}');
+    expect(aiSettingsResource).toContain('React.useState<Record<string, WorkspaceAiSettingsCacheEntry>>({})');
+    expect(aiSettingsResource).toContain('if (!enabled || !workspaceId || entry?.settings || entry?.isLoading || entry?.error) return;');
+    expect(aiSettingsResource).toContain('controlPlaneApi.getWorkspaceAiSettings(targetWorkspaceId)');
+    expect(aiSettingsResource).toContain('const isInitialLoadPending = Boolean(enabled && workspaceId && !entry);');
   });
 
   it('surfaces self-service workspace leaving separately from destructive deletion', () => {

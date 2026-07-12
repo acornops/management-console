@@ -1,7 +1,9 @@
 import React from 'react';
 import { clsx } from 'clsx';
+import { LayoutGroup } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 
+import { ActiveTabIndicator } from '@/components/common/ActiveTabIndicator';
 import { Button, buttonClassName, type ButtonProps } from '@/components/common/Button';
 import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
@@ -97,9 +99,9 @@ export function segmentedTabButtonClassName({
   className?: string;
 }): string {
   return twMerge(clsx(
-    '-mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-xs font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25',
+    'relative -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-xs font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25',
     isActive
-      ? 'border-accent text-accent-strong'
+      ? 'border-transparent text-accent-strong'
       : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text',
     className
   ));
@@ -122,6 +124,7 @@ export const SegmentedTabs = <T extends string,>({
   items,
   onValueChange
 }: SegmentedTabsProps<T>) => {
+  const layoutGroupId = React.useId();
   const tabs = getSegmentedTabModel({ items, activeValue });
   const enabledTabs = tabs.filter((tab) => !tab.disabled);
   const focusSegmentedTab = (value: T) => {
@@ -141,8 +144,9 @@ export const SegmentedTabs = <T extends string,>({
   };
 
   return (
-    <div role="tablist" aria-label={ariaLabel} className={twMerge('flex gap-2 overflow-x-auto border-b border-ui-border', className)}>
-      {tabs.map((tab) => (
+    <LayoutGroup id={layoutGroupId}>
+      <div role="tablist" aria-label={ariaLabel} className={twMerge('flex gap-2 overflow-x-auto border-b border-ui-border', className)}>
+        {tabs.map((tab) => (
         <button
           key={tab.value}
           id={idBase ? `${idBase}-${tab.value}-tab` : undefined}
@@ -184,9 +188,11 @@ export const SegmentedTabs = <T extends string,>({
               {tab.count}
             </span>
           )}
+          {tab.isActive && <ActiveTabIndicator />}
         </button>
-      ))}
-    </div>
+        ))}
+      </div>
+    </LayoutGroup>
   );
 };
 

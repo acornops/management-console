@@ -115,7 +115,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
             <Button
               onClick={() => void onProceedToInstructions()}
               disabled={!vmName.trim() || isRegistering}
-              variant="accent"
+              variant="primary"
               size="sm"
               className="rounded-lg"
             >
@@ -173,7 +173,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
           <div className="flex shrink-0 items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
             <Button
               onClick={onConfirmInstalled}
-              variant="accent"
+              variant="primary"
               size="sm"
               className="rounded-lg"
             >

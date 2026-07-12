@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 
 const HelpAction: React.FC<{
   icon: React.ElementType;
@@ -28,11 +29,8 @@ export const HelpPage: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <motion.header {...headerMotion} className="mb-10">
-        <h1 className="type-route-title">{t('help.title')}</h1>
-        <p className="type-body mt-2 max-w-2xl">{t('help.subtitle')}</p>
-      </motion.header>
+    <PageShell width="narrow">
+      <PageHeader title={t('help.title')} description={t('help.subtitle')} />
 
       <div className="grid max-w-4xl gap-4 md:grid-cols-2">
         <HelpAction
@@ -60,6 +58,6 @@ export const HelpPage: React.FC = () => {
           href="#/help"
         />
       </div>
-    </div>
+    </PageShell>
   );
 };

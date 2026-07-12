@@ -1,12 +1,18 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { CloseButton, Textarea, TextInput } from '@/components/common/ComponentVocabulary';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
+import { Select } from '@/components/common/Select';
 import { ICONS } from '@/constants';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
-import { createWorkflowSchedule } from '@/services/control-plane/workflowApi';
-import { getUserTimeZone } from '@/utils/dateTime';
+import {
+  createWorkflowSchedule,
+  previewWorkflowSchedule,
+  type WorkflowSchedulePreview
+} from '@/services/control-plane/workflowApi';
+import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
 
 interface WorkflowScheduleCreateDrawerProps {
   workspaceId: string;
@@ -14,7 +20,25 @@ interface WorkflowScheduleCreateDrawerProps {
   onClose: () => void;
 }
 
-const defaultCron = '0 9 * * 1-5';
+type Frequency = 'daily' | 'weekdays' | 'weekly' | 'custom';
+
+const weekdayOptions = [
+  { value: 1, key: 'monday' },
+  { value: 2, key: 'tuesday' },
+  { value: 3, key: 'wednesday' },
+  { value: 4, key: 'thursday' },
+  { value: 5, key: 'friday' },
+  { value: 6, key: 'saturday' },
+  { value: 0, key: 'sunday' }
+] as const;
+
+function cronFromGuided(frequency: Frequency, time: string, weekdays: number[], currentCron: string): string {
+  if (frequency === 'custom') return currentCron;
+  const [hour = '9', minute = '0'] = time.split(':');
+  if (frequency === 'daily') return `${Number(minute)} ${Number(hour)} * * *`;
+  if (frequency === 'weekdays') return `${Number(minute)} ${Number(hour)} * * 1-5`;
+  return `${Number(minute)} ${Number(hour)} * * ${weekdays.length > 0 ? weekdays.join(',') : '1'}`;
+}
 
 function parseJsonObject(value: string): Record<string, unknown> {
   const trimmed = value.trim();
@@ -25,28 +49,92 @@ function parseJsonObject(value: string): Record<string, unknown> {
 }
 
 export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawerProps> = ({ workspaceId, scheduleWorkflow, onClose }) => {
+  const { t } = useTranslation();
   const [name, setName] = React.useState('');
-  const [cron, setCron] = React.useState(defaultCron);
+  const [frequency, setFrequency] = React.useState<Frequency>('weekdays');
+  const [time, setTime] = React.useState('09:00');
+  const [weekdays, setWeekdays] = React.useState<number[]>([1, 2, 3, 4, 5]);
+  const [cron, setCron] = React.useState('0 9 * * 1-5');
   const [timezone, setTimezone] = React.useState(getUserTimeZone);
   const [enabled, setEnabled] = React.useState(true);
-  const [approvedContextGrants, setApprovedContextGrants] = React.useState('workspace_metadata');
+  const [approvedContextGrants, setApprovedContextGrants] = React.useState<string[]>([]);
+  const [inputDefaults, setInputDefaults] = React.useState<Record<string, unknown>>({});
   const [inputDefaultsText, setInputDefaultsText] = React.useState('{}');
+  const [jsonError, setJsonError] = React.useState('');
   const [error, setError] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+  const [preview, setPreview] = React.useState<WorkflowSchedulePreview | null>(null);
+  const [previewing, setPreviewing] = React.useState(false);
 
   React.useEffect(() => {
     if (!scheduleWorkflow) return;
-    setName(`${scheduleWorkflow.name} schedule`);
-    setCron(defaultCron);
+    setName(t('agentsWorkflows.schedule.defaultName', { name: scheduleWorkflow.name }));
+    setFrequency('weekdays');
+    setTime('09:00');
+    setWeekdays([1, 2, 3, 4, 5]);
+    setCron('0 9 * * 1-5');
     setTimezone(getUserTimeZone());
     setEnabled(true);
-    setApprovedContextGrants(scheduleWorkflow.contextGrants.join('\n') || 'workspace_metadata');
+    setApprovedContextGrants([...new Set(scheduleWorkflow.contextGrants)]);
+    setInputDefaults({});
     setInputDefaultsText('{}');
+    setJsonError('');
     setError('');
-  }, [scheduleWorkflow?.id]);
+  }, [scheduleWorkflow?.id, t]);
+
+  React.useEffect(() => {
+    setCron((current) => cronFromGuided(frequency, time, weekdays, current));
+  }, [frequency, time, weekdays]);
+
+  React.useEffect(() => {
+    if (!scheduleWorkflow || jsonError) return;
+    setPreviewing(true);
+    const timer = window.setTimeout(() => {
+      previewWorkflowSchedule(workspaceId, {
+        workflowId: scheduleWorkflow.id,
+        name: name.trim(),
+        cron,
+        timezone,
+        enabled,
+        approvedContextGrants,
+        inputDefaults
+      }).then(setPreview).catch((previewError) => {
+        setPreview({
+          valid: false,
+          summary: previewError instanceof Error ? previewError.message : t('agentsWorkflows.schedule.previewUnavailable'),
+          nextRunTimes: [],
+          errors: []
+        });
+      }).finally(() => setPreviewing(false));
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [approvedContextGrants, cron, enabled, inputDefaults, jsonError, name, scheduleWorkflow?.id, timezone, workspaceId, t]);
+
+  const updateInputDefault = (inputName: string, value: string) => {
+    const next = { ...inputDefaults, [inputName]: value };
+    setInputDefaults(next);
+    setInputDefaultsText(JSON.stringify(next, null, 2));
+    setJsonError('');
+  };
+
+  const updateJson = (value: string) => {
+    setInputDefaultsText(value);
+    try {
+      setInputDefaults(parseJsonObject(value));
+      setJsonError('');
+    } catch (nextError) {
+      setJsonError(nextError instanceof Error ? nextError.message : t('agentsWorkflows.schedule.invalidJson'));
+    }
+  };
+
+  const toggleContextGrant = (grant: string, checked: boolean) => {
+    setApprovedContextGrants((current) => checked
+      ? [...new Set([...current, grant])]
+      : current.filter((value) => value !== grant));
+  };
 
   const save = async () => {
-    if (!scheduleWorkflow || saving) return;
+    if (!scheduleWorkflow || saving || !preview?.valid || jsonError) return;
     setError('');
     setSaving(true);
     try {
@@ -56,46 +144,145 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         cron: cron.trim(),
         timezone: timezone.trim(),
         enabled,
-        approvedContextGrants: approvedContextGrants.split(/\n|,/).map((value) => value.trim()).filter(Boolean),
-        inputDefaults: parseJsonObject(inputDefaultsText)
+        approvedContextGrants,
+        inputDefaults
       });
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create workflow schedule');
+      setError(err instanceof Error ? err.message : t('agentsWorkflows.schedule.createError'));
     } finally {
       setSaving(false);
     }
   };
 
+  const localTimezone = getUserTimeZone();
+  const timezoneOptions = [...new Set([localTimezone, 'UTC', 'Asia/Singapore', 'America/New_York'])]
+    .map((value) => ({ value, label: value === localTimezone ? `${value} (${t('agentsWorkflows.schedule.local')})` : value }));
+  const fieldError = (field: string) => preview?.errors.find((item) => item.field === field)?.message;
+
   return (
-    <RightSidePanel isOpen={Boolean(scheduleWorkflow)} onClose={onClose} closeDisabled={saving} titleId="workflow-schedule-create-title" descriptionId="workflow-schedule-create-description" className="max-w-2xl">
-      <div className="flex items-start justify-between border-b border-ui-border px-5 py-4">
-        <div>
-          <h2 id="workflow-schedule-create-title" className="type-section-title">Schedule workflow</h2>
-          <p id="workflow-schedule-create-description" className="type-caption mt-1 text-ui-text-muted">Create a recurring run without leaving this workflow.</p>
+    <RightSidePanel isOpen={Boolean(scheduleWorkflow)} onClose={onClose} closeDisabled={saving} titleId="workflow-schedule-create-title" descriptionId="workflow-schedule-create-description" className="w-full max-w-2xl">
+      <div className="flex min-w-0 items-start justify-between gap-3 border-b border-ui-border px-4 py-4 sm:px-5">
+        <div className="min-w-0">
+          <h2 id="workflow-schedule-create-title" className="type-section-title">{t('agentsWorkflows.schedule.title')}</h2>
+          <p id="workflow-schedule-create-description" className="type-caption mt-1 text-ui-text-muted">{t('agentsWorkflows.schedule.description')}</p>
         </div>
-        <CloseButton onClick={onClose} disabled={saving} label="Close schedule workflow drawer" />
+        <CloseButton onClick={onClose} disabled={saving} label={t('agentsWorkflows.schedule.close')} />
       </div>
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5">
-        {error && <div className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm font-semibold text-status-danger-text">{error}</div>}
+      <div className="min-h-0 min-w-0 flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-4 py-5 sm:px-5">
+        {error && <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm font-semibold text-status-danger-text">{error}</div>}
         <div className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">
-          <div className="type-micro-label text-ui-text-muted">Workflow</div>
-          <div className="mt-1 text-sm font-semibold text-ui-text">{scheduleWorkflow?.name || 'No workflow selected'}</div>
+          <div className="type-micro-label text-ui-text-muted">{t('agentsWorkflows.schedule.workflow')}</div>
+          <div className="mt-1 break-words text-sm font-semibold text-ui-text">{scheduleWorkflow?.name || t('agentsWorkflows.schedule.noWorkflow')}</div>
         </div>
-        <label className="block text-sm font-semibold text-ui-text">Schedule name<TextInput value={name} onChange={(event) => setName(event.target.value)} className="mt-2" /></label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-semibold text-ui-text">Cron<TextInput value={cron} onChange={(event) => setCron(event.target.value)} className="mt-2 font-mono" /></label>
-          <label className="block text-sm font-semibold text-ui-text">Timezone<TextInput value={timezone} onChange={(event) => setTimezone(event.target.value)} className="mt-2" /></label>
+
+        <label className="block text-sm font-semibold text-ui-text">
+          {t('agentsWorkflows.schedule.name')}
+          <TextInput value={name} onChange={(event) => setName(event.target.value)} className="mt-2 w-full" aria-invalid={!name.trim()} />
+        </label>
+
+        <fieldset className="min-w-0 space-y-3">
+          <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.frequency')}</legend>
+          <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
+            {(['daily', 'weekdays', 'weekly', 'custom'] as Frequency[]).map((value) => (
+              <Button key={value} type="button" size="sm" variant={frequency === value ? 'primary' : 'secondary'} className="w-full justify-center" onClick={() => setFrequency(value)}>
+                {t(`agentsWorkflows.schedule.frequency_${value}`)}
+              </Button>
+            ))}
+          </div>
+        </fieldset>
+
+        {frequency !== 'custom' && (
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+            <label className="block min-w-0 text-sm font-semibold text-ui-text">
+              {t('agentsWorkflows.schedule.time')}
+              <TextInput type="time" value={time} onChange={(event) => setTime(event.target.value)} className="mt-2 w-full" />
+            </label>
+            <label className="block min-w-0 text-sm font-semibold text-ui-text">
+              {t('agentsWorkflows.schedule.timezone')}
+              <Select<string> value={timezone} options={timezoneOptions} onChange={setTimezone} className="mt-2 w-full" ariaLabel={t('agentsWorkflows.schedule.timezone')} />
+            </label>
+          </div>
+        )}
+
+        {frequency === 'weekly' && (
+          <fieldset className="min-w-0">
+            <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.weekdays')}</legend>
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {weekdayOptions.map((day) => (
+                <label key={day.value} className="flex min-w-0 items-center gap-2 rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-semibold text-ui-text">
+                  <Checkbox checked={weekdays.includes(day.value)} onChange={(event) => setWeekdays((current) => event.target.checked ? [...new Set([...current, day.value])].sort() : current.filter((value) => value !== day.value))} />
+                  <span className="truncate">{t(`agentsWorkflows.schedule.${day.key}`)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
+
+        {scheduleWorkflow?.inputs.length ? (
+          <fieldset className="min-w-0 space-y-3">
+            <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.inputs')}</legend>
+            <p className="type-caption text-ui-text-muted">{t('agentsWorkflows.schedule.inputsHelp')}</p>
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+              {scheduleWorkflow.inputs.map((input) => (
+                <label key={input.name} className="block min-w-0 text-sm font-semibold text-ui-text">
+                  <span className="break-words">{input.label}{input.required ? ' *' : ''}</span>
+                  <TextInput value={String(inputDefaults[input.name] ?? '')} onChange={(event) => updateInputDefault(input.name, event.target.value)} className="mt-2 w-full" aria-invalid={Boolean(fieldError(`inputDefaults.${input.name}`))} />
+                  {fieldError(`inputDefaults.${input.name}`) && <span className="type-caption mt-1 block text-status-danger-text">{fieldError(`inputDefaults.${input.name}`)}</span>}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
+
+        {scheduleWorkflow?.contextGrants.length ? (
+          <fieldset className="min-w-0 space-y-2">
+            <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.context')}</legend>
+            <p className="type-caption text-ui-text-muted">{t('agentsWorkflows.schedule.contextHelp')}</p>
+            {scheduleWorkflow.contextGrants.map((grant) => (
+              <label key={grant} className="flex min-w-0 items-start gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-sm text-ui-text">
+                <Checkbox className="mt-0.5" checked={approvedContextGrants.includes(grant)} onChange={(event) => toggleContextGrant(grant, event.target.checked)} />
+                <span className="min-w-0"><strong className="break-words">{grant.replaceAll('_', ' ')}</strong><span className="type-caption mt-1 block text-ui-text-muted">{t('agentsWorkflows.schedule.contextGrantHelp')}</span></span>
+              </label>
+            ))}
+          </fieldset>
+        ) : null}
+
+        <div role="status" aria-live="polite" className={`rounded-md border px-4 py-3 ${preview?.valid ? 'border-status-success/30 bg-status-success-soft' : 'border-ui-border bg-ui-bg'}`}>
+          <div className="flex items-center gap-2 text-sm font-semibold text-ui-text">
+            <ICONS.Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {previewing ? t('agentsWorkflows.schedule.previewing') : preview?.summary || t('agentsWorkflows.schedule.previewPending')}
+          </div>
+          {preview?.nextRunTimes.length ? <ol className="type-caption mt-2 grid gap-1 text-ui-text-muted">{preview.nextRunTimes.slice(0, 3).map((runAt) => <li key={runAt}>{formatUserDateTime(runAt, { timeZone: timezone })}</li>)}</ol> : null}
         </div>
-        <label className="flex items-center gap-3 text-sm font-semibold text-ui-text"><Checkbox checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />Enabled</label>
-        <label className="block text-sm font-semibold text-ui-text">Approved context grants<Textarea value={approvedContextGrants} onChange={(event) => setApprovedContextGrants(event.target.value)} className="mt-2" /></label>
-        <label className="block text-sm font-semibold text-ui-text">Input defaults<Textarea value={inputDefaultsText} onChange={(event) => setInputDefaultsText(event.target.value)} className="mt-2 min-h-36 font-mono text-xs font-normal" /></label>
+
+        <details className="group min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-3">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-ui-text [&::-webkit-details-marker]:hidden">
+            {t('agentsWorkflows.schedule.advanced')}
+            <ICONS.ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="mt-4 grid min-w-0 gap-4">
+            <label className="block min-w-0 text-sm font-semibold text-ui-text">
+              {t('agentsWorkflows.schedule.cron')}
+              <TextInput value={cron} onChange={(event) => { setFrequency('custom'); setCron(event.target.value); }} className="mt-2 w-full font-mono" aria-invalid={Boolean(fieldError('cron'))} />
+              {fieldError('cron') && <span className="type-caption mt-1 block text-status-danger-text">{fieldError('cron')}</span>}
+            </label>
+            {frequency === 'custom' && <label className="block min-w-0 text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.timezone')}<Select<string> value={timezone} options={timezoneOptions} onChange={setTimezone} className="mt-2 w-full" ariaLabel={t('agentsWorkflows.schedule.timezone')} /></label>}
+            <label className="block min-w-0 text-sm font-semibold text-ui-text">
+              {t('agentsWorkflows.schedule.json')}
+              <Textarea value={inputDefaultsText} onChange={(event) => updateJson(event.target.value)} className="mt-2 min-h-32 w-full font-mono text-xs font-normal" aria-invalid={Boolean(jsonError)} />
+              {jsonError && <span className="type-caption mt-1 block text-status-danger-text">{jsonError}</span>}
+            </label>
+          </div>
+        </details>
+
+        <label className="flex items-center gap-3 text-sm font-semibold text-ui-text"><Checkbox checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />{t('agentsWorkflows.schedule.enabled')}</label>
       </div>
-      <div className="flex justify-end gap-2 border-t border-ui-border px-5 py-4">
-        <Button size="sm" variant="tertiary" onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button size="sm" variant="primary" onClick={() => void save()} disabled={saving || !scheduleWorkflow || !name.trim() || !cron.trim() || !timezone.trim()}>
+      <div className="grid grid-cols-1 gap-2 border-t border-ui-border px-4 py-4 sm:flex sm:justify-end sm:px-5">
+        <Button size="sm" variant="tertiary" className="w-full justify-center sm:w-auto" onClick={onClose} disabled={saving}>{t('agentsWorkflows.schedule.cancel')}</Button>
+        <Button size="sm" variant="primary" className="w-full justify-center sm:w-auto" onClick={() => void save()} disabled={saving || !scheduleWorkflow || !name.trim() || !preview?.valid || Boolean(jsonError)}>
           <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
-          {saving ? 'Creating...' : 'Create schedule'}
+          {saving ? t('agentsWorkflows.schedule.creating') : t('agentsWorkflows.schedule.create')}
         </Button>
       </div>
     </RightSidePanel>

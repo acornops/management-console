@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
+import { DrawerFrame } from '@/components/common/OverlayFrames';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select, SelectOption } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
@@ -231,13 +233,11 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <motion.header {...headerMotion} className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="type-route-title">{t('schedules.title')}</h1>
-          <p className="type-body mt-2 max-w-2xl">{t('schedules.subtitle', { workspace: workspace.name })}</p>
-        </div>
-        <div className="flex gap-2">
+    <PageShell>
+      <PageHeader
+        title={t('schedules.title')}
+        description={t('schedules.subtitle', { workspace: workspace.name })}
+        actions={<>
           <Button size="md" variant="secondary" onClick={() => void refreshSchedules()} disabled={isLoadingSchedules}>
             <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
             {t('common.refresh', { defaultValue: 'Refresh' })}
@@ -246,8 +246,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
             <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
             {t('schedules.actions.create')}
           </Button>
-        </div>
-      </motion.header>
+        </>}
+      />
 
       {!canManageSchedules && (
         <div className="mb-5 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-sm font-medium text-ui-text-muted">
@@ -343,21 +343,23 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
         )}
       </section>
 
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <button type="button" aria-label={t('schedules.form.close')} className="absolute inset-0 bg-ui-text/20" onClick={closeDrawer} />
-          <aside role="dialog" aria-modal="true" aria-labelledby="schedule-drawer-title" className="relative flex h-full w-full max-w-2xl flex-col border-l border-ui-border bg-ui-surface shadow-2xl">
-            <div className="flex items-start justify-between border-b border-ui-border px-5 py-4">
-              <div>
-                <h2 id="schedule-drawer-title" className="type-section-title">{draft.id ? t('schedules.form.editTitle') : t('schedules.form.createTitle')}</h2>
-                <p className="type-caption mt-1 text-ui-text-muted">{t('schedules.form.body')}</p>
-              </div>
-              <Button type="button" variant="tertiary" size="sm" onClick={closeDrawer}>
-                <ICONS.X className="h-4 w-4" aria-hidden="true" />
-                {t('common.close', { defaultValue: 'Close' })}
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5">
+      <DrawerFrame
+        open={drawerOpen}
+        onClose={closeDrawer}
+        closeDisabled={savingSchedule}
+        titleId="schedule-drawer-title"
+        title={draft.id ? t('schedules.form.editTitle') : t('schedules.form.createTitle')}
+        description={t('schedules.form.body')}
+        closeLabel={t('schedules.form.close')}
+        width="lg"
+        bodyClassName="space-y-4"
+        footer={<>
+          <Button size="sm" variant="tertiary" onClick={closeDrawer}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
+          <Button size="sm" variant="primary" onClick={() => void saveDraft()} disabled={savingSchedule || !draft.workflowId || !draft.name.trim()}>
+            {savingSchedule ? t('schedules.form.saving') : t('schedules.form.save')}
+          </Button>
+        </>}
+      >
               {draftError && <div className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm font-semibold text-status-danger-text">{draftError}</div>}
               <label className="block text-sm font-semibold text-ui-text">
                 {t('schedules.form.workflow')}
@@ -395,16 +397,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
                 {t('schedules.form.inputDefaults')}
                 <textarea value={draft.inputDefaultsText} onChange={(event) => setDraft((current) => ({ ...current, inputDefaultsText: event.target.value }))} className={scheduleCodeTextareaClassName} />
               </label>
-            </div>
-            <div className="flex justify-end gap-2 border-t border-ui-border px-5 py-4">
-              <Button size="sm" variant="tertiary" onClick={closeDrawer}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
-              <Button size="sm" variant="primary" onClick={() => void saveDraft()} disabled={savingSchedule || !draft.workflowId || !draft.name.trim()}>
-                {savingSchedule ? t('schedules.form.saving') : t('schedules.form.save')}
-              </Button>
-            </div>
-          </aside>
-        </div>
-      )}
-    </div>
+      </DrawerFrame>
+    </PageShell>
   );
 };

@@ -1,0 +1,37 @@
+{
+  "activationContexts": [
+    "src/pages/WorkspaceWorkflowsPage.components.tsx",
+    "src/pages/WorkspaceWorkflowsPage.tsx",
+    "src/design-system.tsx"
+  ],
+  "literalColorModules": [
+    "src/pages/login/LoginPreview.tsx"
+  ],
+  "authenticatedRoutePages": [
+    "src/pages/WorkspaceOverviewPage.tsx",
+    "src/pages/WorkspaceAgentsPage.tsx",
+    "src/pages/WorkspaceWorkflowsPage.tsx",
+    "src/pages/WorkspaceSchedulesPage.tsx",
+    "src/pages/WorkspaceApprovalsPage.tsx",
+    "src/pages/WorkspaceAuditLogPage.tsx",
+    "src/pages/SettingsPage.tsx",
+    "src/pages/UserSettingsPage.tsx",
+    "src/pages/HelpPage.tsx",
+    "src/pages/KubernetesClustersPage.tsx",
+    "src/pages/VirtualMachinesPage.tsx",
+    "src/pages/KubernetesClusterDetailPage.tsx",
+    "src/pages/WorkspaceInvitePage.tsx",
+    "src/pages/NotFoundPage.tsx"
+  ],
+  "routeHeaderDelegates": {
+    "src/pages/WorkspaceAgentsPage.tsx": "src/pages/WorkspaceAgentsCatalog.tsx",
+    "src/pages/WorkspaceWorkflowsPage.tsx": "src/pages/WorkspaceWorkflowsPage.components.tsx"
+  },
+  "embeddedRouteExceptions": {
+    "src/pages/KubernetesClustersPage.tsx": "Delegates canonical route composition to the Dashboard inventory surface.",
+    "src/pages/VirtualMachinesPage.tsx": "Delegates route composition to list, overview, resource, settings, and chat subviews.",
+    "src/pages/KubernetesClusterDetailPage.tsx": "Full-height target workbench embeds tab-specific views inside a stable split-pane shell.",
+    "src/pages/WorkspaceInvitePage.tsx": "Focused invitation handoff intentionally uses a centered task surface instead of authenticated route chrome.",
+    "src/pages/NotFoundPage.tsx": "Recovery-only error route intentionally uses a centered task surface instead of authenticated route chrome."
+  }
+}

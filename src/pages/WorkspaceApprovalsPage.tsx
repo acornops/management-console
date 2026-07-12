@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import { headerMotion } from '@/lib/motion';
@@ -15,6 +16,7 @@ import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
+  onApprovalDecision?: () => Promise<void> | void;
 }
 
 type ApprovalFilter = 'pending' | 'decided';
@@ -33,7 +35,7 @@ function sourceLabel(source: WorkspaceApprovalInboxRow['source']): string {
   return source === 'workflow_gate' ? 'Workflow gate' : 'Target tool';
 }
 
-export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ workspace }) => {
+export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ workspace, onApprovalDecision }) => {
   const { t } = useTranslation();
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
   const [approvals, setApprovals] = useState<WorkspaceApprovalInboxRow[]>([]);
@@ -84,6 +86,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
     try {
       await decideWorkflowRunApproval(approval.runId, approval.approvalId, decision);
       setDecisionState((current) => ({ ...current, [approval.approvalId]: decision }));
+      await onApprovalDecision?.();
       await loadApprovals(approvalFilter);
     } catch (err) {
       setApprovalError(err instanceof Error ? err.message : t('approvals.decisionError'));
@@ -96,17 +99,13 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <motion.header {...headerMotion} className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="type-route-title">{t('approvals.title')}</h1>
-          <p className="type-body mt-2 max-w-2xl">{t('approvals.subtitle', { workspace: workspace.name })}</p>
-        </div>
+    <PageShell>
+      <PageHeader title={t('approvals.title')} description={t('approvals.subtitle', { workspace: workspace.name })} actions={
         <Button size="md" variant="secondary" onClick={() => void loadApprovals()} disabled={isLoadingApprovals}>
           <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
           {t('common.refresh', { defaultValue: 'Refresh' })}
         </Button>
-      </motion.header>
+      } />
 
       {!canDecideApprovals && (
         <div className="mb-5 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-sm font-medium text-ui-text-muted">
@@ -215,6 +214,6 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
           </div>
         )}
       </section>
-    </div>
+    </PageShell>
   );
 };

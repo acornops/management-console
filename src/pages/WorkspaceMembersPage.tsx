@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Mail, MoreVertical, Search, UserPlus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { TableLoadingRows } from '@/components/common/Loading';
 import { Select, SelectOption } from '@/components/common/Select';
 import { Tooltip } from '@/components/common/Tooltip';
@@ -338,27 +339,24 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   };
 
   return (
-    <div className={embedded ? '' : 'min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8'}>
-      <motion.header {...headerMotion} className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          {embedded ? (
-            <h2 className="text-xl font-bold tracking-tight text-ui-text">{t('members.title')}</h2>
-          ) : (
-            <h1 className="type-route-title">{t('members.title')}</h1>
-          )}
-          <p className="type-body mt-2">{t('members.description')}</p>
+    <PageShell embedded={embedded}>
+      {embedded ? (
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div><h2 className="type-section-title">{t('members.title')}</h2><p className="type-body mt-2">{t('members.description')}</p></div>
+          <Button onClick={openInviteModal} disabled={!canManageMembers || roleTemplates.length === 0} variant="primary" size="md" className="type-label whitespace-nowrap"><UserPlus className="h-4 w-4" aria-hidden="true" />{t('members.inviteMember')}</Button>
         </div>
+      ) : <PageHeader title={t('members.title')} description={t('members.description')} actions={
         <Button
           onClick={openInviteModal}
           disabled={!canManageMembers || roleTemplates.length === 0}
-          variant="secondary"
+          variant="primary"
           size="md"
           className="type-label whitespace-nowrap"
         >
           <UserPlus className="w-4 h-4" aria-hidden="true" />
           {t('members.inviteMember')}
         </Button>
-      </motion.header>
+      } />}
 
       <motion.div
         {...fadeTransition}
@@ -446,7 +444,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                   >
                   <td className="px-4 py-4 sm:px-5 lg:px-6">
                     <div className="flex min-w-0 items-center gap-3 lg:gap-4">
-                      <div className="type-ui flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong ring-4 ring-ui-surface shadow-sm transition-colors group-hover:bg-accent group-hover:text-[oklch(0.99_0.004_86)]">
+                      <div className="type-ui flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong ring-4 ring-ui-surface shadow-sm transition-colors group-hover:bg-accent group-hover:text-ui-bg">
                         {getInitials(member)}
                       </div>
                       <div className="min-w-0">
@@ -563,6 +561,6 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
         onCancelRoleChange={() => selectedMember && setPendingRole(selectedMember.role)}
         onConfirmRoleChange={() => void saveMember()}
       />
-    </div>
+    </PageShell>
   );
 };

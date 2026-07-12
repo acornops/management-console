@@ -24,6 +24,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - The console should call the control plane through typed service modules, not by scattering raw fetch calls through UI components.
 - Cookie-backed requests must use `credentials: include`.
 - Paginated list responses use `{ items, nextCursor? }`.
+- The workspace approval inbox additionally exposes `pendingCount`, the total pending approvals across target-tool and workflow-gate sources before pagination and independently of the list filter. The console treats a missing or invalid count from an older producer as unavailable.
 - Cluster registration returns `{ cluster, agentKey, installInstructions }`.
 - Agent-key rotation returns `{ clusterId, agentKey, keyVersion, installInstructions }`.
 - Workspace payloads include `currentUserRole` and permissions from the control plane; the console must not fabricate current-user membership locally.
@@ -39,6 +40,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - Workspace AI settings UI is gated by `permissions.manage_ai_settings`.
 - AI provider credential flows must never expect or display API key values.
 - MCP catalog role/editability data comes from the control plane; the console must not hard-code editable role keys.
+- Workspace MCP credentials are write-only; responses expose only whether a credential is configured. Workflows inherit MCP servers and tools from selected agents unless a narrower restriction is saved.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
 
 ## Control-Plane Boundary Notes

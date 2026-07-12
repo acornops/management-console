@@ -34,6 +34,7 @@ task local-up
 ## Configuration
 
 - `VITE_APP_BASE_PATH`: application base path. Production defaults to `/`.
+- `VITE_APP_DATA_MODE`: use `control-plane` for deployable builds and contract-sensitive validation.
 - `VITE_CONTROL_PLANE_API_BASE_URL`: control-plane base URL. Use an empty value for same-origin `/api` routing through `console.acornops.dev`. Production nginx CSP defaults to same-origin `connect-src`; standalone cross-origin API builds need a matching custom CSP.
 
 ## Validation

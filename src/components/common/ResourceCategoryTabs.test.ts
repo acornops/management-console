@@ -57,5 +57,7 @@ describe('ResourceCategoryTabs', () => {
     expect(resourceCategoryTabsSource).toContain("event.key === 'End'");
     expect(resourceCategoryTabsSource).toContain('tabIndex={tab.isActive ? 0 : -1}');
     expect(resourceCategoryTabsSource).toContain('onKeyDown={(event) => handleTabKeyDown(event, index)}');
+    expect(resourceCategoryTabsSource).toContain('<LayoutGroup id={layoutGroupId}>');
+    expect(resourceCategoryTabsSource).toContain('{tab.isActive && <ActiveTabIndicator />}');
   });
 });

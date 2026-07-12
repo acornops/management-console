@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { formatUserDateTime } from '@/utils/dateTime';
 
@@ -171,11 +172,8 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
     [inventory, logs]
   );
   return (
-    <div className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <header className="mb-8 min-w-0">
-        <h1 className="type-route-title">{t('app.resources')}</h1>
-        <p className="type-body mt-2">{t('virtualMachines.resources.pageDescription', { name: vmName })}</p>
-      </header>
+    <PageShell>
+      <PageHeader title={t('app.resources')} description={t('virtualMachines.resources.pageDescription', { name: vmName })} />
 
       <div className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4">
         <ResourceCategoryTabs<VmResourceCategory>
@@ -321,6 +319,6 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           </>
         )}
       </section>
-    </div>
+    </PageShell>
   );
 };

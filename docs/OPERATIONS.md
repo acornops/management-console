@@ -30,6 +30,8 @@ GET /
 
 - Blank page under `/`: verify the image was built with `VITE_APP_BASE_PATH=/`.
 - API calls go to localhost: verify `VITE_CONTROL_PLANE_API_BASE_URL` was set to an empty value for same-origin `/api` routing, or that any explicit public base URL is also allowed by the deployed CSP.
+- Workflow options never finish loading: verify the image was built with `VITE_APP_DATA_MODE=control-plane`, `GET /api/v1/workspaces/{workspaceId}/workflow-options` returns `200`, and the deployed control-plane image includes the current workflow-options contract.
+- Cross-origin workflow option requests fail: verify the control plane allows the exact console origin, enables credentialed CORS, and issues session/CSRF cookies with attributes compatible with that origin.
 - Deep links return 404: verify nginx SPA fallback handles root-level application routes.
 - Custom language missing from settings: verify `/locales/manifest.json` is valid and every file-backed language JSON exists under `/locales/`.
 - Stale UI after deploy: verify `/` and `/index.html` return `Cache-Control: no-cache`, while hashed `/assets/...` files return immutable cache headers.

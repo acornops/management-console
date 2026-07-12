@@ -39,6 +39,18 @@ export default {
       fontFamily: {
         sans: ['Outfit', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         mono: ['Ubuntu Mono', 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'monospace']
+      },
+      spacing: {
+        'route-x': 'var(--route-padding-x)',
+        'route-y': 'var(--route-padding-y)',
+        'header-content': 'var(--header-content-gap)',
+        'section': 'var(--section-gap)',
+        'surface': 'var(--surface-padding)',
+        'row-y': 'var(--table-row-padding-y)',
+        'control-sm': 'var(--control-height-compact)',
+        'control': 'var(--control-height-default)',
+        'overlay-x': 'var(--overlay-padding-x)',
+        'overlay-y': 'var(--overlay-padding-y)'
       }
     }
   },
