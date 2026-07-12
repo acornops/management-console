@@ -183,6 +183,8 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           labelPrefix="virtualMachines.resources.categories"
           onSelect={onCategoryChange}
           ariaLabel={t('virtualMachines.resources.categories.label')}
+          idBase="vm-resource-category"
+          controlsId="vm-resource-panel"
         />
         <div
           data-vm-resource-search-filter-bar="true"
@@ -203,7 +205,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
         </div>
       </div>
 
-      <section className="min-h-[14rem] overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+      <section id="vm-resource-panel" role="tabpanel" tabIndex={0} aria-labelledby={`vm-resource-category-${activeCategory}-tab`} className="min-h-[14rem] overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
         {activeCategory === 'logs' ? (
           <div className="max-h-[calc(100vh-22rem)] overflow-auto">
             {logsError ? (

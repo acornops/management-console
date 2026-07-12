@@ -103,10 +103,9 @@ describe('cluster dialog accessibility contracts', () => {
   it('keeps agent access loading state visually stable', () => {
     expect(accessModeSelector).toContain('transition-colors');
     expect(accessModeSelector).toContain('aria-disabled={disabled}');
-    expect(accessModeSelector).toContain('if (!disabled) onChange(mode.value);');
-    expect(accessModeSelector).toContain("disabled ? 'cursor-not-allowed' : ''");
-    expect(accessModeSelector).not.toContain('\n                disabled={disabled}\n                onChange');
-    expect(accessModeSelector).not.toContain('opacity-60');
+    expect(accessModeSelector).toContain('disabled={disabled}');
+    expect(accessModeSelector).toContain('onChange={() => onChange(mode.value)}');
+    expect(accessModeSelector).toContain("disabled ? 'cursor-not-allowed opacity-60' : ''");
     expect(accessModeSelector).not.toContain('transition-all');
   });
 

@@ -12,10 +12,7 @@ import { formInputClassName } from '@/components/common/formControlStyles';
 import { ClusterCatalog } from '@/components/dashboard/ClusterCatalog';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
-import {
-  getAgentConnectionState,
-  getEffectiveHealthStatus
-} from '@/utils/telemetry';
+import { getAgentConnectionState, getEffectiveHealthStatus } from '@/utils/telemetry';
 
 interface DashboardProps {
   kubernetesClusters: KubernetesCluster[];
@@ -25,7 +22,14 @@ interface DashboardProps {
   workspaceName?: string;
   totalClusterCount?: number;
   issueSummaryByClusterId?: Record<string, ControlPlaneTargetIssueSummary | undefined>;
+  issueSummaryLoadStateByClusterId?: Record<string, 'loading' | 'ready' | 'error' | undefined>;
+  metricLoadStateByClusterId?: Record<string, 'loading' | 'ready' | 'error' | undefined>;
   hasActiveClusterFilter?: boolean;
+  isCatalogLoading?: boolean;
+  catalogLoadError?: boolean;
+  onRetryCatalog?: () => void;
+  catalogPanelLabelledBy?: string;
+  catalogTabs?: React.ReactNode;
   controls?: React.ReactNode;
   catalogFooter?: React.ReactNode;
   onAddCluster?: () => void;
@@ -54,7 +58,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   workspaceName,
   totalClusterCount,
   issueSummaryByClusterId = {},
+  issueSummaryLoadStateByClusterId = {},
+  metricLoadStateByClusterId = {},
   hasActiveClusterFilter = false,
+  isCatalogLoading = false,
+  catalogLoadError = false,
+  onRetryCatalog,
+  catalogPanelLabelledBy,
+  catalogTabs,
   controls,
   catalogFooter,
   onAddCluster,
@@ -169,7 +180,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="mt-1 text-sm leading-6 text-ui-text-muted">
                 {criticalClusters + warningClusters + setupRequiredClusters > 0
                   ? t('dashboard.attentionSummary', { count: criticalClusters + warningClusters + setupRequiredClusters })
-                  : t('dashboard.activeSummary', { connected: connectedClusters, total: kubernetesClusters.length })}
+                  : t('dashboard.activeSummary', { connected: connectedClusters, total: clusterCount })}
               </p>
             </div>
           </div>
@@ -196,12 +207,20 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      {kubernetesClusters.length > 0 || hasActiveClusterFilter ? (
+      {catalogTabs}
+
+      {kubernetesClusters.length > 0 || hasActiveClusterFilter || isCatalogLoading || catalogLoadError ? (
         <ClusterCatalog
           kubernetesClusters={kubernetesClusters}
           totalClusterCount={clusterCount}
           hasActiveFilter={hasActiveClusterFilter}
+          isLoading={isCatalogLoading}
+          loadError={catalogLoadError}
+          onRetry={onRetryCatalog}
+          ariaLabelledBy={catalogPanelLabelledBy}
           issueSummaryByClusterId={issueSummaryByClusterId}
+          issueSummaryLoadStateByClusterId={issueSummaryLoadStateByClusterId}
+          metricLoadStateByClusterId={metricLoadStateByClusterId}
           controls={controls}
           footer={catalogFooter}
           openClusterActionMenuId={openClusterActionMenuId}

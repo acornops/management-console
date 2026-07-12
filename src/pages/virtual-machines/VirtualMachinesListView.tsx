@@ -1,41 +1,76 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
-import { MoreHorizontal, Server, Settings, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Search, Server, Settings, Trash2 } from 'lucide-react';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { Select, SelectOption } from '@/components/common/Select';
-import { actionCardButtonClassName, cardClassName } from '@/components/common/Card';
+import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
 import { Dialog } from '@/components/common/Dialog';
-import { headerMotion } from '@/lib/motion';
-import { AppPaths } from '@/utils/routes';
+import { AppPaths, type VmCatalogReturnState } from '@/utils/routes';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
-import type { ControlPlaneVirtualMachine, ControlPlaneVirtualMachineMetricHistoryPoint } from '@/services/controlPlaneApi';
+import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine, ControlPlaneVirtualMachineMetricHistoryPoint } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
-import { getVmMetricTimeline, VmCardResourceChart } from '@/pages/virtual-machines/VirtualMachineMetrics';
+import { getVmMetricTimeline, VmCardResourceChart, VmOperationalDetails, type VmMetricLoadState } from '@/pages/virtual-machines/VirtualMachineMetrics';
 import { PendingVirtualMachineSetup } from '@/pages/virtual-machines/PendingVirtualMachineSetup';
 import {
-  getVmPostureClass,
-  getVmStatusLabel,
-  statusTone,
+  getVmCatalogStatusLabel,
+  getVmCatalogStatusTone,
+  vmMatchesConnectionFilter,
+  vmNeedsAttention,
   type VmConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
+
+const VM_STATUS_FILTERS: ReadonlyArray<VmConnectionFilter> = ['all', 'attention', 'healthy', 'not_installed'];
+
+function vmSearchMatches(vm: ControlPlaneVirtualMachine, query: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return true;
+  return [vm.name, vm.hostname, vm.id].some((value) => value?.toLowerCase().includes(normalizedQuery));
+}
+
+function vmPriority(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): number {
+  if ((issueSummary?.critical ?? 0) > 0) return 0;
+  if (vm.status === 'offline') return 1;
+  if (vm.status === 'degraded') return 2;
+  if ((issueSummary?.total ?? 0) > 0) return 3;
+  if (vm.status === 'unknown') return 4;
+  return 5;
+}
+
+const VmStatusPill: React.FC<{ vm: ControlPlaneVirtualMachine; issueSummary?: ControlPlaneTargetIssueSummary }> = ({ vm, issueSummary }) => {
+  const { t } = useTranslation();
+  const label = getVmCatalogStatusLabel(vm, issueSummary, t);
+  return (
+    <span
+      className={`inline-flex max-w-[8.5rem] items-center rounded-full border px-2 py-0.5 text-[0.6875rem] font-bold uppercase leading-4 tracking-[0.06em] ${getVmCatalogStatusTone(vm, issueSummary)}`}
+      title={label}
+    >
+      <span className="truncate">{label}</span>
+    </span>
+  );
+};
 
 interface VirtualMachinesListViewProps {
   workspace: Workspace;
   items: ControlPlaneVirtualMachine[];
   isLoading: boolean;
+  hasLoadError: boolean;
   query: string;
   status: VmConnectionFilter;
+  catalogReturnState: VmCatalogReturnState;
   metricHistoryByVmId: Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>;
+  metricLoadStateByVmId: Record<string, VmMetricLoadState | undefined>;
+  issueSummaryByVmId: Record<string, ControlPlaneTargetIssueSummary | undefined>;
+  issueSummaryLoadStateByVmId: Record<string, 'loading' | 'ready' | 'error' | undefined>;
   canManageTargets: boolean;
   onQueryChange: (value: string) => void;
   onStatusChange: (value: VmConnectionFilter) => void;
   onOpenRegisterVm: () => void;
+  onRetryLoad: () => void;
   onDeleteVirtualMachine: (vm: ControlPlaneVirtualMachine) => Promise<void> | void;
   navigate: (path: string, options?: NavigateOptions) => void;
 }
@@ -44,13 +79,19 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   workspace,
   items,
   isLoading,
+  hasLoadError,
   query,
   status,
+  catalogReturnState,
   metricHistoryByVmId,
+  metricLoadStateByVmId,
+  issueSummaryByVmId,
+  issueSummaryLoadStateByVmId,
   canManageTargets,
   onQueryChange,
   onStatusChange,
   onOpenRegisterVm,
+  onRetryLoad,
   onDeleteVirtualMachine,
   navigate
 }) => {
@@ -60,15 +101,37 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   const [deleteVmError, setDeleteVmError] = React.useState<string | null>(null);
   const [isDeletingVm, setIsDeletingVm] = React.useState(false);
   const [openVmActionMenuId, setOpenVmActionMenuId] = React.useState<string | null>(null);
-  const statusOptions: Array<SelectOption<typeof status>> = [
-    { value: 'all', label: t('dashboard.allStates') },
-    { value: 'connected', label: t('dashboard.connected') },
-    { value: 'disconnected', label: t('dashboard.disconnected') },
-    { value: 'not_installed', label: t('dashboard.notInstalled') }
-  ];
-  const onlineCount = items.filter((vm) => vm.status === 'online').length;
-  const attentionCount = items.filter((vm) => vm.status === 'degraded' || vm.status === 'offline').length;
+  const [now, setNow] = React.useState(() => Date.now());
   const setupRequiredCount = items.filter((vm) => vm.status === 'unknown').length;
+  const hasCompleteIssueSummaries = items
+    .filter((vm) => vm.status !== 'unknown')
+    .every((vm) => issueSummaryLoadStateByVmId[vm.id] === 'ready' && issueSummaryByVmId[vm.id] !== undefined);
+  const statusLabels: Record<VmConnectionFilter, string> = {
+    all: t('virtualMachines.list.allVms'),
+    attention: t('dashboard.needsAttention'),
+    healthy: t('dashboard.healthy'),
+    not_installed: t('dashboard.notInstalled')
+  };
+  const catalogCounts: Partial<Record<VmConnectionFilter, number>> = {
+    all: items.length,
+    not_installed: setupRequiredCount
+  };
+  if (hasCompleteIssueSummaries) {
+    catalogCounts.attention = items.filter((vm) => vmNeedsAttention(vm, issueSummaryByVmId[vm.id])).length;
+    catalogCounts.healthy = items.filter((vm) => vm.status === 'online' && !vmNeedsAttention(vm, issueSummaryByVmId[vm.id])).length;
+  }
+  const visibleItems = React.useMemo(
+    () => items
+      .filter((vm) => vmMatchesConnectionFilter(vm, status, issueSummaryByVmId[vm.id]) && vmSearchMatches(vm, query))
+      .sort((left, right) => vmPriority(left, issueSummaryByVmId[left.id]) - vmPriority(right, issueSummaryByVmId[right.id]) || left.name.localeCompare(right.name)),
+    [issueSummaryByVmId, items, query, status]
+  );
+  const hasActiveFilter = Boolean(query.trim()) || status !== 'all';
+
+  React.useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   React.useEffect(() => {
     if (!openVmActionMenuId) return undefined;
@@ -116,20 +179,6 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
       <div className="flex flex-col gap-8">
         <PageHeader title={t('virtualMachines.title')} description={t('virtualMachines.list.description')} actions={
           <>
-            <label htmlFor="vm-search" className="sr-only">{t('virtualMachines.list.search')}</label>
-            <PageSearchInput
-              id="vm-search"
-              value={query}
-              onChange={(event) => onQueryChange(event.target.value)}
-              placeholder={t('virtualMachines.list.search')}
-            />
-            <Select<typeof status>
-              value={status}
-              options={statusOptions}
-              onChange={onStatusChange}
-              className="min-w-44"
-              ariaLabel={t('virtualMachines.list.filterByState')}
-            />
             {canManageTargets && (
               <Button onClick={onOpenRegisterVm} variant="primary" size="md" className="whitespace-nowrap">
                 <ICONS.Plus className="h-4 w-4" />
@@ -139,196 +188,179 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
           </>
         } />
 
-        <section className={cardClassName({ className: 'overflow-hidden' })}>
-          <div className={`grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,0.7fr)] lg:items-center ${getVmPostureClass(attentionCount)}`}>
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-current/15 bg-ui-surface/70">
-                <Server className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="type-row-title">
-                  {t('virtualMachines.list.fleetStatus', { status: attentionCount > 0 ? t('dashboard.attention') : t('dashboard.optimal') })}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-ui-text-muted">
-                  {attentionCount > 0
-                    ? t('virtualMachines.list.needReview', { count: attentionCount })
-                    : setupRequiredCount > 0
-                      ? t('virtualMachines.list.setupRequiredSummary', { count: setupRequiredCount })
-                      : t('virtualMachines.list.loadedTelemetry', { online: onlineCount, total: items.length })}
-                </p>
-              </div>
-            </div>
-            <dl className="grid overflow-hidden rounded-md border border-current/10 bg-ui-surface/70 sm:grid-cols-3 lg:min-w-[26rem]">
-              <div className="border-b border-ui-border/70 px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r">
-                <dt className="type-caption">{t('virtualMachines.title')}</dt>
-                <dd className="type-data mt-1">{items.length}</dd>
-              </div>
-              <div className="border-b border-ui-border/70 px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r">
-                <dt className="type-caption">{t('dashboard.attention')}</dt>
-                <dd className={`type-data mt-1 ${attentionCount > 0 ? 'text-status-warning-text' : 'text-status-success-text'}`}>
-                  {attentionCount}
-                </dd>
-              </div>
-              <div className="px-4 py-3">
-                <dt className="type-caption">{t('virtualMachines.list.active')}</dt>
-                <dd className="type-data mt-1 text-metric-blue">{onlineCount}/{items.length}</dd>
-              </div>
-            </dl>
-          </div>
-        </section>
+        <ResourceCategoryTabs<VmConnectionFilter>
+          categories={VM_STATUS_FILTERS}
+          active={status}
+          counts={catalogCounts}
+          labelPrefix="virtualMachines.list"
+          getLabel={(filter) => statusLabels[filter]}
+          onSelect={onStatusChange}
+          ariaLabel={t('virtualMachines.list.filterByState')}
+          idBase="vm-catalog-filter"
+          controlsId="vm-catalog-panel"
+        />
 
-        {items.length > 0 ? (
-          <section data-vm-card-grid="true" className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-            {items.map((vm) => {
+        <section id="vm-catalog-panel" role="tabpanel" tabIndex={0} aria-labelledby={`vm-catalog-filter-${status}-tab`} className="grid min-w-0 shrink-0 content-start gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
+        <div data-vm-catalog-controls="true" className="grid min-w-0 gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-4 shadow-sm sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,12rem)]">
+          <div className="relative min-w-0">
+            <label htmlFor="vm-search" className="sr-only">{t('virtualMachines.list.search')}</label>
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
+            <PageSearchInput id="vm-search" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={t('virtualMachines.list.search')} className="w-full pl-11 lg:w-full" />
+          </div>
+          <span className="flex h-11 min-h-11 items-center justify-center rounded-lg border border-ui-border bg-ui-bg/60 px-4 text-sm font-semibold text-ui-text-muted shadow-[inset_0_1px_0_rgb(var(--surface-rgb)/0.75)]">
+            {t('virtualMachines.list.showingVms', { count: visibleItems.length, total: items.length })}
+          </span>
+        </div>
+
+        {hasLoadError && items.length > 0 && (
+          <div role="alert" className="flex flex-col gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="type-row-title">{t('virtualMachines.list.loadFailedTitle')}</p>
+              <p className="type-caption mt-1 text-status-danger-text/80">{t('virtualMachines.list.loadFailedBody')}</p>
+            </div>
+            <Button type="button" variant="secondary" size="sm" onClick={onRetryLoad} className="shrink-0">
+              {t('common.retry')}
+            </Button>
+          </div>
+        )}
+
+        {visibleItems.length > 0 ? (
+          <div data-vm-card-grid="true" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {visibleItems.map((vm) => {
               const requiresAgentInstall = vm.status === 'unknown';
               const canDeleteVm = canManageTargets;
               const hasVmMenu = canManageTargets;
+              const vmIssueSummary = issueSummaryByVmId[vm.id];
 
               return (
                 <article
                   key={vm.id}
                   data-vm-card="true"
-                  className={cardClassName({
-                    interactive: !requiresAgentInstall,
-                    className: 'group relative flex h-[20rem] min-w-0 flex-col overflow-hidden'
-                  })}
+                  className="group relative flex min-w-0 flex-col overflow-visible rounded-lg border border-ui-border bg-ui-surface shadow-sm transition-colors hover:border-accent/25"
                 >
-                  {!requiresAgentInstall && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'overview'))}
-                      className="absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30"
-                      aria-label={t('virtualMachines.list.openVm', { name: vm.name })}
-                    />
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, requiresAgentInstall ? 'settings' : 'overview', catalogReturnState))}
+                    className="absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25"
+                    aria-label={requiresAgentInstall ? t('virtualMachines.list.installAgentFor', { name: vm.name }) : t('virtualMachines.list.openVm', { name: vm.name })}
+                  />
 
-                  {hasVmMenu && (
-                    <div className="absolute right-3 top-3 z-20 pointer-events-auto">
-                      <button
-                        data-vm-overflow-action="toggle"
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setOpenVmActionMenuId((current) => current === vm.id ? null : vm.id);
-                        }}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-surface hover:text-ui-text active:bg-ui-bg/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                        aria-haspopup="menu"
-                        aria-expanded={openVmActionMenuId === vm.id}
-                        aria-label={t('virtualMachines.list.vmActionsFor', { name: vm.name })}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                      {openVmActionMenuId === vm.id && (
-                        <div
-                          role="menu"
-                          onClick={(event) => event.stopPropagation()}
-                          className="absolute right-0 top-10 w-52 overflow-hidden rounded-lg border border-ui-border bg-ui-surface p-1 text-sm shadow-xl"
-                        >
-                          <button
-                            data-vm-overflow-action="settings"
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setOpenVmActionMenuId(null);
-                              navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'settings'));
-                            }}
-                            className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
-                          >
-                            <Settings className="h-4 w-4 text-ui-text-muted" />
-                            {t('virtualMachines.list.vmSettings')}
-                          </button>
-                          {canDeleteVm && (
-                            <button
-                              data-vm-overflow-action="delete"
-                              type="button"
-                              role="menuitem"
-                              onClick={() => {
-                                setOpenVmActionMenuId(null);
-                                setDeleteVmConfirmation('');
-                                setDeleteVmError(null);
-                                setDeleteTargetVm(vm);
-                              }}
-                              className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-status-danger-text transition-colors hover:bg-status-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              {t('virtualMachines.list.deleteVm')}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="relative z-10 flex flex-1 flex-col pointer-events-none">
-                    <div className="flex min-h-0 flex-1 flex-col gap-5 px-4 pb-6 pt-4 sm:px-5 sm:pb-7">
-                      <div className="min-w-0 text-left">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg">
-                            <Server className="h-5 w-5 text-accent-strong" />
-                          </div>
-                          <div className="min-w-0 flex-1 pr-14">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <h3 className="type-panel-title min-w-0 flex-1 truncate" title={vm.name}>{vm.name}</h3>
-                              <span className={`type-micro-label shrink-0 rounded-full px-1.5 py-px text-[0.625rem] leading-3 ${statusTone(vm.status)}`}>
-                                {getVmStatusLabel(vm.status, t)}
-                              </span>
-                            </div>
-                          </div>
+                  <div className="pointer-events-none relative z-10 flex min-w-0 flex-col">
+                    <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong"><Server className="h-4 w-4" /></span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="type-panel-title truncate text-ui-text" title={vm.name}>{vm.name}</h3>
                         </div>
                       </div>
-
-                      {requiresAgentInstall && (
-                        <PendingVirtualMachineSetup
-                          vmId={vm.id}
-                          onInstallAgent={(vmId) => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vmId, 'settings'))}
-                        />
-                      )}
-
-                      {!requiresAgentInstall && (
-                        <div className="flex min-h-0 flex-1 flex-col">
-                          {vm.status === 'online' ? (
-                            <VmCardResourceChart vm={vm} points={getVmMetricTimeline(metricHistoryByVmId[vm.id] || [])} />
-                          ) : (
-                            <div className="type-caption flex min-h-[118px] items-center border-y border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
-                              {t('virtualMachines.list.telemetryUnavailable')}
-                            </div>
-                          )}
+                      <div className="flex shrink-0 items-center gap-1">
+                        <div className="xl:hidden 2xl:block">
+                          <VmStatusPill vm={vm} issueSummary={vmIssueSummary} />
                         </div>
-                      )}
+                        {hasVmMenu && (
+                          <div className="pointer-events-auto relative z-20">
+                            <button
+                              data-vm-overflow-action="toggle"
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setOpenVmActionMenuId((current) => current === vm.id ? null : vm.id);
+                              }}
+                              className={`inline-flex h-10 w-10 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${openVmActionMenuId === vm.id ? 'bg-ui-bg text-ui-text' : ''}`}
+                              aria-haspopup="menu"
+                              aria-expanded={openVmActionMenuId === vm.id}
+                              aria-label={t('virtualMachines.list.vmActionsFor', { name: vm.name })}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
+                            {openVmActionMenuId === vm.id && (
+                              <div
+                                role="menu"
+                                onClick={(event) => event.stopPropagation()}
+                                className="absolute right-0 top-10 w-52 overflow-hidden rounded-lg border border-ui-border bg-ui-surface p-1 text-sm shadow-xl"
+                              >
+                                <button
+                                  data-vm-overflow-action="settings"
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setOpenVmActionMenuId(null);
+                                    navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'settings', catalogReturnState));
+                                  }}
+                                  className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                                >
+                                  <Settings className="h-4 w-4 text-ui-text-muted" />
+                                  {t('virtualMachines.list.vmSettings')}
+                                </button>
+                                {canDeleteVm && (
+                                  <button
+                                    data-vm-overflow-action="delete"
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                      setOpenVmActionMenuId(null);
+                                      setDeleteVmConfirmation('');
+                                      setDeleteVmError(null);
+                                      setDeleteTargetVm(vm);
+                                    }}
+                                    className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-status-danger-text transition-colors hover:bg-status-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    {t('virtualMachines.list.deleteVm')}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
+                      <VmStatusPill vm={vm} issueSummary={vmIssueSummary} />
+                    </div>
+
+                    {requiresAgentInstall ? (
+                      <PendingVirtualMachineSetup vmId={vm.id} vmName={vm.name} onInstallAgent={(vmId) => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vmId, 'settings', catalogReturnState))} />
+                    ) : (
+                      <VmCardResourceChart
+                        vm={vm}
+                        points={getVmMetricTimeline(metricHistoryByVmId[vm.id] || [])}
+                        now={now}
+                        paused={vm.status === 'offline'}
+                        loadState={metricLoadStateByVmId[vm.id] || 'loading'}
+                      />
+                    )}
+                    <VmOperationalDetails vm={vm} issueCount={vmIssueSummary?.total} />
                   </div>
                 </article>
               );
             })}
-            {canManageTargets && (
-              <button
-                data-vm-add-card="true"
-                type="button"
-                onClick={onOpenRegisterVm}
-                className={actionCardButtonClassName({ className: 'h-[20rem] flex-col' })}
-              >
-                <ICONS.Plus className="h-4 w-4" />
-                {t('virtualMachines.list.connectVm')}
-              </button>
-            )}
-          </section>
+          </div>
         ) : (
-          <section className={cardClassName({ className: 'flex flex-col items-center justify-center px-6 py-12 text-center' })}>
-            <div className="mb-4 rounded-lg border border-ui-border bg-ui-bg p-4 text-ui-text-muted">
-              <ICONS.Server className="h-8 w-8" />
+          <div className="flex min-h-[12rem] items-center justify-center rounded-lg border border-dashed border-ui-border bg-ui-surface px-5 py-8 text-center">
+            <div className="max-w-sm">
+              <div className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
+                {hasActiveFilter ? <Search className="h-4 w-4" /> : <ICONS.Server className="h-4 w-4" />}
+              </div>
+              <h3 className="type-row-title text-ui-text">{isLoading ? t('virtualMachines.list.loadingTitle') : hasLoadError ? t('virtualMachines.list.loadFailedTitle') : hasActiveFilter ? t('virtualMachines.list.noMatchingVms') : t('virtualMachines.list.emptyTitle')}</h3>
+              <p className="type-caption mt-1.5 text-ui-text-muted">
+                {isLoading ? t('virtualMachines.list.loadingBody') : hasLoadError ? t('virtualMachines.list.loadFailedBody') : hasActiveFilter ? t('virtualMachines.list.noMatchingVmsBody') : t('virtualMachines.list.emptyBody')}
+              </p>
+              {!isLoading && hasLoadError && (
+                <Button type="button" variant="secondary" size="sm" onClick={onRetryLoad} className="mt-5">
+                  {t('common.retry')}
+                </Button>
+              )}
+              {!isLoading && !hasLoadError && !hasActiveFilter && canManageTargets && (
+                <Button onClick={onOpenRegisterVm} variant="primary" size="md" className="mt-6">
+                  <ICONS.Plus className="h-4 w-4" />
+                  {t('virtualMachines.list.connectVm')}
+                </Button>
+              )}
             </div>
-            <h3 className="text-lg font-bold text-ui-text">{isLoading ? t('virtualMachines.list.loadingTitle') : t('virtualMachines.list.emptyTitle')}</h3>
-            <p className="mt-2 max-w-sm text-sm text-ui-text-muted">
-              {isLoading ? t('virtualMachines.list.loadingBody') : t('virtualMachines.list.emptyBody')}
-            </p>
-            {!isLoading && canManageTargets && (
-              <Button onClick={onOpenRegisterVm} variant="primary" size="md" className="mt-6">
-                <ICONS.Plus className="h-4 w-4" />
-                {t('virtualMachines.list.connectVm')}
-              </Button>
-            )}
-          </section>
+          </div>
         )}
+        </section>
       </div>
       <AnimatePresence>
         {deleteTargetVm && (

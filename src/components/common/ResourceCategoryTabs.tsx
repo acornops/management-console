@@ -17,17 +17,19 @@ export function getResourceCategoryTabModel<T extends string>({
   active,
   counts,
   labelPrefix,
+  getLabel,
   translate
 }: {
   categories: ReadonlyArray<T>;
   active: T;
   counts?: Partial<Record<T, number>>;
   labelPrefix: string;
+  getLabel?: (category: T) => string;
   translate: (key: string) => string;
 }): Array<ResourceCategoryTabModel<T>> {
   return categories.map((category) => ({
     value: category,
-    label: translate(`${labelPrefix}.${category}`),
+    label: getLabel ? getLabel(category) : translate(`${labelPrefix}.${category}`),
     count: counts?.[category],
     isActive: active === category
   }));
@@ -38,17 +40,23 @@ export const ResourceCategoryTabs = <T extends string,>({
   active,
   counts,
   labelPrefix,
+  getLabel,
   onSelect,
   className,
-  ariaLabel
+  ariaLabel,
+  idBase,
+  controlsId
 }: {
   categories: ReadonlyArray<T>;
   active: T;
   counts?: Partial<Record<T, number>>;
   labelPrefix: string;
+  getLabel?: (category: T) => string;
   onSelect: (category: T) => void;
   className?: string;
   ariaLabel?: string;
+  idBase: string;
+  controlsId: string;
 }) => {
   const { t } = useTranslation();
   const layoutGroupId = React.useId();
@@ -57,6 +65,7 @@ export const ResourceCategoryTabs = <T extends string,>({
     active,
     counts,
     labelPrefix,
+    getLabel,
     translate: (key) => t(key)
   });
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -87,7 +96,7 @@ export const ResourceCategoryTabs = <T extends string,>({
       <div
         role="tablist"
         aria-label={ariaLabel}
-        className={twMerge(clsx('flex w-full max-w-full items-center overflow-x-auto border-b border-ui-border', className))}
+        className={twMerge(clsx('flex w-full max-w-full shrink-0 items-center overflow-x-auto border-b border-ui-border', className))}
       >
         {tabs.map((tab, index) => (
         <button
@@ -95,6 +104,8 @@ export const ResourceCategoryTabs = <T extends string,>({
           ref={(element) => { tabRefs.current[index] = element; }}
           type="button"
           role="tab"
+          id={`${idBase}-${tab.value}-tab`}
+          aria-controls={controlsId}
           aria-selected={tab.isActive}
           tabIndex={tab.isActive ? 0 : -1}
           onClick={() => onSelect(tab.value)}

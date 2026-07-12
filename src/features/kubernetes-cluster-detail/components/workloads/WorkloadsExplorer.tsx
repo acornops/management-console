@@ -422,6 +422,8 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
           counts={resourceFamilyCountsForTabs}
           labelPrefix="resources.families"
           ariaLabel={t('resources.families.label')}
+          idBase="resource-family"
+          controlsId="resource-family-panel"
           onSelect={(family) => {
             markResourceSelectionChanged();
             setActiveResourceFamily(family);
@@ -483,15 +485,16 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
           )}
         </ResourceSearchFilterBar>
       </div>
-      {activeResourceFamily === 'workloads' && (
-        <WorkloadsSection
+      <div id="resource-family-panel" role="tabpanel" tabIndex={0} aria-labelledby={`resource-family-${activeResourceFamily}-tab`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
+        {activeResourceFamily === 'workloads' && (
+          <WorkloadsSection
           emptyMessage={filteredEmptyMessage}
           items={filteredWorkloads}
           onSelect={setSelectedWorkload}
           showUnhealthyOnly={showUnhealthyWorkloadsOnly}
         />
-      )}
-      {activeResourceFamily === 'network' && (
+        )}
+        {activeResourceFamily === 'network' && (
         <NetworkSection
           activeCategory={activeNetworkCategory}
           emptyMessage={filteredEmptyMessage}
@@ -499,16 +502,16 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
           onSelect={setSelectedResource}
           services={filteredServices}
         />
-      )}
-      {activeResourceFamily === 'storage' && (
+        )}
+        {activeResourceFamily === 'storage' && (
         <StorageSection
           activeCategory={activeStorageCategory}
           emptyMessage={filteredEmptyMessage}
           items={filteredPVCs}
           onSelect={setSelectedResource}
         />
-      )}
-      {activeResourceFamily === 'cluster' && (
+        )}
+        {activeResourceFamily === 'cluster' && (
         <ClusterSection
           activeCategory={activeClusterCategory}
           emptyMessage={filteredEmptyMessage}
@@ -516,7 +519,8 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
           nodes={filteredNodes}
           onSelect={setSelectedResource}
         />
-      )}
+        )}
+      </div>
       <div ref={loadMoreRef} className="mt-5 flex flex-col items-center gap-3">
         {resourceListError && (
           <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">

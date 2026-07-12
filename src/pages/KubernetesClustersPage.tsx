@@ -1,24 +1,44 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Dashboard from '@/components/dashboard/Dashboard';
 import { Button } from '@/components/common/Button';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
-import { Select, SelectOption } from '@/components/common/Select';
+import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
-import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
-import { getAgentConnectionState } from '@/utils/telemetry';
+import { ClusterMetricHistoryPoint, HealthStatus, KubernetesCluster } from '@/types';
+import { getAgentConnectionState, getEffectiveHealthStatus } from '@/utils/telemetry';
 import type { ClusterCatalogRouteState, ClusterCatalogStatusFilter } from '@/utils/routes';
 
 const CLUSTER_ISSUE_SUMMARY_REFRESH_MS = 30000;
+const CLUSTER_STATUS_FILTERS: ReadonlyArray<ClusterCatalogStatusFilter> = [
+  'all',
+  'attention',
+  'healthy',
+  'not_installed'
+];
 
-function clusterMatchesCatalogState(cluster: KubernetesCluster, query: string, status: ClusterCatalogStatusFilter): boolean {
+function clusterNeedsAttention(cluster: KubernetesCluster, issueSummary?: ControlPlaneTargetIssueSummary): boolean {
+  const agentState = getAgentConnectionState(cluster);
+  if (agentState === 'not_installed') return false;
+  if (agentState === 'disconnected') return true;
+  if (getEffectiveHealthStatus(cluster) !== HealthStatus.GREEN) return true;
+  return Boolean(issueSummary && (issueSummary.critical > 0 || issueSummary.warning > 0 || issueSummary.active > 0));
+}
+
+function clusterMatchesCatalogState(
+  cluster: KubernetesCluster,
+  query: string,
+  status: ClusterCatalogStatusFilter,
+  issueSummary?: ControlPlaneTargetIssueSummary
+): boolean {
   const normalizedQuery = query.trim().toLowerCase();
   const agentState = getAgentConnectionState(cluster);
   const matchesStatus =
     status === 'all' ||
-    (status === 'connected' && agentState === 'connected') ||
-    (status === 'disconnected' && agentState === 'disconnected') ||
+    (status === 'attention' && clusterNeedsAttention(cluster, issueSummary)) ||
+    (status === 'healthy' && agentState === 'connected' && !clusterNeedsAttention(cluster, issueSummary)) ||
     (status === 'not_installed' && agentState === 'not_installed');
 
   if (!matchesStatus) return false;
@@ -90,23 +110,44 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [catalogLoadError, setCatalogLoadError] = useState(false);
   const [loadedClusterPageItems, setLoadedClusterPageItems] = useState<KubernetesCluster[] | null>(null);
   const [metricHistoryByClusterId, setMetricHistoryByClusterId] = useState<Record<string, ClusterMetricHistoryPoint[]>>({});
+  const [metricLoadStateByClusterId, setMetricLoadStateByClusterId] = useState<Record<string, 'loading' | 'ready' | 'error'>>({});
   const [issueSummaryByClusterId, setIssueSummaryByClusterId] = useState<Record<string, ControlPlaneTargetIssueSummary | undefined>>({});
+  const [issueSummaryLoadStateByClusterId, setIssueSummaryLoadStateByClusterId] = useState<Record<string, 'loading' | 'ready' | 'error'>>({});
   const activeCatalogState = catalogState ?? localCatalogState;
   const query = activeCatalogState.q ?? '';
   const status: ClusterCatalogStatusFilter = activeCatalogState.status ?? 'all';
-  const statusOptions: Array<SelectOption<typeof status>> = [
-    { value: 'all', label: t('dashboard.allStates') },
-    { value: 'connected', label: t('dashboard.connected') },
-    { value: 'disconnected', label: t('dashboard.disconnected') },
-    { value: 'not_installed', label: t('dashboard.notInstalled') }
-  ];
-  const apiStatus =
-    status === 'disconnected' ? 'offline' :
-      status === 'not_installed' ? 'unknown' :
-        undefined;
+  const statusLabels: Record<ClusterCatalogStatusFilter, string> = {
+    all: t('dashboard.allStates'),
+    attention: t('dashboard.needsAttention'),
+    healthy: t('dashboard.healthy'),
+    not_installed: t('dashboard.notInstalled')
+  };
   const hasActiveFilter = Boolean(query.trim()) || status !== 'all';
+  const hasCompleteCatalogCounts = totalClusterCount === undefined || kubernetesClusters.length >= totalClusterCount;
+  const hasCompleteIssueSummaries = kubernetesClusters.every((cluster) =>
+    Object.prototype.hasOwnProperty.call(issueSummaryByClusterId, cluster.id) && issueSummaryByClusterId[cluster.id] !== undefined
+  );
+  const catalogCounts = useMemo<Partial<Record<ClusterCatalogStatusFilter, number>>>(() => {
+    const counts: Partial<Record<ClusterCatalogStatusFilter, number>> = {
+      all: totalClusterCount ?? kubernetesClusters.length
+    };
+    counts.not_installed = kubernetesClusters.filter((cluster) =>
+      getAgentConnectionState(cluster) === 'not_installed'
+    ).length;
+    if (!hasCompleteCatalogCounts || !hasCompleteIssueSummaries) return counts;
+
+    counts.attention = kubernetesClusters.filter((cluster) =>
+      clusterNeedsAttention(cluster, issueSummaryByClusterId[cluster.id])
+    ).length;
+    counts.healthy = kubernetesClusters.filter((cluster) =>
+      getAgentConnectionState(cluster) === 'connected' &&
+      !clusterNeedsAttention(cluster, issueSummaryByClusterId[cluster.id])
+    ).length;
+    return counts;
+  }, [hasCompleteCatalogCounts, hasCompleteIssueSummaries, issueSummaryByClusterId, kubernetesClusters, totalClusterCount]);
 
   const setCatalogState = useCallback((nextState: ClusterCatalogRouteState) => {
     if (onCatalogStateChange) {
@@ -153,12 +194,13 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     const requestId = ++requestSeqRef.current;
     if (mode === 'replace') setIsLoading(true);
     if (mode === 'append') setIsLoadingMore(true);
+    setCatalogLoadError(false);
     try {
       const page = await controlPlaneApi.listClustersForWorkspace(workspaceId, {
         limit: 50,
         cursor,
         q: query,
-        status: apiStatus
+        status: status === 'not_installed' ? 'unknown' : undefined
       });
       if (requestId !== requestSeqRef.current) return;
       const livePageItems = page.items.filter((cluster) => !deletedClusterIdsRef.current.has(cluster.id));
@@ -169,13 +211,14 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
       onAppendWorkspaceKubernetesClusters?.(workspaceId, livePageItems);
     } catch (error) {
       console.error('Failed loading clusters', error);
+      if (requestId === requestSeqRef.current) setCatalogLoadError(true);
     } finally {
       if (requestId === requestSeqRef.current) {
         setIsLoading(false);
         setIsLoadingMore(false);
       }
     }
-  }, [apiStatus, onAppendWorkspaceKubernetesClusters, query, workspaceId]);
+  }, [onAppendWorkspaceKubernetesClusters, query, status, workspaceId]);
 
   useEffect(() => {
     deletedClusterIdsRef.current.clear();
@@ -209,19 +252,34 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
   const loadIssueSummaries = useCallback(() => {
     if (kubernetesClusters.length === 0) {
       setIssueSummaryByClusterId({});
+      setIssueSummaryLoadStateByClusterId({});
       return;
     }
 
     const requestId = ++issueSummaryRequestSeqRef.current;
     const activeClusterIds = new Set(kubernetesClusters.map((cluster) => cluster.id));
+    setIssueSummaryLoadStateByClusterId((current) => Object.fromEntries(
+      kubernetesClusters.map((cluster) => [cluster.id, current[cluster.id] === 'ready' ? 'ready' : 'loading'])
+    ));
 
-    void Promise.allSettled(
-      kubernetesClusters.map(async (cluster) => ({
-        clusterId: cluster.id,
-        summary: await controlPlaneApi.getTargetIssueSummary(cluster.workspaceId, cluster.id)
-      }))
-    )
-      .then((results) => {
+    const results: Array<PromiseSettledResult<{ clusterId: string; summary: ControlPlaneTargetIssueSummary }>> = [];
+    let nextClusterIndex = 0;
+    const loadNextIssueSummary = async () => {
+      while (requestId === issueSummaryRequestSeqRef.current && nextClusterIndex < kubernetesClusters.length) {
+        const cluster = kubernetesClusters[nextClusterIndex];
+        nextClusterIndex += 1;
+        if (!cluster) continue;
+        try {
+          const summary = await controlPlaneApi.getTargetIssueSummary(cluster.workspaceId, cluster.id);
+          results.push({ status: 'fulfilled', value: { clusterId: cluster.id, summary } });
+        } catch (reason) {
+          results.push({ status: 'rejected', reason });
+        }
+      }
+    };
+    const workerCount = Math.min(6, kubernetesClusters.length);
+    void Promise.all(Array.from({ length: workerCount }, () => loadNextIssueSummary()))
+      .then(() => {
         if (requestId !== issueSummaryRequestSeqRef.current) return;
         setIssueSummaryByClusterId((current) => {
           const next: Record<string, ControlPlaneTargetIssueSummary | undefined> = {};
@@ -235,6 +293,10 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
           }
           return next;
         });
+        const fulfilledClusterIds = new Set(results.flatMap((result) => result.status === 'fulfilled' ? [result.value.clusterId] : []));
+        setIssueSummaryLoadStateByClusterId(Object.fromEntries(
+          kubernetesClusters.map((cluster) => [cluster.id, fulfilledClusterIds.has(cluster.id) ? 'ready' : 'error'])
+        ));
       })
       .catch((error) => {
         if (requestId === issueSummaryRequestSeqRef.current) {
@@ -256,6 +318,13 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     return () => window.clearInterval(intervalId);
   }, [kubernetesClusters.length, loadIssueSummaries]);
 
+  useEffect(() => {
+    if (kubernetesClusters.length === 0) return undefined;
+    const handleFocus = () => loadIssueSummaries();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [kubernetesClusters.length, loadIssueSummaries]);
+
   const metricHistoryFetchKey = useMemo(
     () => kubernetesClusters
       .filter((cluster) => getAgentConnectionState(cluster) === 'connected')
@@ -269,11 +338,15 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     const connectedClusters = kubernetesClusters.filter((cluster) => getAgentConnectionState(cluster) === 'connected');
     if (connectedClusters.length === 0) {
       setMetricHistoryByClusterId({});
+      setMetricLoadStateByClusterId({});
       return;
     }
 
     const requestId = ++metricHistoryRequestSeqRef.current;
     const activeConnectedClusterIds = new Set(connectedClusters.map((cluster) => cluster.id));
+    setMetricLoadStateByClusterId((current) => Object.fromEntries(
+      connectedClusters.map((cluster) => [cluster.id, current[cluster.id] === 'ready' ? 'ready' : 'loading'])
+    ));
     const clusterIdsByWorkspaceId = new Map<string, string[]>();
     connectedClusters.forEach((cluster) => {
       const clusterIds = clusterIdsByWorkspaceId.get(cluster.workspaceId) || [];
@@ -300,31 +373,31 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
             ...Object.assign({}, ...historyResults)
           };
         });
+        setMetricLoadStateByClusterId(Object.fromEntries(
+          connectedClusters.map((cluster) => [cluster.id, 'ready'])
+        ));
       })
       .catch((error) => {
         if (requestId === metricHistoryRequestSeqRef.current) {
           console.error('Failed loading cluster metric history', error);
+          setMetricLoadStateByClusterId(Object.fromEntries(
+            connectedClusters.map((cluster) => [cluster.id, 'error'])
+          ));
         }
       });
   }, [metricHistoryFetchKey]);
 
   const clientFilteredClusters = useMemo(
-    () => kubernetesClusters.filter((cluster) => clusterMatchesCatalogState(cluster, query, status)),
-    [kubernetesClusters, query, status]
+    () => kubernetesClusters.filter((cluster) => clusterMatchesCatalogState(cluster, query, status, issueSummaryByClusterId[cluster.id])),
+    [issueSummaryByClusterId, kubernetesClusters, query, status]
   );
 
   const visibleClusters = useMemo(() => {
     const mergedClusters = loadedClusterPageItems
       ? mergeClustersById(loadedClusterPageItems, clientFilteredClusters)
       : clientFilteredClusters;
-    return mergedClusters.filter((cluster) => clusterMatchesCatalogState(cluster, query, status));
-  }, [clientFilteredClusters, loadedClusterPageItems, query, status]);
-
-  const summaryClusters = useMemo(() => (
-    loadedClusterPageItems
-      ? mergeClustersById(loadedClusterPageItems, kubernetesClusters)
-      : kubernetesClusters
-  ), [kubernetesClusters, loadedClusterPageItems]);
+    return mergedClusters.filter((cluster) => clusterMatchesCatalogState(cluster, query, status, issueSummaryByClusterId[cluster.id]));
+  }, [clientFilteredClusters, issueSummaryByClusterId, loadedClusterPageItems, query, status]);
 
   const clustersWithMetricHistory = useMemo(
     () => visibleClusters.map((cluster) =>
@@ -340,35 +413,47 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto custom-scrollbar">
         <Dashboard
           kubernetesClusters={clustersWithMetricHistory}
-          summaryKubernetesClusters={summaryClusters}
           onSelectKubernetesCluster={onSelectKubernetesCluster}
           onInstallAgent={onInstallAgent}
           onOpenClusterSettings={onOpenClusterSettings}
           workspaceName={workspaceName}
           totalClusterCount={totalClusterCount}
           issueSummaryByClusterId={issueSummaryByClusterId}
+          issueSummaryLoadStateByClusterId={issueSummaryLoadStateByClusterId}
+          metricLoadStateByClusterId={metricLoadStateByClusterId}
           hasActiveClusterFilter={hasActiveFilter}
-          controls={workspaceId ? (
-            <>
+          isCatalogLoading={isLoading}
+          catalogLoadError={catalogLoadError}
+          onRetryCatalog={() => void loadClusters('replace')}
+          catalogPanelLabelledBy={`cluster-catalog-filter-${status}-tab`}
+          catalogTabs={(
+            <ResourceCategoryTabs<ClusterCatalogStatusFilter>
+              categories={CLUSTER_STATUS_FILTERS}
+              active={status}
+              counts={catalogCounts}
+              labelPrefix="dashboard"
+              getLabel={(filter) => statusLabels[filter]}
+              onSelect={handleStatusChange}
+              ariaLabel={t('dashboard.filterClustersByState')}
+              idBase="cluster-catalog-filter"
+              controlsId="cluster-catalog-panel"
+            />
+          )}
+          controls={(
+            <div className="relative min-w-0">
               <label htmlFor="cluster-search" className="sr-only">
                 {t('dashboard.searchClusters')}
               </label>
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
               <PageSearchInput
                 id="cluster-search"
                 value={query}
                 onChange={(event) => handleQueryChange(event.target.value)}
                 placeholder={t('dashboard.searchClusters')}
-                className="lg:w-full"
+                className="w-full pl-11 lg:w-full"
               />
-              <Select<typeof status>
-                value={status}
-                options={statusOptions}
-                onChange={handleStatusChange}
-                className="min-w-0"
-                ariaLabel={t('dashboard.filterClustersByState')}
-              />
-            </>
-          ) : undefined}
+            </div>
+          )}
           catalogFooter={workspaceId ? (
             <div ref={sentinelRef} className="flex justify-center py-2">
               {nextCursor && (

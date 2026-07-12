@@ -1,6 +1,7 @@
 export type ClusterSubview = 'overview' | 'resources' | 'mcpServers' | 'skills' | 'tools' | 'health' | 'chat' | 'settings';
 export type VmSubview = 'overview' | 'resources' | 'services' | 'processes' | 'network' | 'logs' | 'mcpServers' | 'skills' | 'tools' | 'chat' | 'settings';
-export type ClusterCatalogStatusFilter = 'all' | 'connected' | 'disconnected' | 'not_installed';
+export type ClusterCatalogStatusFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
+export type VmCatalogStatusFilter = ClusterCatalogStatusFilter;
 
 export interface ClusterCatalogRouteState {
   q?: string;
@@ -11,6 +12,9 @@ export interface ClusterCatalogReturnState {
   q?: string;
   status?: ClusterCatalogStatusFilter;
 }
+
+export type VmCatalogRouteState = ClusterCatalogRouteState;
+export type VmCatalogReturnState = ClusterCatalogReturnState;
 
 export type AppRoute =
   | { kind: 'home' }
@@ -30,8 +34,8 @@ export type AppRoute =
   | { kind: 'workspaceSettings'; workspaceId: string }
   | { kind: 'workspaceAuditLog'; workspaceId: string }
   | ({ kind: 'workspaceKubernetesClusters'; workspaceId: string } & ClusterCatalogRouteState)
-  | { kind: 'workspaceVirtualMachines'; workspaceId: string }
-  | { kind: 'workspaceVirtualMachineDetail'; workspaceId: string; vmId: string; tab?: VmSubview }
+  | ({ kind: 'workspaceVirtualMachines'; workspaceId: string } & VmCatalogRouteState)
+  | { kind: 'workspaceVirtualMachineDetail'; workspaceId: string; vmId: string; tab?: VmSubview; catalogState?: VmCatalogReturnState }
   | { kind: 'workspaceInvitation'; token: string }
   | { kind: 'kubernetesClusterDiagnostics'; clusterId: string; tab?: ClusterSubview; catalogState?: ClusterCatalogReturnState }
   | { kind: 'workspaceKubernetesClusterDiagnostics'; workspaceId: string; clusterId: string; tab?: ClusterSubview; catalogState?: ClusterCatalogReturnState }
@@ -109,12 +113,15 @@ function parseExternalIntegrationLinkStatus(value: string | null): 'linked' | 'e
 function parseClusterCatalogStatus(value: string | null): ClusterCatalogStatusFilter | undefined {
   if (
     value === 'all' ||
-    value === 'connected' ||
-    value === 'disconnected' ||
+    value === 'attention' ||
+    value === 'healthy' ||
     value === 'not_installed'
   ) {
     return value;
   }
+  // Preserve useful intent for links created before operational filters replaced agent-state filters.
+  if (value === 'connected') return 'healthy';
+  if (value === 'disconnected') return 'attention';
   return undefined;
 }
 
@@ -217,7 +224,8 @@ export function parseAppRoute(path: string): AppRoute {
   if (workspaceVirtualMachinesMatch) {
     return {
       kind: 'workspaceVirtualMachines',
-      workspaceId: decodeParam(workspaceVirtualMachinesMatch[1])
+      workspaceId: decodeParam(workspaceVirtualMachinesMatch[1]),
+      ...parseClusterCatalogRouteState(params)
     };
   }
 
@@ -225,11 +233,13 @@ export function parseAppRoute(path: string): AppRoute {
     /^\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)(?:\/(overview|resources|services|processes|network|logs|mcp-servers|skills|tools|chat|settings))?$/
   );
   if (workspaceVirtualMachineDetailMatch) {
+    const catalogState = parseClusterCatalogReturnState(params);
     return {
       kind: 'workspaceVirtualMachineDetail',
       workspaceId: decodeParam(workspaceVirtualMachineDetailMatch[1]),
       vmId: decodeParam(workspaceVirtualMachineDetailMatch[2]),
-      tab: parseVmSubview(workspaceVirtualMachineDetailMatch[3])
+      tab: parseVmSubview(workspaceVirtualMachineDetailMatch[3]),
+      ...(catalogState ? { catalogState } : {})
     };
   }
 
@@ -291,11 +301,11 @@ export const AppPaths = {
   workspaceAuditLog: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/audit-log`,
   workspaceKubernetesClusters: (workspaceId: string, state?: ClusterCatalogRouteState): string =>
     withClusterCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`, state),
-  workspaceVirtualMachines: (workspaceId: string): string =>
-    `/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`,
-  workspaceVirtualMachineDetail: (workspaceId: string, vmId: string, tab?: VmSubview): string => {
+  workspaceVirtualMachines: (workspaceId: string, state?: VmCatalogRouteState): string =>
+    withClusterCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`, state),
+  workspaceVirtualMachineDetail: (workspaceId: string, vmId: string, tab?: VmSubview, catalogState?: VmCatalogReturnState): string => {
     const base = `/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}`;
-    return tab ? `${base}/${vmSubviewPathSegment(tab)}` : base;
+    return withClusterCatalogReturnState(tab ? `${base}/${vmSubviewPathSegment(tab)}` : base, catalogState);
   },
   kubernetesClusterDiagnostics: (clusterId: string, tab?: ClusterSubview, catalogState?: ClusterCatalogReturnState): string => {
     const base = `/kubernetes-clusters/${encodeURIComponent(clusterId)}`;

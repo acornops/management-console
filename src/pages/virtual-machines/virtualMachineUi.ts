@@ -1,19 +1,19 @@
-import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 
-export type VmConnectionFilter = 'all' | 'connected' | 'disconnected' | 'not_installed';
+export type VmConnectionFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 
-export function getVmApiStatusForConnectionFilter(
-  filter: VmConnectionFilter
-): ControlPlaneVirtualMachine['status'] | undefined {
-  if (filter === 'disconnected') return 'offline';
-  if (filter === 'not_installed') return 'unknown';
-  return undefined;
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+export function vmNeedsAttention(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): boolean {
+  if (vm.status === 'unknown') return false;
+  if (vm.status === 'degraded' || vm.status === 'offline') return true;
+  return (issueSummary?.total ?? 0) > 0;
 }
 
-export function vmMatchesConnectionFilter(vm: ControlPlaneVirtualMachine, filter: VmConnectionFilter): boolean {
+export function vmMatchesConnectionFilter(vm: ControlPlaneVirtualMachine, filter: VmConnectionFilter, issueSummary?: ControlPlaneTargetIssueSummary): boolean {
   if (filter === 'all') return true;
-  if (filter === 'connected') return vm.status === 'online' || vm.status === 'degraded';
-  if (filter === 'disconnected') return vm.status === 'offline';
+  if (filter === 'attention') return vmNeedsAttention(vm, issueSummary);
+  if (filter === 'healthy') return vm.status === 'online' && !vmNeedsAttention(vm, issueSummary);
   return vm.status === 'unknown';
 }
 
@@ -24,9 +24,9 @@ export function statusClass(status: ControlPlaneVirtualMachine['status']): strin
 }
 
 export function statusTone(status: ControlPlaneVirtualMachine['status']): string {
-  if (status === 'online') return 'bg-status-success-soft text-status-success-text';
-  if (status === 'degraded') return 'bg-status-warning-soft text-status-warning-text';
-  if (status === 'offline') return 'bg-status-danger-soft text-status-danger-text';
+  if (status === 'online') return 'border-status-success/25 bg-status-success-soft text-status-success-text';
+  if (status === 'degraded') return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
+  if (status === 'offline') return 'border-status-danger/25 bg-status-danger-soft text-status-danger-text';
   return 'border border-ui-border bg-ui-bg text-ui-text-muted';
 }
 
@@ -40,11 +40,29 @@ export function getVmStatusLabel(
   return t('dashboard.setupRequired');
 }
 
-export function getVmPostureClass(attentionCount: number): string {
-  if (attentionCount > 0) {
+export function getVmCatalogStatusLabel(vm: ControlPlaneVirtualMachine, issueSummary: ControlPlaneTargetIssueSummary | undefined, t: Translate): string {
+  if (vm.status === 'unknown') return getVmStatusLabel(vm.status, t);
+  if ((issueSummary?.critical ?? 0) > 0) {
+    return t('dashboard.criticalStatus', { count: issueSummary?.critical });
+  }
+  if ((issueSummary?.warning ?? 0) > 0) {
+    return t('dashboard.warningStatus', { count: issueSummary?.warning });
+  }
+  if ((issueSummary?.total ?? 0) > 0) {
+    return t('dashboard.findingStatus', { count: issueSummary?.total });
+  }
+  return getVmStatusLabel(vm.status, t);
+}
+
+export function getVmCatalogStatusTone(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): string {
+  if (vm.status === 'unknown') return statusTone(vm.status);
+  if ((issueSummary?.critical ?? 0) > 0) {
+    return 'border-status-danger/25 bg-status-danger-soft text-status-danger-text';
+  }
+  if ((issueSummary?.total ?? 0) > 0 && vm.status === 'online') {
     return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
   }
-  return 'border-status-success/25 bg-status-success-soft text-status-success-text';
+  return statusTone(vm.status);
 }
 
 export function formatSnapshotTime(vm: ControlPlaneVirtualMachine): string {

@@ -4,6 +4,7 @@ import { getClusterTelemetrySnapshot } from '@/components/dashboard/clusterTelem
 import { ICONS } from '@/constants';
 import { KubernetesCluster } from '@/types';
 import { formatCompactRelativeTime } from '@/utils/dateTime';
+import { getAgentConnectionState } from '@/utils/telemetry';
 
 type SparklinePoint = { timestamp: number; value: number };
 
@@ -41,7 +42,12 @@ function buildSparklinePath(points: SparklinePoint[], startTimestamp: number, en
   }).join(' ');
 }
 
-export const ClusterTelemetryPanel: React.FC<{ cluster: KubernetesCluster; now?: number }> = ({ cluster, now }) => {
+export const ClusterTelemetryPanel: React.FC<{
+  cluster: KubernetesCluster;
+  now?: number;
+  compact?: boolean;
+  loadState?: 'loading' | 'ready' | 'error';
+}> = ({ cluster, now, compact = false, loadState = 'ready' }) => {
   const { t } = useTranslation();
   const { timeline, cpuPoints, memoryPoints, cpuDisplay, memoryDisplay } = getClusterTelemetrySnapshot(cluster);
   const hasCpuTrend = cpuPoints.length >= 2;
@@ -58,6 +64,58 @@ export const ClusterTelemetryPanel: React.FC<{ cluster: KubernetesCluster; now?:
     { label: t('dashboard.cpu'), value: cpuDisplay, Icon: ICONS.Cpu, markerClassName: 'bg-accent-strong' },
     { label: t('dashboard.memory'), value: memoryDisplay, Icon: ICONS.HardDrive, markerClassName: 'bg-metric-blue' }
   ];
+
+  if (compact) {
+    const lastSignalLabel = getAgentConnectionState(cluster) === 'disconnected'
+      ? t('dashboard.telemetryPaused')
+      : loadState === 'error'
+        ? t('dashboard.telemetryRefreshFailed')
+        : t('dashboard.updatedTime', { time: formatCompactRelativeTime(cluster.lastUpdate, { now }) });
+
+    return (
+      <section data-cluster-telemetry-panel="compact" aria-label={t('dashboard.telemetryAria', { name: cluster.name })} className="shrink-0 px-4 pb-3">
+        <dl className="grid min-w-0 grid-cols-2 gap-4 border-t border-ui-border/60 py-3">
+          {metricItems.map(({ label, value, Icon, markerClassName }) => (
+            <div key={label} className="min-w-0">
+              <dt className="type-micro-label flex items-center gap-1.5 text-ui-text-muted">
+                <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />
+                {label}
+              </dt>
+              <dd className="type-caption mt-1 truncate font-semibold text-ui-text" title={String(value)}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <div>
+          <div className="relative h-[104px] min-w-0 overflow-hidden">
+            <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="h-full w-full" role="img" aria-label={t('dashboard.telemetryAria', { name: cluster.name })}>
+              <line x1="0" x2="180" y1="20" y2="20" className="stroke-ui-border/55" strokeWidth="1" />
+              <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/55" strokeWidth="1" />
+              <line x1="0" x2="180" y1="88" y2="88" className="stroke-ui-border/55" strokeWidth="1" />
+              {hasCpuTrend && cpuPath && <path d={cpuPath} fill="none" className="stroke-accent-strong" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" transform="translate(0 8)" />}
+              {hasMemoryTrend && memoryPath && <path d={memoryPath} fill="none" className="stroke-metric-blue" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" opacity="0.78" transform="translate(0 8)" />}
+            </svg>
+            {!hasTrend && (
+              <div className="absolute inset-0 flex items-center justify-center px-3 text-center">
+                <p className={`type-caption font-semibold ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`}>
+                  {loadState === 'loading'
+                    ? t('dashboard.loadingTelemetry')
+                    : loadState === 'error'
+                      ? t('dashboard.telemetryLoadFailed')
+                      : hasAnyMetric ? t('dashboard.collectingHistory') : t('dashboard.noTelemetry')}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="type-caption mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-ui-text-muted">
+            <span>{axisStartLabel}</span>
+            <span className="truncate text-center">{t('dashboard.telemetryAxisLabel')}</span>
+            <span className="truncate text-right">{lastSignalLabel}</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section data-cluster-telemetry-panel="true" aria-label={t('dashboard.telemetryAria', { name: cluster.name })} className="shrink-0 overflow-hidden rounded-md bg-ui-bg/35">

@@ -49,6 +49,22 @@ describe('ResourceCategoryTabs', () => {
     expect(resourceCategoryTabsSource).not.toContain("t('resources.families.issueCount'");
   });
 
+  it('does not collapse inside a scrollable flex page', () => {
+    expect(resourceCategoryTabsSource).toContain('flex w-full max-w-full shrink-0 items-center');
+  });
+
+  it('accepts explicit labels for state-filter tabs', () => {
+    const tabs = getResourceCategoryTabModel({
+      categories: ['all', 'connected'] as const,
+      active: 'all',
+      labelPrefix: 'dashboard',
+      getLabel: (category) => category === 'all' ? 'All states' : 'Connected',
+      translate: (key) => `translated:${key}`
+    });
+
+    expect(tabs.map((tab) => tab.label)).toEqual(['All states', 'Connected']);
+  });
+
   it('supports keyboard navigation for tab semantics', () => {
     expect(resourceCategoryTabsSource).toContain('const handleTabKeyDown =');
     expect(resourceCategoryTabsSource).toContain("event.key === 'ArrowRight'");
@@ -59,5 +75,7 @@ describe('ResourceCategoryTabs', () => {
     expect(resourceCategoryTabsSource).toContain('onKeyDown={(event) => handleTabKeyDown(event, index)}');
     expect(resourceCategoryTabsSource).toContain('<LayoutGroup id={layoutGroupId}>');
     expect(resourceCategoryTabsSource).toContain('{tab.isActive && <ActiveTabIndicator />}');
+    expect(resourceCategoryTabsSource).toContain('id={`${idBase}-${tab.value}-tab`}');
+    expect(resourceCategoryTabsSource).toContain('aria-controls={controlsId}');
   });
 });

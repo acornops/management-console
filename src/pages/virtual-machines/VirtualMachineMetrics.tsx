@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import type { ControlPlaneVirtualMachine, ControlPlaneVirtualMachineMetricHistoryPoint } from '@/services/controlPlaneApi';
-import { formatUserTime } from '@/utils/dateTime';
+import { formatCompactRelativeTime, formatUserTime } from '@/utils/dateTime';
 
 export interface VmMetricTimelinePoint {
   timestamp: number;
@@ -13,6 +13,8 @@ export interface VmMetricTimelinePoint {
   swapUsedPercent: number | null;
   rootDiskUsedPercent: number | null;
 }
+
+export type VmMetricLoadState = 'loading' | 'ready' | 'error';
 
 export function formatMetricTime(timestamp: number): string {
   return formatUserTime(timestamp, { fallback: '-' });
@@ -99,71 +101,49 @@ function getMetricEmptyCopyKey(pointCount: number, usablePointCount: number): st
   return 'virtualMachines.list.waitingForAnotherVmSample';
 }
 
-export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; points: VmMetricTimelinePoint[] }> = ({ vm, points }) => {
+export const VmOperationalDetails: React.FC<{ vm: ControlPlaneVirtualMachine; issueCount?: number }> = ({ vm, issueCount }) => {
   const { t } = useTranslation();
-  const width = 360;
-  const height = 104;
-  const paddingX = 2;
-  const paddingTop = 10;
-  const plotBottom = 82;
-  const labelY = 102;
-  const safePoints = points.slice(-12);
-  const footerStats = [
-    {
-      label: t('virtualMachines.list.logSources'),
-      value: vm.allowedLogSources?.length ?? 0,
-      icon: <ICONS.BookOpen className="h-4 w-4 text-status-success-text/70" />
-    },
-    {
-      label: t('virtualMachines.list.processes'),
-      value: vm.summary ? vm.summary.processCount : '-',
-      icon: <ICONS.Activity className="h-4 w-4 text-status-success-text/70" />
-    },
-    {
-      label: t('dashboard.findings'),
-      value: vm.summary ? vm.summary.findingCount : '-',
-      icon: <ICONS.Shield className="h-4 w-4 text-status-success-text/70" />
-    }
+  const details = [
+    { label: t('virtualMachines.list.logSources'), compactLabel: t('virtualMachines.list.logSourcesShort'), value: vm.allowedLogSources?.length ?? 0, Icon: ICONS.BookOpen },
+    { label: t('virtualMachines.list.processes'), compactLabel: t('virtualMachines.list.processes'), value: vm.summary ? vm.summary.processCount : '-', Icon: ICONS.Activity },
+    { label: t('virtualMachines.list.issues'), compactLabel: t('virtualMachines.list.issues'), value: issueCount ?? '-', Icon: ICONS.Shield }
   ];
-  const footer = (
-    <div className="grid h-[4.25rem] grid-cols-3 divide-x divide-ui-border border-t border-ui-border pt-5">
-      {footerStats.map((stat) => (
-        <div key={stat.label} className="min-w-0 px-4 sm:px-5">
-          <p className="truncate text-[0.625rem] font-medium leading-3 text-ui-text-muted">{stat.label}</p>
-          <div className="mt-1 flex min-w-0 items-center gap-2">
-            <span className="truncate text-base font-bold leading-5 text-ui-text">{stat.value}</span>
-            {stat.icon}
-          </div>
+
+  return (
+    <dl className="mx-4 grid grid-cols-3 gap-3 border-t border-ui-border/60 pb-4 pt-3">
+      {details.map(({ label, compactLabel, value, Icon }) => (
+        <div key={label} className="min-w-0">
+          <dt className="type-micro-label flex min-w-0 items-center gap-0.5 text-ui-text-muted tracking-[0.02em]" title={label}>
+            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="hidden truncate 2xl:inline">{label}</span>
+            <span className="truncate 2xl:hidden">{compactLabel}</span>
+          </dt>
+          <dd className="type-caption mt-1 break-words font-semibold leading-4 text-ui-text [overflow-wrap:anywhere]" title={String(value)}>{value}</dd>
         </div>
       ))}
-    </div>
+    </dl>
   );
-  const chartBodyClassName = 'grid min-h-0 grid-rows-[auto_minmax(0,1fr)] pb-3';
+};
+
+export const VmCardResourceChart: React.FC<{
+  vm: ControlPlaneVirtualMachine;
+  points: VmMetricTimelinePoint[];
+  now?: number;
+  paused?: boolean;
+  loadState?: VmMetricLoadState;
+}> = ({ vm, points, now, paused = false, loadState = 'ready' }) => {
+  const { t } = useTranslation();
+  const width = 180;
+  const height = 108;
+  const paddingX = 0;
+  const paddingTop = 8;
+  const plotBottom = 96;
+  const safePoints = points.slice(-12);
 
   const loadPointCount = safePoints.filter((point) => point.loadAverage1m !== null).length;
   const memoryPointCount = safePoints.filter((point) => point.memoryUsedPercent !== null).length;
   const usableMetricPointCount = Math.max(loadPointCount, memoryPointCount);
-
-  if (usableMetricPointCount < 2) {
-    return (
-      <div className="grid h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)_4.25rem]" aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}>
-        <div className="flex min-h-0 flex-col items-center justify-center px-5 pb-3 text-center">
-          <p className="type-micro-label">
-            {t(getMetricEmptyCopyKey(safePoints.length, usableMetricPointCount))}
-          </p>
-          {safePoints.length > 0 && (
-            <p className="type-caption mt-2 max-w-xs">
-              {t('virtualMachines.list.trendAfterAnotherVmSample')}
-            </p>
-          )}
-        </div>
-        {footer}
-      </div>
-    );
-  }
-
-  const chartLatest = safePoints[safePoints.length - 1] as VmMetricTimelinePoint;
-  const chartFirst = safePoints[0] as VmMetricTimelinePoint;
+  const hasTrend = usableMetricPointCount >= 2;
   const xForIndex = (index: number) =>
     safePoints.length === 1
       ? width / 2
@@ -185,15 +165,20 @@ export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; poi
   };
   const buildPath = (metric: 'loadAverage1m' | 'memoryUsedPercent') => {
     const segments: string[] = [];
+    let continuesPreviousSample = false;
     safePoints.forEach((point, index) => {
       const value = point[metric];
-      if (value === null) return;
-      segments.push(`${segments.length === 0 ? 'M' : 'L'} ${xForIndex(index)} ${yForValue(value, metric)}`);
+      if (value === null) {
+        continuesPreviousSample = false;
+        return;
+      }
+      segments.push(`${continuesPreviousSample ? 'L' : 'M'} ${xForIndex(index)} ${yForValue(value, metric)}`);
+      continuesPreviousSample = true;
     });
     return segments.join(' ');
   };
-  const loadPath = buildPath('loadAverage1m');
-  const memoryPath = buildPath('memoryUsedPercent');
+  const loadPath = hasTrend ? buildPath('loadAverage1m') : '';
+  const memoryPath = hasTrend ? buildPath('memoryUsedPercent') : '';
   const latestMetricPoint = (metric: 'loadAverage1m' | 'memoryUsedPercent') => {
     for (let index = safePoints.length - 1; index >= 0; index -= 1) {
       const point = safePoints[index] as VmMetricTimelinePoint;
@@ -204,57 +189,68 @@ export const VmCardResourceChart: React.FC<{ vm: ControlPlaneVirtualMachine; poi
   };
   const latestLoadPoint = latestMetricPoint('loadAverage1m');
   const latestMemoryPoint = latestMetricPoint('memoryUsedPercent');
+  const chartLatest = safePoints[safePoints.length - 1];
+  const chartFirst = safePoints[0];
+  const chartMessage = points.length === 0 && loadState === 'loading'
+    ? t('virtualMachines.list.loadingTelemetry')
+    : points.length === 0 && loadState === 'error'
+      ? t('virtualMachines.list.telemetryLoadFailed')
+      : paused
+        ? t('virtualMachines.list.telemetryUnavailable')
+        : t(getMetricEmptyCopyKey(safePoints.length, usableMetricPointCount));
+  const axisStartLabel = hasTrend && chartFirst
+    ? formatCompactRelativeTime(chartFirst.timestamp, { now })
+    : t('dashboard.telemetryAxisEarlier');
+  const axisEndLabel = paused
+    ? t('dashboard.telemetryPaused')
+    : loadState === 'error'
+      ? t('virtualMachines.list.telemetryRefreshFailed')
+      : hasTrend && chartLatest
+        ? formatCompactRelativeTime(chartLatest.timestamp, { now })
+        : t('dashboard.telemetryAxisNow');
+  const metricItems = [
+    { label: t('virtualMachines.list.load1m'), value: formatVmLoad(latestLoadPoint?.value ?? null), Icon: ICONS.Activity, markerClassName: 'bg-accent-strong' },
+    { label: t('virtualMachines.list.memory'), value: formatVmPercent(latestMemoryPoint?.value ?? null), Icon: ICONS.HardDrive, markerClassName: 'bg-metric-blue' }
+  ];
 
   return (
-    <div
-      className="grid h-full min-h-0 flex-1 grid-rows-[minmax(0,1fr)_4.25rem]"
+    <section
+      className="shrink-0 px-4 pb-3"
       aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}
     >
-      <div className={chartBodyClassName}>
-        <div className="mb-1.5 grid min-w-0 grid-cols-2 gap-3">
-          <span className="inline-flex min-w-0 items-center gap-1.5 truncate text-[0.6875rem] font-semibold leading-3 text-accent-strong">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-            {t('virtualMachines.list.load1m')} {formatVmLoad(latestLoadPoint?.value ?? null)}
-          </span>
-          <span className="inline-flex min-w-0 items-center gap-1.5 truncate text-[0.6875rem] font-semibold leading-3 text-metric-blue">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-metric-blue" />
-            {t('virtualMachines.list.memory')} {formatVmPercent(latestMemoryPoint?.value ?? null)}
-          </span>
+      <dl className="grid min-w-0 grid-cols-2 gap-4 border-t border-ui-border/60 py-3">
+        {metricItems.map(({ label, value, Icon, markerClassName }) => (
+          <div key={label} className="min-w-0">
+            <dt className="type-micro-label flex items-center gap-1.5 text-ui-text-muted">
+              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />
+              <span className="truncate">{label}</span>
+            </dt>
+            <dd className="type-caption mt-1 truncate font-semibold text-ui-text" title={value}>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div>
+        <div className="relative h-[104px] min-w-0 overflow-hidden">
+          <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="h-full w-full" role="img" aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}>
+            <line x1="0" x2="180" y1="20" y2="20" className="stroke-ui-border/55" strokeWidth="1" />
+            <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/55" strokeWidth="1" />
+            <line x1="0" x2="180" y1="88" y2="88" className="stroke-ui-border/55" strokeWidth="1" />
+            {loadPath && <path d={loadPath} fill="none" className="stroke-accent-strong" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />}
+            {memoryPath && <path d={memoryPath} fill="none" className="stroke-metric-blue" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" opacity="0.78" />}
+          </svg>
+          {!hasTrend && (
+            <div className="absolute inset-0 flex items-center justify-center px-3 text-center">
+              <p className={`type-caption font-semibold ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`}>{chartMessage}</p>
+            </div>
+          )}
         </div>
-        <svg viewBox={`0 0 ${width} ${height}`} className="h-full min-h-0 w-full overflow-visible" role="img" aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}>
-          {[0.25, 0.5, 0.75].map((tick) => (
-            <line
-              key={tick}
-              x1={paddingX}
-              y1={paddingTop + (1 - tick) * (plotBottom - paddingTop)}
-              x2={width - paddingX}
-              y2={paddingTop + (1 - tick) * (plotBottom - paddingTop)}
-              stroke="var(--border)"
-              strokeDasharray="3 4"
-              opacity="0.55"
-            />
-          ))}
-          {loadPath && (
-            <path d={loadPath} fill="none" stroke="var(--brand-orange)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-          )}
-          {memoryPath && (
-            <path d={memoryPath} fill="none" stroke="rgb(var(--metric-blue-rgb))" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5 5" opacity="0.9" />
-          )}
-          {latestLoadPoint && (
-            <circle cx={xForIndex(latestLoadPoint.index)} cy={yForValue(latestLoadPoint.value, 'loadAverage1m')} r={2.5} fill="var(--brand-orange)" stroke="var(--bg)" strokeWidth={1.5} />
-          )}
-          {latestMemoryPoint && (
-            <circle cx={xForIndex(latestMemoryPoint.index)} cy={yForValue(latestMemoryPoint.value, 'memoryUsedPercent')} r={2.5} fill="rgb(var(--metric-blue-rgb))" stroke="var(--bg)" strokeWidth={1.5} />
-          )}
-          <text x={paddingX} y={labelY} className="type-micro-label fill-ui-text-muted">
-            {formatMetricTime(chartFirst.timestamp)}
-          </text>
-          <text x={width - paddingX} y={labelY} textAnchor="end" className="type-micro-label fill-ui-text-muted">
-            {formatMetricTime(chartLatest.timestamp)}
-          </text>
-        </svg>
+        <div className="type-caption mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-ui-text-muted">
+          <span>{axisStartLabel}</span>
+          <span className="truncate text-center">{t('dashboard.telemetryAxisLabel')}</span>
+          <span className="truncate text-right">{axisEndLabel}</span>
+        </div>
       </div>
-      {footer}
-    </div>
+    </section>
   );
 };

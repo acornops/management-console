@@ -37,7 +37,9 @@ describe('AppShell cluster page callbacks', () => {
     expect(appShell).toContain('status: previousRoute.status');
     expect(appShell).not.toContain('selectedClusterId: nextRoute.clusterId');
     expect(appShell).toContain("previousRoute?.kind === 'workspaceVirtualMachines'");
-    expect(appShell).toContain('path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId)');
+    expect(appShell).toContain('path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId, {');
+    expect(appShell).toContain('q: previousRoute.q');
+    expect(appShell).toContain('status: previousRoute.status');
     expect(appShell).toContain('const getBackToWorkspacePath = React.useCallback');
     expect(appShell).toContain("if (route.kind === 'workspaceKubernetesClusterDiagnostics')");
     expect(appShell).toContain('return AppPaths.workspaceKubernetesClusters(route.workspaceId, route.catalogState);');

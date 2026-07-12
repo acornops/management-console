@@ -14,7 +14,7 @@ import {
   type ControlPlaneVirtualMachineMetricHistoryPoint
 } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
-import { AppPaths, AppRoute, VmSubview } from '@/utils/routes';
+import { AppPaths, AppRoute, type VmCatalogReturnState, VmSubview } from '@/utils/routes';
 import { Workspace } from '@/types';
 import {
   formatSnapshotTime,
@@ -25,7 +25,8 @@ import {
   formatMetricTime,
   getLatestVmTelemetryPoint,
   getVmMetricTimeline,
-  VmMetricTimelinePoint
+  VmMetricTimelinePoint,
+  type VmMetricLoadState
 } from '@/pages/virtual-machines/VirtualMachineMetrics';
 import { VirtualMachineTelemetrySummary } from '@/pages/virtual-machines/VirtualMachineTelemetrySummary';
 import { AddVirtualMachineModal } from '@/pages/virtual-machines/AddVirtualMachineModal';
@@ -36,6 +37,7 @@ import { VirtualMachinesListView } from '@/pages/virtual-machines/VirtualMachine
 import { VirtualMachineResourcesView, VmResourceCategory } from '@/pages/virtual-machines/VirtualMachineResourcesView';
 import { VirtualMachineSettingsView } from '@/pages/virtual-machines/VirtualMachineSettingsView';
 import { useVirtualMachineListRefresh } from '@/pages/virtual-machines/useVirtualMachineListRefresh';
+import { useVirtualMachineIssueSummaries } from '@/pages/virtual-machines/useVirtualMachineIssueSummaries';
 import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/pages/virtual-machines/virtualMachineTargetPrompt';
 import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
 
@@ -97,6 +99,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const [logsError, setLogsError] = React.useState<string | null>(null);
   const [metricHistory, setMetricHistory] = React.useState<ControlPlaneVirtualMachineMetricHistoryPoint[]>([]);
   const [metricHistoryByVmId, setMetricHistoryByVmId] = React.useState<Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>>({});
+  const [metricLoadStateByVmId, setMetricLoadStateByVmId] = React.useState<Record<string, VmMetricLoadState>>({});
   const [metricHistoryStatus, setMetricHistoryStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [installInstructions, setInstallInstructions] = React.useState<{ vmId: string; value: string } | null>(null);
   const [isAddingVm, setIsAddingVm] = React.useState(false);
@@ -107,8 +110,13 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const [newVmName, setNewVmName] = React.useState('');
   const [pendingChatPrompt, setPendingChatPrompt] = React.useState('');
   const [resourceCategory, setResourceCategory] = React.useState<VmResourceCategory>('all');
-  const [query, setQuery] = React.useState('');
-  const [status, setStatus] = React.useState<VmConnectionFilter>('all');
+  const activeCatalogState = route.kind === 'workspaceVirtualMachines' ? route : route.catalogState;
+  const query = activeCatalogState?.q ?? '';
+  const status: VmConnectionFilter = activeCatalogState?.status ?? 'all';
+  const catalogReturnState: VmCatalogReturnState = {
+    q: query || undefined,
+    status: status === 'all' ? undefined : status
+  };
   const metricHistoryRequestSeqRef = React.useRef(0);
   const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
   const view = route.kind === 'workspaceVirtualMachineDetail' ? activeSubview : 'overview';
@@ -117,20 +125,36 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const activeResourceCategory = isVmResourceSubview(view)
     ? vmSubviewToResourceCategory(view)
     : resourceCategory;
-  const visibleMetricVms = React.useMemo(
+  const catalogMetricVms = React.useMemo(
     () => route.kind === 'workspaceVirtualMachines'
-      ? virtualMachines.filter((vm) => vm.status === 'online').slice(0, 6)
+      ? virtualMachines.filter((vm) => vm.status !== 'unknown')
       : [],
     [route.kind, virtualMachines]
   );
-  const isLoading = useVirtualMachineListRefresh({
+  const { isLoading, loadError, reload: reloadVirtualMachines } = useVirtualMachineListRefresh({
     workspaceId: workspace.id,
     virtualMachines,
     hasLoadedWorkspaceVirtualMachines,
-    query,
-    status,
     onReplaceWorkspaceVirtualMachines
   });
+  const { issueSummaryByVmId, issueSummaryLoadStateByVmId } = useVirtualMachineIssueSummaries(catalogMetricVms);
+
+  const updateCatalogState = React.useCallback((patch: Partial<VmCatalogReturnState>) => {
+    if (route.kind !== 'workspaceVirtualMachines') return;
+    const nextState: VmCatalogReturnState = {
+      q: query || undefined,
+      status: status === 'all' ? undefined : status,
+      ...patch
+    };
+    navigate(AppPaths.workspaceVirtualMachines(workspace.id, {
+      q: nextState.q?.trim() || undefined,
+      status: nextState.status && nextState.status !== 'all' ? nextState.status : undefined
+    }), { replace: true });
+  }, [navigate, query, route.kind, status, workspace.id]);
+
+  const vmDetailPath = React.useCallback((vmId: string, tab?: VmSubview) =>
+    AppPaths.workspaceVirtualMachineDetail(workspace.id, vmId, tab, catalogReturnState),
+  [catalogReturnState.q, catalogReturnState.status, workspace.id]);
 
   const refreshWorkspaceSummary = React.useCallback(async () => {
     const refreshed = await controlPlaneApi.getWorkspace(workspace.id);
@@ -264,26 +288,37 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
 
   React.useEffect(() => {
     if (route.kind !== 'workspaceVirtualMachines') return undefined;
-    const visibleVmIds = new Set(visibleMetricVms.map((vm) => vm.id));
+    const visibleVmIds = new Set(catalogMetricVms.map((vm) => vm.id));
     setMetricHistoryByVmId((prev) => Object.fromEntries(
       Object.entries(prev).filter(([vmId]) => visibleVmIds.has(vmId))
     ));
+    setMetricLoadStateByVmId((prev) => Object.fromEntries(
+      catalogMetricVms.map((vm) => [vm.id, prev[vm.id] === 'ready' ? 'ready' : 'loading'])
+    ));
 
-    if (visibleMetricVms.length === 0) return undefined;
+    if (catalogMetricVms.length === 0) return undefined;
 
     let isCurrent = true;
     const requestId = ++metricHistoryRequestSeqRef.current;
-    void Promise.all(
-      visibleMetricVms.map(async (vm) => {
+    const entries: Array<readonly [string, ControlPlaneVirtualMachineMetricHistoryPoint[]]> = [];
+    const failedVmIds = new Set<string>();
+    let nextVmIndex = 0;
+    const loadNextMetricHistory = async () => {
+      while (isCurrent && nextVmIndex < catalogMetricVms.length) {
+        const vm = catalogMetricVms[nextVmIndex];
+        nextVmIndex += 1;
+        if (!vm) continue;
         try {
           const payload = await controlPlaneApi.getVirtualMachineMetricsHistory(workspace.id, vm.id);
-          return [vm.id, payload.points || []] as const;
+          entries.push([vm.id, payload.points || []] as const);
         } catch (error) {
           console.error('Failed loading VM card metric history', error);
-          return [vm.id, []] as const;
+          failedVmIds.add(vm.id);
         }
-      })
-    ).then((entries) => {
+      }
+    };
+    const workerCount = Math.min(6, catalogMetricVms.length);
+    void Promise.all(Array.from({ length: workerCount }, () => loadNextMetricHistory())).then(() => {
       if (!isCurrent || requestId !== metricHistoryRequestSeqRef.current) return;
       setMetricHistoryByVmId((prev) => {
         const visibleOnly = Object.fromEntries(
@@ -291,12 +326,15 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         );
         return { ...visibleOnly, ...Object.fromEntries(entries) };
       });
+      setMetricLoadStateByVmId(Object.fromEntries(
+        catalogMetricVms.map((vm) => [vm.id, failedVmIds.has(vm.id) ? 'error' : 'ready'])
+      ));
     });
 
     return () => {
       isCurrent = false;
     };
-  }, [route.kind, visibleMetricVms, workspace.id]);
+  }, [catalogMetricVms, route.kind, workspace.id]);
 
   const resetVmCreationState = () => {
     setIsAddingVm(false);
@@ -357,22 +395,22 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       return remaining;
     });
     if (route.kind === 'workspaceVirtualMachineDetail' && route.vmId === vm.id) {
-      navigate(AppPaths.workspaceVirtualMachines(workspace.id));
+      navigate(AppPaths.workspaceVirtualMachines(workspace.id, catalogReturnState));
     }
-  }, [navigate, onRemoveWorkspaceVirtualMachine, refreshWorkspaceSummary, route, workspace.id]);
+  }, [catalogReturnState, navigate, onRemoveWorkspaceVirtualMachine, refreshWorkspaceSummary, route, workspace.id]);
 
   const selectResourceCategory = React.useCallback((category: VmResourceCategory) => {
     if (!selected) return;
     setResourceCategory(category);
     const tab: VmSubview = category === 'all' ? 'resources' : category;
-    navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, selected.id, tab));
-  }, [navigate, selected, workspace.id]);
+    navigate(vmDetailPath(selected.id, tab));
+  }, [navigate, selected, vmDetailPath]);
   const openVmTriage = React.useCallback(() => {
     if (!selected) return;
     const prompt = t('virtualMachines.overview.triageHostPrompt', { name: selected.name });
     setPendingChatPrompt(prompt);
-    navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, selected.id, 'chat'));
-  }, [navigate, selected, t, workspace.id]);
+    navigate(vmDetailPath(selected.id, 'chat'));
+  }, [navigate, selected, t, vmDetailPath]);
   const openVmIssueTriage = React.useCallback((issue: ControlPlaneIssueItem) => {
     if (!selected) return;
     const prompt = t('virtualMachines.overview.triageIssuePrompt', {
@@ -382,8 +420,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       message: issue.summary
     });
     setPendingChatPrompt(prompt);
-    navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, selected.id, 'chat'));
-  }, [navigate, selected, t, workspace.id]);
+    navigate(vmDetailPath(selected.id, 'chat'));
+  }, [navigate, selected, t, vmDetailPath]);
   const metricTimeline = React.useMemo(() => getVmMetricTimeline(metricHistory), [metricHistory]);
   const loadSeries = React.useMemo(
     () =>
@@ -422,13 +460,19 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           workspace={workspace}
           items={virtualMachines}
           isLoading={isLoading}
+          hasLoadError={Boolean(loadError)}
           query={query}
           status={status}
+          catalogReturnState={catalogReturnState}
           metricHistoryByVmId={metricHistoryByVmId}
+          metricLoadStateByVmId={metricLoadStateByVmId}
+          issueSummaryByVmId={issueSummaryByVmId}
+          issueSummaryLoadStateByVmId={issueSummaryLoadStateByVmId}
           canManageTargets={canManageTargets}
-          onQueryChange={setQuery}
-          onStatusChange={setStatus}
+          onQueryChange={(nextQuery) => updateCatalogState({ q: nextQuery || undefined })}
+          onStatusChange={(nextStatus) => updateCatalogState({ status: nextStatus === 'all' ? undefined : nextStatus })}
           onOpenRegisterVm={openAddVmModal}
+          onRetryLoad={() => void reloadVirtualMachines()}
           onDeleteVirtualMachine={deleteVirtualMachine}
           navigate={navigate}
         />
@@ -459,7 +503,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           <ICONS.Server className="mx-auto h-10 w-10 text-ui-text-muted" />
           <h2 className="mt-4 text-lg font-bold text-ui-text">{t('virtualMachines.notFoundTitle')}</h2>
           <p className="mt-2 text-sm text-ui-text-muted">{t('virtualMachines.notFoundBody')}</p>
-          <Button onClick={() => navigate(AppPaths.workspaceVirtualMachines(workspace.id))} className="mt-5">
+          <Button onClick={() => navigate(AppPaths.workspaceVirtualMachines(workspace.id, catalogReturnState))} className="mt-5">
             <ICONS.ChevronLeft className="h-4 w-4" />
             {t('virtualMachines.backToList')}
           </Button>

@@ -135,28 +135,31 @@ describe('routes', () => {
   it('round-trips Kubernetes cluster catalog state in listing routes', () => {
     const workspacePath = AppPaths.workspaceKubernetesClusters('team alpha', {
       q: 'dev cluster',
-      status: 'connected'
+      status: 'healthy'
     });
 
     expect(workspacePath).toBe(
-      '/workspaces/team%20alpha/kubernetes-clusters?q=dev+cluster&status=connected'
+      '/workspaces/team%20alpha/kubernetes-clusters?q=dev+cluster&status=healthy'
     );
     expect(parseAppRoute(workspacePath)).toEqual({
       kind: 'workspaceKubernetesClusters',
       workspaceId: 'team alpha',
       q: 'dev cluster',
-      status: 'connected'
+      status: 'healthy'
     });
 
     expect(AppPaths.kubernetesClusters({
       q: 'prod',
-      status: 'disconnected'
-    })).toBe('/kubernetes-clusters?q=prod&status=disconnected');
-    expect(parseAppRoute('/kubernetes-clusters?q=prod&status=disconnected&cluster=cluster-two')).toEqual({
+      status: 'attention'
+    })).toBe('/kubernetes-clusters?q=prod&status=attention');
+    expect(parseAppRoute('/kubernetes-clusters?q=prod&status=attention&cluster=cluster-two')).toEqual({
       kind: 'kubernetesClusters',
       q: 'prod',
-      status: 'disconnected'
+      status: 'attention'
     });
+
+    expect(parseAppRoute('/kubernetes-clusters?status=connected')).toMatchObject({ status: 'healthy' });
+    expect(parseAppRoute('/kubernetes-clusters?status=disconnected')).toMatchObject({ status: 'attention' });
   });
 
   it('round-trips catalog return state in Kubernetes cluster detail routes', () => {
@@ -179,8 +182,35 @@ describe('routes', () => {
 
     expect(AppPaths.kubernetesClusterDiagnostics('cluster-one', 'chat', {
       q: 'prod',
-      status: 'connected'
-    })).toBe('/kubernetes-clusters/cluster-one/chat?catalogQ=prod&catalogStatus=connected');
+      status: 'healthy'
+    })).toBe('/kubernetes-clusters/cluster-one/chat?catalogQ=prod&catalogStatus=healthy');
+  });
+
+  it('round-trips virtual machine catalog and return state', () => {
+    const listPath = AppPaths.workspaceVirtualMachines('team alpha', {
+      q: 'bastion prod',
+      status: 'attention'
+    });
+    expect(listPath).toBe('/workspaces/team%20alpha/virtual-machines?q=bastion+prod&status=attention');
+    expect(parseAppRoute(listPath)).toEqual({
+      kind: 'workspaceVirtualMachines',
+      workspaceId: 'team alpha',
+      q: 'bastion prod',
+      status: 'attention'
+    });
+
+    const detailPath = AppPaths.workspaceVirtualMachineDetail('team-alpha', 'vm-one', 'overview', {
+      q: 'bastion',
+      status: 'not_installed'
+    });
+    expect(detailPath).toBe('/workspaces/team-alpha/virtual-machines/vm-one/overview?catalogQ=bastion&catalogStatus=not_installed');
+    expect(parseAppRoute(detailPath)).toEqual({
+      kind: 'workspaceVirtualMachineDetail',
+      workspaceId: 'team-alpha',
+      vmId: 'vm-one',
+      tab: 'overview',
+      catalogState: { q: 'bastion', status: 'not_installed' }
+    });
   });
 
   it('parses workspace invitation routes', () => {

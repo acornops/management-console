@@ -70,7 +70,10 @@ function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRo
         targetId: nextRoute.vmId,
         targetType: 'virtual_machine',
         workspaceId: nextRoute.workspaceId,
-        path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId)
+        path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId, {
+          q: previousRoute.q,
+          status: previousRoute.status
+        })
       };
     }
   }
@@ -352,6 +355,10 @@ export const AppShell: React.FC<AppShellProps> = ({
       return AppPaths.workspaceKubernetesClusters(route.workspaceId, route.catalogState);
     }
 
+    if (route.kind === 'workspaceVirtualMachineDetail') {
+      return AppPaths.workspaceVirtualMachines(route.workspaceId, route.catalogState);
+    }
+
     return isVirtualMachineSidebar
       ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId)
       : getClusterBackToWorkspacePath(backToWorkspaceId);
@@ -428,8 +435,13 @@ export const AppShell: React.FC<AppShellProps> = ({
       prompt: request.prompt,
       id: Date.now()
     });
-    navigate(AppPaths.workspaceVirtualMachineDetail(request.workspaceId, request.targetId, 'chat'));
-  }, [kubernetesClusters, navigate, openClusterCopilot]);
+    navigate(AppPaths.workspaceVirtualMachineDetail(
+      request.workspaceId,
+      request.targetId,
+      'chat',
+      route.kind === 'workspaceVirtualMachineDetail' ? route.catalogState : undefined
+    ));
+  }, [kubernetesClusters, navigate, openClusterCopilot, route]);
 
   const consumePendingVmTargetPrompt = React.useCallback(() => {
     setPendingVmTargetPrompt(null);
@@ -466,7 +478,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         }}
         onNavigateVmSubview={(tab) => {
           if (!selectedSidebarVm) return;
-          navigate(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab));
+          navigate(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab, route.kind === 'workspaceVirtualMachineDetail' ? route.catalogState : undefined));
         }}
         onSelectWorkspaceContext={handleSelectWorkspaceContext}
         onSetAccountMenuOpen={setIsAccountMenuOpen}
@@ -502,7 +514,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         }}
         onNavigateVmSubview={(tab) => {
           if (!selectedSidebarVm) return;
-          navigate(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab));
+          navigate(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab, route.kind === 'workspaceVirtualMachineDetail' ? route.catalogState : undefined));
         }}
         onOpenCreateWorkspace={() => setIsCreatingWorkspace(true)}
         onSelectWorkspaceContext={handleSelectWorkspaceContext}

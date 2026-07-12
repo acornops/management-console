@@ -76,13 +76,11 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).not.toContain('pageKey');
   });
 
-  it('redirects setup-required cluster detail routes back to the catalog', () => {
-    expect(kubernetesClusterDetailPage).toContain('if (requiresClusterAgentInstall) {');
-    expect(kubernetesClusterDetailPage).toContain('onNavigateBackToClusters();');
-    expect(kubernetesClusterDetailPage).not.toContain('onOpenInstallModal');
-    expect(kubernetesClusterDetailPage).not.toContain("t('diagnostics.installAgentTitle')");
-    expect(kubernetesClusterDetailPage).not.toContain("t('diagnostics.openInstallCommand')");
-    expect(appPageContent).not.toContain('onOpenInstallModal={onInstallAgent}');
+  it('preserves the upstream setup-required cluster installation path', () => {
+    expect(kubernetesClusterDetailPage).toContain('onOpenInstallModal: (clusterId: string) => void;');
+    expect(kubernetesClusterDetailPage).toContain("t('diagnostics.installAgentTitle')");
+    expect(kubernetesClusterDetailPage).toContain("t('diagnostics.openInstallCommand')");
+    expect(appPageContent).toContain('onOpenInstallModal={onInstallAgent}');
   });
 
   it('treats the top-level settings route as redirect-only legacy input', () => {
