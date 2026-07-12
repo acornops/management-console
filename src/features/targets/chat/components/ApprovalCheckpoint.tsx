@@ -13,7 +13,12 @@ interface ApprovalCheckpointProps {
 }
 
 function cleanText(value: unknown): string {
-  return String(value ?? '').replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return String(value ?? '').replace(/[\p{Cc}\p{Cf}]+/gu, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function formatApprovalArguments(value: Record<string, unknown>): string {
+  return JSON.stringify(value, null, 2).replace(/\p{Cf}/gu, (character) =>
+    character.split('').map((unit) => `\\u${unit.charCodeAt(0).toString(16).padStart(4, '0')}`).join(''));
 }
 
 function targetLabel(t: TFunction, argumentsValue: Record<string, unknown> | undefined, defaultKind?: string): string {
@@ -31,6 +36,50 @@ function targetLabel(t: TFunction, argumentsValue: Record<string, unknown> | und
       : t('chat.approvalFallbackTarget.namespace', { namespace });
   }
   return kind ? t('chat.approvalFallbackTarget.selectedKind', { kind }) : '';
+}
+
+function patchChangeSummary(change: unknown, t: TFunction): { text: string; rollout: boolean; routing: boolean } {
+  const value = change && typeof change === 'object' && !Array.isArray(change) ? change as Record<string, unknown> : {};
+  const type = cleanText(value.type);
+  const scope = value.scope === 'pod_template'
+    ? t('chat.approvalFallbackSummary.patchPodTemplate')
+    : t('chat.approvalFallbackSummary.patchResource');
+  const key = cleanText(value.key);
+  if (type === 'set_image') {
+    return {
+      text: t('chat.approvalFallbackSummary.patchSetImage', {
+        container: cleanText(value.container), before: cleanText(value.expected_image), after: cleanText(value.image)
+      }),
+      rollout: true,
+      routing: false
+    };
+  }
+  if (type === 'set_label' || type === 'remove_label') {
+    return {
+      text: t(`chat.approvalFallbackSummary.${type === 'set_label' ? 'patchSetLabel' : 'patchRemoveLabel'}`, {
+        scope, key, value: cleanText(value.value)
+      }),
+      rollout: value.scope === 'pod_template',
+      routing: false
+    };
+  }
+  if (type === 'set_annotation' || type === 'remove_annotation') {
+    return {
+      text: t(`chat.approvalFallbackSummary.${type === 'set_annotation' ? 'patchSetAnnotation' : 'patchRemoveAnnotation'}`, { scope, key }),
+      rollout: value.scope === 'pod_template',
+      routing: false
+    };
+  }
+  if (type === 'set_service_selector' || type === 'remove_service_selector') {
+    return {
+      text: t(`chat.approvalFallbackSummary.${type === 'set_service_selector' ? 'patchSetServiceSelector' : 'patchRemoveServiceSelector'}`, {
+        key, value: cleanText(value.value)
+      }),
+      rollout: false,
+      routing: true
+    };
+  }
+  return { text: t('chat.approvalFallbackSummary.patchValidatedField'), rollout: false, routing: false };
 }
 
 function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): string {
@@ -56,6 +105,25 @@ function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): strin
         ? t('chat.approvalFallbackSummary.scaleReplicasGuarded', { target, replicas, guards })
         : t('chat.approvalFallbackSummary.scaleReplicas', { target, replicas })
       : t('chat.approvalFallbackSummary.scale', { target });
+  }
+  if (approval.toolName === 'patch_resource') {
+    const target = targetLabel(t, approval.arguments, t('chat.approvalFallbackTarget.resource'));
+    const isCronJob = approval.arguments?.kind === 'CronJob';
+    const rawChanges = Array.isArray(approval.arguments?.changes) ? approval.arguments.changes : [];
+    const summaries = rawChanges.slice(0, 10).map((change) => patchChangeSummary(change, t));
+    const visible = summaries.slice(0, 3).map((summary) => summary.text);
+    if (rawChanges.length > 3) visible.push(t('chat.approvalFallbackSummary.patchAndMore', { count: rawChanges.length - 3 }));
+    const guards = [
+      summaries.some((summary) => summary.rollout)
+        ? t(`chat.approvalFallbackSummary.${isCronJob ? 'patchAffectsFutureJobs' : 'patchTriggersRollout'}`)
+        : '',
+      summaries.some((summary) => summary.routing) ? t('chat.approvalFallbackSummary.patchRedirectsTraffic') : ''
+    ].filter(Boolean).join('; ');
+    return t(guards ? 'chat.approvalFallbackSummary.patchGuarded' : 'chat.approvalFallbackSummary.patch', {
+      target,
+      changes: visible.join('; ') || t('chat.approvalFallbackSummary.patchValidatedField'),
+      guards
+    });
   }
   const target = targetLabel(t, approval.arguments);
   if (target) {
@@ -120,7 +188,7 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
               {t('chat.approvalAdvancedDetails')}
             </summary>
             <pre className="type-code mt-1 max-h-36 overflow-auto rounded-md border border-ui-border bg-code-bg px-3 py-2 text-slate-100">
-              {JSON.stringify(approval.arguments, null, 2)}
+              {formatApprovalArguments(approval.arguments)}
             </pre>
           </details>
         )}
