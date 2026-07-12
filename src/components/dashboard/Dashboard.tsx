@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { HealthStatus, KubernetesCluster } from '@/types';
+import { KubernetesCluster } from '@/types';
 import { AnimatePresence } from 'framer-motion';
-import { Activity, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
@@ -12,11 +12,9 @@ import { formInputClassName } from '@/components/common/formControlStyles';
 import { ClusterCatalog } from '@/components/dashboard/ClusterCatalog';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
-import { getAgentConnectionState, getEffectiveHealthStatus } from '@/utils/telemetry';
 
 interface DashboardProps {
   kubernetesClusters: KubernetesCluster[];
-  summaryKubernetesClusters?: KubernetesCluster[];
   onSelectKubernetesCluster: (cluster: KubernetesCluster) => void;
   onInstallAgent?: (clusterId: string) => void;
   workspaceName?: string;
@@ -40,19 +38,8 @@ interface DashboardProps {
 
 const deleteClusterConfirmationInputClassName = formInputClassName('px-4 focus:border-status-danger/45 focus:ring-status-danger/20');
 
-function getPostureClass(criticalClusters: number, warningClusters: number): string {
-  if (criticalClusters > 0) return 'border-status-danger/25 bg-status-danger-soft text-status-danger-text';
-  if (warningClusters > 0) return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
-  return 'border-status-success/25 bg-status-success-soft text-status-success-text';
-}
-
-function getPostureLabel(hasNonGreen: boolean, t: (key: string) => string): string {
-  return hasNonGreen ? t('dashboard.attention') : t('dashboard.optimal');
-}
-
 const Dashboard: React.FC<DashboardProps> = ({
   kubernetesClusters,
-  summaryKubernetesClusters,
   onSelectKubernetesCluster,
   onInstallAgent,
   workspaceName,
@@ -79,25 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [isDeletingCluster, setIsDeletingCluster] = useState(false);
   const [deleteClusterConfirmation, setDeleteClusterConfirmation] = useState('');
   const [openClusterActionMenuId, setOpenClusterActionMenuId] = useState<string | null>(null);
-  const summaryClusters = summaryKubernetesClusters ?? kubernetesClusters;
-  const setupRequiredClusters = summaryClusters.filter((cluster) => getAgentConnectionState(cluster) === 'not_installed').length;
-  const hasNonGreen = summaryClusters.some((cluster) => {
-    const issueSummary = issueSummaryByClusterId[cluster.id];
-    return Number(issueSummary?.total || 0) > 0 || getEffectiveHealthStatus(cluster) !== HealthStatus.GREEN || getAgentConnectionState(cluster) !== 'connected';
-  });
-  const criticalClusters = summaryClusters.filter((cluster) => {
-    const agentState = getAgentConnectionState(cluster);
-    const issueSummary = issueSummaryByClusterId[cluster.id];
-    return agentState !== 'not_installed' && (Number(issueSummary?.critical || 0) > 0 || getEffectiveHealthStatus(cluster) === HealthStatus.RED || agentState === 'disconnected');
-  }).length;
-  const warningClusters = summaryClusters.filter((cluster) => {
-    const agentState = getAgentConnectionState(cluster);
-    const issueSummary = issueSummaryByClusterId[cluster.id];
-    return agentState !== 'not_installed' && Number(issueSummary?.critical || 0) === 0 && (Number(issueSummary?.warning || 0) > 0 || getEffectiveHealthStatus(cluster) === HealthStatus.YELLOW);
-  }).length;
-  const connectedClusters = summaryClusters.filter((cluster) => getAgentConnectionState(cluster) === 'connected').length;
-  const clusterCount = totalClusterCount ?? summaryClusters.length;
-  const hasUnloadedClusters = clusterCount > summaryClusters.length;
+  const clusterCount = totalClusterCount ?? kubernetesClusters.length;
 
   useEffect(() => {
     if (!openClusterActionMenuId) return undefined;
@@ -165,49 +134,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           )}
         </>}
       />
-      <section data-cluster-inventory-summary="true" className={cardClassName({ className: 'overflow-hidden' })}>
-        <div
-          className={`grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,0.7fr)] lg:items-center ${getPostureClass(criticalClusters, warningClusters)}`}
-        >
-          <div className="flex min-w-0 items-start gap-4">
-            <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-current/15 bg-ui-surface/70">
-              <Activity className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="type-row-title">
-                {t(hasUnloadedClusters ? 'dashboard.loadedStatus' : 'dashboard.globalStatus', { status: getPostureLabel(hasNonGreen, t) })}
-              </p>
-              <p className="mt-1 text-sm leading-6 text-ui-text-muted">
-                {criticalClusters + warningClusters + setupRequiredClusters > 0
-                  ? t('dashboard.attentionSummary', { count: criticalClusters + warningClusters + setupRequiredClusters })
-                  : t('dashboard.activeSummary', { connected: connectedClusters, total: clusterCount })}
-              </p>
-            </div>
-          </div>
-          <dl className="grid overflow-hidden rounded-md border border-current/10 bg-ui-surface/70 sm:grid-cols-4 lg:min-w-[30rem]">
-            <div className="border-b border-ui-border/70 px-4 py-3 sm:border-b-0 sm:border-r">
-              <dt className="type-caption">{t('dashboard.clusters')}</dt>
-              <dd className="type-data mt-1">{clusterCount}</dd>
-            </div>
-            <div className="border-b border-ui-border/70 px-4 py-3 sm:border-b-0 sm:border-r">
-              <dt className="type-caption">{t('dashboard.attention')}</dt>
-              <dd className={`type-data mt-1 ${criticalClusters > 0 ? 'text-status-danger-text' : warningClusters > 0 ? 'text-status-warning-text' : 'text-status-success-text'}`}>
-                {criticalClusters + warningClusters}
-              </dd>
-            </div>
-            <div className="border-b border-ui-border/70 px-4 py-3 sm:border-b-0 sm:border-r">
-              <dt className="type-caption">{t('dashboard.setupRequired')}</dt>
-              <dd className="type-data mt-1">{setupRequiredClusters}</dd>
-            </div>
-            <div className="px-4 py-3">
-              <dt className="type-caption">{t('dashboard.active')}</dt>
-              <dd className="type-data mt-1 text-metric-blue">{connectedClusters}/{clusterCount}</dd>
-            </div>
-          </dl>
+      {catalogTabs && (
+        <div className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4">
+          {catalogTabs}
         </div>
-      </section>
-
-      {catalogTabs}
+      )}
 
       {kubernetesClusters.length > 0 || hasActiveClusterFilter || isCatalogLoading || catalogLoadError ? (
         <ClusterCatalog

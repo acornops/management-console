@@ -176,18 +176,18 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
 
   return (
     <PageShell>
-      <div className="flex flex-col gap-8">
-        <PageHeader title={t('virtualMachines.title')} description={t('virtualMachines.list.description')} actions={
-          <>
-            {canManageTargets && (
-              <Button onClick={onOpenRegisterVm} variant="primary" size="md" className="whitespace-nowrap">
-                <ICONS.Plus className="h-4 w-4" />
-                {t('virtualMachines.list.connectVm')}
-              </Button>
-            )}
-          </>
-        } />
+      <PageHeader title={t('virtualMachines.title')} description={t('virtualMachines.list.description')} actions={
+        <>
+          {canManageTargets && (
+            <Button onClick={onOpenRegisterVm} variant="primary" size="md" className="whitespace-nowrap">
+              <ICONS.Plus className="h-4 w-4" />
+              {t('virtualMachines.list.connectVm')}
+            </Button>
+          )}
+        </>
+      } />
 
+      <div className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4">
         <ResourceCategoryTabs<VmConnectionFilter>
           categories={VM_STATUS_FILTERS}
           active={status}
@@ -199,8 +199,9 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
           idBase="vm-catalog-filter"
           controlsId="vm-catalog-panel"
         />
+      </div>
 
-        <section id="vm-catalog-panel" role="tabpanel" tabIndex={0} aria-labelledby={`vm-catalog-filter-${status}-tab`} className="grid min-w-0 shrink-0 content-start gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
+      <section id="vm-catalog-panel" role="tabpanel" tabIndex={0} aria-labelledby={`vm-catalog-filter-${status}-tab`} className="grid min-w-0 shrink-0 content-start gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
         <div data-vm-catalog-controls="true" className="grid min-w-0 gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-4 shadow-sm sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,12rem)]">
           <div className="relative min-w-0">
             <label htmlFor="vm-search" className="sr-only">{t('virtualMachines.list.search')}</label>
@@ -360,8 +361,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
             </div>
           </div>
         )}
-        </section>
-      </div>
+      </section>
       <AnimatePresence>
         {deleteTargetVm && (
           <Dialog

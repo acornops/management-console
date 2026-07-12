@@ -10,10 +10,12 @@ const clusterTelemetryPanel = readFileSync(resolve(root, 'src/components/dashboa
 const kubernetesClustersPage = readFileSync(resolve(root, 'src/pages/KubernetesClustersPage.tsx'), 'utf8');
 
 describe('cluster catalog layout', () => {
-  it('keeps upstream route composition alongside route-backed operational filters', () => {
+  it('keeps canonical route composition alongside route-backed operational filters', () => {
     expect(dashboard).toContain('<PageShell>');
     expect(dashboard).toContain('<PageHeader');
-    expect(dashboard).toContain('data-cluster-inventory-summary="true"');
+    expect(dashboard).not.toContain('data-cluster-inventory-summary="true"');
+    expect(dashboard).not.toContain('globalStatus');
+    expect(dashboard).toContain('className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4"');
     expect(dashboard).toContain('{catalogTabs}');
     expect(kubernetesClustersPage).toContain('<ResourceCategoryTabs<ClusterCatalogStatusFilter>');
     expect(kubernetesClustersPage).toContain("'attention'");

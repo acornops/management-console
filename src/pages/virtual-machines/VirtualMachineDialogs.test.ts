@@ -71,6 +71,9 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachinesListView).not.toContain('h-[20rem]');
     expect(virtualMachinesListView).toContain('md:grid-cols-2 xl:grid-cols-3');
     expect(virtualMachinesListView).toContain('<ResourceCategoryTabs<VmConnectionFilter>');
+    expect(virtualMachinesListView).toContain('className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4"');
+    expect(virtualMachinesListView).not.toContain('fleetStatus');
+    expect(virtualMachinesListView).not.toContain('data-vm-inventory-summary');
     expect(virtualMachinesListView).toContain('data-vm-catalog-controls="true"');
     expect(virtualMachinesListView).toContain('className="w-full pl-11 lg:w-full"');
     expect(virtualMachinesListView).toContain('id="vm-catalog-panel" role="tabpanel"');
