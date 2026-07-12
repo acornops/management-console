@@ -63,9 +63,9 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain("t(`chat.approvalStatusLabel.${approvalStatus}`)");
     expect(approvalCheckpoint).toContain('const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval, t);');
     expect(approvalCheckpoint).toContain("String(value ?? '')");
-    expect(approvalCheckpoint).toContain("approval.toolName === 'apply_remediation'");
-    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.applyRemediation'");
-    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackTarget.selectedTarget')");
+    expect(approvalCheckpoint).not.toContain("approval.toolName === 'apply_remediation'");
+    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.scaleReplicasGuarded'");
+    expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.hpaOverrideConfirmed')");
     expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.genericTarget'");
     expect(approvalCheckpoint).toContain('className="px-4 py-4"');
     expect(approvalCheckpoint).toContain('<h3 className="text-sm font-semibold leading-6 text-ui-text">{t(\'chat.guardTitle\')}</h3>');

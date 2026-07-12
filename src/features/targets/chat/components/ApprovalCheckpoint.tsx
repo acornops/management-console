@@ -43,14 +43,19 @@ function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): strin
   if (approval.toolName === 'scale_workload') {
     const replicas = cleanText(approval.arguments?.replicas);
     const target = targetLabel(t, approval.arguments, t('chat.approvalFallbackTarget.workload'));
+    const guards = [
+      replicas === '0' && approval.arguments?.confirm_scale_to_zero === true
+        ? t('chat.approvalFallbackSummary.scaleToZeroConfirmed')
+        : '',
+      approval.arguments?.confirm_hpa_override === true
+        ? t('chat.approvalFallbackSummary.hpaOverrideConfirmed')
+        : ''
+    ].filter(Boolean).join('; ');
     return replicas
-      ? t('chat.approvalFallbackSummary.scaleReplicas', { target, replicas })
+      ? guards
+        ? t('chat.approvalFallbackSummary.scaleReplicasGuarded', { target, replicas, guards })
+        : t('chat.approvalFallbackSummary.scaleReplicas', { target, replicas })
       : t('chat.approvalFallbackSummary.scale', { target });
-  }
-  if (approval.toolName === 'apply_remediation') {
-    return t('chat.approvalFallbackSummary.applyRemediation', {
-      target: targetLabel(t, approval.arguments) || t('chat.approvalFallbackTarget.selectedTarget')
-    });
   }
   const target = targetLabel(t, approval.arguments);
   if (target) {

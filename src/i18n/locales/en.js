@@ -1058,8 +1058,10 @@ export const en = {
     approvalFallbackSummary: {
       restart: 'Restart {{target}}.',
       scaleReplicas: 'Scale {{target}} to {{replicas}} replicas.',
+      scaleReplicasGuarded: 'Scale {{target}} to {{replicas}} replicas ({{guards}}).',
+      scaleToZeroConfirmed: 'scale-to-zero confirmed',
+      hpaOverrideConfirmed: 'HPA override confirmed',
       scale: 'Scale {{target}}.',
-      applyRemediation: 'Apply the remediation plan to {{target}}.',
       genericTarget: 'Run {{tool}} against {{target}}.',
       generic: 'Run the requested write action.'
     },

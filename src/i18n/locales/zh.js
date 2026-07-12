@@ -1058,8 +1058,10 @@ export const zh = {
     approvalFallbackSummary: {
       restart: '重启 {{target}}。',
       scaleReplicas: '将 {{target}} 扩缩到 {{replicas}} 个副本。',
+      scaleReplicasGuarded: '将 {{target}} 扩缩到 {{replicas}} 个副本（{{guards}}）。',
+      scaleToZeroConfirmed: '已确认缩容至零',
+      hpaOverrideConfirmed: '已确认覆盖 HPA',
       scale: '扩缩 {{target}}。',
-      applyRemediation: '将修复计划应用到 {{target}}。',
       genericTarget: '对 {{target}} 运行 {{tool}}。',
       generic: '运行请求的写入操作。'
     },
