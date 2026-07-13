@@ -19,7 +19,7 @@ import {
   listAgentVersions,
   listWorkspaceAgents,
   restoreAgentVersion,
-  testAgent as testWorkspaceAgent,
+  runAgent as runWorkspaceAgent,
   updateAgent as updateWorkspaceAgent,
   type AgentVersionSnapshotApi
 } from '@/services/control-plane/agentApi';
@@ -203,16 +203,14 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     setTestingAgentId(agentToTest.id);
     setLocalNotice(null);
     try {
-      const result = await testWorkspaceAgent(workspace.id, agentToTest.id, {
+      const result = await runWorkspaceAgent(workspace.id, agentToTest.id, {
+        prompt: `Run ${agentToTest.name} using its configured scope and return an evidence-based result.`,
         approvedContextGrants: agentToTest.contextScope,
-        inputContext: { source: 'management_console' }
+        inputContext: { source: 'management_console' },
+        clientRequestId: crypto.randomUUID()
       });
-      setLocalNotice({ tone: 'success', message: `Test queued for ${agentToTest.name}. Check Activity for ${result.activity.id}.` });
-      updateSelectedAgent(agentToTest.id, (agent) => ({
-        ...agent,
-        activity: activityStateFromRecord(agent.activity, result.activity, agent.activity.runCount + 1),
-        auditHistory: [{ id: result.activity.id, summary: `Test run ${result.activity.status}`, occurredAt: result.activity.createdAt }, ...agent.auditHistory]
-      }));
+      setLocalNotice({ tone: 'success', message: `Run ${result.runId} queued for ${agentToTest.name}.` });
+      await refreshSelectedAgentActivity();
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Test could not be queued.' });
     } finally {

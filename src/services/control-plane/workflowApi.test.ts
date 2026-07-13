@@ -290,23 +290,27 @@ describe('workflow control-plane api', () => {
     });
   });
 
-  it('posts workflow chat messages with workspace scope', async () => {
+  it('posts selected cluster inputs for a target-bound workflow run', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'accepted' }), { status: 202 }));
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(postWorkflowSessionMessage('workspace-1', 'workflow-session-1', {
-      content: 'Scope is all servers',
-      inputs: { scope: 'all' }
+      content: 'Triage this cluster',
+      inputs: { targetId: 'cluster-1' },
+      targetId: 'cluster-1',
+      targetType: 'kubernetes'
     })).resolves.toEqual({ status: 'accepted' });
 
     const messageCall = fetchMock.mock.calls.at(-1);
     expect(messageCall?.[0]).toBe('http://localhost:8081/api/v1/workflow-sessions/workflow-session-1/messages');
     expect(JSON.parse(messageCall?.[1]?.body as string)).toEqual({
       workspaceId: 'workspace-1',
-      content: 'Scope is all servers',
-      inputs: { scope: 'all' }
+      content: 'Triage this cluster',
+      inputs: { targetId: 'cluster-1' },
+      targetId: 'cluster-1',
+      targetType: 'kubernetes'
     });
   });
 

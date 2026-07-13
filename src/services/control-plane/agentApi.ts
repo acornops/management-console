@@ -35,6 +35,7 @@ export interface AgentDefinitionApi {
   trustPolicy?: Record<string, unknown>;
   triggers?: AgentTriggerDefinitionApi[];
   activity?: { runCount?: number; lastRunAt?: string; lastStatus?: string };
+  readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
   capabilitySummary?: string;
   capabilities?: AgentCapability[];
   workflowsUsingAgent?: string[];
@@ -53,7 +54,7 @@ export type AgentUpdateInput = Partial<AgentCreateInput> & {
 
 export interface AgentTriggerDefinitionApi {
   id: string;
-  type: 'manual' | 'workflow_step' | 'schedule' | 'webhook' | 'audit_event' | 'target_event' | 'external_adapter';
+  type: 'manual' | 'workflow_step' | 'schedule' | 'webhook' | 'target_event';
   enabled: boolean;
   name?: string;
   schedule?: { cron: string; timezone: string };
@@ -178,6 +179,17 @@ export function testAgent(
         ...input
       })
     }
+  );
+}
+
+export function runAgent(
+  workspaceId: string,
+  agentId: string,
+  input: { prompt: string; inputContext?: Record<string, unknown>; targetId?: string; approvedContextGrants?: string[]; triggerId?: string; clientRequestId?: string }
+): Promise<{ runId: string; activityId: string; source: 'agent'; status: AgentActivityRecordApi['status'] }> {
+  return requestJson(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/runs`,
+    { method: 'POST', body: JSON.stringify(input) }
   );
 }
 

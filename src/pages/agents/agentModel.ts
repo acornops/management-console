@@ -47,21 +47,21 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
       id: 'agent-cluster-triage',
       workspaceId,
       name: 'Kubernetes Diagnostics',
-      description: 'Reads Kubernetes inventory, events, logs, and metrics for cluster triage. Log access requires approval.',
-      instructions: 'Use read-only cluster inventory, event, log, and metric tools.',
+      description: 'Reads Kubernetes inventory, resource details, and logs for cluster triage through the built-in AgentK tools.',
+      instructions: 'Use only the read-only get_resource, get_resource_logs, and list_resources tools.',
       status: 'active',
       source: 'system',
       providerType: 'internal',
       ownerUserId: defaultDevOwnerUserId,
       owner: defaultDevOwnerName,
-      version: 3,
+      version: 2,
       mcpServers: ['acornops-cluster-agent'],
-      tools: ['inventory.resources.list', 'events.search', 'logs.summarize', 'metrics.query'],
+      tools: ['get_resource', 'get_resource_logs', 'list_resources'],
       skills: ['acornops-observability', 'acornops-target-boundary-design'],
       targetScope: ['kubernetes:*'],
       contextScope: ['workspace_metadata', 'target_inventory'],
       approvalPolicy: {
-        sensitiveActions: 'approval_required',
+        sensitiveActions: 'allowed',
         writeActions: 'blocked'
       },
       trustPolicy: {
@@ -69,10 +69,9 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
         dataEgress: 'Workspace only'
       },
       capabilities: [
-        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'target_inventory', toolId: 'inventory.resources.list', operation: 'read', requiresApproval: false },
-        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'events', toolId: 'events.search', operation: 'read', requiresApproval: false },
-        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'logs', toolId: 'logs.summarize', operation: 'read', requiresApproval: true },
-        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'metrics', toolId: 'metrics.query', operation: 'read', requiresApproval: false },
+        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'resource', toolId: 'get_resource', operation: 'read', requiresApproval: false },
+        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'logs', toolId: 'get_resource_logs', operation: 'read', requiresApproval: false },
+        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'target_inventory', toolId: 'list_resources', operation: 'read', requiresApproval: false },
         { source: 'skill', resourceType: 'skill', resourceScope: 'diagnostics', operation: 'read', requiresApproval: false }
       ],
       workflowsUsingAgent: ['Cluster triage'],
@@ -83,8 +82,8 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
         lastStatus: 'completed'
       },
       auditHistory: [
-        { id: 'audit-agent-k8s-1', summary: 'Logs access changed to require approval', occurredAt: 'Today 09:12' },
-        { id: 'audit-agent-k8s-2', summary: 'Metrics query tool enabled', occurredAt: 'Jun 24 14:20' }
+        { id: 'audit-agent-k8s-1', summary: 'Built-in Kubernetes tool scope synchronized', occurredAt: 'Today 09:12' },
+        { id: 'audit-agent-k8s-2', summary: 'Read-only diagnostics policy confirmed', occurredAt: 'Jun 24 14:20' }
       ]
     },
     {

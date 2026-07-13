@@ -15,6 +15,7 @@ import { ScopeSwitch, agentIdsFromDraft, createAgentSelectionDraft, createFallba
 import { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import { AgentAssignmentList, WorkflowDeleteDialog, WorkflowLaunchActions, WorkflowLibraryList, WorkflowLoadFallbackNotice, WorkflowModeBadge, WorkflowRouteHeader, WorkflowSection, WorkflowTabPanel, workflowTabIcons } from '@/pages/WorkspaceWorkflowsPage.components';
 import { WorkflowCreateDrawer, type CreateWorkflowStep } from '@/pages/WorkspaceWorkflowsPage.createDrawer';
+import { getWorkflowLaunchInputState, WorkflowPromptEditor } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import { WorkflowAgentsPanel, WorkflowCapabilitiesPanel, WorkflowRunsPanel } from '@/pages/WorkspaceWorkflowsPage.panels';
 import { updateUrlSearch } from '@/hooks/useUrlSearchState';
 import { useWorkspaceWorkflowsUrlState } from '@/pages/workflows/useWorkspaceWorkflowsUrlState';
@@ -47,7 +48,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
   const selectedWorkflow = visibleWorkflows.find((workflow) => workflow.id === selectedWorkflowId) || visibleWorkflows[0] || (!query.trim() ? workflows[0] : undefined);
   const initialTab = new URLSearchParams(window.location.search).get('tab') as WorkflowTab | null;
   const [activeTab, setActiveTab] = useState<WorkflowTab>(initialTab && tabs.includes(initialTab) ? initialTab : 'overview');
-  const [, setIsEditingScopeTab] = useState<'' | 'capabilities'>('');
+  const [isEditingScopeTab, setIsEditingScopeTab] = useState<'' | 'capabilities'>('');
   const [workflowLoadError, setWorkflowLoadError] = useState('');
   const [workflowCatalogReady, setWorkflowCatalogReady] = useState(false);
   const [workflowCatalogReloadKey, setWorkflowCatalogReloadKey] = useState(0);
@@ -78,7 +79,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
   const [scopeDrafts, setScopeDrafts] = useState<Record<string, ScopeDraft>>({});
   const [scopeSaveError, setScopeSaveError] = useState<{ tab: 'capabilities'; message: string } | null>(null);
   const [scopeSaveResult, setScopeSaveResult] = useState<{ tab: 'capabilities'; message: string } | null>(null);
-  const [, setSavingScope] = useState('');
+  const [savingScope, setSavingScope] = useState('');
   const [agentSelectionDrafts, setAgentSelectionDrafts] = useState<Record<string, AgentSelectionDraft>>({});
   const [editingAgentSelectionId, setEditingAgentSelectionId] = useState('');
   const [agentSelectionError, setAgentSelectionError] = useState('');
@@ -300,9 +301,18 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
   const createWorkflowScopeOptions = useMemo(() => (
     getWorkflowScopeOptionsForAgents(agentIdsFromDraft(createDraft), workflowAgents, workflowOptions)
   ), [createDraft.agentIds, workflowAgents, workflowOptions]);
-  const launchBlocker = selectedWorkflow
+  const selectedWorkflowScopeOptions = useMemo(() => (
+    getWorkflowScopeOptionsForAgents(
+      selectedWorkflow?.agents.map((agent) => agent.agentId) || [],
+      workflowAgents,
+      workflowOptions
+    )
+  ), [selectedWorkflow?.agents, workflowAgents, workflowOptions]);
+  const baseLaunchBlocker = selectedWorkflow
     ? getWorkflowLaunchBlocker(selectedWorkflow, workflowMessage, workspace.permissions)
     : 'Select a workflow before launching.';
+  const launchInputState = getWorkflowLaunchInputState(selectedWorkflow, workflowOptions, workflowMessage);
+  const launchBlocker = baseLaunchBlocker || launchInputState.blocker;
   const isEditingWorkflow = Boolean(selectedWorkflow && editingWorkflowId === selectedWorkflow.id);
   const isWriteCapableSelected = Boolean(selectedWorkflow) && selectedWorkflow!.policy.mode !== 'read_only';
   const needsLaunchAcknowledgement = isWriteCapableSelected && launchAcknowledgedId !== selectedWorkflow?.id;
@@ -327,7 +337,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
   const workflowActions = useWorkspaceWorkflowActions({
     workspace, workflows, setWorkflows,
     selectedWorkflow, selectedWorkflowEditDraft, workflowMessage, workflowSessionIds, setWorkflowSessionIds,
-    setCompiledScopes, setLaunchError, setLaunchingWorkflowId, setLaunchResult, setActiveTab, setApprovalRecords, setApprovalError,
+    setCompiledScopes, setLaunchError, setLaunchingWorkflowId, setLaunchResult, setActiveTab: selectWorkflowTab, setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns,
     setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
     setRunLogError, setRunLogLoadingId, setCancelRunError, setCancelRunAction, setScopeSaveResult,
@@ -442,7 +452,12 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
                     title="Control message"
                     description="This is the instruction sent when the workflow starts. Keep it specific enough for audit review and follow-up."
                   >
-                    <Textarea aria-label="Control message" value={workflowMessage} onChange={(event) => setWorkflowMessage(event.target.value)} className="mt-3 min-h-32" />
+                    <WorkflowPromptEditor
+                      workflow={selectedWorkflow}
+                      catalog={workflowOptions}
+                      message={workflowMessage}
+                      onChange={setWorkflowMessage}
+                    />
                     <p className="type-caption mt-2 text-ui-text-muted">Changing this message affects only the next launch, not the saved workflow default.</p>
                   </WorkflowSection>
                   {selectedCompiledScope && <div role="status" aria-live="polite" aria-atomic="true" title="Compiled scope: the exact tool set available after applying agent access, workflow gates, and approvals." className="rounded-md border border-accent/25 bg-accent-soft p-3 text-xs font-semibold text-accent-strong">{selectedAccessTools.length} tools compiled for this run.</div>}
@@ -487,6 +502,15 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
                   scopeDraft={selectedScopeDraft}
                   scopeSaveError={scopeSaveError}
                   scopeSaveResult={scopeSaveResult}
+                  canManageWorkflowScope={canManageWorkflowScope}
+                  editing={isEditingScopeTab === 'capabilities'}
+                  saving={savingScope === selectedWorkflow.id}
+                  scopeOptions={selectedWorkflowScopeOptions}
+                  onStartEditing={() => workflowActions.startEditingScopeTab('capabilities')}
+                  onCancelEditing={workflowActions.cancelEditingScopeTab}
+                  onSave={() => void workflowActions.saveWorkflowScope('capabilities')}
+                  onSetWorkflowScopeValue={(key, value, enabled) => workflowActions.setWorkflowScopeValue(selectedWorkflow.id, key, value, enabled)}
+                  onSetStepToolValue={(stepId, value, enabled) => workflowActions.setStepScopeValue(selectedWorkflow.id, stepId, 'allowedTools', value, enabled)}
                   catalogFailures={(['mcpServers', 'mcpTools', 'agents'] as const).flatMap((source) => ['error', 'unavailable'].includes(workflowOptions.sourceAvailability[source]?.status) ? [workflowOptions.sourceAvailability[source]?.message || source] : [])}
                   onRetryCatalog={() => setWorkflowOptionsReloadKey((value) => value + 1)} onOpenMcpSettings={() => navigate('/settings?tab=workspace#workspace-mcp-title')}
                 />

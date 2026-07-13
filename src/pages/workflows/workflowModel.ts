@@ -5,8 +5,9 @@ export type WorkflowTab = 'overview' | 'agents' | 'capabilities' | 'runs' | 'set
 export interface WorkflowInput {
   name: string;
   label: string;
-  type: 'text' | 'select' | 'chat_session_list' | 'repository' | 'format';
+  type: 'text' | 'select' | 'cluster' | 'chat_session_list' | 'repository' | 'format';
   required: boolean;
+  optionSource?: string;
 }
 
 export interface WorkflowStep {
@@ -103,7 +104,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       id: 'cluster-triage',
       workspaceId,
       name: 'Cluster triage',
-      description: 'Investigate cluster signals using inventory, events, logs, and metrics before recommending next steps.',
+      description: 'Mention a Kubernetes cluster in the control message and investigate it using live built-in inventory, resource, and log evidence.',
       status: 'active',
       source: 'system',
       owner: 'AcornOps',
@@ -117,22 +118,28 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       ],
       requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
       enabledMcpServers: ['acornops-cluster-agent'],
-      allowedTools: ['inventory.resources.list', 'events.search', 'logs.summarize', 'metrics.query'],
+      allowedTools: ['get_resource', 'get_resource_logs', 'list_resources'],
       enabledSkills: ['acornops-observability', 'acornops-target-boundary-design'],
-      contextGrants: ['workspace_metadata'],
+      contextGrants: ['workspace_metadata', 'target_inventory'],
       disabledCapabilities: ['write tools'],
-      inputs: [],
+      inputs: [{
+        name: 'targetId',
+        label: 'Kubernetes cluster',
+        type: 'cluster',
+        required: true,
+        optionSource: 'clusters'
+      }],
       steps: [
         {
           id: 'triage-selected-cluster',
           title: 'Triage cluster signals',
           prompt: 'Inspect available cluster diagnostic signals and summarize likely causes, blast radius, and recommended operator actions.',
-          requiredInputs: [],
+          requiredInputs: ['targetId'],
           agentIds: ['agent-cluster-triage'],
           enabledSkills: ['acornops-observability', 'acornops-target-boundary-design'],
           allowedMcpServers: ['acornops-cluster-agent'],
-          allowedTools: ['inventory.resources.list', 'events.search', 'logs.summarize', 'metrics.query'],
-          contextGrants: ['workspace_metadata'],
+          allowedTools: ['get_resource', 'get_resource_logs', 'list_resources'],
+          contextGrants: ['workspace_metadata', 'target_inventory'],
           approvalRequired: false
         }
       ],
@@ -143,7 +150,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
         approvals: []
       },
       scope: { type: 'workspace' },
-      starterPrompt: 'Triage the available cluster diagnostic signals. Start by showing the compiled read scope.',
+      starterPrompt: 'Triage @cluster[Cluster name] using live built-in inventory, resource, and log evidence.',
       runs: [
         {
           id: 'wf-run-4812',
@@ -161,7 +168,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       workspaceId,
       name: 'Repository operation',
       description: 'Perform a guided operation against a selected Git repository, such as adding configuration and opening a PR.',
-      status: 'active',
+      status: 'paused',
       source: 'system',
       owner: 'AcornOps',
       category: 'git-operations',
@@ -218,7 +225,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
       id: 'incident-report-pdf',
       workspaceId,
       name: 'Incident report PDF',
-      description: 'Read selected incident chat sessions and generate a PDF report with timeline, impact, and follow-up actions.',
+      description: 'Mention incident chat sessions in the control message and generate a PDF report with timeline, impact, and follow-up actions.',
       status: 'active',
       source: 'system',
       owner: 'AcornOps',
@@ -232,24 +239,30 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
         { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Finding capability', required: false }
       ],
       requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
-      enabledMcpServers: ['workspace-chat', 'artifact-writer'],
+      enabledMcpServers: [],
       allowedTools: ['chat.sessions.read_selected', 'reports.pdf.generate'],
       enabledSkills: ['acornops-observability'],
       contextGrants: ['selected_chat_sessions'],
       disabledCapabilities: ['broad workspace chat history'],
-      inputs: [],
+      inputs: [{
+        name: 'chatSessionIds',
+        label: 'Incident chats',
+        type: 'chat_session_list',
+        required: true,
+        optionSource: 'chatSessions'
+      }],
       steps: [
         {
           id: 'generate-incident-report',
           title: 'Generate incident report',
           prompt: 'Read selected incident chats, extract the timeline and evidence, then generate a PDF report artifact.',
-          requiredInputs: [],
+          requiredInputs: ['chatSessionIds'],
           agentIds: ['agent-incident-reporter'],
           enabledSkills: ['acornops-observability'],
-          allowedMcpServers: ['workspace-chat', 'artifact-writer'],
+          allowedMcpServers: [],
           allowedTools: ['chat.sessions.read_selected', 'reports.pdf.generate'],
           contextGrants: ['selected_chat_sessions'],
-          approvalRequired: false,
+          approvalRequired: true,
           outputArtifacts: [{ id: 'incident-report', type: 'pdf', title: 'Incident report PDF', required: true }]
         }
       ],
@@ -260,7 +273,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
         approvals: ['Before reading selected chats']
       },
       scope: { type: 'workspace' },
-      starterPrompt: 'Generate an incident report from the selected chats. Show the selected chat sessions and report outline before producing the PDF.',
+      starterPrompt: 'Generate an incident report from @chat[Incident chat title]. Show the referenced chat sessions and report outline before producing the PDF.',
       runs: [
         {
           id: 'wf-run-4590',

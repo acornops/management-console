@@ -517,8 +517,9 @@ export function mapApiWorkflowToDefinition(
       ? workflow.inputs.map((input) => ({
           name: input.name,
           label: input.label,
-          type: input.type === 'output_format' ? 'format' : (['text', 'select', 'chat_session_list', 'repository', 'format'].includes(input.type) ? input.type as WorkflowDefinition['inputs'][number]['type'] : 'select'),
-          required: input.required
+          type: input.type === 'output_format' ? 'format' : (['text', 'select', 'cluster', 'chat_session_list', 'repository', 'format'].includes(input.type) ? input.type as WorkflowDefinition['inputs'][number]['type'] : 'select'),
+          required: input.required,
+          optionSource: input.optionSource
         }))
       : requiredInputs.map((name) => ({
           name,

@@ -14,6 +14,7 @@ import {
   WorkflowTabPanel
 } from '@/pages/WorkspaceWorkflowsPage.components';
 import type { WorkflowDefinition, WorkflowRunMessage } from '@/pages/workflows/workflowModel';
+import { WorkflowScopeMultiSelect, type WorkflowScopeOptions } from '@/pages/WorkspaceWorkflowsPage.scope';
 import {
   getWorkflowAgentCapabilityReview,
   type WorkflowAgentCapabilityReview
@@ -444,10 +445,19 @@ export const WorkflowCapabilitiesPanel: React.FC<{
   scopeDraft: ScopeDraft;
   scopeSaveError: { tab: 'capabilities'; message: string } | null;
   scopeSaveResult: { tab: 'capabilities'; message: string } | null;
+  canManageWorkflowScope: boolean;
+  editing: boolean;
+  saving: boolean;
+  scopeOptions: WorkflowScopeOptions;
+  onStartEditing: () => void;
+  onCancelEditing: () => void;
+  onSave: () => void;
+  onSetWorkflowScopeValue: (key: 'enabledMcpServers' | 'enabledSkills', value: string, enabled: boolean) => void;
+  onSetStepToolValue: (stepId: string, value: string, enabled: boolean) => void;
   catalogFailures: string[];
   onRetryCatalog: () => void;
   onOpenMcpSettings: () => void;
-}> = ({ workflow, agents, scopeDraft: _scopeDraft, scopeSaveError, scopeSaveResult, catalogFailures, onRetryCatalog, onOpenMcpSettings }) => {
+}> = ({ workflow, agents, scopeDraft, scopeSaveError, scopeSaveResult, canManageWorkflowScope, editing, saving, scopeOptions, onStartEditing, onCancelEditing, onSave, onSetWorkflowScopeValue, onSetStepToolValue, catalogFailures, onRetryCatalog, onOpenMcpSettings }) => {
   const { t } = useTranslation();
   const agentReviews = getWorkflowAgentCapabilityReview(workflow, agents);
 
@@ -456,6 +466,12 @@ export const WorkflowCapabilitiesPanel: React.FC<{
       tab="capabilities"
       title="Capability review"
       description="Read the effective access path before launch: selected agents provide access, gates remove capabilities, and approvals pause sensitive steps."
+      actions={!editing ? (
+        <Button type="button" variant="secondary" size="sm" onClick={onStartEditing} disabled={!canManageWorkflowScope} title={!canManageWorkflowScope ? 'You need manage_workflows to edit workflow capabilities.' : undefined}>
+          <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
+          Edit capabilities
+        </Button>
+      ) : undefined}
     >
       {scopeSaveError?.tab === 'capabilities' && <div role="alert" aria-live="assertive" className="mt-4 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{scopeSaveError.message}</div>}
       {scopeSaveResult?.tab === 'capabilities' && <div role="status" aria-live="polite" aria-atomic="true" className="mt-4 rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{scopeSaveResult.message}</div>}
@@ -466,9 +482,55 @@ export const WorkflowCapabilitiesPanel: React.FC<{
         </div>
       )}
 
-      <AgentCapabilityReviewList agentReviews={agentReviews} />
+      {editing && (
+        <section className="rounded-lg border border-ui-border bg-ui-surface p-4 sm:p-5" aria-label="Edit workflow capabilities">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <WorkflowScopeMultiSelect
+              label="Built-in MCP server"
+              value={scopeDraft.enabledMcpServers}
+              options={scopeOptions.mcpServers}
+              searchPlaceholder="Search built-in server"
+              emptyMessage="No built-in MCP server is available."
+              selectedEmptyLabel="No server selected"
+              onToggle={(option, checked) => onSetWorkflowScopeValue('enabledMcpServers', option.value, checked)}
+            />
+            <WorkflowScopeMultiSelect
+              label="Skills"
+              value={scopeDraft.enabledSkills}
+              options={scopeOptions.skills}
+              searchPlaceholder="Search skills"
+              emptyMessage="No skills are available from the selected agents."
+              selectedEmptyLabel="No skills selected"
+              onToggle={(option, checked) => onSetWorkflowScopeValue('enabledSkills', option.value, checked)}
+            />
+          </div>
+          <p className="type-caption mt-3 text-ui-text-muted">The AcornOps Kubernetes Tools connection is system-owned. This gate controls access; it cannot replace the server URL or credentials.</p>
+          <div className="mt-5 grid gap-5">
+            {workflow.steps.map((step) => (
+              <WorkflowScopeMultiSelect
+                key={step.id}
+                label={`${step.title} tools`}
+                value={scopeDraft.steps[step.id]?.allowedTools || ''}
+                options={scopeOptions.mcpTools}
+                searchPlaceholder="Search built-in tools"
+                emptyMessage="No built-in tools are available from the selected agents."
+                selectedEmptyLabel="No tools selected"
+                onToggle={(option, checked) => onSetStepToolValue(step.id, option.value, checked)}
+              />
+            ))}
+          </div>
+          <div className="mt-5 flex justify-end gap-2 border-t border-ui-border pt-4">
+            <Button type="button" variant="secondary" size="sm" onClick={onCancelEditing} disabled={saving}>Cancel</Button>
+            <Button type="button" variant="primary" size="sm" onClick={onSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save capability gate'}
+            </Button>
+          </div>
+        </section>
+      )}
 
-      <section className="border-t border-ui-border pt-5">
+      {!editing && <AgentCapabilityReviewList agentReviews={agentReviews} />}
+
+      {!editing && <section className="border-t border-ui-border pt-5">
         <dl className="min-w-0 divide-y divide-ui-border">
           <CapabilityReviewRow
             label="Blocked capabilities"
@@ -483,7 +545,7 @@ export const WorkflowCapabilitiesPanel: React.FC<{
             emptyLabel="No approval constraints configured."
           />
         </dl>
-      </section>
+      </section>}
     </WorkflowTabPanel>
   );
 };

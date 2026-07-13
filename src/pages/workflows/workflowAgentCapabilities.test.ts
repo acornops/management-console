@@ -19,9 +19,9 @@ describe('workflowAgentCapabilities', () => {
     expect(review[0].agentId).toBe('agent-cluster-triage');
     expect(review[0].mcpServers).toEqual(['acornops-cluster-agent']);
     expect(review[0].skills).toEqual(['acornops-observability', 'acornops-target-boundary-design']);
-    expect(review[0].tools).toEqual(['inventory.resources.list', 'events.search', 'logs.summarize', 'metrics.query']);
+    expect(review[0].tools).toEqual(['get_resource', 'get_resource_logs', 'list_resources']);
     expect(review[0].tools).not.toContain('mock.tool');
     expect(review[0].approvalPolicy).toContain('Write actions: blocked');
-    expect(review[0].capabilityRules).toContain('read kubernetes target_inventory via inventory.resources.list');
+    expect(review[0].capabilityRules).toContain('read kubernetes target_inventory via list_resources');
   });
 });

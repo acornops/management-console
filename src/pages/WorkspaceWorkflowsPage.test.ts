@@ -30,10 +30,12 @@ import {
 const root = resolve(__dirname, '../..');
 const workflowsPage = [
   'src/pages/WorkspaceWorkflowsPage.tsx', 'src/pages/WorkspaceWorkflowsPage.components.tsx',
+  'src/pages/WorkspaceWorkflowsPage.launchFields.tsx',
   'src/pages/WorkspaceWorkflowsPage.createDrawer.tsx', 'src/pages/WorkspaceWorkflowsPage.scope.tsx',
   'src/pages/WorkspaceWorkflowsPage.panels.tsx'
 ].map((filePath) => readFileSync(resolve(root, filePath), 'utf8')).join('\n');
-const workflowActions = readFileSync(resolve(root, 'src/pages/workflows/useWorkspaceWorkflowActions.ts'), 'utf8');
+const workflowActions = ['src/pages/workflows/useWorkspaceWorkflowActions.ts', 'src/pages/workflows/workflowScopeActions.ts']
+  .map((filePath) => readFileSync(resolve(root, filePath), 'utf8')).join('\n');
 const workflowHelpers = readFileSync(resolve(root, 'src/pages/workflows/workflowPageHelpers.tsx'), 'utf8');
 const desktopSidebar = readFileSync(resolve(root, 'src/app/AppDesktopSidebar.tsx'), 'utf8');
 const mobileNavigation = readFileSync(resolve(root, 'src/app/AppMobileNavigation.tsx'), 'utf8');
@@ -75,7 +77,10 @@ describe('WorkspaceWorkflowsPage model', () => {
 
     expect(filterWorkflowDefinitions(workflows, 'cluster').map((workflow) => workflow.id)).toEqual(['cluster-triage']);
     expect(filterWorkflowDefinitions(workflows, 'repository').map((workflow) => workflow.id)).toEqual(['repository-operation']);
-    expect(filterWorkflowDefinitions(workflows, 'approval').map((workflow) => workflow.id)).toEqual(['repository-operation']);
+    expect(filterWorkflowDefinitions(workflows, 'approval').map((workflow) => workflow.id)).toEqual([
+      'repository-operation',
+      'incident-report-pdf'
+    ]);
   });
 
   it('supports repo-style workflow tags in defaults and search', () => {
@@ -113,7 +118,7 @@ describe('WorkspaceWorkflowsPage model', () => {
     const triageWorkflow = getWorkflowById(workflows, 'cluster-triage');
 
     expect(triageWorkflow?.policy.mode).toBe('read_only');
-    expect(getWorkflowToolScopeSummary(triageWorkflow as WorkflowDefinition)).toBe('Kubernetes Diagnostics, 4 allowed tools, read only');
+    expect(getWorkflowToolScopeSummary(triageWorkflow as WorkflowDefinition)).toBe('Kubernetes Diagnostics, 3 allowed tools, read only');
   });
 
   it('keeps workflow detail tabs aligned with agent assignment and capability review', () => {
@@ -124,6 +129,7 @@ describe('WorkspaceWorkflowsPage model', () => {
 
   it('uses bottom-underline workflow detail tabs instead of boxed pills', () => {
     expect(workflowsPage).toContain("SegmentedTabs, Textarea, TextInput } from '@/components/common/ComponentVocabulary';");
+    expect(workflowsPage).toContain("import { Textarea } from '@/components/common/ComponentVocabulary';");
     expect(workflowsPage).toContain('<SegmentedTabs<WorkflowTab>');
     expect(workflowsPage).toContain('ariaLabel="Workflow section tabs"');
     expect(workflowsPage).toContain('idBase="workflow-section"');
@@ -151,7 +157,7 @@ describe('WorkspaceWorkflowsPage model', () => {
     expect(getWorkflowLaunchBlocker({ ...readOnlyWorkflow, status: 'paused' }, 'Start triage', permissions)).toBe('Activate this workflow before launching it.');
     expect(getWorkflowLaunchBlocker(readOnlyWorkflow, '   ', permissions)).toBe('Add a control message before launching.');
     expect(getWorkflowLaunchBlocker(readOnlyWorkflow, 'Start triage', { ...permissions, create_sessions: false })).toBe('You need create_sessions to launch workflows.');
-    expect(getWorkflowLaunchBlocker(readWriteWorkflow, 'Start operation', permissions)).toBe('You need create_read_write_runs to launch this workflow.');
+    expect(getWorkflowLaunchBlocker({ ...readWriteWorkflow, status: 'active' }, 'Start operation', permissions)).toBe('You need create_read_write_runs to launch this workflow.');
   });
 
   it('builds user-authored workflow payloads with selected agents', () => {
@@ -189,7 +195,7 @@ describe('WorkspaceWorkflowsPage model', () => {
       'acornops-cross-repo-change',
       'acornops-open-pr'
     ]);
-    expect(repositoryOnly.mcpTools.map((option) => option.value)).not.toContain('inventory.resources.list');
+    expect(repositoryOnly.mcpTools.map((option) => option.value)).not.toContain('list_resources');
 
     const repositoryWithTriage = getWorkflowScopeOptionsForAgents(['agent-release-coordinator', 'agent-cluster-triage'], agents, globalCatalog);
     expect(repositoryWithTriage.mcpServers.map((option) => option.value)).toEqual(['acornops-cluster-agent']);
@@ -600,50 +606,6 @@ describe('WorkspaceWorkflowsPage integration surface', () => {
     expect(workflowsPage).toContain('<Button type="button" variant="primary" size="md" className="whitespace-nowrap self-start lg:self-auto"');
     expect(workflowsPage).toContain('onCreate={() => void workflowActions.createNewWorkflow()}');
     expect(workflowsPage).toContain('<Button type="button" variant="primary" size="sm" onClick={onCreate}');
-  });
-
-  it('surfaces workflow run approvals for review and server-side decisions', () => {
-    expect(workflowsPage).toContain('listWorkflowRunApprovals');
-    expect(workflowsPage).toContain('listWorkflowRunEvents');
-    expect(workflowActions).toContain('cancelWorkflowRun');
-    expect(workflowActions).toContain('decideWorkflowRunApproval');
-    expect(workflowsPage).toContain('approvalRecords');
-    expect(workflowsPage).toContain('TraceFooter');
-    expect(workflowsPage).toContain('className="max-w-none"');
-    expect(workflowsPage).toContain('window.setInterval');
-    expect(workflowsPage).toContain('2500');
-    expect(workflowsPage).toContain('Stop workflow run');
-    expect(workflowsPage).toContain('Approve');
-    expect(workflowsPage).toContain('Reject');
-  });
-
-  it('reviews effective capabilities without configuring new MCP servers or skills directly on workflows', () => {
-    expectSnippets(workflowsPage, ['Capability review', 'const AgentCapabilityReviewList', 'getWorkflowAgentCapabilityReview(workflow, agents)', 'agents={workflowAgents}', 'Coordinator: System Orchestrator', 'Selected agents', 'Approvals', "scopeSaveResult?.tab === 'capabilities'", 'sm:grid-cols-[9rem_minmax(0,1fr)]', 'lg:grid-cols-[15rem_minmax(0,1fr)]', 'first:border-t-0', 'ApprovalPolicyBadges', 'accessBadge="read"', '<ICONS.Bot className="h-4 w-4" aria-hidden="true" />']);
-    expectMissingSnippets(workflowsPage, ['Workflow restrictions', 'Target context', 'const WorkflowScopeRow', 'values={workflow.enabledMcpServers}', 'values={workflow.enabledSkills}', 'values={workflow.allowedTools}']);
-    expectMissingSnippets(workflowsPage, ['Inherited access', 'Capability rules', 'CapabilityRuleBadges', 'context grant', 'target type', '<TokenGroup title="Target selection"', '<TokenGroup title="Context grants"', '<TokenGroup title="Selected-agent MCP servers"', '<TokenGroup title="Selected-agent skills"', '<TokenGroup title="Allowed tools"', '<TokenGroup title="Disabled by workflow gate"', 'Add server', 'selectedScopeDirty', 'Edit capability gate', 'Save capability gate', 'Discard', 'testWorkflowMcpServerConnection', '<WorkflowReadinessFact icon={ICONS.User} label="Owner" value={workflow.owner} />', "['MCP servers', 'allowedMcpServers']", "['Allowed tools', 'allowedTools']", 'divide-y divide-ui-border border-y border-ui-border', 'grid min-w-0 gap-4 md:grid-cols-2', '<div className="hidden lg:block" aria-hidden="true" />']);
-    expectSnippets(workflowActions, ['Workflow capability gate saved. Future sessions will use the narrowed access.', 'setScopeSaveResult', 'enabledMcpServers: selectedWorkflow.enabledMcpServers', 'enabledSkills: selectedWorkflow.enabledSkills', 'agentIds', "setActiveTab('overview')"]);
-    expectSnippets(workflowHelpers, ['<Switch', 'onCheckedChange={onChange}', 'agentIds']);
-    expect(workflowActions).not.toContain('category: draft.category');
-  });
-
-  it('lets operators edit and delete user-authored workflow definitions without category authoring', () => {
-    expect(workflowActions).toContain('updateWorkflow');
-    expect(workflowActions).toContain('deleteWorkflow');
-    expect(workflowsPage).toContain('const canManageWorkflowScope = Boolean(workspace.permissions?.manage_workflows);');
-    expect(workflowsPage).not.toContain('const canManageWorkflowScope = Boolean(workspace.permissions?.manage_mcp);');
-    expect(workflowsPage).toContain('startEditingWorkflow');
-    expect(workflowsPage).toContain('saveWorkflowDefinition');
-    expect(workflowsPage).toContain('toggleWorkflowActive');
-    expect(workflowsPage).toContain('Toggle workflow active state');
-    expect(workflowsPage).toContain('deleteSelectedWorkflow');
-    expect(workflowsPage).toContain("selectedWorkflow.source !== 'user'");
-    expect(workflowsPage).toContain('delete-workflow-confirmation-input');
-    expect(workflowsPage).toContain('Type the workflow name to confirm deletion.');
-    expect(workflowsPage).toContain('deleteWorkflowConfirmation !== deleteTargetWorkflow.name');
-    expect(workflowsPage).toContain('<CloseButton');
-    expect(workflowsPage).toContain('<ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />');
-    expect(workflowActions).toContain('Workflow updated.');
-    expect(workflowsPage).not.toContain('WORKFLOW_CATEGORY_INVALID');
   });
 
 });

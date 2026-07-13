@@ -71,13 +71,14 @@ export const WorkflowLaunchActions: React.FC<{
   isWriteCapable: boolean;
   launchAcknowledged: boolean;
   launchBlocker: string | null;
+  launchFields?: React.ReactNode;
   launching: boolean;
   needsLaunchAcknowledgement: boolean;
   onAcknowledgementChange: (checked: boolean) => void;
   onLaunch: () => void;
   onSchedule: () => void;
   tags: string[];
-}> = ({ canManageWorkflowScope, isWriteCapable, launchAcknowledged, launchBlocker, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onLaunch, onSchedule, tags }) => (
+}> = ({ canManageWorkflowScope, isWriteCapable, launchAcknowledged, launchBlocker, launchFields, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onLaunch, onSchedule, tags }) => (
   <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
     <div className="min-w-0">
       {tags.length > 0 && (
@@ -87,6 +88,7 @@ export const WorkflowLaunchActions: React.FC<{
           ))}
         </div>
       )}
+      {launchFields && <div className={`${tags.length > 0 ? 'mt-3' : ''}`}>{launchFields}</div>}
       {isWriteCapable && !launchBlocker && (
         <label id="workflow-launch-acknowledgement" className={`${tags.length > 0 ? 'mt-2' : ''} flex min-h-11 cursor-pointer items-center gap-2 text-ui-text-muted transition-colors hover:text-ui-text focus-within:text-ui-text`}>
           <Checkbox checked={launchAcknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="shrink-0" />

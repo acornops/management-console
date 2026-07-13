@@ -48,7 +48,7 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(page).toContain('AgentWorkspaceDrawer');
     expect(drawers).toContain('max-w-[min(100vw,64rem)]');
     expect(workspace).toContain("['overview', 'capabilities', 'activity', 'versions']");
-    expect(workspace).toContain("'Run test'");
+    expect(workspace).toContain("'Run agent'");
     expect(workspace).not.toContain('Run readiness');
   });
 
@@ -62,7 +62,7 @@ describe('WorkspaceAgentsPage surface', () => {
 
   it('preserves RBAC, activity, versions, restore, and lifecycle requests', () => {
     expect(page).toContain('canManageWorkspaceAgents');
-    expect(page).toContain('testWorkspaceAgent');
+    expect(page).toContain('runWorkspaceAgent');
     expect(page).toContain('restoreAgentVersion');
     expect(page).toContain('deleteWorkspaceAgent');
     expect(workspace).toContain('Danger zone');

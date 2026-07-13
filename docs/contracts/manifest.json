@@ -121,6 +121,8 @@
       "plannedWorkflowPaths": [
         "GET /api/v1/workspaces/{workspaceId}/agents",
         "POST /api/v1/workspaces/{workspaceId}/agents",
+        "GET /api/v1/workspaces/{workspaceId}/automation/diagnostics",
+        "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/runs",
         "GET /api/v1/agents/{agentId}?workspaceId={workspaceId}",
         "PATCH /api/v1/agents/{agentId}",
         "DELETE /api/v1/agents/{agentId}",
@@ -154,6 +156,11 @@
         "GET /api/v1/workflows/{workflowId}/sessions",
         "POST /api/v1/workflows/{workflowId}/sessions",
         "POST /api/v1/workflow-sessions/{sessionId}/messages",
+        "GET /api/v1/workflow-executions/{executionId}",
+        "POST /api/v1/workflow-executions/{executionId}/cancel",
+        "POST /api/v1/workflow-executions/{executionId}/resume",
+        "GET /api/v1/workflow-reports/{reportId}",
+        "GET /api/v1/workflow-reports/{reportId}/download",
         "GET /internal/v1/workflow-sessions/{sessionId}/context"
       ],
       "webhookPaths": [
@@ -259,7 +266,8 @@
         "patchCluster": ["name?", "namespaceInclude?", "namespaceExclude?", "writeConfirmationRequiredOverride?"],
         "registerVirtualMachine": ["name", "hostname?", "osFamily?", "serviceManager?", "allowedLogSources?"],
         "patchVirtualMachine": ["name?", "hostname?", "allowedLogSources?"],
-        "postMessage": ["content", "toolAccessMode", "clientMessageId"]
+        "postMessage": ["content", "toolAccessMode", "clientMessageId"],
+        "postWorkflowMessage": ["content", "inputs?", "clientRequestId?", "targetId?", "targetType?"]
       },
       "responseFields": {
         "user": ["quota.workspaceMemberships.{used,limit}"],
@@ -296,7 +304,11 @@
         "runApprovalDecision": ["targetId", "targetType", "clusterId?", "summary?", "conflict.approval.{targetId,targetType,clusterId?,summary?}"],
         "postMessageAccepted": ["message_id", "run_id"],
         "runEventFrame": ["schema_version", "run_id", "seq", "ts", "type", "payload"],
-        "agent": ["id", "workspaceId", "name", "description?", "instructions", "status", "source", "kind", "providerType", "version", "ownerUserId", "mcpServers[]", "tools[]", "skills[]", "contextGrants[]", "targetScope", "approvalPolicy", "trustPolicy", "triggers[]", "activity"],
+        "agent": ["id", "workspaceId", "name", "description?", "instructions", "status", "source", "kind", "providerType", "version", "ownerUserId", "mcpServers[]", "tools[]", "skills[]", "contextGrants[]", "targetScope", "approvalPolicy", "trustPolicy", "triggers[]", "activity", "readiness.{status,reasons[]}"],
+        "agentRunAccepted": ["runId", "activityId", "source=agent", "status"],
+        "automationDiagnostics": ["status", "runtime.{mode,workspaceEnabled,workerIntervalMs}", "dispatch.{byStatus,oldestPendingAgeSeconds}", "runs.{agentByStatus,workflowByStatus,active}", "triggers.{deliveriesByStatus,schedulerLagSeconds}", "approvals.{pending,oldestPendingAgeSeconds}", "templates.{byReadiness,items[]}", "reports.retainedSources", "checkedAt"],
+        "workflowExecutionAccepted": ["executionId", "run_id", "workflow_run_id", "status"],
+        "workflowReport": ["id", "executionId", "runId", "sourceVersion", "mediaType", "title", "sourceSizeBytes", "retentionExpiresAt", "no PDF bytes"],
         "workflowSelectedAgents": ["orchestratorAgentId", "steps[].agentIds[]", "compiledAccessScope.selectedAgents[]", "jwtClaims.agent_id? explicit direct/delegated agent only", "jwtClaims.agent_version? explicit direct/delegated agent only", "jwtClaims.trigger_id?"],
         "workflowSchedule": ["id", "workspaceId", "workflowId", "workflowVersion", "name", "status", "cron", "timezone", "inputDefaults", "approvedContextGrants", "nextRunAt?", "lastRunAt?", "lastStatus?", "lastError?", "createdBy", "updatedBy"],
         "workflowSchedulePage": ["items", "summary.{total,active,paused,approvalGated,nextRunAt?}"],

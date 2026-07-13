@@ -8,23 +8,20 @@ import {
   listWorkflowRunEvents,
   postWorkflowSessionMessage,
   updateWorkflow,
-  updateWorkflowScope,
   type WorkflowRunEvent
 } from '@/services/control-plane/workflowApi';
 import {
   agentIdsFromDraft,
   createAgentSelectionDraft,
-  createScopeDraft,
   buildWorkflowCreateInput,
   createWorkflowDraft,
   createWorkflowEditDraft,
   mapApiWorkflowToDefinition,
-  setLineValue,
-  splitLines,
   uniqueValues,
-  type ScopeDraft,
   type WorkflowEditDraft
 } from './workflowPageHelpers';
+import { createWorkflowScopeActions } from './workflowScopeActions';
+import { getWorkflowLaunchInputState } from '../WorkspaceWorkflowsPage.launchFields';
 
 type WorkflowActionsContext = Record<string, any>;
 
@@ -34,10 +31,10 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     selectedWorkflow, selectedWorkflowEditDraft, workflowMessage, workflowSessionIds, setWorkflowSessionIds,
     setCompiledScopes, setLaunchError, setLaunchingWorkflowId, setLaunchResult, setActiveTab, setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns, setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
-    setRunLogError, setRunLogLoadingId, setCancelRunError, setCancelRunAction, setScopeSaveResult,
+    setRunLogError, setRunLogLoadingId, setCancelRunError, setCancelRunAction,
     workflowRunMessageDrafts, setWorkflowRunMessageDrafts, setWorkflowRunMessages,
     setWorkflowRunMessageSendingId, setWorkflowRunMessageErrorByRunId,
-    setScopeDrafts, setScopeSaveError, setIsEditingScopeTab, scopeDrafts, setSavingScope, setNewWorkflowTag,
+    setNewWorkflowTag,
     newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
     setDeleteWorkflowId, setEditingWorkflowId, setUpdatingWorkflowId, setSelectedWorkflowId, setDeletingWorkflowId,
     createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
@@ -51,6 +48,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   const ownerLabelsByUserId = providedOwnerLabelsByUserId instanceof Map
     ? providedOwnerLabelsByUserId
     : new Map<string, string>(ownerLabelEntries);
+  const scopeActions = createWorkflowScopeActions({ ...ctx, ownerLabelsByUserId });
 
   function closeCreateWorkflowPanel(): void {
     setCreatePanelOpen(false);
@@ -95,6 +93,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       : workflow));
     setLaunchingWorkflowId(selectedWorkflow.id);
     try {
+      const controlMessage = workflowMessage || selectedWorkflow.starterPrompt;
+      const promptReferences = getWorkflowLaunchInputState(selectedWorkflow, workflowOptions, controlMessage);
       let effectiveSessionId = workflowSessionIds[selectedWorkflow.id];
       if (!effectiveSessionId) {
         const sessionResponse = await createWorkflowSession(workspace.id, selectedWorkflow.id, {
@@ -105,7 +105,12 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         setCompiledScopes((current) => ({ ...current, [selectedWorkflow.id]: sessionResponse.compiledAccessScope }));
       }
       const result = await postWorkflowSessionMessage(workspace.id, effectiveSessionId, {
-        content: workflowMessage || selectedWorkflow.starterPrompt
+        content: controlMessage,
+        inputs: promptReferences.inputs,
+        ...(promptReferences.targetId ? {
+          targetId: promptReferences.targetId,
+          targetType: promptReferences.targetType
+        } : {})
       });
       const runId = typeof result.run_id === 'string'
         ? result.run_id
@@ -236,8 +241,14 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     }));
     setWorkflowRunMessageSendingId(runId);
     try {
+      const promptReferences = getWorkflowLaunchInputState(selectedWorkflow, workflowOptions, content);
       await postWorkflowSessionMessage(workspace.id, sessionId, {
-        content
+        content,
+        inputs: selectedWorkflow ? promptReferences.inputs : {},
+        ...(promptReferences.targetId ? {
+          targetId: promptReferences.targetId,
+          targetType: promptReferences.targetType
+        } : {})
       });
       setWorkflowRunMessages((current: Record<string, WorkflowRunMessage[]>) => ({
         ...current,
@@ -326,96 +337,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     }
   }
 
-  function updateScopeDraft(workflowId: string, update: (draft: ScopeDraft) => ScopeDraft): void {
-    setScopeSaveResult(null);
-    setScopeDrafts((current) => {
-      const workflow = workflows.find((item) => item.id === workflowId);
-      const currentDraft = current[workflowId] || (workflow ? createScopeDraft(workflow) : undefined);
-      if (!currentDraft) return current;
-      return { ...current, [workflowId]: update(currentDraft) };
-    });
-  }
-
-  function startEditingScopeTab(tab: 'capabilities'): void {
-    setScopeSaveError(null);
-    setScopeSaveResult(null);
-    setIsEditingScopeTab(tab);
-  }
-
-  function cancelEditingScopeTab(): void {
-    if (selectedWorkflow) {
-      setScopeDrafts((current) => ({
-        ...current,
-        [selectedWorkflow.id]: createScopeDraft(selectedWorkflow)
-      }));
-    }
-    setScopeSaveError(null);
-    setIsEditingScopeTab('');
-  }
-
-  async function saveWorkflowScope(tab: 'capabilities'): Promise<void> {
-    if (!selectedWorkflow) return;
-    const draft = scopeDrafts[selectedWorkflow.id] || createScopeDraft(selectedWorkflow);
-    setScopeSaveError(null);
-    setScopeSaveResult(null);
-    setSavingScope(selectedWorkflow.id);
-    try {
-      const updated = await updateWorkflowScope(workspace.id, selectedWorkflow.id, {
-        enabledMcpServers: selectedWorkflow.enabledMcpServers,
-        enabledSkills: selectedWorkflow.enabledSkills,
-        policy: {
-          mode: draft.policyMode,
-          approvalRequirements: splitLines(draft.approvalRequirements)
-        },
-        steps: selectedWorkflow.steps.map((step) => {
-          const stepDraft = draft.steps[step.id];
-          return {
-            id: step.id,
-            agentIds: step.agentIds || [],
-            allowedTools: splitLines(stepDraft?.allowedTools || ''),
-            contextGrants: splitLines(stepDraft?.contextGrants || ''),
-            approvalRequired: Boolean(stepDraft?.approvalRequired)
-          };
-        })
-      });
-      const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId);
-      setWorkflows((current) => current.map((workflow) => workflow.id === selectedWorkflow.id
-        ? { ...mapped, runs: workflow.runs, lastRun: workflow.lastRun }
-        : workflow));
-      setCompiledScopes((current) => {
-        const next = { ...current };
-        delete next[selectedWorkflow.id];
-        return next;
-      });
-      setScopeDrafts((current) => ({ ...current, [selectedWorkflow.id]: createScopeDraft(mapped) }));
-      setScopeSaveResult({ tab, message: 'Workflow capability gate saved. Future sessions will use the narrowed access.' });
-      setIsEditingScopeTab('');
-    } catch (error) {
-      setScopeSaveError({ tab, message: error instanceof Error ? error.message : 'Unable to save workflow scope' });
-    } finally {
-      setSavingScope('');
-    }
-  }
-
-  function setStepScopeValue(
-    workflowId: string,
-    stepId: string,
-    key: 'allowedTools' | 'contextGrants',
-    value: string,
-    enabled: boolean
-  ): void {
-    updateScopeDraft(workflowId, (draft) => ({
-      ...draft,
-      steps: {
-        ...draft.steps,
-        [stepId]: {
-          ...draft.steps[stepId],
-          [key]: setLineValue(draft.steps[stepId]?.[key] || '', value, enabled)
-        }
-      }
-    }));
-  }
-
   function addWorkflowTag(workflowId: string): void {
     const tag = newWorkflowTag.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     if (!tag) return;
@@ -429,18 +350,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setWorkflows((current) => current.map((workflow) => workflow.id === workflowId
       ? { ...workflow, tags: workflow.tags.filter((value) => value !== tag) }
       : workflow));
-  }
-
-  function setWorkflowScopeValue(
-    workflowId: string,
-    key: 'enabledMcpServers' | 'enabledSkills',
-    value: string,
-    enabled: boolean
-  ): void {
-    updateScopeDraft(workflowId, (draft) => ({
-      ...draft,
-      [key]: setLineValue(draft[key], value, enabled)
-    }));
   }
 
   function startEditingWorkflow(workflow: WorkflowDefinition): void {
@@ -613,9 +522,9 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   return {
+    ...scopeActions,
     addWorkflowTag,
     cancelEditingAgentSelection,
-    cancelEditingScopeTab,
     cancelEditingWorkflow,
     closeCreateWorkflowPanel,
     createNewWorkflow,
@@ -625,10 +534,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     removeWorkflowTag,
     saveAgentSelection,
     saveWorkflowDefinition,
-    saveWorkflowScope,
-    setStepScopeValue,
-    setWorkflowScopeValue,
-    startEditingScopeTab,
     startEditingAgentSelection,
     startEditingWorkflow,
     sendWorkflowRunMessage,

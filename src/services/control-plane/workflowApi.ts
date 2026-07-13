@@ -200,7 +200,7 @@ export interface WorkflowSchedulePreview {
 export interface WorkspaceApprovalInboxRow {
   approvalId: string;
   runId: string;
-  source: 'target_tool' | 'workflow_gate';
+  source: 'target_tool' | 'workflow_gate' | 'agent_gate' | 'agent_tool' | 'workflow_tool';
   workflowId?: string;
   targetId?: string;
   targetType?: string;
@@ -504,7 +504,12 @@ export function updateWorkflowScope(
 export function postWorkflowSessionMessage(
   workspaceId: string,
   sessionId: string,
-  input: { content: string; inputs?: Record<string, unknown> }
+  input: {
+    content: string;
+    inputs?: Record<string, unknown>;
+    targetId?: string;
+    targetType?: 'kubernetes' | 'virtual_machine';
+  }
 ): Promise<Record<string, unknown>> {
   return requestJson<Record<string, unknown>>(
     `/api/v1/workflow-sessions/${encodeURIComponent(sessionId)}/messages`,
@@ -513,7 +518,9 @@ export function postWorkflowSessionMessage(
       body: JSON.stringify({
         workspaceId,
         content: input.content,
-        inputs: input.inputs || {}
+        inputs: input.inputs || {},
+        ...(input.targetId ? { targetId: input.targetId } : {}),
+        ...(input.targetType ? { targetType: input.targetType } : {})
       })
     }
   );

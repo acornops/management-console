@@ -32,7 +32,14 @@ function approvalTone(status: WorkspaceApprovalInboxRow['status']): React.Compon
 }
 
 function sourceLabel(source: WorkspaceApprovalInboxRow['source']): string {
-  return source === 'workflow_gate' ? 'Workflow gate' : 'Target tool';
+  const labels: Record<WorkspaceApprovalInboxRow['source'], string> = {
+    target_tool: 'Target tool',
+    workflow_gate: 'Workflow gate',
+    agent_gate: 'Agent gate',
+    agent_tool: 'Agent tool',
+    workflow_tool: 'Workflow tool'
+  };
+  return labels[source];
 }
 
 export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ workspace, onApprovalDecision }) => {

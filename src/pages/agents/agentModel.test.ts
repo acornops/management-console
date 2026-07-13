@@ -24,7 +24,7 @@ describe('agentModel', () => {
     expect(agents.every((agent) => agent.providerType !== 'external')).toBe(true);
     expect(agents.find((agent) => agent.id === 'agent-release-coordinator')?.mcpServers).toEqual([]);
     expect(agents[0].capabilities.every((capability) => capability.source)).toBe(true);
-    expect(agents[0].approvalPolicy.sensitiveActions).toBe('approval_required');
+    expect(agents[0].approvalPolicy.sensitiveActions).toBe('allowed');
   });
 
   it('assigns editable fallback agents to the dev user owner', () => {
@@ -47,7 +47,7 @@ describe('agentModel', () => {
   it('summarizes derived access instead of storing a separate abstract ACL', () => {
     const agent = createDefaultAgentDefinitions('workspace-1')[0] as AgentDefinition;
 
-    expect(getAgentCapabilitySummary(agent)).toBe('1 MCP server, 4 tools, 2 skills, approval required');
+    expect(getAgentCapabilitySummary(agent)).toBe('1 MCP server, 3 tools, 2 skills, no approvals');
   });
 
   it('derives access descriptions without inventing readiness state', () => {
