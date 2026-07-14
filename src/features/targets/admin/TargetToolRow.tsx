@@ -1,9 +1,9 @@
 import React from 'react';
-import { Switch } from '@/components/common/FormControls';
+import { MenuItem, Switch } from '@/components/common/FormControls';
 import { createPortal } from 'react-dom';
 import { Activity, BookOpen, Download, Eye, FileText, Globe2, MoreVertical, RotateCcw, Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
+import { menuSurfaceClassName } from '@/components/common/menuStyles';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
 
 interface TargetToolRowProps {
@@ -106,38 +106,35 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
         >
           {tool.id === 'target_insights' ? (
             <>
-              <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('files')} className={menuOptionClassName()}>
+              <MenuItem onClick={() => invokeTargetInsightsAction('files')}>
                 <FileText className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
                 <span>{canEditTool ? t('tools.targetInsights.editFiles') : t('tools.targetInsights.viewFiles')}</span>
-              </button>
-              <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('settings')} className={menuOptionClassName()}>
+              </MenuItem>
+              <MenuItem onClick={() => invokeTargetInsightsAction('settings')}>
                 <Settings2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
                 <span>{t('tools.targetInsights.settings')}</span>
-              </button>
-              <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('activity')} className={menuOptionClassName()}>
+              </MenuItem>
+              <MenuItem onClick={() => invokeTargetInsightsAction('activity')}>
                 <Activity className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
                 <span>{t('tools.targetInsights.activity')}</span>
-              </button>
-              <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('export')} className={menuOptionClassName()}>
+              </MenuItem>
+              <MenuItem onClick={() => invokeTargetInsightsAction('export')}>
                 <Download className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
                 <span>{t('tools.targetInsights.export')}</span>
-              </button>
+              </MenuItem>
               {canEditTool && (
-                <button type="button" role="menuitem" onClick={() => invokeTargetInsightsAction('reset')} className={menuOptionClassName({ className: 'text-status-danger-text hover:text-status-danger-text' })}>
+                <MenuItem destructive onClick={() => invokeTargetInsightsAction('reset')}>
                   <RotateCcw className="h-4 w-4 shrink-0 text-status-danger-text" aria-hidden="true" />
                   <span>{t('tools.targetInsights.resetAction')}</span>
-                </button>
+                </MenuItem>
               )}
             </>
           ) : (
-            <button
-              type="button"
-              role="menuitem"
+            <MenuItem
               onClick={() => {
                 closeActionMenu();
                 onConfigure(tool);
               }}
-              className={menuOptionClassName()}
             >
               {canEditTool ? (
                 <Settings2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
@@ -145,7 +142,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
                 <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               )}
               <span>{canEditTool ? t('tools.configureTool') : t('tools.viewTool')}</span>
-            </button>
+            </MenuItem>
           )}
         </div>,
         document.body
@@ -196,7 +193,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
           data-target-tool-primary-actions="true"
           type="button"
           onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
           aria-haspopup="menu"
           aria-expanded={actionMenuOpen}
           aria-controls={actionMenuOpen ? actionMenuId : undefined}

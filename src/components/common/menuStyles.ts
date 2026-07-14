@@ -21,7 +21,7 @@ export const menuOptionClassName = ({
   className?: string;
 } = {}) =>
   twMerge(clsx(
-    'type-ui flex min-h-9 w-full items-center gap-3 rounded-sm px-3 py-2 text-left outline-none transition-colors',
+    'type-ui flex min-h-11 w-full items-center gap-3 rounded-sm px-3 py-2 text-left outline-none transition-colors sm:min-h-9',
     selected && 'bg-ui-bg text-ui-text',
     !selected && active && 'bg-ui-bg text-ui-text',
     !selected && !active && !destructive && 'text-ui-text hover:bg-ui-bg',

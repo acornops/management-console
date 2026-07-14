@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch } from '@/components/common/FormControls';
+import { MenuItem, Switch } from '@/components/common/FormControls';
 import { createPortal } from 'react-dom';
 import {
   Edit3,
@@ -11,7 +11,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
+import { menuSurfaceClassName } from '@/components/common/menuStyles';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { formatDiscoveryTimestamp, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
@@ -163,28 +163,22 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
           className={menuSurfaceClassName('fixed z-[130] p-1')}
           style={actionMenuStyle}
         >
-          <button
-            type="button"
-            role="menuitem"
+          <MenuItem
             onClick={() => {
               closeActionMenu();
               onManageTools(server.id);
             }}
-            className={menuOptionClassName()}
           >
             <Settings2 className="h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
             <span>{t('mcpServers.manageTools')}</span>
-          </button>
+          </MenuItem>
           {canTestServer && (
-            <button
-              type="button"
-              role="menuitem"
+            <MenuItem
               disabled={Boolean(pendingTestServerId)}
               onClick={() => {
                 closeActionMenu();
                 onTestConnection(server);
               }}
-              className={menuOptionClassName({ disabled: Boolean(pendingTestServerId) })}
               aria-describedby={healthCheckHelpId}
             >
               {pendingTestServerId === server.id ? (
@@ -193,35 +187,30 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
                 <RefreshCcw className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               )}
               <span>{t('mcpServers.healthCheck')}</span>
-            </button>
+            </MenuItem>
           )}
           {canEditServer && (
-            <button
-              type="button"
-              role="menuitem"
+            <MenuItem
               onClick={() => {
                 closeActionMenu();
                 onEdit(server);
               }}
-              className={menuOptionClassName()}
             >
               <Edit3 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               <span>{t('mcpServers.edit')}</span>
-            </button>
+            </MenuItem>
           )}
           {canDeleteServer && (
-            <button
-              type="button"
-              role="menuitem"
+            <MenuItem
+              destructive
               onClick={() => {
                 closeActionMenu();
                 onDelete(server);
               }}
-              className={menuOptionClassName({ className: 'text-status-danger-text hover:bg-status-danger-soft' })}
             >
               <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{t('mcpServers.delete')}</span>
-            </button>
+            </MenuItem>
           )}
         </div>,
         document.body
@@ -296,7 +285,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
           data-mcp-server-primary-actions="true"
           type="button"
           onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
           aria-haspopup="menu"
           aria-expanded={actionMenuOpen}
           aria-controls={actionMenuOpen ? actionMenuId : undefined}

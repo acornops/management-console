@@ -78,7 +78,7 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).not.toContain('const SidebarContextSlot = React.forwardRef<HTMLDivElement');
     expect(desktopSidebar).not.toContain('<SidebarTargetContext');
     expect(desktopSidebar).not.toContain('const splitSidebarContextName = (name: string): [string, string]');
-    expect(desktopSidebar).toContain('className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"');
+    expect(desktopSidebar).toContain('className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"');
     expect(desktopSidebar).toContain("<ICONS.ChevronLeft className=\"w-3.5 h-3.5\" />");
     expect(desktopSidebar).toContain("<div className=\"type-micro-label mb-1\">{t('app.activeCluster')}</div>");
     expect(desktopSidebar).toContain("<div className=\"type-micro-label mb-1\">{t('app.activeVirtualMachine')}</div>");
@@ -116,7 +116,7 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('current={child.current}');
     expect(desktopSidebar).toContain('navigate(AppPaths.accountSettings());');
     expect(desktopSidebar).toContain("t('app.accountSettings')");
-    expect(desktopSidebar).toContain("t('app.theme')");
+    expect(desktopSidebar).toContain('<ThemeMenu');
     expect(desktopSidebar).toContain("t('app.logout')");
     expect(desktopSidebar).toContain("tracking-[0.08em]");
     expect(desktopSidebar).not.toContain("label={t('app.runbooks')}");
@@ -197,7 +197,8 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain("isAccountSettingsActive ? 'border-accent/25 bg-accent-soft text-accent-strong'");
     expect(desktopSidebar).toContain("isAccountSettingsActive ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'");
     expect(desktopSidebar).toContain('data-account-menu-panel="true"');
-    expect(desktopSidebar).toContain('data-account-theme-control="true"');
+    expect(desktopSidebar).toContain('<ThemeMenu');
+    expect(desktopSidebar).toContain('variant="account"');
     expect(desktopSidebar).toContain("aria-label={t('app.account')}");
     expect(desktopSidebar).not.toContain('const accountMenuLabelId = React.useId();');
     expect(desktopSidebar).toContain('<ICONS.ChevronRight');

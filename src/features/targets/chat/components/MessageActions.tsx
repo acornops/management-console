@@ -66,7 +66,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface/75 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+          className="control-target inline-flex h-6 w-6 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface/75 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
           aria-label={t('chat.editMessage')}
           title={t('chat.editMessage')}
         >
@@ -77,7 +77,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
         type="button"
         onClick={() => void handleCopy()}
         disabled={!canCopyToClipboard}
-        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface/75 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
+        className="control-target inline-flex h-6 w-6 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface/75 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={hasCopied ? t('chat.copiedMessage') : t('chat.copyMessage')}
         title={hasCopied ? t('chat.copiedMessage') : t('chat.copyMessage')}
       >

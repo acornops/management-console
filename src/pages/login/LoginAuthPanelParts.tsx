@@ -8,7 +8,7 @@ export const inputClass = formInputClassName('px-4');
 export const iconInputClass = `${inputClass} pl-10`;
 export const passwordInputClass = `${iconInputClass} pr-11`;
 export const invalidInputClass = fieldInvalidClass;
-export const primaryButtonClass = 'flex w-full items-center justify-center gap-2 rounded-lg border border-ui-text bg-ui-text px-4 py-3 text-sm font-bold text-ui-bg transition-colors hover:bg-ui-text/90 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60';
+export const primaryButtonClass = 'flex w-full items-center justify-center gap-2 rounded-lg border border-control-boundary bg-control-primary px-4 py-3 text-sm font-bold text-control-primary-fg transition-colors hover:bg-control-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg disabled:cursor-not-allowed disabled:opacity-60';
 export const secondaryButtonClass = 'w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2.5 text-sm font-bold text-ui-text transition-colors hover:bg-ui-surface focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60';
 
 export function NoticeCard({
@@ -160,14 +160,14 @@ export function OidcLoginButton({
       type="button"
       onClick={onLogin}
       disabled={isAuthLoading}
-      className={`mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`control-target mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
         passwordAuthEnabled
           ? 'bg-ui-bg text-ui-text hover:bg-ui-surface'
-          : 'bg-ui-text text-ui-bg hover:bg-ui-text/90'
+          : 'border-control-boundary bg-control-primary text-control-primary-fg hover:bg-control-primary-hover'
       }`}
     >
       {isAuthLoading ? (
-        <span className={`h-4 w-4 rounded-full border-2 ${passwordAuthEnabled ? 'border-current' : 'border-ui-bg'} border-t-transparent animate-spin`} />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
       ) : (
         <>
           <ICONS.Shield className="h-4 w-4 text-accent-strong" />
@@ -197,7 +197,7 @@ export function SignupSwitchFooter({
           type="button"
           onClick={onSwitch}
           disabled={isAuthLoading}
-          className="rounded-sm font-bold text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="control-target rounded-sm font-bold text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {actionLabel}
         </button>

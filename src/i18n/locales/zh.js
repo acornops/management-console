@@ -187,8 +187,11 @@ export const zh = {
     help: '帮助',
     userSettings: '用户设置',
     theme: '主题',
+    themeSystem: '跟随系统',
     themeLight: '浅色',
     themeDark: '深色',
+    themeMenuLabel: '主题偏好',
+    openThemeMenu: '选择主题。当前偏好：{{theme}}',
     workspaceSettings: '工作区设置',
     aiSettings: 'AI 设置',
     auditLog: '审计日志',
@@ -307,6 +310,7 @@ export const zh = {
     decisionError: '记录审批决策失败。',
     targetWorkspace: '工作区',
     filters: {
+      label: '按状态筛选审批',
       pending: '待处理',
       recent: '最近'
     },

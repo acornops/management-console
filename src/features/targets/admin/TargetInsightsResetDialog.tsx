@@ -2,6 +2,7 @@ import React from 'react';
 import { RotateCcw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
@@ -52,15 +53,11 @@ export const TargetInsightsResetDialog: React.FC<TargetInsightsResetDialogProps>
           <h3 id="target-insights-reset-dialog-title" className="type-panel-title">{t('tools.targetInsights.resetTitle')}</h3>
           <p className="type-caption mt-1 text-ui-text-muted">{tool.label}</p>
         </div>
-        <button
-          type="button"
+        <CloseButton
           onClick={onClose}
           disabled={saving}
-          className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
           aria-label={t('tools.targetInsights.closeReset')}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
       </div>
       <div className="px-6 py-5">
         <div className="flex gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">

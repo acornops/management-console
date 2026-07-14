@@ -366,7 +366,7 @@ describe('target chat polish contracts', () => {
     expect(chatGateDialog).toContain('tabIndex={-1}');
     expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0 }}');
     expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}');
-    expect(chatGateDialog).toContain('bg-ui-bg/70 p-4 backdrop-blur-sm');
+    expect(chatGateDialog).toContain('bg-ui-bg/88 p-4 dark:bg-ui-bg/92');
     expect(chatGateDialog).toContain('rounded-lg border border-ui-border bg-ui-surface');
     expect(chatGateDialog).toContain("t('chat.recentActivityActionTitle')");
     expect(chatGateDialog).toContain("recentActivityBody || t('chat.chooseRecentActivityAction')");

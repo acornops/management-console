@@ -239,7 +239,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
       <button
         type="button"
         onClick={() => setExpanded(runId, !isExpanded)}
-        className={`group min-h-10 items-center gap-2 py-2 pl-0 pr-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 ${
+        className={`control-target group min-h-10 items-center gap-2 py-2 pl-0 pr-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 ${
           isExpanded
             ? 'flex w-full rounded-md bg-ui-surface/45 text-ui-text hover:bg-ui-surface/75'
             : 'flex w-full rounded-md bg-ui-surface/45 text-ui-text-muted hover:bg-ui-surface/75 hover:text-ui-text'
@@ -368,7 +368,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                           <button
                             type="button"
                             onClick={() => void openArtifact(toolCall)}
-                            className="type-caption inline-flex min-h-9 items-center gap-1.5 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                            className="control-target type-caption inline-flex min-h-9 items-center gap-1.5 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                             aria-expanded={artifactView?.callId === toolCall.callId}
                           >
                             <FileJson className="h-3.5 w-3.5" />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/common/Button';
+import { SegmentedTabs, type CompactControlItem } from '@/components/common/ComponentVocabulary';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
@@ -41,6 +42,11 @@ const tabLabels: Record<AgentProfileTab, string> = {
   overview: 'Overview', capabilities: 'Capabilities', activity: 'Activity', versions: 'Versions'
 };
 
+const agentProfileTabItems: Array<CompactControlItem<AgentProfileTab>> = agentProfileTabs.map((value) => ({
+  value,
+  label: tabLabels[value]
+}));
+
 const workflowHref = (agent: AgentDefinition, workflow: string) => `${AppPaths.workspaceWorkflows(agent.workspaceId)}?${new URLSearchParams({ q: workflow }).toString()}`;
 
 const Fact: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
@@ -76,15 +82,18 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
         {disabledAction && <p className="type-caption mt-3 text-ui-text-muted">{disabledAction}</p>}
       </header>
 
-      <div role="tablist" aria-label="Agent profile sections" className="flex min-w-0 overflow-x-auto border-b border-ui-border px-3">
-        {agentProfileTabs.map((tab) => (
-          <button key={tab} type="button" role="tab" aria-selected={props.activeTab === tab} onClick={() => props.onTabChange(tab)} className={`min-h-11 whitespace-nowrap border-b-2 px-3 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${props.activeTab === tab ? 'border-accent text-ui-text' : 'border-transparent text-ui-text-muted hover:text-ui-text'}`}>{tabLabels[tab]}</button>
-        ))}
-      </div>
+      <SegmentedTabs
+        activeValue={props.activeTab}
+        ariaLabel="Agent profile sections"
+        className="px-3"
+        idBase="agent-profile"
+        items={agentProfileTabItems}
+        onValueChange={props.onTabChange}
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
         {props.activeTab === 'overview' && (
-          <div className="space-y-7">
+          <div id="agent-profile-overview-panel" role="tabpanel" aria-labelledby="agent-profile-overview-tab" className="space-y-7">
             <section>
               <h3 className="type-panel-title">Identity and assignment</h3>
               <dl className="mt-2 grid divide-y divide-ui-border sm:grid-cols-2 sm:gap-x-8 sm:[&>*]:border-b sm:[&>*]:border-ui-border">
@@ -115,7 +124,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
         )}
 
         {props.activeTab === 'capabilities' && (
-          <div className="space-y-7">
+          <div id="agent-profile-capabilities-panel" role="tabpanel" aria-labelledby="agent-profile-capabilities-tab" className="space-y-7">
             <section className="grid gap-6 sm:grid-cols-3"><CapabilityList title="MCP servers" values={selectedAgent.mcpServers} /><CapabilityList title="Tools" values={selectedAgent.tools} /><CapabilityList title="Skills" values={selectedAgent.skills} /></section>
             <section className="border-t border-ui-border pt-6">
               <h3 className="type-panel-title">Detailed rules</h3>
@@ -127,7 +136,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
         )}
 
         {props.activeTab === 'activity' && (
-          <section>
+          <section id="agent-profile-activity-panel" role="tabpanel" aria-labelledby="agent-profile-activity-tab">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><h3 className="type-panel-title">Activity history</h3><p className="type-caption mt-1 text-ui-text-muted">Agent runs use the same durable execution and approval path as workflow steps.</p></div>
               <div className="flex flex-wrap gap-2"><Button type="button" variant="secondary" size="sm" onClick={props.onRefreshSelectedAgentActivity} disabled={props.agentActivityAction === selectedAgent.id}>{props.agentActivityAction === selectedAgent.id ? 'Refreshing...' : 'Refresh'}</Button><Button type="button" variant="secondary" size="sm" onClick={props.onTestSelectedAgent} disabled={!props.canManageAgents || props.testingAgentId === selectedAgent.id}><ICONS.Activity className="h-4 w-4" />{props.testingAgentId === selectedAgent.id ? 'Queuing...' : 'Run agent'}</Button></div>
@@ -139,7 +148,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
         )}
 
         {props.activeTab === 'versions' && (
-          <section>
+          <section id="agent-profile-versions-panel" role="tabpanel" aria-labelledby="agent-profile-versions-tab">
             <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="type-panel-title">Version snapshots</h3><p className="type-caption mt-1 text-ui-text-muted">Restore replaces the current definition after confirmation.</p></div><div className="flex gap-2"><Button type="button" variant="secondary" size="sm" onClick={props.onSaveSelectedAgentVersion} disabled={!props.canManageAgents || props.agentVersionAction === selectedAgent.id}>{props.agentVersionAction === selectedAgent.id ? 'Saving...' : 'Save snapshot'}</Button><Button type="button" variant="tertiary" size="sm" onClick={props.onRefreshSelectedAgentVersions} disabled={props.agentVersionAction === `${selectedAgent.id}:history`}>Refresh</Button></div></div>
             <div className="mt-4 divide-y divide-ui-border border-y border-ui-border">{versions.length ? versions.map((version) => <div key={version.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><span><strong className="text-sm text-ui-text">v{version.version}</strong><span className="type-caption ml-3 text-ui-text-muted">{formatAgentTimestamp(version.createdAt)}</span></span><Button type="button" variant="tertiary" size="sm" onClick={() => window.confirm(`Restore v${version.version}? This replaces the current agent definition.`) && props.onRestoreSelectedAgentVersion(version)} disabled={!props.canManageAgents || props.agentVersionAction === `${selectedAgent.id}:restore:${version.id}`}>Restore</Button></div>) : <p className="py-5 text-sm text-ui-text-muted">No version snapshots yet.</p>}</div>
           </section>

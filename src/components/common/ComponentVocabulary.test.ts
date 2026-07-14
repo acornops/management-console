@@ -21,7 +21,7 @@ describe('common component vocabulary primitives', () => {
   it('keeps close buttons on the shared icon button vocabulary', () => {
     expect(closeButtonClassName()).toBe(buttonClassName({ variant: 'icon', size: 'icon' }));
     expect(closeButtonClassName('absolute right-4 top-4')).toContain('absolute right-4 top-4');
-    expect(closeButtonClassName()).toContain('focus-visible:ring-accent/25');
+    expect(closeButtonClassName()).toContain('focus-visible:ring-control-boundary');
   });
 
   it('keeps text inputs and textareas on shared form control styles', () => {
@@ -91,6 +91,9 @@ describe('authenticated surface component vocabulary', () => {
   const workspaceInviteModal = readFileSync(resolve(root, 'src/pages/workspace-members/WorkspaceInviteModal.tsx'), 'utf8');
   const workspaceAgentsDrawers = readFileSync(resolve(root, 'src/pages/WorkspaceAgentsDrawers.tsx'), 'utf8');
   const workspaceAgentsCatalog = readFileSync(resolve(root, 'src/pages/WorkspaceAgentsCatalog.tsx'), 'utf8');
+  const workspaceAgentDetailPanel = readFileSync(resolve(root, 'src/pages/WorkspaceAgentDetailPanel.tsx'), 'utf8');
+  const workspaceApprovalsPage = readFileSync(resolve(root, 'src/pages/WorkspaceApprovalsPage.tsx'), 'utf8');
+  const workspaceAuditLogPage = readFileSync(resolve(root, 'src/pages/WorkspaceAuditLogPage.tsx'), 'utf8');
   const workspaceWorkflowsPage = readFileSync(resolve(root, 'src/pages/WorkspaceWorkflowsPage.tsx'), 'utf8');
   const addVirtualMachineModal = readFileSync(resolve(root, 'src/pages/virtual-machines/AddVirtualMachineModal.tsx'), 'utf8');
   const virtualMachinesListView = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachinesListView.tsx'), 'utf8');
@@ -132,5 +135,16 @@ describe('authenticated surface component vocabulary', () => {
     expect(workspaceWorkflowsPage).toContain('<SegmentedTabs');
     expect(workspaceWorkflowsPage).toContain('idBase="workflow-section"');
     expect(workspaceWorkflowsPage).not.toContain('role="tablist" aria-label="Workflow section tabs" className="flex gap-2 overflow-x-auto border-b border-ui-border"');
+    expect(workspaceAgentDetailPanel).toContain('<SegmentedTabs');
+    expect(workspaceAgentDetailPanel).toContain('idBase="agent-profile"');
+    ['overview', 'capabilities', 'activity', 'versions'].forEach((tab) => {
+      expect(workspaceAgentDetailPanel).toContain(`id="agent-profile-${tab}-panel"`);
+      expect(workspaceAgentDetailPanel).toContain(`aria-labelledby="agent-profile-${tab}-tab"`);
+    });
+    expect(workspaceAgentDetailPanel.match(/role="tabpanel"/g)).toHaveLength(4);
+    expect(workspaceApprovalsPage).toContain('<FilterToggleGroup<ApprovalFilter>');
+    expect(workspaceApprovalsPage).toContain("ariaLabel={t('approvals.filters.label')}");
+    expect(workspaceAuditLogPage).toContain('<FilterToggleGroup');
+    expect(workspaceAuditLogPage).toContain("ariaLabel={t('auditLog.timeRange')}");
   });
 });

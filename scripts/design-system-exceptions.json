@@ -5,7 +5,8 @@
     "src/design-system.tsx"
   ],
   "literalColorModules": [
-    "src/pages/login/LoginPreview.tsx"
+    "src/pages/login/LoginPreview.tsx",
+    "src/app/theme.ts"
   ],
   "authenticatedRoutePages": [
     "src/pages/WorkspaceOverviewPage.tsx",

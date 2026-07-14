@@ -1,5 +1,4 @@
 import React from 'react';
-import type { MouseEventHandler } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
@@ -11,6 +10,8 @@ import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ActiveResourceNav } from '@/app/appRouteState';
 import { navIconClass, SidebarNavButton, SidebarSection, TargetSettingsDivider, WorkspaceSidebarNavLink } from '@/app/AppDesktopSidebarParts';
 import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
+import { ThemeMenu } from '@/components/common/ThemeMenu';
+import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 
 interface AppDesktopSidebarProps {
   workspaces: Workspace[];
@@ -26,8 +27,8 @@ interface AppDesktopSidebarProps {
   selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmIssueCount: number;
-  theme: 'light' | 'dark';
-  isDark: boolean;
+  themePreference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
   isAccountMenuOpen: boolean;
   isSidebarWorkspaceMenuOpen: boolean;
   sidebarAccountMenuRef: React.RefObject<HTMLDivElement | null>;
@@ -40,7 +41,7 @@ interface AppDesktopSidebarProps {
   onSelectWorkspaceContext: (workspaceId: string) => void;
   onSetAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onSetSidebarWorkspaceMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onToggleTheme: MouseEventHandler<HTMLButtonElement>;
+  onSelectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
   onLogout: () => void;
   user: User;
 }
@@ -68,8 +69,8 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   selectedClusterIssueCount,
   clusterAssistantNavStatus,
   selectedVmIssueCount,
-  theme,
-  isDark,
+  themePreference,
+  resolvedTheme,
   isAccountMenuOpen,
   isSidebarWorkspaceMenuOpen,
   sidebarAccountMenuRef,
@@ -82,7 +83,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   onSelectWorkspaceContext,
   onSetAccountMenuOpen,
   onSetSidebarWorkspaceMenuOpen,
-  onToggleTheme,
+  onSelectTheme,
   onLogout,
   user
 }) => {
@@ -157,7 +158,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
     <aside className="management-console-desktop-sidebar relative z-40 h-full min-h-0 w-64 shrink-0 flex-col overflow-visible border-r border-ui-border bg-ui-surface lg:self-stretch">
       <div className="flex items-center gap-3 px-6 py-5">
         <button
-          className="flex items-center gap-3 cursor-pointer"
+          className="control-target flex items-center gap-3 cursor-pointer"
           onClick={() => navigate(workspaceHomePath)}
           aria-label={t('app.goHome')}
         >
@@ -257,7 +258,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                                     closeWorkspaceSwitcher({ restoreFocus: true });
                                   }}
                                   aria-current={isSelected ? 'true' : undefined}
-                                  className={`flex w-full items-start gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
+                                  className={`control-target flex w-full items-start gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
                                     isSelected
                                       ? 'border border-accent/20 bg-accent-soft font-bold text-accent-strong'
                                       : 'text-ui-text hover:bg-ui-bg'
@@ -281,7 +282,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                               closeWorkspaceSwitcher({ restoreFocus: true });
                               onOpenCreateWorkspace();
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-ui-text-muted hover:text-accent-strong hover:bg-accent-soft transition-all"
+                            className="control-target w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-ui-text-muted hover:text-accent-strong hover:bg-accent-soft transition-all"
                           >
                             <ICONS.Plus className="h-3.5 w-3.5" />
                             <span>{t('app.newWorkspace')}</span>
@@ -343,7 +344,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 <motion.button
                   type="button"
                   onClick={onBackToWorkspaceSidebar}
-                  className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('app.backToWorkspace')}
                 >
                   <ICONS.ChevronLeft className="w-3.5 h-3.5" />
@@ -414,7 +415,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 <motion.button
                   type="button"
                   onClick={onBackToWorkspaceSidebar}
-                  className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('app.backToWorkspace')}
                 >
                   <ICONS.ChevronLeft className="w-3.5 h-3.5" />
@@ -523,7 +524,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
               aria-label={t('app.account')}
               onKeyDown={handleAccountMenuKeyDown}
               data-account-menu-panel="true"
-              className="absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-xl"
+              className="absolute bottom-full left-3 right-3 mb-2 rounded-lg border border-ui-border bg-ui-surface shadow-xl"
             >
               <div className="flex items-center gap-3 px-4 py-4">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/20 bg-accent-soft font-mono text-sm font-bold text-accent-strong">
@@ -559,26 +560,12 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   <ICONS.ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-55 transition-transform duration-[160ms] group-hover/setting:translate-x-0.5 motion-reduce:transform-none motion-reduce:duration-0" />
                 </motion.button>
 
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onToggleTheme}
-                  data-account-theme-control="true"
-                  className="group/theme flex min-h-12 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text motion-reduce:duration-0"
-                  aria-label={theme === 'light' ? t('app.switchDark') : t('app.switchLight')}
-                >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg">
-                      {isDark ? <ICONS.Moon className="h-4 w-4" /> : <ICONS.Sun className="h-4 w-4" />}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-bold leading-5">{t('app.theme')}</span>
-                      <span className="block text-xs leading-4 text-ui-text-muted">
-                        {theme === 'light' ? t('app.themeLight') : t('app.themeDark')}
-                      </span>
-                    </span>
-                  </span>
-                </motion.button>
+                <ThemeMenu
+                  preference={themePreference}
+                  resolvedTheme={resolvedTheme}
+                  variant="account"
+                  onSelect={onSelectTheme}
+                />
               </div>
 
               <div className="border-t border-ui-border px-2 py-2">
@@ -589,7 +576,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     closeAccountMenu();
                     onLogout();
                   }}
-                  className="flex min-h-10 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm font-bold text-status-danger-text transition-colors duration-[160ms] hover:bg-status-danger-soft motion-reduce:duration-0"
+                  className="control-target flex min-h-10 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm font-bold text-status-danger-text transition-colors duration-[160ms] hover:bg-status-danger-soft motion-reduce:duration-0"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center">
                     <ICONS.LogOut className="h-4 w-4" />

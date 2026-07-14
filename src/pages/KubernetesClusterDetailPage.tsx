@@ -108,7 +108,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               </div>
               <button
                 onClick={onNavigateBackToClusters}
-                className={`${THEME_CLASSES.primary.text} font-semibold flex items-center gap-2 hover:gap-3 transition-all`}
+                className={`control-target ${THEME_CLASSES.primary.text} font-semibold flex items-center gap-2 hover:gap-3 transition-all`}
               >
                 {t('diagnostics.returnToClusters')} <ICONS.ChevronRight className="w-4 h-4" />
               </button>
@@ -124,7 +124,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               </div>
               <button
                 onClick={onNavigateBackToClusters}
-                className={`${THEME_CLASSES.primary.text} font-semibold flex items-center gap-2 hover:gap-3 transition-all`}
+                className={`control-target ${THEME_CLASSES.primary.text} font-semibold flex items-center gap-2 hover:gap-3 transition-all`}
               >
                 {t('diagnostics.returnToDashboard')} <ICONS.ChevronRight className="w-4 h-4" />
               </button>

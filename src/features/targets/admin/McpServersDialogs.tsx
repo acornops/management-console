@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Switch } from '@/components/common/FormControls';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
@@ -141,15 +142,11 @@ export const McpServerFormDialog: React.FC<{
             <ModalStepIndicator steps={createSteps} currentStepId={isReviewStep ? 'review' : 'configure'} className="mt-4" />
           )}
         </div>
-        <button
-          type="button"
+        <CloseButton
           onClick={onClose}
           disabled={pending}
-          className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
           aria-label={t('mcpServers.closeForm')}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
       </div>
 
       <div className="grid min-h-0 gap-6 overflow-y-auto p-6 custom-scrollbar lg:grid-cols-[minmax(0,1fr)_19rem]">
@@ -291,7 +288,7 @@ export const McpServerFormDialog: React.FC<{
                   <button
                     type="button"
                     onClick={() => onShowSecretValueChange((current) => !current)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
+                    className="control-target absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
                     aria-label={showSecretValue ? t('mcpServers.hideSecret') : t('mcpServers.showSecret')}
                     aria-pressed={showSecretValue}
                   >
@@ -320,7 +317,7 @@ export const McpServerFormDialog: React.FC<{
               <button
                 type="button"
                 onClick={addPublicHeader}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                className="control-target inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                 aria-label={t('mcpServers.addHeader')}
                 title={t('mcpServers.addHeader')}
               >
@@ -351,7 +348,7 @@ export const McpServerFormDialog: React.FC<{
                     <button
                       type="button"
                       onClick={() => removePublicHeader(header.id)}
-                      className="rounded-lg border border-ui-border p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text sm:self-center"
+                      className="control-target rounded-lg border border-ui-border p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text sm:self-center"
                       aria-label={t('mcpServers.removeHeader')}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -463,15 +460,11 @@ export const DeleteMcpServerDialog: React.FC<{
             <p className="mt-0.5 text-[11px] font-semibold text-ui-text-muted">{t('mcpServers.deleteSubtitle')}</p>
           </div>
         </div>
-        <button
-          type="button"
+        <CloseButton
           onClick={onClose}
           disabled={pending}
-          className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
           aria-label={t('mcpServers.closeDelete')}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
       </div>
       <div className="space-y-3 px-6 py-5">
         <p className="type-body">
@@ -491,7 +484,7 @@ export const DeleteMcpServerDialog: React.FC<{
           type="button"
           onClick={onClose}
           disabled={pending}
-          className="type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-all hover:bg-ui-bg disabled:opacity-50"
+          className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-all hover:bg-ui-bg disabled:opacity-50"
         >
           {t('app.cancel')}
         </button>
@@ -499,7 +492,7 @@ export const DeleteMcpServerDialog: React.FC<{
           type="button"
           onClick={onDelete}
           disabled={pending}
-          className="type-ui rounded-lg bg-status-danger px-4 py-2 text-ui-bg transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
+          className="control-target type-ui rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-control-danger-fg transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? t('app.deleting') : t('mcpServers.deleteAction')}
         </button>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Archive, CheckCircle2, ChevronDown, FilePlus2, FileText, Folder, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { Tooltip } from '@/components/common/Tooltip';
@@ -216,7 +217,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
           <h4 className="type-row-title">{t('tools.targetInsights.files')}</h4>
           <button
             type="button"
-            className="rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
+            className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
             disabled={!canMutateFile}
             onClick={startNewFile}
             title={t('tools.targetInsights.newFile')}
@@ -268,7 +269,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
                         key={file.entry.id}
                         type="button"
                         onClick={() => selectFile(file)}
-                        className={`flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left text-xs transition-colors ${
+                        className={`control-target flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left text-xs transition-colors ${
                           file.entry.id === selectedEntryId && !creatingNewFile
                             ? 'bg-accent-soft/20 text-accent-strong'
                             : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
@@ -336,15 +337,11 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
           <h3 id="target-insights-dialog-title" className="type-panel-title">{t('tools.targetInsights.title')}</h3>
           <p className="type-caption mt-1 text-ui-text-muted">{tool.description}</p>
         </div>
-        <button
-          type="button"
+        <CloseButton
           onClick={guardedClose}
           disabled={fileSaving || savingTool}
-          className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
           aria-label={t('tools.targetInsights.close')}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">

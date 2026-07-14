@@ -166,7 +166,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-lg border border-status-success/25 bg-status-success-soft px-4 py-3 text-xs font-extrabold text-status-success-text">
-              <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
+              <div className="h-2 w-2 rounded-full bg-status-success"></div>
               {t('virtualMachines.list.waitingForAgent')}
             </div>
           </div>

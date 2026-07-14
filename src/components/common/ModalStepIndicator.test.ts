@@ -19,7 +19,7 @@ describe('ModalStepIndicator', () => {
   });
 
   it('keeps active step marker color on shared semantic tokens', () => {
-    expect(modalStepIndicator).toContain("active ? 'bg-accent text-ui-bg'");
+    expect(modalStepIndicator).toContain("active ? 'bg-control-activation text-control-activation-fg'");
     expect(modalStepIndicator).not.toContain('text-[oklch(');
   });
 });

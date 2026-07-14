@@ -1,7 +1,7 @@
 import React from 'react';
-import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -56,14 +56,10 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
           <h3 id="target-insights-activity-dialog-title" className="type-panel-title">{t('tools.targetInsights.activityTitle')}</h3>
           <p className="type-caption mt-1 text-ui-text-muted">{tool.description}</p>
         </div>
-        <button
-          type="button"
+        <CloseButton
           onClick={onClose}
-          className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong"
           aria-label={t('tools.targetInsights.closeActivity')}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
       </div>
       <div className="min-h-[18rem] flex-1 overflow-y-auto p-6 custom-scrollbar">
         {loading ? (

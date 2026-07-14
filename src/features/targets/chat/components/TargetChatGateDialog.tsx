@@ -109,7 +109,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
 
   return (
     <motion.div
-      className="absolute inset-0 z-[150] flex items-center justify-center bg-ui-bg/70 p-4 backdrop-blur-sm"
+      className="absolute inset-0 z-[150] flex items-center justify-center bg-ui-bg/88 p-4 dark:bg-ui-bg/92"
       initial={shouldReduceMotion ? false : { opacity: 0 }}
       animate={shouldReduceMotion ? undefined : { opacity: 1 }}
       exit={shouldReduceMotion ? undefined : { opacity: 0 }}

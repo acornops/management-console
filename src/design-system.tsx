@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MotionConfig } from 'framer-motion';
-import { Check, MoreHorizontal, Plus, Rocket, Trash2 } from 'lucide-react';
+import { Check, Moon, MoreHorizontal, Plus, Rocket, Sun, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
@@ -12,13 +12,34 @@ import { DialogFrame, DrawerFrame } from '@/components/common/OverlayFrames';
 import { DataSurface, PageHeader, PageSection, PageShell, TableToolbar } from '@/components/common/PageComposition';
 import { Select } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { TextInput } from '@/components/common/ComponentVocabulary';
+import {
+  CloseButton,
+  FilterToggleGroup,
+  SegmentedTabs,
+  TextInput,
+  type CompactControlItem
+} from '@/components/common/ComponentVocabulary';
 import '@/styles.css';
+
+type CatalogTab = 'overview' | 'runs';
+type CatalogFilter = 'all' | 'attention';
+
+const catalogTabs: Array<CompactControlItem<CatalogTab>> = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'runs', label: 'Runs', count: 4 }
+];
+
+const catalogFilters: Array<CompactControlItem<CatalogFilter>> = [
+  { value: 'all', label: 'All', count: 12 },
+  { value: 'attention', label: 'Needs attention', count: 2 }
+];
 
 const Catalog = () => {
   const [dark, setDark] = React.useState(false);
   const [checked, setChecked] = React.useState(true);
   const [selected, setSelected] = React.useState('all');
+  const [catalogTab, setCatalogTab] = React.useState<CatalogTab>('overview');
+  const [catalogFilter, setCatalogFilter] = React.useState<CatalogFilter>('all');
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
 
@@ -32,7 +53,12 @@ const Catalog = () => {
         context="Development catalog"
         title="Operator’s ledger"
         description="Canonical route composition, controls, states, and overlay anatomy. This entrypoint is served by Vite in development and is not part of the production app router."
-        actions={<Button variant="secondary" onClick={() => setDark((value) => !value)}>{dark ? 'Light theme' : 'Dark theme'}</Button>}
+        actions={
+          <Button variant="secondary" onClick={() => setDark((value) => !value)} data-catalog-theme-toggle="true">
+            {dark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+            {dark ? 'Light theme' : 'Dark theme'}
+          </Button>
+        }
       />
 
       <PageSection title="Action hierarchy" description="Orange is reserved for workflow launch or activation.">
@@ -45,6 +71,41 @@ const Catalog = () => {
           <Button variant="activation"><Rocket className="h-4 w-4" />Launch workflow</Button>
           <Button variant="primary" disabled>Disabled</Button>
           <Button variant="primary" disabled aria-busy="true">Saving...</Button>
+        </div>
+      </PageSection>
+
+      <PageSection title="Tabs, filters, and compact controls" description="Shared state controls keep keyboard behavior, pressed state, and target sizing consistent.">
+        <div className="space-y-5 rounded-lg border border-ui-border bg-ui-surface p-surface">
+          <div>
+            <SegmentedTabs<CatalogTab>
+              activeValue={catalogTab}
+              ariaLabel="Catalog section"
+              idBase="catalog-section"
+              items={catalogTabs}
+              onValueChange={setCatalogTab}
+            />
+            <div
+              id={`catalog-section-${catalogTab}-panel`}
+              role="tabpanel"
+              aria-labelledby={`catalog-section-${catalogTab}-tab`}
+              className="type-body px-3 py-4 text-ui-text-muted"
+            >
+              {catalogTab === 'overview' ? 'Overview content renders immediately.' : 'Run content renders immediately.'}
+            </div>
+          </div>
+          <FilterToggleGroup<CatalogFilter>
+            activeValue={catalogFilter}
+            ariaLabel="Catalog status filter"
+            items={catalogFilters}
+            onValueChange={setCatalogFilter}
+          />
+          <div className="flex flex-wrap items-center gap-3" data-catalog-control-sizes="true">
+            <Button size="md" data-catalog-control="default">Default action</Button>
+            <Button size="sm" data-catalog-control="compact">Compact action</Button>
+            <Button variant="icon" size="icon" aria-label="Catalog icon action" data-catalog-control="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+            <CloseButton aria-label="Catalog close action" data-catalog-control="close" />
+            <button type="button" className="control-target rounded-md border border-ui-border px-3 type-ui" data-catalog-control="raw">Local action</button>
+          </div>
         </div>
       </PageSection>
 
@@ -88,6 +149,7 @@ const Catalog = () => {
           <DataSurface heading="Error" state="error" error={<div className="p-surface"><InlineAlert tone="danger">Could not load inventory.</InlineAlert></div>} />
         </div>
         <div className="mt-4 overflow-hidden rounded-lg border border-ui-border bg-ui-surface"><TableToolbar><span className="type-row-title">Table toolbar</span><span className="type-caption text-ui-text-muted">Dense rows use the canonical rhythm</span></TableToolbar><div className="divide-y divide-ui-border"><div className="px-surface py-row-y type-body">Cluster alpha</div><div className="px-surface py-row-y type-body">Cluster beta</div></div></div>
+        <pre className="type-code mt-4 overflow-x-auto rounded-lg border border-code-text/10 bg-code-bg p-4 text-code-text" data-catalog-code-surface="true"><code>kubectl get pods --all-namespaces</code></pre>
       </PageSection>
 
       <PageSection title="Overlays" actions={<><Button onClick={() => setDialogOpen(true)}>Open dialog</Button><Button onClick={() => setDrawerOpen(true)}>Open drawer</Button></>}>

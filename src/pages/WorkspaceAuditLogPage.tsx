@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton, FilterToggleGroup, type CompactControlItem } from '@/components/common/ComponentVocabulary';
 import { TableLoadingRows } from '@/components/common/Loading';
 import { PageSearchInput, pageSearchInputClassName } from '@/components/common/PageSearchInput';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
@@ -267,6 +268,10 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
 
   const visibleCount = useMemo(() => events.length, [events.length]);
   const selectedMetadata = selectedEvent ? formatMetadata(selectedEvent.metadata) : '';
+  const timePresetItems = useMemo<Array<CompactControlItem<AuditTimePreset>>>(() => timePresetOptions.map((value) => ({
+    value,
+    label: t(`auditLog.timePresets.${value}`)
+  })), [t]);
   const clearFilters = () => {
     setDraftFilters(defaultFilters);
     applyNormalizedFilters(defaultFilters);
@@ -364,39 +369,24 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
               <fieldset className="min-w-0">
                 <legend className="sr-only">{t('auditLog.timeRange')}</legend>
                 <div className="flex flex-wrap gap-2">
-                  {timePresetOptions.map((preset) => {
-                    const isActive = activeTimePreset === preset;
-                    return (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => applyTimePreset(preset)}
-                        className={`type-label min-h-9 rounded-md border px-3 py-1.5 transition-colors ${
-                          isActive
-                            ? 'border-accent/40 bg-accent-soft text-accent-strong'
-                            : 'border-ui-border bg-ui-surface text-ui-text-muted hover:border-accent/30 hover:bg-ui-bg hover:text-ui-text'
-                        }`}
-                        aria-pressed={isActive}
-                      >
-                        {t(`auditLog.timePresets.${preset}`)}
-                      </button>
-                    );
-                  })}
-                  <button
-                    type="button"
+                  <FilterToggleGroup
+                    activeValue={activeTimePreset || 'none'}
+                    ariaLabel={t('auditLog.timeRange')}
+                    items={timePresetItems}
+                    onValueChange={applyTimePreset}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => setIsCustomRangeOpen((current) => !current)}
-                    className={`type-label inline-flex min-h-9 items-center gap-2 rounded-md border px-3 py-1.5 transition-colors ${
-                      isCustomRangeOpen || (!activeTimePreset && (draftFilters.from || draftFilters.to))
-                        ? 'border-accent/40 bg-accent-soft text-accent-strong'
-                        : 'border-ui-border bg-ui-surface text-ui-text-muted hover:border-accent/30 hover:bg-ui-bg hover:text-ui-text'
-                    }`}
+                    aria-pressed={Boolean(isCustomRangeOpen || (!activeTimePreset && (draftFilters.from || draftFilters.to)))}
                     aria-expanded={isCustomRangeOpen}
                     aria-controls="audit-custom-range-controls"
                   >
                     <ICONS.Clock className="h-3.5 w-3.5" aria-hidden="true" />
                     {t('auditLog.customRange')}
                     <ICONS.ChevronDown className={`h-3.5 w-3.5 transition-transform ${isCustomRangeOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-                  </button>
+                  </Button>
                 </div>
               </fieldset>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -486,7 +476,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                         <button
                           type="button"
                           onClick={() => setSelectedEvent(event)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg hover:text-ui-text"
+                          className="control-target inline-flex h-9 w-9 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg hover:text-ui-text"
                           aria-label={t('auditLog.viewDetails')}
                         >
                           <ICONS.Eye className="h-4 w-4" />
@@ -536,15 +526,11 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   <p className="type-micro-label">{selectedEvent.category}</p>
                   <h2 id="audit-event-title" className="type-section-title mt-2">{selectedEvent.summary}</h2>
                 </div>
-                <button
+                <CloseButton
                   ref={closeAuditDetailsButtonRef}
-                  type="button"
                   onClick={() => setSelectedEvent(null)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ui-border text-ui-text-muted hover:bg-ui-surface hover:text-ui-text"
                   aria-label={t('auditLog.closeDetails')}
-                >
-                  <ICONS.X className="h-4 w-4" />
-                </button>
+                />
               </div>
               <dl className="divide-y divide-ui-border border-y border-ui-border">
                 {[

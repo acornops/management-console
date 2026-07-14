@@ -2,13 +2,13 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
-import { headerMotion } from '@/lib/motion';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlaneApi';
 import { User } from '@/types';
@@ -108,15 +108,11 @@ const SecurityDialog: React.FC<{
   >
     <div className="mb-5 flex items-center justify-between gap-4">
       <h2 id="account-security-dialog-title" className="text-lg font-bold text-ui-text">{title}</h2>
-      <button
-        type="button"
+      <CloseButton
         onClick={onClose}
         disabled={isSubmitting}
-        className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
         aria-label={closeLabel}
-      >
-        <ICONS.X className="h-4 w-4" />
-      </button>
+      />
     </div>
     <form className="space-y-4" onSubmit={onSubmit}>
       {children}
@@ -339,7 +335,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
                 whileTap={{ scale: 0.97 }}
                 type="button"
                 onClick={onLogout}
-                className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-2 text-xs font-bold text-status-danger-text transition-all hover:bg-status-danger-soft bg-status-danger-soft text-status-danger-text"
+                className="control-target rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-2 text-xs font-bold text-status-danger-text transition-all hover:bg-status-danger-soft bg-status-danger-soft text-status-danger-text"
               >
                 {t('app.logout')}
               </motion.button>

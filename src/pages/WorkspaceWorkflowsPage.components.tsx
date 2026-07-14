@@ -150,7 +150,7 @@ export const WorkflowLibraryList: React.FC<{
     )}
     <div className="grid gap-3">
       {visibleWorkflows.map((workflow) => (
-        <button key={workflow.id} type="button" aria-current={workflow.id === selectedWorkflow?.id ? 'true' : undefined} aria-pressed={workflow.id === selectedWorkflow?.id} aria-label={`Select workflow ${workflow.name}${workflow.id === selectedWorkflow?.id ? ', selected' : ''}`} onClick={() => { setSelectedWorkflowId(workflow.id); setActiveTab('overview'); }} className={`w-full rounded-lg border px-3 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${workflow.id === selectedWorkflow?.id ? 'border-accent/40 bg-accent-soft/45 ring-1 ring-accent/10' : 'border-ui-border bg-ui-surface hover:bg-ui-bg'}`}>
+        <button key={workflow.id} type="button" aria-current={workflow.id === selectedWorkflow?.id ? 'true' : undefined} aria-pressed={workflow.id === selectedWorkflow?.id} aria-label={`Select workflow ${workflow.name}${workflow.id === selectedWorkflow?.id ? ', selected' : ''}`} onClick={() => { setSelectedWorkflowId(workflow.id); setActiveTab('overview'); }} className={`control-target w-full rounded-lg border px-3 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${workflow.id === selectedWorkflow?.id ? 'border-accent/40 bg-accent-soft/45 ring-1 ring-accent/10' : 'border-ui-border bg-ui-surface hover:bg-ui-bg'}`}>
         <span className="grid gap-x-3 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto]">
           <span className="min-w-0">
             <span className="type-row-title block break-words text-ui-text [overflow-wrap:anywhere]">{workflow.name}</span>

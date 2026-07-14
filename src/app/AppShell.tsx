@@ -1,16 +1,11 @@
 import React from 'react';
-import type { MouseEventHandler } from 'react';
 import { AppClusterChatRuntime } from '@/app/AppClusterChatRuntime';
 import { AppClusterCopilotPanel } from '@/app/AppClusterCopilotPanel';
 import { AppDesktopSidebar } from '@/app/AppDesktopSidebar';
 import { AppDialogs } from '@/app/AppDialogs';
 import { AppMobileNavigation } from '@/app/AppMobileNavigation';
 import { AppPageContent } from '@/app/AppPageContent';
-import {
-  isActiveAssistantStatus,
-  isTerminalAssistantStatus,
-  type AssistantNavStatus
-} from '@/app/assistantNavStatus';
+import { isActiveAssistantStatus, isTerminalAssistantStatus, type AssistantNavStatus } from '@/app/assistantNavStatus';
 import { ActivePrimaryNav, ActiveResourceNav, getClusterBackToWorkspacePath, getVirtualMachineBackToWorkspacePath } from '@/app/appRouteState';
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
 import { useCreateWorkspaceInviteSetup } from '@/app/useCreateWorkspaceInviteSetup';
@@ -19,6 +14,7 @@ import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { useWorkspaceApprovalSummary } from '@/hooks/useWorkspaceApprovalSummary';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
+import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import type { controlPlaneApi as ControlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
@@ -167,10 +163,11 @@ interface AppShellProps {
   showToast: (message: string) => void;
   sidebarAccountMenuRef: React.RefObject<HTMLDivElement | null>;
   sidebarWorkspaceMenuRef: React.RefObject<HTMLDivElement | null>;
-  theme: 'light' | 'dark';
+  themePreference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
   toasts: Array<{ id: string; message: string }>;
   toWorkspaceInvitation: (invitation: Awaited<ReturnType<typeof ControlPlaneApi.createWorkspaceInvitation>>) => WorkspaceInvitation;
-  toggleTheme: MouseEventHandler<HTMLButtonElement>;
+  selectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
   updateKubernetesCluster: (clusterId: string, updates: Partial<KubernetesCluster>) => void;
   updateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   user: User;
@@ -266,10 +263,11 @@ export const AppShell: React.FC<AppShellProps> = ({
   showToast,
   sidebarAccountMenuRef,
   sidebarWorkspaceMenuRef,
-  theme,
+  themePreference,
+  resolvedTheme,
   toasts,
   toWorkspaceInvitation,
-  toggleTheme,
+  selectTheme,
   updateKubernetesCluster,
   updateWorkspace,
   user,
@@ -457,7 +455,8 @@ export const AppShell: React.FC<AppShellProps> = ({
         pendingApprovalCount={approvalSummary.pendingCount}
         isClusterSidebar={isClusterSidebar}
         isVirtualMachineSidebar={isVirtualMachineSidebar}
-        isDark={isDark}
+        themePreference={themePreference}
+        resolvedTheme={resolvedTheme}
         isMobileNavOpen={isMobileNavOpen}
         selectedClusterIssueCount={selectedClusterIssueCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
@@ -483,7 +482,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onSelectWorkspaceContext={handleSelectWorkspaceContext}
         onSetAccountMenuOpen={setIsAccountMenuOpen}
         onSetMobileNavOpen={setIsMobileNavOpen}
-        onToggleTheme={toggleTheme}
+        onSelectTheme={selectTheme}
       />
 
       <AppDesktopSidebar
@@ -500,8 +499,8 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedClusterIssueCount={selectedClusterIssueCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmIssueCount={selectedVmIssueCount}
-        theme={theme}
-        isDark={isDark}
+        themePreference={themePreference}
+        resolvedTheme={resolvedTheme}
         isAccountMenuOpen={isAccountMenuOpen}
         isSidebarWorkspaceMenuOpen={isSidebarWorkspaceMenuOpen}
         sidebarAccountMenuRef={sidebarAccountMenuRef}
@@ -520,7 +519,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onSelectWorkspaceContext={handleSelectWorkspaceContext}
         onSetAccountMenuOpen={setIsAccountMenuOpen}
         onSetSidebarWorkspaceMenuOpen={setIsSidebarWorkspaceMenuOpen}
-        onToggleTheme={toggleTheme}
+        onSelectTheme={selectTheme}
         onLogout={() => void handleLogout()}
         user={user}
       />

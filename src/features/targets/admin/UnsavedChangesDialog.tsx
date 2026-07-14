@@ -1,6 +1,7 @@
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 
 interface UnsavedChangesDialogProps {
@@ -33,14 +34,10 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
         </div>
         <h3 id="unsaved-changes-dialog-title" className="type-panel-title">{title}</h3>
       </div>
-      <button
-        type="button"
+      <CloseButton
         onClick={onCancel}
-        className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={cancelLabel}
-      >
-        <X className="h-4 w-4" />
-      </button>
+      />
     </div>
 
     <div className="px-6 py-5">

@@ -5,6 +5,7 @@ import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModa
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
 import { AppToast, ToastViewport } from '@/components/common/ToastViewport';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
@@ -127,15 +128,11 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                     <p className="mt-0.5 text-[11px] font-semibold text-ui-text-muted">{t('app.deleteWorkspaceSubtitle')}</p>
                   </div>
                 </div>
-                <button
-                  type="button"
+                <CloseButton
                   onClick={handleCloseWorkspaceDelete}
                   disabled={isDeletingWorkspace}
-                  className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label={t('app.closeDeleteWorkspaceDialog')}
-                >
-                  <ICONS.X className="h-4 w-4" />
-                </button>
+                />
               </div>
 
               <div className="space-y-4 p-5">
@@ -171,7 +168,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                     type="button"
                     onClick={handleCloseWorkspaceDelete}
                     disabled={isDeletingWorkspace}
-                    className="rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
+                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {t('app.cancel')}
                   </button>
@@ -190,7 +187,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                       }
                     }}
                     disabled={isDeletingWorkspace || workspaceDeleteConfirmation !== deleteTargetWorkspace.name}
-                    className="rounded-lg bg-status-danger px-4 py-2 text-xs font-extrabold text-ui-bg shadow-lg shadow-status-danger/20 transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
+                    className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-xs font-extrabold text-control-danger-fg shadow-lg shadow-status-danger/20 transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isDeletingWorkspace ? t('app.deleting') : t('app.deleteWorkspace')}
                   </button>

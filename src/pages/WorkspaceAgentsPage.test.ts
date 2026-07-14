@@ -8,6 +8,7 @@ const page = source('src/pages/WorkspaceAgentsPage.tsx');
 const catalog = source('src/pages/WorkspaceAgentsCatalog.tsx');
 const drawers = source('src/pages/WorkspaceAgentsDrawers.tsx');
 const workspace = source('src/pages/WorkspaceAgentDetailPanel.tsx');
+const componentVocabulary = source('src/components/common/ComponentVocabulary.tsx');
 
 describe('WorkspaceAgentsPage surface', () => {
   it('restores canonical profile tabs and legacy activity URLs', () => {
@@ -30,7 +31,7 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(catalog).toContain('getAgentCapabilitySummary');
     expect(catalog).toContain('<WorkflowAssignment agent={agent} />');
     expect(catalog).toContain('aria-label={t(\'agentsWorkflows.agents.openProfile\'');
-    expect(catalog).toContain('className="absolute inset-0');
+    expect(catalog).toContain('className="control-target absolute inset-0');
     expect(catalog).toContain('pointer-events-auto relative z-20');
     expect(catalog).not.toContain("['Agent', 'Status', 'Capabilities', 'Workflows']");
     expect(catalog).not.toContain('View profile');
@@ -50,6 +51,23 @@ describe('WorkspaceAgentsPage surface', () => {
     expect(workspace).toContain("['overview', 'capabilities', 'activity', 'versions']");
     expect(workspace).toContain("'Run agent'");
     expect(workspace).not.toContain('Run readiness');
+  });
+
+  it('keeps profile tabs URL-backed with roving keyboard focus and stable ARIA links', () => {
+    expect(workspace).toContain('<SegmentedTabs');
+    expect(workspace).toContain('idBase="agent-profile"');
+    expect(workspace.match(/role="tabpanel"/g)).toHaveLength(4);
+    ['overview', 'capabilities', 'activity', 'versions'].forEach((tab) => {
+      expect(workspace).toContain(`id="agent-profile-${tab}-panel"`);
+      expect(workspace).toContain(`aria-labelledby="agent-profile-${tab}-tab"`);
+    });
+    expect(componentVocabulary).toContain('aria-controls={idBase ? `${idBase}-${tab.value}-panel` : undefined}');
+    expect(componentVocabulary).toContain('tabIndex={tab.isActive ? 0 : -1}');
+    ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'].forEach((key) => {
+      expect(componentVocabulary).toContain(`event.key === '${key}'`);
+    });
+    expect(page).toContain("initialUrlSearch.get('agentTab')");
+    expect(page).toContain('agentTab: tab');
   });
 
   it('guards edits and disables unchanged save', () => {

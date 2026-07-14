@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { ICONS, THEME_CLASSES } from '@/constants';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 
 export interface AppToast {
   id: string;
@@ -20,7 +21,6 @@ interface ToastViewportProps {
  */
 export const ToastViewport: React.FC<ToastViewportProps> = ({
   toasts,
-  isDark,
   onDismiss
 }) => {
   const { t } = useTranslation();
@@ -46,22 +46,17 @@ export const ToastViewport: React.FC<ToastViewportProps> = ({
             >
               <div className="px-4 py-3 flex items-start gap-3">
                 <div
-                  className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-full ${
-                    isDark ? 'bg-status-success/20 text-emerald-300' : 'bg-emerald-100 text-status-success-text'
-                  }`}
+                  className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-status-success-soft text-status-success-text"
                 >
                   <ICONS.CheckCircle2 className="w-3.5 h-3.5" />
                 </div>
                 <p className="flex-1 text-sm font-medium text-ui-text">
                   {toast.message}
                 </p>
-                <button
+                <CloseButton
                   onClick={() => onDismiss(toast.id)}
-                  className="rounded-md p-1 text-ui-text-muted transition hover:bg-ui-bg hover:text-ui-text"
                   aria-label={t('common.dismissNotification')}
-                >
-                  <ICONS.X className="w-3.5 h-3.5" />
-                </button>
+                />
               </div>
               <motion.div
                 initial={{ scaleX: 1 }}

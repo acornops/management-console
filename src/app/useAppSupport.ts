@@ -53,7 +53,6 @@ export function useAppSupport(args: {
   setIsMobileNavOpen: Dispatch<SetStateAction<boolean>>;
   setIsSidebarWorkspaceMenuOpen: Dispatch<SetStateAction<boolean>>;
   setSelectedWorkspaceId: Dispatch<SetStateAction<string | null>>;
-  setTheme: Dispatch<SetStateAction<'light' | 'dark'>>;
   setUser: Dispatch<SetStateAction<User | null>>;
   setWorkspaces: Dispatch<SetStateAction<Workspace[]>>;
 }): {
@@ -72,7 +71,6 @@ export function useAppSupport(args: {
   showToast: (message: string) => void;
   toWorkspaceInvitation: (invitation: ControlPlaneWorkspaceInvitation) => WorkspaceInvitation;
   toasts: AppToast[];
-  toggleTheme: () => void;
   updateKubernetesCluster: (clusterId: string, updates: Partial<KubernetesCluster>) => void;
   updateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
 } {
@@ -93,7 +91,6 @@ export function useAppSupport(args: {
     setIsMobileNavOpen,
     setIsSidebarWorkspaceMenuOpen,
     setSelectedWorkspaceId,
-    setTheme,
     setUser,
     setWorkspaces
   } = args;
@@ -146,10 +143,6 @@ export function useAppSupport(args: {
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isMobileNavOpen, setIsMobileNavOpen]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
 
   const showToast = (message: string) => {
     const id = globalThis.crypto?.randomUUID?.() || `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -346,7 +339,6 @@ export function useAppSupport(args: {
     showToast,
     toWorkspaceInvitation,
     toasts,
-    toggleTheme,
     updateKubernetesCluster,
     updateWorkspace
   };

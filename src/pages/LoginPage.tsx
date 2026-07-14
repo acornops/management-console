@@ -1,14 +1,15 @@
 import React from 'react';
-import type { MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ICONS } from '@/constants';
-import { Tooltip } from '@/components/common/Tooltip';
+import { ThemeMenu } from '@/components/common/ThemeMenu';
+import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import { PasswordAuthResult } from '@/types';
 import { LoginAuthPanel } from './login/LoginAuthPanel';
 import { LoginPreview } from './login/LoginPreview';
 
 interface LoginPageProps {
   isDark: boolean;
+  preference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
   isAuthLoading: boolean;
   logoSrc: string;
   oidcEnabled: boolean;
@@ -27,7 +28,7 @@ interface LoginPageProps {
   onResendVerification: (email: string) => Promise<{ resendAfterSeconds?: number }>;
   onRequestPasswordReset: (email: string) => Promise<{ resendAfterSeconds?: number }>;
   onResetPassword: (token: string, password: string) => Promise<void>;
-  onToggleTheme: MouseEventHandler<HTMLButtonElement>;
+  onSelectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
 }
 
 /**
@@ -35,6 +36,8 @@ interface LoginPageProps {
  */
 export const LoginPage: React.FC<LoginPageProps> = ({
   isDark,
+  preference,
+  resolvedTheme,
   isAuthLoading,
   logoSrc,
   oidcEnabled,
@@ -48,25 +51,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onResendVerification,
   onRequestPasswordReset,
   onResetPassword,
-  onToggleTheme
+  onSelectTheme
 }) => {
   const { t } = useTranslation();
   return (
     <div className={`relative flex min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-ui-bg text-ui-text transition-colors duration-200 lg:grid lg:grid-cols-2 lg:overflow-hidden ${isDark ? 'dark' : ''}`}>
-      <Tooltip
-        content={isDark ? t('login.switchLight') : t('login.switchDark')}
-        side="left"
-        className="absolute right-4 top-4 z-20"
-      >
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          className="rounded-lg border border-ui-border bg-ui-surface/90 p-2.5 text-ui-text-muted shadow-sm transition-all duration-150 hover:bg-ui-surface-strong hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-95"
-          aria-label={isDark ? t('login.switchLight') : t('login.switchDark')}
-        >
-          {isDark ? <ICONS.Sun className="h-4 w-4" /> : <ICONS.Moon className="h-4 w-4" />}
-        </button>
-      </Tooltip>
+      <ThemeMenu
+        preference={preference}
+        resolvedTheme={resolvedTheme}
+        variant="login"
+        onSelect={onSelectTheme}
+      />
 
       <main className="relative z-10 flex min-h-[100dvh] w-full flex-1 flex-col items-center justify-center px-4 py-6 sm:p-8 lg:min-h-0 lg:items-end lg:pr-28 xl:pr-32 2xl:pr-36">
         <div

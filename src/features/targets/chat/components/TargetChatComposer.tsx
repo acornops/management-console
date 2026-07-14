@@ -158,7 +158,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                             <button
                               type="button"
                               onClick={() => removeComposerAttachment(attachment.id)}
-                              className="absolute right-1 top-1 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border border-ui-border bg-ui-bg text-ui-text shadow-sm transition-colors hover:bg-ui-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                              className="control-target absolute right-1 top-1 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border border-ui-border bg-ui-bg text-ui-text shadow-sm transition-colors hover:bg-ui-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                               aria-label={t('chat.removeAttachment', { name: attachment.name })}
                             >
                               <X className="h-3.5 w-3.5" />
@@ -207,7 +207,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={!canPost || isRunActive}
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="control-target inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label={t('chat.attachFiles')}
                   >
                     <Plus className="h-4 w-4" />
@@ -240,7 +240,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                         setIsModelSubmenuOpen(false);
                       }}
                       disabled={!canPost || isRunActive || isWorkspaceAiSettingsLoading || Boolean(workspaceAiSettingsError)}
-                      className="inline-flex h-8 max-w-[15rem] items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="control-target inline-flex h-8 max-w-[15rem] items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label={t('chat.modelAndEffortSelector')}
                       aria-controls={modelMenuPanelId}
                       aria-expanded={isModelMenuOpen}
@@ -270,7 +270,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                                 key={option.value}
                                 type="button"
                                 onClick={() => handleModelAndEffortChange(option.value as ReasoningEffort)}
-                                className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left font-medium text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                                className="control-target flex h-10 w-full items-center justify-between rounded-xl px-3 text-left font-medium text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                                 aria-pressed={isSelected}
                               >
                                 <span>{t(option.labelKey)}</span>
@@ -284,7 +284,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                               type="button"
                               id={modelSubmenuButtonId}
                               onClick={() => setIsModelSubmenuOpen((current) => !current)}
-                              className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left font-medium text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                              className="control-target flex h-10 w-full items-center justify-between rounded-xl px-3 text-left font-medium text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                               aria-controls={modelSubmenuPanelId}
                               aria-expanded={isModelSubmenuOpen}
                             >
@@ -318,7 +318,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                                         key={`${option.provider}:${option.model}`}
                                         type="button"
                                         onClick={() => handleModelChange(option)}
-                                        className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left font-medium text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                                        className="control-target flex h-10 w-full items-center justify-between rounded-xl px-3 text-left font-medium text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                                         aria-pressed={isSelected}
                                       >
                                         <span className="min-w-0">
@@ -349,7 +349,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                     disabled={isRunActive ? !canCancelActiveRun || isCancellingRun : !canPost || !hasComposerSubmitPayload || isComposerRuntimeUnavailable}
                     variant={isRunActive ? 'secondary' : 'primary'}
                     size="icon"
-                    className={`h-9 w-9 shrink-0 rounded-full border-0 bg-ui-text text-ui-bg hover:bg-ui-text/90 focus-visible:ring-accent/25 disabled:bg-ui-text/35 disabled:text-ui-bg/70 dark:bg-ui-text dark:text-ui-bg dark:hover:bg-ui-text/90 ${isRunActive ? 'border-status-danger/25 bg-status-danger-soft text-status-danger-text hover:border-status-danger/40 hover:bg-status-danger-soft/80 focus-visible:ring-status-danger/20' : ''}`}
+                    className={`h-9 w-9 shrink-0 rounded-full ${isRunActive ? 'border-status-danger/25 bg-status-danger-soft text-status-danger-text hover:border-status-danger/40 hover:bg-status-danger-soft/80 focus-visible:ring-status-danger/20' : ''}`}
                     aria-label={composerActionLabel}
                   >
                     {isRunActive ? (isCancellingRun ? <Loader2 className="h-5 w-5 animate-spin" /> : <Square className="h-4 w-4 fill-current" />) : <ArrowUp className="h-5 w-5 stroke-[2.4]" />}

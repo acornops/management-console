@@ -61,10 +61,10 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage
             type="button"
             onClick={() => onSelect(workload)}
             aria-label={`${t('workloads.details')}: ${workload.name}`}
-            className={classNames(
+            className={`control-target ${classNames(
               resourceRowGridClass,
               'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/30'
-            )}
+            )}`}
           >
             <div data-resource-row-identity="true" className="flex min-w-0 max-w-full items-center gap-4 sm:gap-5 xl:gap-6">
               <div

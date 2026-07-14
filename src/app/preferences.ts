@@ -1,6 +1,7 @@
 import { User } from '@/types';
 import { AppLanguageCode, getLanguageOption, resolveSupportedLanguageCode } from '@/i18n/languageConfig';
 import { safeStorage } from '@/utils/safeStorage';
+import { parseThemePreference, type ThemePreference } from '@/app/theme';
 
 export const GLOBAL_THEME_STORAGE_KEY = 'app_theme';
 export const GLOBAL_LANGUAGE_STORAGE_KEY = 'app_language';
@@ -17,15 +18,21 @@ export function getProfileStorageKey(profileKey: string, preference: ProfilePref
   return `${PROFILE_PREFERENCE_STORAGE_PREFIX}:${profileKey}:${preference}`;
 }
 
-export function readThemePreference(profileKey?: string): 'light' | 'dark' {
-  const saved = profileKey
-    ? safeStorage.getItem(getProfileStorageKey(profileKey, 'theme'))
-    : safeStorage.getItem(GLOBAL_THEME_STORAGE_KEY);
-  if (saved === 'light' || saved === 'dark') {
-    return saved;
+export function readThemePreference(profileKey?: string): ThemePreference {
+  if (profileKey) {
+    const saved = safeStorage.getItem(getProfileStorageKey(profileKey, 'theme'));
+    if (saved !== null) {
+      return parseThemePreference(saved);
+    }
   }
-  const fallback = safeStorage.getItem(GLOBAL_THEME_STORAGE_KEY);
-  return fallback === 'dark' ? 'dark' : 'light';
+  return parseThemePreference(safeStorage.getItem(GLOBAL_THEME_STORAGE_KEY));
+}
+
+export function persistThemePreference(preference: ThemePreference, profileKey?: string): void {
+  safeStorage.setItem(
+    profileKey ? getProfileStorageKey(profileKey, 'theme') : GLOBAL_THEME_STORAGE_KEY,
+    preference
+  );
 }
 
 export function readLanguagePreference(profileKey?: string): AppLanguageCode {

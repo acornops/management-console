@@ -18,8 +18,8 @@ export function vmMatchesConnectionFilter(vm: ControlPlaneVirtualMachine, filter
 }
 
 export function statusClass(status: ControlPlaneVirtualMachine['status']): string {
-  if (status === 'online') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-  if (status === 'degraded') return 'bg-amber-100 text-amber-700 border-amber-200';
+  if (status === 'online') return 'border-status-success/25 bg-status-success-soft text-status-success-text';
+  if (status === 'degraded') return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
   return 'bg-ui-bg text-ui-text-muted border-ui-border';
 }
 
@@ -72,5 +72,5 @@ export function formatSnapshotTime(vm: ControlPlaneVirtualMachine): string {
 export function issueSeverityTone(severity: 'critical' | 'warning' | 'info'): string {
   if (severity === 'critical') return 'bg-status-danger-soft text-status-danger-text';
   if (severity === 'warning') return 'bg-status-warning-soft text-status-warning-text';
-  return 'bg-sky-500/10 text-sky-600 dark:text-sky-300';
+  return 'border border-ui-border bg-ui-surface-strong text-ui-text-muted';
 }

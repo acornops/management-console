@@ -8,6 +8,7 @@ const root = resolve(__dirname, '../..');
 describe('WorkspaceApprovalsPage control-plane surface', () => {
   const approvalsPage = readFileSync(resolve(root, 'src/pages/WorkspaceApprovalsPage.tsx'), 'utf8');
   const workflowApi = readFileSync(resolve(root, 'src/services/control-plane/workflowApi.ts'), 'utf8');
+  const componentVocabulary = readFileSync(resolve(root, 'src/components/common/ComponentVocabulary.tsx'), 'utf8');
   const enLocale = readFileSync(resolve(root, 'src/i18n/locales/en.js'), 'utf8');
 
   it('loads the unified inbox and decides approvals through run-scoped decisions', () => {
@@ -15,7 +16,11 @@ describe('WorkspaceApprovalsPage control-plane surface', () => {
     expect(approvalsPage).toContain('decideWorkflowRunApproval');
     expect(approvalsPage).toContain('await onApprovalDecision?.();');
     expect(approvalsPage).toContain("useState<ApprovalFilter>('pending')");
-    expect(approvalsPage).toContain("(['pending', 'decided'] as ApprovalFilter[])");
+    expect(approvalsPage).toContain("{ value: 'pending', label: t('approvals.filters.pending') }");
+    expect(approvalsPage).toContain("{ value: 'decided', label: t('approvals.filters.recent') }");
+    expect(approvalsPage).toContain('<FilterToggleGroup<ApprovalFilter>');
+    expect(approvalsPage).toContain("ariaLabel={t('approvals.filters.label')}");
+    expect(componentVocabulary).toContain('aria-pressed={filter.ariaPressed}');
     expect(workflowApi).toContain('/approvals');
     expect(approvalsPage).not.toContain('const approvalRows');
     expect(approvalsPage).not.toContain('placeholderNotice');

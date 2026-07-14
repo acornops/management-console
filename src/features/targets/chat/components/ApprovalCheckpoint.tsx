@@ -187,7 +187,7 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
             <summary className="cursor-pointer select-none text-xs font-semibold leading-5 text-ui-text-muted">
               {t('chat.approvalAdvancedDetails')}
             </summary>
-            <pre className="type-code mt-1 max-h-36 overflow-auto rounded-md border border-ui-border bg-code-bg px-3 py-2 text-slate-100">
+            <pre className="type-code mt-1 max-h-36 overflow-auto rounded-md border border-ui-border bg-code-bg px-3 py-2 text-code-text">
               {formatApprovalArguments(approval.arguments)}
             </pre>
           </details>

@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { cardClassName } from '@/components/common/Card';
 import { Dialog } from '@/components/common/Dialog';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
@@ -196,15 +197,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <p className="mt-0.5 text-[11px] font-semibold text-ui-text-muted">{t('dashboard.deleteClusterSubtitle')}</p>
                 </div>
               </div>
-              <button
-                type="button"
+              <CloseButton
                 onClick={closeDeleteClusterDialog}
                 disabled={isDeletingCluster}
-                className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
                 aria-label={t('dashboard.closeDeleteCluster')}
-              >
-                <ICONS.X className="h-4 w-4" />
-              </button>
+              />
             </div>
             <div className="space-y-4 px-7 py-6">
               <p className="text-sm leading-6 text-ui-text-muted">
@@ -247,7 +244,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 type="button"
                 onClick={closeDeleteClusterDialog}
                 disabled={isDeletingCluster}
-                className="rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title text-ui-text-muted transition-all hover:bg-ui-bg disabled:opacity-50"
+                className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title text-ui-text-muted transition-all hover:bg-ui-bg disabled:opacity-50"
               >
                 {t('app.cancel')}
               </button>
@@ -255,7 +252,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 type="button"
                 onClick={() => void handleConfirmDeleteCluster()}
                 disabled={isDeletingCluster || deleteClusterConfirmation !== deleteTargetCluster.name}
-                className="rounded-lg bg-status-danger px-4 py-2 type-row-title text-ui-bg transition-all hover:bg-status-danger-text disabled:cursor-not-allowed disabled:opacity-60"
+                className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 type-row-title text-control-danger-fg transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeletingCluster ? t('dashboard.deleting') : t('dashboard.delete')}
               </button>

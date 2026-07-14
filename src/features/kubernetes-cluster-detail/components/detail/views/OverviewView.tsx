@@ -38,7 +38,7 @@ function severityRank(severity: ControlPlaneIssueItem['severity']): number {
 function getSeverityTone(severity: ControlPlaneIssueItem['severity']): string {
   if (severity === 'critical') return 'bg-status-danger-soft text-status-danger-text';
   if (severity === 'warning') return 'bg-status-warning-soft text-status-warning-text';
-  return 'bg-sky-500/10 text-sky-600 dark:text-sky-300';
+  return 'border border-ui-border bg-ui-surface-strong text-ui-text-muted';
 }
 
 function issueTimestamp(issue: ControlPlaneIssueItem): number {

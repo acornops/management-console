@@ -6,9 +6,11 @@ Motion in the management console explains continuity between visible states. It 
 
 ### Theme reveal
 
-Theme changes begin at the control the operator clicked. Supported browsers reveal the new theme with a 320 ms radial View Transition using the console's ease-out-quint curve. The clicked sun or moon control is isolated for the snapshot and crosses state with a restrained 160 ms rotate and scale transition.
+User-selected appearance changes begin at the chosen theme option. The live page recolors in place and a non-occluding 320 ms radial ripple expands from that control with the console's ease-out-quint curve. The implementation does not snapshot the page, so operational content and the login illustration remain live.
 
-The same interaction applies to the login control, desktop account menu, and mobile navigation. A rapid repeated click skips the active transition before starting the next one. The login illustration pauses during snapshot capture. Reduced-motion users and browsers without View Transitions receive the preference change immediately.
+The same interaction applies to the shared System, Light, and Dark menu on login, desktop account navigation, and mobile navigation. Each trigger shows the destination appearance with a 160 ms opacity, rotate, and scale swap using the same ease-out-quint curve. A rapid repeated choice removes the active ripple before starting the next one. Reduced-motion users receive the preference change and destination icon immediately.
+
+Selecting `System` when it resolves to the appearance already on screen updates the preference without a ripple. A later `prefers-color-scheme` change while `System` is active also switches immediately without click-origin motion because there was no click to explain. Browser `theme-color` updates with the resolved canvas in every path.
 
 ### Active tab continuity
 

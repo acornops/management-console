@@ -87,7 +87,7 @@ export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({
             aria-expanded={isExpanded}
             aria-controls={expandedPanelId}
             onClick={() => setIsExpanded((expanded) => !expanded)}
-            className="type-label inline-flex items-center gap-2 rounded-md px-1 py-1 text-ui-text-muted transition-colors hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+            className="control-target type-label inline-flex items-center gap-2 rounded-md px-1 py-1 text-ui-text-muted transition-colors hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
           >
             {t('members.rolePreviewCapabilities')}
             <ChevronDown className={clsx('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} aria-hidden="true" />

@@ -16,11 +16,74 @@ function sourceFiles(directory) {
   }).filter((path) => ['.ts', '.tsx'].includes(extname(path)) && !path.includes('.test.'));
 }
 
+function productionFiles(directory) {
+  return readdirSync(directory).flatMap((entry) => {
+    const path = join(directory, entry);
+    return statSync(path).isDirectory() ? productionFiles(path) : [path];
+  }).filter((path) => ['.ts', '.tsx', '.css'].includes(extname(path)) && !path.includes('.test.'));
+}
+
+function jsxButtonOpenings(source) {
+  const openings = [];
+  const startPattern = /<(?:motion\.)?button\b/g;
+  let match;
+
+  while ((match = startPattern.exec(source)) !== null) {
+    let braceDepth = 0;
+    let quote = '';
+    let escaped = false;
+    let index = match.index;
+
+    for (; index < source.length; index += 1) {
+      const character = source[index];
+      if (quote) {
+        if (escaped) {
+          escaped = false;
+        } else if (character === '\\') {
+          escaped = true;
+        } else if (character === quote) {
+          quote = '';
+        }
+        continue;
+      }
+      if (character === '"' || character === "'" || character === '`') {
+        quote = character;
+      } else if (character === '{') {
+        braceDepth += 1;
+      } else if (character === '}') {
+        braceDepth = Math.max(0, braceDepth - 1);
+      } else if (character === '>' && braceDepth === 0) {
+        openings.push({ source: source.slice(match.index, index + 1), start: match.index });
+        startPattern.lastIndex = index + 1;
+        break;
+      }
+    }
+  }
+
+  return openings;
+}
+
 function report(path, rule, detail) {
   failures.push(`${relative(root, path)}: ${rule}: ${detail}`);
 }
 
 const files = sourceFiles(srcRoot);
+const productionSources = productionFiles(srcRoot);
+const namedTailwindPalette = /(?:^|[\s'"`])(?:[a-z-]+:)*(?:bg|text|border|divide|ring|outline|shadow|fill|stroke|from|via|to|decoration|caret|accent)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950)(?:\/[^\s'"`}]+)?/g;
+const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
+const canonicalButtonTarget = /(?:^|[\s'"`])(?:control-target|min-h-11|h-11|min-h-12|h-12|min-h-control|h-control)(?=$|[\s'"`])/;
+
+for (const path of productionSources) {
+  const source = readFileSync(path, 'utf8');
+  const paletteMatches = [...source.matchAll(namedTailwindPalette)];
+  for (const match of paletteMatches) {
+    report(path, 'named-tailwind-palette', `${match[0].trim()} must resolve through a design token`);
+  }
+  if (/\bbackdrop-blur(?:-|\b)/.test(source)) {
+    report(path, 'no-glass', 'backdrop blur is prohibited; use an opaque token scrim or surface');
+  }
+}
+
 for (const path of files) {
   const source = readFileSync(path, 'utf8');
   const repoPath = relative(root, path).replaceAll('\\', '/');
@@ -51,6 +114,14 @@ for (const path of files) {
 
   if (repoPath.startsWith('src/pages/') && /px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10/.test(source)) {
     report(path, 'route-shell-copy', 'use PageShell instead of copying route margins and scrolling');
+  }
+
+  for (const opening of jsxButtonOpenings(source)) {
+    const isDesktopSidebarNavigationRow = repoPath === 'src/app/AppDesktopSidebarParts.tsx' && /navButtonClass\(/.test(opening.source);
+    if (!approvedButtonSizingHelpers.test(opening.source) && !canonicalButtonTarget.test(opening.source) && !isDesktopSidebarNavigationRow) {
+      const line = source.slice(0, opening.start).split('\n').length;
+      report(path, 'raw-button-target', `line ${line}: raw buttons require an approved shared sizing helper or a 44px mobile target (36px compact targets may begin at sm)`);
+    }
   }
 }
 

@@ -3,6 +3,7 @@ import { Loader2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -229,15 +230,11 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
           </h3>
           <p className="mt-1 text-xs font-medium text-ui-text-muted">{cluster.name}</p>
         </div>
-        <button
-          type="button"
+        <CloseButton
           onClick={onClose}
           disabled={isSaving}
-          className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
           aria-label={t('clusterSetup.closeNamespaceScopeDialog')}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
       </div>
 
       <div className="space-y-4 overflow-y-auto p-6 custom-scrollbar">
@@ -263,7 +260,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     type="button"
                     disabled={isSaving}
                     onClick={() => removeToken('include', namespace)}
-                    className="rounded-sm p-0.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
+                    className="control-target rounded-sm p-0.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
                     aria-label={t('clusterSetup.removeNamespaceToken', { namespace })}
                   >
                     <X className="h-3 w-3" />
@@ -342,7 +339,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     type="button"
                     disabled={isSaving}
                     onClick={() => removeToken('exclude', namespace)}
-                    className="rounded-sm p-0.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
+                    className="control-target rounded-sm p-0.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
                     aria-label={t('clusterSetup.removeNamespaceToken', { namespace })}
                   >
                     <X className="h-3 w-3" />

@@ -174,7 +174,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              className="pointer-events-none absolute inset-0 z-[140] flex items-center justify-center bg-ui-bg/75 p-6 backdrop-blur-[2px]"
+              className="pointer-events-none absolute inset-0 z-[140] flex items-center justify-center bg-ui-bg/88 p-6 dark:bg-ui-bg/92"
             >
               <div className="flex min-h-48 w-full max-w-2xl flex-col items-center justify-center rounded-2xl border border-dashed border-accent/50 bg-accent/10 px-8 py-10 text-center shadow-lg shadow-ui-text/5">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-ui-surface text-accent-strong">
@@ -196,7 +196,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             ref={historyButtonRef}
             type="button"
             onClick={() => setIsHistoryOpen(true)}
-            className="inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+            className="control-target inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
             aria-label={historyControlLabel}
             aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
             aria-expanded={isHistoryOpen}
@@ -222,7 +222,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 ref={historyButtonRef}
                 type="button"
                 onClick={() => setIsHistoryOpen(false)}
-                className="inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                className="control-target inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                 aria-label={historyControlLabel}
                 aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
                 aria-expanded={isHistoryOpen}
@@ -318,7 +318,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                     type="button"
                     onClick={() => void onLoadEarlierMessages()}
                     disabled={isLoadingEarlierMessages}
-                    className="type-label rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+                    className="control-target type-label rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isLoadingEarlierMessages ? t('chat.loadingEarlier') : t('chat.loadEarlier')}
                   </button>
@@ -500,7 +500,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 <button
                   type="button"
                   onClick={() => setIsHistoryOpen(false)}
-                  className="inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={historyControlLabel}
                 >
                   <History className="h-4 w-4" />

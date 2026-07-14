@@ -187,8 +187,11 @@ export const en = {
     help: 'Help',
     userSettings: 'User Settings',
     theme: 'Theme',
+    themeSystem: 'System',
     themeLight: 'Light',
     themeDark: 'Dark',
+    themeMenuLabel: 'Theme preference',
+    openThemeMenu: 'Choose theme. Current preference: {{theme}}',
     workspaceSettings: 'Workspace Settings',
     aiSettings: 'AI Settings',
     auditLog: 'Audit Log',
@@ -307,6 +310,7 @@ export const en = {
     decisionError: 'Failed recording approval decision.',
     targetWorkspace: 'Workspace',
     filters: {
+      label: 'Filter approvals by status',
       pending: 'Pending',
       recent: 'Recent'
     },

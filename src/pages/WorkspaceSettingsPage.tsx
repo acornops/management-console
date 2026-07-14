@@ -1,11 +1,9 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { ICONS } from '@/constants';
 import { isKnownOnlyWorkspaceOwner } from '@/app/workspaceLeave';
-import { headerMotion } from '@/lib/motion';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ProjectMember, Workspace } from '@/types';
 import { WorkspaceMcpSettings } from '@/pages/WorkspaceMcpSettings';

@@ -48,7 +48,7 @@ export function ChatEmptyPrompt({
             type="button"
             onClick={() => void onSendSuggestion(suggestion.label)}
             disabled={!canSendSuggestion}
-            className="group flex min-h-14 items-start gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm font-medium text-ui-text transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="control-target group flex min-h-14 items-start gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm font-medium text-ui-text transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" />
             <span className="min-w-0 break-words">{suggestion.label}</span>

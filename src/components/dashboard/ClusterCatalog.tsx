@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { MoreHorizontal, Settings, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { MenuItem } from '@/components/common/FormControls';
 import { ClusterTelemetryPanel } from '@/components/dashboard/ClusterTelemetryPanel';
 import { ICONS } from '@/constants';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
@@ -165,7 +166,7 @@ const ClusterActionMenu: React.FC<{
         data-cluster-overflow-action="toggle"
         type="button"
         onClick={onToggle}
-        className={`inline-flex h-10 w-10 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${isOpen ? 'bg-ui-bg text-ui-text' : ''}`}
+        className={`control-target inline-flex h-10 w-10 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${isOpen ? 'bg-ui-bg text-ui-text' : ''}`}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={t('dashboard.clusterActionsFor', { name: cluster.name })}
@@ -175,16 +176,16 @@ const ClusterActionMenu: React.FC<{
       {isOpen && (
         <div role="menu" onClick={(event) => event.stopPropagation()} className="absolute right-0 top-10 w-52 overflow-hidden rounded-lg border border-ui-border bg-ui-surface p-1 text-sm shadow-xl">
           {onOpenSettings && (
-            <button data-cluster-overflow-action="settings" type="button" role="menuitem" onClick={() => { onClose(); onOpenSettings(cluster); }} className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20">
+            <MenuItem data-cluster-overflow-action="settings" onClick={() => { onClose(); onOpenSettings(cluster); }}>
               <Settings className="h-4 w-4 text-ui-text-muted" />
               {t('dashboard.clusterSettings')}
-            </button>
+            </MenuItem>
           )}
           {canDeleteCluster && (
-            <button data-cluster-overflow-action="delete" type="button" role="menuitem" onClick={() => { onClose(); onOpenDelete(cluster); }} className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-status-danger-text transition-colors hover:bg-status-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25">
+            <MenuItem data-cluster-overflow-action="delete" destructive onClick={() => { onClose(); onOpenDelete(cluster); }}>
               <Trash2 className="h-4 w-4" />
               {t('dashboard.deleteCluster')}
-            </button>
+            </MenuItem>
           )}
         </div>
       )}
@@ -318,7 +319,7 @@ const ClusterCatalogCard: React.FC<ClusterItemProps> = (props) => {
         aria-label={actionLabelNamed}
         disabled={view.requiresAgentInstall && !props.onInstallAgent}
         onClick={() => view.requiresAgentInstall ? props.onInstallAgent?.(cluster.id) : props.onSelectKubernetesCluster(cluster)}
-        className="absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25 disabled:cursor-not-allowed"
+        className="control-target absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25 disabled:cursor-not-allowed"
       />
 
       <div className="pointer-events-none relative z-10 flex min-w-0 flex-col">

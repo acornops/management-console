@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { FilterToggleGroup, type CompactControlItem } from '@/components/common/ComponentVocabulary';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
-import { headerMotion } from '@/lib/motion';
 import { Workspace } from '@/types';
 import {
   decideWorkflowRunApproval,
@@ -49,6 +48,10 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
   const [isLoadingApprovals, setIsLoadingApprovals] = useState(true);
   const [approvalError, setApprovalError] = useState('');
   const [decisionState, setDecisionState] = useState<Record<string, 'approved' | 'rejected' | 'loading'>>({});
+  const approvalFilterItems = useMemo<Array<CompactControlItem<ApprovalFilter>>>(() => [
+    { value: 'pending', label: t('approvals.filters.pending') },
+    { value: 'decided', label: t('approvals.filters.recent') }
+  ], [t]);
 
   const canDecideApprovals = Boolean(
     workspace.permissions?.create_read_write_runs ||
@@ -152,18 +155,12 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
               <p className="type-caption mt-1 text-ui-text-muted">{t('approvals.queueBody')}</p>
             </div>
           </div>
-          <div className="flex rounded-md border border-ui-border bg-ui-surface p-1">
-            {(['pending', 'decided'] as ApprovalFilter[]).map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setApprovalFilter(status)}
-                className={`rounded px-3 py-1.5 text-xs font-bold transition-colors ${approvalFilter === status ? 'bg-ui-text text-ui-surface' : 'text-ui-text-muted hover:bg-ui-bg'}`}
-              >
-                {status === 'pending' ? t('approvals.filters.pending') : t('approvals.filters.recent')}
-              </button>
-            ))}
-          </div>
+          <FilterToggleGroup<ApprovalFilter>
+            activeValue={approvalFilter}
+            ariaLabel={t('approvals.filters.label')}
+            items={approvalFilterItems}
+            onValueChange={setApprovalFilter}
+          />
         </div>
 
         {isLoadingApprovals ? (

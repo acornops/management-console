@@ -1,7 +1,8 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
-import { Trash2, X } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 
 interface DeleteConversationDialogProps {
@@ -38,15 +39,11 @@ export const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> =
           <p className="mt-0.5 text-[11px] font-semibold text-ui-text-muted">{t('chat.deleteConversationSubtitle')}</p>
         </div>
       </div>
-      <button
-        type="button"
+      <CloseButton
         onClick={onClose}
         disabled={isDeleting}
-        className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={t('chat.closeDeleteConversation')}
-      >
-        <X className="h-4 w-4" />
-      </button>
+      />
     </div>
 
     <div className="space-y-3 px-6 py-5">

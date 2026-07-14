@@ -15,6 +15,7 @@ colors:
   muted-ink: "oklch(0.54 0.025 54)"
   metric-blue: "oklch(0.52 0.085 244)"
   code-night: "oklch(0.225 0.02 250)"
+  code-text: "oklch(0.94 0.008 80)"
   success: "oklch(0.52 0.13 160)"
   success-soft: "oklch(0.96 0.03 160)"
   success-text: "oklch(0.4 0.12 160)"
@@ -113,7 +114,7 @@ components:
     padding: "10px 16px"
   button-activation:
     backgroundColor: "{colors.signal-orange}"
-    textColor: "{colors.warm-canvas}"
+    textColor: "{colors.ink-text}"
     rounded: "{rounded.sm}"
     padding: "10px 16px"
   search-field:
@@ -187,6 +188,7 @@ The palette is warm, inspectable, and intentionally quiet. The canonical source 
 - **Ink Text** (`ink-text`): Primary text.
 - **Muted Ink** (`muted-ink`): Helper text, metadata, quiet labels.
 - **Code Night** (`code-night`): Code and terminal-style surfaces.
+- **Code Text** (`code-text`): The shared warm, high-contrast foreground for code, logs, and terminal-style surfaces in both themes.
 
 ### Brand & Illustration
 - **Logo Brown** (`logo-brown`) and **Logo Cream** (`logo-cream`): The acorn mark and wordmark only. They are brand-asset colors, never used for UI surfaces or body text.
@@ -194,11 +196,19 @@ The palette is warm, inspectable, and intentionally quiet. The canonical source 
 
 ### Dual Theme
 
-The console ships both a light and a dark theme, toggled by a `dark` class on the root (`darkMode: 'class'`). Both are defined as OKLCH tokens in `:root` and `.dark` within `src/styles.css`, each mirrored to an `-rgb` triple so Tailwind alpha utilities resolve in either theme. The light theme is the warm-canvas ledger described above. The dark theme keeps the same warm hue family: near-black warm surfaces (`bg` near `oklch(0.18 0.008 60)`), lifted warm panels, and lightened orange, metric, and semantic ramps tuned for contrast on dark surfaces. Orange stays the single signal in both themes.
+The console ships `System`, `Light`, and `Dark` preferences. `System` resolves through `prefers-color-scheme`; the resolved appearance controls the root `dark` class (`darkMode: 'class'`). A missing or invalid stored preference becomes `System`, while stored `Light` and `Dark` values remain valid. Authenticated profile preferences override the global preference when present.
 
-On the login screen and authenticated desktop and mobile navigation, supported browsers reveal the new theme outward from the clicked theme control through the View Transition API. The token change is captured as one composited surface, the clicked sun or moon control crosses state, and the ambient login illustration pauses during capture. Reduced-motion users and browsers without View Transitions receive the new theme immediately with no morph.
+Both themes are defined as OKLCH tokens in `:root` and `.dark` within `src/styles.css`, each mirrored to an `-rgb` triple so Tailwind alpha utilities resolve in either theme. The docs-derived dark neutral ramp is:
 
-The reveal lasts `320ms` with the standard quartic ease-out and the control swaps in `160ms`. A second toggle cancels and cleans up the active reveal before starting the next one.
+- Canvas `#121110`, `oklch(0.178407 0.002613 67.659)`.
+- Surface `#1E1A18`, `oklch(0.221666 0.007407 48.368)`.
+- Strong surface `#2D2827`, `oklch(0.281925 0.007660 31.115)`.
+- Structural border `#464140`, `oklch(0.379934 0.007070 31.086)`.
+- Text `#F5F1EF`, `oklch(0.960674 0.005080 48.686)`.
+- Muted text `#A6A1A0`, `oklch(0.712881 0.005998 31.059)`.
+- Interactive boundary `#777371`, `oklch(0.558455 0.005830 48.624)`.
+
+The shared theme menu appears on login and authenticated desktop and mobile navigation. It uses Monitor, Sun, and Moon options with radio-menu semantics and complete keyboard focus behavior. Every trigger shows the destination appearance with a `160ms` opacity, rotate, and scale swap using the ease-out-quint curve. A user choice that changes the resolved appearance recolors in place and adds a `320ms` click-origin ripple. Choosing `System` when it already matches the visible appearance updates only the stored preference. Later operating-system changes under `System` switch without a click-origin ripple. Reduced-motion users receive every change immediately.
 
 ### Named Rules
 
@@ -260,11 +270,13 @@ Buttons are compact, predictable, and text-led. They use lucide icons when an ic
 
 - **Shape:** Gently curved rectangles (`6px`).
 - **Primary:** Filled neutral, near-ink background with canvas text. Use for the strongest action on a utilitarian screen.
-- **Activation:** Controlled orange fill for workflow launch and activation moments only. Create, Add, Invite, Save, Continue, and routine Run actions use neutral Primary.
-- **Secondary:** Paper surface, warm border, ink text, small shadow.
+- **Dark Primary:** Strong warm-neutral fill with light text. Never invert the page background and text tokens to construct a button.
+- **Activation:** Controlled orange fill for workflow launch and activation moments only. Light mode keeps the bright orange fill with dark ink text. Dark mode uses the accessible `#B8441F` fill with light text. Create, Add, Invite, Save, Continue, and routine Run actions use neutral Primary.
+- **Secondary:** Paper surface, interactive boundary, ink text, small shadow. Dark mode uses a warm dark surface with light text.
+- **Danger:** Semantic destructive fill. Dark mode uses `#A92C3C` with light text.
 - **Tertiary / Ghost:** Text-muted default, soft orange wash on hover.
 - **Sizing:** Default controls are at least `44px` high; compact controls may reduce to `36px` from the `sm` breakpoint upward.
-- **Hover / Focus / Disabled:** Color and border transitions run at about `200ms`; keyboard focus uses a visible orange ring; disabled controls keep their dimensions, reduce to `50%` opacity, and use a not-allowed cursor.
+- **Hover / Focus / Disabled:** Enabled foreground and fill pairs meet WCAG 2.1 AA normal-text contrast. Interactive and focus boundaries use the semantic boundary token where 3:1 non-text contrast is required. Disabled controls keep their dimensions, reduce to `50%` opacity, and use a not-allowed cursor.
 
 ### Route composition and spacing
 
@@ -321,7 +333,7 @@ Navigation is familiar product chrome driven by one route model. Workspace desti
 
 Tabs and filters share the canonical compact-control vocabulary rather than page-local pills.
 
-- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed, and keyboard navigable with arrow, Home, and End keys. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard quartic ease-out and snaps instantly under reduced motion.
+- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed, and keyboard navigable with arrow, Home, and End keys. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
 - **Filters:** `44px` high with `6px` corners, a visible border, `aria-pressed`, and optional stable counts. Active filters remain neutral paper controls with a stronger orange border, not filled orange pills.
 
 ### Dialogs and Drawers
@@ -341,12 +353,12 @@ Motion is a state channel, never decoration. A small vocabulary of functional in
 - **Reasoning Sheen** (`reasoning-summary-active`): A slow orange sheen swept across reasoning-summary text while a model is actively reasoning. This is the single sanctioned use of animated `background-clip: text`; it signals live reasoning state and falls back to solid `currentColor` under reduced motion. It is not decorative gradient text and does not license gradient text anywhere else.
 - **Loading Sweep** (`loading-bar-sweep`): An indeterminate progress sweep for pending loads.
 - **Pending Step Pulse** (`pending-agent-step-pulse`): A soft warning-tinted ring pulse marking a pending step in an agent run trace.
-- **Theme Reveal** (`theme-reveal`): A `320ms` radial reveal originating at the theme control, with a `160ms` control swap. Unsupported browsers and reduced-motion users switch instantly.
+- **Theme Reveal** (`theme-reveal`): A `320ms` non-occluding radial ripple originating at the selected theme option. The live page recolors in place, so operational and illustration motion is never snapshotted. Preference changes with the same resolved appearance and operating-system changes under `System` do not add a ripple. Reduced-motion users switch instantly.
 - **Active Tab Indicator** (`active-tab-indicator`): A shared `2px` underline that moves between related tabs in `200ms`; reduced motion removes the travel.
 
 ### Login Brand Illustration
 
-The desktop login surface may carry the themed “Squirrel Chasing Acorns” operational story: a squirrel follows evidence through Observe, Correlate, and Resolve cards. This is the one reusable permission for ambient brand motion. It appears only on the unauthenticated brand surface at `1024px` and wider, uses theme and semantic tokens, pauses during theme capture, and becomes a static composition under reduced motion. Its proportional card geometry, SVG paths, gradients, and local shadow are illustration details, not system tokens or app-component patterns.
+The desktop login surface may carry the themed “Squirrel Chasing Acorns” operational story: a squirrel follows evidence through Observe, Correlate, and Resolve cards. This is the one reusable permission for ambient brand motion. It appears only on the unauthenticated brand surface at `1024px` and wider, uses theme and semantic tokens, remains live while the theme recolors in place, and becomes a static composition under reduced motion. Its proportional card geometry, SVG paths, gradients, and local shadow are illustration details, not system tokens or app-component patterns.
 
 ### Named Rules
 

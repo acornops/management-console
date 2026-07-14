@@ -28,7 +28,7 @@ export function createMarkdownComponents(tone: MarkdownTone = 'assistant'): Comp
     : 'border border-ui-border bg-ui-bg text-ui-text';
   const codeBlockClass = isUserTone
     ? 'border-ui-bg/20 bg-ui-bg/10 text-ui-bg'
-    : 'border-ui-border bg-code-bg text-slate-100';
+    : 'border-ui-border bg-code-bg text-code-text';
   const blockquoteClass = isUserTone
     ? 'border-ui-bg/30 bg-ui-bg/10 text-ui-bg/90'
     : 'border-ui-border bg-ui-bg text-ui-text-muted';

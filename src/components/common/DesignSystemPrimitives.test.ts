@@ -13,9 +13,9 @@ const catalog = readFileSync(resolve(root, 'src/design-system.tsx'), 'utf8');
 
 describe('design-system primitives', () => {
   it('uses semantic neutral and activation button intents', () => {
-    expect(buttonClassName({ variant: 'primary' })).toContain('bg-ui-text');
-    expect(buttonClassName({ variant: 'activation' })).toContain('bg-accent');
-    expect(buttonClassName({ variant: 'danger' })).toContain('bg-status-danger');
+    expect(buttonClassName({ variant: 'primary' })).toContain('bg-control-primary');
+    expect(buttonClassName({ variant: 'activation' })).toContain('bg-control-activation');
+    expect(buttonClassName({ variant: 'danger' })).toContain('bg-control-danger');
     expect(buttonClassName({ variant: 'primary', size: 'md' })).toContain('min-h-11');
     expect(buttonClassName({ variant: 'primary', className: 'w-full' })).toContain('w-full');
   });
@@ -55,5 +55,11 @@ describe('design-system primitives', () => {
     expect(catalog).toContain('state="error"');
     expect(catalog).toContain('<DialogFrame');
     expect(catalog).toContain('<DrawerFrame');
+    expect(catalog).toContain("dark ? <Sun");
+    expect(catalog).toContain('<SegmentedTabs');
+    expect(catalog).toContain('<FilterToggleGroup');
+    expect(catalog).toContain('data-catalog-code-surface="true"');
+    expect(catalog).toContain('bg-code-bg p-4 text-code-text');
+    expect(catalog.match(/data-catalog-control=/g)).toHaveLength(5);
   });
 });

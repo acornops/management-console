@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { PageLoadingFallback } from '@/components/common/Loading';
@@ -12,7 +11,6 @@ import { formatMemberMutationError } from '@/pages/workspace-members/memberUtils
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
-import { fadeTransition } from '@/lib/motion';
 import type { SettingsTab } from '@/pages/SettingsPage';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import {
@@ -405,8 +403,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
 
   return (
     <main className="flex-1 min-w-0 w-full max-w-full min-h-0 flex flex-col h-full overflow-hidden relative">
-      <motion.div
-        {...fadeTransition}
+      <div
         className="flex-1 min-w-0 w-full max-w-full min-h-0 h-full overflow-hidden flex flex-col"
       >
         {shouldShowCreateFirstWorkspace && (
@@ -634,7 +631,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             <NotFoundPage isDark={isDark} onGoHome={() => navigate(AppPaths.workspaces(), { replace: true })} />
           )}
         </Suspense>
-      </motion.div>
+      </div>
     </main>
   );
 };

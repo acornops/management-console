@@ -169,7 +169,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                     aria-label={t('agentsWorkflows.agents.openProfile', { name: agent.name })}
                     aria-current={selected ? 'true' : undefined}
                     onClick={() => onOpenManagement(agent)}
-                    className="absolute inset-0 z-0 h-full w-full cursor-pointer rounded-none focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/45"
+                    className="control-target absolute inset-0 z-0 h-full w-full cursor-pointer rounded-none focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/45"
                   />
                   <div className={catalogGridClass}>
                     <CatalogCell label={t('agentsWorkflows.agents.fields.identity')} className="col-span-2 lg:col-span-1">

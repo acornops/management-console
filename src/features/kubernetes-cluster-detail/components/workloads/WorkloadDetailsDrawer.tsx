@@ -152,12 +152,12 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                 key={tab}
                 type="button"
                 onClick={() => setActiveDetailTab(tab)}
-                className={classNames(
+                className={`control-target ${classNames(
                   'flex-1 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all',
                   activeDetailTab === tab
                     ? 'bg-ui-surface text-accent-strong shadow-sm'
                     : 'text-ui-text-muted hover:text-ui-text'
-                )}
+                )}`}
               >
                 {tab === 'details' ? t('workloads.details') : t('workloads.logs')}
               </button>
@@ -318,7 +318,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                         type="button"
                         onClick={() => void loadPodLogs('manual')}
                         disabled={isPodLogsLoading}
-                        className="inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-xs font-bold uppercase tracking-widest text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-60"
+                        className="control-target inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-xs font-bold uppercase tracking-widest text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isPodLogsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
                         {t('workloads.refresh')}
@@ -351,17 +351,17 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                 )}
 
                 <div className="overflow-hidden rounded-xl border border-ui-border bg-code-bg shadow-sm">
-                  <div className="flex items-center justify-between gap-3 border-b border-slate-100/10 px-4 py-3">
-                    <div className="inline-flex min-w-0 items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-100">
+                  <div className="flex items-center justify-between gap-3 border-b border-code-text/10 px-4 py-3">
+                    <div className="inline-flex min-w-0 items-center gap-2 text-xs font-bold uppercase tracking-widest text-code-text">
                       <FileText className="h-4 w-4 text-accent-strong" />
                       <span className="truncate">{selectedWorkload.name}</span>
                     </div>
-                    <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-100/70">
+                    <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-code-text/70">
                       {isFollowingLogs && <CheckCircle2 className="h-3.5 w-3.5 text-status-success-text" />}
                       {podLogs?.fetchedAt ? t('workloads.fetchedAt', { time: formatUserTime(podLogs.fetchedAt, { includeTimeZone: true }) }) : t('workloads.notLoaded')}
                     </div>
                   </div>
-                  <pre className="max-h-[420px] min-h-[220px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-xs leading-5 text-slate-100 custom-scrollbar">
+                  <pre className="max-h-[420px] min-h-[220px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-xs leading-5 text-code-text custom-scrollbar">
                     {isPodLogsLoading && !podLogs
                       ? t('workloads.loadingLogs')
                       : podLogs?.logs?.trim()

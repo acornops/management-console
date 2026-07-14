@@ -3,6 +3,7 @@ import { Check, Copy, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { formInputClassName } from '@/components/common/formControlStyles';
@@ -154,15 +155,11 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
             </h3>
             <ModalStepIndicator steps={connectSteps} currentStepId={clusterCreationStep} className="mt-4" />
           </div>
-          <button
-            type="button"
+          <CloseButton
             onClick={onClose}
             disabled={isCreatingCluster}
-            className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={t('clusterSetup.closeAddDialog')}
-          >
-            <ICONS.X className="h-4 w-4" />
-          </button>
+          />
         </div>
 
         {clusterCreationStep === 'details' ? (
@@ -264,7 +261,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                     <button
                       type="button"
                       onClick={() => void copyInstallCommand()}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-all hover:bg-ui-bg hover:text-ui-text"
+                      className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-all hover:bg-ui-bg hover:text-ui-text"
                       aria-label={hasCopiedCommand ? t('clusterSetup.copied') : t('clusterSetup.copy')}
                     >
                       {hasCopiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -297,7 +294,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-lg border border-status-success/25 bg-status-success-soft px-4 py-3 text-xs font-extrabold text-status-success-text">
-                <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
+                <div className="h-2 w-2 rounded-full bg-status-success"></div>
                 {t('clusterSetup.waitingForAgent')}
               </div>
             </div>

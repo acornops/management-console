@@ -1,8 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { headerMotion } from '@/lib/motion';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 
 const HelpAction: React.FC<{

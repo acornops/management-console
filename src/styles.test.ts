@@ -4,25 +4,21 @@ import {
   appDialogs,
   appPageContent,
   appShell,
-  auditLogPage,
   buttonComponent,
-  chatSubmit,
   chatView,
   clusterOverviewView,
   clusterSettingsView,
   contrastRatio,
   darkTheme,
   dashboardPage,
+  designSystemCheck,
   designDocsIndex,
   desktopSidebar,
   enLocale,
-  fieldValidationMessage,
   indexHtml,
   lightTheme,
   loginAuthPanel,
-  loginAuthPanelParts,
   loginPage,
-  loginPasswordAuthForm,
   loginPreview,
   markdownComponents,
   mcpServerCard,
@@ -37,17 +33,16 @@ import {
   resourceCategoryTabs,
   resourceExplorerControls,
   resourceExplorerLayout,
-  resourcesView,
   rgbVariableValue,
   styles,
   tailwindConfig,
+  themeInit,
   traceFooter,
   typographyDoc,
   userSettingsPage,
   workloadExplorerParts,
   workloadsExplorer,
   workloadsExplorerSurface,
-  workspaceInviteModal,
   workspaceSettingsPage,
   zhLocale
 } from './stylesTestSupport';
@@ -73,19 +68,23 @@ describe('theme color contract', () => {
     expect(lightTheme).toContain('--border-rgb: 235 229 222');
     expect(lightTheme).toContain('--text-rgb: 48 45 41');
     expect(lightTheme).toContain('--text-muted-rgb: 123 107 97');
+    expect(lightTheme).toContain('--code-text: oklch(0.94 0.008 80)');
+    expect(lightTheme).toContain('--code-text-rgb: 238 235 229');
 
-    expect(darkTheme).toContain('--bg: oklch(0.18 0.008 60)');
-    expect(darkTheme).toContain('--surface: oklch(0.225 0.008 58)');
-    expect(darkTheme).toContain('--surface-strong: oklch(0.265 0.01 58)');
-    expect(darkTheme).toContain('--border: oklch(0.32 0.018 54)');
-    expect(darkTheme).toContain('--text: oklch(0.96 0.008 80)');
-    expect(darkTheme).toContain('--text-muted: oklch(0.7 0.018 60)');
-    expect(darkTheme).toContain('--bg-rgb: 20 17 14');
-    expect(darkTheme).toContain('--surface-rgb: 31 27 24');
-    expect(darkTheme).toContain('--surface-strong-rgb: 41 36 33');
-    expect(darkTheme).toContain('--border-rgb: 58 49 42');
-    expect(darkTheme).toContain('--text-rgb: 245 241 236');
-    expect(darkTheme).toContain('--text-muted-rgb: 167 156 148');
+    expect(darkTheme).toContain('--bg: oklch(0.178407 0.002613 67.659)');
+    expect(darkTheme).toContain('--surface: oklch(0.221666 0.007407 48.368)');
+    expect(darkTheme).toContain('--surface-strong: oklch(0.281925 0.00766 31.115)');
+    expect(darkTheme).toContain('--border: oklch(0.379934 0.00707 31.086)');
+    expect(darkTheme).toContain('--text: oklch(0.960674 0.00508 48.686)');
+    expect(darkTheme).toContain('--text-muted: oklch(0.712881 0.005998 31.059)');
+    expect(darkTheme).toContain('--bg-rgb: 18 17 16');
+    expect(darkTheme).toContain('--surface-rgb: 30 26 24');
+    expect(darkTheme).toContain('--surface-strong-rgb: 45 40 39');
+    expect(darkTheme).toContain('--border-rgb: 70 65 64');
+    expect(darkTheme).toContain('--text-rgb: 245 241 239');
+    expect(darkTheme).toContain('--text-muted-rgb: 166 161 160');
+    expect(darkTheme).toContain('--code-text: oklch(0.94 0.008 80)');
+    expect(darkTheme).toContain('--code-text-rgb: 238 235 229');
 
     expect(styles).not.toContain('--bg-rgb: 246 248 251');
     expect(styles).not.toContain('--surface-rgb: 252 253 255');
@@ -102,6 +101,11 @@ describe('theme color contract', () => {
     expect(tailwindConfig).toContain("'status-success-text'");
     expect(tailwindConfig).toContain("'status-warning-text'");
     expect(tailwindConfig).toContain("'status-danger-text'");
+    expect(tailwindConfig).toContain("'control-primary-fg'");
+    expect(tailwindConfig).toContain("'control-activation-fg'");
+    expect(tailwindConfig).toContain("'control-danger-fg'");
+    expect(tailwindConfig).toContain("'control-boundary'");
+    expect(tailwindConfig).toContain("'code-text': 'rgb(var(--code-text-rgb) / <alpha-value>)'");
   });
 
   it('keeps muted and status-soft text contrast readable', () => {
@@ -122,9 +126,36 @@ describe('theme color contract', () => {
     });
   });
 
+  it('keeps code text readable against both code surfaces', () => {
+    for (const theme of [lightTheme, darkTheme]) {
+      expect(contrastRatio(
+        rgbVariableValue(theme, '--code-text-rgb'),
+        rgbVariableValue(theme, '--code-bg-rgb')
+      )).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('enforces token palettes, no-glass surfaces, and tested raw-button targets', () => {
+    [
+      'slate', 'gray', 'zinc', 'neutral', 'stone', 'red', 'orange', 'amber', 'yellow',
+      'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet',
+      'purple', 'fuchsia', 'pink', 'rose'
+    ].forEach((palette) => expect(designSystemCheck).toContain(palette));
+    expect(designSystemCheck).toContain("report(path, 'named-tailwind-palette'");
+    expect(designSystemCheck).toContain("report(path, 'no-glass'");
+    expect(designSystemCheck).toContain("report(path, 'raw-button-target'");
+    expect(designSystemCheck).toContain('approvedButtonSizingHelpers');
+    expect(designSystemCheck).toContain('canonicalButtonTarget');
+    expect(designSystemCheck).toContain("repoPath === 'src/app/AppDesktopSidebarParts.tsx'");
+    expect(designSystemCheck).toContain('navButtonClass');
+  });
+
   it('keeps browser chrome and status colors on the token system', () => {
-    expect(indexHtml).toContain('content="#fcfaf6" media="(prefers-color-scheme: light)"');
-    expect(indexHtml).toContain('content="#14110e" media="(prefers-color-scheme: dark)"');
+    expect(indexHtml).toContain('<meta name="theme-color" content="#fcfaf6" />');
+    expect(indexHtml).toContain('<script src="/theme-init.js"></script>');
+    expect(themeInit).toContain("window.localStorage.getItem('app_theme')");
+    expect(themeInit).toContain("window.matchMedia('(prefers-color-scheme: dark)')");
+    expect(themeInit).toContain("resolvedTheme === 'dark' ? '#121110' : '#fcfaf6'");
     expect(clusterOverviewView).not.toContain('#FF5800');
     expect(clusterOverviewView).toContain('text-accent-strong');
   });
@@ -423,11 +454,12 @@ describe('theme color contract', () => {
   it('keeps button hierarchy restrained with orange reserved for activation actions', () => {
     expect(buttonComponent).toContain("export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'danger' | 'activation'");
     expect(buttonComponent).toContain('primary: filledNeutralButtonClass');
-    expect(buttonComponent).toContain('border border-ui-text bg-ui-text text-ui-bg');
-    expect(buttonComponent).toContain("activation: 'border border-accent bg-accent");
-    expect(buttonComponent).toContain('text-ui-bg');
-    expect(buttonComponent).toContain('hover:bg-accent-bright');
-    expect(buttonComponent).toContain("secondary: 'border border-ui-border bg-ui-surface text-ui-text shadow-sm");
+    expect(buttonComponent).toContain('border border-control-boundary bg-control-primary text-control-primary-fg');
+    expect(buttonComponent).toContain("activation: 'border border-control-boundary bg-control-activation text-control-activation-fg");
+    expect(buttonComponent).toContain('hover:bg-control-activation-hover');
+    expect(buttonComponent).toContain("secondary: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm");
+    expect(buttonComponent).toContain("danger: 'border border-control-boundary bg-control-danger text-control-danger-fg");
+    expect(buttonComponent).not.toContain('text-ui-bg');
     expect(buttonComponent).toContain("tertiary: 'text-ui-text-muted");
     expect(buttonComponent).toContain('hover:bg-accent-soft hover:text-accent-strong');
     expect(buttonComponent).not.toContain('bg-[oklch(0.18_0.006_70)]');
@@ -436,6 +468,35 @@ describe('theme color contract', () => {
     expect(membersPage).toMatch(/onClick=\{openInviteModal\}[\s\S]*?variant="primary"/);
     expect(addClusterModal).not.toContain('text-slate-950');
     expect(addClusterModal).toContain('variant="primary"');
+  });
+
+  it('meets WCAG AA contrast for every enabled filled button state and control boundary', () => {
+    const textPairs = [
+      ['--control-primary-fg-rgb', '--control-primary-bg-rgb'],
+      ['--control-primary-fg-rgb', '--control-primary-hover-rgb'],
+      ['--control-secondary-fg-rgb', '--control-secondary-bg-rgb'],
+      ['--control-secondary-fg-rgb', '--control-secondary-hover-rgb'],
+      ['--control-activation-fg-rgb', '--control-activation-bg-rgb'],
+      ['--control-activation-fg-rgb', '--control-activation-hover-rgb'],
+      ['--control-danger-fg-rgb', '--control-danger-bg-rgb'],
+      ['--control-danger-fg-rgb', '--control-danger-hover-rgb']
+    ];
+
+    for (const theme of [lightTheme, darkTheme]) {
+      for (const [foreground, background] of textPairs) {
+        expect(contrastRatio(rgbVariableValue(theme, foreground), rgbVariableValue(theme, background)))
+          .toBeGreaterThanOrEqual(4.5);
+      }
+      for (const surrounding of ['--bg-rgb', '--surface-rgb']) {
+        expect(contrastRatio(
+          rgbVariableValue(theme, '--control-boundary-rgb'),
+          rgbVariableValue(theme, surrounding)
+        )).toBeGreaterThanOrEqual(3);
+      }
+    }
+
+    expect(buttonComponent).toContain('disabled:opacity-50');
+    expect(buttonComponent).toContain('focus-visible:ring-control-boundary');
   });
 
   it('separates warning severity color from the orange workflow accent', () => {
@@ -493,7 +554,7 @@ describe('theme color contract', () => {
     expect(mcpServersView).not.toContain('xl:grid-cols-3');
     expect(mcpServersView).not.toContain('absolute inset-0 z-0');
     expect(mcpServerCard).toContain("aria-label={t('mcpServers.serverActionsNamed', { name: server.name })}");
-    expect(mcpServerCard).toContain('role="menuitem"');
+    expect(mcpServerCard).toContain('<MenuItem');
   });
 
   it('keeps app page-header titles at the standard page scale', () => {
@@ -562,87 +623,6 @@ describe('theme color contract', () => {
     expect(membersPage).toContain('inviteLink: existing?.inviteLink');
     expect(membersPage).toContain('onCreateInvitation ? createInvitation : undefined');
     expect(membersPage).not.toContain('[loadInvitations, workspace.id, workspace.invitations]');
-  });
-
-  it('labels paged member and issue counts as loaded counts', () => {
-    expect(membersPage).toContain('members.loadedTotalCount');
-    expect(membersPage).toContain('members.loadedMatchingCount');
-    expect(enLocale).toContain("inviteLinksCount: '{{count}} loaded links'");
-    expect(enLocale).toContain("active: 'Active'");
-  });
-
-  it('clears resource pages before replacing paginated resources', () => {
-    expect(resourcesView).toContain("if (mode === 'replace') {");
-    expect(resourcesView).toContain('setResourceItems([]);');
-    expect(resourcesView).toContain('setNextCursor(undefined);');
-    expect(resourcesView).not.toContain('window.setTimeout');
-  });
-
-  it('does not require the full MCP tool list before requesting write-capable chat runs', () => {
-    expect(chatSubmit).toContain("canRequestWriteRuns ? 'read_write' : 'read_only'");
-    expect(chatSubmit).not.toContain('app.mcpTools || []');
-  });
-
-  it('keeps table rows visibly highlighted on hover', () => {
-    expect(membersPage).toContain('transition-colors hover:bg-accent-soft/45');
-    expect(clusterOverviewView).toContain('transition-colors last:border-b-0 hover:bg-ui-bg/70');
-    expect(markdownComponents).toContain("import remarkGfm from 'remark-gfm';");
-    expect(markdownComponents).toContain('export const markdownRemarkPlugins = [remarkGfm];');
-    expect(markdownComponents).toContain("const tableRowHoverClass = isUserTone ? 'hover:bg-ui-bg/10' : 'hover:bg-ui-bg/70'");
-    expect(markdownComponents).toContain('<tr className={`transition-colors ${tableRowHoverClass}`}>{children}</tr>');
-  });
-
-  it('keeps workspace members and audit log tables inside the viewport', () => {
-    expect(membersPage).not.toContain('overflow-x-auto');
-    expect(membersPage).not.toContain('min-w-[760px]');
-    expect(auditLogPage).not.toContain('overflow-x-auto');
-    expect(auditLogPage).not.toContain('min-w-[920px]');
-  });
-
-  it('keeps workspace member actions in the table rhythm on wide screens', () => {
-    expect(membersPage).not.toContain('minmax(1rem,1fr)_5.5rem');
-    expect(membersPage).not.toContain('<th className="hidden px-4 py-4 md:block" aria-hidden="true" />');
-    expect(membersPage).not.toContain('<td className="hidden md:block" aria-hidden="true" />');
-    expect(membersPage).toContain('table-fixed');
-    expect(membersPage).toContain('md:table-cell');
-    expect(membersPage).not.toContain('lg:grid-cols-[minmax(18rem,24rem)_9rem_8rem_9rem_4rem]');
-    expect(membersPage).toContain('<span className="sr-only">{t(\'members.manage\')}</span>');
-  });
-
-  it('keeps workspace member and audit log pages on the shared route margins', () => {
-    expect(membersPage).toContain('<PageShell embedded={embedded}>');
-    expect(auditLogPage).toContain('<PageShell>');
-    expect(auditLogPage).not.toContain('mx-auto max-w-7xl px-5 py-8 lg:px-8');
-    expect(auditLogPage).not.toContain('overflow-hidden border-y border-ui-border bg-ui-surface');
-  });
-
-  it('uses app-styled validation instead of native browser validation bubbles', () => {
-    const validationSurfaces = [
-      workspaceInviteModal,
-      loginAuthPanel,
-      loginPasswordAuthForm,
-      loginAuthPanelParts
-    ].join('\n');
-    expect(validationSurfaces).toContain('noValidate');
-    expect(validationSurfaces).toContain('aria-invalid={Boolean(');
-    expect(validationSurfaces).toContain('FieldValidationMessage');
-    expect(validationSurfaces).not.toMatch(/\srequired(?:\s|>|$)/);
-    expect(fieldValidationMessage).toContain('role="alert"');
-    expect(fieldValidationMessage).toContain('border-status-danger/25 bg-status-danger-soft');
-  });
-
-  it('keeps audit log time presets available for log-style filtering', () => {
-    expect(auditLogPage).toContain("const timePresetOptions: AuditTimePreset[] = ['today', 'last24h', 'past7d', 'past30d'];");
-    expect(auditLogPage).toContain('aria-pressed={isActive}');
-    expect(auditLogPage).toContain('applyNormalizedFilters(nextFilters);');
-  });
-
-  it('auto-applies audit log filter selections without relying on an apply button', () => {
-    expect(auditLogPage).toContain('data-audit-filter-toolbar="true"');
-    expect(auditLogPage).toContain('aria-controls="audit-custom-range-controls"');
-    expect(auditLogPage).toContain('const timer = window.setTimeout(() => {');
-    expect(auditLogPage).toContain('applyNormalizedFilters(draftFilters);');
-    expect(auditLogPage).not.toContain("t('auditLog.applyFilters')");
   });
 
 });

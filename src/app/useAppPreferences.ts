@@ -1,10 +1,10 @@
 import { Dispatch, MutableRefObject, SetStateAction, useEffect } from 'react';
 import {
   GLOBAL_LANGUAGE_STORAGE_KEY,
-  GLOBAL_THEME_STORAGE_KEY,
   getProfilePreferenceKey,
   getProfileStorageKey,
   LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY,
+  persistThemePreference,
   readLanguagePreference,
   readThemePreference,
   readWorkspacePreference
@@ -12,8 +12,12 @@ import {
 import { AppLanguageCode, getLanguageOption, resolveSupportedLanguageCode } from '@/i18n/languageConfig';
 import { User } from '@/types';
 import { safeStorage } from '@/utils/safeStorage';
-
-type AppTheme = 'light' | 'dark';
+import {
+  applyResolvedTheme,
+  observeResolvedTheme,
+  type ResolvedTheme,
+  type ThemePreference
+} from '@/app/theme';
 
 type AppI18n = {
   language: string;
@@ -28,9 +32,10 @@ type UseAppPreferencesOptions = {
   setLanguage: Dispatch<SetStateAction<AppLanguageCode>>;
   setLoadedProfilePreferenceKey: Dispatch<SetStateAction<string | null>>;
   setSelectedWorkspaceId: Dispatch<SetStateAction<string | null>>;
-  setTheme: Dispatch<SetStateAction<AppTheme>>;
+  setResolvedTheme: Dispatch<SetStateAction<ResolvedTheme>>;
+  setThemePreference: Dispatch<SetStateAction<ThemePreference>>;
   skipAnonymousPreferencePersistCountRef: MutableRefObject<number>;
-  theme: AppTheme;
+  themePreference: ThemePreference;
   user: User | null;
 };
 
@@ -42,9 +47,10 @@ export function useAppPreferences({
   setLanguage,
   setLoadedProfilePreferenceKey,
   setSelectedWorkspaceId,
-  setTheme,
+  setResolvedTheme,
+  setThemePreference,
   skipAnonymousPreferencePersistCountRef,
-  theme,
+  themePreference,
   user
 }: UseAppPreferencesOptions): void {
   const activeProfilePreferenceKey = user ? getProfilePreferenceKey(user) : null;
@@ -57,29 +63,37 @@ export function useAppPreferences({
     }
 
     const profileKey = getProfilePreferenceKey(user);
-    setTheme(readThemePreference(profileKey));
+    setThemePreference(readThemePreference(profileKey));
     setLanguage(readLanguagePreference(profileKey));
     setSelectedWorkspaceId(readWorkspacePreference(profileKey));
     setLoadedProfilePreferenceKey(profileKey);
     safeStorage.removeItem(LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY);
-  }, [setLanguage, setLoadedProfilePreferenceKey, setSelectedWorkspaceId, setTheme, user]);
+  }, [setLanguage, setLoadedProfilePreferenceKey, setSelectedWorkspaceId, setThemePreference, user]);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    document.body.className = 'bg-ui-bg';
+    document.documentElement.dataset.themePreference = themePreference;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    return observeResolvedTheme(themePreference, mediaQuery, (nextTheme) => {
+      setResolvedTheme(nextTheme);
+      applyResolvedTheme(nextTheme);
+      document.body.className = 'bg-ui-bg';
+    });
+  }, [setResolvedTheme, themePreference]);
+
+  useEffect(() => {
     if (activeProfilePreferenceKey) {
       if (loadedProfilePreferenceKey !== activeProfilePreferenceKey) {
         return;
       }
-      safeStorage.setItem(getProfileStorageKey(activeProfilePreferenceKey, 'theme'), theme);
+      persistThemePreference(themePreference, activeProfilePreferenceKey);
       return;
     }
     if (skipAnonymousPreferencePersistCountRef.current > 0) {
       skipAnonymousPreferencePersistCountRef.current -= 1;
       return;
     }
-    safeStorage.setItem(GLOBAL_THEME_STORAGE_KEY, theme);
-  }, [activeProfilePreferenceKey, loadedProfilePreferenceKey, skipAnonymousPreferencePersistCountRef, theme]);
+    persistThemePreference(themePreference);
+  }, [activeProfilePreferenceKey, loadedProfilePreferenceKey, skipAnonymousPreferencePersistCountRef, themePreference]);
 
   useEffect(() => {
     const supportedLanguage = resolveSupportedLanguageCode(language);

@@ -216,7 +216,7 @@ export function LoginPasswordAuthForm({
             <button
               type="button"
               onClick={onForgotPassword}
-              className="rounded-sm text-xs font-bold text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
+              className="control-target rounded-sm text-xs font-bold text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               {t('login.forgotPassword')}
             </button>
@@ -264,7 +264,7 @@ export function LoginPasswordAuthForm({
         )}
       </AnimatePresence>
 
-      <button type="submit" disabled={isAuthLoading} className={primaryButtonClass}>
+      <button type="submit" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
         {isAuthLoading ? (
           <span className="h-4 w-4 rounded-full border-2 border-ui-bg border-t-transparent animate-spin" />
         ) : (

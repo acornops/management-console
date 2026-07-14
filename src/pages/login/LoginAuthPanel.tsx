@@ -303,7 +303,7 @@ export function LoginAuthPanel({
     <button
       type="button"
       onClick={() => setShowPassword((current) => !current)}
-      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ui-text-muted transition-all hover:bg-ui-surface hover:text-ui-text focus:outline-none focus:ring-2 focus:ring-accent/20"
+      className="control-target absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ui-text-muted transition-all hover:bg-ui-surface hover:text-ui-text focus:outline-none focus:ring-2 focus:ring-accent/20"
       aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
       aria-pressed={showPassword}
     >
@@ -329,7 +329,7 @@ export function LoginAuthPanel({
         type="button"
         onClick={() => void resendVerification()}
         disabled={isAuthLoading || Boolean(pendingVerification?.resendAfterSeconds)}
-        className={primaryButtonClass}
+        className={`control-target ${primaryButtonClass}`}
       >
         <ICONS.Send className="h-4 w-4" />
         <span>{t('login.resendEmail')}</span>
@@ -342,7 +342,7 @@ export function LoginAuthPanel({
           setPassword('');
           setConfirmPassword('');
         }}
-        className={secondaryButtonClass}
+        className={`control-target ${secondaryButtonClass}`}
       >
         {t('login.useDifferentEmail')}
       </button>
@@ -383,7 +383,7 @@ export function LoginAuthPanel({
               error={resendEmailError}
               inputId="verification-resend-email"
             />
-            <button type="submit" disabled={isAuthLoading} className={primaryButtonClass}>
+            <button type="submit" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
               <ICONS.Send className="h-4 w-4" />
               <span>{t('login.resendEmail')}</span>
             </button>
@@ -434,7 +434,7 @@ export function LoginAuthPanel({
         <button
           type="submit"
           disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)}
-          className={primaryButtonClass}
+          className={`control-target ${primaryButtonClass}`}
         >
           {isAuthLoading ? (
             <span className="h-4 w-4 rounded-full border-2 border-ui-bg border-t-transparent animate-spin" />
@@ -445,7 +445,7 @@ export function LoginAuthPanel({
             </>
           )}
         </button>
-        <button type="button" onClick={() => changeMode('login')} className={secondaryButtonClass}>
+        <button type="button" onClick={() => changeMode('login')} className={`control-target ${secondaryButtonClass}`}>
           {t('login.backToSignIn')}
         </button>
       </form>
@@ -468,7 +468,7 @@ export function LoginAuthPanel({
           inputId="reset-request-email"
         />
         {activeResetRequest && renderPasswordResetNotice(activeResetRequest)}
-        <button type="submit" disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)} className={primaryButtonClass}>
+        <button type="submit" disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
           <ICONS.Send className="h-4 w-4" />
           <span>{t('login.sendResetEmail')}</span>
         </button>
@@ -485,7 +485,7 @@ export function LoginAuthPanel({
             title={t('login.passwordUpdated')}
             body={t('login.passwordUpdatedBody')}
           />
-          <button type="button" onClick={() => changeMode('login')} className={primaryButtonClass}>
+          <button type="button" onClick={() => changeMode('login')} className={`control-target ${primaryButtonClass}`}>
             <span>{t('login.signInTab')}</span>
             <ICONS.ArrowRight className="h-4 w-4" />
           </button>
@@ -507,7 +507,7 @@ export function LoginAuthPanel({
           />
           {renderResetRequestForm()}
           {error && <ErrorMessage message={error} />}
-          <button type="button" onClick={() => changeMode('login')} className={secondaryButtonClass}>
+          <button type="button" onClick={() => changeMode('login')} className={`control-target ${secondaryButtonClass}`}>
             {t('login.backToSignIn')}
           </button>
         </div>
@@ -536,7 +536,7 @@ export function LoginAuthPanel({
           renderPasswordToggle={renderPasswordToggle}
         />
         {error && <ErrorMessage message={error} />}
-        <button type="submit" disabled={isAuthLoading} className={primaryButtonClass}>
+        <button type="submit" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
           {isAuthLoading ? (
             <span className="h-4 w-4 rounded-full border-2 border-ui-bg border-t-transparent animate-spin" />
           ) : (

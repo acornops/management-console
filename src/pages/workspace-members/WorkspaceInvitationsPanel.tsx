@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy, Loader2, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/common/Dialog';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { WorkspaceInvitation } from '@/types';
 import { formatInvitationStatus, formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
@@ -133,7 +134,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               type="button"
               aria-expanded={shouldShowInvitations}
               onClick={() => setIsExpanded((expanded) => !expanded)}
-              className="type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+              className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
             >
               {shouldShowInvitations ? t('members.hideInvitations') : t('members.showInvitations')}
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${shouldShowInvitations ? 'rotate-180' : ''}`} aria-hidden="true" />
@@ -154,7 +155,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                   type="button"
                   onClick={onLoadMoreInvitations}
                   disabled={isLoadingMoreInvitations}
-                  className="type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
+                  className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
@@ -187,7 +188,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                     <button
                       type="button"
                       onClick={() => void copyExistingInviteLink(invitation)}
-                      className="type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
+                      className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
                     >
                       {copiedInvitationId === invitation.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                       {copiedInvitationId === invitation.id ? t('members.copied') : t('members.copy')}
@@ -198,7 +199,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                       type="button"
                       onClick={() => void recreateInvitation(invitation)}
                       disabled={recreatingInvitationId === invitation.id}
-                      className="type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
+                      className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {recreatingInvitationId === invitation.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
                       {recreatingInvitationId === invitation.id ? t('members.recreatingInvite') : t('members.recreateInvite')}
@@ -208,7 +209,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                     type="button"
                     onClick={() => void revokeInvitation(invitation)}
                     disabled={!onRevokeInvitation || invitation.status !== 'pending' || revokingInvitationId === invitation.id}
-                    className="type-label inline-flex items-center gap-2 rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text transition-colors hover:bg-status-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
+                    className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text transition-colors hover:bg-status-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {revokingInvitationId === invitation.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                     {t('members.revoke')}
@@ -222,7 +223,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                   type="button"
                   onClick={onLoadMoreInvitations}
                   disabled={isLoadingMoreInvitations}
-                  className="type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
+                  className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
@@ -248,14 +249,10 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                 {t('members.replacementInviteBody', { email: createdReplacementInvite.email })}
               </p>
             </div>
-            <button
-              type="button"
+            <CloseButton
               onClick={closeReplacementInviteDialog}
               aria-label={t('members.closeReplacementInvite')}
-              className="shrink-0 rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
+            />
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-6 custom-scrollbar sm:px-8">
@@ -311,7 +308,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
             <button
               type="button"
               onClick={closeReplacementInviteDialog}
-              className="type-label inline-flex items-center justify-center rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
+              className="control-target type-label inline-flex items-center justify-center rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
             >
               {t('members.close')}
             </button>

@@ -90,7 +90,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectSession(session.id)}
-                className="flex w-full items-start gap-3 rounded-md p-3 pr-9 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                className="control-target flex w-full items-start gap-3 rounded-md p-3 pr-9 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                 aria-current={isActive ? 'true' : undefined}
               >
                 <History className={`mt-0.5 h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />
@@ -119,7 +119,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                 <button
                   type="button"
                   onClick={() => onDeleteSessionClick(session.id)}
-                  className="absolute right-3 top-3 rounded-md p-1 text-ui-text-muted opacity-0 transition-opacity hover:bg-ui-surface hover:text-status-danger-text group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target absolute right-3 top-3 rounded-md p-1 text-ui-text-muted opacity-0 transition-opacity hover:bg-ui-surface hover:text-status-danger-text group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   title={t('chat.deleteConversation')}
                   aria-label={t('chat.deleteConversation')}
                 >

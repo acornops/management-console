@@ -109,13 +109,13 @@ describe('startThemeTransition', () => {
 
   it('recolours immediately and plays one non-occluding reveal from the control', () => {
     const button = createElement();
-    const onToggleTheme = vi.fn();
+    const onChangeTheme = vi.fn();
     const activeReveal = { current: null } as any;
 
-    const overlay = asFake(startThemeTransition({ button: button as any, onToggleTheme, activeReveal }));
+    const overlay = asFake(startThemeTransition({ button: button as any, onChangeTheme, activeReveal }));
 
     // The theme flips in place — no snapshot, so live motion never freezes.
-    expect(onToggleTheme).toHaveBeenCalledOnce();
+    expect(onChangeTheme).toHaveBeenCalledOnce();
     expect(overlay).toBe(appended[0]);
     expect(overlay?.className).toBe('theme-reveal-ripple');
     expect(overlay?.getAttribute('aria-hidden')).toBe('true');
@@ -129,7 +129,7 @@ describe('startThemeTransition', () => {
     const button = createElement();
     const activeReveal = { current: null } as any;
 
-    const overlay = asFake(startThemeTransition({ button: button as any, onToggleTheme: vi.fn(), activeReveal }));
+    const overlay = asFake(startThemeTransition({ button: button as any, onChangeTheme: vi.fn(), activeReveal }));
     overlay?.dispatch('animationend');
 
     expect(overlay?.removed).toBe(true);
@@ -142,12 +142,12 @@ describe('startThemeTransition', () => {
   ])('flips the theme for %s and only decorates with motion enabled', (_label, reducedMotion) => {
     matchMedia.mockReturnValue({ matches: reducedMotion });
     const button = createElement();
-    const onToggleTheme = vi.fn();
+    const onChangeTheme = vi.fn();
     const activeReveal = { current: null } as any;
 
-    const overlay = asFake(startThemeTransition({ button: button as any, onToggleTheme, activeReveal }));
+    const overlay = asFake(startThemeTransition({ button: button as any, onChangeTheme, activeReveal }));
 
-    expect(onToggleTheme).toHaveBeenCalledOnce();
+    expect(onChangeTheme).toHaveBeenCalledOnce();
     if (reducedMotion) {
       expect(overlay).toBeNull();
       expect(appended).toHaveLength(0);
@@ -162,7 +162,7 @@ describe('startThemeTransition', () => {
     const button = createElement();
     const activeReveal = { current: null } as any;
 
-    const overlay = asFake(startThemeTransition({ button: button as any, onToggleTheme: vi.fn(), activeReveal }));
+    const overlay = asFake(startThemeTransition({ button: button as any, onChangeTheme: vi.fn(), activeReveal }));
     // animationend never fires (e.g. backgrounded tab); the failsafe must clean up.
     expect(overlay?.removed).toBe(false);
     expect(timeoutCallbacks).toHaveLength(1);
@@ -178,8 +178,8 @@ describe('startThemeTransition', () => {
     const secondButton = createElement({ left: 70, top: 50, width: 20, height: 20 });
     const activeReveal = { current: null } as any;
 
-    const first = asFake(startThemeTransition({ button: firstButton as any, onToggleTheme: vi.fn(), activeReveal }));
-    const second = asFake(startThemeTransition({ button: secondButton as any, onToggleTheme: vi.fn(), activeReveal }));
+    const first = asFake(startThemeTransition({ button: firstButton as any, onChangeTheme: vi.fn(), activeReveal }));
+    const second = asFake(startThemeTransition({ button: secondButton as any, onChangeTheme: vi.fn(), activeReveal }));
 
     expect(first?.removed).toBe(true);
     expect(second?.removed).toBe(false);

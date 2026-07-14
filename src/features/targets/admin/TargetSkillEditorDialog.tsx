@@ -1,6 +1,7 @@
 import React from 'react';
-import { AlertTriangle, GitBranch, RefreshCcw, X } from 'lucide-react';
+import { AlertTriangle, GitBranch, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { Dialog } from '@/components/common/Dialog';
@@ -135,15 +136,11 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 Reimport
               </Button>
             )}
-            <button
-              type="button"
+            <CloseButton
               onClick={guardedClose}
               disabled={saving}
-              className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
               aria-label="Close skill editor"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            />
           </div>
         </div>
 

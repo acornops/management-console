@@ -41,13 +41,18 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(({ checke
     aria-label={label}
     disabled={disabled}
     onClick={() => onCheckedChange(!checked)}
-    className={twMerge(clsx(
-      'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border p-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50',
-      checked ? 'border-ui-text bg-ui-text' : 'border-ui-border bg-ui-surface-strong'
-    ), className)}
+    className={twMerge(
+      'relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9',
+      className
+    )}
     {...props}
   >
-    <span aria-hidden="true" className={clsx('h-[1.125rem] w-[1.125rem] rounded-full bg-ui-bg shadow-sm transition-transform', checked ? 'translate-x-[1.125rem]' : 'translate-x-0')} />
+    <span aria-hidden="true" className={clsx(
+      'relative inline-flex h-6 w-11 items-center rounded-full border p-0.5 transition-colors',
+      checked ? 'border-ui-text bg-ui-text' : 'border-ui-border bg-ui-surface-strong'
+    )}>
+      <span className={clsx('h-[1.125rem] w-[1.125rem] rounded-full bg-ui-bg shadow-sm transition-transform', checked ? 'translate-x-[1.125rem]' : 'translate-x-0')} />
+    </span>
   </button>
 ));
 
@@ -64,8 +69,8 @@ export interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElem
   selected?: boolean;
 }
 
-export const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({ className, destructive, selected, ...props }, ref) => (
-  <button ref={ref} type="button" role="menuitem" className={menuOptionClassName({ className, destructive, selected })} {...props} />
+export const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({ className, destructive, disabled, selected, ...props }, ref) => (
+  <button ref={ref} type="button" role="menuitem" disabled={disabled} className={menuOptionClassName({ className, destructive, disabled, selected })} {...props} />
 ));
 
 MenuItem.displayName = 'MenuItem';

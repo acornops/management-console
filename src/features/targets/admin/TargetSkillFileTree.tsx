@@ -345,7 +345,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
               suppressRenameBlurRef.current = true;
             }}
             onClick={cancelRename}
-            className="rounded p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
+            className="control-target rounded p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
             title="Cancel rename"
             aria-label="Cancel rename"
           >
@@ -367,7 +367,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
         onActiveFilePathChange(file.path);
       }}
       onDoubleClick={() => startRename({ type: 'file', path: file.path })}
-      className={`relative flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left text-xs transition-colors ${
+      className={`control-target relative flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left text-xs transition-colors ${
         activeFilePath === file.path
           ? 'bg-accent-soft/20 text-accent-strong'
           : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
@@ -423,7 +423,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
               suppressFileActionBlurRef.current = true;
             }}
             onClick={cancelFileAction}
-            className="rounded p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
+            className="control-target rounded p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
             title="Cancel"
             aria-label="Cancel"
           >
@@ -460,7 +460,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
                 event.stopPropagation();
                 toggleFolderCollapsed(folder.path);
               }}
-              className="rounded p-1 text-current transition-colors hover:bg-ui-surface"
+              className="control-target rounded p-1 text-current transition-colors hover:bg-ui-surface"
               aria-label={collapsed ? `Expand ${folder.name}` : `Collapse ${folder.name}`}
             >
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
@@ -469,7 +469,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
               type="button"
               onClick={() => setSelectedFolderPath(folder.path)}
               onDoubleClick={() => startRename({ type: 'folder', path: folder.path })}
-              className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left"
+              className="control-target flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left"
             >
               <Folder className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{folder.name}</span>
@@ -489,10 +489,10 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
         <div className="flex items-center justify-between gap-2">
           <h4 className="type-row-title">Files</h4>
           <div className="flex gap-1">
-            <button type="button" className="rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50" disabled={!canEditSkills} onClick={() => openFileAction('file')} title="Add file" aria-label="Add file">
+            <button type="button" className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50" disabled={!canEditSkills} onClick={() => openFileAction('file')} title="Add file" aria-label="Add file">
               <FilePlus2 className="h-3.5 w-3.5" />
             </button>
-            <button type="button" className="rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50" disabled={!canEditSkills} onClick={() => openFileAction('folder')} title="Add folder" aria-label="Add folder">
+            <button type="button" className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50" disabled={!canEditSkills} onClick={() => openFileAction('folder')} title="Add folder" aria-label="Add folder">
               <FolderPlus className="h-3.5 w-3.5" />
             </button>
           </div>

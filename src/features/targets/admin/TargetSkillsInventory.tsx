@@ -1,9 +1,9 @@
 import React from 'react';
-import { Switch } from '@/components/common/FormControls';
+import { MenuItem, Switch } from '@/components/common/FormControls';
 import { createPortal } from 'react-dom';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
+import { menuSurfaceClassName } from '@/components/common/menuStyles';
 import { Select } from '@/components/common/Select';
 import type { SelectOption } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
@@ -109,14 +109,11 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
           className={menuSurfaceClassName('fixed z-[130] p-1')}
           style={actionMenuStyle}
         >
-          <button
-            type="button"
-            role="menuitem"
+          <MenuItem
             onClick={() => {
               closeActionMenu();
               onEditSkill(skill.id);
             }}
-            className={menuOptionClassName()}
           >
             {canEditSkills ? (
               <Edit3 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
@@ -124,20 +121,18 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
               <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
             )}
             <span>{canEditSkills ? 'Edit skill' : 'View skill'}</span>
-          </button>
+          </MenuItem>
           {canEditSkills && (
-            <button
-              type="button"
-              role="menuitem"
+            <MenuItem
+              destructive
               onClick={() => {
                 closeActionMenu();
                 onDeleteSkill(skill.id);
               }}
-              className={menuOptionClassName({ className: 'text-status-danger-text hover:bg-status-danger-soft' })}
             >
               <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>Delete skill</span>
-            </button>
+            </MenuItem>
           )}
         </div>,
         document.body
@@ -188,7 +183,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
           data-target-skill-primary-actions="true"
           type="button"
           onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
           aria-haspopup="menu"
           aria-expanded={actionMenuOpen}
           aria-controls={actionMenuOpen ? actionMenuId : undefined}

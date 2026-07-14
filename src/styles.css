@@ -34,6 +34,8 @@
   --metric-blue-rgb: 58 110 150;
   --code-bg: oklch(0.225 0.02 250);
   --code-bg-rgb: 21 29 37;
+  --code-text: oklch(0.94 0.008 80);
+  --code-text-rgb: 238 235 229;
   --status-success: oklch(0.52 0.13 160);
   --status-success-soft: oklch(0.96 0.03 160);
   --status-success-text: oklch(0.4 0.12 160);
@@ -52,6 +54,32 @@
   --status-danger-rgb: 193 49 64;
   --status-danger-soft-rgb: 255 233 232;
   --status-danger-text-rgb: 154 28 46;
+  --control-primary-bg: var(--text);
+  --control-primary-bg-rgb: 48 45 41;
+  --control-primary-hover: oklch(0.379934 0.00707 31.086);
+  --control-primary-hover-rgb: 70 65 64;
+  --control-primary-fg: var(--bg);
+  --control-primary-fg-rgb: 252 250 246;
+  --control-secondary-bg: var(--surface);
+  --control-secondary-bg-rgb: 255 254 251;
+  --control-secondary-hover: var(--surface-strong);
+  --control-secondary-hover-rgb: 247 241 234;
+  --control-secondary-fg: var(--text);
+  --control-secondary-fg-rgb: 48 45 41;
+  --control-activation-bg: var(--brand-orange);
+  --control-activation-bg-rgb: 255 112 59;
+  --control-activation-hover: var(--brand-orange-bright);
+  --control-activation-hover-rgb: 255 139 92;
+  --control-activation-fg: var(--text);
+  --control-activation-fg-rgb: 48 45 41;
+  --control-danger-bg: var(--status-danger);
+  --control-danger-bg-rgb: 193 49 64;
+  --control-danger-hover: var(--status-danger-text);
+  --control-danger-hover-rgb: 154 28 46;
+  --control-danger-fg: var(--bg);
+  --control-danger-fg-rgb: 252 250 246;
+  --control-boundary: var(--text-muted);
+  --control-boundary-rgb: 123 107 97;
   --route-padding-x: 1rem;
   --route-padding-y: 1.5rem;
   --header-content-gap: 2rem;
@@ -90,20 +118,20 @@
   --brand-orange-strong: oklch(0.78 0.13 42);
   --brand-orange-readable: oklch(0.82 0.12 42);
   --brand-orange-soft: oklch(0.29 0.055 38);
-  --bg: oklch(0.18 0.008 60);
-  --surface: oklch(0.225 0.008 58);
-  --surface-strong: oklch(0.265 0.01 58);
-  --border: oklch(0.32 0.018 54);
-  --text: oklch(0.96 0.008 80);
-  --text-muted: oklch(0.7 0.018 60);
+  --bg: oklch(0.178407 0.002613 67.659);
+  --surface: oklch(0.221666 0.007407 48.368);
+  --surface-strong: oklch(0.281925 0.00766 31.115);
+  --border: oklch(0.379934 0.00707 31.086);
+  --text: oklch(0.960674 0.00508 48.686);
+  --text-muted: oklch(0.712881 0.005998 31.059);
   --logo-brown-rgb: 116 93 72;
   --logo-cream-rgb: 241 234 218;
-  --bg-rgb: 20 17 14;
-  --surface-rgb: 31 27 24;
-  --surface-strong-rgb: 41 36 33;
-  --border-rgb: 58 49 42;
-  --text-rgb: 245 241 236;
-  --text-muted-rgb: 167 156 148;
+  --bg-rgb: 18 17 16;
+  --surface-rgb: 30 26 24;
+  --surface-strong-rgb: 45 40 39;
+  --border-rgb: 70 65 64;
+  --text-rgb: 245 241 239;
+  --text-muted-rgb: 166 161 160;
   --brand-orange-rgb: 255 112 59;
   --brand-orange-strong-rgb: 255 154 112;
   --brand-orange-bright-rgb: 255 139 92;
@@ -113,6 +141,8 @@
   --metric-blue-rgb: 105 158 201;
   --code-bg: oklch(0.175 0.02 250);
   --code-bg-rgb: 10 17 25;
+  --code-text: oklch(0.94 0.008 80);
+  --code-text-rgb: 238 235 229;
   --status-success: oklch(0.72 0.13 160);
   --status-success-soft: oklch(0.3 0.055 160);
   --status-success-text: oklch(0.78 0.11 160);
@@ -131,6 +161,32 @@
   --status-danger-rgb: 253 114 119;
   --status-danger-soft-rgb: 80 40 40;
   --status-danger-text-rgb: 255 154 155;
+  --control-primary-bg: var(--surface-strong);
+  --control-primary-bg-rgb: 45 40 39;
+  --control-primary-hover: var(--border);
+  --control-primary-hover-rgb: 70 65 64;
+  --control-primary-fg: var(--text);
+  --control-primary-fg-rgb: 245 241 239;
+  --control-secondary-bg: var(--surface);
+  --control-secondary-bg-rgb: 30 26 24;
+  --control-secondary-hover: var(--surface-strong);
+  --control-secondary-hover-rgb: 45 40 39;
+  --control-secondary-fg: var(--text);
+  --control-secondary-fg-rgb: 245 241 239;
+  --control-activation-bg: oklch(0.541572 0.158036 37.299);
+  --control-activation-bg-rgb: 184 68 31;
+  --control-activation-hover: oklch(0.463111 0.138173 37.042);
+  --control-activation-hover-rgb: 150 52 21;
+  --control-activation-fg: var(--text);
+  --control-activation-fg-rgb: 245 241 239;
+  --control-danger-bg: oklch(0.492682 0.160451 18.505);
+  --control-danger-bg-rgb: 169 44 60;
+  --control-danger-hover: oklch(0.425723 0.140503 17.414);
+  --control-danger-hover-rgb: 139 33 49;
+  --control-danger-fg: var(--text);
+  --control-danger-fg-rgb: 245 241 239;
+  --control-boundary: oklch(0.558455 0.00583 48.624);
+  --control-boundary-rgb: 119 115 113;
 }
 
 html,
@@ -153,6 +209,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Explicit fallback target for intentionally raw controls. Shared primitives
+   own their sizing; this utility keeps page-local controls accessible until a
+   semantic shared component is the better fit. */
+.control-target {
+  min-width: var(--control-height-default);
+  min-height: var(--control-height-default);
+}
+
+@media (min-width: 640px) {
+  .control-target {
+    min-width: var(--control-height-compact);
+    min-height: var(--control-height-compact);
+  }
+}
+
 /* Theme changes recolour the page in place: token-driven surfaces ease through
    their own colour transitions (see the html rule above) while live motion — the
    login "Squirrel Chasing Acorns" illustration — keeps running, never paused and
@@ -173,7 +244,7 @@ body {
   );
   clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
   will-change: clip-path, opacity;
-  animation: theme-reveal-ripple 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: theme-reveal-ripple 320ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes theme-reveal-ripple {

@@ -6,18 +6,18 @@ export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'dan
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 const baseButtonClass =
-  'type-ui inline-flex items-center justify-center gap-2 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25';
+  'type-ui inline-flex items-center justify-center gap-2 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg';
 
 const filledNeutralButtonClass =
-  'border border-ui-text bg-ui-text text-ui-bg shadow-sm shadow-ui-text/15 hover:border-ui-text/90 hover:bg-ui-text/90';
+  'border border-control-boundary bg-control-primary text-control-primary-fg shadow-sm shadow-ui-text/15 hover:bg-control-primary-hover';
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: filledNeutralButtonClass,
-  secondary: 'border border-ui-border bg-ui-surface text-ui-text shadow-sm hover:bg-ui-bg hover:border-accent/30',
+  secondary: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm hover:bg-control-secondary-hover',
   tertiary: 'text-ui-text-muted hover:bg-accent-soft hover:text-accent-strong',
-  activation: 'border border-accent bg-accent text-ui-bg shadow-sm shadow-accent/20 hover:bg-accent-bright hover:border-accent-bright',
-  icon: 'border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm hover:bg-ui-bg hover:text-accent-strong',
-  danger: 'border border-status-danger bg-status-danger text-ui-bg hover:bg-status-danger-text'
+  activation: 'border border-control-boundary bg-control-activation text-control-activation-fg shadow-sm shadow-accent/20 hover:bg-control-activation-hover',
+  icon: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm hover:bg-control-secondary-hover',
+  danger: 'border border-control-boundary bg-control-danger text-control-danger-fg hover:bg-control-danger-hover'
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

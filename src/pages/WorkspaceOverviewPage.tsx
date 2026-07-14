@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import {
   ArrowRight,
   Clock3,
@@ -10,7 +9,6 @@ import { Button } from '@/components/common/Button';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { ICONS } from '@/constants';
-import { headerMotion } from '@/lib/motion';
 import { issueStatusTone } from '@/pages/issues/issueUi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi, type ControlPlaneIssueItem, type ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
@@ -252,7 +250,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
                 key={`${card.targetType}-${card.targetId}`}
                 type="button"
                 onClick={() => openCard(card)}
-                className="group flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 sm:px-5"
+                className="control-target group flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 sm:px-5"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span className={`type-micro-label shrink-0 rounded-full px-2.5 py-1 ${card.postureTone}`}>

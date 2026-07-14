@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import {
   classNames,
   ResourceMetaPair,
@@ -123,7 +124,7 @@ export const InfrastructureRow: React.FC<{
         type="button"
         onClick={onClick}
         aria-label={`${t('workloads.details')}: ${title}`}
-        className={rowClassName}
+        className={`control-target ${rowClassName}`}
       >
         {content}
       </button>
@@ -155,13 +156,10 @@ export const SidePanel: React.FC<{
     <RightSidePanel isOpen={isOpen} onClose={onClose} ariaLabel={title}>
       <div className="flex items-center justify-between border-b border-ui-border px-4 py-5 sm:px-8 sm:py-6">
         <h3 className="type-section-title">{title}</h3>
-        <button
+        <CloseButton
           onClick={onClose}
-          className="rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg"
           aria-label={t('workloads.closeDetails')}
-        >
-          <X className="h-5 w-5" />
-        </button>
+        />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">{children}</div>
     </RightSidePanel>

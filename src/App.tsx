@@ -20,6 +20,7 @@ import { isWorkspaceDataRoute, legacySettingsRedirectPath, workspaceLandingPath 
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
 import { readLanguagePreference, readThemePreference } from '@/app/preferences';
+import { getSystemTheme, resolveThemePreference, type ResolvedTheme, type ThemePreference } from '@/app/theme';
 import { getSupportedLanguages } from '@/i18n/languageConfig';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -46,9 +47,12 @@ const App: React.FC = () => {
   const sidebarAccountMenuRef = useRef<HTMLDivElement | null>(null);
   const sidebarWorkspaceMenuRef = useRef<HTMLDivElement | null>(null);
   const skipAnonymousPreferencePersistCountRef = useRef(0);
-  const [theme, setTheme] = useState<'light' | 'dark'>(readThemePreference);
+  const [themePreference, setThemePreference] = useState<ThemePreference>(readThemePreference);
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
+    resolveThemePreference(readThemePreference(), getSystemTheme() === 'dark')
+  );
   const [language, setLanguage] = useState<string>(readLanguagePreference);
-  const isDark = theme === 'dark';
+  const isDark = resolvedTheme === 'dark';
   const routeWorkspaceId = getWorkspaceRouteId(route);
   const workspaceContextId = routeWorkspaceId || selectedWorkspaceId;
   const clusterContextId = getClusterRouteId(route);
@@ -87,7 +91,6 @@ const App: React.FC = () => {
     selectedWorkspaceId,
     user,
     workspaces,
-    skipAnonymousPreferencePersistCountRef,
     setKubernetesClusters,
     setIsSessionRestoring,
     setSelectedWorkspaceId,
@@ -110,7 +113,6 @@ const App: React.FC = () => {
     showToast,
     toWorkspaceInvitation,
     toasts,
-    toggleTheme,
     updateKubernetesCluster,
     updateWorkspace
   } = useAppSupport({
@@ -130,11 +132,10 @@ const App: React.FC = () => {
     setIsMobileNavOpen,
     setIsSidebarWorkspaceMenuOpen,
     setSelectedWorkspaceId,
-    setTheme,
     setUser,
     setWorkspaces
   });
-  const handleToggleTheme = useThemeTransition(toggleTheme);
+  const handleSelectTheme = useThemeTransition(setThemePreference, resolvedTheme);
   const {
     clusterCreationStep,
     clusterInstallCommand,
@@ -182,9 +183,10 @@ const App: React.FC = () => {
     setLanguage,
     setLoadedProfilePreferenceKey,
     setSelectedWorkspaceId,
-    setTheme,
+    setResolvedTheme,
+    setThemePreference,
     skipAnonymousPreferencePersistCountRef,
-    theme,
+    themePreference,
     user
   });
   useRecentInvestigationSync({
@@ -465,6 +467,8 @@ const App: React.FC = () => {
     return (
       <LoginPage
         isDark={isDark}
+        preference={themePreference}
+        resolvedTheme={resolvedTheme}
         isAuthLoading={isAuthLoading}
         logoSrc={logoSrc}
         oidcEnabled={authConfig.oidcEnabled}
@@ -478,7 +482,7 @@ const App: React.FC = () => {
         onResendVerification={handleResendVerification}
         onRequestPasswordReset={handleRequestPasswordReset}
         onResetPassword={handleResetPassword}
-        onToggleTheme={handleToggleTheme}
+        onSelectTheme={handleSelectTheme}
       />
     );
   }
@@ -573,10 +577,11 @@ const App: React.FC = () => {
       showToast={showToast}
       sidebarAccountMenuRef={sidebarAccountMenuRef}
       sidebarWorkspaceMenuRef={sidebarWorkspaceMenuRef}
-      theme={theme}
+      themePreference={themePreference}
+      resolvedTheme={resolvedTheme}
       toasts={toasts}
       toWorkspaceInvitation={toWorkspaceInvitation}
-      toggleTheme={handleToggleTheme}
+      selectTheme={handleSelectTheme}
       updateKubernetesCluster={updateKubernetesCluster}
       updateWorkspace={updateWorkspace}
       user={user}

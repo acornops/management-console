@@ -149,7 +149,7 @@ export const AgentCapabilityMultiSelect: React.FC<AgentCapabilityMultiSelectProp
                   key={value}
                   type="button"
                   onClick={() => onSelectedValuesChange(selectedValues.filter((item) => item !== value))}
-                  className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-xs font-semibold text-ui-text shadow-sm hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-xs font-semibold text-ui-text shadow-sm hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   title={`Remove ${capabilityOptionLabelFor(value, options)}`}
                 >
                   <span className="min-w-0 truncate">{capabilityOptionLabelFor(value, options)}</span>

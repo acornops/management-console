@@ -1,9 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
-import { headerMotion } from '@/lib/motion';
 
 export interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
   embedded?: boolean;
@@ -59,8 +56,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   ...props
 }) => (
-  <motion.header
-    {...headerMotion}
+  <header
     className={twMerge(
       'page-header mb-[var(--header-content-gap)] flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between',
       className
@@ -74,7 +70,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       {description && <div className="type-body mt-2 max-w-[72ch] text-ui-text-muted">{description}</div>}
     </div>
     {actions && <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-end">{actions}</div>}
-  </motion.header>
+  </header>
 );
 
 export interface PageSectionProps extends Omit<React.HTMLAttributes<HTMLElement>, 'title'> {

@@ -1,7 +1,7 @@
 import React from 'react';
-import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { Select, SelectOption } from '@/components/common/Select';
 import { ProjectMember, WorkspaceRoleTemplate } from '@/types';
@@ -65,15 +65,11 @@ export const WorkspaceMemberDetailsPanel: React.FC<WorkspaceMemberDetailsPanelPr
         <>
           <div className="flex items-center justify-between border-b border-ui-border px-8 py-6">
             <h2 id="member-details-title" className="type-section-title">{t('members.memberDetails')}</h2>
-            <button
+            <CloseButton
               ref={closeButtonRef}
-              type="button"
               onClick={onClose}
-              className="rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
               aria-label={t('members.closeMemberDetails')}
-            >
-              <X className="w-5 h-5" aria-hidden="true" />
-            </button>
+            />
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
@@ -159,7 +155,7 @@ export const WorkspaceMemberDetailsPanel: React.FC<WorkspaceMemberDetailsPanelPr
                   type="button"
                   onClick={onConfirmRemove}
                   disabled={!canEditSelectedMember || isSaving}
-                  className="type-ui w-full rounded-md px-1 py-1 text-left text-status-danger-text transition-colors hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="control-target type-ui w-full rounded-md px-1 py-1 text-left text-status-danger-text transition-colors hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {t('members.removeAccess')}
                   <span className="type-caption mt-1 block text-status-danger-text">

@@ -28,7 +28,7 @@ type Boundary = 'first' | 'last';
 const menuOffsetPx = 6;
 
 const sizeClasses: Record<NonNullable<SelectProps<string>['size']>, string> = {
-  sm: 'h-9 px-3 text-xs',
+  sm: 'h-11 px-3 text-xs sm:h-9',
   md: 'h-11 px-4'
 };
 
@@ -261,13 +261,13 @@ export const Select = <T extends string | number>({
           }
         }}
         onKeyDown={handleKeyDown}
-        className={twMerge(clsx(
+        className={`control-target ${twMerge(clsx(
           'type-ui flex w-full items-center justify-between gap-3 rounded-md border bg-ui-surface text-ui-text shadow-sm outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60',
           sizeClasses[size],
           isOpen
             ? 'border-accent/35 bg-ui-bg ring-2 ring-accent/10'
             : 'border-ui-border hover:border-accent/25 hover:bg-ui-bg focus-visible:border-accent/35 focus-visible:ring-2 focus-visible:ring-accent/15'
-        ))}
+        ))}`}
       >
         <span className={clsx('min-w-0 truncate text-left', !selectedOption && 'text-ui-text-muted')}>
           {selectedOption?.label ?? placeholder}

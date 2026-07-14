@@ -1,10 +1,10 @@
 import React from 'react';
-import type { MouseEventHandler } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import { NavCountBadge } from '@/app/NavCountBadge';
 import { Dialog } from '@/components/common/Dialog';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
@@ -14,6 +14,8 @@ import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ActivePrimaryNav, ActiveResourceNav } from '@/app/appRouteState';
+import { ThemeMenu } from '@/components/common/ThemeMenu';
+import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 
 interface AppMobileNavigationProps {
   activeClusterSubview: ClusterSubview;
@@ -23,7 +25,8 @@ interface AppMobileNavigationProps {
   pendingApprovalCount?: number;
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;
-  isDark: boolean;
+  themePreference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
   isMobileNavOpen: boolean;
   selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
@@ -43,7 +46,7 @@ interface AppMobileNavigationProps {
   onSelectWorkspaceContext: (workspaceId: string) => void;
   onSetAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onSetMobileNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onToggleTheme: MouseEventHandler<HTMLButtonElement>;
+  onSelectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
 }
 
 export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
@@ -54,7 +57,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   pendingApprovalCount,
   isClusterSidebar,
   isVirtualMachineSidebar,
-  isDark,
+  themePreference,
+  resolvedTheme,
   isMobileNavOpen,
   selectedClusterIssueCount,
   clusterAssistantNavStatus,
@@ -74,7 +78,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   onSelectWorkspaceContext,
   onSetAccountMenuOpen,
   onSetMobileNavOpen,
-  onToggleTheme
+  onSelectTheme
 }) => {
   const { t } = useTranslation();
   const logoSrc = `${import.meta.env.BASE_URL}logo.svg`;
@@ -145,15 +149,11 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                 </h2>
                 <p className="type-caption mt-0.5">{t('app.navigationHint')}</p>
               </div>
-              <motion.button
+              <CloseButton
                 ref={mobileNavCloseButtonRef}
-                type="button"
                 onClick={() => onSetMobileNavOpen(false)}
-                className="p-1.5 text-ui-text-muted transition-colors hover:text-accent-strong"
                 aria-label={t('app.closeNavigation')}
-              >
-                <ICONS.X className="w-4 h-4" />
-              </motion.button>
+              />
             </div>
 
             <div className="max-h-[calc(100vh-6.5rem)] divide-y divide-ui-border overflow-y-auto custom-scrollbar">
@@ -546,20 +546,12 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                     </span>
                     <ICONS.ChevronRight className="h-4 w-4 shrink-0" />
                   </button>
-                  <motion.button
-                    type="button"
-                    onClick={onToggleTheme}
-                    className="flex min-h-11 items-center justify-between rounded-md px-3 py-2 text-xs font-bold text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text"
-                    aria-label={t('app.toggleTheme')}
-                  >
-                    <span className="flex items-center gap-2">
-                      {isDark ? <ICONS.Sun className="h-4 w-4" /> : <ICONS.Moon className="h-4 w-4" />}
-                      <span>{t('app.theme')}</span>
-                    </span>
-                    <span className="text-ui-text-muted">
-                      {isDark ? t('app.themeDark') : t('app.themeLight')}
-                    </span>
-                  </motion.button>
+                  <ThemeMenu
+                    preference={themePreference}
+                    resolvedTheme={resolvedTheme}
+                    variant="mobile"
+                    onSelect={onSelectTheme}
+                  />
                   <button
                     type="button"
                     onClick={onLogout}

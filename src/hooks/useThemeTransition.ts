@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { MouseEventHandler, MutableRefObject } from 'react';
+import type { MutableRefObject } from 'react';
+import {
+  getSystemTheme,
+  themeSelectionChangesResolvedTheme,
+  type ResolvedTheme,
+  type ThemePreference
+} from '@/app/theme';
 
 const THEME_REVEAL_CLASS = 'theme-reveal-ripple';
-// Failsafe far beyond the ~420ms reveal: if `animationend` never fires (e.g. the
+// Failsafe far beyond the 320ms reveal: if `animationend` never fires (e.g. the
 // tab is backgrounded mid-reveal) the overlay still tears itself down instead of
 // staying pinned over the app.
 const THEME_REVEAL_FAILSAFE_MS = 1500;
@@ -44,11 +50,11 @@ export function getThemeRevealGeometry(
  */
 export function startThemeTransition({
   button,
-  onToggleTheme,
+  onChangeTheme,
   activeReveal
 }: {
   button: HTMLButtonElement;
-  onToggleTheme: () => void;
+  onChangeTheme: () => void;
   activeReveal: MutableRefObject<ActiveThemeReveal | null>;
 }): HTMLElement | null {
   // Tear down any in-flight reveal first so rapid toggles never stack overlays.
@@ -60,7 +66,7 @@ export function startThemeTransition({
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Recolour in place. No View Transition snapshot, so nothing on screen freezes.
-  onToggleTheme();
+  onChangeTheme();
 
   // Under reduced motion the flip is the whole interaction — no decorative reveal.
   if (prefersReducedMotion) {
@@ -100,7 +106,15 @@ export function startThemeTransition({
   return overlay;
 }
 
-export function useThemeTransition(onToggleTheme: () => void): MouseEventHandler<HTMLButtonElement> {
+export type ThemePreferenceSelectionHandler = (
+  preference: ThemePreference,
+  source: HTMLButtonElement
+) => void;
+
+export function useThemeTransition(
+  onSelectTheme: (preference: ThemePreference) => void,
+  resolvedTheme: ResolvedTheme
+): ThemePreferenceSelectionHandler {
   const activeReveal = useRef<ActiveThemeReveal | null>(null);
 
   useEffect(() => () => {
@@ -108,11 +122,18 @@ export function useThemeTransition(onToggleTheme: () => void): MouseEventHandler
     activeReveal.current = null;
   }, []);
 
-  return useCallback((event) => {
+  return useCallback((preference, source) => {
+    if (!themeSelectionChangesResolvedTheme(preference, resolvedTheme, getSystemTheme() === 'dark')) {
+      activeReveal.current?.dispose();
+      activeReveal.current = null;
+      onSelectTheme(preference);
+      return;
+    }
+
     startThemeTransition({
-      button: event.currentTarget,
-      onToggleTheme,
+      button: source,
+      onChangeTheme: () => onSelectTheme(preference),
       activeReveal
     });
-  }, [onToggleTheme]);
+  }, [onSelectTheme, resolvedTheme]);
 }

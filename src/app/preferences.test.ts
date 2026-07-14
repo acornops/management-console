@@ -7,8 +7,11 @@ import {
 } from '@/i18n/languageConfig';
 import {
   GLOBAL_LANGUAGE_STORAGE_KEY,
+  GLOBAL_THEME_STORAGE_KEY,
   getProfileStorageKey,
-  readLanguagePreference
+  persistThemePreference,
+  readLanguagePreference,
+  readThemePreference
 } from './preferences';
 
 const originalWindow = globalThis.window;
@@ -68,5 +71,56 @@ describe('language preferences', () => {
     window.localStorage.setItem(GLOBAL_LANGUAGE_STORAGE_KEY, 'zh');
 
     expect(readLanguagePreference()).toBe('fr');
+  });
+});
+
+describe('theme preferences', () => {
+  beforeEach(() => {
+    installStorageMock();
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: originalWindow,
+      writable: true
+    });
+  });
+
+  it.each(['light', 'dark', 'system'] as const)('preserves a stored %s preference', (preference) => {
+    window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, preference);
+    expect(readThemePreference()).toBe(preference);
+  });
+
+  it.each([null, '', 'sepia'])('defaults a missing or invalid global preference to System', (preference) => {
+    if (preference !== null) window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, preference);
+    expect(readThemePreference()).toBe('system');
+  });
+
+  it('uses an explicit profile preference ahead of the global preference', () => {
+    window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(getProfileStorageKey('operator', 'theme'), 'light');
+    expect(readThemePreference('operator')).toBe('light');
+  });
+
+  it('falls back to the global preference when the profile has no stored choice', () => {
+    window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, 'dark');
+    expect(readThemePreference('operator')).toBe('dark');
+  });
+
+  it('treats an explicit invalid profile value as System instead of leaking the global choice', () => {
+    window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(getProfileStorageKey('operator', 'theme'), 'invalid');
+    expect(readThemePreference('operator')).toBe('system');
+  });
+
+  it('persists System and explicit themes at global and profile scope', () => {
+    persistThemePreference('system');
+    persistThemePreference('light', 'operator');
+
+    expect(window.localStorage.getItem(GLOBAL_THEME_STORAGE_KEY)).toBe('system');
+    expect(window.localStorage.getItem(getProfileStorageKey('operator', 'theme'))).toBe('light');
   });
 });

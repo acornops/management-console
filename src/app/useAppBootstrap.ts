@@ -26,7 +26,6 @@ export function useAppBootstrap(args: {
   selectedWorkspaceId: string | null;
   user: User | null;
   workspaces: Workspace[];
-  skipAnonymousPreferencePersistCountRef: React.MutableRefObject<number>;
   setKubernetesClusters: React.Dispatch<React.SetStateAction<KubernetesCluster[]>>;
   setIsSessionRestoring: (value: boolean) => void;
   setSelectedWorkspaceId: (workspaceId: string | null) => void;
@@ -40,7 +39,6 @@ export function useAppBootstrap(args: {
     selectedWorkspaceId,
     user,
     workspaces,
-    skipAnonymousPreferencePersistCountRef,
     setKubernetesClusters,
     setIsSessionRestoring,
     setSelectedWorkspaceId,
@@ -80,7 +78,6 @@ export function useAppBootstrap(args: {
       setWorkspaces(attachClusterIds(fetchedWorkspaces, fetchedClusters));
     } catch (err) {
       console.error('Session restoration failed', err);
-      skipAnonymousPreferencePersistCountRef.current = 2;
       setUser(null);
       setKubernetesClusters([]);
       setWorkspaces([]);
@@ -93,8 +90,7 @@ export function useAppBootstrap(args: {
     setIsSessionRestoring,
     setSelectedWorkspaceId,
     setUser,
-    setWorkspaces,
-    skipAnonymousPreferencePersistCountRef
+    setWorkspaces
   ]);
 
   useEffect(() => {

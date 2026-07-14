@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
 import { ClusterSettingsView } from '@/features/kubernetes-cluster-detail/components/detail/views/ClusterSettingsView';
 import { McpServersView } from '@/features/targets/admin/McpServersView';
@@ -12,7 +12,6 @@ import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detai
 import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
 import { KubernetesClusterDetailProps, View } from '@/features/kubernetes-cluster-detail/types';
 import { toKubernetesTargetDescriptor } from '@/features/targets/targetDescriptor';
-import { fadeTransition } from '@/lib/motion';
 
 interface KubernetesClusterDetailLocationState {
   view: View;
@@ -216,8 +215,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   return (
     <div className="flex h-full min-h-0 relative overflow-hidden">
       <div className="flex-1 min-h-0 flex flex-col h-full relative overflow-hidden">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={activeView} {...fadeTransition} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div key={activeView} className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {activeView === 'overview' && (
               <OverviewView
                 cluster={cluster}
@@ -304,8 +302,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 onUpdateWriteConfirmationPolicy={onUpdateWriteConfirmationPolicy}
               />
             )}
-          </motion.div>
-        </AnimatePresence>
+        </div>
         <AnimatePresence>
           {isNamespaceScopeDialogOpen && (
             <NamespaceScopeDialog

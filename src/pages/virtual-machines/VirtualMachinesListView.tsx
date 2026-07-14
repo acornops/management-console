@@ -5,6 +5,7 @@ import { MoreHorizontal, Search, Server, Settings, Trash2 } from 'lucide-react';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
+import { MenuItem } from '@/components/common/FormControls';
 import { PageSearchInput } from '@/components/common/PageSearchInput';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
@@ -242,7 +243,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                   <button
                     type="button"
                     onClick={() => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, requiresAgentInstall ? 'settings' : 'overview', catalogReturnState))}
-                    className="absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25"
+                    className="control-target absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25"
                     aria-label={requiresAgentInstall ? t('virtualMachines.list.installAgentFor', { name: vm.name }) : t('virtualMachines.list.openVm', { name: vm.name })}
                   />
 
@@ -267,7 +268,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                                 event.stopPropagation();
                                 setOpenVmActionMenuId((current) => current === vm.id ? null : vm.id);
                               }}
-                              className={`inline-flex h-10 w-10 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${openVmActionMenuId === vm.id ? 'bg-ui-bg text-ui-text' : ''}`}
+                              className={`control-target inline-flex h-10 w-10 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${openVmActionMenuId === vm.id ? 'bg-ui-bg text-ui-text' : ''}`}
                               aria-haspopup="menu"
                               aria-expanded={openVmActionMenuId === vm.id}
                               aria-label={t('virtualMachines.list.vmActionsFor', { name: vm.name })}
@@ -280,35 +281,30 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                                 onClick={(event) => event.stopPropagation()}
                                 className="absolute right-0 top-10 w-52 overflow-hidden rounded-lg border border-ui-border bg-ui-surface p-1 text-sm shadow-xl"
                               >
-                                <button
+                                <MenuItem
                                   data-vm-overflow-action="settings"
-                                  type="button"
-                                  role="menuitem"
                                   onClick={() => {
                                     setOpenVmActionMenuId(null);
                                     navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'settings', catalogReturnState));
                                   }}
-                                  className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                                 >
                                   <Settings className="h-4 w-4 text-ui-text-muted" />
                                   {t('virtualMachines.list.vmSettings')}
-                                </button>
+                                </MenuItem>
                                 {canDeleteVm && (
-                                  <button
+                                  <MenuItem
                                     data-vm-overflow-action="delete"
-                                    type="button"
-                                    role="menuitem"
+                                    destructive
                                     onClick={() => {
                                       setOpenVmActionMenuId(null);
                                       setDeleteVmConfirmation('');
                                       setDeleteVmError(null);
                                       setDeleteTargetVm(vm);
                                     }}
-                                    className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-status-danger-text transition-colors hover:bg-status-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                     {t('virtualMachines.list.deleteVm')}
-                                  </button>
+                                  </MenuItem>
                                 )}
                               </div>
                             )}

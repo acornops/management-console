@@ -11,7 +11,7 @@ describe('McpServerCard desktop density', () => {
     expect(mcpServerCard).toContain('data-mcp-server-primary-actions="true"');
     expect(mcpServerCard).toContain("aria-label={t('mcpServers.serverActionsNamed', { name: server.name })}");
     expect(mcpServerCard).toContain('role="menu"');
-    expect(mcpServerCard).toContain('role="menuitem"');
+    expect(mcpServerCard).toContain('<MenuItem');
     expect(mcpServerCard).toContain("onManageTools(server.id)");
     expect(mcpServerCard).toContain("t('mcpServers.healthCheck')");
     expect(mcpServerCard).toContain('aria-describedby={healthCheckHelpId}');

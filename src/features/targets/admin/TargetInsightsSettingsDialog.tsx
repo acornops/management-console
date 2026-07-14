@@ -1,7 +1,8 @@
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { TargetInsightsSettingsPanel } from '@/features/targets/admin/TargetInsightsSettingsPanel';
@@ -152,15 +153,11 @@ export const TargetInsightsSettingsDialog: React.FC<TargetInsightsSettingsDialog
             </div>
           )}
         </div>
-        <button
-          type="button"
+        <CloseButton
           onClick={onClose}
           disabled={settingsSaving || savingTool}
-          className="rounded-lg p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-accent-strong disabled:opacity-50"
           aria-label={t('tools.targetInsights.closeSettings')}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        />
       </div>
       {loading ? (
         <div className="flex min-h-[18rem] items-center justify-center">
