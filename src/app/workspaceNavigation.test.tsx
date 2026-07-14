@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { WorkspaceSidebarNavLink } from '@/app/AppDesktopSidebarParts';
+import { SidebarSection, WorkspaceSidebarNavLink } from '@/app/AppDesktopSidebarParts';
 import { getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
 import type { Workspace } from '@/types';
 import { AppPaths } from '@/utils/routes';
@@ -13,6 +13,16 @@ function workspace(permissions: Record<string, boolean>): Workspace {
 }
 
 describe('workspace navigation model', () => {
+  it('keeps navigation rows and groups visually separated', () => {
+    const regular = renderToStaticMarkup(<SidebarSection title="Inventory"><span>Clusters</span></SidebarSection>);
+    const compact = renderToStaticMarkup(<SidebarSection title="Inventory" compactAfter><span>Clusters</span></SidebarSection>);
+
+    expect(regular).toContain('pb-8 px-3');
+    expect(compact).toContain('pb-6 px-3');
+    expect(regular).toContain('mb-3 flex');
+    expect(regular).toContain('space-y-2');
+  });
+
   it('groups all permitted destinations and marks Schedules as the current Workflows child', () => {
     const groups = getWorkspaceNavigationGroups({
       workspace: workspace({ read_workspace_data: true, read_audit_log: true }),

@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { BookOpen, ChevronRight, CircleDashed, MessageSquare, Wrench } from 'lucide-react';
+import { BookOpen, ChevronRight, CircleDashed, FileJson, MessageSquare, Wrench } from 'lucide-react';
 import { formatRunUsageDetail, getTraceActivityLabel } from '@/features/targets/chat/lib/trace-utils';
 import { LiveRunTrace, RunTraceTimelineEvent } from '@/features/targets/chat/types';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
 
 interface TraceFooterProps {
   runId: string;
@@ -155,6 +156,49 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   const usageDetail = formatRunUsageDetail(trace.usage);
   const timelineEvents = buildTimelineEvents(trace);
   const timelineScrollRef = React.useRef<HTMLDivElement>(null);
+  const [artifactView, setArtifactView] = React.useState<{
+    callId: string;
+    content?: string;
+    loading?: boolean;
+    error?: string;
+  }>();
+  const artifactRequestRef = React.useRef(0);
+  const artifactCalls = trace.toolCalls.filter((toolCall) => toolCall.artifact || toolCall.artifactUnavailable);
+
+  React.useEffect(() => {
+    artifactRequestRef.current += 1;
+    setArtifactView(undefined);
+  }, [runId]);
+
+  const openArtifact = React.useCallback(async (toolCall: LiveRunTrace['toolCalls'][number]) => {
+    if (!toolCall.artifact) return;
+    if (artifactView?.callId === toolCall.callId) {
+      artifactRequestRef.current += 1;
+      setArtifactView(undefined);
+      return;
+    }
+    const requestId = artifactRequestRef.current + 1;
+    artifactRequestRef.current = requestId;
+    setArtifactView({ callId: toolCall.callId, loading: true });
+    try {
+      const result = await controlPlaneApi.getToolResultArtifact(runId, toolCall.artifact.id);
+      if (artifactRequestRef.current !== requestId) return;
+      const serialized = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+      const viewerLimit = 100_000;
+      setArtifactView({
+        callId: toolCall.callId,
+        content: serialized.length > viewerLimit
+          ? `${serialized.slice(0, viewerLimit)}\n\n[Viewer limited to ${viewerLimit.toLocaleString()} characters]`
+          : serialized
+      });
+    } catch (error) {
+      if (artifactRequestRef.current !== requestId) return;
+      setArtifactView({
+        callId: toolCall.callId,
+        error: error instanceof Error ? error.message : 'The full result is no longer available.'
+      });
+    }
+  }, [artifactView?.callId, runId]);
   const latestTimelineEventKey = timelineEvents.at(-1)
     ? [
         timelineEvents.at(-1)?.id,
@@ -297,6 +341,61 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                 </div>
               )}
             </div>
+            {artifactCalls.length > 0 && (
+              <div className="border-t border-ui-border px-3 py-3">
+                <p className="type-micro-label text-ui-text-muted">Full redacted results</p>
+                <div className="mt-2 space-y-2">
+                  {artifactCalls.map((toolCall) => (
+                    <div key={toolCall.callId} className="rounded-md border border-ui-border bg-ui-surface px-3 py-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="type-caption truncate text-ui-text">{toolCall.tool}</p>
+                          <p className="type-micro-label text-ui-text-muted">
+                            {toolCall.artifact
+                              ? `${Math.ceil(toolCall.artifact.uncompressed_bytes / 1024).toLocaleString()} KiB · expires ${new Date(toolCall.artifact.expires_at).toLocaleString()}`
+                              : 'Complete result could not be retained'}
+                          </p>
+                          {toolCall.contextMeta && (
+                            <p className="type-micro-label text-ui-text-muted">
+                              {toolCall.contextMeta.strategy.replaceAll('_', ' ')}
+                              {toolCall.contextMeta.truncated
+                                ? ` · ${toolCall.contextMeta.omissions?.length || 1} explicit omission(s)`
+                                : ' · no explicit projection omissions'}
+                            </p>
+                          )}
+                        </div>
+                        {toolCall.artifact && (
+                          <button
+                            type="button"
+                            onClick={() => void openArtifact(toolCall)}
+                            className="type-caption inline-flex min-h-9 items-center gap-1.5 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                            aria-expanded={artifactView?.callId === toolCall.callId}
+                          >
+                            <FileJson className="h-3.5 w-3.5" />
+                            {artifactView?.callId === toolCall.callId
+                              ? 'Hide full redacted result'
+                              : 'View full redacted result'}
+                          </button>
+                        )}
+                      </div>
+                      {artifactView?.callId === toolCall.callId && (
+                        <div className="mt-2 border-t border-ui-border pt-2">
+                          {artifactView.loading ? (
+                            <p className="type-caption text-ui-text-muted">Loading the redacted artifact…</p>
+                          ) : artifactView.error ? (
+                            <p className="type-caption text-status-danger-text">{artifactView.error}</p>
+                          ) : (
+                            <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono text-xs text-ui-on-strong">
+                              {artifactView.content}
+                            </pre>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </div>

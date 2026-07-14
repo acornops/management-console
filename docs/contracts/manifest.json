@@ -113,6 +113,7 @@
         "POST /api/v1/sessions/{sessionId}/messages",
         "GET /api/v1/runs/{runId}",
         "GET /api/v1/runs/{runId}/events",
+        "GET /api/v1/runs/{runId}/tool-result-artifacts/{artifactId}",
         "GET /api/v1/runs/{runId}/stream",
         "GET /api/v1/runs/{runId}/approvals",
         "POST /api/v1/runs/{runId}/approvals/{approvalId}/decision",
@@ -224,6 +225,10 @@
         "run_cancelled",
         "run_completed"
       ],
+      "toolCallCompletedPayloadFields": ["call_id", "tool", "result", "context_meta", "artifact?", "artifactUnavailable?", "is_error"],
+      "toolCallCompletedContextMetaFields": ["schema_version", "strategy", "original_bytes", "context_bytes", "truncated", "omissions"],
+      "toolCallCompletedArtifactFields": ["id", "expires_at", "sha256", "uncompressed_bytes", "compressed_bytes", "content_type"],
+      "toolCallCompletedResultMaxBytes": 12288,
       "targetChatActivityEventTypes": [
         "message.created",
         "run.created",

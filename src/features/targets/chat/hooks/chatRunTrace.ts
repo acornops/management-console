@@ -71,6 +71,55 @@ export function mapRunStatusToTraceStatus(status: ControlPlaneRun['status']): Li
   return status === 'queued' || status === 'dispatching' ? 'connecting' : 'running';
 }
 
+function toolResultDetail(result: unknown, contextMeta?: LiveRunTrace['toolCalls'][number]['contextMeta']): string {
+  const serialized = (() => {
+    if (typeof result === 'string') return result;
+    try {
+      return JSON.stringify(result, null, 2) || '';
+    } catch {
+      return String(result || '');
+    }
+  })();
+  const evidence = serialized.length <= 16_384
+    ? serialized
+    : 'Structured evidence exceeded the 16,384-character trace viewer limit.';
+  if (!contextMeta) return evidence;
+  const projection = contextMeta.strategy.replaceAll('_', ' ');
+  const status = contextMeta.truncated
+    ? `${contextMeta.omissions?.length || 1} explicit omission(s)`
+    : 'no explicit projection omissions';
+  return [`Evidence: ${projection} · ${status}`, evidence].filter(Boolean).join('\n\n');
+}
+
+function parseContextMeta(value: unknown): LiveRunTrace['toolCalls'][number]['contextMeta'] | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const metadata = value as Record<string, unknown>;
+  if (
+    metadata.schema_version !== 'v1'
+    || typeof metadata.strategy !== 'string'
+    || metadata.strategy.length === 0
+  ) return undefined;
+  return {
+    schema_version: 'v1',
+    strategy: metadata.strategy,
+    ...(typeof metadata.original_bytes === 'number' ? { original_bytes: metadata.original_bytes } : {}),
+    ...(typeof metadata.context_bytes === 'number' ? { context_bytes: metadata.context_bytes } : {}),
+    truncated: metadata.truncated === true,
+    omissions: Array.isArray(metadata.omissions) ? metadata.omissions : []
+  };
+}
+
+function parseArtifact(value: unknown): LiveRunTrace['toolCalls'][number]['artifact'] | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const artifact = value as Record<string, unknown>;
+  if (
+    typeof artifact.id !== 'string' || typeof artifact.expires_at !== 'string'
+    || typeof artifact.sha256 !== 'string' || typeof artifact.content_type !== 'string'
+    || typeof artifact.uncompressed_bytes !== 'number' || typeof artifact.compressed_bytes !== 'number'
+  ) return undefined;
+  return artifact as LiveRunTrace['toolCalls'][number]['artifact'];
+}
+
 function applySkillContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent): LiveRunTrace | null {
   if (
     event.type !== 'skill_context_load_started' &&
@@ -238,11 +287,21 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
       const isError = Boolean(event.payload?.is_error);
+      const artifact = parseArtifact(event.payload?.artifact);
+      const contextMeta = parseContextMeta(event.payload?.context_meta);
       trace = appendRunTraceStep(
-        upsertToolCall(trace, callId, { callId, tool: toolName, status: 'completed', isError }),
+        upsertToolCall(trace, callId, {
+          callId,
+          tool: toolName,
+          status: 'completed',
+          isError,
+          ...(contextMeta ? { contextMeta } : {}),
+          ...(artifact ? { artifact } : {}),
+          ...(event.payload?.artifactUnavailable ? { artifactUnavailable: true } : {})
+        }),
         `Tool call completed: ${toolName}`,
         isError ? 'error' : 'success',
-        previewValue(event.payload?.result, 6000),
+        toolResultDetail(event.payload?.result, contextMeta),
         'tool'
       );
     } else if (
@@ -438,18 +497,23 @@ export function createRunEventHandler(args: {
       const callId = typeof event.payload?.call_id === 'string' ? event.payload.call_id : createLocalMessageId();
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'tool';
       const isError = Boolean(event.payload?.is_error);
+      const artifact = parseArtifact(event.payload?.artifact);
+      const contextMeta = parseContextMeta(event.payload?.context_meta);
       const nextTrace = upsertToolCall(trace, callId, {
         callId,
         tool: toolName,
         status: 'completed',
-        isError
+        isError,
+        ...(contextMeta ? { contextMeta } : {}),
+        ...(artifact ? { artifact } : {}),
+        ...(event.payload?.artifactUnavailable ? { artifactUnavailable: true } : {})
       });
       updateTrace(
         appendRunTraceStep(
           nextTrace,
           `Tool call completed: ${toolName}`,
           isError ? 'error' : 'success',
-          previewValue(event.payload?.result, 6000),
+          toolResultDetail(event.payload?.result, contextMeta),
           'tool'
         )
       );

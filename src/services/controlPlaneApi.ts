@@ -13,6 +13,7 @@ import {
   getControlPlaneBaseUrl,
   readJsonEventStream,
   readRunEventStream,
+  requestArtifact,
   requestJson
 } from './control-plane/http';
 import { controlPlaneAuthApi } from './control-plane/authApi';
@@ -560,6 +561,12 @@ export const controlPlaneApi = {
 
   async getRunEvents(runId: string): Promise<ControlPlaneRunEvent[]> {
     return requestJson<ControlPlaneRunEvent[]>(`/api/v1/runs/${encodeURIComponent(runId)}/events`);
+  },
+
+  async getToolResultArtifact(runId: string, artifactId: string): Promise<unknown> {
+    return requestArtifact(
+      `/api/v1/runs/${encodeURIComponent(runId)}/tool-result-artifacts/${encodeURIComponent(artifactId)}`
+    );
   },
 
   async listRunApprovals(runId: string): Promise<ControlPlaneRunToolApproval[]> {

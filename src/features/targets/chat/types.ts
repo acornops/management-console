@@ -13,6 +13,23 @@ export interface RunTraceToolCall {
   tool: string;
   status: 'running' | 'completed';
   isError?: boolean;
+  contextMeta?: {
+    schema_version: 'v1';
+    strategy: string;
+    original_bytes?: number;
+    context_bytes?: number;
+    truncated: boolean;
+    omissions: unknown[];
+  };
+  artifact?: {
+    id: string;
+    expires_at: string;
+    sha256: string;
+    uncompressed_bytes: number;
+    compressed_bytes: number;
+    content_type: string;
+  };
+  artifactUnavailable?: boolean;
 }
 
 export interface RunTraceSkillLoad {

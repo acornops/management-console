@@ -180,6 +180,14 @@ for (const eventType of controlPlaneContract.eventTypes) {
   expectIncludes(manifestText, eventType, 'Run event manifest');
   expectIncludes(clusterChat, `event.type === '${eventType}'`, 'Run event handling');
 }
+for (const field of [
+  ...controlPlaneContract.toolCallCompletedPayloadFields,
+  ...controlPlaneContract.toolCallCompletedContextMetaFields,
+  ...controlPlaneContract.toolCallCompletedArtifactFields
+]) {
+  expectIncludes(clusterChat, field.replace(/\?$/, ''), 'Tool completion event field');
+}
+expect(controlPlaneContract.toolCallCompletedResultMaxBytes === 12 * 1024, 'Tool completion event byte limit');
 
 expectIncludes(controlPlaneMapping, 'nextCursor', 'Cursor pagination contract type');
 expectIncludes(controlPlaneApiSurface, 'page.nextCursor', 'Cursor pagination implementation');

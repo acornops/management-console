@@ -181,6 +181,23 @@ describe('chatRunTrace helpers', () => {
     });
   });
 
+  it('shows projection strategy and explicit omissions with compact tool evidence', () => {
+    const trace = buildTraceFromRunEvents(createRun({ status: 'completed' }), [
+      createEvent('tool_call_completed', 1, {
+        call_id: 'call-1', tool: 'get_resource', result: { summary: 'Inspected Pod default/api.' },
+        context_meta: {
+          schema_version: 'v1', strategy: 'producer_projection', truncated: true,
+          omissions: [{ path: 'data.health.conditions', reason: 'context_byte_limit' }]
+        }
+      }),
+      createEvent('run_completed', 2)
+    ]);
+
+    const step = trace.steps.find((item) => item.label === 'Tool call completed: get_resource');
+    expect(step?.detail).toContain('Evidence: producer projection · 1 explicit omission(s)');
+    expect(step?.detail).toContain('Inspected Pod default/api.');
+  });
+
   it('restores skill context events separately from tool calls', () => {
     const trace = buildTraceFromRunEvents(createRun({ status: 'running' }), [
       createEvent('skill_catalog_available', 1, { count: 1, skills: [{ skill_ref: 'skill_1', name: 'CNPG triage' }] }),

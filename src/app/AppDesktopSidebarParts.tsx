@@ -21,17 +21,17 @@ export const SidebarSection: React.FC<{
   children: React.ReactNode;
   compactAfter?: boolean;
 }> = ({ title, children, compactAfter = false }) => (
-  <div className={`${compactAfter ? 'pb-5' : 'pb-7'} px-3`}>
-    {title && <div className="mb-2 flex items-center justify-between px-3">
+  <div className={`${compactAfter ? 'pb-6' : 'pb-8'} px-3`}>
+    {title && <div className="mb-3 flex items-center justify-between px-3">
       <div className="text-xs font-bold uppercase tracking-[0.08em] text-ui-text-muted opacity-70">{title}</div>
     </div>}
-    <div className="space-y-1">{children}</div>
+    <div className="space-y-2">{children}</div>
   </div>
 );
 
 export const TargetSettingsDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="border-t border-ui-border px-3 pb-5 pt-3">
-    <div className="space-y-0.5">{children}</div>
+  <div className="border-t border-ui-border px-3 pb-8 pt-4">
+    <div className="space-y-2">{children}</div>
   </div>
 );
 

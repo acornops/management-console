@@ -72,6 +72,40 @@ async function getCsrfToken(): Promise<string> {
   return csrfTokenRequest;
 }
 
+async function throwControlPlaneResponseError(response: Response): Promise<never> {
+  if (response.status === 401) throw new Error('UNAUTHORIZED');
+  const body = await response.text();
+  let message = body.trim();
+  let code: string | undefined;
+  let details: Record<string, unknown> | undefined;
+  if (message) {
+    try {
+      const parsed = JSON.parse(message) as {
+        error?: string | { message?: string; detail?: string; code?: string; details?: Record<string, unknown> };
+        message?: string;
+        detail?: string;
+      };
+      if (typeof parsed.error === 'object' && parsed.error) {
+        code = parsed.error.code;
+        details = parsed.error.details;
+        message = parsed.error.message || parsed.error.detail || parsed.error.code || message;
+      } else if (typeof parsed.error === 'string') {
+        message = parsed.error;
+      } else {
+        message = parsed.message || parsed.detail || message;
+      }
+    } catch {
+      // Keep the raw body for non-JSON responses.
+    }
+  }
+  throw new ControlPlaneRequestError(
+    `Control plane request failed (${response.status}): ${message || response.statusText}`,
+    response.status,
+    code,
+    details
+  );
+}
+
 export async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const method = (init?.method || 'GET').toUpperCase();
   const requestInit: RequestInit = {
@@ -90,39 +124,7 @@ export async function requestJson<T>(path: string, init?: RequestInit): Promise<
   const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, requestInit);
 
   if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error('UNAUTHORIZED');
-    }
-    const body = await response.text();
-    let message = body.trim();
-    let code: string | undefined;
-    let details: Record<string, unknown> | undefined;
-    if (message) {
-      try {
-        const parsed = JSON.parse(message) as {
-          error?: string | { message?: string; detail?: string; code?: string; details?: Record<string, unknown> };
-          message?: string;
-          detail?: string;
-        };
-        if (typeof parsed.error === 'object' && parsed.error) {
-          code = parsed.error.code;
-          details = parsed.error.details;
-          message = parsed.error.message || parsed.error.detail || parsed.error.code || message;
-        } else if (typeof parsed.error === 'string') {
-          message = parsed.error;
-        } else {
-          message = parsed.message || parsed.detail || message;
-        }
-      } catch {
-        // Keep the raw body for non-JSON responses.
-      }
-    }
-    throw new ControlPlaneRequestError(
-      `Control plane request failed (${response.status}): ${message || response.statusText}`,
-      response.status,
-      code,
-      details
-    );
+    return throwControlPlaneResponseError(response);
   }
 
   if (response.status === 204) {
@@ -130,6 +132,26 @@ export async function requestJson<T>(path: string, init?: RequestInit): Promise<
   }
 
   return (await response.json()) as T;
+}
+
+/** Fetch a bounded redacted artifact as JSON or text using the user session. */
+export async function requestArtifact(path: string): Promise<unknown> {
+  const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, {
+    credentials: 'include',
+    cache: 'no-store'
+  });
+  if (!response.ok) {
+    return throwControlPlaneResponseError(response);
+  }
+  const body = await response.text();
+  if (response.headers.get('content-type')?.toLowerCase().includes('application/json')) {
+    try {
+      return JSON.parse(body) as unknown;
+    } catch {
+      throw new ControlPlaneRequestError('Control plane returned an invalid JSON artifact', 502);
+    }
+  }
+  return body;
 }
 
 export function delay(ms: number): Promise<void> {

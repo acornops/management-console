@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const requestJson = vi.fn();
+const requestArtifact = vi.fn();
 const delay = vi.fn();
 const getControlPlaneBaseUrl = vi.fn(() => 'https://control-plane.example.com');
 const readJsonEventStream = vi.fn();
@@ -15,6 +16,7 @@ const mapWorkspaceMember = vi.fn((member) => ({ email: member.email, name: membe
 
 vi.mock('./control-plane/http', () => ({
   requestJson,
+  requestArtifact,
   delay,
   getControlPlaneBaseUrl,
   readJsonEventStream,

@@ -44,7 +44,7 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).not.toContain("<SidebarSection title={t('app.administration')} quiet>");
     expect(desktopSidebar).toContain('<TargetSettingsDivider>');
     expect(desktopSidebar).toContain('</TargetSettingsDivider>');
-    expect(desktopSidebar).toContain('className="border-t border-ui-border px-3 pb-5 pt-3"');
+    expect(desktopSidebar).toContain('className="border-t border-ui-border px-3 pb-8 pt-4"');
     expect(desktopSidebar).not.toContain('className="border-t border-ui-border px-0 pb-8 pt-4"');
     expect(desktopSidebar).not.toContain('className="mx-4 border-t border-ui-border px-0 pb-8 pt-4"');
     expect(desktopSidebar).toContain("active={activeResourceNav === 'clusterSettings'}");
@@ -107,8 +107,8 @@ describe('desktop sidebar workspace switcher', () => {
     expect(workspaceNavigation).toContain("id: 'help'");
     expect(workspaceNavigation).toContain("activeResourceNav === 'workflows' || activeResourceNav === 'schedules'");
     expect(desktopSidebar).toContain('item.children.map((child)');
-    expect(desktopSidebar).toContain("item.children ? 'rounded-md bg-ui-bg pb-1' : undefined");
-    expect(desktopSidebar).toContain('className="mt-0.5 space-y-0.5 pl-3"');
+    expect(desktopSidebar).toContain("item.children ? 'rounded-md bg-ui-bg pb-2' : undefined");
+    expect(desktopSidebar).toContain('className="mt-1 space-y-1 pl-3"');
     expect(desktopSidebar).toContain('current={item.current}');
     expect(desktopSidebar).toContain('current={child.current}');
     expect(desktopSidebar).toContain('navigate(AppPaths.accountSettings());');
@@ -159,9 +159,9 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('compactAfter?: boolean');
     expect(desktopSidebar).not.toContain('quiet?: boolean');
     expect(desktopSidebar).not.toContain('data-sidebar-section-quiet={quiet ? \'true\' : undefined}');
-    expect(desktopSidebar).toContain("compactAfter ? 'pb-5' : 'pb-7'");
-    expect(desktopSidebar).toContain('className="mb-2 flex items-center justify-between px-3"');
-    expect(desktopSidebar).toContain('className="space-y-1"');
+    expect(desktopSidebar).toContain("compactAfter ? 'pb-6' : 'pb-8'");
+    expect(desktopSidebar).toContain('className="mb-3 flex items-center justify-between px-3"');
+    expect(desktopSidebar).toContain('className="space-y-2"');
   });
 
   it('matches the login wordmark orange and keeps comfortable top spacing', () => {

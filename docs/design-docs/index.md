@@ -7,3 +7,4 @@
 | [Workspace Navigation](/docs/design-docs/workspace-navigation.md) | Active | Shared desktop/mobile hierarchy, link behavior, permission rules, density, and approval signal | Added with the workspace navigation refinement on July 12, 2026 |
 | [Focused Application Motion](/docs/design-docs/motion.md) | Active | Theme reveal, active-tab continuity, reduced-motion behavior, and operational-view boundaries | Added with the focused application morph system on July 12, 2026 |
 | [Authenticated Console Design System](/docs/design-docs/design-system-standardization.md) | Active | Shared route composition, controls, spacing, overlays, catalog, enforcement, and ownership | Added with console-wide standardization on July 12, 2026 |
+| [Tool Result Evidence](/docs/design-docs/tool-result-evidence.md) | Active | Compact trace evidence, projection status, and lazy bounded artifact viewing | Added with the production tool-result architecture on July 13, 2026 |

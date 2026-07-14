@@ -507,7 +507,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('aria-controls={contentId}');
     expect(traceFooter).not.toContain('AnimatePresence initial={false} mode="wait"');
     expect(traceFooter).toContain('RunTraceTimelineEvent');
-    expect(traceFooter).toContain('BookOpen, ChevronRight, CircleDashed, MessageSquare, Wrench');
+    expect(traceFooter).toContain('BookOpen, ChevronRight, CircleDashed, FileJson, MessageSquare, Wrench');
     expect(traceFooter).toContain('Skill context · Loaded');
     expect(traceFooter).not.toContain('ChevronDown');
     expect(traceFooter).toContain("function inferTimelineStepType(label: string): RunTraceTimelineEvent['type']");

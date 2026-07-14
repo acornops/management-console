@@ -5,6 +5,7 @@ import {
   getControlPlaneUrl,
   normalizeBaseUrl,
   readRunEventStream,
+  requestArtifact,
   requestJson
 } from './http';
 
@@ -134,6 +135,31 @@ describe('control-plane http helpers', () => {
     await expect(requestJson('/api/v1/text-error')).rejects.toThrow(
       'Control plane request failed (502): plain failure'
     );
+  });
+
+  it('reads redacted artifacts as JSON or text and preserves no-store session semantics', async () => {
+    const env = import.meta.env as Record<string, unknown>;
+    const previous = env.VITE_CONTROL_PLANE_API_BASE_URL;
+    env.VITE_CONTROL_PLANE_API_BASE_URL = 'http://localhost:8081';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('{"ok":true}', {
+        status: 200,
+        headers: { 'content-type': 'application/json; charset=utf-8' }
+      }))
+      .mockResolvedValueOnce(new Response('plain logs', {
+        status: 200,
+        headers: { 'content-type': 'text/plain' }
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(requestArtifact('/artifact-1')).resolves.toEqual({ ok: true });
+    await expect(requestArtifact('/artifact-2')).resolves.toBe('plain logs');
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'http://localhost:8081/artifact-1', {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    env.VITE_CONTROL_PLANE_API_BASE_URL = previous;
   });
 
   it('parses streamed SSE frames and ignores malformed payloads', async () => {
