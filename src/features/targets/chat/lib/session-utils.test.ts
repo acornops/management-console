@@ -6,6 +6,7 @@ import {
   buildConversationTitleFromPrompt,
   filterMessagesByRunIds,
   formatRunFailureMessage,
+  ensureFailedRunAssistantMessage,
   mapControlPlaneMessage,
   resolveAssistantTransientStatus,
   sanitizeChatMessages,
@@ -252,6 +253,48 @@ describe('session-utils', () => {
     } finally {
       dateNowSpy.mockRestore();
     }
+  });
+
+  it('adds one stable assistant failure message when a failed run has no response', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'Check pods', runId: 'run-1', timestamp: 1 }
+    ];
+    const run = {
+      id: 'run-1',
+      status: 'failed',
+      endedAt: '2026-07-01T02:03:04.000Z',
+      errorCode: 'OPENAI_ERROR',
+      errorMessage: 'Provider temporarily unavailable'
+    } as const;
+
+    const restored = ensureFailedRunAssistantMessage(messages, run);
+    const restoredAgain = ensureFailedRunAssistantMessage(restored, run);
+
+    expect(restored).toEqual([
+      messages[0],
+      expect.objectContaining({
+        id: 'failed-run-1',
+        role: 'assistant',
+        runId: 'run-1'
+      })
+    ]);
+    expect(restored[1].content).toContain('OpenAI is temporarily unavailable');
+    expect(restored[1].timestamp).toBe(Date.parse('2026-07-01T02:03:04.000Z'));
+    expect(restoredAgain).toBe(restored);
+  });
+
+  it('does not replace existing assistant content or add failures to successful runs', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'Check pods', runId: 'run-1', timestamp: 1 },
+      { id: 'assistant-1', role: 'assistant', content: 'Partial diagnostic output.', runId: 'run-1', timestamp: 2 }
+    ];
+
+    expect(ensureFailedRunAssistantMessage(messages, {
+      id: 'run-1', status: 'failed', errorMessage: 'Provider failed'
+    })).toBe(messages);
+    expect(ensureFailedRunAssistantMessage(messages.slice(0, 1), {
+      id: 'run-1', status: 'completed'
+    })).toEqual(messages.slice(0, 1));
   });
 
   it('normalizes provider rate limit failures with retry guidance', () => {

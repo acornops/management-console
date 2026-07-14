@@ -69,6 +69,34 @@ export function buildChatSetupFailureMessage(message: string, runId?: string): C
   };
 }
 
+export function ensureFailedRunAssistantMessage(
+  chatMessages: ChatMessage[],
+  run: { id: string; status: string; endedAt?: string; errorCode?: string; errorMessage?: string }
+): ChatMessage[] {
+  if (run.status !== 'failed') return chatMessages;
+  const existingAssistantMessage = chatMessages.find(
+    (message) => message.role === 'assistant' && message.runId === run.id && (!isBlankAssistantMessage(message) || message.approval)
+  );
+  if (existingAssistantMessage) return chatMessages;
+
+  const failureMessage = buildChatFailureMessage(formatRunFailureMessage(run.errorCode, run.errorMessage), run.id);
+  const endedAtTimestamp = Date.parse(run.endedAt || '');
+  const triggeringUserTimestamp = [...chatMessages]
+    .reverse()
+    .find((message) => message.role === 'user' && message.runId === run.id)
+    ?.timestamp;
+  return [
+    ...chatMessages.filter(
+      (message) => !(message.role === 'assistant' && message.runId === run.id && isBlankAssistantMessage(message))
+    ),
+    {
+      ...failureMessage,
+      id: `failed-${run.id}`,
+      timestamp: Number.isFinite(endedAtTimestamp) ? endedAtTimestamp : triggeringUserTimestamp ?? failureMessage.timestamp
+    }
+  ];
+}
+
 export function isBlankAssistantMessage(message: ChatMessage): boolean {
   return message.role === 'assistant' && String(message.content || '').trim().length === 0 && !message.approval;
 }

@@ -3,6 +3,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { ChatSession } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
+  ensureFailedRunAssistantMessage,
   mapControlPlaneMessage,
   resolveAssistantTransientStatus,
   sanitizeChatMessages,
@@ -353,13 +354,18 @@ export function useWatchedRunStream(args: {
       let mappedMessages = backendMessages
         ? sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage))
         : null;
+      if (latestRun?.status === 'failed' && mappedMessages) {
+        mappedMessages = ensureFailedRunAssistantMessage(mappedMessages, latestRun);
+      }
       if (latestRun?.status === 'cancelled' && mappedMessages) {
         mappedMessages = replaceCancelledRunAssistantMessages(mappedMessages, runId, runCancelledMessage);
       }
       updateWatchedSession((session) => {
         const fallbackMessages = latestRun?.status === 'cancelled'
           ? replaceCancelledRunAssistantMessages(session.messages, runId, runCancelledMessage)
-          : session.messages;
+          : latestRun?.status === 'failed'
+            ? ensureFailedRunAssistantMessage(session.messages, latestRun)
+            : session.messages;
         const terminalRunIds = latestRun && !isRunInProgress(latestRun.status) ? new Set([runId]) : undefined;
         const nextMessages = mappedMessages
           ? mergeHydratedChatMessages({

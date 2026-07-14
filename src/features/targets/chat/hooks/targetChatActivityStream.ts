@@ -7,6 +7,7 @@ import {
   type ControlPlaneTargetChatActivityEvent
 } from '@/services/controlPlaneApi';
 import {
+  ensureFailedRunAssistantMessage,
   mapControlPlaneMessage,
   resolveAssistantTransientStatus,
   sanitizeChatMessages,
@@ -162,6 +163,7 @@ export function useTargetChatActivityStream(args: {
         } else if (isRunTerminal(run.status)) {
           traceUpdates[run.id] = preferRicherRunTrace(runTracesByRunIdRef.current[run.id], buildTraceFromRunEvents(run, events));
           terminalRunIds = new Set([run.id]);
+          mappedMessages = ensureFailedRunAssistantMessage(mappedMessages, run);
           if (run.status === 'cancelled') {
             mappedMessages = replaceCancelledRunAssistantMessages(mappedMessages, run.id, runCancelledMessage);
           }

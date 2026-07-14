@@ -6,6 +6,7 @@ import type { ControlPlaneRunToolApproval, ControlPlaneSession, ControlPlaneSess
 import { createLocalMessageId, toTimestamp } from '@/features/targets/chat/lib/helpers';
 import {
   dedupeAssistantMessagesByRun,
+  ensureFailedRunAssistantMessage,
   filterMessagesByRunIds,
   isBlankAssistantMessage,
   isPendingAssistantPlaceholder,
@@ -434,7 +435,7 @@ export function useControlPlaneChatSessionSync(args: {
       try {
         const backendMessages = await controlPlaneApi.getSessionMessages(backendSessionId, { limit: 100 });
         if (cancelled) return;
-        const mappedMessages = sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage));
+        let mappedMessages = sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage));
         const assistantRunIds = new Set(
           mappedMessages
             .filter((message) => message.role === 'assistant' && message.runId)
@@ -484,6 +485,7 @@ export function useControlPlaneChatSessionSync(args: {
             if (isRunTerminal(run.status)) {
               const events = await controlPlaneApi.getRunEvents(run.id).catch(() => []);
               terminalTraces[run.id] = preferRicherRunTrace(runTracesByRunIdRef.current?.[run.id], buildTraceFromRunEvents(run, events));
+              mappedMessages = ensureFailedRunAssistantMessage(mappedMessages, run);
               if (run.status === 'cancelled') {
                 cancelledRunIds.add(run.id);
               }

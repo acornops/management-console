@@ -191,6 +191,13 @@ describe('target chat controller wiring', () => {
     expect(chatSessionSync).toContain('runTracesByRunIdRef.current = next;');
   });
 
+  it('restores assistant failure messages across every terminal reconciliation path', () => {
+    expect(chatSessionSync).toContain('mappedMessages = ensureFailedRunAssistantMessage(mappedMessages, run);');
+    expect(targetChatActivityStream).toContain('mappedMessages = ensureFailedRunAssistantMessage(mappedMessages, run);');
+    expect(targetChatRunWatcher).toContain('mappedMessages = ensureFailedRunAssistantMessage(mappedMessages, latestRun);');
+    expect(targetChatRunWatcher).toContain('ensureFailedRunAssistantMessage(session.messages, latestRun)');
+  });
+
   it('advances target activity replay cursors only after canonical reconciliation', () => {
     expect(targetChatActivityStream).toContain('let processing = Promise.resolve();');
     expect(targetChatActivityStream).toContain('let activityRefreshFailed = false;');

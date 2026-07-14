@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { sanitizeChatMessages } from '@/features/targets/chat/lib/session-utils';
+import { ensureFailedRunAssistantMessage, sanitizeChatMessages } from '@/features/targets/chat/lib/session-utils';
 import { mapControlPlaneApprovalToPendingApproval } from '@/features/targets/chat/hooks/chatSessionSync';
 import {
   createConversationId,
@@ -434,6 +434,33 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
       const backendMessages: ChatMessage[] = [
         { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 3, clientMessageId: 'local-user', runId: 'run-1' }
       ];
+
+      expect(mergeHydratedChatMessages({
+        localMessages,
+        backendMessages,
+        terminalRunIds: new Set(['run-1'])
+      })).toEqual(backendMessages);
+    });
+
+    it('replaces a failed terminal placeholder with an assistant failure message', () => {
+      const localMessages: ChatMessage[] = [
+        { id: 'local-user', role: 'user', content: 'Check pods', timestamp: 1, clientMessageId: 'local-user', runId: 'run-1' },
+        {
+          id: 'stream-run-1',
+          role: 'assistant',
+          content: '',
+          timestamp: 2,
+          runId: 'run-1',
+          transientStatus: 'pending_assistant'
+        }
+      ];
+      const backendMessages = ensureFailedRunAssistantMessage([
+        { id: 'backend-user', role: 'user', content: 'Check pods', timestamp: 3, clientMessageId: 'local-user', runId: 'run-1' }
+      ], {
+        id: 'run-1',
+        status: 'failed',
+        errorMessage: 'Provider request failed'
+      });
 
       expect(mergeHydratedChatMessages({
         localMessages,
