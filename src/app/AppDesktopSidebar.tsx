@@ -292,12 +292,11 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   </AnimatePresence>
                 </div>
 
-                {workspaceNavigationGroups.map((group) => (
-                  <SidebarSection key={group.id} title={group.label || ''} compactAfter={group.id !== 'utilities'}>
-                    {group.items.map((item) => {
+                {workspaceNavigationGroups.map((group) => {
+                  const items = group.items.map((item) => {
                       const Icon = item.icon;
                       return (
-                        <div key={item.id} className={item.children ? 'rounded-md bg-ui-bg pb-2' : undefined}>
+                        <div key={item.id} className={item.children ? 'rounded-md bg-ui-bg pb-1' : undefined}>
                           <WorkspaceSidebarNavLink
                             active={item.active}
                             current={item.current}
@@ -309,7 +308,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                             onClick={(event) => handleAppLinkClick(event, item.path, navigate)}
                           />
                           {item.children && (
-                            <div className="mt-1 space-y-1 pl-3">
+                            <div className="mt-0.5 space-y-0.5 pl-3">
                               {item.children.map((child) => (
                                 <WorkspaceSidebarNavLink
                                   key={child.id}
@@ -325,9 +324,16 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                           )}
                         </div>
                       );
-                    })}
-                  </SidebarSection>
-                ))}
+                    });
+
+                  return group.id === 'utilities' ? (
+                    <TargetSettingsDivider key={group.id}>{items}</TargetSettingsDivider>
+                  ) : (
+                    <SidebarSection key={group.id} title={group.label || ''} compactAfter>
+                      {items}
+                    </SidebarSection>
+                  );
+                })}
               </>
             )}
 

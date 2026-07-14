@@ -17,10 +17,10 @@ describe('workspace navigation model', () => {
     const regular = renderToStaticMarkup(<SidebarSection title="Inventory"><span>Clusters</span></SidebarSection>);
     const compact = renderToStaticMarkup(<SidebarSection title="Inventory" compactAfter><span>Clusters</span></SidebarSection>);
 
-    expect(regular).toContain('pb-8 px-3');
-    expect(compact).toContain('pb-6 px-3');
-    expect(regular).toContain('mb-3 flex');
-    expect(regular).toContain('space-y-2');
+    expect(regular).toContain('pb-7 px-3');
+    expect(compact).toContain('pb-5 px-3');
+    expect(regular).toContain('mb-2 flex');
+    expect(regular).toContain('space-y-1');
   });
 
   it('groups all permitted destinations and marks Schedules as the current Workflows child', () => {
