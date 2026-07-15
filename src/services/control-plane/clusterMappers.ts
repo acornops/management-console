@@ -39,6 +39,14 @@ import {
 import { mapResourceSignals } from './resourceSignals';
 import { formatUserDateTime } from '@/utils/dateTime';
 
+const criticalPodContainerReasons = new Set([
+  'crashloopbackoff',
+  'imagepullbackoff',
+  'errimagepull',
+  'oomkilled',
+  'createcontainerconfigerror'
+]);
+
 export function mapClusterStatus(status: ControlPlaneCluster['status']): HealthStatus {
   if (status === 'online') return HealthStatus.GREEN;
   if (status === 'degraded') return HealthStatus.RED;
@@ -383,16 +391,16 @@ export function mapPodWorkloads(pods: SnapshotResourcePod[] | undefined): Worklo
   return toArray(pods)
     .filter((pod) => Boolean(pod.name))
     .map((pod) => {
-      const hasCrashLoop = toArray(pod.containerStatuses).some((status) =>
-        String(status.state?.waiting?.reason || '').toLowerCase() === 'crashloopbackoff'
-      );
+      const criticalContainerReason = toArray(pod.containerStatuses)
+        .map((status) => status.state?.waiting?.reason || status.state?.terminated?.reason)
+        .find((reason) => criticalPodContainerReasons.has(String(reason || '').toLowerCase()));
       return {
         id: pod.uid || `pod/${pod.namespace || 'default'}/${pod.name}`,
         uid: pod.uid,
         name: pod.name || 'unknown',
         type: 'Pod',
         namespace: pod.namespace || 'default',
-        status: hasCrashLoop ? 'CrashLoopBackOff' : String(pod.phase || 'Unknown'),
+        status: criticalContainerReason || String(pod.phase || 'Unknown'),
         restarts: pod.restartCount,
         node: pod.nodeName || '-',
         containers: toArray(pod.containerStatuses).map((status) => status.name).filter(Boolean),

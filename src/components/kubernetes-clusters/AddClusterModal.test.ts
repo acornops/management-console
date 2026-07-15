@@ -20,7 +20,7 @@ describe('updateInstallCommandNamespaceScope', () => {
 
     expect(command).toContain("--set-json namespaceScope.include='[\"payments\",\"shared\"]'");
     expect(command).toContain("--set-json namespaceScope.exclude='[\"sandbox\"]'");
-    expect(command).toContain("--set-string config.watchNamespaces='payments,shared'");
+    expect(command).not.toContain('config.watchNamespaces');
   });
 
   it('preserves write RBAC returned by the control plane', () => {

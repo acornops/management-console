@@ -36,10 +36,6 @@ function helmSetJson(path: string, value: string[]): string {
   return `  --set-json ${path}=${shellSingleQuote(JSON.stringify(value))}`;
 }
 
-function helmSetString(path: string, value: string): string {
-  return `  --set-string ${path}=${shellSingleQuote(value)}`;
-}
-
 const clusterNameInputClassName = formInputClassName('px-4 font-medium');
 const namespaceInputClassName = formInputClassName('text-xs font-medium');
 
@@ -50,8 +46,6 @@ export function updateInstallCommandNamespaceScope(
 ): string {
   const include = parseNamespaceList(includeValue);
   const exclude = parseNamespaceList(excludeValue);
-  const excluded = new Set(exclude);
-  const watchNamespaces = include.filter((namespace) => !excluded.has(namespace));
   const normalizedLines = command
     .split('\n')
     .map((line) => line.replace(/\s*\\$/, '').trimEnd())
@@ -63,8 +57,7 @@ export function updateInstallCommandNamespaceScope(
 
   const namespaceLines = [
     helmSetJson('namespaceScope.include', include),
-    helmSetJson('namespaceScope.exclude', exclude),
-    ...(watchNamespaces.length > 0 ? [helmSetString('config.watchNamespaces', watchNamespaces.join(','))] : [])
+    helmSetJson('namespaceScope.exclude', exclude)
   ];
   const agentKeyIndex = normalizedLines.findIndex((line) => line.includes('--set-string config.agentKey='));
   const insertIndex = agentKeyIndex >= 0 ? agentKeyIndex + 1 : normalizedLines.length;

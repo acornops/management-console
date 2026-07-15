@@ -224,6 +224,25 @@ describe('mapControlPlaneClusterToKubernetesCluster', () => {
     ]);
 
     expect(
+      mapPodWorkloads([
+        {
+          name: 'image-pull-failure',
+          namespace: 'payments',
+          phase: 'Running',
+          containerStatuses: [
+            {
+              name: 'api',
+              ready: false,
+              state: { waiting: { reason: 'ImagePullBackOff' } }
+            }
+          ]
+        }
+      ])
+    ).toEqual([
+      expect.objectContaining({ name: 'image-pull-failure', status: 'ImagePullBackOff' })
+    ]);
+
+    expect(
       mapNamespaces([{ name: 'payments', uid: 'ns-1', creationTimestamp: '2026-05-24T00:00:00.000Z', status: 'Active' }])
     ).toEqual([
       expect.objectContaining({
