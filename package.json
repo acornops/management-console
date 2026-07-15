@@ -24,6 +24,8 @@
     "validate:ci": "npm run design:check && npm run lint && npm run test:coverage && npm run design:snapshots && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes"
   },
   "dependencies": {
+    "@fontsource/outfit": "^5.2.8",
+    "@fontsource/ubuntu-mono": "^5.2.8",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.3",
     "i18next": "^26.0.10",

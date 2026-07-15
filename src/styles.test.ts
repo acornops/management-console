@@ -12,9 +12,11 @@ import {
   darkTheme,
   dashboardPage,
   designSystemCheck,
+  designSystemHtml,
   designDocsIndex,
   desktopSidebar,
   enLocale,
+  fonts,
   indexHtml,
   lightTheme,
   loginAuthPanel,
@@ -28,6 +30,7 @@ import {
   mcpServersView,
   membersPage,
   mobileNavigation,
+  nginxConfig,
   overviewPage,
   pageComposition,
   resourceCategoryTabs,
@@ -175,7 +178,17 @@ describe('theme color contract', () => {
       'type-code'
     ];
 
-    expect(indexHtml).toContain('family=Outfit:wght@400;500;600;700;800&family=Ubuntu+Mono:wght@400;700');
+    for (const weight of [400, 500, 600, 700, 800]) {
+      expect(fonts).toContain(`@fontsource/outfit/latin-${weight}.css`);
+    }
+    for (const weight of [400, 700]) {
+      expect(fonts).toContain(`@fontsource/ubuntu-mono/latin-${weight}.css`);
+    }
+    for (const source of [indexHtml, designSystemHtml, nginxConfig]) {
+      expect(source).not.toContain('fonts.googleapis.com');
+      expect(source).not.toContain('fonts.gstatic.com');
+    }
+    expect(nginxConfig).toContain("font-src 'self' data:");
     expect(styles).toContain("font-family: 'Outfit', ui-sans-serif");
     expect(styles).toContain("font-family: 'Ubuntu Mono', ui-monospace");
     expect(styles).toContain('font-kerning: normal');

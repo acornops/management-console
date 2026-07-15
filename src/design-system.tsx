@@ -12,6 +12,7 @@ import { DialogFrame, DrawerFrame } from '@/components/common/OverlayFrames';
 import { DataSurface, PageHeader, PageSection, PageShell, TableToolbar } from '@/components/common/PageComposition';
 import { Select } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import '@/fonts';
 import {
   CloseButton,
   FilterToggleGroup,

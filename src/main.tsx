@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MotionConfig } from 'framer-motion';
 import App from './App';
+import './fonts';
 import { initializeI18n } from './i18n';
 import './styles.css';
 
