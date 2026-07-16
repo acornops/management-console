@@ -4,6 +4,7 @@ import { createLocalMessageId } from '@/features/targets/chat/lib/helpers';
 const MAX_TRACE_STEPS = 200;
 const MAX_REASONING_SUMMARIES = 50;
 const MAX_REASONING_SUMMARY_CHARS = 20_000;
+const REASONING_SUMMARY_TRUNCATION_NOTICE = '… [Reasoning summary truncated]';
 const MAX_TIMELINE_EVENTS = 250;
 
 /**
@@ -48,6 +49,15 @@ function normalizeReasoningText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
 
+function truncateReasoningSummary(summary: RunTraceReasoningSummary, maxChars: number): RunTraceReasoningSummary {
+  if (summary.text.length <= maxChars) return summary;
+  const retainedChars = Math.max(0, maxChars - REASONING_SUMMARY_TRUNCATION_NOTICE.length);
+  return {
+    ...summary,
+    text: `${summary.text.slice(0, retainedChars).trimEnd()}${REASONING_SUMMARY_TRUNCATION_NOTICE}`
+  };
+}
+
 function capReasoningSummaries(summaries: RunTraceReasoningSummary[]): RunTraceReasoningSummary[] {
   const capped = summaries.slice(-MAX_REASONING_SUMMARIES);
   let totalChars = 0;
@@ -58,7 +68,7 @@ function capReasoningSummaries(summaries: RunTraceReasoningSummary[]): RunTraceR
     if (remainingChars <= 0) break;
     if (item.text.length > remainingChars) {
       if (retained.length === 0) {
-        retained.unshift({ ...item, text: item.text.slice(0, remainingChars) });
+        retained.unshift(truncateReasoningSummary(item, remainingChars));
       }
       break;
     }

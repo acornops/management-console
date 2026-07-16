@@ -238,6 +238,18 @@ export function sanitizeChatMessages(chatMessages: ChatMessage[]): ChatMessage[]
  */
 export function formatRunFailureMessage(errorCode?: string, errorMessage?: string): string {
   const rawMessage = String(errorMessage || '').trim();
+  if (errorCode === 'MODEL_UNAVAILABLE') {
+    return 'This model is currently unavailable. Choose another model and retry.';
+  }
+  if (errorCode === 'PROVIDER_AUTH_INVALID') {
+    return 'The AI provider configuration needs attention. Ask a workspace administrator to review AI Settings.';
+  }
+  if (errorCode === 'PROVIDER_RATE_LIMITED') {
+    return 'The AI provider rate limit was reached. Retry shortly or choose another model.';
+  }
+  if (errorCode === 'PROVIDER_UNAVAILABLE') {
+    return 'The AI provider is temporarily unavailable. Retry shortly or choose another model.';
+  }
   if (!rawMessage) {
     return 'No additional details were provided.';
   }
@@ -287,10 +299,10 @@ export function formatRunFailureMessage(errorCode?: string, errorMessage?: strin
           ? 'Gemini'
           : 'The AI provider';
   if (normalized === 'provider request failed') {
-    return `${providerName} rejected or could not complete the request. Check or rotate the workspace API key in AI Settings, then retry. If the key is valid, the provider may be temporarily unavailable.`;
+    return `${providerName} could not complete this request with the selected model. Retry once or choose another model. If it continues, ask a workspace administrator to check AI Settings.`;
   }
   if (normalized === 'provider temporarily unavailable') {
-    return `${providerName} is temporarily unavailable. Retry shortly; if this repeats, check the workspace API key in AI Settings.`;
+    return `${providerName} is temporarily unavailable. Retry shortly or choose another model.`;
   }
 
   return providerMessage;

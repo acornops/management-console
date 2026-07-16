@@ -508,7 +508,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('aria-controls={contentId}');
     expect(traceFooter).not.toContain('AnimatePresence initial={false} mode="wait"');
     expect(traceFooter).toContain('RunTraceTimelineEvent');
-    expect(traceFooter).toContain('BookOpen, ChevronRight, CircleDashed, FileJson, MessageSquare, Wrench');
+    expect(traceFooter).toContain('BookOpen, ChevronRight, CircleDashed, MessageSquare, Wrench');
     expect(traceFooter).toContain('Skill context · Loaded');
     expect(traceFooter).not.toContain('ChevronDown');
     expect(traceFooter).toContain("function inferTimelineStepType(label: string): RunTraceTimelineEvent['type']");
@@ -578,7 +578,8 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('const timelineEvents = buildTimelineEvents(trace);');
     expect(traceFooter).not.toContain('Run timeline');
     expect(traceFooter).toContain('className="mt-1 border-t border-ui-border/80 pt-1"');
-    expect(traceFooter).toContain('max-h-80 overflow-hidden');
+    expect(traceFooter).toContain('ref={timelineScrollRef}');
+    expect(traceFooter).toContain('className="relative max-h-80 overflow-y-auto overscroll-contain"');
     expect(traceFooter).not.toContain('bg-ui-bg/70 shadow-sm');
     expect(traceFooter).not.toContain('<p className="type-micro-label truncate text-ui-text-muted" title={activitySummary}>');
     expect(traceFooter).toContain('timelineEvents.map((event)');
@@ -594,17 +595,13 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('type-micro-label max-w-[45%] shrink truncate');
     expect(traceFooter).toContain('title={getTimelineEventMeta(event)}');
     expect(traceFooter).toContain('{getTimelineEventMeta(event)}');
-    expect(traceFooter).toContain('type-caption mt-0.5 line-clamp-4 whitespace-pre-wrap break-words text-ui-text-muted');
-    expect(traceFooter).toContain('title={event.detail}');
     expect(traceFooter).not.toContain('max-h-28 overflow-y-auto overscroll-contain');
     expect(traceFooter).toContain('No run activity has been recorded for this message.');
     expect(traceFooter).not.toContain('mt-2 max-h-80 overflow-hidden rounded-md');
     expect(traceFooter).not.toContain('border border-ui-border bg-ui-bg/80');
     expect(traceFooter).not.toContain('rounded-full px-2 py-0.5');
     expect(traceFooter).toContain('hidden={!isExpanded}');
-    expect(traceFooter).toContain('max-h-80 divide-y divide-ui-border overflow-y-auto overscroll-contain');
-    expect(traceFooter).toContain('timelineScrollRef');
-    expect(traceFooter).toContain('timelineScrollRef.current.scrollTop = timelineScrollRef.current.scrollHeight;');
+    expect(traceFooter).toContain('className="divide-y divide-ui-border"');
     expect(traceFooter).toContain('const latestTimelineEventKey = timelineEvents.at(-1)');
     expect(traceFooter).not.toContain('Progress steps');
     expect(traceFooter).not.toContain('Reasoning Summaries');

@@ -66,6 +66,7 @@ describe('trace-utils', () => {
 
     expect(next.reasoningSummaries).toHaveLength(1);
     expect(next.reasoningSummaries?.[0].text).toHaveLength(20_000);
+    expect(next.reasoningSummaries?.[0].text.endsWith('… [Reasoning summary truncated]')).toBe(true);
     expect(next.activeReasoningSummary).toBe(next.reasoningSummaries?.[0].text);
     expect(next.timelineEvents?.[0].detail).toBe(next.reasoningSummaries?.[0].text);
 
@@ -73,6 +74,7 @@ describe('trace-utils', () => {
     expect(completed.reasoningSummaries).toHaveLength(1);
     expect(completed.reasoningSummaries?.[0].status).toBe('completed');
     expect(completed.reasoningSummaries?.[0].text).toHaveLength(20_000);
+    expect(completed.reasoningSummaries?.[0].text.endsWith('… [Reasoning summary truncated]')).toBe(true);
     expect(completed.activeReasoningSummary).toBe(completed.reasoningSummaries?.[0].text);
     expect(completed.timelineEvents?.[0].detail).toBe(completed.reasoningSummaries?.[0].text);
   });

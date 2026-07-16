@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { BookOpen, ChevronRight, CircleDashed, FileJson, MessageSquare, Wrench } from 'lucide-react';
+import { BookOpen, ChevronRight, CircleDashed, MessageSquare, Wrench } from 'lucide-react';
 import { formatRunUsageDetail, getTraceActivityLabel } from '@/features/targets/chat/lib/trace-utils';
 import { LiveRunTrace, RunTraceTimelineEvent } from '@/features/targets/chat/types';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 
 interface TraceFooterProps {
@@ -13,6 +14,15 @@ interface TraceFooterProps {
   suppressCompactReasoningSummary?: boolean;
   compactStatusOnly?: boolean;
   className?: string;
+}
+
+const FOLLOW_LATEST_THRESHOLD_PX = 24;
+
+function isLatestEventInFollowZone(scrollContainer: HTMLDivElement, latestEvent: HTMLDivElement): boolean {
+  const containerBounds = scrollContainer.getBoundingClientRect();
+  const latestEventBounds = latestEvent.getBoundingClientRect();
+  return latestEventBounds.bottom >= containerBounds.top - FOLLOW_LATEST_THRESHOLD_PX
+    && latestEventBounds.bottom <= containerBounds.bottom + FOLLOW_LATEST_THRESHOLD_PX;
 }
 
 function inferTimelineStepType(label: string): RunTraceTimelineEvent['type'] {
@@ -128,6 +138,13 @@ function formatCompactSkillSummary(skillLoads: LiveRunTrace['skillLoads'] = []):
   return parts.join(', ');
 }
 
+function getFullResultErrorMessage(error: unknown): string {
+  if (error instanceof ControlPlaneRequestError && error.status === 404) {
+    return 'The full result is no longer available.';
+  }
+  return 'Could not load the full result. Try again.';
+}
+
 /**
  * Shows compact and expandable reasoning details attached to one assistant message.
  */
@@ -156,6 +173,9 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   const usageDetail = formatRunUsageDetail(trace.usage);
   const timelineEvents = buildTimelineEvents(trace);
   const timelineScrollRef = React.useRef<HTMLDivElement>(null);
+  const latestTimelineEventRef = React.useRef<HTMLDivElement>(null);
+  const shouldFollowLatestRef = React.useRef(true);
+  const previousDisclosureRef = React.useRef({ runId, isExpanded });
   const [artifactView, setArtifactView] = React.useState<{
     callId: string;
     content?: string;
@@ -195,7 +215,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
       if (artifactRequestRef.current !== requestId) return;
       setArtifactView({
         callId: toolCall.callId,
-        error: error instanceof Error ? error.message : 'The full result is no longer available.'
+        error: getFullResultErrorMessage(error)
       });
     }
   }, [artifactView?.callId, runId]);
@@ -229,10 +249,29 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
       ? 'bg-status-danger'
       : 'bg-accent';
 
+  const handleTimelineScroll = React.useCallback(() => {
+    if (!isInProgress || !timelineScrollRef.current || !latestTimelineEventRef.current) return;
+    shouldFollowLatestRef.current = isLatestEventInFollowZone(
+      timelineScrollRef.current,
+      latestTimelineEventRef.current
+    );
+  }, [isInProgress]);
+
   React.useLayoutEffect(() => {
-    if (!isExpanded || !isInProgress || !timelineScrollRef.current) return;
-    timelineScrollRef.current.scrollTop = timelineScrollRef.current.scrollHeight;
-  }, [isExpanded, isInProgress, latestTimelineEventKey, timelineEvents.length]);
+    const previousDisclosure = previousDisclosureRef.current;
+    const shouldResetFollow = previousDisclosure.runId !== runId
+      || (!previousDisclosure.isExpanded && isExpanded);
+    previousDisclosureRef.current = { runId, isExpanded };
+    if (shouldResetFollow) shouldFollowLatestRef.current = true;
+    if (!isExpanded || !isInProgress || !timelineScrollRef.current || !latestTimelineEventRef.current) return;
+    if (!shouldFollowLatestRef.current) return;
+    const scrollContainer = timelineScrollRef.current;
+    const latestEvent = latestTimelineEventRef.current;
+    scrollContainer.scrollTop = Math.max(
+      0,
+      latestEvent.offsetTop + latestEvent.offsetHeight - scrollContainer.clientHeight
+    );
+  }, [isExpanded, isInProgress, latestTimelineEventKey, runId, timelineEvents.length]);
 
   return (
     <div className={`${compactStatusOnly ? '' : 'mt-3'} w-full ${className || 'max-w-[72ch]'}`}>
@@ -294,11 +333,19 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
             animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="max-h-80 overflow-hidden">
+            <div
+              ref={timelineScrollRef}
+              className="relative max-h-80 overflow-y-auto overscroll-contain"
+              onScroll={handleTimelineScroll}
+            >
               {timelineEvents.length > 0 ? (
-                <div ref={timelineScrollRef} className="max-h-80 divide-y divide-ui-border overflow-y-auto overscroll-contain">
+                <div className="divide-y divide-ui-border">
                   {timelineEvents.map((event) => (
-                    <div key={event.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 px-3 py-2.5">
+                    <div
+                      key={event.id}
+                      ref={event === timelineEvents.at(-1) ? latestTimelineEventRef : undefined}
+                      className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 px-3 py-2.5"
+                    >
                       <span className="mt-0.5 flex h-5 w-5 items-center justify-center">
                         {event.type === 'reasoning' ? (
                           <MessageSquare className={`h-3.5 w-3.5 ${getTimelineEventToneClass(event)}`} />
@@ -323,10 +370,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                           </span>
                         </div>
                         {event.detail && (
-                          <p
-                            className="type-caption mt-0.5 line-clamp-4 whitespace-pre-wrap break-words text-ui-text-muted"
-                            title={event.detail}
-                          >
+                          <p className="type-caption mt-0.5 whitespace-pre-wrap break-words text-ui-text-muted">
                             {event.detail}
                           </p>
                         )}
@@ -340,62 +384,51 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                   No run activity has been recorded for this message.
                 </div>
               )}
-            </div>
-            {artifactCalls.length > 0 && (
-              <div className="border-t border-ui-border px-3 py-3">
-                <p className="type-micro-label text-ui-text-muted">Full redacted results</p>
-                <div className="mt-2 space-y-2">
-                  {artifactCalls.map((toolCall) => (
-                    <div key={toolCall.callId} className="rounded-md border border-ui-border bg-ui-surface px-3 py-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="type-caption truncate text-ui-text">{toolCall.tool}</p>
-                          <p className="type-micro-label text-ui-text-muted">
-                            {toolCall.artifact
-                              ? `${Math.ceil(toolCall.artifact.uncompressed_bytes / 1024).toLocaleString()} KiB · expires ${new Date(toolCall.artifact.expires_at).toLocaleString()}`
-                              : 'Complete result could not be retained'}
-                          </p>
-                          {toolCall.contextMeta && (
-                            <p className="type-micro-label text-ui-text-muted">
-                              {toolCall.contextMeta.strategy.replaceAll('_', ' ')}
-                              {toolCall.contextMeta.truncated
-                                ? ` · ${toolCall.contextMeta.omissions?.length || 1} explicit omission(s)`
-                                : ' · no explicit projection omissions'}
-                            </p>
+              {artifactCalls.length > 0 && (
+                <div className="border-t border-ui-border px-3 py-2.5">
+                  <p className="type-micro-label text-ui-text-muted">Full tool results</p>
+                  <div className="mt-1 divide-y divide-ui-border">
+                    {artifactCalls.map((toolCall) => (
+                      <div key={toolCall.callId} className="py-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="type-caption truncate text-ui-text">{toolCall.tool}</p>
+                            {!toolCall.artifact && (
+                              <p className="type-caption text-ui-text-muted">Full result unavailable</p>
+                            )}
+                          </div>
+                          {toolCall.artifact && (
+                            <button
+                              type="button"
+                              onClick={() => void openArtifact(toolCall)}
+                              className="control-target type-caption inline-flex min-h-9 items-center rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                              aria-expanded={artifactView?.callId === toolCall.callId}
+                            >
+                              {artifactView?.callId === toolCall.callId
+                                ? 'Hide full result'
+                                : 'View full result'}
+                            </button>
                           )}
                         </div>
-                        {toolCall.artifact && (
-                          <button
-                            type="button"
-                            onClick={() => void openArtifact(toolCall)}
-                            className="control-target type-caption inline-flex min-h-9 items-center gap-1.5 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
-                            aria-expanded={artifactView?.callId === toolCall.callId}
-                          >
-                            <FileJson className="h-3.5 w-3.5" />
-                            {artifactView?.callId === toolCall.callId
-                              ? 'Hide full redacted result'
-                              : 'View full redacted result'}
-                          </button>
+                        {artifactView?.callId === toolCall.callId && (
+                          <div className="mt-2 border-t border-ui-border pt-2">
+                            {artifactView.loading ? (
+                              <p className="type-caption text-ui-text-muted">Loading full result…</p>
+                            ) : artifactView.error ? (
+                              <p className="type-caption text-status-danger-text">{artifactView.error}</p>
+                            ) : (
+                              <pre className="whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono text-xs text-ui-on-strong">
+                                {artifactView.content}
+                              </pre>
+                            )}
+                          </div>
                         )}
                       </div>
-                      {artifactView?.callId === toolCall.callId && (
-                        <div className="mt-2 border-t border-ui-border pt-2">
-                          {artifactView.loading ? (
-                            <p className="type-caption text-ui-text-muted">Loading the redacted artifact…</p>
-                          ) : artifactView.error ? (
-                            <p className="type-caption text-status-danger-text">{artifactView.error}</p>
-                          ) : (
-                            <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono text-xs text-ui-on-strong">
-                              {artifactView.content}
-                            </pre>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </motion.div>
         )}
       </div>

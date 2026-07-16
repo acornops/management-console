@@ -307,12 +307,30 @@ describe('session-utils', () => {
     expect(message).toContain('Retry after about 2 seconds.');
   });
 
-  it('normalizes provider setup failures with AI Settings guidance', () => {
-    expect(formatRunFailureMessage('OPENAI_ERROR', 'Provider request failed')).toContain(
-      'Check or rotate the workspace API key in AI Settings'
-    );
+  it('normalizes ambiguous provider failures without blaming credentials', () => {
+    expect(formatRunFailureMessage('OPENAI_ERROR', 'Provider request failed')).toContain('choose another model');
+    expect(formatRunFailureMessage('OPENAI_ERROR', 'Provider request failed')).not.toContain('rotate');
     expect(formatRunFailureMessage('ANTHROPIC_ERROR', 'Provider temporarily unavailable')).toContain(
       'Anthropic is temporarily unavailable'
+    );
+  });
+
+  it('shows targeted recovery only for conservatively classified provider failures', () => {
+    expect(formatRunFailureMessage('MODEL_UNAVAILABLE', 'Selected model is unavailable')).toBe(
+      'This model is currently unavailable. Choose another model and retry.'
+    );
+    const providerConfigurationMessage = formatRunFailureMessage(
+      'PROVIDER_AUTH_INVALID',
+      'Provider authentication failed'
+    );
+    expect(providerConfigurationMessage).toContain('workspace administrator');
+    expect(providerConfigurationMessage).not.toContain('credentials');
+    expect(providerConfigurationMessage).not.toContain('key');
+    expect(formatRunFailureMessage('PROVIDER_RATE_LIMITED', 'Provider rate limit reached')).toContain(
+      'Retry shortly'
+    );
+    expect(formatRunFailureMessage('PROVIDER_UNAVAILABLE', 'Provider temporarily unavailable')).toContain(
+      'temporarily unavailable'
     );
   });
 
