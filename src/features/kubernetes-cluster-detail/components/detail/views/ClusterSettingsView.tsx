@@ -13,9 +13,11 @@ interface ClusterSettingsViewProps {
   cluster: KubernetesCluster;
   workspaceName?: string;
   canManageCluster?: boolean;
+  canManageAgentKeys?: boolean;
   onUpdateName?: (name: string) => void | Promise<void>;
   onEditNamespaceScope?: () => void;
   onUpdateWriteConfirmationPolicy?: (overrideRequired: boolean | null) => void | Promise<void>;
+  onReinstallAgent?: () => void;
 }
 
 type WriteConfirmationPolicyValue = 'required' | 'not_required';
@@ -82,9 +84,11 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   cluster,
   workspaceName,
   canManageCluster = false,
+  canManageAgentKeys = false,
   onUpdateName,
   onEditNamespaceScope,
-  onUpdateWriteConfirmationPolicy
+  onUpdateWriteConfirmationPolicy,
+  onReinstallAgent
 }) => {
   const { t } = useTranslation();
   const [isEditingName, setIsEditingName] = useState(false);
@@ -108,6 +112,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   const canEditNamespaceScope = canManageCluster && Boolean(onEditNamespaceScope);
   const canEditWriteConfirmations = canManageCluster && Boolean(onUpdateWriteConfirmationPolicy);
   const canEditClusterName = canManageCluster && Boolean(onUpdateName);
+  const canReinstallAgent = agentConnectionState === 'disconnected' && canManageAgentKeys && Boolean(onReinstallAgent);
   const trimmedDraftName = draftName.trim();
   const clusterNameValidationError = isEditingName && trimmedDraftName.length === 0
     ? t('clusterSettings.clusterNameRequired')
@@ -236,6 +241,18 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
             icon={ICONS.Activity}
             label={t('clusterSettings.connectionState')}
             description={t(`clusterSettings.connection.${agentConnectionState}`)}
+            action={canReinstallAgent ? (
+              <Button
+                data-cluster-settings-action="reinstall-agent"
+                onClick={onReinstallAgent}
+                variant="secondary"
+                size="sm"
+                className="w-full sm:w-auto"
+              >
+                <ICONS.Wrench className="h-4 w-4" />
+                {t('clusterSettings.reinstallAgent')}
+              </Button>
+            ) : undefined}
           />
           <SettingRow
             icon={ICONS.Clock}

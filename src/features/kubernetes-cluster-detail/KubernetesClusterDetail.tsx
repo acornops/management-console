@@ -91,6 +91,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   onUpdateName,
   onUpdateNamespaceScope,
   onUpdateWriteConfirmationPolicy,
+  onReinstallAgent,
   onOpenAiSettings,
   onOpenCopilot,
   onActiveViewChange
@@ -109,6 +110,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   const canManageTools = Boolean(currentWorkspacePermissions?.manage_tools || currentWorkspacePermissions?.manage_target_insights);
   const canManageMcp = Boolean(currentWorkspacePermissions?.manage_mcp);
   const canManageCluster = Boolean(currentWorkspacePermissions?.manage_targets);
+  const canManageAgentKeys = Boolean(currentWorkspacePermissions?.manage_agent_keys);
   const [isNamespaceScopeDialogOpen, setIsNamespaceScopeDialogOpen] = useState(false);
   const assistantMarkdownComponents = useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = useMemo(() => createMarkdownComponents('user'), []);
@@ -303,9 +305,11 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 cluster={cluster}
                 workspaceName={workspaceName}
                 canManageCluster={canManageCluster}
+                canManageAgentKeys={canManageAgentKeys}
                 onUpdateName={onUpdateName}
                 onEditNamespaceScope={onUpdateNamespaceScope ? () => setIsNamespaceScopeDialogOpen(true) : undefined}
                 onUpdateWriteConfirmationPolicy={onUpdateWriteConfirmationPolicy}
+                onReinstallAgent={onReinstallAgent}
               />
             )}
         </div>

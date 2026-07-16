@@ -740,6 +740,7 @@ export const zh = {
   clusterSetup: {
     addCluster: '连接集群',
     installAgent: '安装 Agent',
+    reinstallAgent: '重新安装 Agent',
     closeAddDialog: '关闭连接集群对话框',
     closeInstallAgentDialog: '关闭安装 agent 对话框',
     stepConfigure: '配置',
@@ -785,6 +786,8 @@ export const zh = {
     waitingForAgent: '等待 agent 连接...',
     installedAgent: '我已安装 agent',
     installAgentFirst: '此集群已注册，但还没有 agent 连接。请先安装 agent，再使用集群工具、权限调整和诊断。',
+    reinstallAgentHelp: 'AgentK 通常会自动重新连接。如果 Helm release 或凭据已被删除，请生成新的安装命令。',
+    rotateAgentKeyWarning: '轮换 key 后，之前的安装将无法重新连接。',
     generateCommandHelp: '生成一次性安装命令来部署 agent。',
     generateFailed: '生成安装命令失败。',
     agentKeyVersion: 'Agent key 版本：v{{version}}。',
@@ -792,7 +795,9 @@ export const zh = {
     rotateHelp: '生成新命令会轮换 key。',
     generating: '生成中...',
     generateCommand: '生成命令',
-    regenerateCommand: '重新生成命令'
+    regenerateCommand: '重新生成命令',
+    rotateAndGenerateCommand: '轮换 Key 并生成命令',
+    rotateAndRegenerateCommand: '轮换 Key 并重新生成命令'
   },
   diagnostics: {
     installAgentTitle: '请先安装 Agent',
@@ -1079,6 +1084,7 @@ export const zh = {
     clusterNameRequired: '请输入集群名称。',
     workspace: '工作区',
     connectionState: '连接状态',
+    reinstallAgent: '重新安装 Agent',
     lastTelemetry: '最近遥测',
     collectionTitle: '采集范围',
     collectionBody: '控制此集群向 AcornOps 上报哪些命名空间。',

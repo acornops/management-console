@@ -14,11 +14,13 @@ describe('cluster settings view structure', () => {
     expect(clusterSettingsView).toContain('const canEditNamespaceScope = canManageCluster && Boolean(onEditNamespaceScope);');
     expect(clusterSettingsView).toContain('const canEditWriteConfirmations = canManageCluster && Boolean(onUpdateWriteConfirmationPolicy);');
     expect(clusterSettingsView).toContain('const canEditClusterName = canManageCluster && Boolean(onUpdateName);');
+    expect(clusterSettingsView).toContain("const canReinstallAgent = agentConnectionState === 'disconnected' && canManageAgentKeys && Boolean(onReinstallAgent);");
     expect(clusterSettingsView).toContain('action={canEditNamespaceScope ? (');
     expect(clusterSettingsView).toContain('action={canEditWriteConfirmations ? (');
     expect(clusterSettingsView).toContain('data-cluster-settings-action="edit-name"');
     expect(clusterSettingsView).toContain('data-cluster-settings-action="save-name"');
     expect(clusterSettingsView).toContain('data-cluster-settings-name-editor="true"');
+    expect(clusterSettingsView).toContain('data-cluster-settings-action="reinstall-agent"');
     expect(clusterSettingsView).toContain('await onUpdateName?.(trimmedDraftName);');
     expect(clusterSettingsView).toContain("event.key === 'Enter'");
     expect(clusterSettingsView).toContain("event.key === 'Escape'");

@@ -10,6 +10,7 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { AgentAccessMode } from '@/services/control-plane/types';
 import { KubernetesCluster } from '@/types';
+import { getAgentConnectionState } from '@/utils/telemetry';
 
 const GENERATE_COMMAND_SPINNER_DELAY_MS = 500;
 
@@ -37,7 +38,14 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
   const generateCommandButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const command = React.useMemo(() => installCommand, [installCommand]);
-  const generateCommandLabel = command ? t('clusterSetup.regenerateCommand') : t('clusterSetup.generateCommand');
+  const isReinstall = getAgentConnectionState(cluster) === 'disconnected';
+  const generateCommandLabel = isReinstall
+    ? command
+      ? t('clusterSetup.rotateAndRegenerateCommand')
+      : t('clusterSetup.rotateAndGenerateCommand')
+    : command
+      ? t('clusterSetup.regenerateCommand')
+      : t('clusterSetup.generateCommand');
 
   React.useEffect(() => {
     if (!isGenerating) {
@@ -98,7 +106,9 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
     >
         <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
           <div>
-            <h3 id="install-agent-title" className="font-bold tracking-tight text-ui-text">{t('clusterSetup.installAgent')}</h3>
+            <h3 id="install-agent-title" className="font-bold tracking-tight text-ui-text">
+              {t(isReinstall ? 'clusterSetup.reinstallAgent' : 'clusterSetup.installAgent')}
+            </h3>
             <p className="mt-1 text-xs font-medium text-ui-text-muted">{workspaceName} / {cluster.name}</p>
           </div>
           <CloseButton
@@ -110,9 +120,15 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
         <div className="space-y-4 overflow-y-auto p-6">
           <div className="rounded-xl border border-accent/20 bg-accent-soft/60 p-4">
             <p className="text-sm font-medium text-ui-text">
-              {t('clusterSetup.installAgentFirst')}
+              {t(isReinstall ? 'clusterSetup.reinstallAgentHelp' : 'clusterSetup.installAgentFirst')}
             </p>
           </div>
+
+          {isReinstall && (
+            <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
+              {t('clusterSetup.rotateAgentKeyWarning')}
+            </div>
+          )}
 
           {errorMessage && (
             <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-3 text-xs font-medium text-status-danger-text">

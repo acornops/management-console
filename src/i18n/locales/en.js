@@ -740,6 +740,7 @@ export const en = {
   clusterSetup: {
     addCluster: 'Connect Cluster',
     installAgent: 'Install Agent',
+    reinstallAgent: 'Reinstall Agent',
     closeAddDialog: 'Close connect cluster dialog',
     closeInstallAgentDialog: 'Close install agent dialog',
     stepConfigure: 'Configure',
@@ -785,6 +786,8 @@ export const en = {
     waitingForAgent: 'Waiting for agent connection...',
     installedAgent: "I've Installed the Agent",
     installAgentFirst: 'This cluster is registered but no agent has connected yet. Install the agent first before cluster tools, permissions tuning, and diagnostics become available.',
+    reinstallAgentHelp: 'AgentK normally reconnects automatically. If its Helm release or credentials were removed, generate a new installation command.',
+    rotateAgentKeyWarning: 'Rotating the key prevents the previous installation from reconnecting.',
     generateCommandHelp: 'Generate a one-time installation command to deploy the agent.',
     generateFailed: 'Failed generating install command.',
     agentKeyVersion: 'Agent key version: v{{version}}.',
@@ -792,7 +795,9 @@ export const en = {
     rotateHelp: 'Generating a new command rotates the key.',
     generating: 'Generating...',
     generateCommand: 'Generate Command',
-    regenerateCommand: 'Regenerate Command'
+    regenerateCommand: 'Regenerate Command',
+    rotateAndGenerateCommand: 'Rotate Key and Generate Command',
+    rotateAndRegenerateCommand: 'Rotate Key and Regenerate Command'
   },
   diagnostics: {
     installAgentTitle: 'Install Agent First',
@@ -1079,6 +1084,7 @@ export const en = {
     clusterNameRequired: 'Enter a cluster name.',
     workspace: 'Workspace',
     connectionState: 'Connection State',
+    reinstallAgent: 'Reinstall Agent',
     lastTelemetry: 'Last Telemetry',
     collectionTitle: 'Collection Scope',
     collectionBody: 'Control which namespaces this cluster reports to AcornOps.',

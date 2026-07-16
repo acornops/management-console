@@ -88,6 +88,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               onUpdateWriteConfirmationPolicy={(overrideRequired) =>
                 onUpdateClusterWriteConfirmationPolicy(selectedCluster.id, overrideRequired)
               }
+              onReinstallAgent={() => onOpenInstallModal(selectedCluster.id)}
               onOpenAiSettings={() => onOpenAiSettings(selectedCluster.workspaceId)}
               onOpenCopilot={(prompt) => onOpenClusterChatPanel?.(selectedCluster, prompt)}
             />

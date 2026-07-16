@@ -81,12 +81,17 @@ describe('cluster dialog accessibility contracts', () => {
     expect(installAgentModal).not.toContain('max-w-3xl');
     expect(installAgentModal).toContain("t('clusterSetup.installCommand')");
     expect(installAgentModal).toContain('rotateClusterAgentKey(cluster.workspaceId, cluster.id, { agentAccessMode })');
+    expect(installAgentModal).toContain("getAgentConnectionState(cluster) === 'disconnected'");
+    expect(installAgentModal).toContain("t('clusterSetup.rotateAgentKeyWarning')");
+    expect(installAgentModal).toContain("t('clusterSetup.rotateAndGenerateCommand')");
     expect(installAgentModal).toContain('<ClusterAgentAccessModeSelector');
     expect(installAgentModal).toContain('GENERATE_COMMAND_SPINNER_DELAY_MS = 500');
     expect(installAgentModal).toContain('const [showGenerateSpinner, setShowGenerateSpinner] = React.useState(false);');
     expect(installAgentModal).toContain('window.setTimeout(() =>');
     expect(installAgentModal).toContain('setShowGenerateSpinner(true);');
-    expect(installAgentModal).toContain('const generateCommandLabel = command ? t(\'clusterSetup.regenerateCommand\') : t(\'clusterSetup.generateCommand\');');
+    expect(installAgentModal).toContain('const generateCommandLabel = isReinstall');
+    expect(installAgentModal).toContain("t('clusterSetup.regenerateCommand')");
+    expect(installAgentModal).toContain("t('clusterSetup.generateCommand')");
     expect(installAgentModal).toContain("className={isGenerating ? 'cursor-wait' : ''}");
     expect(installAgentModal).toContain('aria-busy={isGenerating}');
     expect(installAgentModal).toContain('aria-disabled={isGenerating}');
