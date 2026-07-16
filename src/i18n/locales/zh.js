@@ -22,7 +22,8 @@ export const zh = {
       targetInsights: '请检查洞察设置后重试。',
       targetSkills: '请检查技能详情后重试。',
       targetTools: '请检查工具设置后重试。',
-      virtualMachines: '请检查虚拟机信息后重试。'
+      virtualMachines: '请检查虚拟机信息后重试。',
+      webhooks: '请检查 Webhook URL 和事件设置。'
     },
     upstream: {
       default: '服务无法完成请求。请稍后重试。',
@@ -918,9 +919,11 @@ export const zh = {
     workspaceTab: '工作区',
     membersTab: '成员',
     aiTab: 'AI',
+    webhooksTab: 'Webhook',
     selectWorkspaceForTab: '请先选择工作区，然后再打开此设置标签。',
     workspaceAccessRequired: '你的角色无权访问工作区 AI 默认值。',
     membersAccessRequired: '你的工作区角色无法读取工作区成员。',
+    webhooksAccessRequired: '你的工作区角色无法管理 Webhook。',
     noWorkspaceTitle: '未选择工作区',
     noWorkspaceBody: '请先选择或创建工作区，然后再编辑工作区设置。'
   },

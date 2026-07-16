@@ -32,6 +32,8 @@ export type {
   ControlPlaneExternalIntegrationWorkspaceGrant,
   ControlPlaneWorkspaceCapability
 } from './externalIntegrationTypes';
+export type { ControlPlaneWebhookCreated, ControlPlaneWebhookEventType, ControlPlaneWebhookHistory, ControlPlaneWebhookInput, ControlPlaneWebhookPatch, ControlPlaneWebhookSubscription } from './webhookTypes';
+export { CONTROL_PLANE_WEBHOOK_EVENT_TYPES } from './webhookTypes';
 
 export interface PagedResult<T> { items: T[]; nextCursor?: string; }
 

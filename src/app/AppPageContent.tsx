@@ -125,6 +125,7 @@ export function preloadAppRoutePage(route: AppRoute): void {
       break;
     case 'workspaceSettings':
     case 'workspaceAiSettings':
+    case 'workspaceWebhooks':
       void loadSettingsPage();
       break;
     case 'workspaceAuditLog':
@@ -148,6 +149,7 @@ function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspa
       route.kind === 'workspaceApprovals' ||
       route.kind === 'workspaceMembers' ||
       route.kind === 'workspaceAiSettings' ||
+      route.kind === 'workspaceWebhooks' ||
       route.kind === 'workspaceSettings' ||
       route.kind === 'workspaceAuditLog' ||
       route.kind === 'workspaceKubernetesClusters' ||
@@ -263,6 +265,8 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
     ? 'members'
     : route.kind === 'workspaceAiSettings'
       ? 'ai'
+      : route.kind === 'workspaceWebhooks'
+        ? 'webhooks'
       : 'workspace';
   const clusterCatalogState: ClusterCatalogRouteState | undefined =
     route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters'
@@ -328,6 +332,10 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
     }
     if (tab === 'ai') {
       navigate(AppPaths.workspaceAiSettings(workspaceContext.id));
+      return;
+    }
+    if (tab === 'webhooks') {
+      navigate(AppPaths.workspaceWebhooks(workspaceContext.id));
       return;
     }
     navigate(AppPaths.workspaceSettings(workspaceContext.id));
@@ -542,7 +550,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
-          {(route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers') && (
+          {(route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers' || route.kind === 'workspaceWebhooks') && (
             <SettingsPage
               workspace={workspaceContext}
               initialTab={activeSettingsTab}
@@ -551,6 +559,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               canDeleteWorkspace={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'delete_workspace') : false}
               canManageMembers={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'manage_members') : false}
               canManageAiSettings={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'manage_ai_settings') : false}
+              canManageWebhooks={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'manage_webhooks') : false}
               currentUserRole={workspaceContext ? getCurrentUserRoleForWorkspace(workspaceContext.id) : undefined}
               onDeleteWorkspace={onOpenDeleteWorkspace}
               onLeaveWorkspace={workspaceContext ? leaveWorkspace : undefined}

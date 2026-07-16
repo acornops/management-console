@@ -22,7 +22,8 @@ export const en = {
       targetInsights: 'Check the Insights settings and try again.',
       targetSkills: 'Check the skill details and try again.',
       targetTools: 'Check the tool settings and try again.',
-      virtualMachines: 'Check the virtual machine details and try again.'
+      virtualMachines: 'Check the virtual machine details and try again.',
+      webhooks: 'Check the webhook URL and event settings.'
     },
     upstream: {
       default: 'The service could not complete the request. Try again shortly.',
@@ -918,9 +919,11 @@ export const en = {
     workspaceTab: 'Workspace',
     membersTab: 'Members',
     aiTab: 'AI',
+    webhooksTab: 'Webhooks',
     selectWorkspaceForTab: 'Select a workspace before opening this settings tab.',
     workspaceAccessRequired: 'Your role does not allow access to workspace AI defaults.',
     membersAccessRequired: 'Your workspace role cannot read workspace members.',
+    webhooksAccessRequired: 'Your workspace role cannot manage webhooks.',
     noWorkspaceTitle: 'No workspace selected',
     noWorkspaceBody: 'Select or create a workspace before editing workspace settings.'
   },

@@ -55,6 +55,7 @@ import type {
   ControlPlaneTargetChatActivity,
   ControlPlaneTargetChatActivityEvent
 } from './control-plane/sessionActivityTypes';
+import { webhookApi } from './control-plane/webhookApi';
 
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
@@ -79,6 +80,12 @@ export type {
   ControlPlaneWorkspaceCapability,
   ControlPlaneWorkspaceInvitation,
   ControlPlaneWorkspaceAuditEvent,
+  ControlPlaneWebhookCreated,
+  ControlPlaneWebhookEventType,
+  ControlPlaneWebhookHistory,
+  ControlPlaneWebhookInput,
+  ControlPlaneWebhookPatch,
+  ControlPlaneWebhookSubscription,
   ControlPlaneRoleTemplate,
   TargetType,
   TargetSummary,
@@ -108,6 +115,7 @@ export type {
   UpdateTargetToolInput,
   TargetInsightsEntryInput
 } from './control-plane/types';
+export { CONTROL_PLANE_WEBHOOK_EVENT_TYPES } from './control-plane/types';
 export type {
   ControlPlaneVirtualMachineMetricHistoryPoint,
   ControlPlaneVirtualMachineMetricsHistoryResponse
@@ -120,6 +128,7 @@ export type { ControlPlaneVirtualMachine, RegisterVirtualMachineResponse } from 
 
 export const controlPlaneApi = {
   ...controlPlaneAuthApi,
+  ...webhookApi,
 
   async getCurrentUser(): Promise<User> {
     return userFromControlPlane(await requestJson<ControlPlaneUser>('/api/v1/me'));

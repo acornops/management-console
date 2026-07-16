@@ -32,6 +32,7 @@ export type AppRoute =
   | { kind: 'workspaceMembers'; workspaceId: string }
   | { kind: 'workspaceAiSettings'; workspaceId: string }
   | { kind: 'workspaceSettings'; workspaceId: string }
+  | { kind: 'workspaceWebhooks'; workspaceId: string }
   | { kind: 'workspaceAuditLog'; workspaceId: string }
   | ({ kind: 'workspaceKubernetesClusters'; workspaceId: string } & ClusterCatalogRouteState)
   | ({ kind: 'workspaceVirtualMachines'; workspaceId: string } & VmCatalogRouteState)
@@ -191,7 +192,7 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceInvitation', token: decodeParam(inviteMatch[1]) };
   }
 
-  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|workflows|schedules|approvals|members|ai-settings|settings|audit-log)$/);
+  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|workflows|schedules|approvals|members|ai-settings|settings|webhooks|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
@@ -207,6 +208,7 @@ export function parseAppRoute(path: string): AppRoute {
     if (section === 'approvals') return { kind: 'workspaceApprovals', workspaceId };
     if (section === 'ai-settings') return { kind: 'workspaceAiSettings', workspaceId };
     if (section === 'settings') return { kind: 'workspaceSettings', workspaceId };
+    if (section === 'webhooks') return { kind: 'workspaceWebhooks', workspaceId };
     if (section === 'audit-log') return { kind: 'workspaceAuditLog', workspaceId };
     return { kind: 'workspaceMembers', workspaceId };
   }
@@ -298,6 +300,7 @@ export const AppPaths = {
   workspaceMembers: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/members`,
   workspaceAiSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`,
   workspaceSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/settings`,
+  workspaceWebhooks: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/webhooks`,
   workspaceAuditLog: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/audit-log`,
   workspaceKubernetesClusters: (workspaceId: string, state?: ClusterCatalogRouteState): string =>
     withClusterCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`, state),

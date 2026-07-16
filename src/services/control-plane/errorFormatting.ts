@@ -10,7 +10,8 @@ export type ControlPlaneErrorArea =
   | 'targetInsights'
   | 'targetSkills'
   | 'targetTools'
-  | 'virtualMachines';
+  | 'virtualMachines'
+  | 'webhooks';
 
 interface FormatControlPlaneErrorOptions {
   area?: ControlPlaneErrorArea;
@@ -84,6 +85,8 @@ function validationMessage(area?: ControlPlaneErrorArea): string {
       return tr('controlPlaneErrors.validation.targetTools', 'Check the tool settings and try again.');
     case 'virtualMachines':
       return tr('controlPlaneErrors.validation.virtualMachines', 'Check the virtual machine details and try again.');
+    case 'webhooks':
+      return tr('controlPlaneErrors.validation.webhooks', 'Check the webhook URL and event settings.');
     default:
       return tr('controlPlaneErrors.validation.default', 'Check the request and try again.');
   }

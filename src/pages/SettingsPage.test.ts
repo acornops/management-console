@@ -11,9 +11,11 @@ const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'),
 
 describe('SettingsPage workspace tabs', () => {
   it('treats members as a workspace settings tab instead of inventory navigation', () => {
-    expect(settingsPage).toContain("type SettingsTab = 'workspace' | 'members' | 'ai';");
+    expect(settingsPage).toContain("type SettingsTab = 'workspace' | 'members' | 'ai' | 'webhooks';");
     expect(settingsPage).toContain("{ id: 'members', label: t('settingsPage.membersTab'), icon: ICONS.Users");
+    expect(settingsPage).toContain("{ id: 'webhooks', label: t('settingsPage.webhooksTab'), icon: ICONS.Send");
     expect(settingsPage).toContain('<WorkspaceMembersPage');
+    expect(settingsPage).toContain('<WorkspaceWebhooksPage');
     expect(settingsPage).toContain('embedded');
     expect(settingsPage).toContain('canReadMembers');
     expect(settingsPage).toContain('onClick={() => handleSelectTab(id)}');
@@ -28,6 +30,7 @@ describe('SettingsPage workspace tabs', () => {
     expect(settingsPage).toContain("t('settingsPage.workspaceAccessRequired')");
     expect(settingsPage).toContain("t('settingsPage.membersAccessRequired')");
     expect(settingsPage).toContain("if (tab === 'ai' && !canReadWorkspaceData)");
+    expect(settingsPage).toContain("if (tab === 'webhooks' && !canReadWorkspaceData)");
     expect(settingsPage).not.toContain("tab === 'workspace' || tab === 'ai'");
     expect(settingsPage).toContain('aria-disabled={Boolean(unavailableReason)}');
     expect(settingsPage).not.toContain('disabled={disabled}');
@@ -71,7 +74,7 @@ describe('SettingsPage workspace tabs', () => {
 
   it('maps direct workspace settings routes onto the settings tab shell', () => {
     expect(appPageContent).toContain("const activeSettingsTab: SettingsTab = route.kind === 'workspaceMembers'");
-    expect(appPageContent).toContain("route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers'");
+    expect(appPageContent).toContain("route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers' || route.kind === 'workspaceWebhooks'");
     expect(appPageContent).not.toContain("route.kind === 'settings' ||");
     expect(appPageContent).toContain('initialTab={activeSettingsTab}');
     expect(appPageContent).toContain('onSelectTab={navigateWorkspaceSettingsTab}');

@@ -41,7 +41,8 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).toContain("case 'workspaceMembers':");
     expect(appPageContent).toContain("case 'workspaceSettings':");
     expect(appPageContent).toContain("case 'workspaceAiSettings':");
-    expect(appPageContent).toContain("route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers'");
+    expect(appPageContent).toContain("case 'workspaceWebhooks':");
+    expect(appPageContent).toContain("route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers' || route.kind === 'workspaceWebhooks'");
     expect(appPageContent).toContain('<SettingsPage');
     expect(appPageContent).toContain('case \'accountSettings\':');
     expect(appPageContent).toContain('void loadUserSettingsPage();');
