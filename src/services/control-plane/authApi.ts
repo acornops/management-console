@@ -4,7 +4,9 @@ import { ControlPlaneRequestError, getControlPlaneUrl, requestJson } from './htt
 import {
   ControlPlaneAuthConfig,
   ControlPlaneAuthMethods,
+  ControlPlaneExternalIntegrationLinkSummary,
   ControlPlaneExternalIntegrationLinkPreview,
+  ControlPlaneWorkspaceCapability,
   ControlPlanePasswordResetRequestResult,
   ControlPlaneUser,
   ControlPlaneVerificationRequired,
@@ -52,11 +54,48 @@ export const controlPlaneAuthApi = {
     });
   },
 
-  async completeExternalIntegrationLink(token: string): Promise<void> {
+  async completeExternalIntegrationLink(
+    token: string,
+    workspaceGrants: Array<{ workspaceId: string; capabilities: ControlPlaneWorkspaceCapability[] }> = []
+  ): Promise<void> {
     await requestJson<{ status: 'linked' }>('/api/v1/auth/external-integrations/link/complete', {
       method: 'POST',
-      body: JSON.stringify({ token })
+      body: JSON.stringify({ token, workspaceGrants })
     });
+  },
+
+  async listExternalIntegrationLinks(): Promise<ControlPlaneExternalIntegrationLinkSummary[]> {
+    const result = await requestJson<{ links: ControlPlaneExternalIntegrationLinkSummary[] }>('/api/v1/auth/external-integrations/links');
+    return Array.isArray(result.links) ? result.links : [];
+  },
+
+  async updateExternalIntegrationLinkGrants(
+    linkId: string,
+    workspaceGrants: Array<{ workspaceId: string; capabilities: ControlPlaneWorkspaceCapability[] }>
+  ): Promise<ControlPlaneExternalIntegrationLinkSummary> {
+    const result = await requestJson<{ link: ControlPlaneExternalIntegrationLinkSummary }>(
+      `/api/v1/auth/external-integrations/links/${encodeURIComponent(linkId)}/grants`,
+      { method: 'PATCH', body: JSON.stringify({ workspaceGrants }) }
+    );
+    return result.link;
+  },
+
+  async unlinkExternalIntegration(link: Pick<
+    ControlPlaneExternalIntegrationLinkSummary,
+    'integrationClientId' | 'provider' | 'externalUserId'
+  >): Promise<ControlPlaneExternalIntegrationLinkSummary> {
+    const result = await requestJson<{ link: ControlPlaneExternalIntegrationLinkSummary }>(
+      '/api/v1/auth/external-integrations/links/unlink',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          integrationClientId: link.integrationClientId,
+          provider: link.provider,
+          externalUserId: link.externalUserId
+        })
+      }
+    );
+    return result.link;
   },
 
   async loginWithPassword(identifier: string, password: string): Promise<User> {

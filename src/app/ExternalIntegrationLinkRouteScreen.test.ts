@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   externalIntegrationLinkApprovalMessage,
   externalIntegrationLinkApprovalTitle,
   externalIntegrationLinkStatusMessage
 } from './ExternalIntegrationLinkRouteScreen';
+
+const root = resolve(__dirname, '../..');
+const routeScreen = readFileSync(resolve(root, 'src/app/ExternalIntegrationLinkRouteScreen.tsx'), 'utf8');
 
 describe('ExternalIntegrationLinkRouteScreen', () => {
   it('uses explicit account-linking approval copy', () => {
@@ -26,5 +31,12 @@ describe('ExternalIntegrationLinkRouteScreen', () => {
     expect(externalIntegrationLinkStatusMessage('cancelled')).toBe(
       'Account linking cancelled.\nGo back to the external client.'
     );
+  });
+
+  it('collects workspace grants before completing the link', () => {
+    expect(routeScreen).toContain('grantableWorkspaces');
+    expect(routeScreen).toContain('workspaceGrants');
+    expect(routeScreen).toContain('controlPlaneApi.completeExternalIntegrationLink(route.token, workspaceGrants)');
+    expect(routeScreen).toContain('Workspace access');
   });
 });

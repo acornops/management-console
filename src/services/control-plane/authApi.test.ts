@@ -74,7 +74,8 @@ describe('controlPlaneAuthApi', () => {
         id: 'user-1',
         email: 'ops@example.com',
         displayName: 'Ops User'
-      }
+      },
+      grantableWorkspaces: []
     });
     const { controlPlaneAuthApi } = await import('./authApi');
 
@@ -94,11 +95,49 @@ describe('controlPlaneAuthApi', () => {
     requestJson.mockResolvedValueOnce({ status: 'linked' });
     const { controlPlaneAuthApi } = await import('./authApi');
 
-    await controlPlaneAuthApi.completeExternalIntegrationLink('intlink_token');
+    await controlPlaneAuthApi.completeExternalIntegrationLink('intlink_token', [
+      { workspaceId: 'workspace-1', capabilities: ['read_workspace_data'] }
+    ]);
 
     expect(requestJson).toHaveBeenCalledWith('/api/v1/auth/external-integrations/link/complete', {
       method: 'POST',
-      body: JSON.stringify({ token: 'intlink_token' })
+      body: JSON.stringify({
+        token: 'intlink_token',
+        workspaceGrants: [{ workspaceId: 'workspace-1', capabilities: ['read_workspace_data'] }]
+      })
+    });
+  });
+
+  it('unlinks an external integration through the authenticated browser endpoint', async () => {
+    requestJson.mockResolvedValueOnce({
+      status: 'revoked',
+      link: {
+        id: 'link-1',
+        integrationClientId: 'mattermost-eng',
+        provider: 'mattermost',
+        clientDisplayName: 'Mattermost Engineering',
+        externalUserId: 'mm-user-1',
+        linkedAt: '2026-06-09T00:00:00.000Z',
+        lastAuthenticatedAt: '2026-06-09T00:00:00.000Z',
+        expiresAt: '2026-06-10T00:00:00.000Z',
+        grants: []
+      }
+    });
+    const { controlPlaneAuthApi } = await import('./authApi');
+
+    await controlPlaneAuthApi.unlinkExternalIntegration({
+      integrationClientId: 'mattermost-eng',
+      provider: 'mattermost',
+      externalUserId: 'mm-user-1'
+    });
+
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/auth/external-integrations/links/unlink', {
+      method: 'POST',
+      body: JSON.stringify({
+        integrationClientId: 'mattermost-eng',
+        provider: 'mattermost',
+        externalUserId: 'mm-user-1'
+      })
     });
   });
 
