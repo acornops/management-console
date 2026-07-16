@@ -20,6 +20,9 @@ export const CONTROL_PLANE_WEBHOOK_EVENT_TYPES = [
   'run.cancel_requested.v1',
   'run.tool_approval_requested.v1',
   'run.tool_approval_decided.v1',
+  'issue.created.v1',
+  'issue.reopened.v1',
+  'issue.resolved.v1',
   'tool.called.v1',
   'mcp.server.created.v1',
   'mcp.server.updated.v1',
@@ -57,10 +60,14 @@ export interface ControlPlaneWebhookHistory {
   subjectType: string;
   subjectId: string;
   payload: Record<string, unknown>;
-  status: 'success' | 'failed';
+  status: 'success' | 'failed' | 'paused' | 'superseded' | 'cancelled';
   responseStatus?: number | null;
   error?: string | null;
   durationMs?: number | null;
+  attemptNumber: number;
+  willRetry: boolean;
+  nextAttemptAt?: string | null;
+  terminalReason?: string | null;
   sentAt: string;
 }
 

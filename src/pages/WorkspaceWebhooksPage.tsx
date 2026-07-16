@@ -29,11 +29,16 @@ interface Draft {
 const emptyDraft: Draft = {
   name: '',
   url: '',
-  eventTypes: ['run.failed.v1'],
+  eventTypes: ['issue.created.v1', 'issue.reopened.v1', 'issue.resolved.v1'],
   enabled: true
 };
 
 const eventGroups: Array<{ id: string; label: string; eventTypes: ControlPlaneWebhookEventType[] }> = [
+  {
+    id: 'issue-alerts',
+    label: 'Issue alerts',
+    eventTypes: ['issue.created.v1', 'issue.reopened.v1', 'issue.resolved.v1']
+  },
   {
     id: 'run-alerts',
     label: 'Run alerts',
@@ -387,9 +392,28 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
                   ) : (
                     <div className="divide-y divide-ui-border">
                       {history.map((entry) => (
-                        <div key={entry.id} className="grid gap-2 p-4 text-xs font-semibold text-ui-text-muted md:grid-cols-[minmax(0,1fr)_120px_120px]">
-                          <span className="min-w-0 truncate text-ui-text">{entry.eventType}</span>
-                          <span>{entry.status}{entry.responseStatus ? ` (${entry.responseStatus})` : ''}</span>
+                        <div key={entry.id} className="grid gap-2 p-4 text-xs font-semibold text-ui-text-muted md:grid-cols-[minmax(0,1fr)_140px_180px]">
+                          <div className="min-w-0">
+                            <span className="block truncate text-ui-text">{entry.eventType}</span>
+                            <span className="mt-1 block">
+                              {entry.status === 'paused' ? 'Paused before next attempt' : `Attempt ${entry.attemptNumber}`}
+                              {entry.willRetry && entry.nextAttemptAt
+                                ? ` · next retry ${new Date(entry.nextAttemptAt).toLocaleString()}`
+                                : ''}
+                            </span>
+                            {entry.status === 'superseded' && (
+                              <span className="mt-1 block text-ui-text">
+                                Deliberately not sent because the issue state advanced.
+                              </span>
+                            )}
+                            {entry.terminalReason && entry.status !== 'superseded' && (
+                              <span className="mt-1 block">{entry.terminalReason.replaceAll('_', ' ')}</span>
+                            )}
+                          </div>
+                          <span className="capitalize">
+                            {entry.status}{entry.responseStatus ? ` (${entry.responseStatus})` : ''}
+                            {entry.willRetry ? ' · retrying' : ''}
+                          </span>
                           <span>{new Date(entry.sentAt).toLocaleString()}</span>
                         </div>
                       ))}

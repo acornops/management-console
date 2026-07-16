@@ -26,6 +26,8 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(webhooksPage).toContain('const eventGroups');
     expect(webhooksPage).toContain('applyEventGroup(group.eventTypes)');
     expect(webhooksPage).toContain('eventTypes: sortedEvents([...current.eventTypes, ...eventTypes])');
+    expect(webhooksPage).toContain("label: 'Issue alerts'");
+    expect(webhooksPage).toContain("'issue.resolved.v1'");
   });
 
   it('shows created signing secrets only through one-time create state', () => {
@@ -39,5 +41,6 @@ describe('WorkspaceWebhooksPage contract surface', () => {
   it('loads delivery history through the manage_webhooks-gated history endpoint', () => {
     expect(webhooksPage).toContain('controlPlaneApi.listWebhookHistory(workspace.id, webhook.id, { limit: 25 })');
     expect(webhooksPage).toContain('No delivery attempts recorded.');
+    expect(webhooksPage).toContain('Deliberately not sent because the issue state advanced.');
   });
 });
