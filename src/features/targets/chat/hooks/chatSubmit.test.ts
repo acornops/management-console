@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ChatMessage } from '@/types';
-import { RUN_TERMINAL_WAIT_TIMEOUT_MS } from '@/features/targets/chat/hooks/chatSubmit';
+import { isRuntimeSelectionPolicyRejection, RUN_TERMINAL_WAIT_TIMEOUT_MS } from '@/features/targets/chat/hooks/chatSubmit';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { preserveStreamingAssistantMessageId } from '@/features/targets/chat/lib/session-utils';
 import {
   replaceCancelledRunAssistantMessages,
@@ -155,5 +156,18 @@ describe('replaceCancelledRunAssistantMessages', () => {
 describe('RUN_TERMINAL_WAIT_TIMEOUT_MS', () => {
   it('exceeds the default write approval timeout window', () => {
     expect(RUN_TERMINAL_WAIT_TIMEOUT_MS).toBeGreaterThan(300000);
+  });
+});
+
+describe('isRuntimeSelectionPolicyRejection', () => {
+  it.each(['PROVIDER_NOT_ALLOWED', 'MODEL_NOT_ALLOWED', 'REASONING_EFFORT_NOT_ALLOWED'])(
+    'refreshes settings after a %s policy race',
+    (code) => {
+      expect(isRuntimeSelectionPolicyRejection(new ControlPlaneRequestError('rejected', 400, code))).toBe(true);
+    }
+  );
+
+  it('does not treat unrelated submission errors as runtime policy races', () => {
+    expect(isRuntimeSelectionPolicyRejection(new ControlPlaneRequestError('unavailable', 503, 'UPSTREAM_UNAVAILABLE'))).toBe(false);
   });
 });

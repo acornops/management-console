@@ -531,7 +531,7 @@ export const controlPlaneApi = {
     toolAccessMode?: 'read_only' | 'read_write',
     clientMessageId?: string,
     runtimeSelection?: ChatRuntimeSelection
-  ): Promise<{ messageId: string; runId: string }> {
+  ): Promise<{ messageId: string; runId: string; runtimeSelection?: ChatRuntimeSelection }> {
     const accepted = await requestJson<ControlPlaneAcceptedMessage>(
       `/api/v1/sessions/${encodeURIComponent(sessionId)}/messages`,
       {
@@ -552,7 +552,7 @@ export const controlPlaneApi = {
         })
       }
     );
-    return { messageId: accepted.message_id, runId: accepted.run_id };
+    return { messageId: accepted.message_id, runId: accepted.run_id, runtimeSelection: accepted.runtimeSelection };
   },
 
   async getRun(runId: string): Promise<ControlPlaneRun> {

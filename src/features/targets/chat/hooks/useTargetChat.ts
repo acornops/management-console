@@ -12,13 +12,11 @@ import {
 } from '@/features/targets/chat/lib/session-utils';
 import { submitChatMessage } from '@/features/targets/chat/hooks/chatSubmit';
 import {
-  createConversationId,
   sortSessionsByTimestamp,
   useControlPlaneChatSessionSync
 } from '@/features/targets/chat/hooks/chatSessionSync';
 import { isTraceInProgress } from '@/features/targets/chat/hooks/chatRunTrace';
 import {
-  buildRecentActivityWarning,
   buildTargetChatAutoScrollSignature,
   buildTargetChatConversationAccessState,
   createRecentActivitySessionPlaceholder,
@@ -34,6 +32,8 @@ import {
   replaceCancelledRunAssistantMessages,
   type ActiveRunStreamControls
 } from '@/features/targets/chat/hooks/chatRunCancellation';
+import { useChatComposerRuntime } from '@/features/targets/chat/hooks/useChatComposerRuntime';
+import { createDraftSessionWithWarning } from '@/features/targets/chat/hooks/chatDraftSession';
 export type { TargetChatController } from '@/features/targets/chat/hooks/targetChatControllerTypes';
 export function useTargetChat({
   target,
@@ -92,6 +92,14 @@ export function useTargetChat({
     timestamp: Date.now()
   };
   const activeSessionRecord = sessions.find((s) => s.id === activeSessionId) || null;
+  const {
+    composerRuntimeSelection,
+    workspaceAiSettingsRefreshToken,
+    setComposerRuntimeSelection,
+    handleMessageAccepted,
+    handleRuntimeSelectionRejected,
+    clearComposerRuntimeSelection
+  } = useChatComposerRuntime({ activeSession: activeSessionRecord, target, currentUserId, onUpdateSessions });
   const {
     isActiveSessionOwner,
     conversationNotice,
@@ -297,26 +305,12 @@ export function useTargetChat({
     onUpdateSessions(updatedSessions);
   };
 
-  const createDraftSessionWithWarning = async (): Promise<ChatSession> => {
-    const now = Date.now();
-    const newSessionId = createConversationId();
-    let recentActivityWarning: ChatSession['recentActivityWarning'];
-    try {
-      const activity = await (sessionApi?.getTargetChatActivity || controlPlaneApi.getTargetChatActivity)(target.workspaceId, target.id);
-      recentActivityWarning = buildRecentActivityWarning(activity, currentUserId, t);
-    } catch {
-      recentActivityWarning = undefined;
-    }
-    return {
-      id: newSessionId,
-      name: t('chat.newConversation'),
-      hydrated: true,
-      messages: [],
-      timestamp: now,
-      status: 'open',
-      recentActivityWarning
-    };
-  };
+  const createDraftSession = () => createDraftSessionWithWarning({
+    getTargetChatActivity: () => (sessionApi?.getTargetChatActivity || controlPlaneApi.getTargetChatActivity)(target.workspaceId, target.id),
+    currentUserId,
+    name: t('chat.newConversation'),
+    t
+  });
 
   const handleCreateSession = () => {
     const reusableDraft = sessions.find(
@@ -328,7 +322,7 @@ export function useTargetChat({
         shouldStickToBottomRef.current = true;
         return;
       }
-      void createDraftSessionWithWarning().then((checkedDraft) => {
+      void createDraftSession().then((checkedDraft) => {
         const nextDraft: ChatSession = {
           ...reusableDraft,
           recentActivityWarning: checkedDraft.recentActivityWarning,
@@ -341,7 +335,7 @@ export function useTargetChat({
       return;
     }
 
-    void createDraftSessionWithWarning().then((nextSession) => {
+    void createDraftSession().then((nextSession) => {
       onUpdateSessions(sortSessionsByTimestamp([nextSession, ...target.chatSessions]));
       setActiveSessionId(nextSession.id);
       shouldStickToBottomRef.current = true;
@@ -385,6 +379,7 @@ export function useTargetChat({
       await controlPlaneApi.deleteSession(sessionToDelete.backendSessionId);
       clearHydratingSession(sessionToDelete.backendSessionId);
     }
+    clearComposerRuntimeSelection(sessionToDelete);
 
     const nextSessions = sortSessionsByTimestamp(target.chatSessions.filter((session) => session.id !== sessionId));
     onUpdateSessions(nextSessions);
@@ -519,7 +514,9 @@ export function useTargetChat({
       markRunCancelled,
       registerRunStream,
       unregisterRunStream,
-      suppressedRunIdsRef: suppressedHydrationRunIdsRef
+      suppressedRunIdsRef: suppressedHydrationRunIdsRef,
+      onMessageAccepted: handleMessageAccepted,
+      onRuntimeSelectionRejected: handleRuntimeSelectionRejected
     });
 
   const releaseSubmitLockSoon = () => {
@@ -585,7 +582,7 @@ export function useTargetChat({
     submitInFlightRef.current = true;
     let shouldReleaseSubmitLock = true;
     try {
-      const draftSession = await createDraftSessionWithWarning();
+      const draftSession = await createDraftSession();
       const sessionId = draftSession.id;
       setActiveSessionId(sessionId);
       shouldStickToBottomRef.current = true;
@@ -627,6 +624,8 @@ export function useTargetChat({
     visibleMessages,
     runTracesByRunId,
     traceExpandedByRunId,
+    composerRuntimeSelection,
+    workspaceAiSettingsRefreshToken,
     transcriptRef,
     setActiveSessionId: handleSelectSession,
     handleCreateSession,
@@ -635,6 +634,7 @@ export function useTargetChat({
     handleDeleteSession,
     handleCancelRun,
     setInputValue,
+    setComposerRuntimeSelection,
     setTraceExpandedByRunId,
     handleChatScroll,
     handleLoadEarlierMessages,

@@ -17,6 +17,7 @@ describe('target chat controller wiring', () => {
   const useTargetChat = readFileSync(resolve(root, 'src/features/targets/chat/hooks/useTargetChat.ts'), 'utf8');
   const targetChatState = readFileSync(resolve(root, 'src/features/targets/chat/hooks/targetChatState.ts'), 'utf8');
   const chatSubmit = readFileSync(resolve(root, 'src/features/targets/chat/hooks/chatSubmit.ts'), 'utf8');
+  const chatSubmitTypes = readFileSync(resolve(root, 'src/features/targets/chat/hooks/chatSubmitTypes.ts'), 'utf8');
   const chatSubmitFailures = readFileSync(resolve(root, 'src/features/targets/chat/hooks/chatSubmitFailures.ts'), 'utf8');
   const chatSessionSync = readFileSync(resolve(root, 'src/features/targets/chat/hooks/chatSessionSync.ts'), 'utf8');
   const targetChatRunWatcher = readFileSync(resolve(root, 'src/features/targets/chat/hooks/targetChatRunWatcher.ts'), 'utf8');
@@ -142,7 +143,7 @@ describe('target chat controller wiring', () => {
     expect(useTargetChat).toContain('filterMessagesByRunIds(sanitizeChatMessages(messages), suppressedHydrationRunIdsRef.current)');
     expect(useTargetChat).toContain('const revisedRunIds = new Set(turnMessages.map((message) => message.runId).filter(Boolean) as string[]);');
     expect(useTargetChat).toContain('for (const revisedRunId of revisedRunIds) suppressedHydrationRunIdsRef.current.add(revisedRunId);');
-    expect(chatSubmit).toContain('suppressedRunIdsRef?: MutableRefObject<ReadonlySet<string>>;');
+    expect(chatSubmitTypes).toContain('suppressedRunIdsRef?: MutableRefObject<ReadonlySet<string>>;');
     expect(chatSubmit).toContain('const filterSuppressedMessages = (nextMessages: ChatMessage[]) => filterMessagesByRunIds(nextMessages, suppressedRunIdsRef?.current);');
     expect(chatSessionSync).toContain('replaceCancelledRunMessagesForHydration(');
   });

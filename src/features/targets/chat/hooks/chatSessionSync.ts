@@ -76,6 +76,14 @@ export function mapControlPlaneSessionToChatSession(
   session: ControlPlaneSession,
   existing?: ChatSession
 ): ChatSession {
+  const existingComposerIsUnsent = Boolean(
+    existing?.composerRuntimeSelection
+    && (
+      existing.composerRuntimeSelection.provider !== existing.lastRuntimeSelection?.provider
+      || existing.composerRuntimeSelection.model !== existing.lastRuntimeSelection?.model
+      || existing.composerRuntimeSelection.reasoningEffort !== existing.lastRuntimeSelection?.reasoningEffort
+    )
+  );
   return {
     id: existing?.id || session.id,
     backendSessionId: session.id,
@@ -86,6 +94,10 @@ export function mapControlPlaneSessionToChatSession(
     hydrated: existing?.hydrated ?? false,
     messagesLoadFailed: existing?.messagesLoadFailed,
     messagesNextCursor: existing?.messagesNextCursor,
+    lastRuntimeSelection: session.lastRuntimeSelection,
+    composerRuntimeSelection: existingComposerIsUnsent
+      ? existing?.composerRuntimeSelection
+      : session.lastRuntimeSelection,
     messages: existing?.messages || [],
     timestamp: toTimestamp(session.lastMessageAt || session.updatedAt)
   };

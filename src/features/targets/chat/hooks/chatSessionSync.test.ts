@@ -87,6 +87,7 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
         createdAt: '2026-06-01T05:00:00.000Z',
         updatedAt: '2026-06-01T05:00:00.000Z',
         lastMessageAt: '2026-06-01T05:00:00.000Z',
+        lastRuntimeSelection: { provider: 'openai', model: 'gpt-5.5', reasoningEffort: 'high' },
         expiresAt: '2026-06-02T05:00:00.000Z'
       };
 
@@ -97,8 +98,44 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
       expect(fetched.id).toBe('draft-session');
       expect(fetched.backendSessionId).toBe('backend-session');
       expect(fetched.messages).toEqual(draftBackedSession.messages);
+      expect(fetched.lastRuntimeSelection).toEqual({ provider: 'openai', model: 'gpt-5.5', reasoningEffort: 'high' });
+      expect(fetched.composerRuntimeSelection).toEqual({ provider: 'openai', model: 'gpt-5.5', reasoningEffort: 'high' });
       expect(merged).toHaveLength(1);
       expect(merged[0].id).toBe('draft-session');
+    });
+
+    it('preserves only unsent composer overrides when backend runtime data refreshes', () => {
+      const backendSession: ControlPlaneSession = {
+        id: 'backend-session',
+        workspaceId: 'workspace-1',
+        targetId: 'target-1',
+        targetType: 'kubernetes',
+        createdBy: 'user-1',
+        title: 'Session',
+        status: 'open',
+        createdAt: '2026-06-01T05:00:00.000Z',
+        updatedAt: '2026-06-01T05:00:00.000Z',
+        lastMessageAt: '2026-06-01T05:00:00.000Z',
+        lastRuntimeSelection: { provider: 'gemini', model: 'gemini-2.0-flash', reasoningEffort: 'low' },
+        expiresAt: '2026-06-02T05:00:00.000Z'
+      };
+      const acceptedSelection = { provider: 'openai' as const, model: 'gpt-5.5', reasoningEffort: 'high' as const };
+      const base: ChatSession = {
+        id: 'backend-session',
+        backendSessionId: 'backend-session',
+        name: 'Session',
+        messages: [],
+        timestamp: 1,
+        lastRuntimeSelection: acceptedSelection,
+        composerRuntimeSelection: acceptedSelection
+      };
+
+      expect(mapControlPlaneSessionToChatSession(backendSession, base).composerRuntimeSelection)
+        .toEqual(backendSession.lastRuntimeSelection);
+      expect(mapControlPlaneSessionToChatSession(backendSession, {
+        ...base,
+        composerRuntimeSelection: { ...acceptedSelection, reasoningEffort: 'medium' }
+      }).composerRuntimeSelection).toEqual({ ...acceptedSelection, reasoningEffort: 'medium' });
     });
 
     it('prefers crypto randomUUID and falls back to local ids', () => {

@@ -6,7 +6,7 @@ import {
   chatGateDialog,
   chatTranscriptStates,
   conversationAssistantStatuses, chatSessionSync,
-  chatSubmit,
+  chatSubmit, chatSubmitTypes,
   chatView,
   conversationHistory,
   enLocale,
@@ -247,16 +247,17 @@ describe('target chat polish contracts', () => {
     expect(chatView).not.toContain('disabled={!option.ready}');
     expect(chatView).not.toContain("t('workspaceAiSettings.providerDisabled')");
     expect(chatView).not.toContain("t('workspaceAiSettings.credentialMissingBadge')");
-    expect(chatView).toContain('const selectedEffortTouchedRef = React.useRef(false);');
-    expect(chatView).toContain('selectedEffortTouchedRef.current = true;');
-    expect(chatView).toContain('selectedEffortTouchedRef.current = false;');
-    expect(chatView).toContain('resolveComposerReasoningEffort(workspaceAiSettings, selectedEffort, selectedEffortTouchedRef.current)');
+    expect(chatView).toContain('resolveComposerRuntimeSelection(workspaceAiSettings, composerModelOptions, composerRuntimeSelection)');
+    expect(chatView).toContain('onComposerRuntimeSelectionChange({ ...resolvedComposerRuntimeSelection, reasoningEffort: value });');
+    expect(chatView).toContain('runtimeResolution.fellBack && !chatRuntimeSelectionsEqual');
+    expect(chatView).toContain("setRuntimeFallbackNotice(t('chat.runtimeFallbackNotice'));");
     expect(chatView).toContain('export function resolveComposerReasoningEffort(');
+    expect(chatView).toContain('export function resolveComposerRuntimeSelection(');
     expect(chatView).toContain('settings.allowedReasoningEfforts.includes(settings.reasoningEffort)');
     expect(chatView).toContain('selectedEffortTouched && settings.allowedReasoningEfforts.includes(selectedEffort)');
     expect(chatView).toContain('!canPost || !hasComposerSubmitPayload || isComposerRuntimeUnavailable');
     expect(chatView).toContain('findComposerModelOption(composerModelOptions, selectedProvider, selectedModel)');
-    expect(chatView).toContain('const composerRuntimeSelection: ChatRuntimeSelection | undefined');
+    expect(chatView).toContain('const resolvedComposerRuntimeSelection = runtimeResolution.selection;');
     expect(chatView).toContain('const sendText = async (text: string) => {');
     expect(chatView).toContain('const message = buildPromptWithComposerContext(text, composerAttachments);');
     expect(chatView).toContain('const isComposerSubmittingRef = React.useRef(false);');
@@ -264,7 +265,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('const releaseComposerSubmitLockSoon = () => {');
     expect(chatView).toContain('setTimeout(() => {');
     expect(chatView).toContain('isComposerSubmittingRef.current = true;');
-    expect(chatView).toContain('const sendPromise = onSend(message, composerRuntimeSelection);');
+    expect(chatView).toContain('const sendPromise = onSend(message, resolvedComposerRuntimeSelection);');
     expect(chatView).toContain('releaseComposerSubmitLockSoon();');
     expect(chatView).toContain('isComposerSubmittingRef.current = false;');
     expect(chatView).toContain('await sendPromise;');
@@ -332,7 +333,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('const startEditingMessage = (messageId: string, content: string) => {');
     expect(chatView).toContain('const submitEditedMessage = async (messageId: string) => {');
     expect(chatView).toContain('if (!nextContent || !canPost || isSubmittingEdit || isRunActive || isComposerRuntimeUnavailable) return;');
-    expect(chatView).toContain('await onEditLastUserMessage(messageId, nextContent, composerRuntimeSelection);');
+    expect(chatView).toContain('await onEditLastUserMessage(messageId, nextContent, resolvedComposerRuntimeSelection);');
     expect(chatView).toContain('!isComposerRuntimeUnavailable &&');
     expect(chatView).toContain("userTurnTrace?.status === 'cancelled' || userTurnTrace?.status === 'failed'");
     expect(chatView).toContain('messageIndex === lastUserMessageIndex');
@@ -635,14 +636,13 @@ describe('target chat polish contracts', () => {
     expect(visibleChatStatusSources).not.toContain('execution engine');
     expect(visibleChatStatusSources).not.toContain('reasoning trace');
     expect(useTargetChat).toContain('const handleEditLastUserMessage = async (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => {');
-    expect(useTargetChat).toContain('runtimeSelection');
     expect(useTargetChat).toContain("const userIndex = sanitizedMessages.findIndex((message) => message.id === messageId && message.role === 'user');");
     expect(useTargetChat).toContain("trace?.status === 'cancelled' || trace?.status === 'failed' || cancelledRunIdsRef.current.has(runId)");
     expect(useTargetChat).toContain('const revisedSession: ChatSession = {');
     expect(useTargetChat).toContain('messages: sanitizedMessages.slice(0, userIndex)');
     expect(useTargetChat).toContain('overrideInput: prompt');
     expect(chatSubmit).toContain('messages: activeSession.messages');
-    expect(chatSubmit).toContain('draftConversationName: string;');
+    expect(chatSubmitTypes).toContain('draftConversationName: string;');
     expect(chatSubmit).toContain('name: draftConversationName,');
     expect(chatSubmit).not.toContain("|| 'New Conversation'");
   });

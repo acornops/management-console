@@ -20,6 +20,7 @@ import { isWorkspaceDataRoute, legacySettingsRedirectPath, workspaceLandingPath 
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
 import { readLanguagePreference, readThemePreference } from '@/app/preferences';
+import { clearChatComposerRuntimesForUser } from '@/features/targets/chat/lib/chatComposerRuntimeStorage';
 import { getSystemTheme, resolveThemePreference, type ResolvedTheme, type ThemePreference } from '@/app/theme';
 import { getSupportedLanguages } from '@/i18n/languageConfig';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
@@ -449,6 +450,7 @@ const App: React.FC = () => {
       console.error('Logout failed', err);
     }
     setIsAccountMenuOpen(false);
+    if (user) clearChatComposerRuntimesForUser(user.id);
     skipAnonymousPreferencePersistCountRef.current = 2;
     setUser(null);
     setKubernetesClusters([]);

@@ -370,6 +370,8 @@ export interface ChatSession {
   hydrated?: boolean;
   messagesLoadFailed?: boolean;
   messagesNextCursor?: string;
+  lastRuntimeSelection?: ChatRuntimeSelection;
+  composerRuntimeSelection?: ChatRuntimeSelection;
   messages: ChatMessage[];
   timestamp: number;
 }

@@ -1,4 +1,4 @@
-import { ClusterMetricHistoryPoint, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
+import { ChatRuntimeSelection, ClusterMetricHistoryPoint, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
   ControlPlaneRoleTemplate,
@@ -537,6 +537,7 @@ export interface ControlPlaneSession extends ControlPlaneTargetScope {
   createdAt: string;
   updatedAt: string;
   lastMessageAt: string;
+  lastRuntimeSelection?: ChatRuntimeSelection;
   expiresAt: string;
   deletedAt?: string;
 }
@@ -615,6 +616,7 @@ export interface ControlPlaneRunToolApproval extends ControlPlaneTargetScope {
 export interface ControlPlaneAcceptedMessage {
   message_id: string;
   run_id: string;
+  runtimeSelection?: ChatRuntimeSelection;
 }
 
 export interface TargetMcpServer {

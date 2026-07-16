@@ -117,6 +117,8 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   const {
     sessions,
     activeSessionId,
+    composerRuntimeSelection,
+    workspaceAiSettingsRefreshToken,
     isActiveSessionOwner,
     conversationNotice,
     recentActivityWarning,
@@ -138,6 +140,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
     handleDeleteSession,
     handleCancelRun,
     setInputValue,
+    setComposerRuntimeSelection,
     handleChatScroll,
     handleLoadEarlierMessages,
     handleSend,
@@ -267,6 +270,8 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 inputValue={inputValue}
                 sessions={sessions}
                 activeSessionId={activeSessionId}
+                composerRuntimeSelection={composerRuntimeSelection}
+                workspaceAiSettingsRefreshToken={workspaceAiSettingsRefreshToken}
                 target={target}
                 assistantMarkdownComponents={assistantMarkdownComponents}
                 userMarkdownComponents={userMarkdownComponents}
@@ -279,6 +284,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 onLoadEarlierMessages={handleLoadEarlierMessages}
                 onOpenAiSettings={onOpenAiSettings}
                 onInputChange={setInputValue}
+                onComposerRuntimeSelectionChange={setComposerRuntimeSelection}
                 onSend={handleSend}
                 onEditLastUserMessage={handleEditLastUserMessage}
                 onApprove={handleApprove}

@@ -42,6 +42,9 @@ The management console is the browser client for the control-plane API. Keep thi
 - MCP catalog role/editability data comes from the control plane; the console must not hard-code editable role keys.
 - Workspace MCP credentials are write-only; responses expose only whether a credential is configured. Workflows inherit MCP servers and tools from selected agents unless a narrower restriction is saved.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
+- Established chats restore provider, model, and reasoning effort from the
+  control plane's latest accepted run snapshot; workspace AI settings seed
+  chats that do not yet have a run.
 
 ## Control-Plane Boundary Notes
 

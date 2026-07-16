@@ -44,6 +44,8 @@ export interface TargetChatController {
   runTracesByRunId: Record<string, LiveRunTrace>;
   sessionAssistantStatuses?: Record<string, AssistantNavStatus>;
   traceExpandedByRunId: Record<string, boolean>;
+  composerRuntimeSelection?: ChatRuntimeSelection;
+  workspaceAiSettingsRefreshToken: number;
   transcriptRef: (node: HTMLDivElement | null) => void;
   setActiveSessionId: (sessionId: string) => void;
   handleCreateSession: () => void;
@@ -52,6 +54,7 @@ export interface TargetChatController {
   handleDeleteSession: (sessionId: string) => Promise<void>;
   handleCancelRun: () => Promise<void>;
   setInputValue: (value: string) => void;
+  setComposerRuntimeSelection: (selection: ChatRuntimeSelection) => void;
   setTraceExpandedByRunId: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   handleChatScroll: () => void;
   handleLoadEarlierMessages: () => Promise<void>;

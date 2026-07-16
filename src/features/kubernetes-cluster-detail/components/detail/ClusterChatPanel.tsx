@@ -49,6 +49,8 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
   const {
     sessions,
     activeSessionId,
+    composerRuntimeSelection,
+    workspaceAiSettingsRefreshToken,
     isActiveSessionOwner,
     conversationNotice,
     recentActivityWarning,
@@ -70,6 +72,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
     handleDeleteSession,
     handleCancelRun,
     setInputValue,
+    setComposerRuntimeSelection,
     handleChatScroll,
     handleLoadEarlierMessages,
     handleSend,
@@ -111,6 +114,8 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       inputValue={inputValue}
       sessions={sessions}
       activeSessionId={activeSessionId}
+      composerRuntimeSelection={composerRuntimeSelection}
+      workspaceAiSettingsRefreshToken={workspaceAiSettingsRefreshToken}
       assistantMarkdownComponents={assistantMarkdownComponents}
       userMarkdownComponents={userMarkdownComponents}
       visibleMessages={visibleMessages}
@@ -122,6 +127,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       onLoadEarlierMessages={handleLoadEarlierMessages}
       onOpenAiSettings={onOpenAiSettings}
       onInputChange={setInputValue}
+      onComposerRuntimeSelectionChange={setComposerRuntimeSelection}
       onSend={handleSend}
       onEditLastUserMessage={handleEditLastUserMessage}
       onApprove={handleApprove}

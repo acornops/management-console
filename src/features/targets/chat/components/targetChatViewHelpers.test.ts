@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   resolveAiSettingsGateReason,
-  resolveComposerReasoningEffort
+  resolveComposerReasoningEffort,
+  resolveComposerRuntimeSelection,
+  buildComposerModelOptions
 } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { WorkspaceAiSettings } from '@/types';
 
@@ -52,5 +54,26 @@ describe('target chat view helpers', () => {
         false
       )
     ).toBe('off');
+  });
+
+  it('restores a valid conversation runtime and falls back when it is no longer available', () => {
+    const settings = aiSettings();
+    const options = buildComposerModelOptions(settings);
+    expect(resolveComposerRuntimeSelection(settings, options, {
+      provider: 'openai',
+      model: 'gpt-5-nano',
+      reasoningEffort: 'high'
+    })).toEqual({
+      selection: { provider: 'openai', model: 'gpt-5-nano', reasoningEffort: 'high' },
+      fellBack: false
+    });
+    expect(resolveComposerRuntimeSelection(settings, options, {
+      provider: 'gemini',
+      model: 'removed-model',
+      reasoningEffort: 'high'
+    })).toEqual({
+      selection: { provider: 'openai', model: 'gpt-5-nano', reasoningEffort: 'medium' },
+      fellBack: true
+    });
   });
 });

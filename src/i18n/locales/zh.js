@@ -1209,6 +1209,7 @@ export const zh = {
     modelLoading: '正在加载模型',
     modelDefault: '默认模型',
     modelUnavailable: '模型不可用',
+    runtimeFallbackNotice: '此对话之前使用的模型或推理强度已不可用。已选择工作区默认设置。',
     noModelsAvailable: '没有已配置模型',
     noConfiguredModels: '请先在 AI 设置中配置提供商 API key，再开始运行。',
     capabilityPreviewAria: '助手能力',

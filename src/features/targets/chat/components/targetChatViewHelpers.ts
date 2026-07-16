@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LlmProvider, ReasoningEffort, WorkspaceAiProviderStatus, WorkspaceAiSettings } from '@/types';
+import type { ChatRuntimeSelection, LlmProvider, ReasoningEffort, WorkspaceAiProviderStatus, WorkspaceAiSettings } from '@/types';
 import { formatUserTime } from '@/utils/dateTime';
 
 export const SUGGESTION_KEYS = ['chat.suggestions.podTermination', 'chat.suggestions.serviceDns', 'chat.suggestions.crashLooping', 'chat.suggestions.mcpConnectivity'];
@@ -334,4 +334,44 @@ export function resolveComposerReasoningEffort(
   return settings.allowedReasoningEfforts.includes('low')
     ? 'low'
     : settings.allowedReasoningEfforts[0] || 'low';
+}
+
+export function chatRuntimeSelectionsEqual(
+  left: ChatRuntimeSelection | undefined,
+  right: ChatRuntimeSelection | undefined
+): boolean {
+  return left?.provider === right?.provider
+    && left?.model === right?.model
+    && left?.reasoningEffort === right?.reasoningEffort;
+}
+
+export function resolveComposerRuntimeSelection(
+  settings: WorkspaceAiSettings,
+  options: ComposerModelOption[],
+  requested?: ChatRuntimeSelection
+): { selection?: ChatRuntimeSelection; fellBack: boolean } {
+  const requestedOption = requested
+    ? findComposerModelOption(options, requested.provider, requested.model)
+    : undefined;
+  if (
+    requested
+    && requestedOption?.ready
+    && settings.allowedReasoningEfforts.includes(requested.reasoningEffort)
+  ) {
+    return { selection: requested, fellBack: false };
+  }
+
+  const defaultOption = findComposerModelOption(options, settings.defaultProvider, settings.defaultModel);
+  const fallbackOption = (defaultOption?.ready ? defaultOption : undefined)
+    || options.find((option) => option.ready);
+  if (!fallbackOption) return { selection: undefined, fellBack: Boolean(requested) };
+
+  return {
+    selection: {
+      provider: fallbackOption.provider,
+      model: fallbackOption.model,
+      reasoningEffort: resolveComposerReasoningEffort(settings, settings.reasoningEffort, false)
+    },
+    fellBack: Boolean(requested)
+  };
 }

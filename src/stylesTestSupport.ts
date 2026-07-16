@@ -80,6 +80,7 @@ export const conversationHistory = readSource(
   'src/features/targets/chat/components/ConversationHistory.tsx'
 );
 export const chatSubmit = readSource('src/features/targets/chat/hooks/chatSubmit.ts');
+export const chatSubmitTypes = readSource('src/features/targets/chat/hooks/chatSubmitTypes.ts');
 export const chatSessionSync = readSource('src/features/targets/chat/hooks/chatSessionSync.ts');
 export const conversationAssistantStatuses = readSource(
   'src/features/targets/chat/hooks/useConversationAssistantStatuses.ts'

@@ -1209,6 +1209,7 @@ export const en = {
     modelLoading: 'Loading model',
     modelDefault: 'Default model',
     modelUnavailable: 'Model unavailable',
+    runtimeFallbackNotice: 'The model or reasoning effort previously used in this conversation is no longer available. Workspace defaults are selected.',
     noModelsAvailable: 'No configured models',
     noConfiguredModels: 'Configure an AI provider key in AI Settings before starting a run.',
     capabilityPreviewAria: 'Assistant capabilities',

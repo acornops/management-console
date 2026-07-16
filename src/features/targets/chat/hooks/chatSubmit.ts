@@ -1,6 +1,6 @@
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { ChatMessage, ChatRuntimeSelection, ChatSession } from '@/types';
-import { controlPlaneApi, type ControlPlaneSession } from '@/services/controlPlaneApi';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { createLocalMessageId, sleep } from '@/features/targets/chat/lib/helpers';
 import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/features/targets/chat/lib/trace-utils';
 import {
@@ -18,41 +18,19 @@ import { createBaseRunTrace, createRunEventHandler } from '@/features/targets/ch
 import { createConversationId } from '@/features/targets/chat/hooks/chatSessionSync';
 import {
   replaceCancelledRunAssistantMessages,
-  replacePendingCancelledRunMessages,
-  type ActiveRunStreamControls
+  replacePendingCancelledRunMessages
 } from '@/features/targets/chat/hooks/chatRunCancellation';
 import { LiveRunTrace } from '@/features/targets/chat/types';
 import { buildChatSubmitFailureMessage, replacePendingAssistantWithFailure } from '@/features/targets/chat/hooks/chatSubmitFailures';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
+import type { ChatSubmitArgs } from '@/features/targets/chat/hooks/chatSubmitTypes';
 export const RUN_TERMINAL_WAIT_TIMEOUT_MS = 600000;
-export async function submitChatMessage(args: {
-  target: TargetDescriptor;
-  activeSession: ChatSession;
-  activeSessionId: string | null;
-  canChat: boolean;
-  canRequestWriteRuns: boolean;
-  inputValue: string;
-  isLoading: boolean;
-  overrideInput?: string;
-  runtimeSelection?: ChatRuntimeSelection;
-  shouldStickToBottomRef: MutableRefObject<boolean>;
-  onUpdateSessions: (sessions: ChatSession[]) => void;
-  setActiveSessionId: (sessionId: string) => void;
-  setInputValue: (value: string) => void;
-  setIsLoading: (value: boolean) => void;
-  setActiveRunId: (runId: string | null) => void;
-  setRunTracesByRunId: Dispatch<SetStateAction<Record<string, LiveRunTrace>>>;
-  setTraceExpandedByRunId: Dispatch<SetStateAction<Record<string, boolean>>>;
-  draftConversationName: string;
-  fallbackBackendErrorMessage: string;
-  runCancelledMessage: string;
-  createSession?: (workspaceId: string, targetId: string, title: string) => Promise<ControlPlaneSession>;
-  isRunCancelled?: (runId: string) => boolean;
-  markRunCancelled?: (runId: string) => void;
-  registerRunStream?: (runId: string, controls: ActiveRunStreamControls) => void;
-  unregisterRunStream?: (runId: string) => void;
-  suppressedRunIdsRef?: MutableRefObject<ReadonlySet<string>>;
-}): Promise<void> {
+
+export function isRuntimeSelectionPolicyRejection(error: unknown): boolean {
+  return error instanceof ControlPlaneRequestError
+    && ['PROVIDER_NOT_ALLOWED', 'MODEL_NOT_ALLOWED', 'REASONING_EFFORT_NOT_ALLOWED'].includes(error.code || '');
+}
+
+export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
   const {
     target,
     activeSession,
@@ -79,7 +57,9 @@ export async function submitChatMessage(args: {
     markRunCancelled,
     registerRunStream,
     unregisterRunStream,
-    suppressedRunIdsRef
+    suppressedRunIdsRef,
+    onMessageAccepted,
+    onRuntimeSelectionRejected
   } = args;
   const prompt = (overrideInput ?? inputValue).trim();
   if (!prompt || isLoading || !canChat) return;
@@ -101,6 +81,7 @@ export async function submitChatMessage(args: {
     };
 
   sessions = existingSession ? upsertSession(sessions, session) : [...sessions, session];
+  const createsBackendSession = !session.backendSessionId;
   if (!activeSessionId) setActiveSessionId(localSessionId);
   const isFirstUserMessage = !session.messages.some((message) => message.role === 'user');
   if (isFirstUserMessage) {
@@ -228,6 +209,20 @@ export async function submitChatMessage(args: {
       userMsg.id,
       runtimeSelection
     );
+    const acceptedRuntimeSelection = accepted.runtimeSelection || runtimeSelection;
+    if (acceptedRuntimeSelection) {
+      session = {
+        ...session,
+        lastRuntimeSelection: acceptedRuntimeSelection,
+        composerRuntimeSelection: acceptedRuntimeSelection
+      };
+      sessions = upsertSession(sessions, session);
+      publishSessions(true);
+    }
+    onMessageAccepted?.({
+      backendSessionId: session.backendSessionId!,
+      createdBackendSession: createsBackendSession
+    });
     const streamingMessageId = `stream-${accepted.runId}`;
     runIdForMessage = accepted.runId;
     if (isRunCancelled(pendingTraceRunId)) {
@@ -602,6 +597,10 @@ export async function submitChatMessage(args: {
   } catch (error) {
     if (isAcceptedRunCancelled()) {
       return;
+    }
+    if (isRuntimeSelectionPolicyRejection(error)) {
+      setInputValue(inputValue);
+      onRuntimeSelectionRejected?.();
     }
     const failureMessage = buildChatSubmitFailureMessage({
       error,

@@ -35,6 +35,8 @@ export interface TargetChatViewProps {
   inputValue: string;
   sessions: ChatSession[];
   activeSessionId: string | null;
+  composerRuntimeSelection?: ChatRuntimeSelection;
+  workspaceAiSettingsRefreshToken: number;
   assistantMarkdownComponents: Components;
   userMarkdownComponents: Components;
   visibleMessages: ChatMessage[];
@@ -45,6 +47,7 @@ export interface TargetChatViewProps {
   onLoadEarlierMessages: () => void | Promise<void>;
   onOpenAiSettings: () => void;
   onInputChange: (value: string) => void;
+  onComposerRuntimeSelectionChange: (selection: ChatRuntimeSelection) => void;
   onSend: (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => void | Promise<void>;
   onEditLastUserMessage: (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => void | Promise<void>;
   onApprove: (approvalId: string) => void | Promise<void>;
