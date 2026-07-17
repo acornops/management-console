@@ -64,6 +64,7 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).toContain('void loadWorkspaceApprovalsPage();');
     expect(appPageContent).toContain("route.kind === 'workspaceApprovals'");
     expect(appPageContent).toContain('<WorkspaceApprovalsPage');
+    expect(appPageContent).toContain('runId={route.runId} approvalId={route.approvalId}');
     expect(appBootstrap).toContain("import { preloadAppRoutePage } from '@/app/AppPageContent';");
     expect(appBootstrap).toContain('preloadAppRoutePage(route);');
     expect(appPageContent).not.toContain('routePageLoaders');

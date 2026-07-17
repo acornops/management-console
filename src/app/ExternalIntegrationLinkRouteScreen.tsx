@@ -4,6 +4,13 @@ import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { MiniProgressBar } from '@/components/common/Loading';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import {
+  createExternalIntegrationGrantDraft,
+  externalIntegrationWorkspaceGrants,
+  formatExternalIntegrationCapability,
+  setExternalIntegrationWorkspaceEnabled,
+  toggleExternalIntegrationCapability
+} from '@/services/control-plane/externalIntegrationCapabilities';
 import type {
   ControlPlaneExternalIntegrationGrantableWorkspace,
   ControlPlaneExternalIntegrationLinkPreview,
@@ -30,33 +37,6 @@ export function externalIntegrationLinkApprovalTitle(preview?: Pick<ControlPlane
 
 export const externalIntegrationLinkApprovalMessage = 'Approve this request to connect your signed-in AcornOps account to the external account shown below.';
 
-const capabilityLabels: Record<ControlPlaneWorkspaceCapability, string> = {
-  read_workspace_data: 'Read workspace data',
-  create_sessions: 'Create sessions',
-  create_read_only_runs: 'Create read-only runs'
-};
-const externalIntegrationCapabilities: ControlPlaneWorkspaceCapability[] = [
-  'read_workspace_data',
-  'create_sessions',
-  'create_read_only_runs'
-];
-
-function normalizeCapabilities(capabilities: ControlPlaneWorkspaceCapability[]): ControlPlaneWorkspaceCapability[] {
-  const next = new Set(capabilities);
-  if (next.has('create_read_only_runs')) next.add('create_sessions');
-  if (next.has('create_sessions')) next.add('read_workspace_data');
-  if (!next.has('read_workspace_data')) {
-    next.delete('create_sessions');
-    next.delete('create_read_only_runs');
-  }
-  if (!next.has('create_sessions')) next.delete('create_read_only_runs');
-  return externalIntegrationCapabilities.filter((capability) => next.has(capability));
-}
-
-function initialGrantDraft(workspaces: ControlPlaneExternalIntegrationGrantableWorkspace[]): Record<string, ControlPlaneWorkspaceCapability[]> {
-  return Object.fromEntries(workspaces.map((workspace) => [workspace.workspaceId, normalizeCapabilities(workspace.grantedCapabilities)]));
-}
-
 export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLinkRouteScreenProps> = ({ logoSrc, onLinkStatus, route }) => {
   const [preview, setPreview] = useState<ControlPlaneExternalIntegrationLinkPreview | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(Boolean(route.token));
@@ -74,7 +54,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
       .then((result) => {
         if (!cancelled) {
           setPreview(result);
-          setGrantDraft(initialGrantDraft(result.grantableWorkspaces || []));
+          setGrantDraft(createExternalIntegrationGrantDraft(result.grantableWorkspaces || []));
         }
       })
       .catch(() => {
@@ -92,9 +72,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
     if (!route.token || isApproving || !preview) return;
     setIsApproving(true);
     setApprovalError(null);
-    const workspaceGrants = Object.entries(grantDraft)
-      .filter(([, capabilities]) => capabilities.length > 0)
-      .map(([workspaceId, capabilities]) => ({ workspaceId, capabilities }));
+    const workspaceGrants = externalIntegrationWorkspaceGrants(grantDraft);
     void controlPlaneApi.completeExternalIntegrationLink(route.token, workspaceGrants)
       .then(() => onLinkStatus('linked'))
       .catch(() => {
@@ -105,10 +83,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
   };
 
   const setWorkspaceEnabled = (workspace: ControlPlaneExternalIntegrationGrantableWorkspace, enabled: boolean) => {
-    setGrantDraft((current) => ({
-      ...current,
-      [workspace.workspaceId]: enabled && workspace.grantableCapabilities.includes('read_workspace_data') ? ['read_workspace_data'] : []
-    }));
+    setGrantDraft((current) => setExternalIntegrationWorkspaceEnabled(current, workspace, enabled));
   };
 
   const toggleCapability = (
@@ -116,16 +91,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
     capability: ControlPlaneWorkspaceCapability,
     enabled: boolean
   ) => {
-    setGrantDraft((current) => {
-      const currentCapabilities = new Set(current[workspace.workspaceId] || []);
-      if (enabled) currentCapabilities.add(capability);
-      else currentCapabilities.delete(capability);
-      const allowed = new Set(workspace.grantableCapabilities);
-      return {
-        ...current,
-        [workspace.workspaceId]: normalizeCapabilities([...currentCapabilities].filter((item) => allowed.has(item)))
-      };
-    });
+    setGrantDraft((current) => toggleExternalIntegrationCapability(current, workspace, capability, enabled));
   };
 
   const handleCancel = () => {
@@ -208,7 +174,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
                                 checked={selectedCapabilities.includes(capability)}
                                 onChange={(event) => toggleCapability(workspace, capability, event.target.checked)}
                               />
-                              {capabilityLabels[capability]}
+                              {formatExternalIntegrationCapability(capability)}
                             </label>
                           ))}
                         </div>

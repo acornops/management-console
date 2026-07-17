@@ -11,10 +11,10 @@ export interface ControlPlaneExternalIntegrationLinkPreview {
   grantableWorkspaces: ControlPlaneExternalIntegrationGrantableWorkspace[];
 }
 
-export type ControlPlaneWorkspaceCapability =
-  | 'read_workspace_data'
-  | 'create_sessions'
-  | 'create_read_only_runs';
+// The control plane owns the grantable capability catalog. Keep this wire type
+// open so a newly deployed server capability remains visible and selectable
+// before the console adds specialized display copy for it.
+export type ControlPlaneWorkspaceCapability = string;
 
 export interface ControlPlaneExternalIntegrationWorkspaceGrant {
   workspaceId: string;

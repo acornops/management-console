@@ -10,6 +10,13 @@ import { Select } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
+import {
+  createExternalIntegrationGrantDraft,
+  externalIntegrationWorkspaceGrants,
+  formatExternalIntegrationCapability,
+  setExternalIntegrationWorkspaceEnabled as updateExternalIntegrationWorkspaceEnabled,
+  toggleExternalIntegrationCapability as updateExternalIntegrationCapability
+} from '@/services/control-plane/externalIntegrationCapabilities';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import {
   controlPlaneApi,
@@ -121,7 +128,7 @@ const ExternalIntegrationGrantEditor: React.FC<{
                       checked={selectedCapabilities.includes(capability)}
                       onChange={(event) => onToggleCapability(link, workspace, capability, event.target.checked)}
                     />
-                    {externalIntegrationCapabilityLabels[capability]}
+                    {formatExternalIntegrationCapability(capability)}
                   </label>
                 ))}
               </div>
@@ -138,36 +145,10 @@ const ExternalIntegrationGrantEditor: React.FC<{
 
 const inputClassName = formInputClassName();
 
-const externalIntegrationCapabilityLabels: Record<ControlPlaneWorkspaceCapability, string> = {
-  read_workspace_data: 'Read workspace data',
-  create_sessions: 'Create sessions',
-  create_read_only_runs: 'Create read-only runs'
-};
-const externalIntegrationCapabilities: ControlPlaneWorkspaceCapability[] = [
-  'read_workspace_data',
-  'create_sessions',
-  'create_read_only_runs'
-];
-
-function normalizeExternalIntegrationCapabilities(capabilities: ControlPlaneWorkspaceCapability[]): ControlPlaneWorkspaceCapability[] {
-  const next = new Set(capabilities);
-  if (next.has('create_read_only_runs')) next.add('create_sessions');
-  if (next.has('create_sessions')) next.add('read_workspace_data');
-  if (!next.has('read_workspace_data')) {
-    next.delete('create_sessions');
-    next.delete('create_read_only_runs');
-  }
-  if (!next.has('create_sessions')) next.delete('create_read_only_runs');
-  return externalIntegrationCapabilities.filter((capability) => next.has(capability));
-}
-
 function draftFromExternalIntegrationLinks(links: ControlPlaneExternalIntegrationLinkSummary[]): Record<string, Record<string, ControlPlaneWorkspaceCapability[]>> {
   return Object.fromEntries(links.map((link) => [
     link.id,
-    Object.fromEntries((link.grantableWorkspaces || []).map((workspace) => [
-      workspace.workspaceId,
-      normalizeExternalIntegrationCapabilities(workspace.grantedCapabilities)
-    ]))
+    createExternalIntegrationGrantDraft(link.grantableWorkspaces || [])
   ]));
 }
 
@@ -354,10 +335,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
   ) => {
     setExternalIntegrationDrafts((current) => ({
       ...current,
-      [link.id]: {
-        ...(current[link.id] || {}),
-        [workspace.workspaceId]: enabled && workspace.grantableCapabilities.includes('read_workspace_data') ? ['read_workspace_data'] : []
-      }
+      [link.id]: updateExternalIntegrationWorkspaceEnabled(current[link.id] || {}, workspace, enabled)
     }));
   };
 
@@ -367,27 +345,15 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
     capability: ControlPlaneWorkspaceCapability,
     enabled: boolean
   ) => {
-    setExternalIntegrationDrafts((current) => {
-      const linkDraft = current[link.id] || {};
-      const selected = new Set(linkDraft[workspace.workspaceId] || []);
-      if (enabled) selected.add(capability);
-      else selected.delete(capability);
-      const allowed = new Set(workspace.grantableCapabilities);
-      return {
-        ...current,
-        [link.id]: {
-          ...linkDraft,
-          [workspace.workspaceId]: normalizeExternalIntegrationCapabilities([...selected].filter((item) => allowed.has(item)))
-        }
-      };
-    });
+    setExternalIntegrationDrafts((current) => ({
+      ...current,
+      [link.id]: updateExternalIntegrationCapability(current[link.id] || {}, workspace, capability, enabled)
+    }));
   };
 
   const saveExternalIntegrationGrants = async (link: ControlPlaneExternalIntegrationLinkSummary) => {
     const linkDraft = externalIntegrationDrafts[link.id] || {};
-    const workspaceGrants = Object.entries(linkDraft)
-      .filter(([, capabilities]) => capabilities.length > 0)
-      .map(([workspaceId, capabilities]) => ({ workspaceId, capabilities }));
+    const workspaceGrants = externalIntegrationWorkspaceGrants(linkDraft);
     setSavingExternalIntegrationLinkId(link.id);
     setExternalIntegrationError(null);
     setExternalIntegrationNotice(null);

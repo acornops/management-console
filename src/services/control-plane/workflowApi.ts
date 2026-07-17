@@ -344,12 +344,14 @@ export function deleteWorkflowSchedule(workspaceId: string, scheduleId: string):
 
 export function listWorkspaceApprovalInbox(
   workspaceId: string,
-  params: { status?: 'pending' | 'decided' | 'all'; limit?: number; cursor?: string } = {}
+  params: { status?: 'pending' | 'decided' | 'all'; limit?: number; cursor?: string; runId?: string; approvalId?: string } = {}
 ): Promise<WorkspaceApprovalInboxResponse> {
   const search = new URLSearchParams();
   if (params.status) search.set('status', params.status);
   if (params.limit) search.set('limit', String(params.limit));
   if (params.cursor) search.set('cursor', params.cursor);
+  if (params.runId) search.set('runId', params.runId);
+  if (params.approvalId) search.set('approvalId', params.approvalId);
   const query = search.toString();
   return requestJson<unknown>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/approvals${query ? `?${query}` : ''}`

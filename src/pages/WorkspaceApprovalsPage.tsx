@@ -16,6 +16,8 @@ import { formatUserDateTime } from '@/utils/dateTime';
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
   onApprovalDecision?: () => Promise<void> | void;
+  runId?: string;
+  approvalId?: string;
 }
 
 type ApprovalFilter = 'pending' | 'decided';
@@ -41,7 +43,12 @@ function sourceLabel(source: WorkspaceApprovalInboxRow['source']): string {
   return labels[source];
 }
 
-export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ workspace, onApprovalDecision }) => {
+export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
+  workspace,
+  onApprovalDecision,
+  runId,
+  approvalId
+}) => {
   const { t } = useTranslation();
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
   const [approvals, setApprovals] = useState<WorkspaceApprovalInboxRow[]>([]);
@@ -57,12 +64,18 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
     workspace.permissions?.create_read_write_runs ||
     workspace.currentUserRoleTemplate?.capabilities.includes('create_read_write_runs')
   );
+  const focusedApproval = Boolean(runId || approvalId);
 
   const loadApprovals = async (status: ApprovalFilter = approvalFilter) => {
     setIsLoadingApprovals(true);
     setApprovalError('');
     try {
-      const response = await listWorkspaceApprovalInbox(workspace.id, { status, limit: 50 });
+      const response = await listWorkspaceApprovalInbox(workspace.id, {
+        status: focusedApproval ? 'all' : status,
+        limit: 50,
+        runId,
+        approvalId
+      });
       setApprovals(response.items);
     } catch (err) {
       setApprovalError(err instanceof Error ? err.message : t('approvals.loadError'));
@@ -73,7 +86,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
 
   useEffect(() => {
     void loadApprovals(approvalFilter);
-  }, [workspace.id, approvalFilter]);
+  }, [workspace.id, approvalFilter, runId, approvalId]);
 
   const summary = useMemo(() => {
     const pending = approvals.filter((approval) => approval.status === 'pending');
@@ -127,6 +140,11 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
           {approvalError}
         </div>
       )}
+      {focusedApproval && (
+        <div className="mb-5 rounded-md border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent-strong">
+          {t('approvals.focusedNotice')}
+        </div>
+      )}
 
       <section aria-label={t('approvals.summaryLabel')} className="mb-5 overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
         <div className="grid divide-y divide-ui-border sm:grid-cols-4 sm:divide-x sm:divide-y-0">
@@ -155,12 +173,14 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
               <p className="type-caption mt-1 text-ui-text-muted">{t('approvals.queueBody')}</p>
             </div>
           </div>
-          <FilterToggleGroup<ApprovalFilter>
-            activeValue={approvalFilter}
-            ariaLabel={t('approvals.filters.label')}
-            items={approvalFilterItems}
-            onValueChange={setApprovalFilter}
-          />
+          {!focusedApproval && (
+            <FilterToggleGroup<ApprovalFilter>
+              activeValue={approvalFilter}
+              ariaLabel={t('approvals.filters.label')}
+              items={approvalFilterItems}
+              onValueChange={setApprovalFilter}
+            />
+          )}
         </div>
 
         {isLoadingApprovals ? (
@@ -169,8 +189,10 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
           </div>
         ) : approvals.length === 0 ? (
           <div className="px-5 py-12 text-center">
-            <h3 className="type-section-title">{t('approvals.emptyTitle')}</h3>
-            <p className="type-body mx-auto mt-2 max-w-xl text-ui-text-muted">{t('approvals.emptyBody')}</p>
+            <h3 className="type-section-title">{focusedApproval ? t('approvals.focusedEmptyTitle') : t('approvals.emptyTitle')}</h3>
+            <p className="type-body mx-auto mt-2 max-w-xl text-ui-text-muted">
+              {focusedApproval ? t('approvals.focusedEmptyBody') : t('approvals.emptyBody')}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -191,8 +213,12 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
                 {approvals.map((approval) => {
                   const decision = decisionState[approval.approvalId];
                   const pending = approval.status === 'pending';
+                  const isFocusedApproval = Boolean(
+                    (approvalId && approval.approvalId === approvalId) ||
+                    (!approvalId && runId && approval.runId === runId)
+                  );
                   return (
-                    <tr key={approval.approvalId} className="bg-ui-surface text-sm">
+                    <tr key={approval.approvalId} className={`text-sm ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
                       <th scope="row" className="px-4 py-4 font-semibold text-ui-text">{approval.summary}</th>
                       <td className="px-4 py-4 font-medium text-ui-text">{approval.workflowId || sourceLabel(approval.source)} · {approval.runId}</td>
                       <td className="px-4 py-4 text-ui-text-muted">{approval.requestedBy || 'System'}</td>

@@ -28,7 +28,7 @@ export type AppRoute =
   | { kind: 'workspaceAgents'; workspaceId: string }
   | { kind: 'workspaceWorkflows'; workspaceId: string }
   | { kind: 'workspaceSchedules'; workspaceId: string; createWorkflowId?: string }
-  | { kind: 'workspaceApprovals'; workspaceId: string }
+  | { kind: 'workspaceApprovals'; workspaceId: string; runId?: string; approvalId?: string }
   | { kind: 'workspaceMembers'; workspaceId: string }
   | { kind: 'workspaceAiSettings'; workspaceId: string }
   | { kind: 'workspaceSettings'; workspaceId: string }
@@ -205,7 +205,17 @@ export function parseAppRoute(path: string): AppRoute {
         ? { kind: 'workspaceSchedules', workspaceId, createWorkflowId }
         : { kind: 'workspaceSchedules', workspaceId };
     }
-    if (section === 'approvals') return { kind: 'workspaceApprovals', workspaceId };
+    if (section === 'approvals') {
+      const route: Extract<AppRoute, { kind: 'workspaceApprovals' }> = {
+        kind: 'workspaceApprovals',
+        workspaceId
+      };
+      const runId = params.get('runId');
+      const approvalId = params.get('approvalId');
+      if (runId) route.runId = runId;
+      if (approvalId) route.approvalId = approvalId;
+      return route;
+    }
     if (section === 'ai-settings') return { kind: 'workspaceAiSettings', workspaceId };
     if (section === 'settings') return { kind: 'workspaceSettings', workspaceId };
     if (section === 'webhooks') return { kind: 'workspaceWebhooks', workspaceId };
@@ -295,8 +305,13 @@ export const AppPaths = {
     `/workspaces/${encodeURIComponent(workspaceId)}/schedules`,
   workspaceScheduleCreate: (workspaceId: string, workflowId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/schedules?create=schedule&workflowId=${encodeURIComponent(workflowId)}`,
-  workspaceApprovals: (workspaceId: string): string =>
-    `/workspaces/${encodeURIComponent(workspaceId)}/approvals`,
+  workspaceApprovals: (workspaceId: string, focus?: { runId?: string; approvalId?: string }): string => {
+    const params = new URLSearchParams();
+    if (focus?.runId) params.set('runId', focus.runId);
+    if (focus?.approvalId) params.set('approvalId', focus.approvalId);
+    const query = params.toString();
+    return `/workspaces/${encodeURIComponent(workspaceId)}/approvals${query ? `?${query}` : ''}`;
+  },
   workspaceMembers: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/members`,
   workspaceAiSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`,
   workspaceSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/settings`,

@@ -21,7 +21,13 @@ describe('WorkspaceApprovalsPage control-plane surface', () => {
     expect(approvalsPage).toContain('<FilterToggleGroup<ApprovalFilter>');
     expect(approvalsPage).toContain("ariaLabel={t('approvals.filters.label')}");
     expect(componentVocabulary).toContain('aria-pressed={filter.ariaPressed}');
+    expect(approvalsPage).toContain("status: focusedApproval ? 'all' : status");
+    expect(approvalsPage).toContain('runId,');
+    expect(approvalsPage).toContain('approvalId');
+    expect(approvalsPage).toContain('isFocusedApproval');
     expect(workflowApi).toContain('/approvals');
+    expect(workflowApi).toContain('params.runId');
+    expect(workflowApi).toContain('params.approvalId');
     expect(approvalsPage).not.toContain('const approvalRows');
     expect(approvalsPage).not.toContain('placeholderNotice');
   });
@@ -30,10 +36,14 @@ describe('WorkspaceApprovalsPage control-plane surface', () => {
     expect(approvalsPage).toContain('isLoadingApprovals');
     expect(approvalsPage).toContain('approvalError');
     expect(approvalsPage).toContain('approvals.emptyTitle');
+    expect(approvalsPage).toContain('approvals.focusedEmptyTitle');
+    expect(approvalsPage).toContain('approvals.focusedNotice');
+    expect(approvalsPage).toContain('{!focusedApproval && (');
     expect(approvalsPage).toContain('approvals.permissionNotice');
     expect(approvalsPage).toContain('canDecideApprovals');
     expect(approvalsPage).toContain("decisionState[approval.approvalId]");
     expect(enLocale).toContain("emptyTitle: 'No approvals waiting'");
+    expect(enLocale).toContain("focusedNotice: 'Showing the approval referenced by this link.'");
     expect(enLocale).toContain("permissionNotice: 'You need create_read_write_runs to approve write-capable workflow actions.'");
   });
 
