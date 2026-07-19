@@ -7,7 +7,7 @@ const externalIntegrationCapabilityLabels: Record<string, string> = {
   read_workspace_data: 'Read workspace data',
   create_sessions: 'Create sessions',
   create_read_only_runs: 'Create read-only runs',
-  create_read_write_runs: 'Create read-write runs'
+  create_read_write_runs: 'Launch read-write runs and Workflows; approve integration-owned writes'
 };
 
 const dependentCapabilityOrder: ControlPlaneWorkspaceCapability[] = [

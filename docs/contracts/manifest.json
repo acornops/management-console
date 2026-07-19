@@ -161,6 +161,7 @@
         "POST /api/v1/workflows/{workflowId}/sessions",
         "POST /api/v1/workflow-sessions/{sessionId}/messages",
         "GET /api/v1/workflow-executions/{executionId}",
+        "GET /api/v1/workflow-executions/{executionId}/stream",
         "POST /api/v1/workflow-executions/{executionId}/cancel",
         "POST /api/v1/workflow-executions/{executionId}/resume",
         "GET /api/v1/workflow-reports/{reportId}",

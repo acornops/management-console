@@ -27,7 +27,9 @@ const workspaces: ControlPlaneExternalIntegrationGrantableWorkspace[] = [
 
 describe('external integration capabilities', () => {
   it('labels the opt-in read-write run capability', () => {
-    expect(formatExternalIntegrationCapability('create_read_write_runs')).toBe('Create read-write runs');
+    expect(formatExternalIntegrationCapability('create_read_write_runs')).toBe(
+      'Launch read-write runs and Workflows; approve integration-owned writes'
+    );
   });
 
   it('formats a new server-provided capability instead of rendering a blank label', () => {
