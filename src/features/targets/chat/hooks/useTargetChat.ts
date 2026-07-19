@@ -27,6 +27,11 @@ import { useTargetChatActivityStream } from '@/features/targets/chat/hooks/targe
 import { useWatchedRunStream } from '@/features/targets/chat/hooks/targetChatRunWatcher';
 import { useActivityDiscoveredRun } from '@/features/targets/chat/hooks/useActivityDiscoveredRun';
 import { useTargetChatScrollAnchor } from '@/features/targets/chat/hooks/useTargetChatScrollAnchor';
+import {
+  isChatSubmissionLocked,
+  releaseChatSubmissionLock,
+  runWithChatSubmissionLock
+} from '@/features/targets/chat/hooks/chatSubmissionLock';
 import { LiveRunTrace } from '@/features/targets/chat/types';
 import {
   replaceCancelledRunAssistantMessages,
@@ -64,7 +69,7 @@ export function useTargetChat({
   const cancelledRunIdsRef = useRef<Set<string>>(new Set());
   const suppressedHydrationRunIdsRef = useRef<Set<string>>(new Set());
   const activeRunStreamControlsRef = useRef<Record<string, ActiveRunStreamControls>>({});
-  const submitInFlightRef = useRef(false);
+  const submitInFlightRef = useRef<symbol | null>(null);
   const isRunCancelled = useCallback((runId: string) => cancelledRunIdsRef.current.has(runId), []);
   const markRunCancelled = useCallback((runId: string) => {
     cancelledRunIdsRef.current.add(runId);
@@ -394,6 +399,7 @@ export function useTargetChat({
     const runId = effectiveActiveRunId;
     const timestamp = Date.now();
     cancelledRunIdsRef.current.add(runId);
+    releaseChatSubmissionLock(submitInFlightRef);
     const isPendingAcceptedRun = runId.startsWith('pending-trace-');
     activeRunStreamControlsRef.current[runId]?.abort();
     setIsCancellingRun(true);
@@ -519,24 +525,8 @@ export function useTargetChat({
       onRuntimeSelectionRejected: handleRuntimeSelectionRejected
     });
 
-  const releaseSubmitLockSoon = () => {
-    setTimeout(() => {
-      submitInFlightRef.current = false;
-    }, 0);
-  };
-
-  const runSubmittedChatMessage = async (args: Parameters<typeof submitChatMessageForArgs>[0]) => {
-    if (submitInFlightRef.current) return;
-    submitInFlightRef.current = true;
-    try {
-      const submitPromise = submitChatMessageForArgs(args);
-      releaseSubmitLockSoon();
-      await submitPromise;
-    } catch (error) {
-      submitInFlightRef.current = false;
-      throw error;
-    }
-  };
+  const runSubmittedChatMessage = (args: Parameters<typeof submitChatMessageForArgs>[0]) =>
+    runWithChatSubmissionLock(submitInFlightRef, () => submitChatMessageForArgs(args));
 
   const handleSend = (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) =>
     runSubmittedChatMessage({
@@ -549,7 +539,7 @@ export function useTargetChat({
 
   const handleEditLastUserMessage = async (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => {
     const prompt = nextContent.trim();
-    if (!prompt || isRunActive || !canPostInActiveSession || submitInFlightRef.current) return;
+    if (!prompt || isRunActive || !canPostInActiveSession || isChatSubmissionLocked(submitInFlightRef)) return;
     const sanitizedMessages = sanitizeChatMessages(activeSession.messages);
     const userIndex = sanitizedMessages.findIndex((message) => message.id === messageId && message.role === 'user');
     if (userIndex < 0) return;
@@ -578,10 +568,7 @@ export function useTargetChat({
   };
 
   const handleSendInNewSession = async (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => {
-    if (submitInFlightRef.current) return;
-    submitInFlightRef.current = true;
-    let shouldReleaseSubmitLock = true;
-    try {
+    await runWithChatSubmissionLock(submitInFlightRef, async () => {
       const draftSession = await createDraftSession();
       const sessionId = draftSession.id;
       setActiveSessionId(sessionId);
@@ -591,19 +578,14 @@ export function useTargetChat({
         setInputValue(overrideInput);
         return;
       }
-      const submitPromise = submitChatMessageForArgs({
+      await submitChatMessageForArgs({
         activeSessionForSubmit: draftSession,
         activeSessionIdForSubmit: sessionId,
         canChatForSubmit: canChat,
         overrideInput,
         runtimeSelection
       });
-      releaseSubmitLockSoon();
-      shouldReleaseSubmitLock = false;
-      await submitPromise;
-    } finally {
-      if (shouldReleaseSubmitLock) submitInFlightRef.current = false;
-    }
+    });
   };
 
   return {

@@ -86,18 +86,14 @@ describe('target chat controller wiring', () => {
   });
 
   it('serializes chat submissions before React run-active state catches up', () => {
-    expect(useTargetChat).toContain('const submitInFlightRef = useRef(false);');
+    expect(useTargetChat).toContain('const submitInFlightRef = useRef<symbol | null>(null);');
     expect(useTargetChat).toContain('const submitChatMessageForArgs = (args: {');
-    expect(useTargetChat).toContain('const releaseSubmitLockSoon = () => {');
-    expect(useTargetChat).toContain('setTimeout(() => {');
-    expect(useTargetChat).toContain('if (submitInFlightRef.current) return;');
-    expect(useTargetChat).toContain('submitInFlightRef.current = true;');
-    expect(useTargetChat).toContain('releaseSubmitLockSoon();');
-    expect(useTargetChat).toContain('if (shouldReleaseSubmitLock) submitInFlightRef.current = false;');
-    expect(useTargetChat).toContain('if (!prompt || isRunActive || !canPostInActiveSession || submitInFlightRef.current) return;');
+    expect(useTargetChat).toContain('runWithChatSubmissionLock(submitInFlightRef, () => submitChatMessageForArgs(args));');
+    expect(useTargetChat).toContain('releaseChatSubmissionLock(submitInFlightRef);');
+    expect(useTargetChat).toContain('isChatSubmissionLocked(submitInFlightRef)');
+    expect(useTargetChat).not.toContain('releaseSubmitLockSoon');
     expect(useTargetChat).toContain('const handleSendInNewSession = async (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => {');
-    expect(useTargetChat).toContain('let shouldReleaseSubmitLock = true;');
-    expect(useTargetChat).toContain('const submitPromise = submitChatMessageForArgs({');
+    expect(useTargetChat).toContain('await runWithChatSubmissionLock(submitInFlightRef, async () => {');
   });
 
   it('optimistically resolves cancelled runs so the composer and placeholder recover', () => {

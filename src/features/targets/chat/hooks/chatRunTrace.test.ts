@@ -437,9 +437,15 @@ describe('chatRunTrace helpers', () => {
       appendStreamingText
     });
 
-    handleEvent(createEvent('run_failed', 1));
+    handleEvent(createEvent('run_failed', 1, {
+      code: 'GATEWAY_HTTP_ERROR',
+      message: 'llm-gateway returned HTTP 404: {"detail":"Not Found"}'
+    }));
     expect(trace.status).toBe('failed');
     expect(trace.steps.at(-1)?.label).toBe('Could not complete');
+    expect(trace.steps.at(-1)?.detail).toBe(
+      'A required service could not handle this request. Try again later. If the problem continues, contact a workspace administrator.'
+    );
     handleEvent(createEvent('assistant_token_delta', 2, { text: 'stale' }));
     expect(trace.status).toBe('failed');
     expect(trace.steps.at(-1)?.label).toBe('Could not complete');

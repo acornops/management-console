@@ -332,7 +332,12 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
       trace = appendRunTraceStep(trace, `Approval expired: ${toolName}`, 'error', 'No approval was recorded before timeout.', 'tool');
     } else if (event.type === 'run_failed') {
-      trace = appendRunTraceStep({ ...trace, status: 'failed' }, 'Could not complete', 'error', formatTraceFailureDetail());
+      trace = appendRunTraceStep(
+        { ...trace, status: 'failed' },
+        'Could not complete',
+        'error',
+        formatTraceFailureDetail(event.payload?.code, event.payload?.message)
+      );
       reachedTerminalEvent = true;
     } else if (event.type === 'run_completed') {
       trace = appendRunTraceStep({ ...trace, status: 'completed' }, 'Completed', 'success', 'The run finished successfully.');
@@ -591,7 +596,12 @@ export function createRunEventHandler(args: {
 
     if (event.type === 'run_failed') {
       updateTrace(
-        appendRunTraceStep({ ...trace, status: 'failed' }, 'Could not complete', 'error', formatTraceFailureDetail())
+        appendRunTraceStep(
+          { ...trace, status: 'failed' },
+          'Could not complete',
+          'error',
+          formatTraceFailureDetail(event.payload?.code, event.payload?.message)
+        )
       );
       args.setTraceExpanded(false);
       return;
