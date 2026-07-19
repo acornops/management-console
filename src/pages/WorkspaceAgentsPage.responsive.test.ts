@@ -5,7 +5,11 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(__dirname, '../..');
 const page = readFileSync(resolve(root, 'src/pages/WorkspaceAgentsPage.tsx'), 'utf8');
 const catalog = readFileSync(resolve(root, 'src/pages/WorkspaceAgentsCatalog.tsx'), 'utf8');
+const discoveryFilterBar = readFileSync(resolve(root, 'src/components/common/DiscoveryFilterBar.tsx'), 'utf8');
+const searchFilterFrame = readFileSync(resolve(root, 'src/components/common/SearchFilterFrame.tsx'), 'utf8');
 const panel = readFileSync(resolve(root, 'src/components/common/RightSidePanel.tsx'), 'utf8');
+const detail = readFileSync(resolve(root, 'src/pages/WorkspaceAgentDetailPanel.tsx'), 'utf8');
+const componentVocabulary = readFileSync(resolve(root, 'src/components/common/ComponentVocabulary.tsx'), 'utf8');
 
 describe('WorkspaceAgentsPage responsive polish', () => {
   it('contains the route and catalog at narrow widths', () => {
@@ -20,10 +24,14 @@ describe('WorkspaceAgentsPage responsive polish', () => {
   });
 
   it('keeps the toolbar and filters contained', () => {
-    expect(catalog).toContain('xl:flex-row xl:items-center xl:justify-between');
-    expect(catalog).toContain('lg:w-full xl:max-w-xl');
-    expect(catalog).toContain('overflow-x-auto');
-    expect(catalog).toContain('flex-nowrap');
+    expect(catalog).toContain('<DiscoveryFilterBar');
+    expect(catalog).toContain('createDiscoveryFilterGroup<AgentFocusFilter>');
+    expect(discoveryFilterBar).toContain('<SearchFilterFrame');
+    expect(discoveryFilterBar).toContain('w-full pl-11 pr-12 lg:w-full');
+    expect(discoveryFilterBar).toContain('<Select<string>');
+    expect(searchFilterFrame).toContain('sm:grid-cols-2 lg:contents');
+    expect(searchFilterFrame).toContain('lg:w-[clamp(10.5rem,14vw,14rem)]');
+    expect(searchFilterFrame).toContain('lg:flex-nowrap');
   });
 
   it('keeps touch and keyboard navigation available across row layouts', () => {
@@ -38,5 +46,11 @@ describe('WorkspaceAgentsPage responsive polish', () => {
     expect(page).toContain('<AgentWorkspaceDrawer');
     expect(panel).toContain('role="dialog"');
     expect(panel).toContain('aria-modal="true"');
+  });
+
+  it('reveals keyboard-selected tabs within a horizontally scrolling mobile strip', () => {
+    expect(detail).toContain('allPanelsMounted={false}');
+    expect(componentVocabulary).toContain("tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });");
+    expect(componentVocabulary).not.toContain('focus({ preventScroll: true })');
   });
 });

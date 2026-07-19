@@ -38,10 +38,11 @@ describe('ThemeMenu', () => {
     expect(themeMenu).toContain('{selectedLabel}');
   });
 
-  it('shows the shared destination icon on all three triggers', () => {
+  it('shows the shared current-theme icon on all three triggers', () => {
     expect(themeMenu).toContain("import { ThemeToggleIcon } from '@/components/common/ThemeToggleIcon';");
     expect(themeMenu.match(/<ThemeToggleIcon resolvedTheme=\{resolvedTheme\}/g)).toHaveLength(3);
-    expect(themeToggleIcon).toContain("resolvedTheme === 'dark' ? 'light' : 'dark'");
+    expect(themeToggleIcon).toContain("resolvedTheme === 'dark' ? Moon : Sun");
+    expect(themeToggleIcon).toContain('key={resolvedTheme}');
     expect(themeToggleIcon).toContain('duration: 0.16');
     expect(themeToggleIcon).toContain('opacity: 0, rotate: -24, scale: 0.82');
     expect(themeToggleIcon).toContain('useReducedMotion()');

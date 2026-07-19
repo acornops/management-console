@@ -1,4 +1,5 @@
 import { Workspace } from '@/types';
+import { hasWorkspacePermission } from '@/app/workspacePermissions';
 
 export function getCurrentUserRoleForWorkspaceValue(
   workspaceById: Map<string, Workspace>,
@@ -15,11 +16,5 @@ export function getWorkspacePermissionValue(
   workspaceId: string,
   permission: keyof NonNullable<Workspace['permissions']>
 ): boolean {
-  const workspace = workspaceById.get(workspaceId);
-  const serverPermission = workspace?.permissions?.[permission];
-  if (typeof serverPermission === 'boolean') return serverPermission;
-  if (workspace?.currentUserRoleTemplate) {
-    return workspace.currentUserRoleTemplate.capabilities.includes(permission);
-  }
-  return false;
+  return hasWorkspacePermission(workspaceById.get(workspaceId), permission);
 }

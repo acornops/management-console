@@ -10,7 +10,8 @@ const navCountBadge = readFileSync(resolve(root, 'src/app/NavCountBadge.tsx'), '
 const workspaceNavigation = readFileSync(resolve(root, 'src/app/workspaceNavigation.tsx'), 'utf8');
 
 describe('mobile navigation structure', () => {
-  it('uses the same orange wordmark treatment as the login screen', () => {
+  it('keeps the wordmark readable in both themes', () => {
+    expect(mobileNavigation).toContain('className="font-bold text-brand-brown dark:text-brand-cream">acorn</span>');
     expect(mobileNavigation).toContain('className="font-bold text-accent-bright">ops</span>');
   });
 
@@ -89,6 +90,8 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).toContain("activeResourceNav === 'accountSettings'");
     expect(mobileNavigation).toContain('<ThemeMenu');
     expect(mobileNavigation).toContain('variant="mobile"');
+    expect(mobileNavigation).toContain('border border-ui-border bg-ui-surface px-3 py-2 text-xs font-bold text-ui-text');
+    expect(mobileNavigation).not.toContain('border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-xs font-bold text-status-danger-text');
     expect(mobileNavigation).toContain('className="flex min-h-11 items-center gap-3"');
     expect(mobileNavigation).toContain(
       'className="flex min-h-11 min-w-11 items-center justify-center p-2 text-ui-text-muted transition-colors hover:text-accent-strong"'
@@ -124,6 +127,8 @@ describe('mobile navigation structure', () => {
     expect(mobileNavigation).toContain('item.children.map((child)');
     expect(mobileNavigation).toContain('aria-current={child.current ? \'page\' : undefined}');
     expect(mobileNavigation).toContain("item.children ? 'rounded-md bg-ui-bg pb-1' : undefined");
+    expect(mobileNavigation).toContain('className="mt-0.5 grid grid-cols-1 gap-1 px-3"');
+    expect(mobileNavigation).not.toContain('className="mt-0.5 grid grid-cols-1 gap-1 pl-3"');
     expect(mobileNavigation).toContain('before:h-1.5 before:w-1.5');
     expect(mobileNavigation).not.toContain("title={t('app.virtualMachinesTooltip')}");
     expect(mobileNavigation).not.toContain("t('app.runbooks')");

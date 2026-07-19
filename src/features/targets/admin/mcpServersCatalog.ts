@@ -3,7 +3,7 @@ import type {
   TargetToolCatalogItem,
   TargetToolCatalogServer
 } from '@/features/targets/admin/targetMcpCatalogTypes';
-import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
+import { formatMcpError } from '@/services/control-plane/mcpError';
 import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
 import { formatUserDateTime } from '@/utils/dateTime';
 
@@ -14,7 +14,6 @@ export interface ServerFormState {
   url: string;
   enabled: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
-  secretValue: string;
   headerName: string;
   publicHeaders: Array<{ id: string; name: string; value: string }>;
 }
@@ -24,7 +23,6 @@ export const DEFAULT_SERVER_FORM: ServerFormState = {
   url: '',
   enabled: true,
   authType: 'none',
-  secretValue: '',
   headerName: '',
   publicHeaders: []
 };
@@ -236,7 +234,7 @@ export function isManagedMcpServer(server: Pick<TargetToolCatalogServer, 'type' 
 }
 
 export function formatMcpMutationError(error: unknown, fallback: string): string {
-  return formatControlPlaneError(error, fallback, { area: 'mcp' });
+  return formatMcpError(error, fallback).message;
 }
 
 export function formatDiscoveryTimestamp(value: string): string {

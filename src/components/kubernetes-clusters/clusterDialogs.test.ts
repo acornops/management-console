@@ -69,6 +69,12 @@ describe('cluster dialog accessibility contracts', () => {
     expect(appShell).not.toContain('onCloseAddCluster={() => setIsAddingCluster(false)}');
   });
 
+  it('checks the registered cluster connection before completing setup', () => {
+    expect(workspaceClusterActions).toContain('await controlPlaneApi.getCluster(targetWorkspaceIdForClusterAdd, registeredClusterId)');
+    expect(workspaceClusterActions).toContain("getAgentConnectionState(refreshed) !== 'connected'");
+    expect(addClusterModal).toContain("t('clusterSetup.checkingConnection')");
+  });
+
   it('uses the shared dialog shell for the install-agent flow', () => {
     expect(installAgentModal).toContain("import { Check, Copy, Loader2 } from 'lucide-react'");
     expect(installAgentModal).toContain("import { Dialog } from '@/components/common/Dialog'");

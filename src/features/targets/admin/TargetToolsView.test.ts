@@ -67,6 +67,24 @@ describe('TargetToolsView inventory polish', () => {
     expect(targetToolRow).not.toContain('line-clamp-2 text-xs leading-5 text-ui-text-muted">{tool.description}');
   });
 
+  it('identifies platform-native tools without offering target configuration', () => {
+    expect(targetToolsView).toContain("tool.origin === 'platform_native'");
+    expect(targetToolRow).toContain("const isPlatformNative = tool.origin === 'platform_native';");
+    expect(targetToolRow).toContain("t('tools.alwaysAvailable')");
+    expect(targetToolRow).toContain('{isPlatformNative ? (');
+    expect(targetToolRow).toContain("t('common.providedByAcornOps')");
+    expect(targetToolRow).toContain("t('tools.noConfiguration')");
+    expect(targetToolRow).toContain('isPlatformNative ? (');
+    expect(enLocale).toContain("providedByAcornOps: 'Provided by AcornOps'");
+    expect(enLocale).toContain("platformNativeSummary: 'Available in target chat'");
+  });
+
+  it('shows AcornOps provenance on every built-in tool while keeping origin-specific controls', () => {
+    expect(targetToolRow).toContain("{t('common.providedByAcornOps')}");
+    expect(targetToolRow).not.toContain("{isPlatformNative && (\n                <span className=\"type-micro-label");
+    expect(targetToolRow).toContain("const isPlatformNative = tool.origin === 'platform_native';");
+  });
+
   it('presents Insights as files instead of entries', () => {
     expect(targetInsightsViewModel).toContain('function buildInsightFilePath');
     expect(targetInsightsViewModel).toContain('insights/${entry.status}/${slug}.md');

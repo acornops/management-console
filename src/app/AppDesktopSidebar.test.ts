@@ -78,7 +78,7 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).not.toContain('const SidebarContextSlot = React.forwardRef<HTMLDivElement');
     expect(desktopSidebar).not.toContain('<SidebarTargetContext');
     expect(desktopSidebar).not.toContain('const splitSidebarContextName = (name: string): [string, string]');
-    expect(desktopSidebar).toContain('className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"');
+    expect(desktopSidebar).toContain('className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"');
     expect(desktopSidebar).toContain("<ICONS.ChevronLeft className=\"w-3.5 h-3.5\" />");
     expect(desktopSidebar).toContain("<div className=\"type-micro-label mb-1\">{t('app.activeCluster')}</div>");
     expect(desktopSidebar).toContain("<div className=\"type-micro-label mb-1\">{t('app.activeVirtualMachine')}</div>");
@@ -111,13 +111,16 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).not.toContain("compactAfter={group.id !== 'utilities'}");
     expect(desktopSidebar).toContain('item.children.map((child)');
     expect(desktopSidebar).toContain("item.children ? 'rounded-md bg-ui-bg pb-1' : undefined");
-    expect(desktopSidebar).toContain('className="mt-0.5 space-y-0.5 pl-3"');
+    expect(desktopSidebar).toContain('className="mt-0.5 space-y-0.5 px-3"');
+    expect(desktopSidebar).not.toContain('className="mt-0.5 space-y-0.5 pl-3"');
     expect(desktopSidebar).toContain('current={item.current}');
     expect(desktopSidebar).toContain('current={child.current}');
     expect(desktopSidebar).toContain('navigate(AppPaths.accountSettings());');
     expect(desktopSidebar).toContain("t('app.accountSettings')");
     expect(desktopSidebar).toContain('<ThemeMenu');
     expect(desktopSidebar).toContain("t('app.logout')");
+    expect(desktopSidebar).toContain('text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text');
+    expect(desktopSidebar).not.toContain('text-status-danger-text transition-colors duration-[160ms] hover:bg-status-danger-soft');
     expect(desktopSidebar).toContain("tracking-[0.08em]");
     expect(desktopSidebar).not.toContain("label={t('app.runbooks')}");
     expect(desktopSidebar).not.toContain('AppPaths.workspaceRunbooks');
@@ -167,8 +170,9 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('className="space-y-1"');
   });
 
-  it('matches the login wordmark orange and keeps comfortable top spacing', () => {
+  it('keeps the wordmark readable in both themes and preserves comfortable top spacing', () => {
     expect(desktopSidebar).toContain('className="flex items-center gap-3 px-6 py-5"');
+    expect(desktopSidebar).toContain('className="font-bold text-brand-brown dark:text-brand-cream">acorn</span>');
     expect(desktopSidebar).toContain('className="font-bold text-accent-bright">ops</span>');
   });
 
@@ -201,7 +205,7 @@ describe('desktop sidebar workspace switcher', () => {
     expect(desktopSidebar).toContain('variant="account"');
     expect(desktopSidebar).toContain("aria-label={t('app.account')}");
     expect(desktopSidebar).not.toContain('const accountMenuLabelId = React.useId();');
-    expect(desktopSidebar).toContain('<ICONS.ChevronRight');
+    expect(desktopSidebar).not.toContain('<ICONS.ChevronRight');
     expect(desktopSidebar).not.toContain('aria-hidden="true" className="flex shrink-0 items-center rounded-md border border-ui-border bg-ui-bg p-0.5"');
     expect(desktopSidebar).not.toContain('space-y-1 p-2');
   });

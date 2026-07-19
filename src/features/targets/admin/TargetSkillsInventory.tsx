@@ -1,5 +1,6 @@
 import React from 'react';
 import { MenuItem, Switch } from '@/components/common/FormControls';
+import { EmptyState } from '@/components/common/EmptyState';
 import { createPortal } from 'react-dom';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -345,11 +346,14 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
                 />
               )) : (
                 <tr>
-                  <td colSpan={5} className="px-8 py-12 text-center">
-                    <p className="type-body">{skills.length === 0 ? t('targetSkills.empty') : t('targetSkills.noSkillMatches')}</p>
-                    <p className="type-caption mt-1 text-ui-text-muted">
-                      {skills.length === 0 ? t('targetSkills.emptyHelp') : t('targetSkills.noSkillMatchesHelp')}
-                    </p>
+                  <td colSpan={5} className="p-0">
+                    <EmptyState
+                      embedded
+                      headingLevel={3}
+                      icon={skills.length === 0 ? <BookOpen /> : <Search />}
+                      title={skills.length === 0 ? t('targetSkills.empty') : t('targetSkills.noSkillMatches')}
+                      description={skills.length === 0 ? t('targetSkills.emptyHelp') : t('targetSkills.noSkillMatchesHelp')}
+                    />
                   </td>
                 </tr>
               )}

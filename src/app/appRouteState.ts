@@ -4,6 +4,7 @@ export type ActivePrimaryNav = 'workspaces' | 'clusters';
 export type ActiveResourceNav =
   | 'overview'
   | 'agents'
+  | 'catalog'
   | 'workflows'
   | 'schedules'
   | 'approvals'
@@ -35,6 +36,7 @@ export function getWorkspaceRouteId(route: AppRoute): string | null {
   if (
     route.kind === 'workspaceOverview' ||
     route.kind === 'workspaceAgents' ||
+    route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceWorkflows' ||
     route.kind === 'workspaceSchedules' ||
     route.kind === 'workspaceApprovals' ||
@@ -79,6 +81,7 @@ export function getActivePrimaryNav(route: AppRoute): ActivePrimaryNav {
 export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
   if (route.kind === 'workspaceOverview') return 'overview';
   if (route.kind === 'workspaceAgents') return 'agents';
+  if (route.kind === 'workspaceCatalog') return 'catalog';
   if (route.kind === 'workspaceWorkflows') return 'workflows';
   if (route.kind === 'workspaceSchedules') return 'schedules';
   if (route.kind === 'workspaceApprovals') return 'approvals';

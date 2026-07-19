@@ -44,6 +44,14 @@ describe('WorkspaceMembersPage member role management', () => {
     expect(membersPage).not.toContain("t('members.accessSummaryBody')");
   });
 
+  it('keeps standing member removal neutral until its active confirmation', () => {
+    expect(memberDetailsPanel).toContain("import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';");
+    expect(memberDetailsPanel).toContain('<DangerZone className="m-5">');
+    expect(memberDetailsPanel).toContain('tone="danger"');
+    expect(memberDetailsPanel).not.toContain('border-b border-status-danger/20 bg-status-danger-soft px-8 py-5');
+    expect(memberDetailsPanel).toContain('space-y-4 bg-status-danger-soft');
+  });
+
   it('removes the standalone supported roles section from the page', () => {
     expect(membersPage).not.toContain('SupportedRolesList');
     expect(membersPage).not.toContain("t('members.supportedRoles')");
@@ -127,8 +135,8 @@ describe('WorkspaceMembersPage member role management', () => {
     expect(membersPage).toContain('roleLoadError');
     expect(membersPage).toContain("t('members.supportedRolesLoadFailed')");
     expect(membersPage).toContain("t('members.loadMembersFailed')");
-    expect(membersPage).toContain("t('members.empty')");
-    expect(membersPage).toContain("hasMemberFilters ? t('members.emptyFiltered') : t('members.empty')");
+    expect(membersPage).toContain("t(hasMemberFilters ? 'members.emptyFiltered' : 'members.empty')");
+    expect(membersPage).toContain('<EmptyState');
     expect(membersPage).not.toContain("setListError(error instanceof Error ? error.message : t('members.emptyFiltered'))");
   });
 
@@ -142,10 +150,10 @@ describe('WorkspaceMembersPage member role management', () => {
   });
 
   it('surfaces invitation list failures instead of logging them only to the console', () => {
-    expect(membersPage).toContain('const [invitationListError, setInvitationListError]');
-    expect(membersPage).toContain("setInvitationListError(t('members.loadInvitationsFailed'))");
-    expect(membersPage).toContain('invitationListError ||');
-    expect(membersPage).toContain("loadError={invitationListError}");
+    expect(membersPage).toContain('const invitationCollection = useCursorCollection({');
+    expect(membersPage).toContain("throw new Error(t('members.loadInvitationsFailed'))");
+    expect(membersPage).toContain('invitationCollection.error ||');
+    expect(membersPage).toContain('loadError={invitationCollection.error}');
     expect(membersPage).not.toContain("console.error('Failed loading workspace invitations'");
   });
 });

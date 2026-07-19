@@ -102,13 +102,6 @@ export interface BehaviorDraft {
   reasoningEffort: ReasoningEffort;
 }
 
-export const DEFAULT_BEHAVIOR_DRAFT: BehaviorDraft = {
-  defaultProvider: 'openai',
-  defaultModel: 'gpt-5.5',
-  reasoningSummaryMode: 'auto',
-  reasoningEffort: 'low'
-};
-
 export function providerLabel(provider: LlmProvider): string {
   if (provider === 'openai') return 'OpenAI';
   if (provider === 'anthropic') return 'Anthropic';

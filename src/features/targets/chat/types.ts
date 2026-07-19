@@ -30,6 +30,13 @@ export interface RunTraceToolCall {
     content_type: string;
   };
   artifactUnavailable?: boolean;
+  reportArtifact?: {
+    reportId: string;
+    title: string;
+    mediaType: 'application/pdf';
+    downloadUrl: string;
+    retentionExpiresAt?: string;
+  };
 }
 
 export interface RunTraceSkillLoad {

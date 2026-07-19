@@ -7,7 +7,9 @@ const root = resolve(__dirname, '../../..');
 const addVirtualMachineModal = readFileSync(resolve(root, 'src/pages/virtual-machines/AddVirtualMachineModal.tsx'), 'utf8');
 const pendingAgentSetup = readFileSync(resolve(root, 'src/components/common/PendingAgentSetup.tsx'), 'utf8');
 const virtualMachinesPage = readFileSync(resolve(root, 'src/pages/VirtualMachinesPage.tsx'), 'utf8');
+const virtualMachineAgentSetup = readFileSync(resolve(root, 'src/pages/virtual-machines/useVirtualMachineAgentSetup.ts'), 'utf8');
 const virtualMachinesListView = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachinesListView.tsx'), 'utf8');
+const virtualMachineSettingsView = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachineSettingsView.tsx'), 'utf8');
 const virtualMachineListRefresh = readFileSync(resolve(root, 'src/pages/virtual-machines/useVirtualMachineListRefresh.ts'), 'utf8');
 const virtualMachineIssueSummaries = readFileSync(resolve(root, 'src/pages/virtual-machines/useVirtualMachineIssueSummaries.ts'), 'utf8');
 const pendingVirtualMachineSetup = readFileSync(resolve(root, 'src/pages/virtual-machines/PendingVirtualMachineSetup.tsx'), 'utf8');
@@ -15,6 +17,10 @@ const virtualMachineMetrics = readFileSync(resolve(root, 'src/pages/virtual-mach
 const virtualMachineIssuesPanel = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachineIssuesPanel.tsx'), 'utf8');
 const virtualMachineUi = readFileSync(resolve(root, 'src/pages/virtual-machines/virtualMachineUi.ts'), 'utf8');
 const constants = readFileSync(resolve(root, 'src/constants.tsx'), 'utf8');
+const emptyState = readFileSync(resolve(root, 'src/components/common/EmptyState.tsx'), 'utf8');
+const targetCatalogPrimitives = readFileSync(resolve(root, 'src/features/targets/catalog/TargetCatalogPrimitives.tsx'), 'utf8');
+const telemetryTrendSummary = readFileSync(resolve(root, 'src/features/targets/catalog/TelemetryTrendSummary.tsx'), 'utf8');
+const targetIssueSummaries = readFileSync(resolve(root, 'src/features/targets/catalog/useTargetIssueSummaries.ts'), 'utf8');
 
 describe('virtual machine onboarding dialog', () => {
   it('uses the shared dialog shell for VM connection', () => {
@@ -54,14 +60,24 @@ describe('virtual machine onboarding dialog', () => {
     expect(addVirtualMachineModal).toContain("t('virtualMachines.list.continueToInstallAgent')");
     expect(addVirtualMachineModal).not.toContain('onBackToDetails');
     expect(addVirtualMachineModal).not.toContain("t('virtualMachines.list.back')");
-    expect(virtualMachinesPage).toContain('const confirmVmInstalled = () => {');
-    expect(virtualMachinesPage).toContain('resetVmCreationState();');
-    expect(virtualMachinesPage).toContain('React.useState<{ vmId: string; value: string } | null>(null)');
-    expect(virtualMachinesPage).toContain('setInstallInstructions(null);');
-    expect(virtualMachinesPage).toContain('setInstallInstructions({ vmId: result.virtualMachine.id, value: result.installInstructions });');
+    expect(virtualMachineAgentSetup).toContain('const confirmVmInstalled = async () => {');
+    expect(virtualMachineAgentSetup).toContain('await controlPlaneApi.getVirtualMachine(workspaceId, installInstructions.vmId)');
+    expect(virtualMachineAgentSetup).toContain("if (refreshed.status === 'unknown')");
+    expect(virtualMachineAgentSetup).toContain('resetVmCreationState();');
+    expect(virtualMachineAgentSetup).toContain('React.useState<{ vmId: string; value: string } | null>(null)');
+    expect(virtualMachineAgentSetup).toContain('setInstallInstructions(null);');
+    expect(virtualMachineAgentSetup).toContain('setInstallInstructions({ vmId: result.virtualMachine.id, value: result.installInstructions });');
     expect(virtualMachinesPage).toContain('installInstructions?.vmId === selected.id ? installInstructions.value : null');
-    expect(virtualMachinesPage).not.toContain('createdVmId');
+    expect(virtualMachineAgentSetup).not.toContain('createdVmId');
     expect(virtualMachinesPage).not.toContain("navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, targetVmId, 'settings'))");
+  });
+
+  it('gates VM agent-key controls with the dedicated permission', () => {
+    expect(virtualMachinesPage).toContain('canManageAgentKeys: boolean;');
+    expect(virtualMachineAgentSetup).toContain('if (!virtualMachine || !canManageAgentKeys || isRotatingAgentKey) return;');
+    expect(virtualMachinesPage).toContain('onRotateKey={canManageAgentKeys ? () => rotateKey(selected) : undefined}');
+    expect(virtualMachinesListView).toContain('onInstallAgent={canManageAgentKeys ?');
+    expect(virtualMachineSettingsView).toContain('disabled={!onRotateKey || isRotatingKey}');
   });
 
   it('uses card list actions for VM onboarding and agent setup', () => {
@@ -70,24 +86,30 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachinesListView).not.toContain('data-vm-add-card="true"');
     expect(virtualMachinesListView).not.toContain('h-[20rem]');
     expect(virtualMachinesListView).toContain('md:grid-cols-2 xl:grid-cols-3');
-    expect(virtualMachinesListView).toContain('<ResourceCategoryTabs<VmConnectionFilter>');
-    expect(virtualMachinesListView).toContain('className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4"');
+    expect(virtualMachinesListView).toContain('<DiscoveryFilterBar');
+    expect(virtualMachinesListView).toContain('createDiscoveryFilterGroup<VmConnectionFilter>');
+    expect(virtualMachinesListView).not.toContain('<ResourceCategoryTabs<VmConnectionFilter>');
     expect(virtualMachinesListView).not.toContain('fleetStatus');
     expect(virtualMachinesListView).not.toContain('data-vm-inventory-summary');
     expect(virtualMachinesListView).toContain('data-vm-catalog-controls="true"');
-    expect(virtualMachinesListView).toContain('className="w-full pl-11 lg:w-full"');
-    expect(virtualMachinesListView).toContain('id="vm-catalog-panel" role="tabpanel"');
+    expect(virtualMachinesListView).toContain('(items.length > 0 || hasActiveFilter) && (');
+    expect(virtualMachinesListView).toContain('onClearAll={onClearFilters}');
+    expect(virtualMachinesListView).toContain('id="vm-catalog-panel" aria-labelledby="vm-catalog-heading"');
+    expect(virtualMachinesListView).not.toContain('role="tabpanel"');
     expect(virtualMachinesListView).toContain('grid min-w-0 shrink-0 content-start gap-4');
+    expect(virtualMachinesListView).toContain('<EmptyState');
+    expect(emptyState).toContain('type-panel-title text-ui-text');
+    expect(emptyState).toContain('type-body mx-auto mt-1.5');
     expect(virtualMachinesListView).toContain('data-vm-card-grid="true" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3"');
-    expect(virtualMachinesListView).toContain('data-vm-overflow-action="toggle"');
+    expect(targetCatalogPrimitives).toContain("'data-vm-overflow-action': 'toggle'");
     expect(virtualMachinesListView).toContain('data-vm-overflow-action="settings"');
     expect(virtualMachinesListView).toContain('data-vm-overflow-action="delete"');
-    expect(virtualMachinesListView).toContain('aria-haspopup="menu"');
-    expect(virtualMachinesListView).toContain("aria-label={t('virtualMachines.list.vmActionsFor', { name: vm.name })}");
+    expect(targetCatalogPrimitives).toContain('aria-haspopup="menu"');
+    expect(virtualMachinesListView).toContain("label={t('virtualMachines.list.vmActionsFor', { name: vm.name })}");
     expect(virtualMachinesListView).toContain('type-panel-title truncate text-ui-text');
     expect(virtualMachinesListView).not.toContain('{vm.hostname &&');
     expect(virtualMachinesListView).toContain('flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4');
-    expect(virtualMachinesListView).toContain('rounded-full border px-2 py-0.5');
+    expect(targetCatalogPrimitives).toContain('rounded-full border px-2 py-0.5');
     expect(virtualMachinesListView).toContain('<PendingVirtualMachineSetup');
     expect(pendingVirtualMachineSetup).toContain('data-vm-setup-action="install"');
     expect(pendingVirtualMachineSetup).not.toContain('<PendingAgentSetup');
@@ -148,6 +170,10 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachineMetrics).toContain('const paddingX = 0;');
     expect(virtualMachineMetrics).toContain('preserveAspectRatio="none"');
     expect(virtualMachineMetrics).toContain('className="h-full w-full"');
+    expect(virtualMachineMetrics).toContain('<TelemetryTrendSummary');
+    expect(virtualMachineMetrics).toContain('aria-hidden="true"');
+    expect(virtualMachineMetrics).not.toContain('role="img"');
+    expect(telemetryTrendSummary).toContain('<table className="sr-only">');
     expect(virtualMachineMetrics).toContain('strokeWidth={2.4}');
     expect(virtualMachineMetrics).toContain('className="stroke-ui-border/55"');
     expect(virtualMachineMetrics).not.toContain('h-[118px] border-y border-ui-border bg-ui-bg/60');
@@ -174,6 +200,13 @@ describe('virtual machine onboarding dialog', () => {
     expect(virtualMachinesListView).not.toContain('rounded-lg bg-status-danger px-4 py-2 type-row-title');
   });
 
+  it('exposes permission-gated VM deletion from target settings', () => {
+    expect(virtualMachinesPage).toContain('onDeleteVirtualMachine={canManageTargets ? () => deleteVirtualMachine(selected) : undefined}');
+    expect(virtualMachineSettingsView).toContain('<TargetDeleteZone');
+    expect(virtualMachineSettingsView).toContain('confirmationI18nKey="virtualMachines.list.deleteVmConfirmationLabel"');
+    expect(virtualMachineSettingsView).toContain('onDelete={onDeleteVirtualMachine}');
+  });
+
   it('uses the shared lifecycle filter labels', () => {
     expect(virtualMachinesListView).toContain("t('virtualMachines.list.allVms')");
     expect(virtualMachinesListView).toContain("t('dashboard.needsAttention')");
@@ -189,19 +222,20 @@ describe('virtual machine onboarding dialog', () => {
   });
 
   it('loads the complete VM catalog and metric histories for every card that can show telemetry', () => {
-    expect(virtualMachineListRefresh).toContain('do {');
-    expect(virtualMachineListRefresh).toContain('{ limit: 50, cursor }');
-    expect(virtualMachineListRefresh).toContain('page.nextCursor');
-    expect(virtualMachineListRefresh).toContain('seenCursors.has(cursor)');
+    expect(virtualMachineListRefresh).toContain('const collection = useCursorCollection({');
+    expect(virtualMachineListRefresh).toContain('pageSize: 50');
+    expect(virtualMachineListRefresh).toContain("strategy: 'drain'");
+    expect(virtualMachineListRefresh).toContain('{ limit, cursor, signal }');
     expect(virtualMachinesPage).toContain("virtualMachines.filter((vm) => vm.status !== 'unknown')");
     expect(virtualMachinesPage).not.toContain('.slice(0, 6)');
     expect(virtualMachineListRefresh).toContain('VIRTUAL_MACHINE_CATALOG_REFRESH_MS = 30000');
     expect(virtualMachineListRefresh).toContain("document.visibilityState === 'hidden'");
     expect(virtualMachineListRefresh).toContain("window.addEventListener('focus', refreshWhenVisible)");
     expect(virtualMachinesPage).toContain('metricLoadStateByVmId={metricLoadStateByVmId}');
-    expect(virtualMachineIssueSummaries).toContain('controlPlaneApi.getTargetIssueSummary(vm.workspaceId, vm.id)');
-    expect(virtualMachineIssueSummaries).toContain('const workerCount = Math.min(6, virtualMachines.length);');
-    expect(virtualMachineIssueSummaries).toContain('requestSequenceRef.current += 1;');
+    expect(virtualMachineIssueSummaries).toContain('useTargetIssueSummaries(virtualMachines)');
+    expect(targetIssueSummaries).toContain('controlPlaneApi.getTargetIssueSummary(target.workspaceId, target.id)');
+    expect(targetIssueSummaries).toContain('TARGET_ISSUE_SUMMARY_CONCURRENCY = 4');
+    expect(targetIssueSummaries).toContain('TARGET_ISSUE_SUMMARY_REFRESH_MS = 60_000');
     expect(virtualMachinesPage).toContain('issueSummaryByVmId={issueSummaryByVmId}');
     expect(virtualMachinesListView).toContain('vmNeedsAttention(vm, issueSummaryByVmId[vm.id])');
     expect(virtualMachinesListView).not.toContain('vm.summary?.findingCount');

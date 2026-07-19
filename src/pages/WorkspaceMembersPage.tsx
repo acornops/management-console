@@ -3,11 +3,13 @@ import { AnimatePresence } from 'framer-motion';
 import { Mail, MoreVertical, Search, UserPlus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { EmptyState } from '@/components/common/EmptyState';
+import { DataTableStateRow } from '@/components/common/DataTable';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { TableLoadingRows } from '@/components/common/Loading';
 import { Select, SelectOption } from '@/components/common/Select';
 import { Tooltip } from '@/components/common/Tooltip';
 import { formInputClassName } from '@/components/common/formControlStyles';
+import { ICONS } from '@/constants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 import { WorkspaceInvitationsPanel } from '@/pages/workspace-members/WorkspaceInvitationsPanel';
@@ -16,6 +18,7 @@ import { formatMemberMutationError, formatRole, getInitials } from '@/pages/work
 import { MemberRoleCell } from '@/pages/workspace-members/MemberRoleCell';
 import { WorkspaceMemberDetailsPanel } from '@/pages/workspace-members/WorkspaceMemberDetailsPanel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
+import { useCursorCollection } from '@/hooks/useCursorCollection';
 
 interface WorkspaceMembersPageProps {
   workspace: Workspace;
@@ -42,29 +45,79 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const closeMemberButtonRef = useRef<HTMLButtonElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  const requestSeqRef = useRef(0);
-  const invitationRequestSeqRef = useRef(0);
   const [selectedMember, setSelectedMember] = useState<ProjectMember | null>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | ProjectMember['role']>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | ProjectMember['source']>('all');
-  const [members, setMembers] = useState<ProjectMember[]>(workspace.members || []);
   const [roleTemplates, setRoleTemplates] = useState<WorkspaceRoleTemplate[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [invitations, setInvitations] = useState<WorkspaceInvitation[]>(workspace.invitations || []);
-  const [nextInvitationCursor, setNextInvitationCursor] = useState<string | undefined>();
-  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isLoadingMoreInvitations, setIsLoadingMoreInvitations] = useState(false);
-  const [listError, setListError] = useState<string | null>(null);
-  const [invitationListError, setInvitationListError] = useState<string | null>(null);
   const [roleLoadError, setRoleLoadError] = useState<string | null>(null);
   const [pendingRole, setPendingRole] = useState<ProjectMember['role']>('viewer');
   const [isSaving, setIsSaving] = useState(false);
   const [isConfirmingRemove, setIsConfirmingRemove] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [appliedMemberFilters, setAppliedMemberFilters] = useState<{
+    q: string;
+    role: 'all' | ProjectMember['role'];
+    source: 'all' | ProjectMember['source'];
+  }>({ q: '', role: 'all', source: 'all' });
+  const loadMemberPage = useCallback(async ({ cursor, filters, limit, signal }: {
+    cursor?: string;
+    filters: typeof appliedMemberFilters;
+    limit: number;
+    signal: AbortSignal;
+  }) => {
+    try {
+      return await controlPlaneApi.listWorkspaceMembers(workspace.id, { limit, cursor, ...filters, signal });
+    } catch {
+      throw new Error(t('members.loadMembersFailed'));
+    }
+  }, [t, workspace.id]);
+  const memberCollection = useCursorCollection({
+    filters: appliedMemberFilters,
+    getKey: (member: ProjectMember) => member.userId || member.email,
+    loadPage: loadMemberPage,
+    pageSize: 50,
+    strategy: 'sentinel'
+  });
+  const loadInvitationPage = useCallback(async ({ cursor, limit, signal }: {
+    cursor?: string;
+    filters: { workspaceId: string };
+    limit: number;
+    signal: AbortSignal;
+  }) => {
+    try {
+      const page = await controlPlaneApi.listWorkspaceInvitationsPage(workspace.id, { limit, cursor, signal });
+      return {
+        ...page,
+        items: page.items.map((invitation): WorkspaceInvitation => ({
+          id: invitation.id,
+          email: invitation.email,
+          role: invitation.role,
+          roleTemplate: invitation.roleTemplate,
+          status: invitation.status,
+          invitedBy: invitation.invitedBy,
+          createdAt: invitation.createdAt,
+          expiresAt: invitation.expiresAt,
+          acceptedAt: invitation.acceptedAt,
+          revokedAt: invitation.revokedAt
+        }))
+      };
+    } catch {
+      throw new Error(t('members.loadInvitationsFailed'));
+    }
+  }, [t, workspace.id]);
+  const invitationCollection = useCursorCollection({
+    filters: { workspaceId: workspace.id },
+    getKey: (invitation: WorkspaceInvitation) => invitation.id,
+    loadPage: loadInvitationPage,
+    pageSize: 50,
+    strategy: 'sentinel'
+  });
+  const { items: members, nextCursor, phase: memberPhase, error: listError = null } = memberCollection;
+  const isLoadingInitial = memberPhase === 'loading' || memberPhase === 'refreshing';
+  const isLoadingMore = memberPhase === 'loadingMore';
   const canManageOwners = currentUserRole === 'owner';
   const roleTemplateByKey = new Map(roleTemplates.map((role) => [role.key, role]));
   const fallbackRoleTemplate = (role: string): WorkspaceRoleTemplate | undefined => roleTemplateByKey.get(role);
@@ -88,12 +141,16 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
         loaded: members.length,
         total: workspace.memberCount ?? members.length
       });
-  const memberEmptyMessage = listError || (hasMemberFilters ? t('members.emptyFiltered') : t('members.empty'));
+  const memberEmptyTitle = listError
+    ? t('members.loadFailedTitle')
+    : t(hasMemberFilters ? 'members.emptyFilteredTitle' : 'members.emptyTitle');
+  const memberEmptyDescription = listError || t(hasMemberFilters ? 'members.emptyFiltered' : 'members.empty');
   const hasInvitationWork = Boolean(
-    invitationListError ||
+    invitationCollection.phase === 'loading' ||
+    invitationCollection.error ||
     invitations.some((invitation) => invitation.status === 'pending' || invitation.status === 'expired') ||
-    nextInvitationCursor ||
-    isLoadingMoreInvitations
+    invitationCollection.nextCursor ||
+    invitationCollection.phase === 'loadingMore'
   );
   const ownerCount = members.filter((member) => member.role === 'owner').length;
   const selectedMemberIsOnlyOwner = Boolean(
@@ -121,36 +178,6 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     setRoleFilter('all');
     setSourceFilter('all');
   };
-
-  const loadMembers = useCallback(async (mode: 'replace' | 'append', cursor?: string) => {
-    const requestId = ++requestSeqRef.current;
-    if (mode === 'replace') {
-      setIsLoadingInitial(true);
-    } else {
-      setIsLoadingMore(true);
-    }
-    setListError(null);
-    try {
-      const page = await controlPlaneApi.listWorkspaceMembers(workspace.id, {
-        limit: 50,
-        cursor,
-        q: searchTerm,
-        role: roleFilter,
-        source: sourceFilter
-      });
-      if (requestId !== requestSeqRef.current) return;
-      setMembers((current) => mode === 'append' ? [...current, ...page.items] : page.items);
-      setNextCursor(page.nextCursor);
-    } catch {
-      if (requestId !== requestSeqRef.current) return;
-      setListError(t('members.loadMembersFailed'));
-    } finally {
-      if (requestId === requestSeqRef.current) {
-        setIsLoadingInitial(false);
-        setIsLoadingMore(false);
-      }
-    }
-  }, [roleFilter, searchTerm, sourceFilter, t, workspace.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,77 +207,23 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     };
   }, [t, workspace.id]);
 
-  const loadInvitations = useCallback(async (mode: 'replace' | 'append', cursor?: string) => {
-    const requestId = ++invitationRequestSeqRef.current;
-    if (mode === 'append') {
-      setIsLoadingMoreInvitations(true);
-    }
-    setInvitationListError(null);
-    try {
-      const page = await controlPlaneApi.listWorkspaceInvitationsPage(workspace.id, {
-        limit: 50,
-        cursor
-      });
-      if (requestId !== invitationRequestSeqRef.current) return;
-      const mappedInvitations = page.items.map((invitation): WorkspaceInvitation => ({
-        id: invitation.id,
-        email: invitation.email,
-        role: invitation.role,
-        roleTemplate: invitation.roleTemplate,
-        status: invitation.status,
-        invitedBy: invitation.invitedBy,
-        createdAt: invitation.createdAt,
-        expiresAt: invitation.expiresAt,
-        acceptedAt: invitation.acceptedAt,
-        revokedAt: invitation.revokedAt
-      }));
-      setInvitations((current) => {
-        const existingById = new Map(current.map((invitation) => [invitation.id, invitation]));
-        const byId = new Map((mode === 'append' ? current : []).map((invitation) => [invitation.id, invitation]));
-        for (const invitation of mappedInvitations) {
-          const existing = existingById.get(invitation.id);
-          byId.set(invitation.id, {
-            ...invitation,
-            inviteLink: existing?.inviteLink
-          });
-        }
-        return [...byId.values()];
-      });
-      setNextInvitationCursor(page.nextCursor);
-    } catch {
-      if (requestId !== invitationRequestSeqRef.current) return;
-      setInvitationListError(t('members.loadInvitationsFailed'));
-    } finally {
-      if (requestId === invitationRequestSeqRef.current) {
-        setIsLoadingMoreInvitations(false);
-      }
-    }
-  }, [t, workspace.id]);
-
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void loadMembers('replace');
+      setAppliedMemberFilters({ q: searchTerm, role: roleFilter, source: sourceFilter });
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [loadMembers]);
+  }, [roleFilter, searchTerm, sourceFilter]);
 
   useEffect(() => {
-    setInvitations(workspace.invitations || []);
-    setNextInvitationCursor(undefined);
-    void loadInvitations('replace');
-  }, [loadInvitations, workspace.id]);
-
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !nextCursor) return undefined;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting) && !isLoadingInitial && !isLoadingMore && nextCursor) {
-        void loadMembers('append', nextCursor);
-      }
-    }, { rootMargin: '240px' });
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [nextCursor, isLoadingInitial, isLoadingMore, loadMembers]);
+    if (invitationCollection.phase !== 'ready') return;
+    setInvitations((current) => {
+      const existingById = new Map(current.map((invitation) => [invitation.id, invitation]));
+      return invitationCollection.items.map((invitation) => ({
+        ...invitation,
+        inviteLink: existingById.get(invitation.id)?.inviteLink
+      }));
+    });
+  }, [invitationCollection.items, invitationCollection.phase]);
 
   const openMember = (member: ProjectMember) => {
     setSelectedMember(member);
@@ -302,7 +275,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
       await onUpdateMemberRole?.(selectedMember, pendingRole);
       const roleTemplate = fallbackRoleTemplate(pendingRole);
       setSelectedMember({ ...selectedMember, role: pendingRole, roleTemplate });
-      setMembers((current) => current.map((member) => member.email === selectedMember.email ? { ...member, role: pendingRole, roleTemplate } : member));
+      await memberCollection.refresh();
       setIsConfirmingRemove(false);
     } catch (error) {
       setErrorMessage(formatMemberMutationError(error, t('members.updateMemberFailed'), t('members.onlyOwnerChangeWarning')));
@@ -321,7 +294,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     setErrorMessage(null);
     try {
       await onRemoveMember?.(selectedMember);
-      setMembers((current) => current.filter((member) => member.email !== selectedMember.email));
+      await memberCollection.refresh();
       setSelectedMember(null);
       setIsConfirmingRemove(false);
     } catch (error) {
@@ -482,30 +455,24 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                   </tr>
                 );
               })}
-              {members.length === 0 && !isLoadingInitial && (
-                <tr>
-                  <td colSpan={5} className="type-body px-8 py-12 text-center">
-                    {memberEmptyMessage}
-                  </td>
-                </tr>
-              )}
-              {isLoadingInitial && (
-                <TableLoadingRows
-                  columns={5}
-                  label={t('members.loadingMembers')}
-                  cellClassName="px-4 py-4 sm:px-5 lg:px-6"
-                  columnClassNames={['', '', 'hidden md:table-cell', 'hidden md:table-cell', 'text-right']}
-                  showAvatarInFirstColumn
-                />
-              )}
+              <DataTableStateRow
+                columns={5}
+                phase={isLoadingInitial ? 'loading' : listError ? 'error' : 'ready'}
+                itemCount={members.length}
+                filtered={hasMemberFilters}
+                loading={<div role="status" className="p-6 text-sm text-ui-text-muted">{t('members.loadingMembers')}</div>}
+                empty={<EmptyState embedded headingLevel={3} icon={<ICONS.Users />} title={memberEmptyTitle} description={memberEmptyDescription} />}
+                filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={memberEmptyTitle} description={memberEmptyDescription} />}
+                error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={memberEmptyTitle} description={memberEmptyDescription} />}
+              />
             </tbody>
           </table>
           {nextCursor && (
-            <div ref={loadMoreRef} className="flex justify-center px-6 py-4">
+            <div ref={memberCollection.sentinelRef} className="flex justify-center px-6 py-4">
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => void loadMembers('append', nextCursor)}
+                onClick={() => void memberCollection.loadMore()}
                 disabled={isLoadingMore}
               >
                 {isLoadingMore ? t('common.loading') : t('common.loadMore')}
@@ -518,11 +485,13 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
       {hasInvitationWork && (
         <WorkspaceInvitationsPanel
           invitations={invitations}
-          hasMoreInvitations={Boolean(nextInvitationCursor)}
-          isLoadingMoreInvitations={isLoadingMoreInvitations}
-          loadError={invitationListError}
+          hasMoreInvitations={Boolean(invitationCollection.nextCursor)}
+          isLoadingMoreInvitations={invitationCollection.phase === 'loadingMore'}
+          loadError={invitationCollection.error}
+          phase={invitationCollection.phase}
+          loadMoreSentinelRef={invitationCollection.sentinelRef}
           onCreateInvitation={onCreateInvitation ? createInvitation : undefined}
-          onLoadMoreInvitations={nextInvitationCursor ? () => void loadInvitations('append', nextInvitationCursor) : undefined}
+          onLoadMoreInvitations={invitationCollection.nextCursor ? () => void invitationCollection.loadMore() : undefined}
           onRevokeInvitation={onRevokeInvitation ? revokeInvitation : undefined}
         />
       )}

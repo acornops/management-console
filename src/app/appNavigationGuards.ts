@@ -40,6 +40,7 @@ export function isWorkspaceDataRoute(route: AppRoute): boolean {
     route.kind === 'workspaceVirtualMachineDetail' ||
     route.kind === 'workspaceKubernetesClusterDiagnostics' ||
     route.kind === 'workspaceSchedules' ||
+    route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceApprovals' ||
     route.kind === 'workspaceAiSettings'
   );

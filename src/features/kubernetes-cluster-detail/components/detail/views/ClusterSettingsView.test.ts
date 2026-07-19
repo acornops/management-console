@@ -38,5 +38,9 @@ describe('cluster settings view structure', () => {
     expect(clusterSettingsView).toContain("label={t('clusterSettings.clusterName')}");
     expect(clusterSettingsView).toContain("label={t('clusterSettings.connectionState')}");
     expect(clusterSettingsView).toContain("label={t('clusterSettings.lastTelemetry')}");
+    expect(clusterSettingsView).toContain('canManageCluster && onDeleteCluster');
+    expect(clusterSettingsView).toContain('<TargetDeleteZone');
+    expect(clusterSettingsView).toContain('confirmationI18nKey="dashboard.deleteClusterConfirmationLabel"');
+    expect(clusterSettingsView).toContain('onDelete={onDeleteCluster}');
   });
 });

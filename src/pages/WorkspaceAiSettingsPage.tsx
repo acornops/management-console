@@ -7,6 +7,7 @@ import { Select, SelectOption } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
+import { isAiRuntimeReady, resolveAiRuntimeReadiness } from '@/features/ai/aiRuntimeReadiness';
 import type { WorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -14,7 +15,6 @@ import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace } from '@
 import {
   behaviorDraftChanged,
   behaviorDraftFromSettings,
-  DEFAULT_BEHAVIOR_DRAFT,
   EMPTY_CREDENTIAL_ERRORS,
   EMPTY_PROVIDER_KEYS,
   modelsForProvider,
@@ -35,16 +35,14 @@ interface WorkspaceAiSettingsPageProps {
   canManageAiSettings: boolean;
   aiSettingsResource: WorkspaceAiSettingsResource;
   showToast: (message: string) => void;
+  returnTo?: string; onReturnToAssistant?: (returnTo: string) => void;
   embedded?: boolean;
 }
 
 const credentialInputClassName = formInputClassName('h-10 min-h-10 font-medium');
 
 export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({
-  workspace,
-  canManageAiSettings,
-  aiSettingsResource,
-  showToast,
+  workspace, canManageAiSettings, aiSettingsResource, showToast, returnTo, onReturnToAssistant,
   embedded = false
 }) => {
   const { t } = useTranslation();
@@ -52,8 +50,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     ? aiSettingsResource.settings
     : null;
   const [behaviorError, setBehaviorError] = useState('');
-  const [behaviorDraft, setBehaviorDraft] = useState<BehaviorDraft>(() => (
-    currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : DEFAULT_BEHAVIOR_DRAFT
+  const [behaviorDraft, setBehaviorDraft] = useState<BehaviorDraft | null>(() => (
+    currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : null
   ));
   const [providerKeys, setProviderKeys] = useState<Record<LlmProvider, string>>(EMPTY_PROVIDER_KEYS);
   const [credentialErrors, setCredentialErrors] = useState<Record<LlmProvider, string>>(EMPTY_CREDENTIAL_ERRORS);
@@ -76,7 +74,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
 
   useEffect(() => {
     setBehaviorError('');
-    setBehaviorDraft(currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : DEFAULT_BEHAVIOR_DRAFT);
+    setBehaviorDraft(currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : null);
     hydratedWorkspaceIdRef.current = currentAiSettings ? workspace.id : null;
     setProviderKeys(EMPTY_PROVIDER_KEYS);
     setCredentialErrors(EMPTY_CREDENTIAL_ERRORS);
@@ -92,17 +90,19 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   }, [currentAiSettings, workspace.id]);
 
   const providerModels = useMemo(() => {
-    return modelsForProvider(currentAiSettings, behaviorDraft.defaultProvider);
-  }, [behaviorDraft.defaultProvider, currentAiSettings]);
+    return behaviorDraft ? modelsForProvider(currentAiSettings, behaviorDraft.defaultProvider) : [];
+  }, [behaviorDraft, currentAiSettings]);
 
   const selectableModels = useMemo(() => {
+    if (!behaviorDraft) return [];
     return providerModels.includes(behaviorDraft.defaultModel) ? providerModels : [behaviorDraft.defaultModel, ...providerModels];
-  }, [behaviorDraft.defaultModel, providerModels]);
+  }, [behaviorDraft, providerModels]);
 
   const selectableProviders = useMemo(() => {
     const allowedProviders = currentAiSettings?.allowedProviders || PROVIDERS;
+    if (!behaviorDraft) return allowedProviders;
     return allowedProviders.includes(behaviorDraft.defaultProvider) ? allowedProviders : [behaviorDraft.defaultProvider, ...allowedProviders];
-  }, [behaviorDraft.defaultProvider, currentAiSettings?.allowedProviders]);
+  }, [behaviorDraft, currentAiSettings?.allowedProviders]);
   const providerOptions = useMemo<Array<SelectOption<LlmProvider>>>(
     () => selectableProviders.map((provider) => ({
       value: provider,
@@ -136,11 +136,12 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     [currentAiSettings, t]
   );
 
-  const hasBehaviorChanges = Boolean(currentAiSettings && behaviorDraftChanged(currentAiSettings, behaviorDraft));
+  const hasBehaviorChanges = Boolean(currentAiSettings && behaviorDraft && behaviorDraftChanged(currentAiSettings, behaviorDraft));
   const isReasoningPolicyDisabled = reasoningPolicyDisabled(currentAiSettings);
   const canSaveBehavior = Boolean(
     canManageAiSettings
       && currentAiSettings
+      && behaviorDraft
       && hasBehaviorChanges
       && currentAiSettings.allowedProviders.includes(behaviorDraft.defaultProvider)
       && providerModels.includes(behaviorDraft.defaultModel)
@@ -156,37 +157,42 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const providerStatusByProvider = useMemo(() => {
     return new Map(displayedProviderStatuses.map((status) => [status.provider, status]));
   }, [displayedProviderStatuses]);
-  const savedDefaultProvider = currentAiSettings?.defaultProvider ?? behaviorDraft.defaultProvider;
-  const savedDefaultModel = currentAiSettings?.defaultModel ?? behaviorDraft.defaultModel;
-  const savedReasoningSummaryMode = currentAiSettings?.reasoningSummaryMode ?? behaviorDraft.reasoningSummaryMode;
-  const savedReasoningEffort = currentAiSettings?.reasoningEffort ?? behaviorDraft.reasoningEffort;
-  const savedDefaultProviderStatus = providerStatusByProvider.get(savedDefaultProvider);
+  const savedDefaultProviderStatus = currentAiSettings
+    ? providerStatusByProvider.get(currentAiSettings.defaultProvider)
+    : undefined;
   const savedDefaultProviderConfigured = Boolean(savedDefaultProviderStatus?.configured);
   const savedDefaultProviderEnabled = Boolean(savedDefaultProviderStatus?.enabled);
   const savedDefaultProviderMissingCredential = Boolean(currentAiSettings && savedDefaultProviderStatus && savedDefaultProviderEnabled && !savedDefaultProviderConfigured);
   const savedDefaultProviderDisabled = Boolean(currentAiSettings && savedDefaultProviderStatus && !savedDefaultProviderEnabled);
+  const hasReadyAiRuntime = isAiRuntimeReady(resolveAiRuntimeReadiness({ settings: currentAiSettings, isLoading: aiSettingsResource.isLoading && !currentAiSettings, error: aiSettingsResource.error }));
   const isCurrentWorkspaceRequest = () => isMountedRef.current && workspaceIdRef.current === workspace.id;
   const readinessNotice = !canManageAiSettings
     ? { tone: 'neutral' as const, message: t('workspaceAiSettings.noAccess') }
-    : savedDefaultProviderDisabled
+    : hasReadyAiRuntime
+      ? { tone: 'neutral' as const, message: t('workspaceAiSettings.readinessReady') }
+      : savedDefaultProviderDisabled
       ? {
           tone: 'danger' as const,
-          message: t('workspaceAiSettings.defaultProviderDisabledWarning', { provider: providerLabel(savedDefaultProvider) })
+          message: t('workspaceAiSettings.defaultProviderDisabledWarning', { provider: providerLabel(currentAiSettings!.defaultProvider) })
         }
       : savedDefaultProviderMissingCredential
         ? {
             tone: 'warning' as const,
-            message: t('workspaceAiSettings.defaultCredentialMissingWarning', { provider: providerLabel(savedDefaultProvider) })
+            message: t('workspaceAiSettings.defaultCredentialMissingWarning', { provider: providerLabel(currentAiSettings!.defaultProvider) })
           }
         : { tone: 'neutral' as const, message: t('workspaceAiSettings.readinessReady') };
-  const readinessAction = savedDefaultProviderMissingCredential
+  const readinessAction = returnTo && hasReadyAiRuntime
+    ? { label: t('workspaceAiSettings.returnToAssistant'), onClick: () => onReturnToAssistant?.(returnTo) }
+    : savedDefaultProviderMissingCredential
     ? {
-        label: t('workspaceAiSettings.readinessAddCredentialAction', { provider: providerLabel(savedDefaultProvider) }),
+        label: t('workspaceAiSettings.readinessAddCredentialAction', { provider: providerLabel(currentAiSettings!.defaultProvider) }),
         onClick: () => {
-          setCredentialEditorProvider(savedDefaultProvider);
+          if (!currentAiSettings) return;
+          const provider = currentAiSettings.defaultProvider;
+          setCredentialEditorProvider(provider);
           setDeleteCandidate(null);
-          setCredentialErrors((current) => ({ ...current, [savedDefaultProvider]: '' }));
-          setProviderKeys((current) => ({ ...current, [savedDefaultProvider]: '' }));
+          setCredentialErrors((current) => ({ ...current, [provider]: '' }));
+          setProviderKeys((current) => ({ ...current, [provider]: '' }));
           credentialsSectionRef.current?.scrollIntoView({ block: 'start' });
         }
       }
@@ -207,17 +213,20 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const handleDefaultProviderChange = (provider: LlmProvider) => {
     setBehaviorError('');
     const nextProviderModels = modelsForProvider(currentAiSettings, provider);
-    setBehaviorDraft((current) => ({
-      ...current,
-      defaultProvider: provider,
-      defaultModel: nextProviderModels.length > 0 && !nextProviderModels.includes(current.defaultModel)
-        ? nextProviderModels[0]
-        : current.defaultModel
-    }));
+    setBehaviorDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        defaultProvider: provider,
+        defaultModel: nextProviderModels.length > 0 && !nextProviderModels.includes(current.defaultModel)
+          ? nextProviderModels[0]
+          : current.defaultModel
+      };
+    });
   };
 
   const handleSaveBehavior = async () => {
-    if (!canSaveBehavior || isSaving) return;
+    if (!canSaveBehavior || !behaviorDraft || isSaving) return;
     setSavingAction('behavior');
     setBehaviorError('');
     try {
@@ -328,7 +337,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
           </div>
         )}
 
-        {currentAiSettings && (
+        {currentAiSettings && behaviorDraft && (
           <>
             <SettingSection
               title={t('workspaceAiSettings.readinessTitle')}
@@ -338,7 +347,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                 <div className="bg-ui-surface p-5">
                   <p className="mb-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.defaultRuntime')}</p>
                   <p className="min-w-0 truncate text-sm font-bold text-ui-text">
-                    {providerLabel(savedDefaultProvider)} / {savedDefaultModel}
+                    {providerLabel(currentAiSettings.defaultProvider)} / {currentAiSettings.defaultModel}
                   </p>
                 </div>
                 <div className="bg-ui-surface p-5">
@@ -358,17 +367,17 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                     {t('workspaceAiSettings.reasoningSummaryStatus', {
                       mode: isReasoningPolicyDisabled
                         ? t('workspaceAiSettings.reasoningSummaryUnavailable')
-                        : t(reasoningModeLabel(savedReasoningSummaryMode))
+                        : t(reasoningModeLabel(currentAiSettings.reasoningSummaryMode))
                     })}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-ui-text-muted">
-                    {t('workspaceAiSettings.reasoningEffortStatus', { effort: t(reasoningEffortLabel(savedReasoningEffort)) })}
+                    {t('workspaceAiSettings.reasoningEffortStatus', { effort: t(reasoningEffortLabel(currentAiSettings.reasoningEffort)) })}
                   </p>
                 </div>
               </div>
               <div className="border-t border-ui-border bg-ui-bg/35 p-5">
                 <InlineAlert tone={readinessNotice.tone} className="min-h-14">{readinessNotice.message}</InlineAlert>
-                {canManageAiSettings && (
+                {(canManageAiSettings || Boolean(returnTo && hasReadyAiRuntime)) && (
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="type-caption">{t('workspaceAiSettings.nextAction')}</p>
                     <Button

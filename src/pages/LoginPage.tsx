@@ -16,6 +16,7 @@ interface LoginPageProps {
   passwordAuthEnabled: boolean;
   passwordSignupEnabled: boolean;
   passwordResetEnabled: boolean;
+  sessionExpired?: boolean;
   onLogin: () => void;
   onPasswordLogin: (identifier: string, password: string) => Promise<PasswordAuthResult>;
   onPasswordSignup: (input: {
@@ -44,6 +45,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   passwordAuthEnabled,
   passwordSignupEnabled,
   passwordResetEnabled,
+  sessionExpired,
   onLogin,
   onPasswordLogin,
   onPasswordSignup,
@@ -70,9 +72,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         >
           <div className="mb-8 flex justify-center">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-ui-border bg-ui-surface-strong">
-                <img src={logoSrc} alt="AcornOps" className="relative z-10 h-8 w-8" />
-              </div>
+              <img src={logoSrc} alt="AcornOps" className="h-9 w-9 shrink-0" />
               <div className="text-3xl font-bold tracking-tight">
                 <span className="text-ui-text">Acorn</span>
                 <span className="text-accent-bright">Ops</span>
@@ -86,6 +86,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             passwordAuthEnabled={passwordAuthEnabled}
             passwordSignupEnabled={passwordSignupEnabled}
             passwordResetEnabled={passwordResetEnabled}
+            sessionNotice={sessionExpired ? t('controlPlaneErrors.sessionExpired') : undefined}
             onLogin={onLogin}
             onPasswordLogin={onPasswordLogin}
             onPasswordSignup={onPasswordSignup}

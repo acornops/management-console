@@ -26,6 +26,15 @@ describe('cluster overview metric history loading', () => {
     expect(overviewView).toContain("setMetricHistoryStatus('loading')");
     expect(overviewView).toContain("isLoading={metricHistoryStatus === 'loading'}");
   });
+
+  it('preserves prior samples and exposes a retryable telemetry error', () => {
+    expect(overviewView).toContain("setMetricHistoryStatus('error')");
+    expect(overviewView).not.toContain("setMetricHistory([]);\n        setMetricHistoryStatus('error');");
+    expect(overviewView).toContain('setMetricHistoryRequestVersion((version) => version + 1)');
+    expect(overviewView).toContain("metricHistoryStatus === 'error'");
+    expect(overviewView).toContain("t('clusterOverview.telemetryLoadFailedTitle')");
+    expect(overviewView).toContain('onClick={retryMetricHistory}');
+  });
 });
 
 describe('cluster overview issue command signal copy', () => {
@@ -53,5 +62,23 @@ describe('cluster overview issue command signal copy', () => {
     expect(overviewView).not.toContain("t('clusterOverview.finding')");
     expect(overviewView).not.toContain("t('issues.originFinding')");
     expect(overviewView).toContain("t('clusterOverview.issueLoadFailedTitle')");
+  });
+
+  it('announces issue failures and makes them retryable', () => {
+    expect(overviewView).toContain('setIssueRequestVersion((version) => version + 1)');
+    expect(overviewView).toContain('shouldShowIssueLoadFailure ? (');
+    expect(overviewView).toContain('role="alert"');
+    expect(overviewView).toContain('onClick={retryIssues}');
+    expect(overviewView).toContain('const hasIssueCounts = issueSummary !== null || hasIssueRows;');
+    expect(overviewView).toContain("t(issueSummary ? 'clusterOverview.issueLoadFailedBody' : 'clusterOverview.issueLoadFailedWithoutSummaryBody')");
+  });
+
+  it('uses the shared route composition and a coherent issue heading hierarchy', () => {
+    expect(overviewView).toContain('<PageShell>');
+    expect(overviewView).toContain('<PageHeader');
+    expect(overviewView).toContain('<h2 id={issueSectionTitleId}');
+    expect(overviewView).toContain('<h3 className="type-row-title mt-2">{issue.title}</h3>');
+    expect(overviewView).toContain('<h3 className="type-row-title mt-4">{issue.title}</h3>');
+    expect(overviewView).not.toContain('<p className="type-row-title">{t(\'clusterOverview.activeIssues\')}</p>');
   });
 });

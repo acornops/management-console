@@ -1,4 +1,5 @@
 import React from 'react';
+import { Trans } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { CloseButton, Textarea, TextInput } from '@/components/common/ComponentVocabulary';
@@ -7,10 +8,10 @@ import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { Select, SelectOption } from '@/components/common/Select';
 import { ICONS } from '@/constants';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
+import type { WorkflowOption } from '@/services/control-plane/workflowApi';
 import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
 import {
   statusOptions,
-  type AgentCapabilityOptions,
   type AgentDraft,
   type AgentEditDraft
 } from '@/pages/WorkspaceAgentsPage.helpers';
@@ -18,13 +19,6 @@ import {
 interface CreateAgentDrawerProps {
   createDraft: AgentDraft;
   setCreateDraft: React.Dispatch<React.SetStateAction<AgentDraft>>;
-  draftMcpServers: string;
-  setDraftMcpServers: React.Dispatch<React.SetStateAction<string>>;
-  draftTools: string;
-  setDraftTools: React.Dispatch<React.SetStateAction<string>>;
-  draftSkills: string;
-  setDraftSkills: React.Dispatch<React.SetStateAction<string>>;
-  agentCapabilityOptions: AgentCapabilityOptions;
   creatingAgent: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -38,161 +32,15 @@ const createAgentSteps: Array<{ id: `${CreateAgentStep}`; label: string }> = [
   { id: '3', label: 'Review' }
 ];
 
-type AgentCapabilityOption = AgentCapabilityOptions['mcpServers'][number];
-
-const splitCapabilityInput = (value: string): string[] =>
-  Array.from(new Set(value.split(/\n|,/).map((item) => item.trim()).filter(Boolean)));
-
-const joinCapabilityInput = (values: string[]): string => values.join('\n');
-
-const toggleCapabilityValue = (values: string[], value: string, checked: boolean): string[] => {
-  if (checked) return values.includes(value) ? values : [...values, value];
-  return values.filter((item) => item !== value);
-};
-
-const capabilityServerToolPrefixes: Record<string, string[]> = {
-  'acornops-target-agent': ['events.', 'inventory.', 'logs.', 'metrics.'],
-  github: ['github.'],
-  'workspace-chat': ['chat.'],
-  'artifact-writer': ['reports.']
-};
-
-const normalizeCapabilityIdPrefix = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '');
-
-const getToolOptionsForSelectedMcpServers = (
-  selectedMcpServers: string[],
-  options: AgentCapabilityOptions['mcpTools']
-): AgentCapabilityOptions['mcpTools'] => {
-  if (selectedMcpServers.length === 0) return [];
-  const prefixes = selectedMcpServers.flatMap((server) => {
-    const normalized = normalizeCapabilityIdPrefix(server);
-    return capabilityServerToolPrefixes[server] || capabilityServerToolPrefixes[normalized] || [`${normalized}.`];
-  });
-  return options.filter((option) => prefixes.some((prefix) => option.value.toLowerCase().startsWith(prefix)));
-};
-
-const capabilityOptionLabelFor = (value: string, options: AgentCapabilityOption[]): string =>
-  options.find((option) => option.value === value)?.label || value;
-
-interface AgentCapabilityMultiSelectProps {
-  label: string;
-  selectedValues: string[];
-  options: AgentCapabilityOption[];
-  searchPlaceholder: string;
-  emptyMessage: string;
-  onSelectedValuesChange: (nextValues: string[]) => void;
-}
-
-export const AgentCapabilityMultiSelect: React.FC<AgentCapabilityMultiSelectProps> = ({
-  label,
-  selectedValues,
-  options,
-  searchPlaceholder,
-  emptyMessage,
-  onSelectedValuesChange
-}) => {
-  const [query, setQuery] = React.useState('');
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredOptions = options.filter((option) => {
-    if (!normalizedQuery) return true;
-    return [option.label, option.value, option.description || ''].some((value) => value.toLowerCase().includes(normalizedQuery));
-  });
-  const selectedCountLabel = selectedValues.length === 0 ? 'None selected' : `${selectedValues.length} selected`;
-
-  return (
-    <fieldset className="min-w-0">
-      <legend className="type-micro-label">{label}</legend>
-      <details className="group mt-2 rounded-md border border-ui-border bg-ui-surface">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
-          <span className="min-w-0 break-words">Choose {label.toLowerCase()}</span>
-          <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-ui-text-muted">
-            {selectedCountLabel}
-            <ICONS.ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
-          </span>
-        </summary>
-        <div className="border-t border-ui-border p-3">
-          <TextInput
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={searchPlaceholder}
-            className="h-9"
-            disabled={options.length === 0}
-          />
-          <div className="mt-3 max-h-48 overflow-y-auto rounded-md border border-ui-border bg-ui-bg custom-scrollbar">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => {
-                const checked = selectedValues.includes(option.value);
-                return (
-                  <label key={option.value} className="flex cursor-pointer items-start gap-3 border-b border-ui-border px-3 py-2 text-sm font-semibold text-ui-text last:border-b-0 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
-                    <Checkbox
-                      checked={checked}
-                      disabled={option.disabled}
-                      onChange={(event) => onSelectedValuesChange(toggleCapabilityValue(selectedValues, option.value, event.target.checked))}
-                      className="mt-0.5 shrink-0"
-                    />
-                    <span className="min-w-0">
-                      <span className="block break-words [overflow-wrap:anywhere]">{option.label}</span>
-                      {option.description && <span className="type-caption mt-0.5 block break-words text-ui-text-muted [overflow-wrap:anywhere]">{option.description}</span>}
-                      {option.disabledReason && <span className="type-caption mt-0.5 block break-words text-status-warning-text [overflow-wrap:anywhere]">{option.disabledReason}</span>}
-                    </span>
-                  </label>
-                );
-              })
-            ) : (
-              <div className="px-3 py-4 text-sm font-semibold text-ui-text-muted">{emptyMessage}</div>
-            )}
-          </div>
-          {selectedValues.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {selectedValues.map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => onSelectedValuesChange(selectedValues.filter((item) => item !== value))}
-                  className="control-target inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-xs font-semibold text-ui-text shadow-sm hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                  title={`Remove ${capabilityOptionLabelFor(value, options)}`}
-                >
-                  <span className="min-w-0 truncate">{capabilityOptionLabelFor(value, options)}</span>
-                  <ICONS.X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </details>
-    </fieldset>
-  );
-};
-
 export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
   createDraft,
   setCreateDraft,
-  draftMcpServers,
-  setDraftMcpServers,
-  draftTools,
-  setDraftTools,
-  draftSkills,
-  setDraftSkills,
-  agentCapabilityOptions,
   creatingAgent,
   onClose,
   onSave
 }) => {
   const [createAgentStep, setCreateAgentStep] = React.useState<CreateAgentStep>(1);
   const [stepNavigationError, setStepNavigationError] = React.useState('');
-  const selectedMcpServers = React.useMemo(() => splitCapabilityInput(draftMcpServers), [draftMcpServers]);
-  const selectedTools = React.useMemo(() => splitCapabilityInput(draftTools), [draftTools]);
-  const toolOptions = React.useMemo(
-    () => getToolOptionsForSelectedMcpServers(selectedMcpServers, agentCapabilityOptions.mcpTools),
-    [agentCapabilityOptions.mcpTools, selectedMcpServers]
-  );
-  React.useEffect(() => {
-    if (!draftTools.trim()) return;
-    const availableToolIds = new Set(toolOptions.map((option) => option.value));
-    const catalogToolIds = new Set(agentCapabilityOptions.mcpTools.map((option) => option.value));
-    const nextTools = selectedTools.filter((tool) => !catalogToolIds.has(tool) || availableToolIds.has(tool));
-    if (nextTools.length !== selectedTools.length) setDraftTools(joinCapabilityInput(nextTools));
-  }, [agentCapabilityOptions.mcpTools, draftTools, selectedTools, setDraftTools, toolOptions]);
   const identityError = () => {
     if (!createDraft.name.trim() && !createDraft.description.trim()) return 'Step 1 is not done. Enter an agent name and assignment purpose before continuing.';
     if (!createDraft.name.trim()) return 'Step 1 is not done. Enter an agent name before continuing.';
@@ -217,9 +65,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
     setCreateAgentStep(nextStep);
   };
   const capabilitySummary = [
-    { label: 'MCP servers', value: draftMcpServers.trim() || 'None' },
-    { label: 'Tools', value: draftTools.trim() || 'None' },
-    { label: 'Skills', value: draftSkills.trim() || 'None' },
+    { label: 'Capabilities', value: 'Assigned after creation through workspace Agent capability APIs.' },
     { label: 'Instructions', value: createDraft.instructions.trim() || createDraft.description.trim() || 'Assignment purpose will be used.' }
   ];
   return (
@@ -234,7 +80,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="create-agent-title" className="type-section-title">Create agent</h2>
-            <p id="create-agent-description" className="type-caption mt-2 text-ui-text-muted">Name the agent and its assignment purpose. It saves with restricted trust and approval required for write tools.</p>
+            <p id="create-agent-description" className="type-caption mt-2 text-ui-text-muted">Name the agent and its assignment purpose. It saves with restricted trust and asks before changes.</p>
           </div>
           <CloseButton onClick={close} label="Close create agent drawer" className="shrink-0" />
         </div>
@@ -284,59 +130,9 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
           {createAgentStep === 2 && (
             <div className="space-y-4">
               <div>
-                <h3 className="type-panel-title">Capabilities</h3>
-                <p className="type-caption mt-1 text-ui-text-muted">Select capabilities from the catalog. Paste approved IDs only when the option is not listed.</p>
+                <h3 className="type-panel-title">Instructions and capabilities</h3>
+                <p className="type-caption mt-1 text-ui-text-muted">Create the Agent first. Its workspace-owned capability ceiling is configured independently, and workflows may only narrow it.</p>
               </div>
-              {agentCapabilityOptions.mcpServers.length === 0 && agentCapabilityOptions.mcpTools.length === 0 && agentCapabilityOptions.skills.length === 0 && (
-                <div className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-sm font-semibold text-status-warning-text">
-                  Capability options did not load. Existing IDs remain visible; new edits may have fewer picker choices.
-                </div>
-              )}
-              <AgentCapabilityMultiSelect
-                label="MCP servers"
-                selectedValues={splitCapabilityInput(draftMcpServers)}
-                options={agentCapabilityOptions.mcpServers}
-                searchPlaceholder="Search MCP servers"
-                emptyMessage="No MCP servers are available from the catalog."
-                onSelectedValuesChange={(nextValues) => setDraftMcpServers(joinCapabilityInput(nextValues))}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <AgentCapabilityMultiSelect
-                  label="Tools"
-                  selectedValues={splitCapabilityInput(draftTools)}
-                  options={toolOptions}
-                  searchPlaceholder="Search tools"
-                  emptyMessage={selectedMcpServers.length === 0 ? 'Choose MCP servers before choosing tools.' : 'No tools are available for the selected MCP servers.'}
-                  onSelectedValuesChange={(nextValues) => setDraftTools(joinCapabilityInput(nextValues))}
-                />
-                <AgentCapabilityMultiSelect
-                  label="Skills"
-                  selectedValues={splitCapabilityInput(draftSkills)}
-                  options={agentCapabilityOptions.skills}
-                  searchPlaceholder="Search skills"
-                  emptyMessage="No skills are available from the catalog."
-                  onSelectedValuesChange={(nextValues) => setDraftSkills(joinCapabilityInput(nextValues))}
-                />
-              </div>
-              <details className="rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-                <summary className="cursor-pointer text-sm font-semibold text-ui-text hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">Paste approved IDs</summary>
-                <div className="mt-4 grid gap-4">
-                  <label className="block">
-                    <span className="type-micro-label">MCP servers</span>
-                    <Textarea value={draftMcpServers} onChange={(event) => setDraftMcpServers(event.target.value)} placeholder="One MCP server ID per line" />
-                  </label>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="type-micro-label">Tools</span>
-                      <Textarea value={draftTools} onChange={(event) => setDraftTools(event.target.value)} placeholder="One tool ID per line" />
-                    </label>
-                    <label className="block">
-                      <span className="type-micro-label">Skills</span>
-                      <Textarea value={draftSkills} onChange={(event) => setDraftSkills(event.target.value)} placeholder="One skill ID per line" />
-                    </label>
-                  </div>
-                </div>
-              </details>
               <label className="block">
                 <span className="type-micro-label">Operating instructions</span>
                 <Textarea value={createDraft.instructions} onChange={(event) => setCreateDraft((draft) => ({ ...draft, instructions: event.target.value }))} placeholder="Optional. If empty, the assignment purpose becomes the instructions." />
@@ -348,14 +144,14 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
             <div className="space-y-5">
               <div>
                 <h3 className="type-panel-title">Review</h3>
-                <p className="type-caption mt-1 text-ui-text-muted">This agent saves with restricted trust and approval required for write tools.</p>
+                <p className="type-caption mt-1 text-ui-text-muted">This agent saves with restricted trust and asks before changes.</p>
               </div>
               <dl className="divide-y divide-ui-border rounded-md border border-ui-border bg-ui-bg">
                 <AgentCreateReviewRow label="Name" value={createDraft.name || 'Unnamed agent'} />
                 <AgentCreateReviewRow label="Assignment purpose" value={createDraft.description || 'Required before save'} />
                 {capabilitySummary.map((item) => <AgentCreateReviewRow key={item.label} label={item.label} value={item.value} />)}
                 <AgentCreateReviewRow label="Trust" value="Restricted trust" />
-                <AgentCreateReviewRow label="Policy" value="Write tools require approval" />
+                <AgentCreateReviewRow label="Permission mode" value="Ask before changes" />
               </dl>
             </div>
           )}
@@ -387,31 +183,15 @@ const AgentCreateReviewRow: React.FC<{ label: string; value: string }> = ({ labe
   </div>
 );
 
-const EditAgentCapabilityPicker: React.FC<{
-  draft: AgentEditDraft;
-  options: AgentCapabilityOptions;
-  setDraft: React.Dispatch<React.SetStateAction<AgentEditDraft | null>>;
-}> = ({ draft, options, setDraft }) => {
-  const selectedServers = splitCapabilityInput(draft.mcpServers);
-  const toolOptions = getToolOptionsForSelectedMcpServers(selectedServers, options.mcpTools);
-  const setValues = (key: 'mcpServers' | 'tools' | 'skills', values: string[]) => setDraft((current) => current && ({ ...current, [key]: joinCapabilityInput(values) }));
-  return <div className="space-y-4">
-    <AgentCapabilityMultiSelect label="MCP servers" selectedValues={selectedServers} options={options.mcpServers} searchPlaceholder="Search MCP servers" emptyMessage="No MCP servers are available from the catalog." onSelectedValuesChange={(values) => setValues('mcpServers', values)} />
-    <div className="grid gap-4 sm:grid-cols-2">
-      <AgentCapabilityMultiSelect label="Tools" selectedValues={splitCapabilityInput(draft.tools)} options={toolOptions} searchPlaceholder="Search tools" emptyMessage={selectedServers.length ? 'No tools are available for the selected MCP servers.' : 'Choose MCP servers before choosing tools.'} onSelectedValuesChange={(values) => setValues('tools', values)} />
-      <AgentCapabilityMultiSelect label="Skills" selectedValues={splitCapabilityInput(draft.skills)} options={options.skills} searchPlaceholder="Search skills" emptyMessage="No skills are available from the catalog." onSelectedValuesChange={(values) => setValues('skills', values)} />
-    </div>
-  </div>;
-};
-
 interface EditAgentDrawerProps {
   editingAgent: AgentDefinition;
   editDraft: AgentEditDraft;
   setEditDraft: React.Dispatch<React.SetStateAction<AgentEditDraft | null>>;
   ownerSelectOptions: Array<SelectOption<string>>;
-  agentCapabilityOptions: AgentCapabilityOptions;
+  targetOptions: WorkflowOption[];
   editChangeSummary: string[];
   updatingAgentId: string;
+  nameInputRef?: React.RefObject<HTMLInputElement | null>;
   onClose: () => void;
   onSave: () => void;
 }
@@ -421,20 +201,34 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
   editDraft,
   setEditDraft,
   ownerSelectOptions,
-  agentCapabilityOptions,
+  targetOptions,
   editChangeSummary,
   updatingAgentId,
+  nameInputRef,
   onClose,
   onSave
-}) => (
+}) => {
+  const scopeTokens = editDraft.targetScope.split(/\n|,/).map((token) => token.trim()).filter(Boolean);
+  const selectedTypes = new Set(scopeTokens.filter((token) => token.startsWith('target-type:')).map((token) => token.slice(12)));
+  const selectedIds = new Set(scopeTokens.filter((token) => token.startsWith('target:')).map((token) => token.slice(7)));
+  const updateTargetScope = (types: Set<string>, ids: Set<string>) => setEditDraft((draft) => draft && ({
+    ...draft,
+    targetScope: [
+      types.size || ids.size ? 'scope:selected_target' : 'scope:workspace',
+      ...[...types].sort().map((type) => `target-type:${type}`),
+      ...[...ids].sort().map((id) => `target:${id}`)
+    ].join('\n')
+  }));
+  return (
   <RightSidePanel
     isOpen
     onClose={onClose}
     titleId="edit-agent-title"
     descriptionId="edit-agent-description"
-    className="block w-full max-w-[min(100vw,64rem)]"
+    initialFocusRef={nameInputRef}
+    className="w-full max-w-[min(100vw,64rem)]"
   >
-      <div className="border-b border-ui-border bg-ui-bg px-5 py-4">
+      <div className="shrink-0 border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="edit-agent-title" className="type-section-title">Edit agent</h2>
@@ -449,7 +243,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="type-micro-label">Name</span>
-              <TextInput value={editDraft.name} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, name: event.target.value }))} className="mt-2" />
+              <TextInput ref={nameInputRef} value={editDraft.name} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, name: event.target.value }))} className="mt-2" />
             </label>
             <label className="block">
               <span className="type-micro-label">Status</span>
@@ -486,18 +280,45 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             <Textarea value={editDraft.instructions} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, instructions: event.target.value }))} />
           </label>
 
-          <details open className="border-y border-ui-border py-3">
-            <summary className="cursor-pointer text-sm font-semibold text-ui-text">Capabilities</summary>
-            <div className="mt-4"><EditAgentCapabilityPicker draft={editDraft} options={agentCapabilityOptions} setDraft={setEditDraft} /></div>
-          </details>
+          <p className="rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-sm text-ui-text-muted">This form edits the Agent definition only. Its workspace-owned capability ceiling is configured independently and remains visible in the Capabilities tab.</p>
 
           <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
-            <h3 className="type-micro-label">Policy</h3>
-            <div className="mt-3 grid gap-3">
-              <label className="flex items-start gap-3 text-sm font-semibold text-ui-text">
-                <Checkbox checked={editDraft.writeToolsRequireApproval} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, writeToolsRequireApproval: event.target.checked }))} className="mt-1" />
-                <span>Require approval for write tools</span>
-              </label>
+            <h3 className="type-micro-label">Target scope</h3>
+            <p className="type-caption mt-2 text-ui-text-muted">Allow target types broadly, then optionally narrow the Agent to exact targets.</p>
+            <div className="mt-3 flex flex-wrap gap-4">
+              {([
+                ['kubernetes', 'Kubernetes'],
+                ['virtual_machine', 'Virtual machines']
+              ] as const).map(([value, label]) => (
+                <label key={value} className="flex items-center gap-2 text-sm font-semibold text-ui-text">
+                  <Checkbox
+                    checked={selectedTypes.has(value)}
+                    onChange={(event) => {
+                      const next = new Set(selectedTypes);
+                      event.target.checked ? next.add(value) : next.delete(value);
+                      updateTargetScope(next, selectedIds);
+                    }}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-2" aria-label="Exact target scope">
+              {targetOptions.length ? targetOptions.map((target) => (
+                <label key={target.value} className="flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 text-sm font-semibold text-ui-text">
+                  <Checkbox
+                    className="mt-0.5"
+                    checked={selectedIds.has(target.value)}
+                    disabled={target.disabled}
+                    onChange={(event) => {
+                      const next = new Set(selectedIds);
+                      event.target.checked ? next.add(target.value) : next.delete(target.value);
+                      updateTargetScope(selectedTypes, next);
+                    }}
+                  />
+                  <span><span className="block">{target.label}</span>{target.description && <span className="type-caption block text-ui-text-muted">{target.description}</span>}</span>
+                </label>
+              )) : <p className="type-caption text-ui-text-muted">No targets are registered in this workspace.</p>}
             </div>
           </section>
 
@@ -521,7 +342,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
         <Button type="button" variant="tertiary" size="sm" onClick={onClose}>Cancel</Button>
         <Button type="button" variant="primary" size="sm" onClick={onSave} disabled={updatingAgentId === editingAgent.id || !editDraft.name.trim() || !editDraft.description.trim() || editChangeSummary.length === 0}>
           <ICONS.CheckCircle2 className="h-4 w-4" />
@@ -529,7 +350,8 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
         </Button>
       </div>
   </RightSidePanel>
-);
+  );
+};
 
 interface AgentWorkspaceDrawerProps extends React.ComponentProps<typeof WorkspaceAgentDetailPanel> {
   closeButtonRef: React.RefObject<HTMLButtonElement | null>;

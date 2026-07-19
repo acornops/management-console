@@ -28,7 +28,7 @@ describe('WorkspaceAuditLogPage audit operation rendering', () => {
     expect(auditLogPage).toContain("t('auditLog.allEventTypes')");
     expect(auditLogPage).toContain("t('auditLog.allObjectTypes')");
     expect(auditLogPage).toContain("t('auditLog.object')");
-    expect(auditLogPage).toContain('objectType: appliedFilters.objectType.trim() || undefined');
+    expect(auditLogPage).toContain('objectType: filters.objectType.trim() || undefined');
     expect(auditLogPage).toContain("value: 'kubernetes', label: 'kubernetes'");
     expect(auditLogPage).toContain("value: 'kubernetes_cluster', label: 'kubernetes_cluster'");
     expect(auditLogPage).not.toContain('<datalist');
@@ -43,9 +43,11 @@ describe('WorkspaceAuditLogPage audit operation rendering', () => {
   });
 
   it('keeps audit log mobile rows and pagination usable without extra clicks', () => {
-    expect(auditLogPage).toContain('loadMoreTriggerRef');
-    expect(auditLogPage).toContain('new IntersectionObserver');
-    expect(auditLogPage).toContain('void loadEvents(nextCursor);');
+    expect(auditLogPage).toContain('useCursorCollection({');
+    expect(auditLogPage).toContain("strategy: 'sentinel'");
+    expect(auditLogPage).toContain('ref={auditCollection.sentinelRef}');
+    expect(auditLogPage).toContain('void auditCollection.loadMore()');
+    expect(auditLogPage).not.toContain('new IntersectionObserver');
     expect(auditLogPage).toContain('md:hidden');
     expect(auditLogPage).toContain('{formatActor(event)}');
     expect(auditLogPage).toContain('{formatObject(event)} · {event.object.type}');

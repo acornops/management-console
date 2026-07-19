@@ -17,7 +17,7 @@ interface AddVirtualMachineModalProps {
   onClose: () => void;
   onVmNameChange: (value: string) => void;
   onProceedToInstructions: () => void | Promise<void>;
-  onConfirmInstalled: () => void;
+  onConfirmInstalled: () => void | Promise<void>;
 }
 
 export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
@@ -172,13 +172,14 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
           </div>
           <div className="flex shrink-0 items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
             <Button
-              onClick={onConfirmInstalled}
+              onClick={() => void onConfirmInstalled()}
+              disabled={isRegistering}
               variant="primary"
               size="sm"
               className="rounded-lg"
             >
               <Zap className="h-4 w-4" />
-              {t('virtualMachines.list.installedAgent')}
+              {isRegistering ? t('virtualMachines.list.checkingConnection') : t('virtualMachines.list.installedAgent')}
             </Button>
           </div>
         </>

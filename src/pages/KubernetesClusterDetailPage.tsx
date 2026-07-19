@@ -22,6 +22,7 @@ interface KubernetesClusterDetailPageProps {
   onUpdateClusterName: (clusterId: string, name: string) => void | Promise<void>;
   onUpdateClusterNamespaceScope: (clusterId: string, scope: { include: string[]; exclude: string[] }) => void | Promise<void>;
   onUpdateClusterWriteConfirmationPolicy: (clusterId: string, overrideRequired: boolean | null) => void | Promise<void>;
+  onDeleteCluster: (cluster: KubernetesCluster) => void | Promise<void>;
   onOpenAiSettings: (workspaceId: string) => void;
   onNavigateBackToClusters: () => void;
   onOpenClusterChatPanel?: (cluster: KubernetesCluster, prompt?: string) => void;
@@ -44,6 +45,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   onUpdateClusterName,
   onUpdateClusterNamespaceScope,
   onUpdateClusterWriteConfirmationPolicy,
+  onDeleteCluster,
   onOpenAiSettings,
   onNavigateBackToClusters,
   onOpenClusterChatPanel
@@ -63,6 +65,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
       ? 'connected'
       : 'not_installed');
   const requiresClusterAgentInstall = selectedCluster && selectedClusterAgentState === 'not_installed';
+  const canManageAgentKeys = Boolean(selectedWorkspace?.permissions?.manage_agent_keys);
   const requestedClusterView = activeSubview === 'health' ? 'overview' : activeSubview;
 
   return (
@@ -89,6 +92,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
                 onUpdateClusterWriteConfirmationPolicy(selectedCluster.id, overrideRequired)
               }
               onReinstallAgent={() => onOpenInstallModal(selectedCluster.id)}
+              onDeleteCluster={() => onDeleteCluster(selectedCluster)}
               onOpenAiSettings={() => onOpenAiSettings(selectedCluster.workspaceId)}
               onOpenCopilot={(prompt) => onOpenClusterChatPanel?.(selectedCluster, prompt)}
             />
@@ -102,16 +106,16 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
                 <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-ui-text-muted">
                   {t('diagnostics.installAgentBody')}
                 </p>
-                <Button onClick={() => onOpenInstallModal(selectedCluster.id)} variant="primary" size="sm">
+                <Button onClick={() => onOpenInstallModal(selectedCluster.id)} disabled={!canManageAgentKeys} title={!canManageAgentKeys ? t('clusterSetup.agentKeyPermissionRequired') : undefined} variant="primary" size="sm">
                   <ICONS.Wrench className="w-4 h-4" />
                   {t('diagnostics.openInstallCommand')}
                 </Button>
               </div>
               <button
                 onClick={onNavigateBackToClusters}
-                className={`control-target ${THEME_CLASSES.primary.text} font-semibold flex items-center gap-2 hover:gap-3 transition-all`}
+                className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}
               >
-                {t('diagnostics.returnToClusters')} <ICONS.ChevronRight className="w-4 h-4" />
+                {t('diagnostics.returnToClusters')} <ICONS.ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
               </button>
             </div>
           ) : (
@@ -125,9 +129,9 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               </div>
               <button
                 onClick={onNavigateBackToClusters}
-                className={`control-target ${THEME_CLASSES.primary.text} font-semibold flex items-center gap-2 hover:gap-3 transition-all`}
+                className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}
               >
-                {t('diagnostics.returnToDashboard')} <ICONS.ChevronRight className="w-4 h-4" />
+                {t('diagnostics.returnToDashboard')} <ICONS.ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
               </button>
             </div>
           )}

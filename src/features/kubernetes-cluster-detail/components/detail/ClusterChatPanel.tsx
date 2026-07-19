@@ -50,7 +50,9 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
     sessions,
     activeSessionId,
     composerRuntimeSelection,
-    workspaceAiSettingsRefreshToken,
+    workspaceAiSettings,
+    isWorkspaceAiSettingsLoading,
+    workspaceAiSettingsError,
     isActiveSessionOwner,
     conversationNotice,
     recentActivityWarning,
@@ -73,10 +75,10 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
     handleCancelRun,
     setInputValue,
     setComposerRuntimeSelection,
+    handleCreateSessionWithInput,
     handleChatScroll,
     handleLoadEarlierMessages,
     handleSend,
-    handleSendInNewSession,
     handleEditLastUserMessage,
     handleApprove,
     handleReject,
@@ -88,9 +90,9 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       return;
     }
     handledPromptIdRef.current = initialPrompt.id;
-    void handleSendInNewSession(initialPrompt.text);
+    void handleCreateSessionWithInput(initialPrompt.text);
     onInitialPromptHandled();
-  }, [handleSendInNewSession, initialPrompt, onInitialPromptHandled]);
+  }, [handleCreateSessionWithInput, initialPrompt, onInitialPromptHandled]);
 
   return (
     <TargetChatView
@@ -115,7 +117,9 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       sessions={sessions}
       activeSessionId={activeSessionId}
       composerRuntimeSelection={composerRuntimeSelection}
-      workspaceAiSettingsRefreshToken={workspaceAiSettingsRefreshToken}
+      workspaceAiSettings={workspaceAiSettings}
+      isWorkspaceAiSettingsLoading={isWorkspaceAiSettingsLoading}
+      workspaceAiSettingsError={workspaceAiSettingsError}
       assistantMarkdownComponents={assistantMarkdownComponents}
       userMarkdownComponents={userMarkdownComponents}
       visibleMessages={visibleMessages}

@@ -1,7 +1,7 @@
 import type React from 'react';
 import type { Components } from 'react-markdown';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
-import type { ChatMessage, ChatRuntimeSelection, ChatSession } from '@/types';
+import type { ChatMessage, ChatRuntimeSelection, ChatSession, WorkspaceAiSettings } from '@/types';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 
@@ -36,7 +36,9 @@ export interface TargetChatViewProps {
   sessions: ChatSession[];
   activeSessionId: string | null;
   composerRuntimeSelection?: ChatRuntimeSelection;
-  workspaceAiSettingsRefreshToken: number;
+  workspaceAiSettings: WorkspaceAiSettings | null;
+  isWorkspaceAiSettingsLoading: boolean;
+  workspaceAiSettingsError: string;
   assistantMarkdownComponents: Components;
   userMarkdownComponents: Components;
   visibleMessages: ChatMessage[];

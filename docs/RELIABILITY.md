@@ -21,3 +21,15 @@
 - Prefer additive UI mapping for evolving payloads.
 - Show explicit degraded states instead of hiding failures.
 - Capture new UI invariants in docs or structural checks when they become durable.
+- Session bootstrap distinguishes an initial unauthenticated `401` from network
+  and control-plane `5xx` failures. The former opens sign-in; the latter keeps a
+  retryable unavailable screen so an outage never looks like logout.
+- After authentication, the first `401` expires the client session once, clears
+  user/workspace/target/cluster/VM and CSRF state, unmounts active streams, and
+  preserves the current deep link for sign-in recovery.
+- SSE `401` and `403` responses stop immediately. Network and `5xx` failures use
+  capped backoff with at most five reconnect attempts; logout and session expiry
+  unmount stream owners and prevent further retries.
+- Root and global browser error handlers emit deduplicated, sanitized incident
+  records. Records may contain HTTP status and control-plane request IDs, but
+  never raw errors, stacks, tokens, bodies, or URL query parameters.

@@ -9,8 +9,12 @@ const zh = readFileSync(resolve(__dirname, '../i18n/locales/zh.js'), 'utf8');
 
 describe('WorkspaceOverviewPage homepage board', () => {
   it('loads durable workspace issues into one mixed target board', () => {
-    expect(workspaceOverviewPage).toContain('loadAllWorkspaceIssues');
-    expect(workspaceOverviewPage).toContain('loadAllWorkspaceVirtualMachines');
+    expect(workspaceOverviewPage).toContain('const issueCollection = useCursorCollection({');
+    expect(workspaceOverviewPage).toContain('const virtualMachineCollection = useCursorCollection({');
+    expect(workspaceOverviewPage.match(/strategy: 'manual'/g)).toHaveLength(2);
+    expect(workspaceOverviewPage).toContain('pageSize: 24');
+    expect(workspaceOverviewPage).toContain('pageSize: 50');
+    expect(workspaceOverviewPage).not.toContain("strategy: 'drain'");
     expect(workspaceOverviewPage).toContain('buildWorkspaceOverviewCards');
     expect(workspaceOverviewPage).toContain('listWorkspaceIssues');
     expect(workspaceOverviewPage).toContain('isLoadingIssues');
@@ -18,31 +22,28 @@ describe('WorkspaceOverviewPage homepage board', () => {
     expect(workspaceOverviewPage).not.toContain('loadAllVirtualMachineFindings');
   });
 
-  it('keeps the banner, connected-target headings, and issue queue copy localized in English and Chinese', () => {
+  it('keeps resume, connected-target, and issue queue copy localized in English and Chinese', () => {
     for (const locale of [en, zh]) {
       expect(locale).toContain('quickActionsTitle');
-      expect(locale).toContain('quickActionsBody');
       expect(locale).toContain('quickActionsResumeBody');
-      expect(locale).toContain('quickActionsEmptyBody');
       expect(locale).toContain('resumeRecentInvestigation');
       expect(locale).toContain('connectedClustersTitle');
       expect(locale).toContain('connectedVirtualMachinesTitle');
       expect(locale).toContain('connectedTargetCount');
       expect(locale).toContain('needsAttentionTitle');
       expect(locale).toContain('needsAttentionBody');
-      expect(locale).toContain('targetLabel');
-      expect(locale).toContain('scopeLabel');
       expect(locale).toContain('lastSeenLabel');
       expect(locale).toContain('firstSeenLabel');
-      expect(locale).toContain('evidenceLabel');
       expect(locale).toContain('runTriageIssue');
       expect(locale).toContain('viewMoreIssue');
+      expect(locale).toContain('criticalIssuesShown');
+      expect(locale).toContain('warningIssuesShown');
+      expect(locale).toContain('virtualMachinesUnavailable');
       expect(locale).not.toContain('openTarget');
-      expect(locale).toContain('issueRank');
     }
   });
 
-  it('renders the issue queue before flatter connected-target lists', () => {
+  it('renders one distilled issue queue before one consolidated target inventory', () => {
     expect(workspaceOverviewPage).toContain('data-connected-targets="true"');
     expect(workspaceOverviewPage).toContain("t('overview.connectedClustersTitle')");
     expect(workspaceOverviewPage).toContain("t('overview.connectedVirtualMachinesTitle')");
@@ -50,15 +51,18 @@ describe('WorkspaceOverviewPage homepage board', () => {
     expect(workspaceOverviewPage).toContain('ICONS.Server');
     expect(workspaceOverviewPage).toContain('data-attention-board="true"');
     expect(workspaceOverviewPage).toContain('ICONS.AlertTriangle');
-    expect(workspaceOverviewPage).toContain("t('overview.issueRank', { count: index + 1 })");
-    expect(workspaceOverviewPage).toContain("t('overview.evidenceLabel')");
     expect(workspaceOverviewPage).toContain("t('overview.runTriageIssue')");
     expect(workspaceOverviewPage).toContain("t('overview.viewMoreIssue')");
     expect(workspaceOverviewPage).not.toContain("t('overview.openTarget')");
-    expect(workspaceOverviewPage).toContain('group flex w-full items-center gap-4 px-4 py-3');
+    expect(workspaceOverviewPage).toContain('data-target-group="true"');
+    expect(workspaceOverviewPage.match(/data-target-group="true"/g)).toHaveLength(1);
+    expect(workspaceOverviewPage).toContain('group flex w-full items-center justify-between gap-4 px-4 py-3');
     expect(workspaceOverviewPage).toContain('onRunTriage({');
-    expect(workspaceOverviewPage).toContain("data-primary-issue-card={isPrimary ? 'true' : undefined}");
-    expect(workspaceOverviewPage).toContain('variant="secondary"');
+    expect(workspaceOverviewPage).toContain("buttonClassName({ variant: 'tertiary'");
+    expect(workspaceOverviewPage).toContain('href={appHref(path)}');
+    expect(workspaceOverviewPage).toContain('handleAppLinkClick(event, path, navigate)');
+    expect(workspaceOverviewPage).not.toContain('onClick={() => openCard');
+    expect(workspaceOverviewPage).toContain('recentInvestigation && (');
     expect(workspaceOverviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
       workspaceOverviewPage.indexOf('data-connected-targets="true"')
     );
@@ -66,5 +70,19 @@ describe('WorkspaceOverviewPage homepage board', () => {
     expect(workspaceOverviewPage).not.toContain('{issue.summary &&');
     expect(workspaceOverviewPage).not.toContain('data-ranked-issues-list="true"');
     expect(workspaceOverviewPage).not.toContain('data-healthy-targets="true"');
+    expect(workspaceOverviewPage).not.toContain("t('overview.issueRank'");
+    expect(workspaceOverviewPage).not.toContain("t('overview.firstSeenLabel')");
+    expect(workspaceOverviewPage).not.toContain('data-primary-issue-card');
+    expect(workspaceOverviewPage).not.toContain('summaryStats');
+  });
+
+  it('keeps issue and virtual-machine failures distinct, announced, and retryable', () => {
+    expect(workspaceOverviewPage).toContain('const virtualMachineLoadError = virtualMachineCollection.error || null;');
+    expect(workspaceOverviewPage).toContain("role={tone === 'danger' ? 'alert' : 'status'}");
+    expect(workspaceOverviewPage).toContain('renderCollectionRecovery(issueLoadError, issueCollection.retry)');
+    expect(workspaceOverviewPage).toContain('error: virtualMachineLoadError && !hasPriorVirtualMachineData');
+    expect(workspaceOverviewPage).toContain('retainedError: virtualMachineLoadError && hasPriorVirtualMachineData');
+    expect(workspaceOverviewPage).toContain('retry: virtualMachineCollection.retry');
+    expect(workspaceOverviewPage).not.toContain('boardWarnings');
   });
 });

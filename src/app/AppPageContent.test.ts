@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(__dirname, '../..');
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
 const appBootstrap = readFileSync(resolve(root, 'src/app/useAppBootstrap.ts'), 'utf8');
+const appRouter = readFileSync(resolve(root, 'src/hooks/useAppRouter.ts'), 'utf8');
 const app = readFileSync(resolve(root, 'src/App.tsx'), 'utf8');
 const kubernetesClusterDetailPage = readFileSync(resolve(root, 'src/pages/KubernetesClusterDetailPage.tsx'), 'utf8');
 
@@ -76,11 +77,37 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).not.toContain('pageKey');
   });
 
+  it('keeps the current route visible while a lazy route chunk loads', () => {
+    expect(appRouter).toContain("import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';");
+    expect(appRouter.match(/startTransition\(\(\) => \{/g)).toHaveLength(2);
+    expect(appRouter).toContain('setAppPath(getCurrentAppPath(basePath));');
+    expect(appRouter).toContain('setAppPath(targetPath);');
+  });
+
+  it('remounts workspace-scoped workflow and agent state at workspace boundaries', () => {
+    expect(appPageContent.match(/key=\{workspaceContext\.id\}/g)).toHaveLength(3);
+    expect(appPageContent).toContain('<WorkspaceWorkflowsPage\n              key={workspaceContext.id}');
+    expect(appPageContent).toContain('<WorkspaceAgentsPage\n              key={workspaceContext.id}');
+    expect(appPageContent).toContain('<WorkspaceCatalogPage\n              key={workspaceContext.id}');
+  });
+
   it('preserves the upstream setup-required cluster installation path', () => {
     expect(kubernetesClusterDetailPage).toContain('onOpenInstallModal: (clusterId: string) => void;');
     expect(kubernetesClusterDetailPage).toContain("t('diagnostics.installAgentTitle')");
     expect(kubernetesClusterDetailPage).toContain("t('diagnostics.openInstallCommand')");
     expect(appPageContent).toContain('onOpenInstallModal={onInstallAgent}');
+    expect(appPageContent).toContain("canInstallAgent={(cluster) => getWorkspacePermission(cluster.workspaceId, 'manage_agent_keys')}");
+    expect(kubernetesClusterDetailPage).toContain('disabled={!canManageAgentKeys}');
+  });
+
+  it('passes the dedicated agent-key permission into VM controls', () => {
+    expect(appPageContent).toContain("canManageAgentKeys={getWorkspacePermission(workspaceContext.id, 'manage_agent_keys')}");
+  });
+
+  it('wires permission-gated cluster deletion through target settings', () => {
+    expect(appPageContent).toContain('onDeleteCluster={onDeleteCluster}');
+    expect(kubernetesClusterDetailPage).toContain('onDeleteCluster: (cluster: KubernetesCluster) => void | Promise<void>;');
+    expect(kubernetesClusterDetailPage).toContain('onDeleteCluster={() => onDeleteCluster(selectedCluster)}');
   });
 
   it('treats the top-level settings route as redirect-only legacy input', () => {
@@ -106,18 +133,23 @@ describe('AppPageContent route loading', () => {
     expect(appPageContent).toContain('onLeaveWorkspace={workspaceContext ? leaveWorkspace : undefined}');
   });
 
-  it('presents the no-workspace state as a guided setup path instead of a sparse blank page', () => {
-    expect(appPageContent).toContain('aria-labelledby="create-first-workspace-title"');
+  it('presents the no-workspace setup through the shared empty-state pattern', () => {
+    expect(appPageContent).toContain("import { EmptyState } from '@/components/common/EmptyState'");
     expect(appPageContent).toContain("route.kind === 'workspaces' || route.kind === 'home' || route.kind === 'settings'");
-    expect(appPageContent).toContain("t('app.createFirstWorkspaceKicker')");
+    expect(appPageContent).toContain('className="w-full max-w-3xl"');
+    expect(appPageContent).toContain('icon={<ICONS.LayoutGrid />}');
+    expect(appPageContent).toContain("eyebrow={t('app.createFirstWorkspaceKicker')}");
+    expect(appPageContent).toContain("title={t('app.createFirstWorkspace')}");
+    expect(appPageContent).toContain("t('app.createFirstWorkspaceBody')");
     expect(appPageContent).toContain("t('app.createFirstWorkspaceStepWorkspace')");
     expect(appPageContent).toContain("t('app.createFirstWorkspaceStepMembers')");
     expect(appPageContent).toContain("t('app.createFirstWorkspaceStepChat')");
-    expect(appPageContent).toContain('ICONS.BotMessageSquare');
-    expect(appPageContent).not.toContain("t('app.createFirstWorkspaceStepTargets')");
     expect(appPageContent).toContain("t('app.createFirstWorkspaceInviteHint')");
     expect(appPageContent).toContain("t('app.createWorkspaceAction')");
-    expect(appPageContent).toContain('sm:grid-cols-3');
-    expect(appPageContent).not.toContain("t('app.newWorkspace')}</Button>");
+    expect(appPageContent).toContain('<ol className=');
+  });
+
+  it('connects account settings back to the stable workspaces route', () => {
+    expect(appPageContent).toContain('onGoToWorkspaces={() => navigate(AppPaths.workspaces())}');
   });
 });

@@ -116,6 +116,18 @@ for (const path of files) {
     report(path, 'route-shell-copy', 'use PageShell instead of copying route margins and scrolling');
   }
 
+  const hasHandRolledLoadingBranch = /\{[^\n]*(?:isLoading\w*|loading)[^\n]*(?:\?|&&)/i.test(source);
+  const hasHandRolledEmptyBranch = /\{[^\n]*(?:\.length\s*===\s*0|!\w+\.length)[^\n]*(?:\?|&&)/.test(source);
+  if (
+    hasHandRolledLoadingBranch
+    && hasHandRolledEmptyBranch
+    && !source.includes('CollectionState')
+    && !source.includes('DataTableStateRow')
+    && !exceptions.asyncCollectionStateExceptions?.[repoPath]
+  ) {
+    report(path, 'async-collection-state', 'compose loading and empty precedence through CollectionState or add a documented contextual exception');
+  }
+
   for (const opening of jsxButtonOpenings(source)) {
     const isDesktopSidebarNavigationRow = repoPath === 'src/app/AppDesktopSidebarParts.tsx' && /navButtonClass\(/.test(opening.source);
     if (!approvedButtonSizingHelpers.test(opening.source) && !canonicalButtonTarget.test(opening.source) && !isDesktopSidebarNavigationRow) {
@@ -145,6 +157,12 @@ for (const [repoPath, delegate] of Object.entries(exceptions.routeHeaderDelegate
 for (const [repoPath, reason] of Object.entries(exceptions.embeddedRouteExceptions)) {
   if (typeof reason !== 'string' || reason.trim().length < 20) {
     report(join(root, repoPath), 'documented-exception', 'embedded route exceptions require a durable reason');
+  }
+}
+
+for (const [repoPath, reason] of Object.entries(exceptions.asyncCollectionStateExceptions || {})) {
+  if (typeof reason !== 'string' || reason.trim().length < 30) {
+    report(join(root, repoPath), 'documented-exception', 'async collection exceptions require a durable contextual reason');
   }
 }
 

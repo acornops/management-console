@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Select, SelectOption } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
+import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState } from '@/utils/telemetry';
@@ -18,6 +19,7 @@ interface ClusterSettingsViewProps {
   onEditNamespaceScope?: () => void;
   onUpdateWriteConfirmationPolicy?: (overrideRequired: boolean | null) => void | Promise<void>;
   onReinstallAgent?: () => void;
+  onDeleteCluster?: () => void | Promise<void>;
 }
 
 type WriteConfirmationPolicyValue = 'required' | 'not_required';
@@ -88,7 +90,8 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   onUpdateName,
   onEditNamespaceScope,
   onUpdateWriteConfirmationPolicy,
-  onReinstallAgent
+  onReinstallAgent,
+  onDeleteCluster
 }) => {
   const { t } = useTranslation();
   const [isEditingName, setIsEditingName] = useState(false);
@@ -311,6 +314,25 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
             ) : undefined}
           />
         </SettingSection>
+
+        {canManageCluster && onDeleteCluster && (
+          <TargetDeleteZone
+            targetName={cluster.name}
+            title={t('dashboard.deleteCluster')}
+            subtitle={t('dashboard.deleteClusterSubtitle')}
+            description={t('dashboard.deleteClusterBody', { name: cluster.name })}
+            agentWarning={t('dashboard.deleteClusterAgentWarning')}
+            confirmationI18nKey="dashboard.deleteClusterConfirmationLabel"
+            closeLabel={t('dashboard.closeDeleteCluster')}
+            cancelLabel={t('app.cancel')}
+            deleteLabel={t('dashboard.delete')}
+            deletingLabel={t('dashboard.deleting')}
+            errorFallback={t('dashboard.deleteClusterFailed')}
+            errorArea="cluster"
+            idBase="cluster-settings"
+            onDelete={onDeleteCluster}
+          />
+        )}
       </div>
     </div>
   );

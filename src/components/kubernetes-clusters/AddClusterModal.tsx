@@ -254,7 +254,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                     <button
                       type="button"
                       onClick={() => void copyInstallCommand()}
-                      className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-all hover:bg-ui-bg hover:text-ui-text"
+                      className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text"
                       aria-label={hasCopiedCommand ? t('clusterSetup.copied') : t('clusterSetup.copy')}
                     >
                       {hasCopiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -294,12 +294,13 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
             <div className="flex items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
               <Button
                 onClick={() => void onConfirmInstalled()}
+                disabled={isCreatingCluster}
                 variant="primary"
                 size="sm"
                 className="rounded-lg"
               >
                 <Zap className="h-4 w-4" />
-                {t('clusterSetup.installedAgent')}
+                {isCreatingCluster ? t('clusterSetup.checkingConnection') : t('clusterSetup.installedAgent')}
               </Button>
             </div>
           </>

@@ -8,14 +8,22 @@ import { OverviewView } from '@/features/kubernetes-cluster-detail/components/de
 import { ResourcesView } from '@/features/kubernetes-cluster-detail/components/detail/views/ResourcesView';
 import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
 import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
+import type { TargetToolCatalog } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/clusterChatFooter';
 import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
 import { KubernetesClusterDetailProps, View } from '@/features/kubernetes-cluster-detail/types';
 import { toKubernetesTargetDescriptor } from '@/features/targets/targetDescriptor';
+import type { ControlPlaneTargetSkillsCatalog, ControlPlaneTargetToolsCatalog } from '@/services/controlPlaneApi';
 
 interface KubernetesClusterDetailLocationState {
   view: View;
   sessionId: string | null;
+}
+
+interface CapabilityCatalogCache {
+  mcpServers?: TargetToolCatalog;
+  skills?: ControlPlaneTargetSkillsCatalog;
+  tools?: ControlPlaneTargetToolsCatalog;
 }
 
 const VIEWS: View[] = ['overview', 'resources', 'mcpServers', 'skills', 'tools', 'chat', 'settings'];
@@ -92,6 +100,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   onUpdateNamespaceScope,
   onUpdateWriteConfirmationPolicy,
   onReinstallAgent,
+  onDeleteCluster,
   onOpenAiSettings,
   onOpenCopilot,
   onActiveViewChange
@@ -103,6 +112,11 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
 
   const canChat = Boolean(currentWorkspacePermissions?.create_sessions && currentWorkspacePermissions.create_read_only_runs);
   const canRequestWriteRuns = Boolean(currentWorkspacePermissions?.create_read_write_runs);
+  const canUsePersonalMcpConnections = Boolean(
+    currentWorkspacePermissions?.create_sessions
+    || currentWorkspacePermissions?.create_read_only_runs
+    || currentWorkspacePermissions?.create_read_write_runs
+  );
   const canCancelRuns = Boolean(currentWorkspacePermissions?.cancel_runs);
   const canDeleteSessions = Boolean(currentWorkspacePermissions?.delete_sessions);
   const canManageAiSettings = Boolean(currentWorkspacePermissions?.manage_ai_settings);
@@ -115,12 +129,41 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   const assistantMarkdownComponents = useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = useMemo(() => createMarkdownComponents('user'), []);
   const target = useMemo(() => toKubernetesTargetDescriptor(cluster), [cluster]);
+  const targetCacheKey = `${target.workspaceId}:${target.id}`;
+  const [capabilityCatalogsByTarget, setCapabilityCatalogsByTarget] = useState<Record<string, CapabilityCatalogCache>>({});
+  const cachedCapabilityCatalogs = capabilityCatalogsByTarget[targetCacheKey];
+  const cacheCapabilityCatalog = React.useCallback(<K extends keyof CapabilityCatalogCache,>(
+    kind: K,
+    catalog: NonNullable<CapabilityCatalogCache[K]>
+  ) => {
+    setCapabilityCatalogsByTarget((current) => ({
+      ...current,
+      [targetCacheKey]: {
+        ...current[targetCacheKey],
+        [kind]: catalog
+      }
+    }));
+  }, [targetCacheKey]);
+  const cacheMcpServersCatalog = React.useCallback(
+    (catalog: TargetToolCatalog) => cacheCapabilityCatalog('mcpServers', catalog),
+    [cacheCapabilityCatalog]
+  );
+  const cacheSkillsCatalog = React.useCallback(
+    (catalog: ControlPlaneTargetSkillsCatalog) => cacheCapabilityCatalog('skills', catalog),
+    [cacheCapabilityCatalog]
+  );
+  const cacheToolsCatalog = React.useCallback(
+    (catalog: ControlPlaneTargetToolsCatalog) => cacheCapabilityCatalog('tools', catalog),
+    [cacheCapabilityCatalog]
+  );
 
   const {
     sessions,
     activeSessionId,
     composerRuntimeSelection,
-    workspaceAiSettingsRefreshToken,
+    workspaceAiSettings,
+    isWorkspaceAiSettingsLoading,
+    workspaceAiSettingsError,
     isActiveSessionOwner,
     conversationNotice,
     recentActivityWarning,
@@ -158,7 +201,6 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
       onOpenCopilot(prompt);
       return;
     }
-    handleCreateSession();
     setInputValue(prompt);
     setActiveView('chat');
   };
@@ -232,23 +274,33 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             {activeView === 'resources' && <ResourcesView cluster={cluster} canReadPodLogs={canReadPodLogs} onAnalyzePod={analyzePod} />}
             {activeView === 'mcpServers' && (
               <McpServersView
+                key={targetCacheKey}
                 target={target}
                 canManageMcp={canManageMcp}
                 canManageTools={canManageTools}
                 canRequestWriteRuns={canRequestWriteRuns}
+                canUsePersonalConnections={canUsePersonalMcpConnections}
+                initialCatalog={cachedCapabilityCatalogs?.mcpServers}
+                onCatalogChange={cacheMcpServersCatalog}
                 onSyncTools={onSyncTools}
               />
             )}
             {activeView === 'skills' && (
               <TargetSkillsView
+                key={targetCacheKey}
                 target={target}
                 canManageSkills={Boolean(currentWorkspacePermissions?.manage_skills)}
+                initialCatalog={cachedCapabilityCatalogs?.skills}
+                onCatalogChange={cacheSkillsCatalog}
               />
             )}
             {activeView === 'tools' && (
               <TargetToolsView
+                key={targetCacheKey}
                 target={target}
                 canManageTools={canManageTools}
+                initialCatalog={cachedCapabilityCatalogs?.tools}
+                onCatalogChange={cacheToolsCatalog}
               />
             )}
             {activeView === 'chat' && (
@@ -273,7 +325,9 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 sessions={sessions}
                 activeSessionId={activeSessionId}
                 composerRuntimeSelection={composerRuntimeSelection}
-                workspaceAiSettingsRefreshToken={workspaceAiSettingsRefreshToken}
+                workspaceAiSettings={workspaceAiSettings}
+                isWorkspaceAiSettingsLoading={isWorkspaceAiSettingsLoading}
+                workspaceAiSettingsError={workspaceAiSettingsError}
                 target={target}
                 assistantMarkdownComponents={assistantMarkdownComponents}
                 userMarkdownComponents={userMarkdownComponents}
@@ -310,6 +364,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 onEditNamespaceScope={onUpdateNamespaceScope ? () => setIsNamespaceScopeDialogOpen(true) : undefined}
                 onUpdateWriteConfirmationPolicy={onUpdateWriteConfirmationPolicy}
                 onReinstallAgent={onReinstallAgent}
+                onDeleteCluster={onDeleteCluster}
               />
             )}
         </div>

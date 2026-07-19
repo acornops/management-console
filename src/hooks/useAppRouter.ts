@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppRoute, parseAppRoute } from '@/utils/routes';
 
 function normalizeBasePath(baseUrl: string): string {
@@ -46,7 +46,9 @@ export function useAppRouter(): {
 
   useEffect(() => {
     const handlePopstate = () => {
-      setAppPath(getCurrentAppPath(basePath));
+      startTransition(() => {
+        setAppPath(getCurrentAppPath(basePath));
+      });
     };
 
     window.addEventListener('popstate', handlePopstate);
@@ -66,7 +68,9 @@ export function useAppRouter(): {
       } else {
         window.history.pushState({}, '', targetUrl);
       }
-      setAppPath(targetPath);
+      startTransition(() => {
+        setAppPath(targetPath);
+      });
     },
     [basePath]
   );

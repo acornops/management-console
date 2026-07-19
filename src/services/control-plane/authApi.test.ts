@@ -138,7 +138,8 @@ describe('controlPlaneAuthApi', () => {
     });
     expect(requestJson).toHaveBeenNthCalledWith(2, '/api/v1/auth/password/login', {
       method: 'POST',
-      body: JSON.stringify({ identifier: 'ops@example.com', password: 'secret' })
+      body: JSON.stringify({ identifier: 'ops@example.com', password: 'secret' }),
+      sessionExpiry: 'ignore'
     });
   });
 
@@ -179,7 +180,8 @@ describe('controlPlaneAuthApi', () => {
     });
     expect(requestJson).toHaveBeenNthCalledWith(3, '/api/v1/auth/password/resend-verification', {
       method: 'POST',
-      body: JSON.stringify({ email: 'ops@example.com' })
+      body: JSON.stringify({ email: 'ops@example.com' }),
+      sessionExpiry: 'ignore'
     });
   });
 
@@ -210,15 +212,18 @@ describe('controlPlaneAuthApi', () => {
     await expect(controlPlaneAuthApi.resetPassword('valid-token', 'new secure passphrase')).resolves.toBeUndefined();
     expect(requestJson).toHaveBeenNthCalledWith(1, '/api/v1/auth/password/forgot', {
       method: 'POST',
-      body: JSON.stringify({ email: 'ops@example.com' })
+      body: JSON.stringify({ email: 'ops@example.com' }),
+      sessionExpiry: 'ignore'
     });
     expect(requestJson).toHaveBeenNthCalledWith(2, '/api/v1/auth/password/reset', {
       method: 'POST',
-      body: JSON.stringify({ token: 'expired-token', password: 'new secure passphrase' })
+      body: JSON.stringify({ token: 'expired-token', password: 'new secure passphrase' }),
+      sessionExpiry: 'ignore'
     });
     expect(requestJson).toHaveBeenNthCalledWith(3, '/api/v1/auth/password/reset', {
       method: 'POST',
-      body: JSON.stringify({ token: 'valid-token', password: 'new secure passphrase' })
+      body: JSON.stringify({ token: 'valid-token', password: 'new secure passphrase' }),
+      sessionExpiry: 'ignore'
     });
   });
 
@@ -289,7 +294,8 @@ describe('controlPlaneAuthApi', () => {
     await expect(controlPlaneAuthApi.logout()).resolves.toBeUndefined();
     expect(requestJson).toHaveBeenNthCalledWith(2, '/api/v1/auth/logout', {
       method: 'POST',
-      body: JSON.stringify({})
+      body: JSON.stringify({}),
+      sessionExpiry: 'ignore'
     });
   });
 });

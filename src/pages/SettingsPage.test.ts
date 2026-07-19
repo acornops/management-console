@@ -7,6 +7,7 @@ const root = resolve(__dirname, '../..');
 const settingsPage = readFileSync(resolve(root, 'src/pages/SettingsPage.tsx'), 'utf8');
 const aiSettingsResource = readFileSync(resolve(root, 'src/hooks/useWorkspaceAiSettingsResource.ts'), 'utf8');
 const workspaceSettingsPage = readFileSync(resolve(root, 'src/pages/WorkspaceSettingsPage.tsx'), 'utf8');
+const dangerZone = readFileSync(resolve(root, 'src/components/common/DangerZone.tsx'), 'utf8');
 const appPageContent = readFileSync(resolve(root, 'src/app/AppPageContent.tsx'), 'utf8');
 
 describe('SettingsPage workspace tabs', () => {
@@ -52,6 +53,15 @@ describe('SettingsPage workspace tabs', () => {
     expect(aiSettingsResource).toContain('const isInitialLoadPending = Boolean(enabled && workspaceId && !entry);');
   });
 
+  it('renders explicit assistant return navigation without automatic redirects', () => {
+    expect(settingsPage).toContain('<PageBackLink');
+    expect(settingsPage).toContain("{t('workspaceAiSettings.backToAssistant')}");
+    expect(settingsPage).toContain('onReturnToAssistant?.(returnTo);');
+    expect(settingsPage).toContain('returnTo={returnTo}');
+    expect(appPageContent).toContain("returnTo={route.kind === 'workspaceAiSettings' ? route.returnTo : undefined}");
+    expect(settingsPage).not.toContain('window.location');
+  });
+
   it('surfaces self-service workspace leaving separately from destructive deletion', () => {
     expect(settingsPage).toContain('onLeaveWorkspace?: () => Promise<void>');
     expect(settingsPage).toContain('const workspaceTabDisabled = !workspace;');
@@ -67,6 +77,13 @@ describe('SettingsPage workspace tabs', () => {
     expect(workspaceSettingsPage).toContain("t('workspaceSettings.confirmLeave')");
     expect(workspaceSettingsPage).toContain("id=\"workspace-danger-title\"");
     expect(workspaceSettingsPage.indexOf("id=\"workspace-leave-title\"")).toBeLessThan(workspaceSettingsPage.indexOf("id=\"workspace-danger-title\""));
+    expect(workspaceSettingsPage).toContain("import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';");
+    expect(workspaceSettingsPage).toContain('<DangerZone className="mt-10">');
+    expect(workspaceSettingsPage).toContain("tone=\"danger\"");
+    expect(workspaceSettingsPage).not.toContain('rounded-xl border border-status-danger/20 bg-status-danger-soft');
+    expect(workspaceSettingsPage).toMatch(/variant="secondary"\s+size="md"\s+className="w-full"\s+onClick=\{\(\) => setIsConfirmingLeave\(true\)\}/);
+    expect(dangerZone).toContain('divide-y divide-ui-border overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm');
+    expect(dangerZone).not.toContain('bg-status-danger-soft');
   });
 
   it('maps direct workspace settings routes onto the settings tab shell', () => {

@@ -25,6 +25,7 @@ export interface ControlPlaneTargetToolItem {
   label: string;
   description: string;
   enabled: boolean;
+  origin: 'target_setting' | 'platform_native';
   capability: 'read' | 'write';
   runtimeKind: 'provider_native' | 'function';
   visibility?: {

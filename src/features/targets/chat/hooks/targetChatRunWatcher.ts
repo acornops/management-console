@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { ChatSession } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { streamReconnectDelay } from '@/services/control-plane/streamRetry';
+import { reportBrowserError } from '@/observability/browserErrors';
 import {
   ensureFailedRunAssistantMessage,
   mapControlPlaneMessage,
@@ -422,10 +424,12 @@ export function useWatchedRunStream(args: {
         })();
 
         while (!cancelled && !isRunCancelled(runId) && latestRun && isRunInProgress(latestRun.status)) {
+          let streamError: unknown;
           try {
             await controlPlaneApi.streamRunEvents(runId, {
               signal: abortController.signal,
               onEvent: (event) => {
+                reconnectAttempt = 0;
                 handleRunEvent(event);
                 if (isTerminalRunEventType(event.type)) {
                   abortController.abort();
@@ -433,8 +437,9 @@ export function useWatchedRunStream(args: {
               }
             });
           } catch (error) {
+            streamError = error;
             if (!cancelled) {
-              console.warn('Live run watcher stream paused', error);
+              reportBrowserError(error, 'operation');
             }
           }
 
@@ -452,13 +457,17 @@ export function useWatchedRunStream(args: {
             return;
           }
 
-          const delayMs = WATCHER_RECONNECT_DELAYS_MS[Math.min(reconnectAttempt, WATCHER_RECONNECT_DELAYS_MS.length - 1)];
+          const delayMs = streamReconnectDelay(streamError, reconnectAttempt, WATCHER_RECONNECT_DELAYS_MS);
+          if (delayMs === null) {
+            pollEventsStop = true;
+            return;
+          }
           reconnectAttempt += 1;
           await waitForReconnect(delayMs);
         }
       } catch (error) {
         if (!cancelled) {
-          console.warn('Live run watcher could not start', error);
+          reportBrowserError(error, 'operation');
         }
       } finally {
         pollEventsStop = true;

@@ -8,6 +8,7 @@ const root = resolve(__dirname, '../..');
 describe('target chat controller wiring', () => {
   const clusterDetail = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/KubernetesClusterDetail.tsx'), 'utf8');
   const clusterChatPanel = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/detail/ClusterChatPanel.tsx'), 'utf8');
+  const virtualMachineChatView = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachineChatView.tsx'), 'utf8');
   const appClusterChatRuntime = readFileSync(resolve(root, 'src/app/AppClusterChatRuntime.tsx'), 'utf8');
   const chatView = readFileSync(resolve(root, 'src/features/targets/chat/components/TargetChatView.tsx'), 'utf8');
   const chatComposer = readFileSync(resolve(root, 'src/features/targets/chat/components/TargetChatComposer.tsx'), 'utf8');
@@ -94,6 +95,16 @@ describe('target chat controller wiring', () => {
     expect(useTargetChat).not.toContain('releaseSubmitLockSoon');
     expect(useTargetChat).toContain('const handleSendInNewSession = async (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => {');
     expect(useTargetChat).toContain('await runWithChatSubmissionLock(submitInFlightRef, async () => {');
+  });
+
+  it('opens triage prompts in a fresh draft conversation', () => {
+    expect(useTargetChat).toContain('const handleCreateSessionWithInput = async (nextInputValue: string) => {');
+    expect(useTargetChat).toContain('await activateDraftSession();');
+    expect(useTargetChat).toContain('setInputValue(nextInputValue);');
+    expect(clusterChatPanel).toContain('void handleCreateSessionWithInput(initialPrompt.text);');
+    expect(clusterChatPanel).not.toContain('setInputValue(initialPrompt.text);');
+    expect(virtualMachineChatView).toContain('void controller.handleCreateSessionWithInput(prompt);');
+    expect(virtualMachineChatView).not.toContain('setInputValue(prompt);');
   });
 
   it('optimistically resolves cancelled runs so the composer and placeholder recover', () => {

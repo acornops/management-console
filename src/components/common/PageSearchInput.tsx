@@ -6,7 +6,7 @@ import { formInputClassName } from '@/components/common/formControlStyles';
 export const pageSearchInputClassName = (className?: string) =>
   twMerge(
     clsx(
-      formInputClassName('lg:w-72'),
+      formInputClassName('page-search-input lg:w-72'),
       className
     )
   );

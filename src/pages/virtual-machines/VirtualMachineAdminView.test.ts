@@ -8,13 +8,14 @@ const root = resolve(__dirname, '../../..');
 describe('VirtualMachineAdminView wiring', () => {
   const source = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachineAdminView.tsx'), 'utf8');
 
-  it('passes a VM target descriptor to shared admin views', () => {
+  it('keeps MCP servers, skills, and tools owned by the VM target', () => {
     expect(source).toContain("import { toVirtualMachineTargetDescriptor }");
     expect(source).toContain('const target = toVirtualMachineTargetDescriptor');
     expect(source).toContain('<TargetSkillsView');
     expect(source).toContain('target={target}');
     expect(source).toContain('<TargetToolsView');
     expect(source).toContain('<McpServersView');
+    expect(source).not.toContain('<TargetAgentCapabilitiesNotice');
   });
 
   it('does not depend on Kubernetes cluster shims', () => {

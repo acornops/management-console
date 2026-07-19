@@ -1,4 +1,5 @@
 import type { GitTargetSkillImportInput, ImportTargetSkillInput } from '@/services/controlPlaneApi';
+import { isFrontendFixtureRuntime } from '@/config/appDataMode';
 
 interface GitHubApiTreeEntry {
   path: string;
@@ -462,6 +463,12 @@ async function gitLabGetAllPages<T>(url: string): Promise<T[]> {
 }
 
 async function gitFetch(url: string, init?: RequestInit): Promise<Response> {
+  if (isFrontendFixtureRuntime()) {
+    throw new GitSkillImportError(
+      'Remote Git operations are unavailable in frontend fixture mode.',
+      'providerUnavailable'
+    );
+  }
   try {
     return await fetch(url, init);
   } catch {

@@ -17,7 +17,7 @@ describe('McpServersInventory table polish', () => {
     expect(mcpServersInventory).toContain('xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem]');
     expect(mcpServersInventory).toContain('type-label flex h-11 items-center justify-center whitespace-nowrap');
     expect(mcpServersInventory).toContain("t('mcpServers.showingServers', { count: filteredServers.length, total: servers.length })");
-    expect(mcpServerCard).toContain('<tr data-mcp-server-row="true"');
+    expect(mcpServerCard).toContain('data-mcp-server-row="true"');
   });
 
   it('does not render redundant page-local navigation or inactive policy actions', () => {

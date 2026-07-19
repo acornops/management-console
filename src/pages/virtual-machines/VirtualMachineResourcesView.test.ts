@@ -25,6 +25,8 @@ describe('VirtualMachineResourcesView resource filters', () => {
     expect(virtualMachineResourcesView).toContain("t('virtualMachines.resources.logMessage')");
     expect(virtualMachineResourcesView).toContain('filteredLogs.map');
     expect(virtualMachineResourcesView).toContain('min-h-[14rem]');
+    expect(virtualMachineResourcesView).toContain('<h2 className="mt-3 truncate text-sm font-bold text-ui-text">');
+    expect(virtualMachineResourcesView).not.toContain('<h3 className="mt-3 truncate text-sm font-bold text-ui-text">');
     expect(virtualMachineResourcesView).not.toContain('descriptionKey:');
     expect(virtualMachineResourcesView).not.toContain('min-h-[6.5rem]');
     expect(virtualMachineResourcesView).not.toContain('virtualMachines.resources.categoryDescriptions');

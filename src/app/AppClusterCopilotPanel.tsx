@@ -4,7 +4,7 @@ import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { ClusterChatPanel } from '@/features/kubernetes-cluster-detail/components/detail/ClusterChatPanel';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { KubernetesCluster, Workspace } from '@/types';
-import { AppPaths } from '@/utils/routes';
+import { AppPaths, withAssistantSession } from '@/utils/routes';
 
 interface AppClusterCopilotPanelProps {
   cluster: KubernetesCluster | null;
@@ -113,7 +113,11 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
             }}
             onOpenAiSettings={() => {
               onClose();
-              navigate(AppPaths.workspaceAiSettings(cluster.workspaceId));
+              const returnTo = withAssistantSession(
+                AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'chat'),
+                chatController.activeSessionId
+              );
+              navigate(AppPaths.workspaceAiSettings(cluster.workspaceId, returnTo));
             }}
             onInitialPromptHandled={onInitialPromptHandled}
           />

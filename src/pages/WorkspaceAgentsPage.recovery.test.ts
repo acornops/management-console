@@ -21,7 +21,6 @@ describe('WorkspaceAgentsPage recovery', () => {
 
   it('retries all failed live sources together', () => {
     expect(page).toContain('setAgentCatalogReloadKey');
-    expect(page).toContain('setCapabilityOptionsReloadKey');
     expect(page).toContain('setOwnerUsersReloadKey');
     expect(page).toContain('actionLabel="Retry all"');
   });

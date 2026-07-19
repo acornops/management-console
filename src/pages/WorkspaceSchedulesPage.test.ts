@@ -22,9 +22,20 @@ describe('WorkspaceSchedulesPage control-plane surface', () => {
   });
 
   it('renders loading, empty, error, permission, and drawer states', () => {
-    expect(schedulesPage).toContain('isLoadingSchedules');
+    expect(schedulesPage).toContain("useState<CursorCollectionPhase>('loading')");
+    expect(schedulesPage).toContain("setSchedulePhase(schedulePage === null ? 'loading' : 'refreshing')");
+    expect(schedulesPage).toContain("setSchedulePhase('ready')");
+    expect(schedulesPage).toContain("setSchedulePhase('error')");
     expect(schedulesPage).toContain('scheduleError');
     expect(schedulesPage).toContain('schedules.emptyTitle');
+    expect(schedulesPage).toContain('<CollectionState');
+    expect(schedulesPage).toContain('phase={schedulePhase}');
+    expect(schedulesPage).toContain('itemCount={schedules.length}');
+    expect(schedulesPage).toContain("loading={<InlineLoadingIndicator label={t('common.loading')}");
+    expect(schedulesPage).not.toContain('isInitialSchedulesLoad');
+    expect(schedulesPage).not.toContain('isLoadingSchedules');
+    expect(schedulesPage).toContain('icon={<ICONS.Clock />}');
+    expect(schedulesPage).not.toContain('<EmptyState embedded');
     expect(schedulesPage).toContain('schedules.permissionNotice');
     expect(schedulesPage).toContain('<DrawerFrame');
     expect(schedulesPage).toContain('titleId="schedule-drawer-title"');
@@ -38,7 +49,7 @@ describe('WorkspaceSchedulesPage control-plane surface', () => {
     expect(schedulesPage).toContain('createWorkflowId?: string;');
     expect(schedulesPage).toContain('const consumedCreateWorkflowIdRef = React.useRef<string | undefined>(undefined);');
     expect(schedulesPage).toContain('openCreateDrawer(createWorkflowId);');
-    expect(schedulesPage).toContain("setDraft({ ...createEmptyDraft(), workflowId: workflowId || activeWorkflows[0]?.id || workflows[0]?.id || '' });");
+    expect(schedulesPage).toContain("setDraft({ ...createEmptyDraft(), workflowId: workflowId || activeWorkflows[0]?.id || workflows[0]?.id || '', runsAsUserId: currentUser?.id || '' });");
     expect(schedulesPage).toContain('<Button size="md" variant="primary" onClick={() => openCreateDrawer()}');
   });
 
@@ -57,5 +68,16 @@ describe('WorkspaceSchedulesPage control-plane surface', () => {
   it('does not render the removed page-level workflow tabs', () => {
     expect(schedulesPage).not.toContain('WorkspaceAutomationRouteNav');
     expect(schedulesPage).not.toContain('aria-label="Workflow views"');
+  });
+
+  it('shows bounded MCP auto-pause recovery while keeping resume manual', () => {
+    expect(schedulesPage).toContain("schedule.lastStatus === 'auto_paused'");
+    expect(schedulesPage).toContain('.slice(0, 240)');
+    expect(schedulesPage).toContain('Repair MCP before resuming. Resume remains a manual action.');
+    expect(schedulesPage).toContain("t('workflowCoordination.reviewWorkflowAccess')");
+    expect(schedulesPage).toContain("workflow?.executionMode === 'coordinated'");
+    expect(schedulesPage).toContain("tab: 'capabilities'");
+    expect(schedulesPage).toContain("capabilityTab: 'mcp'");
+    expect(schedulesPage).toContain("schedule.status === 'enabled' ? t('schedules.actions.pause') : t('schedules.actions.resume')");
   });
 });

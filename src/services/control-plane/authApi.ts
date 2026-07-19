@@ -1,4 +1,5 @@
 import { User } from '@/types';
+import { isFrontendFixtureRuntime } from '@/config/appDataMode';
 import { formatControlPlaneError } from './errorFormatting';
 import { ControlPlaneRequestError, getControlPlaneUrl, requestJson } from './http';
 import {
@@ -28,7 +29,7 @@ function stripControlPlaneErrorPrefix(error: unknown, fallback: string): string 
 
 export const controlPlaneAuthApi = {
   async getAuthConfig(): Promise<ControlPlaneAuthConfig> {
-    return requestJson<ControlPlaneAuthConfig>('/api/v1/auth/config');
+    return requestJson<ControlPlaneAuthConfig>('/api/v1/auth/config', { sessionExpiry: 'ignore' });
   },
 
   async getCsrfToken(): Promise<string> {
@@ -37,6 +38,9 @@ export const controlPlaneAuthApi = {
   },
 
   async initiateLogin(returnTo: string, options?: { externalIntegrationLinkToken?: string }): Promise<void> {
+    if (isFrontendFixtureRuntime()) {
+      throw new Error('External OAuth is unavailable in frontend fixture mode.');
+    }
     const url = getControlPlaneUrl('/api/v1/auth/oidc/login');
     url.searchParams.set('return_to', returnTo);
     if (options?.externalIntegrationLinkToken) {
@@ -63,7 +67,8 @@ export const controlPlaneAuthApi = {
     try {
       const result = await requestJson<{ user: ControlPlaneUser }>('/api/v1/auth/password/login', {
         method: 'POST',
-        body: JSON.stringify({ identifier, password })
+        body: JSON.stringify({ identifier, password }),
+        sessionExpiry: 'ignore'
       });
       return userFromControlPlane(result.user);
     } catch (error) {
@@ -88,7 +93,8 @@ export const controlPlaneAuthApi = {
         | ControlPlaneVerificationRequired
       >('/api/v1/auth/password/signup', {
         method: 'POST',
-        body: JSON.stringify(input)
+        body: JSON.stringify(input),
+        sessionExpiry: 'ignore'
       });
       if ('status' in result && result.status === 'verification_required') return result;
       if ('user' in result) return { status: 'signed_in', user: userFromControlPlane(result.user) };
@@ -110,7 +116,8 @@ export const controlPlaneAuthApi = {
     try {
       const result = await requestJson<{ user: ControlPlaneUser; status: 'verified' }>('/api/v1/auth/password/verify-email', {
         method: 'POST',
-        body: JSON.stringify({ token })
+        body: JSON.stringify({ token }),
+        sessionExpiry: 'ignore'
       });
       return userFromControlPlane(result.user);
     } catch (error) {
@@ -126,14 +133,16 @@ export const controlPlaneAuthApi = {
   async resendPasswordVerification(email: string): Promise<ControlPlaneVerificationResendResult> {
     return requestJson<ControlPlaneVerificationResendResult>('/api/v1/auth/password/resend-verification', {
       method: 'POST',
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email }),
+      sessionExpiry: 'ignore'
     });
   },
 
   async requestPasswordReset(email: string): Promise<ControlPlanePasswordResetRequestResult> {
     return requestJson<ControlPlanePasswordResetRequestResult>('/api/v1/auth/password/forgot', {
       method: 'POST',
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email }),
+      sessionExpiry: 'ignore'
     });
   },
 
@@ -141,7 +150,8 @@ export const controlPlaneAuthApi = {
     try {
       await requestJson<{ status: string }>('/api/v1/auth/password/reset', {
         method: 'POST',
-        body: JSON.stringify({ token, password })
+        body: JSON.stringify({ token, password }),
+        sessionExpiry: 'ignore'
       });
     } catch (error) {
       if (error instanceof ControlPlaneRequestError && error.code) {
@@ -169,6 +179,9 @@ export const controlPlaneAuthApi = {
   },
 
   async startOidcLink(input: { currentPassword: string; returnTo?: string }): Promise<string> {
+    if (isFrontendFixtureRuntime()) {
+      throw new Error('External OAuth is unavailable in frontend fixture mode.');
+    }
     try {
       const result = await requestJson<{ url: string }>('/api/v1/auth/oidc/link/start', {
         method: 'POST',
@@ -183,7 +196,8 @@ export const controlPlaneAuthApi = {
   async logout(): Promise<void> {
     await requestJson<{ status: string }>('/api/v1/auth/logout', {
       method: 'POST',
-      body: JSON.stringify({})
+      body: JSON.stringify({}),
+      sessionExpiry: 'ignore'
     });
   }
 };

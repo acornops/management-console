@@ -217,7 +217,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  className="sr-only"
+                  hidden
                   onChange={(event) => void handleAttachmentInputChange(event)}
                   disabled={!canPost || isRunActive}
                 />

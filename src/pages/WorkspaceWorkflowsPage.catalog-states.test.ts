@@ -8,6 +8,9 @@ describe('WorkspaceWorkflowsPage catalog states', () => {
   it('keeps request failures retryable without page-wide setup or empty-catalog notices', () => {
     for (const snippet of [
       'Workflow options could not be loaded.',
+      'Workflow options must load before creating a workflow.',
+      'Workflow options must load before launching a workflow.',
+      'workflowOptionsReady={workflowOptionsReady}',
       'setWorkflowOptionsError(error instanceof Error ? error.message',
       'setWorkflowOptionsReloadKey((value) => value + 1)'
     ]) expect(source).toContain(snippet);

@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval } from '@/types';
+import type { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval, WorkspaceAiSettings } from '@/types';
 import type {
   ControlPlaneSession,
   ControlPlaneSessionListPage,
@@ -45,10 +45,14 @@ export interface TargetChatController {
   sessionAssistantStatuses?: Record<string, AssistantNavStatus>;
   traceExpandedByRunId: Record<string, boolean>;
   composerRuntimeSelection?: ChatRuntimeSelection;
+  workspaceAiSettings: WorkspaceAiSettings | null;
+  isWorkspaceAiSettingsLoading: boolean;
+  workspaceAiSettingsError: string;
   workspaceAiSettingsRefreshToken: number;
   transcriptRef: (node: HTMLDivElement | null) => void;
   setActiveSessionId: (sessionId: string) => void;
   handleCreateSession: () => void;
+  handleCreateSessionWithInput: (inputValue: string) => Promise<void>;
   handleDismissRecentActivityWarning: (sessionId?: string) => void;
   handleOpenRecentActivitySession: (sessionId: string) => void;
   handleDeleteSession: (sessionId: string) => Promise<void>;

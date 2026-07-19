@@ -281,7 +281,6 @@ describe('tool mappers', () => {
         server_url: 'https://mcp.example.com',
         enabled: true,
         auth_type: 'bearer_token',
-        auth_secret_name: 'mcp-secret',
         auth_header_name: 'Authorization',
         auth_header_prefix: 'Bearer',
         public_headers: { 'X-Trace': '1' },

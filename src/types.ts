@@ -121,6 +121,16 @@ export interface ClusterToolCatalogServer {
   canEditConnection: boolean;
   canToggle: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
+  authScope?: 'none' | 'personal' | 'legacy_shared';
+  authHeaderName?: string;
+  authHeaderPrefix?: string;
+  provenance?: {
+    sourceId: string;
+    artifactName: string;
+    version: string;
+    digest: string;
+    importedAt: string;
+  };
   publicHeaders?: Record<string, string>;
   connectionStatus: 'unknown' | 'ok' | 'error';
   lastDiscoveryAt: string | null;
@@ -298,6 +308,7 @@ export interface Workspace {
     manage_members: boolean;
     manage_targets: boolean;
     manage_mcp: boolean;
+    manage_catalog_sources?: boolean;
     manage_tools: boolean;
     manage_target_insights: boolean;
     manage_skills: boolean;
@@ -428,6 +439,7 @@ export type WorkspaceCapability =
   | 'manage_members'
   | 'manage_targets'
   | 'manage_mcp'
+  | 'manage_catalog_sources'
   | 'manage_tools'
   | 'manage_target_insights'
   | 'manage_skills'

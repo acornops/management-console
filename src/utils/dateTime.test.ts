@@ -18,6 +18,10 @@ describe('dateTime utilities', () => {
     expect(formatUserDate('2026-06-29T13:35:00.000Z', { timeZone: 'America/Los_Angeles' })).toBe('Jun 29, 2026');
   });
 
+  it('formats absolute dates with an explicitly selected application locale', () => {
+    expect(formatUserDate('2026-06-29T13:35:00.000Z', { locale: 'zh-CN', timeZone: 'UTC' })).toContain('月');
+  });
+
   it('falls back for invalid timestamps', () => {
     expect(parseDateTime('not-a-date')).toBeNull();
     expect(formatUserDateTime('not-a-date', { fallback: 'Never' })).toBe('Never');

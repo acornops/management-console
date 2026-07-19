@@ -8,6 +8,7 @@ import {
   sanitizeChatMessages
 } from '@/features/targets/chat/lib/session-utils';
 import { AppPaths } from '@/utils/routes';
+import { resolveMcpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 
 function formatChatSubmitFailureMessage(error: unknown, workspaceId: string, fallbackMessage: string): string {
   if (error instanceof ControlPlaneRequestError && error.code === 'AI_PROVIDER_CREDENTIAL_MISSING') {
@@ -24,11 +25,21 @@ function formatChatSubmitFailureMessage(error: unknown, workspaceId: string, fal
 export function buildChatSubmitFailureMessage(args: {
   error: unknown;
   workspaceId: string;
+  targetId: string;
+  targetType: 'kubernetes' | 'virtual_machine';
   fallbackMessage: string;
   runId?: string;
 }): ChatMessage {
-  const errorMessage = formatChatSubmitFailureMessage(args.error, args.workspaceId, args.fallbackMessage);
-  return args.error instanceof ControlPlaneRequestError && args.error.code === 'AI_PROVIDER_CREDENTIAL_MISSING'
+  const recovery = resolveMcpReadinessRecovery(args.error, {
+    workspaceId: args.workspaceId,
+    scopeType: 'target',
+    targetId: args.targetId,
+    targetType: args.targetType
+  });
+  const errorMessage = recovery
+    ? `${recovery.message} [${recovery.label}](#${recovery.href})`
+    : formatChatSubmitFailureMessage(args.error, args.workspaceId, args.fallbackMessage);
+  return recovery || (args.error instanceof ControlPlaneRequestError && args.error.code === 'AI_PROVIDER_CREDENTIAL_MISSING')
     ? buildChatSetupFailureMessage(errorMessage, args.runId)
     : buildChatFailureMessage(errorMessage, args.runId);
 }

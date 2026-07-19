@@ -5,6 +5,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import { TraceFooter } from '@/features/targets/chat/components/TraceFooter';
 import { ApprovalCheckpoint } from '@/features/targets/chat/components/ApprovalCheckpoint';
 import { MessageActions } from '@/features/targets/chat/components/MessageActions';
+import { GeneratedReportCard } from '@/features/targets/chat/components/GeneratedReportCard';
 import { ThinkingAcorn } from '@/features/targets/chat/components/ThinkingAcorn';
 import { markdownRemarkPlugins } from '@/features/targets/chat/lib/markdown';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
@@ -149,6 +150,8 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
       )}
 
       {!isInFlightPlaceholder && workingLine}
+
+      {!isInFlightPlaceholder && <GeneratedReportCard trace={trace} t={t} />}
 
       {!hasTraceDetails && !shouldRenderCompactStatusOnly && messageActions}
 

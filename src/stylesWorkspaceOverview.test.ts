@@ -42,15 +42,15 @@ describe('workspace overview style contract', () => {
     expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
       overviewPage.indexOf('data-connected-targets="true"')
     );
-    expect(overviewPage).toContain("t('overview.evidenceLabel')");
     expect(overviewPage).toContain("t('overview.runTriageIssue')");
     expect(overviewPage).toContain("t('overview.viewMoreIssue')");
     expect(overviewPage).toContain('onRunTriage({');
     expect(overviewPage).toContain("t('overview.connectedTargetCount'");
-    expect(overviewPage).toContain('flex min-h-11 w-full items-center justify-between gap-3');
-    expect(overviewPage).toContain('type-label whitespace-nowrap');
-    expect(overviewPage).toContain('w-full rounded-lg border border-ui-border bg-ui-bg p-4 text-left');
-    expect(overviewPage).toContain('border border-ui-border bg-ui-surface px-2.5 py-1 text-ui-text-muted');
+    expect(overviewPage).toContain('flex shrink-0 items-center gap-4 text-ui-text-muted');
+    expect(overviewPage).toContain('w-full px-5 py-4 text-left');
+    expect(overviewPage).toContain('data-target-group="true"');
+    expect(overviewPage).toContain('divide-y divide-ui-border');
+    expect(overviewPage).toContain('recentInvestigation && (');
     expect(overviewPage).not.toContain('bg-status-danger-soft/30');
     expect(overviewPage).not.toContain('bg-status-warning-soft/30');
     expect(overviewPage).not.toContain('overview.triageQueueTitle');
@@ -58,6 +58,8 @@ describe('workspace overview style contract', () => {
     expect(overviewPage).not.toContain('overview.targetEstate');
     expect(overviewPage).not.toContain('data-healthy-targets="true"');
     expect(overviewPage).not.toContain('{card.targetTypeLabel}');
+    expect(overviewPage).not.toContain('data-primary-issue-card');
+    expect(overviewPage).not.toContain('summaryStats');
     expect(enLocale).toContain("needsAttentionTitle: 'What needs attention now'");
   });
 });

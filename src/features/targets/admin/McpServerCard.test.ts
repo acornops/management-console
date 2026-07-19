@@ -18,9 +18,11 @@ describe('McpServerCard desktop density', () => {
     expect(mcpServerCard).toContain("t('mcpServers.healthCheckHelp')");
     expect(mcpServerCard).toContain('type-panel-title truncate');
     expect(mcpServerCard).not.toContain('line-clamp-2 break-words');
-    expect(mcpServerCard).toContain("t('mcpServers.managedByAcornOps')");
+    expect(mcpServerCard).toContain("t('common.providedByAcornOps')");
     expect(mcpServerCard).toContain('const isManagedServer = isManagedMcpServer(server);');
-    expect(mcpServerCard).toContain("const serverSubtitle = isManagedServer ? t('mcpServers.managedByAcornOps') : server.url");
+    expect(mcpServerCard).toContain("const serverSubtitle = isManagedServer ? t('common.providedByAcornOps') : server.url");
+    expect(mcpServerCard).toContain('{isManagedServer && (');
+    expect(mcpServerCard).toContain('{!isManagedServer && (');
     expect(mcpServerCard).toContain('<Switch');
     expect(mcpServerCard).toContain('onToggleServer(server, enabled)');
     expect(mcpServerCard).toContain('isBlockedByOtherServerToggle');

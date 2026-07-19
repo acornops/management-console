@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addMcpServerAction,
   addClusterModal,
   appDialogs,
   appPageContent,
@@ -28,6 +29,7 @@ import {
   mcpServersDialogs,
   mcpServersInventory,
   mcpServersView,
+  mcpServersViewHeader,
   membersPage,
   mobileNavigation,
   nginxConfig,
@@ -49,12 +51,10 @@ import {
   workspaceSettingsPage,
   zhLocale
 } from './stylesTestSupport';
-
 describe('theme color contract', () => {
   it('exposes the v2 neutral surfaces with a restrained orange accent', () => {
     expect(styles).toContain('color-scheme: light');
     expect(styles).toContain('color-scheme: dark');
-
     expect(lightTheme).toContain('--brand-orange: oklch(0.712 0.187 39.7)');
     expect(lightTheme).toContain('--brand-orange-rgb: 255 112 59');
     expect(lightTheme).toContain('--brand-orange-strong-rgb: 230 95 47');
@@ -156,6 +156,7 @@ describe('theme color contract', () => {
   it('keeps browser chrome and status colors on the token system', () => {
     expect(indexHtml).toContain('<meta name="theme-color" content="#fcfaf6" />');
     expect(indexHtml).toContain('<script src="/theme-init.js"></script>');
+    expect(themeInit).toContain("window.localStorage.getItem('acornops_active_theme_preference')");
     expect(themeInit).toContain("window.localStorage.getItem('app_theme')");
     expect(themeInit).toContain("window.matchMedia('(prefers-color-scheme: dark)')");
     expect(themeInit).toContain("resolvedTheme === 'dark' ? '#121110' : '#fcfaf6'");
@@ -273,27 +274,32 @@ describe('theme color contract', () => {
   });
 
   it('makes the workspace homepage triage workflow inspectable from summary to target issue boards', () => {
-    expect(overviewPage).toContain('loadAllWorkspaceIssues');
+    expect(overviewPage).toContain('const issueCollection = useCursorCollection({');
+    expect(overviewPage).toContain("strategy: 'manual'");
+    expect(overviewPage).toContain('pageSize: 24');
     expect(overviewPage).toContain('listWorkspaceIssues');
     expect(overviewPage).toContain('data-overview-quick-actions="true"');
     expect(overviewPage).toContain('data-connected-targets="true"');
     expect(overviewPage).toContain('data-attention-board="true"');
-    expect(overviewPage).toContain("data-primary-issue-card={isPrimary ? 'true' : undefined}");
+    expect(overviewPage).toContain('data-target-group="true"');
     expect(overviewPage).toContain('buildWorkspaceOverviewCards');
-    expect(overviewPage).toContain('attentionItems.map');
-    expect(overviewPage).toContain('onSelectCluster(card.targetId)');
-    expect(overviewPage).toContain('onSelectVirtualMachine(card.targetId)');
+    expect(overviewPage).toContain('attentionItems.map(renderAttentionIssueRow)');
+    expect(overviewPage).toContain('href={appHref(path)}');
+    expect(overviewPage).toContain('handleAppLinkClick(event, path, navigate)');
     expect(overviewPage).toContain('readRecentInvestigation(workspace.id, currentUserId)');
     expect(traceFooter).toContain('Show run details');
     expect(traceFooter).toMatch(/const activitySummary = trace\.status === 'connecting'[\s\S]*'Waiting for progress'/);
   });
 
-  it('keeps triage history from resizing the primary navigation shell', () => {
+  it('keeps the compact assistant rail independent from the primary navigation shell', () => {
     expect(desktopSidebar).toContain('w-64 shrink-0');
-    expect(chatView).toContain('setIsHistoryOpen(true)');
+    expect(chatView).toContain("aria-label={t('chat.assistantNavigation')}");
+    expect(chatView).toContain('h-full w-12 shrink-0 flex-col');
+    expect(chatView).toContain('style={{ width: historyPanelWidth }}');
+    expect(chatView).toContain('data-chat-history-resize-handle="true"');
     expect(chatView).toContain('setIsHistoryOpen(false)');
     expect(chatView).toContain('lg:flex');
-    expect(chatView).toContain('absolute inset-0 z-[110] lg:hidden');
+    expect(chatView).toContain('absolute inset-0 z-[110] bg-ui-text/20 dark:bg-ui-bg/65 lg:hidden');
     expect(chatView).not.toContain('xl:w-80');
   });
 
@@ -376,11 +382,11 @@ describe('theme color contract', () => {
     expect(workloadsExplorerSurface).toContain('(pvc) => !isHealthyStatus(pvc.status)');
     expect(workloadsExplorerSurface).toContain('(node) => !isHealthyStatus(node.status)');
     expect(workloadsExplorerSurface).toContain('healthy={isHealthyStatus(namespace.status)}');
-    expect(resourceExplorerControls).toContain('lg:grid-cols-[minmax(16rem,1fr)_minmax(11rem,14rem)_minmax(11rem,14rem)_minmax(9rem,max-content)]');
+    expect(resourceExplorerControls).toContain('<SearchFilterFrame');
     expect(resourceExplorerControls).toContain("t('resources.clusterScoped')");
     expect(resourceExplorerControls).toContain('const resourceScopeDisplayClassName =');
     expect(resourceExplorerControls).not.toContain("formInputClassName(\n  'flex h-11 min-h-11 items-center");
-    expect(resourceExplorerControls).toContain('children || <div className="hidden min-w-[9rem] lg:block"');
+    expect(resourceExplorerControls).toContain('trailingActions={children}');
     expect(resourceExplorerControls).not.toContain("t('resources.filtersInventory.title')");
     expect(resourceExplorerControls).not.toContain("t('resources.summary.visibleOfTotal'");
     expect(resourceExplorerControls).not.toContain('const showActiveFilterActions = activeFilters.length > 0 || canResetFilters');
@@ -468,8 +474,9 @@ describe('theme color contract', () => {
     expect(buttonComponent).toContain("export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'danger' | 'activation'");
     expect(buttonComponent).toContain('primary: filledNeutralButtonClass');
     expect(buttonComponent).toContain('border border-control-boundary bg-control-primary text-control-primary-fg');
-    expect(buttonComponent).toContain("activation: 'border border-control-boundary bg-control-activation text-control-activation-fg");
+    expect(buttonComponent).toContain("activation: 'border border-transparent bg-control-activation text-control-activation-fg");
     expect(buttonComponent).toContain('hover:bg-control-activation-hover');
+    expect(buttonComponent).not.toContain('shadow-accent/20');
     expect(buttonComponent).toContain("secondary: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm");
     expect(buttonComponent).toContain("danger: 'border border-control-boundary bg-control-danger text-control-danger-fg");
     expect(buttonComponent).not.toContain('text-ui-bg');
@@ -483,14 +490,12 @@ describe('theme color contract', () => {
     expect(addClusterModal).toContain('variant="primary"');
   });
 
-  it('meets WCAG AA contrast for every enabled filled button state and control boundary', () => {
+  it('meets WCAG AA contrast for standard filled buttons and records the branded activation exception', () => {
     const textPairs = [
       ['--control-primary-fg-rgb', '--control-primary-bg-rgb'],
       ['--control-primary-fg-rgb', '--control-primary-hover-rgb'],
       ['--control-secondary-fg-rgb', '--control-secondary-bg-rgb'],
       ['--control-secondary-fg-rgb', '--control-secondary-hover-rgb'],
-      ['--control-activation-fg-rgb', '--control-activation-bg-rgb'],
-      ['--control-activation-fg-rgb', '--control-activation-hover-rgb'],
       ['--control-danger-fg-rgb', '--control-danger-bg-rgb'],
       ['--control-danger-fg-rgb', '--control-danger-hover-rgb']
     ];
@@ -500,6 +505,8 @@ describe('theme color contract', () => {
         expect(contrastRatio(rgbVariableValue(theme, foreground), rgbVariableValue(theme, background)))
           .toBeGreaterThanOrEqual(4.5);
       }
+      expect(rgbVariableValue(theme, '--control-activation-fg-rgb'))
+        .toEqual(rgbVariableValue(theme, '--logo-cream-rgb'));
       for (const surrounding of ['--bg-rgb', '--surface-rgb']) {
         expect(contrastRatio(
           rgbVariableValue(theme, '--control-boundary-rgb'),
@@ -527,15 +534,16 @@ describe('theme color contract', () => {
   it('keeps app page-header action buttons at the medium size', () => {
     expect(dashboardPage).toContain('<Button onClick={onAddCluster} variant="primary" size="md" className="whitespace-nowrap">');
     expect(overviewPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
-    expect(mcpServersView).toContain(
-      '<Button onClick={openCreateServerModal} disabled={!canEditServers} variant="secondary" size="md" className="whitespace-nowrap">'
-    );
+    expect(mcpServersViewHeader).toContain('<AddMcpServerAction');
+    expect(addMcpServerAction).toContain('variant="secondary"');
+    expect(addMcpServerAction).toContain("size = 'md'");
+    expect(addMcpServerAction).toContain('size={size}');
   });
 
   it('keeps MCP connection state copy action-oriented instead of ambiguous', () => {
     expect(mcpServerCard).toContain("server.type === 'builtin'");
     expect(mcpServerCard).toContain("'mcpServers.statusNotChecked'");
-    expect(mcpServerCard).toContain("t('mcpServers.managedByAcornOps')");
+    expect(mcpServerCard).toContain("t('common.providedByAcornOps')");
     expect(mcpServerCard).not.toContain('detailKey');
     ["statusConnected: 'Connected'", "statusNeedsAuth: 'Needs auth'", "statusDiscoveryFailed: 'Discovery failed'", "statusNotChecked: 'No check yet'", "notChecked: 'No health check yet'"].forEach((copy) => expect(enLocale).toContain(copy));
     expect(enLocale).toContain("managedByAcornOps: 'Managed by AcornOps'");
@@ -587,9 +595,8 @@ describe('theme color contract', () => {
     expect(overviewPage).not.toContain('max-w-[90rem]');
     expect(dashboardPage).not.toContain('max-w-[90rem]');
   });
-
   it('keeps cluster detail pages on the shared full-width shell', () => {
-    expect(clusterOverviewView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
+    expect(clusterOverviewView).toMatch(/<PageShell>[\s\S]*<PageHeader/);
     expect(clusterSettingsView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
     expect(workloadsExplorer).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
     expect(mcpServersView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
@@ -600,20 +607,21 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('data-connected-targets="true"');
     expect(overviewPage).toContain('data-attention-board="true"');
     expect(overviewPage).toContain('rounded-lg border border-ui-border bg-ui-surface');
-    expect(overviewPage).toContain('sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end');
-    expect(overviewPage).toContain('flex min-h-11 w-full items-center justify-between gap-3');
-    expect(overviewPage).toContain('flex flex-col gap-4 px-5 py-5 sm:px-6');
+    expect(overviewPage).toContain('sm:flex-row sm:items-center sm:justify-between');
+    expect(overviewPage).toContain('flex shrink-0 items-center gap-4 text-ui-text-muted');
+    expect(overviewPage).toContain('divide-y divide-ui-border');
     expect(overviewPage).toContain('xl:grid-cols-2');
-    expect(overviewPage).toContain('overflow-hidden rounded-xl border border-accent/20');
+    expect(overviewPage).toContain('recentInvestigation && (');
+    expect(overviewPage).toContain('border-y border-ui-border py-3');
     expect(overviewPage).toContain('w-full justify-center sm:w-auto');
-    expect(overviewPage).toContain('group flex w-full items-center gap-4 px-4 py-3');
-    expect(overviewPage).toContain("data-primary-issue-card={isPrimary ? 'true' : undefined}");
-    expect(overviewPage).toContain("t('overview.evidenceLabel')");
+    expect(overviewPage).toContain('group flex w-full items-center justify-between gap-4 px-4 py-3');
     expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
       overviewPage.indexOf('data-connected-targets="true"')
     );
     expect(overviewPage).not.toContain('{card.targetTypeLabel}');
     expect(overviewPage).not.toContain('{issue.summary &&');
+    expect(overviewPage).not.toContain('data-primary-issue-card');
+    expect(overviewPage).not.toContain('summaryStats');
   });
 
   it('keeps connected target lists directly reachable without a secondary healthy-target panel', () => {
@@ -633,7 +641,7 @@ describe('theme color contract', () => {
   });
 
   it('preserves one-time invitation links while invitation pages refresh', () => {
-    expect(membersPage).toContain('inviteLink: existing?.inviteLink');
+    expect(membersPage).toContain('inviteLink: existingById.get(invitation.id)?.inviteLink');
     expect(membersPage).toContain('onCreateInvitation ? createInvitation : undefined');
     expect(membersPage).not.toContain('[loadInvitations, workspace.id, workspace.invitations]');
   });

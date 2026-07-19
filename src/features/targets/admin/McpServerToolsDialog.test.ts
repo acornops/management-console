@@ -8,8 +8,9 @@ const mcpServerToolsDialog = readFileSync(resolve(__dirname, 'McpServerToolsDial
 describe('McpServerToolsDialog summary polish', () => {
   it('uses managed server copy instead of exposing internal control-plane URLs', () => {
     expect(mcpServerToolsDialog).toContain('const isManagedServer = isManagedMcpServer(server);');
-    expect(mcpServerToolsDialog).toContain("const serverSubtitle = isManagedServer ? t('mcpServers.managedByAcornOps') : server.url");
-    expect(mcpServerToolsDialog).toContain("isManagedServer ? 'type-caption mt-1 text-ui-text-muted' : 'type-code mt-1 truncate text-ui-text-muted'");
+    expect(mcpServerToolsDialog).toContain("const serverSubtitle = isManagedServer ? t('common.providedByAcornOps') : server.url");
+    expect(mcpServerToolsDialog).toContain('{isManagedServer && (');
+    expect(mcpServerToolsDialog).toContain('{!isManagedServer && (');
   });
 
   it('keeps tool summary metrics label-first like the MCP servers page summary', () => {
@@ -62,6 +63,7 @@ describe('McpServerToolsDialog summary polish', () => {
     expect(mcpServerToolsDialog).toContain('await onToggleTool(tool, configuredOverrides[tool.name] ?? tool.enabledConfigured);');
     expect(mcpServerToolsDialog).toContain('} catch {');
     expect(mcpServerToolsDialog).toContain('The parent owns the visible error');
-    expect(mcpServerToolsDialog).toContain('{toolsError && (');
+    expect(mcpServerToolsDialog).toContain('phase={toolsPhase}');
+    expect(mcpServerToolsDialog).toContain('feedback={toolsError ? (');
   });
 });

@@ -5,6 +5,10 @@ import { buildRecentActivityWarning } from '@/features/targets/chat/hooks/target
 
 type ActivityWarningTranslator = (key: string, options?: Record<string, unknown>) => string;
 
+export function findReusableDraftSession(sessions: ChatSession[]): ChatSession | undefined {
+  return sessions.find((session) => session.messages.length === 0 && !session.backendSessionId);
+}
+
 export async function createDraftSessionWithWarning(args: {
   getTargetChatActivity: () => Promise<ControlPlaneTargetChatActivity>;
   currentUserId: string;

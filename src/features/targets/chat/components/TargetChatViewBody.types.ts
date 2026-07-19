@@ -2,12 +2,9 @@ import type React from 'react';
 import type { TFunction } from 'i18next';
 import type { Components } from 'react-markdown';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
+import type { AiRuntimeReadiness } from '@/features/ai/aiRuntimeReadiness';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
-import type {
-  AiSettingsGateReason,
-  ComposerAttachment,
-  ComposerModelOption
-} from '@/features/targets/chat/components/targetChatViewHelpers';
+import type { ComposerAttachment, ComposerModelOption } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { ChatMessage, ChatSession, ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
@@ -16,7 +13,7 @@ export interface TargetChatViewBodyProps {
   activeRunId: string | null;
   activeSession: ChatSession | null;
   activeSessionId: string | null;
-  aiSettingsGateReason: AiSettingsGateReason;
+  aiRuntimeReadiness: AiRuntimeReadiness;
   allowedReasoningOptions: Array<{ value: string; labelKey: string }>;
   assistantMarkdownComponents: Components;
   assistantCapabilitiesPreview: ControlPlaneTargetAssistantCapabilitiesPreview | null;

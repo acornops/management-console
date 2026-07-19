@@ -7,6 +7,7 @@ const root = resolve(__dirname, '../../../../..');
 const explorer = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer.tsx'), 'utf8');
 const explorerLists = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorerLists.tsx'), 'utf8');
 const controls = readFileSync(resolve(root, 'src/features/kubernetes-cluster-detail/components/workloads/ResourceExplorerControls.tsx'), 'utf8');
+const searchFilterFrame = readFileSync(resolve(root, 'src/components/common/SearchFilterFrame.tsx'), 'utf8');
 const resourceCategoryTabs = readFileSync(resolve(root, 'src/components/common/ResourceCategoryTabs.tsx'), 'utf8');
 const explorerSurface = `${explorer}\n${explorerLists}`;
 
@@ -54,9 +55,11 @@ describe('WorkloadsExplorer adaptive triage layout', () => {
     expect(controls).toContain('id="resource-search"');
     expect(controls).toContain("t('resources.filters.search')");
     expect(controls).toContain('<Search className=');
-    expect(controls).toContain('lg:grid-cols-[minmax(16rem,1fr)_minmax(11rem,14rem)_minmax(11rem,14rem)_minmax(9rem,max-content)]');
+    expect(controls).toContain('<SearchFilterFrame');
+    expect(searchFilterFrame).toContain('rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm');
+    expect(searchFilterFrame).toContain('lg:w-[clamp(10.5rem,14vw,14rem)]');
     expect(controls).toContain("t('resources.clusterScoped')");
-    expect(controls).toContain('children || <div className="hidden min-w-[9rem] lg:block"');
+    expect(controls).toContain('trailingActions={children}');
     expect(controls).not.toContain("t('resources.summary.visibleOfTotal'");
     expect(explorer).not.toContain('visibleResourceCount={visibleResourceCount}');
     expect(controls).not.toContain('const showActiveFilterActions = activeFilters.length > 0 || canResetFilters');

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { CloseButton, Textarea, TextInput } from '@/components/common/ComponentVocabulary';
+import { Radio } from '@/components/common/FormControls';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { Select } from '@/components/common/Select';
 import { ICONS } from '@/constants';
@@ -12,6 +13,7 @@ import {
   previewWorkflowSchedule,
   type WorkflowSchedulePreview
 } from '@/services/control-plane/workflowApi';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
 
 interface WorkflowScheduleCreateDrawerProps {
@@ -65,6 +67,19 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   const [saving, setSaving] = React.useState(false);
   const [preview, setPreview] = React.useState<WorkflowSchedulePreview | null>(null);
   const [previewing, setPreviewing] = React.useState(false);
+  const [runAsUser, setRunAsUser] = React.useState<{ id: string; label: string } | null>(null);
+  const principal = runAsUser ? { type: 'user' as const, id: runAsUser.id } : null;
+
+  React.useEffect(() => {
+    let cancelled = false;
+    controlPlaneApi.getCurrentUser()
+      .then((user) => {
+        if (cancelled) return;
+        setRunAsUser({ id: user.id, label: user.name || user.email });
+      })
+      .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : 'Your schedule identity could not be loaded.'));
+    return () => { cancelled = true; };
+  }, [workspaceId]);
 
   React.useEffect(() => {
     if (!scheduleWorkflow) return;
@@ -87,7 +102,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   }, [frequency, time, weekdays]);
 
   React.useEffect(() => {
-    if (!scheduleWorkflow || jsonError) return;
+    if (!scheduleWorkflow || jsonError || !principal) return;
     setPreviewing(true);
     const timer = window.setTimeout(() => {
       previewWorkflowSchedule(workspaceId, {
@@ -97,7 +112,8 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         timezone,
         enabled,
         approvedContextGrants,
-        inputDefaults
+        inputDefaults,
+        principal
       }).then(setPreview).catch((previewError) => {
         setPreview({
           valid: false,
@@ -108,7 +124,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
       }).finally(() => setPreviewing(false));
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [approvedContextGrants, cron, enabled, inputDefaults, jsonError, name, scheduleWorkflow?.id, timezone, workspaceId, t]);
+  }, [approvedContextGrants, cron, enabled, inputDefaults, jsonError, name, principal, scheduleWorkflow?.id, timezone, workspaceId, t]);
 
   const updateInputDefault = (inputName: string, value: string) => {
     const next = { ...inputDefaults, [inputName]: value };
@@ -134,7 +150,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   };
 
   const save = async () => {
-    if (!scheduleWorkflow || saving || !preview?.valid || jsonError) return;
+    if (!scheduleWorkflow || saving || !preview?.valid || jsonError || !principal) return;
     setError('');
     setSaving(true);
     try {
@@ -145,7 +161,8 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         timezone: timezone.trim(),
         enabled,
         approvedContextGrants,
-        inputDefaults
+        inputDefaults,
+        principal
       });
       onClose();
     } catch (err) {
@@ -181,13 +198,30 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
           <TextInput value={name} onChange={(event) => setName(event.target.value)} className="mt-2 w-full" aria-invalid={!name.trim()} />
         </label>
 
+        <div className="block text-sm font-semibold text-ui-text">
+          Runs as
+          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 font-normal text-ui-text" aria-live="polite">
+            {runAsUser?.label || t('common.loading')}
+          </div>
+          <span className="type-caption mt-1 block text-ui-text-muted">Schedules run as their authenticated creator. Workspace membership and permissions are rechecked for every run.</span>
+        </div>
+
         <fieldset className="min-w-0 space-y-3">
           <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.frequency')}</legend>
           <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
             {(['daily', 'weekdays', 'weekly', 'custom'] as Frequency[]).map((value) => (
-              <Button key={value} type="button" size="sm" variant={frequency === value ? 'primary' : 'secondary'} className="w-full justify-center" onClick={() => setFrequency(value)}>
-                {t(`agentsWorkflows.schedule.frequency_${value}`)}
-              </Button>
+              <label
+                key={value}
+                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${frequency === value ? 'border-accent/35 bg-accent-soft text-accent-strong' : 'border-control-boundary bg-control-secondary text-control-secondary-fg hover:bg-control-secondary-hover'}`}
+              >
+                <Radio
+                  name="workflow-schedule-frequency"
+                  value={value}
+                  checked={frequency === value}
+                  onChange={() => setFrequency(value)}
+                />
+                <span>{t(`agentsWorkflows.schedule.frequency_${value}`)}</span>
+              </label>
             ))}
           </div>
         </fieldset>

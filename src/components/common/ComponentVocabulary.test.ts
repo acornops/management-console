@@ -56,7 +56,9 @@ describe('common component vocabulary primitives', () => {
 
     expect(componentVocabulary).toContain('const focusSegmentedTab = (value: T) => {');
     expect(componentVocabulary).toContain('window.requestAnimationFrame(() => {');
-    expect(componentVocabulary).toContain('document.getElementById(`${idBase}-${value}-tab`)?.focus({ preventScroll: true });');
+    expect(componentVocabulary).toContain('const tab = document.getElementById(`${idBase}-${value}-tab`);');
+    expect(componentVocabulary).toContain('tab?.focus();');
+    expect(componentVocabulary).toContain("tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });");
     expect(componentVocabulary).toContain('focusSegmentedTab(nextTab.value);');
   });
 
@@ -88,13 +90,18 @@ describe('common component vocabulary primitives', () => {
 });
 
 describe('authenticated surface component vocabulary', () => {
+  const designSystemCatalog = readFileSync(resolve(root, 'src/design-system.tsx'), 'utf8');
   const workspaceInviteModal = readFileSync(resolve(root, 'src/pages/workspace-members/WorkspaceInviteModal.tsx'), 'utf8');
   const workspaceAgentsDrawers = readFileSync(resolve(root, 'src/pages/WorkspaceAgentsDrawers.tsx'), 'utf8');
   const workspaceAgentsCatalog = readFileSync(resolve(root, 'src/pages/WorkspaceAgentsCatalog.tsx'), 'utf8');
   const workspaceAgentDetailPanel = readFileSync(resolve(root, 'src/pages/WorkspaceAgentDetailPanel.tsx'), 'utf8');
   const workspaceApprovalsPage = readFileSync(resolve(root, 'src/pages/WorkspaceApprovalsPage.tsx'), 'utf8');
   const workspaceAuditLogPage = readFileSync(resolve(root, 'src/pages/WorkspaceAuditLogPage.tsx'), 'utf8');
-  const workspaceWorkflowsPage = readFileSync(resolve(root, 'src/pages/WorkspaceWorkflowsPage.tsx'), 'utf8');
+  const appSupport = readFileSync(resolve(root, 'src/app/useAppSupport.ts'), 'utf8');
+  const toastViewport = readFileSync(resolve(root, 'src/components/common/ToastViewport.tsx'), 'utf8');
+  const workspaceWorkflowsPage = [
+    'src/pages/WorkspaceWorkflowsPage.tsx'
+  ].map((filePath) => readFileSync(resolve(root, filePath), 'utf8')).join('\n');
   const addVirtualMachineModal = readFileSync(resolve(root, 'src/pages/virtual-machines/AddVirtualMachineModal.tsx'), 'utf8');
   const virtualMachinesListView = readFileSync(resolve(root, 'src/pages/virtual-machines/VirtualMachinesListView.tsx'), 'utf8');
   const targetSkillsView = readFileSync(
@@ -115,6 +122,31 @@ describe('authenticated surface component vocabulary', () => {
     expect(virtualMachinesListView).toContain('<CloseButton');
   });
 
+  it('keeps the toast dismiss control quiet without changing the shared close button', () => {
+    const toastCloseClassName = buttonClassName({
+      variant: 'icon',
+      size: 'icon',
+      className: 'rounded-full border-transparent bg-transparent text-ui-text-muted shadow-none hover:bg-ui-bg hover:text-ui-text'
+    });
+
+    expect(toastViewport).toContain('<CloseButton');
+    expect(toastViewport).toContain('border-transparent bg-transparent text-ui-text-muted shadow-none');
+    expect(toastViewport).toContain('hover:bg-ui-bg hover:text-ui-text');
+    expect(toastViewport).toContain('flex items-center gap-3 py-2 pl-4 pr-2');
+    expect(toastViewport).not.toContain('mt-0.5 flex h-5 w-5');
+    expect(toastViewport).toContain('relative mb-3 w-full overflow-hidden');
+    expect(toastViewport).toContain('initial={{ scaleX: 1 }}');
+    expect(toastViewport).toContain('duration: TOAST_DURATION_MS / 1000');
+    expect(toastViewport).toContain('absolute inset-x-0 bottom-0 h-0.5 origin-left bg-accent motion-reduce:hidden');
+    expect(toastViewport).toContain('aria-hidden="true"');
+    expect(appSupport).toContain("import { TOAST_DURATION_MS, type AppToast } from '@/components/common/ToastViewport';");
+    expect(appSupport).toContain('}, TOAST_DURATION_MS);');
+    expect(toastCloseClassName).not.toContain('border-control-boundary');
+    expect(toastCloseClassName).not.toContain('bg-control-secondary');
+    expect(toastCloseClassName).not.toContain('shadow-sm');
+    expect(toastCloseClassName).toContain('focus-visible:ring-control-boundary');
+  });
+
   it('routes raw form fields through TextInput and Textarea on migrated surfaces', () => {
     expect(workspaceInviteModal).toContain('<TextInput');
     expect(workspaceInviteModal).not.toContain('<input\n                  id="workspace-invite-email"');
@@ -126,25 +158,33 @@ describe('authenticated surface component vocabulary', () => {
     expect(targetSkillsView).toContain('<Checkbox');
   });
 
-  it('uses shared segmented tabs and filter toggles for compact page controls', () => {
-    expect(workspaceAgentsCatalog).toContain("from '@/components/common/ComponentVocabulary'");
-    expect(workspaceAgentsCatalog).toContain('FilterToggleGroup');
-    expect(workspaceAgentsCatalog).toContain('<FilterToggleGroup');
+  it('uses shared segmented tabs, typed discovery groups, and nested filter toggles', () => {
+    expect(workspaceAgentsCatalog).toContain("from '@/components/common/DiscoveryFilterBar'");
+    expect(workspaceAgentsCatalog).toContain('<DiscoveryFilterBar');
+    expect(workspaceAgentsCatalog).toContain('createDiscoveryFilterGroup<AgentFocusFilter>');
+    expect(workspaceAgentsCatalog).not.toContain('FilterToggleGroup');
     expect(workspaceWorkflowsPage).toContain("from '@/components/common/ComponentVocabulary'");
-    expect(workspaceWorkflowsPage).toContain('SegmentedTabs');
-    expect(workspaceWorkflowsPage).toContain('<SegmentedTabs');
+    expect(workspaceWorkflowsPage).toContain('TextInput');
+    expect(workspaceWorkflowsPage).toContain('<SegmentedTabs<WorkflowTab>');
     expect(workspaceWorkflowsPage).toContain('idBase="workflow-section"');
     expect(workspaceWorkflowsPage).not.toContain('role="tablist" aria-label="Workflow section tabs" className="flex gap-2 overflow-x-auto border-b border-ui-border"');
     expect(workspaceAgentDetailPanel).toContain('<SegmentedTabs');
     expect(workspaceAgentDetailPanel).toContain('idBase="agent-profile"');
-    ['overview', 'capabilities', 'activity', 'versions'].forEach((tab) => {
+    ['overview', 'capabilities', 'activity', 'versions', 'settings'].forEach((tab) => {
       expect(workspaceAgentDetailPanel).toContain(`id="agent-profile-${tab}-panel"`);
       expect(workspaceAgentDetailPanel).toContain(`aria-labelledby="agent-profile-${tab}-tab"`);
     });
-    expect(workspaceAgentDetailPanel.match(/role="tabpanel"/g)).toHaveLength(4);
+    expect(workspaceAgentDetailPanel.match(/role="tabpanel"/g)).toHaveLength(5);
     expect(workspaceApprovalsPage).toContain('<FilterToggleGroup<ApprovalFilter>');
     expect(workspaceApprovalsPage).toContain("ariaLabel={t('approvals.filters.label')}");
     expect(workspaceAuditLogPage).toContain('<FilterToggleGroup');
     expect(workspaceAuditLogPage).toContain("ariaLabel={t('auditLog.timeRange')}");
+  });
+
+  it('catalogs the shared standing lifecycle-action surface', () => {
+    expect(designSystemCatalog).toContain("import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';");
+    expect(designSystemCatalog).toContain('title="Lifecycle actions"');
+    expect(designSystemCatalog).toContain('<DangerZone>');
+    expect(designSystemCatalog).toContain('tone="danger"');
   });
 });

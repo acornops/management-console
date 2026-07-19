@@ -12,6 +12,7 @@ const api = read('src/services/controlPlaneApi.ts');
 const workspaceMappers = read('src/services/control-plane/workspaceMappers.ts');
 const app = read('src/App.tsx');
 const appWorkspacePermissions = read('src/app/appWorkspacePermissions.ts');
+const workspacePermissions = read('src/app/workspacePermissions.ts');
 const appPageContent = read('src/app/AppPageContent.tsx');
 const appSupport = read('src/app/useAppSupport.ts');
 const membersPage = read('src/pages/WorkspaceMembersPage.tsx');
@@ -63,7 +64,9 @@ for (const appNeedle of [
 
 assert(appPageContent.includes('WorkspaceAuditLogPage'), 'workspace audit log page must be routable');
 assert(
-  appWorkspacePermissions.includes('return false;'),
+  appWorkspacePermissions.includes('return hasWorkspacePermission(')
+    && workspacePermissions.includes("if (typeof serverPermission === 'boolean') return serverPermission;")
+    && workspacePermissions.includes('?? false'),
   'workspace permission lookup must fail closed when server metadata is missing'
 );
 
@@ -75,9 +78,11 @@ for (const pageNeedle of [
   'q: searchTerm',
   'role: roleFilter',
   'source: sourceFilter',
-  "loadMembers('append', nextCursor)",
+  'const memberCollection = useCursorCollection({',
+  'onClick={() => void memberCollection.loadMore()}',
   'listWorkspaceInvitationsPage(workspace.id',
-  "loadInvitations('append', nextInvitationCursor)",
+  'const invitationCollection = useCursorCollection({',
+  'loadMoreSentinelRef={invitationCollection.sentinelRef}',
   'onCreateInvitation',
   'onRevokeInvitation',
   'onUpdateMemberRole',

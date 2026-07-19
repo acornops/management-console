@@ -27,4 +27,10 @@ describe('VirtualMachineChatView wiring', () => {
     expect(source).not.toContain('controlPlaneApi.createSession');
     expect(source).not.toContain('KubernetesCluster');
   });
+
+  it('starts triage prompts in a fresh draft conversation', () => {
+    expect(source).toContain('void controller.handleCreateSessionWithInput(prompt);');
+    expect(source).toContain('handledInitialInputRef.current = prompt;');
+    expect(source).not.toContain('setInputValue(prompt);');
+  });
 });

@@ -6,7 +6,6 @@ import {
   mapControlPlaneMessage,
   sanitizeChatMessages,
   filterMessagesByRunIds,
-  isPendingAssistantPlaceholder,
   isBlankAssistantMessage,
   upsertSession
 } from '@/features/targets/chat/lib/session-utils';
@@ -15,7 +14,6 @@ import {
   sortSessionsByTimestamp,
   useControlPlaneChatSessionSync
 } from '@/features/targets/chat/hooks/chatSessionSync';
-import { isTraceInProgress } from '@/features/targets/chat/hooks/chatRunTrace';
 import {
   buildTargetChatAutoScrollSignature,
   buildTargetChatConversationAccessState,
@@ -38,7 +36,12 @@ import {
   type ActiveRunStreamControls
 } from '@/features/targets/chat/hooks/chatRunCancellation';
 import { useChatComposerRuntime } from '@/features/targets/chat/hooks/useChatComposerRuntime';
-import { createDraftSessionWithWarning } from '@/features/targets/chat/hooks/chatDraftSession';
+import { useWorkspaceAiRuntimeReadiness } from '@/features/targets/chat/hooks/useWorkspaceAiRuntimeReadiness';
+import {
+  createDraftSessionWithWarning,
+  findReusableDraftSession
+} from '@/features/targets/chat/hooks/chatDraftSession';
+import { isInFlightAssistantMessage } from '@/features/targets/chat/hooks/chatMessageVisibility';
 export type { TargetChatController } from '@/features/targets/chat/hooks/targetChatControllerTypes';
 export function useTargetChat({
   target,
@@ -105,6 +108,12 @@ export function useTargetChat({
     handleRuntimeSelectionRejected,
     clearComposerRuntimeSelection
   } = useChatComposerRuntime({ activeSession: activeSessionRecord, target, currentUserId, onUpdateSessions });
+  const {
+    settings: workspaceAiSettings,
+    isLoading: isWorkspaceAiSettingsLoading,
+    error: workspaceAiSettingsError,
+    isReady: hasReadyAiRuntime
+  } = useWorkspaceAiRuntimeReadiness(target.workspaceId, workspaceAiSettingsRefreshToken);
   const {
     isActiveSessionOwner,
     conversationNotice,
@@ -211,27 +220,8 @@ export function useTargetChat({
     setRunTracesByRunId: setRunTracesByRunIdAndRef,
     setTraceExpandedByRunId
   });
-  const isInFlightAssistantPlaceholder = (message: ChatMessage): boolean => {
-    if (isPendingAssistantPlaceholder(message)) {
-      return true;
-    }
-    if (!isBlankAssistantMessage(message)) {
-      return false;
-    }
-    const messageId = String(message.id || '');
-    if (isRunActive && (messageId.startsWith('pending-') || messageId.startsWith('stream-'))) {
-      return true;
-    }
-    if (!message.runId) {
-      return false;
-    }
-
-    const trace = runTracesByRunId[message.runId];
-    if (!trace) {
-      return false;
-    }
-    return isTraceInProgress(trace);
-  };
+  const isInFlightAssistantPlaceholder = (message: ChatMessage): boolean =>
+    isInFlightAssistantMessage(message, isRunActive, runTracesByRunId);
 
   const visibleMessages = filterMessagesByRunIds(sanitizeChatMessages(messages), suppressedHydrationRunIdsRef.current)
     .filter((message) => !isBlankAssistantMessage(message) || isInFlightAssistantPlaceholder(message));
@@ -317,34 +307,48 @@ export function useTargetChat({
     t
   });
 
-  const handleCreateSession = () => {
-    const reusableDraft = sessions.find(
-      (session) => session.messages.length === 0 && !session.backendSessionId
-    );
+  const activateDraftSession = async (): Promise<ChatSession> => {
+    const reusableDraft = findReusableDraftSession(latestSessionsRef.current);
     if (reusableDraft) {
       if (reusableDraft.recentActivityWarning?.dismissed) {
         setActiveSessionId(reusableDraft.id);
         shouldStickToBottomRef.current = true;
-        return;
+        return reusableDraft;
       }
-      void createDraftSession().then((checkedDraft) => {
-        const nextDraft: ChatSession = {
-          ...reusableDraft,
-          recentActivityWarning: checkedDraft.recentActivityWarning,
-          timestamp: Date.now()
-        };
-        onUpdateSessions(sortSessionsByTimestamp(upsertSession(target.chatSessions, nextDraft)));
-        setActiveSessionId(reusableDraft.id);
-        shouldStickToBottomRef.current = true;
-      });
-      return;
+
+      const checkedDraft = await createDraftSession();
+      const currentSessions = latestSessionsRef.current;
+      const currentDraft = currentSessions.find((session) => session.id === reusableDraft.id) || reusableDraft;
+      const nextDraft: ChatSession = {
+        ...currentDraft,
+        recentActivityWarning: checkedDraft.recentActivityWarning,
+        timestamp: Date.now()
+      };
+      const nextSessions = sortSessionsByTimestamp(upsertSession(currentSessions, nextDraft));
+      latestSessionsRef.current = nextSessions;
+      onUpdateSessions(nextSessions);
+      setActiveSessionId(nextDraft.id);
+      shouldStickToBottomRef.current = true;
+      return nextDraft;
     }
 
-    void createDraftSession().then((nextSession) => {
-      onUpdateSessions(sortSessionsByTimestamp([nextSession, ...target.chatSessions]));
-      setActiveSessionId(nextSession.id);
-      shouldStickToBottomRef.current = true;
-    });
+    const nextSession = await createDraftSession();
+    const nextSessions = sortSessionsByTimestamp([nextSession, ...latestSessionsRef.current]);
+    latestSessionsRef.current = nextSessions;
+    onUpdateSessions(nextSessions);
+    setActiveSessionId(nextSession.id);
+    shouldStickToBottomRef.current = true;
+    return nextSession;
+  };
+
+  const handleCreateSession = () => {
+    if (!hasReadyAiRuntime) return;
+    void activateDraftSession();
+  };
+
+  const handleCreateSessionWithInput = async (nextInputValue: string) => {
+    await activateDraftSession();
+    setInputValue(nextInputValue);
   };
 
   const handleDismissRecentActivityWarning = (sessionId?: string) => {
@@ -498,7 +502,7 @@ export function useTargetChat({
       target,
       activeSession: args.activeSessionForSubmit,
       activeSessionId: args.activeSessionIdForSubmit,
-      canChat: args.canChatForSubmit,
+      canChat: args.canChatForSubmit && hasReadyAiRuntime,
       canRequestWriteRuns,
       inputValue,
       isLoading: isRunActive,
@@ -528,18 +532,20 @@ export function useTargetChat({
   const runSubmittedChatMessage = (args: Parameters<typeof submitChatMessageForArgs>[0]) =>
     runWithChatSubmissionLock(submitInFlightRef, () => submitChatMessageForArgs(args));
 
-  const handleSend = (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) =>
-    runSubmittedChatMessage({
+  const handleSend = async (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => {
+    if (!hasReadyAiRuntime) return;
+    await runSubmittedChatMessage({
       activeSessionForSubmit: activeSession,
       activeSessionIdForSubmit: activeSessionId,
       canChatForSubmit: canPostInActiveSession,
       overrideInput,
       runtimeSelection
     });
+  };
 
   const handleEditLastUserMessage = async (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => {
     const prompt = nextContent.trim();
-    if (!prompt || isRunActive || !canPostInActiveSession || isChatSubmissionLocked(submitInFlightRef)) return;
+    if (!prompt || isRunActive || !canPostInActiveSession || !hasReadyAiRuntime || isChatSubmissionLocked(submitInFlightRef)) return;
     const sanitizedMessages = sanitizeChatMessages(activeSession.messages);
     const userIndex = sanitizedMessages.findIndex((message) => message.id === messageId && message.role === 'user');
     if (userIndex < 0) return;
@@ -568,6 +574,7 @@ export function useTargetChat({
   };
 
   const handleSendInNewSession = async (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => {
+    if (!hasReadyAiRuntime) return;
     await runWithChatSubmissionLock(submitInFlightRef, async () => {
       const draftSession = await createDraftSession();
       const sessionId = draftSession.id;
@@ -607,10 +614,14 @@ export function useTargetChat({
     runTracesByRunId,
     traceExpandedByRunId,
     composerRuntimeSelection,
+    workspaceAiSettings,
+    isWorkspaceAiSettingsLoading,
+    workspaceAiSettingsError,
     workspaceAiSettingsRefreshToken,
     transcriptRef,
     setActiveSessionId: handleSelectSession,
     handleCreateSession,
+    handleCreateSessionWithInput,
     handleDismissRecentActivityWarning,
     handleOpenRecentActivitySession,
     handleDeleteSession,

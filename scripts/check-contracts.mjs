@@ -27,13 +27,17 @@ const controlPlaneApi = read('src/services/controlPlaneApi.ts');
 const controlPlaneAuthApi = read('src/services/control-plane/authApi.ts');
 const kubernetesClusterApi = read('src/services/control-plane/kubernetesClusterApi.ts');
 const targetApi = read('src/services/control-plane/targetApi.ts');
-const controlPlaneApiSurface = `${controlPlaneApi}\n${controlPlaneAuthApi}\n${kubernetesClusterApi}\n${targetApi}`;
+const agentApi = read('src/services/control-plane/agentApi.ts');
+const catalogApi = read('src/services/control-plane/catalogApi.ts');
+const workflowApi = read('src/services/control-plane/workflowApi.ts');
+const controlPlaneApiSurface = [controlPlaneApi, controlPlaneAuthApi, kubernetesClusterApi, targetApi, agentApi, catalogApi, workflowApi].join('\n');
 const controlPlaneMapping = [
   read('src/types.ts'),
   controlPlaneApi,
   controlPlaneAuthApi,
   kubernetesClusterApi,
   targetApi,
+  catalogApi,
   read('src/services/control-plane/clusterMappers.ts'),
   read('src/services/control-plane/toolMappers.ts'),
   read('src/services/control-plane/targetToolTypes.ts'),
@@ -113,12 +117,18 @@ for (const [docPath, implNeedle, label] of [
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/catalog`', '/mcp/catalog', 'Target MCP catalog path'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools`', 'listTargetTools(', 'Target tools implementation'],
   ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}`', "updateTargetTool(", 'Target tool settings implementation'],
-  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}`', "updateTargetMcpServerTool(", 'Target MCP tool patch implementation'],
+  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}`', 'updateTargetMcpServerTool(', 'Target MCP tool patch implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', '/targets/${encodeURIComponent(targetId)}/mcp/servers', 'List target MCP servers path'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools`', 'listMcpServerTools(', 'List target MCP server tools implementation'],
-  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', "createTargetMcpServer(", 'Create target MCP server implementation'],
-  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', "updateTargetMcpServer(", 'Update target MCP server implementation'],
-  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', "deleteTargetMcpServer(", 'Delete target MCP server implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', 'createTargetMcpServer(', 'Create target MCP server implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/import`', 'importTargetMcpServer(', 'Import target MCP server implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/reimport`', 'reimportTargetMcpServer(', 'Reimport target MCP server implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'getTargetMcpConnection(', 'Target personal connection implementation'],
+  ['`PUT /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'putTargetMcpConnection(', 'Target personal credential implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection/verify`', 'verifyTargetMcpConnection(', 'Target PAT verification implementation'],
+  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'disconnectTargetMcp(', 'Target personal disconnect implementation'],
+  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', 'updateTargetMcpServer(', 'Update target MCP server implementation'],
+  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', 'deleteTargetMcpServer(', 'Delete target MCP server implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection`', '/test-connection', 'Test target MCP server path'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills`', 'listTargetSkills(', 'List target skills implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills`', 'createTargetSkill(', 'Create target skill implementation'],
@@ -127,6 +137,11 @@ for (const [docPath, implNeedle, label] of [
   ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`', 'updateTargetSkill(', 'Update target skill implementation'],
   ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`', 'deleteTargetSkill(', 'Delete target skill implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}/reimport`', 'reimportTargetSkill(', 'Reimport target skill implementation'],
+  ['`POST /api/v1/agents/{agentId}/duplicate`', 'duplicateAgent(', 'Duplicate Agent implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers`', 'listAgentMcpServers(', 'List Agent MCP servers implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers`', 'createAgentMcpServer(', 'Create Agent MCP server implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/skills`', 'listAgentSkills(', 'List Agent skills implementation'],
+  ['`POST /api/v1/workflows/{workflowId}/duplicate`', 'duplicateWorkflow(', 'Duplicate workflow implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`', 'createSession(', 'Create session implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`', 'listSessions(', 'List sessions implementation'],
   ['`DELETE /api/v1/sessions/{sessionId}`', 'deleteSession(', 'Delete session implementation'],
@@ -213,6 +228,11 @@ expectIncludes(controlPlaneMapping, 'manage_ai_settings: boolean', 'Workspace AI
 expectIncludes(controlPlaneMapping, 'WorkspaceAiSettings', 'Workspace AI settings type');
 expectIncludes(controlPlaneApiSurface, 'ai-provider-credentials', 'Workspace AI provider credential path');
 expectIncludes(doc, 'must never expect or display API key values', 'Workspace AI credential redaction doc');
+expectIncludes(doc, 'AcornOps Manager is never an installation destination', 'Catalog Manager exclusion doc');
+expectIncludes(doc, 'current user principal', 'User-only schedule principal doc');
+expectIncludes(read('src/utils/routes.ts'), '/workspaces/${encodeURIComponent(workspaceId)}/catalog', 'Route-backed catalog path');
+expectIncludes(read('src/pages/WorkspaceCatalogPage.tsx'), 'destination', 'Catalog destination URL state');
+expect(!workflowApi.includes('/mcp/servers'), 'Workflow API must not expose retired workspace-scoped MCP management');
 expectIncludes(controlPlaneMapping, 'currentUserRole', 'Workspace current-user role mapping');
 expectIncludes(controlPlaneMapping, 'permissions: workspace.permissions', 'Workspace permissions mapping');
 expectIncludes(controlPlaneApiSurface, 'listWorkspaceMembers(', 'Workspace members must be fetched from control plane');

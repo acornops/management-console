@@ -15,6 +15,12 @@ describe('WorkspaceApprovalsPage control-plane surface', () => {
     expect(approvalsPage).toContain('listWorkspaceApprovalInbox');
     expect(approvalsPage).toContain('decideWorkflowRunApproval');
     expect(approvalsPage).toContain('await onApprovalDecision?.();');
+    expect(approvalsPage).toContain('const [pendingResponse, decidedResponse] = await Promise.all([');
+    expect(approvalsPage).toContain("status: 'pending', limit: 50");
+    expect(approvalsPage).toContain("status: 'decided', limit: 50");
+    expect(approvalsPage).toContain('const approvals = approvalsByFilter[approvalFilter];');
+    expect(approvalsPage).toContain('(pendingApprovalCount ?? approvalsByFilter.pending.length) > 0');
+    expect(approvalsPage).toContain("approval.status === 'approved' && isToday(approval.decidedAt)");
     expect(approvalsPage).toContain("useState<ApprovalFilter>('pending')");
     expect(approvalsPage).toContain("{ value: 'pending', label: t('approvals.filters.pending') }");
     expect(approvalsPage).toContain("{ value: 'decided', label: t('approvals.filters.recent') }");
@@ -27,13 +33,27 @@ describe('WorkspaceApprovalsPage control-plane surface', () => {
   });
 
   it('renders loading, empty, error, permission, and decision states', () => {
-    expect(approvalsPage).toContain('isLoadingApprovals');
+    expect(approvalsPage).toContain("useState<CursorCollectionPhase>('loading')");
+    expect(approvalsPage).toContain("setApprovalPhase(pendingApprovalCount === undefined ? 'loading' : 'refreshing')");
+    expect(approvalsPage).toContain("setApprovalPhase('ready')");
+    expect(approvalsPage).toContain("setApprovalPhase('error')");
     expect(approvalsPage).toContain('approvalError');
     expect(approvalsPage).toContain('approvals.emptyTitle');
+    expect(approvalsPage).toContain('<CollectionState');
+    expect(approvalsPage).toContain('phase={approvalPhase}');
+    expect(approvalsPage).toContain("loading={<InlineLoadingIndicator label={t('common.loading')}");
+    expect(approvalsPage).not.toContain('isInitialApprovalsLoad');
+    expect(approvalsPage).not.toContain('isLoadingApprovals');
+    expect(approvalsPage).toContain('<EmptyState');
+    expect(approvalsPage).toContain('embedded');
+    expect(approvalsPage).toContain('approvals.length === 0');
+    expect(approvalsPage).toContain("approvalFilter === 'pending' ? 'approvals.emptyTitle' : 'approvals.emptyRecentTitle'");
     expect(approvalsPage).toContain('approvals.permissionNotice');
     expect(approvalsPage).toContain('canDecideApprovals');
     expect(approvalsPage).toContain("decisionState[approval.approvalId]");
+    expect(enLocale).toContain("subtitle: 'Review pending requests and recent approval decisions in {{workspace}}.'");
     expect(enLocale).toContain("emptyTitle: 'No approvals waiting'");
+    expect(enLocale).toContain("emptyBody: 'Approval requests will appear here when workflow runs need a decision.'");
     expect(enLocale).toContain("permissionNotice: 'You need create_read_write_runs to approve write-capable workflow actions.'");
   });
 

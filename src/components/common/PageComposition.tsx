@@ -1,5 +1,6 @@
 import React from 'react';
 import { clsx } from 'clsx';
+import { ChevronLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 export interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -33,6 +34,29 @@ export const PageShell = React.forwardRef<HTMLDivElement, PageShellProps>(
 );
 
 PageShell.displayName = 'PageShell';
+
+export interface PageBackLinkProps extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> {
+  href: string;
+}
+
+/** Canonical page-level return navigation, rendered immediately before PageHeader. */
+export const PageBackLink = React.forwardRef<HTMLAnchorElement, PageBackLinkProps>(
+  ({ children, className, ...props }, ref) => (
+    <a
+      ref={ref}
+      className={twMerge(
+        'page-back-link mb-4 inline-flex min-h-11 items-center gap-2 rounded-md px-1 text-sm font-semibold text-ui-text underline-offset-4 hover:text-accent-strong hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary',
+        className
+      )}
+      {...props}
+    >
+      <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+      {children}
+    </a>
+  )
+);
+
+PageBackLink.displayName = 'PageBackLink';
 
 export interface PageHeaderProps {
   actions?: React.ReactNode;
@@ -94,16 +118,20 @@ export const PageSection: React.FC<PageSectionProps> = ({ actions, children, cla
   </section>
 );
 
-export type DataSurfaceState = 'ready' | 'loading' | 'empty' | 'error';
+export type DataSurfaceState = 'ready' | 'loading' | 'refreshing' | 'loadingMore' | 'empty' | 'filtered-empty' | 'error';
 
 export interface DataSurfaceProps extends React.HTMLAttributes<HTMLElement> {
   count?: React.ReactNode;
   description?: React.ReactNode;
   empty?: React.ReactNode;
   error?: React.ReactNode;
+  feedback?: React.ReactNode;
+  filteredEmpty?: React.ReactNode;
   heading?: React.ReactNode;
   icon?: React.ReactNode;
   loading?: React.ReactNode;
+  retainContent?: boolean;
+  statusAnnouncement?: React.ReactNode;
   state?: DataSurfaceState;
   toolbar?: React.ReactNode;
 }
@@ -115,14 +143,28 @@ export const DataSurface: React.FC<DataSurfaceProps> = ({
   description,
   empty,
   error,
+  feedback,
+  filteredEmpty,
   heading,
   icon,
   loading,
+  retainContent = false,
   state = 'ready',
+  statusAnnouncement,
   toolbar,
   ...props
 }) => {
-  const stateContent = state === 'loading' ? loading : state === 'empty' ? empty : state === 'error' ? error : children;
+  const retainsContent = state === 'refreshing' || state === 'loadingMore' || (state === 'error' && retainContent);
+  const stateContent = state === 'loading'
+    ? loading
+    : state === 'empty'
+      ? empty
+      : state === 'filtered-empty'
+        ? filteredEmpty
+        : state === 'error' && !retainContent
+          ? error
+          : children;
+  const isBusy = state === 'loading' || state === 'refreshing' || state === 'loadingMore';
 
   return (
     <section className={twMerge('data-surface min-w-0 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm', className)} {...props}>
@@ -138,7 +180,11 @@ export const DataSurface: React.FC<DataSurfaceProps> = ({
           {(count || toolbar) && <div className="flex shrink-0 flex-wrap items-center gap-3">{count && <span className="type-caption font-semibold text-ui-text-muted">{count}</span>}{toolbar}</div>}
         </TableToolbar>
       )}
-      <div aria-busy={state === 'loading' || undefined}>{stateContent}</div>
+      <div aria-busy={isBusy || undefined}>
+        {stateContent}
+        {retainsContent && feedback}
+        {statusAnnouncement && <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">{statusAnnouncement}</div>}
+      </div>
     </section>
   );
 };

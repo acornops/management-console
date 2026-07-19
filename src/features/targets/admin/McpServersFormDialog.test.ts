@@ -41,13 +41,31 @@ describe('MCP server form dialog polish', () => {
     expect(mcpServersView).not.toContain('setSelectedServerId(createdServer.id)');
   });
 
+  it('connects authenticated installations before entering pending-tool review', () => {
+    expect(mcpServersView).toContain("if (serverForm.authType !== 'none') {");
+    expect(mcpServersView).toContain('setPendingAuthenticatedCreateServerId(createdServer.id);');
+    expect(mcpServersView).toContain('setPatDialogServer(loadedServer || pendingCatalogServer(createdServer));');
+    expect(mcpServersView).toContain('if (pendingAuthenticatedCreateServerId === server.id) {');
+    expect(mcpServersView).toContain('setCreateReviewServerId(server.id);');
+    expect(mcpServersView).toContain("} else {\n          setCreateReviewServerId(createdServer.id);");
+  });
+
+  it('invalidates cached tools after PAT repair without undoing a successful connection', () => {
+    expect(mcpServersView).toContain('setToolRefreshServer(server);');
+    expect(mcpServersView).toContain("const toolsServerId = selectedServerId || createReviewServerId || toolRefreshServer?.id || '';");
+    expect(mcpServersView).toContain('setCreateReviewServerId(server.id);');
+    expect(mcpServersView).toContain('onRefreshError: setToolRefreshError');
+    expect(mcpServersView).toContain('retryAfterSecondsFor={retryAfterSecondsFor}');
+  });
+
   it('does not show the empty MCP server CTA before the catalog has resolved', () => {
     expect(mcpServersView).toContain('const showInitialCatalogLoading = !catalog && !catalogError && !hasLocalFallbackServers;');
-    expect(mcpServersView).toContain('const showEmptyCatalog = Boolean(catalog) && servers.length === 0;');
-    expect(mcpServersView).toContain('{showInitialCatalogLoading && (');
-    expect(mcpServersView).toContain('{showEmptyCatalog && (');
+    expect(mcpServersView).toContain("? 'loading'");
+    expect(mcpServersView).toContain('<CollectionState');
+    expect(mcpServersView).toContain('phase={catalogPhase}');
+    expect(mcpServersView).toContain('itemCount={servers.length}');
     expect(mcpServersView).not.toContain('setShowCatalogLoadingNotice');
-    expect(mcpServersView).not.toContain('!showInitialCatalogLoading && servers.length === 0');
+    expect(mcpServersView).not.toContain('showEmptyCatalog');
   });
 
   it('keeps the create review sidebar compact for narrow modal space', () => {
@@ -81,9 +99,9 @@ describe('MCP server form dialog polish', () => {
 
   it('patches server enablement from the inventory without editing connection details', () => {
     expect(mcpServersView).toContain('const handleToggleServer = async (server: TargetToolCatalogServer, enabled: boolean)');
-    expect(mcpServersView).toContain('const { [serverId]: _staleServerTools, ...rest } = current;');
+    expect(mcpServersView).toContain('const serverToolsCollection = useCursorCollection({');
     expect(mcpServersView).toContain('tools: activeServerTools?.items || activeServer.tools');
-    expect(mcpServersView).toContain('isLoadingTools={!activeServerTools || Boolean(activeServerTools.loadingInitial)}');
+    expect(mcpServersView).toContain("isLoadingTools={!activeServerTools || activeServerTools.phase === 'loading'}");
     expect(mcpServersView).toContain('await controlPlaneApi.updateTargetMcpServer(target.workspaceId, target.id, server.id, {\n        enabled\n      });');
     expect(mcpServersView).toContain('pendingToggleServerId={pendingToggleServerId}');
     expect(mcpServersView).toContain('onToggleServer={(targetServer, enabled) => void handleToggleServer(targetServer, enabled)}');
@@ -91,7 +109,8 @@ describe('MCP server form dialog polish', () => {
 
   it('keeps MCP tool save failures visible in the active tools dialog', () => {
     expect(mcpServersView).toContain("const message = formatMcpMutationError(error, 'Failed updating MCP tool.');");
-    expect(mcpServersView).toContain('error: message');
+    expect(mcpServersView).toContain('setToolMutationError(message);');
+    expect(mcpServersView).toContain('toolsError={toolMutationError || activeServerTools?.error || null}');
     expect(mcpServersView).toContain('throw error;');
     expect(mcpServersView).toContain('void handleToggleTool(createReviewServerWithPagedTools, tool, enabled).catch(() => undefined)');
   });

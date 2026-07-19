@@ -25,12 +25,10 @@ import { LiveRunTrace } from '@/features/targets/chat/types';
 import { buildChatSubmitFailureMessage, replacePendingAssistantWithFailure } from '@/features/targets/chat/hooks/chatSubmitFailures';
 import type { ChatSubmitArgs } from '@/features/targets/chat/hooks/chatSubmitTypes';
 export const RUN_TERMINAL_WAIT_TIMEOUT_MS = 600000;
-
 export function isRuntimeSelectionPolicyRejection(error: unknown): boolean {
   return error instanceof ControlPlaneRequestError
     && ['PROVIDER_NOT_ALLOWED', 'MODEL_NOT_ALLOWED', 'REASONING_EFFORT_NOT_ALLOWED'].includes(error.code || '');
 }
-
 export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
   const {
     target,
@@ -608,6 +606,8 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     const failureMessage = buildChatSubmitFailureMessage({
       error,
       workspaceId: target.workspaceId,
+      targetId: target.id,
+      targetType: target.targetType,
       fallbackMessage: fallbackBackendErrorMessage,
       runId: runIdForMessage
     });

@@ -160,7 +160,7 @@ export function OidcLoginButton({
       type="button"
       onClick={onLogin}
       disabled={isAuthLoading}
-      className={`control-target mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`control-target mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm font-bold transition-[background-color,border-color,color,box-shadow,transform] focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
         passwordAuthEnabled
           ? 'bg-ui-bg text-ui-text hover:bg-ui-surface'
           : 'border-control-boundary bg-control-primary text-control-primary-fg hover:bg-control-primary-hover'

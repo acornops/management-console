@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, Cpu, Terminal } from 'lucide-react';
+import { Activity, AlertTriangle, CircleCheck, Cpu, Terminal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { issueStatusTone } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
@@ -82,6 +83,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const telemetryLabel = getTelemetryFreshnessLabel(telemetryFreshness);
   const [metricHistory, setMetricHistory] = useState<ClusterMetricHistoryPoint[]>(cluster.metricHistory || []);
   const [metricHistoryStatus, setMetricHistoryStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [metricHistoryRequestVersion, setMetricHistoryRequestVersion] = useState(0);
   const persistedMetricTimeline = useMemo(() => getPersistedMetricTimeline(metricHistory), [metricHistory]);
 
   const cpuSeries = useMemo(
@@ -98,9 +100,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         .map((point) => ({ label: formatTime(point.timestamp), value: point.memory })),
     [persistedMetricTimeline]
   );
+  const hasMetricSamples = cpuSeries.length > 0 || memorySeries.length > 0;
 
   const [clusterIssues, setClusterIssues] = useState<ControlPlaneIssueItem[] | null>(null);
   const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [issueRequestVersion, setIssueRequestVersion] = useState(0);
+  const issueSectionTitleId = React.useId();
   useEffect(() => {
     let isCurrent = true;
 
@@ -123,14 +128,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       .catch((error) => {
         console.error('Failed loading cluster metric history', error);
         if (!isCurrent) return;
-        setMetricHistory([]);
         setMetricHistoryStatus('error');
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [cluster.id, cluster.workspaceId, cluster.agentConnectionState]);
+  }, [cluster.id, cluster.workspaceId, cluster.agentConnectionState, metricHistoryRequestVersion]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -153,7 +157,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     return () => {
       isCurrent = false;
     };
-  }, [cluster.id, cluster.workspaceId]);
+  }, [cluster.id, cluster.workspaceId, issueRequestVersion]);
 
   const reportedIssues = useMemo(
     () =>
@@ -165,6 +169,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     [clusterIssues]
   );
   const hasIssueRows = clusterIssues !== null;
+  const hasIssueCounts = issueSummary !== null || hasIssueRows;
   const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);
   const criticalIssues = issueSummary
     ? issueSummary.critical
@@ -183,57 +188,64 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     const prompt = `Triage "${issue.title}" on ${cluster.name}. Severity: ${issue.severity}. Status: ${issue.status}. Scope: ${issue.scopeName || issue.namespace || t('clusterOverview.clusterWide')}. Issue summary: ${issue.summary}`;
     onOpenCopilot?.(prompt);
   };
+  const retryMetricHistory = () => setMetricHistoryRequestVersion((version) => version + 1);
+  const retryIssues = () => setIssueRequestVersion((version) => version + 1);
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
-      <header className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="type-route-title">{t('clusterOverview.title')}</h1>
-          <p className="type-body mt-2">{t('clusterOverview.latestTelemetryFor', { name: cluster.name })}</p>
-        </div>
-        <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end">
+    <PageShell>
+      <PageHeader
+        title={t('clusterOverview.title')}
+        description={t('clusterOverview.latestTelemetryFor', { name: cluster.name })}
+        actions={(
           <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">
-            <div className={`h-2 w-2 rounded-full ${telemetryFreshness === 'current' ? 'bg-status-success' : telemetryFreshness === 'stale' ? 'bg-status-warning' : 'bg-status-danger'}`} />
+            <div
+              className={`h-2 w-2 rounded-full ${telemetryFreshness === 'current' ? 'bg-status-success' : telemetryFreshness === 'stale' ? 'bg-status-warning' : 'bg-status-danger'}`}
+              aria-hidden="true"
+            />
             <span className="type-label">{telemetryLabel} · {formatLastUpdated(cluster.lastUpdate)}</span>
           </div>
-        </div>
-      </header>
+        )}
+      />
 
-      <section className="mb-10 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+      <section aria-labelledby={issueSectionTitleId} aria-busy={issueLoadStatus === 'loading' || undefined} className="mb-8 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         <div className="flex flex-col gap-6 border-b border-ui-border bg-ui-bg px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-start gap-4">
             <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface/70 text-accent-strong">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="type-row-title">{t('clusterOverview.activeIssues')}</p>
+              <h2 id={issueSectionTitleId} className="type-row-title">{t('clusterOverview.activeIssues')}</h2>
               <p className="type-caption mt-2 max-w-3xl">
                 {t('clusterOverview.activeIssuesScope', { pods: podCount, resources: scopedResourceCount })}
               </p>
-              <p className="type-body mt-2 max-w-3xl">
-                {t('clusterOverview.activeIssuesBody', { issues: issueCount, critical: criticalIssues, warning: warningIssues })}
-              </p>
+              {hasIssueCounts && (
+                <p className="type-body mt-2 max-w-3xl">
+                  {t('clusterOverview.activeIssuesBody', { issues: issueCount, critical: criticalIssues, warning: warningIssues })}
+                </p>
+              )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="type-caption rounded-full bg-ui-surface px-3 py-1">
-              {t('clusterOverview.issueCount', { count: issueCount })}
-            </span>
-            <span className="type-caption rounded-full bg-status-danger-soft px-3 py-1 text-status-danger-text">
-              {t('clusterOverview.criticalIssues', { count: criticalIssues })}
-            </span>
-            <span className="type-caption rounded-full bg-status-warning-soft px-3 py-1 text-status-warning-text">
-              {t('clusterOverview.warningIssues', { count: warningIssues })}
-            </span>
-          </div>
+          {hasIssueCounts && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="type-caption rounded-full bg-ui-surface px-3 py-1">
+                {t('clusterOverview.issueCount', { count: issueCount })}
+              </span>
+              <span className="type-caption rounded-full bg-status-danger-soft px-3 py-1 text-status-danger-text">
+                {t('clusterOverview.criticalIssues', { count: criticalIssues })}
+              </span>
+              <span className="type-caption rounded-full bg-status-warning-soft px-3 py-1 text-status-warning-text">
+                {t('clusterOverview.warningIssues', { count: warningIssues })}
+              </span>
+            </div>
+          )}
         </div>
 
         {issueLoadStatus === 'loading' ? (
-          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
+          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center" role="status" aria-live="polite">
             <div className="rounded-md border border-ui-border bg-ui-bg p-3 text-accent-strong">
-              <Activity className="h-5 w-5 animate-pulse" />
+              <Activity className="h-5 w-5 animate-pulse" aria-hidden="true" />
             </div>
-            <h2 className="type-row-title mt-4">{t('clusterOverview.loadingIssuesTitle')}</h2>
+            <h3 className="type-row-title mt-4">{t('clusterOverview.loadingIssuesTitle')}</h3>
             <p className="type-body mt-2 max-w-xl">{t('clusterOverview.loadingIssuesBody')}</p>
           </div>
         ) : reportedIssues.length > 0 ? (
@@ -261,7 +273,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                             {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
                           </span>
                         </div>
-                        <h2 className="type-row-title mt-2">{issue.title}</h2>
+                        <h3 className="type-row-title mt-2">{issue.title}</h3>
                         <p className="type-body mt-1">{issue.reason || issue.summary}</p>
                       </td>
                       <td className="px-5 py-4 align-top">
@@ -304,7 +316,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <p className="type-caption mt-3 text-ui-text-muted">
                     {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
                   </p>
-                  <h2 className="type-row-title mt-4">{issue.title}</h2>
+                  <h3 className="type-row-title mt-4">{issue.title}</h3>
                   <p className="type-body mt-2">{issue.reason || issue.summary}</p>
                   {onOpenCopilot && (
                     <Button onClick={() => openIssueTriage(issue)} variant="primary" size="md" className="mt-4">
@@ -317,51 +329,73 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
           </>
         ) : shouldShowIssueLoadFailure ? (
-          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
+          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center" role="alert">
             <div className="rounded-md border border-status-warning/20 bg-status-warning-soft p-3 text-status-warning-text">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             </div>
-            <h2 className="type-row-title mt-4">{t('clusterOverview.issueLoadFailedTitle')}</h2>
-            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.issueLoadFailedBody')}</p>
+            <h3 className="type-row-title mt-4">{t('clusterOverview.issueLoadFailedTitle')}</h3>
+            <p className="type-body mt-2 max-w-xl">
+              {t(issueSummary ? 'clusterOverview.issueLoadFailedBody' : 'clusterOverview.issueLoadFailedWithoutSummaryBody')}
+            </p>
+            <Button onClick={retryIssues} variant="secondary" size="sm" className="mt-4">
+              {t('common.retry')}
+            </Button>
           </div>
         ) : (
           <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
             <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
-              <AlertTriangle className="h-5 w-5" />
+              <CircleCheck className="h-5 w-5" aria-hidden="true" />
             </div>
-            <h2 className="type-row-title mt-4">{t('clusterOverview.noIssuesTitle')}</h2>
+            <h3 className="type-row-title mt-4">{t('clusterOverview.noIssuesTitle')}</h3>
             <p className="type-body mt-2 max-w-xl">{t('clusterOverview.noIssuesBody')}</p>
           </div>
         )}
       </section>
 
-      <div className="mb-12 grid w-full grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-        <MetricChart
-          title={t('clusterOverview.cpuUsage')}
-          description={t('clusterOverview.cpuDescription')}
-          icon={Cpu}
-          points={cpuSeries}
-          unit="Core"
-          type="area"
-          isLoading={metricHistoryStatus === 'loading'}
-          emptyTitle={t('clusterOverview.noTelemetryHistory')}
-          loadingTitle={t('clusterOverview.collectingHistory')}
-          emptyDescription={t('clusterOverview.trendAfterSamples')}
-        />
-        <MetricChart
-          title={t('clusterOverview.memory')}
-          description={t('clusterOverview.memoryDescription')}
-          icon={Activity}
-          points={memorySeries}
-          unit="GiB"
-          type="line"
-          isLoading={metricHistoryStatus === 'loading'}
-          emptyTitle={t('clusterOverview.noTelemetryHistory')}
-          loadingTitle={t('clusterOverview.collectingHistory')}
-          emptyDescription={t('clusterOverview.trendAfterSamples')}
-        />
-      </div>
+      {metricHistoryStatus === 'error' && (
+        <div className="mb-4 flex flex-col gap-3 rounded-md border border-status-warning/25 bg-status-warning-soft px-4 py-4 text-status-warning-text sm:flex-row sm:items-center sm:justify-between" role="alert">
+          <div className="flex min-w-0 items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="type-row-title text-status-warning-text">{t('clusterOverview.telemetryLoadFailedTitle')}</p>
+              <p className="type-caption mt-1 max-w-3xl text-status-warning-text">{t('clusterOverview.telemetryLoadFailedBody')}</p>
+            </div>
+          </div>
+          <Button onClick={retryMetricHistory} variant="secondary" size="sm" className="w-full shrink-0 sm:w-auto">
+            {t('common.retry')}
+          </Button>
+        </div>
+      )}
 
-    </div>
+      {(metricHistoryStatus !== 'error' || hasMetricSamples) && (
+        <div className="mb-8 grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+          <MetricChart
+            title={t('clusterOverview.cpuUsage')}
+            description={t('clusterOverview.cpuDescription')}
+            icon={Cpu}
+            points={cpuSeries}
+            unit={t('clusterOverview.cpuUnit')}
+            type="area"
+            isLoading={metricHistoryStatus === 'loading'}
+            emptyTitle={t(metricHistoryStatus === 'error' ? 'clusterOverview.telemetryLoadFailedTitle' : 'clusterOverview.noTelemetryHistory')}
+            loadingTitle={t('clusterOverview.collectingHistory')}
+            emptyDescription={t(metricHistoryStatus === 'error' ? 'clusterOverview.telemetryLoadFailedBody' : 'clusterOverview.trendAfterSamples')}
+          />
+          <MetricChart
+            title={t('clusterOverview.memory')}
+            description={t('clusterOverview.memoryDescription')}
+            icon={Activity}
+            points={memorySeries}
+            unit="GiB"
+            type="line"
+            isLoading={metricHistoryStatus === 'loading'}
+            emptyTitle={t(metricHistoryStatus === 'error' ? 'clusterOverview.telemetryLoadFailedTitle' : 'clusterOverview.noTelemetryHistory')}
+            loadingTitle={t('clusterOverview.collectingHistory')}
+            emptyDescription={t(metricHistoryStatus === 'error' ? 'clusterOverview.telemetryLoadFailedBody' : 'clusterOverview.trendAfterSamples')}
+          />
+        </div>
+      )}
+
+    </PageShell>
   );
 };

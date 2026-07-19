@@ -1,14 +1,15 @@
 import React from 'react';
+import { CollectionState } from '@/components/common/CollectionState';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
-import { FilterToggleGroup, type CompactControlItem } from '@/components/common/ComponentVocabulary';
-import { PageSearchInput } from '@/components/common/PageSearchInput';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar, type DiscoveryFilterOption } from '@/components/common/DiscoveryFilterBar';
+import { EmptyState } from '@/components/common/EmptyState';
 import { PageHeader } from '@/components/common/PageComposition';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
-import { statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
+import { isSystemProvidedAgent, statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
 import { AppPaths } from '@/utils/routes';
 
 export type AgentFocusFilter = 'all' | 'active' | 'draft' | 'disabled';
@@ -74,7 +75,7 @@ export function getAgentWorkflowAssignmentSummary(agent: AgentDefinition, t: TFu
 }
 
 function workflowCatalogHref(workspaceId: string, workflowName: string): string {
-  const params = new URLSearchParams({ q: workflowName });
+  const params = new URLSearchParams({ workflow: workflowName });
   return `${AppPaths.workspaceWorkflows(workspaceId)}?${params.toString()}`;
 }
 
@@ -114,6 +115,7 @@ const WorkflowAssignment: React.FC<{ agent: AgentDefinition }> = ({ agent }) => 
 interface WorkspaceAgentsCatalogProps {
   agents: AgentDefinition[];
   visibleAgents: AgentDefinition[];
+  loading?: boolean;
   selectedAgent?: AgentDefinition;
   drawerOpen: boolean;
   canManageAgents: boolean;
@@ -121,12 +123,14 @@ interface WorkspaceAgentsCatalogProps {
   onQueryChange: (query: string) => void;
   catalogFilters: AgentCatalogFilters;
   onCatalogFiltersChange: (filters: AgentCatalogFilters) => void;
+  onClearFilters: () => void;
   onOpenManagement: (agent: AgentDefinition) => void;
 }
 
 export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   agents,
   visibleAgents,
+  loading = false,
   selectedAgent,
   drawerOpen,
   canManageAgents,
@@ -134,36 +138,77 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   onQueryChange,
   catalogFilters,
   onCatalogFiltersChange,
+  onClearFilters,
   onOpenManagement
 }) => {
   const { t } = useTranslation();
-  const filterOptions = React.useMemo<Array<CompactControlItem<AgentFocusFilter>>>(() => [
+  const filterOptions = React.useMemo<Array<DiscoveryFilterOption<AgentFocusFilter>>>(() => [
     { value: 'all', label: t('agentsWorkflows.agents.filters.all'), count: agents.length },
     { value: 'active', label: t('agentsWorkflows.agents.status.active'), count: agents.filter((agent) => agent.status === 'active').length },
     { value: 'draft', label: t('agentsWorkflows.agents.status.draft'), count: agents.filter((agent) => agent.status === 'draft').length },
     { value: 'disabled', label: t('agentsWorkflows.agents.status.disabled'), count: agents.filter((agent) => agent.status === 'disabled').length }
   ], [agents, t]);
+  const hasActiveFilters = Boolean(query.trim()) || hasActiveAgentCatalogFilters(catalogFilters);
 
   return (
     <section aria-label={t('agentsWorkflows.agents.catalogLabel')} className="min-w-0">
-      <div className="mb-3 flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-1">
-        <h2 className="type-panel-title">{t('agentsWorkflows.agents.catalogHeading')}</h2>
-        <span className="type-caption whitespace-nowrap text-ui-text-muted">{t('agentsWorkflows.agents.resultCount', { visible: visibleAgents.length, total: agents.length })}</span>
-      </div>
-      <div aria-label={t('agentsWorkflows.agents.toolbarLabel')} className="mb-4 flex min-w-0 flex-col gap-3 border-y border-ui-border py-3 xl:flex-row xl:items-center xl:justify-between">
-        <PageSearchInput value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={t('agentsWorkflows.agents.searchPlaceholder')} aria-label={t('agentsWorkflows.agents.searchLabel')} className="w-full min-w-0 lg:w-full xl:max-w-xl" />
-        <div className="min-w-0 max-w-full overflow-x-auto pb-1 xl:overflow-visible xl:pb-0">
-          <FilterToggleGroup activeValue={catalogFilters.focus} items={filterOptions} onValueChange={(focus) => onCatalogFiltersChange({ focus })} ariaLabel={t('agentsWorkflows.agents.statusFilterLabel')} className="flex-nowrap" />
-        </div>
-      </div>
+      {(loading || agents.length > 0 || hasActiveFilters) && (
+        <DiscoveryFilterBar
+          idPrefix="agent-catalog"
+          query={query}
+          queryLabel={t('agentsWorkflows.agents.searchLabel')}
+          queryPlaceholder={t('agentsWorkflows.agents.searchPlaceholder')}
+          queryClearLabel={t('common.clearSearch')}
+          resultSummary={loading ? t('common.loading') : hasActiveFilters ? t('agentsWorkflows.agents.resultCount', { visible: visibleAgents.length, total: agents.length }) : t('agentsWorkflows.agents.totalCount', { count: agents.length })}
+          filters={[createDiscoveryFilterGroup<AgentFocusFilter>({
+            id: 'status',
+            label: t('common.status'),
+            value: catalogFilters.focus,
+            defaultValue: 'all',
+            options: filterOptions,
+            onChange: (focus) => onCatalogFiltersChange({ focus })
+          })]}
+          clearAllLabel={t('common.clearAll')}
+          onQueryChange={onQueryChange}
+          onClearAll={onClearFilters}
+          className="mb-4"
+        />
+      )}
 
-      {visibleAgents.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
+      <CollectionState
+        phase={loading ? 'loading' : 'ready'}
+        itemCount={visibleAgents.length}
+        filtered={hasActiveFilters && agents.length > 0}
+        className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface"
+        loading={(
+          <div role="status" aria-live="polite">
+          <span className="sr-only">{t('common.loading')}</span>
+          <ul aria-hidden="true" className="divide-y divide-ui-border">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <li key={index} className="grid min-h-28 grid-cols-[minmax(0,1fr)_5rem] items-center gap-5 px-4 py-3.5 lg:grid-cols-[minmax(14rem,1.4fr)_7rem_minmax(12rem,0.8fr)_minmax(13rem,1fr)_2.75rem]">
+                <span className="space-y-2">
+                  <span className="block h-3 w-36 max-w-full rounded-full bg-ui-border/75" />
+                  <span className="block h-2.5 w-64 max-w-full rounded-full bg-ui-border/60" />
+                  <span className="block h-2.5 w-28 max-w-full rounded-full bg-ui-border/60" />
+                </span>
+                <span className="h-6 w-16 rounded-full bg-ui-border/60" />
+                <span className="hidden h-3 w-32 max-w-full rounded-full bg-ui-border/60 lg:block" />
+                <span className="hidden h-3 w-36 max-w-full rounded-full bg-ui-border/60 lg:block" />
+                <span className="hidden h-4 w-4 rounded bg-ui-border/60 lg:block" />
+              </li>
+            ))}
+          </ul>
+          </div>
+        )}
+        empty={<EmptyState embedded icon={<ICONS.Bot />} title={t('agentsWorkflows.agents.emptyTitle')} description={t(canManageAgents ? 'agentsWorkflows.agents.emptyBody' : 'agentsWorkflows.agents.emptyReadOnlyBody')} />}
+        filteredEmpty={<EmptyState embedded icon={<ICONS.Search />} title={t('agentsWorkflows.agents.noResultsTitle')} description={t('agentsWorkflows.agents.noResultsBody')} />}
+        error={null}
+      >
           <ul role="list" className="divide-y divide-ui-border">
             {visibleAgents.map((agent) => {
               const selected = drawerOpen && selectedAgent?.id === agent.id;
               return (
-                <li key={agent.id} className={`group relative isolate min-w-0 overflow-hidden transition-colors duration-200 ${selected ? 'bg-accent-soft/45 ring-1 ring-inset ring-accent/30' : 'hover:bg-ui-bg/70'}`}>
+                <li key={agent.id} data-agent-catalog-row={agent.id} className={`group relative isolate min-w-0 overflow-hidden transition-colors duration-200 ${selected ? 'bg-accent-soft/45 ring-1 ring-inset ring-accent/30' : 'hover:bg-ui-bg/70'}`}>
                   <button
                     type="button"
                     aria-label={t('agentsWorkflows.agents.openProfile', { name: agent.name })}
@@ -174,9 +219,20 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                   <div className={catalogGridClass}>
                     <CatalogCell label={t('agentsWorkflows.agents.fields.identity')} className="col-span-2 lg:col-span-1">
                       <span className="block min-w-0 pr-8 lg:pr-0">
-                        <span className="type-row-title block break-words text-ui-text transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong [overflow-wrap:anywhere]">{agent.name}</span>
+                        <span className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span className="type-row-title break-words text-ui-text transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong [overflow-wrap:anywhere]">{agent.name}</span>
+                          {isSystemProvidedAgent(agent) && (
+                            <span className="type-micro-label shrink-0 rounded-full bg-accent-soft/45 px-2 py-0.5 text-accent-readable">
+                              {t('common.providedByAcornOps')}
+                            </span>
+                          )}
+                        </span>
                         <span className="type-caption mt-1 block break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.description}</span>
-                        <span className="type-caption mt-1.5 block break-words text-ui-text-muted [overflow-wrap:anywhere]">{t('agentsWorkflows.agents.ownerVersion', { owner: agent.owner, version: agent.version })}</span>
+                        <span className="type-caption mt-1.5 block break-words font-semibold text-ui-text-muted [overflow-wrap:anywhere]">
+                          {isSystemProvidedAgent(agent)
+                            ? `v${agent.version}`
+                            : t('agentsWorkflows.agents.ownerVersion', { owner: agent.owner, version: agent.version })}
+                        </span>
                       </span>
                     </CatalogCell>
                     <CatalogCell label={t('agentsWorkflows.agents.fields.status')}>
@@ -194,16 +250,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
               );
             })}
           </ul>
-        </div>
-      ) : (
-        <div role="status" className="grid min-h-48 place-items-center border-y border-ui-border px-4 py-10 text-center">
-          <div className="max-w-md">
-            <ICONS.Bot className="mx-auto h-6 w-6 text-ui-text-muted" aria-hidden="true" />
-            <h2 className="mt-3 type-panel-title">{agents.length === 0 ? t('agentsWorkflows.agents.emptyTitle') : t('agentsWorkflows.agents.noResultsTitle')}</h2>
-            <p className="type-caption mt-2 text-ui-text-muted">{agents.length === 0 ? t(canManageAgents ? 'agentsWorkflows.agents.emptyBody' : 'agentsWorkflows.agents.emptyReadOnlyBody') : t('agentsWorkflows.agents.noResultsBody')}</p>
-          </div>
-        </div>
-      )}
+      </CollectionState>
     </section>
   );
 };

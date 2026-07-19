@@ -34,7 +34,7 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain('const isSaving = Boolean(savingAction);');
     expect(workspaceAiSettingsPage).toContain('const isCurrentWorkspaceRequest = () => isMountedRef.current && workspaceIdRef.current === workspace.id;');
     expect(workspaceAiSettingsPage.match(/!isCurrentWorkspaceRequest\(\)/g)?.length).toBeGreaterThanOrEqual(3);
-    expect(workspaceAiSettingsPage).toContain('if (!canSaveBehavior || isSaving) return;');
+    expect(workspaceAiSettingsPage).toContain('if (!canSaveBehavior || !behaviorDraft || isSaving) return;');
     expect(workspaceAiSettingsPage).toContain('if (!apiKey || !canManageAiSettings || !currentAiSettings || isSaving) return;');
     expect(workspaceAiSettingsPage).toContain('if (!canManageAiSettings || !currentAiSettings || isSaving) return;');
     expect(workspaceAiSettingsPage).toContain("setSavingAction('behavior');");
@@ -92,7 +92,7 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain('interface BehaviorDraft');
     expect(workspaceAiSettingsPage).toContain('function behaviorDraftFromSettings(settings: WorkspaceAiSettings): BehaviorDraft');
     expect(workspaceAiSettingsPage).toContain('function behaviorDraftChanged(settings: WorkspaceAiSettings, draft: BehaviorDraft): boolean');
-    expect(workspaceAiSettingsPage).toContain('const hasBehaviorChanges = Boolean(currentAiSettings && behaviorDraftChanged(currentAiSettings, behaviorDraft));');
+    expect(workspaceAiSettingsPage).toContain('const hasBehaviorChanges = Boolean(currentAiSettings && behaviorDraft && behaviorDraftChanged(currentAiSettings, behaviorDraft));');
     expect(workspaceAiSettingsPage).toContain('const canSaveBehavior = Boolean(');
     expect(workspaceAiSettingsPage).toContain('const handleSaveBehavior = async () => {');
     expect(workspaceAiSettingsPage).toContain('reasoningSummaryMode: behaviorDraft.reasoningSummaryMode');
@@ -107,14 +107,12 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain("title={t('workspaceAiSettings.readinessTitle')}");
     expect(workspaceAiSettingsPage).toContain("description={t('workspaceAiSettings.readinessBody')}");
     expect(workspaceAiSettingsPage).toContain('const readinessNotice = !canManageAiSettings');
-    expect(workspaceAiSettingsPage).toContain('const savedDefaultProvider = currentAiSettings?.defaultProvider ?? behaviorDraft.defaultProvider;');
-    expect(workspaceAiSettingsPage).toContain('const savedReasoningEffort = currentAiSettings?.reasoningEffort ?? behaviorDraft.reasoningEffort;');
-    expect(workspaceAiSettingsPage).toContain('providerStatusByProvider.get(savedDefaultProvider)');
+    expect(workspaceAiSettingsPage).toContain('providerStatusByProvider.get(currentAiSettings.defaultProvider)');
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessReady')");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningSummaryStatus'");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningSummaryUnavailable')");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningEffortStatus'");
-    expect(workspaceAiSettingsPage).toContain('t(reasoningEffortLabel(savedReasoningEffort))');
+    expect(workspaceAiSettingsPage).toContain('t(reasoningEffortLabel(currentAiSettings.reasoningEffort))');
     expect(workspaceAiSettingsPage).toContain('className="min-h-14"');
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.reasoningEffortOffHelp')");
     expect(workspaceAiSettingsPage).toContain('<label className="block">\n                    <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">\n                      {t(\'workspaceAiSettings.reasoningEffortLabel\')}');
@@ -123,11 +121,15 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
 
   it('turns AI readiness into a next-action guide instead of a passive status card', () => {
     expect(workspaceAiSettingsPage).toContain('const readinessAction =');
-    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessAddCredentialAction', { provider: providerLabel(savedDefaultProvider) })");
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessAddCredentialAction', { provider: providerLabel(currentAiSettings!.defaultProvider) })");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessChooseProviderAction')");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.readinessReviewCredentialsAction')");
     expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.nextAction')");
     expect(workspaceAiSettingsPage).toContain('onClick={() => readinessAction.onClick()}');
+    expect(workspaceAiSettingsPage).toContain('returnTo && hasReadyAiRuntime');
+    expect(workspaceAiSettingsPage).toContain("t('workspaceAiSettings.returnToAssistant')");
+    expect(workspaceAiSettingsPage).toContain('onClick: () => onReturnToAssistant?.(returnTo)');
+    expect(workspaceAiSettingsPage).not.toContain('navigate(returnTo)');
   });
 
   it('anchors in-page AI settings jumps without collapsing section margins', () => {
@@ -144,5 +146,12 @@ describe('WorkspaceAiSettingsPage source contracts', () => {
     expect(workspaceAiSettingsPage).toContain('function reasoningPolicyDisabled(settings: WorkspaceAiSettings | null): boolean');
     expect(workspaceAiSettingsPage).toContain("!settings.allowedReasoningSummaryModes.some((mode) => mode !== 'off')");
     expect(workspaceAiSettingsPage).not.toContain('!currentAiSettings.reasoningSummariesEnabled');
+  });
+
+  it('does not invent an AI provider or model before settings hydrate', () => {
+    expect(workspaceAiSettingsPage).toContain('useState<BehaviorDraft | null>');
+    expect(workspaceAiSettingsPage).toContain('currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : null');
+    expect(workspaceAiSettingsPage).not.toContain('DEFAULT_BEHAVIOR_DRAFT');
+    expect(workspaceAiSettingsPage).not.toContain("defaultModel: 'gpt-5.5'");
   });
 });

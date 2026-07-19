@@ -1,4 +1,5 @@
-import { ChatRuntimeSelection, ClusterMetricHistoryPoint, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
+import { ChatRuntimeSelection, ClusterMetricHistoryPoint, ClusterToolCatalogServer, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
+export type { TargetMcpServer, TargetMcpServerTestConnectionResult } from './targetMcpLegacyTypes';
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
   ControlPlaneRoleTemplate,
@@ -397,6 +398,10 @@ export interface ControlPlaneClusterToolCatalogServer {
   canEditConnection: boolean;
   canToggle?: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
+  authScope?: 'none' | 'personal' | 'legacy_shared';
+  authHeaderName?: string;
+  authHeaderPrefix?: string;
+  provenance?: ClusterToolCatalogServer['provenance'];
   publicHeaders?: Record<string, string>;
   connectionStatus?: 'unknown' | 'ok' | 'error';
   lastDiscoveryAt?: string | null;
@@ -431,13 +436,19 @@ export interface ControlPlaneMcpServer {
   server_url: string;
   enabled: boolean;
   auth_type: 'none' | 'bearer_token' | 'custom_header';
-  auth_secret_name?: string;
+  auth_scope?: 'none' | 'personal';
   auth_header_name?: string;
   auth_header_prefix?: string;
   public_headers?: Record<string, string> | null;
   connection_status?: 'unknown' | 'ok' | 'error';
   last_discovery_at?: string | null;
   last_discovery_error?: string | null;
+  revision?: number;
+  catalog_source_id?: string | null;
+  catalog_artifact_name?: string | null;
+  catalog_version?: string | null;
+  catalog_digest?: string | null;
+  catalog_imported_at?: string | null;
   tools: ControlPlaneClusterTool[];
 }
 
@@ -461,8 +472,6 @@ export interface TargetMcpServerToolInput {
 
 export interface TargetMcpServerAuthInput {
   type?: 'none' | 'bearer_token' | 'custom_header';
-  secretName?: string;
-  secretValue?: string;
   headerName?: string;
   headerPrefix?: string;
 }
@@ -542,6 +551,7 @@ export interface ControlPlaneSession extends ControlPlaneTargetScope {
   deletedAt?: string;
 }
 
+
 export type ControlPlaneSessionListPage = PagedResult<ControlPlaneSession>;
 
 export interface ControlPlaneSessionMessage {
@@ -617,33 +627,4 @@ export interface ControlPlaneAcceptedMessage {
   message_id: string;
   run_id: string;
   runtimeSelection?: ChatRuntimeSelection;
-}
-
-export interface TargetMcpServer {
-  id: string;
-  workspaceId: string;
-  targetId: string;
-  serverName: string;
-  serverUrl: string;
-  enabled: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
-  authSecretName?: string;
-  authHeaderName?: string;
-  authHeaderPrefix?: string;
-  publicHeaders?: Record<string, string>;
-  connectionStatus: 'unknown' | 'ok' | 'error';
-  lastDiscoveryAt?: string | null;
-  lastDiscoveryError?: string | null;
-  tools: KubernetesCluster['mcpTools'];
-}
-
-export interface TargetMcpServerTestConnectionResult {
-  serverId: string;
-  serverName: string;
-  serverUrl: string;
-  connectionStatus: 'ok' | 'error';
-  lastDiscoveryAt: string;
-  discoveredToolCount: number;
-  discoveredTools: string[];
-  error?: string | null;
 }
