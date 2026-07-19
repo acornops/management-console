@@ -51,7 +51,7 @@ const toggleCapabilityValue = (values: string[], value: string, checked: boolean
 };
 
 const capabilityServerToolPrefixes: Record<string, string[]> = {
-  'acornops-cluster-agent': ['events.', 'inventory.', 'logs.', 'metrics.'],
+  'acornops-target-agent': ['events.', 'inventory.', 'logs.', 'metrics.'],
   github: ['github.'],
   'workspace-chat': ['chat.'],
   'artifact-writer': ['reports.']

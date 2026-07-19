@@ -504,7 +504,7 @@ export const WorkflowCapabilitiesPanel: React.FC<{
               onToggle={(option, checked) => onSetWorkflowScopeValue('enabledSkills', option.value, checked)}
             />
           </div>
-          <p className="type-caption mt-3 text-ui-text-muted">The AcornOps Kubernetes Tools connection is system-owned. This gate controls access; it cannot replace the server URL or credentials.</p>
+          <p className="type-caption mt-3 text-ui-text-muted">The AcornOps Target Tools connection is system-owned. This gate controls access; it cannot replace the server URL or credentials.</p>
           <div className="mt-5 grid gap-5">
             {workflow.steps.map((step) => (
               <WorkflowScopeMultiSelect

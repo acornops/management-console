@@ -17,7 +17,7 @@ describe('workflowAgentCapabilities', () => {
 
     expect(review).toHaveLength(1);
     expect(review[0].agentId).toBe('agent-cluster-triage');
-    expect(review[0].mcpServers).toEqual(['acornops-cluster-agent']);
+    expect(review[0].mcpServers).toEqual(['acornops-target-agent']);
     expect(review[0].skills).toEqual(['acornops-observability', 'acornops-target-boundary-design']);
     expect(review[0].tools).toEqual(['get_resource', 'get_resource_logs', 'list_resources']);
     expect(review[0].tools).not.toContain('mock.tool');

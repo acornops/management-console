@@ -198,7 +198,7 @@ describe('WorkspaceWorkflowsPage model', () => {
     expect(repositoryOnly.mcpTools.map((option) => option.value)).not.toContain('list_resources');
 
     const repositoryWithTriage = getWorkflowScopeOptionsForAgents(['agent-release-coordinator', 'agent-cluster-triage'], agents, globalCatalog);
-    expect(repositoryWithTriage.mcpServers.map((option) => option.value)).toEqual(['acornops-cluster-agent']);
+    expect(repositoryWithTriage.mcpServers.map((option) => option.value)).toEqual(['acornops-target-agent']);
     expect(repositoryWithTriage.skills.map((option) => option.value)).toContain('acornops-target-boundary-design');
   });
 

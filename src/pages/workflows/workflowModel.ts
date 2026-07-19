@@ -117,7 +117,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
         { agentId: 'agent-cluster-triage', name: 'Kubernetes Diagnostics', role: 'Triage capability', required: true }
       ],
       requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
-      enabledMcpServers: ['acornops-cluster-agent'],
+      enabledMcpServers: ['acornops-target-agent'],
       allowedTools: ['get_resource', 'get_resource_logs', 'list_resources'],
       enabledSkills: ['acornops-observability', 'acornops-target-boundary-design'],
       contextGrants: ['workspace_metadata', 'target_inventory'],
@@ -137,7 +137,7 @@ export function createDefaultWorkflowDefinitions(workspaceId = defaultWorkspaceI
           requiredInputs: ['targetId'],
           agentIds: ['agent-cluster-triage'],
           enabledSkills: ['acornops-observability', 'acornops-target-boundary-design'],
-          allowedMcpServers: ['acornops-cluster-agent'],
+          allowedMcpServers: ['acornops-target-agent'],
           allowedTools: ['get_resource', 'get_resource_logs', 'list_resources'],
           contextGrants: ['workspace_metadata', 'target_inventory'],
           approvalRequired: false

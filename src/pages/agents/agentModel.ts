@@ -55,7 +55,7 @@ export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId):
       ownerUserId: defaultDevOwnerUserId,
       owner: defaultDevOwnerName,
       version: 2,
-      mcpServers: ['acornops-cluster-agent'],
+      mcpServers: ['acornops-target-agent'],
       tools: ['get_resource', 'get_resource_logs', 'list_resources'],
       skills: ['acornops-observability', 'acornops-target-boundary-design'],
       targetScope: ['kubernetes:*'],
