@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WorkloadsExplorer } from '@/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer';
-import type { ResourceFamily } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
+import type {
+  ResourceFamily,
+  WorkloadExplorerItem
+} from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { mapClusterResourcePageItems } from '@/services/control-plane/clusterMappers';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlanePodLogsOptions, controlPlaneApi } from '@/services/controlPlaneApi';
@@ -84,6 +87,13 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
     }
   }, [cluster.id, cluster.workspaceId, resourceQuery, t]);
 
+  const loadPodLogs = useCallback(async (workload: WorkloadExplorerItem, options: ControlPlanePodLogsOptions) => {
+    if (!canReadPodLogs || workload.type !== 'Pod') {
+      throw new Error(t('workloads.logsUnavailable'));
+    }
+    return controlPlaneApi.getPodLogs(cluster.workspaceId, cluster.id, workload.namespace, workload.name, options);
+  }, [canReadPodLogs, cluster.id, cluster.workspaceId, t]);
+
   useEffect(() => {
     void loadResources('replace');
   }, [loadResources]);
@@ -162,12 +172,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
           void loadResources('append', nextCursor);
         }
       }}
-      onLoadPodLogs={async (workload, options: ControlPlanePodLogsOptions) => {
-        if (!canReadPodLogs || workload.type !== 'Pod') {
-          throw new Error(t('workloads.logsUnavailable'));
-        }
-        return controlPlaneApi.getPodLogs(cluster.workspaceId, cluster.id, workload.namespace, workload.name, options);
-      }}
+      onLoadPodLogs={loadPodLogs}
       onAnalyzePod={(workload) => onAnalyzePod?.(workload.name)}
     />
   );

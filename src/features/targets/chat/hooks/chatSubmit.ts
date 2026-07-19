@@ -6,6 +6,7 @@ import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/f
 import {
   buildChatFailureMessage,
   buildConversationTitleFromPrompt,
+  ensureFailedRunAssistantMessage,
   filterMessagesByRunIds,
   formatRunFailureMessage,
   mapControlPlaneMessage,
@@ -503,7 +504,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
         const existingTrace = current[accepted.runId] || createBaseRunTrace(accepted.runId, 'failed');
         const failedTrace = existingTrace.steps.length > 0
           ? existingTrace
-          : appendRunTraceStep(existingTrace, 'Could not complete', 'error', formatTraceFailureDetail());
+          : appendRunTraceStep(existingTrace, 'Could not complete', 'error', formatTraceFailureDetail(run.errorCode, run.errorMessage));
         return {
           ...current,
           [accepted.runId]: {
@@ -530,6 +531,8 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     mappedMessages = preserveStreamingAssistantMessageId(mappedMessages, run.id, streamingMessageId);
     if (run.status === 'cancelled') {
       mappedMessages = replaceCancelledRunAssistantMessages(mappedMessages, run.id, runCancelledMessage);
+    } else if (run.status === 'failed') {
+      mappedMessages = ensureFailedRunAssistantMessage(mappedMessages, run);
     }
     const hasRunAssistantMessage = mappedMessages.some(
       (message) => message.role === 'assistant' && message.runId === run.id && message.content.trim().length > 0
