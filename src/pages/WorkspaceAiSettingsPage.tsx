@@ -5,16 +5,15 @@ import { InlineAlert } from '@/components/common/InlineAlert';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select, SelectOption } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { isAiRuntimeReady, resolveAiRuntimeReadiness } from '@/features/ai/aiRuntimeReadiness';
-import type { WorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace } from '@/types';
+import { LlmProvider, ReasoningEffort, ReasoningSummaryMode } from '@/types';
 import {
   behaviorDraftChanged,
   behaviorDraftFromSettings,
+  credentialInputClassName,
   EMPTY_CREDENTIAL_ERRORS,
   EMPTY_PROVIDER_KEYS,
   modelsForProvider,
@@ -27,19 +26,9 @@ import {
   REASONING_SUMMARY_MODES,
   SettingSection,
   WorkspaceAiSettingsSkeleton,
-  type BehaviorDraft
+  type BehaviorDraft,
+  type WorkspaceAiSettingsPageProps
 } from '@/pages/WorkspaceAiSettingsPage.helpers';
-
-interface WorkspaceAiSettingsPageProps {
-  workspace: Workspace;
-  canManageAiSettings: boolean;
-  aiSettingsResource: WorkspaceAiSettingsResource;
-  showToast: (message: string) => void;
-  returnTo?: string; onReturnToAssistant?: (returnTo: string) => void;
-  embedded?: boolean;
-}
-
-const credentialInputClassName = formInputClassName('h-10 min-h-10 font-medium');
 
 export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({
   workspace, canManageAiSettings, aiSettingsResource, showToast, returnTo, onReturnToAssistant,

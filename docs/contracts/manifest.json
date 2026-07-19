@@ -211,7 +211,7 @@
         "runtimeToolIdentity": "McpToolRef{serverId,toolName}; legacy strings are accepted only when unambiguous"
       },
       "workflowRuntimePolicy": {
-        "authority": "AGENT_MAX_RUNTIME_MS is the only workflow execution limit and TARGET_CHAT_REPORT_RETENTION_DAYS is the only workflow and target-chat report retention policy.",
+        "authority": "ASSISTANT_MAX_RUNTIME_MS is the only workflow execution limit and TARGET_CHAT_REPORT_RETENTION_DAYS is the only workflow and target-chat report retention policy.",
         "mutationCompatibility": "Legacy maxRuntimeSeconds and retentionDays fields are accepted but ignored and cannot override deployment policy.",
         "response": "Workflow responses normalize maxRuntimeSeconds and retentionDays to effective deployment values.",
         "options": "Workflow option catalogs expose one effective runtime limit and one effective retention policy.",

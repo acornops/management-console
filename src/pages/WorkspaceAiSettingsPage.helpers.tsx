@@ -1,5 +1,18 @@
 import React from 'react';
-import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, WorkspaceAiSettings } from '@/types';
+import { formInputClassName } from '@/components/common/formControlStyles';
+import type { WorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';
+import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace, WorkspaceAiSettings } from '@/types';
+
+export interface WorkspaceAiSettingsPageProps {
+  workspace: Workspace;
+  canManageAiSettings: boolean;
+  aiSettingsResource: WorkspaceAiSettingsResource;
+  showToast: (message: string) => void;
+  returnTo?: string; onReturnToAssistant?: (returnTo: string) => void;
+  embedded?: boolean;
+}
+
+export const credentialInputClassName = formInputClassName('h-10 min-h-10 font-medium');
 
 export const SettingSection: React.FC<{
   title: string;

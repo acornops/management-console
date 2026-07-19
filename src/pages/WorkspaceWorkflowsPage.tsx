@@ -27,9 +27,7 @@ import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadiness
 import { WorkflowTargetScopeEditor } from '@/pages/WorkflowTargetScopeEditor';
 import { WorkflowTemplateActions } from '@/pages/WorkflowTemplateActions';
 const WorkflowScheduleCreateDrawer = React.lazy(() => import('@/pages/WorkflowScheduleCreateDrawer').then((module) => ({ default: module.WorkflowScheduleCreateDrawer })));
-type WorkspaceWorkflowsPageProps = { workspace: Workspace; navigate: (path: string) => void };
-type PendingWorkflowRuns = Record<string, WorkflowDefinition['runs']>; type PendingWorkflowRunsUpdate = PendingWorkflowRuns | ((current: PendingWorkflowRuns) => PendingWorkflowRuns);
-export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ workspace, navigate }) => {
+export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: (path: string) => void }> = ({ workspace, navigate }) => {
   const { t } = useTranslation();
   const initialWorkflowQuery = useMemo(() => getWorkflowRouteQuery(window.location.search), []);
   const initialWorkflowTarget = useMemo(() => getWorkflowRouteSelectionTarget(window.location.search), []);
@@ -120,7 +118,7 @@ export const WorkspaceWorkflowsPage: React.FC<WorkspaceWorkflowsPageProps> = ({ 
   const [scheduleWorkflowId, setScheduleWorkflowId] = useState(new URLSearchParams(window.location.search).get('panel') === 'schedule' ? initialWorkflowTarget : '');
   const canManageWorkflowScope = Boolean(workspace.permissions?.manage_workflows);
   const workflowOptionsReady = workflowOptionsCatalogWorkspaceId === workspace.id && !workflowOptionsError;
-  function setPendingWorkflowRuns(update: PendingWorkflowRunsUpdate): void {
+  function setPendingWorkflowRuns(update: Record<string, WorkflowDefinition['runs']> | ((current: Record<string, WorkflowDefinition['runs']>) => Record<string, WorkflowDefinition['runs']>)): void {
     const next = typeof update === 'function' ? update(pendingWorkflowRunsRef.current) : update;
     pendingWorkflowRunsRef.current = next;
     setPendingWorkflowRunsState(next);
