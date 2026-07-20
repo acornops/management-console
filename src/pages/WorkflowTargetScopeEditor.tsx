@@ -9,8 +9,8 @@ const TARGET_TYPES: ReadonlyArray<readonly [WorkflowTargetType, string]> = [
   ['virtual_machine', 'Virtual machines']
 ];
 
-function workflowTargetType(target: WorkflowOption): WorkflowTargetType {
-  return target.provenance?.targetType || 'kubernetes';
+function workflowTargetType(target: WorkflowOption): WorkflowTargetType | undefined {
+  return target.provenance?.targetType;
 }
 
 export function visibleWorkflowTargets(

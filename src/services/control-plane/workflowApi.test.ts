@@ -47,13 +47,10 @@ describe('workflow control-plane api', () => {
   it('loads workflow authoring options for dropdowns', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({
-        clusters: [{ value: 'cluster-1', label: 'Cluster 1' }],
-        repositories: [{ value: 'repo-1', label: 'Repo 1' }],
         mcpServers: [{ value: 'github', label: 'GitHub' }],
         mcpTools: [{ value: 'github.prs.create', label: 'github.prs.create' }],
         skills: [{ value: 'acornops-open-pr', label: 'acornops-open-pr' }],
         agents: [{ value: 'agent-release-coordinator', label: 'Workflow Analyst' }],
-        chatSessions: [],
         outputFormats: [{ value: 'pdf', label: 'PDF' }],
         approvalPolicies: [],
         runtimeLimits: [],
@@ -137,8 +134,6 @@ describe('workflow control-plane api', () => {
         mode: 'read_write',
         semanticCapabilityIds: ['scm.repository.read'],
         contextGrants: [],
-        maxRuntimeSeconds: 1800,
-        retentionDays: 90,
         approvalRequirements: ['Before write-capable tools run']
       }
     })).resolves.toMatchObject({
@@ -159,8 +154,6 @@ describe('workflow control-plane api', () => {
         mode: 'read_write',
         semanticCapabilityIds: ['scm.repository.read'],
         contextGrants: [],
-        maxRuntimeSeconds: 1800,
-        retentionDays: 90,
         approvalRequirements: ['Before write-capable tools run']
       }
     });
@@ -327,15 +320,14 @@ describe('workflow control-plane api', () => {
 
     await expect(previewWorkflowCapabilities('workspace-1', 'workflow-1', {
       approvedContextGrants: ['target_inventory'],
-      target: { id: 'cluster-1', targetType: 'kubernetes' }
+      content: 'Inspect @target[Development].'
     })).resolves.toEqual({ ...payload, mcpRequirements: [] });
 
     const previewCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workflows/workflow-1/capabilities-preview'))!;
     expect(previewCall[0]).toBe('http://localhost:8081/api/v1/workflows/workflow-1/capabilities-preview');
     expect(JSON.parse(previewCall[1]?.body as string)).toEqual({
       workspaceId: 'workspace-1', approvedContextGrants: ['target_inventory'],
-      inputs: {},
-      target: { id: 'cluster-1', targetType: 'kubernetes' }
+      content: 'Inspect @target[Development].'
     });
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/sessions'))).toBe(false);
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/messages'))).toBe(false);
@@ -349,7 +341,7 @@ describe('workflow control-plane api', () => {
       mcpRequirements: [{
         serverId: 'server-1', serverName: 'User-selected MCP server', authType: 'custom_header',
         owningAgent: { id: 'agent-1', name: 'User-created Agent' }, connectionState: 'connection_missing',
-        authRequirement: { scope: 'personal', credentialLabel: 'Custom header credential', requiredInformation: [] },
+        authRequirement: { scope: 'individual', credentialLabel: 'Custom header credential', requiredInformation: [] },
         action: 'connect_mcp_server'
       }],
       counts: { targets: 0, readyTargets: 0, tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
@@ -358,32 +350,26 @@ describe('workflow control-plane api', () => {
     expect(preview.mcpRequirements).toEqual([{
       serverId: 'server-1', serverName: 'User-selected MCP server', authType: 'custom_header',
       owningAgent: { id: 'agent-1', name: 'User-created Agent' }, connectionState: 'connection_missing',
-      authRequirement: { scope: 'personal', credentialLabel: 'Custom header credential', requiredInformation: [] },
+      authRequirement: { scope: 'individual', credentialLabel: 'Custom header credential', requiredInformation: [] },
       action: 'connect_mcp_server'
     }]);
   });
 
-  it('posts selected cluster inputs for a target-bound workflow run', async () => {
+  it('posts only prompt content for a resource-bound workflow run', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'accepted' }), { status: 202 }));
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(postWorkflowSessionMessage('workspace-1', 'workflow-session-1', {
-      content: 'Triage this cluster',
-      inputs: { targetId: 'cluster-1' },
-      targetId: 'cluster-1',
-      targetType: 'kubernetes'
+      content: 'Triage @target[Development].'
     })).resolves.toEqual({ status: 'accepted' });
 
     const messageCall = fetchMock.mock.calls.at(-1);
     expect(messageCall?.[0]).toBe('http://localhost:8081/api/v1/workflow-sessions/workflow-session-1/messages');
     expect(JSON.parse(messageCall?.[1]?.body as string)).toEqual({
       workspaceId: 'workspace-1',
-      content: 'Triage this cluster',
-      inputs: { targetId: 'cluster-1' },
-      targetId: 'cluster-1',
-      targetType: 'kubernetes'
+      content: 'Triage @target[Development].'
     });
   });
 
@@ -541,7 +527,7 @@ describe('workflow control-plane api', () => {
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputDefaults: { clusterId: 'cluster-primary' },
+      controlMessage: 'Inspect @target[Development].',
       approvedContextGrants: ['workspace_metadata']
     })).resolves.toMatchObject({ id: 'schedule-1' });
     await expect(previewWorkflowSchedule('workspace-1', {
@@ -550,7 +536,7 @@ describe('workflow control-plane api', () => {
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputDefaults: { clusterId: 'cluster-primary' },
+      controlMessage: 'Inspect @target[Development].',
       approvedContextGrants: ['workspace_metadata']
     })).resolves.toMatchObject({ valid: true, summary: 'Weekdays at 09:00 (UTC)' });
     await expect(updateWorkflowSchedule('workspace-1', 'schedule-1', { enabled: false })).resolves.toMatchObject({
@@ -567,7 +553,7 @@ describe('workflow control-plane api', () => {
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputDefaults: { clusterId: 'cluster-primary' },
+      controlMessage: 'Inspect @target[Development].',
       approvedContextGrants: ['workspace_metadata']
     });
     const patchCall = fetchMock.mock.calls.find((call) => call[1]?.method === 'PATCH');

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { SegmentedTabs, Textarea, TextInput } from '@/components/common/ComponentVocabulary';
+import { SegmentedTabs, TextInput } from '@/components/common/ComponentVocabulary';
 import { MasterDetailLayout, MasterDetailPaneBody, MasterDetailPaneHeader } from '@/components/common/MasterDetailLayout';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
@@ -17,14 +17,13 @@ import { ScopeSwitch, createAgentSelectionDraft, createFallbackWorkflowOptions, 
 import { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import { AgentAssignmentList, WorkflowCapabilityLedger, WorkflowDeleteDialog, WorkflowDiscovery, WorkflowLaunchActions, WorkflowLibraryList, WorkflowLoadErrorNotice, WorkflowModeBadge, WorkflowSection, WorkflowTabPanel, WorkflowTagsEditor, workflowTabIcons } from '@/pages/WorkspaceWorkflowsPage.components';
 import { WorkflowCreateDrawer, type CreateWorkflowStep } from '@/pages/WorkspaceWorkflowsPage.createDrawer';
-import { insertWorkflowTargetPlaceholder, WorkflowPromptEditor } from '@/pages/WorkspaceWorkflowsPage.launchFields';
+import { WorkflowPromptEditor } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import { WorkflowAgentsPanel, WorkflowCapabilitiesPanel, WorkflowRunsPanel } from '@/pages/WorkspaceWorkflowsPage.panels';
 import { updateUrlSearch } from '@/hooks/useUrlSearchState';
 import { useWorkspaceWorkflowsUrlState } from '@/pages/workflows/useWorkspaceWorkflowsUrlState';
 import { useWorkflowCapabilityPreview } from '@/pages/workflows/useWorkflowCapabilityPreview';
 import { indexPersistedWorkflowRunResponses, mergePersistedWorkflowRunResponses } from '@/pages/workflows/workflowRunSync';
 import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
-import { WorkflowTargetScopeEditor } from '@/pages/WorkflowTargetScopeEditor';
 import { WorkflowTemplateActions } from '@/pages/WorkflowTemplateActions';
 const WorkflowScheduleCreateDrawer = React.lazy(() => import('@/pages/WorkflowScheduleCreateDrawer').then((module) => ({ default: module.WorkflowScheduleCreateDrawer })));
 export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: (path: string) => void }> = ({ workspace, navigate }) => {
@@ -400,6 +399,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
           createDraft={createDraft} setCreateDraft={setCreateDraft}
           createError={createError} creatingWorkflow={creatingWorkflow}
           canManageWorkflowScope={canManageWorkflowScope} workflowOptions={effectiveWorkflowOptions}
+          workspaceId={workspace.id}
           workflowOptionsReady={workflowOptionsReady}
           onClose={workflowActions.closeCreateWorkflowPanel} onCreate={() => void workflowActions.createNewWorkflow()}
         />}
@@ -574,25 +574,20 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
                             <span className="type-micro-label text-ui-text-muted">Workflow name</span>
                             <TextInput value={selectedWorkflowEditDraft.name} onChange={(event) => workflowActions.updateWorkflowEditDraft(selectedWorkflow.id, { name: event.target.value })} className="mt-2" />
                           </label>
-                          <WorkflowTargetScopeEditor targetTypes={selectedWorkflowEditDraft.targetTypes} targetIds={selectedWorkflowEditDraft.targetIds} targets={effectiveWorkflowOptions.targets?.length ? effectiveWorkflowOptions.targets : effectiveWorkflowOptions.clusters} onChange={(update) => workflowActions.updateWorkflowEditDraft(selectedWorkflow.id, update)} />
                           <label className="block">
                             <span className="type-micro-label text-ui-text-muted">Description</span>
                             <TextInput value={selectedWorkflowEditDraft.description} onChange={(event) => workflowActions.updateWorkflowEditDraft(selectedWorkflow.id, { description: event.target.value })} className="mt-2" />
                           </label>
-                          <label className="block">
+                          <div className="block">
                             <span className="type-micro-label text-ui-text-muted">Message</span>
-                            <Textarea value={selectedWorkflowEditDraft.starterPrompt} onChange={(event) => workflowActions.updateWorkflowEditDraft(selectedWorkflow.id, { starterPrompt: event.target.value })} className="mt-2 min-h-32" />
+                            <WorkflowPromptEditor
+                              workflow={selectedWorkflow}
+                              message={selectedWorkflowEditDraft.starterPrompt}
+                              onChange={(starterPrompt) => workflowActions.updateWorkflowEditDraft(selectedWorkflow.id, { starterPrompt })}
+                              mode="authoring"
+                            />
                             <span className="type-caption mt-2 block text-ui-text-muted">{t('workflowPrompt.authoringGuidance')}</span>
-                          </label>
-                          <Button
-                            variant="tertiary"
-                            size="sm"
-                            onClick={() => workflowActions.updateWorkflowEditDraft(selectedWorkflow.id, {
-                              starterPrompt: insertWorkflowTargetPlaceholder(selectedWorkflowEditDraft.starterPrompt)
-                            })}
-                          >
-                            {t('workflowPrompt.insertPlaceholder')}
-                          </Button>
+                          </div>
                           <div className="flex gap-2">
                             <Button variant="secondary" size="sm" onClick={() => workflowActions.cancelEditingWorkflow(selectedWorkflow)}>Cancel</Button>
                             <Button variant="primary" size="sm" onClick={() => void workflowActions.saveWorkflowDefinition()} disabled={!canManageWorkflowScope || updatingWorkflowId === selectedWorkflow.id || !selectedWorkflowEditDraft.name.trim()}>Save workflow</Button>

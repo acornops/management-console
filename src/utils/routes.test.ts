@@ -131,7 +131,7 @@ describe('routes', () => {
     expect(parseAppRoute('/kubernetes-clusters')).toEqual({ kind: 'kubernetesClusters' });
     expect(AppPaths.accountSettings()).toBe('/account');
     expect(parseAppRoute(AppPaths.accountSettings())).toEqual({ kind: 'accountSettings' });
-    expect(parseAppRoute('/settings')).toEqual({ kind: 'settings' });
+    expect(parseAppRoute('/settings')).toEqual({ kind: 'notFound', path: '/settings' });
     expect(AppPaths).not.toHaveProperty('settings');
     expect(parseAppRoute(AppPaths.help())).toEqual({ kind: 'help' });
     expect(parseAppRoute('/kubernetes-clusters/prod-cluster')).toEqual({

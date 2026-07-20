@@ -50,3 +50,24 @@ boundaries for workspace specialist Agents and target default Agents.
   remote Git operations.
 - Browser-smoke overview, Kubernetes, VM, Agents, Workflows, Catalog, and
   Settings with the configured control-plane port deliberately unreachable.
+
+## MCP ownership and schedule readiness closure
+
+- Use one localized ownership selector and the same consequence copy for Agent
+  and target MCP configuration. Catalog installation must show the selected
+  ownership explanation rather than labels alone.
+- Explain that individual credentials are private per user, user-owned
+  schedules use the schedule owner's connection, and service identities require
+  workspace-managed credentials.
+- Combine schedule timing validation with the existing effective-access preview
+  so missing or unhealthy MCP connections are visible before an enabled
+  schedule can be created. Offer the existing in-place credential connection
+  flow and refresh readiness after verification.
+- Before changing an Agent server from workspace-managed to individual
+  credentials, show the number of enabled schedules that will be paused. On the
+  standalone Schedules page, route auto-paused rows to the exact server and use
+  the same owner-specific credential readiness and connection flow before
+  manual resume.
+- Preserve dispatch-time readiness and auto-pause as a recovery boundary.
+- Restore Web Search and Insights in new-target chat capability previews when
+  their absent setting rows mean default enabled.

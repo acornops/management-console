@@ -56,7 +56,8 @@ export interface CatalogArtifactEndpoint {
   url: string;
   supported?: boolean;
   requiresConfiguration?: boolean;
-  requiresPersonalAuth?: boolean;
+  supportedCredentialModes?: Array<'none' | 'workspace' | 'individual'>;
+  recommendedCredentialMode?: 'none' | 'workspace' | 'individual';
   headerNames?: string[];
   secretHeaderNames?: string[];
   configurationFields?: Array<{
@@ -99,18 +100,24 @@ export interface CatalogImportInput {
   remoteEndpoint: string;
   serverName?: string;
   enabled?: boolean;
+  credentialMode?: 'none' | 'workspace' | 'individual';
   endpointConfiguration?: Record<string, string>;
 }
 
-export interface McpPersonalConnection {
+export interface McpConnection {
   serverId: string;
+  credentialMode: 'workspace' | 'individual';
   status: 'missing' | 'connected' | 'error';
+  managementScope: 'workspace' | 'individual';
+  canManage: boolean;
   authType: 'bearer_token' | 'custom_header';
   action?: 'connect_mcp_server' | 'verify_mcp_server';
   errorCode?: string;
+  verifiedAt?: string;
+  updatedAt?: string;
 }
 
-export interface McpPersonalCredentialInput {
+export interface McpCredentialInput {
   credential: string;
   consentGranted: true;
 }
@@ -222,18 +229,18 @@ export const catalogApi = {
     return response.server;
   },
 
-  async getAgentMcpConnection(workspaceId: string, agentId: string, serverId: string): Promise<McpPersonalConnection> {
-    const response = await requestJson<{ connection: McpPersonalConnection }>(`${agentMcpServerPath(workspaceId, agentId, serverId)}/connection`);
+  async getAgentMcpConnection(workspaceId: string, agentId: string, serverId: string): Promise<McpConnection> {
+    const response = await requestJson<{ connection: McpConnection }>(`${agentMcpServerPath(workspaceId, agentId, serverId)}/connection`);
     return response.connection;
   },
 
-  async putAgentMcpConnection(workspaceId: string, agentId: string, serverId: string, input: McpPersonalCredentialInput): Promise<McpPersonalConnection> {
-    const response = await requestJson<{ connection: McpPersonalConnection }>(`${agentMcpServerPath(workspaceId, agentId, serverId)}/connection`, { method: 'PUT', body: JSON.stringify(input) });
+  async putAgentMcpConnection(workspaceId: string, agentId: string, serverId: string, input: McpCredentialInput): Promise<McpConnection> {
+    const response = await requestJson<{ connection: McpConnection }>(`${agentMcpServerPath(workspaceId, agentId, serverId)}/connection`, { method: 'PUT', body: JSON.stringify(input) });
     return response.connection;
   },
 
-  async verifyAgentMcpConnection(workspaceId: string, agentId: string, serverId: string): Promise<McpPersonalConnection> {
-    const response = await requestJson<{ connection: McpPersonalConnection }>(`${agentMcpServerPath(workspaceId, agentId, serverId)}/connection/verify`, { method: 'POST' });
+  async verifyAgentMcpConnection(workspaceId: string, agentId: string, serverId: string): Promise<McpConnection> {
+    const response = await requestJson<{ connection: McpConnection }>(`${agentMcpServerPath(workspaceId, agentId, serverId)}/connection/verify`, { method: 'POST' });
     return response.connection;
   },
 
@@ -241,18 +248,18 @@ export const catalogApi = {
     await requestJson(`${agentMcpServerPath(workspaceId, agentId, serverId)}/connection`, { method: 'DELETE' });
   },
 
-  async getTargetMcpConnection(workspaceId: string, targetId: string, serverId: string): Promise<McpPersonalConnection> {
-    const response = await requestJson<{ connection: McpPersonalConnection }>(`${targetMcpServerPath(workspaceId, targetId, serverId)}/connection`);
+  async getTargetMcpConnection(workspaceId: string, targetId: string, serverId: string): Promise<McpConnection> {
+    const response = await requestJson<{ connection: McpConnection }>(`${targetMcpServerPath(workspaceId, targetId, serverId)}/connection`);
     return response.connection;
   },
 
-  async putTargetMcpConnection(workspaceId: string, targetId: string, serverId: string, input: McpPersonalCredentialInput): Promise<McpPersonalConnection> {
-    const response = await requestJson<{ connection: McpPersonalConnection }>(`${targetMcpServerPath(workspaceId, targetId, serverId)}/connection`, { method: 'PUT', body: JSON.stringify(input) });
+  async putTargetMcpConnection(workspaceId: string, targetId: string, serverId: string, input: McpCredentialInput): Promise<McpConnection> {
+    const response = await requestJson<{ connection: McpConnection }>(`${targetMcpServerPath(workspaceId, targetId, serverId)}/connection`, { method: 'PUT', body: JSON.stringify(input) });
     return response.connection;
   },
 
-  async verifyTargetMcpConnection(workspaceId: string, targetId: string, serverId: string): Promise<McpPersonalConnection> {
-    const response = await requestJson<{ connection: McpPersonalConnection }>(`${targetMcpServerPath(workspaceId, targetId, serverId)}/connection/verify`, { method: 'POST' });
+  async verifyTargetMcpConnection(workspaceId: string, targetId: string, serverId: string): Promise<McpConnection> {
+    const response = await requestJson<{ connection: McpConnection }>(`${targetMcpServerPath(workspaceId, targetId, serverId)}/connection/verify`, { method: 'POST' });
     return response.connection;
   },
 

@@ -16,7 +16,7 @@ The management console is the browser client for the control-plane API. Keep thi
 | Control plane | Auth, workspace, membership, audit, AI settings, target, tooling, chat, run, and cluster APIs | Frontend services plus manifest checks |
 | Docs website | Public API reference for exact endpoint parameters and schemas | Generated OpenAPI artifacts |
 | AgentK | Cluster registration, agent-key rotation, snapshots, logs, tools, and chat-backed target actions | Control-plane contracts and UI mappers |
-| LLM gateway | MCP registries, Agent/target installations, discovered tools, and personal connections exposed through control-plane APIs | Registry browsing and permission checks |
+| LLM gateway | MCP registries, Agent/target installations, discovered tools, and workspace/individual connections exposed through control-plane APIs | Registry browsing and permission checks |
 | Execution engine | Run event stream, approval, cancel, and chat result state | Run/chat service checks |
 
 ## Platform Dependency Summary
@@ -71,18 +71,21 @@ The management console is the browser client for the control-plane API. Keep thi
   Installed Workflows do not use provider badges; the template catalog attributes
   its templates to AcornOps instead. MCP tools and Skills remain in their dedicated inventories.
 - Desktop and mobile workspace navigation do not expose a standalone Catalog item. Agent and target MCP surfaces provide one **Add MCP server** action with **Browse registries** and **Connect by URL** choices.
-- The route-backed **Browse MCP servers** page stores search, source, compatibility, selected artifact, and Agent/target destination in URL state. A destination-bound visit keeps that destination fixed and links back to it; legacy destination-less `/catalog` links require an explicit destination before installation.
+- The route-backed **Browse MCP servers** page stores search, source, compatibility, selected artifact, and Agent/target destination in URL state. A destination-bound visit keeps that destination fixed and links back to it; visits without a destination require an explicit destination before installation.
 - Only specialist Agents are installation destinations; AcornOps Manager is never an installation destination.
 - Registry installs and re-imports target either a workspace specialist Agent or a Cluster/VM default Agent. The browser never supplies an authoritative target type.
 - **MCP registries** settings provide add, probe, edit, enable/disable, synchronize, and delete controls when allowed by `manage_catalog_sources` and deployment policy. Deployment-managed registries are configuration-read-only but remain synchronizable. The console sends no connector route and treats omitted authentication during edits as credential preservation.
 - Catalog provenance and installation revision determine Install, Installed, and explicit Update states. MCP tools are reviewed after discovery and are not installed independently.
-- Personal MCP authentication is PAT-only in V1. Each target or Agent installation has an independent user connection, credentials remain write-only, and workflows reuse the selected Agent's connection. The console never persists PATs in browser storage.
+- MCP installations select workspace-managed or individual credential ownership.
+  Each target or Agent installation has independent write-only connections, and
+  workflows reuse the selected Agent installation. The console never persists
+  credentials in browser storage.
 - The console does not expose a built-in repository-review Agent, workflow, provider profile, or template setup branch. Workspace managers create a specialist Agent, attach and review any compatible MCP server from the Agent's generic MCP page, and then create a workflow selecting that Agent. Credential values remain write-only and never enter preview state or browser storage.
 - Manual workflow creation sends only operator-controlled fields. Mode, context grants, permissions, approvals, execution duration, and report retention are omitted so the control plane applies deployment-owned defaults. Creation fails closed until the authoritative workflow-options catalog has loaded; fallback catalogs contain no output, approval, runtime, or retention choices.
 - AI behavior drafts remain empty until workspace AI settings arrive, so the console does not invent a provider or model. An omitted production control-plane API base uses same-origin requests; local development retains the localhost fallback.
-- A blocked workflow capability preview opens the generic personal-credential dialog from `serverId`, `authType`, `owningAgent`, and `action`; it writes the credential to that owning Agent and retries the preview. The workflow UI never infers authentication from a provider name or profile identity.
-- Run-readiness recovery parses the bounded `readinessFailures` contract at the
-  API client boundary and accepts legacy `readinessErrors` defensively. Recovery
+- A blocked workflow capability preview opens the generic individual-credential dialog from `serverId`, `authType`, `owningAgent`, and `action`; it writes the credential to that owning Agent and retries the preview. The workflow UI never infers authentication from a provider name or profile identity.
+- Run-readiness recovery parses only the bounded `readinessFailures` contract at
+  the API client boundary. Recovery
   links carry only `mcpServer` and `mcpAction`, focus the exact installation and
   Connect or Verify control, and never invoke a mutation automatically. Target
   failures describe the bounded, Markdown-escaped Kubernetes or VM tool name
@@ -90,7 +93,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - Successful Connect and Verify operations remain successful if the subsequent
   installation/tool refresh fails. The console reports that catalog load
   failure separately and offers a retry. Authenticated manual installations
-  enter PAT connection before pending-tool review; unauthenticated installations
+  enter credential connection before pending-tool review; unauthenticated installations
   retain direct discovery and review.
 - Kubernetes clusters and VMs retain target-scoped MCP servers, skills, and tools for their generic target agents. These target capabilities are administered on the target and are not reassigned to workspace agents.
 - Workflow schedule create and update requests contain only the current user principal. Service identities remain available for non-schedule platform uses but are not presented in schedule UI.

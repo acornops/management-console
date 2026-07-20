@@ -32,16 +32,12 @@ export type CreateWorkflowDraft = {
   agentIds: string[];
   semanticCapabilityIds: string;
   restrictionMode: 'inherit' | 'restrict';
-  targetTypes: string[];
-  targetIds: string[];
 };
 
 export type WorkflowEditDraft = {
   name: string;
   description: string;
   starterPrompt: string;
-  targetTypes: string[];
-  targetIds: string[];
 };
 
 export type AgentSelectionDraft = {
@@ -194,9 +190,7 @@ export function createWorkflowDraft(): CreateWorkflowDraft {
     starterPrompt: '',
     agentIds: [],
     semanticCapabilityIds: '',
-    restrictionMode: 'inherit',
-    targetTypes: [],
-    targetIds: []
+    restrictionMode: 'inherit'
   };
 }
 
@@ -220,9 +214,7 @@ export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCr
     tags: [],
     prompt: draft.starterPrompt.trim() || `Start ${name}.`,
     agentIds,
-    targetConstraints: draft.targetTypes.length || draft.targetIds.length
-      ? { targetTypes: uniqueValues(draft.targetTypes), targetIds: uniqueValues(draft.targetIds) }
-      : undefined,
+    resourceRequirements: [],
     inputs: [],
     capabilityPolicy: {
       restrictionMode: draft.restrictionMode,
@@ -236,8 +228,6 @@ export function createWorkflowEditDraft(workflow: WorkflowDefinition): WorkflowE
     name: workflow.name,
     description: workflow.description,
     starterPrompt: workflow.starterPrompt
-    ,targetTypes: [...(workflow.targetConstraints?.targetTypes || [])]
-    ,targetIds: [...(workflow.targetConstraints?.targetIds || [])]
   };
 }
 
@@ -253,25 +243,19 @@ export function agentIdsFromDraft(draft: AgentSelectionDraft | CreateWorkflowDra
 
 export function createFallbackWorkflowOptions(_workflows: WorkflowDefinition[]): WorkflowOptionsCatalog {
   return {
-    targets: [],
-    clusters: [],
     mcpServers: [],
     mcpTools: [],
     skills: [],
     agents: [],
-    chatSessions: [],
     outputFormats: [],
     approvalPolicies: [],
     runtimeLimits: [],
     retentionPolicies: [],
     sourceAvailability: {
-      targets: { status: 'unavailable', message: 'Target catalog is unavailable.' },
-      clusters: { status: 'unavailable', message: 'Target catalog is unavailable.' },
       mcpServers: { status: 'unavailable', message: 'MCP catalog has not loaded.' },
       mcpTools: { status: 'unavailable', message: 'MCP catalog has not loaded.' },
       skills: { status: 'unavailable', message: 'Skill catalog has not loaded.' },
       agents: { status: 'unavailable', message: 'Agent catalog has not loaded.' },
-      chatSessions: { status: 'unavailable', message: 'Chat session catalog is unavailable.' }
     }
   };
 }
@@ -340,13 +324,10 @@ export function normalizeWorkflowOptionsCatalog(
 ): WorkflowOptionsCatalog {
   const value = catalog && typeof catalog === 'object' ? catalog as Record<string, unknown> : {};
   return {
-    targets: normalizeWorkflowOptionList(value.targets, fallback.targets || []),
-    clusters: normalizeWorkflowOptionList(value.clusters, fallback.clusters),
     mcpServers: normalizeWorkflowOptionList(value.mcpServers, fallback.mcpServers),
     mcpTools: normalizeWorkflowOptionList(value.mcpTools, fallback.mcpTools),
     skills: normalizeWorkflowOptionList(value.skills, fallback.skills),
     agents: normalizeWorkflowOptionList(value.agents, fallback.agents),
-    chatSessions: normalizeWorkflowOptionList(value.chatSessions, fallback.chatSessions),
     outputFormats: normalizeWorkflowOptionList(value.outputFormats, fallback.outputFormats),
     approvalPolicies: normalizeWorkflowOptionList(value.approvalPolicies, fallback.approvalPolicies),
     runtimeLimits: normalizeWorkflowOptionList(value.runtimeLimits, fallback.runtimeLimits),
@@ -425,7 +406,7 @@ export function mapApiWorkflowToDefinition(
     executionMode,
     semanticCapabilityIds,
     capabilityRestrictionMode,
-    targetConstraints: workflow.targetConstraints,
+    resourceRequirements: workflow.resourceRequirements || [],
     readiness: workflow.readiness,
     owner: workflowOwnerLabel(workflow, fallback, ownerLabelsByUserId),
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
@@ -437,7 +418,7 @@ export function mapApiWorkflowToDefinition(
       ? workflow.inputs.map((input) => ({
           name: input.name,
           label: input.label,
-          type: input.type === 'output_format' ? 'format' : (['text', 'select', 'cluster', 'chat_session_list', 'repository', 'format'].includes(input.type) ? input.type as WorkflowDefinition['inputs'][number]['type'] : 'select'),
+          type: input.type === 'output_format' ? 'format' : (['text', 'select', 'format'].includes(input.type) ? input.type as WorkflowDefinition['inputs'][number]['type'] : 'select'),
           required: input.required,
           optionSource: input.optionSource
         }))

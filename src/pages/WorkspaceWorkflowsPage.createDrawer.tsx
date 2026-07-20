@@ -2,14 +2,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
-import { CloseButton, Textarea, TextInput } from '@/components/common/ComponentVocabulary';
+import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { ICONS } from '@/constants';
 import type { WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { createWorkflowDraft, type CreateWorkflowDraft } from '@/pages/workflows/workflowPageHelpers';
-import { WorkflowTargetScopeEditor } from '@/pages/WorkflowTargetScopeEditor';
-import { insertWorkflowTargetPlaceholder } from '@/pages/WorkspaceWorkflowsPage.launchFields';
+import { WorkflowPromptEditor } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 
 export type CreateWorkflowStep = 1 | 2 | 3;
 
@@ -38,6 +37,7 @@ export const WorkflowCreateDrawer: React.FC<{
   canManageWorkflowScope: boolean;
   workflowOptionsReady: boolean;
   workflowOptions: WorkflowOptionsCatalog;
+  workspaceId: string;
   onClose: () => void;
   onCreate: () => void;
 }> = ({
@@ -50,6 +50,7 @@ export const WorkflowCreateDrawer: React.FC<{
   canManageWorkflowScope,
   workflowOptionsReady,
   workflowOptions,
+  workspaceId,
   onClose,
   onCreate
 }) => {
@@ -129,22 +130,16 @@ export const WorkflowCreateDrawer: React.FC<{
               <span className="type-micro-label">Description</span>
               <TextInput id="create-workflow-description-input" value={createDraft.description} onChange={(event) => setCreateDraft((draft) => ({ ...draft, description: event.target.value }))} placeholder="Example: Prepare an incident report from selected sessions" className="mt-2" />
             </label>
-            <label htmlFor="create-workflow-starter-prompt-input" className="block">
+            <div className="block">
               <span className="type-micro-label">Workflow prompt</span>
-              <Textarea id="create-workflow-starter-prompt-input" value={createDraft.starterPrompt} onChange={(event) => setCreateDraft((draft) => ({ ...draft, starterPrompt: event.target.value }))} placeholder="Default message copied into each new run" className="mt-2 min-h-36" />
+              <WorkflowPromptEditor
+                workflow={{ id: 'new-workflow', workspaceId }}
+                message={createDraft.starterPrompt}
+                onChange={(starterPrompt) => setCreateDraft((draft) => ({ ...draft, starterPrompt }))}
+                mode="authoring"
+              />
               <span className="type-caption mt-2 block text-ui-text-muted">{t('workflowPrompt.authoringGuidance')}</span>
-            </label>
-            <Button
-              type="button"
-              variant="tertiary"
-              size="sm"
-              onClick={() => setCreateDraft((draft) => ({
-                ...draft,
-                starterPrompt: insertWorkflowTargetPlaceholder(draft.starterPrompt)
-              }))}
-            >
-              {t('workflowPrompt.insertPlaceholder')}
-            </Button>
+            </div>
           </div>
         )}
         {createWorkflowStep === 2 && (
@@ -171,12 +166,6 @@ export const WorkflowCreateDrawer: React.FC<{
                 )) : <span className="type-caption text-ui-text-muted">No workflow agents are available.</span>}
               </div>
             </fieldset>
-            <WorkflowTargetScopeEditor
-              targetTypes={createDraft.targetTypes}
-              targetIds={createDraft.targetIds}
-              targets={workflowOptions.targets?.length ? workflowOptions.targets : workflowOptions.clusters}
-              onChange={(update) => setCreateDraft((draft) => ({ ...draft, ...update }))}
-            />
           </div>
         )}
         {createWorkflowStep === 3 && (
@@ -191,10 +180,7 @@ export const WorkflowCreateDrawer: React.FC<{
               <WorkflowCreateReviewRow label={t('workflowCoordination.agentsTitle')} value={selectedAgentLabels.join('\n') || t('workflowCoordination.noAgents')} />
               <WorkflowCreateReviewRow label={t('workflowCoordination.executionLabel')} value={selectedAgentLabels.length > 1 ? t('workflowCoordination.coordinatedLabel') : t('workflowCoordination.directLabel')} />
               <WorkflowCreateReviewRow label="Mode" value="Read only" />
-              <WorkflowCreateReviewRow label="Target scope" value={[
-                ...createDraft.targetTypes.map((type) => type === 'kubernetes' ? 'Kubernetes' : 'Virtual machines'),
-                ...createDraft.targetIds.map((id) => workflowOptions.targets?.find((target) => target.value === id)?.label || id)
-              ].join('\n') || 'Any Agent-allowed target'} />
+              <WorkflowCreateReviewRow label="Prompt resources" value="Resolved from the control message at launch" />
             </dl>
           </div>
         )}

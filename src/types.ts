@@ -121,9 +121,10 @@ export interface ClusterToolCatalogServer {
   canEditConnection: boolean;
   canToggle: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
-  authScope?: 'none' | 'personal' | 'legacy_shared';
+  credentialMode: 'none' | 'workspace' | 'individual';
   authHeaderName?: string;
   authHeaderPrefix?: string;
+  revision?: number;
   provenance?: {
     sourceId: string;
     artifactName: string;

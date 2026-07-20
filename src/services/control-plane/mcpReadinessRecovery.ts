@@ -3,10 +3,10 @@ import { AppPaths } from '@/utils/routes';
 
 export type McpReadinessAction = 'connect_mcp_server' | 'verify_mcp_server';
 export type McpReadinessFailureCode =
-  | 'MCP_PAT_USER_PRINCIPAL_REQUIRED'
-  | 'MCP_PERSONAL_CONNECTION_MISSING'
-  | 'MCP_PERSONAL_CONNECTION_ERROR'
-  | 'MCP_PERSONAL_TOOL_UNAVAILABLE'
+  | 'MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED'
+  | 'MCP_CONNECTION_MISSING'
+  | 'MCP_CONNECTION_ERROR'
+  | 'MCP_CREDENTIAL_TOOL_UNAVAILABLE'
   | 'MCP_INSTALLATION_UNAVAILABLE'
   | 'MCP_REMOTE_DISABLED';
 
@@ -32,10 +32,10 @@ type RecoveryContext = {
 );
 
 const readinessCodes = new Set<McpReadinessFailureCode>([
-  'MCP_PAT_USER_PRINCIPAL_REQUIRED',
-  'MCP_PERSONAL_CONNECTION_MISSING',
-  'MCP_PERSONAL_CONNECTION_ERROR',
-  'MCP_PERSONAL_TOOL_UNAVAILABLE',
+  'MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED',
+  'MCP_CONNECTION_MISSING',
+  'MCP_CONNECTION_ERROR',
+  'MCP_CREDENTIAL_TOOL_UNAVAILABLE',
   'MCP_INSTALLATION_UNAVAILABLE',
   'MCP_REMOTE_DISABLED'
 ]);
@@ -77,13 +77,14 @@ export function parseMcpReadinessFailures(error: unknown): McpReadinessFailure[]
 }
 
 function isMcpReadinessError(error: ControlPlaneRequestError): boolean {
+  if (!Array.isArray(error.details?.readinessFailures)) return false;
   if (
-    error.code === 'MCP_PERSONAL_CONNECTION_REQUIRED'
-    || error.code === 'MCP_PAT_USER_PRINCIPAL_REQUIRED'
+    error.code === 'MCP_CONNECTION_REQUIRED'
+    || error.code === 'MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED'
     || error.code === 'MCP_INSTALLATION_UNAVAILABLE'
     || error.code === 'MCP_REMOTE_DISABLED'
   ) return true;
-  return Array.isArray(error.details?.readinessErrors);
+  return false;
 }
 
 function appendRecoveryQuery(path: string, failure?: McpReadinessFailure): string {
@@ -95,19 +96,31 @@ function appendRecoveryQuery(path: string, failure?: McpReadinessFailure): strin
   return `${pathname}?${params.toString()}`;
 }
 
+export function agentMcpConfigurationPath(input: {
+  workspaceId: string;
+  agentId: string;
+  serverId?: string;
+  action?: McpReadinessAction;
+}): string {
+  const params = new URLSearchParams({
+    agent: input.agentId,
+    panel: 'profile',
+    agentTab: 'capabilities',
+    capabilityTab: 'mcp'
+  });
+  if (input.serverId) params.set('mcpServer', input.serverId);
+  if (input.action) params.set('mcpAction', input.action);
+  return `${AppPaths.workspaceAgents(input.workspaceId)}?${params.toString()}`;
+}
+
 function recoveryPath(context: RecoveryContext, failure?: McpReadinessFailure): string {
   if (context.scopeType === 'agent') {
-    const params = new URLSearchParams({
-      agent: context.agentId,
-      panel: 'profile',
-      agentTab: 'capabilities',
-      capabilityTab: 'mcp'
+    return agentMcpConfigurationPath({
+      workspaceId: context.workspaceId,
+      agentId: context.agentId,
+      serverId: failure?.serverId,
+      action: failure?.action
     });
-    if (failure) {
-      params.set('mcpServer', failure.serverId);
-      if (failure.action) params.set('mcpAction', failure.action);
-    }
-    return `${AppPaths.workspaceAgents(context.workspaceId)}?${params.toString()}`;
   }
   const basePath = context.targetType === 'kubernetes'
     ? AppPaths.workspaceKubernetesClusterDiagnostics(context.workspaceId, context.targetId, 'mcpServers')
@@ -125,15 +138,15 @@ function recoveryMessage(
   failure?: McpReadinessFailure
 ): string {
   switch (failure?.code || error.code) {
-    case 'MCP_PERSONAL_CONNECTION_MISSING':
-    case 'MCP_PERSONAL_CONNECTION_REQUIRED':
-      return 'This run needs a personal MCP connection. Connect the required PAT, then retry.';
-    case 'MCP_PERSONAL_CONNECTION_ERROR':
-      return 'The required personal MCP connection is in error. Verify or replace its PAT, then retry.';
-    case 'MCP_PERSONAL_TOOL_UNAVAILABLE':
-      return 'The current PAT does not expose a required approved MCP tool. Verify the connection and review discovered tools.';
-    case 'MCP_PAT_USER_PRINCIPAL_REQUIRED':
-      return 'This MCP tool requires a user-owned personal connection and cannot run as a service principal.';
+    case 'MCP_CONNECTION_MISSING':
+    case 'MCP_CONNECTION_REQUIRED':
+      return 'This run needs an MCP credential connection. Connect the required credential, then retry.';
+    case 'MCP_CONNECTION_ERROR':
+      return 'The required MCP credential connection needs attention. Verify or replace it, then retry.';
+    case 'MCP_CREDENTIAL_TOOL_UNAVAILABLE':
+      return 'The connected credential does not expose a required approved MCP tool. Verify the connection and review discovered tools.';
+    case 'MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED':
+      return 'This run uses a service identity, but the required MCP server uses individual credentials. Switch the server to workspace-managed credentials or run the automation as a user.';
     case 'MCP_INSTALLATION_UNAVAILABLE':
       if (context.scopeType === 'target' && failure) {
         const targetLabel = context.targetType === 'kubernetes' ? 'Kubernetes' : 'virtual machine';
@@ -151,6 +164,7 @@ function recoveryLabel(
   context: RecoveryContext,
   failure?: McpReadinessFailure
 ): string {
+  if (failure?.code === 'MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED') return 'Review credential ownership';
   if (failure?.action === 'connect_mcp_server') return 'Connect the required MCP server';
   if (failure?.action === 'verify_mcp_server') return 'Verify the required MCP server';
   if (context.scopeType === 'target' && failure?.code === 'MCP_INSTALLATION_UNAVAILABLE') {

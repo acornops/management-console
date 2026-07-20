@@ -27,7 +27,7 @@ import type { ProjectMember } from '@/types';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { resolveMcpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
-import { listWorkflowOptions, type WorkflowOption } from '@/services/control-plane/workflowApi';
+import type { WorkflowOption } from '@/services/control-plane/workflowApi';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace }) => {
   const urlSearch = useUrlSearchState();
@@ -71,11 +71,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const editAgentNameInputRef = React.useRef<HTMLInputElement>(null);
   const canManageAgents = canManageWorkspaceAgents(workspace);
   const canManageMcp = workspace.permissions?.manage_mcp === true;
-  const canUsePersonalMcpConnections = Boolean(
-    workspace.permissions?.create_sessions
-    || workspace.permissions?.create_read_only_runs
-    || workspace.permissions?.create_read_write_runs
-  );
   const canManageSkills = workspace.permissions?.manage_skills === true;
   React.useEffect(() => {
     const panel = urlSearch.get('panel');
@@ -156,9 +151,13 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   }, [ownerUsersReloadKey, workspace.id, workspace.members, workspace.permissions?.read_members]);
   React.useEffect(() => {
     let mounted = true;
-    listWorkflowOptions(workspace.id)
-      .then((catalog) => {
-        if (mounted) setTargetOptions(catalog.targets?.length ? catalog.targets : catalog.clusters);
+    controlPlaneApi.listTargetsForWorkspace(workspace.id, { limit: 200 })
+      .then((page) => {
+        if (mounted) setTargetOptions(page.items.map((target) => ({
+          value: target.id,
+          label: target.name,
+          description: `${target.targetType === 'kubernetes' ? 'Kubernetes cluster' : 'Virtual machine'} · ${target.status}`
+        })));
       })
       .catch(() => {
         if (mounted) setTargetOptions([]);
@@ -587,7 +586,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           titleId="agent-details-title"
           canManageAgents={canManageAgents}
           canManageMcp={canManageMcp}
-          canUsePersonalMcpConnections={canUsePersonalMcpConnections}
           canManageSkills={canManageSkills}
           testingAgentId={testingAgentId}
           targetOptions={targetOptions}

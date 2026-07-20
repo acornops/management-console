@@ -543,7 +543,7 @@ describe('theme color contract', () => {
   it('keeps MCP connection state copy action-oriented instead of ambiguous', () => {
     expect(mcpServerCard).toContain("server.type === 'builtin'");
     expect(mcpServerCard).toContain("'mcpServers.statusNotChecked'");
-    expect(mcpServerCard).toContain("t('common.providedByAcornOps')");
+    expect(mcpServerCard).toContain("t('mcpServers.managedByAcornOps')");
     expect(mcpServerCard).not.toContain('detailKey');
     ["statusConnected: 'Connected'", "statusNeedsAuth: 'Needs auth'", "statusDiscoveryFailed: 'Discovery failed'", "statusNotChecked: 'No check yet'", "notChecked: 'No health check yet'"].forEach((copy) => expect(enLocale).toContain(copy));
     expect(enLocale).toContain("managedByAcornOps: 'Managed by AcornOps'");

@@ -21,14 +21,18 @@ function serverAuthType(server: Record<string, any>): 'bearer_token' | 'custom_h
   return (server.authType || server.auth_type) === 'custom_header' ? 'custom_header' : 'bearer_token';
 }
 
-export function personalConnection(
+export function mcpConnection(
   state: FixtureState,
   scopeType: ScopeType,
   scopeId: string,
   server: Record<string, any>
 ): Record<string, any> {
+  const credentialMode = server.credentialMode || server.credential_mode || 'individual';
   return state.mcpConnections[connectionKey(scopeType, scopeId, server.id)] || {
     serverId: server.id,
+    credentialMode,
+    managementScope: credentialMode,
+    canManage: true,
     status: 'missing',
     authType: serverAuthType(server),
     action: 'connect_mcp_server'
@@ -39,11 +43,11 @@ function discoveredTool(scopeType: ScopeType, serverId: string): Record<string, 
   return scopeType === 'agent'
     ? {
         name: 'fixture_discovered_tool', serverId, alias: 'fixture_discovered_tool',
-        description: 'Discovered after PAT verification.', capability: 'read', enabled: false,
+        description: 'Discovered after credential verification.', capability: 'read', enabled: false,
         reviewState: 'pending', riskLevel: 'read_only', autoAllowed: false
       }
     : {
-        name: 'fixture_discovered_tool', description: 'Discovered after PAT verification.',
+        name: 'fixture_discovered_tool', description: 'Discovered after credential verification.',
         capability: 'read', version: '1.0.0', source: 'mcp', enabled: false,
         mcp_server_url: 'https://mcp.fixture.acornops.dev/manual', timeout_ms: 10000
       };
@@ -80,10 +84,10 @@ export async function routeMcpParityConnection(input: {
   }
 
   const key = connectionKey(scopeType, scopeId, server.id);
-  if (input.method === 'GET') return json({ connection: structuredClone(personalConnection(input.state, scopeType, scopeId, server)) });
+  if (input.method === 'GET') return json({ connection: structuredClone(mcpConnection(input.state, scopeType, scopeId, server)) });
   if (input.method === 'DELETE') {
     input.state.mcpConnections[key] = {
-      ...personalConnection(input.state, scopeType, scopeId, server),
+      ...mcpConnection(input.state, scopeType, scopeId, server),
       status: 'missing',
       action: 'connect_mcp_server'
     };
@@ -96,7 +100,7 @@ export async function routeMcpParityConnection(input: {
     if (body.credential === 'fixture-rate-limit') {
       return {
         status: 429,
-        body: { error: { code: 'MCP_PAT_RATE_LIMITED', message: 'Too many PAT attempts.' } },
+        body: { error: { code: 'MCP_CONNECTION_RATE_LIMITED', message: 'Too many credential attempts.' } },
         headers: { 'content-type': 'application/json', 'Retry-After': '2' }
       };
     }
@@ -107,6 +111,9 @@ export async function routeMcpParityConnection(input: {
 
   input.state.mcpConnections[key] = {
     serverId: server.id,
+    credentialMode: server.credentialMode || server.credential_mode || 'individual',
+    managementScope: server.credentialMode || server.credential_mode || 'individual',
+    canManage: true,
     status: connected ? 'connected' : 'error',
     authType: serverAuthType(server),
     action: connected ? undefined : 'verify_mcp_server'

@@ -2,15 +2,20 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
-import { CloseButton, Textarea, TextInput } from '@/components/common/ComponentVocabulary';
+import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { Radio } from '@/components/common/FormControls';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { Select } from '@/components/common/Select';
 import { ICONS } from '@/constants';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
+import { WorkflowPromptEditor } from '@/pages/WorkspaceWorkflowsPage.launchFields';
+import { WorkflowMcpCredentialDialog, WorkflowPreviewAuthRow, workflowCapabilityBlockerMessage } from '@/pages/WorkspaceWorkflowsPage.components';
 import {
   createWorkflowSchedule,
+  previewWorkflowCapabilities,
   previewWorkflowSchedule,
+  type WorkflowCapabilitiesPreview,
+  type WorkflowMcpRequirementPreview,
   type WorkflowSchedulePreview
 } from '@/services/control-plane/workflowApi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -42,14 +47,6 @@ function cronFromGuided(frequency: Frequency, time: string, weekdays: number[], 
   return `${Number(minute)} ${Number(hour)} * * ${weekdays.length > 0 ? weekdays.join(',') : '1'}`;
 }
 
-function parseJsonObject(value: string): Record<string, unknown> {
-  const trimmed = value.trim();
-  if (!trimmed) return {};
-  const parsed = JSON.parse(trimmed) as unknown;
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Input defaults must be a JSON object.');
-  return parsed as Record<string, unknown>;
-}
-
 export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawerProps> = ({ workspaceId, scheduleWorkflow, onClose }) => {
   const { t } = useTranslation();
   const [name, setName] = React.useState('');
@@ -60,13 +57,16 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   const [timezone, setTimezone] = React.useState(getUserTimeZone);
   const [enabled, setEnabled] = React.useState(true);
   const [approvedContextGrants, setApprovedContextGrants] = React.useState<string[]>([]);
-  const [inputDefaults, setInputDefaults] = React.useState<Record<string, unknown>>({});
-  const [inputDefaultsText, setInputDefaultsText] = React.useState('{}');
-  const [jsonError, setJsonError] = React.useState('');
+  const [controlMessage, setControlMessage] = React.useState('');
   const [error, setError] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const [preview, setPreview] = React.useState<WorkflowSchedulePreview | null>(null);
+  const [capabilityPreview, setCapabilityPreview] = React.useState<WorkflowCapabilitiesPreview | null>(null);
+  const [capabilityPreviewError, setCapabilityPreviewError] = React.useState('');
+  const [credentialRequirement, setCredentialRequirement] = React.useState<WorkflowMcpRequirementPreview | null>(null);
+  const [previewRevision, setPreviewRevision] = React.useState(0);
   const [previewing, setPreviewing] = React.useState(false);
+  const previewRequestRef = React.useRef(0);
   const [runAsUser, setRunAsUser] = React.useState<{ id: string; label: string } | null>(null);
   const principal = runAsUser ? { type: 'user' as const, id: runAsUser.id } : null;
 
@@ -77,9 +77,9 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         if (cancelled) return;
         setRunAsUser({ id: user.id, label: user.name || user.email });
       })
-      .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : 'Your schedule identity could not be loaded.'));
+      .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : t('agentsWorkflows.schedule.identityLoadFailed')));
     return () => { cancelled = true; };
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   React.useEffect(() => {
     if (!scheduleWorkflow) return;
@@ -91,10 +91,12 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
     setTimezone(getUserTimeZone());
     setEnabled(true);
     setApprovedContextGrants([...new Set(scheduleWorkflow.contextGrants)]);
-    setInputDefaults({});
-    setInputDefaultsText('{}');
-    setJsonError('');
+    setControlMessage(scheduleWorkflow.starterPrompt);
     setError('');
+    setPreview(null);
+    setCapabilityPreview(null);
+    setCapabilityPreviewError('');
+    setCredentialRequirement(null);
   }, [scheduleWorkflow?.id, t]);
 
   React.useEffect(() => {
@@ -102,46 +104,54 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   }, [frequency, time, weekdays]);
 
   React.useEffect(() => {
-    if (!scheduleWorkflow || jsonError || !principal) return;
+    if (!scheduleWorkflow || !principal) return;
+    const requestId = previewRequestRef.current + 1;
+    previewRequestRef.current = requestId;
     setPreviewing(true);
     const timer = window.setTimeout(() => {
-      previewWorkflowSchedule(workspaceId, {
-        workflowId: scheduleWorkflow.id,
-        name: name.trim(),
-        cron,
-        timezone,
-        enabled,
-        approvedContextGrants,
-        inputDefaults,
-        principal
-      }).then(setPreview).catch((previewError) => {
-        setPreview({
-          valid: false,
-          summary: previewError instanceof Error ? previewError.message : t('agentsWorkflows.schedule.previewUnavailable'),
-          nextRunTimes: [],
-          errors: []
-        });
-      }).finally(() => setPreviewing(false));
+      Promise.allSettled([
+        previewWorkflowSchedule(workspaceId, {
+          workflowId: scheduleWorkflow.id,
+          name: name.trim(),
+          cron,
+          timezone,
+          enabled,
+          approvedContextGrants,
+          controlMessage,
+          principal
+        }),
+        previewWorkflowCapabilities(workspaceId, scheduleWorkflow.id, {
+          approvedContextGrants,
+          content: controlMessage
+        })
+      ]).then(([scheduleResult, capabilityResult]) => {
+        if (previewRequestRef.current !== requestId) return;
+        if (scheduleResult.status === 'fulfilled') {
+          setPreview(scheduleResult.value);
+        } else {
+          setPreview({
+            valid: false,
+            summary: scheduleResult.reason instanceof Error ? scheduleResult.reason.message : t('agentsWorkflows.schedule.previewUnavailable'),
+            nextRunTimes: [],
+            errors: []
+          });
+        }
+        if (capabilityResult.status === 'fulfilled') {
+          setCapabilityPreview(capabilityResult.value);
+          setCapabilityPreviewError('');
+        } else {
+          setCapabilityPreview(null);
+          setCapabilityPreviewError(capabilityResult.reason instanceof Error ? capabilityResult.reason.message : t('agentsWorkflows.schedule.previewUnavailable'));
+        }
+      }).finally(() => {
+        if (previewRequestRef.current === requestId) setPreviewing(false);
+      });
     }, 350);
-    return () => window.clearTimeout(timer);
-  }, [approvedContextGrants, cron, enabled, inputDefaults, jsonError, name, principal, scheduleWorkflow?.id, timezone, workspaceId, t]);
-
-  const updateInputDefault = (inputName: string, value: string) => {
-    const next = { ...inputDefaults, [inputName]: value };
-    setInputDefaults(next);
-    setInputDefaultsText(JSON.stringify(next, null, 2));
-    setJsonError('');
-  };
-
-  const updateJson = (value: string) => {
-    setInputDefaultsText(value);
-    try {
-      setInputDefaults(parseJsonObject(value));
-      setJsonError('');
-    } catch (nextError) {
-      setJsonError(nextError instanceof Error ? nextError.message : t('agentsWorkflows.schedule.invalidJson'));
-    }
-  };
+    return () => {
+      window.clearTimeout(timer);
+      if (previewRequestRef.current === requestId) previewRequestRef.current += 1;
+    };
+  }, [approvedContextGrants, controlMessage, cron, enabled, name, principal, previewRevision, scheduleWorkflow?.id, timezone, workspaceId, t]);
 
   const toggleContextGrant = (grant: string, checked: boolean) => {
     setApprovedContextGrants((current) => checked
@@ -150,7 +160,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   };
 
   const save = async () => {
-    if (!scheduleWorkflow || saving || !preview?.valid || jsonError || !principal) return;
+    if (!scheduleWorkflow || saving || !scheduleReady || !principal) return;
     setError('');
     setSaving(true);
     try {
@@ -161,7 +171,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         timezone: timezone.trim(),
         enabled,
         approvedContextGrants,
-        inputDefaults,
+        controlMessage,
         principal
       });
       onClose();
@@ -176,6 +186,9 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   const timezoneOptions = [...new Set([localTimezone, 'UTC', 'Asia/Singapore', 'America/New_York'])]
     .map((value) => ({ value, label: value === localTimezone ? `${value} (${t('agentsWorkflows.schedule.local')})` : value }));
   const fieldError = (field: string) => preview?.errors.find((item) => item.field === field)?.message;
+  const capabilityReady = capabilityPreview?.status === 'ready' && !capabilityPreviewError;
+  const scheduleReady = Boolean(preview?.valid && (!enabled || capabilityReady));
+  const readinessError = fieldError('mcpReadiness') || fieldError('readiness');
 
   return (
     <RightSidePanel isOpen={Boolean(scheduleWorkflow)} onClose={onClose} closeDisabled={saving} titleId="workflow-schedule-create-title" descriptionId="workflow-schedule-create-description" className="w-full max-w-2xl">
@@ -199,11 +212,12 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         </label>
 
         <div className="block text-sm font-semibold text-ui-text">
-          Runs as
+          {t('agentsWorkflows.schedule.runAs')}
           <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 font-normal text-ui-text" aria-live="polite">
             {runAsUser?.label || t('common.loading')}
           </div>
-          <span className="type-caption mt-1 block text-ui-text-muted">Schedules run as their authenticated creator. Workspace membership and permissions are rechecked for every run.</span>
+          <span className="type-caption mt-1 block text-ui-text-muted">{t('agentsWorkflows.schedule.creatorIdentityHelp')}</span>
+          {fieldError('principal') && <span className="type-caption mt-1 block text-status-danger-text">{fieldError('principal')}</span>}
         </div>
 
         <fieldset className="min-w-0 space-y-3">
@@ -253,20 +267,12 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
           </fieldset>
         )}
 
-        {scheduleWorkflow?.inputs.length ? (
-          <fieldset className="min-w-0 space-y-3">
-            <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.inputs')}</legend>
-            <p className="type-caption text-ui-text-muted">{t('agentsWorkflows.schedule.inputsHelp')}</p>
-            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-              {scheduleWorkflow.inputs.map((input) => (
-                <label key={input.name} className="block min-w-0 text-sm font-semibold text-ui-text">
-                  <span className="break-words">{input.label}{input.required ? ' *' : ''}</span>
-                  <TextInput value={String(inputDefaults[input.name] ?? '')} onChange={(event) => updateInputDefault(input.name, event.target.value)} className="mt-2 w-full" aria-invalid={Boolean(fieldError(`inputDefaults.${input.name}`))} />
-                  {fieldError(`inputDefaults.${input.name}`) && <span className="type-caption mt-1 block text-status-danger-text">{fieldError(`inputDefaults.${input.name}`)}</span>}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+        {scheduleWorkflow ? (
+          <div className="min-w-0 text-sm font-semibold text-ui-text">
+            {t('agentsWorkflows.schedule.controlMessage')}
+            <WorkflowPromptEditor workflow={scheduleWorkflow} message={controlMessage} onChange={setControlMessage} />
+            {fieldError('controlMessage') && <span className="type-caption mt-1 block text-status-danger-text">{fieldError('controlMessage')}</span>}
+          </div>
         ) : null}
 
         {scheduleWorkflow?.contextGrants.length ? (
@@ -282,13 +288,39 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
           </fieldset>
         ) : null}
 
-        <div role="status" aria-live="polite" className={`rounded-md border px-4 py-3 ${preview?.valid ? 'border-status-success/30 bg-status-success-soft' : 'border-ui-border bg-ui-bg'}`}>
+        <div role="status" aria-live="polite" className={`rounded-md border px-4 py-3 ${scheduleReady ? 'border-status-success/30 bg-status-success-soft' : 'border-ui-border bg-ui-bg'}`}>
           <div className="flex items-center gap-2 text-sm font-semibold text-ui-text">
             <ICONS.Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
             {previewing ? t('agentsWorkflows.schedule.previewing') : preview?.summary || t('agentsWorkflows.schedule.previewPending')}
           </div>
           {preview?.nextRunTimes.length ? <ol className="type-caption mt-2 grid gap-1 text-ui-text-muted">{preview.nextRunTimes.slice(0, 3).map((runAt) => <li key={runAt}>{formatUserDateTime(runAt, { timeZone: timezone })}</li>)}</ol> : null}
+          {readinessError && <p className="type-caption mt-2 text-status-warning-text">{readinessError}</p>}
         </div>
+
+        {(capabilityPreview?.mcpRequirements.length || capabilityPreviewError || (enabled && capabilityPreview && capabilityPreview.status !== 'ready')) ? (
+          <section aria-labelledby="workflow-schedule-credential-readiness" className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 id="workflow-schedule-credential-readiness" className="type-row-title">{t(capabilityPreview?.mcpRequirements.length ? 'agentsWorkflows.schedule.credentialReadiness' : 'agentsWorkflows.schedule.capabilityReadiness')}</h3>
+                <p className="type-caption mt-1 text-ui-text-muted">{capabilityPreview?.mcpRequirements.length
+                  ? t('agentsWorkflows.schedule.credentialReadinessHelp', { owner: runAsUser?.label || t('agentsWorkflows.schedule.scheduleOwner') })
+                  : t('agentsWorkflows.schedule.capabilityReadinessHelp')}</p>
+              </div>
+              {capabilityPreviewError && <Button type="button" size="sm" variant="secondary" onClick={() => setPreviewRevision((value) => value + 1)}>{t('common.retry')}</Button>}
+            </div>
+            {capabilityPreviewError ? (
+              <p role="alert" className="type-caption mt-3 text-status-danger-text">{capabilityPreviewError}</p>
+            ) : capabilityPreview ? (
+              capabilityPreview.mcpRequirements.length > 0 ? (
+                <dl className="mt-3 border-t border-ui-border pt-1">
+                  <WorkflowPreviewAuthRow requirements={capabilityPreview.mcpRequirements} onConnectCredential={setCredentialRequirement} />
+                </dl>
+              ) : capabilityPreview.status !== 'ready' ? (
+                <p role="alert" className="type-caption mt-3 text-status-warning-text">{workflowCapabilityBlockerMessage(capabilityPreview, t('agentsWorkflows.schedule.capabilityBlocked'))}</p>
+              ) : null
+            ) : null}
+          </section>
+        ) : null}
 
         <details className="group min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-3">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-ui-text [&::-webkit-details-marker]:hidden">
@@ -302,11 +334,6 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
               {fieldError('cron') && <span className="type-caption mt-1 block text-status-danger-text">{fieldError('cron')}</span>}
             </label>
             {frequency === 'custom' && <label className="block min-w-0 text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.timezone')}<Select<string> value={timezone} options={timezoneOptions} onChange={setTimezone} className="mt-2 w-full" ariaLabel={t('agentsWorkflows.schedule.timezone')} /></label>}
-            <label className="block min-w-0 text-sm font-semibold text-ui-text">
-              {t('agentsWorkflows.schedule.json')}
-              <Textarea value={inputDefaultsText} onChange={(event) => updateJson(event.target.value)} className="mt-2 min-h-32 w-full font-mono text-xs font-normal" aria-invalid={Boolean(jsonError)} />
-              {jsonError && <span className="type-caption mt-1 block text-status-danger-text">{jsonError}</span>}
-            </label>
           </div>
         </details>
 
@@ -314,11 +341,19 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
       </div>
       <div className="grid grid-cols-1 gap-2 border-t border-ui-border px-4 py-4 sm:flex sm:justify-end sm:px-5">
         <Button size="sm" variant="tertiary" className="w-full justify-center sm:w-auto" onClick={onClose} disabled={saving}>{t('agentsWorkflows.schedule.cancel')}</Button>
-        <Button size="sm" variant="primary" className="w-full justify-center sm:w-auto" onClick={() => void save()} disabled={saving || !scheduleWorkflow || !name.trim() || !preview?.valid || Boolean(jsonError)}>
+        <Button size="sm" variant="primary" className="w-full justify-center sm:w-auto" onClick={() => void save()} disabled={saving || previewing || !scheduleWorkflow || !name.trim() || !controlMessage.trim() || !scheduleReady}>
           <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
           {saving ? t('agentsWorkflows.schedule.creating') : t('agentsWorkflows.schedule.create')}
         </Button>
       </div>
+      {credentialRequirement && (
+        <WorkflowMcpCredentialDialog
+          workspaceId={workspaceId}
+          requirement={credentialRequirement}
+          onClose={() => setCredentialRequirement(null)}
+          onConnected={() => setPreviewRevision((value) => value + 1)}
+        />
+      )}
     </RightSidePanel>
   );
 };

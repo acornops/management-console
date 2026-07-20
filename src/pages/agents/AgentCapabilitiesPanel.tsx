@@ -6,9 +6,11 @@ import { SegmentedTabs, type CompactControlItem } from '@/components/common/Comp
 import { InlineConfirmation } from '@/components/common/InlineConfirmation';
 import { Select } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { McpPatDialog } from '@/features/catalog/McpPatDialog';
+import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
 import { AddMcpServerAction } from '@/features/catalog/AddMcpServerAction';
-import { useMcpRateLimit } from '@/features/catalog/useMcpRateLimit';
+import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';
+import { enabledScheduleImpactForAgent } from '@/features/catalog/mcpCredentialModeImpact';
+import { useMcpConnections } from '@/features/catalog/useMcpConnections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import {
@@ -28,16 +30,20 @@ import {
   type AgentSkillApi,
   type WorkspaceNativeToolApi
 } from '@/services/control-plane/agentApi';
-import { catalogApi, type McpPersonalConnection } from '@/services/control-plane/catalogApi';
+import { catalogApi } from '@/services/control-plane/catalogApi';
 import { AppPaths } from '@/utils/routes';
-import { listWorkflowOptions, type WorkflowOption } from '@/services/control-plane/workflowApi';
+import {
+  listWorkspaceWorkflowSchedules,
+  listWorkspaceWorkflows,
+  type WorkflowOption
+} from '@/services/control-plane/workflowApi';
+import { listTargetsForWorkspace } from '@/services/control-plane/targetApi';
 import { AgentToolsPanel } from '@/pages/agents/AgentToolsPanel';
 type CapabilityTab = 'mcp' | 'tools' | 'skills';
 interface AgentCapabilitiesPanelProps {
   agent: AgentDefinition;
   canManageAgents: boolean;
   canManageMcp: boolean;
-  canUsePersonalMcpConnections: boolean;
   canManageSkills: boolean;
 }
 const inputClass = 'min-h-11 w-full rounded-md border border-ui-border bg-ui-surface px-3 text-sm text-ui-text focus-visible:ring-2 focus-visible:ring-accent';
@@ -45,7 +51,6 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
   agent,
   canManageAgents,
   canManageMcp,
-  canUsePersonalMcpConnections,
   canManageSkills
 }) => {
   const { t } = useTranslation();
@@ -56,17 +61,12 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
   const [skills, setSkills] = React.useState<AgentSkillApi[]>(agent.skillInstallations || []);
   const [nativeTools, setNativeTools] = React.useState<WorkspaceNativeToolApi[]>([]);
   const [assignedNativeToolIds, setAssignedNativeToolIds] = React.useState<string[]>(agent.tools || []);
-  const [connections, setConnections] = React.useState<Record<string, McpPersonalConnection>>({});
-  const [connectionLoadErrors, setConnectionLoadErrors] = React.useState<Record<string, string>>({});
-  const [connectionLoadingByServerId, setConnectionLoadingByServerId] = React.useState<Record<string, boolean>>(() => Object.fromEntries(
-    (agent.mcpInstallations || []).filter((server) => server.authScope === 'personal').map((server) => [server.id, true])
-  ));
   const [toolRefreshErrors, setToolRefreshErrors] = React.useState<Record<string, string>>({});
-  const [patDialogServer, setPatDialogServer] = React.useState<AgentMcpServerApi | null>(null);
+  const [credentialDialogServer, setCredentialDialogServer] = React.useState<AgentMcpServerApi | null>(null);
   const [busy, setBusy] = React.useState('');
   const [notice, setNotice] = React.useState('');
   const [error, setError] = React.useState('');
-  const [manualServer, setManualServer] = React.useState<{ name: string; url: string; authType: 'none' | 'bearer_token' | 'custom_header'; authHeaderName: string }>({ name: '', url: '', authType: 'none', authHeaderName: '' });
+  const [manualServer, setManualServer] = React.useState<{ name: string; url: string; authType: 'none' | 'bearer_token' | 'custom_header'; credentialMode: 'none' | 'workspace' | 'individual'; authHeaderName: string }>({ name: '', url: '', authType: 'none', credentialMode: 'none', authHeaderName: '' });
   const [manualServerOpen, setManualServerOpen] = React.useState(false);
   const [manualSkill, setManualSkill] = React.useState({ name: '', description: '', content: '' });
   const [targetOptions, setTargetOptions] = React.useState<WorkflowOption[]>([]);
@@ -75,15 +75,22 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
   } | null>(null);
   const [renameEditor, setRenameEditor] = React.useState<{ serverId: string; name: string } | null>(null);
   const [removeServerId, setRemoveServerId] = React.useState('');
+  const [credentialModeChange, setCredentialModeChange] = React.useState<{
+    server: AgentMcpServerApi;
+    credentialMode: 'workspace' | 'individual';
+    affectedScheduleCount: number;
+  } | null>(null);
   const [skillEditor, setSkillEditor] = React.useState<{ skillId: string; name: string; description: string; content: string } | null>(null);
   const [removeSkillId, setRemoveSkillId] = React.useState('');
   const [gitSkill, setGitSkill] = React.useState({ url: '', ref: 'main', path: '', commit: '', content: '' });
-  const rateLimit = useMcpRateLimit();
   const recoveryServerId = search.get('mcpServer');
   const recoveryAction = search.get('mcpAction');
   const serverRows = React.useRef(new Map<string, HTMLElement>());
   const recoveryControls = React.useRef(new Map<string, HTMLButtonElement>());
+  const managedConnectionMessages = React.useRef(new Map<string, HTMLParagraphElement>());
+  const focusedRecoveryKey = React.useRef<string | null>(null);
   const renameTriggers = React.useRef(new Map<string, HTMLButtonElement>());
+  const credentialModeTriggers = React.useRef(new Map<string, HTMLButtonElement>());
   const removeServerTriggers = React.useRef(new Map<string, HTMLButtonElement>());
   const editSkillTriggers = React.useRef(new Map<string, HTMLButtonElement>());
   const removeSkillTriggers = React.useRef(new Map<string, HTMLButtonElement>());
@@ -101,20 +108,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
     setServers(loadedServers);
     setSkills(loadedSkills);
     setNativeTools(loadedNativeTools);
-    const personalServers = loadedServers.filter((server) => server.authScope === 'personal');
-    setConnectionLoadingByServerId(Object.fromEntries(personalServers.map((server) => [server.id, true])));
-    const personalConnectionResults = await Promise.all(personalServers
-      .map(async (server) => {
-        try {
-          return { serverId: server.id, connection: await catalogApi.getAgentMcpConnection(agent.workspaceId, agent.id, server.id) };
-        } catch (cause) {
-          return { serverId: server.id, error: rateLimit.captureError(server.id, cause, 'Personal connection status could not be loaded.').message };
-        }
-      }));
-    setConnections(Object.fromEntries(personalConnectionResults.flatMap((result) => result.connection ? [[result.serverId, result.connection]] : [])));
-    setConnectionLoadErrors(Object.fromEntries(personalConnectionResults.flatMap((result) => result.error ? [[result.serverId, result.error]] : [])));
-    setConnectionLoadingByServerId({});
-  }, [agent.id, agent.workspaceId, rateLimit.captureError]);
+  }, [agent.id, agent.workspaceId]);
 
   React.useEffect(() => {
     void reload().catch(() => undefined);
@@ -122,8 +116,12 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
 
   React.useEffect(() => {
     let mounted = true;
-    listWorkflowOptions(agent.workspaceId)
-      .then((catalog) => mounted && setTargetOptions(catalog.targets?.length ? catalog.targets : catalog.clusters))
+    listTargetsForWorkspace(agent.workspaceId, { limit: 200 })
+      .then((page) => mounted && setTargetOptions(page.items.map((target) => ({
+        value: target.id,
+        label: target.name,
+        description: `${target.targetType === 'kubernetes' ? 'Kubernetes cluster' : 'Virtual machine'} · ${target.status}`
+      }))))
       .catch(() => mounted && setTargetOptions([]));
     return () => { mounted = false; };
   }, [agent.workspaceId]);
@@ -134,20 +132,12 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
     updateUrlSearch({ mcpAction: null }, { replace: true });
   }, [recoveryAction]);
 
-  React.useEffect(() => {
-    if (!recoveryServerId) return;
-    const row = serverRows.current.get(recoveryServerId);
-    if (!row) return;
-    row.scrollIntoView({ block: 'center' });
-    window.requestAnimationFrame(() => recoveryControls.current.get(recoveryServerId)?.focus());
-  }, [connectionLoadErrors, connectionLoadingByServerId, connections, recoveryAction, recoveryServerId, servers]);
-
   const clearSuccessfulRecovery = (serverId: string) => {
     if (recoveryServerId !== serverId) return;
     updateUrlSearch({ mcpServer: null, mcpAction: null }, { replace: true });
   };
 
-  const refreshAfterPersonalConnection = async (server: AgentMcpServerApi): Promise<boolean> => {
+  const refreshAfterCredentialConnection = async (server: AgentMcpServerApi): Promise<void> => {
     try {
       await reload();
       setToolRefreshErrors((current) => {
@@ -155,15 +145,53 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
         delete next[server.id];
         return next;
       });
-      return true;
-    } catch {
+    } catch (cause) {
       setToolRefreshErrors((current) => ({
         ...current,
-        [server.id]: 'The PAT is connected, but tools may be stale. Retry the installation refresh.'
+        [server.id]: 'The credential is connected, but tools may be stale. Retry the installation refresh.'
       }));
-      return false;
+      throw cause;
     }
   };
+
+  const {
+    connections,
+    connectionErrors: connectionLoadErrors,
+    loadingByServerId: connectionLoadingByServerId,
+    pendingServerId: pendingConnectionServerId,
+    connect,
+    verify,
+    disconnect,
+    retry,
+    retryAfterSecondsFor
+  } = useMcpConnections({
+    workspaceId: agent.workspaceId,
+    destination: { kind: 'agent', id: agent.id },
+    installations: servers,
+    onConnectionReady: refreshAfterCredentialConnection,
+    onRefreshError: (_server, message) => setError(message),
+    onError: (message) => setError(message || '')
+  });
+
+  React.useEffect(() => {
+    if (!recoveryServerId || !recoveryAction) {
+      focusedRecoveryKey.current = null;
+      return;
+    }
+    const recoveryKey = `${recoveryServerId}:${recoveryAction}`;
+    if (focusedRecoveryKey.current === recoveryKey) return;
+    const row = serverRows.current.get(recoveryServerId);
+    if (!row) return;
+    row.scrollIntoView({ block: 'center' });
+    const frame = window.requestAnimationFrame(() => {
+      const focusTarget = recoveryControls.current.get(recoveryServerId)
+        || managedConnectionMessages.current.get(recoveryServerId);
+      if (!focusTarget) return;
+      focusTarget.focus();
+      focusedRecoveryKey.current = recoveryKey;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [connectionLoadErrors, connectionLoadingByServerId, connections, recoveryAction, recoveryServerId, servers]);
 
   const run = async (key: string, action: () => Promise<unknown>, message: string) => {
     setBusy(key);
@@ -180,96 +208,6 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
     }
   };
 
-  const submitPat = async (server: AgentMcpServerApi, credential: string) => {
-    if (rateLimit.remainingSeconds(server.id) > 0) return;
-    setBusy(`connect:${server.id}`);
-    setError('');
-    setNotice('');
-    try {
-      const connection = await catalogApi.putAgentMcpConnection(agent.workspaceId, agent.id, server.id, {
-        credential,
-        consentGranted: true
-      });
-      setConnections((current) => ({ ...current, [server.id]: connection }));
-      setConnectionLoadErrors((current) => {
-        const next = { ...current };
-        delete next[server.id];
-        return next;
-      });
-      if (connection.status !== 'connected') {
-        throw new Error('The PAT was saved, but verification failed. Check its scopes, then verify again or replace it.');
-      }
-      rateLimit.clear(server.id);
-      const refreshed = await refreshAfterPersonalConnection(server);
-      setNotice(refreshed
-        ? 'PAT verified and personal tools discovered.'
-        : 'PAT verified. The installation is connected, but its tools may be stale.');
-      clearSuccessfulRecovery(server.id);
-      setPatDialogServer(null);
-    } catch (cause) {
-      const formatted = rateLimit.captureError(server.id, cause, 'The PAT could not be saved.');
-      setError(formatted.message);
-      throw cause;
-    } finally {
-      setBusy('');
-    }
-  };
-
-  const verifyPat = async (server: AgentMcpServerApi) => {
-    if (rateLimit.remainingSeconds(server.id) > 0) return;
-    setBusy(`verify:${server.id}`);
-    setError('');
-    setNotice('');
-    try {
-      const connection = await catalogApi.verifyAgentMcpConnection(agent.workspaceId, agent.id, server.id);
-      setConnections((current) => ({ ...current, [server.id]: connection }));
-      setConnectionLoadErrors((current) => {
-        const next = { ...current };
-        delete next[server.id];
-        return next;
-      });
-      if (connection.status === 'connected') {
-        rateLimit.clear(server.id);
-        const refreshed = await refreshAfterPersonalConnection(server);
-        setNotice(refreshed
-          ? 'Stored PAT verified and tools rediscovered.'
-          : 'Stored PAT verified. The installation is connected, but its tools may be stale.');
-        clearSuccessfulRecovery(server.id);
-      } else {
-        setError('The stored PAT is still unusable. Verify again, replace the PAT, or disconnect.');
-      }
-    } catch (cause) {
-      setError(rateLimit.captureError(server.id, cause, 'The stored PAT could not be verified.').message);
-    } finally {
-      setBusy('');
-    }
-  };
-
-  const disconnectPat = async (server: AgentMcpServerApi) => {
-    if (rateLimit.remainingSeconds(server.id) > 0) return;
-    setBusy(`disconnect:${server.id}`);
-    setError('');
-    setNotice('');
-    try {
-      await catalogApi.disconnectAgentMcp(agent.workspaceId, agent.id, server.id);
-      setConnections((current) => ({
-        ...current,
-        [server.id]: {
-          serverId: server.id,
-          status: 'missing',
-          authType: server.authType === 'custom_header' ? 'custom_header' : 'bearer_token',
-          action: 'connect_mcp_server'
-        }
-      }));
-      rateLimit.clear(server.id);
-      setNotice('Personal PAT removed. You can reconnect immediately.');
-    } catch (cause) {
-      setError(rateLimit.captureError(server.id, cause, 'The personal PAT could not be removed.').message);
-    } finally {
-      setBusy('');
-    }
-  };
-
   const addManualServer = async () => {
     setBusy('create-server');
     setError('');
@@ -279,30 +217,66 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
         name: manualServer.name.trim(),
         url: manualServer.url.trim(),
         authType: manualServer.authType,
-        authScope: manualServer.authType === 'none' ? 'none' : 'personal',
+        credentialMode: manualServer.authType === 'none' ? 'none' : manualServer.credentialMode,
         authHeaderName: manualServer.authType === 'custom_header' ? manualServer.authHeaderName.trim() : undefined
       });
-      setManualServer({ name: '', url: '', authType: 'none', authHeaderName: '' });
+      setManualServer({ name: '', url: '', authType: 'none', credentialMode: 'none', authHeaderName: '' });
       setManualServerOpen(false);
-      if (created.authScope === 'personal') {
+      if (created.credentialMode !== 'none') {
         setServers((current) => [...current.filter((server) => server.id !== created.id), created]);
-        setConnections((current) => ({
-          ...current,
-          [created.id]: {
-            serverId: created.id,
-            status: 'missing',
-            authType: created.authType === 'custom_header' ? 'custom_header' : 'bearer_token',
-            action: 'connect_mcp_server'
-          }
-        }));
-        setPatDialogServer(created);
-        setNotice('Installation created. Connect a personal PAT to discover tools.');
+        setCredentialDialogServer(created);
+        setNotice(created.credentialMode === 'workspace'
+          ? 'Installation created. Connect a workspace credential to discover tools.'
+          : 'Installation created. Connect your credential to discover tools.');
       } else {
         await reload();
         setNotice('MCP server added. Discovered tools are pending review.');
       }
     } catch (cause) {
-      setError(rateLimit.captureError('create-server', cause, 'The MCP server could not be added.').message);
+      setError(cause instanceof Error ? cause.message : 'The MCP server could not be added.');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const prepareCredentialModeChange = async (server: AgentMcpServerApi) => {
+    const credentialMode = server.credentialMode === 'workspace' ? 'individual' : 'workspace';
+    setBusy(`credential-mode:${server.id}`);
+    setError('');
+    setNotice('');
+    try {
+      let affectedScheduleCount = 0;
+      if (credentialMode === 'individual') {
+        const [workflowItems, schedulePage] = await Promise.all([
+          listWorkspaceWorkflows(agent.workspaceId),
+          listWorkspaceWorkflowSchedules(agent.workspaceId)
+        ]);
+        affectedScheduleCount = enabledScheduleImpactForAgent(workflowItems, schedulePage.items, agent.id).length;
+      }
+      setCredentialModeChange({ server, credentialMode, affectedScheduleCount });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Credential ownership impact could not be loaded.');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const confirmCredentialModeChange = async () => {
+    if (!credentialModeChange) return;
+    const { server, credentialMode, affectedScheduleCount } = credentialModeChange;
+    setBusy(`credential-mode:${server.id}`);
+    setError('');
+    setNotice('');
+    try {
+      const updated = await updateAgentMcpServer(agent.workspaceId, agent.id, server.id, { credentialMode, expectedRevision: server.revision });
+      await reload();
+      setCredentialModeChange(null);
+      setCredentialDialogServer(updated);
+      setNotice(affectedScheduleCount > 0
+        ? t('mcpServers.credentialModeChangedSchedulesPaused', { count: affectedScheduleCount })
+        : t('mcpServers.credentialModeChanged'));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Credential ownership could not be changed.');
     } finally {
       setBusy('');
     }
@@ -346,7 +320,14 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="text-sm font-semibold">Name<input value={manualServer.name} onChange={(event) => setManualServer((value) => ({ ...value, name: event.target.value }))} className={`mt-2 ${inputClass}`} /></label>
               <label className="text-sm font-semibold">HTTPS endpoint<input type="url" pattern="https://.*" value={manualServer.url} onChange={(event) => setManualServer((value) => ({ ...value, url: event.target.value }))} className={`mt-2 ${inputClass}`} /></label>
-              <label className="text-sm font-semibold">Authentication<Select ariaLabel="Authentication" className="mt-2" value={manualServer.authType} options={[{ value: 'none' as const, label: 'None' }, { value: 'bearer_token' as const, label: 'Bearer token (personal)' }, { value: 'custom_header' as const, label: 'Custom header (personal)' }]} onChange={(authType) => setManualServer((value) => ({ ...value, authType }))} /></label>
+              <label className="text-sm font-semibold">Authentication<Select ariaLabel="Authentication" className="mt-2" value={manualServer.authType} options={[{ value: 'none' as const, label: 'None' }, { value: 'bearer_token' as const, label: 'Bearer token' }, { value: 'custom_header' as const, label: 'Custom header' }]} onChange={(authType) => setManualServer((value) => ({ ...value, authType, credentialMode: authType === 'none' ? 'none' : value.credentialMode === 'none' ? 'individual' : value.credentialMode }))} /></label>
+              {manualServer.authType !== 'none' && <div className="sm:col-span-2">
+                <McpCredentialOwnershipSelector
+                  name="agent-mcp-credential-mode"
+                  value={manualServer.credentialMode === 'workspace' ? 'workspace' : 'individual'}
+                  onChange={(credentialMode) => setManualServer((value) => ({ ...value, credentialMode }))}
+                />
+              </div>}
               {manualServer.authType === 'custom_header' && <label className="text-sm font-semibold">Header name<input value={manualServer.authHeaderName} onChange={(event) => setManualServer((value) => ({ ...value, authHeaderName: event.target.value }))} className={`mt-2 ${inputClass}`} /></label>}
               <Button
                 disabled={!mcpWritable || !manualServer.name.trim() || !manualServer.url.trim().startsWith('https://') || (manualServer.authType === 'custom_header' && !manualServer.authHeaderName.trim()) || Boolean(busy)}
@@ -362,7 +343,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
               const connection = connections[server.id];
               const connectionLoadError = connectionLoadErrors[server.id];
               const connectionLoading = Boolean(connectionLoadingByServerId[server.id]);
-              const retryAfterSeconds = rateLimit.remainingSeconds(server.id);
+              const retryAfterSeconds = retryAfterSecondsFor(server.id);
               const recoveryHighlighted = recoveryServerId === server.id;
               return (
                 <article
@@ -379,8 +360,9 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
                         {server.provenance && <StatusBadge tone="neutral">Catalog v{server.provenance.version}</StatusBadge>}
                       </div>
                       <p className="type-code mt-1 break-all text-ui-text-muted">{server.url}</p>
-                      <p className="type-caption mt-2 text-ui-text-muted">{server.tools.length} discovered tools · connection {connectionLoading ? 'loading' : connection?.status || server.connectionStatus || 'not required'} · revision {server.revision}</p>
-                      {connectionLoadError && <p role="alert" className="type-caption mt-1 text-status-danger-text">Personal connection status could not be loaded. Retry before changing this PAT.</p>}
+                      <p className="type-caption mt-2 text-ui-text-muted">{server.tools.length} discovered tools · credential {server.credentialMode === 'workspace' ? 'workspace-managed' : server.credentialMode === 'individual' ? 'individual' : 'not required'} · connection {connectionLoading ? 'loading' : connection?.status || server.connectionStatus || 'not required'} · revision {server.revision}</p>
+                      {connectionLoadError && <p role="alert" className="type-caption mt-1 text-status-danger-text">Credential connection status could not be loaded. Retry before making changes.</p>}
+                      {server.credentialMode === 'workspace' && connection && !connection.canManage && <p ref={(node) => { if (node) managedConnectionMessages.current.set(server.id, node); else managedConnectionMessages.current.delete(server.id); }} tabIndex={recoveryServerId === server.id ? -1 : undefined} className="type-caption mt-1 text-ui-text-muted focus:outline-none">{recoveryServerId === server.id ? 'Ask a workspace administrator to connect this server.' : 'Managed by your workspace'}</p>}
                       {toolRefreshErrors[server.id] && <p role="alert" className="type-caption mt-1 text-status-warning-text">{toolRefreshErrors[server.id]}</p>}
                       {retryAfterSeconds > 0 && <p role="status" className="type-caption mt-1 text-status-warning-text">Connection controls unlock in {retryAfterSeconds}s.</p>}
                       {(server.targetConstraints.targetTypes.length > 0 || server.targetConstraints.targetIds.length > 0) && (
@@ -398,18 +380,19 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
                         });
                       }}>Constraints</Button>
                       <Button size="sm" variant="secondary" disabled={!mcpWritable || Boolean(busy)} onClick={() => void run(`toggle:${server.id}`, () => updateAgentMcpServer(agent.workspaceId, agent.id, server.id, { enabled: !server.enabled, expectedRevision: server.revision }), `MCP server ${server.enabled ? 'disabled' : 'enabled'}.`)}>{server.enabled ? 'Disable' : 'Enable'}</Button>
+                      {server.credentialMode !== 'none' && <Button ref={(node) => { if (node) credentialModeTriggers.current.set(server.id, node); else credentialModeTriggers.current.delete(server.id); }} size="sm" variant="secondary" disabled={!mcpWritable || Boolean(busy)} onClick={() => void prepareCredentialModeChange(server)}>{server.credentialMode === 'workspace' ? 'Use individual credentials' : 'Use workspace credential'}</Button>}
                       {server.authType === 'none' && <Button size="sm" variant="secondary" disabled={!mcpWritable || Boolean(busy)} onClick={() => void run(`test:${server.id}`, () => testAgentMcpServer(agent.workspaceId, agent.id, server.id), 'Connection tested and tools rediscovered.')}>Test / discover</Button>}
                       {server.provenance && <Button size="sm" variant="secondary" disabled={!mcpWritable || Boolean(busy)} onClick={() => void run(`reimport:${server.id}`, () => catalogApi.reimportAgentMcpServer(agent.workspaceId, agent.id, server.id, {
                         artifact: { sourceId: server.provenance?.sourceId, artifactName: server.provenance?.artifactName },
                         version: server.provenance?.version || '', remoteEndpoint: server.url, serverName: server.name,
                         enabled: server.enabled, expectedRevision: server.revision
                       }), 'Catalog server re-imported.')}>Re-import</Button>}
-                      {server.authScope === 'personal' && connectionLoading && <Button size="sm" variant="secondary" disabled>Loading PAT status…</Button>}
-                      {server.authScope === 'personal' && connectionLoadError && <Button size="sm" variant="secondary" disabled={Boolean(busy)} onClick={() => void reload()}>Retry connection status</Button>}
-                      {server.authScope === 'personal' && !connectionLoading && !connectionLoadError && connection?.status === 'error' && <Button ref={(node) => { if (node && recoveryAction === 'verify_mcp_server') recoveryControls.current.set(server.id, node); }} data-mcp-action="verify_mcp_server" size="sm" variant="secondary" disabled={!canUsePersonalMcpConnections || Boolean(busy) || retryAfterSeconds > 0} onClick={() => void verifyPat(server)}>{retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : 'Verify PAT'}</Button>}
-                      {server.authScope === 'personal' && !connectionLoading && !connectionLoadError && connection && <Button ref={(node) => { if (node && recoveryAction === 'connect_mcp_server') recoveryControls.current.set(server.id, node); }} data-mcp-action="connect_mcp_server" size="sm" variant="secondary" disabled={!canUsePersonalMcpConnections || Boolean(busy) || retryAfterSeconds > 0} onClick={() => setPatDialogServer(server)}>{retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : connection.status === 'missing' ? 'Connect PAT' : 'Replace PAT'}</Button>}
-                      {server.authScope === 'personal' && !connectionLoading && !connectionLoadError && (connection?.status === 'connected' || connection?.status === 'error') && <Button size="sm" variant="secondary" disabled={!canUsePersonalMcpConnections || Boolean(busy) || retryAfterSeconds > 0} onClick={() => void disconnectPat(server)}>Disconnect</Button>}
-                      {toolRefreshErrors[server.id] && <Button size="sm" variant="secondary" disabled={Boolean(busy)} onClick={() => void refreshAfterPersonalConnection(server)}>Retry tool refresh</Button>}
+                      {server.credentialMode !== 'none' && connectionLoading && <Button size="sm" variant="secondary" disabled>Loading credential status…</Button>}
+                      {server.credentialMode !== 'none' && connectionLoadError && <Button size="sm" variant="secondary" disabled={Boolean(busy)} onClick={() => void retry(server)}>Retry connection status</Button>}
+                      {server.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && connection.status === 'error' && <Button ref={(node) => { if (recoveryAction !== 'verify_mcp_server') return; if (node) recoveryControls.current.set(server.id, node); else recoveryControls.current.delete(server.id); }} data-mcp-action="verify_mcp_server" size="sm" variant="secondary" disabled={pendingConnectionServerId === server.id || retryAfterSeconds > 0} onClick={() => void verify(server).then((result) => { if (result?.status === 'connected') { setNotice('Credential verified and tools rediscovered.'); clearSuccessfulRecovery(server.id); } })}>{retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : 'Verify credential'}</Button>}
+                      {server.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && <Button ref={(node) => { if (recoveryAction !== 'connect_mcp_server') return; if (node) recoveryControls.current.set(server.id, node); else recoveryControls.current.delete(server.id); }} data-mcp-action="connect_mcp_server" size="sm" variant="secondary" disabled={pendingConnectionServerId === server.id || retryAfterSeconds > 0} onClick={() => setCredentialDialogServer(server)}>{retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : connection.status === 'missing' ? server.credentialMode === 'workspace' ? 'Connect workspace credential' : 'Connect your credential' : 'Replace credential'}</Button>}
+                      {server.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && (connection.status === 'connected' || connection.status === 'error') && <Button size="sm" variant="secondary" disabled={pendingConnectionServerId === server.id || retryAfterSeconds > 0} onClick={() => void disconnect(server).then((removed) => { if (removed) setNotice('Credential disconnected. You can reconnect immediately.'); })}>Disconnect</Button>}
+                      {toolRefreshErrors[server.id] && <Button size="sm" variant="secondary" disabled={Boolean(busy)} onClick={() => void refreshAfterCredentialConnection(server)}>Retry tool refresh</Button>}
                       <Button ref={(node) => { if (node) removeServerTriggers.current.set(server.id, node); else removeServerTriggers.current.delete(server.id); }} size="sm" variant="danger" disabled={!canManageAgents || Boolean(busy)} onClick={() => setRemoveServerId(server.id)}>{t('agentsWorkflows.agents.details.capabilities.actions.remove')}</Button>
                     </div>
                   </div>
@@ -425,6 +408,27 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
                         <Button size="sm" disabled={!renameEditor.name.trim() || renameEditor.name.trim() === server.name || Boolean(busy)} onClick={() => void run(`rename:${server.id}`, () => updateAgentMcpServer(agent.workspaceId, agent.id, server.id, { name: renameEditor.name.trim(), expectedRevision: server.revision }), t('agentsWorkflows.agents.details.capabilities.renameServer.success')).then(() => setRenameEditor(null))}>{t('agentsWorkflows.agents.details.capabilities.actions.save')}</Button>
                       </div>
                     </section>
+                  )}
+                  {credentialModeChange?.server.id === server.id && (
+                    <InlineConfirmation
+                      id={`credential-mode-${server.id}`}
+                      title={t('mcpServers.credentialModeChangeTitle', { name: server.name })}
+                      description={credentialModeChange.credentialMode === 'individual'
+                        ? credentialModeChange.affectedScheduleCount > 0
+                          ? t('mcpServers.confirmWorkspaceToIndividualWithSchedules', { count: credentialModeChange.affectedScheduleCount })
+                          : t('mcpServers.confirmWorkspaceToIndividual')
+                        : t('mcpServers.confirmIndividualToWorkspace')}
+                      tone="warning"
+                      confirmLabel={t('mcpServers.credentialModeChangeConfirm')}
+                      confirmDisabled={Boolean(busy)}
+                      cancelLabel={t('common.cancel')}
+                      className="mt-4 rounded-md"
+                      onCancel={() => {
+                        setCredentialModeChange(null);
+                        window.requestAnimationFrame(() => credentialModeTriggers.current.get(server.id)?.focus());
+                      }}
+                      onConfirm={() => void confirmCredentialModeChange()}
+                    />
                   )}
                   {removeServerId === server.id && (
                     <InlineConfirmation
@@ -593,16 +597,24 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
           </div>
         </div>
       )}
-      {patDialogServer && (
-        <McpPatDialog
-          serverName={patDialogServer.name}
-          serverUrl={patDialogServer.url}
-          authType={connections[patDialogServer.id]?.authType || patDialogServer.authType}
-          authHeaderName={patDialogServer.authHeaderName}
-          mode={connections[patDialogServer.id]?.status === 'missing' ? 'connect' : 'replace'}
-          retryAfterSeconds={rateLimit.remainingSeconds(patDialogServer.id)}
-          onClose={() => setPatDialogServer(null)}
-          onSubmit={(credential) => submitPat(patDialogServer, credential)}
+      {credentialDialogServer && (
+        <McpCredentialDialog
+          serverName={credentialDialogServer.name}
+          serverUrl={credentialDialogServer.url}
+          authType={connections[credentialDialogServer.id]?.authType || credentialDialogServer.authType}
+          authHeaderName={credentialDialogServer.authHeaderName}
+          credentialMode={credentialDialogServer.credentialMode === 'workspace' ? 'workspace' : 'individual'}
+          mode={connections[credentialDialogServer.id]?.status === 'missing' ? 'connect' : 'replace'}
+          retryAfterSeconds={retryAfterSecondsFor(credentialDialogServer.id)}
+          onClose={() => setCredentialDialogServer(null)}
+          onSubmit={async (credential) => {
+            const connection = await connect(credentialDialogServer, credential);
+            if (connection?.status === 'connected') {
+              setNotice('Credential verified and tools discovered.');
+              clearSuccessfulRecovery(credentialDialogServer.id);
+              setCredentialDialogServer(null);
+            }
+          }}
         />
       )}
     </div>

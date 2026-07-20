@@ -1,7 +1,7 @@
 import { getAgentEffectiveActionPolicy, type AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
 
-type WorkflowCapabilityAgentSource = Pick<AgentDefinition, 'id' | 'name' | 'mcpServers' | 'tools' | 'skills' | 'semanticCapabilityIds' | 'permissionMode' | 'capabilities'>;
+type WorkflowCapabilityAgentSource = Pick<AgentDefinition, 'id' | 'name' | 'mcpServers' | 'mcpInstallations' | 'tools' | 'skills' | 'skillInstallations' | 'semanticCapabilityIds' | 'permissionMode' | 'capabilities'>;
 
 export type WorkflowAgentCapabilityReview = {
   agentId: string;
@@ -33,6 +33,14 @@ function titleCaseAgentId(agentId: string): string {
     .replace(/\b\w/g, (value) => value.toUpperCase());
 }
 
+function capabilityDisplayName(id: string): string {
+  return id
+    .replace(/^fixture-/, '')
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, (value) => value.toUpperCase());
+}
+
 function formatCapabilityRule(capability: WorkflowCapabilityAgentSource['capabilities'][number]): string {
   const resource = capability.resourceScope || capability.resourceType;
   const tool = capability.toolId ? ` via ${capability.toolId}` : '';
@@ -56,10 +64,14 @@ export function getWorkflowAgentCapabilityReview(
       name: agent?.name || workflowAgent?.name || titleCaseAgentId(agentId),
       role: workflowAgent?.role || 'Assigned Agent',
       required: workflowAgent?.required ?? false,
-      mcpServers: agent?.mcpServers || [],
+      mcpServers: (agent?.mcpServers || []).map((serverId) => (
+        agent?.mcpInstallations?.find((server) => server.id === serverId)?.name || capabilityDisplayName(serverId)
+      )),
       semanticCapabilityIds: agent?.semanticCapabilityIds || [],
       tools: agent?.tools || [],
-      skills: agent?.skills || [],
+      skills: (agent?.skills || []).map((skillId) => (
+        agent?.skillInstallations?.find((skill) => skill.id === skillId)?.name || capabilityDisplayName(skillId)
+      )),
       actionPolicy: agent ? (() => {
         const policy = getAgentEffectiveActionPolicy(agent.permissionMode);
         return [`Permission mode: ${policy.permissionMode}`, `Approval gate: ${policy.approvalGate}`];

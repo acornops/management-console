@@ -1,5 +1,5 @@
 import { ChatRuntimeSelection, ClusterMetricHistoryPoint, ClusterToolCatalogServer, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
-export type { TargetMcpServer, TargetMcpServerTestConnectionResult } from './targetMcpLegacyTypes';
+export type { TargetMcpServer, TargetMcpServerTestConnectionResult } from './targetMcpTypes';
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
   ControlPlaneRoleTemplate,
@@ -398,9 +398,10 @@ export interface ControlPlaneClusterToolCatalogServer {
   canEditConnection: boolean;
   canToggle?: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
-  authScope?: 'none' | 'personal' | 'legacy_shared';
+  credentialMode: 'none' | 'workspace' | 'individual';
   authHeaderName?: string;
   authHeaderPrefix?: string;
+  revision?: number;
   provenance?: ClusterToolCatalogServer['provenance'];
   publicHeaders?: Record<string, string>;
   connectionStatus?: 'unknown' | 'ok' | 'error';
@@ -436,7 +437,7 @@ export interface ControlPlaneMcpServer {
   server_url: string;
   enabled: boolean;
   auth_type: 'none' | 'bearer_token' | 'custom_header';
-  auth_scope?: 'none' | 'personal';
+  credential_mode: 'none' | 'workspace' | 'individual';
   auth_header_name?: string;
   auth_header_prefix?: string;
   public_headers?: Record<string, string> | null;
@@ -482,6 +483,7 @@ export interface CreateTargetMcpServerInput {
   enabled?: boolean;
   publicHeaders?: Record<string, string>;
   auth?: TargetMcpServerAuthInput;
+  credentialMode?: 'none' | 'workspace' | 'individual';
 }
 
 export interface UpdateTargetMcpServerInput {
@@ -489,6 +491,8 @@ export interface UpdateTargetMcpServerInput {
   enabled?: boolean;
   publicHeaders?: Record<string, string>;
   auth?: TargetMcpServerAuthInput;
+  credentialMode?: 'none' | 'workspace' | 'individual';
+  expectedRevision?: number;
   tools?: TargetMcpServerToolInput[];
   removeTools?: string[];
 }

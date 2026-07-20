@@ -45,9 +45,8 @@ required for the prompt-first target selection revision.
   blocks missing, ambiguous, unavailable, unknown, or out-of-scope references.
 - Explicit capability restrictions use the workflow capability list. Inherited
   workflows use the selected Agents' current combined semantic capabilities.
-- Custom workflow prompts offer an optional target placeholder action; saving
-  does not require the placeholder. Legacy concrete `@cluster[...]` references
-  remain accepted, while all new UI copy emits only `@target[...]`.
+- Custom workflow prompts use the shared registry-driven reference editor.
+  Target selection is represented by the platform `target` provider.
 - Delivery continues on `feat/extensible-catalog-sources`, after control-plane.
   No docs-website change is required.
 

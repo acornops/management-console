@@ -69,7 +69,6 @@ export function getActivePrimaryNav(route: AppRoute): ActivePrimaryNav {
     route.kind === 'workspaces' ||
     route.kind === 'home' ||
     route.kind === 'accountSettings' ||
-    route.kind === 'settings' ||
     route.kind === 'help' ||
     route.kind === 'workspaceInvitation'
   ) {

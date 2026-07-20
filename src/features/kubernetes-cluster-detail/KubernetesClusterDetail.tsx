@@ -112,11 +112,6 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
 
   const canChat = Boolean(currentWorkspacePermissions?.create_sessions && currentWorkspacePermissions.create_read_only_runs);
   const canRequestWriteRuns = Boolean(currentWorkspacePermissions?.create_read_write_runs);
-  const canUsePersonalMcpConnections = Boolean(
-    currentWorkspacePermissions?.create_sessions
-    || currentWorkspacePermissions?.create_read_only_runs
-    || currentWorkspacePermissions?.create_read_write_runs
-  );
   const canCancelRuns = Boolean(currentWorkspacePermissions?.cancel_runs);
   const canDeleteSessions = Boolean(currentWorkspacePermissions?.delete_sessions);
   const canManageAiSettings = Boolean(currentWorkspacePermissions?.manage_ai_settings);
@@ -279,7 +274,6 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 canManageMcp={canManageMcp}
                 canManageTools={canManageTools}
                 canRequestWriteRuns={canRequestWriteRuns}
-                canUsePersonalConnections={canUsePersonalMcpConnections}
                 initialCatalog={cachedCapabilityCatalogs?.mcpServers}
                 onCatalogChange={cacheMcpServersCatalog}
                 onSyncTools={onSyncTools}

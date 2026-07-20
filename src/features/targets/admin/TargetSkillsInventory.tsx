@@ -10,6 +10,7 @@ import type { SelectOption } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import type { ControlPlaneTargetSkillsCatalog } from '@/services/controlPlaneApi';
 import { sourceLabel, summarizeBytes, syncLabel } from '@/features/targets/admin/targetSkillsViewModel';
+import { useFloatingActionMenu } from '@/hooks/useFloatingActionMenu';
 
 type TargetSkillSummary = ControlPlaneTargetSkillsCatalog['items'][number];
 
@@ -43,10 +44,13 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
 }) => {
   const { t } = useTranslation();
   const actionMenuId = React.useId();
-  const actionMenuButtonRef = React.useRef<HTMLButtonElement>(null);
-  const actionMenuRef = React.useRef<HTMLDivElement>(null);
   const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
-  const [actionMenuStyle, setActionMenuStyle] = React.useState<React.CSSProperties | null>(null);
+  const {
+    triggerRef: actionMenuButtonRef,
+    menuRef: actionMenuRef,
+    style: actionMenuStyle,
+    close: closeActionMenu
+  } = useFloatingActionMenu({ open: actionMenuOpen, setOpen: setActionMenuOpen, estimatedHeight: 104 });
   const isTogglingSkill = pendingToggleSkillId === skill.id;
   const isBlockedByOtherSkillToggle = Boolean(pendingToggleSkillId && !isTogglingSkill);
   const canToggleSkill = canEditSkills && !isBlockedByOtherSkillToggle && !isTogglingSkill;
@@ -60,47 +64,6 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
     : assistantState === 'disabled'
       ? 'bg-ui-bg text-ui-text-muted'
       : 'bg-status-warning-soft text-status-warning-text';
-  const updateActionMenuPosition = React.useCallback(() => {
-    const trigger = actionMenuButtonRef.current;
-    if (!trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const menuWidth = 224;
-    const menuHeight = 104;
-    const top = Math.min(rect.bottom + 6, window.innerHeight - menuHeight - 8);
-    setActionMenuStyle({
-      left: Math.max(8, rect.right - menuWidth),
-      top: Math.max(8, top),
-      width: menuWidth
-    });
-  }, []);
-
-  React.useEffect(() => {
-    if (!actionMenuOpen) return undefined;
-
-    updateActionMenuPosition();
-    const closeMenu = () => setActionMenuOpen(false);
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (actionMenuButtonRef.current?.contains(target) || actionMenuRef.current?.contains(target)) return;
-      closeMenu();
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeMenu();
-    };
-    const handleResize = () => updateActionMenuPosition();
-    document.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize, true);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize, true);
-    };
-  }, [actionMenuOpen, updateActionMenuPosition]);
-
-  const closeActionMenu = () => setActionMenuOpen(false);
   const actionMenu = actionMenuOpen && actionMenuStyle && typeof document !== 'undefined'
     ? createPortal(
         <div
@@ -121,7 +84,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
             ) : (
               <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
             )}
-            <span>{canEditSkills ? 'Edit skill' : 'View skill'}</span>
+            <span>{t(canEditSkills ? 'targetSkills.editSkill' : 'targetSkills.viewSkill')}</span>
           </MenuItem>
           {canEditSkills && (
             <MenuItem
@@ -132,7 +95,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
               }}
             >
               <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>Delete skill</span>
+              <span>{t('targetSkills.deleteSkill')}</span>
             </MenuItem>
           )}
         </div>,
@@ -154,7 +117,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
           </div>
           <div className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-ui-text">{skill.name}</span>
-            <span className="mt-1 block truncate text-xs leading-5 text-ui-text-muted" title={skill.description}>{skill.description}</span>
+            <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={skill.description}>{skill.description}</span>
           </div>
         </div>
       </td>
@@ -167,7 +130,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
         <Switch
           checked={skill.enabled}
           aria-disabled={!canToggleSkill}
-          label={`${skill.enabled ? 'Disable' : 'Enable'} ${skill.name}`}
+          label={t(skill.enabled ? 'targetSkills.disableNamed' : 'targetSkills.enableNamed', { name: skill.name })}
           disabled={!canEditSkills}
           onCheckedChange={(enabled) => {
             if (!canToggleSkill) return;
@@ -188,7 +151,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
           aria-haspopup="menu"
           aria-expanded={actionMenuOpen}
           aria-controls={actionMenuOpen ? actionMenuId : undefined}
-          aria-label={`Actions for ${skill.name}`}
+          aria-label={t('targetSkills.actionsNamed', { name: skill.name })}
         >
           <MoreVertical className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -253,29 +216,29 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
   return (
     <>
       <section data-target-skill-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
-          <div className="px-5 py-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
+          <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
             <h2 className="type-row-title">{t('targetSkills.inventoryTitle')}</h2>
             <p className="type-caption mt-1 min-h-10 text-ui-text-muted">
               {t('targetSkills.inventoryBody')}
             </p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.skillsMetric')}</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.total}</p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.assistantVisibleSkills')}</p>
             <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
               {summary.assistantVisible}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.enabledSkillsMetric')}</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.enabled}</p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.needsFixes')}</p>
             <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
               {summary.needsFixes}

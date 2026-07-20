@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  findLegacyWorkflowQuerySelection,
   findWorkflowByRouteTarget,
   getWorkflowRouteSelectionTarget,
   type WorkflowDefinition,
@@ -24,7 +23,6 @@ interface WorkflowUrlStateOptions {
 
 export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) {
   const urlSearch = useUrlSearchState();
-  const legacyQueryHandled = React.useRef(false);
   const routeTarget = getWorkflowRouteSelectionTarget(`?${urlSearch.toString()}`);
   const routeWorkflow = findWorkflowByRouteTarget(options.workflows, routeTarget);
   React.useEffect(() => {
@@ -41,25 +39,17 @@ export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) 
     if (!options.routeHydrated) return;
     if (routeTarget) {
       if (routeWorkflow) {
-        const hasLegacyAlias = urlSearch.has('workflowId') || urlSearch.has('selectedWorkflow');
-        if (urlSearch.get('workflow') !== routeWorkflow.id || hasLegacyAlias) {
-          updateUrlSearch({ workflow: routeWorkflow.id, workflowId: null, selectedWorkflow: null }, { replace: true });
+        if (urlSearch.get('workflow') !== routeWorkflow.id) {
+          updateUrlSearch({ workflow: routeWorkflow.id }, { replace: true });
         }
       } else {
         const fallbackWorkflowId = options.workflows[0]?.id || '';
         options.setSelectedWorkflowId(fallbackWorkflowId);
         options.setActiveTab('overview');
-        updateUrlSearch({ workflow: fallbackWorkflowId || null, workflowId: null, selectedWorkflow: null, tab: null }, { replace: true });
+        updateUrlSearch({ workflow: fallbackWorkflowId || null, tab: null }, { replace: true });
       }
       return;
     }
-    if (legacyQueryHandled.current) return;
-    legacyQueryHandled.current = true;
-    const legacyWorkflow = findLegacyWorkflowQuerySelection(options.workflows, `?${urlSearch.toString()}`);
-    if (!legacyWorkflow) return;
-    options.setSelectedWorkflowId(legacyWorkflow.id);
-    options.setQuery('');
-    updateUrlSearch({ workflow: legacyWorkflow.id, q: null }, { replace: true });
   }, [options.routeHydrated, options.workflows, routeTarget, routeWorkflow, urlSearch]);
   React.useEffect(() => {
     if (!options.createPanelOpen && urlSearch.get('panel') === 'create') updateUrlSearch({ panel: null }, { replace: true });
@@ -69,7 +59,7 @@ export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) 
     selectWorkflow(workflowId: string, updateOptions: { replace?: boolean } = {}) {
       options.setSelectedWorkflowId(workflowId);
       options.setActiveTab('overview');
-      updateUrlSearch({ workflow: workflowId || null, workflowId: null, selectedWorkflow: null, tab: null }, updateOptions);
+      updateUrlSearch({ workflow: workflowId || null, tab: null }, updateOptions);
     },
     clearWorkflowSelection() {
       options.setActiveTab('overview');

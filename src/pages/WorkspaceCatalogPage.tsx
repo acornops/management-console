@@ -11,8 +11,9 @@ import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { AgentCatalogReturnLink, resolveAgentCatalogReturnNavigation } from '@/features/catalog/AgentCatalogReturnNavigation';
-import { McpPatDialog } from '@/features/catalog/McpPatDialog';
-import { useMcpRateLimit } from '@/features/catalog/useMcpRateLimit';
+import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
+import { McpCredentialOwnershipSelector, type McpCredentialMode } from '@/features/catalog/McpCredentialOwnershipSelector';
+import { useMcpConnections } from '@/features/catalog/useMcpConnections';
 import {
   listAgentMcpServers,
   listWorkspaceAgents,
@@ -22,11 +23,10 @@ import {
   catalogApi,
   type CatalogArtifact,
   type CatalogArtifactEndpoint,
-  type CatalogSource,
-  type McpPersonalConnection
+  type CatalogSource
 } from '@/services/control-plane/catalogApi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type { TargetMcpServer } from '@/services/control-plane/targetMcpLegacyTypes';
+import type { TargetMcpServer } from '@/services/control-plane/targetMcpTypes';
 import type { Workspace } from '@/types';
 import { AppPaths, type McpCatalogRouteState } from '@/utils/routes';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
@@ -47,7 +47,7 @@ type InstalledServer = {
   id: string;
   name: string;
   revision: number;
-  authScope?: 'none' | 'personal';
+  credentialMode: 'none' | 'workspace' | 'individual';
   authType?: string;
   authHeaderName?: string;
   url: string;
@@ -69,6 +69,14 @@ function sourceName(sources: CatalogSource[], sourceId: string): string {
 function supportedEndpoint(artifact: CatalogArtifact, selected?: string): CatalogArtifactEndpoint | undefined {
   return artifact.remoteEndpoints.find((endpoint) => endpoint.url === selected)
     || artifact.remoteEndpoints.find((endpoint) => endpoint.supported !== false);
+}
+
+function defaultCredentialMode(endpoint?: CatalogArtifactEndpoint): 'none' | 'workspace' | 'individual' {
+  const supported = endpoint?.supportedCredentialModes || ['none'];
+  if (supported.length === 1) return supported[0];
+  if (endpoint?.recommendedCredentialMode && supported.includes(endpoint.recommendedCredentialMode)) return endpoint.recommendedCredentialMode;
+  if (supported.includes('individual')) return 'individual';
+  return supported[0] || 'none';
 }
 
 function destinationHref(
@@ -94,11 +102,11 @@ export function clearMcpCatalogDiscoveryState(state: McpCatalogRouteState): McpC
 }
 
 function normalizeAgentServer(server: AgentMcpServerApi): InstalledServer {
-  return { id: server.id, name: server.name, url: server.url, revision: server.revision, authScope: server.authScope, authType: server.authType, authHeaderName: server.authHeaderName, provenance: server.provenance };
+  return { id: server.id, name: server.name, url: server.url, revision: server.revision, credentialMode: server.credentialMode, authType: server.authType, authHeaderName: server.authHeaderName, provenance: server.provenance };
 }
 
 function normalizeTargetServer(server: TargetMcpServer): InstalledServer {
-  return { id: server.id, name: server.serverName, url: server.serverUrl, revision: server.revision || 1, authScope: server.authScope, authType: server.authType, authHeaderName: server.authHeaderName, provenance: server.provenance };
+  return { id: server.id, name: server.serverName, url: server.serverUrl, revision: server.revision || 1, credentialMode: server.credentialMode, authType: server.authType, authHeaderName: server.authHeaderName, provenance: server.provenance };
 }
 
 export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ workspace, routeState, navigate }) => {
@@ -116,21 +124,16 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState('');
   const [selectedEndpoints, setSelectedEndpoints] = React.useState<Record<string, string>>({});
+  const [selectedCredentialModes, setSelectedCredentialModes] = React.useState<Record<string, 'none' | 'workspace' | 'individual'>>({});
   const [endpointConfiguration, setEndpointConfiguration] = React.useState<Record<string, Record<string, string>>>({});
-  const [connection, setConnection] = React.useState<McpPersonalConnection | null>(null);
-  const [connectionLoadError, setConnectionLoadError] = React.useState('');
   const [toolRefreshError, setToolRefreshError] = React.useState('');
-  const [connectionLoadNonce, setConnectionLoadNonce] = React.useState(0);
-  const [patDialogOpen, setPatDialogOpen] = React.useState(false);
+  const [credentialDialogOpen, setCredentialDialogOpen] = React.useState(false);
   const itemRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const lastSelectedId = React.useRef<string | undefined>(undefined);
   const catalogRefreshRequestedRef = React.useRef(false);
-  const rateLimit = useMcpRateLimit();
 
   const canManageMcp = hasWorkspacePermission(workspace, 'manage_mcp');
   const canSynchronize = hasWorkspacePermission(workspace, 'manage_catalog_sources');
-  const canUsePersonalMcpConnections = ['create_sessions', 'create_read_only_runs', 'create_read_write_runs']
-    .some((permission) => hasWorkspacePermission(workspace, permission as keyof NonNullable<Workspace['permissions']>));
   const hasActiveDiscoveryFilters = Boolean(
     routeState.q?.trim()
     || routeState.source
@@ -178,6 +181,10 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
     setSelectedEndpoints((current) => ({
       ...current,
       ...Object.fromEntries(artifacts.map((artifact) => [artifact.id, current[artifact.id] || supportedEndpoint(artifact)?.url || '']))
+    }));
+    setSelectedCredentialModes((current) => ({
+      ...current,
+      ...Object.fromEntries(artifacts.map((artifact) => [artifact.id, current[artifact.id] || defaultCredentialMode(supportedEndpoint(artifact))]))
     }));
   }, [artifacts]);
 
@@ -241,25 +248,13 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
     ? installedServers.find((server) => server.provenance?.sourceId === selectedArtifact.sourceId
       && server.provenance.artifactName === selectedArtifact.name)
     : undefined;
+  const connectionInstallations = React.useMemo(
+    () => matchingInstallation ? [matchingInstallation] : [],
+    [matchingInstallation]
+  );
   const installedCurrent = Boolean(matchingInstallation && selectedArtifact
     && matchingInstallation.provenance?.version === selectedArtifact.version
     && matchingInstallation.provenance.digest === selectedArtifact.digest);
-
-  React.useEffect(() => {
-    if (!selectedDestination || !matchingInstallation || matchingInstallation.authScope !== 'personal') {
-      setConnection(null);
-      setConnectionLoadError('');
-      return;
-    }
-    setConnection(null);
-    setConnectionLoadError('');
-    const request = selectedDestination.scopeType === 'agent'
-      ? catalogApi.getAgentMcpConnection(workspace.id, selectedDestination.id, matchingInstallation.id)
-      : catalogApi.getTargetMcpConnection(workspace.id, selectedDestination.id, matchingInstallation.id);
-    void request.then(setConnection).catch((cause) => {
-      setConnectionLoadError(rateLimit.captureError(matchingInstallation.id, cause, 'Personal connection status could not be loaded.').message);
-    });
-  }, [connectionLoadNonce, matchingInstallation?.id, selectedDestination?.key, workspace.id, rateLimit.captureError]);
 
   const refreshDestinationInstallations = async (): Promise<InstalledServer[]> => {
     if (!selectedDestination) return [];
@@ -269,6 +264,29 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
     setInstalledServers(servers);
     return servers;
   };
+
+  const {
+    connections,
+    connectionErrors,
+    loadingByServerId,
+    pendingServerId: pendingConnectionServerId,
+    connect: connectCredential,
+    verify: verifyCredential,
+    disconnect: disconnectCredential,
+    retry: retryCredential,
+    retryAfterSecondsFor
+  } = useMcpConnections({
+    workspaceId: workspace.id,
+    destination: selectedDestination
+      ? { kind: selectedDestination.scopeType, id: selectedDestination.id }
+      : { kind: 'agent', id: '' },
+    installations: connectionInstallations,
+    onConnectionReady: async () => { await refreshDestinationInstallations(); setToolRefreshError(''); },
+    onRefreshError: (_installation, message) => setToolRefreshError(message),
+    onError: (message) => setError(message || '')
+  });
+  const connection = matchingInstallation ? connections[matchingInstallation.id] : undefined;
+  const connectionLoadError = matchingInstallation ? connectionErrors[matchingInstallation.id] : '';
 
   const install = async () => {
     if (!selectedArtifact || !selectedDestination || pending) return;
@@ -283,6 +301,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
         remoteEndpoint: endpoint.url,
         serverName: selectedArtifact.title || selectedArtifact.name,
         enabled: true,
+        credentialMode: selectedCredentialModes[selectedArtifact.id] || defaultCredentialMode(endpoint),
         endpointConfiguration: endpointConfiguration[selectedArtifact.id] || {}
       };
       if (matchingInstallation) {
@@ -300,91 +319,12 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
       const servers = await refreshDestinationInstallations();
       const installed = servers.find((server) => server.provenance?.sourceId === selectedArtifact.sourceId
         && server.provenance.artifactName === selectedArtifact.name);
-      if (endpoint.requiresPersonalAuth && installed && !matchingInstallation) {
-        setConnection({
-          serverId: installed.id,
-          status: 'missing',
-          authType: installed.authType === 'custom_header' ? 'custom_header' : 'bearer_token',
-          action: 'connect_mcp_server'
-        });
-        setPatDialogOpen(true);
-      } else if (installed?.authScope === 'personal') {
-        setConnectionLoadNonce((value) => value + 1);
-      }
+      if (installed?.credentialMode !== 'none' && !matchingInstallation) setCredentialDialogOpen(true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'The catalog installation failed. Your selections were preserved.');
     } finally {
       setPending(false);
     }
-  };
-
-  const connect = async (credential: string) => {
-    if (!selectedDestination || !matchingInstallation) return;
-    if (rateLimit.remainingSeconds(matchingInstallation.id) > 0) return;
-    try {
-      const nextConnection = selectedDestination.scopeType === 'agent'
-        ? await catalogApi.putAgentMcpConnection(workspace.id, selectedDestination.id, matchingInstallation.id, { credential, consentGranted: true })
-        : await catalogApi.putTargetMcpConnection(workspace.id, selectedDestination.id, matchingInstallation.id, { credential, consentGranted: true });
-      setConnection(nextConnection);
-      if (nextConnection.status !== 'connected') {
-        throw new Error('The PAT was saved, but verification failed. Check its scopes, then verify again or replace it.');
-      }
-      rateLimit.clear(matchingInstallation.id);
-      try {
-        await refreshDestinationInstallations();
-        setToolRefreshError('');
-      } catch {
-        setToolRefreshError('The PAT is connected, but tools may be stale. Retry the installation refresh.');
-      }
-      setPatDialogOpen(false);
-    } catch (cause) {
-      const formatted = rateLimit.captureError(matchingInstallation.id, cause, 'The PAT could not be saved.');
-      setError(formatted.message);
-      throw cause;
-    }
-  };
-
-  const verify = async () => {
-    if (!selectedDestination || !matchingInstallation) return;
-    if (rateLimit.remainingSeconds(matchingInstallation.id) > 0) return;
-    setPending(true);
-    try {
-      const nextConnection = selectedDestination.scopeType === 'agent'
-        ? await catalogApi.verifyAgentMcpConnection(workspace.id, selectedDestination.id, matchingInstallation.id)
-        : await catalogApi.verifyTargetMcpConnection(workspace.id, selectedDestination.id, matchingInstallation.id);
-      setConnection(nextConnection);
-      if (nextConnection.status === 'connected') {
-        rateLimit.clear(matchingInstallation.id);
-        try {
-          await refreshDestinationInstallations();
-          setToolRefreshError('');
-        } catch {
-          setToolRefreshError('The PAT is connected, but tools may be stale. Retry the installation refresh.');
-        }
-      } else {
-        setError('The stored PAT is still unusable. Verify again, replace it, or disconnect.');
-      }
-    } catch (cause) {
-      setError(rateLimit.captureError(matchingInstallation.id, cause, 'The stored PAT could not be verified.').message);
-    } finally { setPending(false); }
-  };
-
-  const disconnect = async () => {
-    if (!selectedDestination || !matchingInstallation) return;
-    setPending(true);
-    try {
-      if (selectedDestination.scopeType === 'agent') await catalogApi.disconnectAgentMcp(workspace.id, selectedDestination.id, matchingInstallation.id);
-      else await catalogApi.disconnectTargetMcp(workspace.id, selectedDestination.id, matchingInstallation.id);
-      setConnection({
-        serverId: matchingInstallation.id,
-        status: 'missing',
-        authType: matchingInstallation.authType === 'custom_header' ? 'custom_header' : 'bearer_token',
-        action: 'connect_mcp_server'
-      });
-      rateLimit.clear(matchingInstallation.id);
-    } catch (cause) {
-      setError(rateLimit.captureError(matchingInstallation.id, cause, 'The personal PAT could not be removed.').message);
-    } finally { setPending(false); }
   };
 
   const selectArtifact = (artifact: CatalogArtifact) => {
@@ -409,9 +349,18 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
 
   const endpoint = selectedArtifact ? supportedEndpoint(selectedArtifact, selectedEndpoints[selectedArtifact.id]) : undefined;
   const configurationFields = (endpoint?.configurationFields || []).filter((field) => !field.secret && field.fixedValue === undefined);
+  const supportedCredentialModes = (endpoint?.supportedCredentialModes || [])
+    .filter((mode): mode is McpCredentialMode => mode === 'individual' || mode === 'workspace');
+  const selectedCredentialMode = (selectedArtifact
+    ? selectedCredentialModes[selectedArtifact.id]
+    : undefined) || defaultCredentialMode(endpoint);
   const missingConfiguration = configurationFields.some((field) => field.required && !endpointConfiguration[selectedArtifact?.id || '']?.[field.name] && field.default === undefined);
-  const connectionLoading = Boolean(matchingInstallation?.authScope === 'personal' && !connection && !connectionLoadError);
-  const connectionRetryAfterSeconds = matchingInstallation ? rateLimit.remainingSeconds(matchingInstallation.id) : 0;
+  const connectionLoading = Boolean(
+    matchingInstallation
+    && matchingInstallation.credentialMode !== 'none'
+    && loadingByServerId[matchingInstallation.id]
+  );
+  const connectionRetryAfterSeconds = matchingInstallation ? retryAfterSecondsFor(matchingInstallation.id) : 0;
   const noEnabledRegistries = sourcesLoaded && sources.length === 0;
   const agentReturnNavigation = resolveAgentCatalogReturnNavigation(workspace.id, routeState.destination);
   const returnAgentName = agentReturnNavigation
@@ -576,10 +525,24 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
                   className="mt-2"
                   value={endpoint?.url || ''}
                   options={selectedArtifact.remoteEndpoints.map((candidate) => ({ value: candidate.url, label: candidate.url, disabled: candidate.supported === false }))}
-                  onChange={(url) => setSelectedEndpoints((current) => ({ ...current, [selectedArtifact.id]: url }))}
+                  onChange={(url) => {
+                    setSelectedEndpoints((current) => ({ ...current, [selectedArtifact.id]: url }));
+                    const nextEndpoint = selectedArtifact.remoteEndpoints.find((candidate) => candidate.url === url);
+                    setSelectedCredentialModes((current) => ({ ...current, [selectedArtifact.id]: defaultCredentialMode(nextEndpoint) }));
+                  }}
                 />
               </div>
-              <p className="type-caption break-all text-ui-text-muted">Transport: streamable HTTP. Authentication: {endpoint?.requiresPersonalAuth ? 'personal connection required' : 'none declared'}.</p>
+              <p className="type-caption break-all text-ui-text-muted">Transport: streamable HTTP.</p>
+              {supportedCredentialModes.length > 0 && selectedCredentialMode !== 'none' && (
+                <McpCredentialOwnershipSelector
+                  name="catalog-mcp-credential-mode"
+                  modes={supportedCredentialModes}
+                  value={selectedCredentialMode}
+                  onChange={supportedCredentialModes.length > 1
+                    ? (credentialMode) => setSelectedCredentialModes((current) => ({ ...current, [selectedArtifact.id]: credentialMode }))
+                    : undefined}
+                />
+              )}
               {configurationFields.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{configurationFields.map((field) => <label key={field.name} className="text-sm font-semibold text-ui-text">{field.name}{field.required ? ' *' : ''}<input value={endpointConfiguration[selectedArtifact.id]?.[field.name] ?? field.default ?? ''} placeholder={field.placeholder} onChange={(event) => setEndpointConfiguration((current) => ({ ...current, [selectedArtifact.id]: { ...current[selectedArtifact.id], [field.name]: event.target.value } }))} className="mt-2 min-h-11 w-full rounded-md border border-ui-border bg-ui-bg px-3 font-normal text-ui-text" />{field.description && <span className="type-caption mt-1 block font-normal text-ui-text-muted">{field.description}</span>}</label>)}</div>}
             </div>
 
@@ -611,14 +574,15 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
               {!selectedArtifact.compatible && <p role="status" className="mt-3 text-sm text-status-warning-text">{selectedArtifact.incompatibilityReason || 'This artifact has no supported endpoint.'}</p>}
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" disabled={!canManageMcp || !selectedDestination || !selectedArtifact.compatible || !endpoint || endpoint.supported === false || missingConfiguration || installedCurrent || loadingDestination || pending} onClick={() => void install()}>{pending ? 'Saving…' : installedCurrent ? 'Installed' : matchingInstallation ? 'Update' : 'Install'}</Button>
-                {matchingInstallation?.authScope === 'personal' && connectionLoadError && <Button variant="secondary" disabled={pending} onClick={() => setConnectionLoadNonce((value) => value + 1)}>Retry connection status</Button>}
-                {connectionLoading && <Button variant="secondary" disabled>Loading PAT status…</Button>}
-                {matchingInstallation?.authScope === 'personal' && !connectionLoading && !connectionLoadError && connection?.status === 'error' && <Button variant="secondary" disabled={pending || !canUsePersonalMcpConnections || connectionRetryAfterSeconds > 0} onClick={() => void verify()}>{connectionRetryAfterSeconds > 0 ? `Try again in ${connectionRetryAfterSeconds}s` : 'Verify PAT'}</Button>}
-                {matchingInstallation?.authScope === 'personal' && !connectionLoading && !connectionLoadError && connection && <Button variant="secondary" disabled={pending || !canUsePersonalMcpConnections || connectionRetryAfterSeconds > 0} onClick={() => setPatDialogOpen(true)}>{connectionRetryAfterSeconds > 0 ? `Try again in ${connectionRetryAfterSeconds}s` : connection.status === 'missing' ? 'Connect PAT' : 'Replace PAT'}</Button>}
-                {matchingInstallation?.authScope === 'personal' && !connectionLoading && !connectionLoadError && (connection?.status === 'connected' || connection?.status === 'error') && <Button variant="secondary" disabled={pending || !canUsePersonalMcpConnections || connectionRetryAfterSeconds > 0} onClick={() => void disconnect()}>Disconnect</Button>}
+                {matchingInstallation?.credentialMode !== 'none' && connectionLoadError && <Button variant="secondary" disabled={pending} onClick={() => void retryCredential(matchingInstallation)}>Retry connection status</Button>}
+                {connectionLoading && <Button variant="secondary" disabled>Loading credential status…</Button>}
+                {matchingInstallation?.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && connection.status === 'error' && <Button variant="secondary" disabled={pendingConnectionServerId === matchingInstallation.id || connectionRetryAfterSeconds > 0} onClick={() => void verifyCredential(matchingInstallation)}>{connectionRetryAfterSeconds > 0 ? `Try again in ${connectionRetryAfterSeconds}s` : 'Verify credential'}</Button>}
+                {matchingInstallation?.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && <Button variant="secondary" disabled={pendingConnectionServerId === matchingInstallation.id || connectionRetryAfterSeconds > 0} onClick={() => setCredentialDialogOpen(true)}>{connectionRetryAfterSeconds > 0 ? `Try again in ${connectionRetryAfterSeconds}s` : connection.status === 'missing' ? matchingInstallation.credentialMode === 'workspace' ? 'Connect workspace credential' : 'Connect your credential' : 'Replace credential'}</Button>}
+                {matchingInstallation?.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && (connection.status === 'connected' || connection.status === 'error') && <Button variant="secondary" disabled={pendingConnectionServerId === matchingInstallation.id || connectionRetryAfterSeconds > 0} onClick={() => void disconnectCredential(matchingInstallation)}>Disconnect</Button>}
                 {toolRefreshError && <Button variant="secondary" disabled={pending} onClick={() => void refreshDestinationInstallations().then(() => setToolRefreshError('')).catch(() => undefined)}>Retry tool refresh</Button>}
               </div>
-              {connectionLoadError && <p role="alert" className="type-caption mt-2 text-status-danger-text">Personal connection status could not be loaded. Retry before changing this PAT.</p>}
+              {connectionLoadError && <p role="alert" className="type-caption mt-2 text-status-danger-text">Credential connection status could not be loaded. Retry before making changes.</p>}
+              {matchingInstallation?.credentialMode === 'workspace' && connection && !connection.canManage && <p className="type-caption mt-2 text-ui-text-muted">Managed by your workspace</p>}
               {toolRefreshError && <p role="alert" className="type-caption mt-2 text-status-warning-text">{toolRefreshError}</p>}
               {connectionRetryAfterSeconds > 0 && <p role="status" className="type-caption mt-2 text-status-warning-text">Connection controls unlock in {connectionRetryAfterSeconds}s.</p>}
               {!canManageMcp && <p className="type-caption mt-2 text-ui-text-muted">You need manage_mcp permission to install or update catalog servers.</p>}
@@ -627,16 +591,20 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
           </> : <MasterDetailEmptyState title="Select an MCP server" description="Review provenance, endpoint requirements, and destination before installing." />}
         </section>}
       />}
-      {patDialogOpen && matchingInstallation && (
-        <McpPatDialog
+      {credentialDialogOpen && matchingInstallation && (
+        <McpCredentialDialog
           serverName={matchingInstallation.name}
           serverUrl={matchingInstallation.url}
           authType={connection?.authType || matchingInstallation.authType}
           authHeaderName={matchingInstallation.authHeaderName}
+          credentialMode={matchingInstallation.credentialMode === 'workspace' ? 'workspace' : 'individual'}
           mode={connection?.status === 'missing' || !connection ? 'connect' : 'replace'}
           retryAfterSeconds={connectionRetryAfterSeconds}
-          onClose={() => setPatDialogOpen(false)}
-          onSubmit={connect}
+          onClose={() => setCredentialDialogOpen(false)}
+          onSubmit={async (credential) => {
+            const nextConnection = await connectCredential(matchingInstallation, credential);
+            if (nextConnection?.status === 'connected') setCredentialDialogOpen(false);
+          }}
         />
       )}
     </PageShell>

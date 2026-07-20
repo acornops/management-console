@@ -25,7 +25,6 @@ interface WorkspaceAgentDetailPanelProps {
   titleId?: string;
   canManageAgents: boolean;
   canManageMcp: boolean;
-  canUsePersonalMcpConnections: boolean;
   canManageSkills: boolean;
   testingAgentId: string;
   updatingAgentId: string;
@@ -188,7 +187,6 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               agent={selectedAgent}
               canManageAgents={props.canManageAgents}
               canManageMcp={props.canManageMcp}
-              canUsePersonalMcpConnections={props.canUsePersonalMcpConnections}
               canManageSkills={props.canManageSkills}
             />
           </div>

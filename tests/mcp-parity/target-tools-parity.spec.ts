@@ -16,9 +16,9 @@ test('target capability inventories label every AcornOps-provided tool and built
   const pdfRow = page.locator('[data-target-tool-row="true"]').filter({ hasText: 'Generate PDF report' });
   await expect(pdfRow).toBeVisible();
   await expect(pdfRow.getByText('Provided by AcornOps')).toBeVisible();
+  await expect(pdfRow.getByText('Always available')).toBeVisible();
   await expect(pdfRow.getByText('No configuration')).toBeVisible();
-  await expect(pdfRow.getByRole('switch')).toBeChecked();
-  await expect(pdfRow.getByRole('switch')).toBeDisabled();
+  await expect(pdfRow.getByRole('switch')).toHaveCount(0);
   await expect(pdfRow.getByRole('button', { name: /Actions for Generate PDF report/ })).toHaveCount(0);
 
   const webSearchRow = page.locator('[data-target-tool-row="true"]').filter({ hasText: 'Web Search' });

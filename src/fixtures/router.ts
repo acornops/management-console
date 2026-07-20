@@ -1,8 +1,9 @@
 import { FIXTURE_IDS, getFixtureState, resetFixtureStore } from './store';
 import { routeAutomationTemplateFixtureRequest } from './automationTemplateRoutes';
 import { routeCatalogFixtureRequest } from './catalogRoutes';
-import { personalConnection, routeMcpParityConnection } from './mcpParity';
+import { mcpConnection, routeMcpParityConnection } from './mcpParity';
 import { targetSummary, targetToolCatalog, workflowOptions } from './presenters';
+import { routePromptReferenceFixtureRequest } from './promptReferenceRoutes';
 import { workflowCapabilityPreview } from './workflowCapabilityPreview';
 
 export interface FixtureResponse {
@@ -58,7 +59,7 @@ function targetSkillCatalog(state: ReturnType<typeof getFixtureState>, targetId:
     targetType,
     clusterId: targetType === 'kubernetes' ? targetId : undefined,
     permissions: { canEdit: true, editableRoles: ['owner', 'admin'] },
-    items: state.targetSkills.map((skill) => ({
+    items: state.targetSkills.filter((skill) => skill.target_id === targetId).map((skill) => ({
       ...skill,
       id: skill.id,
       workspaceId: FIXTURE_IDS.workspace,
@@ -77,7 +78,7 @@ function targetSkillCatalog(state: ReturnType<typeof getFixtureState>, targetId:
 
 function mcpCatalog(state: ReturnType<typeof getFixtureState>, targetId: string) {
   const servers = state.targetMcpServers
-    .filter((server) => server.target_id === FIXTURE_IDS.cluster || targetId === FIXTURE_IDS.virtualMachine)
+    .filter((server) => server.target_id === targetId)
     .map((server) => ({
       id: server.id,
       name: server.server_name,
@@ -89,7 +90,7 @@ function mcpCatalog(state: ReturnType<typeof getFixtureState>, targetId: string)
       canEditConnection: !server.server_url.startsWith('builtin:'),
       canToggle: true,
       authType: server.auth_type,
-      authScope: server.auth_scope,
+      credentialMode: server.credential_mode,
       connectionStatus: server.connection_status,
       lastDiscoveryAt: server.last_discovery_at,
       lastDiscoveryError: server.last_discovery_error,
@@ -433,22 +434,21 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (match && method === 'POST') {
     const agentId = decode(match[2]);
     const unavailable = state.agentMcpServers.find((server) => {
-      if (server.agentId !== agentId || server.authScope !== 'personal') return false;
-      return personalConnection(state, 'agent', agentId, server).status !== 'connected';
+      if (server.agentId !== agentId || server.credentialMode === 'none') return false;
+      return mcpConnection(state, 'agent', agentId, server).status !== 'connected';
     });
     if (unavailable) {
-      const connection = personalConnection(state, 'agent', agentId, unavailable);
+      const connection = mcpConnection(state, 'agent', agentId, unavailable);
       const action = connection.status === 'missing' ? 'connect_mcp_server' : 'verify_mcp_server';
       return json({ error: {
-        code: 'MCP_PERSONAL_CONNECTION_REQUIRED',
-        message: 'A required personal MCP connection is not ready.',
+        code: 'MCP_CONNECTION_REQUIRED',
+        message: 'A required MCP credential connection is not ready.',
         retryable: false,
         details: {
-          readinessErrors: ['A required personal MCP connection is not ready.'],
           readinessFailures: [{
             serverId: unavailable.id,
             toolName: 'fixture_discovered_tool',
-            code: connection.status === 'missing' ? 'MCP_PERSONAL_CONNECTION_MISSING' : 'MCP_PERSONAL_CONNECTION_ERROR',
+            code: connection.status === 'missing' ? 'MCP_CONNECTION_MISSING' : 'MCP_CONNECTION_ERROR',
             action
           }]
         }
@@ -465,7 +465,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
       const server = {
         id: id('fixture-agent-mcp'), name: input.name, url: input.url, type: 'mcp', enabled: true,
         isSystem: false, canDelete: true, canEditConnection: true, canToggle: true,
-        authType: input.authType || 'none', authScope: input.authScope || 'none',
+        authType: input.authType || 'none', credentialMode: input.credentialMode || 'none',
         authHeaderName: input.authHeaderName, agentId, revision: 1,
         targetConstraints: { targetTypes: [], targetIds: [] }, connectionStatus: 'unknown',
         lastDiscoveryAt: null, lastDiscoveryError: null, tools: []
@@ -483,6 +483,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/workflow-options$/);
   if (match && method === 'GET') return json(workflowOptions(state));
+  const promptReferenceResponse = await routePromptReferenceFixtureRequest({ request, state, path, method, url });
+  if (promptReferenceResponse) return promptReferenceResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/workflows$/);
   if (match) {
     if (method === 'GET') return json({ items: clone(state.workflows) });
@@ -516,7 +518,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.workflowSchedules), summary: { total: state.workflowSchedules.length, active: state.workflowSchedules.filter((item) => item.status === 'enabled').length, paused: state.workflowSchedules.filter((item) => item.status === 'paused').length, approvalGated: 0 } });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', inputDefaults: {}, approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW, ...input };
+      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', controlMessage: '', approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW, ...input };
       state.workflowSchedules.push(schedule);
       return json({ schedule }, 201);
     }
@@ -597,7 +599,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
       const input = await bodyOf(request);
       if (input.auth?.credential || input.bearerToken || input.customHeaderValue) return fixtureError('External credentials are unavailable in frontend fixture mode.');
       const authType = input.auth?.type || input.authType || 'none';
-      const server = { id: id('fixture-mcp'), workspace_id: decode(match[1]), target_id: decode(match[2]), target_type: decode(match[2]) === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', server_name: input.name || input.serverName, server_url: input.url || input.serverUrl, enabled: input.enabled !== false, auth_type: authType, auth_scope: authType === 'none' ? 'none' : 'personal', auth_header_name: input.auth?.headerName, auth_header_prefix: input.auth?.headerPrefix, connection_status: 'unknown', last_discovery_at: null, last_discovery_error: null, revision: 1, tools: input.tools || [] };
+      const server = { id: id('fixture-mcp'), workspace_id: decode(match[1]), target_id: decode(match[2]), target_type: decode(match[2]) === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', server_name: input.name || input.serverName, server_url: input.url || input.serverUrl, enabled: input.enabled !== false, auth_type: authType, credential_mode: authType === 'none' ? 'none' : input.credentialMode || 'individual', auth_header_name: input.auth?.headerName, auth_header_prefix: input.auth?.headerPrefix, connection_status: 'unknown', last_discovery_at: null, last_discovery_error: null, revision: 1, tools: input.tools || [] };
       state.targetMcpServers.push(server);
       return json(server, 201);
     }

@@ -153,7 +153,7 @@ describe('authenticated surface component vocabulary', () => {
     expect(workspaceAgentsDrawers).toContain('<TextInput');
     expect(workspaceAgentsDrawers).toContain('<Textarea');
     expect(workspaceWorkflowsPage).toContain('<TextInput');
-    expect(workspaceWorkflowsPage).toContain('<Textarea');
+    expect(workspaceWorkflowsPage).toContain('<WorkflowPromptEditor');
     expect(targetSkillsView).toContain('<TextInput');
     expect(targetSkillsView).toContain('<Checkbox');
   });

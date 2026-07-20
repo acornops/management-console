@@ -1,5 +1,19 @@
 import { requestJson } from './http';
 import type { ControlPlaneRunEvent, ControlPlaneRunToolApproval } from './types';
+import type { PromptResourceRequirement } from './promptResourcesApi';
+
+export {
+  listPromptReferenceTypes,
+  resolvePromptReferences,
+  suggestPromptReferences
+} from './promptResourcesApi';
+export type {
+  PromptReferenceResolution,
+  PromptReferenceToken,
+  PromptReferenceTypeDescriptor,
+  PromptResourceCandidate,
+  PromptResourceRequirement
+} from './promptResourcesApi';
 
 export type WorkflowApiDefinition = Record<string, unknown> & {
   id: string;
@@ -18,7 +32,7 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   starterPrompt?: string;
   agentIds: string[];
   executionMode: 'direct' | 'coordinated';
-  targetConstraints?: { targetTypes: string[]; targetIds: string[] };
+  resourceRequirements: PromptResourceRequirement[];
   tags?: string[];
   inputs?: WorkflowApiInputDefinition[];
   requiredPermissions?: string[];
@@ -61,13 +75,10 @@ export interface WorkflowOption {
 }
 
 export interface WorkflowOptionsCatalog {
-  targets?: WorkflowOption[];
-  clusters: WorkflowOption[];
   mcpServers: WorkflowOption[];
   mcpTools: WorkflowOption[];
   skills: WorkflowOption[];
   agents: WorkflowOption[];
-  chatSessions: WorkflowOption[];
   outputFormats: WorkflowOption[];
   approvalPolicies: WorkflowOption[];
   runtimeLimits: WorkflowOption[];
@@ -114,19 +125,23 @@ export interface WorkflowCapabilityToolPreview {
   source: 'target' | 'mcp' | 'builtin';
 }
 
-export interface WorkflowMcpRequirementPreview {
+interface WorkflowMcpRequirementPreviewBase {
   serverId: string;
   serverName: string;
   authType: 'bearer_token' | 'custom_header';
-  owningAgent: { id: string; name: string };
   connectionState: 'connection_missing' | 'connection_error' | 'connected';
   authRequirement: {
-    scope: 'personal';
+    scope: 'workspace' | 'individual';
     credentialLabel: string;
     requiredInformation: Array<{ name: string; description: string }>;
   };
   action: 'connect_mcp_server' | 'verify_mcp_server' | 'none';
 }
+
+export type WorkflowMcpRequirementPreview = WorkflowMcpRequirementPreviewBase & (
+  | { owningAgent: { id: string; name: string }; owningTarget?: never }
+  | { owningTarget: { id: string; name: string; targetType: 'kubernetes' | 'virtual_machine' }; owningAgent?: never }
+);
 
 export interface WorkflowCapabilitiesPreview {
   workflowId: string;
@@ -229,7 +244,7 @@ export interface WorkflowSchedule {
   status: 'enabled' | 'paused';
   cron: string;
   timezone: string;
-  inputDefaults: Record<string, unknown>;
+  controlMessage: string;
   approvedContextGrants: string[];
   principal: { type: 'user'; id: string };
   createdBy?: { userId: string; displayName?: string };
@@ -261,7 +276,7 @@ export interface WorkflowScheduleInput {
   enabled?: boolean;
   cron: string;
   timezone: string;
-  inputDefaults?: Record<string, unknown>;
+  controlMessage: string;
   approvedContextGrants?: string[];
   principal: { type: 'user'; id: string };
 }
@@ -319,7 +334,7 @@ export type WorkflowSessionSummary = WorkflowSessionResponse['session'] & {
 
 export interface WorkflowScopeUpdateInput {
   agentIds: string[];
-  targetConstraints?: { targetTypes: string[]; targetIds: string[] } | null;
+  resourceRequirements?: PromptResourceRequirement[];
   capabilityPolicy?: {
     mode?: 'read_only' | 'read_write';
     restrictionMode?: 'inherit' | 'restrict';
@@ -334,7 +349,7 @@ export interface WorkflowCreateInput {
   description?: string;
   prompt: string;
   agentIds: string[];
-  targetConstraints?: { targetTypes: string[]; targetIds: string[] };
+  resourceRequirements?: PromptResourceRequirement[];
   tags?: string[];
   inputs?: WorkflowApiInputDefinition[];
   requiredPermissions?: string[];
@@ -343,10 +358,6 @@ export interface WorkflowCreateInput {
     restrictionMode?: 'inherit' | 'restrict';
     semanticCapabilityIds?: string[];
     contextGrants?: string[];
-    /** @deprecated Accepted for compatibility; the deployment limit is authoritative. */
-    maxRuntimeSeconds?: number;
-    /** @deprecated Accepted for compatibility; the deployment retention policy is authoritative. */
-    retentionDays?: number;
     approvalRequirements?: string[];
   };
 }
@@ -542,8 +553,7 @@ export function previewWorkflowCapabilities(
   workflowId: string,
   input: {
     approvedContextGrants?: string[];
-    target?: { id: string; targetType: 'kubernetes' | 'virtual_machine' };
-    inputs?: Record<string, unknown>;
+    content?: string;
   } = {}
 ): Promise<WorkflowCapabilitiesPreview> {
   return requestJson<Partial<WorkflowCapabilitiesPreview>>(
@@ -553,8 +563,7 @@ export function previewWorkflowCapabilities(
       body: JSON.stringify({
         workspaceId,
         approvedContextGrants: input.approvedContextGrants || [],
-        inputs: input.inputs || {},
-        ...(input.target ? { target: input.target } : {})
+        ...(input.content ? { content: input.content } : {})
       })
     }
   ).then(normalizeWorkflowCapabilitiesPreview);
@@ -582,9 +591,7 @@ export function postWorkflowSessionMessage(
   sessionId: string,
   input: {
     content: string;
-    inputs?: Record<string, unknown>;
-    targetId?: string;
-    targetType?: 'kubernetes' | 'virtual_machine';
+    clientRequestId?: string;
   }
 ): Promise<WorkflowMessageAccepted> {
   return requestJson<WorkflowMessageAccepted>(
@@ -594,9 +601,7 @@ export function postWorkflowSessionMessage(
       body: JSON.stringify({
         workspaceId,
         content: input.content,
-        inputs: input.inputs || {},
-        ...(input.targetId ? { targetId: input.targetId } : {}),
-        ...(input.targetType ? { targetType: input.targetType } : {})
+        ...(input.clientRequestId ? { clientRequestId: input.clientRequestId } : {})
       })
     }
   );

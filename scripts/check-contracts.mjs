@@ -23,6 +23,14 @@ const readme = read('README.md');
 const doc = read('docs/contracts/README.md');
 const manifest = JSON.parse(read('docs/contracts/manifest.json'));
 const manifestText = JSON.stringify(manifest);
+const publicOpenApi = JSON.parse(read('../docs-website/openapi/control-plane-public.json'));
+const publicOperations = new Set(
+  Object.entries(publicOpenApi.paths ?? {}).flatMap(([operationPath, pathItem]) =>
+    Object.keys(pathItem)
+      .filter((method) => ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(method))
+      .map((method) => `${method.toUpperCase()} ${operationPath}`)
+  )
+);
 const controlPlaneApi = read('src/services/controlPlaneApi.ts');
 const controlPlaneAuthApi = read('src/services/control-plane/authApi.ts');
 const kubernetesClusterApi = read('src/services/control-plane/kubernetesClusterApi.ts');
@@ -76,6 +84,11 @@ function docToken(value) {
   return value.replace(/^`|`$/g, '');
 }
 
+function openApiOperation(value) {
+  const [method, operationPath] = docToken(value).split(' ', 2);
+  return `${method} ${operationPath.split('?', 1)[0]}`;
+}
+
 for (const [docPath, implNeedle, label] of [
   ['`GET /api/v1/auth/oidc/login?return_to=<management-console-url>`', '/api/v1/auth/oidc/login', 'Login path'],
   ['`GET /api/v1/auth/csrf`', '/api/v1/auth/csrf', 'CSRF token path'],
@@ -123,10 +136,10 @@ for (const [docPath, implNeedle, label] of [
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', 'createTargetMcpServer(', 'Create target MCP server implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/import`', 'importTargetMcpServer(', 'Import target MCP server implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/reimport`', 'reimportTargetMcpServer(', 'Reimport target MCP server implementation'],
-  ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'getTargetMcpConnection(', 'Target personal connection implementation'],
-  ['`PUT /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'putTargetMcpConnection(', 'Target personal credential implementation'],
-  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection/verify`', 'verifyTargetMcpConnection(', 'Target PAT verification implementation'],
-  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'disconnectTargetMcp(', 'Target personal disconnect implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'getTargetMcpConnection(', 'Target credential connection implementation'],
+  ['`PUT /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'putTargetMcpConnection(', 'Target credential implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection/verify`', 'verifyTargetMcpConnection(', 'Target credential verification implementation'],
+  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'disconnectTargetMcp(', 'Target credential disconnect implementation'],
   ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', 'updateTargetMcpServer(', 'Update target MCP server implementation'],
   ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', 'deleteTargetMcpServer(', 'Delete target MCP server implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection`', '/test-connection', 'Test target MCP server path'],
@@ -152,7 +165,8 @@ for (const [docPath, implNeedle, label] of [
   ['`GET /api/v1/runs/{runId}/stream`', '/stream', 'Run stream path'],
   ['`POST /api/v1/runs/{runId}/cancel`', 'method: \'POST\'', 'Run cancel method']
 ]) {
-  expectIncludes(manifestText, docToken(docPath), `${label} manifest`);
+  const operation = openApiOperation(docPath);
+  expect(publicOperations.has(operation), `${label} OpenAPI operation: missing ${operation}`);
   expectIncludes(controlPlaneApiSurface, implNeedle, `${label} implementation`);
 }
 
@@ -250,6 +264,30 @@ for (const field of controlPlaneContract.requestFields.postMessage) {
 
 for (const field of controlPlaneContract.responseFields.postMessageAccepted) {
   expectIncludes(manifestText, field, 'Post message response manifest');
+}
+
+for (const guard of [
+  {
+    path: 'src/pages/WorkspaceWorkflowsPage.launchFields.tsx',
+    forbidden: ['PromptReferenceKind', 'parseTargetReferences', 'parseRepositoryPromptReferences', 'referencedOptions', '@cluster[']
+  },
+  {
+    path: 'src/services/control-plane/workflowApi.ts',
+    forbidden: ['selected_chat_sessions', 'chat_session_list', 'inputDefaults', 'allowed_repository']
+  },
+  {
+    path: 'src/pages/workflows/workflowPageHelpers.tsx',
+    forbidden: ['chatSessions:', 'clusters:', 'targets:', 'PromptReferenceKind']
+  },
+  {
+    path: 'src/pages/WorkspaceSchedulesPage.tsx',
+    forbidden: ['inputDefaults', 'chat_session_list', '@cluster[']
+  }
+]) {
+  const source = read(guard.path);
+  for (const forbidden of guard.forbidden) {
+    expect(!source.includes(forbidden), `${guard.path} must not contain retired prompt-resource contract ${forbidden}`);
+  }
 }
 
 if (failures.length > 0) {

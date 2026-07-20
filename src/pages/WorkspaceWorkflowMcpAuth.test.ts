@@ -7,7 +7,7 @@ import {
 import type { WorkflowMcpRequirementPreview } from '@/services/control-plane/workflowApi';
 
 function requirement(
-  overrides: Partial<WorkflowMcpRequirementPreview> = {}
+  overrides: Partial<Pick<WorkflowMcpRequirementPreview, 'authType' | 'connectionState' | 'action'>> = {}
 ): WorkflowMcpRequirementPreview {
   return {
     serverId: 'server-1',
@@ -16,7 +16,7 @@ function requirement(
     owningAgent: { id: 'agent-1', name: 'User-created Agent' },
     connectionState: 'connection_missing',
     authRequirement: {
-      scope: 'personal',
+      scope: 'individual',
       credentialLabel: 'API key or bearer token',
       requiredInformation: []
     },
@@ -26,7 +26,7 @@ function requirement(
 }
 
 describe('workflow MCP authentication recovery', () => {
-  it('offers generic credential connection for a missing personal connection', () => {
+  it('offers generic credential connection for a missing individual connection', () => {
     const missing = requirement();
     expect(canConnectWorkflowMcpRequirement(missing)).toBe(true);
     expect(workflowMcpCredentialMode(missing)).toBe('connect');

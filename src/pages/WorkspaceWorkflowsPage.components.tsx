@@ -9,14 +9,14 @@ import { DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
 import { MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, MasterDetailRow, masterDetailDiscoverySpacingClass } from '@/components/common/MasterDetailLayout';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
-import { McpPatDialog } from '@/features/catalog/McpPatDialog';
+import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
+import { useMcpConnections } from '@/features/catalog/useMcpConnections';
 import { appendWorkflowSearchTag, isSystemProvidedWorkflow, type WorkflowAgentReference, type WorkflowDefinition, type WorkflowPrimaryAction, type WorkflowTab } from '@/pages/workflows/workflowModel';
 import {
   titleFromInputName,
   workflowStatusTone
 } from '@/pages/workflows/workflowPageHelpers';
 import { formatUserDateTime } from '@/utils/dateTime';
-import { catalogApi } from '@/services/control-plane/catalogApi';
 import type { WorkflowCapabilitiesPreview, WorkflowCapabilityToolPreview, WorkflowMcpRequirementPreview } from '@/services/control-plane/workflowApi';
 
 function workflowProvenanceLabel(workflow: WorkflowDefinition): string {
@@ -464,15 +464,14 @@ function mcpConnectionTone(state: WorkflowMcpRequirementPreview['connectionState
   return 'neutral';
 }
 
-function mcpConnectionLabel(state: WorkflowMcpRequirementPreview['connectionState']): string {
-  if (state === 'connection_missing') return 'Connection required';
-  if (state === 'connection_error') return 'Connection failed';
-  return 'Connected';
+function mcpConnectionLabel(state: WorkflowMcpRequirementPreview['connectionState'], t: (key: string) => string): string {
+  if (state === 'connection_missing') return t('mcpServers.workflowConnectionRequired');
+  if (state === 'connection_error') return t('mcpServers.workflowConnectionFailed');
+  return t('mcpServers.statusConnected');
 }
 
 export function canConnectWorkflowMcpRequirement(requirement: WorkflowMcpRequirementPreview): boolean {
-  return requirement.authRequirement.scope === 'personal'
-    && Boolean(requirement.serverId)
+  return Boolean(requirement.serverId)
     && (
       (requirement.connectionState === 'connection_missing' && requirement.action === 'connect_mcp_server')
       || (requirement.connectionState === 'connection_error' && requirement.action === 'verify_mcp_server')
@@ -483,33 +482,44 @@ export function workflowMcpCredentialMode(requirement: WorkflowMcpRequirementPre
   return requirement.connectionState === 'connection_error' ? 'replace' : 'connect';
 }
 
-const WorkflowPreviewAuthRow: React.FC<{
+export function workflowCapabilityBlockerMessage(
+  preview: WorkflowCapabilitiesPreview,
+  fallback: string
+): string {
+  return preview.selectedTarget?.reason
+    || preview.targetCandidates.find((candidate) => candidate.status !== 'ready' && candidate.reason)?.reason
+    || fallback;
+}
+
+export const WorkflowPreviewAuthRow: React.FC<{
   requirements: WorkflowMcpRequirementPreview[];
   onConnectCredential: (requirement: WorkflowMcpRequirementPreview) => void;
 }> = ({ requirements, onConnectCredential }) => {
+  const { t } = useTranslation();
   const visibleRequirements = visibleMcpAuthRequirements(requirements);
   if (visibleRequirements.length === 0) return null;
   return (
     <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
-      <dt className="type-row-title">Required auth</dt>
+      <dt className="type-row-title">{t('mcpServers.requiredAuth')}</dt>
       <dd>
         <ul className="divide-y divide-ui-border">
           {visibleRequirements.map((requirement) => {
             const auth = requirement.authRequirement;
             const canConnectCredential = canConnectWorkflowMcpRequirement(requirement);
+            const owner = requirement.owningTarget || requirement.owningAgent;
             return (
-              <li key={`${requirement.owningAgent.id}:${requirement.serverId}`} className="py-3 first:pt-0 last:pb-0">
+              <li key={`${owner.id}:${requirement.serverId}`} className="py-3 first:pt-0 last:pb-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-semibold text-ui-text">{requirement.serverName}</span>
                   <span className="flex flex-wrap items-center gap-2">
-                    <StatusBadge tone={mcpConnectionTone(requirement.connectionState)}>{mcpConnectionLabel(requirement.connectionState)}</StatusBadge>
-                    {canConnectCredential && <Button type="button" variant="secondary" size="sm" onClick={() => onConnectCredential(requirement)}>{requirement.connectionState === 'connection_error' ? 'Replace credential' : 'Connect credential'}</Button>}
+                    <StatusBadge tone={mcpConnectionTone(requirement.connectionState)}>{mcpConnectionLabel(requirement.connectionState, t)}</StatusBadge>
+                    {canConnectCredential && <Button type="button" variant="secondary" size="sm" onClick={() => onConnectCredential(requirement)}>{t(requirement.connectionState === 'connection_error' ? 'mcpServers.replaceCredential' : 'mcpServers.connectCredential')}</Button>}
                   </span>
                 </div>
-                <p className="type-caption mt-1 text-ui-text-muted">{auth.scope === 'personal' ? 'Personal' : 'Workspace'} · {auth.credentialLabel}</p>
+                <p className="type-caption mt-1 text-ui-text-muted">{t(auth.scope === 'individual' ? 'mcpServers.individualCredential' : 'mcpServers.workspaceManagedCredential')} · {auth.credentialLabel} · {t(requirement.owningTarget ? 'mcpServers.ownedByTarget' : 'mcpServers.ownedByAgent', { name: owner.name })}</p>
                 {auth.requiredInformation.length > 0 && (
                   <div className="mt-3">
-                    <div className="type-micro-label text-ui-text-muted">Required information</div>
+                    <div className="type-micro-label text-ui-text-muted">{t('mcpServers.requiredInformation')}</div>
                     <ul className="mt-1.5 grid gap-1.5">
                       {auth.requiredInformation.map((item) => (
                         <li key={item.name} className="text-sm text-ui-text"><span className="font-semibold">{item.name}</span><span className="text-ui-text-muted">: {item.description}</span></li>
@@ -524,6 +534,57 @@ const WorkflowPreviewAuthRow: React.FC<{
       </dd>
     </div>
   );
+};
+
+export const WorkflowMcpCredentialDialog: React.FC<{
+  workspaceId: string;
+  requirement: WorkflowMcpRequirementPreview;
+  onClose: () => void;
+  onConnected: () => void;
+}> = ({ workspaceId, requirement, onClose, onConnected }) => {
+  const { t } = useTranslation();
+  const installation = React.useMemo(() => ({
+    id: requirement.serverId,
+    credentialMode: requirement.authRequirement.scope,
+    authType: requirement.authType
+  }), [requirement.authRequirement.scope, requirement.authType, requirement.serverId]);
+  const installations = React.useMemo(() => [installation], [installation]);
+  const titleId = React.useId();
+  const {
+    connections,
+    loadingByServerId,
+    connect,
+    retryAfterSecondsFor
+  } = useMcpConnections({
+    workspaceId,
+    destination: requirement.owningTarget
+      ? { kind: 'target', id: requirement.owningTarget.id }
+      : { kind: 'agent', id: requirement.owningAgent.id },
+    installations
+  });
+  const connection = connections[requirement.serverId];
+  if (loadingByServerId[requirement.serverId] || !connection) {
+    return <Dialog titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl"><h2 id={titleId} className="type-section-title">{t('mcpServers.loadingCredentialStatus')}</h2></Dialog>;
+  }
+  if (!connection.canManage) {
+    return <Dialog titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl"><h2 id={titleId} className="type-section-title">{t('mcpServers.workspaceCredentialRequired')}</h2><p className="type-caption mt-2 text-ui-text-muted">{t('mcpServers.askWorkspaceAdmin')}</p><div className="mt-5 flex justify-end"><Button type="button" variant="secondary" onClick={onClose}>{t('common.close')}</Button></div></Dialog>;
+  }
+  return <McpCredentialDialog
+    serverName={requirement.serverName}
+    authType={requirement.authType}
+    credentialLabel={requirement.authRequirement.credentialLabel}
+    credentialMode={requirement.authRequirement.scope}
+    mode={workflowMcpCredentialMode(requirement)}
+    retryAfterSeconds={retryAfterSecondsFor(requirement.serverId)}
+    onClose={onClose}
+    onSubmit={async (credential) => {
+      const next = await connect(installation, credential);
+      if (next?.status === 'connected') {
+        onClose();
+        onConnected();
+      }
+    }}
+  />;
 };
 
 export const WorkflowCapabilityLedger: React.FC<{
@@ -572,17 +633,11 @@ export const WorkflowCapabilityLedger: React.FC<{
     </CollectionState>
   </section>
   {credentialRequirement && canConnectWorkflowMcpRequirement(credentialRequirement) && (
-    <McpPatDialog
-      serverName={credentialRequirement.serverName}
-      authType={credentialRequirement.authType}
-      credentialLabel={credentialRequirement.authRequirement.credentialLabel}
-      mode={workflowMcpCredentialMode(credentialRequirement)}
+    <WorkflowMcpCredentialDialog
+      workspaceId={workspaceId}
+      requirement={credentialRequirement}
       onClose={() => setCredentialRequirement(null)}
-      onSubmit={async (credential) => {
-        await catalogApi.putAgentMcpConnection(workspaceId, credentialRequirement.owningAgent.id, credentialRequirement.serverId, { credential, consentGranted: true });
-        setCredentialRequirement(null);
-        onRetry();
-      }}
+      onConnected={onRetry}
     />
   )}
   </>;

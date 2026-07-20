@@ -54,9 +54,9 @@ describe('WorkflowTargetScopeEditor', () => {
     expect(targetIdsForTypes(targets, ['cluster-1'], [])).toEqual([]);
   });
 
-  it('treats legacy cluster options without provenance as Kubernetes targets', () => {
-    const legacyCluster = { value: 'legacy-cluster', label: 'Legacy Cluster' };
-    expect(visibleWorkflowTargets([legacyCluster], ['kubernetes'])).toEqual([legacyCluster]);
-    expect(visibleWorkflowTargets([legacyCluster], ['virtual_machine'])).toEqual([]);
+  it('rejects target options without final target provenance', () => {
+    const unscopedTarget = { value: 'unscoped-target', label: 'Unscoped target' };
+    expect(visibleWorkflowTargets([unscopedTarget], ['kubernetes'])).toEqual([]);
+    expect(visibleWorkflowTargets([unscopedTarget], ['virtual_machine'])).toEqual([]);
   });
 });

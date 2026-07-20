@@ -8,6 +8,7 @@ import {
   duplicateWorkflow,
   listWorkflowRunEvents,
   postWorkflowSessionMessage,
+  resolvePromptReferences,
   updateWorkflow,
   type WorkflowRunEvent
 } from '@/services/control-plane/workflowApi';
@@ -22,7 +23,6 @@ import {
   type WorkflowEditDraft
 } from './workflowPageHelpers';
 import { createWorkflowScopeActions } from './workflowScopeActions';
-import { getWorkflowLaunchInputState } from '../WorkspaceWorkflowsPage.launchFields';
 import { resolveMcpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 
 type WorkflowActionsContext = Record<string, any>;
@@ -97,7 +97,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setLaunchingWorkflowId(selectedWorkflow.id);
     try {
       const controlMessage = workflowMessage || selectedWorkflow.starterPrompt;
-      const promptReferences = getWorkflowLaunchInputState(selectedWorkflow, workflowOptions, controlMessage, workflowAgents, workflowRunInputs);
       let effectiveSessionId = workflowSessionIds[selectedWorkflow.id];
       if (!effectiveSessionId) {
         const sessionResponse = await createWorkflowSession(workspace.id, selectedWorkflow.id, {
@@ -106,13 +105,16 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         effectiveSessionId = sessionResponse.session.id;
         setWorkflowSessionIds((current) => ({ ...current, [selectedWorkflow.id]: effectiveSessionId }));
       }
+      const referencePreview = await resolvePromptReferences(workspace.id, {
+        prompt: controlMessage,
+        workflowId: selectedWorkflow.id,
+        mode: 'launch'
+      });
+      if (referencePreview.blockers.length > 0) {
+        throw new Error(referencePreview.blockers.map((blocker) => blocker.message).join(' '));
+      }
       const result = await postWorkflowSessionMessage(workspace.id, effectiveSessionId, {
-        content: controlMessage,
-        inputs: promptReferences.inputs,
-        ...(promptReferences.targetId ? {
-          targetId: promptReferences.targetId,
-          targetType: promptReferences.targetType
-        } : {})
+        content: controlMessage
       });
       const runId = result.run_id || optimisticRunId;
       const workflowRunId = result.workflow_run_id || runId;
@@ -251,14 +253,18 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     }));
     setWorkflowRunMessageSendingId(runId);
     try {
-      const promptReferences = getWorkflowLaunchInputState(selectedWorkflow, workflowOptions, content, workflowAgents, workflowRunInputs);
+      if (selectedWorkflow) {
+        const referencePreview = await resolvePromptReferences(workspace.id, {
+          prompt: content,
+          workflowId: selectedWorkflow.id,
+          mode: 'launch'
+        });
+        if (referencePreview.blockers.length > 0) {
+          throw new Error(referencePreview.blockers.map((blocker) => blocker.message).join(' '));
+        }
+      }
       await postWorkflowSessionMessage(workspace.id, sessionId, {
-        content,
-        inputs: selectedWorkflow ? promptReferences.inputs : {},
-        ...(promptReferences.targetId ? {
-          targetId: promptReferences.targetId,
-          targetType: promptReferences.targetType
-        } : {})
+        content
       });
       setWorkflowRunMessages((current: Record<string, WorkflowRunMessage[]>) => ({
         ...current,
@@ -488,9 +494,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         name,
         description: selectedWorkflowEditDraft.description.trim(),
         prompt: selectedWorkflowEditDraft.starterPrompt.trim() || `Start ${name}.`,
-        targetConstraints: selectedWorkflowEditDraft.targetTypes.length || selectedWorkflowEditDraft.targetIds.length
-          ? { targetTypes: selectedWorkflowEditDraft.targetTypes, targetIds: selectedWorkflowEditDraft.targetIds }
-          : null
+        resourceRequirements: selectedWorkflow.resourceRequirements
       });
       const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId);
       setWorkflows((current) => current.map((workflow) => workflow.id === selectedWorkflow.id

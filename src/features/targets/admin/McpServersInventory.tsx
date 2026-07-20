@@ -6,7 +6,7 @@ import type { SelectOption } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
-import type { McpPersonalConnection } from '@/services/control-plane/catalogApi';
+import type { McpConnection } from '@/services/control-plane/catalogApi';
 import { getMcpServerStatusDisplay, McpServerCard } from '@/features/targets/admin/McpServerCard';
 
 interface McpServersInventoryProps {
@@ -15,9 +15,8 @@ interface McpServersInventoryProps {
   pendingTestServerId: string | null;
   pendingToggleServerId: string | null;
   testResultsByServerId: Record<string, TargetMcpServerTestConnectionResult>;
-  personalConnections: Record<string, McpPersonalConnection>;
-  personalConnectionErrors: Record<string, string>;
-  canConnectPersonal: boolean;
+  connections: Record<string, McpConnection>;
+  connectionErrors: Record<string, string>;
   pendingConnectionServerId: string | null;
   retryAfterSecondsFor: (serverId: string) => number;
   recoveryServerId: string | null;
@@ -27,10 +26,10 @@ interface McpServersInventoryProps {
   onToggleServer: (server: TargetToolCatalogServer, enabled: boolean) => void;
   onEdit: (server: TargetToolCatalogServer) => void;
   onDelete: (server: TargetToolCatalogServer) => void;
-  onConnectPersonal: (server: TargetToolCatalogServer) => void;
-  onVerifyPersonal: (server: TargetToolCatalogServer) => void;
-  onDisconnectPersonal: (server: TargetToolCatalogServer) => void;
-  onRetryPersonal: (server: TargetToolCatalogServer) => void;
+  onConnect: (server: TargetToolCatalogServer) => void;
+  onVerify: (server: TargetToolCatalogServer) => void;
+  onDisconnect: (server: TargetToolCatalogServer) => void;
+  onRetry: (server: TargetToolCatalogServer) => void;
 }
 
 const mcpServerSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
@@ -41,9 +40,8 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   pendingTestServerId,
   pendingToggleServerId,
   testResultsByServerId,
-  personalConnections,
-  personalConnectionErrors,
-  canConnectPersonal,
+  connections,
+  connectionErrors,
   pendingConnectionServerId,
   retryAfterSecondsFor,
   recoveryServerId,
@@ -53,10 +51,10 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   onToggleServer,
   onEdit,
   onDelete,
-  onConnectPersonal,
-  onVerifyPersonal,
-  onDisconnectPersonal,
-  onRetryPersonal
+  onConnect,
+  onVerify,
+  onDisconnect,
+  onRetry
 }) => {
   const { t } = useTranslation();
   const [serverSearch, setServerSearch] = useState('');
@@ -105,24 +103,24 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   return (
     <>
       <section data-mcp-server-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
-          <div className="px-5 py-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
+          <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
             <h2 className="type-row-title">{t('mcpServers.serverInventoryTitle')}</h2>
             <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('mcpServers.serverInventoryBody')}</p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.serversMetric')}</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.serverCount}</p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.totalTools}</p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
             <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.enabledTools}</p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
             <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
               {toolAccessSummary.readOnlyTools}
@@ -195,9 +193,8 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                     pendingTestServerId={pendingTestServerId}
                     pendingToggleServerId={pendingToggleServerId}
                     testResult={testResultsByServerId[server.id]}
-                    personalConnection={personalConnections[server.id]}
-                    personalConnectionLoadError={personalConnectionErrors[server.id]}
-                    canConnectPersonal={canConnectPersonal}
+                    connection={connections[server.id]}
+                    connectionLoadError={connectionErrors[server.id]}
                     pendingConnection={pendingConnectionServerId === server.id}
                     retryAfterSeconds={retryAfterSecondsFor(server.id)}
                     recoveryAction={recoveryServerId === server.id ? recoveryAction : undefined}
@@ -206,10 +203,10 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                     onToggleServer={onToggleServer}
                     onEdit={onEdit}
                     onDelete={onDelete}
-                    onConnectPersonal={onConnectPersonal}
-                    onVerifyPersonal={onVerifyPersonal}
-                    onDisconnectPersonal={onDisconnectPersonal}
-                    onRetryPersonal={onRetryPersonal}
+                    onConnect={onConnect}
+                    onVerify={onVerify}
+                    onDisconnect={onDisconnect}
+                    onRetry={onRetry}
                   />
                 ))
               ) : (

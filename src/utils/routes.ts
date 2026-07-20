@@ -30,7 +30,6 @@ export type AppRoute =
   | { kind: 'workspaces' }
   | ({ kind: 'kubernetesClusters' } & ClusterCatalogRouteState)
   | { kind: 'accountSettings' }
-  | { kind: 'settings' }
   | { kind: 'help' }
   | { kind: 'externalIntegrationLink'; token?: string; status?: 'linked' | 'expired' | 'cancelled' }
   | { kind: 'workspaceOverview'; workspaceId: string }
@@ -258,7 +257,6 @@ export function parseAppRoute(path: string): AppRoute {
   if (pathname === '/workspaces') return { kind: 'workspaces' };
   if (pathname === '/kubernetes-clusters') return { kind: 'kubernetesClusters', ...parseClusterCatalogRouteState(params) };
   if (pathname === '/account') return { kind: 'accountSettings' };
-  if (pathname === '/settings') return { kind: 'settings' };
   if (pathname === '/help') return { kind: 'help' };
   if (pathname === '/integrations/external/link') {
     return {

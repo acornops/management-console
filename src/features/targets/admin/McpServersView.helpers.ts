@@ -2,7 +2,7 @@ import type {
   TargetToolCatalogItem,
   TargetToolCatalogServer
 } from '@/features/targets/admin/targetMcpCatalogTypes';
-import type { TargetMcpServer } from '@/services/control-plane/targetMcpLegacyTypes';
+import type { TargetMcpServer } from '@/services/control-plane/targetMcpTypes';
 
 export interface ServerToolsPageState {
   items: TargetToolCatalogItem[];
@@ -57,9 +57,10 @@ export function pendingCatalogServer(created: TargetMcpServer): TargetToolCatalo
     canEditConnection: true,
     canToggle: true,
     authType: created.authType,
-    authScope: created.authScope || 'personal',
+    credentialMode: created.credentialMode,
     authHeaderName: created.authHeaderName,
     authHeaderPrefix: created.authHeaderPrefix,
+    revision: created.revision || 1,
     publicHeaders: created.publicHeaders,
     connectionStatus: created.connectionStatus,
     lastDiscoveryAt: created.lastDiscoveryAt || null,

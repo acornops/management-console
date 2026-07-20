@@ -32,7 +32,7 @@ describe('catalog control-plane api', () => {
     expect(JSON.parse(mutations[1][1].body)).toMatchObject({ expectedRevision: 4, version: '1.2.3' });
   });
 
-  it('covers Agent and target personal connection lifecycle routes', async () => {
+  it('covers Agent and target credential connection lifecycle routes', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-1' }), { status: 200 }));
       if (init?.method === 'DELETE') return Promise.resolve(new Response(null, { status: 204 }));

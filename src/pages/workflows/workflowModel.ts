@@ -7,7 +7,7 @@ export type WorkflowPrimaryAction = 'launch' | 'activate' | 'setup';
 export interface WorkflowInput {
   name: string;
   label: string;
-  type: 'text' | 'select' | 'cluster' | 'chat_session_list' | 'repository' | 'format';
+  type: 'text' | 'select' | 'format';
   required: boolean;
   optionSource?: string;
 }
@@ -54,7 +54,13 @@ export interface WorkflowDefinition {
   executionMode: 'direct' | 'coordinated';
   semanticCapabilityIds: string[];
   capabilityRestrictionMode: WorkflowCapabilityRestrictionMode;
-  targetConstraints?: { targetTypes: string[]; targetIds: string[] };
+  resourceRequirements: Array<{
+    type: string;
+    minimum: number;
+    maximum: number;
+    requiredOperations: string[];
+    constraints?: Record<string, unknown>;
+  }>;
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
   owner: string;
   tags: string[];
@@ -107,21 +113,7 @@ export function getWorkflowRouteQuery(search: string): string {
 }
 
 export function getWorkflowRouteSelectionTarget(search: string): string {
-  const params = workflowRouteParams(search);
-  return (
-    params.get('workflow') ||
-    params.get('workflowId') ||
-    params.get('selectedWorkflow') ||
-    ''
-  ).trim();
-}
-
-export function findLegacyWorkflowQuerySelection(workflows: WorkflowDefinition[], search: string): WorkflowDefinition | undefined {
-  const params = workflowRouteParams(search);
-  if (getWorkflowRouteSelectionTarget(search)) return undefined;
-  const normalizedQuery = normalizeWorkflowRouteTarget(params.get('q') || '');
-  if (!normalizedQuery) return undefined;
-  return workflows.find((workflow) => normalizeWorkflowRouteTarget(workflow.name) === normalizedQuery);
+  return (workflowRouteParams(search).get('workflow') || '').trim();
 }
 
 export function filterWorkflowDefinitions(workflows: WorkflowDefinition[], query: string): WorkflowDefinition[] {

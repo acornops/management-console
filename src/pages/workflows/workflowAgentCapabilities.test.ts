@@ -64,6 +64,7 @@ const workflow: WorkflowDefinition = {
   }],
   requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
   contextGrants: ['workspace_metadata'],
+  resourceRequirements: [],
   inputs: [],
   policy: {
     mode: 'read_only',
@@ -79,9 +80,9 @@ describe('workflowAgentCapabilities', () => {
 
     expect(review).toHaveLength(1);
     expect(review[0].agentId).toBe('agent-cluster-triage');
-    expect(review[0].mcpServers).toEqual(['acornops-target-agent']);
+    expect(review[0].mcpServers).toEqual(['Acornops Target Agent']);
     expect(review[0].semanticCapabilityIds).toEqual(['target.diagnostics.read']);
-    expect(review[0].skills).toEqual(['acornops-observability', 'acornops-target-boundary-design']);
+    expect(review[0].skills).toEqual(['Acornops Observability', 'Acornops Target Boundary Design']);
     expect(review[0].tools).toEqual(['get_resource', 'get_resource_logs', 'list_resources']);
     expect(review[0].tools).not.toContain('target.diagnostics.read');
     expect(review[0].actionPolicy).toEqual([

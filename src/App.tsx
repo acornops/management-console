@@ -18,7 +18,7 @@ import { useRecentInvestigationSync } from '@/app/useRecentInvestigationSync';
 import { useAuthenticatedSessionLifecycle } from '@/app/useAuthenticatedSessionLifecycle';
 import { useThemeTransition } from '@/hooks/useThemeTransition';
 import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from '@/app/appWorkspaceSummaries';
-import { isWorkspaceDataRoute, legacySettingsRedirectPath, workspaceLandingPath } from '@/app/appNavigationGuards';
+import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
 import { readInitialThemePreference, readLanguagePreference } from '@/app/preferences';
@@ -322,14 +322,6 @@ const App: React.FC = () => {
     }
     return;
   }, [route.kind, route.kind === 'kubernetesClusters' ? route.q : undefined, route.kind === 'kubernetesClusters' ? route.status : undefined, selectedWorkspaceId, workspaceById, workspaces, navigate]);
-
-  useEffect(() => {
-    if (!user || route.kind !== 'settings') {
-      return;
-    }
-
-    navigate(legacySettingsRedirectPath({ selectedWorkspaceId, workspaceById, workspaces }), { replace: true });
-  }, [user, route.kind, selectedWorkspaceId, workspaceById, workspaces, navigate]);
 
   useEffect(() => {
     if (route.kind !== 'kubernetesClusterDiagnostics') {

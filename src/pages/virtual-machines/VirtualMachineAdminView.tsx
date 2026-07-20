@@ -46,11 +46,6 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
       canManageMcp={Boolean(workspace.permissions?.manage_mcp)}
       canManageTools={Boolean(workspace.permissions?.manage_tools || workspace.permissions?.manage_target_insights)}
       canRequestWriteRuns={Boolean(workspace.permissions?.create_read_write_runs)}
-      canUsePersonalConnections={Boolean(
-        workspace.permissions?.create_sessions
-        || workspace.permissions?.create_read_only_runs
-        || workspace.permissions?.create_read_write_runs
-      )}
     />
   );
 };

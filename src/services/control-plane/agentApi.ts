@@ -5,7 +5,7 @@ export type AgentProviderType = 'internal' | 'external';
 export type AgentTargetScopeApi = { type?: 'workspace' | 'selected_target'; targetTypes?: string[]; targetIds?: string[] };
 export type RunPermissionMode = 'read_only' | 'ask_before_changes' | 'auto_allowed_changes';
 export interface AgentMcpToolApi { name: string; serverId: string; alias: string; description?: string; capability: 'read' | 'write'; enabled: boolean; reviewState: 'pending' | 'approved' | 'rejected'; riskLevel: 'read_only' | 'non_destructive_write' | 'high_risk' | 'destructive'; autoAllowed: boolean }
-export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; authScope: 'none' | 'personal'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; targetConstraints: { targetTypes: string[]; targetIds: string[] }; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[] }
+export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; targetConstraints: { targetTypes: string[]; targetIds: string[] }; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[] }
 export interface WorkspaceNativeToolApi {
   id: string;
   title: string;
@@ -288,8 +288,8 @@ export function testAgent(
   workspaceId: string,
   agentId: string,
   input: { approvedContextGrants?: string[]; inputContext?: Record<string, unknown>; triggerId?: string } = {}
-): Promise<{ activity: AgentActivityRecordApi; compiledScope: Record<string, unknown> }> {
-  return requestJson<{ activity: AgentActivityRecordApi; compiledScope: Record<string, unknown> }>(
+): Promise<{ compiledScope: Record<string, unknown>; executing: false }> {
+  return requestJson<{ compiledScope: Record<string, unknown>; executing: false }>(
     `/api/v1/agents/${encodeURIComponent(agentId)}/test`,
     {
       method: 'POST',
@@ -368,7 +368,7 @@ const agentCapabilityBase = (workspaceId: string, agentId: string) => `/api/v1/w
 export function listAgentMcpServers(workspaceId: string, agentId: string): Promise<AgentMcpServerApi[]> {
   return requestJson<{ items: AgentMcpServerApi[] }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`).then((response) => response.items);
 }
-export function createAgentMcpServer(workspaceId: string, agentId: string, input: { name: string; url: string; authScope?: 'none' | 'personal'; authType?: 'none' | 'bearer_token' | 'custom_header'; authHeaderName?: string }): Promise<AgentMcpServerApi> {
+export function createAgentMcpServer(workspaceId: string, agentId: string, input: { name: string; url: string; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: 'none' | 'bearer_token' | 'custom_header'; authHeaderName?: string }): Promise<AgentMcpServerApi> {
   return requestJson<{ server: AgentMcpServerApi }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.server);
 }
 export function updateAgentMcpServer(workspaceId: string, agentId: string, serverId: string, input: Record<string, unknown>): Promise<AgentMcpServerApi> {

@@ -258,7 +258,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
 }) => {
   const { t } = useTranslation();
   const shouldShowCreateFirstWorkspace =
-    ((route.kind === 'workspaces' || route.kind === 'home' || route.kind === 'settings') && workspaces.length === 0) ||
+    ((route.kind === 'workspaces' || route.kind === 'home') && workspaces.length === 0) ||
     routeTargetsMissingWorkspace(route, workspaceContext, workspaces.length);
   const activeSettingsTab: SettingsTab = route.kind === 'workspaceMembers'
     ? 'members'

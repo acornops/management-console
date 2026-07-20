@@ -5,6 +5,7 @@ import { Activity, BookOpen, Check, Download, Eye, FileText, Globe2, MoreVertica
 import { useTranslation } from 'react-i18next';
 import { menuSurfaceClassName } from '@/components/common/menuStyles';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
+import { useFloatingActionMenu } from '@/hooks/useFloatingActionMenu';
 
 interface TargetToolRowProps {
   tool: ControlPlaneTargetToolItem;
@@ -31,10 +32,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
 }) => {
   const { t } = useTranslation();
   const actionMenuId = React.useId();
-  const actionMenuButtonRef = React.useRef<HTMLButtonElement>(null);
-  const actionMenuRef = React.useRef<HTMLDivElement>(null);
   const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
-  const [actionMenuStyle, setActionMenuStyle] = React.useState<React.CSSProperties | null>(null);
   const isTogglingTool = pendingToolId === tool.id;
   const isBlockedByOtherToolToggle = Boolean(pendingToolId && !isTogglingTool);
   const canEditTool = canEditTools && (tool.permissions?.canEdit ?? true);
@@ -45,48 +43,16 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
     : 'bg-status-success-soft text-status-success-text';
 
   const targetInsightsActionCount = tool.id === 'target_insights' ? (canEditTool ? 5 : 4) : 1;
-
-  const updateActionMenuPosition = React.useCallback(() => {
-    const trigger = actionMenuButtonRef.current;
-    if (!trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const menuWidth = 224;
-    const menuHeight = targetInsightsActionCount * 40 + 16;
-    const top = Math.min(rect.bottom + 6, window.innerHeight - menuHeight - 8);
-    setActionMenuStyle({
-      left: Math.max(8, rect.right - menuWidth),
-      top: Math.max(8, top),
-      width: menuWidth
-    });
-  }, [targetInsightsActionCount]);
-
-  React.useEffect(() => {
-    if (!actionMenuOpen) return undefined;
-
-    updateActionMenuPosition();
-    const closeMenu = () => setActionMenuOpen(false);
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (actionMenuButtonRef.current?.contains(target) || actionMenuRef.current?.contains(target)) return;
-      closeMenu();
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeMenu();
-    };
-    const handleResize = () => updateActionMenuPosition();
-    document.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize, true);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize, true);
-    };
-  }, [actionMenuOpen, updateActionMenuPosition]);
-
-  const closeActionMenu = () => setActionMenuOpen(false);
+  const {
+    triggerRef: actionMenuButtonRef,
+    menuRef: actionMenuRef,
+    style: actionMenuStyle,
+    close: closeActionMenu
+  } = useFloatingActionMenu({
+    open: actionMenuOpen,
+    setOpen: setActionMenuOpen,
+    estimatedHeight: targetInsightsActionCount * 40 + 16
+  });
   const invokeTargetInsightsAction = (action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => {
     closeActionMenu();
     if (onTargetInsightsAction) {
@@ -168,7 +134,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
                 {t('common.providedByAcornOps')}
               </span>
             </span>
-            <span className="mt-1 block truncate text-xs leading-5 text-ui-text-muted" title={tool.description}>{tool.description}</span>
+            <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={tool.description}>{tool.description}</span>
             <span className="mt-2 block text-xs text-ui-text-muted md:hidden">{runtimeLabel}</span>
           </div>
         </div>
