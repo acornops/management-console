@@ -204,6 +204,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         <div className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">
           <div className="type-micro-label text-ui-text-muted">{t('agentsWorkflows.schedule.workflow')}</div>
           <div className="mt-1 break-words text-sm font-semibold text-ui-text">{scheduleWorkflow?.name || t('agentsWorkflows.schedule.noWorkflow')}</div>
+          <p className="type-caption mt-1 text-ui-text-muted">{t('agentsWorkflows.schedule.latestDefinitionHelp')}</p>
         </div>
 
         <label className="block text-sm font-semibold text-ui-text">

@@ -4,6 +4,7 @@ export interface ControlPlaneTargetToolDomainFilters {
 }
 
 export interface ControlPlaneTargetToolConfig {
+  authorizationClass?: 'prompt_resource' | 'internal_artifact';
   domainFilters?: ControlPlaneTargetToolDomainFilters;
   learning?: {
     idleCheckpointDelayMinutes: number;
@@ -25,6 +26,7 @@ export interface ControlPlaneTargetToolItem {
   label: string;
   description: string;
   enabled: boolean;
+  toggleable?: boolean;
   origin: 'target_setting' | 'platform_native';
   capability: 'read' | 'write';
   runtimeKind: 'provider_native' | 'function';

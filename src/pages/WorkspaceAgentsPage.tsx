@@ -302,11 +302,11 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       updateSelectedAgent(selectedAgent.id, (agent) => ({
         ...agent,
         version: version.version,
-        auditHistory: [{ id: version.id, summary: `Version snapshot saved as v${version.version}.`, occurredAt: version.createdAt }, ...agent.auditHistory]
+        auditHistory: [{ id: version.id, summary: `Restore point saved from revision ${version.version}.`, occurredAt: version.createdAt }, ...agent.auditHistory]
       }));
-      setLocalNotice({ tone: 'success', message: `Saved v${version.version} as the current rollback point.` });
+      setLocalNotice({ tone: 'success', message: `Saved revision ${version.version} as a restore point.` });
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not save a version snapshot for this agent.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not save a restore point for this agent.' });
     } finally {
       setAgentVersionAction('');
     }
@@ -318,9 +318,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     try {
       const versions = await listAgentVersions(workspace.id, selectedAgent.id);
       setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: versions }));
-      setLocalNotice({ tone: 'success', message: 'Version history refreshed.' });
+      setLocalNotice({ tone: 'success', message: 'Restore points refreshed.' });
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not refresh version history.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not refresh restore points.' });
     } finally {
       setAgentVersionAction('');
     }
@@ -334,12 +334,12 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const mapped = mapApiAgent(restored, workspace.name, ownerLabelsByUserId);
       setAgents((current) => current.map((agent) => agent.id === mapped.id ? {
         ...mapped,
-        auditHistory: [{ id: `${version.id}:restore`, summary: `Restored from saved v${version.version}.`, occurredAt: new Date().toISOString() }, ...agent.auditHistory]
+        auditHistory: [{ id: `${version.id}:restore`, summary: `Created a new current revision from saved revision ${version.version}.`, occurredAt: new Date().toISOString() }, ...agent.auditHistory]
       } : agent));
       setSelectedAgentId(mapped.id);
-      setLocalNotice({ tone: 'success', message: `Restored v${version.version}.` });
+      setLocalNotice({ tone: 'success', message: `Restored from revision ${version.version} as the new current revision.` });
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not restore that version.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not restore that restore point.' });
     } finally {
       setAgentVersionAction('');
     }

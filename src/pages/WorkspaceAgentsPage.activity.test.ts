@@ -5,7 +5,7 @@ import { mergeAgentAuditHistoryWithActivity } from './WorkspaceAgentsPage.helper
 describe('mergeAgentAuditHistoryWithActivity', () => {
   const localEntry = {
     id: 'local-version-event',
-    summary: 'Version snapshot saved as v2.',
+    summary: 'Restore point saved from revision 2.',
     occurredAt: '2026-07-19T10:00:00.000Z'
   };
 

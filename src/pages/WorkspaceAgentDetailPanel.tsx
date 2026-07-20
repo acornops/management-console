@@ -116,9 +116,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                   {t('common.providedByAcornOps')}
                 </span>
               )}
-              <span className="type-caption font-semibold text-ui-text-muted">
-                {systemProvided ? `v${selectedAgent.version}` : `${selectedAgent.owner} · v${selectedAgent.version}`}
-              </span>
+              {!systemProvided && <span className="type-caption font-semibold text-ui-text-muted">{selectedAgent.owner}</span>}
             </div>
             <h2 id={props.titleId} className="mt-2 type-section-title">{selectedAgent.name}</h2>
             <p className="type-caption mt-1 max-w-3xl text-ui-text-muted">{selectedAgent.description}</p>
@@ -215,19 +213,19 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
           <section id="agent-profile-versions-panel" role="tabpanel" tabIndex={0} aria-labelledby="agent-profile-versions-tab" className="focus:outline-none">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 ref={versionsHeadingRef} tabIndex={-1} className="type-panel-title outline-none">{t('agentsWorkflows.agents.details.versionSnapshots')}</h3>
-                <p className="type-caption mt-1 text-ui-text-muted">{t(systemProvided ? 'agentsWorkflows.agents.details.systemVersionsDescription' : 'agentsWorkflows.agents.details.customVersionsDescription')}</p>
+                <h3 ref={versionsHeadingRef} tabIndex={-1} className="type-panel-title outline-none">{t('agentsWorkflows.agents.details.restorePoints')}</h3>
+                <p className="type-caption mt-1 text-ui-text-muted">{t(systemProvided ? 'agentsWorkflows.agents.details.systemRestorePointsDescription' : 'agentsWorkflows.agents.details.customRestorePointsDescription')}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="secondary" size="sm" onClick={props.onRefreshSelectedAgentVersions} disabled={props.agentVersionAction === `${selectedAgent.id}:history`}><ICONS.RefreshCw className={`h-4 w-4 ${props.agentVersionAction === `${selectedAgent.id}:history` ? 'animate-spin' : ''}`} aria-hidden="true" />{t('common.refresh')}</Button>
-                {!systemProvided && <Button type="button" variant="secondary" size="sm" onClick={props.onSaveSelectedAgentVersion} disabled={!props.canManageAgents || props.agentVersionAction === selectedAgent.id}><ICONS.Save className="h-4 w-4" aria-hidden="true" />{props.agentVersionAction === selectedAgent.id ? t('agentsWorkflows.agents.details.saving') : t('agentsWorkflows.agents.details.saveSnapshot')}</Button>}
+                {!systemProvided && <Button type="button" variant="secondary" size="sm" onClick={props.onSaveSelectedAgentVersion} disabled={!props.canManageAgents || props.agentVersionAction === selectedAgent.id}><ICONS.Save className="h-4 w-4" aria-hidden="true" />{props.agentVersionAction === selectedAgent.id ? t('agentsWorkflows.agents.details.saving') : t('agentsWorkflows.agents.details.saveRestorePoint')}</Button>}
               </div>
             </div>
             <div className="mt-4 divide-y divide-ui-border border-y border-ui-border">
               {versions.length ? versions.map((version) => (
                 <div key={version.id}>
                   <div className="flex flex-wrap items-center justify-between gap-3 py-3">
-                    <span><strong className="text-sm text-ui-text">v{version.version}</strong><span className="type-caption ml-3 text-ui-text-muted">{formatAgentTimestamp(version.createdAt, version.createdAt, locale)}</span></span>
+                    <span><strong className="text-sm text-ui-text">{t('agentsWorkflows.agents.details.revisionLabel', { version: version.version })}</strong><span className="type-caption ml-3 text-ui-text-muted">{formatAgentTimestamp(version.createdAt, version.createdAt, locale)}</span></span>
                     {!systemProvided && (
                       <Button
                         ref={(node) => { if (node) restoreTriggerRefs.current.set(version.id, node); else restoreTriggerRefs.current.delete(version.id); }}
@@ -259,7 +257,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                     />
                   )}
                 </div>
-              )) : <p className="py-5 text-sm text-ui-text-muted">{t('agentsWorkflows.agents.details.noVersionSnapshots')}</p>}
+              )) : <p className="py-5 text-sm text-ui-text-muted">{t('agentsWorkflows.agents.details.noRestorePoints')}</p>}
             </div>
           </section>
         )}

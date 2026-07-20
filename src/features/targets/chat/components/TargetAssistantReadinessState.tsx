@@ -11,7 +11,6 @@ interface TargetAssistantReadinessStateProps {
   onOpenAiSettings: () => void;
   status: AiRuntimeReadinessStatus;
   t: TFunction;
-  toolCount?: number;
 }
 
 export const TargetAssistantReadinessState: React.FC<TargetAssistantReadinessStateProps> = ({
@@ -19,8 +18,7 @@ export const TargetAssistantReadinessState: React.FC<TargetAssistantReadinessSta
   compact = false,
   onOpenAiSettings,
   status,
-  t,
-  toolCount
+  t
 }) => {
   if (status === 'ready') return null;
 
@@ -44,9 +42,6 @@ export const TargetAssistantReadinessState: React.FC<TargetAssistantReadinessSta
         : t('chat.aiSettingsRequiredReadOnlyBody');
   const actionLabel = isUnavailable ? t('chat.openAiSettings') : t('chat.configureAi');
   const canOpenSettings = !isLoading && canManageAiSettings;
-  const toolAvailability = status === 'unconfigured' && toolCount !== undefined
-    ? t('chat.toolsAvailableAfterSetup', { count: toolCount })
-    : undefined;
   const icon = isLoading
     ? <LoaderCircle className="motion-safe:animate-spin" />
     : canOpenSettings
@@ -68,7 +63,6 @@ export const TargetAssistantReadinessState: React.FC<TargetAssistantReadinessSta
           <div className="min-w-0 flex-1">
             <h2 className="type-row-title text-ui-text">{title}</h2>
             <p className="type-caption mt-1 max-w-[72ch] text-ui-text-muted">{description}</p>
-            {toolAvailability && <p className="type-caption mt-1 text-ui-text-muted">{toolAvailability}</p>}
           </div>
           {canOpenSettings && (
             <Button type="button" variant="secondary" size="sm" onClick={onOpenAiSettings} className="w-full sm:w-auto">
@@ -83,7 +77,7 @@ export const TargetAssistantReadinessState: React.FC<TargetAssistantReadinessSta
   return (
     <EmptyState
       embedded
-      className="min-h-full"
+      className="min-h-full items-start pt-28 lg:pt-32 xl:pt-36"
       icon={icon}
       title={title}
       description={description}
@@ -92,7 +86,6 @@ export const TargetAssistantReadinessState: React.FC<TargetAssistantReadinessSta
           {actionLabel}
         </Button>
       ) : undefined}
-      footer={toolAvailability}
       aria-live="polite"
       aria-busy={isLoading || undefined}
     />

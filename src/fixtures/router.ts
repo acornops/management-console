@@ -563,6 +563,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const tool = catalog.items.find((item) => item.id === decode(match![3]));
     if (!tool) return notFound('Target tool');
     Object.assign(tool, await bodyOf(request));
+    state.targetToolSettings[tool.id] = tool.enabled;
     const stored = state.targetTools.find((item) => item.id === tool.id);
     if (stored) stored.enabledConfigured = tool.enabled;
     return json(tool);

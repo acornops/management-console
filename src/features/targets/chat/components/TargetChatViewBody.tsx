@@ -143,7 +143,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const hasBlockingGate = Boolean(recentActivityWarning);
   const hasReadyAiRuntime = aiRuntimeReadiness.status === 'ready';
-  const setupToolCount = assistantCapabilitiesPreview?.toolSummary.totalAllowed;
   const {
     createSessionFromSearch,
     finishHistoryResize,
@@ -381,7 +380,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
               status={aiRuntimeReadiness.status}
               canManageAiSettings={canManageAiSettings}
               onOpenAiSettings={onOpenAiSettings}
-              toolCount={setupToolCount}
               t={t}
             />
           ) : visibleMessages.length === 0 ? (
@@ -558,7 +556,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             status={aiRuntimeReadiness.status}
             canManageAiSettings={canManageAiSettings}
             onOpenAiSettings={onOpenAiSettings}
-            toolCount={setupToolCount}
             t={t}
           />
         ) : null}

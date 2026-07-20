@@ -228,11 +228,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                           )}
                         </span>
                         <span className="type-caption mt-1 block break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.description}</span>
-                        <span className="type-caption mt-1.5 block break-words font-semibold text-ui-text-muted [overflow-wrap:anywhere]">
-                          {isSystemProvidedAgent(agent)
-                            ? `v${agent.version}`
-                            : t('agentsWorkflows.agents.ownerVersion', { owner: agent.owner, version: agent.version })}
-                        </span>
+                        {!isSystemProvidedAgent(agent) && <span className="type-caption mt-1.5 block break-words font-semibold text-ui-text-muted [overflow-wrap:anywhere]">{agent.owner}</span>}
                       </span>
                     </CatalogCell>
                     <CatalogCell label={t('agentsWorkflows.agents.fields.status')}>

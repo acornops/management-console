@@ -48,7 +48,8 @@ export function targetToolCatalog(state: FixtureState, targetId: string) {
         id: 'web_search',
         label: 'Web Search',
         description: 'Allow assistant runs for this target to search the web through the selected LLM provider.',
-        enabled: true,
+        enabled: state.targetToolSettings.web_search ?? true,
+        toggleable: true,
         origin: 'target_setting',
         capability: 'read',
         runtimeKind: 'provider_native',
@@ -60,7 +61,8 @@ export function targetToolCatalog(state: FixtureState, targetId: string) {
         id: 'target_insights',
         label: 'Insights',
         description: 'Retrieve and improve target-specific troubleshooting insights for future assistant runs.',
-        enabled: true,
+        enabled: state.targetToolSettings.target_insights ?? true,
+        toggleable: true,
         origin: 'target_setting',
         capability: 'read',
         runtimeKind: 'function',
@@ -79,13 +81,14 @@ export function targetToolCatalog(state: FixtureState, targetId: string) {
       {
         id: 'reports.pdf.generate',
         label: 'Generate PDF report',
-        description: 'Persist a bounded, provenance-linked PDF report artifact for the current workflow run.',
-        enabled: true,
+        description: 'Create a provenance-linked PDF incident report from the current assistant conversation and available evidence.',
+        enabled: state.targetToolSettings['reports.pdf.generate'] ?? true,
+        toggleable: true,
         origin: 'platform_native',
         capability: 'read',
         runtimeKind: 'function',
         visibility: { appearsInAssistantToolList: true, appearsInRunEnabledTools: true, appearsInToolCalls: true },
-        permissions: { canEdit: false },
+        permissions: { canEdit: true },
         config: { authorizationClass: 'internal_artifact' }
       }
     ]

@@ -17,20 +17,15 @@ const copy: Record<string, string> = {
   'chat.configureAi': 'Configure AI'
 };
 
-const t = ((key: string, options?: { count?: number }) => (
-  key === 'chat.toolsAvailableAfterSetup'
-    ? `${options?.count} tools will be available after setup`
-    : copy[key] || key
-)) as never;
+const t = ((key: string) => copy[key] || key) as never;
 
 describe('TargetAssistantReadinessState', () => {
-  it('shows setup recovery and successful capability preview details to administrators', () => {
+  it('shows a focused setup recovery action to administrators', () => {
     const markup = renderToStaticMarkup(
       <TargetAssistantReadinessState
         status="unconfigured"
         canManageAiSettings
         onOpenAiSettings={() => undefined}
-        toolCount={4}
         t={t}
       />
     );
@@ -39,7 +34,7 @@ describe('TargetAssistantReadinessState', () => {
     expect(markup).toContain('data-empty-state-surface="embedded"');
     expect(markup).toContain('Connect an AI model to continue');
     expect(markup).toContain('Configure AI');
-    expect(markup).toContain('4 tools will be available after setup');
+    expect(markup).not.toContain('tools will be available');
   });
 
   it('directs read-only users to an administrator without rendering an unavailable action', () => {

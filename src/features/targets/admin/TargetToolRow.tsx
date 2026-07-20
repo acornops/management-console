@@ -37,7 +37,8 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   const isBlockedByOtherToolToggle = Boolean(pendingToolId && !isTogglingTool);
   const canEditTool = canEditTools && (tool.permissions?.canEdit ?? true);
   const isPlatformNative = tool.origin === 'platform_native';
-  const canToggleTool = canEditTool && !isBlockedByOtherToolToggle && !isTogglingTool;
+  const isToggleable = tool.toggleable ?? !isPlatformNative;
+  const canToggleTool = isToggleable && canEditTool && !isBlockedByOtherToolToggle && !isTogglingTool;
   const capabilityBadgeClassName = capability === 'write'
     ? 'bg-status-warning-soft text-status-warning-text'
     : 'bg-status-success-soft text-status-success-text';
@@ -145,7 +146,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
         </span>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
-        {isPlatformNative ? (
+        {!isToggleable ? (
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-status-success-text">
             <Check className="h-4 w-4" aria-hidden="true" />
             {t('tools.alwaysAvailable')}

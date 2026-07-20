@@ -20,10 +20,9 @@ import { formatUserDateTime } from '@/utils/dateTime';
 import type { WorkflowCapabilitiesPreview, WorkflowCapabilityToolPreview, WorkflowMcpRequirementPreview } from '@/services/control-plane/workflowApi';
 
 function workflowProvenanceLabel(workflow: WorkflowDefinition): string {
-  const version = workflow.version ? `v${workflow.version}` : '';
   return isSystemProvidedWorkflow(workflow)
-    ? ['Built-in', version].filter(Boolean).join(' · ')
-    : `${workflow.owner}${version ? ` · ${version}` : ''}`;
+    ? 'Built-in'
+    : workflow.owner;
 }
 
 function formatWorkflowTimestamp(value: string, fallback: string): string {

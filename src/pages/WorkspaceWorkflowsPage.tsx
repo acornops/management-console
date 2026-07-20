@@ -416,7 +416,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
         detail={selectedWorkflow ? (
           <section className="min-w-0 overflow-hidden">
             <MasterDetailPaneHeader
-              badges={<><StatusBadge tone={workflowStatusTone(selectedWorkflow.status)}>{selectedWorkflow.status}</StatusBadge><WorkflowModeBadge mode={selectedWorkflow.policy.mode} />{systemProvidedSelected ? <><span className="type-caption font-semibold text-ui-text-muted">Built-in</span>{selectedWorkflow.version && <span className="type-caption font-semibold text-ui-text-muted">v{selectedWorkflow.version}</span>}</> : <span className="type-caption font-semibold text-ui-text-muted">{selectedWorkflow.owner}{selectedWorkflow.version ? ` · v${selectedWorkflow.version}` : ''}</span>}</>}
+              badges={<><StatusBadge tone={workflowStatusTone(selectedWorkflow.status)}>{selectedWorkflow.status}</StatusBadge><WorkflowModeBadge mode={selectedWorkflow.policy.mode} /><span className="type-caption font-semibold text-ui-text-muted">{systemProvidedSelected ? 'Built-in' : selectedWorkflow.owner}</span></>}
               title={selectedWorkflow.name}
               description={selectedWorkflow.description}
               actions={<WorkflowLaunchActions

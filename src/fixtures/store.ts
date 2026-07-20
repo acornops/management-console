@@ -36,6 +36,7 @@ export interface FixtureState {
   runs: Record<string, Record<string, any>>;
   resources: Array<Record<string, any>>;
   targetTools: Array<Record<string, any>>;
+  targetToolSettings: Record<string, boolean>;
   targetSkills: Array<Record<string, any>>;
   targetMcpServers: Array<Record<string, any>>;
   agentMcpServers: Array<Record<string, any>>;
@@ -323,6 +324,11 @@ export function createFixtureState(): FixtureState {
       { id: 'production/payments-worker', family: 'workloads', kind: 'Pod', name: 'payments-worker-7c5b9f-demo', namespace: 'production', status: 'Critical', node: 'fixture-control-plane', clusterId: FIXTURE_IDS.cluster, clusterName: cluster.name, item: { phase: 'Running', restartCount: 4 } }
     ],
     targetTools,
+    targetToolSettings: {
+      web_search: true,
+      target_insights: true,
+      'reports.pdf.generate': true
+    },
     targetSkills: [
       { id: 'fixture-kubernetes-triage', target_id: FIXTURE_IDS.cluster, target_type: 'kubernetes', name: 'Kubernetes triage', description: 'Evidence-first workload health investigation.', enabled: true, revision: 1, contentDigest: 'sha256:fixture-skill', source: { type: 'manual' }, files: [{ path: 'SKILL.md', content: '# Kubernetes triage\nInspect events, status, and logs.', contentDigest: 'sha256:fixture-skill-file' }] },
       { id: 'fixture-vm-diagnostics', target_id: FIXTURE_IDS.virtualMachine, target_type: 'virtual_machine', name: 'VM diagnostics', description: 'Evidence-first Linux service and process investigation.', enabled: true, revision: 1, contentDigest: 'sha256:fixture-vm-skill', source: { type: 'manual' }, files: [{ path: 'SKILL.md', content: '# VM diagnostics\nInspect services, processes, listeners, and logs.', contentDigest: 'sha256:fixture-vm-skill-file' }] }
