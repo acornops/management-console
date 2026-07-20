@@ -1,6 +1,5 @@
 import { ChatMessage, ChatRuntimeSelection, ChatSession } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { createLocalMessageId, sleep } from '@/features/targets/chat/lib/helpers';
 import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/features/targets/chat/lib/trace-utils';
 import {
@@ -22,13 +21,16 @@ import {
   replacePendingCancelledRunMessages
 } from '@/features/targets/chat/hooks/chatRunCancellation';
 import { LiveRunTrace } from '@/features/targets/chat/types';
-import { buildChatSubmitFailureMessage, replacePendingAssistantWithFailure } from '@/features/targets/chat/hooks/chatSubmitFailures';
+import {
+  buildChatSubmitFailureMessage,
+  isAssistantReferenceRejection,
+  isRuntimeSelectionPolicyRejection,
+  replacePendingAssistantWithFailure
+} from '@/features/targets/chat/hooks/chatSubmitFailures';
+import { buildOptimisticUserMessage } from '@/features/targets/chat/hooks/chatSubmitMessage';
 import type { ChatSubmitArgs } from '@/features/targets/chat/hooks/chatSubmitTypes';
 export const RUN_TERMINAL_WAIT_TIMEOUT_MS = 600000;
-export function isRuntimeSelectionPolicyRejection(error: unknown): boolean {
-  return error instanceof ControlPlaneRequestError
-    && ['PROVIDER_NOT_ALLOWED', 'MODEL_NOT_ALLOWED', 'REASONING_EFFORT_NOT_ALLOWED'].includes(error.code || '');
-}
+export { isRuntimeSelectionPolicyRejection } from '@/features/targets/chat/hooks/chatSubmitFailures';
 export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
   const {
     target,
@@ -40,6 +42,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     isLoading,
     overrideInput,
     runtimeSelection,
+    assistantReferences = [],
     shouldStickToBottomRef,
     onUpdateSessions,
     setActiveSessionId,
@@ -92,14 +95,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
   }
 
   const userMessageId = createLocalMessageId();
-  const userMsg: ChatMessage = {
-    id: userMessageId,
-    role: 'user',
-    content: prompt,
-    timestamp: now,
-    clientMessageId: userMessageId
-  };
-
+  const userMsg = buildOptimisticUserMessage(prompt, now, userMessageId, assistantReferences);
   session = {
     ...session,
     messages: [...session.messages, userMsg],
@@ -206,7 +202,8 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
       prompt,
       canRequestWriteRuns ? 'read_write' : 'read_only',
       userMsg.id,
-      runtimeSelection
+      runtimeSelection,
+      assistantReferences
     );
     const acceptedRuntimeSelection = accepted.runtimeSelection || runtimeSelection;
     if (acceptedRuntimeSelection) {
@@ -603,6 +600,8 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
       setInputValue(inputValue);
       onRuntimeSelectionRejected?.();
     }
+    const shouldRethrow = isAssistantReferenceRejection(error);
+    if (shouldRethrow) setInputValue(inputValue);
     const failureMessage = buildChatSubmitFailureMessage({
       error,
       workspaceId: target.workspaceId,
@@ -625,6 +624,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     };
     sessions = upsertSession(sessions, session);
     publishSessions(true);
+    if (shouldRethrow) throw error;
   } finally {
     if (streamAbortController) streamAbortController.abort();
     if (streamPromise) await streamPromise.catch(() => undefined);

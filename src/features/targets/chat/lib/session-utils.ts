@@ -1,4 +1,4 @@
-import { ChatMessage, ChatSession } from '@/types';
+import { ChatAssistantReference, ChatMessage, ChatSession } from '@/types';
 import { ControlPlaneSessionMessage } from '@/services/controlPlaneApi';
 import { createLocalMessageId, toTimestamp } from '@/features/targets/chat/lib/helpers';
 
@@ -10,6 +10,22 @@ const CHAT_FAILURE_PREFIX = 'I could not complete the troubleshooting run.';
  */
 export function mapControlPlaneMessage(message: ControlPlaneSessionMessage): ChatMessage {
   const role: ChatMessage['role'] = message.role === 'assistant' ? 'assistant' : 'user';
+  const rawReferences = Array.isArray(message.metadata?.assistantReferences) ? message.metadata.assistantReferences : [];
+  const assistantReferences = rawReferences.flatMap((value): ChatAssistantReference[] => {
+    if (!value || typeof value !== 'object') return [];
+    const reference = value as Record<string, unknown>;
+    if ((reference.kind !== 'tool' && reference.kind !== 'skill') || typeof reference.id !== 'string' || typeof reference.label !== 'string') return [];
+    return [{
+      kind: reference.kind,
+      id: reference.id,
+      label: reference.label,
+      ...(typeof reference.description === 'string' ? { description: reference.description } : {}),
+      ...(reference.capability === 'read' || reference.capability === 'write' ? { capability: reference.capability } : {}),
+      ...(['builtin', 'mcp', 'provider_native', 'manual', 'git_import'].includes(String(reference.source))
+        ? { source: reference.source as ChatAssistantReference['source'] }
+        : {})
+    }];
+  });
 
   return {
     id: message.id,
@@ -17,7 +33,8 @@ export function mapControlPlaneMessage(message: ControlPlaneSessionMessage): Cha
     content: message.content,
     runId: message.runId,
     clientMessageId: message.clientMessageId,
-    timestamp: toTimestamp(message.createdAt)
+    timestamp: toTimestamp(message.createdAt),
+    ...(assistantReferences.length > 0 ? { assistantReferences } : {})
   };
 }
 

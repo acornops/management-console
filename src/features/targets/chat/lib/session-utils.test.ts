@@ -37,6 +37,29 @@ describe('session-utils', () => {
     });
   });
 
+  it('maps safe structured assistant references from user message metadata', () => {
+    const mapped = mapControlPlaneMessage({
+      id: 'msg-ref',
+      sessionId: 'session-1',
+      role: 'user',
+      kind: 'user',
+      content: 'Inspect the database.',
+      metadata: {
+        assistantReferences: [
+          { kind: 'tool', id: 'inspect_cluster', label: 'Inspect cluster', capability: 'read', source: 'mcp' },
+          { kind: 'skill', id: 'skill-1', label: 'CNPG triage', source: 'manual' },
+          { kind: 'tool', id: 42, label: 'invalid' }
+        ]
+      },
+      createdAt: '2026-01-02T03:04:05.000Z'
+    });
+
+    expect(mapped.assistantReferences).toEqual([
+      { kind: 'tool', id: 'inspect_cluster', label: 'Inspect cluster', capability: 'read', source: 'mcp' },
+      { kind: 'skill', id: 'skill-1', label: 'CNPG triage', source: 'manual' }
+    ]);
+  });
+
   it('appends new sessions and replaces existing ones by id', () => {
     const original: ChatSession[] = [{ id: 'session-1', name: 'One', messages: [], timestamp: 1 }];
     const appended = upsertSession(original, { id: 'session-2', name: 'Two', messages: [], timestamp: 2 });

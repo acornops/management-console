@@ -4,6 +4,7 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { TargetChatViewBody } from '@/features/targets/chat/components/TargetChatViewBody';
 import type { TargetChatViewProps } from '@/features/targets/chat/components/TargetChatView.types';
+import { useComposerReferences } from '@/features/targets/chat/hooks/useComposerReferences';
 import { isAiRuntimeReady, resolveAiRuntimeReadiness } from '@/features/ai/aiRuntimeReadiness';
 import {
   buildComposerModelOptions,
@@ -125,6 +126,14 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const modelMenuPanelId = `${modelMenuId}-panel`;
   const modelSubmenuButtonId = `${modelMenuId}-model-button`;
   const modelSubmenuPanelId = `${modelMenuId}-model-panel`;
+  const {
+    availableComposerReferences, clearComposerReferences, composerReferences, dismissReferenceMenu,
+    handleComposerInputChange, handleReferenceKeyDown, isReferenceMenuOpen, referenceActiveIndex,
+    referenceMenuId, removeComposerReference, selectComposerReference, setReferenceActiveIndex, slashReferenceQuery
+  } = useComposerReferences({
+    assistantCapabilitiesPreview, composerRootRef, composerTextareaRef, inputValue, onInputChange,
+    closeModelMenus: () => { setIsModelMenuOpen(false); setIsModelSubmenuOpen(false); }
+  });
   const deleteTargetSession = React.useMemo(
     () => sessions.find((session) => session.id === deleteTargetSessionId) || null,
     [deleteTargetSessionId, sessions]
@@ -251,9 +260,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       releaseComposerSubmitLockSoon();
       await sendPromise;
       clearComposerAttachments();
-    } catch (error) {
+    } catch {
       isComposerSubmittingRef.current = false;
-      throw error;
     }
   };
   const openDeleteSessionModal = (sessionId: string) => {
@@ -262,7 +270,10 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     setDeleteTargetSessionId(sessionId);
   };
   const selectSession = (sessionId: string) => {
-    if (sessionId !== activeSessionId) clearComposerAttachments();
+    if (sessionId !== activeSessionId) {
+      clearComposerAttachments();
+      clearComposerReferences();
+    }
     onSelectSession(sessionId);
   };
 
@@ -329,7 +340,6 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     });
     setComposerAttachmentNotice('');
   };
-
   const processComposerFiles = async (files: File[]) => {
     if (!canPost || isRunActive || !hasReadyAiRuntime || files.length === 0) return;
     const attachmentEpoch = composerAttachmentEpochRef.current;
@@ -386,13 +396,13 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     isComposerSubmittingRef.current = true;
     try {
       composerAttachmentEpochRef.current += 1;
-      const sendPromise = onSend(message, resolvedComposerRuntimeSelection);
+      const sendPromise = onSend(message, resolvedComposerRuntimeSelection, composerReferences);
       releaseComposerSubmitLockSoon();
       await sendPromise;
       clearComposerAttachments();
-    } catch (error) {
+      clearComposerReferences();
+    } catch {
       isComposerSubmittingRef.current = false;
-      throw error;
     }
   };
 
@@ -424,11 +434,13 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const handleCreateSessionClick = () => {
     if (!canChat || !hasReadyAiRuntime) return;
     clearComposerAttachments();
+    clearComposerReferences();
     onCreateSession();
     requestComposerFocus();
   };
 
   const handleComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (handleReferenceKeyDown(event)) return;
     if (event.key !== 'Enter' || event.shiftKey || event.metaKey || event.ctrlKey) return;
     event.preventDefault();
     void submitComposerMessage();
@@ -540,8 +552,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     if (previousActiveSessionIdRef.current === activeSessionId) return;
     previousActiveSessionIdRef.current = activeSessionId;
     clearComposerAttachments();
+    clearComposerReferences();
   }, [activeSessionId]);
-
   React.useEffect(() => {
     composerAttachmentsRef.current = composerAttachments;
   }, [composerAttachments]);
@@ -618,17 +630,17 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       {...{
         activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, canApproveWriteActions,
         canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, target, composerActionLabel, composerAttachmentNotice: composerNotice,
-        composerAttachments, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, deleteSessionError, deleteTargetSession,
-        deletingSessionId, desktopHistoryPanelId, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
-        handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, historyButtonRef,
+        composerAttachments, composerReferences, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, deleteSessionError, deleteTargetSession,
+        deletingSessionId, desktopHistoryPanelId, dismissReferenceMenu, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
+        handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerInputChange, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, historyButtonRef,
         historyControlLabel, historyPanelRef, inputValue, isAssistantCapabilitiesPreviewLoading, isCancellingRun, isComposerRuntimeUnavailable, isFileDragActive, isHistoryOpen,
-        isLoadingEarlierMessages, isModelMenuOpen, isModelSubmenuOpen, isPanel, isRunActive, isSessionsLoading, isSubmittingEdit, isWorkspaceAiSettingsLoading,
+        isLoadingEarlierMessages, isModelMenuOpen, isModelSubmenuOpen, isPanel, isReferenceMenuOpen, isRunActive, isSessionsLoading, isSubmittingEdit, isWorkspaceAiSettingsLoading,
         lastUserMessageIndex, mobileHistoryPanelId, modelMenuPanelId, modelMenuRef, modelSelectorId, modelSubmenuButtonId, modelSubmenuPanelId, newChatUnavailableReason,
         onApprove, onCancelRun, onChatScroll, onClose, onDismissRecentActivityWarning, onInputChange, onLoadEarlierMessages, onMaximize, onOpenAiSettings, onOpenRecentActivitySession, onReject,
-        recentActivityWarning: effectiveRecentActivityWarning, removeComposerAttachment, requestedToolAccessMode, resolvedDescriptionKey, resolvedFooterKey, resolvedFooterNoAccessKey, resolvedInputPlaceholderKey,
+        recentActivityWarning: effectiveRecentActivityWarning, referenceActiveIndex, referenceMenuId, referencePickerItems: availableComposerReferences, referenceQuery: slashReferenceQuery?.query || '', removeComposerAttachment, removeComposerReference, requestedToolAccessMode, resolvedDescriptionKey, resolvedFooterKey, resolvedFooterNoAccessKey, resolvedInputPlaceholderKey,
         resolvedNoChatAccessKey, resolvedPromptBodyKey, resolvedPromptTitleKey, resolvedSuggestionKeys, runTracesByRunId, selectSession, selectedEffort, selectedEffortLabel,
         selectedModel, selectedModelLabel, selectedProvider, sendText, sessionAssistantStatuses, sessions, setEditingMessageValue, setIsHistoryOpen,
-        setIsModelMenuOpen, setIsModelSubmenuOpen, setTraceExpandedByRunId, shouldShowTranscriptSkeleton, submitComposerMessage, t, title, traceExpandedByRunId,
+        selectComposerReference, setIsModelMenuOpen, setIsModelSubmenuOpen, setReferenceActiveIndex, setTraceExpandedByRunId, shouldShowTranscriptSkeleton, submitComposerMessage, t, title, traceExpandedByRunId,
         transcriptRef, userMarkdownComponents, userTurnRunIdsByIndex, visibleMessages, workspaceAiSettingsError, startEditingMessage, cancelEditingMessage, closeDeleteSessionModal,
         confirmDeleteSession, editingMessageId, editingMessageValue, isInFlightAssistantPlaceholder, openDeleteSessionModal, submitEditedMessage
       }}

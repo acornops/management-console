@@ -5,7 +5,7 @@ import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { AiRuntimeReadiness } from '@/features/ai/aiRuntimeReadiness';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { ComposerAttachment, ComposerModelOption } from '@/features/targets/chat/components/targetChatViewHelpers';
-import type { ChatMessage, ChatSession, ReasoningEffort } from '@/types';
+import type { ChatAssistantReference, ChatMessage, ChatSession, ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 
@@ -28,6 +28,7 @@ export interface TargetChatViewBodyProps {
   composerActionLabel: string;
   composerAttachmentNotice: string;
   composerAttachments: ComposerAttachment[];
+  composerReferences: ChatAssistantReference[];
   composerModelOptions: ComposerModelOption[];
   composerRootRef: React.RefObject<HTMLDivElement | null>;
   composerSubmitUnavailableReason: string;
@@ -38,6 +39,7 @@ export interface TargetChatViewBodyProps {
   deletingSessionId: string | null;
   desktopHistoryPanelId: string;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  dismissReferenceMenu: () => void;
   hasComposerSubmitPayload: boolean;
   hasConversationLoadError: boolean;
   hasEarlierMessages: boolean;
@@ -47,6 +49,7 @@ export interface TargetChatViewBodyProps {
   handleChatWindowDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   handleChatWindowDrop: (event: React.DragEvent<HTMLDivElement>) => void | Promise<void>;
   handleComposerKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  handleComposerInputChange: (value: string, cursor: number) => void;
   handleCreateSessionClick: () => void;
   handleModelAndEffortChange: (value: ReasoningEffort) => void;
   handleModelChange: (option: ComposerModelOption) => void;
@@ -62,6 +65,7 @@ export interface TargetChatViewBodyProps {
   isLoadingEarlierMessages: boolean;
   isModelMenuOpen: boolean;
   isModelSubmenuOpen: boolean;
+  isReferenceMenuOpen: boolean;
   isPanel: boolean;
   isRunActive: boolean;
   isSessionsLoading: boolean;
@@ -87,7 +91,12 @@ export interface TargetChatViewBodyProps {
   onClose?: () => void;
   onMaximize?: () => void;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
+  referenceActiveIndex: number;
+  referenceMenuId: string;
+  referencePickerItems: ChatAssistantReference[];
+  referenceQuery: string;
   removeComposerAttachment: (attachmentId: string) => void;
+  removeComposerReference: (reference: ChatAssistantReference) => void;
   requestedToolAccessMode: 'read_only' | 'read_write';
   resolvedDescriptionKey: string;
   resolvedFooterKey: string;
@@ -111,6 +120,8 @@ export interface TargetChatViewBodyProps {
   setIsHistoryOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setIsModelMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setIsModelSubmenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setReferenceActiveIndex: React.Dispatch<React.SetStateAction<number>>;
+  selectComposerReference: (reference: ChatAssistantReference) => void;
   setTraceExpandedByRunId: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   shouldShowTranscriptSkeleton: boolean;
   submitComposerMessage: () => void | Promise<void>;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval } from '@/types';
+import { ChatAssistantReference, ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   mapControlPlaneMessage,
@@ -497,6 +497,7 @@ export function useTargetChat({
     canChatForSubmit: boolean;
     overrideInput?: string;
     runtimeSelection?: ChatRuntimeSelection;
+    assistantReferences?: ChatAssistantReference[];
   }) =>
     submitChatMessage({
       target,
@@ -508,6 +509,7 @@ export function useTargetChat({
       isLoading: isRunActive,
       overrideInput: args.overrideInput,
       runtimeSelection: args.runtimeSelection,
+      assistantReferences: args.assistantReferences,
       shouldStickToBottomRef,
       onUpdateSessions,
       setActiveSessionId,
@@ -532,14 +534,15 @@ export function useTargetChat({
   const runSubmittedChatMessage = (args: Parameters<typeof submitChatMessageForArgs>[0]) =>
     runWithChatSubmissionLock(submitInFlightRef, () => submitChatMessageForArgs(args));
 
-  const handleSend = async (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => {
+  const handleSend = async (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection, assistantReferences?: ChatAssistantReference[]) => {
     if (!hasReadyAiRuntime) return;
     await runSubmittedChatMessage({
       activeSessionForSubmit: activeSession,
       activeSessionIdForSubmit: activeSessionId,
       canChatForSubmit: canPostInActiveSession,
       overrideInput,
-      runtimeSelection
+      runtimeSelection,
+      assistantReferences
     });
   };
 
@@ -573,7 +576,7 @@ export function useTargetChat({
     });
   };
 
-  const handleSendInNewSession = async (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => {
+  const handleSendInNewSession = async (overrideInput: string, runtimeSelection?: ChatRuntimeSelection, assistantReferences?: ChatAssistantReference[]) => {
     if (!hasReadyAiRuntime) return;
     await runWithChatSubmissionLock(submitInFlightRef, async () => {
       const draftSession = await createDraftSession();
@@ -590,7 +593,8 @@ export function useTargetChat({
         activeSessionIdForSubmit: sessionId,
         canChatForSubmit: canChat,
         overrideInput,
-        runtimeSelection
+        runtimeSelection,
+        assistantReferences
       });
     });
   };

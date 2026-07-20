@@ -1,4 +1,5 @@
 import {
+  ChatAssistantReference,
   ChatRuntimeSelection,
   ProjectMember,
   User,
@@ -523,7 +524,8 @@ export const controlPlaneApi = {
     content: string,
     toolAccessMode?: 'read_only' | 'read_write',
     clientMessageId?: string,
-    runtimeSelection?: ChatRuntimeSelection
+    runtimeSelection?: ChatRuntimeSelection,
+    assistantReferences: ChatAssistantReference[] = []
   ): Promise<{ messageId: string; runId: string; runtimeSelection?: ChatRuntimeSelection }> {
     const accepted = await requestJson<ControlPlaneAcceptedMessage>(
       `/api/v1/sessions/${encodeURIComponent(sessionId)}/messages`,
@@ -533,6 +535,9 @@ export const controlPlaneApi = {
           content,
           toolAccessMode,
           clientMessageId,
+          ...(assistantReferences.length > 0
+            ? { references: assistantReferences.map(({ kind, id }) => ({ kind, id })) }
+            : {}),
           ...(runtimeSelection
             ? {
                 llm: {

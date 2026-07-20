@@ -1,7 +1,7 @@
 import type React from 'react';
 import type { Components } from 'react-markdown';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
-import type { ChatMessage, ChatRuntimeSelection, ChatSession, WorkspaceAiSettings } from '@/types';
+import type { ChatAssistantReference, ChatMessage, ChatRuntimeSelection, ChatSession, WorkspaceAiSettings } from '@/types';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 
@@ -50,7 +50,7 @@ export interface TargetChatViewProps {
   onOpenAiSettings: () => void;
   onInputChange: (value: string) => void;
   onComposerRuntimeSelectionChange: (selection: ChatRuntimeSelection) => void;
-  onSend: (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => void | Promise<void>;
+  onSend: (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection, assistantReferences?: ChatAssistantReference[]) => void | Promise<void>;
   onEditLastUserMessage: (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => void | Promise<void>;
   onApprove: (approvalId: string) => void | Promise<void>;
   onReject: (approvalId: string) => void | Promise<void>;

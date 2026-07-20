@@ -106,6 +106,10 @@ The management console is the browser client for the control-plane API. Keep thi
 - Visible template-origin Agents and workflows are system provided. The console permits availability changes, supported external-binding configuration, duplication, and deletion; definition edits and version restore require duplication into a manual draft. Agent deletion explains dependent workflows before it can proceed.
 - Authorized users may duplicate an effective definition into a manual draft without copying capability installations or operational history.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
+- The target-chat `/` picker sends structured tool runtime aliases and target
+  skill IDs separately from prompt text. It never repurposes `@` prompt
+  references, and stale references remain visible when the control plane
+  rejects them.
 - Established chats restore provider, model, and reasoning effort from the
   control plane's latest accepted run snapshot; workspace AI settings seed
   chats that do not yet have a run.

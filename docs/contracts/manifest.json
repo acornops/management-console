@@ -403,7 +403,7 @@
         "patchVirtualMachine": ["name?", "hostname?", "allowedLogSources?"],
         "workflowSchedule": ["principal.{type=user,id=currentUserId}"],
         "catalogImport": ["artifact", "version", "remoteEndpoint", "serverName?", "enabled?", "endpointConfiguration?", "expectedRevision? only on re-import", "no targetType from browser"],
-        "postMessage": ["content", "toolAccessMode", "clientMessageId", "llm.{provider,model,reasoningEffort}?"],
+        "postMessage": ["content", "toolAccessMode", "clientMessageId", "llm.{provider,model,reasoningEffort}?", "references[].{kind=tool|skill,id}?"],
         "postWorkflowMessage": ["content", "inputs?", "clientRequestId?", "targetId?", "targetType?"]
       },
       "responseFields": {

@@ -1,5 +1,5 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
-import type { ChatRuntimeSelection, ChatSession } from '@/types';
+import type { ChatAssistantReference, ChatRuntimeSelection, ChatSession } from '@/types';
 import type { ControlPlaneSession } from '@/services/controlPlaneApi';
 import type { ActiveRunStreamControls } from '@/features/targets/chat/hooks/chatRunCancellation';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
@@ -15,6 +15,7 @@ export interface ChatSubmitArgs {
   isLoading: boolean;
   overrideInput?: string;
   runtimeSelection?: ChatRuntimeSelection;
+  assistantReferences?: ChatAssistantReference[];
   shouldStickToBottomRef: MutableRefObject<boolean>;
   onUpdateSessions: (sessions: ChatSession[]) => void;
   setActiveSessionId: (sessionId: string) => void;

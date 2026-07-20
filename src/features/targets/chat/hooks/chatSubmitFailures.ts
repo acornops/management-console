@@ -10,6 +10,15 @@ import {
 import { AppPaths } from '@/utils/routes';
 import { resolveMcpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 
+export function isRuntimeSelectionPolicyRejection(error: unknown): boolean {
+  return error instanceof ControlPlaneRequestError
+    && ['PROVIDER_NOT_ALLOWED', 'MODEL_NOT_ALLOWED', 'REASONING_EFFORT_NOT_ALLOWED'].includes(error.code || '');
+}
+
+export function isAssistantReferenceRejection(error: unknown): boolean {
+  return error instanceof ControlPlaneRequestError && error.code === 'ASSISTANT_REFERENCE_INVALID';
+}
+
 function formatChatSubmitFailureMessage(error: unknown, workspaceId: string, fallbackMessage: string): string {
   if (error instanceof ControlPlaneRequestError && error.code === 'AI_PROVIDER_CREDENTIAL_MISSING') {
     return `The assistant cannot start because this workspace has no API key for its selected provider. Add one in [AI Settings](#${AppPaths.workspaceAiSettings(workspaceId)}), then try again.`;

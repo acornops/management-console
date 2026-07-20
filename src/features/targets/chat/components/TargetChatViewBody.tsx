@@ -16,6 +16,7 @@ import { UserMessageTurn } from '@/features/targets/chat/components/UserMessageT
 import { formatMessageTime } from '@/features/targets/chat/components/targetChatViewHelpers';
 import { useTargetChatHistoryWorkspace } from '@/features/targets/chat/components/useTargetChatHistoryWorkspace';
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
+import { getComposerReferenceProps } from '@/features/targets/chat/components/targetChatReferenceProps';
 export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => {
   const {
     activeRunId,
@@ -87,7 +88,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     onCancelRun,
     onChatScroll,
     onDismissRecentActivityWarning,
-    onInputChange,
     onLoadEarlierMessages,
     onOpenAiSettings,
     onOpenRecentActivitySession,
@@ -534,7 +534,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           modelSubmenuButtonId={modelSubmenuButtonId}
           modelSubmenuPanelId={modelSubmenuPanelId}
           onCancelRun={onCancelRun}
-          onInputChange={onInputChange}
           recentActivityWarning={recentActivityWarning}
           removeComposerAttachment={removeComposerAttachment}
           requestedToolAccessMode={requestedToolAccessMode}
@@ -549,6 +548,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           selectedProvider={selectedProvider}
           setIsModelMenuOpen={setIsModelMenuOpen}
           setIsModelSubmenuOpen={setIsModelSubmenuOpen}
+          {...getComposerReferenceProps(props)}
           submitComposerMessage={submitComposerMessage}
           t={t}
           workspaceAiSettingsError={workspaceAiSettingsError}

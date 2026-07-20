@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval, WorkspaceAiSettings } from '@/types';
+import type { ChatAssistantReference, ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval, WorkspaceAiSettings } from '@/types';
 import type {
   ControlPlaneSession,
   ControlPlaneSessionListPage,
@@ -62,8 +62,8 @@ export interface TargetChatController {
   setTraceExpandedByRunId: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   handleChatScroll: () => void;
   handleLoadEarlierMessages: () => Promise<void>;
-  handleSend: (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => Promise<void>;
-  handleSendInNewSession: (overrideInput: string, runtimeSelection?: ChatRuntimeSelection) => Promise<void>;
+  handleSend: (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection, assistantReferences?: ChatAssistantReference[]) => Promise<void>;
+  handleSendInNewSession: (overrideInput: string, runtimeSelection?: ChatRuntimeSelection, assistantReferences?: ChatAssistantReference[]) => Promise<void>;
   handleEditLastUserMessage: (messageId: string, nextContent: string, runtimeSelection?: ChatRuntimeSelection) => Promise<void>;
   handleApprove: (approvalId: string) => Promise<void>;
   handleReject: (approvalId: string) => Promise<void>;

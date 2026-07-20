@@ -396,6 +396,16 @@ export interface ChatMessage {
   clientMessageId?: string;
   transientStatus?: 'pending_assistant';
   approval?: PendingApproval;
+  assistantReferences?: ChatAssistantReference[];
+}
+
+export interface ChatAssistantReference {
+  kind: 'tool' | 'skill';
+  id: string;
+  label: string;
+  description?: string;
+  capability?: 'read' | 'write';
+  source?: 'builtin' | 'mcp' | 'provider_native' | 'manual' | 'git_import';
 }
 
 export interface PendingApproval {
