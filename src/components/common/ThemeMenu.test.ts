@@ -48,6 +48,11 @@ describe('ThemeMenu', () => {
     expect(themeToggleIcon).toContain('useReducedMotion()');
   });
 
+  it('uses the same structural icon-tile border as adjacent account actions', () => {
+    expect(themeMenu).toContain('rounded-md border border-ui-border bg-ui-bg');
+    expect(themeMenu).not.toContain('rounded-md border border-control-boundary bg-ui-bg');
+  });
+
   it('is the shared implementation on login, desktop account, and mobile navigation surfaces', () => {
     expect(loginPage).toContain('<ThemeMenu');
     expect(loginPage).toContain('variant="login"');
