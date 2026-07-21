@@ -78,11 +78,13 @@ test('workflow templates install and activate without entering the library first
 test('workflow template catalog failure is retryable without leaving the page', async ({ page }) => {
   await page.addInitScript(() => {
     const originalFetch = window.fetch.bind(window);
-    let failNextTemplateRequest = true;
+    let rejectTemplateRequests = true;
+    Object.defineProperty(window, '__allowFixtureTemplateRequests', {
+      value: () => { rejectTemplateRequests = false; }
+    });
     window.fetch = (input, init) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      if (failNextTemplateRequest && url.includes('/automation-templates')) {
-        failNextTemplateRequest = false;
+      if (rejectTemplateRequests && new URL(url, window.location.href).pathname.endsWith('/automation-templates')) {
         return Promise.resolve(new Response(JSON.stringify({ error: { code: 'FIXTURE_TEMPLATE_FAILURE', message: 'Template catalog is temporarily unavailable.' } }), {
           status: 503,
           headers: { 'content-type': 'application/json' }
@@ -96,6 +98,7 @@ test('workflow template catalog failure is retryable without leaving the page', 
   await page.getByRole('button', { name: 'Install templates' }).click();
   const drawer = page.getByRole('dialog', { name: 'Install workflow templates' });
   await expect(drawer.getByRole('alert')).toContainText('Template catalog is temporarily unavailable.');
+  await page.evaluate(() => (window as typeof window & { __allowFixtureTemplateRequests: () => void }).__allowFixtureTemplateRequests());
   await drawer.getByRole('button', { name: 'Retry' }).click();
   await expect(drawer.getByRole('button', { name: /Target remediation/ })).toBeVisible();
 });
