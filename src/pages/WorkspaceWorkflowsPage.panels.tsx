@@ -1,5 +1,6 @@
 import React from 'react';
 import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
+import { isServerWorkflowRunId } from '@/pages/workflows/workflowRunIdentity';
 import { Loader2, SendHorizontal, Square } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
@@ -257,7 +258,7 @@ export const WorkflowRunsPanel: React.FC<{
   const loadedCoordinationIds = React.useRef(new Set<string>());
 
   React.useEffect(() => {
-    if (workflow.executionMode !== 'coordinated' || !expandedRunLogId) return;
+    if (workflow.executionMode !== 'coordinated' || !isServerWorkflowRunId(expandedRunLogId)) return;
     const run = workflow.runs.find((candidate) => (candidate.runId || candidate.id) === expandedRunLogId);
     if (!run) return;
     let cancelled = false;
@@ -303,6 +304,7 @@ export const WorkflowRunsPanel: React.FC<{
     {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <div key={message} role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{message}</div>)}
     {workflow.runs.length > 0 ? workflow.runs.map((run) => {
       const effectiveRunId = run.runId || run.id;
+      const isServerBackedRun = isServerWorkflowRunId(run.runId);
       const approvals = run.runId ? approvalRecords[run.runId] || [] : [];
       const traceExpanded = expandedRunLogId === effectiveRunId;
       const runTrace = workflowRunToTrace(run, runEventsByRunId[effectiveRunId] || []);
@@ -321,7 +323,7 @@ export const WorkflowRunsPanel: React.FC<{
               <div className="type-caption mt-1 text-ui-text-muted">{run.actor} · {formatWorkflowTimestamp(run.startedAt)} · {run.duration}</div>
               <div className="mt-2"><StatusBadge tone={runStatusTone(run.status)}>{run.status.replace('_', ' ')}</StatusBadge></div>
             </div>
-            {isRunActive(run.status) && (
+            {isRunActive(run.status) && isServerBackedRun && (
               stopArmedRunId === effectiveRunId ? (
                 <div className="flex shrink-0 items-center gap-2">
                   <Button type="button" size="sm" variant="danger" onClick={() => { setStopArmedRunId(''); void workflowActions.stopWorkflowRun(effectiveRunId); }} disabled={cancelRunAction === effectiveRunId}>
@@ -357,10 +359,12 @@ export const WorkflowRunsPanel: React.FC<{
               ))}
             </div>
           )}
-          <div className="mt-3 border-t border-ui-border pt-2">
-            <TraceFooter runId={effectiveRunId} trace={runTrace} isExpanded={traceExpanded} setExpanded={(runId, expanded) => expanded ? void workflowActions.toggleRunLogs(runId) : setExpandedRunLogId('')} compactStatusOnly className="max-w-none" />
-          </div>
-          {traceExpanded && (
+          {isServerBackedRun && (
+            <div className="mt-3 border-t border-ui-border pt-2">
+              <TraceFooter runId={effectiveRunId} trace={runTrace} isExpanded={traceExpanded} setExpanded={(runId, expanded) => expanded ? void workflowActions.toggleRunLogs(runId) : setExpandedRunLogId('')} compactStatusOnly className="max-w-none" />
+            </div>
+          )}
+          {isServerBackedRun && traceExpanded && (
             <>
             {workflow.executionMode === 'coordinated' && (
               <section className="mt-4 border-t border-ui-border pt-4" aria-label={t('workflowCoordination.traceTitle')}>

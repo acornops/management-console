@@ -587,7 +587,6 @@ export function updateWorkflowScope(
 }
 
 export function postWorkflowSessionMessage(
-  workspaceId: string,
   sessionId: string,
   input: {
     content: string;
@@ -599,7 +598,6 @@ export function postWorkflowSessionMessage(
     {
       method: 'POST',
       body: JSON.stringify({
-        workspaceId,
         content: input.content,
         ...(input.clientRequestId ? { clientRequestId: input.clientRequestId } : {})
       })

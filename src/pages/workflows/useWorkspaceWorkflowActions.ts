@@ -24,6 +24,7 @@ import {
 } from './workflowPageHelpers';
 import { createWorkflowScopeActions } from './workflowScopeActions';
 import { resolveMcpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
+import { isServerWorkflowRunId } from './workflowRunIdentity';
 
 type WorkflowActionsContext = Record<string, any>;
 
@@ -68,7 +69,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     const optimisticRunId = `local-workflow-run-${Date.now()}`;
     const optimisticRun: WorkflowDefinition['runs'][number] = {
       id: optimisticRunId,
-      runId: optimisticRunId,
       status: getOptimisticWorkflowRunStatus(selectedWorkflow),
       actor: 'You',
       duration: 'Starting',
@@ -81,7 +81,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       ...current,
       [selectedWorkflow.id]: [
         optimisticRun,
-        ...(current[selectedWorkflow.id] || []).filter((run) => run.id !== optimisticRun.id && run.runId !== optimisticRun.runId)
+        ...(current[selectedWorkflow.id] || []).filter((run) => run.id !== optimisticRun.id)
       ]
     }));
     setWorkflows((current) => current.map((workflow) => workflow.id === selectedWorkflow.id
@@ -113,10 +113,13 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       if (referencePreview.blockers.length > 0) {
         throw new Error(referencePreview.blockers.map((blocker) => blocker.message).join(' '));
       }
-      const result = await postWorkflowSessionMessage(workspace.id, effectiveSessionId, {
+      const result = await postWorkflowSessionMessage(effectiveSessionId, {
         content: controlMessage
       });
-      const runId = result.run_id || optimisticRunId;
+      if (!result.run_id) {
+        throw new Error('The control plane accepted the workflow message without returning a run ID.');
+      }
+      const runId = result.run_id;
       const workflowRunId = result.workflow_run_id || runId;
       const authoritativeScope = result.compiledAccessScope;
       const authoritativeTools = Array.isArray(authoritativeScope?.tools)
@@ -263,7 +266,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
           throw new Error(referencePreview.blockers.map((blocker) => blocker.message).join(' '));
         }
       }
-      await postWorkflowSessionMessage(workspace.id, sessionId, {
+      await postWorkflowSessionMessage(sessionId, {
         content
       });
       setWorkflowRunMessages((current: Record<string, WorkflowRunMessage[]>) => ({
@@ -294,6 +297,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   async function decideApproval(runId: string, approvalId: string, decision: 'approved' | 'rejected'): Promise<void> {
+    if (!isServerWorkflowRunId(runId)) return;
     setApprovalError('');
     setApprovalAction(`${runId}:${approvalId}:${decision}`);
     try {
@@ -310,6 +314,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   async function toggleRunLogs(runId: string): Promise<void> {
+    if (!isServerWorkflowRunId(runId)) return;
     if (expandedRunLogId === runId) {
       setExpandedRunLogId('');
       return;
@@ -329,6 +334,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   async function stopWorkflowRun(runId: string): Promise<void> {
+    if (!isServerWorkflowRunId(runId)) return;
     setCancelRunError('');
     setCancelRunAction(runId);
     try {

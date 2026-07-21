@@ -23,6 +23,7 @@ import { updateUrlSearch } from '@/hooks/useUrlSearchState';
 import { useWorkspaceWorkflowsUrlState } from '@/pages/workflows/useWorkspaceWorkflowsUrlState';
 import { useWorkflowCapabilityPreview } from '@/pages/workflows/useWorkflowCapabilityPreview';
 import { indexPersistedWorkflowRunResponses, mergePersistedWorkflowRunResponses } from '@/pages/workflows/workflowRunSync';
+import { isServerWorkflowRunId, serverWorkflowRunIds } from '@/pages/workflows/workflowRunIdentity';
 import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 import { WorkflowTemplateActions } from '@/pages/WorkflowTemplateActions';
 const WorkflowScheduleCreateDrawer = React.lazy(() => import('@/pages/WorkflowScheduleCreateDrawer').then((module) => ({ default: module.WorkflowScheduleCreateDrawer })));
@@ -281,7 +282,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
       if (refreshTimer !== undefined) window.clearInterval(refreshTimer);
     };
   }, [selectedWorkflow?.id, selectedWorkflowHasActiveRuns, workspace.id, workflowCatalogReady]);
-  const selectedRunIds = useMemo(() => selectedWorkflow?.runs.map((run) => run.runId).filter((runId): runId is string => Boolean(runId)) || [], [selectedWorkflow?.runs]);
+  const selectedRunIds = useMemo(() => serverWorkflowRunIds(selectedWorkflow?.runs || []), [selectedWorkflow?.runs]);
   const selectedRunIdsKey = selectedRunIds.join('|');
   React.useEffect(() => {
     if (selectedRunIds.length === 0) return;
@@ -303,7 +304,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
   }, [selectedRunIdsKey]);
 
   React.useEffect(() => {
-    if (!expandedRunLogId || !selectedWorkflow) return;
+    if (!isServerWorkflowRunId(expandedRunLogId) || !selectedWorkflow) return;
     const expandedRun = selectedWorkflow.runs.find((run) => run.runId === expandedRunLogId || run.id === expandedRunLogId);
     if (!expandedRun || !isRunActive(expandedRun.status)) return;
     let cancelled = false;
