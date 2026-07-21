@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
@@ -23,14 +23,26 @@ const readme = read('README.md');
 const doc = read('docs/contracts/README.md');
 const manifest = JSON.parse(read('docs/contracts/manifest.json'));
 const manifestText = JSON.stringify(manifest);
-const publicOpenApi = JSON.parse(read('../docs-website/openapi/control-plane-public.json'));
-const publicOperations = new Set(
-  Object.entries(publicOpenApi.paths ?? {}).flatMap(([operationPath, pathItem]) =>
-    Object.keys(pathItem)
-      .filter((method) => ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(method))
-      .map((method) => `${method.toUpperCase()} ${operationPath}`)
-  )
-);
+const publicOpenApiPath = process.env.ACORNOPS_PUBLIC_OPENAPI_PATH
+  ? path.resolve(process.env.ACORNOPS_PUBLIC_OPENAPI_PATH)
+  : path.join(root, '..', 'docs-website', 'openapi', 'control-plane-public.json');
+const vendoredPublicOperations = new Set(JSON.parse(read('docs/contracts/control-plane-public-operations.json')));
+const livePublicOperations = existsSync(publicOpenApiPath)
+  ? new Set(
+      Object.entries(JSON.parse(readFileSync(publicOpenApiPath, 'utf8')).paths ?? {}).flatMap(([operationPath, pathItem]) =>
+        Object.keys(pathItem)
+          .filter((method) => ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(method))
+          .map((method) => `${method.toUpperCase()} ${operationPath}`)
+      )
+    )
+  : null;
+const publicOperations = livePublicOperations ?? vendoredPublicOperations;
+if (livePublicOperations) {
+  expect(
+    JSON.stringify([...livePublicOperations].sort()) === JSON.stringify([...vendoredPublicOperations].sort()),
+    'Vendored control-plane public operation inventory must match the generated docs artifact'
+  );
+}
 const controlPlaneApi = read('src/services/controlPlaneApi.ts');
 const controlPlaneAuthApi = read('src/services/control-plane/authApi.ts');
 const kubernetesClusterApi = read('src/services/control-plane/kubernetesClusterApi.ts');

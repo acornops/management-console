@@ -6,6 +6,7 @@ The management console is the browser client for the control-plane API. Keep thi
 
 - Complete endpoint and schema detail lives in the generated public docs at `https://docs.acornops.dev`.
 - Control-plane API coverage for this app lives in `docs/contracts/manifest.json`.
+- `docs/contracts/control-plane-public-operations.json` is the vendored public-operation inventory used when the docs repository is not checked out, including isolated CI jobs.
 - `scripts/check-contracts.mjs` verifies that frontend service calls, mappers, manifest entries, and the invariants below stay aligned.
 - This README captures only browser-client behavior that generated reference docs do not make obvious.
 
