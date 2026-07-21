@@ -27,6 +27,7 @@ import { getSystemTheme, resolveThemePreference, type ResolvedTheme, type ThemeP
 import { getSupportedLanguages } from '@/i18n/languageConfig';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { getControlPlaneUrl } from '@/services/control-plane/http';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths } from '@/utils/routes';
 const App: React.FC = () => {
@@ -441,14 +442,22 @@ const App: React.FC = () => {
     return getWorkspacePermissionValue(workspaceById, user?.email, workspaceId, permission);
   }, [user?.email, workspaceById]);
   const handleLogout = async () => {
+    let redirectUrl: string | undefined;
     try {
-      await controlPlaneApi.logout();
-    } catch (err) {
-      console.error('Logout failed', err);
+      const result = await controlPlaneApi.logout();
+      redirectUrl = result.redirectPath.startsWith('/api/')
+        ? getControlPlaneUrl(result.redirectPath).toString()
+        : new URL(result.redirectPath, window.location.origin).toString();
+    } catch {
+      console.error('Logout request failed');
     }
     setIsAccountMenuOpen(false);
     if (user) clearChatComposerRuntimesForUser(user.id);
     clearSessionForLogout();
+    if (redirectUrl) {
+      window.location.assign(redirectUrl);
+      return;
+    }
     navigate(AppPaths.workspaces(), { replace: true });
   };
   if (!user && sessionBootstrapState === 'restoring') {

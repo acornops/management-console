@@ -6,6 +6,7 @@ import {
   ControlPlaneAuthConfig,
   ControlPlaneAuthMethods,
   ControlPlaneExternalIntegrationLinkPreview,
+  ControlPlaneLogoutResult,
   ControlPlanePasswordResetRequestResult,
   ControlPlaneUser,
   ControlPlaneVerificationRequired,
@@ -25,6 +26,14 @@ export class EmailVerificationRequiredError extends Error {
 
 function stripControlPlaneErrorPrefix(error: unknown, fallback: string): string {
   return formatControlPlaneError(error, fallback, { area: 'auth' });
+}
+
+function validLogoutRedirect(result: ControlPlaneLogoutResult): boolean {
+  if (result.mode === 'local') {
+    return result.redirectPath === '/?logout_result=success'
+      || result.redirectPath === '/?logout_result=local_only';
+  }
+  return /^\/api\/v1\/auth\/oidc\/logout\/start\?request=[A-Za-z0-9_-]{32,128}$/.test(result.redirectPath);
 }
 
 export const controlPlaneAuthApi = {
@@ -193,11 +202,19 @@ export const controlPlaneAuthApi = {
     }
   },
 
-  async logout(): Promise<void> {
-    await requestJson<{ status: string }>('/api/v1/auth/logout', {
+  async logout(): Promise<ControlPlaneLogoutResult> {
+    const result = await requestJson<ControlPlaneLogoutResult>('/api/v1/auth/logout', {
       method: 'POST',
       body: JSON.stringify({}),
       sessionExpiry: 'ignore'
     });
+    if (
+      result.status !== 'ok'
+      || !['oidc', 'local'].includes(result.mode)
+      || !validLogoutRedirect(result)
+    ) {
+      throw new Error('Logout response contained an invalid redirect path.');
+    }
+    return result;
   }
 };

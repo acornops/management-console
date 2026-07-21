@@ -573,6 +573,10 @@ export const en = {
     }
   },
   login: {
+    oidcAccessDenied: 'Your identity is not permitted to access this AcornOps deployment.',
+    logoutSuccess: 'You have been signed out.',
+    logoutLocalOnly: 'You are signed out of AcornOps, but your identity-provider session may still be active, so a later login may complete without prompting.',
+    logoutIncomplete: 'You are signed out of AcornOps, but provider sign-out could not be confirmed.',
     subtitle: 'Kubernetes control plane',
     welcomeBack: 'Welcome back',
     signIn: 'Sign in',

@@ -5,6 +5,7 @@ import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import { PasswordAuthResult } from '@/types';
 import { LoginAuthPanel } from './login/LoginAuthPanel';
 import { LoginPreview } from './login/LoginPreview';
+import { authResultNoticeKey, clearAuthResultParameters } from './login/authResultNotice';
 
 interface LoginPageProps {
   isDark: boolean;
@@ -56,6 +57,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onSelectTheme
 }) => {
   const { t } = useTranslation();
+  const [authResultNotice] = React.useState(() => authResultNoticeKey(window.location.search));
+  React.useEffect(() => clearAuthResultParameters(), []);
   return (
     <div className={`relative flex min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-ui-bg text-ui-text transition-colors duration-200 lg:grid lg:grid-cols-2 lg:overflow-hidden ${isDark ? 'dark' : ''}`}>
       <ThemeMenu
@@ -86,7 +89,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             passwordAuthEnabled={passwordAuthEnabled}
             passwordSignupEnabled={passwordSignupEnabled}
             passwordResetEnabled={passwordResetEnabled}
-            sessionNotice={sessionExpired ? t('controlPlaneErrors.sessionExpired') : undefined}
+            sessionNotice={sessionExpired
+              ? t('controlPlaneErrors.sessionExpired')
+              : authResultNotice ? t(authResultNotice) : undefined}
             onLogin={onLogin}
             onPasswordLogin={onPasswordLogin}
             onPasswordSignup={onPasswordSignup}

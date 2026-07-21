@@ -40,6 +40,12 @@ export interface ControlPlaneAuthConfig {
   passwordResetEnabled: boolean;
 }
 
+export interface ControlPlaneLogoutResult {
+  status: 'ok';
+  mode: 'oidc' | 'local';
+  redirectPath: string;
+}
+
 export interface ControlPlaneVerificationRequired { status: 'verification_required'; email: string; resendAfterSeconds?: number; }
 
 export interface ControlPlaneVerificationResendResult { status: 'ok'; message: string; resendAfterSeconds?: number; }

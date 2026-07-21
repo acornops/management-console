@@ -573,6 +573,10 @@ export const zh = {
     }
   },
   login: {
+    oidcAccessDenied: '您的身份无权访问此 AcornOps 部署。',
+    logoutSuccess: '您已退出登录。',
+    logoutLocalOnly: '您已退出 AcornOps，但身份提供商会话可能仍处于活动状态，因此之后登录时可能不会再次提示。',
+    logoutIncomplete: '您已退出 AcornOps，但无法确认身份提供商是否已退出。',
     subtitle: 'Kubernetes 控制平面',
     welcomeBack: '欢迎回来',
     signIn: '登录',

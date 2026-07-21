@@ -285,17 +285,38 @@ describe('controlPlaneAuthApi', () => {
   });
 
   it('returns OIDC start URLs and posts logout bodies', async () => {
-    requestJson.mockResolvedValueOnce({ url: 'https://idp.example.com/link' }).mockResolvedValueOnce({ status: 'ok' });
+    const handoff = 'a'.repeat(43);
+    requestJson.mockResolvedValueOnce({ url: 'https://idp.example.com/link' }).mockResolvedValueOnce({
+      status: 'ok',
+      mode: 'oidc',
+      redirectPath: `/api/v1/auth/oidc/logout/start?request=${handoff}`
+    });
     const { controlPlaneAuthApi } = await import('./authApi');
 
     await expect(controlPlaneAuthApi.startOidcLink({ currentPassword: 'secret' })).resolves.toBe(
       'https://idp.example.com/link'
     );
-    await expect(controlPlaneAuthApi.logout()).resolves.toBeUndefined();
+    await expect(controlPlaneAuthApi.logout()).resolves.toEqual({
+      status: 'ok',
+      mode: 'oidc',
+      redirectPath: `/api/v1/auth/oidc/logout/start?request=${handoff}`
+    });
     expect(requestJson).toHaveBeenNthCalledWith(2, '/api/v1/auth/logout', {
       method: 'POST',
       body: JSON.stringify({}),
       sessionExpiry: 'ignore'
     });
+  });
+
+  it('rejects protocol-relative logout paths', async () => {
+    requestJson.mockResolvedValueOnce({ status: 'ok', mode: 'oidc', redirectPath: '//attacker.example.com' });
+    const { controlPlaneAuthApi } = await import('./authApi');
+    await expect(controlPlaneAuthApi.logout()).rejects.toThrow('invalid redirect path');
+  });
+
+  it('rejects unrecognized same-origin logout paths', async () => {
+    requestJson.mockResolvedValueOnce({ status: 'ok', mode: 'local', redirectPath: '/settings' });
+    const { controlPlaneAuthApi } = await import('./authApi');
+    await expect(controlPlaneAuthApi.logout()).rejects.toThrow('invalid redirect path');
   });
 });
