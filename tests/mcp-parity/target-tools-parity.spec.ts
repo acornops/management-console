@@ -16,9 +16,8 @@ test('target capability inventories label every AcornOps-provided tool and built
   const pdfRow = page.locator('[data-target-tool-row="true"]').filter({ hasText: 'Generate PDF report' });
   await expect(pdfRow).toBeVisible();
   await expect(pdfRow.getByText('Provided by AcornOps')).toBeVisible();
-  await expect(pdfRow.getByText('Always available')).toBeVisible();
   await expect(pdfRow.getByText('No configuration')).toBeVisible();
-  await expect(pdfRow.getByRole('switch')).toHaveCount(0);
+  await expect(pdfRow.getByRole('switch', { name: 'Disable Generate PDF report' })).toBeChecked();
   await expect(pdfRow.getByRole('button', { name: /Actions for Generate PDF report/ })).toHaveCount(0);
 
   const webSearchRow = page.locator('[data-target-tool-row="true"]').filter({ hasText: 'Web Search' });
@@ -31,5 +30,5 @@ test('target capability inventories label every AcornOps-provided tool and built
     waitUntil: 'domcontentloaded'
   });
   const builtInServerRow = page.locator('[data-mcp-server-row="true"]').filter({ hasText: 'AcornOps Kubernetes Tools' });
-  await expect(builtInServerRow.getByText('Provided by AcornOps')).toBeVisible();
+  await expect(builtInServerRow.getByText('Managed by AcornOps')).toBeVisible();
 });

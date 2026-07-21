@@ -23,12 +23,14 @@ test('system Agents show AcornOps provenance while custom Agents retain their ow
   await page.getByRole('button', { name: /Open Workflow Analyst agent profile/ }).click();
   const systemHeader = page.getByRole('heading', { name: 'Workflow Analyst' }).locator('..');
   await expect(systemHeader.getByText('Provided by AcornOps')).toBeVisible();
-  await expect(systemHeader.getByText('v3', { exact: true })).toBeVisible();
+  const systemOverview = page.getByRole('tabpanel', { name: 'Overview' });
+  await expect(systemOverview.getByText('AcornOps', { exact: true })).toBeVisible();
+  await expect(systemOverview.getByText('Built-in', { exact: true })).toBeVisible();
 
   await page.goto(`/workspaces/${workspaceId}/agents?agent=fixture-specialist&panel=profile`);
   const customHeader = page.getByRole('heading', { name: 'Kubernetes Specialist' }).locator('..');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(customHeader.getByText('Ning · v2', { exact: true })).toBeVisible();
+  await expect(customHeader.getByText('Ning', { exact: true })).toBeVisible();
 });
 
 test('templates show publisher attribution while installed Workflows do not use provider badges', async ({ page }) => {
@@ -41,12 +43,12 @@ test('templates show publisher attribution while installed Workflows do not use 
   await expect(systemRow.getByText('Provided by AcornOps')).toHaveCount(0);
   const systemHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(systemHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(systemHeader.getByText('v1', { exact: true })).toBeVisible();
+  await expect(systemHeader.getByText('Built-in', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: /Select workflow Production health review/ }).click();
   const customHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(customHeader.getByText('Ning · v2', { exact: true })).toBeVisible();
+  await expect(customHeader.getByText('Ning', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Install templates' }).click();
   const templateDrawer = page.getByRole('dialog', { name: 'Install workflow templates' });
