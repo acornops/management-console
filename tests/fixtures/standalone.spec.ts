@@ -50,7 +50,7 @@ test('agent profile scopes lifecycle actions to Settings and icons its refresh c
   await page.getByRole('tab', { name: 'Activity' }).click();
   await expect(page.getByRole('button', { name: 'Refresh' }).locator('svg')).toBeVisible();
 
-  await page.getByRole('tab', { name: 'Versions' }).click();
+  await page.getByRole('tab', { name: 'Restore points' }).click();
   await expect(page.getByRole('button', { name: 'Refresh' }).locator('svg')).toBeVisible();
 });
 
