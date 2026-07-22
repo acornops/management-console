@@ -2,6 +2,7 @@ import React from 'react';
 import { LayoutGroup } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '@/components/common/Tooltip';
+import { EmptyState } from '@/components/common/EmptyState';
 import { ICONS } from '@/constants';
 import { useWorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';
 import type { ProjectMember, Workspace, WorkspaceInvitation } from '@/types';
@@ -10,7 +11,7 @@ import { WorkspaceMembersPage } from '@/pages/WorkspaceMembersPage';
 import { WorkspaceSettingsPage } from '@/pages/WorkspaceSettingsPage';
 import { WorkspaceWebhooksPage } from '@/pages/WorkspaceWebhooksPage';
 import { ActiveTabIndicator } from '@/components/common/ActiveTabIndicator';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { PageBackLink, PageHeader, PageShell } from '@/components/common/PageComposition';
 
 export type SettingsTab = 'workspace' | 'members' | 'ai' | 'webhooks';
 
@@ -32,7 +33,7 @@ function getTabUnavailableReason({
   if (!hasWorkspace) return t('settingsPage.selectWorkspaceForTab');
   if (tab === 'members' && !canReadMembers) return t('settingsPage.membersAccessRequired');
   if (tab === 'ai' && !canReadWorkspaceData) return t('settingsPage.workspaceAccessRequired');
-  if (tab === 'webhooks' && !canReadWorkspaceData) return t('settingsPage.workspaceAccessRequired');
+  if (tab === 'webhooks' && !canReadWorkspaceData) return t('settingsPage.webhooksReadAccessRequired');
   return undefined;
 }
 
@@ -53,6 +54,8 @@ interface SettingsPageProps {
   onUpdateMemberRole?: (member: ProjectMember, role: ProjectMember['role']) => Promise<void> | void;
   onRemoveMember?: (member: ProjectMember) => Promise<void> | void;
   onSelectTab?: (tab: SettingsTab) => void;
+  returnTo?: string;
+  onReturnToAssistant?: (returnTo: string) => void;
   showToast: (message: string) => void;
 }
 
@@ -73,6 +76,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   onUpdateMemberRole,
   onRemoveMember,
   onSelectTab,
+  returnTo,
+  onReturnToAssistant,
   showToast
 }) => {
   const { t } = useTranslation();
@@ -132,6 +137,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   return (
     <PageShell>
+      {returnTo && (
+        <PageBackLink
+          href={returnTo}
+          onClick={(event) => {
+            event.preventDefault();
+            onReturnToAssistant?.(returnTo);
+          }}
+        >
+          {t('workspaceAiSettings.backToAssistant')}
+        </PageBackLink>
+      )}
       <PageHeader title={t('settingsPage.title')} description={t('settingsPage.subtitle')} />
 
       <LayoutGroup id={settingsTabsLayoutGroupId}>
@@ -171,17 +187,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       </LayoutGroup>
 
       {!workspace && (
-        <section className="max-w-4xl rounded-xl border border-ui-border bg-ui-surface p-6 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong">
-              <ICONS.LayoutGrid className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-ui-text">{t('settingsPage.noWorkspaceTitle')}</h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-ui-text-muted">{t('settingsPage.noWorkspaceBody')}</p>
-            </div>
-          </div>
-        </section>
+        <EmptyState
+          className="max-w-4xl"
+          icon={<ICONS.LayoutGrid />}
+          title={t('settingsPage.noWorkspaceTitle')}
+          description={t('settingsPage.noWorkspaceBody')}
+        />
       )}
 
       {activeTab === 'workspace' && workspace && !workspaceTabDisabled && (
@@ -217,6 +228,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           workspace={workspace}
           canManageAiSettings={canManageAiSettings}
           aiSettingsResource={aiSettingsResource}
+          returnTo={returnTo}
+          onReturnToAssistant={onReturnToAssistant}
           showToast={showToast}
         />
       )}

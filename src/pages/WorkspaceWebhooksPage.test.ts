@@ -4,43 +4,58 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const root = resolve(__dirname, '../..');
-const webhooksPage = readFileSync(resolve(root, 'src/pages/WorkspaceWebhooksPage.tsx'), 'utf8');
-const controlPlaneApi = readFileSync(resolve(root, 'src/services/controlPlaneApi.ts'), 'utf8');
-const webhookApi = readFileSync(resolve(root, 'src/services/control-plane/webhookApi.ts'), 'utf8');
+const readSource = (path: string) => readFileSync(resolve(root, path), 'utf8');
+const page = readSource('src/pages/WorkspaceWebhooksPage.tsx');
+const editor = readSource('src/features/webhooks/WebhookEditor.tsx');
+const list = readSource('src/features/webhooks/WebhookList.tsx');
+const model = readSource('src/features/webhooks/webhookModel.ts');
+const appPageContent = readSource('src/app/AppPageContent.tsx');
+const controlPlaneApi = readSource('src/services/controlPlaneApi.ts');
+const webhookApi = readSource('src/services/control-plane/webhookApi.ts');
 
 describe('WorkspaceWebhooksPage contract surface', () => {
-  it('uses the browser webhook CRUD endpoints through the typed control-plane API client', () => {
+  it('mounts the webhook route and uses the typed browser API client', () => {
+    expect(appPageContent).toContain("route.kind === 'workspaceWebhooks'");
     expect(controlPlaneApi).toContain('...webhookApi');
     expect(webhookApi).toContain('async listWebhooks(workspaceId: string)');
     expect(webhookApi).toContain('async createWebhook(workspaceId: string, input: ControlPlaneWebhookInput)');
     expect(webhookApi).toContain('async updateWebhook(');
     expect(webhookApi).toContain('async deleteWebhook(workspaceId: string, webhookId: string)');
     expect(webhookApi).toContain('async listWebhookHistory(');
-    expect(webhookApi).toContain('/api/v1/workspaces/${encodeURIComponent(workspaceId)}/webhooks');
   });
 
-  it('keeps read access separate from manage_webhooks mutations and expands event groups in UI', () => {
-    expect(webhooksPage).toContain('canManageWebhooks');
-    expect(webhooksPage).toContain('Webhook management required');
-    expect(webhooksPage).toContain('{canManageWebhooks && (');
-    expect(webhooksPage).toContain('const eventGroups');
-    expect(webhooksPage).toContain('applyEventGroup(group.eventTypes)');
-    expect(webhooksPage).toContain('eventTypes: sortedEvents([...current.eventTypes, ...eventTypes])');
-    expect(webhooksPage).toContain("label: 'Issue alerts'");
-    expect(webhooksPage).toContain("'issue.resolved.v1'");
+  it('keeps read access separate from manage_webhooks mutations', () => {
+    expect(page).toContain('canManageWebhooks');
+    expect(page).toContain('{canManageWebhooks && (');
+    expect(page).toContain('workspaceWebhooks.readOnlyTitle');
+    expect(list).toContain('{canManageWebhooks && (');
   });
 
-  it('shows created signing secrets only through one-time create state', () => {
-    expect(webhooksPage).toContain('const [createdSecret, setCreatedSecret]');
-    expect(webhooksPage).toContain('setCreatedSecret({ name: created.name, secret: created.secret })');
-    expect(webhooksPage).toContain('setCreatedSecret(null)');
-    expect(webhooksPage).not.toContain('localStorage');
-    expect(webhooksPage).not.toContain('sessionStorage');
+  it('uses current accessible form, state, status, and destructive confirmation primitives', () => {
+    expect(editor).toContain('<form');
+    expect(editor).toContain('type="url"');
+    expect(editor).toContain('<fieldset');
+    expect(list).toContain('<DataSurface');
+    expect(list).toContain('<EmptyState');
+    expect(list).toContain('<StatusBadge');
+    expect(list).toContain('<InlineConfirmation');
   });
 
-  it('loads delivery history through the manage_webhooks-gated history endpoint', () => {
-    expect(webhooksPage).toContain('controlPlaneApi.listWebhookHistory(workspace.id, webhook.id, { limit: 25 })');
-    expect(webhooksPage).toContain('No delivery attempts recorded.');
-    expect(webhooksPage).toContain('Deliberately not sent because the issue state advanced.');
+  it('expands current event groups without duplicating events', () => {
+    expect(editor).toContain('applyEventGroup(group.eventTypes)');
+    expect(model).toContain('return [...new Set(events)]');
+    expect(model).toContain("id: 'runAlerts'");
+  });
+
+  it('keeps created signing secrets in one-time component state only', () => {
+    expect(page).toContain('const [createdSecret, setCreatedSecret]');
+    expect(page).toContain('setCreatedSecret({ name: created.name, secret: created.secret })');
+    expect(page).not.toContain('localStorage');
+    expect(page).not.toContain('sessionStorage');
+  });
+
+  it('loads delivery history through the manage_webhooks-gated endpoint', () => {
+    expect(page).toContain('controlPlaneApi.listWebhookHistory(workspace.id, webhook.id, { limit: 25 })');
+    expect(list).toContain("t('workspaceWebhooks.historyEmpty')");
   });
 });

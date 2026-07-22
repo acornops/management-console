@@ -1,11 +1,14 @@
-import { toArray } from './formatters';
 import { requestJson } from './http';
-import type {
-  ControlPlaneWebhookCreated,
-  ControlPlaneWebhookHistory,
-  ControlPlaneWebhookInput,
-  ControlPlaneWebhookPatch,
-  ControlPlaneWebhookSubscription
+import {
+  parseWebhookCreated,
+  parseWebhookHistoryPage,
+  parseWebhookPage,
+  parseWebhookSubscription,
+  type ControlPlaneWebhookCreated,
+  type ControlPlaneWebhookHistory,
+  type ControlPlaneWebhookInput,
+  type ControlPlaneWebhookPatch,
+  type ControlPlaneWebhookSubscription
 } from './webhookTypes';
 
 const workspaceWebhooksPath = (workspaceId: string): string =>
@@ -16,15 +19,14 @@ const workspaceWebhookPath = (workspaceId: string, webhookId: string): string =>
 
 export const webhookApi = {
   async listWebhooks(workspaceId: string): Promise<ControlPlaneWebhookSubscription[]> {
-    const result = await requestJson<ControlPlaneWebhookSubscription[]>(workspaceWebhooksPath(workspaceId));
-    return toArray(result);
+    return parseWebhookPage(await requestJson<unknown>(workspaceWebhooksPath(workspaceId)));
   },
 
   async createWebhook(workspaceId: string, input: ControlPlaneWebhookInput): Promise<ControlPlaneWebhookCreated> {
-    return requestJson<ControlPlaneWebhookCreated>(
+    return parseWebhookCreated(await requestJson<unknown>(
       workspaceWebhooksPath(workspaceId),
       { method: 'POST', body: JSON.stringify(input) }
-    );
+    ));
   },
 
   async updateWebhook(
@@ -32,10 +34,10 @@ export const webhookApi = {
     webhookId: string,
     patch: ControlPlaneWebhookPatch
   ): Promise<ControlPlaneWebhookSubscription> {
-    return requestJson<ControlPlaneWebhookSubscription>(
+    return parseWebhookSubscription(await requestJson<unknown>(
       workspaceWebhookPath(workspaceId, webhookId),
       { method: 'PATCH', body: JSON.stringify(patch) }
-    );
+    ));
   },
 
   async deleteWebhook(workspaceId: string, webhookId: string): Promise<void> {
@@ -53,9 +55,9 @@ export const webhookApi = {
     const params = new URLSearchParams();
     if (options?.limit) params.set('limit', String(options.limit));
     const query = params.toString();
-    const result = await requestJson<ControlPlaneWebhookHistory[]>(
+    const result = await requestJson<unknown>(
       `${workspaceWebhookPath(workspaceId, webhookId)}/history${query ? `?${query}` : ''}`
     );
-    return toArray(result);
+    return parseWebhookHistoryPage(result);
   }
 };

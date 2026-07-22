@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoadingFallback } from '@/components/common/Loading';
 import { ICONS } from '@/constants';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
@@ -19,32 +20,27 @@ import {
   shouldPreflightWorkspaceOwnerLeave,
   workspacesAfterLeave
 } from '@/app/workspaceLeave';
-import { AppRoute, AppPaths, ClusterCatalogReturnState, ClusterCatalogRouteState, ClusterSubview, VmSubview } from '@/utils/routes';
+import { AppRoute, AppPaths, ClusterCatalogReturnState, ClusterCatalogRouteState, ClusterSubview, VmSubview, getCurrentAppPath } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 
-const loadKubernetesClustersPage = () =>
-  import('@/pages/KubernetesClustersPage').then((module) => ({ default: module.KubernetesClustersPage }));
+const loadKubernetesClustersPage = () => import('@/pages/KubernetesClustersPage').then((module) => ({ default: module.KubernetesClustersPage }));
 
-const loadKubernetesClusterDetailPage = () =>
-  import('@/pages/KubernetesClusterDetailPage').then((module) => ({ default: module.KubernetesClusterDetailPage }));
+const loadKubernetesClusterDetailPage = () => import('@/pages/KubernetesClusterDetailPage').then((module) => ({ default: module.KubernetesClusterDetailPage }));
 
-const loadNotFoundPage = () =>
-  import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }));
+const loadNotFoundPage = () => import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }));
 
-const loadSettingsPage = () =>
-  import('@/pages/SettingsPage').then((module) => ({ default: module.SettingsPage }));
+const loadSettingsPage = () => import('@/pages/SettingsPage').then((module) => ({ default: module.SettingsPage }));
 
-const loadUserSettingsPage = () =>
-  import('@/pages/UserSettingsPage').then((module) => ({ default: module.UserSettingsPage }));
+const loadUserSettingsPage = () => import('@/pages/UserSettingsPage').then((module) => ({ default: module.UserSettingsPage }));
 
-const loadHelpPage = () =>
-  import('@/pages/HelpPage').then((module) => ({ default: module.HelpPage }));
+const loadHelpPage = () => import('@/pages/HelpPage').then((module) => ({ default: module.HelpPage }));
 
-const loadVirtualMachinesPage = () =>
-  import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
+const loadVirtualMachinesPage = () => import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
 
-const loadWorkspaceAgentsPage = () =>
-  import('@/pages/WorkspaceAgentsPage').then((module) => ({ default: module.WorkspaceAgentsPage }));
+const loadWorkspaceAgentsPage = () => import('@/pages/WorkspaceAgentsPage').then((module) => ({ default: module.WorkspaceAgentsPage }));
+
+const loadWorkspaceCatalogPage = () =>
+  import('@/pages/WorkspaceCatalogPage').then((module) => ({ default: module.WorkspaceCatalogPage }));
 
 const loadWorkspaceWorkflowsPage = () =>
   import('@/pages/WorkspaceWorkflowsPage').then((module) => ({ default: module.WorkspaceWorkflowsPage }));
@@ -72,6 +68,7 @@ const UserSettingsPage = React.lazy(loadUserSettingsPage);
 const HelpPage = React.lazy(loadHelpPage);
 const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
 const WorkspaceAgentsPage = React.lazy(loadWorkspaceAgentsPage);
+const WorkspaceCatalogPage = React.lazy(loadWorkspaceCatalogPage);
 const WorkspaceWorkflowsPage = React.lazy(loadWorkspaceWorkflowsPage);
 const WorkspaceSchedulesPage = React.lazy(loadWorkspaceSchedulesPage);
 const WorkspaceApprovalsPage = React.lazy(loadWorkspaceApprovalsPage);
@@ -104,6 +101,9 @@ export function preloadAppRoutePage(route: AppRoute): void {
       break;
     case 'workspaceAgents':
       void loadWorkspaceAgentsPage();
+      break;
+    case 'workspaceCatalog':
+      void loadWorkspaceCatalogPage();
       break;
     case 'workspaceWorkflows':
       void loadWorkspaceWorkflowsPage();
@@ -144,6 +144,7 @@ function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspa
     (
       route.kind === 'workspaceOverview' ||
       route.kind === 'workspaceAgents' ||
+      route.kind === 'workspaceCatalog' ||
       route.kind === 'workspaceWorkflows' ||
       route.kind === 'workspaceSchedules' ||
       route.kind === 'workspaceApprovals' ||
@@ -259,15 +260,12 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
 }) => {
   const { t } = useTranslation();
   const shouldShowCreateFirstWorkspace =
-    ((route.kind === 'workspaces' || route.kind === 'home' || route.kind === 'settings') && workspaces.length === 0) ||
+    ((route.kind === 'workspaces' || route.kind === 'home') && workspaces.length === 0) ||
     routeTargetsMissingWorkspace(route, workspaceContext, workspaces.length);
-  const activeSettingsTab: SettingsTab = route.kind === 'workspaceMembers'
-    ? 'members'
-    : route.kind === 'workspaceAiSettings'
-      ? 'ai'
-      : route.kind === 'workspaceWebhooks'
-        ? 'webhooks'
-      : 'workspace';
+  const activeSettingsTab: SettingsTab = route.kind === 'workspaceMembers' ? 'members'
+    : route.kind === 'workspaceAiSettings' ? 'ai'
+      : route.kind === 'workspaceWebhooks' ? 'webhooks'
+        : 'workspace';
   const clusterCatalogState: ClusterCatalogRouteState | undefined =
     route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters'
       ? {
@@ -415,44 +413,40 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
         className="flex-1 min-w-0 w-full max-w-full min-h-0 h-full overflow-hidden flex flex-col"
       >
         {shouldShowCreateFirstWorkspace && (
-          <div className="flex h-full min-h-0 flex-col items-center justify-center overflow-y-auto bg-ui-bg px-6 py-10 text-center custom-scrollbar sm:px-10 lg:pb-24">
-            <section aria-labelledby="create-first-workspace-title" className="w-full max-w-3xl">
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-ui-border bg-ui-surface shadow-sm">
-                <ICONS.LayoutGrid className="h-6 w-6 text-accent-strong" aria-hidden="true" />
-              </div>
-              <p className="type-label mb-3 text-accent-strong">{t('app.createFirstWorkspaceKicker')}</p>
-              <h1 id="create-first-workspace-title" className="type-route-title text-ui-text">{t('app.createFirstWorkspace')}</h1>
-              <p className="type-body mx-auto mt-3 max-w-xl text-ui-text-muted">
-                {t('app.createFirstWorkspaceBody')}
-              </p>
-
-              <ol className="mx-auto mt-7 grid max-w-2xl overflow-hidden rounded-lg border border-ui-border bg-ui-surface text-left shadow-sm sm:grid-cols-3">
-                {([
-                  ['workspace', ICONS.LayoutGrid, t('app.createFirstWorkspaceStepWorkspace'), t('app.createFirstWorkspaceStepWorkspaceBody')],
-                  ['members', ICONS.Users, t('app.createFirstWorkspaceStepMembers'), t('app.createFirstWorkspaceStepMembersBody')],
-                  ['chat', ICONS.BotMessageSquare, t('app.createFirstWorkspaceStepChat'), t('app.createFirstWorkspaceStepChatBody')]
-                ] as const).map(([id, Icon, title, body], index) => (
-                  <li key={id} className="border-b border-ui-border p-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-                    <div className="flex items-center gap-2">
-                      <span className="type-label flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
-                        {index + 1}
-                      </span>
-                      <Icon className="h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
-                    </div>
-                    <p className="type-row-title mt-3 text-ui-text">{title}</p>
-                    <p className="type-caption mt-1 text-ui-text-muted">{body}</p>
-                  </li>
-                ))}
-              </ol>
-
-              <Button onClick={onCreateWorkspaceClick} variant="primary" size="lg" className="mt-8">
+          <div className="flex h-full min-h-0 flex-col items-center justify-start overflow-y-auto bg-ui-bg px-6 py-10 text-center custom-scrollbar sm:px-10 lg:justify-center lg:pb-24">
+            <EmptyState
+              className="w-full max-w-3xl"
+              headingLevel={1}
+              icon={<ICONS.LayoutGrid />}
+              eyebrow={t('app.createFirstWorkspaceKicker')}
+              title={t('app.createFirstWorkspace')}
+              description={t('app.createFirstWorkspaceBody')}
+              details={(
+                <ol className="grid border-y border-ui-border text-left sm:grid-cols-3 sm:divide-x sm:divide-ui-border">
+                  {([
+                    ['workspace', ICONS.LayoutGrid, t('app.createFirstWorkspaceStepWorkspace'), t('app.createFirstWorkspaceStepWorkspaceBody')],
+                    ['members', ICONS.Users, t('app.createFirstWorkspaceStepMembers'), t('app.createFirstWorkspaceStepMembersBody')],
+                    ['chat', ICONS.BotMessageSquare, t('app.createFirstWorkspaceStepChat'), t('app.createFirstWorkspaceStepChatBody')]
+                  ] as const).map(([id, Icon, title, body], index) => (
+                    <li key={id} className="border-b border-ui-border px-4 py-4 last:border-b-0 sm:border-b-0 sm:px-5">
+                      <div className="flex items-center gap-2.5">
+                        <span className="type-label flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
+                          {index + 1}
+                        </span>
+                        <Icon className="h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
+                      </div>
+                      <p className="type-row-title mt-3 text-ui-text">{title}</p>
+                      <p className="type-caption mt-1 text-ui-text-muted">{body}</p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              actions={<Button onClick={onCreateWorkspaceClick} variant="primary" size="lg">
                 <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
                 {t('app.createWorkspaceAction')}
-              </Button>
-              <p className="type-caption mx-auto mt-4 max-w-lg text-ui-text-muted">
-                {t('app.createFirstWorkspaceInviteHint')}
-              </p>
-            </section>
+              </Button>}
+              footer={t('app.createFirstWorkspaceInviteHint')}
+            />
           </div>
         )}
 
@@ -466,18 +460,13 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
               onRunTriage={onRunTargetPrompt}
-              onSelectCluster={(clusterId) =>
-                navigate(AppPaths.workspaceKubernetesClusterDiagnostics(workspaceContext.id, clusterId))
-              }
-              onSelectVirtualMachine={(vmId) =>
-                navigate(AppPaths.workspaceVirtualMachineDetail(workspaceContext.id, vmId))
-              }
-              onResumeRecentInvestigation={(path) => navigate(path)}
+              navigate={navigate}
             />
           )}
 
           {route.kind === 'workspaceWorkflows' && workspaceContext && (
             <WorkspaceWorkflowsPage
+              key={workspaceContext.id}
               workspace={workspaceContext}
               navigate={navigate}
             />
@@ -485,7 +474,17 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
 
           {route.kind === 'workspaceAgents' && workspaceContext && (
             <WorkspaceAgentsPage
+              key={workspaceContext.id}
               workspace={workspaceContext}
+            />
+          )}
+
+          {route.kind === 'workspaceCatalog' && workspaceContext && (
+            <WorkspaceCatalogPage
+              key={workspaceContext.id}
+              workspace={workspaceContext}
+              routeState={route}
+              navigate={navigate}
             />
           )}
 
@@ -507,6 +506,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onCatalogStateChange={navigateClusterCatalogState}
               onSelectKubernetesCluster={selectKubernetesClusterFromCatalog}
               onInstallAgent={onInstallAgent}
+              canInstallAgent={(cluster) => getWorkspacePermission(cluster.workspaceId, 'manage_agent_keys')}
               onOpenClusterSettings={openClusterSettingsFromCatalog}
               onAddCluster={
                 route.kind === 'workspaceKubernetesClusters' && getWorkspacePermission(route.workspaceId, 'manage_targets')
@@ -529,6 +529,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               isDark={isDark}
               canManageTargets={getWorkspacePermission(workspaceContext.id, 'manage_targets')}
+              canManageAgentKeys={getWorkspacePermission(workspaceContext.id, 'manage_agent_keys')}
               navigate={navigate}
               onUpdateWorkspace={onUpdateWorkspace}
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
@@ -549,7 +550,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onGoToWorkspaces={() => navigate(AppPaths.workspaces())}
             />
           )}
-
           {(route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers' || route.kind === 'workspaceWebhooks') && (
             <SettingsPage
               workspace={workspaceContext}
@@ -568,6 +568,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onUpdateMemberRole={workspaceContext ? updateWorkspaceMemberRole : undefined}
               onRemoveMember={workspaceContext ? removeWorkspaceMember : undefined}
               onSelectTab={navigateWorkspaceSettingsTab}
+              returnTo={route.kind === 'workspaceAiSettings' ? route.returnTo : undefined} onReturnToAssistant={(returnTo) => navigate(returnTo)}
               showToast={showToast}
             />
           )}
@@ -581,6 +582,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               user={user}
               language={language}
               languageOptions={languageOptions}
+              onGoToWorkspaces={() => navigate(AppPaths.workspaces())}
               onLogout={onLogout}
               onSetLanguage={onSetLanguage}
             />
@@ -630,7 +632,8 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                 onUpdateKubernetesCluster(clusterId, { writeConfirmationPolicy });
                 showToast(t('clusterSetup.writeConfirmationsUpdated'));
               }}
-              onOpenAiSettings={(workspaceId) => navigate(AppPaths.workspaceAiSettings(workspaceId))}
+              onDeleteCluster={onDeleteCluster}
+              onOpenAiSettings={(workspaceId) => navigate(AppPaths.workspaceAiSettings(workspaceId, getCurrentAppPath()))}
               onNavigateBackToClusters={navigateBackToClusterCatalog}
               onOpenClusterChatPanel={onOpenClusterChatPanel}
             />

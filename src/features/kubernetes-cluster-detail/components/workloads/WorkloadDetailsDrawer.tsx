@@ -173,7 +173,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                 type="button"
                 onClick={() => setActiveDetailTab(tab)}
                 className={`control-target ${classNames(
-                  'flex-1 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all',
+                  'flex-1 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-[background-color,color,box-shadow]',
                   activeDetailTab === tab
                     ? 'bg-ui-surface text-accent-strong shadow-sm'
                     : 'text-ui-text-muted hover:text-ui-text'

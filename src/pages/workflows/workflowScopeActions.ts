@@ -1,4 +1,5 @@
 import { updateWorkflowScope } from '@/services/control-plane/workflowApi';
+import { isSystemProvidedWorkflow } from './workflowModel';
 import {
   createScopeDraft,
   mapApiWorkflowToDefinition,
@@ -24,6 +25,7 @@ export function createWorkflowScopeActions(ctx: Record<string, any>) {
   }
 
   function startEditingScopeTab(tab: 'capabilities'): void {
+    if (!selectedWorkflow || isSystemProvidedWorkflow(selectedWorkflow)) return;
     setScopeSaveError(null);
     setScopeSaveResult(null);
     setIsEditingScopeTab(tab);
@@ -41,30 +43,21 @@ export function createWorkflowScopeActions(ctx: Record<string, any>) {
   }
 
   async function saveWorkflowScope(tab: 'capabilities'): Promise<void> {
-    if (!selectedWorkflow) return;
+    if (!selectedWorkflow || isSystemProvidedWorkflow(selectedWorkflow)) return;
     const draft = scopeDrafts[selectedWorkflow.id] || createScopeDraft(selectedWorkflow);
     setScopeSaveError(null);
     setScopeSaveResult(null);
     setSavingScope(selectedWorkflow.id);
     try {
-      const enabledMcpServers = splitLines(draft.enabledMcpServers);
-      const enabledSkills = splitLines(draft.enabledSkills);
+      const semanticCapabilityIds = draft.restrictionMode === 'restrict'
+        ? splitLines(draft.semanticCapabilityIds)
+        : [];
       const updated = await updateWorkflowScope(workspace.id, selectedWorkflow.id, {
-        enabledMcpServers,
-        enabledSkills,
-        policy: { mode: draft.policyMode, approvalRequirements: splitLines(draft.approvalRequirements) },
-        steps: selectedWorkflow.steps.map((step: { id: string; agentIds?: string[] }) => {
-          const stepDraft = draft.steps[step.id];
-          return {
-            id: step.id,
-            agentIds: step.agentIds || [],
-            allowedMcpServers: enabledMcpServers,
-            enabledSkills,
-            allowedTools: splitLines(stepDraft?.allowedTools || ''),
-            contextGrants: splitLines(stepDraft?.contextGrants || ''),
-            approvalRequired: Boolean(stepDraft?.approvalRequired)
-          };
-        })
+        agentIds: selectedWorkflow.agentIds,
+        capabilityPolicy: {
+          restrictionMode: draft.restrictionMode,
+          semanticCapabilityIds
+        }
       });
       const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId);
       setWorkflows((current: any[]) => current.map((workflow) => workflow.id === selectedWorkflow.id
@@ -76,7 +69,9 @@ export function createWorkflowScopeActions(ctx: Record<string, any>) {
         return next;
       });
       setScopeDrafts((current: Record<string, ScopeDraft>) => ({ ...current, [selectedWorkflow.id]: createScopeDraft(mapped) }));
-      setScopeSaveResult({ tab, message: 'Workflow capability gate saved. Future sessions will use the narrowed access.' });
+      setScopeSaveResult({ tab, message: draft.restrictionMode === 'inherit'
+        ? 'Workflow capability policy saved. Future sessions will inherit the selected Agents’ current capabilities.'
+        : 'Workflow capability policy saved. Future sessions will use the explicit capability restriction.' });
       setIsEditingScopeTab('');
     } catch (error) {
       setScopeSaveError({ tab, message: error instanceof Error ? error.message : 'Unable to save workflow scope' });
@@ -85,19 +80,16 @@ export function createWorkflowScopeActions(ctx: Record<string, any>) {
     }
   }
 
-  function setStepScopeValue(workflowId: string, stepId: string, key: 'allowedTools' | 'contextGrants', value: string, enabled: boolean): void {
+  function setSemanticCapabilityValue(workflowId: string, value: string, enabled: boolean): void {
     updateScopeDraft(workflowId, (draft) => ({
       ...draft,
-      steps: {
-        ...draft.steps,
-        [stepId]: { ...draft.steps[stepId], [key]: setLineValue(draft.steps[stepId]?.[key] || '', value, enabled) }
-      }
+      semanticCapabilityIds: setLineValue(draft.semanticCapabilityIds, value, enabled)
     }));
   }
 
-  function setWorkflowScopeValue(workflowId: string, key: 'enabledMcpServers' | 'enabledSkills', value: string, enabled: boolean): void {
-    updateScopeDraft(workflowId, (draft) => ({ ...draft, [key]: setLineValue(draft[key], value, enabled) }));
+  function setCapabilityRestrictionMode(workflowId: string, restrictionMode: 'inherit' | 'restrict'): void {
+    updateScopeDraft(workflowId, (draft) => ({ ...draft, restrictionMode }));
   }
 
-  return { cancelEditingScopeTab, saveWorkflowScope, setStepScopeValue, setWorkflowScopeValue, startEditingScopeTab };
+  return { cancelEditingScopeTab, saveWorkflowScope, setCapabilityRestrictionMode, setSemanticCapabilityValue, startEditingScopeTab };
 }

@@ -1,9 +1,11 @@
-import { Dispatch, MutableRefObject, SetStateAction, useEffect } from 'react';
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import {
+  clearActiveThemePreference,
   GLOBAL_LANGUAGE_STORAGE_KEY,
   getProfilePreferenceKey,
   getProfileStorageKey,
   LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY,
+  persistActiveThemePreference,
   persistThemePreference,
   readLanguagePreference,
   readThemePreference,
@@ -26,49 +28,75 @@ type AppI18n = {
 
 type UseAppPreferencesOptions = {
   i18n: AppI18n;
+  isSessionRestoring: boolean;
   language: AppLanguageCode;
+  loadedAnonymousPreferences: boolean;
   loadedProfilePreferenceKey: string | null;
   selectedWorkspaceId: string | null;
   setLanguage: Dispatch<SetStateAction<AppLanguageCode>>;
+  setLoadedAnonymousPreferences: Dispatch<SetStateAction<boolean>>;
   setLoadedProfilePreferenceKey: Dispatch<SetStateAction<string | null>>;
   setSelectedWorkspaceId: Dispatch<SetStateAction<string | null>>;
   setResolvedTheme: Dispatch<SetStateAction<ResolvedTheme>>;
   setThemePreference: Dispatch<SetStateAction<ThemePreference>>;
-  skipAnonymousPreferencePersistCountRef: MutableRefObject<number>;
   themePreference: ThemePreference;
   user: User | null;
 };
 
 export function useAppPreferences({
   i18n,
+  isSessionRestoring,
   language,
+  loadedAnonymousPreferences,
   loadedProfilePreferenceKey,
   selectedWorkspaceId,
   setLanguage,
+  setLoadedAnonymousPreferences,
   setLoadedProfilePreferenceKey,
   setSelectedWorkspaceId,
   setResolvedTheme,
   setThemePreference,
-  skipAnonymousPreferencePersistCountRef,
   themePreference,
   user
 }: UseAppPreferencesOptions): void {
   const activeProfilePreferenceKey = user ? getProfilePreferenceKey(user) : null;
 
   useEffect(() => {
-    if (!user) {
-      setLoadedProfilePreferenceKey(null);
-      setSelectedWorkspaceId(null);
+    if (user) {
+      const profileKey = getProfilePreferenceKey(user);
+      const profileThemePreference = readThemePreference(profileKey);
+      setLoadedAnonymousPreferences(false);
+      setThemePreference(profileThemePreference);
+      persistActiveThemePreference(profileThemePreference);
+      setLanguage(readLanguagePreference(profileKey));
+      setSelectedWorkspaceId(readWorkspacePreference(profileKey));
+      setLoadedProfilePreferenceKey(profileKey);
+      safeStorage.removeItem(LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY);
       return;
     }
 
-    const profileKey = getProfilePreferenceKey(user);
-    setThemePreference(readThemePreference(profileKey));
-    setLanguage(readLanguagePreference(profileKey));
-    setSelectedWorkspaceId(readWorkspacePreference(profileKey));
-    setLoadedProfilePreferenceKey(profileKey);
-    safeStorage.removeItem(LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY);
-  }, [setLanguage, setLoadedProfilePreferenceKey, setSelectedWorkspaceId, setThemePreference, user]);
+    if (isSessionRestoring) {
+      return;
+    }
+
+    clearActiveThemePreference();
+    setThemePreference(readThemePreference());
+    setLanguage(readLanguagePreference());
+    setLoadedAnonymousPreferences(true);
+    if (loadedProfilePreferenceKey !== null) {
+      setLoadedProfilePreferenceKey(null);
+    }
+    setSelectedWorkspaceId(null);
+  }, [
+    isSessionRestoring,
+    loadedProfilePreferenceKey,
+    setLanguage,
+    setLoadedAnonymousPreferences,
+    setLoadedProfilePreferenceKey,
+    setSelectedWorkspaceId,
+    setThemePreference,
+    user
+  ]);
 
   useEffect(() => {
     document.documentElement.dataset.themePreference = themePreference;
@@ -86,14 +114,20 @@ export function useAppPreferences({
         return;
       }
       persistThemePreference(themePreference, activeProfilePreferenceKey);
+      persistActiveThemePreference(themePreference);
       return;
     }
-    if (skipAnonymousPreferencePersistCountRef.current > 0) {
-      skipAnonymousPreferencePersistCountRef.current -= 1;
+    if (isSessionRestoring || !loadedAnonymousPreferences) {
       return;
     }
     persistThemePreference(themePreference);
-  }, [activeProfilePreferenceKey, loadedProfilePreferenceKey, skipAnonymousPreferencePersistCountRef, themePreference]);
+  }, [
+    activeProfilePreferenceKey,
+    isSessionRestoring,
+    loadedAnonymousPreferences,
+    loadedProfilePreferenceKey,
+    themePreference
+  ]);
 
   useEffect(() => {
     const supportedLanguage = resolveSupportedLanguageCode(language);
@@ -112,12 +146,19 @@ export function useAppPreferences({
       safeStorage.setItem(getProfileStorageKey(activeProfilePreferenceKey, 'language'), supportedLanguage);
       return;
     }
-    if (skipAnonymousPreferencePersistCountRef.current > 0) {
-      skipAnonymousPreferencePersistCountRef.current -= 1;
+    if (isSessionRestoring || !loadedAnonymousPreferences) {
       return;
     }
     safeStorage.setItem(GLOBAL_LANGUAGE_STORAGE_KEY, supportedLanguage);
-  }, [activeProfilePreferenceKey, i18n, language, loadedProfilePreferenceKey, setLanguage, skipAnonymousPreferencePersistCountRef]);
+  }, [
+    activeProfilePreferenceKey,
+    i18n,
+    isSessionRestoring,
+    language,
+    loadedAnonymousPreferences,
+    loadedProfilePreferenceKey,
+    setLanguage
+  ]);
 
   useEffect(() => {
     if (!activeProfilePreferenceKey || loadedProfilePreferenceKey !== activeProfilePreferenceKey) {

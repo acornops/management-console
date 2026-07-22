@@ -109,6 +109,7 @@ export function segmentedTabButtonClassName({
 
 export interface SegmentedTabsProps<T extends string> {
   activeValue: T;
+  allPanelsMounted?: boolean;
   ariaLabel: string;
   className?: string;
   idBase?: string;
@@ -118,6 +119,7 @@ export interface SegmentedTabsProps<T extends string> {
 
 export const SegmentedTabs = <T extends string,>({
   activeValue,
+  allPanelsMounted = true,
   ariaLabel,
   className,
   idBase,
@@ -125,12 +127,25 @@ export const SegmentedTabs = <T extends string,>({
   onValueChange
 }: SegmentedTabsProps<T>) => {
   const layoutGroupId = React.useId();
+  const tablistRef = React.useRef<HTMLDivElement>(null);
   const tabs = getSegmentedTabModel({ items, activeValue });
   const enabledTabs = tabs.filter((tab) => !tab.disabled);
+
+  React.useEffect(() => {
+    if (!idBase) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const activeTab = tablistRef.current?.querySelector<HTMLElement>(`#${CSS.escape(`${idBase}-${activeValue}-tab`)}`);
+      activeTab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeValue, idBase]);
+
   const focusSegmentedTab = (value: T) => {
     if (!idBase) return;
     window.requestAnimationFrame(() => {
-      document.getElementById(`${idBase}-${value}-tab`)?.focus({ preventScroll: true });
+      const tab = document.getElementById(`${idBase}-${value}-tab`);
+      tab?.focus();
+      tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   };
   const selectRelativeTab = (value: T, offset: number) => {
@@ -145,14 +160,14 @@ export const SegmentedTabs = <T extends string,>({
 
   return (
     <LayoutGroup id={layoutGroupId}>
-      <div role="tablist" aria-label={ariaLabel} className={twMerge('flex gap-2 overflow-x-auto border-b border-ui-border', className)}>
+      <div ref={tablistRef} role="tablist" aria-label={ariaLabel} className={twMerge('no-scrollbar flex gap-2 overflow-x-auto border-b border-ui-border', className)}>
         {tabs.map((tab) => (
         <button
           key={tab.value}
           id={idBase ? `${idBase}-${tab.value}-tab` : undefined}
           type="button"
           role="tab"
-          aria-controls={idBase ? `${idBase}-${tab.value}-panel` : undefined}
+          aria-controls={idBase && (allPanelsMounted || tab.isActive) ? `${idBase}-${tab.value}-panel` : undefined}
           aria-selected={tab.ariaSelected}
           disabled={tab.disabled}
           tabIndex={tab.isActive ? 0 : -1}

@@ -23,10 +23,11 @@ describe('surface behavior contracts', () => {
     expect(enLocale).toContain("active: 'Active'");
   });
 
-  it('clears resource pages before replacing paginated resources', () => {
-    expect(resourcesView).toContain("if (mode === 'replace') {");
-    expect(resourcesView).toContain('setResourceItems([]);');
-    expect(resourcesView).toContain('setNextCursor(undefined);');
+  it('resets resource pages through the shared collection filter lifecycle', () => {
+    expect(resourcesView).toContain('const resourceCollection = useCursorCollection({');
+    expect(resourcesView).toContain('filters: resourceQuery');
+    expect(resourcesView).toContain("strategy: 'sentinel'");
+    expect(resourcesView).not.toContain('setResourceItems([]);');
     expect(resourcesView).not.toContain('window.setTimeout');
   });
 

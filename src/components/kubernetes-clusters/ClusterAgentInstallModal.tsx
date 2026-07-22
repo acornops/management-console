@@ -151,7 +151,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
                   type="button"
                   onClick={handleCopy}
                   disabled={isCopying}
-                  className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-all hover:bg-ui-bg hover:text-ui-text disabled:cursor-wait disabled:opacity-70"
+                  className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-wait disabled:opacity-70"
                   aria-label={isCopying ? t('clusterSetup.copied') : t('clusterSetup.copy')}
                 >
                   {isCopying ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -194,7 +194,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           <button
             type="button"
             onClick={onClose}
-            className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-sm font-bold text-ui-text-muted transition-all hover:bg-ui-bg"
+            className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-sm font-bold text-ui-text-muted transition-colors hover:bg-ui-bg"
           >
             {t('app.close')}
           </button>

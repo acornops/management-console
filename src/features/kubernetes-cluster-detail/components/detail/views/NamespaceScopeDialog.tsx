@@ -251,7 +251,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
           <label htmlFor="namespace-scope-include-input" className="block px-1 text-xs font-bold uppercase tracking-widest text-ui-text-muted">
             {t('clusterSetup.includeNamespaces')}
           </label>
-          <div className="rounded-lg border border-ui-border bg-ui-bg px-3 py-2 transition-all focus-within:border-accent/40 focus-within:ring-2 focus-within:ring-accent/10">
+          <div className="rounded-lg border border-ui-border bg-ui-bg px-3 py-2 transition-[border-color,box-shadow] focus-within:border-accent/40 focus-within:ring-2 focus-within:ring-accent/10">
             <div className="flex min-h-9 flex-wrap items-center gap-2">
               {includeNamespaces.map((namespace) => (
                 <span key={namespace} className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-surface px-2 py-1 text-xs font-semibold text-ui-text">
@@ -330,7 +330,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
           <label htmlFor="namespace-scope-exclude-input" className="block px-1 text-xs font-bold uppercase tracking-widest text-ui-text-muted">
             {t('clusterSetup.excludeNamespaces')}
           </label>
-          <div className="rounded-lg border border-ui-border bg-ui-bg px-3 py-2 transition-all focus-within:border-accent/40 focus-within:ring-2 focus-within:ring-accent/10">
+          <div className="rounded-lg border border-ui-border bg-ui-bg px-3 py-2 transition-[border-color,box-shadow] focus-within:border-accent/40 focus-within:ring-2 focus-within:ring-accent/10">
             <div className="flex min-h-9 flex-wrap items-center gap-2">
               {excludeNamespaces.map((namespace) => (
                 <span key={namespace} className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-surface px-2 py-1 text-xs font-semibold text-ui-text">

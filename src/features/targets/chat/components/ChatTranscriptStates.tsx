@@ -61,7 +61,9 @@ export function ChatEmptyPrompt({
 
 export function ChatTranscriptSkeleton({ isPanel, label }: { isPanel: boolean; label: string }) {
   return (
-    <div className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} mx-auto space-y-5 pb-2`} aria-busy="true" aria-label={label}>
+    <div className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} mx-auto space-y-5 pb-2`} aria-busy="true" role="status" aria-live="polite">
+      <span className="sr-only">{label}</span>
+      <div aria-hidden="true" className="contents">
       <div className="flex w-full justify-end">
         <div className="h-16 w-[min(28rem,78%)] animate-pulse rounded-lg bg-ui-text/10 motion-reduce:animate-none" />
       </div>
@@ -72,6 +74,7 @@ export function ChatTranscriptSkeleton({ isPanel, label }: { isPanel: boolean; l
       </div>
       <div className="w-full max-w-[72ch] border-t border-ui-border/70 pt-3">
         <div className="h-9 w-[min(34rem,90%)] animate-pulse rounded-md bg-ui-surface motion-reduce:animate-none" />
+      </div>
       </div>
     </div>
   );

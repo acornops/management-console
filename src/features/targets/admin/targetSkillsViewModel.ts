@@ -9,6 +9,8 @@ import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 export interface TargetSkillsViewProps {
   target: TargetDescriptor;
   canManageSkills?: boolean;
+  initialCatalog?: ControlPlaneTargetSkillsCatalog | null;
+  onCatalogChange?: (catalog: ControlPlaneTargetSkillsCatalog) => void;
 }
 
 export interface SkillDraftFile {

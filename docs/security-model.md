@@ -1,5 +1,16 @@
 # Management Console Security Model
 
+## Workspace permission precedence
+
+An explicit boolean in `workspace.permissions` is authoritative, including
+`false`. The current role template is consulted only when the server omitted
+that permission. UI guards hide or disable denied privileged actions, while the
+control plane remains the authorization enforcement boundary.
+
+Authentication configuration fails closed. Until `/api/v1/auth/config` loads
+successfully, OIDC, password login, signup, and password reset are disabled and
+the console displays a retryable unavailable state.
+
 ## Trust Boundaries
 
 - The browser authenticates to the control plane with cookies, not embedded service tokens.

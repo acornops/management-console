@@ -1,6 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { getClusterTelemetrySnapshot } from '@/components/dashboard/clusterTelemetryModel';
+import { Button } from '@/components/common/Button';
+import { formatCpuCores, formatMemoryGiB, getClusterTelemetrySnapshot } from '@/components/dashboard/clusterTelemetryModel';
+import { TelemetryTrendSummary } from '@/features/targets/catalog/TelemetryTrendSummary';
 import { ICONS } from '@/constants';
 import { KubernetesCluster } from '@/types';
 import { formatCompactRelativeTime } from '@/utils/dateTime';
@@ -47,30 +49,77 @@ export const ClusterTelemetryPanel: React.FC<{
   now?: number;
   compact?: boolean;
   loadState?: 'loading' | 'ready' | 'error';
-}> = ({ cluster, now, compact = false, loadState = 'ready' }) => {
+  onRetry?: () => void;
+}> = ({ cluster, now, compact = false, loadState = 'ready', onRetry }) => {
   const { t } = useTranslation();
-  const { timeline, cpuPoints, memoryPoints, cpuDisplay, memoryDisplay } = getClusterTelemetrySnapshot(cluster);
+  const { timeline, cpuPoints, memoryPoints, cpuDisplay, memoryDisplay } = React.useMemo(
+    () => getClusterTelemetrySnapshot(cluster),
+    [cluster]
+  );
   const hasCpuTrend = cpuPoints.length >= 2;
   const hasMemoryTrend = memoryPoints.length >= 2;
   const hasTrend = hasCpuTrend || hasMemoryTrend;
   const hasAnyMetric = cpuPoints.length > 0 || memoryPoints.length > 0;
   const startTimestamp = timeline[0]?.timestamp ?? 0;
   const endTimestamp = timeline[timeline.length - 1]?.timestamp ?? startTimestamp;
-  const cpuPath = buildSparklinePath(cpuPoints, startTimestamp, endTimestamp);
-  const memoryPath = buildSparklinePath(memoryPoints, startTimestamp, endTimestamp);
+  const cpuPath = React.useMemo(
+    () => buildSparklinePath(cpuPoints, startTimestamp, endTimestamp),
+    [cpuPoints, endTimestamp, startTimestamp]
+  );
+  const memoryPath = React.useMemo(
+    () => buildSparklinePath(memoryPoints, startTimestamp, endTimestamp),
+    [endTimestamp, memoryPoints, startTimestamp]
+  );
   const axisStartLabel = timeline.length >= 2 ? formatCompactRelativeTime(timeline[0].timestamp, { now }) : t('dashboard.telemetryAxisEarlier');
   const axisEndLabel = timeline.length >= 2 ? formatCompactRelativeTime(timeline[timeline.length - 1].timestamp, { now }) : t('dashboard.telemetryAxisNow');
   const metricItems = [
     { label: t('dashboard.cpu'), value: cpuDisplay, Icon: ICONS.Cpu, markerClassName: 'bg-accent-strong' },
     { label: t('dashboard.memory'), value: memoryDisplay, Icon: ICONS.HardDrive, markerClassName: 'bg-metric-blue' }
   ];
+  const trendSummary = hasTrend ? (
+    <TelemetryTrendSummary
+      title={t('dashboard.telemetryAria', { name: cluster.name })}
+      metricColumnLabel={t('dashboard.telemetryMetric')}
+      startLabel={axisStartLabel}
+      endLabel={axisEndLabel}
+      series={[
+        {
+          label: t('dashboard.cpu'),
+          startValue: formatCpuCores(cpuPoints[0]?.value ?? null) ?? t('dashboard.unavailable'),
+          endValue: formatCpuCores(cpuPoints[cpuPoints.length - 1]?.value ?? null) ?? t('dashboard.unavailable')
+        },
+        {
+          label: t('dashboard.memory'),
+          startValue: formatMemoryGiB(memoryPoints[0]?.value ?? null) ?? t('dashboard.unavailable'),
+          endValue: formatMemoryGiB(memoryPoints[memoryPoints.length - 1]?.value ?? null) ?? t('dashboard.unavailable')
+        }
+      ]}
+    />
+  ) : null;
+  const retryButton = onRetry ? (
+    <Button
+      type="button"
+      variant="secondary"
+      size="sm"
+      className="pointer-events-auto shrink-0"
+      aria-label={t('dashboard.retryTelemetry', { name: cluster.name })}
+      onClick={(event) => {
+        event.stopPropagation();
+        onRetry();
+      }}
+    >
+      {t('common.retry')}
+    </Button>
+  ) : null;
 
   if (compact) {
     const lastSignalLabel = getAgentConnectionState(cluster) === 'disconnected'
       ? t('dashboard.telemetryPaused')
       : loadState === 'error'
         ? t('dashboard.telemetryRefreshFailed')
-        : t('dashboard.updatedTime', { time: formatCompactRelativeTime(cluster.lastUpdate, { now }) });
+        : loadState === 'loading'
+          ? t('dashboard.loadingTelemetry')
+          : t('dashboard.updatedTime', { time: formatCompactRelativeTime(cluster.lastUpdate, { now }) });
 
     return (
       <section data-cluster-telemetry-panel="compact" aria-label={t('dashboard.telemetryAria', { name: cluster.name })} className="shrink-0 px-4 pb-3">
@@ -88,7 +137,7 @@ export const ClusterTelemetryPanel: React.FC<{
         </dl>
         <div>
           <div className="relative h-[104px] min-w-0 overflow-hidden">
-            <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="h-full w-full" role="img" aria-label={t('dashboard.telemetryAria', { name: cluster.name })}>
+            <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
               <line x1="0" x2="180" y1="20" y2="20" className="stroke-ui-border/55" strokeWidth="1" />
               <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/55" strokeWidth="1" />
               <line x1="0" x2="180" y1="88" y2="88" className="stroke-ui-border/55" strokeWidth="1" />
@@ -96,7 +145,11 @@ export const ClusterTelemetryPanel: React.FC<{
               {hasMemoryTrend && memoryPath && <path d={memoryPath} fill="none" className="stroke-metric-blue" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" opacity="0.78" transform="translate(0 8)" />}
             </svg>
             {!hasTrend && (
-              <div className="absolute inset-0 flex items-center justify-center px-3 text-center">
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center"
+                role={loadState === 'error' ? 'alert' : 'status'}
+                aria-live="polite"
+              >
                 <p className={`type-caption font-semibold ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`}>
                   {loadState === 'loading'
                     ? t('dashboard.loadingTelemetry')
@@ -104,13 +157,23 @@ export const ClusterTelemetryPanel: React.FC<{
                       ? t('dashboard.telemetryLoadFailed')
                       : hasAnyMetric ? t('dashboard.collectingHistory') : t('dashboard.noTelemetry')}
                 </p>
+                {loadState === 'error' && retryButton}
               </div>
             )}
           </div>
+          {trendSummary}
           <div className="type-caption mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-ui-text-muted">
             <span>{axisStartLabel}</span>
-            <span className="truncate text-center">{t('dashboard.telemetryAxisLabel')}</span>
-            <span className="truncate text-right">{lastSignalLabel}</span>
+            <span
+              className="truncate text-center"
+              role={loadState === 'error' && hasTrend ? 'alert' : loadState === 'loading' ? 'status' : undefined}
+              aria-live={loadState !== 'ready' ? 'polite' : undefined}
+            >
+              {loadState === 'error' && hasTrend ? lastSignalLabel : t('dashboard.telemetryAxisLabel')}
+            </span>
+            {loadState === 'error' && hasTrend && retryButton
+              ? retryButton
+              : <span className="truncate text-right">{lastSignalLabel}</span>}
           </div>
         </div>
       </section>
@@ -137,7 +200,7 @@ export const ClusterTelemetryPanel: React.FC<{
 
       <div className="min-w-0 px-3 py-3">
         <div className="relative h-[132px] min-w-0 overflow-hidden px-2.5 py-2">
-          <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="h-full w-full" role="img" aria-label={t('dashboard.telemetryAria', { name: cluster.name })}>
+          <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
             <line x1="0" x2="180" y1="18" y2="18" className="stroke-ui-border/60" strokeWidth="1" />
             <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/60" strokeWidth="1" />
             <line x1="0" x2="180" y1="90" y2="90" className="stroke-ui-border/60" strokeWidth="1" />
@@ -145,20 +208,37 @@ export const ClusterTelemetryPanel: React.FC<{
             {hasMemoryTrend && memoryPath && <path d={memoryPath} fill="none" className="stroke-metric-blue" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" opacity="0.78" transform="translate(0 8)" />}
           </svg>
           {!hasTrend && (
-            <div className="absolute inset-0 flex items-center justify-center px-3 text-center">
-              <p className="type-caption max-w-[18rem] text-ui-text-muted" title={t('dashboard.collectingHistoryBody')}>
-                <span className="font-semibold text-ui-text">{hasAnyMetric ? t('dashboard.collectingHistory') : t('dashboard.noTelemetry')}</span>
-                <span className="ml-1">{t('dashboard.collectingHistoryBody')}</span>
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center"
+              role={loadState === 'error' ? 'alert' : 'status'}
+              aria-live="polite"
+            >
+              <p className={`type-caption max-w-[18rem] ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`} title={loadState === 'error' ? t('dashboard.telemetryLoadFailed') : t('dashboard.collectingHistoryBody')}>
+                <span className="font-semibold text-ui-text">
+                  {loadState === 'loading'
+                    ? t('dashboard.loadingTelemetry')
+                    : loadState === 'error'
+                      ? t('dashboard.telemetryLoadFailed')
+                      : hasAnyMetric ? t('dashboard.collectingHistory') : t('dashboard.noTelemetry')}
+                </span>
+                {loadState === 'ready' && <span className="ml-1">{t('dashboard.collectingHistoryBody')}</span>}
               </p>
+              {loadState === 'error' && retryButton}
             </div>
           )}
         </div>
+        {trendSummary}
         <div className="type-caption mt-1.5 flex min-w-0 items-center justify-between gap-3 font-medium text-ui-text-muted" aria-hidden="true">
           <span>{axisStartLabel}</span>
           <span className="min-w-0 truncate text-center">{t('dashboard.telemetryAxisLabel')}</span>
           <span>{axisEndLabel}</span>
         </div>
-
+        {loadState === 'error' && hasTrend && (
+          <div role="alert" className="mt-2 flex min-w-0 items-center justify-between gap-3 rounded-md border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">
+            <span className="type-caption min-w-0 break-words">{t('dashboard.telemetryRefreshFailed')}</span>
+            {retryButton}
+          </div>
+        )}
       </div>
     </section>
   );

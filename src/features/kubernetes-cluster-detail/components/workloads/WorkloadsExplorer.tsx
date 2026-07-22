@@ -84,6 +84,7 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   resourceKindCounts,
   onResourceQueryChange,
   onLoadMoreResources,
+  loadMoreSentinelRef,
   onLoadPodLogs,
   onAnalyzePod
 }) => {
@@ -109,7 +110,6 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   const [showUnhealthyPodsOnly, setShowUnhealthyPodsOnly] = useState(shouldShowUnhealthyPodsInitially);
   const [hasManualResourceSelection, setHasManualResourceSelection] = useState(!persistedShowUnhealthyPodsOnly);
   const triageDefaultAppliedRef = useRef(shouldShowUnhealthyPodsInitially);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const showUnhealthyWorkloadsOnly = activeResourceFamily === 'workloads' && showUnhealthyPodsOnly;
 
   useEffect(() => {
@@ -392,18 +392,6 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
     showUnhealthyWorkloadsOnly
   ]);
 
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasMoreResources || !onLoadMoreResources) return undefined;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting) && !isLoadingInitial && !isLoadingMore) {
-        onLoadMoreResources();
-      }
-    }, { rootMargin: '280px' });
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreResources, isLoadingInitial, isLoadingMore, onLoadMoreResources]);
-
   const markResourceSelectionChanged = () => setHasManualResourceSelection(true);
 
   return (
@@ -521,7 +509,7 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
         />
         )}
       </div>
-      <div ref={loadMoreRef} className="mt-5 flex flex-col items-center gap-3">
+      <div ref={loadMoreSentinelRef} className="mt-5 flex flex-col items-center gap-3">
         {resourceListError && (
           <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
             {resourceListError}

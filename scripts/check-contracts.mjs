@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
@@ -23,17 +23,41 @@ const readme = read('README.md');
 const doc = read('docs/contracts/README.md');
 const manifest = JSON.parse(read('docs/contracts/manifest.json'));
 const manifestText = JSON.stringify(manifest);
+const publicOpenApiPath = process.env.ACORNOPS_PUBLIC_OPENAPI_PATH
+  ? path.resolve(process.env.ACORNOPS_PUBLIC_OPENAPI_PATH)
+  : path.join(root, '..', 'docs-website', 'openapi', 'control-plane-public.json');
+const vendoredPublicOperations = new Set(JSON.parse(read('docs/contracts/control-plane-public-operations.json')));
+const livePublicOperations = existsSync(publicOpenApiPath)
+  ? new Set(
+      Object.entries(JSON.parse(readFileSync(publicOpenApiPath, 'utf8')).paths ?? {}).flatMap(([operationPath, pathItem]) =>
+        Object.keys(pathItem)
+          .filter((method) => ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(method))
+          .map((method) => `${method.toUpperCase()} ${operationPath}`)
+      )
+    )
+  : null;
+const publicOperations = livePublicOperations ?? vendoredPublicOperations;
+if (livePublicOperations) {
+  expect(
+    JSON.stringify([...livePublicOperations].sort()) === JSON.stringify([...vendoredPublicOperations].sort()),
+    'Vendored control-plane public operation inventory must match the generated docs artifact'
+  );
+}
 const controlPlaneApi = read('src/services/controlPlaneApi.ts');
 const controlPlaneAuthApi = read('src/services/control-plane/authApi.ts');
 const kubernetesClusterApi = read('src/services/control-plane/kubernetesClusterApi.ts');
 const targetApi = read('src/services/control-plane/targetApi.ts');
-const controlPlaneApiSurface = `${controlPlaneApi}\n${controlPlaneAuthApi}\n${kubernetesClusterApi}\n${targetApi}`;
+const agentApi = read('src/services/control-plane/agentApi.ts');
+const catalogApi = read('src/services/control-plane/catalogApi.ts');
+const workflowApi = read('src/services/control-plane/workflowApi.ts');
+const controlPlaneApiSurface = [controlPlaneApi, controlPlaneAuthApi, kubernetesClusterApi, targetApi, agentApi, catalogApi, workflowApi].join('\n');
 const controlPlaneMapping = [
   read('src/types.ts'),
   controlPlaneApi,
   controlPlaneAuthApi,
   kubernetesClusterApi,
   targetApi,
+  catalogApi,
   read('src/services/control-plane/clusterMappers.ts'),
   read('src/services/control-plane/toolMappers.ts'),
   read('src/services/control-plane/targetToolTypes.ts'),
@@ -70,6 +94,11 @@ for (const heading of [
 
 function docToken(value) {
   return value.replace(/^`|`$/g, '');
+}
+
+function openApiOperation(value) {
+  const [method, operationPath] = docToken(value).split(' ', 2);
+  return `${method} ${operationPath.split('?', 1)[0]}`;
 }
 
 for (const [docPath, implNeedle, label] of [
@@ -113,12 +142,18 @@ for (const [docPath, implNeedle, label] of [
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/catalog`', '/mcp/catalog', 'Target MCP catalog path'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools`', 'listTargetTools(', 'Target tools implementation'],
   ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}`', "updateTargetTool(", 'Target tool settings implementation'],
-  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}`', "updateTargetMcpServerTool(", 'Target MCP tool patch implementation'],
+  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}`', 'updateTargetMcpServerTool(', 'Target MCP tool patch implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', '/targets/${encodeURIComponent(targetId)}/mcp/servers', 'List target MCP servers path'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools`', 'listMcpServerTools(', 'List target MCP server tools implementation'],
-  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', "createTargetMcpServer(", 'Create target MCP server implementation'],
-  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', "updateTargetMcpServer(", 'Update target MCP server implementation'],
-  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', "deleteTargetMcpServer(", 'Delete target MCP server implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', 'createTargetMcpServer(', 'Create target MCP server implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/import`', 'importTargetMcpServer(', 'Import target MCP server implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/reimport`', 'reimportTargetMcpServer(', 'Reimport target MCP server implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'getTargetMcpConnection(', 'Target credential connection implementation'],
+  ['`PUT /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'putTargetMcpConnection(', 'Target credential implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection/verify`', 'verifyTargetMcpConnection(', 'Target credential verification implementation'],
+  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'disconnectTargetMcp(', 'Target credential disconnect implementation'],
+  ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', 'updateTargetMcpServer(', 'Update target MCP server implementation'],
+  ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}`', 'deleteTargetMcpServer(', 'Delete target MCP server implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection`', '/test-connection', 'Test target MCP server path'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills`', 'listTargetSkills(', 'List target skills implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills`', 'createTargetSkill(', 'Create target skill implementation'],
@@ -127,6 +162,11 @@ for (const [docPath, implNeedle, label] of [
   ['`PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`', 'updateTargetSkill(', 'Update target skill implementation'],
   ['`DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}`', 'deleteTargetSkill(', 'Delete target skill implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}/reimport`', 'reimportTargetSkill(', 'Reimport target skill implementation'],
+  ['`POST /api/v1/agents/{agentId}/duplicate`', 'duplicateAgent(', 'Duplicate Agent implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers`', 'listAgentMcpServers(', 'List Agent MCP servers implementation'],
+  ['`POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers`', 'createAgentMcpServer(', 'Create Agent MCP server implementation'],
+  ['`GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/skills`', 'listAgentSkills(', 'List Agent skills implementation'],
+  ['`POST /api/v1/workflows/{workflowId}/duplicate`', 'duplicateWorkflow(', 'Duplicate workflow implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`', 'createSession(', 'Create session implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions`', 'listSessions(', 'List sessions implementation'],
   ['`DELETE /api/v1/sessions/{sessionId}`', 'deleteSession(', 'Delete session implementation'],
@@ -137,7 +177,8 @@ for (const [docPath, implNeedle, label] of [
   ['`GET /api/v1/runs/{runId}/stream`', '/stream', 'Run stream path'],
   ['`POST /api/v1/runs/{runId}/cancel`', 'method: \'POST\'', 'Run cancel method']
 ]) {
-  expectIncludes(manifestText, docToken(docPath), `${label} manifest`);
+  const operation = openApiOperation(docPath);
+  expect(publicOperations.has(operation), `${label} OpenAPI operation: missing ${operation}`);
   expectIncludes(controlPlaneApiSurface, implNeedle, `${label} implementation`);
 }
 
@@ -213,6 +254,11 @@ expectIncludes(controlPlaneMapping, 'manage_ai_settings: boolean', 'Workspace AI
 expectIncludes(controlPlaneMapping, 'WorkspaceAiSettings', 'Workspace AI settings type');
 expectIncludes(controlPlaneApiSurface, 'ai-provider-credentials', 'Workspace AI provider credential path');
 expectIncludes(doc, 'must never expect or display API key values', 'Workspace AI credential redaction doc');
+expectIncludes(doc, 'AcornOps Manager is never an installation destination', 'Catalog Manager exclusion doc');
+expectIncludes(doc, 'current user principal', 'User-only schedule principal doc');
+expectIncludes(read('src/utils/routes.ts'), '/workspaces/${encodeURIComponent(workspaceId)}/catalog', 'Route-backed catalog path');
+expectIncludes(read('src/pages/WorkspaceCatalogPage.tsx'), 'destination', 'Catalog destination URL state');
+expect(!workflowApi.includes('/mcp/servers'), 'Workflow API must not expose retired workspace-scoped MCP management');
 expectIncludes(controlPlaneMapping, 'currentUserRole', 'Workspace current-user role mapping');
 expectIncludes(controlPlaneMapping, 'permissions: workspace.permissions', 'Workspace permissions mapping');
 expectIncludes(controlPlaneApiSurface, 'listWorkspaceMembers(', 'Workspace members must be fetched from control plane');
@@ -230,6 +276,30 @@ for (const field of controlPlaneContract.requestFields.postMessage) {
 
 for (const field of controlPlaneContract.responseFields.postMessageAccepted) {
   expectIncludes(manifestText, field, 'Post message response manifest');
+}
+
+for (const guard of [
+  {
+    path: 'src/pages/WorkspaceWorkflowsPage.launchFields.tsx',
+    forbidden: ['PromptReferenceKind', 'parseTargetReferences', 'parseRepositoryPromptReferences', 'referencedOptions', '@cluster[']
+  },
+  {
+    path: 'src/services/control-plane/workflowApi.ts',
+    forbidden: ['selected_chat_sessions', 'chat_session_list', 'inputDefaults', 'allowed_repository']
+  },
+  {
+    path: 'src/pages/workflows/workflowPageHelpers.tsx',
+    forbidden: ['chatSessions:', 'clusters:', 'targets:', 'PromptReferenceKind']
+  },
+  {
+    path: 'src/pages/WorkspaceSchedulesPage.tsx',
+    forbidden: ['inputDefaults', 'chat_session_list', '@cluster[']
+  }
+]) {
+  const source = read(guard.path);
+  for (const forbidden of guard.forbidden) {
+    expect(!source.includes(forbidden), `${guard.path} must not contain retired prompt-resource contract ${forbidden}`);
+  }
 }
 
 if (failures.length > 0) {

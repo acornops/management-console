@@ -86,3 +86,99 @@ export interface ControlPlaneWebhookPatch {
   targetId?: string | null;
   enabled?: boolean;
 }
+
+type JsonRecord = Record<string, unknown>;
+
+function asRecord(value: unknown, label: string): JsonRecord {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`Control plane returned an invalid ${label}`);
+  }
+  return value as JsonRecord;
+}
+
+function requiredString(record: JsonRecord, key: string, label: string): string {
+  if (typeof record[key] !== 'string' || record[key].length === 0) {
+    throw new Error(`Control plane returned an invalid ${label}: missing ${key}`);
+  }
+  return record[key];
+}
+
+function optionalString(record: JsonRecord, key: string): string | undefined {
+  return typeof record[key] === 'string' ? record[key] : undefined;
+}
+
+function optionalNullableString(record: JsonRecord, key: string): string | null | undefined {
+  return record[key] === null ? null : optionalString(record, key);
+}
+
+const eventTypeSet = new Set<string>(CONTROL_PLANE_WEBHOOK_EVENT_TYPES);
+
+function parseEventTypes(value: unknown, label: string): ControlPlaneWebhookEventType[] {
+  if (!Array.isArray(value) || value.some((eventType) => typeof eventType !== 'string' || !eventTypeSet.has(eventType))) {
+    throw new Error(`Control plane returned an invalid ${label}: unsupported event type`);
+  }
+  return [...new Set(value)] as ControlPlaneWebhookEventType[];
+}
+
+export function parseWebhookSubscription(value: unknown): ControlPlaneWebhookSubscription {
+  const record = asRecord(value, 'webhook subscription');
+  if (typeof record.enabled !== 'boolean') {
+    throw new Error('Control plane returned an invalid webhook subscription: missing enabled');
+  }
+  return {
+    id: requiredString(record, 'id', 'webhook subscription'),
+    workspaceId: requiredString(record, 'workspaceId', 'webhook subscription'),
+    targetId: optionalNullableString(record, 'targetId'),
+    name: requiredString(record, 'name', 'webhook subscription'),
+    url: requiredString(record, 'url', 'webhook subscription'),
+    eventTypes: parseEventTypes(record.eventTypes, 'webhook subscription'),
+    enabled: record.enabled,
+    createdBy: optionalString(record, 'createdBy'),
+    createdAt: optionalString(record, 'createdAt'),
+    updatedAt: optionalString(record, 'updatedAt')
+  };
+}
+
+export function parseWebhookCreated(value: unknown): ControlPlaneWebhookCreated {
+  const record = asRecord(value, 'created webhook');
+  return {
+    ...parseWebhookSubscription(record),
+    secret: requiredString(record, 'secret', 'created webhook')
+  };
+}
+
+export function parseWebhookHistory(value: unknown): ControlPlaneWebhookHistory {
+  const record = asRecord(value, 'webhook delivery history');
+  if (record.status !== 'success' && record.status !== 'failed') {
+    throw new Error('Control plane returned an invalid webhook delivery history: unsupported status');
+  }
+  const payload = record.payload === undefined ? {} : asRecord(record.payload, 'webhook delivery payload');
+  return {
+    id: requiredString(record, 'id', 'webhook delivery history'),
+    subscriptionId: requiredString(record, 'subscriptionId', 'webhook delivery history'),
+    eventId: requiredString(record, 'eventId', 'webhook delivery history'),
+    eventType: requiredString(record, 'eventType', 'webhook delivery history'),
+    workspaceId: requiredString(record, 'workspaceId', 'webhook delivery history'),
+    targetId: optionalNullableString(record, 'targetId'),
+    subjectType: requiredString(record, 'subjectType', 'webhook delivery history'),
+    subjectId: requiredString(record, 'subjectId', 'webhook delivery history'),
+    payload,
+    status: record.status,
+    responseStatus: typeof record.responseStatus === 'number' ? record.responseStatus : null,
+    error: optionalNullableString(record, 'error'),
+    durationMs: typeof record.durationMs === 'number' ? record.durationMs : null,
+    sentAt: requiredString(record, 'sentAt', 'webhook delivery history')
+  };
+}
+
+export function parseWebhookPage(value: unknown): ControlPlaneWebhookSubscription[] {
+  const items = Array.isArray(value) ? value : asRecord(value, 'webhook page').items;
+  if (!Array.isArray(items)) throw new Error('Control plane returned an invalid webhook page: missing items');
+  return items.map(parseWebhookSubscription);
+}
+
+export function parseWebhookHistoryPage(value: unknown): ControlPlaneWebhookHistory[] {
+  const items = Array.isArray(value) ? value : asRecord(value, 'webhook history page').items;
+  if (!Array.isArray(items)) throw new Error('Control plane returned an invalid webhook history page: missing items');
+  return items.map(parseWebhookHistory);
+}

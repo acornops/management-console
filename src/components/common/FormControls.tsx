@@ -19,7 +19,7 @@ export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(({ className
   <input
     ref={ref}
     type="radio"
-    className={twMerge('ui-radio h-4 w-4 shrink-0 border-ui-border bg-ui-surface text-ui-text focus:ring-2 focus:ring-accent/25 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50', className)}
+    className={twMerge('ui-radio h-4 w-4 shrink-0 appearance-none rounded-full border border-ui-border bg-ui-surface accent-accent outline-none transition-[border-color,box-shadow] checked:border-accent checked:bg-[radial-gradient(circle_at_center,rgb(var(--brand-orange-rgb))_0_35%,transparent_40%)] focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50', className)}
     {...props}
   />
 ));
@@ -49,9 +49,9 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(({ checke
   >
     <span aria-hidden="true" className={clsx(
       'relative inline-flex h-6 w-11 items-center rounded-full border p-0.5 transition-colors',
-      checked ? 'border-ui-text bg-ui-text' : 'border-ui-border bg-ui-surface-strong'
+      checked ? 'border-ui-text bg-ui-text' : 'border-control-boundary bg-ui-surface-strong'
     )}>
-      <span className={clsx('h-[1.125rem] w-[1.125rem] rounded-full bg-ui-bg shadow-sm transition-transform', checked ? 'translate-x-[1.125rem]' : 'translate-x-0')} />
+      <span className={clsx('h-[1.125rem] w-[1.125rem] rounded-full bg-ui-surface shadow-sm ring-1 ring-inset ring-ui-border transition-transform', checked ? 'translate-x-[1.125rem]' : 'translate-x-0')} />
     </span>
   </button>
 ));

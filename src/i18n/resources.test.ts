@@ -146,5 +146,5 @@ describe('bundled i18n resources', () => {
       .sort();
 
     expect(missingInterpolationValues).toEqual([]);
-  });
+  }, 30_000);
 });

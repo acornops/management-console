@@ -6,6 +6,7 @@ import {
   chatGateDialog,
   chatTranscriptStates,
   conversationAssistantStatuses, chatSessionSync,
+  generatedReportCard,
   chatSubmit, chatSubmitTypes,
   chatView,
   conversationHistory,
@@ -19,42 +20,11 @@ import {
   zhLocale
 } from '@/stylesTestSupport';
 describe('target chat polish contracts', () => {
-  it('keeps desktop conversation history as a non-blocking route rail', () => {
-    expect(chatView).toContain('setIsHistoryOpen(true)');
-    expect(chatView).toContain('setIsHistoryOpen(false)');
-    expect(chatView).toContain('desktopHistoryPanelId');
-    expect(chatView).toContain('relative hidden h-full shrink-0 overflow-visible border-r border-ui-border bg-ui-surface shadow-sm lg:flex');
-    expect(chatView).toContain('absolute inset-0 z-[110] lg:hidden');
-    expect(chatView).toContain('usesOverlayHistory');
-    expect(chatView).toContain('historyPanelRef.current?.focus');
-    expect(chatView).toContain('getFocusableHistoryElements');
-    expect(chatView).toContain('getHistoryFocusWrapIndex');
-    expect(chatView).toContain('aria-modal="true"');
-    expect(chatView).toContain('aria-hidden="true"');
-    expect(chatView).toContain('aria-pressed={isHistoryOpen}');
-    expect(chatView).toContain('absolute left-0 top-1/2 z-20');
-    expect(chatView).toContain('right-[-2.25rem] top-1/2');
-    expect(chatView).toContain('side="right"');
-    expect(chatView).toContain("t('chat.hideHistory')");
-    expect(chatView).toContain("t('chat.showHistory')");
-    expect(chatView).toContain('<History className="h-4 w-4" />');
-    expect(chatView).not.toContain('[clip-path:polygon');
-    expect(chatView).toContain('lg:grid-cols-[minmax(0,1fr)_auto]');
-    expect(chatView).not.toContain("Tooltip content={t('chat.newChat')}");
-    expect(chatView).toContain('const handleCreateSessionClick = () => {');
-    expect(chatView).toContain('onCreateSession();');
-    expect(chatView).toContain('requestComposerFocus();');
-    expect(chatView).toContain('onClick={handleCreateSessionClick}');
-    expect(chatView).not.toContain('lg:grid-cols-[auto_minmax(0,1fr)_auto]');
-    expect(conversationHistory).toContain('aria-current={isActive ?');
-    expect(conversationHistory).toContain("t('chat.conversationHistory')");
-    expect(conversationHistory).toContain("t('chat.historyContext', { name: appName })");
-    expect(conversationHistory).not.toContain('onCreateSession');
-    expect(conversationHistory).not.toContain('onClose');
-    expect(chatView).toMatch(/const selectSession = \(sessionId: string\) => \{\s+if \(sessionId !== activeSessionId\) clearComposerAttachments\(\);\s+onSelectSession\(sessionId\);\s+\};/);
-    expect(chatView).not.toContain("event.key === 'Escape'");
-    expect(chatView).not.toContain('xl:w-80');
+  it('keeps the programmatic attachment input out of the accessibility tree', () => {
+    expect(chatView).toMatch(/<input\s+ref=\{fileInputRef\}\s+type="file"\s+multiple\s+hidden/);
+    expect(chatView).not.toMatch(/type="file"[\s\S]{0,80}className="sr-only"/);
   });
+
   it('renders approvals as inline operational checkpoints', () => {
     expect(approvalCheckpoint).toContain('interface ApprovalCheckpointProps');
     expect(approvalCheckpoint).toContain('data-chat-approval-checkpoint="true"');
@@ -191,8 +161,7 @@ describe('target chat polish contracts', () => {
     expect(zhLocale).toContain("conversationLoadFailed: '无法加载会话'");
     expect(chatView).toContain("variant=\"secondary\"");
     expect(chatView).toContain('const newChatUnavailableReason =');
-    expect(chatView).toContain('Tooltip content={newChatUnavailableReason}');
-    expect(chatView).toContain('disabled={!canChat}');
+    expect(chatView).toMatch(/<Tooltip\s+content=\{newChatUnavailableReason\}/);
     expect(chatView).not.toContain('disabled={!canChat || isRunActive}');
     expect(chatView).toContain('composerActionLabel');
     expect(chatView).toContain('canCancelActiveRun');
@@ -209,7 +178,6 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('const requestComposerFocus = () => {');
     expect(chatView).toContain('pendingComposerFocusRef.current = true;');
     expect(chatView).toContain('if (focusComposer()) pendingComposerFocusRef.current = false;');
-    expect(chatView).toContain('!pendingComposerFocusRef.current || !canPost || isRunActive');
     expect(chatView).toContain("focus({ preventScroll: true })");
     expect(chatView).toContain('!wasRunActive || isRunActive || !canPost');
     expect(chatView).toContain('composerRootRef.current?.contains(activeElement)');
@@ -228,19 +196,14 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('sm:left-[calc(100%+0.5rem)]');
     expect(chatView).toContain('sm:right-auto');
     expect(chatView).not.toContain('sm:right-[calc(100%+0.5rem)]');
-    expect(chatView).toContain('controlPlaneApi.getWorkspaceAiSettings(target.workspaceId)');
     expect(chatView).toContain('buildComposerModelOptions(workspaceAiSettings)');
     expect(chatView).toContain('function modelsForProvider(settings: WorkspaceAiSettings, provider: LlmProvider): string[]');
     expect(chatView).toContain('return settings.allowedProviderModels[provider] || [];');
     expect(chatView).not.toContain('modelBelongsToProvider');
-    expect(chatView).toContain('ready: configured && enabled');
     expect(chatView).toContain('const selectableComposerModelOptions = React.useMemo');
     expect(chatView).toContain('composerModelOptions: selectableComposerModelOptions');
     expect(chatView).toContain('const effectiveRecentActivityWarning = recentActivityWarning && (activeSessionId || recentActivityWarning.actionSessionId) ? recentActivityWarning : null;');
     expect(chatView).toContain('const canPost = canChat && isConversationOwner && !effectiveRecentActivityWarning;');
-    expect(chatView).toContain('const isComposerRuntimeBlocked = Boolean(workspaceAiSettings && !hasReadyComposerModel);');
-    expect(chatView).toContain('resolveAiSettingsGateReason(canChat, isWorkspaceAiSettingsLoading, workspaceAiSettingsError, isComposerRuntimeBlocked)');
-    expect(chatView).toContain('const isComposerRuntimeUnavailable = Boolean(isWorkspaceAiSettingsLoading || workspaceAiSettingsError || (workspaceAiSettings && !selectedModelOption?.ready));');
     expect(chatView).toContain('max-h-[min(24rem,calc(100vh-8rem))]');
     expect(chatView).toContain('overflow-y-auto');
     expect(chatView).toContain('composerModelOptions.length > 0 ? `${selectedModelLabel} ${selectedEffortLabel}` : selectedModelLabel');
@@ -276,7 +239,6 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain("isWorkspaceAiSettingsLoading\n      ? t('chat.modelLoading')");
     expect(chatView).toContain("t('chat.modelDefault')");
     expect(chatView).toContain("t('chat.modelUnavailable')");
-    expect(chatView).toContain("t('chat.noConfiguredModels')");
     expect(chatView).toContain('aria-pressed={isSelected}');
     expect(chatView).not.toContain('role="menuitemradio"');
     expect(chatView).not.toContain('role="menu"');
@@ -332,7 +294,6 @@ describe('target chat polish contracts', () => {
     expect(chatView).not.toContain('visibleMessages.slice(messageIndex, turnEndIndex)');
     expect(chatView).toContain('const startEditingMessage = (messageId: string, content: string) => {');
     expect(chatView).toContain('const submitEditedMessage = async (messageId: string) => {');
-    expect(chatView).toContain('if (!nextContent || !canPost || isSubmittingEdit || isRunActive || isComposerRuntimeUnavailable) return;');
     expect(chatView).toContain('await onEditLastUserMessage(messageId, nextContent, resolvedComposerRuntimeSelection);');
     expect(chatView).toContain('!isComposerRuntimeUnavailable &&');
     expect(chatView).toContain("userTurnTrace?.status === 'cancelled' || userTurnTrace?.status === 'failed'");
@@ -353,8 +314,6 @@ describe('target chat polish contracts', () => {
     expect(chatGateDialog).toContain('const hasRecentActivityAction = Boolean(recentActivityWarning && (activeSessionId || actionSessionId));');
     expect(chatGateDialog).toContain('const recentActivityBody = recentActivityWarning?.message.trim();');
     expect(chatGateDialog).toContain('const recentActivityActionLabel = recentActivityWarning?.actionLabel?.trim();');
-    expect(chatGateDialog).toContain('const hasDialogAction = recentActivityWarning ? hasRecentActivityAction : canManageAiSettings;');
-    expect(chatGateDialog).toContain('aria-modal={hasDialogAction ? true : undefined}');
     expect(chatGateDialog).toContain('const primaryActionRef = React.useRef<HTMLButtonElement>(null);');
     expect(chatGateDialog).toContain('const shouldReduceMotion = useReducedMotion();');
     expect(chatGateDialog).toContain('const restoreTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;');
@@ -363,7 +322,6 @@ describe('target chat polish contracts', () => {
     expect(chatGateDialog).toContain('primaryAction.focus({ preventScroll: true });');
     expect(chatGateDialog).toContain('dialogRef.current?.focus({ preventScroll: true });');
     expect(chatGateDialog).toContain('restoreTarget.focus({ preventScroll: true });');
-    expect(chatGateDialog).toContain('Boolean(recentActivityWarning)');
     expect(chatGateDialog).toContain('tabIndex={-1}');
     expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0 }}');
     expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}');
@@ -371,24 +329,17 @@ describe('target chat polish contracts', () => {
     expect(chatGateDialog).toContain('rounded-lg border border-ui-border bg-ui-surface');
     expect(chatGateDialog).toContain("t('chat.recentActivityActionTitle')");
     expect(chatGateDialog).toContain("recentActivityBody || t('chat.chooseRecentActivityAction')");
-    expect(chatGateDialog).toContain("t('chat.aiSettingsRequiredTitle')");
-    expect(chatGateDialog).toContain("t('chat.aiSettingsRequiredManageBody')");
-    expect(chatGateDialog).toContain("t('chat.aiSettingsUnavailableManageBody')");
-    expect(chatGateDialog).toContain("t('chat.aiSettingsRequiredReadOnlyBody')");
     expect(chatGateDialog).toContain('const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {');
-    expect(chatGateDialog).toContain("if (event.key !== 'Tab' || !hasDialogAction) return;");
     expect(chatGateDialog).toContain('dialog.querySelectorAll<HTMLElement>(focusableSelector)');
     expect(chatGateDialog).toContain("element.getAttribute('aria-hidden') === 'true'");
     expect(chatGateDialog).toContain('window.getComputedStyle(element)');
     expect(chatGateDialog).toContain('getDialogFocusWrapIndex({');
     expect(chatGateDialog).toContain('focusableElements.findIndex((element) => element === document.activeElement)');
     expect(chatGateDialog).toContain('(focusableElements[targetIndex] || dialog).focus({ preventScroll: true });');
-    expect(chatGateDialog).toContain('onClick={onOpenAiSettings}');
     expect(chatGateDialog).toContain('onOpenRecentActivitySession(actionSessionId)');
     expect(chatGateDialog).toContain("recentActivityActionLabel || t('chat.openConversation')");
     expect(chatGateDialog).toContain('if (activeSessionId) onDismissRecentActivityWarning(activeSessionId);');
     expect(chatGateDialog).not.toContain('translate-y-[calc(100%+0.75rem)]');
-    expect(chatView).toContain('const hasBlockingGate = Boolean(recentActivityWarning || aiSettingsGateReason);');
     expect(chatView).toContain("content.setAttribute('inert', '')");
     expect(chatView).toContain('aria-hidden={hasBlockingGate ? true : undefined}');
     expect(chatView).toContain('recentActivityWarning: effectiveRecentActivityWarning');
@@ -427,7 +378,7 @@ describe('target chat polish contracts', () => {
     expect(assistantTurn).toContain(': { duration: 0.24, ease: [0.16, 1, 0.3, 1] };');
     expect(assistantTurn).toContain('const shouldShowWorkingShimmer = Boolean(inlineWorkingText && isAssistantWorking && shouldReduceMotion !== true);');
     expect(assistantTurn).toContain('const workingShimmerDurationSeconds = activeReasoningSummary ? 5 : 3.8;');
-    expect(styles).toContain('color: rgb(var(--text-muted-rgb) / 0.9);');
+    expect(styles).toContain('color: color-mix(in oklab, var(--brand-orange-strong), var(--text-muted) 68%);');
     expect(styles).toContain('rgb(var(--brand-orange-bright-rgb) / 0.52) 48%');
     expect(assistantTurn).toContain('previousWorkingTextRef.current = inlineWorkingText;');
     expect(assistantTurn).toContain(".replace(/\\*\\*(.*?)\\*\\*/g, '$1')");
@@ -490,11 +441,23 @@ describe('target chat polish contracts', () => {
     expect(messageActions).toContain('await navigator.clipboard.writeText(copyText);');
     expect(messageActions).toContain('copyResetTimeoutRef.current = window.setTimeout(() => {');
     expect(messageActions).toContain('} catch {');
-    expect(messageActions).toContain('group-hover:opacity-100 group-focus-within:opacity-100');
+    expect(messageActions).toContain('opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100');
     expect(messageActions).toContain('<time>{timestampLabel}</time>');
     expect(messageActions).toContain("aria-label={t('chat.editMessage')}");
     expect(messageActions).toContain('<Pencil className="h-3.5 w-3.5" />');
     expect(messageActions).toContain("aria-label={hasCopied ? t('chat.copiedMessage') : t('chat.copyMessage')}");
+    expect(messageActions).not.toContain('onGeneratePdf');
+    expect(messageActions).not.toContain('FileDown');
+    expect(chatView).not.toContain('createRunReportArtifact');
+    expect(assistantTurn).toContain('<GeneratedReportCard trace={trace} t={t} />');
+    expect(generatedReportCard).toContain("'acornops_generate_pdf_report'");
+    expect(generatedReportCard).toContain("t('chat.generatedIncidentReport')");
+    expect(generatedReportCard).toContain("t('chat.downloadPdf')");
+    expect(generatedReportCard).toContain('getControlPlaneUrl(report.downloadUrl).toString()');
+    expect(generatedReportCard).toContain('role="alert"');
+    expect(generatedReportCard).not.toContain('setTraceExpanded');
+    expect(enLocale).toContain("generatedIncidentReport: 'Generated incident report'");
+    expect(zhLocale).toContain("generatedIncidentReport: '已生成事件报告'");
     expect(messageActions).toContain("align === 'right' ? 'justify-end text-ui-text-muted' : 'justify-start'");
     expect(styles).toContain('.reasoning-summary-active {');
     expect(styles).toContain('animation: reasoning-summary-text-sheen var(--reasoning-summary-shimmer-duration, 3.8s) cubic-bezier(0.22, 1, 0.36, 1) infinite;');

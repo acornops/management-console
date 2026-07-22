@@ -1,4 +1,5 @@
 import { ControlPlaneRunEvent } from './types';
+import { emitSessionExpired } from './sessionLifecycle';
 
 const CSRF_COOKIE_NAME = 'acornops_cp_csrf';
 const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -10,11 +11,27 @@ export class ControlPlaneRequestError extends Error {
     message: string,
     readonly status: number,
     readonly code?: string,
-    readonly details?: Record<string, unknown>
+    readonly details?: Record<string, unknown>,
+    readonly retryAfterSeconds?: number,
+    readonly requestId?: string
   ) {
     super(message);
     this.name = 'ControlPlaneRequestError';
   }
+}
+
+const MAX_RETRY_AFTER_SECONDS = 60 * 60;
+
+export function parseRetryAfterSeconds(value: string | null, nowMs = Date.now()): number | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const numericSeconds = Number(trimmed);
+  const rawSeconds = Number.isFinite(numericSeconds) && numericSeconds >= 0
+    ? Math.ceil(numericSeconds)
+    : Math.ceil((Date.parse(trimmed) - nowMs) / 1000);
+  if (!Number.isFinite(rawSeconds) || rawSeconds <= 0) return undefined;
+  return Math.min(rawSeconds, MAX_RETRY_AFTER_SECONDS);
 }
 
 export function normalizeBaseUrl(value: string): string {
@@ -22,10 +39,16 @@ export function normalizeBaseUrl(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value;
 }
 
+export function resolveControlPlaneBaseUrl(configuredBaseUrl: string | undefined, production: boolean): string {
+  return normalizeBaseUrl(configuredBaseUrl === undefined
+    ? production ? '' : 'http://localhost:8081'
+    : configuredBaseUrl);
+}
+
 export function getControlPlaneBaseUrl(): string {
-  const configuredBaseUrl = import.meta.env.VITE_CONTROL_PLANE_API_BASE_URL;
-  return normalizeBaseUrl(
-    configuredBaseUrl === undefined ? 'http://localhost:8081' : configuredBaseUrl
+  return resolveControlPlaneBaseUrl(
+    import.meta.env.VITE_CONTROL_PLANE_API_BASE_URL,
+    import.meta.env.PROD
   );
 }
 
@@ -45,7 +68,7 @@ function readCookie(name: string): string {
   return entry ? decodeURIComponent(entry.slice(prefix.length)) : '';
 }
 
-async function getCsrfToken(): Promise<string> {
+async function getCsrfToken(sessionExpiry: SessionExpiryBehavior): Promise<string> {
   const existing = readCookie(CSRF_COOKIE_NAME);
   if (existing) return existing;
   if (cachedCsrfToken) return cachedCsrfToken;
@@ -56,7 +79,7 @@ async function getCsrfToken(): Promise<string> {
     })
       .then(async (response) => {
         if (!response.ok) {
-          throw new Error(`CSRF token request failed (${response.status})`);
+          await throwControlPlaneResponseError(response, sessionExpiry);
         }
         const body = (await response.json()) as { csrfToken?: string };
         if (!body.csrfToken) {
@@ -72,8 +95,17 @@ async function getCsrfToken(): Promise<string> {
   return csrfTokenRequest;
 }
 
-async function throwControlPlaneResponseError(response: Response): Promise<never> {
-  if (response.status === 401) throw new Error('UNAUTHORIZED');
+export type SessionExpiryBehavior = 'notify' | 'ignore';
+
+async function throwControlPlaneResponseError(
+  response: Response,
+  sessionExpiry: SessionExpiryBehavior = 'notify'
+): Promise<never> {
+  const requestId = response.headers.get('x-request-id') || undefined;
+  if (response.status === 401) {
+    if (sessionExpiry === 'notify') emitSessionExpired(requestId);
+    throw new ControlPlaneRequestError('Control plane request was unauthorized', 401, 'UNAUTHORIZED', undefined, undefined, requestId);
+  }
   const body = await response.text();
   let message = body.trim();
   let code: string | undefined;
@@ -102,20 +134,27 @@ async function throwControlPlaneResponseError(response: Response): Promise<never
     `Control plane request failed (${response.status}): ${message || response.statusText}`,
     response.status,
     code,
-    details
+    details,
+    response.status === 429
+      ? parseRetryAfterSeconds(response.headers.get('retry-after'))
+      : undefined,
+    requestId
   );
 }
 
-export async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+export type ControlPlaneRequestInit = RequestInit & { sessionExpiry?: SessionExpiryBehavior };
+
+export async function requestJson<T>(path: string, init?: ControlPlaneRequestInit): Promise<T> {
   const method = (init?.method || 'GET').toUpperCase();
+  const { sessionExpiry = 'notify', ...fetchInit } = init || {};
   const requestInit: RequestInit = {
-    ...init,
+    ...fetchInit,
     credentials: 'include'
   };
   const headers = new Headers(init?.headers);
   headers.set('content-type', 'application/json');
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-    headers.set(CSRF_HEADER_NAME, await getCsrfToken());
+    headers.set(CSRF_HEADER_NAME, await getCsrfToken(sessionExpiry));
   }
   requestInit.headers = headers;
   if ((method === 'GET' || method === 'HEAD') && requestInit.cache === undefined) {
@@ -124,7 +163,7 @@ export async function requestJson<T>(path: string, init?: RequestInit): Promise<
   const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, requestInit);
 
   if (!response.ok) {
-    return throwControlPlaneResponseError(response);
+    return throwControlPlaneResponseError(response, sessionExpiry);
   }
 
   if (response.status === 204) {
@@ -152,6 +191,37 @@ export async function requestArtifact(path: string): Promise<unknown> {
     }
   }
   return body;
+}
+
+export function clearControlPlaneCsrfState(): void {
+  cachedCsrfToken = '';
+  csrfTokenRequest = null;
+}
+
+export async function requestEventStream<T>(
+  path: string,
+  options?: {
+    signal?: AbortSignal;
+    onEvent?: (event: T) => void;
+    sessionExpiry?: SessionExpiryBehavior;
+  }
+): Promise<void> {
+  try {
+    const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { accept: 'text/event-stream' },
+      signal: options?.signal
+    });
+    if (!response.ok) {
+      await throwControlPlaneResponseError(response, options?.sessionExpiry);
+    }
+    await readJsonEventStream<T>(response, options?.onEvent);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return;
+    throw error;
+  }
 }
 
 export function delay(ms: number): Promise<void> {

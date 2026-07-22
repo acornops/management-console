@@ -5,6 +5,7 @@ import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import { PasswordAuthResult } from '@/types';
 import { LoginAuthPanel } from './login/LoginAuthPanel';
 import { LoginPreview } from './login/LoginPreview';
+import { authResultNoticeKey, clearAuthResultParameters } from './login/authResultNotice';
 
 interface LoginPageProps {
   isDark: boolean;
@@ -16,6 +17,7 @@ interface LoginPageProps {
   passwordAuthEnabled: boolean;
   passwordSignupEnabled: boolean;
   passwordResetEnabled: boolean;
+  sessionExpired?: boolean;
   onLogin: () => void;
   onPasswordLogin: (identifier: string, password: string) => Promise<PasswordAuthResult>;
   onPasswordSignup: (input: {
@@ -44,6 +46,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   passwordAuthEnabled,
   passwordSignupEnabled,
   passwordResetEnabled,
+  sessionExpired,
   onLogin,
   onPasswordLogin,
   onPasswordSignup,
@@ -54,6 +57,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onSelectTheme
 }) => {
   const { t } = useTranslation();
+  const [authResultNotice] = React.useState(() => authResultNoticeKey(window.location.search));
+  React.useEffect(() => clearAuthResultParameters(), []);
   return (
     <div className={`relative flex min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-ui-bg text-ui-text transition-colors duration-200 lg:grid lg:grid-cols-2 lg:overflow-hidden ${isDark ? 'dark' : ''}`}>
       <ThemeMenu
@@ -70,9 +75,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         >
           <div className="mb-8 flex justify-center">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-ui-border bg-ui-surface-strong">
-                <img src={logoSrc} alt="AcornOps" className="relative z-10 h-8 w-8" />
-              </div>
+              <img src={logoSrc} alt="AcornOps" className="h-9 w-9 shrink-0" />
               <div className="text-3xl font-bold tracking-tight">
                 <span className="text-ui-text">Acorn</span>
                 <span className="text-accent-bright">Ops</span>
@@ -86,6 +89,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             passwordAuthEnabled={passwordAuthEnabled}
             passwordSignupEnabled={passwordSignupEnabled}
             passwordResetEnabled={passwordResetEnabled}
+            sessionNotice={sessionExpired
+              ? t('controlPlaneErrors.sessionExpired')
+              : authResultNotice ? t(authResultNotice) : undefined}
             onLogin={onLogin}
             onPasswordLogin={onPasswordLogin}
             onPasswordSignup={onPasswordSignup}

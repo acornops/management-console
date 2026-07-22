@@ -1,26 +1,32 @@
 import React from 'react';
-import { AppClusterChatRuntime } from '@/app/AppClusterChatRuntime';
-import { AppClusterCopilotPanel } from '@/app/AppClusterCopilotPanel';
+import { useTranslation } from 'react-i18next';
 import { AppDesktopSidebar } from '@/app/AppDesktopSidebar';
-import { AppDialogs } from '@/app/AppDialogs';
 import { AppMobileNavigation } from '@/app/AppMobileNavigation';
 import { AppPageContent } from '@/app/AppPageContent';
+import type { AppShellProps } from '@/app/AppShell.types';
 import { isActiveAssistantStatus, isTerminalAssistantStatus, type AssistantNavStatus } from '@/app/assistantNavStatus';
-import { ActivePrimaryNav, ActiveResourceNav, getClusterBackToWorkspacePath, getVirtualMachineBackToWorkspacePath } from '@/app/appRouteState';
+import { getClusterBackToWorkspacePath, getVirtualMachineBackToWorkspacePath } from '@/app/appRouteState';
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
 import { useCreateWorkspaceInviteSetup } from '@/app/useCreateWorkspaceInviteSetup';
 import { useTargetIssueSummary } from '@/app/useTargetIssueSummary';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { useWorkspaceApprovalSummary } from '@/hooks/useWorkspaceApprovalSummary';
-import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
-import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
-import type { ResolvedTheme, ThemePreference } from '@/app/theme';
+import { PageLoadingFallback } from '@/components/common/Loading';
+import { ToastViewport } from '@/components/common/ToastViewport';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
-import type { controlPlaneApi as ControlPlaneApi } from '@/services/controlPlaneApi';
-import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
-import type { AgentAccessMode } from '@/services/control-plane/types';
-import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
-import { AppPaths, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
+import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
+import { KubernetesCluster, Workspace } from '@/types';
+import { AppPaths, type AppRoute } from '@/utils/routes';
+
+const AppClusterChatRuntime = React.lazy(() =>
+  import('@/app/AppClusterChatRuntime').then((module) => ({ default: module.AppClusterChatRuntime }))
+);
+const AppClusterCopilotPanel = React.lazy(() =>
+  import('@/app/AppClusterCopilotPanel').then((module) => ({ default: module.AppClusterCopilotPanel }))
+);
+const AppDialogs = React.lazy(() =>
+  import('@/app/AppDialogs').then((module) => ({ default: module.AppDialogs }))
+);
 
 interface TargetReturnContext {
   targetId: string;
@@ -75,106 +81,6 @@ function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRo
   }
 
   return null;
-}
-
-interface AppShellProps {
-  acceptWorkspaceInvitation: (token: string) => Promise<void>;
-  activeClusterSubview: ClusterSubview;
-  activeVmSubview: VmSubview;
-  activePrimaryNav: ActivePrimaryNav;
-  activeResourceNav: ActiveResourceNav;
-  kubernetesClusters: KubernetesCluster[];
-  kubernetesClustersInWorkspaceContext: KubernetesCluster[];
-  virtualMachinesInWorkspaceContext: ControlPlaneVirtualMachine[];
-  hasLoadedWorkspaceVirtualMachines: boolean;
-  clusterContextId: string | undefined;
-  clusterCopilotCluster: KubernetesCluster | null;
-  clusterCopilotInitialPrompt: { id: number; text: string } | null;
-  clusterCopilotWidth: number;
-  clusterCopilotWorkspace: Workspace | undefined;
-  clusterCreationStep: 'details' | 'instructions';
-  clusterInstallCommand: string;
-  clusterInstallWarnings: string[];
-  deleteTargetWorkspace: Workspace | undefined;
-  dismissToast: (id: string) => void;
-  excludeNamespaces: string;
-  getCurrentUserRoleForWorkspace: (workspaceId: string) => Workspace['members'][number]['role'];
-  getWorkspacePermission: (workspaceId: string, permission: keyof NonNullable<Workspace['permissions']>) => boolean;
-  handleCancelAddCluster: () => void;
-  handleConfirmAddCluster: () => Promise<void>;
-  handleCreateWorkspace: (name: string) => Promise<Workspace>;
-  handleDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
-  handleDeleteWorkspace: (workspaceId: string) => Promise<void>;
-  handleInitiateAddCluster: (workspaceId: string) => void;
-  handleLogout: () => Promise<void>;
-  handleProceedToInstructions: (agentAccessMode?: AgentAccessMode) => Promise<void>;
-  handleSelectWorkspaceContext: (workspaceId: string) => void;
-  includeNamespaces: string;
-  installAgentCluster: KubernetesCluster | null;
-  installAgentWorkspace: Workspace | undefined;
-  currentUserEmail: string;
-  invitationTokenMissingMessage: string;
-  isAddingCluster: boolean;
-  isClusterCopilotOpen: boolean;
-  isClusterSidebar: boolean;
-  isVirtualMachineSidebar: boolean;
-  isCreatingCluster: boolean;
-  isCreatingWorkspace: boolean;
-  isDark: boolean;
-  isDeletingWorkspace: boolean;
-  isMobileNavOpen: boolean;
-  isAccountMenuOpen: boolean;
-  isSidebarWorkspaceMenuOpen: boolean;
-  language: AppLanguageCode;
-  languageOptions: AppLanguageOption[];
-  loadWorkspaceInvitation: (token: string) => ReturnType<typeof ControlPlaneApi.getWorkspaceInvitation>;
-  navigate: (path: string, options?: RouterNavigateOptions) => void;
-  navigateToKubernetesCluster: (cluster: KubernetesCluster) => void;
-  newClusterName: string;
-  openClusterCopilot: (cluster: KubernetesCluster, prompt?: string) => void;
-  onConversationDeleted: (sessionName: string, targetName: string) => void;
-  refreshWorkspaceInvitations: (workspaceId: string) => Promise<void>;
-  refreshWorkspaceMembers: (workspaceId: string) => Promise<void>;
-  route: AppRoute;
-  selectedSidebarCluster: KubernetesCluster | null;
-  selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
-  selectedWorkspace: Workspace | undefined;
-  selectedWorkspaceId: string | null;
-  setKubernetesClusters: React.Dispatch<React.SetStateAction<KubernetesCluster[]>>;
-  onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
-  onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
-  onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
-  setClusterCopilotInitialPrompt: React.Dispatch<React.SetStateAction<{ id: number; text: string } | null>>;
-  setClusterCopilotWidth: React.Dispatch<React.SetStateAction<number>>;
-  setClusterCreationStep: React.Dispatch<React.SetStateAction<'details' | 'instructions'>>;
-  setDeleteWorkspaceId: React.Dispatch<React.SetStateAction<string | null>>;
-  setExcludeNamespaces: React.Dispatch<React.SetStateAction<string>>;
-  setIncludeNamespaces: React.Dispatch<React.SetStateAction<string>>;
-  setInstallAgentClusterId: React.Dispatch<React.SetStateAction<string | null>>;
-  setIsAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsClusterCopilotOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsCreatingWorkspace: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsDeletingWorkspace: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsMobileNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsSidebarWorkspaceMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setLanguage: (language: AppLanguageCode) => void;
-  setNewClusterName: React.Dispatch<React.SetStateAction<string>>;
-  setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>;
-  showToast: (message: string) => void;
-  sidebarAccountMenuRef: React.RefObject<HTMLDivElement | null>;
-  sidebarWorkspaceMenuRef: React.RefObject<HTMLDivElement | null>;
-  themePreference: ThemePreference;
-  resolvedTheme: ResolvedTheme;
-  toasts: Array<{ id: string; message: string }>;
-  toWorkspaceInvitation: (invitation: Awaited<ReturnType<typeof ControlPlaneApi.createWorkspaceInvitation>>) => WorkspaceInvitation;
-  selectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
-  updateKubernetesCluster: (clusterId: string, updates: Partial<KubernetesCluster>) => void;
-  updateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
-  user: User;
-  workspaceClusterCounts: Map<string, number>;
-  workspaceContext: Workspace | undefined;
-  workspaceContextId: string | null;
-  workspaces: Workspace[];
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
@@ -276,6 +182,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   workspaceContextId,
   workspaces
 }) => {
+  const { t } = useTranslation();
   const { loadWorkspaceRoles, createWorkspaceInvitation } = useCreateWorkspaceInviteSetup({
     invitationTokenMissingMessage,
     setWorkspaces,
@@ -315,6 +222,14 @@ export const AppShell: React.FC<AppShellProps> = ({
   const chatRuntimeInitialSessionId = routeChatCluster ? new URLSearchParams(window.location.search).get('session') : null;
   const [pendingVmTargetPrompt, setPendingVmTargetPrompt] = React.useState<PendingVmTargetPrompt | null>(null);
   const isClusterChatVisible = activeClusterSubview === 'chat' || Boolean(isClusterCopilotOpen && clusterCopilotCluster);
+  const hasOpenDialog = Boolean(
+    deleteTargetWorkspace
+      || installAgentCluster
+      || isAddingCluster
+      || isCreatingCluster
+      || isCreatingWorkspace
+      || isDeletingWorkspace
+  );
   const [clusterAssistantNavStatus, setClusterAssistantNavStatus] = React.useState<AssistantNavStatus>('idle');
   const previousAssistantRuntimeStatusRef = React.useRef<AssistantNavStatus>('idle');
   const isClusterChatVisibleRef = React.useRef(isClusterChatVisible);
@@ -445,6 +360,81 @@ export const AppShell: React.FC<AppShellProps> = ({
     setPendingVmTargetPrompt(null);
   }, []);
 
+  const renderAppContent = (clusterChatController: TargetChatController | null) => (
+    <>
+      <AppPageContent
+        activeClusterSubview={activeClusterSubview}
+        activeVmSubview={activeVmSubview}
+        kubernetesClusters={kubernetesClusters}
+        kubernetesClustersInWorkspaceContext={kubernetesClustersInWorkspaceContext}
+        virtualMachinesInWorkspaceContext={virtualMachinesInWorkspaceContext}
+        hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
+        clusterContextId={clusterContextId}
+        clusterChatController={clusterChatController}
+        isDark={isDark}
+        language={language}
+        languageOptions={languageOptions}
+        route={route}
+        selectedTargetIssueSummary={selectedTargetIssueSummary}
+        user={user}
+        workspaceContext={workspaceContext}
+        workspaceContextId={workspaceContextId}
+        workspaces={workspaces}
+        getCurrentUserRoleForWorkspace={getCurrentUserRoleForWorkspace}
+        getWorkspacePermission={getWorkspacePermission}
+        loadWorkspaceInvitation={loadWorkspaceInvitation}
+        acceptWorkspaceInvitation={acceptWorkspaceInvitation}
+        navigate={navigate}
+        navigateToKubernetesCluster={navigateToKubernetesCluster}
+        onCreateWorkspaceClick={() => setIsCreatingWorkspace(true)}
+        onInitiateAddCluster={handleInitiateAddCluster}
+        onInstallAgent={setInstallAgentClusterId}
+        onUpdateKubernetesCluster={updateKubernetesCluster}
+        onAppendWorkspaceKubernetesClusters={appendWorkspaceKubernetesClusters}
+        onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
+        onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}
+        onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
+        onUpdateWorkspace={updateWorkspace}
+        onOpenClusterChatPanel={openClusterCopilot}
+        onRunTargetPrompt={runTargetPrompt}
+        pendingVmTargetPrompt={pendingVmTargetPrompt}
+        onPendingVmTargetPromptConsumed={consumePendingVmTargetPrompt}
+        onRefreshWorkspaceInvitations={refreshWorkspaceInvitations}
+        onRefreshWorkspaceMembers={refreshWorkspaceMembers}
+        onRefreshApprovalSummary={approvalSummary.refresh}
+        onDeleteCluster={handleDeleteCluster}
+        onOpenDeleteWorkspace={setDeleteWorkspaceId}
+        onLeaveWorkspaceSuccess={handleLeaveWorkspaceSuccess}
+        onLogout={() => void handleLogout()}
+        onSetLanguage={setLanguage}
+        showToast={showToast}
+        toWorkspaceInvitation={toWorkspaceInvitation}
+      />
+
+      {isClusterCopilotOpen && clusterCopilotCluster && (
+        <React.Suspense fallback={null}>
+          <AppClusterCopilotPanel
+            cluster={clusterCopilotCluster}
+            chatController={clusterChatController}
+            currentUserRole={clusterCopilotWorkspace ? getCurrentUserRoleForWorkspace(clusterCopilotWorkspace.id) : 'viewer'}
+            currentWorkspacePermissions={clusterCopilotWorkspace?.permissions}
+            initialPrompt={clusterCopilotInitialPrompt}
+            isDark={isDark}
+            isOpen={isClusterCopilotOpen}
+            width={clusterCopilotWidth}
+            navigate={navigate}
+            onClose={() => {
+              setIsClusterCopilotOpen(false);
+              setClusterCopilotInitialPrompt(null);
+            }}
+            onInitialPromptHandled={() => setClusterCopilotInitialPrompt(null)}
+            onResizeWidth={setClusterCopilotWidth}
+          />
+        </React.Suspense>
+      )}
+    </>
+  );
+
   return (
     <div className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-ui-bg text-ui-text font-sans transition-colors duration-300 lg:flex-row">
       <AppMobileNavigation
@@ -524,123 +514,61 @@ export const AppShell: React.FC<AppShellProps> = ({
         user={user}
       />
 
-      <AppClusterChatRuntime
-        cluster={chatRuntimeCluster}
-        currentUserId={user.id}
-        currentUserRole={chatRuntimeWorkspace ? getCurrentUserRoleForWorkspace(chatRuntimeWorkspace.id) : 'viewer'}
-        currentWorkspacePermissions={chatRuntimeWorkspace?.permissions}
-        initialActiveSessionId={chatRuntimeInitialSessionId}
-        isChatActive={isClusterChatVisible}
-        onAssistantRuntimeStatusChange={handleAssistantRuntimeStatusChange}
-        onConversationDeleted={onConversationDeleted}
-        onUpdateSessions={(clusterId, sessions) => updateKubernetesCluster(clusterId, { chatSessions: sessions })}
-      >
-        {(clusterChatController) => (
-          <>
-            <AppPageContent
-              activeClusterSubview={activeClusterSubview}
-              activeVmSubview={activeVmSubview}
-              kubernetesClusters={kubernetesClusters}
-              kubernetesClustersInWorkspaceContext={kubernetesClustersInWorkspaceContext}
-              virtualMachinesInWorkspaceContext={virtualMachinesInWorkspaceContext}
-              hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
-              clusterContextId={clusterContextId}
-              clusterChatController={clusterChatController}
-              isDark={isDark}
-              language={language}
-              languageOptions={languageOptions}
-              route={route}
-              selectedTargetIssueSummary={selectedTargetIssueSummary}
-              user={user}
-              workspaceContext={workspaceContext}
-              workspaceContextId={workspaceContextId}
-              workspaces={workspaces}
-              getCurrentUserRoleForWorkspace={getCurrentUserRoleForWorkspace}
-              getWorkspacePermission={getWorkspacePermission}
-              loadWorkspaceInvitation={loadWorkspaceInvitation}
-              acceptWorkspaceInvitation={acceptWorkspaceInvitation}
-              navigate={navigate}
-              navigateToKubernetesCluster={navigateToKubernetesCluster}
-              onCreateWorkspaceClick={() => setIsCreatingWorkspace(true)}
-              onInitiateAddCluster={handleInitiateAddCluster}
-              onInstallAgent={setInstallAgentClusterId}
-              onUpdateKubernetesCluster={updateKubernetesCluster}
-              onAppendWorkspaceKubernetesClusters={appendWorkspaceKubernetesClusters}
-              onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
-              onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}
-              onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
-              onUpdateWorkspace={updateWorkspace}
-              onOpenClusterChatPanel={openClusterCopilot}
-              onRunTargetPrompt={runTargetPrompt}
-              pendingVmTargetPrompt={pendingVmTargetPrompt}
-              onPendingVmTargetPromptConsumed={consumePendingVmTargetPrompt}
-              onRefreshWorkspaceInvitations={refreshWorkspaceInvitations}
-              onRefreshWorkspaceMembers={refreshWorkspaceMembers}
-              onRefreshApprovalSummary={approvalSummary.refresh}
-              onDeleteCluster={handleDeleteCluster}
-              onOpenDeleteWorkspace={setDeleteWorkspaceId}
-              onLeaveWorkspaceSuccess={handleLeaveWorkspaceSuccess}
-              onLogout={() => void handleLogout()}
-              onSetLanguage={setLanguage}
-              showToast={showToast}
-              toWorkspaceInvitation={toWorkspaceInvitation}
-            />
+      {chatRuntimeCluster ? (
+        <React.Suspense fallback={<PageLoadingFallback label={t('common.loading')} />}>
+          <AppClusterChatRuntime
+            cluster={chatRuntimeCluster}
+            currentUserId={user.id}
+            currentUserRole={chatRuntimeWorkspace ? getCurrentUserRoleForWorkspace(chatRuntimeWorkspace.id) : 'viewer'}
+            currentWorkspacePermissions={chatRuntimeWorkspace?.permissions}
+            initialActiveSessionId={chatRuntimeInitialSessionId}
+            isChatActive={isClusterChatVisible}
+            onAssistantRuntimeStatusChange={handleAssistantRuntimeStatusChange}
+            onConversationDeleted={onConversationDeleted}
+            onUpdateSessions={(clusterId, sessions) => updateKubernetesCluster(clusterId, { chatSessions: sessions })}
+          >
+            {renderAppContent}
+          </AppClusterChatRuntime>
+        </React.Suspense>
+      ) : renderAppContent(null)}
 
-            <AppClusterCopilotPanel
-              cluster={clusterCopilotCluster}
-              chatController={clusterChatController}
-              currentUserRole={clusterCopilotWorkspace ? getCurrentUserRoleForWorkspace(clusterCopilotWorkspace.id) : 'viewer'}
-              currentWorkspacePermissions={clusterCopilotWorkspace?.permissions}
-              initialPrompt={clusterCopilotInitialPrompt}
-              isDark={isDark}
-              isOpen={isClusterCopilotOpen}
-              width={clusterCopilotWidth}
-              navigate={navigate}
-              onClose={() => {
-                setIsClusterCopilotOpen(false);
-                setClusterCopilotInitialPrompt(null);
-              }}
-              onInitialPromptHandled={() => setClusterCopilotInitialPrompt(null)}
-              onResizeWidth={setClusterCopilotWidth}
-            />
-          </>
-        )}
-      </AppClusterChatRuntime>
+      {hasOpenDialog && (
+        <React.Suspense fallback={null}>
+          <AppDialogs
+            clusterCreationStep={clusterCreationStep}
+            clusterInstallCommand={clusterInstallCommand}
+            clusterInstallWarnings={clusterInstallWarnings}
+            deleteTargetWorkspace={deleteTargetWorkspace}
+            excludeNamespaces={excludeNamespaces}
+            includeNamespaces={includeNamespaces}
+            installAgentCluster={installAgentCluster}
+            installAgentWorkspace={installAgentWorkspace}
+            currentUserEmail={currentUserEmail}
+            isAddingCluster={isAddingCluster}
+            isCreatingCluster={isCreatingCluster}
+            isCreatingWorkspace={isCreatingWorkspace}
+            isDeletingWorkspace={isDeletingWorkspace}
+            newClusterName={newClusterName}
+            onClusterNameChange={setNewClusterName}
+            onCloseAddCluster={handleCancelAddCluster}
+            onCloseInstallAgent={() => setInstallAgentClusterId(null)}
+            onCloseWorkspaceCreate={() => setIsCreatingWorkspace(false)}
+            onCloseWorkspaceDelete={() => setDeleteWorkspaceId(null)}
+            onConfirmClusterInstalled={() => void handleConfirmAddCluster()}
+            onConfirmDeleteWorkspace={(workspace) => handleDeleteWorkspace(workspace.id)}
+            onCreateWorkspace={handleCreateWorkspace}
+            onCreateWorkspaceInvitation={createWorkspaceInvitation}
+            onExcludeNamespacesChange={setExcludeNamespaces}
+            onIncludeNamespacesChange={setIncludeNamespaces}
+            onLoadWorkspaceRoles={loadWorkspaceRoles}
+            onProceedToClusterInstructions={(agentAccessMode) => void handleProceedToInstructions(agentAccessMode)}
+            onSetDeletingWorkspace={setIsDeletingWorkspace}
+            showToast={showToast}
+          />
+        </React.Suspense>
+      )}
 
-      <AppDialogs
-        clusterCreationStep={clusterCreationStep}
-        clusterInstallCommand={clusterInstallCommand}
-        clusterInstallWarnings={clusterInstallWarnings}
-        deleteTargetWorkspace={deleteTargetWorkspace}
-        excludeNamespaces={excludeNamespaces}
-        includeNamespaces={includeNamespaces}
-        installAgentCluster={installAgentCluster}
-        installAgentWorkspace={installAgentWorkspace}
-        currentUserEmail={currentUserEmail}
-        isAddingCluster={isAddingCluster}
-        isCreatingCluster={isCreatingCluster}
-        isCreatingWorkspace={isCreatingWorkspace}
-        isDark={isDark}
-        isDeletingWorkspace={isDeletingWorkspace}
-        newClusterName={newClusterName}
-        toasts={toasts}
-        onClusterNameChange={setNewClusterName}
-        onCloseAddCluster={handleCancelAddCluster}
-        onCloseInstallAgent={() => setInstallAgentClusterId(null)}
-        onCloseWorkspaceCreate={() => setIsCreatingWorkspace(false)}
-        onCloseWorkspaceDelete={() => setDeleteWorkspaceId(null)}
-        onConfirmClusterInstalled={() => void handleConfirmAddCluster()}
-        onConfirmDeleteWorkspace={(workspace) => handleDeleteWorkspace(workspace.id)}
-        onCreateWorkspace={handleCreateWorkspace}
-        onCreateWorkspaceInvitation={createWorkspaceInvitation}
-        onDismissToast={dismissToast}
-        onExcludeNamespacesChange={setExcludeNamespaces}
-        onIncludeNamespacesChange={setIncludeNamespaces}
-        onLoadWorkspaceRoles={loadWorkspaceRoles}
-        onProceedToClusterInstructions={(agentAccessMode) => void handleProceedToInstructions(agentAccessMode)}
-        onSetDeletingWorkspace={setIsDeletingWorkspace}
-        showToast={showToast}
-      />
+      <ToastViewport toasts={toasts} isDark={isDark} onDismiss={dismissToast} />
     </div>
   );
 };

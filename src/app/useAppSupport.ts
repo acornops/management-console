@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { TFunction } from 'i18next';
-import { AppToast } from '@/components/common/ToastViewport';
+import { TOAST_DURATION_MS, type AppToast } from '@/components/common/ToastViewport';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canManageWorkspaceMembers, canReadWorkspaceData } from '@/app/workspacePermissions';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -149,7 +149,7 @@ export function useAppSupport(args: {
     setToasts((prev) => [...prev, { id, message }]);
     window.setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, 3800);
+    }, TOAST_DURATION_MS);
   };
 
   const dismissToast = (id: string) => {

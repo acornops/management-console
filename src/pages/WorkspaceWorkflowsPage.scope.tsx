@@ -6,7 +6,9 @@ import type { WorkflowOptionsCatalog } from '@/services/control-plane/workflowAp
 import { splitLines } from '@/pages/workflows/workflowPageHelpers';
 
 export type WorkflowScopeOption = WorkflowOptionsCatalog['mcpServers'][number];
-export type WorkflowScopeOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
+export type WorkflowScopeOptions = {
+  semanticCapabilities: WorkflowScopeOption[];
+};
 
 export function keepAvailableLineValues(value: string, options: WorkflowScopeOption[]): string {
   const availableValues = new Set(options.map((option) => option.value));
