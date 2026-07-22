@@ -13,6 +13,7 @@ export function LoginAuthPanel({
   passwordAuthEnabled,
   passwordSignupEnabled,
   passwordResetEnabled,
+  sessionNotice,
   onLogin,
   onPasswordLogin,
   onPasswordSignup,
@@ -54,7 +55,7 @@ export function LoginAuthPanel({
       ? mode === 'signup' && canSignup
         ? t('login.startManaging')
         : mode === 'forgot'
-          ? t('login.forgotSubtitle')
+          ? ''
           : mode === 'reset'
             ? t('login.resetSubtitle')
             : t('login.accessWorkspace')
@@ -303,7 +304,7 @@ export function LoginAuthPanel({
     <button
       type="button"
       onClick={() => setShowPassword((current) => !current)}
-      className="control-target absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ui-text-muted transition-all hover:bg-ui-surface hover:text-ui-text focus:outline-none focus:ring-2 focus:ring-accent/20"
+      className="control-target absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus:ring-2 focus:ring-accent/20"
       aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
       aria-pressed={showPassword}
     >
@@ -555,6 +556,11 @@ export function LoginAuthPanel({
   return (
     <div className="relative overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
       <div className="p-5 sm:p-8">
+        {sessionNotice && (
+          <div role="status" className="mb-5 rounded-md border border-status-warning/30 bg-status-warning-soft px-4 py-3 text-sm font-semibold text-status-warning-text">
+            {sessionNotice}
+          </div>
+        )}
         <h1 className="mb-2 text-center text-2xl font-bold text-ui-text">
           {mode === 'signup' && canSignup
             ? t('login.createAccount')
@@ -564,7 +570,9 @@ export function LoginAuthPanel({
                 ? t('login.resetPasswordTitle')
                 : t('login.welcomeBack')}
         </h1>
-        <p className="mb-8 text-center text-sm font-medium leading-6 text-ui-text-muted">{loginSubtitle}</p>
+        {loginSubtitle && (
+          <p className="mb-8 text-center text-sm font-medium leading-6 text-ui-text-muted">{loginSubtitle}</p>
+        )}
 
         {verifyLinkContent || pendingVerification ? (
           <>

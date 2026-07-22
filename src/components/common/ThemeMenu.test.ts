@@ -38,13 +38,19 @@ describe('ThemeMenu', () => {
     expect(themeMenu).toContain('{selectedLabel}');
   });
 
-  it('shows the shared destination icon on all three triggers', () => {
+  it('shows the shared current-theme icon on all three triggers', () => {
     expect(themeMenu).toContain("import { ThemeToggleIcon } from '@/components/common/ThemeToggleIcon';");
     expect(themeMenu.match(/<ThemeToggleIcon resolvedTheme=\{resolvedTheme\}/g)).toHaveLength(3);
-    expect(themeToggleIcon).toContain("resolvedTheme === 'dark' ? 'light' : 'dark'");
+    expect(themeToggleIcon).toContain("resolvedTheme === 'dark' ? Moon : Sun");
+    expect(themeToggleIcon).toContain('key={resolvedTheme}');
     expect(themeToggleIcon).toContain('duration: 0.16');
     expect(themeToggleIcon).toContain('opacity: 0, rotate: -24, scale: 0.82');
     expect(themeToggleIcon).toContain('useReducedMotion()');
+  });
+
+  it('uses the same structural icon-tile border as adjacent account actions', () => {
+    expect(themeMenu).toContain('rounded-md border border-ui-border bg-ui-bg');
+    expect(themeMenu).not.toContain('rounded-md border border-control-boundary bg-ui-bg');
   });
 
   it('is the shared implementation on login, desktop account, and mobile navigation surfaces', () => {

@@ -2,10 +2,17 @@ import { useCallback, useEffect, useRef } from 'react';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { preloadAppRoutePage } from '@/app/AppPageContent';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { AppRoute } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace } from '@/types';
+import { reportBrowserError } from '@/observability/browserErrors';
 
 const TELEMETRY_POLL_INTERVAL_MS = 30000;
+export type SessionBootstrapState = 'restoring' | 'authenticated' | 'anonymous' | 'unavailable';
+
+export function classifySessionBootstrapError(error: unknown): Extract<SessionBootstrapState, 'anonymous' | 'unavailable'> {
+  return error instanceof ControlPlaneRequestError && error.status === 401 ? 'anonymous' : 'unavailable';
+}
 
 function attachClusterIds(workspaces: Workspace[], kubernetesClusters: KubernetesCluster[]): Workspace[] {
   const clusterIdsByWorkspace = new Map<string, string[]>();
@@ -27,7 +34,7 @@ export function useAppBootstrap(args: {
   user: User | null;
   workspaces: Workspace[];
   setKubernetesClusters: React.Dispatch<React.SetStateAction<KubernetesCluster[]>>;
-  setIsSessionRestoring: (value: boolean) => void;
+  setSessionBootstrapState: (value: SessionBootstrapState) => void;
   setSelectedWorkspaceId: (workspaceId: string | null) => void;
   setUser: (user: User | null) => void;
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>;
@@ -40,7 +47,7 @@ export function useAppBootstrap(args: {
     user,
     workspaces,
     setKubernetesClusters,
-    setIsSessionRestoring,
+    setSessionBootstrapState,
     setSelectedWorkspaceId,
     setUser,
     setWorkspaces
@@ -52,9 +59,9 @@ export function useAppBootstrap(args: {
   );
 
   const bootstrapSession = useCallback(async () => {
-    setIsSessionRestoring(true);
+    setSessionBootstrapState('restoring');
     try {
-      const currentUser = await controlPlaneApi.getCurrentUser();
+      const currentUser = await controlPlaneApi.getCurrentUser({ initialSessionProbe: true });
       let fetchedWorkspaces = await controlPlaneApi.getWorkspaces(currentUser);
       let initialWorkspaceId =
         initialWorkspaceIdRef.current ||
@@ -76,18 +83,18 @@ export function useAppBootstrap(args: {
       setUser(currentUser);
       setKubernetesClusters(fetchedClusters);
       setWorkspaces(attachClusterIds(fetchedWorkspaces, fetchedClusters));
+      setSessionBootstrapState('authenticated');
     } catch (err) {
-      console.error('Session restoration failed', err);
+      if (classifySessionBootstrapError(err) === 'unavailable') reportBrowserError(err, 'operation');
       setUser(null);
       setKubernetesClusters([]);
       setWorkspaces([]);
       setSelectedWorkspaceId(null);
-    } finally {
-      setIsSessionRestoring(false);
+      setSessionBootstrapState(classifySessionBootstrapError(err));
     }
   }, [
     setKubernetesClusters,
-    setIsSessionRestoring,
+    setSessionBootstrapState,
     setSelectedWorkspaceId,
     setUser,
     setWorkspaces

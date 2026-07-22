@@ -164,13 +164,13 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
         >
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
           <div className="font-sans text-xl leading-none tracking-tighter antialiased">
-            <span className="font-bold text-brand-brown">acorn</span>
+            <span className="font-bold text-brand-brown dark:text-brand-cream">acorn</span>
             <span className="font-bold text-accent-bright">ops</span>
           </div>
         </button>
       </div>
 
-      <nav aria-label={t('app.workspaceNavigation')} className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+      <nav aria-label={t('app.workspaceNavigation')} className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
           <div className="space-y-0.5">
             {!isClusterSidebar && !isVirtualMachineSidebar && (
               <>
@@ -198,7 +198,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                         </span>
                       </span>
                       <span className={`shrink-0 transition-transform duration-[160ms] motion-reduce:duration-0 ${isSidebarWorkspaceMenuOpen ? 'rotate-180' : ''}`}>
-                        <ICONS.ChevronDown className="w-4 h-4 text-ui-text-muted transition-all group-hover:text-ui-text" />
+                        <ICONS.ChevronDown className="w-4 h-4 text-ui-text-muted transition-colors group-hover:text-ui-text" />
                       </span>
                     </motion.button>
                   ) : (
@@ -238,7 +238,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                             {t('app.switchWorkspace')}
                           </span>
                         </div>
-                        <div role="list" className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar">
+                        <div role="list" className="no-scrollbar flex-1 space-y-1 overflow-y-auto p-2">
                           {workspaces.map((workspace) => {
                             const isSelected = workspace.id === selectedWorkspaceId;
                             const initials = workspace.name
@@ -258,7 +258,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                                     closeWorkspaceSwitcher({ restoreFocus: true });
                                   }}
                                   aria-current={isSelected ? 'true' : undefined}
-                                  className={`control-target flex w-full items-start gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
+                                  className={`control-target flex w-full items-start gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                                     isSelected
                                       ? 'border border-accent/20 bg-accent-soft font-bold text-accent-strong'
                                       : 'text-ui-text hover:bg-ui-bg'
@@ -282,7 +282,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                               closeWorkspaceSwitcher({ restoreFocus: true });
                               onOpenCreateWorkspace();
                             }}
-                            className="control-target w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-ui-text-muted hover:text-accent-strong hover:bg-accent-soft transition-all"
+                            className="control-target w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-ui-text-muted hover:text-accent-strong hover:bg-accent-soft transition-colors"
                           >
                             <ICONS.Plus className="h-3.5 w-3.5" />
                             <span>{t('app.newWorkspace')}</span>
@@ -309,7 +309,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                             onClick={(event) => handleAppLinkClick(event, item.path, navigate)}
                           />
                           {item.children && (
-                            <div className="mt-0.5 space-y-0.5 pl-3">
+                            <div className="mt-0.5 space-y-0.5 px-3">
                               {item.children.map((child) => (
                                 <WorkspaceSidebarNavLink
                                   key={child.id}
@@ -344,7 +344,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 <motion.button
                   type="button"
                   onClick={onBackToWorkspaceSidebar}
-                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('app.backToWorkspace')}
                 >
                   <ICONS.ChevronLeft className="w-3.5 h-3.5" />
@@ -415,7 +415,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 <motion.button
                   type="button"
                   onClick={onBackToWorkspaceSidebar}
-                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs font-bold text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('app.backToWorkspace')}
                 >
                   <ICONS.ChevronLeft className="w-3.5 h-3.5" />
@@ -545,7 +545,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     navigate(AppPaths.accountSettings());
                   }}
                   aria-current={isAccountSettingsActive ? 'page' : undefined}
-                  className={`group/setting flex min-h-11 w-full items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left transition-colors duration-[160ms] motion-reduce:duration-0 ${
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition-colors duration-[160ms] motion-reduce:duration-0 ${
                     isAccountSettingsActive ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                   }`}
                 >
@@ -557,7 +557,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     </span>
                     <span className="text-sm font-bold">{t('app.accountSettings')}</span>
                   </span>
-                  <ICONS.ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-55 transition-transform duration-[160ms] group-hover/setting:translate-x-0.5 motion-reduce:transform-none motion-reduce:duration-0" />
                 </motion.button>
 
                 <ThemeMenu
@@ -576,7 +575,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     closeAccountMenu();
                     onLogout();
                   }}
-                  className="control-target flex min-h-10 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm font-bold text-status-danger-text transition-colors duration-[160ms] hover:bg-status-danger-soft motion-reduce:duration-0"
+                  className="control-target flex min-h-10 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm font-bold text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text motion-reduce:duration-0"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center">
                     <ICONS.LogOut className="h-4 w-4" />

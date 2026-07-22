@@ -15,20 +15,29 @@ export interface ClusterTelemetrySnapshot {
 }
 
 export function getMetricTimeline(points: ClusterMetricHistoryPoint[] = []): MetricTimelinePoint[] {
-  return points
-    .map((point) => {
-      const timestamp = Date.parse(point.timestamp);
-      if (Number.isNaN(timestamp)) return null;
-      return {
-        timestamp,
-        cpu: typeof point.cpuCores === 'number' && Number.isFinite(point.cpuCores) ? point.cpuCores : null,
-        memory: typeof point.memoryBytes === 'number' && Number.isFinite(point.memoryBytes)
-          ? point.memoryBytes / (1024 ** 3)
-          : null
-      };
-    })
-    .filter((point): point is MetricTimelinePoint => point !== null)
-    .sort((left, right) => left.timestamp - right.timestamp);
+  const timelineByTimestamp = new Map<number, MetricTimelinePoint>();
+
+  for (const point of points) {
+    const timestamp = Date.parse(point.timestamp);
+    if (!Number.isFinite(timestamp)) continue;
+
+    const cpu = typeof point.cpuCores === 'number' && Number.isFinite(point.cpuCores) && point.cpuCores >= 0
+      ? point.cpuCores
+      : null;
+    const memory = typeof point.memoryBytes === 'number' && Number.isFinite(point.memoryBytes) && point.memoryBytes >= 0
+      ? point.memoryBytes / (1024 ** 3)
+      : null;
+    if (cpu === null && memory === null) continue;
+
+    const existing = timelineByTimestamp.get(timestamp);
+    timelineByTimestamp.set(timestamp, {
+      timestamp,
+      cpu: cpu ?? existing?.cpu ?? null,
+      memory: memory ?? existing?.memory ?? null
+    });
+  }
+
+  return [...timelineByTimestamp.values()].sort((left, right) => left.timestamp - right.timestamp);
 }
 
 function getLatestMetricValue(values: number[]): number | null {
@@ -40,13 +49,13 @@ function isUnavailableMetric(value: string): boolean {
   return normalized.length === 0 || normalized === '--' || normalized === '-' || normalized.includes('unavailable') || normalized.includes('n/a');
 }
 
-function formatCpuCores(value: number | null): string | null {
+export function formatCpuCores(value: number | null): string | null {
   if (value === null) return null;
   const formatted = value >= 1 ? value.toFixed(value >= 10 ? 0 : 1) : value.toFixed(2);
   return `${formatted} ${value === 1 ? 'core' : 'cores'}`;
 }
 
-function formatMemoryGiB(value: number | null): string | null {
+export function formatMemoryGiB(value: number | null): string | null {
   if (value === null) return null;
   const formatted = value >= 10 ? value.toFixed(0) : value.toFixed(2);
   return `${formatted} GiB`;

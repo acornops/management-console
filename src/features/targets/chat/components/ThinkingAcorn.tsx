@@ -1,47 +1,32 @@
 import React from 'react';
-import rollingAcornSvgSource from '@/assets/assistant/rolling-acorn.svg?raw';
 
 interface ThinkingAcornProps {
   reducedMotion: boolean;
 }
 
-const getMutedAcornFillOpacity = (hexColor: string): string => {
-  const value = hexColor.replace('#', '');
-  const red = Number.parseInt(value.slice(0, 2), 16);
-  const green = Number.parseInt(value.slice(2, 4), 16);
-  const blue = Number.parseInt(value.slice(4, 6), 16);
-  const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-
-  if (luminance < 80) return '0.82';
-  if (luminance < 130) return '0.72';
-  if (luminance < 190) return '0.58';
-  return '0.42';
-};
-
-const animatedAcornSvgMarkup = rollingAcornSvgSource
-  .replace(/^\s*<\?xml[^>]*\?>\s*/, '')
-  .replace(/\srole="img"/, '')
-  .replace(/\saria-labelledby="title desc"/, '')
-  .replace(/\s*<title\b[^>]*>[\s\S]*?<\/title>/g, '')
-  .replace(/\s*<desc\b[^>]*>[\s\S]*?<\/desc>/g, '')
-  .replace(/\sid=(["'])[^"']*\1/g, '')
-  .replace(/\sfill="(#(?:[0-9A-Fa-f]{6}))"/g, (_match, fillColor: string) => (
-    ` fill="currentColor" fill-opacity="${getMutedAcornFillOpacity(fillColor)}"`
-  ))
-  .replace(/<svg\b(?![^>]*\bfocusable=)([^>]*)>/, '<svg$1 focusable="false">');
-const staticAcornSvgMarkup = animatedAcornSvgMarkup.replace(
-  /\s*<animate(?:Transform)?\b[^>]*\/>/g,
-  ''
-);
-
 const ThinkingAcornComponent: React.FC<ThinkingAcornProps> = ({ reducedMotion }) => (
   <span
     className="thinking-acorn"
+    data-reduced-motion={reducedMotion ? 'true' : undefined}
     aria-hidden="true"
-    dangerouslySetInnerHTML={{
-      __html: reducedMotion ? staticAcornSvgMarkup : animatedAcornSvgMarkup
-    }}
-  />
+  >
+    <span className="thinking-acorn__spinner">
+      <svg viewBox="3.75 1.5 12.5 14.5" focusable="false">
+        <path
+          className="thinking-acorn__stem"
+          d="M10.15 4.45c1.05-.42 1.62-1.17 1.72-2.25"
+        />
+        <path
+          className="thinking-acorn__body"
+          d="M4.65 7.85c.08 4.85 2.2 7.55 5.35 7.55s5.27-2.7 5.35-7.55c-1.34.55-3.12.82-5.35.82s-4.01-.27-5.35-.82Z"
+        />
+        <path
+          className="thinking-acorn__cap"
+          d="M4.15 7.3C4.9 4.95 7.05 3.62 10 3.62s5.1 1.33 5.85 3.68c-1.02.9-2.97 1.38-5.85 1.38S5.17 8.2 4.15 7.3Z"
+        />
+      </svg>
+    </span>
+  </span>
 );
 
 export const ThinkingAcorn = React.memo(ThinkingAcornComponent);

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, buttonClassName } from '@/components/common/Button';
@@ -18,6 +18,11 @@ import {
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { WorkloadsExplorerProps } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { formatUserTime } from '@/utils/dateTime';
+import {
+  captureLogViewport,
+  resolveRestoredLogScrollTop,
+  type LogViewportSnapshot
+} from '@/features/kubernetes-cluster-detail/components/workloads/podLogViewport';
 
 const FOLLOW_LOGS_INTERVAL_MS = 7000;
 
@@ -48,6 +53,8 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
   const logsRequestIdRef = useRef(0);
   const followFailuresRef = useRef(0);
   const followInFlightRef = useRef(false);
+  const logViewportRef = useRef<HTMLPreElement>(null);
+  const pendingLogViewportRef = useRef<LogViewportSnapshot | null>(null);
 
   const selectedPodContainers = useMemo(
     () => selectedWorkload?.type === 'Pod' ? selectedWorkload.containers || [] : [],
@@ -83,6 +90,9 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
       });
       if (logsRequestIdRef.current !== requestId) return;
       followFailuresRef.current = 0;
+      pendingLogViewportRef.current = logViewportRef.current
+        ? captureLogViewport(logViewportRef.current, mode === 'follow')
+        : null;
       setPodLogs(result);
     } catch (error) {
       if (logsRequestIdRef.current !== requestId) return;
@@ -104,6 +114,14 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
     }
   }, [logContainer, logPrevious, logTailLines, onLoadPodLogs, selectedWorkload, t]);
 
+  useLayoutEffect(() => {
+    const viewport = logViewportRef.current;
+    const snapshot = pendingLogViewportRef.current;
+    pendingLogViewportRef.current = null;
+    if (!viewport || !snapshot) return;
+    viewport.scrollTop = resolveRestoredLogScrollTop(snapshot, viewport);
+  }, [podLogs]);
+
   useEffect(() => {
     setActiveDetailTab('details');
     setPodLogs(null);
@@ -114,12 +132,14 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
     setLogPrevious(false);
     setLogContainer(selectedPodContainers[0] || '');
     followFailuresRef.current = 0;
+    pendingLogViewportRef.current = null;
   }, [selectedPodContainers, selectedWorkload]);
 
   useEffect(() => {
     setPodLogs(null);
     setPodLogsError(null);
     followFailuresRef.current = 0;
+    pendingLogViewportRef.current = null;
     if (activeDetailTab === 'logs' && canShowLogs) {
       void loadPodLogs('manual');
     }
@@ -153,7 +173,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                 type="button"
                 onClick={() => setActiveDetailTab(tab)}
                 className={`control-target ${classNames(
-                  'flex-1 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all',
+                  'flex-1 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest transition-[background-color,color,box-shadow]',
                   activeDetailTab === tab
                     ? 'bg-ui-surface text-accent-strong shadow-sm'
                     : 'text-ui-text-muted hover:text-ui-text'
@@ -361,7 +381,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({
                       {podLogs?.fetchedAt ? t('workloads.fetchedAt', { time: formatUserTime(podLogs.fetchedAt, { includeTimeZone: true }) }) : t('workloads.notLoaded')}
                     </div>
                   </div>
-                  <pre className="max-h-[420px] min-h-[220px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-xs leading-5 text-code-text custom-scrollbar">
+                  <pre ref={logViewportRef} className="max-h-[420px] min-h-[220px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-xs leading-5 text-code-text custom-scrollbar">
                     {isPodLogsLoading && !podLogs
                       ? t('workloads.loadingLogs')
                       : podLogs?.logs?.trim()

@@ -1,8 +1,50 @@
 import { describe, expect, it } from 'vitest';
 
-import { AppPaths, parseAppRoute } from '@/utils/routes';
+import { AppPaths, parseAppRoute, validateAssistantReturnTo, withAssistantSession } from '@/utils/routes';
 
 describe('routes', () => {
+  it('round-trips same-workspace assistant return paths through AI Settings', () => {
+    const returnTo = withAssistantSession(
+      AppPaths.workspaceVirtualMachineDetail('team alpha', 'vm/one', 'chat'),
+      'session/one'
+    );
+    const settingsPath = AppPaths.workspaceAiSettings('team alpha', returnTo);
+
+    expect(settingsPath).toBe('/workspaces/team%20alpha/ai-settings?returnTo=%2Fworkspaces%2Fteam%2520alpha%2Fvirtual-machines%2Fvm%252Fone%2Fchat%3Fsession%3Dsession%252Fone');
+    expect(parseAppRoute(settingsPath)).toEqual({
+      kind: 'workspaceAiSettings',
+      workspaceId: 'team alpha',
+      returnTo
+    });
+  });
+
+  it('rejects unsafe, malformed, cross-workspace, and self-referential AI Settings returns', () => {
+    const invalidReturns = [
+      'https://example.com/workspaces/team-alpha/kubernetes-clusters/cluster-one/chat',
+      '//example.com/workspaces/team-alpha/kubernetes-clusters/cluster-one/chat',
+      '/workspaces/team-alpha/kubernetes-clusters/%E0%A4%A/chat',
+      '/workspaces/team-bravo/kubernetes-clusters/cluster-one/chat',
+      '/workspaces/team-alpha/ai-settings',
+      '/workspaces/team-alpha/kubernetes-clusters/cluster-one/overview'
+    ];
+
+    invalidReturns.forEach((returnTo) => {
+      expect(validateAssistantReturnTo(returnTo, 'team-alpha')).toBeUndefined();
+      expect(AppPaths.workspaceAiSettings('team-alpha', returnTo)).toBe('/workspaces/team-alpha/ai-settings');
+    });
+    expect(parseAppRoute('/workspaces/team-alpha/ai-settings?returnTo=%2F%2Fexample.com')).toEqual({
+      kind: 'workspaceAiSettings',
+      workspaceId: 'team-alpha'
+    });
+  });
+
+  it('does not expose the removed MCP OAuth callback route', () => {
+    expect(parseAppRoute('/oauth/mcp/callback?code=code&state=state')).toEqual({
+      kind: 'notFound',
+      path: '/oauth/mcp/callback'
+    });
+  });
+
   it('round-trips workspace cluster diagnostics routes with encoded params', () => {
     const path = AppPaths.workspaceKubernetesClusterDiagnostics('workspace/a', 'cluster one', 'chat');
 
@@ -89,7 +131,7 @@ describe('routes', () => {
     expect(parseAppRoute('/kubernetes-clusters')).toEqual({ kind: 'kubernetesClusters' });
     expect(AppPaths.accountSettings()).toBe('/account');
     expect(parseAppRoute(AppPaths.accountSettings())).toEqual({ kind: 'accountSettings' });
-    expect(parseAppRoute('/settings')).toEqual({ kind: 'settings' });
+    expect(parseAppRoute('/settings')).toEqual({ kind: 'notFound', path: '/settings' });
     expect(AppPaths).not.toHaveProperty('settings');
     expect(parseAppRoute(AppPaths.help())).toEqual({ kind: 'help' });
     expect(parseAppRoute('/kubernetes-clusters/prod-cluster')).toEqual({
@@ -282,6 +324,30 @@ describe('routes', () => {
       kind: 'workspaceAgents',
       workspaceId: 'team-alpha'
     });
+    expect(AppPaths.workspaceAgentMcp('team alpha', 'agent/a', 'connect_by_url')).toBe('/workspaces/team%20alpha/agents?agent=agent%2Fa&panel=profile&agentTab=capabilities&capabilityTab=mcp&mcpAction=connect_by_url');
+    expect(AppPaths.workspaceTargetMcp('team alpha', 'cluster/a', 'kubernetes')).toBe('/workspaces/team%20alpha/kubernetes-clusters/cluster%2Fa/mcp-servers');
+    expect(AppPaths.workspaceTargetMcp('team alpha', 'vm/a', 'virtual_machine', 'connect_by_url')).toBe('/workspaces/team%20alpha/virtual-machines/vm%2Fa/mcp-servers?mcpAction=connect_by_url');
+    const catalogPath = AppPaths.workspaceCatalog('team alpha', {
+      q: 'github tools',
+      source: 'source/a',
+      compatibility: 'compatible',
+      artifact: 'artifact/a',
+      destination: 'target:cluster/a'
+    });
+    expect(catalogPath).toBe('/workspaces/team%20alpha/catalog?q=github+tools&source=source%2Fa&compatibility=compatible&artifact=artifact%2Fa&destination=target%3Acluster%2Fa');
+    expect(parseAppRoute(catalogPath)).toEqual({
+      kind: 'workspaceCatalog',
+      workspaceId: 'team alpha',
+      q: 'github tools',
+      source: 'source/a',
+      compatibility: 'compatible',
+      artifact: 'artifact/a',
+      destination: 'target:cluster/a'
+    });
+    expect(parseAppRoute('/workspaces/team-alpha/catalog?compatibility=unknown&destination=manager:manager-a')).toEqual({
+      kind: 'workspaceCatalog',
+      workspaceId: 'team-alpha'
+    });
     expect(parseAppRoute(AppPaths.workspaceMembers('team-alpha'))).toEqual({
       kind: 'workspaceMembers',
       workspaceId: 'team-alpha'
@@ -294,10 +360,7 @@ describe('routes', () => {
       kind: 'workspaceSettings',
       workspaceId: 'team-alpha'
     });
-    expect(parseAppRoute(AppPaths.workspaceWebhooks('team-alpha'))).toEqual({
-      kind: 'workspaceWebhooks',
-      workspaceId: 'team-alpha'
-    });
+    expect(AppPaths.workspaceMcpRegistries('team-alpha')).toBe('/workspaces/team-alpha/settings?section=mcp-registries');
     expect(parseAppRoute(AppPaths.workspaceAuditLog('team-alpha'))).toEqual({
       kind: 'workspaceAuditLog',
       workspaceId: 'team-alpha'

@@ -114,7 +114,7 @@ components:
     padding: "10px 16px"
   button-activation:
     backgroundColor: "{colors.signal-orange}"
-    textColor: "{colors.ink-text}"
+    textColor: "{colors.logo-cream}"
     rounded: "{rounded.sm}"
     padding: "10px 16px"
   search-field:
@@ -169,7 +169,7 @@ The ledger reads in two lights. A light theme and a dark theme share one warm hu
 The palette is warm, inspectable, and intentionally quiet. The canonical source is `src/styles.css`, using OKLCH tokens with RGB mirrors for Tailwind alpha utilities.
 
 ### Primary
-- **Controlled Signal Orange** (`signal-orange`): Used for focus rings, selected state, hover accents, scroll thumbs, and activation moments. Filled orange buttons are reserved for workflow launch or activation.
+- **Controlled Signal Orange** (`signal-orange`): Used for focus rings, selected state, hover accents, and activation moments. Filled orange buttons are reserved for workflow launch or activation.
 - **Strong Signal Orange** (`signal-orange-strong`): Used for icons and text when an orange element needs readable contrast without filling the surface.
 - **Readable Signal Orange** (`signal-orange-readable`): Used only when orange text must meet contrast on light surfaces, such as the wordmark.
 - **Soft Signal Wash** (`signal-orange-soft`): Used for selected, hover, and low-pressure accent backgrounds.
@@ -186,7 +186,7 @@ The palette is warm, inspectable, and intentionally quiet. The canonical source 
 - **Pressed Surface** (`pressed-surface`): Stronger neutral layer for active, inset, or grouped surfaces.
 - **Warm Border** (`warm-border`): The default structural divider.
 - **Ink Text** (`ink-text`): Primary text.
-- **Muted Ink** (`muted-ink`): Helper text, metadata, quiet labels.
+- **Muted Ink** (`muted-ink`): Helper text, metadata, quiet labels, and the scoped scrollbar thumb used by intentional console scroll regions.
 - **Code Night** (`code-night`): Code and terminal-style surfaces.
 - **Code Text** (`code-text`): The shared warm, high-contrast foreground for code, logs, and terminal-style surfaces in both themes.
 
@@ -271,7 +271,7 @@ Buttons are compact, predictable, and text-led. They use lucide icons when an ic
 - **Shape:** Gently curved rectangles (`6px`).
 - **Primary:** Filled neutral, near-ink background with canvas text. Use for the strongest action on a utilitarian screen.
 - **Dark Primary:** Strong warm-neutral fill with light text. Never invert the page background and text tokens to construct a button.
-- **Activation:** Controlled orange fill for workflow launch and activation moments only. Light mode keeps the bright orange fill with dark ink text. Dark mode uses the accessible `#B8441F` fill with light text. Create, Add, Invite, Save, Continue, and routine Run actions use neutral Primary.
+- **Activation:** Canonical signal-orange fill with light logo-cream text for workflow launch and activation moments only. The same AcornOps orange is used in both themes, and the fill provides its own boundary without a permanent dark outline or stacked shadow. This user-directed brand pairing is an explicit contrast exception and must not be generalized to routine controls. Create, Add, Invite, Save, Continue, and routine Run actions use neutral Primary.
 - **Secondary:** Paper surface, interactive boundary, ink text, small shadow. Dark mode uses a warm dark surface with light text.
 - **Danger:** Semantic destructive fill. Dark mode uses `#A92C3C` with light text.
 - **Tertiary / Ghost:** Text-muted default, soft orange wash on hover.
@@ -280,7 +280,7 @@ Buttons are compact, predictable, and text-led. They use lucide icons when an ic
 
 ### Route composition and spacing
 
-Authenticated routes compose through `PageShell` and `PageHeader`. `PageShell` owns scrolling, responsive route margins, width constraints, and embedded mode. `PageHeader` owns route title hierarchy, description width, context or breadcrumbs, action wrapping, and responsive alignment.
+Authenticated routes compose through `PageShell`, `PageBackLink`, and `PageHeader`. `PageShell` owns scrolling, responsive route margins, width constraints, and embedded mode. When a route needs an explicit return destination, `PageBackLink` renders immediately before `PageHeader` and owns the left-chevron icon, typography, target height, hover treatment, and focus boundary. Route-level Back navigation is never restyled as a header action. `PageHeader` owns route title hierarchy, description width, context or breadcrumbs, action wrapping, and responsive alignment.
 
 The canonical rhythm is token-driven:
 
@@ -293,6 +293,8 @@ The canonical rhythm is token-driven:
 - Dialog and drawer padding: `20px / 16px` on compact viewports and `24px / 20px` from `lg`.
 
 Individual pages retain information architecture suited to the task. Split panes, resource explorers, chat transcripts, metric layouts, and tables may differ. Route chrome, title hierarchy, action semantics, control behavior, state treatment, spacing tokens, and overlay anatomy do not differ. Embedded surfaces must be documented in `scripts/design-system-exceptions.json` and still use shared controls and state patterns.
+
+Workflows and MCP Catalog use the shared catalog split. One bordered surface contains a divided library and detail pane with a `32rem` minimum height. At `lg` and wider, the library uses `minmax(18rem, 22rem)` and detail fills the remaining width. Below `lg`, only the route-selected pane is visible; detail provides a Back action that returns to the library and restores focus to its selected row. Desktop may preview the first visible item without writing selection state to the URL. Shared primitives also own list headers, row padding and selection, loading and empty states, detail headers, detail-body padding and tone, and the discovery-to-surface gap. Page-specific filters, metadata, actions, tabs, and detail fields remain feature-owned.
 
 ### Chips
 
@@ -313,6 +315,27 @@ Cards are used for repeated items, dialogs, framed tools, and list groups. Page 
 - **Internal Padding:** Usually `16px` to `20px`; dense rows can use `12px`.
 - **Interactive State:** Hover and focus-within may strengthen the border with a low-opacity orange and lift the surface tonally. Do not add a larger shadow.
 
+### Empty states
+
+Route-level collections use the shared `EmptyState` component. Standalone states
+open with a small layered-paper illustration that recalls the operator's ledger,
+then use an optional context label, panel-title heading, body description with a
+restrained reading measure, optional teaching detail, and an action row separated
+by the canonical `24px` gap. The layered paper remains neutral and static while
+its framed glyph uses the strong signal-orange text token to mark the available
+setup path; it never implies activity. Standalone collection
+states use one dashed warm-border frame with a `12rem` minimum height. Tables,
+queues, and master-detail panes use the embedded surface mode with the compact
+`40px` icon tile so the same anatomy sits inside the existing boundary without
+creating nested cards.
+
+Genuinely empty inventory and filtered no-results states share the component but
+keep distinct copy and icons. Route-header creation actions are not duplicated in
+the empty state; a state-local action is reserved for recovery or for a full-page
+setup state with no route header. Compact field absences such as no run history or
+no assigned capabilities remain inline text rather than expanding into a
+collection empty state.
+
 ### Inputs / Fields
 
 Inputs are quiet and stable.
@@ -325,16 +348,19 @@ Inputs are quiet and stable.
 
 Navigation is familiar product chrome driven by one route model. Workspace destinations are grouped as inventory, automation, governance, and utilities, with permission-aware omissions. Workspace, target, workflow, and settings destinations remain real links so copy, open-in-new-tab, and browser history continue to work.
 
-- **Desktop (`1024px` and wider):** A fixed `256px` sidebar uses `40px` rows, `6px` corners, muted text, and grouped section labels. Hover shifts to the canvas surface and stronger ink. Active rows use the same canvas surface, semibold ink, an orange icon, `aria-current`, and an optional count badge.
-- **Mobile (below `1024px`):** A `64px` top bar opens a bounded dialog navigation panel. The panel preserves the desktop groups and destinations, traps focus, exposes an explicit close control, and returns focus to the trigger.
+- **Desktop (`1024px` and wider):** A fixed `256px` sidebar uses `40px` rows, `6px` corners, muted text, and grouped section labels. Hover shifts to the canvas surface and stronger ink. Active rows use the same canvas surface, semibold ink, an orange icon, `aria-current`, and an optional count badge. Overflow remains wheel-, touch-, and keyboard-scrollable without displaying a scrollbar.
+- **Mobile (below `1024px`):** A `64px` top bar opens a bounded dialog navigation panel. The panel preserves the desktop groups and destinations, traps focus, exposes an explicit close control, returns focus to the trigger, and keeps overflow scrollable without visible scrollbar chrome.
 - **State:** Focus uses the standard orange ring. Press feedback may scale to `0.98`; it becomes instant under reduced motion. Status and approval counts reserve stable space when their appearance would otherwise shift labels.
 
 ### Tabs and Filters
 
 Tabs and filters share the canonical compact-control vocabulary rather than page-local pills.
 
-- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed, and keyboard navigable with arrow, Home, and End keys. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
-- **Filters:** `44px` high with `6px` corners, a visible border, `aria-pressed`, and optional stable counts. Active filters remain neutral paper controls with a stronger orange border, not filled orange pills.
+- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
+- **Top-level discovery:** Collection pages use `DiscoveryFilterBar` with a labeled `PageSearchInput`, zero or more typed filter-group definitions created by `createDiscoveryFilterGroup`, and a polite result summary. `DiscoveryFilterBar` and nested resource search both compose `SearchFilterFrame`, the canonical bordered paper surface with `16px` padding, a restrained shadow, `12px` gaps, and stable `44px` controls. Search is the dominant flexible field while categorical controls stay approximately `11rem` to `14rem` wide.
+- **Visible discovery filters:** Typed categorical groups render as always-visible shared `Select` controls. Clusters, virtual machines, and agents expose Status; MCP Catalog exposes Source and Compatibility; Workflows uses the search-only composition. Stable option counts appear inside the select when supplied. Below `sm`, search, selects, trailing actions, and the result summary stack full-width. From `sm` to below `lg`, search owns the first row while multiple selects share equal columns. At `lg` and wider, the toolbar settles into one balanced row without overflow.
+- **Discovery clearing:** Search clear and Escape remove only the query and retain search focus. Choosing a default select option clears only that categorical condition. Clear all appears at two or more active conditions, counting the query and every non-default group; it clears the complete route-backed discovery state atomically and restores search focus. The bar is hidden for a genuinely empty, unfiltered collection and remains visible when active filters produce no matches.
+- **Nested filters:** Dense resource explorers may use local filter controls when their density or hierarchy differs from top-level collection discovery. Categorical top-level filters use selects, not toggle rows or filled pills.
 
 ### Dialogs and Drawers
 

@@ -1,18 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Check, ChevronDown, Copy, Loader2, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@/components/common/Dialog';
+import { CollectionState } from '@/components/common/CollectionState';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { WorkspaceInvitation } from '@/types';
 import { formatInvitationStatus, formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { formatUserDateTime } from '@/utils/dateTime';
+import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 
 interface WorkspaceInvitationsPanelProps {
   invitations: WorkspaceInvitation[];
   hasMoreInvitations?: boolean;
   isLoadingMoreInvitations?: boolean;
   loadError?: string | null;
+  phase?: CursorCollectionPhase;
+  loadMoreSentinelRef?: React.RefCallback<HTMLElement>;
   onCreateInvitation?: (input: { email: string; role: WorkspaceInvitation['role'] }) => Promise<WorkspaceInvitation>;
   onLoadMoreInvitations?: () => void;
   onRevokeInvitation?: (invitation: WorkspaceInvitation) => Promise<void> | void;
@@ -25,12 +29,13 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
   hasMoreInvitations = false,
   isLoadingMoreInvitations = false,
   loadError = null,
+  phase = 'ready',
+  loadMoreSentinelRef,
   onCreateInvitation,
   onLoadMoreInvitations,
   onRevokeInvitation
 }) => {
   const { t } = useTranslation();
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [copiedInvitationId, setCopiedInvitationId] = useState<string | null>(null);
   const [copiedReplacementInviteId, setCopiedReplacementInviteId] = useState<string | null>(null);
   const [createdReplacementInvite, setCreatedReplacementInvite] = useState<WorkspaceInvitation | null>(null);
@@ -44,18 +49,6 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
     (invitation) => invitation.status === 'pending' || invitation.status === 'expired'
   );
   const shouldShowInvitations = isExpanded || Boolean(inviteErrorMessage) || Boolean(loadError);
-
-  useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasMoreInvitations || isLoadingMoreInvitations || !onLoadMoreInvitations) return undefined;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        onLoadMoreInvitations();
-      }
-    }, { rootMargin: '240px' });
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreInvitations, isLoadingMoreInvitations, onLoadMoreInvitations]);
 
   const copyExistingInviteLink = async (invitation: WorkspaceInvitation) => {
     if (!invitation.inviteLink) return;
@@ -118,6 +111,30 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
     }
   };
 
+  const noInvitationsState = (
+    <div className="type-body px-5 py-8 text-center">
+      {loadError && (
+        <div className="type-caption mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-left text-status-danger-text">
+          {loadError}
+        </div>
+      )}
+      {t('members.noPendingInvitations')}
+      {hasMoreInvitations && (
+        <div ref={loadMoreSentinelRef} className="mt-5 flex justify-center">
+          <button
+            type="button"
+            onClick={onLoadMoreInvitations}
+            disabled={isLoadingMoreInvitations}
+            className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
       <div className="mt-8 overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
@@ -141,29 +158,14 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
             </button>
           </div>
         </div>
-        {shouldShowInvitations && (visibleInvitations.length === 0 ? (
-          <div className="type-body px-5 py-8 text-center">
-            {loadError && (
-              <div className="type-caption mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-left text-status-danger-text">
-                {loadError}
-              </div>
-            )}
-            {t('members.noPendingInvitations')}
-            {hasMoreInvitations && (
-              <div ref={loadMoreRef} className="mt-5 flex justify-center">
-                <button
-                  type="button"
-                  onClick={onLoadMoreInvitations}
-                  disabled={isLoadingMoreInvitations}
-                  className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
+        {shouldShowInvitations && <CollectionState
+          phase={phase}
+          itemCount={visibleInvitations.length}
+          loading={null}
+          empty={noInvitationsState}
+          error={noInvitationsState}
+          feedback={isLoadingMoreInvitations ? <span className="sr-only">{t('members.loadingInvitations')}</span> : null}
+        >
           <div className="divide-y divide-ui-border">
             {inviteErrorMessage && (
               <div className="type-caption bg-status-danger-soft px-5 py-3 text-status-danger-text">
@@ -218,7 +220,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               </div>
             ))}
             {hasMoreInvitations && (
-              <div ref={loadMoreRef} className="flex justify-center px-5 py-4">
+              <div ref={loadMoreSentinelRef} className="flex justify-center px-5 py-4">
                 <button
                   type="button"
                   onClick={onLoadMoreInvitations}
@@ -231,7 +233,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               </div>
             )}
           </div>
-        ))}
+        </CollectionState>}
       </div>
 
       {createdReplacementInvite && (

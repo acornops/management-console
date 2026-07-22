@@ -1,5 +1,33 @@
 export type RunTraceStatus = 'connecting' | 'running' | 'completed' | 'failed' | 'cancelled';
 
+export interface SlashReferenceQuery {
+  start: number;
+  end: number;
+  query: string;
+}
+
+export const MAX_CHAT_ASSISTANT_REFERENCES = 8;
+
+export function resolveSlashReferenceQuery(value: string, cursor: number): SlashReferenceQuery | null {
+  const boundedCursor = Math.max(0, Math.min(cursor, value.length));
+  const beforeCursor = value.slice(0, boundedCursor);
+  const match = beforeCursor.match(/(?:^|\s)\/([^\s/]*)$/);
+  if (!match || match.index === undefined) return null;
+  const slashOffset = match[0].lastIndexOf('/');
+  return {
+    start: match.index + slashOffset,
+    end: boundedCursor,
+    query: match[1]
+  };
+}
+
+export function removeSlashReferenceQuery(value: string, query: SlashReferenceQuery): string {
+  const before = value.slice(0, query.start);
+  const after = value.slice(query.end);
+  const needsSpace = before.length > 0 && after.length > 0 && !/\s$/.test(before) && !/^\s/.test(after);
+  return `${before}${needsSpace ? ' ' : ''}${after}`;
+}
+
 export interface RunTraceStep {
   id: string;
   label: string;
@@ -30,6 +58,13 @@ export interface RunTraceToolCall {
     content_type: string;
   };
   artifactUnavailable?: boolean;
+  reportArtifact?: {
+    reportId: string;
+    title: string;
+    mediaType: 'application/pdf';
+    downloadUrl: string;
+    retentionExpiresAt?: string;
+  };
 }
 
 export interface RunTraceSkillLoad {

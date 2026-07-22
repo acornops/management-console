@@ -1,10 +1,9 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { TFunction } from 'i18next';
-import { AlertTriangle, Bot, Settings } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { getDialogFocusWrapIndex } from '@/components/common/Dialog';
-import type { AiSettingsGateReason } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { ChatSession } from '@/types';
 
 const focusableSelector = [
@@ -19,24 +18,18 @@ const focusableSelector = [
 
 interface TargetChatGateDialogProps {
   activeSessionId: string | null;
-  aiSettingsGateReason: AiSettingsGateReason;
-  canManageAiSettings: boolean;
   isPanel: boolean;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
   onDismissRecentActivityWarning: (sessionId: string) => void;
-  onOpenAiSettings: () => void;
   onOpenRecentActivitySession: (sessionId: string) => void;
   t: TFunction;
 }
 
 export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
   activeSessionId,
-  aiSettingsGateReason,
-  canManageAiSettings,
   isPanel,
   recentActivityWarning,
   onDismissRecentActivityWarning,
-  onOpenAiSettings,
   onOpenRecentActivitySession,
   t
 }) => {
@@ -49,7 +42,6 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
   const recentActivityBody = recentActivityWarning?.message.trim();
   const recentActivityActionLabel = recentActivityWarning?.actionLabel?.trim();
   const hasRecentActivityAction = Boolean(recentActivityWarning && (activeSessionId || actionSessionId));
-  const hasDialogAction = recentActivityWarning ? hasRecentActivityAction : canManageAiSettings;
 
   React.useEffect(() => {
     const restoreTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -65,29 +57,14 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
         restoreTarget.focus({ preventScroll: true });
       }
     };
-  }, [activeSessionId, actionSessionId, aiSettingsGateReason, canManageAiSettings, Boolean(recentActivityWarning)]);
+  }, [activeSessionId, actionSessionId]);
 
-  if (!recentActivityWarning && !aiSettingsGateReason) return null;
+  if (!recentActivityWarning) return null;
 
-  const title = recentActivityWarning
-    ? t('chat.recentActivityActionTitle')
-    : t('chat.aiSettingsRequiredTitle');
-  const body = recentActivityWarning
-    ? recentActivityBody || t('chat.chooseRecentActivityAction')
-    : canManageAiSettings && aiSettingsGateReason === 'unavailable'
-      ? t('chat.aiSettingsUnavailableManageBody')
-      : canManageAiSettings
-      ? t('chat.aiSettingsRequiredManageBody')
-      : t('chat.aiSettingsRequiredReadOnlyBody');
-  const icon = recentActivityWarning ? (
-    <AlertTriangle className="h-5 w-5" />
-  ) : canManageAiSettings ? (
-    <Settings className="h-5 w-5" />
-  ) : (
-    <Bot className="h-5 w-5" />
-  );
+  const title = t('chat.recentActivityActionTitle');
+  const body = recentActivityBody || t('chat.chooseRecentActivityAction');
   const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-    if (event.key !== 'Tab' || !hasDialogAction) return;
+    if (event.key !== 'Tab' || !hasRecentActivityAction) return;
     const dialog = dialogRef.current;
     if (!dialog) return;
     const focusableElements = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector)).filter((element) => {
@@ -118,7 +95,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
       <motion.section
         ref={dialogRef}
         role="dialog"
-        aria-modal={hasDialogAction ? true : undefined}
+        aria-modal="true"
         aria-labelledby={dialogTitleId}
         aria-describedby={dialogBodyId}
         tabIndex={-1}
@@ -131,7 +108,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
       >
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-ui-text-muted">
-            {icon}
+            <AlertTriangle className="h-5 w-5" />
           </span>
           <div className="min-w-0">
             <h2 id={dialogTitleId} className="text-base font-semibold leading-6 text-ui-text">
@@ -143,37 +120,29 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
           </div>
         </div>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          {recentActivityWarning ? (
-            <>
-              <Button
-                ref={actionSessionId ? undefined : primaryActionRef}
-                type="button"
-                variant={actionSessionId ? 'secondary' : 'primary'}
-                size="sm"
-                disabled={!activeSessionId}
-                onClick={() => {
-                  if (activeSessionId) onDismissRecentActivityWarning(activeSessionId);
-                }}
-              >
-                {t('chat.continueSeparateChat')}
-              </Button>
-              {actionSessionId && (
-                <Button
-                  ref={primaryActionRef}
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  onClick={() => onOpenRecentActivitySession(actionSessionId)}
-                >
-                  {recentActivityActionLabel || t('chat.openConversation')}
-                </Button>
-              )}
-            </>
-          ) : canManageAiSettings ? (
-            <Button ref={primaryActionRef} type="button" variant="primary" size="sm" onClick={onOpenAiSettings}>
-              {t('chat.openAiSettings')}
+          <Button
+            ref={actionSessionId ? undefined : primaryActionRef}
+            type="button"
+            variant={actionSessionId ? 'secondary' : 'primary'}
+            size="sm"
+            disabled={!activeSessionId}
+            onClick={() => {
+              if (activeSessionId) onDismissRecentActivityWarning(activeSessionId);
+            }}
+          >
+            {t('chat.continueSeparateChat')}
+          </Button>
+          {actionSessionId && (
+            <Button
+              ref={primaryActionRef}
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => onOpenRecentActivitySession(actionSessionId)}
+            >
+              {recentActivityActionLabel || t('chat.openConversation')}
             </Button>
-          ) : null}
+          )}
         </div>
       </motion.section>
     </motion.div>

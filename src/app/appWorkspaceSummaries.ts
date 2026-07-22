@@ -1,5 +1,6 @@
 import { KubernetesCluster, Workspace } from '@/types';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import { hasWorkspacePermission } from '@/app/workspacePermissions';
 
 export const buildKubernetesClustersByWorkspaceId = (kubernetesClusters: KubernetesCluster[]): Map<string, KubernetesCluster[]> => {
   const groupedKubernetesClusters = new Map<string, KubernetesCluster[]>();
@@ -33,9 +34,7 @@ export const getWorkspaceClusterCounts = (
 ): Map<string, number> => {
   const counts = new Map<string, number>();
   workspaces.forEach((workspace) => {
-    const canReadWorkspaceData = workspace.permissions?.read_workspace_data
-      ?? workspace.currentUserRoleTemplate?.capabilities.includes('read_workspace_data')
-      ?? false;
+    const canReadWorkspaceData = hasWorkspacePermission(workspace, 'read_workspace_data');
     if (!canReadWorkspaceData) {
       counts.set(workspace.id, workspace.clusterCount ?? 0);
       return;

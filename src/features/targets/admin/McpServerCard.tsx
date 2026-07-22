@@ -4,17 +4,22 @@ import { createPortal } from 'react-dom';
 import {
   Edit3,
   Loader2,
+  Link2,
   MoreVertical,
   RefreshCcw,
   Server,
   Settings2,
-  Trash2
+  Trash2,
+  Unlink2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { menuSurfaceClassName } from '@/components/common/menuStyles';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { formatDiscoveryTimestamp, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
+import type { McpConnection } from '@/services/control-plane/catalogApi';
+import { useFloatingActionMenu } from '@/hooks/useFloatingActionMenu';
+import { formatUserDateTime } from '@/utils/dateTime';
 
 interface McpServerCardProps {
   server: TargetToolCatalogServer;
@@ -22,11 +27,20 @@ interface McpServerCardProps {
   pendingTestServerId: string | null;
   pendingToggleServerId: string | null;
   testResult?: TargetMcpServerTestConnectionResult;
+  connection?: McpConnection;
+  connectionLoadError?: string;
+  pendingConnection: boolean;
+  retryAfterSeconds: number;
+  recoveryAction?: 'connect_mcp_server' | 'verify_mcp_server';
   onManageTools: (serverId: string) => void;
   onTestConnection: (server: TargetToolCatalogServer) => void;
   onToggleServer: (server: TargetToolCatalogServer, enabled: boolean) => void;
   onEdit: (server: TargetToolCatalogServer) => void;
   onDelete: (server: TargetToolCatalogServer) => void;
+  onConnect: (server: TargetToolCatalogServer) => void;
+  onVerify: (server: TargetToolCatalogServer) => void;
+  onDisconnect: (server: TargetToolCatalogServer) => void;
+  onRetry: (server: TargetToolCatalogServer) => void;
 }
 
 type ServerStatusTone = 'success' | 'warning' | 'danger' | 'muted';
@@ -73,22 +87,37 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
   pendingTestServerId,
   pendingToggleServerId,
   testResult,
+  connection,
+  connectionLoadError,
+  pendingConnection,
+  retryAfterSeconds,
+  recoveryAction,
   onManageTools,
   onTestConnection,
   onToggleServer,
   onEdit,
-  onDelete
+  onDelete,
+  onConnect,
+  onVerify,
+  onDisconnect,
+  onRetry
 }) => {
   const { t } = useTranslation();
   const healthCheckHelpId = React.useId();
   const actionMenuId = React.useId();
-  const actionMenuButtonRef = React.useRef<HTMLButtonElement>(null);
-  const actionMenuRef = React.useRef<HTMLDivElement>(null);
+  const recoveryActionRef = React.useRef<HTMLButtonElement>(null);
+  const managedConnectionRef = React.useRef<HTMLParagraphElement>(null);
+  const rowRef = React.useRef<HTMLTableRowElement>(null);
   const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
-  const [actionMenuStyle, setActionMenuStyle] = React.useState<React.CSSProperties | null>(null);
+  const {
+    triggerRef: actionMenuButtonRef,
+    menuRef: actionMenuRef,
+    style: actionMenuStyle,
+    close: closeActionMenu
+  } = useFloatingActionMenu({ open: actionMenuOpen, setOpen: setActionMenuOpen, estimatedHeight: 316 });
   const canDeleteServer = canEditServers && server.canDelete && !server.isSystem;
   const canEditServer = canEditServers && server.canEditConnection && !server.isSystem;
-  const canTestServer = canEditServers && !server.isSystem && server.canToggle;
+  const canTestServer = canEditServers && !server.isSystem && server.canToggle && server.authType === 'none';
   const isTogglingServer = pendingToggleServerId === server.id;
   const isBlockedByOtherServerToggle = Boolean(pendingToggleServerId && !isTogglingServer);
   const canToggleServer = canEditServers && server.canToggle && !isBlockedByOtherServerToggle && !isTogglingServer;
@@ -112,47 +141,23 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
     : !server.canToggle
       ? 'text-status-warning-text'
       : 'text-ui-text-muted';
-  const updateActionMenuPosition = React.useCallback(() => {
-    const trigger = actionMenuButtonRef.current;
-    if (!trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const menuWidth = 224;
-    const menuHeight = 188;
-    const top = Math.min(rect.bottom + 6, window.innerHeight - menuHeight - 8);
-    setActionMenuStyle({
-      left: Math.max(8, rect.right - menuWidth),
-      top: Math.max(8, top),
-      width: menuWidth
-    });
-  }, []);
+  const connectionDisabled = pendingConnection || !connection?.canManage || retryAfterSeconds > 0;
+  const hasCredential = server.credentialMode !== 'none';
+  React.useEffect(() => {
+    if (!recoveryAction) return;
+    rowRef.current?.scrollIntoView({ block: 'center' });
+    if (connection && !connection.canManage) {
+      setActionMenuOpen(false);
+      window.requestAnimationFrame(() => managedConnectionRef.current?.focus());
+      return;
+    }
+    setActionMenuOpen(true);
+  }, [connection, recoveryAction]);
 
   React.useEffect(() => {
-    if (!actionMenuOpen) return undefined;
-
-    updateActionMenuPosition();
-    const closeMenu = () => setActionMenuOpen(false);
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (actionMenuButtonRef.current?.contains(target) || actionMenuRef.current?.contains(target)) return;
-      closeMenu();
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeMenu();
-    };
-    const handleResize = () => updateActionMenuPosition();
-    document.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize, true);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize, true);
-    };
-  }, [actionMenuOpen, updateActionMenuPosition]);
-
-  const closeActionMenu = () => setActionMenuOpen(false);
+    if (!recoveryAction || !actionMenuOpen) return;
+    window.requestAnimationFrame(() => recoveryActionRef.current?.focus());
+  }, [actionMenuOpen, recoveryAction]);
 
   const actionMenu = actionMenuOpen && actionMenuStyle && typeof document !== 'undefined'
     ? createPortal(
@@ -200,6 +205,58 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               <span>{t('mcpServers.edit')}</span>
             </MenuItem>
           )}
+          {hasCredential && connectionLoadError && (
+            <MenuItem
+              disabled={pendingConnection}
+              onClick={() => {
+                closeActionMenu();
+                onRetry(server);
+              }}
+            >
+              <RefreshCcw className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+              <span>{t('mcpServers.retryConnectionLoad')}</span>
+            </MenuItem>
+          )}
+          {hasCredential && !connectionLoadError && connection?.canManage && connection.status === 'error' && (
+            <MenuItem
+              ref={recoveryAction === 'verify_mcp_server' ? recoveryActionRef : undefined}
+              data-mcp-action="verify_mcp_server"
+              disabled={connectionDisabled}
+              onClick={() => {
+                closeActionMenu();
+                onVerify(server);
+              }}
+            >
+              {pendingConnection ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-ui-text-muted" aria-hidden="true" /> : <RefreshCcw className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />}
+              <span>{retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : t('mcpServers.verifyCredential')}</span>
+            </MenuItem>
+          )}
+          {hasCredential && !connectionLoadError && connection?.canManage && (
+            <MenuItem
+              ref={recoveryAction === 'connect_mcp_server' ? recoveryActionRef : undefined}
+              data-mcp-action="connect_mcp_server"
+              disabled={connectionDisabled}
+              onClick={() => {
+                closeActionMenu();
+                onConnect(server);
+              }}
+            >
+              <Link2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+              <span>{retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : connection.status === 'missing' ? t(server.credentialMode === 'workspace' ? 'mcpServers.connectWorkspaceCredential' : 'mcpServers.connectIndividualCredential') : t('mcpServers.replaceCredential')}</span>
+            </MenuItem>
+          )}
+          {hasCredential && !connectionLoadError && connection?.canManage && (connection.status === 'connected' || connection.status === 'error') && (
+            <MenuItem
+              disabled={connectionDisabled}
+              onClick={() => {
+                closeActionMenu();
+                onDisconnect(server);
+              }}
+            >
+              <Unlink2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+              <span>{t('mcpServers.disconnectCredential')}</span>
+            </MenuItem>
+          )}
           {canDeleteServer && (
             <MenuItem
               destructive
@@ -218,20 +275,40 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
     : null;
 
   return (
-    <tr data-mcp-server-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
+    <tr ref={rowRef} data-mcp-server-row="true" data-mcp-server-id={server.id} className={`group border-b border-ui-bg transition-colors hover:bg-accent-soft/45 ${recoveryAction ? 'bg-accent-soft ring-2 ring-inset ring-accent/45' : ''}`}>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
             <Server className="h-5 w-5 text-accent-strong" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="type-panel-title truncate" title={server.name}>{server.name}</h3>
-            <p
-              className={`${isManagedServer ? 'type-caption' : 'type-code'} mt-1 truncate text-ui-text-muted`}
-              title={serverSubtitle}
-            >
-              {serverSubtitle}
+            <div className="flex min-w-0 items-center">
+              <h3 className="type-panel-title truncate" title={server.name}>{server.name}</h3>
+            </div>
+            <p className={`${isManagedServer ? 'type-caption' : 'type-code'} mt-1 truncate text-ui-text-muted`} title={serverSubtitle}>
+                {serverSubtitle}
             </p>
+            {server.provenance && <p className="type-caption mt-1 truncate text-ui-text-muted" title={`${server.provenance.artifactName} ${server.provenance.version}`}>{t('mcpServers.catalogProvenance', { artifact: server.provenance.artifactName, version: server.provenance.version })}</p>}
+            {hasCredential && (
+              connectionLoadError
+                ? <p role="alert" className="type-caption mt-1 text-status-danger-text">{t('mcpServers.connectionLoadFailed')}</p>
+                : <>
+                    <p className="type-caption mt-1 text-ui-text-muted">{t(server.credentialMode === 'workspace' ? 'mcpServers.workspaceConnectionStatus' : 'mcpServers.individualConnectionStatus', { status: connection?.status || 'loading' })}</p>
+                    {connection?.verifiedAt && (
+                      <p className="type-caption mt-1 text-ui-text-muted">{t('mcpServers.lastVerified', { date: formatUserDateTime(connection.verifiedAt) })}</p>
+                    )}
+                    {server.credentialMode === 'workspace' && connection && !connection.canManage && (
+                      <p
+                        ref={managedConnectionRef}
+                        tabIndex={recoveryAction ? -1 : undefined}
+                        className="type-caption mt-1 text-ui-text-muted focus:outline-none"
+                      >
+                        {t(recoveryAction ? 'mcpServers.askWorkspaceAdmin' : 'mcpServers.managedByWorkspace')}
+                      </p>
+                    )}
+                  </>
+            )}
+            {retryAfterSeconds > 0 && <p role="status" className="type-caption mt-1 text-status-warning-text">Connection controls unlock in {retryAfterSeconds}s.</p>}
           </div>
         </div>
       </td>

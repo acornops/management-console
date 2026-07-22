@@ -6,6 +6,8 @@ import {
   type ControlPlaneRun,
   type ControlPlaneTargetChatActivityEvent
 } from '@/services/controlPlaneApi';
+import { streamReconnectDelay } from '@/services/control-plane/streamRetry';
+import { reportBrowserError } from '@/observability/browserErrors';
 import {
   ensureFailedRunAssistantMessage,
   mapControlPlaneMessage,
@@ -251,11 +253,13 @@ export function useTargetChatActivityStream(args: {
         streamAbortController = new AbortController();
         let processing = Promise.resolve();
         let activityRefreshFailed = false;
+        let streamError: unknown;
         try {
           await controlPlaneApi.streamTargetChatActivity(target.workspaceId, target.id, {
             signal: streamAbortController.signal,
             after: lastEventIdRef.current,
             onEvent: (event) => {
+              reconnectAttempt = 0;
               processing = processing
                 .then(async () => {
                   if (activityRefreshFailed) {
@@ -283,14 +287,16 @@ export function useTargetChatActivityStream(args: {
           });
           await processing;
         } catch (error) {
+          streamError = error;
           if (!cancelled) {
-            console.warn('Target chat activity stream paused', error);
+            reportBrowserError(error, 'operation');
           }
         } finally {
           streamAbortController = null;
         }
         if (cancelled) break;
-        const delayMs = ACTIVITY_RECONNECT_DELAYS_MS[Math.min(reconnectAttempt, ACTIVITY_RECONNECT_DELAYS_MS.length - 1)];
+        const delayMs = streamReconnectDelay(streamError, reconnectAttempt, ACTIVITY_RECONNECT_DELAYS_MS);
+        if (delayMs === null) break;
         reconnectAttempt += 1;
         await waitForReconnect(delayMs);
       }

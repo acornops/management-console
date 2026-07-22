@@ -77,6 +77,11 @@ export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog):
       canEditConnection: Boolean(server.canEditConnection),
       canToggle: server.canToggle !== false,
       authType: server.authType || 'none',
+      credentialMode: server.credentialMode,
+      authHeaderName: server.authHeaderName,
+      authHeaderPrefix: server.authHeaderPrefix,
+      revision: Number(server.revision || 1),
+      provenance: server.provenance,
       publicHeaders: server.publicHeaders || {},
       connectionStatus:
         server.connectionStatus === 'ok' || server.connectionStatus === 'error'
@@ -117,7 +122,7 @@ export function mapMcpServer(server: ControlPlaneMcpServer): TargetMcpServer {
     serverUrl: server.server_url,
     enabled: Boolean(server.enabled),
     authType: server.auth_type || 'none',
-    authSecretName: server.auth_secret_name,
+    credentialMode: server.credential_mode,
     authHeaderName: server.auth_header_name,
     authHeaderPrefix: server.auth_header_prefix,
     publicHeaders: server.public_headers || undefined,
@@ -127,6 +132,16 @@ export function mapMcpServer(server: ControlPlaneMcpServer): TargetMcpServer {
         : 'unknown',
     lastDiscoveryAt: server.last_discovery_at || null,
     lastDiscoveryError: server.last_discovery_error || null,
+    revision: server.revision,
+    provenance: server.catalog_source_id && server.catalog_artifact_name && server.catalog_version && server.catalog_digest
+      ? {
+          sourceId: server.catalog_source_id,
+          artifactName: server.catalog_artifact_name,
+          version: server.catalog_version,
+          digest: server.catalog_digest,
+          importedAt: server.catalog_imported_at || undefined
+        }
+      : undefined,
     tools: mapClusterTools(server.tools)
   };
 }

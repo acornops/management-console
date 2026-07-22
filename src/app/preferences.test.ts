@@ -6,11 +6,15 @@ import {
   setSupportedLanguages
 } from '@/i18n/languageConfig';
 import {
+  ACTIVE_THEME_PREFERENCE_STORAGE_KEY,
+  clearActiveThemePreference,
   GLOBAL_LANGUAGE_STORAGE_KEY,
   GLOBAL_THEME_STORAGE_KEY,
   getProfileStorageKey,
+  persistActiveThemePreference,
   persistThemePreference,
   readLanguagePreference,
+  readInitialThemePreference,
   readThemePreference
 } from './preferences';
 
@@ -99,6 +103,26 @@ describe('theme preferences', () => {
     expect(readThemePreference()).toBe('system');
   });
 
+  it('uses the active-session hint ahead of the global preference during initial theme resolution', () => {
+    window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(ACTIVE_THEME_PREFERENCE_STORAGE_KEY, 'light');
+
+    expect(readInitialThemePreference()).toBe('light');
+  });
+
+  it('falls back to the global preference when there is no active-session hint', () => {
+    window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, 'dark');
+
+    expect(readInitialThemePreference()).toBe('dark');
+  });
+
+  it('treats an invalid active-session hint as System instead of leaking the global choice', () => {
+    window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, 'dark');
+    window.localStorage.setItem(ACTIVE_THEME_PREFERENCE_STORAGE_KEY, 'sepia');
+
+    expect(readInitialThemePreference()).toBe('system');
+  });
+
   it('uses an explicit profile preference ahead of the global preference', () => {
     window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, 'dark');
     window.localStorage.setItem(getProfileStorageKey('operator', 'theme'), 'light');
@@ -122,5 +146,40 @@ describe('theme preferences', () => {
 
     expect(window.localStorage.getItem(GLOBAL_THEME_STORAGE_KEY)).toBe('system');
     expect(window.localStorage.getItem(getProfileStorageKey('operator', 'theme'))).toBe('light');
+  });
+
+  it('persists and clears the active-session hint independently of global and profile preferences', () => {
+    window.localStorage.setItem(GLOBAL_THEME_STORAGE_KEY, 'dark');
+    persistThemePreference('system', 'operator');
+
+    persistActiveThemePreference('light');
+    expect(window.localStorage.getItem(ACTIVE_THEME_PREFERENCE_STORAGE_KEY)).toBe('light');
+
+    clearActiveThemePreference();
+    expect(window.localStorage.getItem(ACTIVE_THEME_PREFERENCE_STORAGE_KEY)).toBeNull();
+    expect(window.localStorage.getItem(GLOBAL_THEME_STORAGE_KEY)).toBe('dark');
+    expect(window.localStorage.getItem(getProfileStorageKey('operator', 'theme'))).toBe('system');
+  });
+
+  it('keeps System as the safe initial theme when storage is unavailable', () => {
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        clear: () => undefined,
+        getItem: () => {
+          throw new Error('storage unavailable');
+        },
+        removeItem: () => {
+          throw new Error('storage unavailable');
+        },
+        setItem: () => {
+          throw new Error('storage unavailable');
+        }
+      }
+    });
+
+    expect(readInitialThemePreference()).toBe('system');
+    expect(() => persistActiveThemePreference('dark')).not.toThrow();
+    expect(() => clearActiveThemePreference()).not.toThrow();
   });
 });

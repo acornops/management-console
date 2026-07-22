@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import { AppSessionRestoringScreen } from '@/app/AppSessionRestoringScreen';
+import { AppUnavailableScreen } from '@/app/AppUnavailableScreen';
 import { AppShell } from '@/app/AppShell';
 import { ExternalIntegrationLinkRouteScreen } from '@/app/ExternalIntegrationLinkRouteScreen';
 import { getActivePrimaryNav, getActiveResourceNav, getClusterRouteId, getWorkspaceRouteId } from '@/app/appRouteState';
-import { useAppBootstrap } from '@/app/useAppBootstrap';
+import { useAppBootstrap, type SessionBootstrapState } from '@/app/useAppBootstrap';
 import { useAppPreferences } from '@/app/useAppPreferences';
 import { useAuthConfig } from '@/app/useAuthConfig';
 import { useAppSupport } from '@/app/useAppSupport';
@@ -14,17 +15,19 @@ import { useSidebarRouteTargets } from '@/app/useSidebarRouteTargets';
 import { useWorkspaceClusterActions } from '@/app/useWorkspaceClusterActions';
 import { useWorkspaceVirtualMachineCache } from '@/app/useWorkspaceVirtualMachineCache';
 import { useRecentInvestigationSync } from '@/app/useRecentInvestigationSync';
+import { useAuthenticatedSessionLifecycle } from '@/app/useAuthenticatedSessionLifecycle';
 import { useThemeTransition } from '@/hooks/useThemeTransition';
 import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from '@/app/appWorkspaceSummaries';
-import { isWorkspaceDataRoute, legacySettingsRedirectPath, workspaceLandingPath } from '@/app/appNavigationGuards';
+import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
-import { readLanguagePreference, readThemePreference } from '@/app/preferences';
+import { readInitialThemePreference, readLanguagePreference } from '@/app/preferences';
 import { clearChatComposerRuntimesForUser } from '@/features/targets/chat/lib/chatComposerRuntimeStorage';
 import { getSystemTheme, resolveThemePreference, type ResolvedTheme, type ThemePreference } from '@/app/theme';
 import { getSupportedLanguages } from '@/i18n/languageConfig';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { getControlPlaneUrl } from '@/services/control-plane/http';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths } from '@/utils/routes';
 const App: React.FC = () => {
@@ -35,8 +38,9 @@ const App: React.FC = () => {
   const [kubernetesClusters, setKubernetesClusters] = useState<KubernetesCluster[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
-  const [isSessionRestoring, setIsSessionRestoring] = useState(true);
-  const authConfig = useAuthConfig();
+  const [sessionBootstrapState, setSessionBootstrapState] = useState<SessionBootstrapState>('restoring');
+  const authConfigState = useAuthConfig();
+  const authConfig = authConfigState.config;
   const [installAgentClusterId, setInstallAgentClusterId] = useState<string | null>(null);
   const [deleteWorkspaceId, setDeleteWorkspaceId] = useState<string | null>(null);
   const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false);
@@ -45,13 +49,11 @@ const App: React.FC = () => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [loadedProfilePreferenceKey, setLoadedProfilePreferenceKey] = useState<string | null>(null);
+  const [loadedAnonymousPreferences, setLoadedAnonymousPreferences] = useState(false);
   const sidebarAccountMenuRef = useRef<HTMLDivElement | null>(null);
   const sidebarWorkspaceMenuRef = useRef<HTMLDivElement | null>(null);
-  const skipAnonymousPreferencePersistCountRef = useRef(0);
-  const [themePreference, setThemePreference] = useState<ThemePreference>(readThemePreference);
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
-    resolveThemePreference(readThemePreference(), getSystemTheme() === 'dark')
-  );
+  const [themePreference, setThemePreference] = useState<ThemePreference>(readInitialThemePreference);
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => resolveThemePreference(readInitialThemePreference(), getSystemTheme() === 'dark'));
   const [language, setLanguage] = useState<string>(readLanguagePreference);
   const isDark = resolvedTheme === 'dark';
   const routeWorkspaceId = getWorkspaceRouteId(route);
@@ -74,6 +76,15 @@ const App: React.FC = () => {
     [kubernetesClusters, kubernetesClustersByWorkspaceId, workspaceById, workspaceContextId]
   );
   const virtualMachineCache = useWorkspaceVirtualMachineCache(workspaceContextId, workspaceById);
+  const closeSessionNavigation = useCallback(() => {
+    setIsAccountMenuOpen(false); setIsMobileNavOpen(false); setIsSidebarWorkspaceMenuOpen(false);
+  }, []);
+  const { sessionExpired, clearSessionForLogout } = useAuthenticatedSessionLifecycle({
+    navigate, user,
+    resetVirtualMachineCache: virtualMachineCache.resetVirtualMachineCache,
+    setKubernetesClusters, setSessionBootstrapState, setSelectedWorkspaceId, setUser, setWorkspaces,
+    closeNavigation: closeSessionNavigation
+  });
   const {
     clusterCopilotCluster,
     clusterCopilotInitialPrompt,
@@ -88,15 +99,8 @@ const App: React.FC = () => {
   const activePrimaryNav = useMemo(() => getActivePrimaryNav(route), [route]);
   const activeResourceNav = useMemo(() => getActiveResourceNav(route), [route]);
   const { bootstrapSession } = useAppBootstrap({
-    route,
-    selectedWorkspaceId,
-    user,
-    workspaces,
-    setKubernetesClusters,
-    setIsSessionRestoring,
-    setSelectedWorkspaceId,
-    setUser,
-    setWorkspaces
+    route, selectedWorkspaceId, user, workspaces,
+    setKubernetesClusters, setSessionBootstrapState, setSelectedWorkspaceId, setUser, setWorkspaces
   });
   const {
     dismissToast,
@@ -178,15 +182,17 @@ const App: React.FC = () => {
   });
   useAppPreferences({
     i18n,
+    isSessionRestoring: sessionBootstrapState === 'restoring',
     language,
+    loadedAnonymousPreferences,
     loadedProfilePreferenceKey,
     selectedWorkspaceId,
     setLanguage,
+    setLoadedAnonymousPreferences,
     setLoadedProfilePreferenceKey,
     setSelectedWorkspaceId,
     setResolvedTheme,
     setThemePreference,
-    skipAnonymousPreferencePersistCountRef,
     themePreference,
     user
   });
@@ -319,14 +325,6 @@ const App: React.FC = () => {
   }, [route.kind, route.kind === 'kubernetesClusters' ? route.q : undefined, route.kind === 'kubernetesClusters' ? route.status : undefined, selectedWorkspaceId, workspaceById, workspaces, navigate]);
 
   useEffect(() => {
-    if (!user || route.kind !== 'settings') {
-      return;
-    }
-
-    navigate(legacySettingsRedirectPath({ selectedWorkspaceId, workspaceById, workspaces }), { replace: true });
-  }, [user, route.kind, selectedWorkspaceId, workspaceById, workspaces, navigate]);
-
-  useEffect(() => {
     if (route.kind !== 'kubernetesClusterDiagnostics') {
       return;
     }
@@ -444,46 +442,49 @@ const App: React.FC = () => {
     return getWorkspacePermissionValue(workspaceById, user?.email, workspaceId, permission);
   }, [user?.email, workspaceById]);
   const handleLogout = async () => {
+    let redirectUrl: string | undefined;
     try {
-      await controlPlaneApi.logout();
-    } catch (err) {
-      console.error('Logout failed', err);
+      const result = await controlPlaneApi.logout();
+      redirectUrl = result.redirectPath.startsWith('/api/')
+        ? getControlPlaneUrl(result.redirectPath).toString()
+        : new URL(result.redirectPath, window.location.origin).toString();
+    } catch {
+      console.error('Logout request failed');
     }
     setIsAccountMenuOpen(false);
     if (user) clearChatComposerRuntimesForUser(user.id);
-    skipAnonymousPreferencePersistCountRef.current = 2;
-    setUser(null);
-    setKubernetesClusters([]);
-    virtualMachineCache.resetVirtualMachineCache();
-    setWorkspaces([]);
-    setSelectedWorkspaceId(null);
+    clearSessionForLogout();
+    if (redirectUrl) {
+      window.location.assign(redirectUrl);
+      return;
+    }
     navigate(AppPaths.workspaces(), { replace: true });
   };
-  if (!user && isSessionRestoring) {
+  if (!user && sessionBootstrapState === 'restoring') {
     return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
+  }
+  if (!user && sessionBootstrapState === 'unavailable') {
+    return <AppUnavailableScreen logoSrc={logoSrc} title="Console temporarily unavailable" description="The control plane could not restore your session. Check your connection and try again." onRetry={() => void bootstrapSession()} />;
   }
   if (route.kind === 'externalIntegrationLink' && (user || route.status || !route.token)) {
     return <ExternalIntegrationLinkRouteScreen logoSrc={logoSrc} onLinkStatus={(status) => navigate(AppPaths.externalIntegrationLinkStatus(status), { replace: true })} route={route} />;
   }
   if (!user) {
+    if (authConfigState.status === 'loading') {
+      return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
+    }
+    if (authConfigState.status === 'unavailable') {
+      return <AppUnavailableScreen logoSrc={logoSrc} title="Sign-in configuration unavailable" description="Sign-in options could not be loaded safely. No authentication method is enabled until the configuration is available." onRetry={authConfigState.retry} />;
+    }
     return (
       <LoginPage
-        isDark={isDark}
-        preference={themePreference}
-        resolvedTheme={resolvedTheme}
-        isAuthLoading={isAuthLoading}
-        logoSrc={logoSrc}
-        oidcEnabled={authConfig.oidcEnabled}
-        passwordAuthEnabled={authConfig.passwordAuthEnabled}
-        passwordSignupEnabled={authConfig.passwordSignupEnabled}
-        passwordResetEnabled={authConfig.passwordResetEnabled}
-        onLogin={handleLogin}
-        onPasswordLogin={handlePasswordLogin}
-        onPasswordSignup={handlePasswordSignup}
-        onVerifyEmail={handleVerifyEmail}
-        onResendVerification={handleResendVerification}
-        onRequestPasswordReset={handleRequestPasswordReset}
-        onResetPassword={handleResetPassword}
+        isDark={isDark} preference={themePreference} resolvedTheme={resolvedTheme}
+        isAuthLoading={isAuthLoading} logoSrc={logoSrc} sessionExpired={sessionExpired}
+        oidcEnabled={authConfig.oidcEnabled} passwordAuthEnabled={authConfig.passwordAuthEnabled}
+        passwordSignupEnabled={authConfig.passwordSignupEnabled} passwordResetEnabled={authConfig.passwordResetEnabled}
+        onLogin={handleLogin} onPasswordLogin={handlePasswordLogin} onPasswordSignup={handlePasswordSignup}
+        onVerifyEmail={handleVerifyEmail} onResendVerification={handleResendVerification}
+        onRequestPasswordReset={handleRequestPasswordReset} onResetPassword={handleResetPassword}
         onSelectTheme={handleSelectTheme}
       />
     );

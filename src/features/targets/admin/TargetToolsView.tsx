@@ -1,8 +1,10 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
+import { EmptyState } from '@/components/common/EmptyState';
+import { DataTableStateRow } from '@/components/common/DataTable';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { Select } from '@/components/common/Select';
 import type { SelectOption } from '@/components/common/Select';
@@ -23,6 +25,8 @@ import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
 interface TargetToolsViewProps {
   target: TargetDescriptor;
   canManageTools?: boolean;
+  initialCatalog?: ControlPlaneTargetToolsCatalog | null;
+  onCatalogChange?: (catalog: ControlPlaneTargetToolsCatalog) => void;
 }
 
 interface ToolDraft {
@@ -112,6 +116,7 @@ function summarizeDomainFilters(tool: ControlPlaneTargetToolItem, t: (key: strin
 }
 
 function summarizeToolConfig(tool: ControlPlaneTargetToolItem, t: (key: string, options?: Record<string, unknown>) => string): string {
+  if (tool.origin === 'platform_native') return t('tools.platformNativeSummary');
   if (tool.id !== 'target_insights') return summarizeDomainFilters(tool, t);
   if (tool.readiness && !tool.readiness.learningAvailable) return 'Learning paused';
   const maxSnippets = tool.config.retrieval?.maxSnippetsPerRetrieval || 4;
@@ -136,11 +141,13 @@ function toolCapabilityLabel(tool: ControlPlaneTargetToolItem, t: (key: string) 
 
 export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   target,
-  canManageTools = false
+  canManageTools = false,
+  initialCatalog = null,
+  onCatalogChange
 }) => {
   const { t } = useTranslation();
 
-  const [catalog, setCatalog] = React.useState<ControlPlaneTargetToolsCatalog | null>(null);
+  const [catalog, setCatalog] = React.useState<ControlPlaneTargetToolsCatalog | null>(() => initialCatalog);
   const [catalogLoading, setCatalogLoading] = React.useState(false);
   const [catalogError, setCatalogError] = React.useState<string | null>(null);
   const [editingTool, setEditingTool] = React.useState<ControlPlaneTargetToolItem | null>(null);
@@ -171,7 +178,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       enabled: items.filter((tool) => tool.enabled).length,
       read: items.filter((tool) => toolCapability(tool) === 'read').length,
       write: items.filter((tool) => toolCapability(tool) === 'write').length,
-      assistantVisible: items.filter((tool) => tool.visibility?.appearsInAssistantToolList).length
+      assistantVisible: items.filter((tool) => tool.enabled && tool.visibility?.appearsInAssistantToolList).length
     };
   }, [catalog]);
 
@@ -183,6 +190,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         tool.label,
         tool.id,
         tool.description,
+        t('common.providedByAcornOps'),
         tool.enabled ? t('tools.enabled') : t('tools.disabled'),
         toolCapabilityLabel(tool, t),
         toolRuntimeLabel(tool, t),
@@ -204,7 +212,6 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     try {
       setCatalog(await controlPlaneApi.listTargetTools(target.workspaceId, target.id));
     } catch (error) {
-      setCatalog(null);
       setCatalogError(formatError(error, t('tools.loadFailed'), 'targetTools'));
     } finally {
       setCatalogLoading(false);
@@ -214,6 +221,10 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   React.useEffect(() => {
     void loadCatalog();
   }, [loadCatalog]);
+
+  React.useEffect(() => {
+    if (catalog) onCatalogChange?.(catalog);
+  }, [catalog, onCatalogChange]);
 
   const openConfigure = (tool: ControlPlaneTargetToolItem) => {
     setEditingTool(tool);
@@ -346,6 +357,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         label: editingTool?.label || '',
         description: editingTool?.description || '',
         enabled: draftRequest.request.enabled,
+        origin: editingTool?.origin || 'target_setting',
         capability: editingTool?.capability || 'read',
         runtimeKind: editingTool?.runtimeKind || 'provider_native',
         visibility: editingTool?.visibility,
@@ -384,27 +396,27 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       {catalog ? (
         <>
           <section data-target-tools-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-            <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
-              <div className="px-5 py-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
+              <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
                 <h2 className="type-row-title">{t('tools.inventoryTitle')}</h2>
                 <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('tools.inventoryBody')}</p>
               </div>
-              <div className="px-5 py-3.5">
+              <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
                 <p className="type-caption text-ui-text-muted">{t('tools.toolsMetric')}</p>
                 <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolSummary.total}</p>
               </div>
-              <div className="px-5 py-3.5">
+              <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
                 <p className="type-caption text-ui-text-muted">{t('tools.enabledToolsMetric')}</p>
                 <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolSummary.enabled}</p>
               </div>
-              <div className="px-5 py-3.5">
+              <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
                 <p className="type-caption text-ui-text-muted">{t('tools.readOnlyTools')}</p>
                 <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
                   {toolSummary.read}
                   <span className="h-2 w-2 rounded-full bg-status-success" />
                 </p>
               </div>
-              <div className="px-5 py-3.5">
+              <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
                 <p className="type-caption text-ui-text-muted">{t('tools.writeCapableTools')}</p>
                 <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
                   {toolSummary.write}
@@ -463,7 +475,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTools.length > 0 ? filteredTools.map((tool) => (
+                  {filteredTools.map((tool) => (
                     <TargetToolRow
                       key={tool.id}
                       tool={tool}
@@ -476,16 +488,17 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                       onTargetInsightsAction={openTargetInsightsAction}
                       onToggleTool={(nextTool, enabled) => void toggleTool(nextTool, enabled)}
                     />
-                  )) : (
-                    <tr>
-                      <td colSpan={5} className="px-8 py-12 text-center">
-                        <p className="type-body">{catalog.items.length === 0 ? t('tools.empty') : t('tools.noToolMatches')}</p>
-                        <p className="type-caption mt-1 text-ui-text-muted">
-                          {catalog.items.length === 0 ? t('tools.emptyHelp') : t('tools.noToolMatchesHelp')}
-                        </p>
-                      </td>
-                    </tr>
-                  )}
+                  ))}
+                  <DataTableStateRow
+                    columns={5}
+                    phase="ready"
+                    itemCount={filteredTools.length}
+                    filtered={catalog.items.length > 0}
+                    loading={null}
+                    empty={<EmptyState embedded headingLevel={3} icon={<Wrench />} title={t('tools.empty')} description={t('tools.emptyHelp')} />}
+                    filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('tools.noToolMatches')} description={t('tools.noToolMatchesHelp')} />}
+                    error={null}
+                  />
                 </tbody>
               </table>
             </div>
