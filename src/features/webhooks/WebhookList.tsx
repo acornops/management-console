@@ -31,6 +31,13 @@ interface WebhookListProps {
   onLoadHistory: (webhook: ControlPlaneWebhookSubscription) => void;
 }
 
+function deliveryStatusTone(entry: ControlPlaneWebhookHistory): 'success' | 'warning' | 'danger' | 'neutral' {
+  if (entry.status === 'success') return 'success';
+  if (entry.status === 'failed') return entry.willRetry ? 'warning' : 'danger';
+  if (entry.status === 'paused') return 'warning';
+  return 'neutral';
+}
+
 export const WebhookList: React.FC<WebhookListProps> = ({
   webhooks,
   canManageWebhooks,
@@ -164,13 +171,33 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                   {!isHistoryLoading && !historyError && history.length > 0 && (
                     <div className="mt-3 divide-y divide-ui-border overflow-hidden rounded-md border border-ui-border bg-ui-surface">
                       {history.map((entry) => (
-                        <div key={entry.id} className="grid gap-2 p-3 text-xs font-semibold text-ui-text-muted md:grid-cols-[minmax(0,1fr)_120px_minmax(160px,auto)]">
-                          <span className="min-w-0 truncate text-ui-text">{entry.eventType}</span>
-                          <span className="flex items-center gap-2">
-                            <StatusBadge tone={entry.status === 'success' ? 'success' : 'danger'}>
+                        <div key={entry.id} className="grid gap-3 p-3 text-xs font-semibold text-ui-text-muted md:grid-cols-[minmax(0,1fr)_140px_minmax(160px,auto)]">
+                          <div className="min-w-0">
+                            <span className="block truncate text-ui-text">{entry.eventType}</span>
+                            <span className="mt-1 block">
+                              {entry.status === 'paused'
+                                ? t('workspaceWebhooks.historyPaused')
+                                : t('workspaceWebhooks.historyAttempt', { attempt: entry.attemptNumber })}
+                              {entry.willRetry && entry.nextAttemptAt
+                                ? ` · ${t('workspaceWebhooks.historyNextRetry', {
+                                    time: formatUserDateTime(entry.nextAttemptAt, { fallback: entry.nextAttemptAt })
+                                  })}`
+                                : ''}
+                            </span>
+                            {entry.terminalReason && (
+                              <span className="mt-1 block text-ui-text">
+                                {t(`workspaceWebhooks.terminalReason.${entry.terminalReason}`, {
+                                  defaultValue: entry.terminalReason.replaceAll('_', ' ')
+                                })}
+                              </span>
+                            )}
+                          </div>
+                          <span className="flex flex-wrap items-center gap-2">
+                            <StatusBadge tone={deliveryStatusTone(entry)}>
                               {t(`workspaceWebhooks.historyStatus.${entry.status}`)}
                             </StatusBadge>
-                            {entry.responseStatus ?? ''}
+                            {entry.responseStatus ? `HTTP ${entry.responseStatus}` : ''}
+                            {entry.willRetry ? t('workspaceWebhooks.retrying') : ''}
                           </span>
                           <time dateTime={entry.sentAt}>{formatUserDateTime(entry.sentAt, { fallback: entry.sentAt })}</time>
                         </div>

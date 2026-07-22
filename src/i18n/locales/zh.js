@@ -1009,6 +1009,7 @@ export const zh = {
     events: '事件',
     selectEvent: '请至少选择一个事件。',
     groups: {
+      issueAlerts: '问题告警',
       runAlerts: '运行告警',
       targetHealth: '目标健康状况',
       workspaceChanges: '工作区变更'
@@ -1044,7 +1045,26 @@ export const zh = {
     deleteDescription: '向此端点的事件投递将立即停止。此操作无法撤销。',
     targetScoped: '限定目标',
     recentDeliveries: '最近投递',
-    historyStatus: { success: '已投递', failed: '失败' },
+    historyStatus: {
+      success: '已投递',
+      failed: '失败',
+      paused: '已暂停',
+      superseded: '已取代',
+      cancelled: '已取消'
+    },
+    historyAttempt: '第 {{attempt}} 次尝试',
+    historyPaused: '已在下一次投递尝试前暂停',
+    historyNextRetry: '下次重试 {{time}}',
+    retrying: '正在重试',
+    terminalReason: {
+      issue_recovering: '问题正在恢复。如果问题再次变为活动状态，投递将继续。',
+      issue_lifecycle_advanced: '由于问题状态已推进，此事件未被投递。',
+      subscription_unavailable: '订阅已停用、删除或不再匹配此事件。',
+      signing_configuration: '签名配置不可用。',
+      http_terminal: '端点返回了不会重试的响应。',
+      delivery_policy: '投递安全策略拒绝了该目标。',
+      attempts_exhausted: '已达到投递重试次数或最大重试时限。'
+    },
     historyLoading: '正在加载投递历史…',
     historyEmpty: '尚无投递记录。'
   },

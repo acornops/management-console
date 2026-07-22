@@ -70,6 +70,15 @@ Central tracking: acornops/acornops#12.
   against both versions without weakening item validation.
 - 2026-07-22, Wave 2: Synchronized the vendored operation inventory with the
   generated webhook-route connect/status operations.
+- 2026-07-22, Wave 3: Added issue created, reopened, and resolved events to the
+  current typed webhook model. New webhook drafts select the issue-alert group
+  by default, while the existing run, target-health, and workspace groups stay
+  available through the current accessible editor.
+- 2026-07-22, Wave 3: Adapted durable delivery history to the current
+  `WebhookList` rather than restoring the older monolithic page. The API
+  boundary now validates attempt and retry metadata and all five delivery
+  states. History rows show attempt number, scheduled retry, HTTP result, and
+  localized terminal reasons, including deliberate stale-issue suppression.
 
 ## Validation Log
 
@@ -91,6 +100,13 @@ Central tracking: acornops/acornops#12.
   passed all 43 current cases. Dedicated webhook browser coverage verifies the
   real route, history, focused inline deletion confirmation and cancellation,
   create flow, and one-time signing-secret display.
+- Wave 3 console: design-system, TypeScript, all 606 unit tests, membership,
+  synchronized contracts, harness, production build, and route smoke passed.
+  The real-Chrome design suite passed 19 tests with its one intentional skip.
+  The repeated fixture suite passed all 129 cases with one worker and the MCP
+  parity suite passed all 21 repeated cases. Webhook browser coverage now
+  verifies successful and superseded durable history, the stale-issue
+  explanation, deletion confirmation, create flow, and one-time secret.
 - Each wave: run focused component/service tests, contract checks, design-system
   checks, control-plane-mode validation, production build, and route smoke.
 - Final: verify linking, grants, webhook lifecycle, executions, SSE status, and

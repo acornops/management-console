@@ -44,6 +44,8 @@ describe('WorkspaceWebhooksPage contract surface', () => {
   it('expands current event groups without duplicating events', () => {
     expect(editor).toContain('applyEventGroup(group.eventTypes)');
     expect(model).toContain('return [...new Set(events)]');
+    expect(model).toContain("id: 'issueAlerts'");
+    expect(model).toContain("eventTypes: ['issue.created.v1', 'issue.reopened.v1', 'issue.resolved.v1']");
     expect(model).toContain("id: 'runAlerts'");
   });
 
@@ -57,5 +59,9 @@ describe('WorkspaceWebhooksPage contract surface', () => {
   it('loads delivery history through the manage_webhooks-gated endpoint', () => {
     expect(page).toContain('controlPlaneApi.listWebhookHistory(workspace.id, webhook.id, { limit: 25 })');
     expect(list).toContain("t('workspaceWebhooks.historyEmpty')");
+    expect(list).toContain('deliveryStatusTone(entry)');
+    expect(list).toContain('entry.attemptNumber');
+    expect(list).toContain('entry.nextAttemptAt');
+    expect(list).toContain('entry.terminalReason');
   });
 });

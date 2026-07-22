@@ -14,14 +14,18 @@ export interface WebhookDraft {
 export const emptyWebhookDraft = (): WebhookDraft => ({
   name: '',
   url: '',
-  eventTypes: ['run.failed.v1'],
+  eventTypes: ['issue.created.v1', 'issue.reopened.v1', 'issue.resolved.v1'],
   enabled: true
 });
 
 export const webhookEventGroups: Array<{
-  id: 'runAlerts' | 'targetHealth' | 'workspaceChanges';
+  id: 'issueAlerts' | 'runAlerts' | 'targetHealth' | 'workspaceChanges';
   eventTypes: ControlPlaneWebhookEventType[];
 }> = [
+  {
+    id: 'issueAlerts',
+    eventTypes: ['issue.created.v1', 'issue.reopened.v1', 'issue.resolved.v1']
+  },
   {
     id: 'runAlerts',
     eventTypes: ['run.failed.v1', 'run.cancelled.v1', 'run.tool_approval_requested.v1']

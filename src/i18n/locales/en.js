@@ -1009,6 +1009,7 @@ export const en = {
     events: 'Events',
     selectEvent: 'Select at least one event.',
     groups: {
+      issueAlerts: 'Issue alerts',
       runAlerts: 'Run alerts',
       targetHealth: 'Target health',
       workspaceChanges: 'Workspace changes'
@@ -1044,7 +1045,26 @@ export const en = {
     deleteDescription: 'Event delivery to this endpoint will stop immediately. This action cannot be undone.',
     targetScoped: 'Target scoped',
     recentDeliveries: 'Recent deliveries',
-    historyStatus: { success: 'Delivered', failed: 'Failed' },
+    historyStatus: {
+      success: 'Delivered',
+      failed: 'Failed',
+      paused: 'Paused',
+      superseded: 'Superseded',
+      cancelled: 'Cancelled'
+    },
+    historyAttempt: 'Attempt {{attempt}}',
+    historyPaused: 'Paused before the next delivery attempt',
+    historyNextRetry: 'next retry {{time}}',
+    retrying: 'Retrying',
+    terminalReason: {
+      issue_recovering: 'The issue is recovering. Delivery will resume if it becomes active again.',
+      issue_lifecycle_advanced: 'Deliberately not sent because the issue state advanced.',
+      subscription_unavailable: 'The subscription is disabled, deleted, or no longer matches this event.',
+      signing_configuration: 'The signing configuration is unavailable.',
+      http_terminal: 'The endpoint returned a response that will not be retried.',
+      delivery_policy: 'The destination was rejected by the delivery security policy.',
+      attempts_exhausted: 'The delivery retry limit or maximum retry age was reached.'
+    },
     historyLoading: 'Loading delivery history…',
     historyEmpty: 'No delivery attempts recorded.'
   },
