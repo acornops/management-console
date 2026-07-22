@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ChatRuntimeSelection, LlmProvider, ReasoningEffort, WorkspaceAiProviderStatus, WorkspaceAiSettings } from '@/types';
+import { getReadyAiRuntimeModels } from '@/features/ai/aiRuntimeReadiness';
 import { formatUserTime } from '@/utils/dateTime';
 
 export const SUGGESTION_KEYS = ['chat.suggestions.podTermination', 'chat.suggestions.serviceDns', 'chat.suggestions.crashLooping', 'chat.suggestions.mcpConnectivity'];
@@ -84,25 +85,39 @@ export function getHistoryFocusWrapIndex(currentIndex: number, focusableCount: n
   return null;
 }
 
+export function shouldDismissHistoryOnKeyDown(key: string, usesOverlayHistory: boolean): boolean {
+  return usesOverlayHistory && key === 'Escape';
+}
+
 export function useTargetChatHistoryFocus(args: {
   isHistoryOpen: boolean;
   historyButtonRef: React.RefObject<HTMLButtonElement | null>;
   historyPanelRef: React.RefObject<HTMLElement | null>;
+  onDismiss: () => void;
 }): void {
-  const { isHistoryOpen, historyButtonRef, historyPanelRef } = args;
+  const { isHistoryOpen, historyButtonRef, historyPanelRef, onDismiss } = args;
 
   React.useEffect(() => {
     if (!isHistoryOpen) return;
 
     const usesOverlayHistory = window.matchMedia('(max-width: 1023px)').matches;
-    const restoreTarget = usesOverlayHistory && document.activeElement instanceof HTMLElement ? document.activeElement : historyButtonRef.current;
     const focusTimer = usesOverlayHistory
       ? window.setTimeout(() => {
-          historyPanelRef.current?.focus({ preventScroll: true });
+          const panel = historyPanelRef.current;
+          const focusTarget = historyButtonRef.current?.dataset.chatHistoryTrigger === 'search'
+            ? panel?.querySelector<HTMLInputElement>('[data-chat-history-search="true"]')
+            : panel;
+          focusTarget?.focus({ preventScroll: true });
         }, 0)
       : undefined;
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (shouldDismissHistoryOnKeyDown(event.key, usesOverlayHistory)) {
+        event.preventDefault();
+        event.stopPropagation();
+        onDismiss();
+        return;
+      }
       if (!usesOverlayHistory || event.key !== 'Tab') return;
 
       const panel = historyPanelRef.current;
@@ -123,11 +138,16 @@ export function useTargetChatHistoryFocus(args: {
     return () => {
       if (focusTimer !== undefined) window.clearTimeout(focusTimer);
       window.removeEventListener('keydown', handleKeyDown);
-      if (usesOverlayHistory && restoreTarget && document.contains(restoreTarget)) {
-        restoreTarget.focus({ preventScroll: true });
+      const restoreTarget = usesOverlayHistory ? historyButtonRef.current : null;
+      if (usesOverlayHistory && restoreTarget) {
+        window.setTimeout(() => {
+          if (document.contains(restoreTarget)) {
+            restoreTarget.focus({ preventScroll: true });
+          }
+        }, 0);
       }
     };
-  }, [historyButtonRef, historyPanelRef, isHistoryOpen]);
+  }, [historyButtonRef, historyPanelRef, isHistoryOpen, onDismiss]);
 }
 
 function getFileExtension(fileName: string): string {
@@ -285,6 +305,9 @@ function modelsForProvider(settings: WorkspaceAiSettings, provider: LlmProvider)
 
 export function buildComposerModelOptions(settings: WorkspaceAiSettings | null): ComposerModelOption[] {
   if (!settings) return [];
+  const readyModelKeys = new Set(
+    getReadyAiRuntimeModels(settings).map(({ provider, model }) => `${provider}:${model}`)
+  );
   return settings.allowedProviders.flatMap((provider) => {
     const providerStatus = providerStatusFor(settings, provider);
     const configured = providerStatus?.configured ?? false;
@@ -294,7 +317,7 @@ export function buildComposerModelOptions(settings: WorkspaceAiSettings | null):
       model,
       configured,
       enabled,
-      ready: configured && enabled
+      ready: readyModelKeys.has(`${provider}:${model}`)
     }));
   });
 }
@@ -305,19 +328,6 @@ export function findComposerModelOption(
   model: string
 ): ComposerModelOption | undefined {
   return options.find((option) => option.provider === provider && option.model === model);
-}
-
-export type AiSettingsGateReason = 'not_configured' | 'unavailable' | null;
-
-export function resolveAiSettingsGateReason(
-  canChat: boolean,
-  isLoading: boolean,
-  error: string,
-  isRuntimeBlocked: boolean
-): AiSettingsGateReason {
-  if (!canChat || isLoading) return null;
-  if (error) return 'unavailable';
-  return isRuntimeBlocked ? 'not_configured' : null;
 }
 
 export function resolveComposerReasoningEffort(

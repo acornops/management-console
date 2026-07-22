@@ -21,7 +21,10 @@ This repository owns the AcornOps management console, its production image, rout
 
 ## Agent-Assisted Development
 
-This repository supports human and agent-assisted development. Start coding agents from this repository root for management-console-only work, and from the `acornops-workspace` root for changes that touch multiple AcornOps repositories.
+This repository supports human and agent-assisted development. Start coding
+agents from this repository root for management-console-only work, and from the
+AcornOps workspace cloned from the [`acornops`](https://github.com/acornops/acornops)
+repository for changes that touch multiple AcornOps repositories.
 
 ## Contracts
 
@@ -147,9 +150,12 @@ The build-time path base is configurable with `VITE_APP_BASE_PATH`:
 
 ## Data/Auth
 
-The management console is control-plane backed. Configure:
+Standalone development defaults to browser-based fixtures. It runs the real API client and response mappers against an MSW transport with representative Kubernetes, VM, automation, catalog, settings, audit, and chat data. Fixture mutations are in-memory and reset when the page reloads; external OAuth, credentials, and remote Git operations are intentionally unavailable.
 
-- `VITE_APP_DATA_MODE=control-plane` when building or running a deployable console image.
+Configure:
+
+- `VITE_APP_DATA_MODE=mock` for standalone fixture development. This is the development default.
+- `VITE_APP_DATA_MODE=control-plane` for full-stack development and deployable builds. Production builds reject `mock`.
 - `VITE_CONTROL_PLANE_API_BASE_URL` for password auth, SSO, workspace, target, Kubernetes cluster, resource, MCP server, and chat APIs. For the full local stack and production edge, leave it empty to use same-origin `/api` routing from the management-console host. The production nginx CSP permits same-origin API calls by default; standalone cross-origin API builds require a matching custom CSP.
 
 When running the full platform through `acornops-deployment`, configure these values in the deployment env file instead of creating a component-local `.env`.
@@ -193,5 +199,6 @@ Run the checks that match the change:
 - `npm run contracts:check`
 - `npm run harness:check`
 - `npm run smoke:routes`
+- `npm run smoke:fixtures`
 - `npm run validate`
 - Run in `VITE_APP_DATA_MODE=control-plane` when validating contract-sensitive UI changes

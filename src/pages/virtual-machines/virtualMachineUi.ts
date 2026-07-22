@@ -54,6 +54,25 @@ export function getVmCatalogStatusLabel(vm: ControlPlaneVirtualMachine, issueSum
   return getVmStatusLabel(vm.status, t);
 }
 
+export function getVmCatalogStatusReason(
+  vm: ControlPlaneVirtualMachine,
+  issueSummary: ControlPlaneTargetIssueSummary | undefined,
+  issueSummaryLoadState: 'loading' | 'ready' | 'error' | undefined,
+  t: Translate
+): string {
+  if (vm.status === 'unknown') return t('virtualMachines.list.vmStateInstallAgent');
+  if (issueSummaryLoadState === 'error') return issueSummary
+    ? t('virtualMachines.list.vmStateIssuesRefreshFailed')
+    : t('virtualMachines.list.vmStateIssuesUnavailable');
+  if (!issueSummary) return t('virtualMachines.list.vmStateCheckingIssues');
+  if (issueSummary.critical > 0) return t('virtualMachines.list.vmStateCriticalIssues', { count: issueSummary.critical });
+  if (vm.status === 'offline') return t('virtualMachines.list.vmStateAgentOffline');
+  if (issueSummary.warning > 0) return t('virtualMachines.list.vmStateWarningIssues', { count: issueSummary.warning });
+  if (issueSummary.total > 0) return t('virtualMachines.list.vmStateIssues', { count: issueSummary.total });
+  if (vm.status === 'degraded') return t('virtualMachines.list.vmStateDegraded');
+  return t('virtualMachines.list.vmStateClear');
+}
+
 export function getVmCatalogStatusTone(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): string {
   if (vm.status === 'unknown') return statusTone(vm.status);
   if ((issueSummary?.critical ?? 0) > 0) {

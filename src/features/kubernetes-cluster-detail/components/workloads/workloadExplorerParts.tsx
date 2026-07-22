@@ -61,6 +61,7 @@ export interface WorkloadsExplorerProps {
     q?: string;
   }) => void;
   onLoadMoreResources?: () => void;
+  loadMoreSentinelRef?: React.RefCallback<HTMLDivElement>;
   onLoadPodLogs?: (workload: WorkloadExplorerItem, options: ControlPlanePodLogsOptions) => Promise<ControlPlanePodLogs>;
   onAnalyzePod?: (workload: WorkloadExplorerItem) => void;
 }

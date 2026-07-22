@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CloseButton, FilterToggleGroup, type CompactControlItem } from '@/components/common/ComponentVocabulary';
-import { TableLoadingRows } from '@/components/common/Loading';
+import { EmptyState } from '@/components/common/EmptyState';
+import { DataTableStateRow } from '@/components/common/DataTable';
 import { PageSearchInput, pageSearchInputClassName } from '@/components/common/PageSearchInput';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
@@ -11,6 +12,7 @@ import { Tooltip } from '@/components/common/Tooltip';
 import { ICONS } from '@/constants';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { Workspace, WorkspaceAuditCategory, WorkspaceAuditEvent } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
 
@@ -186,17 +188,10 @@ function filtersEqual(first: AuditFilters, second: AuditFilters): boolean {
 export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ workspace }) => {
   const { t } = useTranslation();
   const closeAuditDetailsButtonRef = useRef<HTMLButtonElement>(null);
-  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
-  const requestSeqRef = useRef(0);
-  const [events, setEvents] = useState<WorkspaceAuditEvent[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [draftFilters, setDraftFilters] = useState<AuditFilters>(defaultFilters);
   const [appliedFilters, setAppliedFilters] = useState<AuditFilters>(defaultFilters);
   const [activeTimePreset, setActiveTimePreset] = useState<AuditTimePreset | undefined>();
   const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<WorkspaceAuditEvent | null>(null);
 
   const applyNormalizedFilters = useCallback((nextFilters: AuditFilters) => {
@@ -204,42 +199,38 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
     setAppliedFilters((current) => filtersEqual(current, normalizedFilters) ? current : normalizedFilters);
   }, []);
 
-  const loadEvents = useCallback(async (cursor?: string) => {
-    const requestId = ++requestSeqRef.current;
-    if (cursor) {
-      setIsLoadingMore(true);
-    } else {
-      setIsLoading(true);
-      setErrorMessage('');
-    }
+  const loadAuditPage = useCallback(async ({ cursor, filters, limit, signal }: {
+    cursor?: string;
+    filters: AuditFilters;
+    limit: number;
+    signal: AbortSignal;
+  }) => {
     try {
-      const page = await controlPlaneApi.listWorkspaceAuditEvents(workspace.id, {
-        limit: 50,
+      return await controlPlaneApi.listWorkspaceAuditEvents(workspace.id, {
+        limit,
         cursor,
-        category: appliedFilters.category,
-        eventType: appliedFilters.eventType.trim() || undefined,
-        actorUserId: appliedFilters.actorUserId.trim() || undefined,
-        objectType: appliedFilters.objectType.trim() || undefined,
-        from: toIsoDateTimeFilter(appliedFilters.from),
-        to: toIsoDateTimeFilter(appliedFilters.to)
+        category: filters.category,
+        eventType: filters.eventType.trim() || undefined,
+        actorUserId: filters.actorUserId.trim() || undefined,
+        objectType: filters.objectType.trim() || undefined,
+        from: toIsoDateTimeFilter(filters.from),
+        to: toIsoDateTimeFilter(filters.to),
+        signal
       });
-      if (requestId !== requestSeqRef.current) return;
-      setEvents((current) => cursor ? [...current, ...page.items] : page.items);
-      setNextCursor(page.nextCursor);
     } catch (error) {
-      if (requestId !== requestSeqRef.current) return;
-      setErrorMessage(formatControlPlaneError(error, t('auditLog.loadFailed')));
-    } finally {
-      if (requestId === requestSeqRef.current) {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-      }
+      throw new Error(formatControlPlaneError(error, t('auditLog.loadFailed')));
     }
-  }, [appliedFilters, t, workspace.id]);
-
-  useEffect(() => {
-    void loadEvents();
-  }, [loadEvents]);
+  }, [t, workspace.id]);
+  const auditCollection = useCursorCollection({
+    filters: appliedFilters,
+    getKey: (event: WorkspaceAuditEvent) => event.id,
+    loadPage: loadAuditPage,
+    pageSize: 50,
+    strategy: 'sentinel'
+  });
+  const { items: events, nextCursor, phase: auditPhase, error: errorMessage = '' } = auditCollection;
+  const isLoading = auditPhase === 'loading' || auditPhase === 'refreshing';
+  const isLoadingMore = auditPhase === 'loadingMore';
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -247,24 +238,6 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
     }, 300);
     return () => window.clearTimeout(timer);
   }, [applyNormalizedFilters, draftFilters]);
-
-  useEffect(() => {
-    if (!nextCursor || isLoading || isLoadingMore || typeof IntersectionObserver === 'undefined') return;
-    const trigger = loadMoreTriggerRef.current;
-    if (!trigger) return;
-
-    let isActive = true;
-    const observer = new IntersectionObserver((entries) => {
-      if (!isActive || !entries.some((entry) => entry.isIntersecting)) return;
-      isActive = false;
-      void loadEvents(nextCursor);
-    }, { rootMargin: '240px 0px' });
-    observer.observe(trigger);
-    return () => {
-      isActive = false;
-      observer.disconnect();
-    };
-  }, [isLoading, isLoadingMore, loadEvents, nextCursor]);
 
   const visibleCount = useMemo(() => events.length, [events.length]);
   const selectedMetadata = selectedEvent ? formatMetadata(selectedEvent.metadata) : '';
@@ -289,7 +262,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
   return (
     <PageShell>
         <PageHeader title={t('auditLog.title')} description={t('auditLog.description')} actions={
-            <Button variant="secondary" size="md" onClick={() => loadEvents()} disabled={isLoading} className="whitespace-nowrap">
+            <Button variant="secondary" size="md" onClick={() => void auditCollection.refresh()} disabled={isLoading} className="whitespace-nowrap">
               <ICONS.Clock className="h-4 w-4" />
               {t('auditLog.refresh')}
             </Button>
@@ -485,28 +458,22 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                     </td>
                   </tr>
                 ))}
-                {events.length === 0 && !isLoading && (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-10 text-center type-body">
-                      {t('auditLog.empty')}
-                    </td>
-                  </tr>
-                )}
-                {isLoading && (
-                  <TableLoadingRows
-                    columns={5}
-                    label={t('auditLog.loading')}
-                    rows={5}
-                    cellClassName="px-3 py-4 sm:px-5"
-                    columnClassNames={['', '', 'hidden md:table-cell', 'hidden md:table-cell', 'text-right']}
-                  />
-                )}
+                <DataTableStateRow
+                  columns={5}
+                  phase={isLoading ? 'loading' : errorMessage ? 'error' : 'ready'}
+                  itemCount={events.length}
+                  filtered={Object.values(appliedFilters).some(Boolean)}
+                  loading={<div role="status" className="p-5 text-sm text-ui-text-muted">{t('auditLog.loading')}</div>}
+                  empty={<EmptyState embedded headingLevel={3} icon={<ICONS.Activity />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
+                  filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
+                  error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={t('auditLog.loadFailed')} description={errorMessage} />}
+                />
               </tbody>
             </table>
           </div>
           {nextCursor && (
-            <div ref={loadMoreTriggerRef} className="border-t border-ui-border px-4 py-4 text-center">
-              <Button variant="secondary" size="md" onClick={() => loadEvents(nextCursor)} disabled={isLoadingMore}>
+            <div ref={auditCollection.sentinelRef} className="border-t border-ui-border px-4 py-4 text-center">
+              <Button variant="secondary" size="md" onClick={() => void auditCollection.loadMore()} disabled={isLoadingMore}>
                 {isLoadingMore ? t('auditLog.loadingMore') : t('auditLog.loadMore')}
               </Button>
             </div>

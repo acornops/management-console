@@ -15,7 +15,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary: filledNeutralButtonClass,
   secondary: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm hover:bg-control-secondary-hover',
   tertiary: 'text-ui-text-muted hover:bg-accent-soft hover:text-accent-strong',
-  activation: 'border border-control-boundary bg-control-activation text-control-activation-fg shadow-sm shadow-accent/20 hover:bg-control-activation-hover',
+  activation: 'border border-transparent bg-control-activation text-control-activation-fg hover:bg-control-activation-hover',
   icon: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm hover:bg-control-secondary-hover',
   danger: 'border border-control-boundary bg-control-danger text-control-danger-fg hover:bg-control-danger-hover'
 };

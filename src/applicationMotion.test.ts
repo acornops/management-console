@@ -37,7 +37,8 @@ describe('focused application motion source contracts', () => {
     expect(styles).toContain('animation: theme-reveal-ripple 320ms cubic-bezier(0.22, 1, 0.36, 1) forwards;');
     expect(styles).not.toContain('::view-transition');
     expect(themeMenu.match(/<ThemeToggleIcon resolvedTheme=\{resolvedTheme\}/g)).toHaveLength(3);
-    expect(themeToggleIcon).toContain("const destinationTheme = resolvedTheme === 'dark' ? 'light' : 'dark';");
+    expect(themeToggleIcon).toContain("const Icon = resolvedTheme === 'dark' ? Moon : Sun;");
+    expect(themeToggleIcon).toContain('key={resolvedTheme}');
     expect(themeToggleIcon).toContain('initial={shouldReduceMotion ? false : { opacity: 0, rotate: -24, scale: 0.82 }}');
     expect(themeToggleIcon).toContain('exit={shouldReduceMotion ? undefined : { opacity: 0, rotate: 24, scale: 0.82 }}');
     expect(themeToggleIcon).toContain('{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }');

@@ -1,4 +1,5 @@
 import {
+  ChatAssistantReference,
   ChatRuntimeSelection,
   ProjectMember,
   User,
@@ -10,14 +11,13 @@ import {
 import { toArray } from './control-plane/formatters';
 import {
   delay,
-  getControlPlaneBaseUrl,
-  readJsonEventStream,
-  readRunEventStream,
+  requestEventStream,
   requestArtifact,
   requestJson
 } from './control-plane/http';
 import { controlPlaneAuthApi } from './control-plane/authApi';
 import { kubernetesClusterApi } from './control-plane/kubernetesClusterApi';
+import { catalogApi } from './control-plane/catalogApi';
 import { pageQuery } from './control-plane/query';
 import {
   getTarget,
@@ -120,9 +120,12 @@ export type { ControlPlaneVirtualMachine, RegisterVirtualMachineResponse } from 
 
 export const controlPlaneApi = {
   ...controlPlaneAuthApi,
+  ...catalogApi,
 
-  async getCurrentUser(): Promise<User> {
-    return userFromControlPlane(await requestJson<ControlPlaneUser>('/api/v1/me'));
+  async getCurrentUser(options?: { initialSessionProbe?: boolean }): Promise<User> {
+    return userFromControlPlane(await requestJson<ControlPlaneUser>('/api/v1/me', {
+      sessionExpiry: options?.initialSessionProbe ? 'ignore' : 'notify'
+    }));
   },
 
   async getWorkspaces(_currentUser: User): Promise<Workspace[]> {
@@ -201,11 +204,10 @@ export const controlPlaneApi = {
 
   async listWorkspaceMembers(
     workspaceId: string,
-    options?: { limit?: number; cursor?: string; q?: string; role?: ProjectMember['role'] | 'all'; source?: ProjectMember['source'] | 'all' }
+    options?: { limit?: number; cursor?: string; q?: string; role?: ProjectMember['role'] | 'all'; source?: ProjectMember['source'] | 'all'; signal?: AbortSignal }
   ): Promise<PagedResult<ProjectMember>> {
     const source = options?.source === 'OIDC' ? 'oidc' : options?.source === 'Internal' ? 'internal' : undefined;
-    const page = await requestJson<PagedResult<ControlPlaneWorkspaceMember>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/members${pageQuery({
+    const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/members${pageQuery({
         limit: options?.limit,
         cursor: options?.cursor,
         q: options?.q,
@@ -213,8 +215,10 @@ export const controlPlaneApi = {
           role: options?.role && options.role !== 'all' ? options.role : undefined,
           source
         }
-      })}`
-    );
+      })}`;
+    const page = options?.signal
+      ? await requestJson<PagedResult<ControlPlaneWorkspaceMember>>(path, { signal: options.signal })
+      : await requestJson<PagedResult<ControlPlaneWorkspaceMember>>(path);
     return { items: toArray(page.items).map(mapWorkspaceMember), nextCursor: page.nextCursor };
   },
 
@@ -246,24 +250,24 @@ export const controlPlaneApi = {
 
   async listWorkspaceInvitationsPage(
     workspaceId: string,
-    options?: { limit?: number; cursor?: string; q?: string; role?: ProjectMember['role']; status?: string }
+    options?: { limit?: number; cursor?: string; q?: string; role?: ProjectMember['role']; status?: string; signal?: AbortSignal }
   ): Promise<PagedResult<ControlPlaneWorkspaceInvitation>> {
-    return requestJson<PagedResult<ControlPlaneWorkspaceInvitation>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/invitations${pageQuery({
+    const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/invitations${pageQuery({
         limit: options?.limit,
         cursor: options?.cursor,
         q: options?.q,
         filters: { role: options?.role, status: options?.status }
-      })}`
-    );
+      })}`;
+    return options?.signal
+      ? requestJson<PagedResult<ControlPlaneWorkspaceInvitation>>(path, { signal: options.signal })
+      : requestJson<PagedResult<ControlPlaneWorkspaceInvitation>>(path);
   },
 
   async listWorkspaceIssues(
     workspaceId: string,
-    options?: { limit?: number; cursor?: string; q?: string; status?: string; severity?: string; targetType?: string; targetId?: string; namespace?: string }
+    options?: { limit?: number; cursor?: string; q?: string; status?: string; severity?: string; targetType?: string; targetId?: string; namespace?: string; signal?: AbortSignal }
   ): Promise<PagedResult<ControlPlaneIssueItem>> {
-    return requestJson<PagedResult<ControlPlaneIssueItem>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/issues${pageQuery({
+    const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/issues${pageQuery({
         limit: options?.limit,
         cursor: options?.cursor,
         q: options?.q,
@@ -274,8 +278,10 @@ export const controlPlaneApi = {
           targetId: options?.targetId,
           namespace: options?.namespace
         }
-      })}`
-    );
+      })}`;
+    return options?.signal
+      ? requestJson<PagedResult<ControlPlaneIssueItem>>(path, { signal: options.signal })
+      : requestJson<PagedResult<ControlPlaneIssueItem>>(path);
   },
 
   async getWorkspaceIssue(workspaceId: string, issueId: string): Promise<ControlPlaneIssueItem> {
@@ -333,10 +339,10 @@ export const controlPlaneApi = {
       objectType?: string;
       from?: string;
       to?: string;
+      signal?: AbortSignal;
     }
   ): Promise<PagedResult<WorkspaceAuditEvent>> {
-    const page = await requestJson<PagedResult<ControlPlaneWorkspaceAuditEvent>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/audit-log${pageQuery({
+    const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/audit-log${pageQuery({
         limit: options?.limit,
         cursor: options?.cursor,
         filters: {
@@ -347,8 +353,10 @@ export const controlPlaneApi = {
           from: options?.from,
           to: options?.to
         }
-      })}`
-    );
+      })}`;
+    const page = options?.signal
+      ? await requestJson<PagedResult<ControlPlaneWorkspaceAuditEvent>>(path, { signal: options.signal })
+      : await requestJson<PagedResult<ControlPlaneWorkspaceAuditEvent>>(path);
     return { items: toArray(page.items), nextCursor: page.nextCursor };
   },
 
@@ -393,16 +401,17 @@ export const controlPlaneApi = {
 
   async listVirtualMachinesForWorkspace(
     workspaceId: string,
-    options?: { limit?: number; cursor?: string; q?: string; status?: string }
+    options?: { limit?: number; cursor?: string; q?: string; status?: string; signal?: AbortSignal }
   ): Promise<PagedResult<ControlPlaneVirtualMachine>> {
-    return requestJson<PagedResult<ControlPlaneVirtualMachine>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines${pageQuery({
+    const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines${pageQuery({
         limit: options?.limit,
         cursor: options?.cursor,
         q: options?.q,
         filters: { status: options?.status }
-      })}`
-    );
+      })}`;
+    return options?.signal
+      ? requestJson<PagedResult<ControlPlaneVirtualMachine>>(path, { signal: options.signal })
+      : requestJson<PagedResult<ControlPlaneVirtualMachine>>(path);
   },
 
   async registerVirtualMachine(
@@ -493,26 +502,11 @@ export const controlPlaneApi = {
       onEvent?: (event: ControlPlaneTargetChatActivityEvent) => void;
     }
   ): Promise<void> {
-    try {
-      const afterQuery = options?.after ? `?after=${encodeURIComponent(options.after)}` : '';
-      const response = await fetch(
-        `${getControlPlaneBaseUrl()}/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/chat-activity/stream${afterQuery}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-          headers: { accept: 'text/event-stream' },
-          signal: options?.signal
-        }
-      );
-      if (!response.ok) {
-        if (response.status === 401) throw new Error('UNAUTHORIZED');
-        throw new Error(`Target chat activity stream request failed (${response.status}): ${await response.text()}`);
-      }
-      await readJsonEventStream<ControlPlaneTargetChatActivityEvent>(response, options?.onEvent);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      throw error;
-    }
+    const afterQuery = options?.after ? `?after=${encodeURIComponent(options.after)}` : '';
+    await requestEventStream<ControlPlaneTargetChatActivityEvent>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/chat-activity/stream${afterQuery}`,
+      options
+    );
   },
 
   async deleteWorkspace(workspaceId: string): Promise<void> {
@@ -534,7 +528,8 @@ export const controlPlaneApi = {
     content: string,
     toolAccessMode?: 'read_only' | 'read_write',
     clientMessageId?: string,
-    runtimeSelection?: ChatRuntimeSelection
+    runtimeSelection?: ChatRuntimeSelection,
+    assistantReferences: ChatAssistantReference[] = []
   ): Promise<{ messageId: string; runId: string; runtimeSelection?: ChatRuntimeSelection }> {
     const accepted = await requestJson<ControlPlaneAcceptedMessage>(
       `/api/v1/sessions/${encodeURIComponent(sessionId)}/messages`,
@@ -544,6 +539,9 @@ export const controlPlaneApi = {
           content,
           toolAccessMode,
           clientMessageId,
+          ...(assistantReferences.length > 0
+            ? { references: assistantReferences.map(({ kind, id }) => ({ kind, id })) }
+            : {}),
           ...(runtimeSelection
             ? {
                 llm: {
@@ -602,22 +600,7 @@ export const controlPlaneApi = {
   },
 
   async streamRunEvents(runId: string, options?: { signal?: AbortSignal; onEvent?: (event: ControlPlaneRunEvent) => void }): Promise<void> {
-    try {
-      const response = await fetch(`${getControlPlaneBaseUrl()}/api/v1/runs/${encodeURIComponent(runId)}/stream`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: { accept: 'text/event-stream' },
-        signal: options?.signal
-      });
-      if (!response.ok) {
-        if (response.status === 401) throw new Error('UNAUTHORIZED');
-        throw new Error(`Run stream request failed (${response.status}): ${await response.text()}`);
-      }
-      await readRunEventStream(response, options?.onEvent);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      throw error;
-    }
+    await requestEventStream<ControlPlaneRunEvent>(`/api/v1/runs/${encodeURIComponent(runId)}/stream`, options);
   },
 
 };

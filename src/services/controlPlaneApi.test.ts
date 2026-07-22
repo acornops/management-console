@@ -6,6 +6,7 @@ const delay = vi.fn();
 const getControlPlaneBaseUrl = vi.fn(() => 'https://control-plane.example.com');
 const readJsonEventStream = vi.fn();
 const readRunEventStream = vi.fn();
+const requestEventStream = vi.fn();
 const mapControlPlaneClusterToKubernetesCluster = vi.fn();
 const mapClusterToolsCatalog = vi.fn((value) => ({ mapped: value }));
 const mapMcpServer = vi.fn((value) => ({ mappedServer: value.id }));
@@ -20,7 +21,8 @@ vi.mock('./control-plane/http', () => ({
   delay,
   getControlPlaneBaseUrl,
   readJsonEventStream,
-  readRunEventStream
+  readRunEventStream,
+  requestEventStream
 }));
 
 vi.mock('./control-plane/clusterMappers', () => ({
@@ -326,7 +328,8 @@ describe('controlPlaneApi', () => {
           clusterId: 'cluster/1',
           points: [
             { timestamp: '2026-05-25T00:00:00.000Z', cpuCores: 1.5, memoryBytes: 1024 },
-            { timestamp: '2026-05-25T00:01:00.000Z', cpuCores: 'n/a', memoryBytes: undefined }
+            { timestamp: '2026-05-25T00:01:00.000Z', cpuCores: 'n/a', memoryBytes: undefined },
+            { timestamp: '2026-05-25T00:02:00.000Z', cpuCores: -1, memoryBytes: Number.POSITIVE_INFINITY }
           ]
         },
         {
@@ -345,7 +348,8 @@ describe('controlPlaneApi', () => {
     ).resolves.toEqual({
       'cluster/1': [
         { timestamp: '2026-05-25T00:00:00.000Z', cpuCores: 1.5, memoryBytes: 1024 },
-        { timestamp: '2026-05-25T00:01:00.000Z', cpuCores: null, memoryBytes: null }
+        { timestamp: '2026-05-25T00:01:00.000Z', cpuCores: null, memoryBytes: null },
+        { timestamp: '2026-05-25T00:02:00.000Z', cpuCores: null, memoryBytes: null }
       ],
       'cluster-2': []
     });
@@ -480,51 +484,39 @@ describe('controlPlaneApi', () => {
   });
 
   it('streams run events and treats aborts as non-failures', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(
-        new Response('boom', {
-          status: 500
-        })
-      )
-      .mockResolvedValueOnce(new Response('data: {"status":"completed"}\n\n', { status: 200 }))
-      .mockRejectedValueOnce(new DOMException('aborted', 'AbortError'));
-    vi.stubGlobal('fetch', fetchMock);
-    readRunEventStream.mockResolvedValue(undefined);
+    requestEventStream
+      .mockRejectedValueOnce(new Error('UNAUTHORIZED'))
+      .mockRejectedValueOnce(new Error('Control plane request failed (500): boom'))
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
     const { controlPlaneApi } = await import('./controlPlaneApi');
 
     await expect(controlPlaneApi.streamRunEvents('run-1')).rejects.toThrow('UNAUTHORIZED');
-    await expect(controlPlaneApi.streamRunEvents('run-1')).rejects.toThrow('Run stream request failed (500): boom');
-    await expect(controlPlaneApi.streamRunEvents('run 1', { onEvent: vi.fn() })).resolves.toBeUndefined();
-    await expect(controlPlaneApi.streamRunEvents('run-1', { signal: new AbortController().signal })).resolves.toBeUndefined();
-    expect(fetchMock).toHaveBeenNthCalledWith(
+    await expect(controlPlaneApi.streamRunEvents('run-1')).rejects.toThrow('Control plane request failed (500): boom');
+    const onEvent = vi.fn();
+    await expect(controlPlaneApi.streamRunEvents('run 1', { onEvent })).resolves.toBeUndefined();
+    const signal = new AbortController().signal;
+    await expect(controlPlaneApi.streamRunEvents('run-1', { signal })).resolves.toBeUndefined();
+    expect(requestEventStream).toHaveBeenNthCalledWith(
       3,
-      'https://control-plane.example.com/api/v1/runs/run%201/stream',
-      expect.objectContaining({
-        method: 'GET',
-        credentials: 'include',
-        headers: { accept: 'text/event-stream' }
-      })
+      '/api/v1/runs/run%201/stream',
+      { onEvent }
     );
-    expect(readRunEventStream).toHaveBeenCalledTimes(1);
+    expect(requestEventStream).toHaveBeenNthCalledWith(4, '/api/v1/runs/run-1/stream', { signal });
   });
 
   it('streams target chat activity events with replay cursors and treats aborts as non-failures', async () => {
     const onEvent = vi.fn();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(new Response('boom', { status: 500 }))
-      .mockResolvedValueOnce(new Response('data: {"id":"43"}\n\n', { status: 200 }))
-      .mockRejectedValueOnce(new DOMException('aborted', 'AbortError'));
-    vi.stubGlobal('fetch', fetchMock);
-    readJsonEventStream.mockResolvedValue(undefined);
+    requestEventStream
+      .mockRejectedValueOnce(new Error('UNAUTHORIZED'))
+      .mockRejectedValueOnce(new Error('Control plane request failed (500): boom'))
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
     const { controlPlaneApi } = await import('./controlPlaneApi');
 
     await expect(controlPlaneApi.streamTargetChatActivity('workspace-1', 'target-1')).rejects.toThrow('UNAUTHORIZED');
     await expect(controlPlaneApi.streamTargetChatActivity('workspace-1', 'target-1')).rejects.toThrow(
-      'Target chat activity stream request failed (500): boom'
+      'Control plane request failed (500): boom'
     );
     await expect(
       controlPlaneApi.streamTargetChatActivity('workspace 1', 'target 1', { after: '42', onEvent })
@@ -532,15 +524,10 @@ describe('controlPlaneApi', () => {
     await expect(
       controlPlaneApi.streamTargetChatActivity('workspace-1', 'target-1', { signal: new AbortController().signal })
     ).resolves.toBeUndefined();
-    expect(fetchMock).toHaveBeenNthCalledWith(
+    expect(requestEventStream).toHaveBeenNthCalledWith(
       3,
-      'https://control-plane.example.com/api/v1/workspaces/workspace%201/targets/target%201/chat-activity/stream?after=42',
-      expect.objectContaining({
-        method: 'GET',
-        credentials: 'include',
-        headers: { accept: 'text/event-stream' }
-      })
+      '/api/v1/workspaces/workspace%201/targets/target%201/chat-activity/stream?after=42',
+      { after: '42', onEvent }
     );
-    expect(readJsonEventStream).toHaveBeenCalledWith(expect.any(Response), onEvent);
   });
 });

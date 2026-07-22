@@ -1,12 +1,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { ICONS } from '@/constants';
 import { isKnownOnlyWorkspaceOwner } from '@/app/workspaceLeave';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ProjectMember, Workspace } from '@/types';
-import { WorkspaceMcpSettings } from '@/pages/WorkspaceMcpSettings';
+import { WorkspaceCatalogSources } from '@/pages/WorkspaceCatalogSources';
+import { useUrlSearchState } from '@/hooks/useUrlSearchState';
 
 interface WorkspaceSettingsPageProps {
   workspace: Workspace;
@@ -54,28 +56,6 @@ const SettingRow: React.FC<{
   </div>
 );
 
-const DangerPanel: React.FC<{
-  id: string;
-  title: string;
-  body: string;
-  children: React.ReactNode;
-}> = ({ id, title, body, children }) => (
-  <section
-    aria-labelledby={id}
-    className="flex flex-col gap-5 rounded-xl border border-status-danger/20 bg-status-danger-soft p-6 sm:flex-row sm:items-start sm:justify-between sm:p-8"
-  >
-    <div className="min-w-0">
-      <h2 id={id} className="mb-1 text-sm font-bold text-status-danger-text">
-        {title}
-      </h2>
-      <p className="max-w-2xl text-xs font-medium leading-5 text-status-danger-text">
-        {body}
-      </p>
-    </div>
-    <div className="w-full shrink-0 sm:w-auto">{children}</div>
-  </section>
-);
-
 function formatQuota(value: { used: number; limit: number } | undefined, fallback: string): string {
   return value ? `${value.used} / ${value.limit}` : fallback;
 }
@@ -92,10 +72,18 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
   embedded = false
 }) => {
   const { t } = useTranslation();
+  const urlSearch = useUrlSearchState();
   const [isConfirmingLeave, setIsConfirmingLeave] = React.useState(false);
   const [isLeaving, setIsLeaving] = React.useState(false);
   const [leaveError, setLeaveError] = React.useState('');
   const leaveBlockedByKnownOnlyOwner = isKnownOnlyWorkspaceOwner(currentUserRole, workspace.memberCount);
+
+  React.useEffect(() => {
+    if (urlSearch.get('section') !== 'mcp-registries') return;
+    window.requestAnimationFrame(() => {
+      document.getElementById('mcp-registries')?.scrollIntoView({ block: 'start' });
+    });
+  }, [urlSearch]);
 
   const handleLeaveWorkspace = async () => {
     if (!onLeaveWorkspace) return;
@@ -141,9 +129,9 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
               />
             </SettingSection>
 
-            <WorkspaceMcpSettings
+            <WorkspaceCatalogSources
               workspaceId={workspace.id}
-              canManage={Boolean(workspace.permissions?.manage_mcp)}
+              canManage={Boolean(workspace.permissions?.manage_catalog_sources)}
             />
 
             <SettingSection
@@ -216,91 +204,98 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
           </section>
         )}
 
-        <div className="mt-10 space-y-4">
-          <DangerPanel
+        <DangerZone className="mt-10">
+          <DangerZoneRow
             id="workspace-leave-title"
             title={t('workspaceSettings.leaveTitle')}
-            body={t('workspaceSettings.leaveBody')}
-          >
-            <div className="flex flex-col gap-3">
-              {leaveBlockedByKnownOnlyOwner && (
-                <p className="max-w-xs text-xs font-semibold leading-5 text-status-danger-text">
-                  {t('workspaceSettings.leaveOnlyOwnerWarning')}
-                </p>
-              )}
-              {leaveError && (
-                <p className="max-w-xs text-xs font-semibold leading-5 text-status-danger-text" role="alert">
-                  {leaveError}
-                </p>
-              )}
-              {isConfirmingLeave ? (
-                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            description={t('workspaceSettings.leaveBody')}
+            detail={(
+              <>
+                {leaveBlockedByKnownOnlyOwner && (
+                  <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-status-warning-text">
+                    {t('workspaceSettings.leaveOnlyOwnerWarning')}
+                  </p>
+                )}
+                {leaveError && (
+                  <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-status-danger-text" role="alert">
+                    {leaveError}
+                  </p>
+                )}
+              </>
+            )}
+            action={(
+              <div>
+                {isConfirmingLeave ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="md"
+                      className="w-full"
+                      onClick={() => {
+                        setIsConfirmingLeave(false);
+                        setLeaveError('');
+                      }}
+                      disabled={isLeaving}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="md"
+                      className="w-full"
+                      onClick={() => void handleLeaveWorkspace()}
+                      disabled={isLeaving || leaveBlockedByKnownOnlyOwner}
+                      aria-label={t('workspaceSettings.leaveNamedWorkspace', { name: workspace.name })}
+                    >
+                      <ICONS.LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+                      {isLeaving ? t('workspaceSettings.leaving') : t('workspaceSettings.confirmLeave')}
+                    </Button>
+                  </div>
+                ) : (
                   <Button
                     type="button"
                     variant="secondary"
                     size="md"
-                    className="w-full text-xs uppercase tracking-widest sm:w-auto"
-                    onClick={() => {
-                      setIsConfirmingLeave(false);
-                      setLeaveError('');
-                    }}
-                    disabled={isLeaving}
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="md"
-                    className="w-full text-xs uppercase tracking-widest sm:w-auto"
-                    onClick={() => void handleLeaveWorkspace()}
-                    disabled={isLeaving || leaveBlockedByKnownOnlyOwner}
+                    className="w-full"
+                    onClick={() => setIsConfirmingLeave(true)}
+                    disabled={!onLeaveWorkspace || leaveBlockedByKnownOnlyOwner}
                     aria-label={t('workspaceSettings.leaveNamedWorkspace', { name: workspace.name })}
+                    title={leaveBlockedByKnownOnlyOwner ? t('workspaceSettings.leaveOnlyOwnerWarning') : t('workspaceSettings.leaveNamedWorkspace', { name: workspace.name })}
                   >
                     <ICONS.LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-                    {isLeaving ? t('workspaceSettings.leaving') : t('workspaceSettings.confirmLeave')}
+                    {t('workspaceSettings.leaveAction')}
                   </Button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="md"
-                  className="w-full text-xs uppercase tracking-widest sm:w-auto"
-                  onClick={() => setIsConfirmingLeave(true)}
-                  disabled={!onLeaveWorkspace || leaveBlockedByKnownOnlyOwner}
-                  aria-label={t('workspaceSettings.leaveNamedWorkspace', { name: workspace.name })}
-                  title={leaveBlockedByKnownOnlyOwner ? t('workspaceSettings.leaveOnlyOwnerWarning') : t('workspaceSettings.leaveNamedWorkspace', { name: workspace.name })}
-                >
-                  <ICONS.LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-                  {t('workspaceSettings.leaveAction')}
-                </Button>
-              )}
-            </div>
-          </DangerPanel>
+                )}
+              </div>
+            )}
+          />
 
-          <DangerPanel
+          <DangerZoneRow
             id="workspace-danger-title"
             title={t('workspaceSettings.dangerTitle')}
-            body={t('workspaceSettings.dangerBody')}
-          >
-            <Button
-              onClick={() => {
-                if (!canDeleteWorkspace) return;
-                onDeleteWorkspace(workspace.id);
-              }}
-              disabled={!canDeleteWorkspace}
-              variant="danger"
-              size="md"
-              className="w-full text-xs uppercase tracking-widest sm:w-auto"
-              aria-label={canDeleteWorkspace ? t('app.deleteNamedWorkspace', { name: workspace.name }) : t('app.ownerDeleteOnly')}
-              title={canDeleteWorkspace ? t('app.deleteNamedWorkspace', { name: workspace.name }) : t('app.ownerDeleteOnly')}
-            >
-              <ICONS.Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {t('app.deleteWorkspace')}
-            </Button>
-          </DangerPanel>
-        </div>
+            description={t('workspaceSettings.dangerBody')}
+            tone="danger"
+            action={(
+              <Button
+                onClick={() => {
+                  if (!canDeleteWorkspace) return;
+                  onDeleteWorkspace(workspace.id);
+                }}
+                disabled={!canDeleteWorkspace}
+                variant="danger"
+                size="md"
+                className="w-full"
+                aria-label={canDeleteWorkspace ? t('app.deleteNamedWorkspace', { name: workspace.name }) : t('app.ownerDeleteOnly')}
+                title={canDeleteWorkspace ? t('app.deleteNamedWorkspace', { name: workspace.name }) : t('app.ownerDeleteOnly')}
+              >
+                <ICONS.Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('app.deleteWorkspace')}
+              </Button>
+            )}
+          />
+        </DangerZone>
       </div>
     </PageShell>
   );

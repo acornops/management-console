@@ -8,6 +8,7 @@ import { AppRoute, AppPaths } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { parseNamespaceList } from '@/app/useAppSupport';
 import type { AgentAccessMode } from '@/services/control-plane/types';
+import { getAgentConnectionState } from '@/utils/telemetry';
 
 export function getPostWorkspaceDeleteNavigationPath({
   kubernetesClusters,
@@ -74,6 +75,7 @@ export function useWorkspaceClusterActions(args: {
   const [newClusterName, setNewClusterName] = useState('');
   const [clusterInstallCommand, setClusterInstallCommand] = useState('');
   const [clusterInstallWarnings, setClusterInstallWarnings] = useState<string[]>([]);
+  const [registeredClusterId, setRegisteredClusterId] = useState<string | null>(null);
   const [isCreatingCluster, setIsCreatingCluster] = useState(false);
   const [includeNamespaces, setIncludeNamespaces] = useState('');
   const [excludeNamespaces, setExcludeNamespaces] = useState('');
@@ -133,6 +135,7 @@ export function useWorkspaceClusterActions(args: {
     setExcludeNamespaces('');
     setClusterInstallCommand('');
     setClusterInstallWarnings([]);
+    setRegisteredClusterId(null);
   };
 
   const handleProceedToInstructions = async (selectedAgentAccessMode: AgentAccessMode = 'read_only') => {
@@ -172,6 +175,7 @@ export function useWorkspaceClusterActions(args: {
       await refreshWorkspaceSummary(targetWorkspaceIdForClusterAdd);
       setClusterInstallCommand(result.installCommand);
       setClusterInstallWarnings(result.installWarnings);
+      setRegisteredClusterId(result.cluster.id);
       setClusterCreationStep('instructions');
     } catch (err) {
       console.error('Failed registering cluster in control plane', err);
@@ -182,7 +186,21 @@ export function useWorkspaceClusterActions(args: {
   };
 
   const handleConfirmAddCluster = async () => {
-    resetClusterCreationState();
+    if (!targetWorkspaceIdForClusterAdd || !registeredClusterId || isCreatingCluster) return;
+    setIsCreatingCluster(true);
+    try {
+      const refreshed = await controlPlaneApi.getCluster(targetWorkspaceIdForClusterAdd, registeredClusterId);
+      setKubernetesClusters((prev) => [refreshed, ...prev.filter((cluster) => cluster.id !== refreshed.id)]);
+      if (getAgentConnectionState(refreshed) !== 'connected') {
+        showToast(t('clusterSetup.agentNotConnected'));
+        return;
+      }
+      resetClusterCreationState();
+    } catch (err) {
+      showToast(formatControlPlaneError(err, t('clusterSetup.connectionCheckFailed'), { area: 'cluster' }));
+    } finally {
+      setIsCreatingCluster(false);
+    }
   };
 
   const handleCancelAddCluster = () => {
@@ -195,6 +213,7 @@ export function useWorkspaceClusterActions(args: {
     setClusterCreationStep('details');
     setClusterInstallCommand('');
     setClusterInstallWarnings([]);
+    setRegisteredClusterId(null);
     setTargetWorkspaceIdForClusterAdd(null);
     setIncludeNamespaces('');
     setExcludeNamespaces('');

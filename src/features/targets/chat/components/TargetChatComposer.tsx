@@ -4,6 +4,7 @@ import { ArrowUp, Check, ChevronDown, ChevronRight, FileText, Image as ImageIcon
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
 import { AssistantCapabilityPreviewControl } from '@/features/targets/chat/components/AssistantCapabilityPreviewControl';
+import { TargetChatReferenceChips, TargetChatReferenceMenu } from '@/features/targets/chat/components/TargetChatReferencePicker';
 import { formatAttachmentSize, providerLabel } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
 import type { ReasoningEffort } from '@/types';
@@ -19,14 +20,17 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
   | 'composerActionLabel'
   | 'composerAttachmentNotice'
   | 'composerAttachments'
+  | 'composerReferences'
   | 'composerModelOptions'
   | 'composerRootRef'
   | 'composerSubmitUnavailableReason'
   | 'composerTextareaRef'
   | 'conversationNotice'
+  | 'dismissReferenceMenu'
   | 'fileInputRef'
   | 'handleAttachmentInputChange'
   | 'handleComposerKeyDown'
+  | 'handleComposerInputChange'
   | 'handleModelAndEffortChange'
   | 'handleModelChange'
   | 'hasComposerSubmitPayload'
@@ -36,6 +40,7 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
   | 'isComposerRuntimeUnavailable'
   | 'isModelMenuOpen'
   | 'isModelSubmenuOpen'
+  | 'isReferenceMenuOpen'
   | 'isPanel'
   | 'isRunActive'
   | 'isWorkspaceAiSettingsLoading'
@@ -45,9 +50,13 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
   | 'modelSubmenuButtonId'
   | 'modelSubmenuPanelId'
   | 'onCancelRun'
-  | 'onInputChange'
   | 'recentActivityWarning'
+  | 'referenceActiveIndex'
+  | 'referenceMenuId'
+  | 'referencePickerItems'
+  | 'referenceQuery'
   | 'removeComposerAttachment'
+  | 'removeComposerReference'
   | 'requestedToolAccessMode'
   | 'resolvedFooterKey'
   | 'resolvedFooterNoAccessKey'
@@ -60,6 +69,8 @@ type TargetChatComposerProps = Pick<TargetChatViewBodyProps,
   | 'selectedProvider'
   | 'setIsModelMenuOpen'
   | 'setIsModelSubmenuOpen'
+  | 'setReferenceActiveIndex'
+  | 'selectComposerReference'
   | 'submitComposerMessage'
   | 't'
   | 'workspaceAiSettingsError'
@@ -76,14 +87,17 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   composerActionLabel,
   composerAttachmentNotice,
   composerAttachments,
+  composerReferences,
   composerModelOptions,
   composerRootRef,
   composerSubmitUnavailableReason,
   composerTextareaRef,
   conversationNotice,
+  dismissReferenceMenu,
   fileInputRef,
   handleAttachmentInputChange,
   handleComposerKeyDown,
+  handleComposerInputChange,
   handleModelAndEffortChange,
   handleModelChange,
   hasComposerSubmitPayload,
@@ -93,6 +107,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   isComposerRuntimeUnavailable,
   isModelMenuOpen,
   isModelSubmenuOpen,
+  isReferenceMenuOpen,
   isPanel,
   isRunActive,
   isWorkspaceAiSettingsLoading,
@@ -102,9 +117,13 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   modelSubmenuButtonId,
   modelSubmenuPanelId,
   onCancelRun,
-  onInputChange,
   recentActivityWarning,
+  referenceActiveIndex,
+  referenceMenuId,
+  referencePickerItems,
+  referenceQuery,
   removeComposerAttachment,
+  removeComposerReference,
   requestedToolAccessMode,
   resolvedFooterKey,
   resolvedFooterNoAccessKey,
@@ -117,6 +136,8 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   selectedProvider,
   setIsModelMenuOpen,
   setIsModelSubmenuOpen,
+  setReferenceActiveIndex,
+  selectComposerReference,
   submitComposerMessage,
   t,
   workspaceAiSettingsError
@@ -137,7 +158,19 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
           }}
         >
           <div ref={composerRootRef} className={`${isPanel ? 'max-w-2xl' : 'max-w-3xl'} relative mx-auto`}>
+            {isReferenceMenuOpen && (
+              <TargetChatReferenceMenu
+                id={referenceMenuId}
+                references={referencePickerItems}
+                activeIndex={referenceActiveIndex}
+                query={referenceQuery}
+                onActiveIndexChange={setReferenceActiveIndex}
+                onSelect={selectComposerReference}
+                t={t}
+              />
+            )}
             <div className="overflow-visible rounded-[1.375rem] border border-ui-border bg-ui-surface px-2 py-2 text-ui-text shadow-sm transition-colors focus-within:border-accent/45 focus-within:ring-2 focus-within:ring-accent/10 dark:bg-ui-surface-strong dark:shadow-ui-text/10">
+              <TargetChatReferenceChips references={composerReferences} onRemove={removeComposerReference} t={t} />
               {(composerAttachments.length > 0 || composerAttachmentNotice) && (
                 <div className="space-y-2 pb-2">
                   {composerAttachments.length > 0 && (
@@ -192,11 +225,15 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 <textarea
                   ref={composerTextareaRef}
                   value={inputValue}
-                  onChange={(event) => onInputChange(event.target.value)}
+                  onChange={(event) => handleComposerInputChange(event.target.value, event.target.selectionStart)}
                   onKeyDown={handleComposerKeyDown}
                   rows={1}
                   className={`${isPanel ? 'min-h-9 text-sm' : 'min-h-10 text-sm'} max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 font-medium text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60`}
                   aria-label={t('chat.composerInputLabel', { name: target.name })}
+                  aria-controls={isReferenceMenuOpen ? referenceMenuId : undefined}
+                  aria-expanded={isReferenceMenuOpen}
+                  aria-autocomplete="list"
+                  aria-activedescendant={isReferenceMenuOpen && referencePickerItems[referenceActiveIndex] ? `${referenceMenuId}-option-${referenceActiveIndex}` : undefined}
                   placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: target.name }) : blockedComposerMessage}
                   disabled={!canPost || isRunActive}
                 />
@@ -217,7 +254,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  className="sr-only"
+                  hidden
                   onChange={(event) => void handleAttachmentInputChange(event)}
                   disabled={!canPost || isRunActive}
                 />
@@ -236,6 +273,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                       type="button"
                       id={modelSelectorId}
                       onClick={() => {
+                        dismissReferenceMenu();
                         setIsModelMenuOpen((current) => !current);
                         setIsModelSubmenuOpen(false);
                       }}

@@ -1,32 +1,41 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { MoreHorizontal, Settings, Trash2 } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Settings, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CollectionState } from '@/components/common/CollectionState';
+import { EmptyState } from '@/components/common/EmptyState';
 import { MenuItem } from '@/components/common/FormControls';
 import { ClusterTelemetryPanel } from '@/components/dashboard/ClusterTelemetryPanel';
 import { ICONS } from '@/constants';
+import {
+  TargetCatalogActionHint,
+  TargetCatalogActionMenu,
+  TargetCatalogCard,
+  TargetCatalogStatusPill
+} from '@/features/targets/catalog/TargetCatalogPrimitives';
+import { useCatalogNow } from '@/features/targets/catalog/useCatalogNow';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { HealthStatus, KubernetesCluster } from '@/types';
 import { getAgentConnectionState, getEffectiveHealthStatus } from '@/utils/telemetry';
 
 interface ClusterCatalogProps {
   kubernetesClusters: KubernetesCluster[];
-  totalClusterCount?: number;
   issueSummaryByClusterId?: Record<string, ControlPlaneTargetIssueSummary | undefined>;
   issueSummaryLoadStateByClusterId?: Record<string, 'loading' | 'ready' | 'error' | undefined>;
   metricLoadStateByClusterId?: Record<string, 'loading' | 'ready' | 'error' | undefined>;
+  onRetryTelemetry?: () => void;
   hasActiveFilter?: boolean;
   isLoading?: boolean;
   loadError?: boolean;
   onRetry?: () => void;
-  ariaLabelledBy?: string;
   controls?: React.ReactNode;
   footer?: React.ReactNode;
   openClusterActionMenuId: string | null;
-  onToggleClusterActionMenu: (clusterId: string) => void;
+  onOpenClusterActionMenuChange: (clusterId: string | null) => void;
   onOpenDelete: (cluster: KubernetesCluster) => void;
   onSelectKubernetesCluster: (cluster: KubernetesCluster) => void;
   onInstallAgent?: (clusterId: string) => void;
+  canInstallAgent?: (cluster: KubernetesCluster) => boolean;
   onOpenClusterSettings?: (cluster: KubernetesCluster) => void;
   canDeleteKubernetesCluster?: (cluster: KubernetesCluster) => boolean;
   onDeleteKubernetesCluster?: (cluster: KubernetesCluster) => Promise<void> | void;
@@ -121,13 +130,11 @@ const ClusterStatusPill: React.FC<{
   label: string;
   reason: string;
 }> = ({ cluster, requiresAgentInstall, issueSummary, label, reason }) => (
-  <span
-    className={`inline-flex max-w-[8.5rem] items-center rounded-full border px-2 py-0.5 text-[0.6875rem] font-bold uppercase leading-4 tracking-[0.06em] ${getClusterStatusClass(cluster, requiresAgentInstall, issueSummary)}`}
-    title={reason}
-    aria-label={`${label}: ${reason}`}
-  >
-    <span className="truncate">{label}</span>
-  </span>
+  <TargetCatalogStatusPill
+    label={label}
+    reason={reason}
+    toneClassName={getClusterStatusClass(cluster, requiresAgentInstall, issueSummary)}
+  />
 );
 
 const ClusterMetadata: React.FC<{ cluster: KubernetesCluster }> = ({ cluster }) => {
@@ -153,43 +160,32 @@ const ClusterMetadata: React.FC<{ cluster: KubernetesCluster }> = ({ cluster }) 
 const ClusterActionMenu: React.FC<{
   cluster: KubernetesCluster;
   isOpen: boolean;
-  onToggle: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onOpenSettings?: (cluster: KubernetesCluster) => void;
   canDeleteCluster: boolean;
   onOpenDelete: (cluster: KubernetesCluster) => void;
-}> = ({ cluster, isOpen, onToggle, onClose, onOpenSettings, canDeleteCluster, onOpenDelete }) => {
+}> = ({ cluster, isOpen, onOpenChange, onOpenSettings, canDeleteCluster, onOpenDelete }) => {
   const { t } = useTranslation();
   return (
-    <div className="pointer-events-auto relative z-20">
-      <button
-        data-cluster-overflow-action="toggle"
-        type="button"
-        onClick={onToggle}
-        className={`control-target inline-flex h-10 w-10 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${isOpen ? 'bg-ui-bg text-ui-text' : ''}`}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        aria-label={t('dashboard.clusterActionsFor', { name: cluster.name })}
-      >
-        <MoreHorizontal className="h-4 w-4" />
-      </button>
-      {isOpen && (
-        <div role="menu" onClick={(event) => event.stopPropagation()} className="absolute right-0 top-10 w-52 overflow-hidden rounded-lg border border-ui-border bg-ui-surface p-1 text-sm shadow-xl">
-          {onOpenSettings && (
-            <MenuItem data-cluster-overflow-action="settings" onClick={() => { onClose(); onOpenSettings(cluster); }}>
-              <Settings className="h-4 w-4 text-ui-text-muted" />
-              {t('dashboard.clusterSettings')}
-            </MenuItem>
-          )}
-          {canDeleteCluster && (
-            <MenuItem data-cluster-overflow-action="delete" destructive onClick={() => { onClose(); onOpenDelete(cluster); }}>
-              <Trash2 className="h-4 w-4" />
-              {t('dashboard.deleteCluster')}
-            </MenuItem>
-          )}
-        </div>
+    <TargetCatalogActionMenu
+      targetKind="cluster"
+      label={t('dashboard.clusterActionsFor', { name: cluster.name })}
+      open={isOpen}
+      onOpenChange={onOpenChange}
+    >
+      {onOpenSettings && (
+        <MenuItem data-cluster-overflow-action="settings" onClick={() => { onOpenChange(false); onOpenSettings(cluster); }}>
+          <Settings className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
+          {t('dashboard.clusterSettings')}
+        </MenuItem>
       )}
-    </div>
+      {canDeleteCluster && (
+        <MenuItem data-cluster-overflow-action="delete" destructive onClick={() => { onOpenChange(false); onOpenDelete(cluster); }}>
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
+          {t('dashboard.deleteCluster')}
+        </MenuItem>
+      )}
+    </TargetCatalogActionMenu>
   );
 };
 
@@ -199,8 +195,9 @@ interface ClusterItemProps {
   issueSummaryLoadState?: 'loading' | 'ready' | 'error';
   now: number;
   metricLoadState?: 'loading' | 'ready' | 'error';
+  onRetryTelemetry?: () => void;
   openClusterActionMenuId: string | null;
-  onToggleClusterActionMenu: (clusterId: string) => void;
+  onOpenClusterActionMenuChange: (clusterId: string | null) => void;
   onOpenSettings?: (cluster: KubernetesCluster) => void;
   canDeleteCluster: boolean;
   onOpenDelete: (cluster: KubernetesCluster) => void;
@@ -310,32 +307,37 @@ const ClusterCatalogCard: React.FC<ClusterItemProps> = (props) => {
   const view = useClusterPresentation(cluster, issueSummary, props.issueSummaryLoadState);
   const actionLabelNamed = view.requiresAgentInstall
     ? view.t('dashboard.installAgentNamed', { name: cluster.name })
-    : view.t('dashboard.viewClusterNamed', { name: cluster.name });
+    : clusterNeedsAttention(cluster, issueSummary)
+      ? view.t('dashboard.investigateClusterNamed', { name: cluster.name })
+      : view.t('dashboard.viewClusterNamed', { name: cluster.name });
   return (
-    <article className="group relative flex min-w-0 flex-col overflow-visible rounded-lg border border-ui-border bg-ui-surface shadow-sm transition-colors hover:border-accent/25">
-      <button
-        data-cluster-card-primary-action="true"
-        type="button"
-        aria-label={actionLabelNamed}
-        disabled={view.requiresAgentInstall && !props.onInstallAgent}
-        onClick={() => view.requiresAgentInstall ? props.onInstallAgent?.(cluster.id) : props.onSelectKubernetesCluster(cluster)}
-        className="control-target absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25 disabled:cursor-not-allowed"
-      />
-
-      <div className="pointer-events-none relative z-10 flex min-w-0 flex-col">
+    <TargetCatalogCard
+      targetKind="cluster"
+      actionLabel={actionLabelNamed}
+      disabled={view.requiresAgentInstall && !props.onInstallAgent}
+      onActivate={() => view.requiresAgentInstall ? props.onInstallAgent?.(cluster.id) : props.onSelectKubernetesCluster(cluster)}
+    >
         <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong"><ICONS.Layers className="h-4 w-4" /></span>
             <div className="min-w-0 flex-1">
               <h3 className="type-panel-title break-words text-ui-text">{cluster.name}</h3>
               <ClusterMetadata cluster={cluster} />
+              {!view.requiresAgentInstall && <TargetCatalogActionHint label={view.actionLabel} />}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <div className="xl:hidden 2xl:block">
               <ClusterStatusPill cluster={cluster} requiresAgentInstall={view.requiresAgentInstall} issueSummary={issueSummary} label={view.statusLabel} reason={view.statusReason} />
             </div>
-            <ClusterActionMenu cluster={cluster} isOpen={props.openClusterActionMenuId === cluster.id} onToggle={(event) => { event.stopPropagation(); props.onToggleClusterActionMenu(cluster.id); }} onClose={() => props.onToggleClusterActionMenu(cluster.id)} onOpenSettings={view.requiresAgentInstall ? undefined : props.onOpenSettings} canDeleteCluster={props.canDeleteCluster} onOpenDelete={props.onOpenDelete} />
+            <ClusterActionMenu
+              cluster={cluster}
+              isOpen={props.openClusterActionMenuId === cluster.id}
+              onOpenChange={(open) => props.onOpenClusterActionMenuChange(open ? cluster.id : null)}
+              onOpenSettings={view.requiresAgentInstall ? undefined : props.onOpenSettings}
+              canDeleteCluster={props.canDeleteCluster}
+              onOpenDelete={props.onOpenDelete}
+            />
           </div>
         </div>
         <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
@@ -344,69 +346,58 @@ const ClusterCatalogCard: React.FC<ClusterItemProps> = (props) => {
 
         {view.requiresAgentInstall
           ? <ClusterSetupTelemetry cluster={cluster} onInstallAgent={props.onInstallAgent} />
-          : <ClusterTelemetryPanel cluster={cluster} now={now} compact loadState={props.metricLoadState} />}
+          : <ClusterTelemetryPanel cluster={cluster} now={now} compact loadState={props.metricLoadState} onRetry={props.onRetryTelemetry} />}
         <ClusterOperationalDetails cluster={cluster} />
-      </div>
-    </article>
+    </TargetCatalogCard>
   );
 };
 
 const ClusterCatalogEmptyState: React.FC<{ filtered: boolean; isLoading: boolean; loadError: boolean; onRetry?: () => void }> = ({ filtered, isLoading, loadError, onRetry }) => {
   const { t } = useTranslation();
+  const EmptyIcon = loadError ? ICONS.AlertCircle : filtered ? ICONS.Search : ICONS.Layers;
   return (
-    <div className="flex min-h-[12rem] items-center justify-center rounded-lg border border-dashed border-ui-border bg-ui-surface px-5 py-8 text-center">
-      <div className="max-w-sm">
-        <div className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted"><ICONS.Search className="h-4 w-4" /></div>
-        <h3 className="type-row-title text-ui-text">
-          {isLoading ? t('dashboard.loadingClusters') : loadError ? t('dashboard.clusterLoadFailed') : filtered ? t('dashboard.noMatchingClusters') : t('dashboard.noClusters')}
-        </h3>
-        <p className="type-caption mt-1.5 text-ui-text-muted">
-          {isLoading ? t('dashboard.loadingClustersBody') : loadError ? t('dashboard.clusterLoadFailedBody') : filtered ? t('dashboard.noMatchingClustersBody') : t('dashboard.noClustersBody')}
-        </p>
-        {!isLoading && loadError && onRetry && (
-          <Button type="button" variant="secondary" size="sm" onClick={onRetry} className="mt-5">
+    <EmptyState
+      headingLevel={3}
+      icon={<EmptyIcon />}
+      title={isLoading ? t('dashboard.loadingClusters') : loadError ? t('dashboard.clusterLoadFailed') : filtered ? t('dashboard.noMatchingClusters') : t('dashboard.noClusters')}
+      description={isLoading ? t('dashboard.loadingClustersBody') : loadError ? t('dashboard.clusterLoadFailedBody') : filtered ? t('dashboard.noMatchingClustersBody') : t('dashboard.noClustersBody')}
+      actions={!isLoading && loadError && onRetry ? (
+          <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
             {t('common.retry')}
           </Button>
-        )}
-      </div>
-    </div>
+      ) : undefined}
+    />
   );
 };
 
 export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
   kubernetesClusters,
-  totalClusterCount,
   issueSummaryByClusterId = {},
   issueSummaryLoadStateByClusterId = {},
   metricLoadStateByClusterId = {},
+  onRetryTelemetry,
   hasActiveFilter = false,
   isLoading = false,
   loadError = false,
   onRetry,
-  ariaLabelledBy,
   controls,
   footer,
   openClusterActionMenuId,
-  onToggleClusterActionMenu,
+  onOpenClusterActionMenuChange,
   onOpenDelete,
   onSelectKubernetesCluster,
   onInstallAgent,
+  canInstallAgent,
   onOpenClusterSettings,
   canDeleteKubernetesCluster,
   onDeleteKubernetesCluster
 }) => {
   const { t } = useTranslation();
-  const [now, setNow] = useState(() => Date.now());
-  const clusterTotal = totalClusterCount ?? kubernetesClusters.length;
+  const now = useCatalogNow();
   const sortedClusters = useMemo(() => [...kubernetesClusters].sort((left, right) => {
     const priorityDifference = getClusterPriority(left, issueSummaryByClusterId[left.id]) - getClusterPriority(right, issueSummaryByClusterId[right.id]);
     return priorityDifference || left.name.localeCompare(right.name);
   }), [issueSummaryByClusterId, kubernetesClusters]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const itemProps = (cluster: KubernetesCluster): ClusterItemProps => ({
     cluster,
@@ -414,24 +405,21 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
     issueSummaryLoadState: issueSummaryLoadStateByClusterId[cluster.id],
     now,
     metricLoadState: metricLoadStateByClusterId[cluster.id],
+    onRetryTelemetry,
     openClusterActionMenuId,
-    onToggleClusterActionMenu,
+    onOpenClusterActionMenuChange,
     onOpenSettings: onOpenClusterSettings,
     canDeleteCluster: Boolean(onDeleteKubernetesCluster && canDeleteKubernetesCluster?.(cluster)),
     onOpenDelete,
     onSelectKubernetesCluster,
-    onInstallAgent
+    onInstallAgent: onInstallAgent && (canInstallAgent?.(cluster) ?? true) ? onInstallAgent : undefined
   });
 
   return (
-    <section id="cluster-catalog-panel" role="tabpanel" tabIndex={0} data-cluster-catalog="true" aria-labelledby={ariaLabelledBy} className="grid min-w-0 shrink-0 content-start gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
+    <section id="cluster-catalog-panel" data-cluster-catalog="true" aria-labelledby="cluster-catalog-heading" className="grid min-w-0 shrink-0 content-start gap-4">
+      <h2 id="cluster-catalog-heading" className="sr-only">{t('dashboard.clusterCatalog')}</h2>
       {controls && (
-        <div data-cluster-catalog-controls="true" className="grid min-w-0 gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-4 shadow-sm sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,12rem)]">
-          <div className="min-w-0">{controls}</div>
-          <span className="flex h-11 min-h-11 items-center justify-center rounded-lg border border-ui-border bg-ui-bg/60 px-4 text-sm font-semibold text-ui-text-muted shadow-[inset_0_1px_0_rgb(var(--surface-rgb)/0.75)]">
-            {t('dashboard.showingClusters', { count: kubernetesClusters.length, total: clusterTotal })}
-          </span>
-        </div>
+        <div data-cluster-catalog-controls="true">{controls}</div>
       )}
 
       {loadError && sortedClusters.length > 0 && (
@@ -444,11 +432,19 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
         </div>
       )}
 
-      {sortedClusters.length === 0 ? <ClusterCatalogEmptyState filtered={hasActiveFilter} isLoading={isLoading} loadError={loadError} onRetry={onRetry} /> : (
+      <CollectionState
+        phase={loadError ? 'error' : isLoading ? sortedClusters.length > 0 ? 'refreshing' : 'loading' : 'ready'}
+        itemCount={sortedClusters.length}
+        filtered={hasActiveFilter}
+        loading={<ClusterCatalogEmptyState filtered={false} isLoading loadError={false} onRetry={onRetry} />}
+        empty={<ClusterCatalogEmptyState filtered={false} isLoading={false} loadError={false} onRetry={onRetry} />}
+        filteredEmpty={<ClusterCatalogEmptyState filtered isLoading={false} loadError={false} onRetry={onRetry} />}
+        error={<ClusterCatalogEmptyState filtered={hasActiveFilter} isLoading={false} loadError onRetry={onRetry} />}
+      >
         <div data-cluster-card-grid="true" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sortedClusters.map((cluster) => <ClusterCatalogCard key={cluster.id} {...itemProps(cluster)} />)}
         </div>
-      )}
+      </CollectionState>
       {footer && <div className="shrink-0">{footer}</div>}
     </section>
   );

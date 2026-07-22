@@ -37,6 +37,29 @@ describe('session-utils', () => {
     });
   });
 
+  it('maps safe structured assistant references from user message metadata', () => {
+    const mapped = mapControlPlaneMessage({
+      id: 'msg-ref',
+      sessionId: 'session-1',
+      role: 'user',
+      kind: 'user',
+      content: 'Inspect the database.',
+      metadata: {
+        assistantReferences: [
+          { kind: 'tool', id: 'inspect_cluster', label: 'Inspect cluster', capability: 'read', source: 'mcp' },
+          { kind: 'skill', id: 'skill-1', label: 'CNPG triage', source: 'manual' },
+          { kind: 'tool', id: 42, label: 'invalid' }
+        ]
+      },
+      createdAt: '2026-01-02T03:04:05.000Z'
+    });
+
+    expect(mapped.assistantReferences).toEqual([
+      { kind: 'tool', id: 'inspect_cluster', label: 'Inspect cluster', capability: 'read', source: 'mcp' },
+      { kind: 'skill', id: 'skill-1', label: 'CNPG triage', source: 'manual' }
+    ]);
+  });
+
   it('appends new sessions and replaces existing ones by id', () => {
     const original: ChatSession[] = [{ id: 'session-1', name: 'One', messages: [], timestamp: 1 }];
     const appended = upsertSession(original, { id: 'session-2', name: 'Two', messages: [], timestamp: 2 });
@@ -297,6 +320,36 @@ describe('session-utils', () => {
     })).toEqual(messages.slice(0, 1));
   });
 
+  it('normalizes persisted gateway failure envelopes without replacing partial assistant output', () => {
+    const run = {
+      id: 'run-1',
+      status: 'failed',
+      errorCode: 'GATEWAY_HTTP_ERROR',
+      errorMessage: 'llm-gateway returned HTTP 404: {"detail":"Not Found"}'
+    };
+    const persistedFailure: ChatMessage[] = [{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: `I could not complete the troubleshooting run.\n\n${run.errorMessage}`,
+      runId: run.id,
+      timestamp: 1
+    }];
+
+    expect(ensureFailedRunAssistantMessage(persistedFailure, run)[0]).toMatchObject({
+      id: 'assistant-1',
+      content: 'I could not complete the troubleshooting run.\n\nA required service could not handle this request. Try again later. If the problem continues, contact a workspace administrator.'
+    });
+
+    const partialResponse: ChatMessage[] = [{
+      id: 'assistant-2',
+      role: 'assistant',
+      content: 'I found two unhealthy workloads before the run stopped.',
+      runId: run.id,
+      timestamp: 2
+    }];
+    expect(ensureFailedRunAssistantMessage(partialResponse, run)).toBe(partialResponse);
+  });
+
   it('normalizes provider rate limit failures with retry guidance', () => {
     const message = formatRunFailureMessage(
       'rate_limit',
@@ -316,6 +369,12 @@ describe('session-utils', () => {
   });
 
   it('shows targeted recovery only for conservatively classified provider failures', () => {
+    expect(formatRunFailureMessage(
+      'GATEWAY_HTTP_ERROR',
+      'llm-gateway returned HTTP 404: {"detail":"Not Found"}'
+    )).toBe(
+      'A required service could not handle this request. Try again later. If the problem continues, contact a workspace administrator.'
+    );
     expect(formatRunFailureMessage('MODEL_UNAVAILABLE', 'Selected model is unavailable')).toBe(
       'This model is currently unavailable. Choose another model and retry.'
     );

@@ -6,10 +6,15 @@ import {
   createAgentVersion,
   deleteAgent,
   deleteAgentTrigger,
+  duplicateAgent,
   getAgent,
+  listAutomationTemplates,
   listAgentActivity,
   listAgentVersions,
   listWorkspaceAgents,
+  listWorkspaceNativeTools,
+  grantAgentNativeTool,
+  revokeAgentNativeTool,
   restoreAgentVersion,
   testAgent,
   updateAgentTrigger,
@@ -35,6 +40,38 @@ describe('agent control-plane api', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/agents?includeInactive=true');
   });
 
+  it('validates automation template catalog responses at the control-plane boundary', async () => {
+    const validTemplate = {
+      id: 'target-remediation', version: 3, name: 'Target remediation', description: 'Safely change one target.',
+      installMode: 'opt_in', installationStatus: 'not_installed', setupSteps: ['Install workflow'],
+      blockerCodes: ['TEMPLATE_NOT_INSTALLED']
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ templates: [validTemplate], installations: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ templates: [{ id: 'broken-template' }], installations: [] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listAutomationTemplates('workspace-1')).resolves.toEqual({ templates: [validTemplate], installations: [] });
+    await expect(listAutomationTemplates('workspace-1')).rejects.toThrow('invalid template definition');
+  });
+
+  it('lists and assigns code-owned native tools through manage_agents routes', async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
+      if (url.endsWith('/catalog/native-tools')) return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'reports.pdf.generate', title: 'Generate PDF report', invocationScopes: ['workflow'] }] }), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify({ agent: { id: 'agent-1', workspaceId: 'workspace-1', tools: init?.method === 'PUT' ? ['reports.pdf.generate'] : [] } }), { status: 200 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listWorkspaceNativeTools('workspace-1')).resolves.toMatchObject([{ id: 'reports.pdf.generate', invocationScopes: ['workflow'] }]);
+    await expect(grantAgentNativeTool('workspace-1', 'agent-1', 'reports.pdf.generate')).resolves.toMatchObject({ tools: ['reports.pdf.generate'] });
+    await expect(revokeAgentNativeTool('workspace-1', 'agent-1', 'reports.pdf.generate')).resolves.toMatchObject({ tools: [] });
+
+    const mutations = fetchMock.mock.calls.filter((call) => ['PUT', 'DELETE'].includes(call[1]?.method as string));
+    expect(mutations.map((call) => call[1]?.method)).toEqual(['PUT', 'DELETE']);
+    expect(String(mutations[0][0])).toContain('/agents/agent-1/native-tools/reports.pdf.generate');
+  });
+
   it('creates and updates durable agents through workspace-scoped consumer payloads', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (url.endsWith('/api/v1/auth/csrf')) {
@@ -45,7 +82,7 @@ describe('agent control-plane api', () => {
           agent: {
             id: 'agent-1',
             workspaceId: 'workspace-1',
-            name: 'Repository Operator',
+            name: 'Workflow Analyst',
             providerType: 'external',
             status: 'draft'
           }
@@ -55,7 +92,7 @@ describe('agent control-plane api', () => {
         agent: {
           id: 'agent-1',
           workspaceId: 'workspace-1',
-          name: 'Repository Operator',
+          name: 'Workflow Analyst',
           providerType: 'external',
           status: 'active'
         }
@@ -64,7 +101,7 @@ describe('agent control-plane api', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(createAgent('workspace-1', {
-      name: 'Repository Operator',
+      name: 'Workflow Analyst',
       description: 'Prepare repository changes with explicit approval gates.',
       instructions: 'Prepare repository changes.',
       providerType: 'external'
@@ -79,7 +116,7 @@ describe('agent control-plane api', () => {
     const updateCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/agents/agent-1'));
     expect(createCall?.[1]).toMatchObject({ method: 'POST', credentials: 'include' });
     expect(JSON.parse(createCall?.[1]?.body as string)).toEqual({
-      name: 'Repository Operator',
+      name: 'Workflow Analyst',
       description: 'Prepare repository changes with explicit approval gates.',
       instructions: 'Prepare repository changes.',
       providerType: 'external'
@@ -105,6 +142,19 @@ describe('agent control-plane api', () => {
     });
 
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/agents/agent-1?workspaceId=workspace-1');
+  });
+
+  it('duplicates an effective agent definition into a custom draft', async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify({ agent: { id: 'agent-copy', workspaceId: 'workspace-1', name: 'Diagnostics copy', source: 'user', createdBy: 'user-1', status: 'draft' } }), { status: 201 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(duplicateAgent('workspace-1', 'agent-cluster-triage', 'Diagnostics copy')).resolves.toMatchObject({ id: 'agent-copy', source: 'user', status: 'draft' });
+    const call = fetchMock.mock.calls.find((item) => String(item[0]).endsWith('/api/v1/agents/agent-cluster-triage/duplicate'));
+    expect(call?.[1]).toMatchObject({ method: 'POST', credentials: 'include' });
+    expect(JSON.parse(call?.[1]?.body as string)).toEqual({ workspaceId: 'workspace-1', name: 'Diagnostics copy' });
   });
 
   it('calls agent version, test, activity, and trigger routes', async () => {

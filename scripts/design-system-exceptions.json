@@ -1,7 +1,8 @@
 {
   "activationContexts": [
-    "src/pages/WorkspaceWorkflowsPage.components.tsx",
     "src/pages/WorkspaceWorkflowsPage.tsx",
+    "src/pages/WorkspaceWorkflowsPage.components.tsx",
+    "src/pages/WorkflowTemplateSetupDrawer.tsx",
     "src/design-system.tsx"
   ],
   "literalColorModules": [
@@ -25,8 +26,7 @@
     "src/pages/NotFoundPage.tsx"
   ],
   "routeHeaderDelegates": {
-    "src/pages/WorkspaceAgentsPage.tsx": "src/pages/WorkspaceAgentsCatalog.tsx",
-    "src/pages/WorkspaceWorkflowsPage.tsx": "src/pages/WorkspaceWorkflowsPage.components.tsx"
+    "src/pages/WorkspaceAgentsPage.tsx": "src/pages/WorkspaceAgentsCatalog.tsx"
   },
   "embeddedRouteExceptions": {
     "src/pages/KubernetesClustersPage.tsx": "Delegates canonical route composition to the Dashboard inventory surface.",
@@ -34,5 +34,10 @@
     "src/pages/KubernetesClusterDetailPage.tsx": "Full-height target workbench embeds tab-specific views inside a stable split-pane shell.",
     "src/pages/WorkspaceInvitePage.tsx": "Focused invitation handoff intentionally uses a centered task surface instead of authenticated route chrome.",
     "src/pages/NotFoundPage.tsx": "Recovery-only error route intentionally uses a centered task surface instead of authenticated route chrome."
+  },
+  "asyncCollectionStateExceptions": {
+    "src/components/workspaces/CreateWorkspaceModal.tsx": "The detected branches belong to role-template form options inside a create mutation, not to a rendered read collection.",
+    "src/features/targets/admin/TargetInsightsDialog.tsx": "The detected branches belong to a single insight editor and its validation state, not to a paginated or list collection.",
+    "src/features/targets/chat/components/AssistantCapabilityPreviewControl.tsx": "The detected branches belong to one lazy capability preview resource, not to a user-facing collection surface."
   }
 }

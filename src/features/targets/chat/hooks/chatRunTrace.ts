@@ -120,6 +120,23 @@ function parseArtifact(value: unknown): LiveRunTrace['toolCalls'][number]['artif
   return artifact as LiveRunTrace['toolCalls'][number]['artifact'];
 }
 
+function parseReportArtifact(value: unknown): LiveRunTrace['toolCalls'][number]['reportArtifact'] | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const envelope = value as Record<string, unknown>;
+  const structured = envelope.structuredContent && typeof envelope.structuredContent === 'object'
+    ? envelope.structuredContent as Record<string, unknown>
+    : envelope;
+  if (typeof structured.reportId !== 'string' || typeof structured.downloadUrl !== 'string'
+    || structured.mediaType !== 'application/pdf') return undefined;
+  return {
+    reportId: structured.reportId,
+    title: typeof structured.title === 'string' ? structured.title : 'Workflow report',
+    mediaType: 'application/pdf',
+    downloadUrl: structured.downloadUrl,
+    ...(typeof structured.retentionExpiresAt === 'string' ? { retentionExpiresAt: structured.retentionExpiresAt } : {})
+  };
+}
+
 function applySkillContextEvent(trace: LiveRunTrace, event: ControlPlaneRunEvent): LiveRunTrace | null {
   if (
     event.type !== 'skill_context_load_started' &&
@@ -289,6 +306,7 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const isError = Boolean(event.payload?.is_error);
       const artifact = parseArtifact(event.payload?.artifact);
       const contextMeta = parseContextMeta(event.payload?.context_meta);
+      const reportArtifact = parseReportArtifact(event.payload?.result);
       trace = appendRunTraceStep(
         upsertToolCall(trace, callId, {
           callId,
@@ -297,6 +315,7 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
           isError,
           ...(contextMeta ? { contextMeta } : {}),
           ...(artifact ? { artifact } : {}),
+          ...(reportArtifact ? { reportArtifact } : {}),
           ...(event.payload?.artifactUnavailable ? { artifactUnavailable: true } : {})
         }),
         `Tool call completed: ${toolName}`,
@@ -332,7 +351,12 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const toolName = typeof event.payload?.tool === 'string' ? event.payload.tool : 'write tool';
       trace = appendRunTraceStep(trace, `Approval expired: ${toolName}`, 'error', 'No approval was recorded before timeout.', 'tool');
     } else if (event.type === 'run_failed') {
-      trace = appendRunTraceStep({ ...trace, status: 'failed' }, 'Could not complete', 'error', formatTraceFailureDetail());
+      trace = appendRunTraceStep(
+        { ...trace, status: 'failed' },
+        'Could not complete',
+        'error',
+        formatTraceFailureDetail(event.payload?.code, event.payload?.message)
+      );
       reachedTerminalEvent = true;
     } else if (event.type === 'run_completed') {
       trace = appendRunTraceStep({ ...trace, status: 'completed' }, 'Completed', 'success', 'The run finished successfully.');
@@ -499,6 +523,7 @@ export function createRunEventHandler(args: {
       const isError = Boolean(event.payload?.is_error);
       const artifact = parseArtifact(event.payload?.artifact);
       const contextMeta = parseContextMeta(event.payload?.context_meta);
+      const reportArtifact = parseReportArtifact(event.payload?.result);
       const nextTrace = upsertToolCall(trace, callId, {
         callId,
         tool: toolName,
@@ -506,6 +531,7 @@ export function createRunEventHandler(args: {
         isError,
         ...(contextMeta ? { contextMeta } : {}),
         ...(artifact ? { artifact } : {}),
+        ...(reportArtifact ? { reportArtifact } : {}),
         ...(event.payload?.artifactUnavailable ? { artifactUnavailable: true } : {})
       });
       updateTrace(
@@ -591,7 +617,12 @@ export function createRunEventHandler(args: {
 
     if (event.type === 'run_failed') {
       updateTrace(
-        appendRunTraceStep({ ...trace, status: 'failed' }, 'Could not complete', 'error', formatTraceFailureDetail())
+        appendRunTraceStep(
+          { ...trace, status: 'failed' },
+          'Could not complete',
+          'error',
+          formatTraceFailureDetail(event.payload?.code, event.payload?.message)
+        )
       );
       args.setTraceExpanded(false);
       return;

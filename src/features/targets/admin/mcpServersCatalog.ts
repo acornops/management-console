@@ -3,7 +3,7 @@ import type {
   TargetToolCatalogItem,
   TargetToolCatalogServer
 } from '@/features/targets/admin/targetMcpCatalogTypes';
-import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
+import { formatMcpError } from '@/services/control-plane/mcpError';
 import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
 import { formatUserDateTime } from '@/utils/dateTime';
 
@@ -14,7 +14,7 @@ export interface ServerFormState {
   url: string;
   enabled: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
-  secretValue: string;
+  credentialMode: 'none' | 'workspace' | 'individual';
   headerName: string;
   publicHeaders: Array<{ id: string; name: string; value: string }>;
 }
@@ -24,7 +24,7 @@ export const DEFAULT_SERVER_FORM: ServerFormState = {
   url: '',
   enabled: true,
   authType: 'none',
-  secretValue: '',
+  credentialMode: 'none',
   headerName: '',
   publicHeaders: []
 };
@@ -72,6 +72,12 @@ const reservedPublicHeaderNames = new Set([
   'proxy-connection',
   'te',
   'trailer',
+  'accept',
+  'accept-encoding',
+  'content-type',
+  'last-event-id',
+  'mcp-protocol-version',
+  'mcp-session-id',
   'x-workspace-id',
   'x-target-id',
   'x-target-type',
@@ -99,6 +105,7 @@ export function validatePublicHeaderRows(rows: ServerFormState['publicHeaders'])
     const name = row.name.trim();
     const normalizedName = name.toLowerCase();
     if (!name) return 'publicHeaderNameRequired';
+    if (name !== row.name || name.length > 128) return 'publicHeaderNameInvalid';
     if (!publicHeaderNamePattern.test(name)) return 'publicHeaderNameInvalid';
     if (seenHeaders.has(normalizedName)) return 'publicHeaderDuplicate';
     seenHeaders.add(normalizedName);
@@ -182,6 +189,7 @@ export function buildLocalCatalog(target: TargetDescriptor, canEdit: boolean): T
       canEditConnection: Boolean(tool.sourceServerId && type === 'mcp'),
       canToggle: Boolean(tool.sourceServerId || type === 'builtin'),
       authType: 'none',
+      credentialMode: 'none',
       publicHeaders: {},
       connectionStatus: 'unknown',
       lastDiscoveryAt: null,
@@ -236,7 +244,7 @@ export function isManagedMcpServer(server: Pick<TargetToolCatalogServer, 'type' 
 }
 
 export function formatMcpMutationError(error: unknown, fallback: string): string {
-  return formatControlPlaneError(error, fallback, { area: 'mcp' });
+  return formatMcpError(error, fallback).message;
 }
 
 export function formatDiscoveryTimestamp(value: string): string {

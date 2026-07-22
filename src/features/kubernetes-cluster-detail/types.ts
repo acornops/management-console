@@ -16,6 +16,7 @@ export interface KubernetesClusterDetailProps {
   onUpdateNamespaceScope?: (scope: { include: string[]; exclude: string[] }) => Promise<void> | void;
   onUpdateWriteConfirmationPolicy?: (overrideRequired: boolean | null) => Promise<void> | void;
   onReinstallAgent?: () => void;
+  onDeleteCluster?: () => Promise<void> | void;
   onOpenAiSettings: () => void;
   onOpenCopilot?: (prompt?: string) => void;
   onActiveViewChange?: (view: View) => void;

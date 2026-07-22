@@ -37,6 +37,12 @@ export const resourceExplorerLayout = readSource(
 export const mcpServersView = readSource(
   'src/features/targets/admin/McpServersView.tsx'
 );
+export const mcpServersViewHeader = readSource(
+  'src/features/targets/admin/McpServersViewHeader.tsx'
+);
+export const addMcpServerAction = readSource(
+  'src/features/catalog/AddMcpServerAction.tsx'
+);
 export const mcpServerCard = readSource(
   'src/features/targets/admin/McpServerCard.tsx'
 );
@@ -52,7 +58,9 @@ export const mcpServersInventory = readSource(
 export const chatView = [
   readSource('src/features/targets/chat/components/TargetChatView.tsx'),
   readSource('src/features/targets/chat/components/TargetChatViewBody.tsx'),
+  readSource('src/features/targets/chat/components/useTargetChatHistoryWorkspace.ts'),
   readSource('src/features/targets/chat/components/TargetChatComposer.tsx'),
+  readSource('src/features/targets/chat/components/TargetAssistantReadinessState.tsx'),
   readSource('src/features/targets/chat/components/targetChatViewHelpers.ts')
 ].join('\n');
 export const assistantTurn = readSource(
@@ -63,6 +71,9 @@ export const thinkingAcorn = readSource(
 );
 export const messageActions = readSource(
   'src/features/targets/chat/components/MessageActions.tsx'
+);
+export const generatedReportCard = readSource(
+  'src/features/targets/chat/components/GeneratedReportCard.tsx'
 );
 export const userMessageTurn = readSource(
   'src/features/targets/chat/components/UserMessageTurn.tsx'

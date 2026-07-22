@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
+import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { Select, SelectOption } from '@/components/common/Select';
 import { ProjectMember, WorkspaceRoleTemplate } from '@/types';
@@ -122,9 +123,9 @@ export const WorkspaceMemberDetailsPanel: React.FC<WorkspaceMemberDetailsPanelPr
               </div>
             )}
 
-            <div className="border-b border-status-danger/20 bg-status-danger-soft px-8 py-5">
+            <DangerZone className="m-5">
               {isConfirmingRemove ? (
-                <div className="space-y-4">
+                <div className="space-y-4 bg-status-danger-soft px-5 py-5 text-status-danger-text">
                   <div>
                     <p className="type-row-title text-status-danger-text">{t('members.confirmRemoveAccess')}</p>
                     <p className="type-caption mt-1 text-status-danger-text">{t('members.confirmRemoveAccessBody', { name: selectedMember.name })}</p>
@@ -151,19 +152,28 @@ export const WorkspaceMemberDetailsPanel: React.FC<WorkspaceMemberDetailsPanelPr
                   </div>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={onConfirmRemove}
-                  disabled={!canEditSelectedMember || isSaving}
-                  className="control-target type-ui w-full rounded-md px-1 py-1 text-left text-status-danger-text transition-colors hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {t('members.removeAccess')}
-                  <span className="type-caption mt-1 block text-status-danger-text">
-                    {t('members.removeAccessBody')}
-                  </span>
-                </button>
+                <DangerZoneRow
+                  id="member-remove-access-title"
+                  title={t('members.removeAccess')}
+                  description={t('members.removeAccessBody')}
+                  headingLevel="h3"
+                  tone="danger"
+                  actionClassName="sm:w-36"
+                  action={(
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      className="w-full"
+                      onClick={onConfirmRemove}
+                      disabled={!canEditSelectedMember || isSaving}
+                    >
+                      {t('members.removeAccess')}
+                    </Button>
+                  )}
+                />
               )}
-            </div>
+            </DangerZone>
           </div>
         </>
       )}

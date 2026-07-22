@@ -271,6 +271,7 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
             onMouseDown={(event) => event.stopPropagation()}
           >
             {children}
+            <div data-floating-layer="true" className="pointer-events-none absolute inset-0 z-[120]" />
           </motion.aside>
         </div>
       )}

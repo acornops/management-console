@@ -96,7 +96,7 @@ export const ResourceCategoryTabs = <T extends string,>({
       <div
         role="tablist"
         aria-label={ariaLabel}
-        className={twMerge(clsx('flex w-full max-w-full shrink-0 items-center overflow-x-auto border-b border-ui-border', className))}
+        className={twMerge(clsx('no-scrollbar flex w-full max-w-full shrink-0 items-center overflow-x-auto border-b border-ui-border', className))}
       >
         {tabs.map((tab, index) => (
         <button

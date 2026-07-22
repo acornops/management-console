@@ -1,4 +1,4 @@
-import type { AgentActivityRecordApi, AgentCapability, AgentProviderType, AgentStatus, AgentTargetScopeApi, AgentTriggerDefinitionApi } from '@/services/control-plane/agentApi';
+import type { AgentActivityRecordApi, AgentCapability, AgentMcpServerApi, AgentProviderType, AgentSkillApi, AgentStatus, AgentTargetScopeApi, AgentTriggerDefinitionApi, RunPermissionMode } from '@/services/control-plane/agentApi';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 export interface AgentDefinition {
@@ -8,20 +8,23 @@ export interface AgentDefinition {
   description: string;
   instructions: string;
   status: AgentStatus;
-  source?: 'system' | 'user';
+  origin: { type: 'template' | 'manual'; templateId?: string; templateVersion?: number };
+  kind: 'specialist';
+  reviewState: 'draft' | 'reviewed';
   providerType: AgentProviderType;
   ownerUserId?: string;
+  createdBy: string;
   owner: string;
   version: number;
   mcpServers: string[];
+  mcpInstallations?: AgentMcpServerApi[];
   tools: string[];
   skills: string[];
+  skillInstallations?: AgentSkillApi[];
+  semanticCapabilityIds: string[];
   targetScope: string[];
   contextScope: string[];
-  approvalPolicy: {
-    sensitiveActions: 'approval_required' | 'allowed' | 'blocked';
-    writeActions: 'approval_required' | 'allowed' | 'blocked';
-  };
+  permissionMode: RunPermissionMode;
   trustPolicy: {
     boundary: string;
     dataEgress: string;
@@ -35,142 +38,6 @@ export interface AgentDefinition {
     lastStatus?: AgentActivityRecordApi['status'];
   };
   auditHistory: Array<{ id: string; summary: string; occurredAt: string }>;
-}
-
-const defaultWorkspaceId = 'current-workspace';
-const defaultDevOwnerUserId = 'user-1';
-const defaultDevOwnerName = 'Dev User';
-
-export function createDefaultAgentDefinitions(workspaceId = defaultWorkspaceId): AgentDefinition[] {
-  return [
-    {
-      id: 'agent-cluster-triage',
-      workspaceId,
-      name: 'Kubernetes Diagnostics',
-      description: 'Reads Kubernetes inventory, resource details, and logs for cluster triage through the built-in AgentK tools.',
-      instructions: 'Use only the read-only get_resource, get_resource_logs, and list_resources tools.',
-      status: 'active',
-      source: 'system',
-      providerType: 'internal',
-      ownerUserId: defaultDevOwnerUserId,
-      owner: defaultDevOwnerName,
-      version: 2,
-      mcpServers: ['acornops-cluster-agent'],
-      tools: ['get_resource', 'get_resource_logs', 'list_resources'],
-      skills: ['acornops-observability', 'acornops-target-boundary-design'],
-      targetScope: ['kubernetes:*'],
-      contextScope: ['workspace_metadata', 'target_inventory'],
-      approvalPolicy: {
-        sensitiveActions: 'allowed',
-        writeActions: 'blocked'
-      },
-      trustPolicy: {
-        boundary: 'Internal AcornOps runtime',
-        dataEgress: 'Workspace only'
-      },
-      capabilities: [
-        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'resource', toolId: 'get_resource', operation: 'read', requiresApproval: false },
-        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'logs', toolId: 'get_resource_logs', operation: 'read', requiresApproval: false },
-        { source: 'mcp_tool', resourceType: 'kubernetes', resourceScope: 'target_inventory', toolId: 'list_resources', operation: 'read', requiresApproval: false },
-        { source: 'skill', resourceType: 'skill', resourceScope: 'diagnostics', operation: 'read', requiresApproval: false }
-      ],
-      workflowsUsingAgent: ['Cluster triage'],
-      triggers: [{ id: 'manual-cluster-triage', type: 'manual', enabled: true, name: 'Manual run' }],
-      activity: {
-        runCount: 18,
-        lastRunAt: 'Today 09:12',
-        lastStatus: 'completed'
-      },
-      auditHistory: [
-        { id: 'audit-agent-k8s-1', summary: 'Built-in Kubernetes tool scope synchronized', occurredAt: 'Today 09:12' },
-        { id: 'audit-agent-k8s-2', summary: 'Read-only diagnostics policy confirmed', occurredAt: 'Jun 24 14:20' }
-      ]
-    },
-    {
-      id: 'agent-release-coordinator',
-      workspaceId,
-      name: 'Repository Operator',
-      description: 'Coordinates repository operations after an administrator assigns workspace MCP capabilities.',
-      instructions: 'Use only assigned MCP tools and request approval before write operations.',
-      status: 'active',
-      source: 'system',
-      providerType: 'internal',
-      ownerUserId: defaultDevOwnerUserId,
-      owner: defaultDevOwnerName,
-      version: 2,
-      mcpServers: [],
-      tools: [],
-      skills: ['acornops-cross-repo-change', 'acornops-open-pr'],
-      targetScope: ['workspace'],
-      contextScope: ['workspace_metadata'],
-      approvalPolicy: {
-        sensitiveActions: 'approval_required',
-        writeActions: 'approval_required'
-      },
-      trustPolicy: {
-        boundary: 'Workspace MCP grants only',
-        dataEgress: 'Only through assigned MCP servers'
-      },
-      capabilities: [
-        { source: 'skill', resourceType: 'skill', resourceScope: 'pull_request', operation: 'write', requiresApproval: true }
-      ],
-      workflowsUsingAgent: ['Repository operation'],
-      triggers: [{ id: 'manual-release-coordinator', type: 'manual', enabled: true, name: 'Manual run' }],
-      activity: {
-        runCount: 7,
-        lastRunAt: 'Yesterday 15:30',
-        lastStatus: 'failed'
-      },
-      auditHistory: [
-        { id: 'audit-agent-repo-1', summary: 'External capability manifest reviewed', occurredAt: 'Yesterday 15:30' }
-      ]
-    },
-    {
-      id: 'agent-incident-reporter',
-      workspaceId,
-      name: 'Incident Reporter',
-      description: 'Reads selected incident chats and generates timeline PDF reports. It cannot access unselected chats.',
-      instructions: 'Use selected chat context only after approval and write the requested report artifact.',
-      status: 'active',
-      source: 'system',
-      providerType: 'internal',
-      ownerUserId: defaultDevOwnerUserId,
-      owner: defaultDevOwnerName,
-      version: 1,
-      mcpServers: ['workspace-chat', 'artifact-writer'],
-      tools: ['chat.sessions.read_selected', 'reports.pdf.generate'],
-      skills: ['acornops-observability'],
-      targetScope: ['workspace:current'],
-      contextScope: ['selected_chat_sessions'],
-      approvalPolicy: {
-        sensitiveActions: 'approval_required',
-        writeActions: 'approval_required'
-      },
-      trustPolicy: {
-        boundary: 'Internal AcornOps runtime',
-        dataEgress: 'Approved report artifact only'
-      },
-      capabilities: [
-        { source: 'context', resourceType: 'chat_session', resourceScope: 'selected_chat_sessions', toolId: 'chat.sessions.read_selected', operation: 'read', requiresApproval: true },
-        { source: 'builtin_tool', resourceType: 'artifact', resourceScope: 'report', toolId: 'reports.pdf.generate', operation: 'write', requiresApproval: true }
-      ],
-      workflowsUsingAgent: ['Incident report PDF'],
-      triggers: [{ id: 'manual-incident-reporter', type: 'manual', enabled: true, name: 'Manual run' }],
-      activity: {
-        runCount: 0
-      },
-      auditHistory: [
-        { id: 'audit-agent-report-1', summary: 'Draft agent created from incident reporting template', occurredAt: 'Jun 20 10:05' }
-      ]
-    }
-  ];
-}
-
-export function getAgentCapabilitySummary(agent: AgentDefinition): string {
-  const approvalCopy = agent.capabilities.some((capability) => capability.requiresApproval)
-    ? 'approval required'
-    : 'no approvals';
-  return `${agent.mcpServers.length} MCP server${agent.mcpServers.length === 1 ? '' : 's'}, ${agent.tools.length} tools, ${agent.skills.length} skills, ${approvalCopy}`;
 }
 
 export interface AgentActivitySummary {
@@ -215,9 +82,25 @@ export function getAgentAccessClass(agent: AgentDefinition): string {
     ? Array.from(new Set(scopedResourceTypes))
     : Array.from(new Set(agent.capabilities.map((capability) => capability.resourceType).filter(Boolean)));
   const resourceLabel = resourceTypes.length === 1 ? titleCase(resourceTypes[0]) : resourceTypes.length > 1 ? 'Mixed resources' : 'Workspace';
-  if (agent.approvalPolicy.writeActions === 'blocked') return `${resourceLabel} read, write blocked`;
-  if (agent.approvalPolicy.writeActions === 'approval_required') return `${resourceLabel} read, write gated`;
-  return `${resourceLabel} read/write`;
+  if (agent.permissionMode === 'read_only') return `${resourceLabel} read only`;
+  if (agent.permissionMode === 'ask_before_changes') return `${resourceLabel} read, changes gated`;
+  return `${resourceLabel} routine changes allowed`;
+}
+
+export function getAgentEffectiveActionPolicy(permissionMode: RunPermissionMode): {
+  permissionMode: string;
+  approvalGate: string;
+} {
+  if (permissionMode === 'read_only') {
+    return { permissionMode: 'Read only', approvalGate: 'Writes are disabled' };
+  }
+  if (permissionMode === 'ask_before_changes') {
+    return { permissionMode: 'Ask before changes', approvalGate: 'Before every write-capable tool' };
+  }
+  return {
+    permissionMode: 'Automatic routine changes',
+    approvalGate: 'Before high-risk or destructive writes'
+  };
 }
 
 export function targetScopeFromTokens(tokens: string[]): AgentTargetScopeApi {

@@ -1,14 +1,31 @@
-import { ChatMessage, ChatSession } from '@/types';
+import { ChatAssistantReference, ChatMessage, ChatSession } from '@/types';
 import { ControlPlaneSessionMessage } from '@/services/controlPlaneApi';
 import { createLocalMessageId, toTimestamp } from '@/features/targets/chat/lib/helpers';
 
 const MAX_CONVERSATION_TITLE_LENGTH = 64;
+const CHAT_FAILURE_PREFIX = 'I could not complete the troubleshooting run.';
 
 /**
  * Converts control-plane message records into management console chat messages.
  */
 export function mapControlPlaneMessage(message: ControlPlaneSessionMessage): ChatMessage {
   const role: ChatMessage['role'] = message.role === 'assistant' ? 'assistant' : 'user';
+  const rawReferences = Array.isArray(message.metadata?.assistantReferences) ? message.metadata.assistantReferences : [];
+  const assistantReferences = rawReferences.flatMap((value): ChatAssistantReference[] => {
+    if (!value || typeof value !== 'object') return [];
+    const reference = value as Record<string, unknown>;
+    if ((reference.kind !== 'tool' && reference.kind !== 'skill') || typeof reference.id !== 'string' || typeof reference.label !== 'string') return [];
+    return [{
+      kind: reference.kind,
+      id: reference.id,
+      label: reference.label,
+      ...(typeof reference.description === 'string' ? { description: reference.description } : {}),
+      ...(reference.capability === 'read' || reference.capability === 'write' ? { capability: reference.capability } : {}),
+      ...(['builtin', 'mcp', 'provider_native', 'manual', 'git_import'].includes(String(reference.source))
+        ? { source: reference.source as ChatAssistantReference['source'] }
+        : {})
+    }];
+  });
 
   return {
     id: message.id,
@@ -16,7 +33,8 @@ export function mapControlPlaneMessage(message: ControlPlaneSessionMessage): Cha
     content: message.content,
     runId: message.runId,
     clientMessageId: message.clientMessageId,
-    timestamp: toTimestamp(message.createdAt)
+    timestamp: toTimestamp(message.createdAt),
+    ...(assistantReferences.length > 0 ? { assistantReferences } : {})
   };
 }
 
@@ -53,7 +71,7 @@ export function buildChatFailureMessage(message: string, runId?: string): ChatMe
   return {
     id: createLocalMessageId(),
     role: 'assistant',
-    content: `I could not complete the troubleshooting run.\n\n${message}`,
+    content: `${CHAT_FAILURE_PREFIX}\n\n${message}`,
     runId,
     timestamp: Date.now()
   };
@@ -77,7 +95,18 @@ export function ensureFailedRunAssistantMessage(
   const existingAssistantMessage = chatMessages.find(
     (message) => message.role === 'assistant' && message.runId === run.id && (!isBlankAssistantMessage(message) || message.approval)
   );
-  if (existingAssistantMessage) return chatMessages;
+  if (existingAssistantMessage) {
+    if (
+      run.errorCode === 'GATEWAY_HTTP_ERROR' &&
+      String(existingAssistantMessage.content || '').trim().startsWith(CHAT_FAILURE_PREFIX)
+    ) {
+      const normalizedFailure = `${CHAT_FAILURE_PREFIX}\n\n${formatRunFailureMessage(run.errorCode, run.errorMessage)}`;
+      return chatMessages.map((message) =>
+        message === existingAssistantMessage ? { ...message, content: normalizedFailure } : message
+      );
+    }
+    return chatMessages;
+  }
 
   const failureMessage = buildChatFailureMessage(formatRunFailureMessage(run.errorCode, run.errorMessage), run.id);
   const endedAtTimestamp = Date.parse(run.endedAt || '');
@@ -238,6 +267,9 @@ export function sanitizeChatMessages(chatMessages: ChatMessage[]): ChatMessage[]
  */
 export function formatRunFailureMessage(errorCode?: string, errorMessage?: string): string {
   const rawMessage = String(errorMessage || '').trim();
+  if (errorCode === 'GATEWAY_HTTP_ERROR') {
+    return 'A required service could not handle this request. Try again later. If the problem continues, contact a workspace administrator.';
+  }
   if (errorCode === 'MODEL_UNAVAILABLE') {
     return 'This model is currently unavailable. Choose another model and retry.';
   }

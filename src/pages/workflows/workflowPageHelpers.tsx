@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { buildTraceFromRunEvents } from '@/features/targets/chat/hooks/chatRunTrace';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 import {
-  createDefaultWorkflowDefinitions,
   type WorkflowDefinition,
   type WorkflowStatus,
   type WorkflowTab
@@ -22,16 +21,8 @@ import { formatElapsedDuration } from '@/utils/dateTime';
 export const tabs: WorkflowTab[] = ['overview', 'agents', 'capabilities', 'runs', 'settings'];
 
 export type ScopeDraft = {
-  category: string;
-  enabledMcpServers: string;
-  enabledSkills: string;
-  policyMode: WorkflowDefinition['policy']['mode'];
-  approvalRequirements: string;
-  steps: Record<string, {
-    allowedTools: string;
-    contextGrants: string;
-    approvalRequired: boolean;
-  }>;
+  restrictionMode: 'inherit' | 'restrict';
+  semanticCapabilityIds: string;
 };
 
 export type CreateWorkflowDraft = {
@@ -39,9 +30,8 @@ export type CreateWorkflowDraft = {
   description: string;
   starterPrompt: string;
   agentIds: string[];
-  enabledMcpServers: string;
-  enabledSkills: string;
-  allowedTools: string;
+  semanticCapabilityIds: string;
+  restrictionMode: 'inherit' | 'restrict';
 };
 
 export type WorkflowEditDraft = {
@@ -52,14 +42,6 @@ export type WorkflowEditDraft = {
 
 export type AgentSelectionDraft = {
   agentIds: string[];
-};
-
-export type McpServerDraft = {
-  name: string;
-  type: string;
-  baseUrl: string;
-  command: string;
-  tools: string;
 };
 
 export function workflowStatusTone(status: WorkflowStatus): 'success' | 'warning' | 'neutral' {
@@ -196,19 +178,8 @@ export function workflowRunToTrace(run: WorkflowDefinition['runs'][number], even
 
 export function createScopeDraft(workflow: WorkflowDefinition): ScopeDraft {
   return {
-    category: workflow.category,
-    enabledMcpServers: joinLines(workflow.enabledMcpServers),
-    enabledSkills: joinLines(workflow.enabledSkills),
-    policyMode: workflow.policy.mode,
-    approvalRequirements: joinLines(workflow.policy.approvals),
-    steps: Object.fromEntries(workflow.steps.map((step) => [
-      step.id,
-      {
-        allowedTools: joinLines(step.allowedTools),
-        contextGrants: joinLines(step.contextGrants),
-        approvalRequired: step.approvalRequired
-      }
-    ]))
+    restrictionMode: workflow.capabilityRestrictionMode === 'inherit' ? 'inherit' : 'restrict',
+    semanticCapabilityIds: joinLines(workflow.semanticCapabilityIds)
   };
 }
 
@@ -218,9 +189,8 @@ export function createWorkflowDraft(): CreateWorkflowDraft {
     description: '',
     starterPrompt: '',
     agentIds: [],
-    enabledMcpServers: '',
-    enabledSkills: '',
-    allowedTools: ''
+    semanticCapabilityIds: '',
+    restrictionMode: 'inherit'
   };
 }
 
@@ -235,37 +205,21 @@ function uniqueInOrder(values: string[]): string[] {
 
 export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCreateInput {
   const name = draft.name.trim();
-  const enabledMcpServers = splitLines(draft.enabledMcpServers);
-  const enabledSkills = splitLines(draft.enabledSkills);
-  const allowedTools = splitLines(draft.allowedTools);
-  const agentIds = uniqueInOrder(draft.agentIds.map((agentId) => agentId.trim()));
+  const semanticCapabilityIds = draft.restrictionMode === 'restrict' ? splitLines(draft.semanticCapabilityIds) : [];
+  const agentIds = uniqueInOrder(draft.agentIds.map((agentId) => agentId.trim())).sort((left, right) => left.localeCompare(right));
 
   return {
     name,
     description: draft.description.trim(),
     tags: [],
-    starterPrompt: draft.starterPrompt.trim() || `Start ${name}.`,
+    prompt: draft.starterPrompt.trim() || `Start ${name}.`,
+    agentIds,
+    resourceRequirements: [],
     inputs: [],
-    enabledMcpServers,
-    enabledSkills,
-    requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
-    policy: {
-      mode: 'read_only',
-      maxRuntimeSeconds: 900,
-      retentionDays: 90,
-      approvalRequirements: []
-    },
-    steps: [{
-      id: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'workflow'}-step`,
-      title: 'Generate run plan',
-      requiredInputs: [],
-      enabledSkills,
-      agentIds,
-      allowedMcpServers: enabledMcpServers,
-      allowedTools,
-      contextGrants: ['workspace_metadata'],
-      approvalRequired: false
-    }]
+    capabilityPolicy: {
+      restrictionMode: draft.restrictionMode,
+      semanticCapabilityIds
+    }
   };
 }
 
@@ -279,66 +233,46 @@ export function createWorkflowEditDraft(workflow: WorkflowDefinition): WorkflowE
 
 export function createAgentSelectionDraft(workflow: WorkflowDefinition): AgentSelectionDraft {
   return {
-    agentIds: workflow.agents.map((agent) => agent.agentId).filter(Boolean)
+    agentIds: uniqueInOrder(workflow.agentIds).sort((left, right) => left.localeCompare(right))
   };
 }
 
 export function agentIdsFromDraft(draft: AgentSelectionDraft | CreateWorkflowDraft): string[] {
-  return uniqueInOrder(draft.agentIds.map((agentId) => agentId.trim()));
-}
-
-export function createMcpServerDraft(): McpServerDraft {
-  return {
-    name: '',
-    type: 'http',
-    baseUrl: '',
-    command: '',
-    tools: ''
-  };
+  return uniqueInOrder(draft.agentIds.map((agentId) => agentId.trim())).sort((left, right) => left.localeCompare(right));
 }
 
 export function createFallbackWorkflowOptions(_workflows: WorkflowDefinition[]): WorkflowOptionsCatalog {
   return {
-    clusters: [],
     mcpServers: [],
     mcpTools: [],
     skills: [],
     agents: [],
-    chatSessions: [],
-    outputFormats: [
-      { value: 'pdf', label: 'PDF' },
-      { value: 'markdown', label: 'Markdown' }
-    ],
-    approvalPolicies: [
-      { value: 'read_only', label: 'Read only' },
-      { value: 'read_write', label: 'Read/write with approvals' }
-    ],
+    outputFormats: [],
+    approvalPolicies: [],
     runtimeLimits: [],
     retentionPolicies: [],
     sourceAvailability: {
-      clusters: { status: 'unavailable', message: 'Target catalog is unavailable.' },
       mcpServers: { status: 'unavailable', message: 'MCP catalog has not loaded.' },
       mcpTools: { status: 'unavailable', message: 'MCP catalog has not loaded.' },
       skills: { status: 'unavailable', message: 'Skill catalog has not loaded.' },
       agents: { status: 'unavailable', message: 'Agent catalog has not loaded.' },
-      chatSessions: { status: 'unavailable', message: 'Chat session catalog is unavailable.' }
     }
   };
 }
 
 type WorkflowScopeAgentSource = {
   id: string;
-  mcpServers: string[];
-  tools: string[];
-  skills: string[];
+  semanticCapabilityIds: string[];
 };
 
-type WorkflowScopeOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
+type WorkflowScopeOptions = {
+  semanticCapabilities: WorkflowOption[];
+};
 
-function optionsForAgentValues(
+function optionsForCapabilityIds(
   values: string[],
-  catalogOptions: WorkflowOptionsCatalog['mcpServers']
-): WorkflowOptionsCatalog['mcpServers'] {
+  catalogOptions: WorkflowOption[]
+): WorkflowOption[] {
   const catalogByValue = new Map(catalogOptions.map((option) => [option.value, option]));
   return uniqueValues(values).map((value) => catalogByValue.get(value) || { value, label: value });
 }
@@ -352,9 +286,10 @@ export function getWorkflowScopeOptionsForAgents(
   const selectedAgents = uniqueInOrder(agentIds).map((agentId) => agentsById.get(agentId)).filter((agent): agent is WorkflowScopeAgentSource => Boolean(agent));
 
   return {
-    mcpServers: optionsForAgentValues(selectedAgents.flatMap((agent) => agent.mcpServers), catalog.mcpServers),
-    mcpTools: optionsForAgentValues(selectedAgents.flatMap((agent) => agent.tools), catalog.mcpTools),
-    skills: optionsForAgentValues(selectedAgents.flatMap((agent) => agent.skills), catalog.skills)
+    semanticCapabilities: optionsForCapabilityIds(
+      selectedAgents.flatMap((agent) => agent.semanticCapabilityIds),
+      catalog.mcpTools
+    )
   };
 }
 
@@ -389,12 +324,10 @@ export function normalizeWorkflowOptionsCatalog(
 ): WorkflowOptionsCatalog {
   const value = catalog && typeof catalog === 'object' ? catalog as Record<string, unknown> : {};
   return {
-    clusters: normalizeWorkflowOptionList(value.clusters, fallback.clusters),
     mcpServers: normalizeWorkflowOptionList(value.mcpServers, fallback.mcpServers),
     mcpTools: normalizeWorkflowOptionList(value.mcpTools, fallback.mcpTools),
     skills: normalizeWorkflowOptionList(value.skills, fallback.skills),
     agents: normalizeWorkflowOptionList(value.agents, fallback.agents),
-    chatSessions: normalizeWorkflowOptionList(value.chatSessions, fallback.chatSessions),
     outputFormats: normalizeWorkflowOptionList(value.outputFormats, fallback.outputFormats),
     approvalPolicies: normalizeWorkflowOptionList(value.approvalPolicies, fallback.approvalPolicies),
     runtimeLimits: normalizeWorkflowOptionList(value.runtimeLimits, fallback.runtimeLimits),
@@ -405,18 +338,14 @@ export function normalizeWorkflowOptionsCatalog(
   };
 }
 
-const defaultOrchestrator = {
-  agentId: 'agent-workflow-orchestrator',
-  name: 'System Orchestrator',
-  role: 'Coordinator',
-  required: true
-};
-
 function workflowOwnerLabel(
   workflow: WorkflowApiDefinition,
   fallback?: WorkflowDefinition,
   ownerLabelsByUserId?: Map<string, string>
 ): string {
+  if (workflow.origin?.type === 'template' || workflow.source === 'system' || fallback?.source === 'system') {
+    return 'AcornOps';
+  }
   const createdByUser = workflow.createdByUser;
   if (createdByUser) {
     return createdByUser.displayName || createdByUser.email || createdByUser.userId || createdByUser.id || fallback?.owner || 'Unknown user';
@@ -426,7 +355,7 @@ function workflowOwnerLabel(
     if (ownerLabel) return ownerLabel;
     return workflow.createdBy === 'system' ? 'AcornOps' : workflow.createdBy;
   }
-  return fallback?.owner || (workflow.source === 'system' || fallback?.source === 'system' ? 'AcornOps' : 'Unknown user');
+  return fallback?.owner || 'Unknown user';
 }
 
 function titleCaseAgentId(agentId: string): string {
@@ -443,111 +372,62 @@ export function mapApiWorkflowToDefinition(
   options?: WorkflowOptionsCatalog,
   ownerLabelsByUserId?: Map<string, string>
 ): WorkflowDefinition {
-  const workflowSteps = Array.isArray(workflow.steps) && workflow.steps.length > 0
-    ? workflow.steps
-    : fallback?.steps.map((step) => ({
-        id: step.id,
-        title: step.title,
-        requiredInputs: step.requiredInputs,
-        agentIds: step.agentIds || [],
-        enabledSkills: step.enabledSkills,
-        allowedMcpServers: step.allowedMcpServers,
-        allowedTools: step.allowedTools,
-        contextGrants: step.contextGrants,
-        approvalRequired: step.approvalRequired,
-        outputArtifacts: step.outputArtifacts
-      })) || [];
-  const workflowPolicy = workflow.policy || {
-    mode: fallback?.policy.mode || 'read_only',
-    maxRuntimeSeconds: 0,
-    retentionDays: 0,
-    approvalRequirements: fallback?.policy.approvals || []
-  };
-  const workflowEnabledTools = Array.isArray(workflow.enabledTools)
-    ? workflow.enabledTools.filter((tool): tool is string => typeof tool === 'string')
-    : undefined;
-  const requiredInputs = uniqueValues(workflowSteps.flatMap((step) => step.requiredInputs || []));
-  const allowedTools = workflowEnabledTools && workflowEnabledTools.length > 0
-    ? uniqueValues(workflowEnabledTools)
-    : uniqueValues(workflowSteps.flatMap((step) => step.allowedTools || []));
-  const enabledMcpServers = Array.isArray(workflow.enabledMcpServers)
-    ? uniqueValues(workflow.enabledMcpServers)
-    : uniqueValues(workflowSteps.flatMap((step) => step.allowedMcpServers || []));
-  const enabledSkills = Array.isArray(workflow.enabledSkills)
-    ? uniqueValues(workflow.enabledSkills)
-    : uniqueValues(workflowSteps.flatMap((step) => step.enabledSkills || []));
-  const contextGrants = uniqueValues(workflowSteps.flatMap((step) => step.contextGrants || []));
-  const agentIds = uniqueInOrder(workflowSteps.flatMap((step) => step.agentIds || []));
-  const fallbackAssignments = fallback?.agents || [];
+  const semanticCapabilityIds = uniqueValues(workflow.capabilityPolicy.semanticCapabilityIds);
+  const capabilityRestrictionMode = workflow.capabilityPolicy.restrictionMode === 'inherit' ? 'inherit' : 'restrict';
+  const agentIds = uniqueInOrder(Array.isArray(workflow.agentIds) ? workflow.agentIds : [])
+    .sort((left, right) => left.localeCompare(right));
+  const executionMode = workflow.executionMode || (agentIds.length > 1 ? 'coordinated' : 'direct');
   const agentOptionLabels = new Map((options?.agents || []).map((agent) => [agent.value, agent.label]));
+  const workflowPolicy = workflow.capabilityPolicy;
+  const contextGrants = uniqueValues(workflowPolicy.contextGrants);
+  const fallbackAssignments = fallback?.agents || [];
   const apiAssignments = agentIds.map((agentId) => {
     const fallbackAgent = fallbackAssignments.find((agent) => agent.agentId === agentId);
-    return fallbackAgent || {
+    return {
       agentId,
-      name: agentOptionLabels.get(agentId) || titleCaseAgentId(agentId),
-      role: 'Agent',
-      required: false
+      name: fallbackAgent?.name || agentOptionLabels.get(agentId) || titleCaseAgentId(agentId),
+      role: executionMode === 'direct' ? 'Direct' : 'AcornOps-coordinated',
+      required: true
     };
   });
+  const source = workflow.source || (workflow.origin?.type === 'template' ? 'system' : workflow.origin ? 'user' : fallback?.source);
 
   return {
     id: workflow.id,
     workspaceId,
+    version: workflow.version,
     name: workflow.name,
     description: workflow.description || fallback?.description || 'Workspace-scoped workflow served by control-plane.',
     status: workflow.status || 'active',
-    source: workflow.source || fallback?.source,
+    source,
+    origin: workflow.origin,
+    createdBy: workflow.createdBy,
+    agentIds,
+    executionMode,
+    semanticCapabilityIds,
+    capabilityRestrictionMode,
+    resourceRequirements: workflow.resourceRequirements || [],
+    readiness: workflow.readiness,
     owner: workflowOwnerLabel(workflow, fallback, ownerLabelsByUserId),
-    category: typeof workflow.category === 'string' ? workflow.category : fallback?.category || 'cluster-triage',
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
     lastRun: fallback?.lastRun || 'No runs yet',
-    primaryAction: fallback?.primaryAction || 'Start workflow',
-    orchestrator: fallback?.orchestrator || {
-      ...defaultOrchestrator,
-      agentId: workflow.orchestratorAgentId || defaultOrchestrator.agentId
-    },
     agents: apiAssignments.length > 0 ? apiAssignments : fallback?.agents || [],
     requiredPermissions: Array.isArray(workflow.requiredPermissions) ? workflow.requiredPermissions : fallback?.requiredPermissions || [],
-    enabledMcpServers,
-    allowedTools,
-    enabledSkills,
     contextGrants,
-    disabledCapabilities: fallback?.disabledCapabilities || [],
     inputs: Array.isArray(workflow.inputs) && workflow.inputs.length > 0
       ? workflow.inputs.map((input) => ({
           name: input.name,
           label: input.label,
-          type: input.type === 'output_format' ? 'format' : (['text', 'select', 'cluster', 'chat_session_list', 'repository', 'format'].includes(input.type) ? input.type as WorkflowDefinition['inputs'][number]['type'] : 'select'),
+          type: input.type === 'output_format' ? 'format' : (['text', 'select', 'format'].includes(input.type) ? input.type as WorkflowDefinition['inputs'][number]['type'] : 'select'),
           required: input.required,
           optionSource: input.optionSource
         }))
-      : requiredInputs.map((name) => ({
-          name,
-          label: titleFromInputName(name),
-          type: 'text',
-          required: true
-        })),
-    steps: workflowSteps.map((step) => ({
-      id: step.id,
-      title: step.title,
-      prompt: fallback?.steps.find((fallbackStep) => fallbackStep.id === step.id)?.prompt || step.title,
-      requiredInputs: step.requiredInputs || [],
-      agentIds: step.agentIds || [],
-      enabledSkills: step.enabledSkills || [],
-      allowedTools: step.allowedTools || [],
-      allowedMcpServers: step.allowedMcpServers || [],
-      contextGrants: step.contextGrants || [],
-      approvalRequired: Boolean(step.approvalRequired),
-      outputArtifacts: step.outputArtifacts
-    })),
+      : [],
     policy: {
       mode: workflowPolicy.mode,
-      maxRuntime: workflowPolicy.maxRuntimeSeconds > 0 ? `${Math.round(workflowPolicy.maxRuntimeSeconds / 60)} min` : fallback?.policy.maxRuntime || '',
-      retention: workflowPolicy.retentionDays > 0 ? `${workflowPolicy.retentionDays} days` : fallback?.policy.retention || '',
-      approvals: workflowPolicy.approvalRequirements || []
+      approvals: uniqueValues(workflowPolicy.approvalRequirements)
     },
-    scope: { type: 'workspace' },
-    starterPrompt: workflow.starterPrompt || fallback?.starterPrompt || `Start ${workflow.name}.`,
+    starterPrompt: workflow.prompt || workflow.starterPrompt || fallback?.starterPrompt || `Start ${workflow.name}.`,
     runs: fallback?.runs || []
   };
 }

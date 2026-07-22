@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { canManageWorkspaceMembers, canReadWorkspaceAuditLog, canReadWorkspaceData, canReadWorkspaceMembers } from '@/app/workspacePermissions';
+import { canManageWorkspaceMembers, canReadWorkspaceAuditLog, canReadWorkspaceData, canReadWorkspaceMembers, hasWorkspacePermission } from '@/app/workspacePermissions';
 import { Workspace } from '@/types';
 
 function workspace(input: Partial<Workspace>): Workspace {
@@ -75,5 +75,17 @@ describe('workspace permissions', () => {
     expect(canReadWorkspaceMembers(customWorkspace)).toBe(true);
     expect(canReadWorkspaceAuditLog(customWorkspace)).toBe(false);
     expect(canManageWorkspaceMembers(customWorkspace)).toBe(true);
+  });
+
+  it('treats an explicit false as authoritative over a role-template capability', () => {
+    const deniedWorkspace = workspace({
+      permissions: { manage_workflows: false } as Workspace['permissions'],
+      currentUserRoleTemplate: {
+        key: 'operator', displayName: 'Operator', description: '', kind: 'custom',
+        capabilities: ['manage_workflows'], protected: false, sortOrder: 100
+      }
+    });
+
+    expect(hasWorkspacePermission(deniedWorkspace, 'manage_workflows')).toBe(false);
   });
 });

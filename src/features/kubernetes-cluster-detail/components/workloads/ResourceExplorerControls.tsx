@@ -2,6 +2,7 @@ import React from 'react';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Select, SelectOption } from '@/components/common/Select';
+import { SearchFilterFrame } from '@/components/common/SearchFilterFrame';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { Workload } from '@/types';
 import {
@@ -43,7 +44,7 @@ export const WorkloadTriageShortcut: React.FC<{
         aria-pressed={showUnhealthyPodsOnly}
         onClick={onToggle}
         className={classNames(
-          'type-label flex h-11 w-full min-w-0 max-w-full items-center gap-2 rounded-md border px-3 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 lg:w-auto',
+          'type-label flex h-11 w-full min-w-0 max-w-full items-center gap-2 rounded-md border px-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 lg:w-auto',
           showUnhealthyPodsOnly
             ? 'border-accent/30 bg-accent-soft text-accent-strong'
             : 'border-ui-border bg-ui-surface text-ui-text-muted hover:border-accent/30 hover:text-accent-strong'
@@ -175,51 +176,54 @@ export const ResourceSearchFilterBar: React.FC<{
   };
 
   return (
-    <div
-      data-resource-search-filter-bar="true"
-      className="grid min-w-0 w-full max-w-full gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-4 shadow-sm lg:grid-cols-[minmax(16rem,1fr)_minmax(11rem,14rem)_minmax(11rem,14rem)_minmax(9rem,max-content)]"
-    >
-      <div className="relative min-w-0">
-        <label htmlFor="resource-search" className="sr-only">{t('resources.filters.search')}</label>
-        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-        <input
-          id="resource-search"
-          type="search"
-          value={searchTerm}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder={t('resources.filters.search')}
-          className={resourceSearchInputClassName}
-        />
-      </div>
-      <div data-resource-category-select="true" className="min-w-0">
-        <Select<ResourceCategoryValue>
-          value={activeCategoryValue}
-          options={categoryOptions}
-          onChange={onCategoryChange}
-          className="w-full"
-          ariaLabel={t('resources.filters.category')}
-        />
-      </div>
-      <div className="min-w-0">
-        {showNamespaceFilter ? (
-          <Select<string>
-            value={selectedNamespace}
-            options={namespaceOptions}
-            onChange={onNamespaceChange}
-            className="w-full"
-            ariaLabel={t('workloads.namespace')}
-          />
-        ) : (
-          <div
-            className={resourceScopeDisplayClassName}
-            aria-label={t('resources.clusterScoped')}
-            title={t('resources.clusterScoped')}
-          >
-            <span className="min-w-0 truncate">{t('resources.clusterScoped')}</span>
+    <div data-resource-search-filter-bar="true">
+      <SearchFilterFrame
+        search={(
+          <div className="relative min-w-0">
+            <label htmlFor="resource-search" className="sr-only">{t('resources.filters.search')}</label>
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
+            <input
+              id="resource-search"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder={t('resources.filters.search')}
+              className={resourceSearchInputClassName}
+            />
           </div>
         )}
-      </div>
-      {children || <div className="hidden min-w-[9rem] lg:block" aria-hidden="true" />}
+        filterControls={[
+          <div key="category" data-resource-category-select="true" className="min-w-0">
+            <Select<ResourceCategoryValue>
+              value={activeCategoryValue}
+              options={categoryOptions}
+              onChange={onCategoryChange}
+              className="w-full"
+              ariaLabel={t('resources.filters.category')}
+            />
+          </div>,
+          <div key="scope" className="min-w-0">
+            {showNamespaceFilter ? (
+              <Select<string>
+                value={selectedNamespace}
+                options={namespaceOptions}
+                onChange={onNamespaceChange}
+                className="w-full"
+                ariaLabel={t('workloads.namespace')}
+              />
+            ) : (
+              <div
+                className={resourceScopeDisplayClassName}
+                aria-label={t('resources.clusterScoped')}
+                title={t('resources.clusterScoped')}
+              >
+                <span className="min-w-0 truncate">{t('resources.clusterScoped')}</span>
+              </div>
+            )}
+          </div>
+        ]}
+        trailingActions={children}
+      />
     </div>
   );
 };

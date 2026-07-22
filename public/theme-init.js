@@ -1,7 +1,10 @@
 (function initializeTheme() {
   var preference = 'system';
   try {
-    var saved = window.localStorage.getItem('app_theme');
+    var saved = window.localStorage.getItem('acornops_active_theme_preference');
+    if (saved === null) {
+      saved = window.localStorage.getItem('app_theme');
+    }
     if (saved === 'light' || saved === 'dark' || saved === 'system') {
       preference = saved;
     }

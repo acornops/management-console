@@ -2,6 +2,7 @@ import React from 'react';
 import type { TFunction } from 'i18next';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import { Button } from '@/components/common/Button';
+import { BookOpen, Wrench } from 'lucide-react';
 import { MessageActions } from '@/features/targets/chat/components/MessageActions';
 import { markdownRemarkPlugins } from '@/features/targets/chat/lib/markdown';
 import type { ChatMessage } from '@/types';
@@ -92,9 +93,24 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
               </div>
             </form>
           ) : (
-            <ReactMarkdown components={markdownComponents} remarkPlugins={markdownRemarkPlugins}>
-              {message.content}
-            </ReactMarkdown>
+            <>
+              {Boolean(message.assistantReferences?.length) && (
+                <div className="mb-2 flex flex-wrap gap-1.5" role="list" aria-label={t('chat.references')}>
+                  {message.assistantReferences!.map((reference) => {
+                    const Icon = reference.kind === 'tool' ? Wrench : BookOpen;
+                    return (
+                      <span key={`${reference.kind}:${reference.id}`} role="listitem" className="inline-flex items-center gap-1 rounded bg-ui-bg/15 px-1.5 py-0.5 text-[11px] font-semibold">
+                        <Icon className="h-3 w-3" aria-hidden="true" />
+                        {reference.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+              <ReactMarkdown components={markdownComponents} remarkPlugins={markdownRemarkPlugins}>
+                {message.content}
+              </ReactMarkdown>
+            </>
           )}
         </div>
         {!isEditing && (

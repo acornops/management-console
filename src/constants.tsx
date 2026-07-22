@@ -50,6 +50,7 @@ import {
   Languages,
   Clock,
   RefreshCw,
+  Save,
   Bot,
   CircleHelp
 } from 'lucide-react';
@@ -106,6 +107,7 @@ export const ICONS = {
   Languages,
   Clock,
   RefreshCw,
+  Save,
   Bot,
   CircleHelp
 };

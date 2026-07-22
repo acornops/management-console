@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import { useCursorCollection } from '@/hooks/useCursorCollection';
 
 export const VIRTUAL_MACHINE_CATALOG_REFRESH_MS = 30000;
 
@@ -24,53 +25,24 @@ export function useVirtualMachineListRefresh({
   onReplaceWorkspaceVirtualMachines
 }: VirtualMachineListRefreshArgs): VirtualMachineListRefreshState {
   const hasWorkspaceVirtualMachineCache = hasLoadedWorkspaceVirtualMachines || virtualMachines.length > 0;
-  const hasWorkspaceVirtualMachineCacheRef = useRef(hasWorkspaceVirtualMachineCache);
-  const requestSequenceRef = useRef(0);
-  const [isLoading, setIsLoading] = useState(!hasWorkspaceVirtualMachineCache);
-  const [loadError, setLoadError] = useState<unknown | null>(null);
+  const loadVirtualMachinePage = useCallback(({ cursor, limit, signal }: { cursor?: string; limit: number; signal: AbortSignal }) => (
+    controlPlaneApi.listVirtualMachinesForWorkspace(workspaceId, { limit, cursor, signal })
+  ), [workspaceId]);
+  const collection = useCursorCollection({
+    filters: { workspaceId },
+    getKey: (virtualMachine: ControlPlaneVirtualMachine) => virtualMachine.id,
+    loadPage: loadVirtualMachinePage,
+    pageSize: 50,
+    strategy: 'drain'
+  });
+  const { items, phase, error } = collection;
+  const reload = useCallback(() => collection.refresh(), [collection.refresh]);
+  const isLoading = !hasWorkspaceVirtualMachineCache && (phase === 'loading' || phase === 'refreshing');
+  const loadError = phase === 'error' ? new Error(error || 'Failed loading virtual machines') : null;
 
   useEffect(() => {
-    hasWorkspaceVirtualMachineCacheRef.current = hasWorkspaceVirtualMachineCache;
-  }, [hasWorkspaceVirtualMachineCache]);
-
-  const reload = useCallback(async () => {
-    const requestId = ++requestSequenceRef.current;
-    if (!hasWorkspaceVirtualMachineCacheRef.current) setIsLoading(true);
-    setLoadError(null);
-    try {
-      const itemsById = new Map<string, ControlPlaneVirtualMachine>();
-      const seenCursors = new Set<string>();
-      let cursor: string | undefined;
-
-      do {
-        const page = await controlPlaneApi.listVirtualMachinesForWorkspace(workspaceId, { limit: 50, cursor });
-        if (requestId !== requestSequenceRef.current) return;
-        page.items.forEach((vm) => itemsById.set(vm.id, vm));
-        cursor = page.nextCursor;
-        if (cursor && seenCursors.has(cursor)) {
-          throw new Error('The control plane repeated a virtual-machine page cursor.');
-        }
-        if (cursor) seenCursors.add(cursor);
-      } while (cursor);
-
-      if (requestId === requestSequenceRef.current) {
-        onReplaceWorkspaceVirtualMachines(workspaceId, [...itemsById.values()]);
-      }
-    } catch (error) {
-      if (requestId !== requestSequenceRef.current) return;
-      console.error('Failed loading virtual machines', error);
-      setLoadError(error);
-    } finally {
-      if (requestId === requestSequenceRef.current) setIsLoading(false);
-    }
-  }, [onReplaceWorkspaceVirtualMachines, workspaceId]);
-
-  useEffect(() => {
-    void reload();
-    return () => {
-      requestSequenceRef.current += 1;
-    };
-  }, [reload]);
+    if (phase === 'ready') onReplaceWorkspaceVirtualMachines(workspaceId, items);
+  }, [items, onReplaceWorkspaceVirtualMachines, phase, workspaceId]);
 
   useEffect(() => {
     const refreshWhenVisible = () => {

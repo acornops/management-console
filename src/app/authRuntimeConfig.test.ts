@@ -16,23 +16,27 @@ const authApiSurface = `${api}\n${authApi}`;
 
 describe('runtime auth configuration', () => {
   it('loads auth capabilities from the control plane before rendering login controls', () => {
-    expect(authApiSurface).toContain("requestJson<ControlPlaneAuthConfig>('/api/v1/auth/config')");
-    expect(authConfigHook).toContain('const [authConfig, setAuthConfig] = useState<ControlPlaneAuthConfig>(defaultAuthConfig)');
+    expect(authApiSurface).toContain("requestJson<ControlPlaneAuthConfig>('/api/v1/auth/config'");
+    expect(authConfigHook).toContain("status: 'loading'");
+    expect(authConfigHook).toContain("status: 'ready'");
+    expect(authConfigHook).toContain("status: 'unavailable'");
     expect(authConfigHook).toContain('void controlPlaneApi.getAuthConfig()');
-    expect(app).toContain('const authConfig = useAuthConfig();');
+    expect(app).toContain('const authConfigState = useAuthConfig();');
+    expect(app).toContain('const authConfig = authConfigState.config;');
+    expect(app).toContain("authConfigState.status === 'unavailable'");
     expect(app).toContain('oidcEnabled={authConfig.oidcEnabled}');
     expect(app).toContain('passwordAuthEnabled={authConfig.passwordAuthEnabled}');
     expect(app).toContain('passwordSignupEnabled={authConfig.passwordSignupEnabled}');
     expect(app).toContain('passwordResetEnabled={authConfig.passwordResetEnabled}');
     expect(authConfigHook).toContain('passwordEmailVerificationRequired: true');
-    expect(authConfigHook).toContain('passwordResetEnabled: true');
+    expect(authConfigHook).toContain('passwordResetEnabled: false');
   });
 
-  it('keeps dual auth visible by default and hides disabled modes from login', () => {
-    expect(authConfigHook).toContain('oidcEnabled: true');
-    expect(authConfigHook).toContain('passwordAuthEnabled: true');
-    expect(authConfigHook).toContain('passwordSignupEnabled: true');
-    expect(authConfigHook).toContain('passwordResetEnabled: true');
+  it('fails closed by default and hides disabled modes from login', () => {
+    expect(authConfigHook).toContain('oidcEnabled: false');
+    expect(authConfigHook).toContain('passwordAuthEnabled: false');
+    expect(authConfigHook).toContain('passwordSignupEnabled: false');
+    expect(authConfigHook).toContain('passwordResetEnabled: false');
     expect(loginPage).toContain('<LoginAuthPanel');
     expect(loginAuthPanel).toContain('const canSignup = passwordAuthEnabled && passwordSignupEnabled');
     expect(loginAuthPanel).toContain('const canResetPassword = passwordAuthEnabled && passwordResetEnabled');

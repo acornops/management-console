@@ -1,45 +1,29 @@
 import { Workspace } from '@/types';
 
-export function canReadWorkspaceData(workspace: Workspace | undefined): boolean {
+export type WorkspacePermission = keyof NonNullable<Workspace['permissions']>;
+
+export function hasWorkspacePermission(
+  workspace: Workspace | undefined,
+  permission: WorkspacePermission
+): boolean {
   if (!workspace) return false;
-  if (typeof workspace.permissions?.read_workspace_data === 'boolean') {
-    return workspace.permissions.read_workspace_data;
-  }
-  if (workspace.currentUserRoleTemplate) {
-    return workspace.currentUserRoleTemplate.capabilities.includes('read_workspace_data');
-  }
-  return false;
+  const serverPermission = workspace.permissions?.[permission];
+  if (typeof serverPermission === 'boolean') return serverPermission;
+  return workspace.currentUserRoleTemplate?.capabilities.includes(permission) ?? false;
+}
+
+export function canReadWorkspaceData(workspace: Workspace | undefined): boolean {
+  return hasWorkspacePermission(workspace, 'read_workspace_data');
 }
 
 export function canReadWorkspaceAuditLog(workspace: Workspace | undefined): boolean {
-  if (!workspace) return false;
-  if (typeof workspace.permissions?.read_audit_log === 'boolean') {
-    return workspace.permissions.read_audit_log;
-  }
-  if (workspace.currentUserRoleTemplate) {
-    return workspace.currentUserRoleTemplate.capabilities.includes('read_audit_log');
-  }
-  return false;
+  return hasWorkspacePermission(workspace, 'read_audit_log');
 }
 
 export function canReadWorkspaceMembers(workspace: Workspace | undefined): boolean {
-  if (!workspace) return false;
-  if (typeof workspace.permissions?.read_members === 'boolean') {
-    return workspace.permissions.read_members;
-  }
-  if (workspace.currentUserRoleTemplate) {
-    return workspace.currentUserRoleTemplate.capabilities.includes('read_members');
-  }
-  return false;
+  return hasWorkspacePermission(workspace, 'read_members');
 }
 
 export function canManageWorkspaceMembers(workspace: Workspace | undefined): boolean {
-  if (!workspace) return false;
-  if (typeof workspace.permissions?.manage_members === 'boolean') {
-    return workspace.permissions.manage_members;
-  }
-  if (workspace.currentUserRoleTemplate) {
-    return workspace.currentUserRoleTemplate.capabilities.includes('manage_members');
-  }
-  return false;
+  return hasWorkspacePermission(workspace, 'manage_members');
 }

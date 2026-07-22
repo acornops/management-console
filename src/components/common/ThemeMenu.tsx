@@ -131,7 +131,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({
           <ThemeToggleIcon resolvedTheme={resolvedTheme} />
         ) : variant === 'account' ? (
           <span className="flex min-w-0 items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-control-boundary bg-ui-bg">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg">
               <ThemeToggleIcon resolvedTheme={resolvedTheme} />
             </span>
             <span className="min-w-0">

@@ -9,13 +9,16 @@ not drift.
 
 - Overview is the explicit workspace landing destination.
 - Inventory contains Kubernetes Clusters and Virtual Machines.
-- Automation contains Agents and Workflows. Schedules is a route-level view of
-  Workflows, not a separate sidebar destination.
+- Automation keeps Agents and Workflows adjacent, followed by MCP Catalog as a
+  capability-discovery destination. Schedules is a route-level view of Workflows,
+  not a separate sidebar destination.
 - Governance contains Approvals for workspace-data readers and Audit Log for
   audit-log readers. Omit the group when neither destination is permitted.
 - Utilities contains Workspace Settings and Help and is visually separated from
   governance.
 - Account controls remain pinned outside the independently scrolling navigation.
+- Navigation overflow remains available to wheel, touch, and keyboard input, but
+  desktop and mobile navigation do not display scrollbar chrome.
 
 ## Route and Link Rules
 
@@ -48,4 +51,3 @@ values at `99+` while retaining the exact accessible label. Reserve badge space
 so polling cannot shift labels or row height. The shell refreshes immediately on
 workspace changes and approval decisions, every 30 seconds while visible, and
 on window focus. A transient request failure keeps the last successful value.
-

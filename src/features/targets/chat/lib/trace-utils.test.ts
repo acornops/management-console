@@ -49,7 +49,13 @@ describe('trace-utils', () => {
       'Tokens: input 8, output 3, reasoning 0'
     );
     expect(formatRunUsageDetail(undefined)).toBeUndefined();
-    expect(formatTraceFailureDetail()).toBe('Check the assistant response for details.');
+    expect(formatTraceFailureDetail(
+      'GATEWAY_HTTP_ERROR',
+      'llm-gateway returned HTTP 404: {"detail":"Not Found"}'
+    )).toBe(
+      'A required service could not handle this request. Try again later. If the problem continues, contact a workspace administrator.'
+    );
+    expect(formatTraceFailureDetail()).toBe('No additional details were provided.');
   });
 
   it('deduplicates identical consecutive trace steps', () => {

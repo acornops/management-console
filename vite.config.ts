@@ -3,13 +3,20 @@ import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { configDefaults, defineConfig } from 'vitest/config';
+import { resolveAppDataMode } from './src/config/appDataMode';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, '.', '');
   const basePath = env.VITE_APP_BASE_PATH || '/';
+  const dataMode = resolveAppDataMode(env.VITE_APP_DATA_MODE, {
+    production: command === 'build' && mode === 'production'
+  });
   const analyzeBundle = process.env.ANALYZE === 'true' || env.ANALYZE === 'true';
   return {
     base: basePath.endsWith('/') ? basePath : `${basePath}/`,
+    define: {
+      'import.meta.env.VITE_APP_DATA_MODE': JSON.stringify(dataMode)
+    },
     server: {
       port: 3000,
       host: '0.0.0.0',
@@ -17,7 +24,12 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       ...(analyzeBundle
-        ? [visualizer({ filename: 'dist/stats.html', gzipSize: true, brotliSize: true })]
+        ? [visualizer({
+            filename: 'dist/stats.json',
+            template: 'raw-data',
+            gzipSize: true,
+            brotliSize: true
+          })]
         : [])
     ],
     build: {
@@ -46,7 +58,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'node',
-      exclude: [...configDefaults.exclude, 'tests/design-system/**'],
+      exclude: [...configDefaults.exclude, 'tests/design-system/**', 'tests/fixtures/**', 'tests/mcp-parity/**'],
       testTimeout: 10000,
       passWithNoTests: false,
       clearMocks: true,

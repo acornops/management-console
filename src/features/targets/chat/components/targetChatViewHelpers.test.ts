@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  resolveAiSettingsGateReason,
+  getHistoryFocusWrapIndex,
   resolveComposerReasoningEffort,
   resolveComposerRuntimeSelection,
-  buildComposerModelOptions
+  buildComposerModelOptions,
+  shouldDismissHistoryOnKeyDown
 } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { WorkspaceAiSettings } from '@/types';
 
@@ -26,17 +27,21 @@ function aiSettings(overrides: Partial<WorkspaceAiSettings> = {}): WorkspaceAiSe
 }
 
 describe('target chat view helpers', () => {
+  it('wraps Tab focus within the mobile history drawer', () => {
+    expect(getHistoryFocusWrapIndex(2, 3, false)).toBe(0);
+    expect(getHistoryFocusWrapIndex(0, 3, true)).toBe(2);
+    expect(getHistoryFocusWrapIndex(1, 3, false)).toBeNull();
+  });
+
+  it('dismisses history with Escape only when it is an overlay', () => {
+    expect(shouldDismissHistoryOnKeyDown('Escape', true)).toBe(true);
+    expect(shouldDismissHistoryOnKeyDown('Escape', false)).toBe(false);
+    expect(shouldDismissHistoryOnKeyDown('Tab', true)).toBe(false);
+  });
+
   it('uses the workspace reasoning effort default until the user changes the composer effort', () => {
     expect(resolveComposerReasoningEffort(aiSettings(), 'low', false)).toBe('medium');
     expect(resolveComposerReasoningEffort(aiSettings(), 'high', true)).toBe('high');
-  });
-
-  it('gates assistant chat when AI settings are unavailable or not configured', () => {
-    expect(resolveAiSettingsGateReason(false, false, '', true)).toBeNull();
-    expect(resolveAiSettingsGateReason(true, true, 'load failed', false)).toBeNull();
-    expect(resolveAiSettingsGateReason(true, false, 'load failed', false)).toBe('unavailable');
-    expect(resolveAiSettingsGateReason(true, false, '', true)).toBe('not_configured');
-    expect(resolveAiSettingsGateReason(true, false, '', false)).toBeNull();
   });
 
   it('falls back when the configured workspace reasoning effort is outside policy', () => {

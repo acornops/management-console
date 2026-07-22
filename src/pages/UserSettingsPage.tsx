@@ -1,11 +1,11 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { handleAppLinkClick } from '@/app/workspaceNavigation';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { PageBackLink, PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
@@ -20,11 +20,13 @@ import {
 } from '@/services/controlPlaneApi';
 import { User } from '@/types';
 import { formatUserDate } from '@/utils/dateTime';
+import { AppPaths } from '@/utils/routes';
 
 interface UserSettingsPageProps {
   user: User;
   language: AppLanguageCode;
   languageOptions: AppLanguageOption[];
+  onGoToWorkspaces: () => void;
   onLogout: () => void;
   onSetLanguage: (language: AppLanguageCode) => void;
   embedded?: boolean;
@@ -249,6 +251,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
   user,
   language,
   languageOptions,
+  onGoToWorkspaces,
   onLogout,
   onSetLanguage,
   embedded = false
@@ -420,9 +423,17 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
   };
 
   return (
-    <PageShell embedded={embedded} width="narrow">
+    <PageShell embedded={embedded}>
       {!embedded && (
-        <PageHeader title={t('settings.title')} description={t('settings.subtitle')} />
+        <>
+          <PageBackLink
+            href={AppPaths.workspaces()}
+            onClick={(event) => handleAppLinkClick(event, AppPaths.workspaces(), () => onGoToWorkspaces())}
+          >
+            {t('settings.backToWorkspaces')}
+          </PageBackLink>
+          <PageHeader title={t('settings.title')} description={t('settings.subtitle')} />
+        </>
       )}
 
       <div className="max-w-4xl">
@@ -566,14 +577,16 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
             label={t('app.logout')}
             description={t('settings.logoutBody')}
             action={
-              <motion.button
-                whileTap={{ scale: 0.97 }}
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={onLogout}
-                className="control-target rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-2 text-xs font-bold text-status-danger-text transition-all hover:bg-status-danger-soft bg-status-danger-soft text-status-danger-text"
+                className="w-full sm:w-auto"
               >
+                <ICONS.LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                 {t('app.logout')}
-              </motion.button>
+              </Button>
             }
           />
         </SettingSection>

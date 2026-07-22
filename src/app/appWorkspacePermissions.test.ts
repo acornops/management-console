@@ -26,6 +26,20 @@ describe('app workspace permission lookup', () => {
     expect(getWorkspacePermissionValue(workspaces, 'user@example.com', 'workspace-a', 'manage_members')).toBe(true);
   });
 
+  it('does not let a role-template capability override explicit denial', () => {
+    const workspaces = new Map([
+      ['workspace-a', workspace({
+        permissions: { manage_members: false } as Workspace['permissions'],
+        currentUserRoleTemplate: {
+          key: 'manager', displayName: 'Manager', description: '', kind: 'custom',
+          capabilities: ['manage_members'], protected: false, sortOrder: 100
+        }
+      })]
+    ]);
+
+    expect(getWorkspacePermissionValue(workspaces, undefined, 'workspace-a', 'manage_members')).toBe(false);
+  });
+
   it('uses role template capabilities when explicit permissions are absent', () => {
     const workspaces = new Map([
       ['workspace-a', workspace({

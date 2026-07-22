@@ -9,20 +9,19 @@ export interface ThemeToggleIconProps {
   resolvedTheme: ResolvedTheme;
 }
 
-/** Shows the appearance a theme control will reveal, not the current theme. */
+/** Shows the currently resolved appearance. */
 export const ThemeToggleIcon: React.FC<ThemeToggleIconProps> = ({
   className = 'h-4 w-4',
   resolvedTheme
 }) => {
   const shouldReduceMotion = useReducedMotion();
-  const destinationTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
-  const Icon = destinationTheme === 'dark' ? Moon : Sun;
+  const Icon = resolvedTheme === 'dark' ? Moon : Sun;
 
   return (
     <span className={`relative inline-flex ${className}`} aria-hidden="true">
       <AnimatePresence initial={false} mode="popLayout">
         <motion.span
-          key={destinationTheme}
+          key={resolvedTheme}
           className="absolute inset-0 inline-flex items-center justify-center"
           initial={shouldReduceMotion ? false : { opacity: 0, rotate: -24, scale: 0.82 }}
           animate={{ opacity: 1, rotate: 0, scale: 1 }}

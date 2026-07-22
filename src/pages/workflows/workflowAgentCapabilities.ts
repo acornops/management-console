@@ -1,7 +1,7 @@
-import type { AgentDefinition } from '@/pages/agents/agentModel';
+import { getAgentEffectiveActionPolicy, type AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
 
-type WorkflowCapabilityAgentSource = Pick<AgentDefinition, 'id' | 'name' | 'mcpServers' | 'tools' | 'skills' | 'approvalPolicy' | 'capabilities'>;
+type WorkflowCapabilityAgentSource = Pick<AgentDefinition, 'id' | 'name' | 'mcpServers' | 'mcpInstallations' | 'tools' | 'skills' | 'skillInstallations' | 'semanticCapabilityIds' | 'permissionMode' | 'capabilities'>;
 
 export type WorkflowAgentCapabilityReview = {
   agentId: string;
@@ -9,9 +9,10 @@ export type WorkflowAgentCapabilityReview = {
   role: string;
   required: boolean;
   mcpServers: string[];
+  semanticCapabilityIds: string[];
   tools: string[];
   skills: string[];
-  approvalPolicy: string[];
+  actionPolicy: string[];
   capabilityRules: string[];
   missingAgentData: boolean;
 };
@@ -32,23 +33,18 @@ function titleCaseAgentId(agentId: string): string {
     .replace(/\b\w/g, (value) => value.toUpperCase());
 }
 
-function formatApprovalPolicy(policy: WorkflowCapabilityAgentSource['approvalPolicy']): string[] {
-  const labelByValue: Record<WorkflowCapabilityAgentSource['approvalPolicy']['writeActions'], string> = {
-    allowed: 'allowed',
-    approval_required: 'approval required',
-    blocked: 'blocked'
-  };
-  return [
-    `Sensitive actions: ${labelByValue[policy.sensitiveActions]}`,
-    `Write actions: ${labelByValue[policy.writeActions]}`
-  ];
+function capabilityDisplayName(id: string): string {
+  return id
+    .replace(/^fixture-/, '')
+    .replaceAll('_', ' ')
+    .replaceAll('-', ' ')
+    .replace(/\b\w/g, (value) => value.toUpperCase());
 }
 
 function formatCapabilityRule(capability: WorkflowCapabilityAgentSource['capabilities'][number]): string {
   const resource = capability.resourceScope || capability.resourceType;
   const tool = capability.toolId ? ` via ${capability.toolId}` : '';
-  const approval = capability.requiresApproval ? ' (approval)' : '';
-  return `${capability.operation} ${capability.resourceType} ${resource}${tool}${approval}`;
+  return `${capability.operation} ${capability.resourceType} ${resource}${tool}`;
 }
 
 export function getWorkflowAgentCapabilityReview(
@@ -58,8 +54,7 @@ export function getWorkflowAgentCapabilityReview(
   const agentsById = new Map(agents.map((agent) => [agent.id, agent]));
   const workflowAgentRefs = workflow.agents.map((agent) => [agent.agentId, agent] as const);
   const refsByAgentId = new Map(workflowAgentRefs);
-  const stepAgentIds = workflow.steps.flatMap((step) => step.agentIds || []);
-  const assignedAgentIds = uniqueInOrder([...workflowAgentRefs.map(([agentId]) => agentId), ...stepAgentIds]);
+  const assignedAgentIds = uniqueInOrder([...workflowAgentRefs.map(([agentId]) => agentId), ...workflow.agentIds]);
 
   return assignedAgentIds.map((agentId) => {
     const workflowAgent = refsByAgentId.get(agentId);
@@ -67,12 +62,20 @@ export function getWorkflowAgentCapabilityReview(
     return {
       agentId,
       name: agent?.name || workflowAgent?.name || titleCaseAgentId(agentId),
-      role: workflowAgent?.role || 'Step agent',
+      role: workflowAgent?.role || 'Assigned Agent',
       required: workflowAgent?.required ?? false,
-      mcpServers: agent?.mcpServers || [],
+      mcpServers: (agent?.mcpServers || []).map((serverId) => (
+        agent?.mcpInstallations?.find((server) => server.id === serverId)?.name || capabilityDisplayName(serverId)
+      )),
+      semanticCapabilityIds: agent?.semanticCapabilityIds || [],
       tools: agent?.tools || [],
-      skills: agent?.skills || [],
-      approvalPolicy: agent ? formatApprovalPolicy(agent.approvalPolicy) : [],
+      skills: (agent?.skills || []).map((skillId) => (
+        agent?.skillInstallations?.find((skill) => skill.id === skillId)?.name || capabilityDisplayName(skillId)
+      )),
+      actionPolicy: agent ? (() => {
+        const policy = getAgentEffectiveActionPolicy(agent.permissionMode);
+        return [`Permission mode: ${policy.permissionMode}`, `Approval gate: ${policy.approvalGate}`];
+      })() : [],
       capabilityRules: agent ? agent.capabilities.map(formatCapabilityRule) : [],
       missingAgentData: !agent
     };

@@ -1,5 +1,6 @@
 import { LiveRunTrace, RunTraceReasoningSummary, RunTraceSkillLoad, RunTraceStatus, RunTraceStep, RunTraceTimelineEvent, RunTraceToolCall, RunTraceUsage } from '@/features/targets/chat/types';
 import { createLocalMessageId } from '@/features/targets/chat/lib/helpers';
+import { formatRunFailureMessage } from '@/features/targets/chat/lib/session-utils';
 
 const MAX_TRACE_STEPS = 200;
 const MAX_REASONING_SUMMARIES = 50;
@@ -8,10 +9,13 @@ const REASONING_SUMMARY_TRUNCATION_NOTICE = '… [Reasoning summary truncated]';
 const MAX_TIMELINE_EVENTS = 250;
 
 /**
- * Returns fixed detail text for run-level errors in the reasoning pane.
+ * Returns the same user-facing run failure detail used by assistant messages.
  */
-export function formatTraceFailureDetail(): string {
-  return 'Check the assistant response for details.';
+export function formatTraceFailureDetail(errorCode?: unknown, errorMessage?: unknown): string {
+  return formatRunFailureMessage(
+    typeof errorCode === 'string' ? errorCode : undefined,
+    typeof errorMessage === 'string' ? errorMessage : undefined
+  );
 }
 
 function toNonNegativeInt(value: unknown): number | null {

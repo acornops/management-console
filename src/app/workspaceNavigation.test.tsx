@@ -35,6 +35,7 @@ describe('workspace navigation model', () => {
     expect(groups.flatMap((group) => group.items).map((item) => item.id)).toEqual([
       'overview', 'clusters', 'virtualMachines', 'agents', 'workflows', 'approvals', 'workspaceAuditLog', 'workspaceSettings', 'help'
     ]);
+    expect(groups.flatMap((group) => group.items).some((item) => item.path.includes('/catalog'))).toBe(false);
     const workflows = groups.flatMap((group) => group.items).find((item) => item.id === 'workflows');
     expect(workflows).toMatchObject({
       active: true,

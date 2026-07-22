@@ -57,7 +57,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
 
   return (
     <div
-      className={`mt-1 flex items-center gap-2 text-[11px] font-medium text-ui-text-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 ${
+      className={`mt-1 flex items-center gap-2 text-[11px] font-medium text-ui-text-muted opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${
         align === 'right' ? 'justify-end text-ui-text-muted' : 'justify-start'
       }`}
     >
