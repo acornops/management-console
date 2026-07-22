@@ -4,8 +4,10 @@ import { resolve } from 'node:path';
 import {
   externalIntegrationLinkApprovalMessage,
   externalIntegrationLinkApprovalTitle,
+  externalIntegrationLinkErrorIsExpired,
   externalIntegrationLinkStatusMessage
 } from './ExternalIntegrationLinkRouteScreen';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 
 const root = resolve(__dirname, '../..');
 const routeScreen = readFileSync(resolve(root, 'src/app/ExternalIntegrationLinkRouteScreen.tsx'), 'utf8');
@@ -37,6 +39,16 @@ describe('ExternalIntegrationLinkRouteScreen', () => {
     expect(routeScreen).toContain('grantableWorkspaces');
     expect(routeScreen).toContain('workspaceGrants');
     expect(routeScreen).toContain('controlPlaneApi.completeExternalIntegrationLink(route.token, workspaceGrants)');
-    expect(routeScreen).toContain('Workspace access');
+    expect(routeScreen).toContain("t('externalIntegrationLink.workspaceAccess')");
+  });
+
+  it('navigates to expired only for an explicit expired-token response', () => {
+    expect(externalIntegrationLinkErrorIsExpired(
+      new ControlPlaneRequestError('expired', 410, 'EXTERNAL_INTEGRATION_LINK_EXPIRED')
+    )).toBe(true);
+    expect(externalIntegrationLinkErrorIsExpired(
+      new ControlPlaneRequestError('unavailable', 503, 'UPSTREAM_ERROR')
+    )).toBe(false);
+    expect(externalIntegrationLinkErrorIsExpired(new TypeError('network error'))).toBe(false);
   });
 });

@@ -34,6 +34,7 @@ interface GrantEditorProps {
   draft: Record<string, ControlPlaneWorkspaceCapability[]>;
   isSaving: boolean;
   isUnlinking: boolean;
+  mutationsDisabled: boolean;
   pendingUnlink: boolean;
   onToggleWorkspace: (workspace: ControlPlaneExternalIntegrationGrantableWorkspace, enabled: boolean) => void;
   onToggleCapability: (
@@ -52,6 +53,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
   draft,
   isSaving,
   isUnlinking,
+  mutationsDisabled,
   pendingUnlink,
   onToggleWorkspace,
   onToggleCapability,
@@ -78,10 +80,10 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button size="sm" disabled={isSaving || isUnlinking} onClick={onSave}>
+          <Button size="sm" disabled={mutationsDisabled} onClick={onSave}>
             {isSaving ? t('settings.externalIntegrationsSaving') : t('settings.externalIntegrationsSave')}
           </Button>
-          <Button size="sm" variant="danger" disabled={isSaving || isUnlinking} onClick={onRequestUnlink}>
+          <Button size="sm" variant="danger" disabled={mutationsDisabled} onClick={onRequestUnlink}>
             {isUnlinking ? t('settings.externalIntegrationsUnlinking') : t('settings.externalIntegrationsUnlink')}
           </Button>
         </div>
@@ -94,7 +96,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
           tone="danger"
           confirmLabel={t('settings.externalIntegrationsUnlink')}
           confirmVariant="danger"
-          confirmDisabled={isUnlinking}
+          confirmDisabled={mutationsDisabled}
           cancelLabel={t('settings.cancel')}
           onCancel={onCancelUnlink}
           onConfirm={onConfirmUnlink}
@@ -110,6 +112,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
               <label className="flex items-start gap-3">
                 <Checkbox
                   checked={workspaceEnabled}
+                  disabled={mutationsDisabled}
                   onChange={(event) => onToggleWorkspace(workspace, event.target.checked)}
                   className="mt-1"
                 />
@@ -124,6 +127,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
                     <label key={capability} className="flex items-center gap-2 text-xs font-medium text-ui-text-muted">
                       <Checkbox
                         checked={selectedCapabilities.includes(capability)}
+                        disabled={mutationsDisabled}
                         onChange={(event) => onToggleCapability(workspace, capability, event.target.checked)}
                       />
                       {capabilityLabels[capability] || formatExternalIntegrationCapability(capability)}
@@ -151,6 +155,9 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
   const [savingLinkId, setSavingLinkId] = React.useState<string | null>(null);
   const [unlinkingLinkId, setUnlinkingLinkId] = React.useState<string | null>(null);
   const [pendingUnlinkLinkId, setPendingUnlinkLinkId] = React.useState<string | null>(null);
+  const translationRef = React.useRef(t);
+  const mutationInFlightRef = React.useRef(false);
+  translationRef.current = t;
 
   const refresh = React.useCallback(async () => {
     try {
@@ -159,9 +166,13 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
       setDrafts(draftFromLinks(nextLinks));
       setError(null);
     } catch (refreshError) {
-      setError(formatControlPlaneError(refreshError, t('settings.externalIntegrationsLoadFailed'), { area: 'auth' }));
+      setError(formatControlPlaneError(
+        refreshError,
+        translationRef.current('settings.externalIntegrationsLoadFailed'),
+        { area: 'auth' }
+      ));
     }
-  }, [t]);
+  }, []);
 
   React.useEffect(() => {
     void refresh();
@@ -182,35 +193,50 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
   };
 
   const save = async (link: ControlPlaneExternalIntegrationLinkSummary) => {
+    if (mutationInFlightRef.current) return;
+    mutationInFlightRef.current = true;
     setSavingLinkId(link.id);
     setError(null);
     setNotice(null);
     try {
-      await controlPlaneApi.updateExternalIntegrationLinkGrants(
+      const updatedLink = await controlPlaneApi.updateExternalIntegrationLinkGrants(
         link.id,
         buildExternalIntegrationWorkspaceGrants(drafts[link.id] || {})
       );
-      await refresh();
+      setLinks((current) => current?.map((item) => item.id === link.id ? updatedLink : item) || current);
+      setDrafts((current) => ({
+        ...current,
+        [link.id]: draftFromLinks([updatedLink])[link.id] || {}
+      }));
       setNotice(t('settings.externalIntegrationsSaved', { name: link.clientDisplayName }));
     } catch (saveError) {
       setError(formatControlPlaneError(saveError, t('settings.externalIntegrationsSaveFailed'), { area: 'auth' }));
     } finally {
+      mutationInFlightRef.current = false;
       setSavingLinkId(null);
     }
   };
 
   const unlink = async (link: ControlPlaneExternalIntegrationLinkSummary) => {
+    if (mutationInFlightRef.current) return;
+    mutationInFlightRef.current = true;
     setUnlinkingLinkId(link.id);
     setError(null);
     setNotice(null);
     try {
       await controlPlaneApi.unlinkExternalIntegration(link);
       setPendingUnlinkLinkId(null);
-      await refresh();
+      setLinks((current) => current?.filter((item) => item.id !== link.id) || current);
+      setDrafts((current) => {
+        const next = { ...current };
+        delete next[link.id];
+        return next;
+      });
       setNotice(t('settings.externalIntegrationsUnlinked', { name: link.clientDisplayName }));
     } catch (unlinkError) {
       setError(formatControlPlaneError(unlinkError, t('settings.externalIntegrationsUnlinkFailed', { name: link.clientDisplayName }), { area: 'auth' }));
     } finally {
+      mutationInFlightRef.current = false;
       setUnlinkingLinkId(null);
     }
   };
@@ -218,13 +244,14 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
   if (links === null && !error) {
     return <div className="p-6 text-sm text-ui-text-muted" role="status">{t('settings.externalIntegrationsLoading')}</div>;
   }
+  const mutationInFlight = Boolean(savingLinkId || unlinkingLinkId);
 
   return (
     <>
       {error && (
         <div className="flex flex-col gap-3 border-b border-ui-border bg-status-danger-soft px-6 py-3 text-sm text-status-danger-text sm:flex-row sm:items-center sm:justify-between" role="alert">
           <span>{error}</span>
-          <Button size="sm" variant="tertiary" onClick={() => void refresh()}>{t('settings.externalIntegrationsRetry')}</Button>
+          <Button size="sm" variant="tertiary" disabled={mutationInFlight} onClick={() => void refresh()}>{t('settings.externalIntegrationsRetry')}</Button>
         </div>
       )}
       {notice && (
@@ -239,6 +266,7 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
           draft={drafts[link.id] || {}}
           isSaving={savingLinkId === link.id}
           isUnlinking={unlinkingLinkId === link.id}
+          mutationsDisabled={mutationInFlight}
           pendingUnlink={pendingUnlinkLinkId === link.id}
           onToggleWorkspace={(workspace, enabled) => updateDraft(
             link,

@@ -18,9 +18,9 @@ const subscription = {
 };
 
 describe('webhook response parsing', () => {
-  it('accepts current paged lists and older bare-array demo responses', () => {
+  it('accepts current paged lists and rejects stale bare-array responses', () => {
     expect(parseWebhookPage({ items: [subscription] })).toEqual([subscription]);
-    expect(parseWebhookPage([subscription])).toEqual([subscription]);
+    expect(() => parseWebhookPage([subscription])).toThrow('invalid webhook page');
   });
 
   it('requires the one-time secret on create responses', () => {
@@ -50,6 +50,7 @@ describe('webhook response parsing', () => {
       sentAt: '2026-07-22T00:00:01.000Z'
     };
     expect(parseWebhookHistoryPage({ items: [history] })).toEqual([history]);
+    expect(() => parseWebhookHistoryPage([history])).toThrow('invalid webhook history page');
   });
 
   it.each(['paused', 'superseded', 'cancelled'] as const)('accepts durable %s delivery history', (status) => {

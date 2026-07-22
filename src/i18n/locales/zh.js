@@ -355,6 +355,46 @@ export const zh = {
       approve: '批准',
       reject: '拒绝',
       deciding: '决策中...'
+    },
+    none: '无',
+    system: '系统',
+    sources: {
+      target_tool: '目标工具',
+      workflow_gate: '工作流门控',
+      agent_gate: 'Agent 门控',
+      agent_tool: 'Agent 工具',
+      workflow_tool: '工作流工具'
+    }
+  },
+  externalIntegrationLink: {
+    approvalTitle: '将 AcornOps 连接到外部集成',
+    approvalTitleNamed: '将 AcornOps 连接到 {{name}}',
+    approvalMessage: '批准此请求，将当前登录的 AcornOps 账号连接到下方显示的外部账号。',
+    checking: '正在检查连接请求',
+    integration: '集成',
+    provider: '提供商',
+    externalAccount: '外部账号',
+    signedInAs: '当前登录账号',
+    workspaceAccess: '工作区访问权限',
+    noWorkspaces: '此外部集成没有可用的工作区。',
+    approve: '批准',
+    approving: '正在批准...',
+    cancel: '取消连接',
+    completing: '正在完成外部集成账号连接',
+    retry: '重试',
+    loadFailed: '无法检查外部集成连接，请重试。',
+    completeFailed: '无法完成外部集成账号连接，请重试。',
+    status: {
+      linked: '账号连接成功。\n请返回外部客户端。',
+      expired: '账号连接失败，token 已过期。\n请在外部客户端重新发起连接。',
+      cancelled: '已取消账号连接。\n请返回外部客户端。',
+      unavailable: '外部集成连接不可用。'
+    },
+    capabilities: {
+      read_workspace_data: '读取工作区数据',
+      create_sessions: '创建会话',
+      create_read_only_runs: '创建只读运行',
+      create_read_write_runs: '启动读写运行和工作流；批准此集成发起的写入操作'
     }
   },
   virtualMachines: {

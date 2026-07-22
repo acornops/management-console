@@ -192,13 +192,13 @@ export function parseWebhookHistory(value: unknown): ControlPlaneWebhookHistory 
 }
 
 export function parseWebhookPage(value: unknown): ControlPlaneWebhookSubscription[] {
-  const items = Array.isArray(value) ? value : asRecord(value, 'webhook page').items;
+  const items = asRecord(value, 'webhook page').items;
   if (!Array.isArray(items)) throw new Error('Control plane returned an invalid webhook page: missing items');
   return items.map(parseWebhookSubscription);
 }
 
 export function parseWebhookHistoryPage(value: unknown): ControlPlaneWebhookHistory[] {
-  const items = Array.isArray(value) ? value : asRecord(value, 'webhook history page').items;
+  const items = asRecord(value, 'webhook history page').items;
   if (!Array.isArray(items)) throw new Error('Control plane returned an invalid webhook history page: missing items');
   return items.map(parseWebhookHistory);
 }

@@ -355,6 +355,46 @@ export const en = {
       approve: 'Approve',
       reject: 'Reject',
       deciding: 'Deciding...'
+    },
+    none: 'None',
+    system: 'System',
+    sources: {
+      target_tool: 'Target tool',
+      workflow_gate: 'Workflow gate',
+      agent_gate: 'Agent gate',
+      agent_tool: 'Agent tool',
+      workflow_tool: 'Workflow tool'
+    }
+  },
+  externalIntegrationLink: {
+    approvalTitle: 'Link AcornOps to an external integration',
+    approvalTitleNamed: 'Link AcornOps to {{name}}',
+    approvalMessage: 'Approve this request to connect your signed-in AcornOps account to the external account shown below.',
+    checking: 'Checking link request',
+    integration: 'Integration',
+    provider: 'Provider',
+    externalAccount: 'External account',
+    signedInAs: 'Signed in as',
+    workspaceAccess: 'Workspace access',
+    noWorkspaces: 'No workspaces are available for this external integration.',
+    approve: 'Approve',
+    approving: 'Approving...',
+    cancel: 'Cancel linking',
+    completing: 'Completing external integration account link',
+    retry: 'Retry',
+    loadFailed: 'Unable to check the external integration link. Try again.',
+    completeFailed: 'Unable to complete the external integration account link. Try again.',
+    status: {
+      linked: 'Account linking successful.\nGo back to the external client.',
+      expired: 'Account linking unsuccessful due to expired token.\nRetry linking on external client.',
+      cancelled: 'Account linking cancelled.\nGo back to the external client.',
+      unavailable: 'External integration link unavailable.'
+    },
+    capabilities: {
+      read_workspace_data: 'Read workspace data',
+      create_sessions: 'Create sessions',
+      create_read_only_runs: 'Create read-only runs',
+      create_read_write_runs: 'Launch read-write runs and workflows; approve integration-owned writes'
     }
   },
   virtualMachines: {

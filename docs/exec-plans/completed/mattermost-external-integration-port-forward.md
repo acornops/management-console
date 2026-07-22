@@ -64,10 +64,10 @@ Central tracking: acornops/acornops#12.
   and inline destructive-confirmation primitives. All user-facing copy is
   localized, delivery dates use the shared user-time-zone formatter, and the
   one-time signing secret remains ephemeral component state.
-- 2026-07-22, Wave 2: Webhook response parsing now validates data at the API
-  boundary, consumes the current `{ items }` contract, and temporarily accepts
-  the older demo's bare list arrays so the port-forward can be exercised
-  against both versions without weakening item validation.
+- 2026-07-22, Wave 2: Webhook response parsing validates data at the API
+  boundary and consumes the current `{ items }` contract. The final production
+  sweep removed the unreleased older demo's bare-list compatibility path so
+  contract drift fails visibly.
 - 2026-07-22, Wave 2: Synchronized the vendored operation inventory with the
   generated webhook-route connect/status operations.
 - 2026-07-22, Wave 3: Added issue created, reopened, and resolved events to the
@@ -91,6 +91,18 @@ Central tracking: acornops/acornops#12.
   provide explicit not-found feedback.
 - 2026-07-22, Wave 4: Synchronized the vendored public-operation inventory with
   the generated workflow-execution SSE contract.
+- 2026-07-23, production sweep: Removed the unreleased bare-array webhook list
+  fallback so the console fails visibly on control-plane contract drift instead
+  of silently accepting two response shapes.
+- 2026-07-23, production sweep: Kept transient link-completion failures on the
+  localized retry screen and reserved expiry navigation for explicit 410 or
+  expiry error codes. Capability labels, approval sources, empty values, and
+  completion errors are localized; long identifiers and errors wrap safely.
+- 2026-07-23, production sweep: Serialized external-integration settings
+  mutations with both rendered disabled state and same-tick ref guards. Grant
+  saves apply the returned link directly, avoiding a redundant refresh and
+  preventing concurrent save/unlink races while preserving the newer settings
+  architecture.
 
 ## Validation Log
 
@@ -125,6 +137,13 @@ Central tracking: acornops/acornops#12.
   The repeated fixture suite passed all 129 cases with one worker and the MCP
   parity suite passed all 21 repeated cases. Focused grant, approval API, and
   route tests passed all 43 cases.
+- Production sweep: design-system and TypeScript checks passed; all 610 unit
+  tests passed. Real-Chrome design coverage passed 19 cases with one intentional
+  skip. The repeated fixture suite passed all 129 cases and MCP parity passed
+  all 21 cases with one worker, avoiding the environment's two-worker teardown
+  stall without reducing repetitions. Membership, synchronized contracts,
+  harness, production build, route smoke, and the production dependency audit
+  all passed.
 - Each wave: run focused component/service tests, contract checks, design-system
   checks, control-plane-mode validation, production build, and route smoke.
 - Final: verify linking, grants, webhook lifecycle, executions, SSE status, and

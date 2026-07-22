@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CollectionState } from '@/components/common/CollectionState';
@@ -18,6 +19,7 @@ import {
 import { formatUserDateTime } from '@/utils/dateTime';
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
@@ -28,8 +30,8 @@ interface WorkspaceApprovalsPageProps {
 
 type ApprovalFilter = 'pending' | 'decided';
 
-function formatDateTime(value?: string): string {
-  return formatUserDateTime(value, { fallback: value || 'None' });
+function formatDateTime(value: string | undefined, fallback: string): string {
+  return formatUserDateTime(value, { fallback: value || fallback });
 }
 
 function isToday(value?: string): boolean {
@@ -48,15 +50,8 @@ function approvalTone(status: WorkspaceApprovalInboxRow['status']): React.Compon
   return 'neutral';
 }
 
-function sourceLabel(source: WorkspaceApprovalInboxRow['source']): string {
-  const labels: Record<WorkspaceApprovalInboxRow['source'], string> = {
-    target_tool: 'Target tool',
-    workflow_gate: 'Workflow gate',
-    agent_gate: 'Agent gate',
-    agent_tool: 'Agent tool',
-    workflow_tool: 'Workflow tool'
-  };
-  return labels[source];
+function sourceLabel(source: WorkspaceApprovalInboxRow['source'], t: TFunction): string {
+  return t(`approvals.sources.${source}`);
 }
 
 export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
@@ -113,7 +108,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
       setPendingApprovalCount(pendingResponse.pendingCount);
       setApprovalPhase('ready');
     } catch (err) {
-      setApprovalError(err instanceof Error ? err.message : t('approvals.loadError'));
+      setApprovalError(formatControlPlaneError(err, t('approvals.loadError')));
       setApprovalPhase('error');
     }
   };
@@ -154,7 +149,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
       await onApprovalDecision?.();
       await loadApprovals();
     } catch (err) {
-      setApprovalError(err instanceof Error ? err.message : t('approvals.decisionError'));
+      setApprovalError(formatControlPlaneError(err, t('approvals.decisionError')));
       setDecisionState((current) => {
         const next = { ...current };
         delete next[approval.approvalId];
@@ -274,11 +269,11 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                   return (
                     <tr key={approval.approvalId} className={`text-sm ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
                       <th scope="row" className="px-4 py-4 font-semibold text-ui-text">{approval.summary}</th>
-                      <td className="px-4 py-4 font-medium text-ui-text">{approval.workflowId || sourceLabel(approval.source)} · {approval.runId}</td>
-                      <td className="px-4 py-4 text-ui-text-muted">{approval.requestedBy || 'System'}</td>
+                      <td className="px-4 py-4 font-medium text-ui-text">{approval.workflowId || sourceLabel(approval.source, t)} · {approval.runId}</td>
+                      <td className="px-4 py-4 text-ui-text-muted">{approval.requestedBy || t('approvals.system')}</td>
                       <td className="px-4 py-4 text-ui-text-muted">{approval.targetId || t('approvals.targetWorkspace')}</td>
-                      <td className="px-4 py-4 font-semibold text-ui-text">{sourceLabel(approval.source)}</td>
-                      <td className="px-4 py-4 text-ui-text-muted">{formatDateTime(approval.expiresAt)}</td>
+                      <td className="px-4 py-4 font-semibold text-ui-text">{sourceLabel(approval.source, t)}</td>
+                      <td className="px-4 py-4 text-ui-text-muted">{formatDateTime(approval.expiresAt, t('approvals.none'))}</td>
                       <td className="px-4 py-4"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></td>
                       <td className="px-4 py-4">
                         <div className="flex gap-2">
