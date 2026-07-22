@@ -41,6 +41,8 @@ export interface FixtureState {
   targetMcpServers: Array<Record<string, any>>;
   agentMcpServers: Array<Record<string, any>>;
   mcpConnections: Record<string, Record<string, any>>;
+  webhooks: Array<Record<string, any>>;
+  webhookHistory: Record<string, Array<Record<string, any>>>;
 }
 
 const allPermissions = {
@@ -318,6 +320,20 @@ export function createFixtureState(): FixtureState {
     catalogArtifacts: [{ id: 'fixture-catalog-artifact', workspaceId: FIXTURE_IDS.workspace, sourceId: 'fixture-catalog-source', bindingId: 'fixture-binding', artifactKind: 'mcp_server', name: 'github-observer', title: 'GitHub Observer', description: 'Read-only repository and pull request context for operational workflows.', version: '1.4.0', digest: 'sha256:fixture-catalog-digest', metadata: { publisher: 'AcornOps', categories: ['developer-tools'] }, compatible: true, remoteEndpoints: [{ type: 'streamable-http', url: 'https://mcp.fixture.acornops.dev/github', supported: true, supportedCredentialModes: ['workspace', 'individual'], recommendedCredentialMode: 'individual' }], publishedAt: EARLIER, upstreamUpdatedAt: NOW }],
     sessions,
     messages,
+    webhooks: [{
+      id: 'fixture-webhook', workspaceId: FIXTURE_IDS.workspace, targetId: null,
+      name: 'Mattermost operations', url: 'https://mattermost-bot.fixture.acornops.dev/webhooks/acornops',
+      eventTypes: ['run.failed.v1', 'run.tool_approval_requested.v1'], enabled: true,
+      createdBy: FIXTURE_IDS.user, createdAt: EARLIER, updatedAt: NOW
+    }],
+    webhookHistory: {
+      'fixture-webhook': [{
+        id: 'fixture-webhook-history', subscriptionId: 'fixture-webhook', eventId: 'fixture-event',
+        eventType: 'run.failed.v1', workspaceId: FIXTURE_IDS.workspace, targetId: null,
+        subjectType: 'run', subjectId: FIXTURE_IDS.run, payload: {}, status: 'success',
+        responseStatus: 202, error: null, durationMs: 42, sentAt: NOW
+      }]
+    },
     runs: { [FIXTURE_IDS.run]: { id: FIXTURE_IDS.run, workspaceId: FIXTURE_IDS.workspace, sessionId: FIXTURE_IDS.session, messageId: 'fixture-message-user', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', clusterId: FIXTURE_IDS.cluster, status: 'completed', requestedAt: EARLIER, startedAt: EARLIER, endedAt: NOW, usage: { input_tokens: 640, output_tokens: 118, tool_calls: 2 }, assistantMessage: { content: messages[FIXTURE_IDS.session][1].content, format: 'markdown' } } },
     resources: [
       { id: 'production/checkout-api', family: 'workloads', kind: 'Deployment', name: 'checkout-api', namespace: 'production', status: 'Healthy', clusterId: FIXTURE_IDS.cluster, clusterName: cluster.name, item: { replicas: 3, readyReplicas: 3, availableReplicas: 3 } },

@@ -262,13 +262,10 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   const shouldShowCreateFirstWorkspace =
     ((route.kind === 'workspaces' || route.kind === 'home') && workspaces.length === 0) ||
     routeTargetsMissingWorkspace(route, workspaceContext, workspaces.length);
-  const activeSettingsTab: SettingsTab = route.kind === 'workspaceMembers'
-    ? 'members'
-    : route.kind === 'workspaceAiSettings'
-      ? 'ai'
-      : route.kind === 'workspaceWebhooks'
-        ? 'webhooks'
-      : 'workspace';
+  const activeSettingsTab: SettingsTab = route.kind === 'workspaceMembers' ? 'members'
+    : route.kind === 'workspaceAiSettings' ? 'ai'
+      : route.kind === 'workspaceWebhooks' ? 'webhooks'
+        : 'workspace';
   const clusterCatalogState: ClusterCatalogRouteState | undefined =
     route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters'
       ? {
@@ -553,7 +550,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onGoToWorkspaces={() => navigate(AppPaths.workspaces())}
             />
           )}
-          {(route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers') && (
+          {(route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers' || route.kind === 'workspaceWebhooks') && (
             <SettingsPage
               workspace={workspaceContext}
               initialTab={activeSettingsTab}

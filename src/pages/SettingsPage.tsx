@@ -33,7 +33,7 @@ function getTabUnavailableReason({
   if (!hasWorkspace) return t('settingsPage.selectWorkspaceForTab');
   if (tab === 'members' && !canReadMembers) return t('settingsPage.membersAccessRequired');
   if (tab === 'ai' && !canReadWorkspaceData) return t('settingsPage.workspaceAccessRequired');
-  if (tab === 'webhooks' && !canReadWorkspaceData) return t('settingsPage.workspaceAccessRequired');
+  if (tab === 'webhooks' && !canReadWorkspaceData) return t('settingsPage.webhooksReadAccessRequired');
   return undefined;
 }
 

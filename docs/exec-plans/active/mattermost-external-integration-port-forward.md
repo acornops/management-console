@@ -49,6 +49,27 @@ Central tracking: acornops/acornops#12.
 - 2026-07-22, Wave 1: Synchronized the vendored public-operation inventory with
   the generated control-plane OpenAPI contract, including the link-grant PATCH
   operation.
+- 2026-07-22, Wave 2: Reconnected the webhook settings route to the current
+  lazy-loaded settings shell. The older branch added a route case and path
+  builder but omitted `webhooks` from the shared workspace-section matcher and
+  from the mounted settings-page condition, leaving the advertised path at the
+  not-found screen. Round-trip and browser fixtures now cover the real route.
+- 2026-07-22, Wave 2: Preserved separate read and `manage_webhooks` access.
+  Readers can inspect subscriptions, while create/update/delete and history
+  remain capability-gated. The form explicitly creates workspace-wide
+  subscriptions; existing target-scoped subscriptions remain visible and
+  identifiable without inventing a target catalog interaction in this wave.
+- 2026-07-22, Wave 2: Reworked the legacy monolithic webhook screen around the
+  current `DataSurface`, `CollectionState`, `EmptyState`, `StatusBadge`, form,
+  and inline destructive-confirmation primitives. All user-facing copy is
+  localized, delivery dates use the shared user-time-zone formatter, and the
+  one-time signing secret remains ephemeral component state.
+- 2026-07-22, Wave 2: Webhook response parsing now validates data at the API
+  boundary, consumes the current `{ items }` contract, and temporarily accepts
+  the older demo's bare list arrays so the port-forward can be exercised
+  against both versions without weakening item validation.
+- 2026-07-22, Wave 2: Synchronized the vendored operation inventory with the
+  generated webhook-route connect/status operations.
 
 ## Validation Log
 
@@ -62,6 +83,14 @@ Central tracking: acornops/acornops#12.
   The fixture suite passed all 123 repeated cases and the MCP parity suite all
   21 repeated cases when run with one worker, avoiding the same runner teardown
   problem without reducing repetitions.
+- Wave 2 console: design-system, TypeScript, all 602 unit tests, membership,
+  contracts, harness, production build, and route smoke passed. The real-Chrome
+  design suite passed 19 tests with its one intentional skip. The pre-existing
+  repeated fixture suite passed all 123 cases with one worker, the MCP parity
+  suite passed all 21 repeated cases, and a post-route-fix full fixture pass
+  passed all 43 current cases. Dedicated webhook browser coverage verifies the
+  real route, history, focused inline deletion confirmation and cancellation,
+  create flow, and one-time signing-secret display.
 - Each wave: run focused component/service tests, contract checks, design-system
   checks, control-plane-mode validation, production build, and route smoke.
 - Final: verify linking, grants, webhook lifecycle, executions, SSE status, and
