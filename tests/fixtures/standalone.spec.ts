@@ -43,6 +43,8 @@ test('webhook settings expose history, confirmation, and one-time secret flows',
 
   await page.getByRole('button', { name: 'History' }).click();
   await expect(page.getByText('Delivered', { exact: true })).toBeVisible();
+  await expect(page.getByText('Superseded', { exact: true })).toBeVisible();
+  await expect(page.getByText('Deliberately not sent because the issue state advanced.', { exact: true })).toBeVisible();
   await expect(page.getByText('run.failed.v1', { exact: true }).last()).toBeVisible();
 
   await page.getByRole('button', { name: 'Delete' }).click();

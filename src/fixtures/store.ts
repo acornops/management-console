@@ -323,7 +323,7 @@ export function createFixtureState(): FixtureState {
     webhooks: [{
       id: 'fixture-webhook', workspaceId: FIXTURE_IDS.workspace, targetId: null,
       name: 'Mattermost operations', url: 'https://mattermost-bot.fixture.acornops.dev/webhooks/acornops',
-      eventTypes: ['run.failed.v1', 'run.tool_approval_requested.v1'], enabled: true,
+      eventTypes: ['issue.created.v1', 'issue.reopened.v1', 'issue.resolved.v1', 'run.failed.v1'], enabled: true,
       createdBy: FIXTURE_IDS.user, createdAt: EARLIER, updatedAt: NOW
     }],
     webhookHistory: {
@@ -331,7 +331,14 @@ export function createFixtureState(): FixtureState {
         id: 'fixture-webhook-history', subscriptionId: 'fixture-webhook', eventId: 'fixture-event',
         eventType: 'run.failed.v1', workspaceId: FIXTURE_IDS.workspace, targetId: null,
         subjectType: 'run', subjectId: FIXTURE_IDS.run, payload: {}, status: 'success',
-        responseStatus: 202, error: null, durationMs: 42, sentAt: NOW
+        responseStatus: 202, error: null, durationMs: 42, attemptNumber: 1,
+        willRetry: false, nextAttemptAt: null, terminalReason: null, sentAt: NOW
+      }, {
+        id: 'fixture-webhook-history-superseded', subscriptionId: 'fixture-webhook', eventId: 'fixture-issue-event',
+        eventType: 'issue.created.v1', workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.cluster,
+        subjectType: 'issue', subjectId: 'fixture-issue', payload: {}, status: 'superseded',
+        responseStatus: null, error: null, durationMs: null, attemptNumber: 1,
+        willRetry: false, nextAttemptAt: null, terminalReason: 'issue_lifecycle_advanced', sentAt: NOW
       }]
     },
     runs: { [FIXTURE_IDS.run]: { id: FIXTURE_IDS.run, workspaceId: FIXTURE_IDS.workspace, sessionId: FIXTURE_IDS.session, messageId: 'fixture-message-user', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', clusterId: FIXTURE_IDS.cluster, status: 'completed', requestedAt: EARLIER, startedAt: EARLIER, endedAt: NOW, usage: { input_tokens: 640, output_tokens: 118, tool_calls: 2 }, assistantMessage: { content: messages[FIXTURE_IDS.session][1].content, format: 'markdown' } } },

@@ -20,6 +20,9 @@ export const CONTROL_PLANE_WEBHOOK_EVENT_TYPES = [
   'run.cancel_requested.v1',
   'run.tool_approval_requested.v1',
   'run.tool_approval_decided.v1',
+  'issue.created.v1',
+  'issue.reopened.v1',
+  'issue.resolved.v1',
   'tool.called.v1',
   'mcp.server.created.v1',
   'mcp.server.updated.v1',
@@ -57,10 +60,14 @@ export interface ControlPlaneWebhookHistory {
   subjectType: string;
   subjectId: string;
   payload: Record<string, unknown>;
-  status: 'success' | 'failed';
+  status: 'success' | 'failed' | 'paused' | 'superseded' | 'cancelled';
   responseStatus?: number | null;
   error?: string | null;
   durationMs?: number | null;
+  attemptNumber: number;
+  willRetry: boolean;
+  nextAttemptAt?: string | null;
+  terminalReason?: string | null;
   sentAt: string;
 }
 
@@ -104,6 +111,22 @@ function optionalNullableString(record: JsonRecord, key: string): string | null 
   return record[key] === null ? null : optionalString(record, key);
 }
 
+function requiredNonNegativeInteger(record: JsonRecord, key: string, label: string): number {
+  const value = record[key];
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    throw new Error(`Control plane returned an invalid ${label}: missing ${key}`);
+  }
+  return value;
+}
+
+function requiredBoolean(record: JsonRecord, key: string, label: string): boolean {
+  const value = record[key];
+  if (typeof value !== 'boolean') {
+    throw new Error(`Control plane returned an invalid ${label}: missing ${key}`);
+  }
+  return value;
+}
+
 const eventTypeSet = new Set<string>(CONTROL_PLANE_WEBHOOK_EVENT_TYPES);
 
 function parseEventTypes(value: unknown, label: string): ControlPlaneWebhookEventType[] {
@@ -142,7 +165,7 @@ export function parseWebhookCreated(value: unknown): ControlPlaneWebhookCreated 
 
 export function parseWebhookHistory(value: unknown): ControlPlaneWebhookHistory {
   const record = asRecord(value, 'webhook delivery history');
-  if (record.status !== 'success' && record.status !== 'failed') {
+  if (!['success', 'failed', 'paused', 'superseded', 'cancelled'].includes(String(record.status))) {
     throw new Error('Control plane returned an invalid webhook delivery history: unsupported status');
   }
   const payload = record.payload === undefined ? {} : asRecord(record.payload, 'webhook delivery payload');
@@ -156,10 +179,14 @@ export function parseWebhookHistory(value: unknown): ControlPlaneWebhookHistory 
     subjectType: requiredString(record, 'subjectType', 'webhook delivery history'),
     subjectId: requiredString(record, 'subjectId', 'webhook delivery history'),
     payload,
-    status: record.status,
+    status: record.status as ControlPlaneWebhookHistory['status'],
     responseStatus: typeof record.responseStatus === 'number' ? record.responseStatus : null,
     error: optionalNullableString(record, 'error'),
     durationMs: typeof record.durationMs === 'number' ? record.durationMs : null,
+    attemptNumber: requiredNonNegativeInteger(record, 'attemptNumber', 'webhook delivery history'),
+    willRetry: requiredBoolean(record, 'willRetry', 'webhook delivery history'),
+    nextAttemptAt: optionalNullableString(record, 'nextAttemptAt'),
+    terminalReason: optionalNullableString(record, 'terminalReason'),
     sentAt: requiredString(record, 'sentAt', 'webhook delivery history')
   };
 }
