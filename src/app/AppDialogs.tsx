@@ -4,7 +4,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModal';
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
-import { AppToast, ToastViewport } from '@/components/common/ToastViewport';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
@@ -25,10 +24,8 @@ interface AppDialogsProps {
   isAddingCluster: boolean;
   isCreatingCluster: boolean;
   isCreatingWorkspace: boolean;
-  isDark: boolean;
   isDeletingWorkspace: boolean;
   newClusterName: string;
-  toasts: AppToast[];
   onClusterNameChange: (value: string) => void;
   onCloseAddCluster: () => void;
   onCloseInstallAgent: () => void;
@@ -41,7 +38,6 @@ interface AppDialogsProps {
     workspaceId: string,
     input: { email: string; role: ProjectMember['role'] }
   ) => Promise<WorkspaceInvitation>;
-  onDismissToast: (id: string) => void;
   onExcludeNamespacesChange: (value: string) => void;
   onIncludeNamespacesChange: (value: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
@@ -63,10 +59,8 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   isAddingCluster,
   isCreatingCluster,
   isCreatingWorkspace,
-  isDark,
   isDeletingWorkspace,
   newClusterName,
-  toasts,
   onClusterNameChange,
   onCloseAddCluster,
   onCloseInstallAgent,
@@ -76,7 +70,6 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onConfirmDeleteWorkspace,
   onCreateWorkspace,
   onCreateWorkspaceInvitation,
-  onDismissToast,
   onExcludeNamespacesChange,
   onIncludeNamespacesChange,
   onLoadWorkspaceRoles,
@@ -168,7 +161,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                     type="button"
                     onClick={handleCloseWorkspaceDelete}
                     disabled={isDeletingWorkspace}
-                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-xs font-bold text-ui-text-muted transition-all hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
+                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-xs font-bold text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {t('app.cancel')}
                   </button>
@@ -233,12 +226,6 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           />
         )}
       </AnimatePresence>
-
-      <ToastViewport
-        toasts={toasts}
-        isDark={isDark}
-        onDismiss={onDismissToast}
-      />
     </>
   );
 };

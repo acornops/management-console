@@ -22,7 +22,7 @@ export default defineConfig({
     { name: 'mobile', use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } }
   ],
   webServer: {
-    command: 'npm run dev -- --host 127.0.0.1 --port 4177',
+    command: 'VITE_APP_DATA_MODE=control-plane npm run dev -- --host 127.0.0.1 --port 4177',
     url: 'http://127.0.0.1:4177/design-system.html',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000

@@ -27,11 +27,13 @@ import { TargetSkillsInventory } from '@/features/targets/admin/TargetSkillsInve
 
 export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   target,
-  canManageSkills = false
+  canManageSkills = false,
+  initialCatalog = null,
+  onCatalogChange
 }) => {
   const { t } = useTranslation();
 
-  const [catalog, setCatalog] = React.useState<ControlPlaneTargetSkillsCatalog | null>(null);
+  const [catalog, setCatalog] = React.useState<ControlPlaneTargetSkillsCatalog | null>(() => initialCatalog);
   const [catalogLoading, setCatalogLoading] = React.useState(false);
   const [catalogError, setCatalogError] = React.useState<string | null>(null);
   const [selectedSkillId, setSelectedSkillId] = React.useState<string | null>(null);
@@ -93,7 +95,6 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
         ? current
         : nextCatalog.items[0]?.id || null);
     } catch (error) {
-      setCatalog(null);
       setCatalogError(formatTargetSkillError(error, 'targetSkills.loadFailed'));
     } finally {
       setCatalogLoading(false);
@@ -118,6 +119,10 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   React.useEffect(() => {
     void loadCatalog();
   }, [loadCatalog]);
+
+  React.useEffect(() => {
+    if (catalog) onCatalogChange?.(catalog);
+  }, [catalog, onCatalogChange]);
 
   React.useEffect(() => {
     if (editorMode !== 'edit' || !selectedSkillId) return;

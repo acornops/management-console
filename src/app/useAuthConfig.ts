@@ -1,37 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneAuthConfig } from '@/services/controlPlaneApi';
+import { reportBrowserError } from '@/observability/browserErrors';
 
 export const defaultAuthConfig: ControlPlaneAuthConfig = {
-  oidcEnabled: true,
+  oidcEnabled: false,
   oidcProviderName: 'OIDC',
-  passwordAuthEnabled: true,
-  passwordSignupEnabled: true,
+  passwordAuthEnabled: false,
+  passwordSignupEnabled: false,
   passwordEmailVerificationRequired: true,
-  passwordResetEnabled: true
+  passwordResetEnabled: false
 };
 
-export function useAuthConfig(): ControlPlaneAuthConfig {
-  const [authConfig, setAuthConfig] = useState<ControlPlaneAuthConfig>(defaultAuthConfig);
+export type AuthConfigLoadState =
+  | { status: 'loading'; config: ControlPlaneAuthConfig }
+  | { status: 'ready'; config: ControlPlaneAuthConfig }
+  | { status: 'unavailable'; config: ControlPlaneAuthConfig };
+
+export function useAuthConfig(): AuthConfigLoadState & { retry: () => void } {
+  const [state, setState] = useState<AuthConfigLoadState>({ status: 'loading', config: defaultAuthConfig });
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => {
+    setState({ status: 'loading', config: defaultAuthConfig });
+    setAttempt((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     void controlPlaneApi.getAuthConfig()
       .then((nextAuthConfig) => {
         if (!cancelled) {
-          setAuthConfig(nextAuthConfig);
+          setState({ status: 'ready', config: nextAuthConfig });
         }
       })
       .catch((err) => {
-        console.error('Failed to load auth config', err);
+        reportBrowserError(err, 'operation');
         if (!cancelled) {
-          setAuthConfig(defaultAuthConfig);
+          setState({ status: 'unavailable', config: defaultAuthConfig });
         }
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
 
-  return authConfig;
+  return { ...state, retry };
 }

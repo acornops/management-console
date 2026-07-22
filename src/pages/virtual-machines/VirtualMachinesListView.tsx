@@ -1,15 +1,22 @@
 import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
-import { MoreHorizontal, Search, Server, Settings, Trash2 } from 'lucide-react';
+import { Server, Settings, Trash2 } from 'lucide-react';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
+import { EmptyState } from '@/components/common/EmptyState';
 import { MenuItem } from '@/components/common/FormControls';
-import { PageSearchInput } from '@/components/common/PageSearchInput';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
 import { Dialog } from '@/components/common/Dialog';
+import {
+  TargetCatalogActionHint,
+  TargetCatalogActionMenu,
+  TargetCatalogCard,
+  TargetCatalogStatusPill
+} from '@/features/targets/catalog/TargetCatalogPrimitives';
+import { useCatalogNow } from '@/features/targets/catalog/useCatalogNow';
 import { AppPaths, type VmCatalogReturnState } from '@/utils/routes';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -19,6 +26,7 @@ import { getVmMetricTimeline, VmCardResourceChart, VmOperationalDetails, type Vm
 import { PendingVirtualMachineSetup } from '@/pages/virtual-machines/PendingVirtualMachineSetup';
 import {
   getVmCatalogStatusLabel,
+  getVmCatalogStatusReason,
   getVmCatalogStatusTone,
   vmMatchesConnectionFilter,
   vmNeedsAttention,
@@ -42,16 +50,19 @@ function vmPriority(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneT
   return 5;
 }
 
-const VmStatusPill: React.FC<{ vm: ControlPlaneVirtualMachine; issueSummary?: ControlPlaneTargetIssueSummary }> = ({ vm, issueSummary }) => {
+const VmStatusPill: React.FC<{
+  vm: ControlPlaneVirtualMachine;
+  issueSummary?: ControlPlaneTargetIssueSummary;
+  issueSummaryLoadState?: 'loading' | 'ready' | 'error';
+}> = ({ vm, issueSummary, issueSummaryLoadState }) => {
   const { t } = useTranslation();
   const label = getVmCatalogStatusLabel(vm, issueSummary, t);
   return (
-    <span
-      className={`inline-flex max-w-[8.5rem] items-center rounded-full border px-2 py-0.5 text-[0.6875rem] font-bold uppercase leading-4 tracking-[0.06em] ${getVmCatalogStatusTone(vm, issueSummary)}`}
-      title={label}
-    >
-      <span className="truncate">{label}</span>
-    </span>
+    <TargetCatalogStatusPill
+      label={label}
+      reason={getVmCatalogStatusReason(vm, issueSummary, issueSummaryLoadState, t)}
+      toneClassName={getVmCatalogStatusTone(vm, issueSummary)}
+    />
   );
 };
 
@@ -68,8 +79,10 @@ interface VirtualMachinesListViewProps {
   issueSummaryByVmId: Record<string, ControlPlaneTargetIssueSummary | undefined>;
   issueSummaryLoadStateByVmId: Record<string, 'loading' | 'ready' | 'error' | undefined>;
   canManageTargets: boolean;
+  canManageAgentKeys: boolean;
   onQueryChange: (value: string) => void;
   onStatusChange: (value: VmConnectionFilter) => void;
+  onClearFilters: () => void;
   onOpenRegisterVm: () => void;
   onRetryLoad: () => void;
   onDeleteVirtualMachine: (vm: ControlPlaneVirtualMachine) => Promise<void> | void;
@@ -89,8 +102,10 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   issueSummaryByVmId,
   issueSummaryLoadStateByVmId,
   canManageTargets,
+  canManageAgentKeys,
   onQueryChange,
   onStatusChange,
+  onClearFilters,
   onOpenRegisterVm,
   onRetryLoad,
   onDeleteVirtualMachine,
@@ -102,7 +117,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   const [deleteVmError, setDeleteVmError] = React.useState<string | null>(null);
   const [isDeletingVm, setIsDeletingVm] = React.useState(false);
   const [openVmActionMenuId, setOpenVmActionMenuId] = React.useState<string | null>(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const now = useCatalogNow();
   const setupRequiredCount = items.filter((vm) => vm.status === 'unknown').length;
   const hasCompleteIssueSummaries = items
     .filter((vm) => vm.status !== 'unknown')
@@ -128,28 +143,6 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
     [issueSummaryByVmId, items, query, status]
   );
   const hasActiveFilter = Boolean(query.trim()) || status !== 'all';
-
-  React.useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  React.useEffect(() => {
-    if (!openVmActionMenuId) return undefined;
-
-    const closeMenu = () => setOpenVmActionMenuId(null);
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeMenu();
-    };
-
-    window.addEventListener('click', closeMenu);
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('click', closeMenu);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [openVmActionMenuId]);
 
   const closeDeleteVmDialog = () => {
     setDeleteVmConfirmation('');
@@ -188,31 +181,35 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
         </>
       } />
 
-      <div className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4">
-        <ResourceCategoryTabs<VmConnectionFilter>
-          categories={VM_STATUS_FILTERS}
-          active={status}
-          counts={catalogCounts}
-          labelPrefix="virtualMachines.list"
-          getLabel={(filter) => statusLabels[filter]}
-          onSelect={onStatusChange}
-          ariaLabel={t('virtualMachines.list.filterByState')}
-          idBase="vm-catalog-filter"
-          controlsId="vm-catalog-panel"
-        />
-      </div>
-
-      <section id="vm-catalog-panel" role="tabpanel" tabIndex={0} aria-labelledby={`vm-catalog-filter-${status}-tab`} className="grid min-w-0 shrink-0 content-start gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
-        <div data-vm-catalog-controls="true" className="grid min-w-0 gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-4 shadow-sm sm:grid-cols-[minmax(16rem,1fr)_minmax(10rem,12rem)]">
-          <div className="relative min-w-0">
-            <label htmlFor="vm-search" className="sr-only">{t('virtualMachines.list.search')}</label>
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-            <PageSearchInput id="vm-search" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={t('virtualMachines.list.search')} className="w-full pl-11 lg:w-full" />
+      <section id="vm-catalog-panel" aria-labelledby="vm-catalog-heading" className="grid min-w-0 shrink-0 content-start gap-4">
+        <h2 id="vm-catalog-heading" className="sr-only">{t('virtualMachines.list.catalog')}</h2>
+        {(items.length > 0 || hasActiveFilter) && (
+          <div data-vm-catalog-controls="true">
+            <DiscoveryFilterBar
+              idPrefix="vm-catalog"
+              query={query}
+              queryLabel={t('virtualMachines.list.search')}
+              queryPlaceholder={t('virtualMachines.list.search')}
+              queryClearLabel={t('common.clearSearch')}
+              resultSummary={hasActiveFilter ? t('virtualMachines.list.showingVms', { count: visibleItems.length, total: items.length }) : t('virtualMachines.list.vmCount', { count: items.length })}
+              filters={[createDiscoveryFilterGroup<VmConnectionFilter>({
+                id: 'status',
+                label: t('common.status'),
+                value: status,
+                defaultValue: 'all',
+                options: VM_STATUS_FILTERS.map((filter) => ({
+                  value: filter,
+                  label: statusLabels[filter],
+                  count: catalogCounts[filter]
+                })),
+                onChange: onStatusChange
+              })]}
+              clearAllLabel={t('common.clearAll')}
+              onQueryChange={onQueryChange}
+              onClearAll={onClearFilters}
+            />
           </div>
-          <span className="flex h-11 min-h-11 items-center justify-center rounded-lg border border-ui-border bg-ui-bg/60 px-4 text-sm font-semibold text-ui-text-muted shadow-[inset_0_1px_0_rgb(var(--surface-rgb)/0.75)]">
-            {t('virtualMachines.list.showingVms', { count: visibleItems.length, total: items.length })}
-          </span>
-        </div>
+        )}
 
         {hasLoadError && items.length > 0 && (
           <div role="alert" className="flex flex-col gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
@@ -233,54 +230,41 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
               const canDeleteVm = canManageTargets;
               const hasVmMenu = canManageTargets;
               const vmIssueSummary = issueSummaryByVmId[vm.id];
+              const vmIssueSummaryLoadState = issueSummaryLoadStateByVmId[vm.id];
+              const actionHint = vmNeedsAttention(vm, vmIssueSummary)
+                ? t('dashboard.investigate')
+                : t('virtualMachines.list.openDetails');
 
               return (
-                <article
+                <TargetCatalogCard
                   key={vm.id}
-                  data-vm-card="true"
-                  className="group relative flex min-w-0 flex-col overflow-visible rounded-lg border border-ui-border bg-ui-surface shadow-sm transition-colors hover:border-accent/25"
+                  targetKind="vm"
+                  actionLabel={requiresAgentInstall
+                    ? t('virtualMachines.list.installAgentFor', { name: vm.name })
+                    : vmNeedsAttention(vm, vmIssueSummary)
+                      ? t('virtualMachines.list.investigateVm', { name: vm.name })
+                      : t('virtualMachines.list.openVm', { name: vm.name })}
+                  onActivate={() => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, requiresAgentInstall ? 'settings' : 'overview', catalogReturnState))}
                 >
-                  <button
-                    type="button"
-                    onClick={() => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, requiresAgentInstall ? 'settings' : 'overview', catalogReturnState))}
-                    className="control-target absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25"
-                    aria-label={requiresAgentInstall ? t('virtualMachines.list.installAgentFor', { name: vm.name }) : t('virtualMachines.list.openVm', { name: vm.name })}
-                  />
-
-                  <div className="pointer-events-none relative z-10 flex min-w-0 flex-col">
                     <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
                       <div className="flex min-w-0 flex-1 items-center gap-3">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong"><Server className="h-4 w-4" /></span>
                         <div className="min-w-0 flex-1">
                           <h3 className="type-panel-title truncate text-ui-text" title={vm.name}>{vm.name}</h3>
+                          {!requiresAgentInstall && <TargetCatalogActionHint label={actionHint} />}
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
                         <div className="xl:hidden 2xl:block">
-                          <VmStatusPill vm={vm} issueSummary={vmIssueSummary} />
+                          <VmStatusPill vm={vm} issueSummary={vmIssueSummary} issueSummaryLoadState={vmIssueSummaryLoadState} />
                         </div>
                         {hasVmMenu && (
-                          <div className="pointer-events-auto relative z-20">
-                            <button
-                              data-vm-overflow-action="toggle"
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setOpenVmActionMenuId((current) => current === vm.id ? null : vm.id);
-                              }}
-                              className={`control-target inline-flex h-10 w-10 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${openVmActionMenuId === vm.id ? 'bg-ui-bg text-ui-text' : ''}`}
-                              aria-haspopup="menu"
-                              aria-expanded={openVmActionMenuId === vm.id}
-                              aria-label={t('virtualMachines.list.vmActionsFor', { name: vm.name })}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </button>
-                            {openVmActionMenuId === vm.id && (
-                              <div
-                                role="menu"
-                                onClick={(event) => event.stopPropagation()}
-                                className="absolute right-0 top-10 w-52 overflow-hidden rounded-lg border border-ui-border bg-ui-surface p-1 text-sm shadow-xl"
-                              >
+                          <TargetCatalogActionMenu
+                            targetKind="vm"
+                            label={t('virtualMachines.list.vmActionsFor', { name: vm.name })}
+                            open={openVmActionMenuId === vm.id}
+                            onOpenChange={(open) => setOpenVmActionMenuId(open ? vm.id : null)}
+                          >
                                 <MenuItem
                                   data-vm-overflow-action="settings"
                                   onClick={() => {
@@ -288,7 +272,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                                     navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'settings', catalogReturnState));
                                   }}
                                 >
-                                  <Settings className="h-4 w-4 text-ui-text-muted" />
+                                  <Settings className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
                                   {t('virtualMachines.list.vmSettings')}
                                 </MenuItem>
                                 {canDeleteVm && (
@@ -302,22 +286,20 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                                       setDeleteTargetVm(vm);
                                     }}
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                                     {t('virtualMachines.list.deleteVm')}
                                   </MenuItem>
                                 )}
-                              </div>
-                            )}
-                          </div>
+                          </TargetCatalogActionMenu>
                         )}
                       </div>
                     </div>
                     <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
-                      <VmStatusPill vm={vm} issueSummary={vmIssueSummary} />
+                      <VmStatusPill vm={vm} issueSummary={vmIssueSummary} issueSummaryLoadState={vmIssueSummaryLoadState} />
                     </div>
 
                     {requiresAgentInstall ? (
-                      <PendingVirtualMachineSetup vmId={vm.id} vmName={vm.name} onInstallAgent={(vmId) => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vmId, 'settings', catalogReturnState))} />
+                      <PendingVirtualMachineSetup vmId={vm.id} vmName={vm.name} onInstallAgent={canManageAgentKeys ? (vmId) => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vmId, 'settings', catalogReturnState)) : undefined} />
                     ) : (
                       <VmCardResourceChart
                         vm={vm}
@@ -328,34 +310,22 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                       />
                     )}
                     <VmOperationalDetails vm={vm} issueCount={vmIssueSummary?.total} />
-                  </div>
-                </article>
+                </TargetCatalogCard>
               );
             })}
           </div>
         ) : (
-          <div className="flex min-h-[12rem] items-center justify-center rounded-lg border border-dashed border-ui-border bg-ui-surface px-5 py-8 text-center">
-            <div className="max-w-sm">
-              <div className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
-                {hasActiveFilter ? <Search className="h-4 w-4" /> : <ICONS.Server className="h-4 w-4" />}
-              </div>
-              <h3 className="type-row-title text-ui-text">{isLoading ? t('virtualMachines.list.loadingTitle') : hasLoadError ? t('virtualMachines.list.loadFailedTitle') : hasActiveFilter ? t('virtualMachines.list.noMatchingVms') : t('virtualMachines.list.emptyTitle')}</h3>
-              <p className="type-caption mt-1.5 text-ui-text-muted">
-                {isLoading ? t('virtualMachines.list.loadingBody') : hasLoadError ? t('virtualMachines.list.loadFailedBody') : hasActiveFilter ? t('virtualMachines.list.noMatchingVmsBody') : t('virtualMachines.list.emptyBody')}
-              </p>
-              {!isLoading && hasLoadError && (
-                <Button type="button" variant="secondary" size="sm" onClick={onRetryLoad} className="mt-5">
+          <EmptyState
+            headingLevel={3}
+            icon={hasLoadError ? <ICONS.AlertCircle /> : hasActiveFilter ? <ICONS.Search /> : <ICONS.Server />}
+            title={isLoading ? t('virtualMachines.list.loadingTitle') : hasLoadError ? t('virtualMachines.list.loadFailedTitle') : hasActiveFilter ? t('virtualMachines.list.noMatchingVms') : t('virtualMachines.list.emptyTitle')}
+            description={isLoading ? t('virtualMachines.list.loadingBody') : hasLoadError ? t('virtualMachines.list.loadFailedBody') : hasActiveFilter ? t('virtualMachines.list.noMatchingVmsBody') : t('virtualMachines.list.emptyBody')}
+            actions={!isLoading && hasLoadError ? (
+                <Button type="button" variant="secondary" size="sm" onClick={onRetryLoad}>
                   {t('common.retry')}
                 </Button>
-              )}
-              {!isLoading && !hasLoadError && !hasActiveFilter && canManageTargets && (
-                <Button onClick={onOpenRegisterVm} variant="primary" size="md" className="mt-6">
-                  <ICONS.Plus className="h-4 w-4" />
-                  {t('virtualMachines.list.connectVm')}
-                </Button>
-              )}
-            </div>
-          </div>
+            ) : undefined}
+          />
         )}
       </section>
       <AnimatePresence>

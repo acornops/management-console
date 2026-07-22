@@ -12,6 +12,7 @@
 - The default production base path is `/`.
 - Browser API calls should use same-origin `/api` routing. The production nginx CSP defaults `connect-src` to same-origin; explicit public control-plane base URLs require a matching custom CSP.
 - Full service exposure and TLS are owned by `acornops-deployment`.
+- Production builds require `VITE_APP_DATA_MODE=control-plane`; the fixture transport cannot be enabled in a production build.
 
 ## Production Paths
 
@@ -35,6 +36,21 @@ GET /
 - Deep links return 404: verify nginx SPA fallback handles root-level application routes.
 - Custom language missing from settings: verify `/locales/manifest.json` is valid and every file-backed language JSON exists under `/locales/`.
 - Stale UI after deploy: verify `/` and `/index.html` return `Cache-Control: no-cache`, while hashed `/assets/...` files return immutable cache headers.
+- Sign-in configuration unavailable: verify `GET /api/v1/auth/config` is
+  reachable and returns the expected flags. The console intentionally enables
+  no fallback authentication method.
+
+## Browser Incident Support
+
+1. Record the generated browser incident ID and occurrence time.
+2. Record the control-plane request ID when the structured record contains one.
+3. Search control-plane logs by request ID, then correlate by time and route
+   path. Do not collect tokens, bodies, or URL query strings.
+4. If no request ID exists, reproduce using the route path and browser version.
+
+Centralized browser error reporting is deliberately deferred. Incidents exist
+only in the affected browser console, so support depends on user-provided IDs;
+this remains an operational risk until a privacy-reviewed reporting path exists.
 
 ## Required Validation
 
@@ -42,6 +58,19 @@ Before release or deployment chart changes:
 
 ```bash
 npm run validate
+```
+
+The production-readiness release gate uses Node 22 and a clean install:
+
+```bash
+npm ci
+git diff --check
+npm run lint
+npm run test
+npx playwright test --config=playwright.fixtures.config.ts --retries=0 --repeat-each=3
+npx playwright test --config=playwright.mcp-parity.config.ts --retries=0 --repeat-each=3
+VITE_APP_DATA_MODE=control-plane npm run validate:ci
+npm run smoke:nginx
 ```
 
 For production image or nginx config changes, also run:

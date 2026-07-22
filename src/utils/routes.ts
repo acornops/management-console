@@ -2,6 +2,15 @@ export type ClusterSubview = 'overview' | 'resources' | 'mcpServers' | 'skills' 
 export type VmSubview = 'overview' | 'resources' | 'services' | 'processes' | 'network' | 'logs' | 'mcpServers' | 'skills' | 'tools' | 'chat' | 'settings';
 export type ClusterCatalogStatusFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 export type VmCatalogStatusFilter = ClusterCatalogStatusFilter;
+export type McpCatalogCompatibility = 'all' | 'compatible' | 'incompatible';
+
+export interface McpCatalogRouteState {
+  q?: string;
+  source?: string;
+  compatibility?: McpCatalogCompatibility;
+  artifact?: string;
+  destination?: string;
+}
 
 export interface ClusterCatalogRouteState {
   q?: string;
@@ -21,16 +30,16 @@ export type AppRoute =
   | { kind: 'workspaces' }
   | ({ kind: 'kubernetesClusters' } & ClusterCatalogRouteState)
   | { kind: 'accountSettings' }
-  | { kind: 'settings' }
   | { kind: 'help' }
   | { kind: 'externalIntegrationLink'; token?: string; status?: 'linked' | 'expired' | 'cancelled' }
   | { kind: 'workspaceOverview'; workspaceId: string }
   | { kind: 'workspaceAgents'; workspaceId: string }
+  | ({ kind: 'workspaceCatalog'; workspaceId: string } & McpCatalogRouteState)
   | { kind: 'workspaceWorkflows'; workspaceId: string }
   | { kind: 'workspaceSchedules'; workspaceId: string; createWorkflowId?: string }
   | { kind: 'workspaceApprovals'; workspaceId: string; runId?: string; approvalId?: string }
   | { kind: 'workspaceMembers'; workspaceId: string }
-  | { kind: 'workspaceAiSettings'; workspaceId: string }
+  | { kind: 'workspaceAiSettings'; workspaceId: string; returnTo?: string }
   | { kind: 'workspaceSettings'; workspaceId: string }
   | { kind: 'workspaceWebhooks'; workspaceId: string }
   | { kind: 'workspaceAuditLog'; workspaceId: string }
@@ -131,6 +140,31 @@ function cleanQueryParam(value: string | null): string | undefined {
   return trimmed || undefined;
 }
 
+function parseMcpCatalogRouteState(params: URLSearchParams): McpCatalogRouteState {
+  const compatibilityValue = params.get('compatibility');
+  const compatibility = compatibilityValue === 'compatible' || compatibilityValue === 'incompatible' || compatibilityValue === 'all'
+    ? compatibilityValue
+    : undefined;
+  const destination = cleanQueryParam(params.get('destination'));
+  return {
+    ...(cleanQueryParam(params.get('q')) ? { q: cleanQueryParam(params.get('q')) } : {}),
+    ...(cleanQueryParam(params.get('source')) ? { source: cleanQueryParam(params.get('source')) } : {}),
+    ...(compatibility ? { compatibility } : {}),
+    ...(cleanQueryParam(params.get('artifact')) ? { artifact: cleanQueryParam(params.get('artifact')) } : {}),
+    ...(destination && /^(agent|target):.+/.test(destination) ? { destination } : {})
+  };
+}
+
+function withMcpCatalogRouteState(path: string, state?: McpCatalogRouteState): string {
+  const params = new URLSearchParams();
+  if (state?.q?.trim()) params.set('q', state.q.trim());
+  if (state?.source?.trim()) params.set('source', state.source.trim());
+  if (state?.compatibility && state.compatibility !== 'all') params.set('compatibility', state.compatibility);
+  if (state?.artifact?.trim()) params.set('artifact', state.artifact.trim());
+  if (state?.destination?.trim()) params.set('destination', state.destination.trim());
+  return appendQuery(path, params);
+}
+
 function parseClusterCatalogRouteState(params: URLSearchParams): ClusterCatalogRouteState {
   const q = cleanQueryParam(params.get('q'));
   const status = parseClusterCatalogStatus(params.get('status'));
@@ -151,6 +185,53 @@ function parseClusterCatalogReturnState(params: URLSearchParams): ClusterCatalog
 function appendQuery(path: string, params: URLSearchParams): string {
   const query = params.toString();
   return query ? `${path}?${query}` : path;
+}
+
+export function validateAssistantReturnTo(value: string | null | undefined, workspaceId: string): string | undefined {
+  const candidate = value?.trim();
+  if (!candidate || !candidate.startsWith('/') || candidate.startsWith('//')) return undefined;
+  if (candidate.includes('\\') || candidate.includes('#') || /[\u0000-\u001f\u007f]/.test(candidate)) return undefined;
+
+  try {
+    decodeURIComponent(candidate);
+  } catch {
+    return undefined;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(candidate, 'https://console.acornops.invalid');
+  } catch {
+    return undefined;
+  }
+  if (parsed.origin !== 'https://console.acornops.invalid') return undefined;
+
+  const normalized = `${parsed.pathname}${parsed.search}`;
+  if (normalized !== candidate) return undefined;
+  const assistantPathMatches = [
+    parsed.pathname.match(/^\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)\/chat$/),
+    parsed.pathname.match(/^\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/chat$/)
+  ];
+  const match = assistantPathMatches.find((candidateMatch) => candidateMatch !== null);
+  if (!match || decodeParam(match[1]) !== workspaceId) return undefined;
+  return normalized;
+}
+
+export function withAssistantSession(path: string, sessionId?: string | null): string {
+  if (!sessionId?.trim()) return path;
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}session=${encodeURIComponent(sessionId.trim())}`;
+}
+
+export function getCurrentAppPath(): string {
+  if (typeof window === 'undefined') return '/';
+  if (window.location.hash.startsWith('#/')) return window.location.hash.slice(1) || '/';
+
+  const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '');
+  const pathname = baseUrl && baseUrl !== '/' && window.location.pathname.startsWith(baseUrl)
+    ? window.location.pathname.slice(baseUrl.length) || '/'
+    : window.location.pathname || '/';
+  return `${pathname}${window.location.search}`;
 }
 
 function withClusterCatalogRouteState(path: string, state?: ClusterCatalogRouteState): string {
@@ -177,7 +258,6 @@ export function parseAppRoute(path: string): AppRoute {
   if (pathname === '/workspaces') return { kind: 'workspaces' };
   if (pathname === '/kubernetes-clusters') return { kind: 'kubernetesClusters', ...parseClusterCatalogRouteState(params) };
   if (pathname === '/account') return { kind: 'accountSettings' };
-  if (pathname === '/settings') return { kind: 'settings' };
   if (pathname === '/help') return { kind: 'help' };
   if (pathname === '/integrations/external/link') {
     return {
@@ -192,12 +272,13 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceInvitation', token: decodeParam(inviteMatch[1]) };
   }
 
-  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|workflows|schedules|approvals|members|ai-settings|settings|webhooks|audit-log)$/);
+  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|catalog|workflows|schedules|approvals|members|ai-settings|webhooks|settings|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
     if (section === 'overview') return { kind: 'workspaceOverview', workspaceId };
     if (section === 'agents') return { kind: 'workspaceAgents', workspaceId };
+    if (section === 'catalog') return { kind: 'workspaceCatalog', workspaceId, ...parseMcpCatalogRouteState(params) };
     if (section === 'workflows') return { kind: 'workspaceWorkflows', workspaceId };
     if (section === 'schedules') {
       const createWorkflowId = params.get('create') === 'schedule' ? params.get('workflowId') || undefined : undefined;
@@ -205,18 +286,11 @@ export function parseAppRoute(path: string): AppRoute {
         ? { kind: 'workspaceSchedules', workspaceId, createWorkflowId }
         : { kind: 'workspaceSchedules', workspaceId };
     }
-    if (section === 'approvals') {
-      const route: Extract<AppRoute, { kind: 'workspaceApprovals' }> = {
-        kind: 'workspaceApprovals',
-        workspaceId
-      };
-      const runId = params.get('runId');
-      const approvalId = params.get('approvalId');
-      if (runId) route.runId = runId;
-      if (approvalId) route.approvalId = approvalId;
-      return route;
+    if (section === 'approvals') return { kind: 'workspaceApprovals', workspaceId };
+    if (section === 'ai-settings') {
+      const returnTo = validateAssistantReturnTo(params.get('returnTo'), workspaceId);
+      return { kind: 'workspaceAiSettings', workspaceId, ...(returnTo ? { returnTo } : {}) };
     }
-    if (section === 'ai-settings') return { kind: 'workspaceAiSettings', workspaceId };
     if (section === 'settings') return { kind: 'workspaceSettings', workspaceId };
     if (section === 'webhooks') return { kind: 'workspaceWebhooks', workspaceId };
     if (section === 'audit-log') return { kind: 'workspaceAuditLog', workspaceId };
@@ -299,6 +373,13 @@ export const AppPaths = {
   workspaceOverview: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/overview`,
   workspaceAgents: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/agents`,
+  workspaceAgentMcp: (workspaceId: string, agentId: string, action?: 'connect_by_url'): string => {
+    const params = new URLSearchParams({ agent: agentId, panel: 'profile', agentTab: 'capabilities', capabilityTab: 'mcp' });
+    if (action) params.set('mcpAction', action);
+    return appendQuery(`/workspaces/${encodeURIComponent(workspaceId)}/agents`, params);
+  },
+  workspaceCatalog: (workspaceId: string, state?: McpCatalogRouteState): string =>
+    withMcpCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/catalog`, state),
   workspaceWorkflows: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/workflows`,
   workspaceSchedules: (workspaceId: string): string =>
@@ -313,9 +394,16 @@ export const AppPaths = {
     return `/workspaces/${encodeURIComponent(workspaceId)}/approvals${query ? `?${query}` : ''}`;
   },
   workspaceMembers: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/members`,
-  workspaceAiSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`,
+  workspaceAiSettings: (workspaceId: string, returnTo?: string): string => {
+    const base = `/workspaces/${encodeURIComponent(workspaceId)}/ai-settings`;
+    const validReturnTo = validateAssistantReturnTo(returnTo, workspaceId);
+    if (!validReturnTo) return base;
+    return appendQuery(base, new URLSearchParams({ returnTo: validReturnTo }));
+  },
   workspaceSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/settings`,
   workspaceWebhooks: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/webhooks`,
+  workspaceMcpRegistries: (workspaceId: string): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/settings?section=mcp-registries`,
   workspaceAuditLog: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/audit-log`,
   workspaceKubernetesClusters: (workspaceId: string, state?: ClusterCatalogRouteState): string =>
     withClusterCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`, state),
@@ -324,6 +412,19 @@ export const AppPaths = {
   workspaceVirtualMachineDetail: (workspaceId: string, vmId: string, tab?: VmSubview, catalogState?: VmCatalogReturnState): string => {
     const base = `/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}`;
     return withClusterCatalogReturnState(tab ? `${base}/${vmSubviewPathSegment(tab)}` : base, catalogState);
+  },
+  workspaceTargetMcp: (
+    workspaceId: string,
+    targetId: string,
+    targetType: 'kubernetes' | 'virtual_machine',
+    action?: 'connect_by_url'
+  ): string => {
+    const base = targetType === 'kubernetes'
+      ? `/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(targetId)}/mcp-servers`
+      : `/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(targetId)}/mcp-servers`;
+    const params = new URLSearchParams();
+    if (action) params.set('mcpAction', action);
+    return appendQuery(base, params);
   },
   kubernetesClusterDiagnostics: (clusterId: string, tab?: ClusterSubview, catalogState?: ClusterCatalogReturnState): string => {
     const base = `/kubernetes-clusters/${encodeURIComponent(clusterId)}`;

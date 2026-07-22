@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  ControlPlaneRequestError,
+  clearControlPlaneCsrfState,
   getControlPlaneBaseUrl,
   getControlPlaneUrl,
   normalizeBaseUrl,
+  parseRetryAfterSeconds,
+  resolveControlPlaneBaseUrl,
   readRunEventStream,
   requestArtifact,
   requestJson
@@ -25,6 +29,9 @@ describe('control-plane http helpers', () => {
     expect(normalizeBaseUrl('https://control-plane.example.com/')).toBe('https://control-plane.example.com');
     expect(normalizeBaseUrl('https://control-plane.example.com')).toBe('https://control-plane.example.com');
     expect(getControlPlaneBaseUrl()).toBe('http://localhost:8081');
+    expect(resolveControlPlaneBaseUrl(undefined, false)).toBe('http://localhost:8081');
+    expect(resolveControlPlaneBaseUrl(undefined, true)).toBe('');
+    expect(resolveControlPlaneBaseUrl('https://control-plane.example.com/', true)).toBe('https://control-plane.example.com');
 
     env.VITE_CONTROL_PLANE_API_BASE_URL = previous;
   });
@@ -113,7 +120,7 @@ describe('control-plane http helpers', () => {
   it('normalizes error responses from unauthorized, json, and raw text bodies', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(new Response(null, { status: 401, statusText: 'Unauthorized' }))
+      .mockResolvedValueOnce(new Response('secret response body', { status: 401, statusText: 'Unauthorized', headers: { 'x-request-id': 'request-401' } }))
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ error: { detail: 'Detailed failure' } }), {
           status: 500,
@@ -128,13 +135,45 @@ describe('control-plane http helpers', () => {
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(requestJson('/api/v1/protected')).rejects.toThrow('UNAUTHORIZED');
+    try {
+      await requestJson('/api/v1/protected', { sessionExpiry: 'ignore' });
+      expect.fail('requestJson should reject');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ControlPlaneRequestError);
+      expect((error as ControlPlaneRequestError).status).toBe(401);
+      expect((error as ControlPlaneRequestError).requestId).toBe('request-401');
+      expect((error as Error).message).not.toContain('secret response body');
+    }
     await expect(requestJson('/api/v1/json-error')).rejects.toThrow(
       'Control plane request failed (500): Detailed failure'
     );
     await expect(requestJson('/api/v1/text-error')).rejects.toThrow(
       'Control plane request failed (502): plain failure'
     );
+  });
+
+  it('clears cached CSRF state for session teardown', () => {
+    expect(() => clearControlPlaneCsrfState()).not.toThrow();
+  });
+
+  it('captures and bounds Retry-After on rate-limited responses', async () => {
+    expect(parseRetryAfterSeconds('12', 0)).toBe(12);
+    expect(parseRetryAfterSeconds('999999', 0)).toBe(3600);
+    expect(parseRetryAfterSeconds('Thu, 01 Jan 1970 00:00:15 GMT', 10_000)).toBe(5);
+    expect(parseRetryAfterSeconds('invalid', 0)).toBeUndefined();
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ error: { code: 'MCP_CONNECTION_RATE_LIMITED', message: 'Wait before retrying.' } }),
+      { status: 429, headers: { 'retry-after': '27', 'content-type': 'application/json' } }
+    )));
+
+    try {
+      await requestJson('/api/v1/rate-limited');
+      expect.fail('requestJson should reject');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ControlPlaneRequestError);
+      expect((error as ControlPlaneRequestError).retryAfterSeconds).toBe(27);
+    }
   });
 
   it('reads redacted artifacts as JSON or text and preserves no-store session semantics', async () => {

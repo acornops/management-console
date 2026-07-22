@@ -14,7 +14,7 @@ import {
   type ControlPlaneVirtualMachineMetricHistoryPoint
 } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
-import { AppPaths, AppRoute, type VmCatalogReturnState, VmSubview } from '@/utils/routes';
+import { AppPaths, AppRoute, getCurrentAppPath, type VmCatalogReturnState, VmSubview } from '@/utils/routes';
 import { Workspace } from '@/types';
 import {
   formatSnapshotTime,
@@ -38,6 +38,7 @@ import { VirtualMachineResourcesView, VmResourceCategory } from '@/pages/virtual
 import { VirtualMachineSettingsView } from '@/pages/virtual-machines/VirtualMachineSettingsView';
 import { useVirtualMachineListRefresh } from '@/pages/virtual-machines/useVirtualMachineListRefresh';
 import { useVirtualMachineIssueSummaries } from '@/pages/virtual-machines/useVirtualMachineIssueSummaries';
+import { useVirtualMachineAgentSetup } from '@/pages/virtual-machines/useVirtualMachineAgentSetup';
 import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/pages/virtual-machines/virtualMachineTargetPrompt';
 import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
 
@@ -50,6 +51,7 @@ interface VirtualMachinesPageProps {
   hasLoadedWorkspaceVirtualMachines: boolean;
   isDark: boolean;
   canManageTargets: boolean;
+  canManageAgentKeys: boolean;
   navigate: (path: string, options?: NavigateOptions) => void;
   onUpdateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
@@ -78,6 +80,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   hasLoadedWorkspaceVirtualMachines,
   isDark,
   canManageTargets,
+  canManageAgentKeys,
   navigate,
   onUpdateWorkspace,
   onReplaceWorkspaceVirtualMachines,
@@ -101,13 +104,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const [metricHistoryByVmId, setMetricHistoryByVmId] = React.useState<Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>>({});
   const [metricLoadStateByVmId, setMetricLoadStateByVmId] = React.useState<Record<string, VmMetricLoadState>>({});
   const [metricHistoryStatus, setMetricHistoryStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [installInstructions, setInstallInstructions] = React.useState<{ vmId: string; value: string } | null>(null);
-  const [isAddingVm, setIsAddingVm] = React.useState(false);
-  const [vmCreationStep, setVmCreationStep] = React.useState<'details' | 'instructions'>('details');
-  const [isRegisteringVm, setIsRegisteringVm] = React.useState(false);
-  const [newVmInstallInstructions, setNewVmInstallInstructions] = React.useState('');
-  const [vmCreationError, setVmCreationError] = React.useState<string | null>(null);
-  const [newVmName, setNewVmName] = React.useState('');
   const [pendingChatPrompt, setPendingChatPrompt] = React.useState('');
   const [resourceCategory, setResourceCategory] = React.useState<VmResourceCategory>('all');
   const activeCatalogState = route.kind === 'workspaceVirtualMachines' ? route : route.catalogState;
@@ -161,6 +157,18 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     const { clusterIds: _clusterIds, members: _members, ...updates } = refreshed;
     onUpdateWorkspace(workspace.id, updates);
   }, [onUpdateWorkspace, workspace.id]);
+  const {
+    agentKeyRotationError, confirmVmInstalled, installInstructions, isAddingVm, isRegisteringVm,
+    isRotatingAgentKey, newVmInstallInstructions, newVmName, openAddVmModal, registerVm,
+    resetVmCreationState, rotateKey, setNewVmName, vmCreationError, vmCreationStep
+  } = useVirtualMachineAgentSetup({
+    workspaceId: workspace.id,
+    canManageTargets,
+    canManageAgentKeys,
+    refreshWorkspaceSummary,
+    onUpsertVirtualMachine: (virtualMachine) => onUpsertWorkspaceVirtualMachine(workspace.id, virtualMachine),
+    t
+  });
 
   React.useEffect(() => {
     if (!selectedId || selected || isLoading) return;
@@ -336,55 +344,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     };
   }, [catalogMetricVms, route.kind, workspace.id]);
 
-  const resetVmCreationState = () => {
-    setIsAddingVm(false);
-    setVmCreationStep('details');
-    setIsRegisteringVm(false);
-    setInstallInstructions(null);
-    setNewVmInstallInstructions('');
-    setVmCreationError(null);
-    setNewVmName('');
-  };
-
-  const openAddVmModal = () => {
-    if (!canManageTargets) return;
-    setIsAddingVm(true);
-    setVmCreationStep('details');
-    setNewVmInstallInstructions('');
-    setVmCreationError(null);
-  };
-
-  const registerVm = async () => {
-    if (!newVmName.trim() || !canManageTargets) return;
-    setIsRegisteringVm(true);
-    setVmCreationError(null);
-    try {
-      const result = await controlPlaneApi.registerVirtualMachine(workspace.id, {
-        name: newVmName.trim()
-      });
-      setInstallInstructions({ vmId: result.virtualMachine.id, value: result.installInstructions });
-      setNewVmInstallInstructions(result.installInstructions);
-      onUpsertWorkspaceVirtualMachine(workspace.id, result.virtualMachine);
-      await refreshWorkspaceSummary();
-      setVmCreationStep('instructions');
-    } catch (error) {
-      console.error('Failed registering virtual machine in control plane', error);
-      setVmCreationError(formatControlPlaneError(error, t('virtualMachines.list.registerFailed'), { area: 'virtualMachines' }));
-    } finally {
-      setIsRegisteringVm(false);
-    }
-  };
-
-  const confirmVmInstalled = () => {
-    resetVmCreationState();
-  };
-
-  const rotateKey = async () => {
-    if (!selected) return;
-    const result = await controlPlaneApi.rotateVirtualMachineAgentKey(workspace.id, selected.id);
-    setInstallInstructions({ vmId: selected.id, value: result.installInstructions });
-  };
-
   const deleteVirtualMachine = React.useCallback(async (vm: ControlPlaneVirtualMachine) => {
     await controlPlaneApi.deleteVirtualMachine(workspace.id, vm.id);
     onRemoveWorkspaceVirtualMachine(workspace.id, vm.id);
@@ -469,8 +428,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           issueSummaryByVmId={issueSummaryByVmId}
           issueSummaryLoadStateByVmId={issueSummaryLoadStateByVmId}
           canManageTargets={canManageTargets}
+          canManageAgentKeys={canManageAgentKeys}
           onQueryChange={(nextQuery) => updateCatalogState({ q: nextQuery || undefined })}
           onStatusChange={(nextStatus) => updateCatalogState({ status: nextStatus === 'all' ? undefined : nextStatus })}
+          onClearFilters={() => updateCatalogState({ q: undefined, status: undefined })}
           onOpenRegisterVm={openAddVmModal}
           onRetryLoad={() => void reloadVirtualMachines()}
           onDeleteVirtualMachine={deleteVirtualMachine}
@@ -486,7 +447,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           onClose={resetVmCreationState}
           onVmNameChange={setNewVmName}
           onProceedToInstructions={registerVm}
-          onConfirmInstalled={confirmVmInstalled}
+          onConfirmInstalled={() => void confirmVmInstalled()}
         />
       </>
     );
@@ -599,7 +560,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         currentUserId={currentUserId}
         isDark={isDark}
         initialInputValue={selectedTargetPrompt || pendingChatPrompt}
-        onOpenAiSettings={() => navigate(AppPaths.workspaceAiSettings(workspace.id))}
+        onOpenAiSettings={() => navigate(AppPaths.workspaceAiSettings(workspace.id, getCurrentAppPath()))}
         onInitialInputConsumed={() => {
           if (selectedTargetPrompt) onPendingTargetPromptConsumed?.();
           setPendingChatPrompt('');
@@ -634,7 +595,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         vm={selected}
         workspace={workspace}
         installInstructions={installInstructions?.vmId === selected.id ? installInstructions.value : null}
-        onRotateKey={rotateKey}
+        onRotateKey={canManageAgentKeys ? () => rotateKey(selected) : undefined}
+        isRotatingKey={isRotatingAgentKey}
+        rotationError={agentKeyRotationError}
+        onDeleteVirtualMachine={canManageTargets ? () => deleteVirtualMachine(selected) : undefined}
       />
     );
   }

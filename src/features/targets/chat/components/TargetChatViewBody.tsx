@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { History, Plus, Upload } from 'lucide-react';
+import { MessagesSquare, Plus, Search, Upload } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
 import { ConversationHistory } from '@/features/targets/chat/components/ConversationHistory';
@@ -8,21 +8,21 @@ import { LiveRunTrace } from '@/features/targets/chat/types';
 import { AssistantTurn } from '@/features/targets/chat/components/AssistantTurn';
 import { TargetChatComposer } from '@/features/targets/chat/components/TargetChatComposer';
 import { TargetChatGateDialog } from '@/features/targets/chat/components/TargetChatGateDialog';
+import { TargetAssistantReadinessState } from '@/features/targets/chat/components/TargetAssistantReadinessState';
 import { TargetChatPanelControls } from '@/features/targets/chat/components/TargetChatPanelControls';
 import { ChatEmptyPrompt, ChatTranscriptLoadError, ChatTranscriptSkeleton } from '@/features/targets/chat/components/ChatTranscriptStates';
 import { DeleteConversationDialog } from '@/features/targets/chat/components/DeleteConversationDialog';
 import { UserMessageTurn } from '@/features/targets/chat/components/UserMessageTurn';
-import {
-  formatMessageTime
-} from '@/features/targets/chat/components/targetChatViewHelpers';
+import { formatMessageTime } from '@/features/targets/chat/components/targetChatViewHelpers';
+import { useTargetChatHistoryWorkspace } from '@/features/targets/chat/components/useTargetChatHistoryWorkspace';
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
-
+import { getComposerReferenceProps } from '@/features/targets/chat/components/targetChatReferenceProps';
 export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => {
   const {
     activeRunId,
     activeSession,
     activeSessionId,
-    aiSettingsGateReason,
+    aiRuntimeReadiness,
     allowedReasoningOptions,
     assistantMarkdownComponents,
     assistantCapabilitiesPreview,
@@ -88,7 +88,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     onCancelRun,
     onChatScroll,
     onDismissRecentActivityWarning,
-    onInputChange,
     onLoadEarlierMessages,
     onOpenAiSettings,
     onOpenRecentActivitySession,
@@ -142,7 +141,34 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     submitEditedMessage
   } = props;
   const contentRef = React.useRef<HTMLDivElement>(null);
-  const hasBlockingGate = Boolean(recentActivityWarning || aiSettingsGateReason);
+  const hasBlockingGate = Boolean(recentActivityWarning);
+  const hasReadyAiRuntime = aiRuntimeReadiness.status === 'ready';
+  const {
+    createSessionFromSearch,
+    finishHistoryResize,
+    handleHistoryResizeKeyDown,
+    historyPanelMaxWidth,
+    historyPanelWidth,
+    historySearchPageId,
+    historySearchValue,
+    isChatsRailActive,
+    isHistorySearchPageOpen,
+    isSearchRailActive,
+    moveHistoryResize,
+    openHistorySearch,
+    resetHistoryPanelWidth,
+    selectSessionFromSearch,
+    setHistorySearchValue,
+    startHistoryResize,
+    toggleHistoryChats
+  } = useTargetChatHistoryWorkspace({
+    desktopHistoryPanelId,
+    handleCreateSessionClick,
+    historyButtonRef,
+    isHistoryOpen,
+    selectSession,
+    setIsHistoryOpen
+  });
 
   React.useEffect(() => {
     const content = contentRef.current;
@@ -190,64 +216,108 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             </motion.div>
           )}
         </AnimatePresence>
-      {!isPanel && !isHistoryOpen && (
-        <Tooltip content={historyControlLabel} side="right" className="absolute left-0 top-1/2 z-20 -translate-y-1/2">
-          <button
-            ref={historyButtonRef}
-            type="button"
-            onClick={() => setIsHistoryOpen(true)}
-            className="control-target inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-            aria-label={historyControlLabel}
-            aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
-            aria-expanded={isHistoryOpen}
-            aria-pressed={isHistoryOpen}
-          >
-            <History className="h-4 w-4" />
-          </button>
-        </Tooltip>
+      {!isPanel && (
+        <nav
+          aria-label={t('chat.assistantNavigation')}
+          className="relative z-20 flex h-full w-12 shrink-0 flex-col items-center gap-1 border-r border-ui-border bg-ui-surface py-2"
+        >
+          <Tooltip content={t('chat.searchChats')} side="right">
+            <Button
+              type="button"
+              variant="tertiary"
+              size="icon"
+              onClick={openHistorySearch}
+              data-chat-history-trigger="search"
+              className={isSearchRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
+              aria-label={t('chat.searchChats')}
+              aria-controls={historySearchPageId}
+              aria-current={isSearchRailActive ? 'page' : undefined}
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </Tooltip>
+          <Tooltip content={isChatsRailActive ? historyControlLabel : t('chat.chats')} side="right">
+            <Button
+              type="button"
+              variant="tertiary"
+              size="icon"
+              onClick={toggleHistoryChats}
+              data-chat-history-trigger="chats"
+              className={isChatsRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
+              aria-label={isChatsRailActive ? historyControlLabel : t('chat.chats')}
+              aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
+              aria-expanded={isChatsRailActive}
+              aria-current={isChatsRailActive ? 'page' : undefined}
+            >
+              <MessagesSquare className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </Tooltip>
+        </nav>
       )}
-      <AnimatePresence initial={false}>
-        {!isPanel && isHistoryOpen && (
-          <motion.aside
-            id={desktopHistoryPanelId}
-            aria-label={t('chat.history')}
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="relative hidden h-full shrink-0 overflow-visible border-r border-ui-border bg-ui-surface shadow-sm lg:flex"
-          >
-            <Tooltip content={historyControlLabel} side="right" className="absolute right-[-2.25rem] top-1/2 z-20 -translate-y-1/2">
-              <button
-                ref={historyButtonRef}
-                type="button"
-                onClick={() => setIsHistoryOpen(false)}
-                className="control-target inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                aria-label={historyControlLabel}
-                aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
-                aria-expanded={isHistoryOpen}
-                aria-pressed={isHistoryOpen}
-              >
-                <History className="h-4 w-4" />
-              </button>
-            </Tooltip>
-            <div className="flex h-full w-80 shrink-0 flex-col overflow-hidden">
-              <ConversationHistory
-                appName={target.name}
-                sessions={sessions}
-                activeSessionId={activeSessionId}
-                sessionAssistantStatuses={sessionAssistantStatuses}
-                isSessionsLoading={isSessionsLoading}
-                onSelectSession={selectSession}
-                onDeleteSessionClick={openDeleteSessionModal}
-                canDeleteSessions={canDeleteSessions}
-                t={t}
-              />
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
+      {!isPanel && isHistoryOpen && (
+        <aside
+          id={desktopHistoryPanelId}
+          aria-label={t('chat.chats')}
+          style={{ width: historyPanelWidth }}
+          className="relative hidden h-full shrink-0 overflow-hidden border-r border-ui-border bg-ui-surface shadow-sm lg:flex"
+        >
+          <div className="flex h-full w-full shrink-0 flex-col overflow-hidden">
+            <ConversationHistory
+              appName={target.name}
+              sessions={sessions}
+              activeSessionId={activeSessionId}
+              sessionAssistantStatuses={sessionAssistantStatuses}
+              isSessionsLoading={isSessionsLoading}
+              onSelectSession={selectSession}
+              onDeleteSessionClick={openDeleteSessionModal}
+              onSearchValueChange={setHistorySearchValue}
+              searchValue={historySearchValue}
+              canDeleteSessions={canDeleteSessions}
+              t={t}
+            />
+          </div>
+          <div
+            data-chat-history-resize-handle="true"
+            role="separator"
+            aria-label={t('chat.resizeHistory')}
+            aria-orientation="vertical"
+            aria-valuemin={0}
+            aria-valuemax={historyPanelMaxWidth}
+            aria-valuenow={Math.round(historyPanelWidth)}
+            tabIndex={0}
+            title={t('chat.resizeHistoryHint')}
+            className="absolute right-0 top-0 z-20 h-full w-2 touch-none cursor-col-resize bg-transparent transition-colors hover:bg-accent/10 focus:outline-none focus-visible:bg-accent/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/35"
+            onPointerDown={startHistoryResize}
+            onPointerMove={moveHistoryResize}
+            onPointerUp={(event) => finishHistoryResize(event)}
+            onPointerCancel={(event) => finishHistoryResize(event, true)}
+            onDoubleClick={resetHistoryPanelWidth}
+            onKeyDown={handleHistoryResizeKeyDown}
+          />
+        </aside>
+      )}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
+        {isHistorySearchPageOpen && !isPanel ? (
+          <ConversationHistory
+            id={historySearchPageId}
+            mode="page"
+            appName={target.name}
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            sessionAssistantStatuses={sessionAssistantStatuses}
+            isSessionsLoading={isSessionsLoading}
+            canCreateSession={canChat && hasReadyAiRuntime}
+            canDeleteSessions={canDeleteSessions}
+            newChatUnavailableReason={newChatUnavailableReason}
+            onCreateSession={createSessionFromSearch}
+            onSelectSession={selectSessionFromSearch}
+            onDeleteSessionClick={openDeleteSessionModal}
+            onSearchValueChange={setHistorySearchValue}
+            searchValue={historySearchValue}
+            t={t}
+          />
+        ) : (
+          <>
         <header className={`${isPanel ? 'sticky top-0 z-10 border-b border-ui-border bg-ui-surface px-5 py-4 sm:px-6' : 'bg-ui-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8'} transition-colors`}>
           {isPanel ? (
             <div>
@@ -267,16 +337,20 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 <h1 className="type-route-title">{title}</h1>
                 <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: target.name })}</p>
               </div>
-              <div className="flex w-full min-w-0 shrink-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:max-w-2xl lg:justify-end">
-                <Tooltip content={newChatUnavailableReason} disabled={!newChatUnavailableReason}>
-                  <span className="inline-flex w-full sm:w-auto">
+              <div className="flex w-full min-w-0 shrink-0 items-center gap-3 lg:w-auto lg:max-w-2xl lg:justify-end">
+                <Tooltip
+                  content={newChatUnavailableReason}
+                  disabled={!newChatUnavailableReason}
+                  className="min-w-0 flex-1 lg:flex-none"
+                >
+                  <span className="inline-flex w-full">
                     <Button
                       type="button"
                       onClick={handleCreateSessionClick}
-                      disabled={!canChat}
+                      disabled={!canChat || !hasReadyAiRuntime}
                       variant="secondary"
                       size="md"
-                      className="w-full whitespace-nowrap sm:w-auto"
+                      className="w-full whitespace-nowrap lg:w-auto"
                     >
                       <Plus className="h-4 w-4" />
                       {t('chat.newChat')}
@@ -300,6 +374,13 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
               isPanel={isPanel}
               title={t('chat.conversationLoadFailed')}
               body={t('chat.conversationLoadFailedBody')}
+            />
+          ) : visibleMessages.length === 0 && !hasReadyAiRuntime ? (
+            <TargetAssistantReadinessState
+              status={aiRuntimeReadiness.status}
+              canManageAiSettings={canManageAiSettings}
+              onOpenAiSettings={onOpenAiSettings}
+              t={t}
             />
           ) : visibleMessages.length === 0 ? (
             <ChatEmptyPrompt
@@ -356,7 +437,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   !isUser &&
                   hasLaterUserMessage &&
                   traceToRender?.status === 'cancelled';
-
                 if (!isUser) {
                   return (
                     <div key={messageKey} className="flex w-full justify-start">
@@ -415,7 +495,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           )}
         </div>
 
-        <TargetChatComposer
+        {hasReadyAiRuntime ? <TargetChatComposer
           allowedReasoningOptions={allowedReasoningOptions}
           assistantCapabilitiesPreview={assistantCapabilitiesPreview}
           assistantCapabilitiesPreviewError={assistantCapabilitiesPreviewError}
@@ -452,7 +532,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           modelSubmenuButtonId={modelSubmenuButtonId}
           modelSubmenuPanelId={modelSubmenuPanelId}
           onCancelRun={onCancelRun}
-          onInputChange={onInputChange}
           recentActivityWarning={recentActivityWarning}
           removeComposerAttachment={removeComposerAttachment}
           requestedToolAccessMode={requestedToolAccessMode}
@@ -467,45 +546,49 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           selectedProvider={selectedProvider}
           setIsModelMenuOpen={setIsModelMenuOpen}
           setIsModelSubmenuOpen={setIsModelSubmenuOpen}
+          {...getComposerReferenceProps(props)}
           submitComposerMessage={submitComposerMessage}
           t={t}
           workspaceAiSettingsError={workspaceAiSettingsError}
-        />
+        /> : visibleMessages.length > 0 ? (
+          <TargetAssistantReadinessState
+            compact
+            status={aiRuntimeReadiness.status}
+            canManageAiSettings={canManageAiSettings}
+            onOpenAiSettings={onOpenAiSettings}
+            t={t}
+          />
+        ) : null}
+          </>
+        )}
       </div>
 
       <AnimatePresence>
         {!isPanel && isHistoryOpen && (
           <motion.div
-            className="absolute inset-0 z-[110] lg:hidden"
+            className="absolute inset-0 z-[110] bg-ui-text/20 dark:bg-ui-bg/65 lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setIsHistoryOpen(false);
+            }}
           >
-            <div className="absolute inset-0 h-full w-full bg-ui-text/20 dark:bg-ui-bg/65" aria-hidden="true" />
             <motion.aside
               ref={historyPanelRef}
               id={mobileHistoryPanelId}
               role="dialog"
               aria-modal="true"
-              aria-label={t('chat.history')}
+              aria-label={t('chat.chats')}
               tabIndex={-1}
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -24, opacity: 0 }}
               transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute left-0 top-0 flex h-full w-[min(23rem,calc(100vw-2rem))] flex-col overflow-visible border-r border-ui-border bg-ui-surface shadow-xl outline-none"
+              className="absolute left-12 top-0 flex h-full w-[min(21rem,calc(100vw-5rem))] flex-col overflow-hidden border-r border-ui-border bg-ui-surface shadow-xl outline-none"
+              onMouseDown={(event) => event.stopPropagation()}
             >
-              <Tooltip content={historyControlLabel} side="right" className="absolute right-[-2.25rem] top-1/2 z-20 -translate-y-1/2">
-                <button
-                  type="button"
-                  onClick={() => setIsHistoryOpen(false)}
-                  className="control-target inline-flex h-16 w-9 items-center justify-center rounded-r-lg border border-l-0 border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                  aria-label={historyControlLabel}
-                >
-                  <History className="h-4 w-4" />
-                </button>
-              </Tooltip>
               <ConversationHistory
                 appName={target.name}
                 sessions={sessions}
@@ -514,6 +597,9 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 isSessionsLoading={isSessionsLoading}
                 onSelectSession={selectSession}
                 onDeleteSessionClick={openDeleteSessionModal}
+                onSearchValueChange={setHistorySearchValue}
+                onClose={() => setIsHistoryOpen(false)}
+                searchValue={historySearchValue}
                 canDeleteSessions={canDeleteSessions}
                 t={t}
               />
@@ -535,15 +621,12 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
       </div>
 
       <AnimatePresence>
-        {hasBlockingGate && (
+        {recentActivityWarning && (
           <TargetChatGateDialog
             activeSessionId={activeSessionId}
-            aiSettingsGateReason={aiSettingsGateReason}
-            canManageAiSettings={canManageAiSettings}
             isPanel={isPanel}
             recentActivityWarning={recentActivityWarning}
             onDismissRecentActivityWarning={onDismissRecentActivityWarning}
-            onOpenAiSettings={onOpenAiSettings}
             onOpenRecentActivitySession={onOpenRecentActivitySession}
             t={t}
           />

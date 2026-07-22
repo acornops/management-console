@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import {
   getVmCatalogStatusLabel,
+  getVmCatalogStatusReason,
   getVmCatalogStatusTone,
   getVmStatusLabel,
   vmMatchesConnectionFilter,
@@ -71,6 +72,7 @@ describe('virtual machine connection filters', () => {
     expect(vmMatchesConnectionFilter(vm, 'healthy', issues)).toBe(false);
     expect(getVmCatalogStatusLabel(vm, issues, t)).toBe('dashboard.criticalStatus:1');
     expect(getVmCatalogStatusTone(vm, issues)).toContain('text-status-danger-text');
+    expect(getVmCatalogStatusReason(vm, issues, 'ready', t)).toBe('virtualMachines.list.vmStateCriticalIssues:1');
   });
 
   it('does not turn raw snapshot findings into catalog issues', () => {

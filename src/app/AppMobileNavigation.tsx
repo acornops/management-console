@@ -108,7 +108,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
         >
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
           <div className="text-left font-sans text-lg leading-none tracking-tighter">
-            <span className="font-bold text-brand-brown">acorn</span>
+            <span className="font-bold text-brand-brown dark:text-brand-cream">acorn</span>
             <span className="font-bold text-accent-bright">ops</span>
             <span className="type-micro-label mt-1 block max-w-[10rem] truncate">
               {selectedWorkspace?.name || t('app.noWorkspace')}
@@ -156,7 +156,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
               />
             </div>
 
-            <div className="max-h-[calc(100vh-6.5rem)] divide-y divide-ui-border overflow-y-auto custom-scrollbar">
+            <div className="no-scrollbar max-h-[calc(100vh-6.5rem)] divide-y divide-ui-border overflow-y-auto">
               <section className="px-4 py-3">
                 <div className="grid grid-cols-2 gap-1.5">
                   <button
@@ -165,7 +165,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                       onSetMobileNavOpen(false);
                       navigate(AppPaths.workspaces());
                     }}
-                    className={`min-h-11 rounded-md px-3 py-2 text-xs font-semibold transition-all ${
+                    className={`min-h-11 rounded-md px-3 py-2 text-xs font-semibold transition-colors ${
                       activePrimaryNav === 'workspaces'
                         ? 'bg-accent-soft text-accent-strong'
                         : 'bg-ui-bg text-ui-text-muted hover:text-ui-text'
@@ -186,7 +186,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         navigate(AppPaths.workspaceKubernetesClusters(selectedWorkspaceId));
                       }}
                       disabled={!selectedWorkspaceId}
-                      className={`min-h-11 rounded-md px-3 py-2 text-xs font-semibold transition-all ${
+                      className={`min-h-11 rounded-md px-3 py-2 text-xs font-semibold transition-colors ${
                         activePrimaryNav === 'clusters'
                           ? 'bg-accent-soft text-accent-strong'
                           : 'bg-ui-bg text-ui-text-muted hover:text-ui-text'
@@ -235,7 +235,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateClusterSubview(tab);
                               }}
                               disabled={!selectedSidebarCluster}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
                                 activeClusterSubview === tab
                                   ? 'bg-accent-soft text-accent-strong'
                                   : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
@@ -279,7 +279,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateClusterSubview(tab);
                               }}
                               disabled={!selectedSidebarCluster}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
                                 activeClusterSubview === tab
                                   ? 'bg-accent-soft text-accent-strong'
                                   : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
@@ -301,7 +301,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             onNavigateClusterSubview('settings');
                           }}
                           disabled={!selectedSidebarCluster}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
                             activeClusterSubview === 'settings'
                               ? 'bg-accent-soft text-accent-strong'
                               : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
@@ -344,7 +344,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateVmSubview(tab);
                               }}
                               disabled={!selectedSidebarVm}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
                                 (tab === 'resources'
                                   ? activeVmSubview === 'resources' || activeVmSubview === 'services' || activeVmSubview === 'processes' || activeVmSubview === 'network' || activeVmSubview === 'logs'
                                   : activeVmSubview === tab)
@@ -381,7 +381,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateVmSubview(tab);
                               }}
                               disabled={!selectedSidebarVm}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
                                 activeVmSubview === tab
                                   ? 'bg-accent-soft text-accent-strong'
                                   : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
@@ -403,7 +403,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             onNavigateVmSubview('settings');
                           }}
                           disabled={!selectedSidebarVm}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs font-bold transition-all ${
+                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
                             activeVmSubview === 'settings'
                               ? 'bg-accent-soft text-accent-strong'
                               : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
@@ -450,7 +450,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                       )}
                                     </a>
                                     {item.children && (
-                                      <div className="mt-0.5 grid grid-cols-1 gap-1 pl-3">
+                                      <div className="mt-0.5 grid grid-cols-1 gap-1 px-3">
                                         {item.children.map((child) => (
                                           <a
                                             key={child.id}
@@ -489,7 +489,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                     {selectedWorkspace?.name || t('app.selectWorkspace')}
                   </span>
                 </div>
-                <div className="max-h-60 space-y-1 overflow-y-auto custom-scrollbar">
+                <div className="no-scrollbar max-h-60 space-y-1 overflow-y-auto">
                   {workspaces.length === 0 && (
                     <p className="text-xs text-ui-text-muted">{t('app.noWorkspacesAvailable')}</p>
                   )}
@@ -502,7 +502,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         type="button"
                         onClick={() => onSelectWorkspaceContext(workspace.id)}
                         aria-current={isSelected ? 'true' : undefined}
-                        className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs transition-all ${
+                        className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs transition-colors ${
                           isSelected
                             ? 'bg-accent-soft text-accent-strong'
                             : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
@@ -528,7 +528,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                       navigate(AppPaths.accountSettings());
                     }}
                     aria-current={activeResourceNav === 'accountSettings' ? 'page' : undefined}
-                    className={`flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-all ${
+                    className={`flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors ${
                       activeResourceNav === 'accountSettings'
                         ? 'bg-accent-soft text-accent-strong'
                         : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
@@ -555,7 +555,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                   <button
                     type="button"
                     onClick={onLogout}
-                    className="min-h-11 rounded-md border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-xs font-bold text-status-danger-text hover:bg-status-danger-soft"
+                    className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-bold text-ui-text transition-colors hover:bg-ui-bg"
                   >
                     {t('app.logout')}
                   </button>

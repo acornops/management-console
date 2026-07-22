@@ -2,6 +2,7 @@ import React from 'react';
 import { RefreshCw, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { EmptyState } from '@/components/common/EmptyState';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
@@ -223,9 +224,13 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                 <InlineLoadingIndicator label={t('virtualMachines.resources.loadingLogs')} />
               </div>
             ) : filteredLogs.length === 0 ? (
-              <p className="px-4 py-5 text-sm font-medium text-ui-text-muted">
-                {t(hasResourceSearch ? 'virtualMachines.resources.noSearchResults' : 'virtualMachines.resources.noLogs')}
-              </p>
+              <EmptyState
+                embedded
+                headingLevel={3}
+                icon={<Search />}
+                title={t(hasResourceSearch ? 'virtualMachines.resources.noSearchResults' : 'virtualMachines.resources.noLogs')}
+                description={t(hasResourceSearch ? 'virtualMachines.resources.noSearchResultsHelp' : 'virtualMachines.resources.emptyHelp')}
+              />
             ) : (
               <div className="divide-y divide-ui-border">
                 <div className="hidden border-b border-ui-border bg-ui-bg/60 px-4 py-3 md:grid md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)]">
@@ -260,9 +265,13 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                 <InlineLoadingIndicator label={t('virtualMachines.resources.loading')} />
               </div>
             ) : filteredInventory.length === 0 ? (
-              <p className="px-4 py-5 text-sm font-medium text-ui-text-muted">
-                {t(hasResourceSearch ? 'virtualMachines.resources.noSearchResults' : 'virtualMachines.resources.noInventory')}
-              </p>
+              <EmptyState
+                embedded
+                headingLevel={3}
+                icon={<Search />}
+                title={t(hasResourceSearch ? 'virtualMachines.resources.noSearchResults' : 'virtualMachines.resources.noInventory')}
+                description={t(hasResourceSearch ? 'virtualMachines.resources.noSearchResultsHelp' : 'virtualMachines.resources.emptyHelp')}
+              />
             ) : (
               <>
                 <div className="hidden overflow-x-auto md:block">
@@ -311,7 +320,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                         </span>
                         <span className="text-xs font-semibold text-ui-text-muted">{getInventoryStatus(item)}</span>
                       </div>
-                      <h3 className="mt-3 truncate text-sm font-bold text-ui-text">{String(item.name || t('virtualMachines.resources.item'))}</h3>
+                      <h2 className="mt-3 truncate text-sm font-bold text-ui-text">{String(item.name || t('virtualMachines.resources.item'))}</h2>
                       <p className="mt-1 break-words text-sm font-medium leading-6 text-ui-text-muted">{getInventoryDetail(item) || String(item.kind || t('virtualMachines.resources.noAdditionalDetail'))}</p>
                     </article>
                   ))}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isWorkspaceDataRoute, legacySettingsRedirectPath, workspaceLandingPath } from '@/app/appNavigationGuards';
+import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
 import type { Workspace } from '@/types';
 
 function makeWorkspace(permissions: Workspace['permissions']): Workspace {
@@ -74,34 +74,4 @@ describe('app navigation guards', () => {
     }))).toBe('/workspaces/workspace-1/settings');
   });
 
-  it('redirects the legacy top-level settings route to a valid workspace-aware destination', () => {
-    const readableWorkspace = makeWorkspace({
-      read_workspace_data: true
-    } as Workspace['permissions']);
-    const limitedWorkspace = makeWorkspace({
-      read_workspace_data: false,
-      read_members: true,
-      read_audit_log: false
-    } as Workspace['permissions']);
-    const workspaceById = new Map([
-      [readableWorkspace.id, readableWorkspace],
-      ['limited', { ...limitedWorkspace, id: 'limited' }]
-    ]);
-
-    expect(legacySettingsRedirectPath({
-      selectedWorkspaceId: readableWorkspace.id,
-      workspaceById,
-      workspaces: [readableWorkspace]
-    })).toBe('/workspaces/workspace-1/settings');
-    expect(legacySettingsRedirectPath({
-      selectedWorkspaceId: 'limited',
-      workspaceById,
-      workspaces: [readableWorkspace, { ...limitedWorkspace, id: 'limited' }]
-    })).toBe('/workspaces/limited/settings');
-    expect(legacySettingsRedirectPath({
-      selectedWorkspaceId: null,
-      workspaceById: new Map(),
-      workspaces: []
-    })).toBe('/workspaces');
-  });
 });

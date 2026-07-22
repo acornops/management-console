@@ -4,6 +4,7 @@ import { safeStorage } from '@/utils/safeStorage';
 import { parseThemePreference, type ThemePreference } from '@/app/theme';
 
 export const GLOBAL_THEME_STORAGE_KEY = 'app_theme';
+export const ACTIVE_THEME_PREFERENCE_STORAGE_KEY = 'acornops_active_theme_preference';
 export const GLOBAL_LANGUAGE_STORAGE_KEY = 'app_language';
 export const LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY = 'acornops_workspace_context_id';
 export const PROFILE_PREFERENCE_STORAGE_PREFIX = 'acornops_profile_preferences';
@@ -28,11 +29,28 @@ export function readThemePreference(profileKey?: string): ThemePreference {
   return parseThemePreference(safeStorage.getItem(GLOBAL_THEME_STORAGE_KEY));
 }
 
+export function readInitialThemePreference(): ThemePreference {
+  const activePreference = safeStorage.getItem(ACTIVE_THEME_PREFERENCE_STORAGE_KEY);
+  return parseThemePreference(
+    activePreference === null
+      ? safeStorage.getItem(GLOBAL_THEME_STORAGE_KEY)
+      : activePreference
+  );
+}
+
 export function persistThemePreference(preference: ThemePreference, profileKey?: string): void {
   safeStorage.setItem(
     profileKey ? getProfileStorageKey(profileKey, 'theme') : GLOBAL_THEME_STORAGE_KEY,
     preference
   );
+}
+
+export function persistActiveThemePreference(preference: ThemePreference): void {
+  safeStorage.setItem(ACTIVE_THEME_PREFERENCE_STORAGE_KEY, preference);
+}
+
+export function clearActiveThemePreference(): void {
+  safeStorage.removeItem(ACTIVE_THEME_PREFERENCE_STORAGE_KEY);
 }
 
 export function readLanguagePreference(profileKey?: string): AppLanguageCode {

@@ -10,6 +10,7 @@ import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 
 interface WorkflowUrlStateOptions {
   workflows: WorkflowDefinition[];
+  routeHydrated: boolean;
   selectedWorkflowId: string;
   activeTab: WorkflowTab;
   createPanelOpen: boolean;
@@ -22,36 +23,52 @@ interface WorkflowUrlStateOptions {
 
 export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) {
   const urlSearch = useUrlSearchState();
+  const routeTarget = getWorkflowRouteSelectionTarget(`?${urlSearch.toString()}`);
+  const routeWorkflow = findWorkflowByRouteTarget(options.workflows, routeTarget);
   React.useEffect(() => {
-    const routeWorkflow = findWorkflowByRouteTarget(options.workflows, getWorkflowRouteSelectionTarget(`?${urlSearch.toString()}`));
+    const nextRouteWorkflow = findWorkflowByRouteTarget(options.workflows, getWorkflowRouteSelectionTarget(`?${urlSearch.toString()}`));
     const routeTab = urlSearch.get('tab') as WorkflowTab | null;
     const panel = urlSearch.get('panel');
-    if (routeWorkflow) options.setSelectedWorkflowId(routeWorkflow.id);
+    if (nextRouteWorkflow) options.setSelectedWorkflowId(nextRouteWorkflow.id);
     options.setQuery(urlSearch.get('q') || '');
     options.setActiveTab(routeTab && tabs.includes(routeTab) ? routeTab : 'overview');
     options.setCreatePanelOpen(panel === 'create');
-    options.setScheduleWorkflowId(panel === 'schedule' ? routeWorkflow?.id || options.selectedWorkflowId : '');
+    options.setScheduleWorkflowId(panel === 'schedule' ? nextRouteWorkflow?.id || options.selectedWorkflowId : '');
   }, [urlSearch, options.workflows]);
+  React.useEffect(() => {
+    if (!options.routeHydrated) return;
+    if (routeTarget) {
+      if (routeWorkflow) {
+        if (urlSearch.get('workflow') !== routeWorkflow.id) {
+          updateUrlSearch({ workflow: routeWorkflow.id }, { replace: true });
+        }
+      } else {
+        const fallbackWorkflowId = options.workflows[0]?.id || '';
+        options.setSelectedWorkflowId(fallbackWorkflowId);
+        options.setActiveTab('overview');
+        updateUrlSearch({ workflow: fallbackWorkflowId || null, tab: null }, { replace: true });
+      }
+      return;
+    }
+  }, [options.routeHydrated, options.workflows, routeTarget, routeWorkflow, urlSearch]);
   React.useEffect(() => {
     if (!options.createPanelOpen && urlSearch.get('panel') === 'create') updateUrlSearch({ panel: null }, { replace: true });
   }, [options.createPanelOpen]);
-  React.useEffect(() => {
-    if (options.selectedWorkflowId && urlSearch.get('workflow') !== options.selectedWorkflowId) {
-      updateUrlSearch({ workflow: options.selectedWorkflowId }, { replace: true });
-    }
-  }, [options.selectedWorkflowId]);
-  React.useEffect(() => {
-    const routeTab = urlSearch.get('tab') || 'overview';
-    if (routeTab !== options.activeTab) updateUrlSearch({ tab: options.activeTab === 'overview' ? null : options.activeTab }, { replace: true });
-  }, [options.activeTab]);
   return {
-    selectWorkflow(workflowId: string) {
+    hasExplicitWorkflowSelection: Boolean(routeTarget),
+    selectWorkflow(workflowId: string, updateOptions: { replace?: boolean } = {}) {
       options.setSelectedWorkflowId(workflowId);
-      updateUrlSearch({ workflow: workflowId });
+      options.setActiveTab('overview');
+      updateUrlSearch({ workflow: workflowId || null, tab: null }, updateOptions);
     },
-    selectWorkflowTab(tab: WorkflowTab) {
+    clearWorkflowSelection() {
+      options.setActiveTab('overview');
+      updateUrlSearch({ workflow: null, tab: null });
+    },
+    selectWorkflowTab(tab: WorkflowTab, previewWorkflowId = options.selectedWorkflowId) {
+      if (previewWorkflowId) options.setSelectedWorkflowId(previewWorkflowId);
       options.setActiveTab(tab);
-      updateUrlSearch({ tab: tab === 'overview' ? null : tab });
+      updateUrlSearch({ workflow: previewWorkflowId || null, tab: tab === 'overview' ? null : tab });
     }
   };
 }

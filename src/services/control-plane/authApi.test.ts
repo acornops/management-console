@@ -177,7 +177,8 @@ describe('controlPlaneAuthApi', () => {
     });
     expect(requestJson).toHaveBeenNthCalledWith(2, '/api/v1/auth/password/login', {
       method: 'POST',
-      body: JSON.stringify({ identifier: 'ops@example.com', password: 'secret' })
+      body: JSON.stringify({ identifier: 'ops@example.com', password: 'secret' }),
+      sessionExpiry: 'ignore'
     });
   });
 
@@ -218,7 +219,8 @@ describe('controlPlaneAuthApi', () => {
     });
     expect(requestJson).toHaveBeenNthCalledWith(3, '/api/v1/auth/password/resend-verification', {
       method: 'POST',
-      body: JSON.stringify({ email: 'ops@example.com' })
+      body: JSON.stringify({ email: 'ops@example.com' }),
+      sessionExpiry: 'ignore'
     });
   });
 
@@ -249,15 +251,18 @@ describe('controlPlaneAuthApi', () => {
     await expect(controlPlaneAuthApi.resetPassword('valid-token', 'new secure passphrase')).resolves.toBeUndefined();
     expect(requestJson).toHaveBeenNthCalledWith(1, '/api/v1/auth/password/forgot', {
       method: 'POST',
-      body: JSON.stringify({ email: 'ops@example.com' })
+      body: JSON.stringify({ email: 'ops@example.com' }),
+      sessionExpiry: 'ignore'
     });
     expect(requestJson).toHaveBeenNthCalledWith(2, '/api/v1/auth/password/reset', {
       method: 'POST',
-      body: JSON.stringify({ token: 'expired-token', password: 'new secure passphrase' })
+      body: JSON.stringify({ token: 'expired-token', password: 'new secure passphrase' }),
+      sessionExpiry: 'ignore'
     });
     expect(requestJson).toHaveBeenNthCalledWith(3, '/api/v1/auth/password/reset', {
       method: 'POST',
-      body: JSON.stringify({ token: 'valid-token', password: 'new secure passphrase' })
+      body: JSON.stringify({ token: 'valid-token', password: 'new secure passphrase' }),
+      sessionExpiry: 'ignore'
     });
   });
 
@@ -319,16 +324,38 @@ describe('controlPlaneAuthApi', () => {
   });
 
   it('returns OIDC start URLs and posts logout bodies', async () => {
-    requestJson.mockResolvedValueOnce({ url: 'https://idp.example.com/link' }).mockResolvedValueOnce({ status: 'ok' });
+    const handoff = 'a'.repeat(43);
+    requestJson.mockResolvedValueOnce({ url: 'https://idp.example.com/link' }).mockResolvedValueOnce({
+      status: 'ok',
+      mode: 'oidc',
+      redirectPath: `/api/v1/auth/oidc/logout/start?request=${handoff}`
+    });
     const { controlPlaneAuthApi } = await import('./authApi');
 
     await expect(controlPlaneAuthApi.startOidcLink({ currentPassword: 'secret' })).resolves.toBe(
       'https://idp.example.com/link'
     );
-    await expect(controlPlaneAuthApi.logout()).resolves.toBeUndefined();
+    await expect(controlPlaneAuthApi.logout()).resolves.toEqual({
+      status: 'ok',
+      mode: 'oidc',
+      redirectPath: `/api/v1/auth/oidc/logout/start?request=${handoff}`
+    });
     expect(requestJson).toHaveBeenNthCalledWith(2, '/api/v1/auth/logout', {
       method: 'POST',
-      body: JSON.stringify({})
+      body: JSON.stringify({}),
+      sessionExpiry: 'ignore'
     });
+  });
+
+  it('rejects protocol-relative logout paths', async () => {
+    requestJson.mockResolvedValueOnce({ status: 'ok', mode: 'oidc', redirectPath: '//attacker.example.com' });
+    const { controlPlaneAuthApi } = await import('./authApi');
+    await expect(controlPlaneAuthApi.logout()).rejects.toThrow('invalid redirect path');
+  });
+
+  it('rejects unrecognized same-origin logout paths', async () => {
+    requestJson.mockResolvedValueOnce({ status: 'ok', mode: 'local', redirectPath: '/settings' });
+    const { controlPlaneAuthApi } = await import('./authApi');
+    await expect(controlPlaneAuthApi.logout()).rejects.toThrow('invalid redirect path');
   });
 });

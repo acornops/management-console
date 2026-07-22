@@ -68,6 +68,7 @@ describe('tool mappers', () => {
             canDelete: false,
             canEditConnection: false,
             authType: 'none',
+            credentialMode: 'none',
             toolCounts: {
               total: 1,
               enabledConfigured: 1,
@@ -118,6 +119,7 @@ describe('tool mappers', () => {
           canDelete: false,
           canEditConnection: false,
           authType: 'none',
+          credentialMode: 'none',
           toolCounts: {
             total: 0,
             enabledConfigured: 0,
@@ -152,6 +154,7 @@ describe('tool mappers', () => {
           canEditConnection: 0 as unknown as boolean,
           canToggle: false,
           authType: 'custom_header',
+          credentialMode: 'individual',
           connectionStatus: 'degraded' as 'unknown',
           toolCounts: {
             total: undefined as unknown as number,
@@ -240,6 +243,7 @@ describe('tool mappers', () => {
           canDelete: false,
           canEditConnection: false,
           authType: 'none',
+          credentialMode: 'none',
           toolCounts: {
             total: 1,
             enabledConfigured: 1,
@@ -281,7 +285,7 @@ describe('tool mappers', () => {
         server_url: 'https://mcp.example.com',
         enabled: true,
         auth_type: 'bearer_token',
-        auth_secret_name: 'mcp-secret',
+        credential_mode: 'individual',
         auth_header_name: 'Authorization',
         auth_header_prefix: 'Bearer',
         public_headers: { 'X-Trace': '1' },

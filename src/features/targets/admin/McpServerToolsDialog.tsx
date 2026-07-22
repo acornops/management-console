@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { CollectionState } from '@/components/common/CollectionState';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Switch } from '@/components/common/FormControls';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
@@ -18,6 +19,7 @@ export const McpServerToolsDialog: React.FC<{
   isLoadingMoreTools?: boolean;
   toolsError?: string | null;
   hasMoreTools?: boolean;
+  loadMoreSentinelRef?: React.RefCallback<HTMLElement>;
   onClose: () => void;
   onToggleTool: (tool: TargetToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onLoadMoreTools?: () => void;
@@ -29,32 +31,27 @@ export const McpServerToolsDialog: React.FC<{
   isLoadingMoreTools = false,
   toolsError = null,
   hasMoreTools = false,
+  loadMoreSentinelRef,
   onClose,
   onToggleTool,
   onLoadMoreTools
 }) => {
   const { t } = useTranslation();
-  const loadMoreToolsRef = React.useRef<HTMLDivElement>(null);
   const [configuredOverrides, setConfiguredOverrides] = React.useState<Record<string, boolean>>({});
   const [isSavingTools, setIsSavingTools] = React.useState(false);
   const isManagedServer = isManagedMcpServer(server);
-  const serverSubtitle = isManagedServer ? t('mcpServers.managedByAcornOps') : server.url;
+  const serverSubtitle = isManagedServer ? t('common.providedByAcornOps') : server.url;
+  const toolsPhase = isLoadingTools
+    ? 'loading'
+    : toolsError
+      ? 'error'
+      : isLoadingMoreTools
+        ? 'loadingMore'
+        : 'ready';
 
   React.useEffect(() => {
     setConfiguredOverrides({});
   }, [server.id]);
-
-  React.useEffect(() => {
-    const target = loadMoreToolsRef.current;
-    if (!target || !hasMoreTools || !onLoadMoreTools) return undefined;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting) && !isLoadingTools && !isLoadingMoreTools) {
-        onLoadMoreTools();
-      }
-    }, { rootMargin: '240px' });
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMoreTools, isLoadingMoreTools, isLoadingTools, onLoadMoreTools]);
 
   const getConfiguredEnabled = React.useCallback((tool: TargetToolCatalogItem) => (
     configuredOverrides[tool.name] ?? tool.enabledConfigured
@@ -155,23 +152,34 @@ export const McpServerToolsDialog: React.FC<{
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {t('mcpServers.configureTools')}
             </div>
-            <h2 id="mcp-server-tools-title" className="type-section-title truncate" title={server.name}>{server.name}</h2>
-            <p className={isManagedServer ? 'type-caption mt-1 text-ui-text-muted' : 'type-code mt-1 truncate text-ui-text-muted'} title={serverSubtitle}>
-              {serverSubtitle}
-            </p>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h2 id="mcp-server-tools-title" className="type-section-title truncate" title={server.name}>{server.name}</h2>
+              {isManagedServer && (
+                <span className="type-micro-label shrink-0 rounded-full bg-accent-soft/45 px-2 py-0.5 text-accent-readable">
+                  {t('common.providedByAcornOps')}
+                </span>
+              )}
+            </div>
+            {!isManagedServer && (
+              <p className="type-code mt-1 truncate text-ui-text-muted" title={serverSubtitle}>
+                {serverSubtitle}
+              </p>
+            )}
           </div>
           <CloseButton onClick={onClose} aria-label={t('mcpServers.closeTools')} />
         </div>
 
         <div className="overflow-y-auto p-6 custom-scrollbar">
-          {toolsError && (
-            <div className="type-caption mb-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{toolsError}</div>
-          )}
-          {isLoadingTools ? (
-            <InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="bg-ui-bg text-xs" />
-          ) : server.tools.length === 0 ? (
-            <div className="type-caption rounded-lg border border-ui-border bg-ui-bg px-4 py-3">{t('mcpServers.noToolsDiscovered')}</div>
-          ) : (
+          <CollectionState
+            phase={toolsPhase}
+            itemCount={server.tools.length}
+            loading={<InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="bg-ui-bg text-xs" />}
+            empty={<div className="type-caption rounded-lg border border-ui-border bg-ui-bg px-4 py-3">{t('mcpServers.noToolsDiscovered')}</div>}
+            error={<div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{toolsError}</div>}
+            feedback={toolsError ? (
+              <div className="type-caption mt-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{toolsError}</div>
+            ) : <span className="sr-only">{t('mcpServers.loadingTools')}</span>}
+          >
             <div className="space-y-4">
               {globalBlockReason && (
                 <div className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
@@ -210,7 +218,7 @@ export const McpServerToolsDialog: React.FC<{
               </section>
               {renderToolSection(t('mcpServers.readOnlySection'), t('mcpServers.readOnlySectionHelp'), readTools)}
               {renderToolSection(t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
-              <div ref={loadMoreToolsRef}>
+              <div ref={loadMoreSentinelRef}>
                 {hasMoreTools && (
                   <button type="button" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-label w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
                     {isLoadingMoreTools ? t('mcpServers.loadingTools') : t('common.loadMore')}
@@ -218,7 +226,7 @@ export const McpServerToolsDialog: React.FC<{
                 )}
               </div>
             </div>
-          )}
+          </CollectionState>
 
           {!canManageTools && (
             <div className="type-caption mt-5 rounded-lg border border-ui-border bg-ui-bg px-4 py-3">{t('mcpServers.manageToolsNoAccess')}</div>

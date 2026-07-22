@@ -47,16 +47,17 @@ import type {
 
 async function listWorkspaceKubernetesClusters(
   workspaceId: string,
-  options?: { limit?: number; cursor?: string; q?: string; status?: string }
+  options?: { limit?: number; cursor?: string; q?: string; status?: string; signal?: AbortSignal }
 ): Promise<PagedResult<KubernetesCluster>> {
-  const page = await requestJson<PagedResult<ControlPlaneCluster>>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters${pageQuery({
+  const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters${pageQuery({
       limit: options?.limit,
       cursor: options?.cursor,
       q: options?.q,
       filters: { status: options?.status }
-    })}`
-  );
+    })}`;
+  const page = options?.signal
+    ? await requestJson<PagedResult<ControlPlaneCluster>>(path, { signal: options.signal })
+    : await requestJson<PagedResult<ControlPlaneCluster>>(path);
 
   return {
     items: page.items.map((cluster) => mapControlPlaneClusterToKubernetesCluster(cluster)),
@@ -67,8 +68,12 @@ async function listWorkspaceKubernetesClusters(
 function mapMetricHistoryPoint(point: ClusterMetricHistoryPoint): ClusterMetricHistoryPoint {
   return {
     timestamp: point.timestamp,
-    cpuCores: typeof point.cpuCores === 'number' ? point.cpuCores : null,
-    memoryBytes: typeof point.memoryBytes === 'number' ? point.memoryBytes : null
+    cpuCores: typeof point.cpuCores === 'number' && Number.isFinite(point.cpuCores) && point.cpuCores >= 0
+      ? point.cpuCores
+      : null,
+    memoryBytes: typeof point.memoryBytes === 'number' && Number.isFinite(point.memoryBytes) && point.memoryBytes >= 0
+      ? point.memoryBytes
+      : null
   };
 }
 
@@ -80,7 +85,7 @@ export const kubernetesClusterApi = {
 
   async listClustersForWorkspace(
     workspaceId: string,
-    options?: { limit?: number; cursor?: string; q?: string; status?: string }
+    options?: { limit?: number; cursor?: string; q?: string; status?: string; signal?: AbortSignal }
   ): Promise<PagedResult<KubernetesCluster>> {
     return listWorkspaceKubernetesClusters(workspaceId, options);
   },
@@ -95,10 +100,9 @@ export const kubernetesClusterApi = {
   async listClusterResources(
     workspaceId: string,
     clusterId: string,
-    options?: { limit?: number; cursor?: string; q?: string; family?: string; kind?: string; namespace?: string; health?: string }
+    options?: { limit?: number; cursor?: string; q?: string; family?: string; kind?: string; namespace?: string; health?: string; signal?: AbortSignal }
   ): Promise<PagedResult<ControlPlaneResourcePageItem>> {
-    return requestJson<PagedResult<ControlPlaneResourcePageItem>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}/resources${pageQuery({
+    const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}/resources${pageQuery({
         limit: options?.limit,
         cursor: options?.cursor,
         q: options?.q,
@@ -108,8 +112,10 @@ export const kubernetesClusterApi = {
           namespace: options?.namespace,
           health: options?.health
         }
-      })}`
-    );
+      })}`;
+    return options?.signal
+      ? requestJson<PagedResult<ControlPlaneResourcePageItem>>(path, { signal: options.signal })
+      : requestJson<PagedResult<ControlPlaneResourcePageItem>>(path);
   },
 
   async getClusterMetricsHistory(
@@ -431,10 +437,9 @@ export const kubernetesClusterApi = {
     workspaceId: string,
     targetId: string,
     serverId: string,
-    options?: { limit?: number; cursor?: string; q?: string; capability?: 'read' | 'write'; enabled?: boolean }
+    options?: { limit?: number; cursor?: string; q?: string; capability?: 'read' | 'write'; enabled?: boolean; signal?: AbortSignal }
   ): Promise<PagedResult<ControlPlaneClusterToolCatalogItem>> {
-    return requestJson<PagedResult<ControlPlaneClusterToolCatalogItem>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/mcp/servers/${encodeURIComponent(serverId)}/tools${pageQuery({
+    const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/mcp/servers/${encodeURIComponent(serverId)}/tools${pageQuery({
         limit: options?.limit,
         cursor: options?.cursor,
         q: options?.q,
@@ -442,8 +447,10 @@ export const kubernetesClusterApi = {
           capability: options?.capability,
           enabled: typeof options?.enabled === 'boolean' ? String(options.enabled) : undefined
         }
-      })}`
-    );
+      })}`;
+    return options?.signal
+      ? requestJson<PagedResult<ControlPlaneClusterToolCatalogItem>>(path, { signal: options.signal })
+      : requestJson<PagedResult<ControlPlaneClusterToolCatalogItem>>(path);
   },
 
   async listTargetMcpServers(workspaceId: string, targetId: string): Promise<TargetMcpServer[]> {

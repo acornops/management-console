@@ -31,11 +31,15 @@ export type AgentEditDraft = AgentDraft & {
   skills: string;
   targetScope: string;
   contextScope: string;
-  writeToolsRequireApproval: boolean;
   allowExternalData: boolean;
 };
 
-export type LocalNotice = { tone: 'success' | 'danger'; message: string };
+export type AgentEditDraftSource = {
+  agentId: string;
+  draft: AgentEditDraft;
+};
+
+export type LocalNotice = { tone: 'success' | 'danger'; message: string; actionHref?: string; actionLabel?: string };
 export type AgentCapabilityOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
 export type AgentCatalogFocus = 'all' | 'active' | 'draft' | 'disabled';
 
@@ -45,18 +49,13 @@ export const statusTone = (status: AgentDefinition['status']): 'success' | 'warn
   return 'danger';
 };
 
+export const isSystemProvidedAgent = (agent: Pick<AgentDefinition, 'origin'>): boolean =>
+  agent.origin.type === 'template';
+
 export const splitInput = (value: string): string[] =>
   value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
 
 const joinInput = (values: string[]): string => values.join('\n');
-
-const uniqueStrings = (values: string[]): string[] => Array.from(new Set(values.filter(Boolean)));
-
-export const createFallbackAgentCapabilityOptions = (agents: AgentDefinition[]): AgentCapabilityOptions => ({
-  mcpServers: uniqueStrings(agents.flatMap((agent) => agent.mcpServers)).map((value) => ({ value, label: value })),
-  mcpTools: uniqueStrings(agents.flatMap((agent) => agent.tools)).map((value) => ({ value, label: value })),
-  skills: uniqueStrings(agents.flatMap((agent) => agent.skills)).map((value) => ({ value, label: value }))
-});
 
 const normalizeAgentCapabilityOption = (option: unknown): AgentCapabilityOptions['mcpServers'][number] | null => {
   if (typeof option === 'string' && option.trim()) return { value: option.trim(), label: option.trim() };
@@ -73,23 +72,21 @@ const normalizeAgentCapabilityOption = (option: unknown): AgentCapabilityOptions
 };
 
 const normalizeAgentCapabilityOptionList = (
-  options: unknown,
-  fallback: AgentCapabilityOptions['mcpServers']
+  options: unknown
 ): AgentCapabilityOptions['mcpServers'] => {
-  if (!Array.isArray(options)) return fallback;
+  if (!Array.isArray(options)) return [];
   const normalized = options
     .map(normalizeAgentCapabilityOption)
     .filter((option): option is NonNullable<typeof option> => Boolean(option));
-  return normalized.length > 0 ? normalized : fallback;
+  return normalized;
 };
 
 export const normalizeAgentCapabilityOptions = (
-  catalog: WorkflowOptionsCatalog,
-  fallback: AgentCapabilityOptions
+  catalog: WorkflowOptionsCatalog
 ): AgentCapabilityOptions => ({
-  mcpServers: normalizeAgentCapabilityOptionList(catalog.mcpServers, fallback.mcpServers),
-  mcpTools: normalizeAgentCapabilityOptionList(catalog.mcpTools, fallback.mcpTools),
-  skills: normalizeAgentCapabilityOptionList(catalog.skills, fallback.skills)
+  mcpServers: normalizeAgentCapabilityOptionList(catalog.mcpServers),
+  mcpTools: normalizeAgentCapabilityOptionList(catalog.mcpTools),
+  skills: normalizeAgentCapabilityOptionList(catalog.skills)
 });
 
 const listValuesChanged = (left: string[], right: string): boolean => {
@@ -108,14 +105,6 @@ const targetScopeTokens = (scope: AgentDefinitionApi['targetScope']): string[] =
   ].filter(Boolean);
 };
 
-const approvalPolicyFor = (policy: AgentDefinitionApi['approvalPolicy']): AgentDefinition['approvalPolicy'] => {
-  const mode = typeof policy?.mode === 'string' ? policy.mode : undefined;
-  return {
-    sensitiveActions: mode === 'none' ? 'allowed' : 'approval_required',
-    writeActions: policy?.writeToolsRequireApproval === false ? 'allowed' : 'approval_required'
-  };
-};
-
 const trustPolicyFor = (policy: AgentDefinitionApi['trustPolicy']): AgentDefinition['trustPolicy'] => ({
   boundary: typeof policy?.level === 'string' ? `${policy.level} trust boundary` : 'Restricted workspace trust boundary',
   dataEgress: policy?.allowExternalData === true ? 'Additional data access allowed by policy' : 'Workspace approved context only'
@@ -123,43 +112,52 @@ const trustPolicyFor = (policy: AgentDefinitionApi['trustPolicy']): AgentDefinit
 
 export const mapApiAgent = (
   item: AgentDefinitionApi,
-  fallback: AgentDefinition,
   workspaceName: string,
   ownerLabelsByUserId: Map<string, string> = new Map()
 ): AgentDefinition => {
-  const providerType = item.providerType || (item.source === 'system' ? 'internal' : fallback.providerType);
-  const contextScope = item.contextGrants || item.contextScope || fallback.contextScope;
-  const ownerUserId = item.ownerUserId || fallback.ownerUserId;
-  const owner = ownerUserId ? ownerLabelsByUserId.get(ownerUserId) || (ownerUserId === 'user-1' ? 'Dev User' : ownerUserId) : fallback.owner || workspaceName;
+  const ownerUserId = item.ownerUserId;
+  const owner = item.origin.type === 'template'
+    ? 'AcornOps'
+    : ownerUserId ? ownerLabelsByUserId.get(ownerUserId) || ownerUserId : workspaceName;
   return {
-    ...fallback,
     id: item.id,
     workspaceId: item.workspaceId,
     name: item.name,
-    description: item.description || fallback.description,
-    instructions: item.instructions || fallback.instructions,
-    status: item.status || fallback.status,
-    source: item.source || fallback.source,
-    providerType,
+    description: item.description || '',
+    instructions: item.instructions || '',
+    status: item.status || 'draft',
+    origin: item.origin,
+    kind: item.kind,
+    reviewState: item.reviewState,
+    providerType: item.providerType || 'internal',
     ownerUserId,
     owner,
-    version: item.version || fallback.version,
-    mcpServers: item.mcpServers || [],
-    tools: item.tools || [],
-    skills: item.skills || [],
+    createdBy: item.createdBy,
+    version: item.version || 1,
+    mcpServers: item.mcpInstallations?.map((server) => server.name) || item.mcpServers || [],
+    mcpInstallations: item.mcpInstallations || [],
+    tools: [
+      ...(item.tools || []),
+      ...(item.mcpInstallations || []).flatMap((server) => server.tools
+        .filter((tool) => tool.enabled && tool.reviewState === 'approved')
+        .map((tool) => tool.alias))
+    ],
+    skills: item.skillInstallations?.map((skill) => skill.name) || item.skills || [],
+    skillInstallations: item.skillInstallations || [],
+    semanticCapabilityIds: item.semanticCapabilityIds || [],
     targetScope: targetScopeTokens(item.targetScope),
-    contextScope,
-    approvalPolicy: approvalPolicyFor(item.approvalPolicy),
+    contextScope: item.contextGrants || item.contextScope || [],
+    permissionMode: item.permissionMode || 'ask_before_changes',
     trustPolicy: trustPolicyFor(item.trustPolicy),
-    capabilities: item.capabilities || fallback.capabilities,
-    workflowsUsingAgent: item.workflowsUsingAgent || fallback.workflowsUsingAgent,
-    triggers: item.triggers || fallback.triggers,
+    capabilities: item.capabilities || [],
+    workflowsUsingAgent: item.workflowsUsingAgent || [],
+    triggers: item.triggers || [],
     activity: {
-      runCount: item.activity?.runCount ?? fallback.activity.runCount,
-      lastRunAt: item.activity?.lastRunAt || fallback.activity.lastRunAt,
-      lastStatus: (item.activity?.lastStatus as AgentDefinition['activity']['lastStatus'] | undefined) || fallback.activity.lastStatus
+      runCount: item.activity?.runCount ?? 0,
+      lastRunAt: item.activity?.lastRunAt,
+      lastStatus: item.activity?.lastStatus as AgentDefinition['activity']['lastStatus'] | undefined
     },
-    auditHistory: fallback.auditHistory
+    auditHistory: []
   };
 };
 
@@ -183,10 +181,8 @@ export const canManageWorkspaceAgents = (workspace: Workspace): boolean => {
   return workspace.permissions?.manage_agents === true;
 };
 
-const systemLevelAgentIds = new Set(['agent-workflow-orchestrator']);
-
 export const isWorkspaceCatalogAgent = (agent: AgentDefinition): boolean => {
-  return !systemLevelAgentIds.has(agent.id);
+  return Boolean(agent.id);
 };
 
 export function filterVisibleAgents(
@@ -202,8 +198,8 @@ export function filterVisibleAgents(
 
 export const summarizeAgentActivityRecord = (activity: AgentActivityRecordApi): string => `Activity ${activity.status} on v${activity.agentVersion}`;
 
-export const formatAgentTimestamp = (value: string | undefined, fallback = '-'): string =>
-  formatUserDateTime(value, { fallback: value || fallback });
+export const formatAgentTimestamp = (value: string | undefined, fallback = '-', locale?: Intl.LocalesArgument): string =>
+  formatUserDateTime(value, { fallback: value || fallback, locale });
 
 export const activityStateFromRecord = (
   current: AgentDefinition['activity'],
@@ -220,12 +216,20 @@ export const activityStateFromRecord = (
 export const auditHistoryFromAgentActivity = (activity: AgentActivityRecordApi[]): AgentDefinition['auditHistory'] =>
   activity.map((record) => ({ id: record.id, summary: summarizeAgentActivityRecord(record), occurredAt: record.updatedAt || record.createdAt }));
 
+export const mergeAgentAuditHistoryWithActivity = (
+  current: AgentDefinition['auditHistory'],
+  activity: AgentActivityRecordApi[]
+): AgentDefinition['auditHistory'] => {
+  const refreshed = auditHistoryFromAgentActivity(activity);
+  const refreshedIds = new Set(refreshed.map((entry) => entry.id));
+  return [...refreshed, ...current.filter((entry) => !refreshedIds.has(entry.id))]
+    .sort((left, right) => Date.parse(right.occurredAt) - Date.parse(left.occurredAt));
+};
+
 export const formatAgentDisplayValue = (value: string): string =>
   value
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
-export const formatPolicyValue = (value: string): string => formatAgentDisplayValue(value);
-
 export const statusOptions: Array<SelectOption<AgentDefinition['status']>> = [
   { value: 'draft', label: 'Draft' },
   { value: 'active', label: 'Active' },
@@ -244,9 +248,17 @@ export const createAgentEditDraft = (agent: AgentDefinition): AgentEditDraft => 
   skills: joinInput(agent.skills),
   targetScope: joinInput(agent.targetScope),
   contextScope: joinInput(agent.contextScope),
-  writeToolsRequireApproval: agent.approvalPolicy.writeActions === 'approval_required',
   allowExternalData: agent.trustPolicy.dataEgress.toLowerCase().includes('external')
 });
+
+export const agentEditDraftsEqual = (left: AgentEditDraft, right: AgentEditDraft): boolean =>
+  Object.keys(left).every((key) => left[key as keyof AgentEditDraft] === right[key as keyof AgentEditDraft]);
+
+export const shouldRefreshAgentEditDraft = (
+  agentId: string,
+  currentDraft: AgentEditDraft | null,
+  source: AgentEditDraftSource | null
+): boolean => !currentDraft || !source || source.agentId !== agentId || agentEditDraftsEqual(currentDraft, source.draft);
 
 export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEditDraft): string[] => {
   const changes: string[] = [];
@@ -258,7 +270,6 @@ export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEd
   if (listValuesChanged(agent.mcpServers, draft.mcpServers) || listValuesChanged(agent.tools, draft.tools) || listValuesChanged(agent.skills, draft.skills)) {
     changes.push('Capability sources changed');
   }
-  if ((agent.approvalPolicy.writeActions === 'approval_required') !== draft.writeToolsRequireApproval) changes.push('Write approval rule changed');
   return changes;
 };
 

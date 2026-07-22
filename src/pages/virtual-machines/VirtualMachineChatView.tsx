@@ -58,14 +58,19 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
     initialActiveSessionId,
     onUpdateSessions: setChatSessions
   });
-  const { setInputValue } = controller;
+  const handledInitialInputRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     const prompt = initialInputValue?.trim();
-    if (!prompt) return;
-    setInputValue(prompt);
+    if (!prompt) {
+      handledInitialInputRef.current = null;
+      return;
+    }
+    if (handledInitialInputRef.current === prompt) return;
+    handledInitialInputRef.current = prompt;
+    void controller.handleCreateSessionWithInput(prompt);
     onInitialInputConsumed?.();
-  }, [initialInputValue, onInitialInputConsumed, setInputValue]);
+  }, [controller.handleCreateSessionWithInput, initialInputValue, onInitialInputConsumed]);
 
   return (
     <TargetChatView
@@ -99,7 +104,9 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       sessions={controller.sessions}
       activeSessionId={controller.activeSessionId}
       composerRuntimeSelection={controller.composerRuntimeSelection}
-      workspaceAiSettingsRefreshToken={controller.workspaceAiSettingsRefreshToken}
+      workspaceAiSettings={controller.workspaceAiSettings}
+      isWorkspaceAiSettingsLoading={controller.isWorkspaceAiSettingsLoading}
+      workspaceAiSettingsError={controller.workspaceAiSettingsError}
       assistantMarkdownComponents={assistantMarkdownComponents}
       userMarkdownComponents={userMarkdownComponents}
       visibleMessages={controller.visibleMessages}

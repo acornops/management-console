@@ -4,26 +4,25 @@ import {
   cancelWorkflowRun,
   createWorkflowSchedule,
   createWorkflow,
-  createWorkflowMcpServer,
   createWorkflowSession,
   decideWorkflowRunApproval,
   deleteWorkflowSchedule,
+  duplicateWorkflow,
+  getWorkflowExecution,
   listWorkspaceApprovalInbox,
   listWorkspaceWorkflowSchedules,
   deleteWorkflow,
-  listWorkflowMcpServers,
-  listWorkflowMcpServerTools,
   listWorkflowOptions,
   listWorkflowRunApprovals,
   listWorkflowRunEvents,
   listWorkflowSessions,
   listWorkspaceWorkflows,
+  normalizeWorkflowCapabilitiesPreview,
   postWorkflowSessionMessage,
+  previewWorkflowCapabilities,
   previewWorkflowSchedule,
-  testWorkflowMcpServerConnection,
   updateWorkflow,
-  updateWorkflowSchedule,
-  updateWorkflowMcpServer
+  updateWorkflowSchedule
 } from './workflowApi';
 
 describe('workflow control-plane api', () => {
@@ -48,13 +47,10 @@ describe('workflow control-plane api', () => {
   it('loads workflow authoring options for dropdowns', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({
-        clusters: [{ value: 'cluster-1', label: 'Cluster 1' }],
-        repositories: [{ value: 'repo-1', label: 'Repo 1' }],
         mcpServers: [{ value: 'github', label: 'GitHub' }],
         mcpTools: [{ value: 'github.prs.create', label: 'github.prs.create' }],
         skills: [{ value: 'acornops-open-pr', label: 'acornops-open-pr' }],
-        agents: [{ value: 'agent-release-coordinator', label: 'Repository Operator' }],
-        chatSessions: [],
+        agents: [{ value: 'agent-release-coordinator', label: 'Workflow Analyst' }],
         outputFormats: [{ value: 'pdf', label: 'PDF' }],
         approvalPolicies: [],
         runtimeLimits: [],
@@ -66,13 +62,42 @@ describe('workflow control-plane api', () => {
     await expect(listWorkflowOptions('workspace-1')).resolves.toMatchObject({
       mcpServers: [{ value: 'github', label: 'GitHub' }],
       skills: [{ value: 'acornops-open-pr', label: 'acornops-open-pr' }],
-      agents: [{ value: 'agent-release-coordinator', label: 'Repository Operator' }]
+      agents: [{ value: 'agent-release-coordinator', label: 'Workflow Analyst' }]
     });
 
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/workflow-options');
   });
 
-  it('creates user-authored workflows with workflow-level MCP and skill scope', async () => {
+  it('loads sanitized coordinated execution children', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      execution: { id: 'execution-1', status: 'running' },
+      attempts: [],
+      coordination: {
+        label: 'AcornOps coordination',
+        status: 'running',
+        children: [{
+          id: 'delegation-1',
+          capabilityId: 'target.diagnostics.read',
+          target: { id: 'cluster-1', targetType: 'kubernetes' },
+          agent: { id: 'agent-1', name: 'Workflow Analyst' },
+          required: true,
+          status: 'running'
+        }]
+      }
+    }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await getWorkflowExecution('execution-1');
+
+    expect(response.coordination?.children[0]).toMatchObject({
+      capabilityId: 'target.diagnostics.read',
+      agent: { name: 'Workflow Analyst' },
+      status: 'running'
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workflow-executions/execution-1');
+  });
+
+  it('creates V2 workflows with selected Agents and a server-derived execution mode', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }))
@@ -82,18 +107,20 @@ describe('workflow control-plane api', () => {
             id: 'workflow-1',
             workspaceId: 'workspace-1',
             version: 1,
-            source: 'user',
+            origin: { type: 'manual' },
             name: 'Custom workflow',
+            prompt: 'Inspect the repository.',
+            agentIds: ['agent-1'],
+            executionMode: 'direct',
             requiredPermissions: ['read_workspace_data'],
-            enabledMcpServers: ['github'],
-            enabledSkills: ['acornops-open-pr'],
-            policy: {
+            capabilityPolicy: {
               mode: 'read_write',
+              semanticCapabilityIds: ['scm.repository.read'],
+              contextGrants: [],
               maxRuntimeSeconds: 1800,
               retentionDays: 90,
               approvalRequirements: ['Before write-capable tools run']
-            },
-            steps: []
+            }
           }
         }), { status: 201 })
       );
@@ -101,13 +128,19 @@ describe('workflow control-plane api', () => {
 
     await expect(createWorkflow('workspace-1', {
       name: 'Custom workflow',
-      enabledMcpServers: ['github'],
-      enabledSkills: ['acornops-open-pr']
+      prompt: 'Inspect the repository.',
+      agentIds: ['agent-1'],
+      capabilityPolicy: {
+        mode: 'read_write',
+        semanticCapabilityIds: ['scm.repository.read'],
+        contextGrants: [],
+        approvalRequirements: ['Before write-capable tools run']
+      }
     })).resolves.toMatchObject({
       id: 'workflow-1',
-      source: 'user',
-      enabledMcpServers: ['github'],
-      enabledSkills: ['acornops-open-pr']
+      origin: { type: 'manual' },
+      agentIds: ['agent-1'],
+      executionMode: 'direct'
     });
 
     const createCall = fetchMock.mock.calls[1];
@@ -115,8 +148,14 @@ describe('workflow control-plane api', () => {
     expect(createCall[1]).toMatchObject({ method: 'POST', credentials: 'include' });
     expect(JSON.parse(createCall[1]?.body as string)).toEqual({
       name: 'Custom workflow',
-      enabledMcpServers: ['github'],
-      enabledSkills: ['acornops-open-pr']
+      prompt: 'Inspect the repository.',
+      agentIds: ['agent-1'],
+      capabilityPolicy: {
+        mode: 'read_write',
+        semanticCapabilityIds: ['scm.repository.read'],
+        contextGrants: [],
+        approvalRequirements: ['Before write-capable tools run']
+      }
     });
   });
 
@@ -129,19 +168,20 @@ describe('workflow control-plane api', () => {
         workflow: {
           id: 'workflow-1',
           name: 'Updated workflow',
-          starterPrompt: 'Run the updated workflow.'
+          prompt: 'Run the updated workflow.'
         }
       }), { status: 200 }));
     });
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(updateWorkflow('workspace-1', 'workflow-1', {
+      agentIds: ['agent-1'],
       name: 'Updated workflow',
-      starterPrompt: 'Run the updated workflow.'
+      prompt: 'Run the updated workflow.'
     })).resolves.toMatchObject({
       id: 'workflow-1',
       name: 'Updated workflow',
-      starterPrompt: 'Run the updated workflow.'
+      prompt: 'Run the updated workflow.'
     });
 
     const updateCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workflows/workflow-1'));
@@ -149,9 +189,23 @@ describe('workflow control-plane api', () => {
     expect(updateCall?.[1]).toMatchObject({ method: 'PATCH', credentials: 'include' });
     expect(JSON.parse(updateCall?.[1]?.body as string)).toEqual({
       workspaceId: 'workspace-1',
+      agentIds: ['agent-1'],
       name: 'Updated workflow',
-      starterPrompt: 'Run the updated workflow.'
+      prompt: 'Run the updated workflow.'
     });
+  });
+
+  it('duplicates an effective workflow definition into a custom draft', async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify({ workflow: { id: 'workflow-copy', workspaceId: 'workspace-1', version: 1, source: 'user', createdBy: 'user-1', name: 'Triage copy', status: 'draft', requiredPermissions: [], policy: { mode: 'read_only', maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] }, steps: [] } }), { status: 201 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(duplicateWorkflow('workspace-1', 'cluster-triage', 'Triage copy')).resolves.toMatchObject({ id: 'workflow-copy', source: 'user', status: 'draft' });
+    const call = fetchMock.mock.calls.find((item) => String(item[0]).endsWith('/api/v1/workflows/cluster-triage/duplicate'));
+    expect(call?.[1]).toMatchObject({ method: 'POST', credentials: 'include' });
+    expect(JSON.parse(call?.[1]?.body as string)).toEqual({ workspaceId: 'workspace-1', name: 'Triage copy' });
   });
 
   it('deletes user-authored workflows from the workflow route', async () => {
@@ -169,45 +223,6 @@ describe('workflow control-plane api', () => {
     expect(deleteCall?.[0]).toBe('http://localhost:8081/api/v1/workflows/workflow-1');
     expect(deleteCall?.[1]).toMatchObject({ method: 'DELETE', credentials: 'include' });
     expect(JSON.parse(deleteCall?.[1]?.body as string)).toEqual({ workspaceId: 'workspace-1' });
-  });
-
-  it('manages workspace MCP servers for workflow configuration', async () => {
-    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
-      if (url.endsWith('/api/v1/auth/csrf')) {
-        return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
-      }
-      if (url.endsWith('/api/v1/workspaces/workspace-1/mcp/servers') && !init?.method) {
-        return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'github', name: 'GitHub' }] }), { status: 200 }));
-      }
-      if (url.endsWith('/api/v1/workspaces/workspace-1/mcp/servers') && init?.method === 'POST') {
-        return Promise.resolve(new Response(JSON.stringify({ server: { id: 'pagerduty', name: 'PagerDuty' } }), { status: 201 }));
-      }
-      if (url.endsWith('/api/v1/workspaces/workspace-1/mcp/servers/pagerduty') && init?.method === 'PATCH') {
-        return Promise.resolve(new Response(JSON.stringify({ server: { id: 'pagerduty', name: 'PagerDuty API' } }), { status: 200 }));
-      }
-      if (url.endsWith('/api/v1/workspaces/workspace-1/mcp/servers/pagerduty/test-connection')) {
-        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
-      }
-      return Promise.resolve(new Response(JSON.stringify({ items: ['pagerduty.incidents.read'] }), { status: 200 }));
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(listWorkflowMcpServers('workspace-1')).resolves.toEqual([{ id: 'github', name: 'GitHub' }]);
-    await expect(createWorkflowMcpServer('workspace-1', { name: 'PagerDuty', url: 'https://mcp.example.com' })).resolves.toEqual({ id: 'pagerduty', name: 'PagerDuty' });
-    await expect(updateWorkflowMcpServer('workspace-1', 'pagerduty', { name: 'PagerDuty API' })).resolves.toEqual({ id: 'pagerduty', name: 'PagerDuty API' });
-    await expect(testWorkflowMcpServerConnection('workspace-1', 'pagerduty')).resolves.toEqual({ ok: true });
-    await expect(listWorkflowMcpServerTools('workspace-1', 'pagerduty')).resolves.toEqual(['pagerduty.incidents.read']);
-
-    const listCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workspaces/workspace-1/mcp/servers') && !call[1]?.method);
-    const createCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workspaces/workspace-1/mcp/servers') && call[1]?.method === 'POST');
-    const updateCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workspaces/workspace-1/mcp/servers/pagerduty') && call[1]?.method === 'PATCH');
-    const testCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workspaces/workspace-1/mcp/servers/pagerduty/test-connection'));
-    const toolsCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workspaces/workspace-1/mcp/servers/pagerduty/tools'));
-    expect(listCall?.[0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/mcp/servers');
-    expect(createCall?.[1]).toMatchObject({ method: 'POST', credentials: 'include' });
-    expect(updateCall?.[1]).toMatchObject({ method: 'PATCH', credentials: 'include' });
-    expect(testCall?.[0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/mcp/servers/pagerduty/test-connection');
-    expect(toolsCall?.[0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/mcp/servers/pagerduty/tools');
   });
 
   it('loads workflow sessions with run history', async () => {
@@ -290,27 +305,70 @@ describe('workflow control-plane api', () => {
     });
   });
 
-  it('posts selected cluster inputs for a target-bound workflow run', async () => {
+  it('previews an exact workflow target without creating a session or run', async () => {
+    const payload = {
+      workflowId: 'workflow-1', workflowVersion: 4, mode: 'read_write', semanticCapabilityIds: ['target.remediation.write'],
+      checkedAt: '2026-07-17T00:00:00.000Z', status: 'ready', reasonCodes: [], targetCandidates: [],
+      selectedTarget: { id: 'cluster-1', name: 'Development', targetType: 'kubernetes', status: 'ready' },
+      tools: { read: [], write: [] }, directMcpServers: [], enabledSkills: [], approvalRequirements: [],
+      counts: { targets: 1, readyTargets: 1, tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
+    };
+    const fetchMock = vi.fn().mockImplementation((url: string) => Promise.resolve(
+      new Response(JSON.stringify(url.endsWith('/api/v1/auth/csrf') ? { csrfToken: 'csrf-token-1' } : payload), { status: 200 })
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(previewWorkflowCapabilities('workspace-1', 'workflow-1', {
+      approvedContextGrants: ['target_inventory'],
+      content: 'Inspect @target[Development].'
+    })).resolves.toEqual({ ...payload, mcpRequirements: [] });
+
+    const previewCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workflows/workflow-1/capabilities-preview'))!;
+    expect(previewCall[0]).toBe('http://localhost:8081/api/v1/workflows/workflow-1/capabilities-preview');
+    expect(JSON.parse(previewCall[1]?.body as string)).toEqual({
+      workspaceId: 'workspace-1', approvedContextGrants: ['target_inventory'],
+      content: 'Inspect @target[Development].'
+    });
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/sessions'))).toBe(false);
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/messages'))).toBe(false);
+  });
+
+  it('preserves generic MCP authentication recovery metadata without provider profiles', () => {
+    const preview = normalizeWorkflowCapabilitiesPreview({
+      workflowId: 'workflow-1', workflowVersion: 4, mode: 'read_only', semanticCapabilityIds: [],
+      checkedAt: '2026-07-19T00:00:00.000Z', status: 'blocked', reasonCodes: ['MCP_CONNECTION_UNAVAILABLE'],
+      targetCandidates: [], tools: { read: [], write: [] }, directMcpServers: [], enabledSkills: [], approvalRequirements: [],
+      mcpRequirements: [{
+        serverId: 'server-1', serverName: 'User-selected MCP server', authType: 'custom_header',
+        owningAgent: { id: 'agent-1', name: 'User-created Agent' }, connectionState: 'connection_missing',
+        authRequirement: { scope: 'individual', credentialLabel: 'Custom header credential', requiredInformation: [] },
+        action: 'connect_mcp_server'
+      }],
+      counts: { targets: 0, readyTargets: 0, tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
+    });
+
+    expect(preview.mcpRequirements).toEqual([{
+      serverId: 'server-1', serverName: 'User-selected MCP server', authType: 'custom_header',
+      owningAgent: { id: 'agent-1', name: 'User-created Agent' }, connectionState: 'connection_missing',
+      authRequirement: { scope: 'individual', credentialLabel: 'Custom header credential', requiredInformation: [] },
+      action: 'connect_mcp_server'
+    }]);
+  });
+
+  it('posts only prompt content for a resource-bound workflow run', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: 'accepted' }), { status: 202 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(postWorkflowSessionMessage('workspace-1', 'workflow-session-1', {
-      content: 'Triage this cluster',
-      inputs: { targetId: 'cluster-1' },
-      targetId: 'cluster-1',
-      targetType: 'kubernetes'
+    await expect(postWorkflowSessionMessage('workflow-session-1', {
+      content: 'Triage @target[Development].'
     })).resolves.toEqual({ status: 'accepted' });
 
     const messageCall = fetchMock.mock.calls.at(-1);
     expect(messageCall?.[0]).toBe('http://localhost:8081/api/v1/workflow-sessions/workflow-session-1/messages');
     expect(JSON.parse(messageCall?.[1]?.body as string)).toEqual({
-      workspaceId: 'workspace-1',
-      content: 'Triage this cluster',
-      inputs: { targetId: 'cluster-1' },
-      targetId: 'cluster-1',
-      targetType: 'kubernetes'
+      content: 'Triage @target[Development].'
     });
   });
 
@@ -463,19 +521,21 @@ describe('workflow control-plane api', () => {
       summary: { active: 1, approvalGated: 1 }
     });
     await expect(createWorkflowSchedule('workspace-1', {
+      principal: { type: 'user', id: 'user-1' },
       workflowId: 'workflow-1',
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputDefaults: { clusterId: 'cluster-primary' },
+      controlMessage: 'Inspect @target[Development].',
       approvedContextGrants: ['workspace_metadata']
     })).resolves.toMatchObject({ id: 'schedule-1' });
     await expect(previewWorkflowSchedule('workspace-1', {
+      principal: { type: 'user', id: 'user-1' },
       workflowId: 'workflow-1',
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputDefaults: { clusterId: 'cluster-primary' },
+      controlMessage: 'Inspect @target[Development].',
       approvedContextGrants: ['workspace_metadata']
     })).resolves.toMatchObject({ valid: true, summary: 'Weekdays at 09:00 (UTC)' });
     await expect(updateWorkflowSchedule('workspace-1', 'schedule-1', { enabled: false })).resolves.toMatchObject({
@@ -487,11 +547,12 @@ describe('workflow control-plane api', () => {
     expect(fetchMock.mock.calls.some((call) => call[0] === 'http://localhost:8081/api/v1/workspaces/workspace-1/workflow-schedules')).toBe(true);
     const createCall = fetchMock.mock.calls.find((call) => call[1]?.method === 'POST' && String(call[0]).endsWith('/workflow-schedules'));
     expect(JSON.parse(createCall?.[1]?.body as string)).toEqual({
+      principal: { type: 'user', id: 'user-1' },
       workflowId: 'workflow-1',
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputDefaults: { clusterId: 'cluster-primary' },
+      controlMessage: 'Inspect @target[Development].',
       approvedContextGrants: ['workspace_metadata']
     });
     const patchCall = fetchMock.mock.calls.find((call) => call[1]?.method === 'PATCH');

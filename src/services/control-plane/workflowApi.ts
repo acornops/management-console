@@ -1,23 +1,25 @@
 import { requestJson } from './http';
 import type { ControlPlaneRunEvent, ControlPlaneRunToolApproval } from './types';
+import type { PromptResourceRequirement } from './promptResourcesApi';
 
-export interface WorkflowApiStep {
-  id: string;
-  title: string;
-  requiredInputs: string[];
-  agentIds?: string[];
-  enabledSkills: string[];
-  allowedMcpServers: string[];
-  allowedTools: string[];
-  contextGrants: string[];
-  approvalRequired: boolean;
-  outputArtifacts?: Array<{ id: string; type: string; title: string; required?: boolean }>;
-}
+export {
+  listPromptReferenceTypes,
+  resolvePromptReferences,
+  suggestPromptReferences
+} from './promptResourcesApi';
+export type {
+  PromptReferenceResolution,
+  PromptReferenceToken,
+  PromptReferenceTypeDescriptor,
+  PromptResourceCandidate,
+  PromptResourceRequirement
+} from './promptResourcesApi';
 
 export type WorkflowApiDefinition = Record<string, unknown> & {
   id: string;
   workspaceId: string;
   version: number;
+  origin?: { type: 'template' | 'manual'; templateId?: string; templateVersion?: number };
   source?: 'system' | 'user';
   templateId?: string;
   name: string;
@@ -26,21 +28,24 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   createdBy?: string;
   createdByUser?: { id?: string; userId?: string; displayName?: string; email?: string };
   createdAt?: string;
-  category?: string;
-  orchestratorAgentId?: string;
+  prompt?: string;
+  starterPrompt?: string;
+  agentIds: string[];
+  executionMode: 'direct' | 'coordinated';
+  resourceRequirements: PromptResourceRequirement[];
   tags?: string[];
   inputs?: WorkflowApiInputDefinition[];
-  enabledMcpServers?: string[];
-  enabledSkills?: string[];
-  starterPrompt?: string;
-  requiredPermissions: string[];
-  policy: {
+  requiredPermissions?: string[];
+  capabilityPolicy: {
     mode: 'read_only' | 'read_write';
+    restrictionMode: 'inherit' | 'restrict';
+    semanticCapabilityIds: string[];
+    contextGrants: string[];
     maxRuntimeSeconds: number;
     retentionDays: number;
     approvalRequirements: string[];
   };
-  steps: WorkflowApiStep[];
+  readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
 };
 
 export interface WorkflowApiInputDefinition {
@@ -58,20 +63,22 @@ export interface WorkflowOption {
   disabled?: boolean;
   disabledReason?: string;
   provenance?: {
-    source: 'workspace' | 'target';
+    source: 'workspace' | 'target' | 'agent';
     provider?: 'github' | 'gitlab';
     targetId?: string;
     targetName?: string;
+    targetType?: 'kubernetes' | 'virtual_machine';
+    agentId?: string;
+    serverId?: string;
+    toolName?: string;
   };
 }
 
 export interface WorkflowOptionsCatalog {
-  clusters: WorkflowOption[];
   mcpServers: WorkflowOption[];
   mcpTools: WorkflowOption[];
   skills: WorkflowOption[];
   agents: WorkflowOption[];
-  chatSessions: WorkflowOption[];
   outputFormats: WorkflowOption[];
   approvalPolicies: WorkflowOption[];
   runtimeLimits: WorkflowOption[];
@@ -84,40 +91,6 @@ export interface WorkflowOptionsCatalog {
   }>;
 }
 
-export interface WorkflowMcpServer {
-  id: string;
-  workspaceId: string;
-  scope: 'workspace';
-  name: string;
-  url: string;
-  enabled: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
-  authHeaderName?: string;
-  credentialConfigured: boolean;
-  publicHeaders: Record<string, string>;
-  status: 'connected' | 'disabled' | 'not_checked' | 'error';
-  lastCheckedAt?: string;
-  discoveryError?: string;
-  tools: WorkflowMcpTool[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface WorkflowMcpTool {
-  name: string;
-  title: string;
-  capability: 'read' | 'write';
-  enabled: boolean;
-}
-
-export interface WorkflowMcpServerInput {
-  name: string;
-  url: string;
-  enabled?: boolean;
-  auth?: { type: WorkflowMcpServer['authType']; credential?: string; headerName?: string };
-  publicHeaders?: Record<string, string>;
-}
-
 export interface WorkflowSessionResponse {
   session: {
     id: string;
@@ -125,6 +98,124 @@ export interface WorkflowSessionResponse {
     workspaceId: string;
     workflowVersion: number;
   } & Record<string, unknown>;
+  compiledAccessScope: Record<string, unknown>;
+}
+
+export type WorkflowCapabilityPreviewReasonCode =
+  | 'TARGET_REQUIRED' | 'TARGET_NOT_FOUND' | 'TARGET_TYPE_MISMATCH' | 'TARGET_OFFLINE'
+  | 'TARGET_STATUS_UNKNOWN' | 'TARGET_WRITE_UNSUPPORTED' | 'CAPABILITY_MAPPING_UNAVAILABLE'
+  | 'TARGET_TOOL_MAPPING_UNAVAILABLE' | 'TARGET_TOOL_CATALOG_UNAVAILABLE'
+  | 'MCP_CONNECTION_UNAVAILABLE';
+
+export interface WorkflowTargetCapabilityCandidate {
+  id: string;
+  name: string;
+  targetType: 'kubernetes' | 'virtual_machine';
+  status: 'ready' | 'unavailable' | 'unsupported';
+  reasonCode?: WorkflowCapabilityPreviewReasonCode;
+  reason?: string;
+}
+
+export interface WorkflowCapabilityToolPreview {
+  id: string;
+  name: string;
+  label: string;
+  description?: string;
+  access: 'read' | 'write';
+  source: 'target' | 'mcp' | 'builtin';
+}
+
+interface WorkflowMcpRequirementPreviewBase {
+  serverId: string;
+  serverName: string;
+  authType: 'bearer_token' | 'custom_header';
+  connectionState: 'connection_missing' | 'connection_error' | 'connected';
+  authRequirement: {
+    scope: 'workspace' | 'individual';
+    credentialLabel: string;
+    requiredInformation: Array<{ name: string; description: string }>;
+  };
+  action: 'connect_mcp_server' | 'verify_mcp_server' | 'none';
+}
+
+export type WorkflowMcpRequirementPreview = WorkflowMcpRequirementPreviewBase & (
+  | { owningAgent: { id: string; name: string }; owningTarget?: never }
+  | { owningTarget: { id: string; name: string; targetType: 'kubernetes' | 'virtual_machine' }; owningAgent?: never }
+);
+
+export interface WorkflowCapabilitiesPreview {
+  workflowId: string;
+  workflowVersion: number;
+  mode: 'read_only' | 'read_write';
+  semanticCapabilityIds: string[];
+  checkedAt: string;
+  status: 'needs_target' | 'ready' | 'blocked';
+  reasonCodes: WorkflowCapabilityPreviewReasonCode[];
+  targetCandidates: WorkflowTargetCapabilityCandidate[];
+  selectedTarget?: WorkflowTargetCapabilityCandidate;
+  compiledAccessScope?: Record<string, unknown>;
+  tools: { read: WorkflowCapabilityToolPreview[]; write: WorkflowCapabilityToolPreview[] };
+  directMcpServers: Array<{ id: string; name: string }>;
+  enabledSkills: Array<{ id: string; name: string }>;
+  mcpRequirements: WorkflowMcpRequirementPreview[];
+  approvalRequirements: string[];
+  counts: {
+    targets: number; readyTargets: number; tools: number; readTools: number; writeTools: number;
+    directMcpServers: number; enabledSkills: number; approvals: number;
+  };
+}
+
+function previewArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value as T[] : [];
+}
+
+export function normalizeWorkflowCapabilitiesPreview(
+  value: Partial<WorkflowCapabilitiesPreview> | null | undefined
+): WorkflowCapabilitiesPreview {
+  const tools = value?.tools;
+  const readTools = previewArray<WorkflowCapabilityToolPreview>(tools?.read);
+  const writeTools = previewArray<WorkflowCapabilityToolPreview>(tools?.write);
+  const targetCandidates = previewArray<WorkflowTargetCapabilityCandidate>(value?.targetCandidates);
+  const directMcpServers = previewArray<{ id: string; name: string }>(value?.directMcpServers);
+  const enabledSkills = previewArray<{ id: string; name: string }>(value?.enabledSkills);
+  const approvalRequirements = previewArray<string>(value?.approvalRequirements);
+  const counts = value?.counts;
+
+  return {
+    workflowId: typeof value?.workflowId === 'string' ? value.workflowId : '',
+    workflowVersion: typeof value?.workflowVersion === 'number' ? value.workflowVersion : 0,
+    mode: value?.mode === 'read_write' ? 'read_write' : 'read_only',
+    semanticCapabilityIds: previewArray<string>(value?.semanticCapabilityIds),
+    checkedAt: typeof value?.checkedAt === 'string' ? value.checkedAt : '',
+    status: value?.status === 'ready' || value?.status === 'needs_target' ? value.status : 'blocked',
+    reasonCodes: previewArray<WorkflowCapabilityPreviewReasonCode>(value?.reasonCodes),
+    targetCandidates,
+    ...(value?.selectedTarget ? { selectedTarget: value.selectedTarget } : {}),
+    ...(value?.compiledAccessScope ? { compiledAccessScope: value.compiledAccessScope } : {}),
+    tools: { read: readTools, write: writeTools },
+    directMcpServers,
+    enabledSkills,
+    mcpRequirements: previewArray<WorkflowMcpRequirementPreview>(value?.mcpRequirements),
+    approvalRequirements,
+    counts: {
+      targets: typeof counts?.targets === 'number' ? counts.targets : targetCandidates.length,
+      readyTargets: typeof counts?.readyTargets === 'number' ? counts.readyTargets : targetCandidates.filter((candidate) => candidate.status === 'ready').length,
+      tools: typeof counts?.tools === 'number' ? counts.tools : readTools.length + writeTools.length,
+      readTools: typeof counts?.readTools === 'number' ? counts.readTools : readTools.length,
+      writeTools: typeof counts?.writeTools === 'number' ? counts.writeTools : writeTools.length,
+      directMcpServers: typeof counts?.directMcpServers === 'number' ? counts.directMcpServers : directMcpServers.length,
+      enabledSkills: typeof counts?.enabledSkills === 'number' ? counts.enabledSkills : enabledSkills.length,
+      approvals: typeof counts?.approvals === 'number' ? counts.approvals : approvalRequirements.length
+    }
+  };
+}
+
+export interface WorkflowMessageAccepted {
+  message_id: string;
+  run_id: string;
+  workflow_run_id: string;
+  executionId: string;
+  status: string;
   compiledAccessScope: Record<string, unknown>;
 }
 
@@ -153,8 +244,9 @@ export interface WorkflowSchedule {
   status: 'enabled' | 'paused';
   cron: string;
   timezone: string;
-  inputDefaults: Record<string, unknown>;
+  controlMessage: string;
   approvedContextGrants: string[];
+  principal: { type: 'user'; id: string };
   createdBy?: { userId: string; displayName?: string };
   updatedBy?: { userId: string; displayName?: string };
   createdAt: string;
@@ -184,8 +276,9 @@ export interface WorkflowScheduleInput {
   enabled?: boolean;
   cron: string;
   timezone: string;
-  inputDefaults?: Record<string, unknown>;
+  controlMessage: string;
   approvedContextGrants?: string[];
+  principal: { type: 'user'; id: string };
 }
 
 export type WorkflowScheduleUpdateInput = Partial<WorkflowScheduleInput>;
@@ -240,45 +333,60 @@ export type WorkflowSessionSummary = WorkflowSessionResponse['session'] & {
 };
 
 export interface WorkflowScopeUpdateInput {
-  category?: string;
-  enabledMcpServers?: string[];
-  enabledSkills?: string[];
-  policy?: {
+  agentIds: string[];
+  resourceRequirements?: PromptResourceRequirement[];
+  capabilityPolicy?: {
     mode?: 'read_only' | 'read_write';
+    restrictionMode?: 'inherit' | 'restrict';
+    semanticCapabilityIds?: string[];
+    contextGrants?: string[];
     approvalRequirements?: string[];
   };
-  steps?: Array<{
-    id: string;
-    agentIds?: string[];
-    allowedMcpServers?: string[];
-    allowedTools?: string[];
-    contextGrants?: string[];
-    approvalRequired?: boolean;
-  }>;
 }
 
 export interface WorkflowCreateInput {
   name: string;
   description?: string;
-  category?: string;
+  prompt: string;
+  agentIds: string[];
+  resourceRequirements?: PromptResourceRequirement[];
   tags?: string[];
-  starterPrompt?: string;
   inputs?: WorkflowApiInputDefinition[];
-  enabledMcpServers?: string[];
-  enabledSkills?: string[];
   requiredPermissions?: string[];
-  policy?: {
+  capabilityPolicy?: {
     mode?: 'read_only' | 'read_write';
-    maxRuntimeSeconds?: number;
-    retentionDays?: number;
+    restrictionMode?: 'inherit' | 'restrict';
+    semanticCapabilityIds?: string[];
+    contextGrants?: string[];
     approvalRequirements?: string[];
   };
-  steps?: WorkflowApiStep[];
 }
 
-export type WorkflowUpdateInput = Partial<WorkflowCreateInput> & {
+export type WorkflowUpdateInput = Partial<Omit<WorkflowCreateInput, 'agentIds'>> & {
+  agentIds: string[];
   status?: WorkflowApiDefinition['status'];
 };
+
+export interface WorkflowCoordinationChild {
+  id: string;
+  childRunId?: string;
+  capabilityId: string;
+  target: { id: string; targetType: 'kubernetes' | 'virtual_machine' };
+  agent: { id: string; name: string };
+  required: boolean;
+  status: string;
+  failure?: { code: string; message: string };
+}
+
+export interface WorkflowExecutionResponse {
+  execution: Record<string, unknown>;
+  attempts: Array<Record<string, unknown>>;
+  coordination?: {
+    label: 'AcornOps coordination';
+    status: string;
+    children: WorkflowCoordinationChild[];
+  };
+}
 
 export function listWorkspaceWorkflows(workspaceId: string): Promise<WorkflowApiDefinition[]> {
   return requestJson<{ items: WorkflowApiDefinition[] }>(
@@ -286,9 +394,16 @@ export function listWorkspaceWorkflows(workspaceId: string): Promise<WorkflowApi
   ).then((page) => page.items);
 }
 
-export function listWorkflowOptions(workspaceId: string): Promise<WorkflowOptionsCatalog> {
+export function getWorkflowExecution(executionId: string): Promise<WorkflowExecutionResponse> {
+  return requestJson<WorkflowExecutionResponse>(
+    `/api/v1/workflow-executions/${encodeURIComponent(executionId)}`
+  );
+}
+
+export function listWorkflowOptions(workspaceId: string, agentId?: string): Promise<WorkflowOptionsCatalog> {
+  const query = agentId ? `?agentId=${encodeURIComponent(agentId)}` : '';
   return requestJson<WorkflowOptionsCatalog>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/workflow-options`
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/workflow-options${query}`
   );
 }
 
@@ -385,6 +500,20 @@ export function updateWorkflow(
   ).then((response) => response.workflow);
 }
 
+export function duplicateWorkflow(
+  workspaceId: string,
+  workflowId: string,
+  name?: string
+): Promise<WorkflowApiDefinition> {
+  return requestJson<{ workflow: WorkflowApiDefinition }>(
+    `/api/v1/workflows/${encodeURIComponent(workflowId)}/duplicate`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ workspaceId, ...(name?.trim() ? { name: name.trim() } : {}) })
+    }
+  ).then((response) => response.workflow);
+}
+
 export function deleteWorkflow(workspaceId: string, workflowId: string): Promise<void> {
   return requestJson<{ deleted: boolean }>(
     `/api/v1/workflows/${encodeURIComponent(workflowId)}`,
@@ -393,71 +522,6 @@ export function deleteWorkflow(workspaceId: string, workflowId: string): Promise
       body: JSON.stringify({ workspaceId })
     }
   ).then(() => undefined);
-}
-
-export function listWorkflowMcpServers(workspaceId: string): Promise<WorkflowMcpServer[]> {
-  return requestJson<{ items: WorkflowMcpServer[] }>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers`
-  ).then((page) => page.items);
-}
-
-export function createWorkflowMcpServer(
-  workspaceId: string,
-  input: WorkflowMcpServerInput
-): Promise<WorkflowMcpServer> {
-  return requestJson<{ server: WorkflowMcpServer }>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers`,
-    {
-      method: 'POST',
-      body: JSON.stringify(input)
-    }
-  ).then((response) => response.server);
-}
-
-export function updateWorkflowMcpServer(
-  workspaceId: string,
-  serverId: string,
-  input: Partial<WorkflowMcpServerInput>
-): Promise<WorkflowMcpServer> {
-  return requestJson<{ server: WorkflowMcpServer }>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers/${encodeURIComponent(serverId)}`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify(input)
-    }
-  ).then((response) => response.server);
-}
-
-export function deleteWorkflowMcpServer(workspaceId: string, serverId: string): Promise<void> {
-  return requestJson<{ deleted: boolean }>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers/${encodeURIComponent(serverId)}`,
-    { method: 'DELETE' }
-  ).then(() => undefined);
-}
-
-export function testWorkflowMcpServerConnection(workspaceId: string, serverId: string): Promise<Record<string, unknown>> {
-  return requestJson<Record<string, unknown>>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers/${encodeURIComponent(serverId)}/test-connection`,
-    { method: 'POST' }
-  );
-}
-
-export function listWorkflowMcpServerTools(workspaceId: string, serverId: string): Promise<WorkflowMcpTool[]> {
-  return requestJson<{ items: WorkflowMcpTool[] }>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers/${encodeURIComponent(serverId)}/tools`
-  ).then((page) => page.items);
-}
-
-export function updateWorkflowMcpTool(
-  workspaceId: string,
-  serverId: string,
-  toolName: string,
-  patch: { enabled: boolean; capability: 'read' | 'write' }
-): Promise<WorkflowMcpTool> {
-  return requestJson<{ tool: WorkflowMcpTool }>(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/mcp/servers/${encodeURIComponent(serverId)}/tools/${encodeURIComponent(toolName)}`,
-    { method: 'PATCH', body: JSON.stringify(patch) }
-  ).then((response) => response.tool);
 }
 
 export function listWorkflowSessions(
@@ -486,6 +550,27 @@ export function createWorkflowSession(
   );
 }
 
+export function previewWorkflowCapabilities(
+  workspaceId: string,
+  workflowId: string,
+  input: {
+    approvedContextGrants?: string[];
+    content?: string;
+  } = {}
+): Promise<WorkflowCapabilitiesPreview> {
+  return requestJson<Partial<WorkflowCapabilitiesPreview>>(
+    `/api/v1/workflows/${encodeURIComponent(workflowId)}/capabilities-preview`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        workspaceId,
+        approvedContextGrants: input.approvedContextGrants || [],
+        ...(input.content ? { content: input.content } : {})
+      })
+    }
+  ).then(normalizeWorkflowCapabilitiesPreview);
+}
+
 export function updateWorkflowScope(
   workspaceId: string,
   workflowId: string,
@@ -504,25 +589,19 @@ export function updateWorkflowScope(
 }
 
 export function postWorkflowSessionMessage(
-  workspaceId: string,
   sessionId: string,
   input: {
     content: string;
-    inputs?: Record<string, unknown>;
-    targetId?: string;
-    targetType?: 'kubernetes' | 'virtual_machine';
+    clientRequestId?: string;
   }
-): Promise<Record<string, unknown>> {
-  return requestJson<Record<string, unknown>>(
+): Promise<WorkflowMessageAccepted> {
+  return requestJson<WorkflowMessageAccepted>(
     `/api/v1/workflow-sessions/${encodeURIComponent(sessionId)}/messages`,
     {
       method: 'POST',
       body: JSON.stringify({
-        workspaceId,
         content: input.content,
-        inputs: input.inputs || {},
-        ...(input.targetId ? { targetId: input.targetId } : {}),
-        ...(input.targetType ? { targetType: input.targetType } : {})
+        ...(input.clientRequestId ? { clientRequestId: input.clientRequestId } : {})
       })
     }
   );

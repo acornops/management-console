@@ -2,6 +2,7 @@ export type DateTimeInput = Date | number | string | null | undefined;
 
 interface DateTimeFormatOptions {
   fallback?: string;
+  locale?: Intl.LocalesArgument;
   timeZone?: string;
   includeTimeZone?: boolean;
 }
@@ -29,7 +30,7 @@ export function formatUserDateTime(value: DateTimeInput, options: DateTimeFormat
   const date = parseDateTime(value);
   if (!date) return options.fallback ?? 'Unknown';
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(options.locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -44,7 +45,7 @@ export function formatUserDate(value: DateTimeInput, options: DateTimeFormatOpti
   const date = parseDateTime(value);
   if (!date) return options.fallback ?? 'Unknown';
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(options.locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -56,7 +57,7 @@ export function formatUserTime(value: DateTimeInput, options: DateTimeFormatOpti
   const date = parseDateTime(value);
   if (!date) return options.fallback ?? 'Unknown';
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(options.locale, {
     hour: 'numeric',
     minute: '2-digit',
     timeZone: getTimeZone(options.timeZone),

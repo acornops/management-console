@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
+import { TelemetryTrendSummary } from '@/features/targets/catalog/TelemetryTrendSummary';
 import type { ControlPlaneVirtualMachine, ControlPlaneVirtualMachineMetricHistoryPoint } from '@/services/controlPlaneApi';
 import { formatCompactRelativeTime, formatUserTime } from '@/utils/dateTime';
 
@@ -138,7 +139,7 @@ export const VmCardResourceChart: React.FC<{
   const paddingX = 0;
   const paddingTop = 8;
   const plotBottom = 96;
-  const safePoints = points.slice(-12);
+  const safePoints = React.useMemo(() => points.slice(-12), [points]);
 
   const loadPointCount = safePoints.filter((point) => point.loadAverage1m !== null).length;
   const memoryPointCount = safePoints.filter((point) => point.memoryUsedPercent !== null).length;
@@ -212,6 +213,26 @@ export const VmCardResourceChart: React.FC<{
     { label: t('virtualMachines.list.load1m'), value: formatVmLoad(latestLoadPoint?.value ?? null), Icon: ICONS.Activity, markerClassName: 'bg-accent-strong' },
     { label: t('virtualMachines.list.memory'), value: formatVmPercent(latestMemoryPoint?.value ?? null), Icon: ICONS.HardDrive, markerClassName: 'bg-metric-blue' }
   ];
+  const trendSummary = hasTrend ? (
+    <TelemetryTrendSummary
+      title={t('virtualMachines.list.telemetryFor', { name: vm.name })}
+      metricColumnLabel={t('dashboard.telemetryMetric')}
+      startLabel={axisStartLabel}
+      endLabel={axisEndLabel}
+      series={[
+        {
+          label: t('virtualMachines.list.load1m'),
+          startValue: formatVmLoad(safePoints.find((point) => point.loadAverage1m !== null)?.loadAverage1m ?? null),
+          endValue: formatVmLoad(latestLoadPoint?.value ?? null)
+        },
+        {
+          label: t('virtualMachines.list.memory'),
+          startValue: formatVmPercent(safePoints.find((point) => point.memoryUsedPercent !== null)?.memoryUsedPercent ?? null),
+          endValue: formatVmPercent(latestMemoryPoint?.value ?? null)
+        }
+      ]}
+    />
+  ) : null;
 
   return (
     <section
@@ -232,7 +253,7 @@ export const VmCardResourceChart: React.FC<{
       </dl>
       <div>
         <div className="relative h-[104px] min-w-0 overflow-hidden">
-          <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="h-full w-full" role="img" aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}>
+          <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
             <line x1="0" x2="180" y1="20" y2="20" className="stroke-ui-border/55" strokeWidth="1" />
             <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/55" strokeWidth="1" />
             <line x1="0" x2="180" y1="88" y2="88" className="stroke-ui-border/55" strokeWidth="1" />
@@ -245,6 +266,7 @@ export const VmCardResourceChart: React.FC<{
             </div>
           )}
         </div>
+        {trendSummary}
         <div className="type-caption mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-ui-text-muted">
           <span>{axisStartLabel}</span>
           <span className="truncate text-center">{t('dashboard.telemetryAxisLabel')}</span>

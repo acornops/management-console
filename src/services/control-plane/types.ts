@@ -1,4 +1,5 @@
-import { ChatRuntimeSelection, ClusterMetricHistoryPoint, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
+import { ChatRuntimeSelection, ClusterMetricHistoryPoint, ClusterToolCatalogServer, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
+export type { TargetMcpServer, TargetMcpServerTestConnectionResult } from './targetMcpTypes';
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
   ControlPlaneRoleTemplate,
@@ -46,6 +47,12 @@ export interface ControlPlaneAuthConfig {
   passwordSignupEnabled: boolean;
   passwordEmailVerificationRequired: boolean;
   passwordResetEnabled: boolean;
+}
+
+export interface ControlPlaneLogoutResult {
+  status: 'ok';
+  mode: 'oidc' | 'local';
+  redirectPath: string;
 }
 
 export interface ControlPlaneVerificationRequired { status: 'verification_required'; email: string; resendAfterSeconds?: number; }
@@ -396,6 +403,11 @@ export interface ControlPlaneClusterToolCatalogServer {
   canEditConnection: boolean;
   canToggle?: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header';
+  credentialMode: 'none' | 'workspace' | 'individual';
+  authHeaderName?: string;
+  authHeaderPrefix?: string;
+  revision?: number;
+  provenance?: ClusterToolCatalogServer['provenance'];
   publicHeaders?: Record<string, string>;
   connectionStatus?: 'unknown' | 'ok' | 'error';
   lastDiscoveryAt?: string | null;
@@ -430,13 +442,19 @@ export interface ControlPlaneMcpServer {
   server_url: string;
   enabled: boolean;
   auth_type: 'none' | 'bearer_token' | 'custom_header';
-  auth_secret_name?: string;
+  credential_mode: 'none' | 'workspace' | 'individual';
   auth_header_name?: string;
   auth_header_prefix?: string;
   public_headers?: Record<string, string> | null;
   connection_status?: 'unknown' | 'ok' | 'error';
   last_discovery_at?: string | null;
   last_discovery_error?: string | null;
+  revision?: number;
+  catalog_source_id?: string | null;
+  catalog_artifact_name?: string | null;
+  catalog_version?: string | null;
+  catalog_digest?: string | null;
+  catalog_imported_at?: string | null;
   tools: ControlPlaneClusterTool[];
 }
 
@@ -460,8 +478,6 @@ export interface TargetMcpServerToolInput {
 
 export interface TargetMcpServerAuthInput {
   type?: 'none' | 'bearer_token' | 'custom_header';
-  secretName?: string;
-  secretValue?: string;
   headerName?: string;
   headerPrefix?: string;
 }
@@ -472,6 +488,7 @@ export interface CreateTargetMcpServerInput {
   enabled?: boolean;
   publicHeaders?: Record<string, string>;
   auth?: TargetMcpServerAuthInput;
+  credentialMode?: 'none' | 'workspace' | 'individual';
 }
 
 export interface UpdateTargetMcpServerInput {
@@ -479,6 +496,8 @@ export interface UpdateTargetMcpServerInput {
   enabled?: boolean;
   publicHeaders?: Record<string, string>;
   auth?: TargetMcpServerAuthInput;
+  credentialMode?: 'none' | 'workspace' | 'individual';
+  expectedRevision?: number;
   tools?: TargetMcpServerToolInput[];
   removeTools?: string[];
 }
@@ -540,6 +559,7 @@ export interface ControlPlaneSession extends ControlPlaneTargetScope {
   expiresAt: string;
   deletedAt?: string;
 }
+
 
 export type ControlPlaneSessionListPage = PagedResult<ControlPlaneSession>;
 
@@ -616,33 +636,4 @@ export interface ControlPlaneAcceptedMessage {
   message_id: string;
   run_id: string;
   runtimeSelection?: ChatRuntimeSelection;
-}
-
-export interface TargetMcpServer {
-  id: string;
-  workspaceId: string;
-  targetId: string;
-  serverName: string;
-  serverUrl: string;
-  enabled: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
-  authSecretName?: string;
-  authHeaderName?: string;
-  authHeaderPrefix?: string;
-  publicHeaders?: Record<string, string>;
-  connectionStatus: 'unknown' | 'ok' | 'error';
-  lastDiscoveryAt?: string | null;
-  lastDiscoveryError?: string | null;
-  tools: KubernetesCluster['mcpTools'];
-}
-
-export interface TargetMcpServerTestConnectionResult {
-  serverId: string;
-  serverName: string;
-  serverUrl: string;
-  connectionStatus: 'ok' | 'error';
-  lastDiscoveryAt: string;
-  discoveredToolCount: number;
-  discoveredTools: string[];
-  error?: string | null;
 }

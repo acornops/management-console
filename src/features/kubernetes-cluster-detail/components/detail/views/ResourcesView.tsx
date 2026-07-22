@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WorkloadsExplorer } from '@/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer';
 import type {
@@ -10,6 +10,7 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import { ControlPlanePodLogsOptions, controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneResourcePageItem } from '@/services/controlPlaneApi';
 import { KubernetesCluster } from '@/types';
+import { useCursorCollection } from '@/hooks/useCursorCollection';
 
 interface ResourcesViewProps {
   cluster: KubernetesCluster;
@@ -27,13 +28,30 @@ type ResourceQuery = {
 
 export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPodLogs = false, onAnalyzePod }) => {
   const { t } = useTranslation();
-  const requestSeqRef = useRef(0);
   const [resourceQuery, setResourceQuery] = useState<ResourceQuery>({ family: 'workloads' });
-  const [resourceItems, setResourceItems] = useState<ControlPlaneResourcePageItem[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | undefined>();
-  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [resourceListError, setResourceListError] = useState<string | null>(null);
+  const loadResourcePage = useCallback(async ({ cursor, filters, limit, signal }: {
+    cursor?: string;
+    filters: ResourceQuery;
+    limit: number;
+    signal: AbortSignal;
+  }) => {
+    try {
+      return await controlPlaneApi.listClusterResources(cluster.workspaceId, cluster.id, { limit, cursor, ...filters, signal });
+    } catch (error) {
+      throw new Error(formatControlPlaneError(error, t('resources.loadFailed'), { area: 'cluster' }));
+    }
+  }, [cluster.id, cluster.workspaceId, t]);
+  const resourceCollection = useCursorCollection({
+    filters: resourceQuery,
+    getKey: (item: ControlPlaneResourcePageItem) => `${item.kind}:${item.namespace || ''}:${item.name}`,
+    loadPage: loadResourcePage,
+    pageSize: 100,
+    strategy: 'sentinel'
+  });
+  const resourceItems = resourceCollection.items;
+  const isLoadingInitial = resourceCollection.phase === 'loading' || resourceCollection.phase === 'refreshing';
+  const isLoadingMore = resourceCollection.phase === 'loadingMore';
+  const resourceListError = resourceCollection.error || null;
   const mappedPageResources = useMemo(
     () => mapClusterResourcePageItems(resourceItems),
     [resourceItems]
@@ -49,55 +67,6 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
         : query
     );
   }, []);
-  const loadResources = useCallback(async (mode: 'replace' | 'append', cursor?: string) => {
-    const requestId = ++requestSeqRef.current;
-    if (mode === 'replace') {
-      setIsLoadingInitial(true);
-      setResourceItems([]);
-      setNextCursor(undefined);
-    } else {
-      setIsLoadingMore(true);
-    }
-    setResourceListError(null);
-    try {
-      const page = await controlPlaneApi.listClusterResources(cluster.workspaceId, cluster.id, {
-        limit: 100,
-        cursor,
-        family: resourceQuery.family,
-        kind: resourceQuery.kind,
-        namespace: resourceQuery.namespace,
-        health: resourceQuery.health,
-        q: resourceQuery.q
-      });
-      if (requestId !== requestSeqRef.current) return;
-      setResourceItems((current) => mode === 'append' ? [...current, ...page.items] : page.items);
-      setNextCursor(page.nextCursor);
-    } catch (error) {
-      if (requestId !== requestSeqRef.current) return;
-      setResourceListError(formatControlPlaneError(error, t('resources.loadFailed'), { area: 'cluster' }));
-      if (mode === 'replace') {
-        setResourceItems([]);
-        setNextCursor(undefined);
-      }
-    } finally {
-      if (requestId === requestSeqRef.current) {
-        setIsLoadingInitial(false);
-        setIsLoadingMore(false);
-      }
-    }
-  }, [cluster.id, cluster.workspaceId, resourceQuery, t]);
-
-  const loadPodLogs = useCallback(async (workload: WorkloadExplorerItem, options: ControlPlanePodLogsOptions) => {
-    if (!canReadPodLogs || workload.type !== 'Pod') {
-      throw new Error(t('workloads.logsUnavailable'));
-    }
-    return controlPlaneApi.getPodLogs(cluster.workspaceId, cluster.id, workload.namespace, workload.name, options);
-  }, [canReadPodLogs, cluster.id, cluster.workspaceId, t]);
-
-  useEffect(() => {
-    void loadResources('replace');
-  }, [loadResources]);
-
   const workloads = useMemo(
     () =>
       mappedPageResources.workloads.map((workload) => ({
@@ -162,17 +131,19 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
       canReadPodLogs={canReadPodLogs}
       isLoadingInitial={isLoadingInitial}
       isLoadingMore={isLoadingMore}
-      hasMoreResources={Boolean(nextCursor)}
+      hasMoreResources={Boolean(resourceCollection.nextCursor)}
       resourceListError={resourceListError}
       resourceFamilyCounts={cluster.resourceSummary?.resourceFamilyCounts}
       resourceKindCounts={cluster.resourceSummary?.resourceKindCounts}
       onResourceQueryChange={updateResourceQuery}
-      onLoadMoreResources={() => {
-        if (nextCursor && !isLoadingInitial && !isLoadingMore) {
-          void loadResources('append', nextCursor);
+      loadMoreSentinelRef={resourceCollection.sentinelRef}
+      onLoadMoreResources={() => void resourceCollection.loadMore()}
+      onLoadPodLogs={async (workload, options: ControlPlanePodLogsOptions) => {
+        if (!canReadPodLogs || workload.type !== 'Pod') {
+          throw new Error(t('workloads.logsUnavailable'));
         }
+        return controlPlaneApi.getPodLogs(cluster.workspaceId, cluster.id, workload.namespace, workload.name, options);
       }}
-      onLoadPodLogs={loadPodLogs}
       onAnalyzePod={(workload) => onAnalyzePod?.(workload.name)}
     />
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { KubernetesCluster } from '@/types';
 import { AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
@@ -6,8 +6,8 @@ import { Trans, useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { cardClassName } from '@/components/common/Card';
 import { Dialog } from '@/components/common/Dialog';
+import { EmptyState } from '@/components/common/EmptyState';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ClusterCatalog } from '@/components/dashboard/ClusterCatalog';
@@ -18,17 +18,17 @@ interface DashboardProps {
   kubernetesClusters: KubernetesCluster[];
   onSelectKubernetesCluster: (cluster: KubernetesCluster) => void;
   onInstallAgent?: (clusterId: string) => void;
+  canInstallAgent?: (cluster: KubernetesCluster) => boolean;
   workspaceName?: string;
   totalClusterCount?: number;
   issueSummaryByClusterId?: Record<string, ControlPlaneTargetIssueSummary | undefined>;
   issueSummaryLoadStateByClusterId?: Record<string, 'loading' | 'ready' | 'error' | undefined>;
   metricLoadStateByClusterId?: Record<string, 'loading' | 'ready' | 'error' | undefined>;
+  onRetryTelemetry?: () => void;
   hasActiveClusterFilter?: boolean;
   isCatalogLoading?: boolean;
   catalogLoadError?: boolean;
   onRetryCatalog?: () => void;
-  catalogPanelLabelledBy?: string;
-  catalogTabs?: React.ReactNode;
   controls?: React.ReactNode;
   catalogFooter?: React.ReactNode;
   onAddCluster?: () => void;
@@ -43,17 +43,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   kubernetesClusters,
   onSelectKubernetesCluster,
   onInstallAgent,
+  canInstallAgent,
   workspaceName,
   totalClusterCount,
   issueSummaryByClusterId = {},
   issueSummaryLoadStateByClusterId = {},
   metricLoadStateByClusterId = {},
+  onRetryTelemetry,
   hasActiveClusterFilter = false,
   isCatalogLoading = false,
   catalogLoadError = false,
   onRetryCatalog,
-  catalogPanelLabelledBy,
-  catalogTabs,
   controls,
   catalogFooter,
   onAddCluster,
@@ -68,23 +68,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [deleteClusterConfirmation, setDeleteClusterConfirmation] = useState('');
   const [openClusterActionMenuId, setOpenClusterActionMenuId] = useState<string | null>(null);
   const clusterCount = totalClusterCount ?? kubernetesClusters.length;
-
-  useEffect(() => {
-    if (!openClusterActionMenuId) return undefined;
-
-    const closeMenu = () => setOpenClusterActionMenuId(null);
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeMenu();
-    };
-
-    window.addEventListener('click', closeMenu);
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('click', closeMenu);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [openClusterActionMenuId]);
 
   const closeDeleteClusterDialog = () => {
     setDeleteClusterConfirmation('');
@@ -135,48 +118,36 @@ const Dashboard: React.FC<DashboardProps> = ({
           )}
         </>}
       />
-      {catalogTabs && (
-        <div className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4">
-          {catalogTabs}
-        </div>
-      )}
-
-      {kubernetesClusters.length > 0 || hasActiveClusterFilter || isCatalogLoading || catalogLoadError ? (
+      {clusterCount > 0 || kubernetesClusters.length > 0 || hasActiveClusterFilter || isCatalogLoading || catalogLoadError ? (
         <ClusterCatalog
           kubernetesClusters={kubernetesClusters}
-          totalClusterCount={clusterCount}
           hasActiveFilter={hasActiveClusterFilter}
           isLoading={isCatalogLoading}
           loadError={catalogLoadError}
           onRetry={onRetryCatalog}
-          ariaLabelledBy={catalogPanelLabelledBy}
           issueSummaryByClusterId={issueSummaryByClusterId}
           issueSummaryLoadStateByClusterId={issueSummaryLoadStateByClusterId}
           metricLoadStateByClusterId={metricLoadStateByClusterId}
+          onRetryTelemetry={onRetryTelemetry}
           controls={controls}
           footer={catalogFooter}
           openClusterActionMenuId={openClusterActionMenuId}
-          onToggleClusterActionMenu={(clusterId) => setOpenClusterActionMenuId((current) => current === clusterId ? null : clusterId)}
+          onOpenClusterActionMenuChange={setOpenClusterActionMenuId}
           onOpenDelete={openDeleteClusterDialog}
           onSelectKubernetesCluster={onSelectKubernetesCluster}
           onInstallAgent={onInstallAgent}
+          canInstallAgent={canInstallAgent}
           onOpenClusterSettings={onOpenClusterSettings}
           canDeleteKubernetesCluster={canDeleteKubernetesCluster}
           onDeleteKubernetesCluster={onDeleteKubernetesCluster}
         />
       ) : (
-        <section className={cardClassName({ className: 'flex flex-col items-center justify-center px-6 py-12 text-center' })}>
-          <div className="mb-4 rounded-lg border border-ui-border bg-ui-bg p-4 text-ui-text-muted">
-            <ICONS.Server className="w-8 h-8" />
-          </div>
-          <h3 className="text-lg font-bold text-ui-text">{t('dashboard.noClusters')}</h3>
-          <p className="mt-2 max-w-sm text-sm text-ui-text-muted">{t('dashboard.noClustersBody')}</p>
-          {onAddCluster && (
-            <Button onClick={onAddCluster} variant="primary" size="md" className="mt-6">
-              <ICONS.Plus className="w-4 h-4" /> {t('dashboard.addFirstCluster')}
-            </Button>
-          )}
-        </section>
+        <EmptyState
+          headingLevel={3}
+          icon={<ICONS.Layers />}
+          title={t('dashboard.noClusters')}
+          description={t('dashboard.noClustersBody')}
+        />
       )}
 
       <AnimatePresence>
@@ -244,7 +215,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 type="button"
                 onClick={closeDeleteClusterDialog}
                 disabled={isDeletingCluster}
-                className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title text-ui-text-muted transition-all hover:bg-ui-bg disabled:opacity-50"
+                className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title text-ui-text-muted transition-colors hover:bg-ui-bg disabled:opacity-50"
               >
                 {t('app.cancel')}
               </button>

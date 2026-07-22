@@ -16,12 +16,14 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "smoke:routes": "node scripts/smoke-routes.mjs",
+    "smoke:fixtures": "playwright test --config=playwright.fixtures.config.ts --retries=0 --repeat-each=3",
+    "smoke:mcp-parity": "playwright test --config=playwright.mcp-parity.config.ts --retries=0 --repeat-each=3",
     "smoke:nginx": "node scripts/smoke-nginx-headers.mjs",
     "membership:check": "node scripts/check-workspace-membership.mjs",
     "contracts:check": "node scripts/check-contracts.mjs",
     "harness:check": "node scripts/check-harness.mjs",
-    "validate": "npm run design:check && npm run lint && npm run test && npm run design:snapshots && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes",
-    "validate:ci": "npm run design:check && npm run lint && npm run test:coverage && npm run design:snapshots && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes"
+    "validate": "npm run design:check && npm run lint && npm run test && npm run design:snapshots && npm run smoke:fixtures && npm run smoke:mcp-parity && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes",
+    "validate:ci": "npm run design:check && npm run lint && npm run test:coverage && npm run design:snapshots && npm run smoke:fixtures && npm run smoke:mcp-parity && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run smoke:routes"
   },
   "dependencies": {
     "@fontsource/outfit": "^5.2.8",
@@ -30,6 +32,7 @@
     "framer-motion": "^12.34.3",
     "i18next": "^26.0.10",
     "lucide-react": "^0.575.0",
+    "msw": "^2.15.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-i18next": "^17.0.7",

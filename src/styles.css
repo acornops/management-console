@@ -70,8 +70,8 @@
   --control-activation-bg-rgb: 255 112 59;
   --control-activation-hover: var(--brand-orange-bright);
   --control-activation-hover-rgb: 255 139 92;
-  --control-activation-fg: var(--text);
-  --control-activation-fg-rgb: 48 45 41;
+  --control-activation-fg: var(--logo-cream);
+  --control-activation-fg-rgb: 241 234 218;
   --control-danger-bg: var(--status-danger);
   --control-danger-bg-rgb: 193 49 64;
   --control-danger-hover: var(--status-danger-text);
@@ -173,12 +173,12 @@
   --control-secondary-hover-rgb: 45 40 39;
   --control-secondary-fg: var(--text);
   --control-secondary-fg-rgb: 245 241 239;
-  --control-activation-bg: oklch(0.541572 0.158036 37.299);
-  --control-activation-bg-rgb: 184 68 31;
-  --control-activation-hover: oklch(0.463111 0.138173 37.042);
-  --control-activation-hover-rgb: 150 52 21;
-  --control-activation-fg: var(--text);
-  --control-activation-fg-rgb: 245 241 239;
+  --control-activation-bg: var(--brand-orange);
+  --control-activation-bg-rgb: 255 112 59;
+  --control-activation-hover: var(--brand-orange-bright);
+  --control-activation-hover-rgb: 255 139 92;
+  --control-activation-fg: var(--logo-cream);
+  --control-activation-fg-rgb: 241 234 218;
   --control-danger-bg: oklch(0.492682 0.160451 18.505);
   --control-danger-bg-rgb: 169 44 60;
   --control-danger-hover: oklch(0.425723 0.140503 17.414);
@@ -301,21 +301,59 @@ body {
 
 .thinking-acorn {
   display: inline-flex;
-  width: 1.4rem;
-  min-width: 1.4rem;
-  height: 1rem;
+  width: 0.875rem;
+  min-width: 0.875rem;
+  height: 0.875rem;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  color: rgb(var(--text-muted-rgb) / 0.9);
-  opacity: 0.5;
+  color: color-mix(in oklab, var(--brand-orange-strong), var(--text-muted) 68%);
   pointer-events: none;
 }
 
-.thinking-acorn > svg {
+.thinking-acorn__spinner {
+  display: inline-flex;
+  width: 0.875rem;
+  height: 0.875rem;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+}
+
+.thinking-acorn__spinner > svg {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 0.875rem;
+  height: 0.875rem;
+  overflow: visible;
+}
+
+.thinking-acorn__body,
+.thinking-acorn__cap {
+  fill: currentColor;
+}
+
+.thinking-acorn__cap {
+  opacity: 0.72;
+}
+
+.thinking-acorn__stem {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.65;
+}
+
+.thinking-acorn:not([data-reduced-motion='true']) .thinking-acorn__spinner {
+  animation: thinking-acorn-spin 1.35s linear infinite;
+}
+
+@keyframes thinking-acorn-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* The login illustration is an operational story, not an app preview. A squirrel
@@ -762,39 +800,31 @@ select {
   scrollbar-gutter: stable both-edges;
 }
 
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+.custom-scrollbar {
+  scrollbar-color: rgb(var(--text-muted-rgb) / 28%) transparent;
+  scrollbar-width: thin;
 }
 
-::-webkit-scrollbar-track {
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgb(var(--brand-orange-rgb) / 22%);
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(var(--text-muted-rgb) / 28%);
+  background-clip: padding-box;
+  border: 2px solid transparent;
   border-radius: 999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--brand-orange-rgb) / 40%);
-}
-
-.cluster-catalog-scrollbar {
-  scrollbar-color: rgb(var(--text-muted-rgb) / 28%) transparent;
-}
-
-.cluster-catalog-scrollbar::-webkit-scrollbar {
-  width: 1px;
-  height: 1px;
-}
-
-.cluster-catalog-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(var(--text-muted-rgb) / 22%);
-}
-
-.cluster-catalog-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--text-muted-rgb) / 38%);
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--text-muted-rgb) / 44%);
+  background-clip: padding-box;
+  border: 2px solid transparent;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -823,4 +853,9 @@ select {
   .management-console-desktop-sidebar {
     display: flex !important;
   }
+}
+/* Search fields use the shared, accessible clear control instead of browser-specific chrome. */
+.page-search-input::-webkit-search-cancel-button {
+  appearance: none;
+  -webkit-appearance: none;
 }

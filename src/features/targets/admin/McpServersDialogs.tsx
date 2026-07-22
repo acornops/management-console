@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
@@ -12,9 +12,10 @@ import { formInputClassName } from '@/components/common/formControlStyles';
 import type { TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { getToolLabel, ServerFormState } from '@/features/targets/admin/mcpServersCatalog';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
+import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';
+import { InlineConfirmation } from '@/components/common/InlineConfirmation';
 
 const mcpServerInputClassName = formInputClassName('px-4 font-medium');
-const mcpServerSecretInputClassName = formInputClassName('px-4 pr-11 font-medium');
 const mcpPublicHeaderInputClassName = formInputClassName('min-h-10 min-w-0 font-medium');
 
 export const McpServerFormDialog: React.FC<{
@@ -24,7 +25,6 @@ export const McpServerFormDialog: React.FC<{
   form: ServerFormState;
   mutationError: string | null;
   pending: boolean;
-  showSecretValue: boolean;
   isValid: boolean;
   publicHeadersValidationError: string | null;
   reviewServer?: TargetToolCatalogServer | null;
@@ -34,10 +34,16 @@ export const McpServerFormDialog: React.FC<{
   pendingToolName?: string | null;
   onClose: () => void;
   onFormChange: React.Dispatch<React.SetStateAction<ServerFormState>>;
-  onShowSecretValueChange: React.Dispatch<React.SetStateAction<boolean>>;
   onSubmit: () => void;
   onToggleReviewTool?: (tool: TargetToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onFinishReview?: () => void;
+  credentialModeConfirmation?: {
+    serverName: string;
+    credentialMode: 'workspace' | 'individual';
+    affectedScheduleCount: number;
+    onConfirm: () => void;
+    onCancel: () => void;
+  } | null;
 }> = ({
   mode,
   createStep = 'configure',
@@ -45,7 +51,6 @@ export const McpServerFormDialog: React.FC<{
   form,
   mutationError,
   pending,
-  showSecretValue,
   isValid,
   publicHeadersValidationError,
   reviewServer,
@@ -55,10 +60,10 @@ export const McpServerFormDialog: React.FC<{
   pendingToolName = null,
   onClose,
   onFormChange,
-  onShowSecretValueChange,
   onSubmit,
   onToggleReviewTool,
-  onFinishReview
+  onFinishReview,
+  credentialModeConfirmation
 }) => {
   const { t } = useTranslation();
   const isReviewStep = mode === 'create' && createStep === 'review';
@@ -223,6 +228,8 @@ export const McpServerFormDialog: React.FC<{
           <label className="space-y-1">
             <span className="type-label px-1">{t('mcpServers.serverUrl')}</span>
             <input
+              type="url"
+              pattern="https://.*"
               value={form.url}
               onChange={(event) => onFormChange((current) => ({ ...current, url: event.target.value }))}
               placeholder={t('mcpServers.serverUrlPlaceholder')}
@@ -241,7 +248,10 @@ export const McpServerFormDialog: React.FC<{
               onChange={(authType) =>
                 onFormChange((current) => ({
                   ...current,
-                  authType
+                  authType,
+                  credentialMode: authType === 'none'
+                    ? 'none'
+                    : current.credentialMode === 'none' ? 'individual' : current.credentialMode
                 }))
               }
               ariaLabel={t('mcpServers.authType')}
@@ -261,45 +271,23 @@ export const McpServerFormDialog: React.FC<{
 
         {form.authType !== 'none' && (
           <div className="space-y-3">
-            <div className={`grid grid-cols-1 gap-4 ${form.authType === 'custom_header' ? 'md:grid-cols-2' : ''}`}>
-              {form.authType === 'custom_header' && (
-                <label className="space-y-1">
-                  <span className="type-label px-1">{t('mcpServers.headerName')}</span>
-                  <input
-                    value={form.headerName}
-                    onChange={(event) => onFormChange((current) => ({ ...current, headerName: event.target.value }))}
-                    placeholder={t('mcpServers.headerNamePlaceholder')}
-                    className={mcpServerInputClassName}
-                  />
-                </label>
-              )}
+            <McpCredentialOwnershipSelector
+              name="mcp-credential-ownership"
+              value={form.credentialMode === 'workspace' ? 'workspace' : 'individual'}
+              onChange={(credentialMode) => onFormChange((current) => ({ ...current, credentialMode }))}
+            />
+            {form.authType === 'custom_header' && (
               <label className="space-y-1">
-                <span className="type-label px-1">
-                  {form.authType === 'bearer_token' ? t('mcpServers.authBearer') : t('mcpServers.headerValue')}
-                </span>
-                <span className="relative block">
-                  <input
-                    value={form.secretValue}
-                    onChange={(event) => onFormChange((current) => ({ ...current, secretValue: event.target.value }))}
-                    type={showSecretValue ? 'text' : 'password'}
-                    autoComplete="off"
-                    className={mcpServerSecretInputClassName}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onShowSecretValueChange((current) => !current)}
-                    className="control-target absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
-                    aria-label={showSecretValue ? t('mcpServers.hideSecret') : t('mcpServers.showSecret')}
-                    aria-pressed={showSecretValue}
-                  >
-                    {showSecretValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </span>
+                <span className="type-label px-1">{t('mcpServers.headerName')}</span>
+                <input
+                  value={form.headerName}
+                  onChange={(event) => onFormChange((current) => ({ ...current, headerName: event.target.value }))}
+                  placeholder={t('mcpServers.headerNamePlaceholder')}
+                  className={mcpServerInputClassName}
+                />
               </label>
-            </div>
-            <p className="type-caption px-1">
-              {t(mode === 'edit' ? 'mcpServers.credentialsEditHelp' : 'mcpServers.credentialsHelp')}
-            </p>
+            )}
+            <p className="type-caption rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">{t('mcpServers.credentialSetupHelp')}</p>
           </div>
         )}
 
@@ -369,6 +357,23 @@ export const McpServerFormDialog: React.FC<{
             {mutationError}
           </div>
         )}
+        {credentialModeConfirmation && (
+          <InlineConfirmation
+            id="target-mcp-credential-mode-confirmation"
+            title={t('mcpServers.credentialModeChangeTitle', { name: credentialModeConfirmation.serverName })}
+            description={credentialModeConfirmation.credentialMode === 'individual'
+              ? credentialModeConfirmation.affectedScheduleCount > 0
+                ? t('mcpServers.confirmWorkspaceToIndividualTargetWithSchedules', { count: credentialModeConfirmation.affectedScheduleCount })
+                : t('mcpServers.confirmWorkspaceToIndividualTarget')
+              : t('mcpServers.confirmIndividualToWorkspace')}
+            tone="warning"
+            confirmLabel={t('mcpServers.credentialModeChangeConfirm')}
+            confirmDisabled={pending}
+            cancelLabel={t('common.cancel')}
+            onConfirm={credentialModeConfirmation.onConfirm}
+            onCancel={credentialModeConfirmation.onCancel}
+          />
+        )}
         </div>
 
         <aside className="rounded-lg border border-ui-border bg-ui-surface p-5">
@@ -410,7 +415,7 @@ export const McpServerFormDialog: React.FC<{
             </Button>
             <Button
               onClick={onSubmit}
-              disabled={pending || !isValid}
+              disabled={pending || !isValid || Boolean(credentialModeConfirmation)}
               variant="primary"
               size="sm"
             >
@@ -484,7 +489,7 @@ export const DeleteMcpServerDialog: React.FC<{
           type="button"
           onClick={onClose}
           disabled={pending}
-          className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-all hover:bg-ui-bg disabled:opacity-50"
+          className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:bg-ui-bg disabled:opacity-50"
         >
           {t('app.cancel')}
         </button>
