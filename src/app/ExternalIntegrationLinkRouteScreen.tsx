@@ -5,16 +5,12 @@ import { Checkbox } from '@/components/common/Checkbox';
 import { MiniProgressBar } from '@/components/common/Loading';
 import {
   buildExternalIntegrationWorkspaceGrants,
-  normalizeExternalIntegrationCapabilities
-} from '@/features/external-integrations/externalIntegrationGrants';
-import { controlPlaneApi } from '@/services/controlPlaneApi';
-import {
   createExternalIntegrationGrantDraft,
-  externalIntegrationWorkspaceGrants,
   formatExternalIntegrationCapability,
   setExternalIntegrationWorkspaceEnabled,
   toggleExternalIntegrationCapability
-} from '@/services/control-plane/externalIntegrationCapabilities';
+} from '@/features/external-integrations/externalIntegrationGrants';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
   ControlPlaneExternalIntegrationGrantableWorkspace,
   ControlPlaneExternalIntegrationLinkPreview,
@@ -40,18 +36,6 @@ export function externalIntegrationLinkApprovalTitle(preview?: Pick<ControlPlane
 }
 
 export const externalIntegrationLinkApprovalMessage = 'Approve this request to connect your signed-in AcornOps account to the external account shown below.';
-
-const capabilityLabels: Record<ControlPlaneWorkspaceCapability, string> = {
-  read_workspace_data: 'Read workspace data',
-  create_sessions: 'Create sessions',
-  create_read_only_runs: 'Create read-only runs'
-};
-function initialGrantDraft(workspaces: ControlPlaneExternalIntegrationGrantableWorkspace[]): Record<string, ControlPlaneWorkspaceCapability[]> {
-  return Object.fromEntries(workspaces.map((workspace) => [
-    workspace.workspaceId,
-    normalizeExternalIntegrationCapabilities(workspace.grantedCapabilities, workspace.grantableCapabilities)
-  ]));
-}
 
 export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLinkRouteScreenProps> = ({ logoSrc, onLinkStatus, route }) => {
   const [preview, setPreview] = useState<ControlPlaneExternalIntegrationLinkPreview | null>(null);
@@ -107,19 +91,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
     capability: ControlPlaneWorkspaceCapability,
     enabled: boolean
   ) => {
-    setGrantDraft((current) => {
-      const currentCapabilities = new Set(current[workspace.workspaceId] || []);
-      if (enabled) currentCapabilities.add(capability);
-      else currentCapabilities.delete(capability);
-      const allowed = new Set(workspace.grantableCapabilities);
-      return {
-        ...current,
-        [workspace.workspaceId]: normalizeExternalIntegrationCapabilities(
-          [...currentCapabilities],
-          [...allowed]
-        )
-      };
-    });
+    setGrantDraft((current) => toggleExternalIntegrationCapability(current, workspace, capability, enabled));
   };
 
   const handleCancel = () => {

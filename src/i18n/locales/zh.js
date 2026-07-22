@@ -962,6 +962,7 @@ export const zh = {
     externalIntegrationsReadWorkspace: '读取工作区数据',
     externalIntegrationsCreateSessions: '创建会话',
     externalIntegrationsCreateReadOnlyRuns: '创建只读运行',
+    externalIntegrationsCreateReadWriteRuns: '启动读写运行和工作流；批准此集成发起的写入操作',
     externalIntegrationsSave: '保存授权',
     externalIntegrationsSaving: '正在保存...',
     externalIntegrationsSaved: '已更新 {{name}} 的权限。',

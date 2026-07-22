@@ -286,7 +286,16 @@ export function parseAppRoute(path: string): AppRoute {
         ? { kind: 'workspaceSchedules', workspaceId, createWorkflowId }
         : { kind: 'workspaceSchedules', workspaceId };
     }
-    if (section === 'approvals') return { kind: 'workspaceApprovals', workspaceId };
+    if (section === 'approvals') {
+      const runId = params.get('runId') || undefined;
+      const approvalId = params.get('approvalId') || undefined;
+      return {
+        kind: 'workspaceApprovals',
+        workspaceId,
+        ...(runId ? { runId } : {}),
+        ...(approvalId ? { approvalId } : {})
+      };
+    }
     if (section === 'ai-settings') {
       const returnTo = validateAssistantReturnTo(params.get('returnTo'), workspaceId);
       return { kind: 'workspaceAiSettings', workspaceId, ...(returnTo ? { returnTo } : {}) };

@@ -13,6 +13,7 @@ import {
 } from '@/services/controlPlaneApi';
 import {
   buildExternalIntegrationWorkspaceGrants,
+  formatExternalIntegrationCapability,
   normalizeExternalIntegrationCapabilities
 } from './externalIntegrationGrants';
 
@@ -60,10 +61,11 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
   onConfirmUnlink
 }) => {
   const { t } = useTranslation();
-  const capabilityLabels: Record<ControlPlaneWorkspaceCapability, string> = {
+  const capabilityLabels: Partial<Record<ControlPlaneWorkspaceCapability, string>> = {
     read_workspace_data: t('settings.externalIntegrationsReadWorkspace'),
     create_sessions: t('settings.externalIntegrationsCreateSessions'),
-    create_read_only_runs: t('settings.externalIntegrationsCreateReadOnlyRuns')
+    create_read_only_runs: t('settings.externalIntegrationsCreateReadOnlyRuns'),
+    create_read_write_runs: t('settings.externalIntegrationsCreateReadWriteRuns')
   };
 
   return (
@@ -124,7 +126,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
                         checked={selectedCapabilities.includes(capability)}
                         onChange={(event) => onToggleCapability(workspace, capability, event.target.checked)}
                       />
-                      {capabilityLabels[capability]}
+                      {capabilityLabels[capability] || formatExternalIntegrationCapability(capability)}
                     </label>
                   ))}
                 </div>

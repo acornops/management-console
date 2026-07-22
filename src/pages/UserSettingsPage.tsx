@@ -10,13 +10,6 @@ import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { ExternalIntegrationSettingsPanel } from '@/features/external-integrations/ExternalIntegrationSettingsPanel';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
-import {
-  createExternalIntegrationGrantDraft,
-  externalIntegrationWorkspaceGrants,
-  formatExternalIntegrationCapability,
-  setExternalIntegrationWorkspaceEnabled as updateExternalIntegrationWorkspaceEnabled,
-  toggleExternalIntegrationCapability as updateExternalIntegrationCapability
-} from '@/services/control-plane/externalIntegrationCapabilities';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlaneApi';
 import { User } from '@/types';

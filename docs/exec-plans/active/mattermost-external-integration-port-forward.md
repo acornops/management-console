@@ -79,6 +79,18 @@ Central tracking: acornops/acornops#12.
   boundary now validates attempt and retry metadata and all five delivery
   states. History rows show attempt number, scheduled retry, HTTP result, and
   localized terminal reasons, including deliberate stale-issue suppression.
+- 2026-07-22, Wave 4: Kept the current refactored external-integration settings
+  panel as the capability editor. Read-write workflow grants now use the shared
+  dependency-safe normalizer, localized account-settings copy, and a readable
+  fallback for server-provided capabilities instead of restoring the older
+  monolithic account implementation or maintaining a duplicate helper.
+- 2026-07-22, Wave 4: Added exact run and approval deep links to the current
+  approval inbox while retaining its `CollectionState`, aggregate pending
+  count, permission checks, and recent-decision model. Focused links request
+  `status=all`, hide unrelated status controls, highlight the selected row, and
+  provide explicit not-found feedback.
+- 2026-07-22, Wave 4: Synchronized the vendored public-operation inventory with
+  the generated workflow-execution SSE contract.
 
 ## Validation Log
 
@@ -107,6 +119,12 @@ Central tracking: acornops/acornops#12.
   parity suite passed all 21 repeated cases. Webhook browser coverage now
   verifies successful and superseded durable history, the stale-issue
   explanation, deletion confirmation, create flow, and one-time secret.
+- Wave 4 console: design-system, TypeScript, all 609 unit tests, membership,
+  synchronized contracts, harness, production build, and route smoke passed.
+  The real-Chrome design suite passed 19 tests with its one intentional skip.
+  The repeated fixture suite passed all 129 cases with one worker and the MCP
+  parity suite passed all 21 repeated cases. Focused grant, approval API, and
+  route tests passed all 43 cases.
 - Each wave: run focused component/service tests, contract checks, design-system
   checks, control-plane-mode validation, production build, and route smoke.
 - Final: verify linking, grants, webhook lifecycle, executions, SSE status, and

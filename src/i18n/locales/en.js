@@ -962,6 +962,7 @@ export const en = {
     externalIntegrationsReadWorkspace: 'Read workspace data',
     externalIntegrationsCreateSessions: 'Create sessions',
     externalIntegrationsCreateReadOnlyRuns: 'Create read-only runs',
+    externalIntegrationsCreateReadWriteRuns: 'Launch read-write runs and workflows; approve integration-owned writes',
     externalIntegrationsSave: 'Save grants',
     externalIntegrationsSaving: 'Saving...',
     externalIntegrationsSaved: 'Permissions successfully changed for {{name}}.',
