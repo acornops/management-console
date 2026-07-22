@@ -22,6 +22,8 @@ import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
   onApprovalDecision?: () => Promise<void> | void;
+  runId?: string;
+  approvalId?: string;
 }
 
 type ApprovalFilter = 'pending' | 'decided';
@@ -57,7 +59,12 @@ function sourceLabel(source: WorkspaceApprovalInboxRow['source']): string {
   return labels[source];
 }
 
-export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ workspace, onApprovalDecision }) => {
+export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
+  workspace,
+  onApprovalDecision,
+  runId,
+  approvalId
+}) => {
   const { t } = useTranslation();
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
   const [approvalsByFilter, setApprovalsByFilter] = useState<Record<ApprovalFilter, WorkspaceApprovalInboxRow[]>>({
@@ -74,11 +81,27 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
   ], [t]);
 
   const canDecideApprovals = hasWorkspacePermission(workspace, 'create_read_write_runs');
+  const focusedApproval = Boolean(runId || approvalId);
 
   const loadApprovals = async () => {
     setApprovalPhase(pendingApprovalCount === undefined ? 'loading' : 'refreshing');
     setApprovalError('');
     try {
+      if (focusedApproval) {
+        const response = await listWorkspaceApprovalInbox(workspace.id, {
+          status: 'all',
+          limit: 50,
+          runId,
+          approvalId
+        });
+        setApprovalsByFilter({
+          pending: response.items.filter((approval) => approval.status === 'pending'),
+          decided: response.items.filter((approval) => approval.status !== 'pending')
+        });
+        setPendingApprovalCount(undefined);
+        setApprovalPhase('ready');
+        return;
+      }
       const [pendingResponse, decidedResponse] = await Promise.all([
         listWorkspaceApprovalInbox(workspace.id, { status: 'pending', limit: 50 }),
         listWorkspaceApprovalInbox(workspace.id, { status: 'decided', limit: 50 })
@@ -97,9 +120,11 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
 
   useEffect(() => {
     void loadApprovals();
-  }, [workspace.id]);
+  }, [workspace.id, runId, approvalId]);
 
-  const approvals = approvalsByFilter[approvalFilter];
+  const approvals = focusedApproval
+    ? [...approvalsByFilter.pending, ...approvalsByFilter.decided]
+    : approvalsByFilter[approvalFilter];
   const hasAnyApprovals = (pendingApprovalCount ?? approvalsByFilter.pending.length) > 0
     || approvalsByFilter.decided.length > 0;
   const approvalsBusy = approvalPhase === 'loading' || approvalPhase === 'refreshing';
@@ -153,6 +178,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
         </div>
       )}
       {approvalError && approvalPhase !== 'error' && <InlineAlert tone="danger" className="mb-5">{approvalError}</InlineAlert>}
+      {focusedApproval && <InlineAlert tone="neutral" className="mb-5">{t('approvals.focusedNotice')}</InlineAlert>}
 
       <CollectionState
         phase={approvalPhase}
@@ -160,8 +186,8 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
         loading={<InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />}
         empty={<EmptyState
           icon={<ICONS.CheckCircle2 />}
-          title={t('approvals.emptyTitle')}
-          description={t('approvals.emptyBody')}
+          title={t(focusedApproval ? 'approvals.focusedEmptyTitle' : 'approvals.emptyTitle')}
+          description={t(focusedApproval ? 'approvals.focusedEmptyBody' : 'approvals.emptyBody')}
         />}
         error={<EmptyState
           role="alert"
@@ -200,12 +226,14 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
               <p className="type-caption mt-1 text-ui-text-muted">{t('approvals.queueBody')}</p>
             </div>
           </div>
-          <FilterToggleGroup<ApprovalFilter>
-            activeValue={approvalFilter}
-            ariaLabel={t('approvals.filters.label')}
-            items={approvalFilterItems}
-            onValueChange={setApprovalFilter}
-          />
+          {!focusedApproval && (
+            <FilterToggleGroup<ApprovalFilter>
+              activeValue={approvalFilter}
+              ariaLabel={t('approvals.filters.label')}
+              items={approvalFilterItems}
+              onValueChange={setApprovalFilter}
+            />
+          )}
         </div>
 
         {approvals.length === 0 ? (
@@ -213,8 +241,12 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
             embedded
             headingLevel={3}
             icon={<ICONS.CheckCircle2 />}
-            title={t(approvalFilter === 'pending' ? 'approvals.emptyTitle' : 'approvals.emptyRecentTitle')}
-            description={t(approvalFilter === 'pending' ? 'approvals.emptyBody' : 'approvals.emptyRecentBody')}
+            title={t(focusedApproval
+              ? 'approvals.focusedEmptyTitle'
+              : approvalFilter === 'pending' ? 'approvals.emptyTitle' : 'approvals.emptyRecentTitle')}
+            description={t(focusedApproval
+              ? 'approvals.focusedEmptyBody'
+              : approvalFilter === 'pending' ? 'approvals.emptyBody' : 'approvals.emptyRecentBody')}
           />
         ) : (
           <div className="overflow-x-auto">
@@ -235,8 +267,12 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({ 
                 {approvals.map((approval) => {
                   const decision = decisionState[approval.approvalId];
                   const pending = approval.status === 'pending';
+                  const isFocusedApproval = Boolean(
+                    (approvalId && approval.approvalId === approvalId) ||
+                    (!approvalId && runId && approval.runId === runId)
+                  );
                   return (
-                    <tr key={approval.approvalId} className="bg-ui-surface text-sm">
+                    <tr key={approval.approvalId} className={`text-sm ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
                       <th scope="row" className="px-4 py-4 font-semibold text-ui-text">{approval.summary}</th>
                       <td className="px-4 py-4 font-medium text-ui-text">{approval.workflowId || sourceLabel(approval.source)} · {approval.runId}</td>
                       <td className="px-4 py-4 text-ui-text-muted">{approval.requestedBy || 'System'}</td>

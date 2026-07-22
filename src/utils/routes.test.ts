@@ -319,6 +319,15 @@ describe('routes', () => {
       kind: 'workspaceApprovals',
       workspaceId: 'team-alpha'
     });
+    expect(AppPaths.workspaceApprovals('team-alpha', { runId: 'run/a', approvalId: 'approval/b' })).toBe(
+      '/workspaces/team-alpha/approvals?runId=run%2Fa&approvalId=approval%2Fb'
+    );
+    expect(parseAppRoute(AppPaths.workspaceApprovals('team-alpha', { runId: 'run/a', approvalId: 'approval/b' }))).toEqual({
+      kind: 'workspaceApprovals',
+      workspaceId: 'team-alpha',
+      runId: 'run/a',
+      approvalId: 'approval/b'
+    });
     expect(AppPaths.workspaceAgents('team-alpha')).toBe('/workspaces/team-alpha/agents');
     expect(parseAppRoute(AppPaths.workspaceAgents('team-alpha'))).toEqual({
       kind: 'workspaceAgents',

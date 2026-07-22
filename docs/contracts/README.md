@@ -124,6 +124,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - Password signup does not imply workspace membership.
 - Webhook, MCP, Target Insights, workspace audit, AI settings, and target mutation screens should treat denied mutations as normal permission outcomes.
 - Run streams and run-event frames are control-plane contracts; UI code should map them in one place before rendering.
+- Approval deep links may include exact `runId` and `approvalId` filters; the console keeps approval decisions on the run-scoped control-plane endpoint.
 
 ## Change Checklist
 

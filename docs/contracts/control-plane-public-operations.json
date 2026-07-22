@@ -43,6 +43,7 @@
   "GET /api/v1/sessions/{sessionId}",
   "GET /api/v1/sessions/{sessionId}/messages",
   "GET /api/v1/workflow-executions/{executionId}",
+  "GET /api/v1/workflow-executions/{executionId}/stream",
   "GET /api/v1/workflows/{workflowId}",
   "GET /api/v1/workflows/{workflowId}/sessions",
   "GET /api/v1/workspace-invitations/{token}",

@@ -493,7 +493,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           )}
 
           {route.kind === 'workspaceApprovals' && workspaceContext && (
-            <WorkspaceApprovalsPage workspace={workspaceContext} onApprovalDecision={onRefreshApprovalSummary} />
+            <WorkspaceApprovalsPage workspace={workspaceContext} runId={route.runId} approvalId={route.approvalId} onApprovalDecision={onRefreshApprovalSummary} />
           )}
 
           {(route.kind === 'kubernetesClusters' || route.kind === 'workspaceKubernetesClusters') && (

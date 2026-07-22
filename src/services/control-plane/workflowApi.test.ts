@@ -587,13 +587,18 @@ describe('workflow control-plane api', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(listWorkspaceApprovalInbox('workspace-1', { status: 'pending', limit: 25 })).resolves.toMatchObject({
+    await expect(listWorkspaceApprovalInbox('workspace-1', {
+      status: 'pending',
+      limit: 25,
+      runId: 'run-1',
+      approvalId: 'approval-1'
+    })).resolves.toMatchObject({
       pendingCount: 17,
       items: [{ approvalId: 'approval-1', source: 'workflow_gate', runId: 'run-1' }]
     });
     await expect(decideWorkflowRunApproval('run-1', 'approval-1', 'approved')).resolves.toMatchObject({ status: 'approved' });
 
-    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/approvals?status=pending&limit=25');
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/approvals?status=pending&limit=25&runId=run-1&approvalId=approval-1');
   });
 
   it('hides unavailable pending counts from older or invalid producers', async () => {
