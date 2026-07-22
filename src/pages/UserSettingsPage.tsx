@@ -8,6 +8,7 @@ import { PageBackLink, PageHeader, PageShell } from '@/components/common/PageCom
 import { Select } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
+import { ExternalIntegrationSettingsPanel } from '@/features/external-integrations/ExternalIntegrationSettingsPanel';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlaneApi';
@@ -308,6 +309,10 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
                 : t('settings.twoFactorUnavailable')
             }
           />
+        </SettingSection>
+
+        <SettingSection title={t('settings.externalIntegrationsTitle')} description={t('settings.externalIntegrationsBody')}>
+          <ExternalIntegrationSettingsPanel />
         </SettingSection>
 
         <SettingSection title={t('settings.preferencesTitle')} description={t('settings.preferencesBody')}>

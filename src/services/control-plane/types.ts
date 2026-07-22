@@ -26,6 +26,13 @@ export type {
   TargetInsightsEntryInput,
   UpdateTargetToolInput
 } from './targetToolTypes';
+export type {
+  ControlPlaneExternalIntegrationGrantableWorkspace,
+  ControlPlaneExternalIntegrationLinkPreview,
+  ControlPlaneExternalIntegrationLinkSummary,
+  ControlPlaneExternalIntegrationWorkspaceGrant,
+  ControlPlaneWorkspaceCapability
+} from './externalIntegrationTypes';
 
 export interface PagedResult<T> { items: T[]; nextCursor?: string; }
 
@@ -74,16 +81,6 @@ export interface ControlPlaneAuthMethods {
     canLinkOidc: boolean;
     canAddPassword: boolean;
   };
-}
-
-export interface ControlPlaneExternalIntegrationLinkPreview {
-  integrationClientId: string;
-  provider: string;
-  clientDisplayName: string;
-  externalUserId: string;
-  externalDisplayName?: string;
-  expiresAt: string;
-  signedInUser: ControlPlaneUser;
 }
 
 export type TargetType = 'kubernetes' | 'virtual_machine';

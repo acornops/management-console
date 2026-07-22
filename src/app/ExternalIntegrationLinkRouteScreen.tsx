@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Link2 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+import { Checkbox } from '@/components/common/Checkbox';
 import { MiniProgressBar } from '@/components/common/Loading';
+import {
+  buildExternalIntegrationWorkspaceGrants,
+  normalizeExternalIntegrationCapabilities
+} from '@/features/external-integrations/externalIntegrationGrants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type { ControlPlaneExternalIntegrationLinkPreview } from '@/services/control-plane/types';
+import type {
+  ControlPlaneExternalIntegrationGrantableWorkspace,
+  ControlPlaneExternalIntegrationLinkPreview,
+  ControlPlaneWorkspaceCapability
+} from '@/services/control-plane/types';
 import { AppRoute } from '@/utils/routes';
 
 interface ExternalIntegrationLinkRouteScreenProps {
@@ -25,11 +34,24 @@ export function externalIntegrationLinkApprovalTitle(preview?: Pick<ControlPlane
 
 export const externalIntegrationLinkApprovalMessage = 'Approve this request to connect your signed-in AcornOps account to the external account shown below.';
 
+const capabilityLabels: Record<ControlPlaneWorkspaceCapability, string> = {
+  read_workspace_data: 'Read workspace data',
+  create_sessions: 'Create sessions',
+  create_read_only_runs: 'Create read-only runs'
+};
+function initialGrantDraft(workspaces: ControlPlaneExternalIntegrationGrantableWorkspace[]): Record<string, ControlPlaneWorkspaceCapability[]> {
+  return Object.fromEntries(workspaces.map((workspace) => [
+    workspace.workspaceId,
+    normalizeExternalIntegrationCapabilities(workspace.grantedCapabilities, workspace.grantableCapabilities)
+  ]));
+}
+
 export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLinkRouteScreenProps> = ({ logoSrc, onLinkStatus, route }) => {
   const [preview, setPreview] = useState<ControlPlaneExternalIntegrationLinkPreview | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(Boolean(route.token));
   const [isApproving, setIsApproving] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [grantDraft, setGrantDraft] = useState<Record<string, ControlPlaneWorkspaceCapability[]>>({});
 
   useEffect(() => {
     if (!route.token) return;
@@ -39,7 +61,10 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
     setApprovalError(null);
     void controlPlaneApi.previewExternalIntegrationLink(route.token)
       .then((result) => {
-        if (!cancelled) setPreview(result);
+        if (!cancelled) {
+          setPreview(result);
+          setGrantDraft(initialGrantDraft(result.grantableWorkspaces || []));
+        }
       })
       .catch(() => {
         if (!cancelled) onLinkStatus('expired');
@@ -56,13 +81,41 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
     if (!route.token || isApproving || !preview) return;
     setIsApproving(true);
     setApprovalError(null);
-    void controlPlaneApi.completeExternalIntegrationLink(route.token)
+    const workspaceGrants = buildExternalIntegrationWorkspaceGrants(grantDraft);
+    void controlPlaneApi.completeExternalIntegrationLink(route.token, workspaceGrants)
       .then(() => onLinkStatus('linked'))
       .catch(() => {
         setApprovalError('Unable to complete the external integration account link. The request may have expired.');
         onLinkStatus('expired');
       })
       .finally(() => setIsApproving(false));
+  };
+
+  const setWorkspaceEnabled = (workspace: ControlPlaneExternalIntegrationGrantableWorkspace, enabled: boolean) => {
+    setGrantDraft((current) => ({
+      ...current,
+      [workspace.workspaceId]: enabled && workspace.grantableCapabilities.includes('read_workspace_data') ? ['read_workspace_data'] : []
+    }));
+  };
+
+  const toggleCapability = (
+    workspace: ControlPlaneExternalIntegrationGrantableWorkspace,
+    capability: ControlPlaneWorkspaceCapability,
+    enabled: boolean
+  ) => {
+    setGrantDraft((current) => {
+      const currentCapabilities = new Set(current[workspace.workspaceId] || []);
+      if (enabled) currentCapabilities.add(capability);
+      else currentCapabilities.delete(capability);
+      const allowed = new Set(workspace.grantableCapabilities);
+      return {
+        ...current,
+        [workspace.workspaceId]: normalizeExternalIntegrationCapabilities(
+          [...currentCapabilities],
+          [...allowed]
+        )
+      };
+    });
   };
 
   const handleCancel = () => {
@@ -99,24 +152,66 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
           </div>
         )}
         {preview && (
-          <dl className="grid w-full gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm">
-            <div>
-              <dt className="text-xs font-medium uppercase text-ui-text-muted">Integration</dt>
-              <dd className="mt-1 font-medium text-ui-text">{preview.clientDisplayName}</dd>
+          <>
+            <dl className="grid w-full gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm">
+              <div>
+                <dt className="text-xs font-medium uppercase text-ui-text-muted">Integration</dt>
+                <dd className="mt-1 font-medium text-ui-text">{preview.clientDisplayName}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase text-ui-text-muted">Provider</dt>
+                <dd className="mt-1 font-medium text-ui-text">{preview.provider}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase text-ui-text-muted">External account</dt>
+                <dd className="mt-1 font-medium text-ui-text">{preview.externalDisplayName || preview.externalUserId}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase text-ui-text-muted">Signed in as</dt>
+                <dd className="mt-1 font-medium text-ui-text">{preview.signedInUser.email}</dd>
+              </div>
+            </dl>
+            <div className="w-full rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left">
+              <h2 className="text-sm font-semibold text-ui-text">Workspace access</h2>
+              <div className="mt-3 grid gap-3">
+                {(preview.grantableWorkspaces || []).map((workspace) => {
+                  const selectedCapabilities = grantDraft[workspace.workspaceId] || [];
+                  const workspaceEnabled = selectedCapabilities.length > 0;
+                  return (
+                    <div key={workspace.workspaceId} className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
+                      <label className="flex items-start gap-3">
+                        <Checkbox
+                          checked={workspaceEnabled}
+                          onChange={(event) => setWorkspaceEnabled(workspace, event.target.checked)}
+                          className="mt-1"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-ui-text">{workspace.workspaceName}</span>
+                          <span className="block text-xs text-ui-text-muted">{workspace.role}</span>
+                        </span>
+                      </label>
+                      {workspaceEnabled && (
+                        <div className="mt-3 grid gap-2 pl-6">
+                          {workspace.grantableCapabilities.map((capability) => (
+                            <label key={capability} className="flex items-center gap-2 text-xs font-medium text-ui-text-muted">
+                              <Checkbox
+                                checked={selectedCapabilities.includes(capability)}
+                                onChange={(event) => toggleCapability(workspace, capability, event.target.checked)}
+                              />
+                              {capabilityLabels[capability]}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {!preview.grantableWorkspaces?.length && (
+                  <p className="text-sm text-ui-text-muted">No workspaces are available for this external integration.</p>
+                )}
+              </div>
             </div>
-            <div>
-              <dt className="text-xs font-medium uppercase text-ui-text-muted">Provider</dt>
-              <dd className="mt-1 font-medium text-ui-text">{preview.provider}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium uppercase text-ui-text-muted">External account</dt>
-              <dd className="mt-1 font-medium text-ui-text">{preview.externalDisplayName || preview.externalUserId}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium uppercase text-ui-text-muted">Signed in as</dt>
-              <dd className="mt-1 font-medium text-ui-text">{preview.signedInUser.email}</dd>
-            </div>
-          </dl>
+          </>
         )}
         <Button onClick={handleApprove} disabled={isApproving || isLoadingPreview || !preview} variant="primary" size="lg" className="w-full">
           {isApproving ? 'Approving' : 'Approve'}
