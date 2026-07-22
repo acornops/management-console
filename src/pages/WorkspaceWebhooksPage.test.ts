@@ -57,11 +57,22 @@ describe('WorkspaceWebhooksPage contract surface', () => {
   });
 
   it('loads delivery history through the manage_webhooks-gated endpoint', () => {
-    expect(page).toContain('controlPlaneApi.listWebhookHistory(workspace.id, webhook.id, { limit: 25 })');
+    expect(page).toContain('controlPlaneApi.listWebhookHistory(requestedWorkspaceId, webhook.id, { limit: 25 })');
     expect(list).toContain("t('workspaceWebhooks.historyEmpty')");
     expect(list).toContain('deliveryStatusTone(entry)');
     expect(list).toContain('entry.attemptNumber');
     expect(list).toContain('entry.nextAttemptAt');
     expect(list).toContain('entry.terminalReason');
+  });
+
+  it('fences asynchronous list, history, and mutation results to the active workspace', () => {
+    expect(page).toContain('currentWorkspaceId.current = workspace.id');
+    expect(page).toContain('webhookRequestSequence.current === requestSequence');
+    expect(page).toContain('historyRequestSequence.current === requestSequence');
+    expect(page).toContain('saveRequestSequence.current === requestSequence');
+    expect(page).toContain('deleteRequestSequence.current === requestSequence');
+    expect(page).toContain('setWebhooks([])');
+    expect(page).toContain('const workspaceStateCurrent = stateWorkspaceId === workspace.id');
+    expect(page).toContain('const visibleWebhooks = workspaceStateCurrent ? webhooks : []');
   });
 });

@@ -44,22 +44,43 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [mutationError, setMutationError] = React.useState<string | null>(null);
   const [historyError, setHistoryError] = React.useState<string | null>(null);
+  const [stateWorkspaceId, setStateWorkspaceId] = React.useState(workspace.id);
+  const currentWorkspaceId = React.useRef(workspace.id);
+  const webhookRequestSequence = React.useRef(0);
+  const historyRequestSequence = React.useRef(0);
+  const saveRequestSequence = React.useRef(0);
+  const deleteRequestSequence = React.useRef(0);
+  currentWorkspaceId.current = workspace.id;
 
   const loadWebhooks = React.useCallback(async (initial = false) => {
+    const requestedWorkspaceId = workspace.id;
+    const requestSequence = ++webhookRequestSequence.current;
+    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
+      && webhookRequestSequence.current === requestSequence;
     if (initial) setIsInitialLoading(true);
     else setIsRefreshing(true);
     setLoadError(null);
     try {
-      setWebhooks(await controlPlaneApi.listWebhooks(workspace.id));
+      const items = await controlPlaneApi.listWebhooks(requestedWorkspaceId);
+      if (!isCurrentRequest()) return;
+      setWebhooks(items);
     } catch (loadFailure) {
+      if (!isCurrentRequest()) return;
       setLoadError(formatControlPlaneError(loadFailure, t('workspaceWebhooks.loadFailed'), { area: 'webhooks' }));
     } finally {
+      if (!isCurrentRequest()) return;
       setIsInitialLoading(false);
       setIsRefreshing(false);
     }
   }, [t, workspace.id]);
 
   React.useEffect(() => {
+    webhookRequestSequence.current += 1;
+    historyRequestSequence.current += 1;
+    saveRequestSequence.current += 1;
+    deleteRequestSequence.current += 1;
+    setStateWorkspaceId(workspace.id);
+    setWebhooks([]);
     setDraft(emptyWebhookDraft());
     setEditingId(null);
     setCreatedSecret(null);
@@ -67,6 +88,12 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     setHistoryWebhookId(null);
     setMutationError(null);
     setHistoryError(null);
+    setLoadError(null);
+    setIsInitialLoading(true);
+    setIsRefreshing(false);
+    setIsSaving(false);
+    setDeletingId(null);
+    setIsHistoryLoading(false);
     void loadWebhooks(true);
   }, [loadWebhooks]);
 
@@ -77,6 +104,10 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
 
   const saveWebhook = async () => {
     if (!canManageWebhooks) return;
+    const requestedWorkspaceId = workspace.id;
+    const requestSequence = ++saveRequestSequence.current;
+    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
+      && saveRequestSequence.current === requestSequence;
     setIsSaving(true);
     setMutationError(null);
     setCreatedSecret(null);
@@ -89,29 +120,38 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         enabled: draft.enabled
       };
       if (editingId) {
-        await controlPlaneApi.updateWebhook(workspace.id, editingId, input);
+        await controlPlaneApi.updateWebhook(requestedWorkspaceId, editingId, input);
+        if (!isCurrentRequest()) return;
         showToast(t('workspaceWebhooks.updated'));
       } else {
-        const created = await controlPlaneApi.createWebhook(workspace.id, input);
+        const created = await controlPlaneApi.createWebhook(requestedWorkspaceId, input);
+        if (!isCurrentRequest()) return;
         setCreatedSecret({ name: created.name, secret: created.secret });
         showToast(t('workspaceWebhooks.created'));
       }
       resetForm();
       await loadWebhooks();
     } catch (saveFailure) {
+      if (!isCurrentRequest()) return;
       setMutationError(formatControlPlaneError(saveFailure, t('workspaceWebhooks.saveFailed'), { area: 'webhooks' }));
     } finally {
+      if (!isCurrentRequest()) return;
       setIsSaving(false);
     }
   };
 
   const deleteWebhook = async (webhook: ControlPlaneWebhookSubscription) => {
     if (!canManageWebhooks) return;
+    const requestedWorkspaceId = workspace.id;
+    const requestSequence = ++deleteRequestSequence.current;
+    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
+      && deleteRequestSequence.current === requestSequence;
     setDeletingId(webhook.id);
     setMutationError(null);
     setCreatedSecret(null);
     try {
-      await controlPlaneApi.deleteWebhook(workspace.id, webhook.id);
+      await controlPlaneApi.deleteWebhook(requestedWorkspaceId, webhook.id);
+      if (!isCurrentRequest()) return;
       if (historyWebhookId === webhook.id) {
         setHistory([]);
         setHistoryWebhookId(null);
@@ -120,23 +160,33 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
       showToast(t('workspaceWebhooks.deleted'));
       await loadWebhooks();
     } catch (deleteFailure) {
+      if (!isCurrentRequest()) return;
       setMutationError(formatControlPlaneError(deleteFailure, t('workspaceWebhooks.deleteFailed'), { area: 'webhooks' }));
     } finally {
+      if (!isCurrentRequest()) return;
       setDeletingId(null);
     }
   };
 
   const loadHistory = async (webhook: ControlPlaneWebhookSubscription) => {
     if (!canManageWebhooks) return;
+    const requestedWorkspaceId = workspace.id;
+    const requestSequence = ++historyRequestSequence.current;
+    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
+      && historyRequestSequence.current === requestSequence;
     setHistoryWebhookId(webhook.id);
     setHistory([]);
     setHistoryError(null);
     setIsHistoryLoading(true);
     try {
-      setHistory(await controlPlaneApi.listWebhookHistory(workspace.id, webhook.id, { limit: 25 }));
+      const items = await controlPlaneApi.listWebhookHistory(requestedWorkspaceId, webhook.id, { limit: 25 });
+      if (!isCurrentRequest()) return;
+      setHistory(items);
     } catch (historyFailure) {
+      if (!isCurrentRequest()) return;
       setHistoryError(formatControlPlaneError(historyFailure, t('workspaceWebhooks.historyFailed'), { area: 'webhooks' }));
     } finally {
+      if (!isCurrentRequest()) return;
       setIsHistoryLoading(false);
     }
   };
@@ -151,11 +201,17 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     }
   };
 
-  const editingWebhook = editingId ? webhooks.find((webhook) => webhook.id === editingId) : undefined;
+  const workspaceStateCurrent = stateWorkspaceId === workspace.id;
+  const visibleWebhooks = workspaceStateCurrent ? webhooks : [];
+  const visibleDraft = workspaceStateCurrent ? draft : emptyWebhookDraft();
+  const visibleCreatedSecret = workspaceStateCurrent ? createdSecret : null;
+  const editingWebhook = workspaceStateCurrent && editingId
+    ? visibleWebhooks.find((webhook) => webhook.id === editingId)
+    : undefined;
 
   return (
     <div className="max-w-6xl space-y-6">
-      {mutationError && (
+      {workspaceStateCurrent && mutationError && (
         <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-sm font-semibold text-status-danger-text">
           {mutationError}
         </div>
@@ -175,16 +231,16 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         </section>
       )}
 
-      {canManageWebhooks && createdSecret && (
+      {canManageWebhooks && visibleCreatedSecret && (
         <section className="rounded-lg border border-status-success/30 bg-status-success-soft p-4" aria-labelledby="webhook-secret-title">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <h2 id="webhook-secret-title" className="text-sm font-bold text-status-success-text">
-                {t('workspaceWebhooks.secretTitle', { name: createdSecret.name })}
+                {t('workspaceWebhooks.secretTitle', { name: visibleCreatedSecret.name })}
               </h2>
               <p className="mt-1 type-caption text-status-success-text">{t('workspaceWebhooks.secretDescription')}</p>
               <code className="mt-2 block break-all rounded-md border border-status-success/25 bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text">
-                {createdSecret.secret}
+                {visibleCreatedSecret.secret}
               </code>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
@@ -202,9 +258,9 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
 
       {canManageWebhooks && (
         <WebhookEditor
-          draft={draft}
+          draft={visibleDraft}
           editingName={editingWebhook?.name}
-          isSaving={isSaving}
+          isSaving={workspaceStateCurrent && isSaving}
           onChange={setDraft}
           onCancel={resetForm}
           onSave={() => void saveWebhook()}
@@ -212,16 +268,16 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
       )}
 
       <WebhookList
-        webhooks={webhooks}
+        webhooks={visibleWebhooks}
         canManageWebhooks={canManageWebhooks}
-        isLoading={isInitialLoading}
-        isRefreshing={isRefreshing}
-        loadError={loadError}
-        deletingId={deletingId}
-        historyWebhookId={historyWebhookId}
-        history={history}
-        isHistoryLoading={isHistoryLoading}
-        historyError={historyError}
+        isLoading={!workspaceStateCurrent || isInitialLoading}
+        isRefreshing={workspaceStateCurrent && isRefreshing}
+        loadError={workspaceStateCurrent ? loadError : null}
+        deletingId={workspaceStateCurrent ? deletingId : null}
+        historyWebhookId={workspaceStateCurrent ? historyWebhookId : null}
+        history={workspaceStateCurrent ? history : []}
+        isHistoryLoading={workspaceStateCurrent && isHistoryLoading}
+        historyError={workspaceStateCurrent ? historyError : null}
         onRefresh={() => void loadWebhooks()}
         onEdit={(webhook) => {
           setEditingId(webhook.id);

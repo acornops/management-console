@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
@@ -70,6 +70,11 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
   const [approvalPhase, setApprovalPhase] = useState<CursorCollectionPhase>('loading');
   const [approvalError, setApprovalError] = useState('');
   const [decisionState, setDecisionState] = useState<Record<string, 'approved' | 'rejected' | 'loading'>>({});
+  const approvalRequestSequence = useRef(0);
+  const scopeKey = `${workspace.id}\u0000${runId || ''}\u0000${approvalId || ''}`;
+  const [stateScopeKey, setStateScopeKey] = useState(scopeKey);
+  const currentScopeKey = useRef(scopeKey);
+  currentScopeKey.current = scopeKey;
   const approvalFilterItems = useMemo<Array<CompactControlItem<ApprovalFilter>>>(() => [
     { value: 'pending', label: t('approvals.filters.pending') },
     { value: 'decided', label: t('approvals.filters.recent') }
@@ -78,8 +83,12 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
   const canDecideApprovals = hasWorkspacePermission(workspace, 'create_read_write_runs');
   const focusedApproval = Boolean(runId || approvalId);
 
-  const loadApprovals = async () => {
-    setApprovalPhase(pendingApprovalCount === undefined ? 'loading' : 'refreshing');
+  const loadApprovals = useCallback(async (initial = false) => {
+    const requestSequence = ++approvalRequestSequence.current;
+    const requestedScopeKey = scopeKey;
+    const isCurrentRequest = () => currentScopeKey.current === requestedScopeKey
+      && approvalRequestSequence.current === requestSequence;
+    setApprovalPhase(initial ? 'loading' : 'refreshing');
     setApprovalError('');
     try {
       if (focusedApproval) {
@@ -89,6 +98,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
           runId,
           approvalId
         });
+        if (!isCurrentRequest()) return;
         setApprovalsByFilter({
           pending: response.items.filter((approval) => approval.status === 'pending'),
           decided: response.items.filter((approval) => approval.status !== 'pending')
@@ -101,6 +111,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
         listWorkspaceApprovalInbox(workspace.id, { status: 'pending', limit: 50 }),
         listWorkspaceApprovalInbox(workspace.id, { status: 'decided', limit: 50 })
       ]);
+      if (!isCurrentRequest()) return;
       setApprovalsByFilter({
         pending: pendingResponse.items,
         decided: decidedResponse.items
@@ -108,47 +119,65 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
       setPendingApprovalCount(pendingResponse.pendingCount);
       setApprovalPhase('ready');
     } catch (err) {
+      if (!isCurrentRequest()) return;
       setApprovalError(formatControlPlaneError(err, t('approvals.loadError')));
       setApprovalPhase('error');
     }
-  };
+  }, [approvalId, focusedApproval, runId, scopeKey, t, workspace.id]);
 
   useEffect(() => {
-    void loadApprovals();
-  }, [workspace.id, runId, approvalId]);
+    approvalRequestSequence.current += 1;
+    setStateScopeKey(scopeKey);
+    setApprovalsByFilter({ pending: [], decided: [] });
+    setPendingApprovalCount(undefined);
+    setApprovalError('');
+    setDecisionState({});
+    void loadApprovals(true);
+  }, [loadApprovals]);
 
+  const scopeStateCurrent = stateScopeKey === scopeKey;
+  const visibleApprovalsByFilter = scopeStateCurrent
+    ? approvalsByFilter
+    : { pending: [], decided: [] };
+  const visiblePendingApprovalCount = scopeStateCurrent ? pendingApprovalCount : undefined;
+  const visibleApprovalPhase = scopeStateCurrent ? approvalPhase : 'loading';
+  const visibleApprovalError = scopeStateCurrent ? approvalError : '';
   const approvals = focusedApproval
-    ? [...approvalsByFilter.pending, ...approvalsByFilter.decided]
-    : approvalsByFilter[approvalFilter];
-  const hasAnyApprovals = (pendingApprovalCount ?? approvalsByFilter.pending.length) > 0
-    || approvalsByFilter.decided.length > 0;
-  const approvalsBusy = approvalPhase === 'loading' || approvalPhase === 'refreshing';
+    ? [...visibleApprovalsByFilter.pending, ...visibleApprovalsByFilter.decided]
+    : visibleApprovalsByFilter[approvalFilter];
+  const hasAnyApprovals = (visiblePendingApprovalCount ?? visibleApprovalsByFilter.pending.length) > 0
+    || visibleApprovalsByFilter.decided.length > 0;
+  const approvalsBusy = visibleApprovalPhase === 'loading' || visibleApprovalPhase === 'refreshing';
 
   const summary = useMemo(() => {
-    const pending = approvalsByFilter.pending;
-    const decided = approvalsByFilter.decided;
+    const pending = visibleApprovalsByFilter.pending;
+    const decided = visibleApprovalsByFilter.decided;
     const expiringSoon = pending.filter((approval) => {
       const expiresAt = new Date(approval.expiresAt).getTime();
       return Number.isFinite(expiresAt) && expiresAt - Date.now() <= 30 * 60 * 1000;
     });
     return {
-      waiting: pendingApprovalCount ?? pending.length,
+      waiting: visiblePendingApprovalCount ?? pending.length,
       expiringSoon: expiringSoon.length,
       approved: decided.filter((approval) => approval.status === 'approved' && isToday(approval.decidedAt)).length,
       rejected: decided.filter((approval) => approval.status === 'rejected' && isToday(approval.decidedAt)).length
     };
-  }, [approvalsByFilter, pendingApprovalCount]);
+  }, [visibleApprovalsByFilter, visiblePendingApprovalCount]);
 
   const decideApproval = async (approval: WorkspaceApprovalInboxRow, decision: 'approved' | 'rejected') => {
     if (!canDecideApprovals || approval.status !== 'pending') return;
+    const decisionScopeKey = scopeKey;
     setDecisionState((current) => ({ ...current, [approval.approvalId]: 'loading' }));
     setApprovalError('');
     try {
       await decideWorkflowRunApproval(approval.runId, approval.approvalId, decision);
+      if (currentScopeKey.current !== decisionScopeKey) return;
       setDecisionState((current) => ({ ...current, [approval.approvalId]: decision }));
       await onApprovalDecision?.();
+      if (currentScopeKey.current !== decisionScopeKey) return;
       await loadApprovals();
     } catch (err) {
+      if (currentScopeKey.current !== decisionScopeKey) return;
       setApprovalError(formatControlPlaneError(err, t('approvals.decisionError')));
       setDecisionState((current) => {
         const next = { ...current };
@@ -172,12 +201,12 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
           {t('approvals.permissionNotice')}
         </div>
       )}
-      {approvalError && approvalPhase !== 'error' && <InlineAlert tone="danger" className="mb-5">{approvalError}</InlineAlert>}
+      {visibleApprovalError && visibleApprovalPhase !== 'error' && <InlineAlert tone="danger" className="mb-5">{visibleApprovalError}</InlineAlert>}
       {focusedApproval && <InlineAlert tone="neutral" className="mb-5">{t('approvals.focusedNotice')}</InlineAlert>}
 
       <CollectionState
-        phase={approvalPhase}
-        itemCount={hasAnyApprovals ? approvalsByFilter.pending.length + approvalsByFilter.decided.length : 0}
+        phase={visibleApprovalPhase}
+        itemCount={hasAnyApprovals ? visibleApprovalsByFilter.pending.length + visibleApprovalsByFilter.decided.length : 0}
         loading={<InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />}
         empty={<EmptyState
           icon={<ICONS.CheckCircle2 />}
@@ -188,11 +217,11 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
           role="alert"
           icon={<ICONS.AlertTriangle />}
           title={t('approvals.loadError')}
-          description={approvalError}
+          description={visibleApprovalError}
           actions={<Button variant="secondary" onClick={() => void loadApprovals()}>{t('common.retry', { defaultValue: 'Retry' })}</Button>}
         />}
-        feedback={approvalError ? <InlineAlert tone="danger" className="mb-5">{approvalError}</InlineAlert> : <InlineLoadingIndicator label={t('common.loading')} className="mb-5" />}
-        announcement={approvalPhase === 'ready' ? `${summary.waiting} ${t('approvals.filters.pending')}` : undefined}
+        feedback={visibleApprovalError ? <InlineAlert tone="danger" className="mb-5">{visibleApprovalError}</InlineAlert> : <InlineLoadingIndicator label={t('common.loading')} className="mb-5" />}
+        announcement={visibleApprovalPhase === 'ready' ? `${summary.waiting} ${t('approvals.filters.pending')}` : undefined}
       >
         <section aria-label={t('approvals.summaryLabel')} className="mb-5 overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
         <div className="grid divide-y divide-ui-border sm:grid-cols-4 sm:divide-x sm:divide-y-0">
