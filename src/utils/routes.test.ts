@@ -356,6 +356,10 @@ describe('routes', () => {
       kind: 'workspaceAiSettings',
       workspaceId: 'team-alpha'
     });
+    expect(parseAppRoute(AppPaths.workspaceWebhooks('team-alpha'))).toEqual({
+      kind: 'workspaceWebhooks',
+      workspaceId: 'team-alpha'
+    });
     expect(parseAppRoute(AppPaths.workspaceSettings('team-alpha'))).toEqual({
       kind: 'workspaceSettings',
       workspaceId: 'team-alpha'

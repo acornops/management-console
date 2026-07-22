@@ -9,10 +9,11 @@ import type { ProjectMember, Workspace, WorkspaceInvitation } from '@/types';
 import { WorkspaceAiSettingsPage } from '@/pages/WorkspaceAiSettingsPage';
 import { WorkspaceMembersPage } from '@/pages/WorkspaceMembersPage';
 import { WorkspaceSettingsPage } from '@/pages/WorkspaceSettingsPage';
+import { WorkspaceWebhooksPage } from '@/pages/WorkspaceWebhooksPage';
 import { ActiveTabIndicator } from '@/components/common/ActiveTabIndicator';
 import { PageBackLink, PageHeader, PageShell } from '@/components/common/PageComposition';
 
-export type SettingsTab = 'workspace' | 'members' | 'ai';
+export type SettingsTab = 'workspace' | 'members' | 'ai' | 'webhooks';
 
 interface TabUnavailableInput {
   tab: SettingsTab;
@@ -32,6 +33,7 @@ function getTabUnavailableReason({
   if (!hasWorkspace) return t('settingsPage.selectWorkspaceForTab');
   if (tab === 'members' && !canReadMembers) return t('settingsPage.membersAccessRequired');
   if (tab === 'ai' && !canReadWorkspaceData) return t('settingsPage.workspaceAccessRequired');
+  if (tab === 'webhooks' && !canReadWorkspaceData) return t('settingsPage.webhooksReadAccessRequired');
   return undefined;
 }
 
@@ -43,6 +45,7 @@ interface SettingsPageProps {
   canDeleteWorkspace: boolean;
   canManageMembers: boolean;
   canManageAiSettings: boolean;
+  canManageWebhooks: boolean;
   currentUserRole?: ProjectMember['role'];
   onDeleteWorkspace: (workspaceId: string) => void;
   onLeaveWorkspace?: () => Promise<void>;
@@ -64,6 +67,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   canDeleteWorkspace,
   canManageMembers,
   canManageAiSettings,
+  canManageWebhooks,
   currentUserRole = 'viewer',
   onDeleteWorkspace,
   onLeaveWorkspace,
@@ -82,6 +86,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const workspaceTabDisabled = !workspace;
   const aiTabDisabled = !workspace || !canReadWorkspaceData;
   const membersTabDisabled = !workspace || !canReadMembers;
+  const webhooksTabDisabled = !workspace || !canReadWorkspaceData;
   const hasWorkspace = Boolean(workspace);
   const aiSettingsResource = useWorkspaceAiSettingsResource(
     workspace?.id,
@@ -99,8 +104,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
     if (activeTab === 'ai' && aiTabDisabled) {
       setActiveTab('workspace');
+      return;
     }
-  }, [activeTab, aiTabDisabled, membersTabDisabled]);
+    if (activeTab === 'webhooks' && webhooksTabDisabled) {
+      setActiveTab('workspace');
+    }
+  }, [activeTab, aiTabDisabled, membersTabDisabled, webhooksTabDisabled]);
 
   const tabs: Array<{
     id: SettingsTab;
@@ -109,7 +118,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   }> = [
     { id: 'workspace', label: t('settingsPage.workspaceTab'), icon: ICONS.LayoutGrid },
     { id: 'members', label: t('settingsPage.membersTab'), icon: ICONS.Users },
-    { id: 'ai', label: t('settingsPage.aiTab'), icon: ICONS.Bot }
+    { id: 'ai', label: t('settingsPage.aiTab'), icon: ICONS.Bot },
+    { id: 'webhooks', label: t('settingsPage.webhooksTab'), icon: ICONS.Send }
   ];
 
   const handleSelectTab = (tab: SettingsTab) => {
@@ -220,6 +230,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           aiSettingsResource={aiSettingsResource}
           returnTo={returnTo}
           onReturnToAssistant={onReturnToAssistant}
+          showToast={showToast}
+        />
+      )}
+
+      {activeTab === 'webhooks' && workspace && !webhooksTabDisabled && (
+        <WorkspaceWebhooksPage
+          workspace={workspace}
+          canManageWebhooks={canManageWebhooks}
           showToast={showToast}
         />
       )}

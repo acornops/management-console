@@ -13,6 +13,7 @@ export type ActiveResourceNav =
   | 'members'
   | 'workspaceAiSettings'
   | 'workspaceSettings'
+  | 'workspaceWebhooks'
   | 'workspaceAuditLog'
   | 'accountSettings'
   | 'help'
@@ -46,6 +47,7 @@ export function getWorkspaceRouteId(route: AppRoute): string | null {
     route.kind === 'workspaceMembers' ||
     route.kind === 'workspaceAiSettings' ||
     route.kind === 'workspaceSettings' ||
+    route.kind === 'workspaceWebhooks' ||
     route.kind === 'workspaceAuditLog' ||
     route.kind === 'workspaceKubernetesClusterDiagnostics'
   ) {
@@ -99,6 +101,7 @@ export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
   if (route.kind === 'help') return 'help';
   if (route.kind === 'workspaceAiSettings') return 'workspaceAiSettings';
   if (route.kind === 'workspaceSettings') return 'workspaceSettings';
+  if (route.kind === 'workspaceWebhooks') return 'workspaceWebhooks';
   if (route.kind === 'workspaceAuditLog') return 'workspaceAuditLog';
   if (route.kind === 'workspaceMembers') return 'members';
   if (route.kind === 'accountSettings') return 'accountSettings';

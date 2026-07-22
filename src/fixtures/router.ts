@@ -5,6 +5,7 @@ import { mcpConnection, routeMcpParityConnection } from './mcpParity';
 import { targetSummary, targetToolCatalog, workflowOptions } from './presenters';
 import { routePromptReferenceFixtureRequest } from './promptReferenceRoutes';
 import { workflowCapabilityPreview } from './workflowCapabilityPreview';
+import { routeWebhookFixtureRequest } from './webhookRoutes';
 
 export interface FixtureResponse {
   status: number;
@@ -121,6 +122,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const connectionResponse = await routeMcpParityConnection({ method, path, request, state });
     if (connectionResponse) return connectionResponse;
   }
+  const webhookResponse = await routeWebhookFixtureRequest({ method, path, request, state });
+  if (webhookResponse) return webhookResponse;
   if (/\/skills\/(?:import|[^/]+\/reimport)$/.test(path)) {
     return fixtureError('Remote Git operations are unavailable in frontend fixture mode.');
   }

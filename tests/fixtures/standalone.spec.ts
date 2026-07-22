@@ -13,6 +13,7 @@ const routes = [
   { path: '/workspaces/fixture-workspace/catalog?destination=agent%3Afixture-specialist', text: 'Destination: Kubernetes Specialist' },
   { path: '/workspaces/fixture-workspace/catalog?destination=target%3Afixture-cluster', text: 'Destination: Singapore Production' },
   { path: '/workspaces/fixture-workspace/settings?section=mcp-registries', text: 'MCP registries' },
+  { path: '/workspaces/fixture-workspace/webhooks', text: 'Mattermost operations' },
   { path: '/workspaces/fixture-workspace/settings', text: 'AcornOps Fixture Lab' }
 ];
 
@@ -35,6 +36,27 @@ for (const route of routes) {
     )).toEqual([]);
   });
 }
+
+test('webhook settings expose history, confirmation, and one-time secret flows', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('Mattermost operations', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'History' }).click();
+  await expect(page.getByText('Delivered', { exact: true })).toBeVisible();
+  await expect(page.getByText('run.failed.v1', { exact: true }).last()).toBeVisible();
+
+  await page.getByRole('button', { name: 'Delete' }).click();
+  const confirmation = page.getByRole('alert').filter({ hasText: 'Delete Mattermost operations?' });
+  await expect(confirmation).toBeFocused();
+  await confirmation.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByText('Mattermost operations', { exact: true })).toBeVisible();
+
+  await page.getByLabel('Name').fill('Mattermost incident channel');
+  await page.getByLabel('Delivery URL').fill('https://mattermost-bot.fixture.acornops.dev/webhooks/incidents');
+  await page.getByRole('button', { name: 'Create webhook' }).click();
+  await expect(page.getByText('One-time signing secret for Mattermost incident channel')).toBeVisible();
+  await expect(page.getByText('whsec_fixture_local_only')).toBeVisible();
+});
 
 test('agent profile scopes lifecycle actions to Settings and icons its refresh controls', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/agents?panel=profile&agent=fixture-specialist&agentTab=overview', { waitUntil: 'domcontentloaded' });
