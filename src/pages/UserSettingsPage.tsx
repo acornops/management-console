@@ -2,22 +2,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { handleAppLinkClick } from '@/app/workspaceNavigation';
 import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { PageBackLink, PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
+import { ExternalIntegrationSettingsPanel } from '@/features/external-integrations/ExternalIntegrationSettingsPanel';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
-import {
-  controlPlaneApi,
-  ControlPlaneAuthMethods,
-  type ControlPlaneExternalIntegrationGrantableWorkspace,
-  type ControlPlaneExternalIntegrationLinkSummary,
-  type ControlPlaneWorkspaceCapability
-} from '@/services/controlPlaneApi';
+import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlaneApi';
 import { User } from '@/types';
 import { formatUserDate } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
@@ -66,112 +60,7 @@ const SettingRow: React.FC<{
   </div>
 );
 
-const ExternalIntegrationGrantEditor: React.FC<{
-  link: ControlPlaneExternalIntegrationLinkSummary;
-  draft: Record<string, ControlPlaneWorkspaceCapability[]>;
-  isSaving: boolean;
-  isUnlinking: boolean;
-  onToggleWorkspace: (link: ControlPlaneExternalIntegrationLinkSummary, workspace: ControlPlaneExternalIntegrationGrantableWorkspace, enabled: boolean) => void;
-  onToggleCapability: (
-    link: ControlPlaneExternalIntegrationLinkSummary,
-    workspace: ControlPlaneExternalIntegrationGrantableWorkspace,
-    capability: ControlPlaneWorkspaceCapability,
-    enabled: boolean
-  ) => void;
-  onSave: (link: ControlPlaneExternalIntegrationLinkSummary) => void;
-  onUnlink: (link: ControlPlaneExternalIntegrationLinkSummary) => void;
-}> = ({ link, draft, isSaving, isUnlinking, onToggleWorkspace, onToggleCapability, onSave, onUnlink }) => (
-  <div className="border-b border-ui-border p-6 last:border-0">
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        <p className="text-sm font-bold text-ui-text">{link.clientDisplayName}</p>
-        <p className="mt-1 break-words text-xs text-ui-text-muted">
-          {link.provider} · {link.externalDisplayName || link.externalUserId}
-        </p>
-      </div>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Button size="sm" disabled={isSaving || isUnlinking} onClick={() => onSave(link)}>
-          {isSaving ? 'Saving' : 'Save grants'}
-        </Button>
-        <Button size="sm" variant="danger" disabled={isSaving || isUnlinking} onClick={() => onUnlink(link)}>
-          {isUnlinking ? 'Unlinking' : 'Unlink'}
-        </Button>
-      </div>
-    </div>
-    <div className="mt-4 grid gap-3">
-      {(link.grantableWorkspaces || []).map((workspace) => {
-        const selectedCapabilities = draft[workspace.workspaceId] || [];
-        const workspaceEnabled = selectedCapabilities.length > 0;
-        return (
-          <div key={workspace.workspaceId} className="rounded-lg border border-ui-border bg-ui-bg px-4 py-3">
-            <label className="flex items-start gap-3">
-              <Checkbox
-                checked={workspaceEnabled}
-                onChange={(event) => onToggleWorkspace(link, workspace, event.target.checked)}
-                className="mt-1"
-              />
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-ui-text">{workspace.workspaceName}</span>
-                <span className="block text-xs text-ui-text-muted">{workspace.role}</span>
-              </span>
-            </label>
-            {workspaceEnabled && (
-              <div className="mt-3 grid gap-2 pl-6">
-                {workspace.grantableCapabilities.map((capability) => (
-                  <label key={capability} className="flex items-center gap-2 text-xs font-medium text-ui-text-muted">
-                    <Checkbox
-                      checked={selectedCapabilities.includes(capability)}
-                      onChange={(event) => onToggleCapability(link, workspace, capability, event.target.checked)}
-                    />
-                    {externalIntegrationCapabilityLabels[capability]}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-      {!link.grantableWorkspaces?.length && (
-        <p className="text-sm text-ui-text-muted">No workspaces are currently available for this integration.</p>
-      )}
-    </div>
-  </div>
-);
-
 const inputClassName = formInputClassName();
-
-const externalIntegrationCapabilityLabels: Record<ControlPlaneWorkspaceCapability, string> = {
-  read_workspace_data: 'Read workspace data',
-  create_sessions: 'Create sessions',
-  create_read_only_runs: 'Create read-only runs'
-};
-const externalIntegrationCapabilities: ControlPlaneWorkspaceCapability[] = [
-  'read_workspace_data',
-  'create_sessions',
-  'create_read_only_runs'
-];
-
-function normalizeExternalIntegrationCapabilities(capabilities: ControlPlaneWorkspaceCapability[]): ControlPlaneWorkspaceCapability[] {
-  const next = new Set(capabilities);
-  if (next.has('create_read_only_runs')) next.add('create_sessions');
-  if (next.has('create_sessions')) next.add('read_workspace_data');
-  if (!next.has('read_workspace_data')) {
-    next.delete('create_sessions');
-    next.delete('create_read_only_runs');
-  }
-  if (!next.has('create_sessions')) next.delete('create_read_only_runs');
-  return externalIntegrationCapabilities.filter((capability) => next.has(capability));
-}
-
-function draftFromExternalIntegrationLinks(links: ControlPlaneExternalIntegrationLinkSummary[]): Record<string, Record<string, ControlPlaneWorkspaceCapability[]>> {
-  return Object.fromEntries(links.map((link) => [
-    link.id,
-    Object.fromEntries((link.grantableWorkspaces || []).map((workspace) => [
-      workspace.workspaceId,
-      normalizeExternalIntegrationCapabilities(workspace.grantedCapabilities)
-    ]))
-  ]));
-}
 
 function formatDate(value?: string): string | undefined {
   if (!value) return undefined;
@@ -266,12 +155,6 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [dialogError, setDialogError] = React.useState<string | undefined>();
   const [isSubmittingSecurity, setIsSubmittingSecurity] = React.useState(false);
-  const [externalIntegrationLinks, setExternalIntegrationLinks] = React.useState<ControlPlaneExternalIntegrationLinkSummary[]>([]);
-  const [externalIntegrationDrafts, setExternalIntegrationDrafts] = React.useState<Record<string, Record<string, ControlPlaneWorkspaceCapability[]>>>({});
-  const [externalIntegrationError, setExternalIntegrationError] = React.useState<string | null>(null);
-  const [externalIntegrationNotice, setExternalIntegrationNotice] = React.useState<string | null>(null);
-  const [savingExternalIntegrationLinkId, setSavingExternalIntegrationLinkId] = React.useState<string | null>(null);
-  const [unlinkingExternalIntegrationLinkId, setUnlinkingExternalIntegrationLinkId] = React.useState<string | null>(null);
 
   const passwordMethod = authMethods?.methods.find((method) => method.type === 'password');
   const oidcMethod = authMethods?.methods.find((method) => method.type === 'oidc');
@@ -290,21 +173,6 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
   React.useEffect(() => {
     void refreshAuthMethods();
   }, [refreshAuthMethods]);
-
-  const refreshExternalIntegrationLinks = React.useCallback(async () => {
-    try {
-      const links = await controlPlaneApi.listExternalIntegrationLinks();
-      setExternalIntegrationLinks(links);
-      setExternalIntegrationDrafts(draftFromExternalIntegrationLinks(links));
-      setExternalIntegrationError(null);
-    } catch (error) {
-      setExternalIntegrationError(formatControlPlaneError(error, 'Unable to load external integrations.', { area: 'auth' }));
-    }
-  }, []);
-
-  React.useEffect(() => {
-    void refreshExternalIntegrationLinks();
-  }, [refreshExternalIntegrationLinks]);
 
   const closeSecurityDialog = () => {
     setActiveDialog(null);
@@ -347,78 +215,6 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
     } catch (error) {
       setDialogError(formatControlPlaneError(error, t('settings.ssoLinkFailed'), { area: 'auth' }));
       setIsSubmittingSecurity(false);
-    }
-  };
-
-  const setExternalIntegrationWorkspaceEnabled = (
-    link: ControlPlaneExternalIntegrationLinkSummary,
-    workspace: ControlPlaneExternalIntegrationGrantableWorkspace,
-    enabled: boolean
-  ) => {
-    setExternalIntegrationDrafts((current) => ({
-      ...current,
-      [link.id]: {
-        ...(current[link.id] || {}),
-        [workspace.workspaceId]: enabled && workspace.grantableCapabilities.includes('read_workspace_data') ? ['read_workspace_data'] : []
-      }
-    }));
-  };
-
-  const toggleExternalIntegrationCapability = (
-    link: ControlPlaneExternalIntegrationLinkSummary,
-    workspace: ControlPlaneExternalIntegrationGrantableWorkspace,
-    capability: ControlPlaneWorkspaceCapability,
-    enabled: boolean
-  ) => {
-    setExternalIntegrationDrafts((current) => {
-      const linkDraft = current[link.id] || {};
-      const selected = new Set(linkDraft[workspace.workspaceId] || []);
-      if (enabled) selected.add(capability);
-      else selected.delete(capability);
-      const allowed = new Set(workspace.grantableCapabilities);
-      return {
-        ...current,
-        [link.id]: {
-          ...linkDraft,
-          [workspace.workspaceId]: normalizeExternalIntegrationCapabilities([...selected].filter((item) => allowed.has(item)))
-        }
-      };
-    });
-  };
-
-  const saveExternalIntegrationGrants = async (link: ControlPlaneExternalIntegrationLinkSummary) => {
-    const linkDraft = externalIntegrationDrafts[link.id] || {};
-    const workspaceGrants = Object.entries(linkDraft)
-      .filter(([, capabilities]) => capabilities.length > 0)
-      .map(([workspaceId, capabilities]) => ({ workspaceId, capabilities }));
-    setSavingExternalIntegrationLinkId(link.id);
-    setExternalIntegrationError(null);
-    setExternalIntegrationNotice(null);
-    try {
-      await controlPlaneApi.updateExternalIntegrationLinkGrants(link.id, workspaceGrants);
-      await refreshExternalIntegrationLinks();
-      setExternalIntegrationNotice(`Permissions successfully changed for ${link.clientDisplayName}.`);
-    } catch (error) {
-      setExternalIntegrationError(formatControlPlaneError(error, 'Unable to save external integration grants.', { area: 'auth' }));
-    } finally {
-      setSavingExternalIntegrationLinkId(null);
-    }
-  };
-
-  const unlinkExternalIntegration = async (link: ControlPlaneExternalIntegrationLinkSummary) => {
-    const displayName = link.clientDisplayName;
-    if (!window.confirm(`Unlink ${displayName} from this account?`)) return;
-    setUnlinkingExternalIntegrationLinkId(link.id);
-    setExternalIntegrationError(null);
-    setExternalIntegrationNotice(null);
-    try {
-      await controlPlaneApi.unlinkExternalIntegration(link);
-      await refreshExternalIntegrationLinks();
-      setExternalIntegrationNotice(`${displayName} was unlinked from this account.`);
-    } catch (error) {
-      setExternalIntegrationError(formatControlPlaneError(error, `Unable to unlink ${displayName}.`, { area: 'auth' }));
-    } finally {
-      setUnlinkingExternalIntegrationLinkId(null);
     }
   };
 
@@ -515,34 +311,8 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
           />
         </SettingSection>
 
-        <SettingSection title="External Integrations" description="Manage which workspaces linked external integrations can access.">
-          {externalIntegrationError && (
-            <div className="border-b border-ui-border bg-status-danger-soft px-6 py-3 text-sm text-status-danger-text">
-              {externalIntegrationError}
-            </div>
-          )}
-          {externalIntegrationNotice && (
-            <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 text-sm text-status-success-text">
-              {externalIntegrationNotice}
-            </div>
-          )}
-          {externalIntegrationLinks.length ? (
-            externalIntegrationLinks.map((link) => (
-              <ExternalIntegrationGrantEditor
-                key={link.id}
-                link={link}
-                draft={externalIntegrationDrafts[link.id] || {}}
-                isSaving={savingExternalIntegrationLinkId === link.id}
-                isUnlinking={unlinkingExternalIntegrationLinkId === link.id}
-                onToggleWorkspace={setExternalIntegrationWorkspaceEnabled}
-                onToggleCapability={toggleExternalIntegrationCapability}
-                onSave={saveExternalIntegrationGrants}
-                onUnlink={unlinkExternalIntegration}
-              />
-            ))
-          ) : (
-            <div className="p-6 text-sm text-ui-text-muted">No external integrations are linked to this account.</div>
-          )}
+        <SettingSection title={t('settings.externalIntegrationsTitle')} description={t('settings.externalIntegrationsBody')}>
+          <ExternalIntegrationSettingsPanel />
         </SettingSection>
 
         <SettingSection title={t('settings.preferencesTitle')} description={t('settings.preferencesBody')}>

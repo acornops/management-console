@@ -109,6 +109,7 @@
   "GET /api/v1/workspaces/{workspaceId}/workflows",
   "PATCH /api/v1/agents/{agentId}",
   "PATCH /api/v1/agents/{agentId}/triggers/{triggerId}",
+  "PATCH /api/v1/auth/external-integrations/links/{linkId}/grants",
   "PATCH /api/v1/workflow-schedules/{scheduleId}",
   "PATCH /api/v1/workflows/{workflowId}",
   "PATCH /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}",
@@ -203,4 +204,3 @@
   "PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}",
   "PUT /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection"
 ]
-

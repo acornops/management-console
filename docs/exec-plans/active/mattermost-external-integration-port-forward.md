@@ -37,12 +37,31 @@ Central tracking: acornops/acornops#12.
   attribution.
 - 2026-07-22: Current UI architecture and contracts win every conflict; legacy
   PR screens are design references, not authoritative replacements.
+- 2026-07-22, Wave 1: Kept the current lazy-loaded account route and
+  `ExternalIntegrationLinkRouteScreen`. Workspace grant selection was added to
+  those current surfaces; the deleted legacy account-page test was not
+  restored.
+- 2026-07-22, Wave 1: Extracted linked-integration grant management from
+  `UserSettingsPage` into a focused feature component and shared grant
+  normalizer. Capability dependencies fail closed against the server-provided
+  grantable set, unlink uses the current accessible inline-confirmation
+  primitive, and all new account-settings copy is localized.
+- 2026-07-22, Wave 1: Synchronized the vendored public-operation inventory with
+  the generated control-plane OpenAPI contract, including the link-grant PATCH
+  operation.
 
 ## Validation Log
 
 - Baseline: design checks, TypeScript, and 587 unit tests passed in
   control-plane data mode. The real-Chrome design suite passed 19 tests in the
   combined run; the interrupted final existing case passed independently.
+- Wave 1 console: design checks, TypeScript, 592 unit tests, membership,
+  contracts, harness, production build, and route smoke passed in control-plane
+  data mode. The real-Chrome design run again passed 19 tests before the known
+  combined-run teardown stall; its remaining desktop case passed independently.
+  The fixture suite passed all 123 repeated cases and the MCP parity suite all
+  21 repeated cases when run with one worker, avoiding the same runner teardown
+  problem without reducing repetitions.
 - Each wave: run focused component/service tests, contract checks, design-system
   checks, control-plane-mode validation, production build, and route smoke.
 - Final: verify linking, grants, webhook lifecycle, executions, SSE status, and
