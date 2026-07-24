@@ -33,6 +33,8 @@ describe('MCP credential mode schedule impact', () => {
       .mockResolvedValueOnce({
         workflowId: 'workflow-match',
         workflowVersion: 1,
+        promptDigest: '0'.repeat(64),
+        bindingDigest: '1'.repeat(64),
         mode: 'read_only',
         semanticCapabilityIds: [],
         checkedAt: '2026-07-24T00:00:00.000Z',
@@ -53,6 +55,8 @@ describe('MCP credential mode schedule impact', () => {
       .mockResolvedValueOnce({
         workflowId: 'workflow-other',
         workflowVersion: 1,
+        promptDigest: '0'.repeat(64),
+        bindingDigest: '1'.repeat(64),
         mode: 'read_only',
         semanticCapabilityIds: [],
         checkedAt: '2026-07-24T00:00:00.000Z',
@@ -68,9 +72,9 @@ describe('MCP credential mode schedule impact', () => {
         counts: { targets: 1, readyTargets: 1, tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
       });
     const schedules = [
-      { id: 'schedule-match', workflowId: 'workflow-match', status: 'enabled', approvedContextGrants: [], controlMessage: 'Inspect.' },
-      { id: 'schedule-other', workflowId: 'workflow-other', status: 'enabled', approvedContextGrants: [], controlMessage: 'Inspect.' },
-      { id: 'schedule-paused', workflowId: 'workflow-paused', status: 'paused', approvedContextGrants: [], controlMessage: 'Inspect.' }
+      { id: 'schedule-match', workflowId: 'workflow-match', status: 'enabled', approvedContextGrants: [], inputs: {} },
+      { id: 'schedule-other', workflowId: 'workflow-other', status: 'enabled', approvedContextGrants: [], inputs: {} },
+      { id: 'schedule-paused', workflowId: 'workflow-paused', status: 'paused', approvedContextGrants: [], inputs: {} }
     ] as WorkflowSchedule[];
 
     await expect(enabledScheduleImpactForTarget('workspace-1', schedules, 'target-1', 'server-1'))

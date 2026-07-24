@@ -8,7 +8,7 @@ import { RightSidePanel } from '@/components/common/RightSidePanel';
 import { Select } from '@/components/common/Select';
 import { ICONS } from '@/constants';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
-import { WorkflowPromptEditor } from '@/pages/WorkspaceWorkflowsPage.launchFields';
+import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import { WorkflowMcpCredentialDialog, WorkflowPreviewAuthRow, workflowCapabilityBlockerMessage } from '@/pages/WorkspaceWorkflowsPage.components';
 import {
   createWorkflowSchedule,
@@ -57,7 +57,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   const [timezone, setTimezone] = React.useState(getUserTimeZone);
   const [enabled, setEnabled] = React.useState(true);
   const [approvedContextGrants, setApprovedContextGrants] = React.useState<string[]>([]);
-  const [controlMessage, setControlMessage] = React.useState('');
+  const [inputs, setInputs] = React.useState<Record<string, string>>({});
   const [error, setError] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const [preview, setPreview] = React.useState<WorkflowSchedulePreview | null>(null);
@@ -68,7 +68,12 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   const [previewing, setPreviewing] = React.useState(false);
   const previewRequestRef = React.useRef(0);
   const [runAsUser, setRunAsUser] = React.useState<{ id: string; label: string } | null>(null);
-  const principal = runAsUser ? { type: 'user' as const, id: runAsUser.id } : null;
+  const principal = React.useMemo(
+    () => runAsUser ? { type: 'user' as const, id: runAsUser.id } : null,
+    [runAsUser?.id]
+  );
+  const identityLoadFailedMessage = t('agentsWorkflows.schedule.identityLoadFailed');
+  const previewUnavailableMessage = t('agentsWorkflows.schedule.previewUnavailable');
 
   React.useEffect(() => {
     let cancelled = false;
@@ -77,9 +82,9 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         if (cancelled) return;
         setRunAsUser({ id: user.id, label: user.name || user.email });
       })
-      .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : t('agentsWorkflows.schedule.identityLoadFailed')));
+      .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : identityLoadFailedMessage));
     return () => { cancelled = true; };
-  }, [workspaceId, t]);
+  }, [identityLoadFailedMessage, workspaceId]);
 
   React.useEffect(() => {
     if (!scheduleWorkflow) return;
@@ -91,13 +96,13 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
     setTimezone(getUserTimeZone());
     setEnabled(true);
     setApprovedContextGrants([...new Set(scheduleWorkflow.contextGrants)]);
-    setControlMessage(scheduleWorkflow.starterPrompt);
+    setInputs({});
     setError('');
     setPreview(null);
     setCapabilityPreview(null);
     setCapabilityPreviewError('');
     setCredentialRequirement(null);
-  }, [scheduleWorkflow?.id, t]);
+  }, [scheduleWorkflow?.id]);
 
   React.useEffect(() => {
     setCron((current) => cronFromGuided(frequency, time, weekdays, current));
@@ -117,12 +122,12 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
           timezone,
           enabled,
           approvedContextGrants,
-          controlMessage,
+          inputs,
           principal
         }),
         previewWorkflowCapabilities(workspaceId, scheduleWorkflow.id, {
           approvedContextGrants,
-          content: controlMessage
+          inputs
         })
       ]).then(([scheduleResult, capabilityResult]) => {
         if (previewRequestRef.current !== requestId) return;
@@ -131,7 +136,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         } else {
           setPreview({
             valid: false,
-            summary: scheduleResult.reason instanceof Error ? scheduleResult.reason.message : t('agentsWorkflows.schedule.previewUnavailable'),
+            summary: scheduleResult.reason instanceof Error ? scheduleResult.reason.message : previewUnavailableMessage,
             nextRunTimes: [],
             errors: []
           });
@@ -141,7 +146,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
           setCapabilityPreviewError('');
         } else {
           setCapabilityPreview(null);
-          setCapabilityPreviewError(capabilityResult.reason instanceof Error ? capabilityResult.reason.message : t('agentsWorkflows.schedule.previewUnavailable'));
+          setCapabilityPreviewError(capabilityResult.reason instanceof Error ? capabilityResult.reason.message : previewUnavailableMessage);
         }
       }).finally(() => {
         if (previewRequestRef.current === requestId) setPreviewing(false);
@@ -151,7 +156,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
       window.clearTimeout(timer);
       if (previewRequestRef.current === requestId) previewRequestRef.current += 1;
     };
-  }, [approvedContextGrants, controlMessage, cron, enabled, name, principal, previewRevision, scheduleWorkflow?.id, timezone, workspaceId, t]);
+  }, [approvedContextGrants, cron, enabled, inputs, name, principal, previewRevision, previewUnavailableMessage, scheduleWorkflow?.id, timezone, workspaceId]);
 
   const toggleContextGrant = (grant: string, checked: boolean) => {
     setApprovedContextGrants((current) => checked
@@ -171,7 +176,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         timezone: timezone.trim(),
         enabled,
         approvedContextGrants,
-        controlMessage,
+        inputs,
         principal
       });
       onClose();
@@ -269,11 +274,22 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         )}
 
         {scheduleWorkflow ? (
-          <div className="min-w-0 text-sm font-semibold text-ui-text">
-            {t('agentsWorkflows.schedule.controlMessage')}
-            <WorkflowPromptEditor workflow={scheduleWorkflow} message={controlMessage} onChange={setControlMessage} />
-            {fieldError('controlMessage') && <span className="type-caption mt-1 block text-status-danger-text">{fieldError('controlMessage')}</span>}
-          </div>
+          <section className="grid gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-ui-text">Workflow inputs</h3>
+              <p className="type-caption mt-1 text-ui-text-muted">Stored values are reauthorized against the active workflow on every occurrence.</p>
+            </div>
+            {scheduleWorkflow.parameters.length > 0
+              ? <WorkflowParameterFields
+                  workflow={scheduleWorkflow}
+                  values={inputs}
+                  onChange={setInputs}
+                  errors={Object.fromEntries((preview?.errors || [])
+                    .filter((item) => item.field.startsWith('inputs.'))
+                    .map((item) => [item.field.slice('inputs.'.length), item.message]))}
+                />
+              : <p className="type-caption text-ui-text-muted">This workflow requires no runtime input.</p>}
+          </section>
         ) : null}
 
         {scheduleWorkflow?.contextGrants.length ? (
@@ -342,7 +358,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
       </div>
       <div className="grid grid-cols-1 gap-2 border-t border-ui-border px-4 py-4 sm:flex sm:justify-end sm:px-5">
         <Button size="sm" variant="tertiary" className="w-full justify-center sm:w-auto" onClick={onClose} disabled={saving}>{t('agentsWorkflows.schedule.cancel')}</Button>
-        <Button size="sm" variant="primary" className="w-full justify-center sm:w-auto" onClick={() => void save()} disabled={saving || previewing || !scheduleWorkflow || !name.trim() || !controlMessage.trim() || !scheduleReady}>
+        <Button size="sm" variant="primary" className="w-full justify-center sm:w-auto" onClick={() => void save()} disabled={saving || previewing || !scheduleWorkflow || !name.trim() || !scheduleReady}>
           <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
           {saving ? t('agentsWorkflows.schedule.creating') : t('agentsWorkflows.schedule.create')}
         </Button>

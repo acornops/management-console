@@ -9,22 +9,27 @@ export function workflowCapabilityPreview(
 ): Record<string, unknown> | undefined {
   const workflow = state.workflows.find((item) => item.id === workflowId);
   if (!workflow) return undefined;
-  const requestedTarget = input.target as { id?: string; targetType?: string } | undefined;
+  const requestedTargetId = typeof input.inputs?.target === 'string' ? input.inputs.target : undefined;
   const candidates = [
     { id: FIXTURE_IDS.cluster, name: 'Singapore Production', targetType: 'kubernetes', status: 'ready' },
     { id: FIXTURE_IDS.virtualMachine, name: 'Payments VM', targetType: 'virtual_machine', status: 'ready' }
   ];
-  const selectedTarget = requestedTarget
-    ? candidates.find((candidate) => candidate.id === requestedTarget.id && candidate.targetType === requestedTarget.targetType)
+  const selectedTarget = requestedTargetId
+    ? candidates.find((candidate) => candidate.id === requestedTargetId)
     : undefined;
-  const targetRequired = Boolean((workflow.targetConstraints as { targetIds?: unknown[] } | undefined)?.targetIds?.length);
-  const status = targetRequired && !requestedTarget ? 'needs_target' : selectedTarget ? 'ready' : 'blocked';
+  const targetRequired = Array.isArray(workflow.parameters)
+    && workflow.parameters.some((parameter: { type?: string }) => parameter.type === 'target');
+  const status = targetRequired
+    ? !requestedTargetId ? 'needs_target' : selectedTarget ? 'ready' : 'blocked'
+    : 'ready';
   const tools = selectedTarget
     ? state.targetTools.filter((tool) => tool.capability === 'read').map((tool) => ({ id: tool.id, name: tool.name, label: tool.name.replaceAll('_', ' '), description: tool.description, access: 'read', source: 'target' }))
     : [];
   return {
     workflowId,
     workflowVersion: workflow.version,
+    promptDigest: '0'.repeat(64),
+    bindingDigest: '1'.repeat(64),
     mode: (workflow.capabilityPolicy as { mode?: string } | undefined)?.mode || 'read_only',
     semanticCapabilityIds: (workflow.capabilityPolicy as { semanticCapabilityIds?: string[] } | undefined)?.semanticCapabilityIds || [],
     checkedAt: NOW,

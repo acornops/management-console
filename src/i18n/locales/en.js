@@ -2650,7 +2650,7 @@ export const en = {
       context: 'Context access', contextHelp: 'Approve only the context this recurring run needs.', contextGrantHelp: 'The workflow may read this context on every scheduled run.',
       previewing: 'Checking schedule...', previewPending: 'Complete the schedule to see upcoming runs.', previewUnavailable: 'Schedule preview is unavailable.',
       runAs: 'Runs as', creatorIdentityHelp: 'Schedules run as their authenticated creator. Workspace membership and permissions are rechecked for every run.', identityLoadFailed: 'Your schedule identity could not be loaded.',
-      controlMessage: 'Control message', credentialReadiness: 'Credential readiness', capabilityReadiness: 'Capability readiness', scheduleOwner: 'the schedule owner',
+      credentialReadiness: 'Credential readiness', capabilityReadiness: 'Capability readiness', scheduleOwner: 'the schedule owner',
       credentialReadinessHelp: 'Checked for {{owner}}. Individual MCP connections are never borrowed from another user.', capabilityBlocked: 'Resolve the workflow capability requirements before enabling this schedule.',
       capabilityReadinessHelp: 'Checked against the selected target, Agent assignments, and currently enabled tools.',
       advanced: 'Advanced cron and JSON', cron: 'Cron expression', json: 'Input defaults JSON', invalidJson: 'Input defaults must be a JSON object.',

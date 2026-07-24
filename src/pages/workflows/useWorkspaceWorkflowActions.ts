@@ -8,7 +8,6 @@ import {
   duplicateWorkflow,
   listWorkflowRunEvents,
   postWorkflowSessionMessage,
-  resolvePromptReferences,
   updateWorkflow,
   type WorkflowRunEvent
 } from '@/services/control-plane/workflowApi';
@@ -31,7 +30,8 @@ type WorkflowActionsContext = Record<string, any>;
 export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   const {
     workspace, workflows, setWorkflows,
-    selectedWorkflow, selectedWorkflowEditDraft, workflowMessage, workflowRunInputs, workflowAgents, workflowSessionIds, setWorkflowSessionIds,
+    selectedWorkflow, selectedWorkflowEditDraft, workflowRunInputs, workflowAgents, setWorkflowSessionIds,
+    setWorkflowRunInputs, setLaunchDrawerWorkflowId, setLaunchInputErrors,
     capabilityPreview, setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setLaunchResult, setActiveTab, setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns, setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
     setRunLogError, setRunLogLoadingId, setCancelRunError, setCancelRunAction,
@@ -96,30 +96,25 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       : workflow));
     setLaunchingWorkflowId(selectedWorkflow.id);
     try {
-      const controlMessage = workflowMessage || selectedWorkflow.starterPrompt;
-      let effectiveSessionId = workflowSessionIds[selectedWorkflow.id];
-      if (!effectiveSessionId) {
-        const sessionResponse = await createWorkflowSession(workspace.id, selectedWorkflow.id, {
-          approvedContextGrants: selectedWorkflow.contextGrants
-        });
-        effectiveSessionId = sessionResponse.session.id;
-        setWorkflowSessionIds((current) => ({ ...current, [selectedWorkflow.id]: effectiveSessionId }));
-      }
-      const referencePreview = await resolvePromptReferences(workspace.id, {
-        prompt: controlMessage,
-        workflowId: selectedWorkflow.id,
-        mode: 'launch'
+      const sessionResponse = await createWorkflowSession(workspace.id, selectedWorkflow.id, {
+        approvedContextGrants: selectedWorkflow.contextGrants
       });
-      if (referencePreview.blockers.length > 0) {
-        throw new Error(referencePreview.blockers.map((blocker) => blocker.message).join(' '));
-      }
+      const effectiveSessionId = sessionResponse.session.id;
+      const inputValues = Object.fromEntries(
+        Object.entries(workflowRunInputs || {}).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+      );
       const result = await postWorkflowSessionMessage(effectiveSessionId, {
-        content: controlMessage
+        kind: 'launch',
+        inputs: inputValues
       });
       if (!result.run_id) {
         throw new Error('The control plane accepted the workflow message without returning a run ID.');
       }
       const runId = result.run_id;
+      setWorkflowSessionIds((current) => ({ ...current, [runId]: effectiveSessionId }));
+      setWorkflowRunInputs((current: Record<string, Record<string, unknown>>) => ({ ...current, [selectedWorkflow.id]: {} }));
+      setLaunchInputErrors({});
+      setLaunchDrawerWorkflowId('');
       const confirmedRun: WorkflowDefinition['runs'][number] = {
         ...optimisticRun,
         id: runId,
@@ -170,6 +165,14 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         return next;
       });
     } catch (error) {
+      const details = error && typeof error === 'object' && 'details' in error
+        ? (error as { details?: { errors?: Array<{ key?: string; message?: string }> } }).details
+        : undefined;
+      if (Array.isArray(details?.errors)) {
+        setLaunchInputErrors(Object.fromEntries(details.errors
+          .filter((item) => item.key && item.message)
+          .map((item) => [item.key as string, item.message as string])));
+      }
       const recoveryAgentId = selectedWorkflow.agentIds[0];
       const recovery = recoveryAgentId
         ? resolveMcpReadinessRecovery(error, { workspaceId: workspace.id, scopeType: 'agent', agentId: recoveryAgentId })
@@ -250,17 +253,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     }));
     setWorkflowRunMessageSendingId(runId);
     try {
-      if (selectedWorkflow) {
-        const referencePreview = await resolvePromptReferences(workspace.id, {
-          prompt: content,
-          workflowId: selectedWorkflow.id,
-          mode: 'launch'
-        });
-        if (referencePreview.blockers.length > 0) {
-          throw new Error(referencePreview.blockers.map((blocker) => blocker.message).join(' '));
-        }
-      }
       await postWorkflowSessionMessage(sessionId, {
+        kind: 'follow_up',
         content
       });
       setWorkflowRunMessages((current: Record<string, WorkflowRunMessage[]>) => ({

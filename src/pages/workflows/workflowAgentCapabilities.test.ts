@@ -63,7 +63,7 @@ const workflow: WorkflowDefinition = {
   requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
   contextGrants: ['workspace_metadata'],
   resourceRequirements: [],
-  inputs: [],
+  parameters: [],
   policy: {
     mode: 'read_only',
     approvals: []

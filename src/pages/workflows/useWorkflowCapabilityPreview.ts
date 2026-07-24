@@ -19,7 +19,9 @@ export function useWorkflowCapabilityPreview(input: {
   const requestRef = React.useRef(0);
   const launchOptions = input.options;
   const launchInput = getWorkflowLaunchInputState(input.workflow, launchOptions, input.message, input.agents, input.runInputs);
-  const blocker = loading
+  const blocker = launchInput.blocker
+    ? launchInput.blocker
+    : loading
     ? 'Wait for the effective access preview to finish.'
     : error
       ? 'Retry the effective access preview before launch.'
@@ -27,10 +29,10 @@ export function useWorkflowCapabilityPreview(input: {
         ? 'Wait for the effective access preview to finish.'
         : preview.status === 'blocked'
         ? preview.selectedTarget?.reason || 'The effective access preview is blocked.'
-        : launchInput.blocker;
+        : null;
 
   React.useEffect(() => {
-    if (!input.workflow) {
+    if (!input.workflow || launchInput.blocker) {
       requestRef.current += 1;
       setPreview(null);
       setLoading(false);
@@ -43,7 +45,12 @@ export function useWorkflowCapabilityPreview(input: {
     setLoading(true);
     setError('');
     setPreview(null);
-    previewWorkflowCapabilities(input.workspaceId, workflow.id, { approvedContextGrants: workflow.contextGrants, content: input.message })
+    const inputs = Object.fromEntries(Object.entries(input.runInputs || {})
+      .filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+    const timer = window.setTimeout(() => previewWorkflowCapabilities(input.workspaceId, workflow.id, {
+      approvedContextGrants: workflow.contextGrants,
+      inputs
+    })
       .then((response) => {
         if (requestRef.current !== requestId) return;
         if (response.workflowId !== workflow.id
@@ -60,11 +67,12 @@ export function useWorkflowCapabilityPreview(input: {
       })
       .finally(() => {
         if (requestRef.current === requestId) setLoading(false);
-      });
+      }), 300);
     return () => {
+      window.clearTimeout(timer);
       if (requestRef.current === requestId) requestRef.current += 1;
     };
-  }, [input.workspaceId, input.workflow?.id, input.workflow?.version, input.workflow?.policy.mode, input.workflow?.contextGrants.join('\0'), input.message, retryKey]);
+  }, [input.workspaceId, input.workflow?.id, input.workflow?.version, input.workflow?.policy.mode, input.workflow?.contextGrants.join('\0'), JSON.stringify(input.runInputs || {}), launchInput.blocker, retryKey]);
 
   return { preview, loading, error, launchOptions, launchInput, blocker, retry: () => setRetryKey((value) => value + 1) };
 }

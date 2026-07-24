@@ -1,6 +1,6 @@
 import { requestJson } from './http';
 import type { ControlPlaneRunEvent, ControlPlaneRunToolApproval } from './types';
-import type { PromptResourceRequirement } from './promptResourcesApi';
+import type { PromptResourceRequirement, WorkflowParameterDefinition } from './promptResourcesApi';
 
 export {
   listPromptReferenceTypes,
@@ -12,7 +12,8 @@ export type {
   PromptReferenceToken,
   PromptReferenceTypeDescriptor,
   PromptResourceCandidate,
-  PromptResourceRequirement
+  PromptResourceRequirement,
+  WorkflowParameterDefinition
 } from './promptResourcesApi';
 
 export type WorkflowApiDefinition = Record<string, unknown> & {
@@ -34,7 +35,7 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   executionMode: 'direct' | 'coordinated';
   resourceRequirements: PromptResourceRequirement[];
   tags?: string[];
-  inputs?: WorkflowApiInputDefinition[];
+  parameters: WorkflowParameterDefinition[];
   requiredPermissions?: string[];
   capabilityPolicy: {
     mode: 'read_only' | 'read_write';
@@ -47,14 +48,6 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   };
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
 };
-
-export interface WorkflowApiInputDefinition {
-  name: string;
-  label: string;
-  type: string;
-  required: boolean;
-  optionSource?: string;
-}
 
 export interface WorkflowOption {
   value: string;
@@ -146,6 +139,8 @@ export type WorkflowMcpRequirementPreview = WorkflowMcpRequirementPreviewBase & 
 export interface WorkflowCapabilitiesPreview {
   workflowId: string;
   workflowVersion: number;
+  promptDigest: string;
+  bindingDigest: string;
   mode: 'read_only' | 'read_write';
   semanticCapabilityIds: string[];
   checkedAt: string;
@@ -183,6 +178,8 @@ export function normalizeWorkflowCapabilitiesPreview(
   return {
     workflowId: typeof value?.workflowId === 'string' ? value.workflowId : '',
     workflowVersion: typeof value?.workflowVersion === 'number' ? value.workflowVersion : 0,
+    promptDigest: typeof value?.promptDigest === 'string' ? value.promptDigest : '',
+    bindingDigest: typeof value?.bindingDigest === 'string' ? value.bindingDigest : '',
     mode: value?.mode === 'read_write' ? 'read_write' : 'read_only',
     semanticCapabilityIds: previewArray<string>(value?.semanticCapabilityIds),
     checkedAt: typeof value?.checkedAt === 'string' ? value.checkedAt : '',
@@ -244,7 +241,7 @@ export interface WorkflowSchedule {
   status: 'enabled' | 'paused';
   cron: string;
   timezone: string;
-  controlMessage: string;
+  inputs: Record<string, string>;
   approvedContextGrants: string[];
   principal: { type: 'user'; id: string };
   createdBy?: { userId: string; displayName?: string };
@@ -276,7 +273,7 @@ export interface WorkflowScheduleInput {
   enabled?: boolean;
   cron: string;
   timezone: string;
-  controlMessage: string;
+  inputs: Record<string, string>;
   approvedContextGrants?: string[];
   principal: { type: 'user'; id: string };
 }
@@ -351,7 +348,6 @@ export interface WorkflowCreateInput {
   agentIds: string[];
   resourceRequirements?: PromptResourceRequirement[];
   tags?: string[];
-  inputs?: WorkflowApiInputDefinition[];
   requiredPermissions?: string[];
   capabilityPolicy?: {
     mode?: 'read_only' | 'read_write';
@@ -555,8 +551,8 @@ export function previewWorkflowCapabilities(
   workflowId: string,
   input: {
     approvedContextGrants?: string[];
-    content?: string;
-  } = {}
+    inputs: Record<string, string>;
+  } = { inputs: {} }
 ): Promise<WorkflowCapabilitiesPreview> {
   return requestJson<Partial<WorkflowCapabilitiesPreview>>(
     `/api/v1/workflows/${encodeURIComponent(workflowId)}/capabilities-preview`,
@@ -565,7 +561,7 @@ export function previewWorkflowCapabilities(
       body: JSON.stringify({
         workspaceId,
         approvedContextGrants: input.approvedContextGrants || [],
-        ...(input.content ? { content: input.content } : {})
+        inputs: input.inputs
       })
     }
   ).then(normalizeWorkflowCapabilitiesPreview);
@@ -590,19 +586,15 @@ export function updateWorkflowScope(
 
 export function postWorkflowSessionMessage(
   sessionId: string,
-  input: {
-    content: string;
-    clientRequestId?: string;
-  }
+  input:
+    | { kind: 'launch'; inputs: Record<string, string>; clientRequestId?: string }
+    | { kind: 'follow_up'; content: string; clientRequestId?: string }
 ): Promise<WorkflowMessageAccepted> {
   return requestJson<WorkflowMessageAccepted>(
     `/api/v1/workflow-sessions/${encodeURIComponent(sessionId)}/messages`,
     {
       method: 'POST',
-      body: JSON.stringify({
-        content: input.content,
-        ...(input.clientRequestId ? { clientRequestId: input.clientRequestId } : {})
-      })
+      body: JSON.stringify(input)
     }
   );
 }

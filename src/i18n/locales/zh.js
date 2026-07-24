@@ -2650,7 +2650,7 @@ export const zh = {
       context: '上下文访问', contextHelp: '仅批准此周期运行所需的上下文。', contextGrantHelp: '工作流可在每次计划运行时读取此上下文。',
       previewing: '正在检查计划…', previewPending: '完成计划设置后可查看接下来的运行时间。', previewUnavailable: '计划预览暂不可用。',
       runAs: '运行身份', creatorIdentityHelp: '计划任务以其已认证创建者的身份运行。每次运行都会重新检查工作区成员资格和权限。', identityLoadFailed: '无法加载你的计划任务身份。',
-      controlMessage: '控制消息', credentialReadiness: '凭据就绪状态', capabilityReadiness: '能力就绪状态', scheduleOwner: '计划任务所有者',
+      credentialReadiness: '凭据就绪状态', capabilityReadiness: '能力就绪状态', scheduleOwner: '计划任务所有者',
       credentialReadinessHelp: '正在检查 {{owner}} 的凭据。个人 MCP 连接绝不会借用其他用户的凭据。', capabilityBlocked: '请先解决工作流能力要求，再启用此计划任务。',
       capabilityReadinessHelp: '根据所选目标、Agent 分配和当前启用的工具进行检查。',
       advanced: '高级 Cron 和 JSON', cron: 'Cron 表达式', json: '输入默认值 JSON', invalidJson: '输入默认值必须是 JSON 对象。',

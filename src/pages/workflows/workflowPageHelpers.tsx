@@ -215,7 +215,6 @@ export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCr
     prompt: draft.starterPrompt.trim() || `Start ${name}.`,
     agentIds,
     resourceRequirements: [],
-    inputs: [],
     capabilityPolicy: {
       restrictionMode: draft.restrictionMode,
       semanticCapabilityIds
@@ -414,15 +413,7 @@ export function mapApiWorkflowToDefinition(
     agents: apiAssignments.length > 0 ? apiAssignments : fallback?.agents || [],
     requiredPermissions: Array.isArray(workflow.requiredPermissions) ? workflow.requiredPermissions : fallback?.requiredPermissions || [],
     contextGrants,
-    inputs: Array.isArray(workflow.inputs) && workflow.inputs.length > 0
-      ? workflow.inputs.map((input) => ({
-          name: input.name,
-          label: input.label,
-          type: input.type === 'output_format' ? 'format' : (['text', 'select', 'format'].includes(input.type) ? input.type as WorkflowDefinition['inputs'][number]['type'] : 'select'),
-          required: input.required,
-          optionSource: input.optionSource
-        }))
-      : [],
+    parameters: Array.isArray(workflow.parameters) ? workflow.parameters : fallback?.parameters || [],
     policy: {
       mode: workflowPolicy.mode,
       approvals: uniqueValues(workflowPolicy.approvalRequirements)

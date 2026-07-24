@@ -4,12 +4,10 @@ export type WorkflowCapabilityRestrictionMode = 'inherit' | 'restrict';
 export type WorkflowTab = 'overview' | 'agents' | 'capabilities' | 'runs' | 'settings';
 export type WorkflowPrimaryAction = 'launch' | 'activate' | 'setup';
 
-export interface WorkflowInput {
-  name: string;
-  label: string;
-  type: 'text' | 'select' | 'format';
-  required: boolean;
-  optionSource?: string;
+export interface WorkflowParameter {
+  key: string;
+  type: 'text' | 'target' | 'chat';
+  required: true;
 }
 
 export interface WorkflowRunRecord {
@@ -68,7 +66,7 @@ export interface WorkflowDefinition {
   agents: WorkflowAgentReference[];
   requiredPermissions: string[];
   contextGrants: string[];
-  inputs: WorkflowInput[];
+  parameters: WorkflowParameter[];
   policy: {
     mode: WorkflowCapabilityMode;
     approvals: string[];

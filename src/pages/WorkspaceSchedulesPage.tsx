@@ -32,7 +32,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { agentMcpConfigurationPath } from '@/services/control-plane/mcpReadinessRecovery';
 import { AppPaths } from '@/utils/routes';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
-import { WorkflowPromptEditor } from '@/pages/WorkspaceWorkflowsPage.launchFields';
+import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import { WorkflowMcpCredentialDialog, WorkflowPreviewAuthRow, workflowCapabilityBlockerMessage } from '@/pages/WorkspaceWorkflowsPage.components';
 
 interface WorkspaceSchedulesPageProps {
@@ -48,7 +48,7 @@ interface ScheduleDraft {
   timezone: string;
   enabled: boolean;
   approvedContextGrants: string;
-  controlMessage: string;
+  inputs: Record<string, string>;
   runsAsUserId: string;
 }
 
@@ -59,7 +59,7 @@ const createEmptyDraft = (): ScheduleDraft => ({
   timezone: getUserTimeZone(),
   enabled: true,
   approvedContextGrants: 'workspace_metadata',
-  controlMessage: '',
+  inputs: {},
   runsAsUserId: ''
 });
 
@@ -123,7 +123,7 @@ function scheduleToDraft(schedule: WorkflowSchedule): ScheduleDraft {
     timezone: schedule.timezone,
     enabled: schedule.status === 'enabled',
     approvedContextGrants: schedule.approvedContextGrants.join('\n'),
-    controlMessage: schedule.controlMessage,
+    inputs: schedule.inputs,
     runsAsUserId: schedule.principal.id
   };
 }
@@ -196,7 +196,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
   const openCreateDrawer = (workflowId?: string) => {
     const selectedWorkflowId = workflowId || activeWorkflows[0]?.id || workflows[0]?.id || '';
     const selectedWorkflow = workflows.find((candidate) => candidate.id === selectedWorkflowId);
-    setDraft({ ...createEmptyDraft(), workflowId: selectedWorkflowId, controlMessage: selectedWorkflow?.starterPrompt || '', runsAsUserId: currentUser?.id || '' });
+    setDraft({ ...createEmptyDraft(), workflowId: selectedWorkflowId, inputs: {}, runsAsUserId: currentUser?.id || '' });
     setDraftError('');
     setCapabilityPreview(null);
     setCapabilityPreviewError('');
@@ -247,7 +247,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
     const timer = window.setTimeout(() => {
       previewWorkflowCapabilities(workspace.id, draft.workflowId, {
         approvedContextGrants: approvedContextGrants(draft.approvedContextGrants),
-        content: draft.controlMessage
+        inputs: draft.inputs
       }).then((preview) => {
         if (capabilityPreviewRequestRef.current !== requestId) return;
         setCapabilityPreview(preview);
@@ -264,7 +264,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
       window.clearTimeout(timer);
       if (capabilityPreviewRequestRef.current === requestId) capabilityPreviewRequestRef.current += 1;
     };
-  }, [capabilityPreviewRevision, draft.approvedContextGrants, draft.controlMessage, draft.workflowId, draftOwnerIsCurrentUser, drawerOpen, t, workspace.id]);
+  }, [capabilityPreviewRevision, draft.approvedContextGrants, draft.inputs, draft.workflowId, draftOwnerIsCurrentUser, drawerOpen, t, workspace.id]);
 
   const draftCapabilityReady = !draft.enabled
     || !draftOwnerIsCurrentUser
@@ -287,7 +287,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
           timezone: draft.timezone.trim(),
           enabled: draft.enabled,
           approvedContextGrants: contextGrants,
-          controlMessage: draft.controlMessage
+          inputs: draft.inputs
         });
       } else {
         await createWorkflowSchedule(workspace.id, {
@@ -297,7 +297,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
           timezone: draft.timezone.trim(),
           enabled: draft.enabled,
           approvedContextGrants: contextGrants,
-          controlMessage: draft.controlMessage,
+          inputs: draft.inputs,
           principal: { type: 'user', id: currentUser?.id || draft.runsAsUserId }
         });
       }
@@ -432,7 +432,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
                     <td className="px-4 py-4 font-medium text-ui-text">{workflowName(workflows, schedule.workflowId)}</td>
                     <td className="px-4 py-4 text-ui-text-muted"><code>{schedule.cron}</code> · {schedule.timezone}</td>
                     <td className="px-4 py-4 font-semibold text-ui-text">{formatDateTime(schedule.nextRunAt)}</td>
-                    <td className="px-4 py-4 text-ui-text-muted"><span className="line-clamp-2 max-w-sm">{schedule.controlMessage}</span></td>
+                    <td className="px-4 py-4 text-ui-text-muted"><span className="line-clamp-2 max-w-sm">{Object.keys(schedule.inputs).length} runtime values</span></td>
                     <td className="px-4 py-4 text-ui-text-muted">{schedule.approvedContextGrants.length} {t('schedules.contextGrantLabel')}</td>
                     <td className="px-4 py-4">
                       <StatusBadge tone={mcpAutoPaused ? 'warning' : statusTone(schedule.status)}>{mcpAutoPaused ? 'Auto-paused' : schedule.status === 'enabled' ? t('schedules.status.active') : t('schedules.status.paused')}</StatusBadge>
@@ -487,7 +487,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
                 <Select<string>
                   value={draft.workflowId}
                   options={workflowOptions}
-                  onChange={(workflowId) => setDraft((current) => ({ ...current, workflowId, controlMessage: workflows.find((workflow) => workflow.id === workflowId)?.starterPrompt || current.controlMessage }))}
+                  onChange={(workflowId) => setDraft((current) => ({ ...current, workflowId, inputs: {} }))}
                   className="mt-2"
                   ariaLabel={t('schedules.form.workflow')}
                 />
@@ -522,14 +522,17 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({ 
                 <textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className={scheduleFormTextareaClassName} />
               </label>
               {workflows.find((workflow) => workflow.id === draft.workflowId) ? (
-                <div className="block text-sm font-semibold text-ui-text">
-                  Control message
-                  <WorkflowPromptEditor
+                <section className="grid gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-ui-text">Workflow inputs</h3>
+                    <p className="type-caption mt-1 text-ui-text-muted">These values are validated and reauthorized for every occurrence.</p>
+                  </div>
+                  <WorkflowParameterFields
                     workflow={workflows.find((workflow) => workflow.id === draft.workflowId)!}
-                    message={draft.controlMessage}
-                    onChange={(controlMessage) => setDraft((current) => ({ ...current, controlMessage }))}
+                    values={draft.inputs}
+                    onChange={(inputs) => setDraft((current) => ({ ...current, inputs }))}
                   />
-                </div>
+                </section>
               ) : null}
               {draftOwnerIsCurrentUser ? (
                 <section aria-labelledby="schedule-credential-readiness" className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">

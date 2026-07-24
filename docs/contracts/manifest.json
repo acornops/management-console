@@ -28,6 +28,7 @@
         "snapshot": "Target candidates, mappings, and Agent registrations are evaluated from one request snapshot. The selected target is reloaded and its stored target type is authoritative.",
         "statuses": ["needs_target", "ready", "blocked"],
         "targetStatuses": ["ready", "unavailable", "unsupported"],
+        "digests": "Responses include promptDigest and bindingDigest from the exact runtime-parameter compilation used for an accepted launch.",
         "mcpAuthRequirements": "Every credentialed MCP server in the compiled Agent scope emits mcpRequirements[].{serverId,serverName,authType,owningAgent.{id,name},connectionState,authRequirement.{scope,credentialLabel,requiredInformation[].{name,description}},action}; generic connection metadata and guidance only, never provider profiles, URLs, headers, or credential values",
         "privacy": "Responses expose bounded reason codes and explicit capability-preview metadata only; compiled scopes, credentials, URLs, headers, tool arguments, input schemas, private connection state, and internal coordinator identity are excluded.",
         "mutation": "Preview creates no session, execution, run, approval, or audit record. Dispatch recompiles an internal authoritative scope that is never returned by the public API."
@@ -200,11 +201,13 @@
         "patchCluster": ["name?", "namespaceInclude?", "namespaceExclude?", "writeConfirmationRequiredOverride?"],
         "registerVirtualMachine": ["name", "hostname?", "osFamily?", "serviceManager?", "allowedLogSources?"],
         "patchVirtualMachine": ["name?", "hostname?", "allowedLogSources?"],
-        "workflowSchedule": ["controlMessage", "principal.{type=user,id=currentUserId}"],
-        "promptReferenceResolve": ["prompt", "workflowId?", "workflowSessionId?", "initiatingMessageId?", "mode=authoring|launch", "requirements[]?"],
+        "workflowSchedule": ["inputs.{parameterKey:string}", "principal.{type=user,id=currentUserId}"],
+        "promptReferenceResolve": ["prompt", "workflowId?", "requirements[]?"],
         "catalogImport": ["artifact", "version", "remoteEndpoint", "serverName?", "enabled?", "endpointConfiguration?", "expectedRevision? only on re-import", "no targetType from browser"],
         "postMessage": ["content", "toolAccessMode", "clientMessageId", "llm.{provider,model,reasoningEffort}?", "references[].{kind=tool|skill,id}?"],
-        "postWorkflowMessage": ["content", "clientRequestId?"]
+        "postWorkflowMessage": ["launch.{kind=launch,inputs.{parameterKey:string},clientRequestId?}", "followUp.{kind=follow_up,content,clientRequestId?}"],
+        "workflowCapabilityPreview": ["inputs.{parameterKey:string}"],
+        "workflowDefinitionMutation": ["prompt", "no inputs or parameters fields"]
       },
       "responseFields": {
         "user": ["quota.workspaceMemberships.{used,limit}"],
@@ -244,11 +247,12 @@
         "agent": ["id", "workspaceId", "name", "description?", "instructions", "status", "origin", "reviewState", "providerType", "version", "ownerUserId", "mcpServers[]", "tools[]", "nativeToolConfigs", "skills[]", "contextGrants[]", "targetScope", "approvalPolicy", "trustPolicy", "workflowUsage.{workflowRunCount,lastRunAt?,lastStatus?}", "readiness.{status,reasons[]}"],
         "automationDiagnostics": ["status", "runtime.{mode,workspaceEnabled,workerIntervalMs}", "dispatch.{byStatus,oldestPendingAgeSeconds}", "runs.{workflowByStatus,byExecutorRole,byGraphPosition,active}", "schedules.schedulerLagSeconds", "approvals.{pending,oldestPendingAgeSeconds}", "templates.{byReadiness,items[]}", "reports.retainedSources", "checkedAt"],
         "workflowExecutionAccepted": ["executionId", "run_id", "status"],
+        "workflowDefinition": ["parameters[].{key,type=text|target|chat,required=true}"],
         "promptReferenceDescriptor": ["type", "displayName", "description", "icon", "placeholderLabel", "availability", "unavailableReason?", "minimum", "maximum", "allowPinnedReferences", "provider", "providerVersion"],
         "promptReferenceResolution": ["prompt", "promptDigest", "bindingDigest", "tokens[]", "candidates[]", "bindings[]", "blockers[]", "resolvedAt"],
         "workflowReport": ["id", "executionId?", "runId?", "targetRunId?", "sourceVersion", "mediaType", "title", "sourceSizeBytes", "retentionExpiresAt", "downloadUrl", "no source or PDF bytes"],
         "workflowSelectedAgents": ["agentIds[]", "executionMode=direct|coordinated", "internal session authorization ceiling selectedAgents[]", "jwtClaims.executor_role", "jwtClaims.agent_id? specialist only", "jwtClaims.agent_version? specialist only", "jwtClaims.trigger_id?"],
-        "workflowSchedule": ["id", "workspaceId", "workflowId", "workflowVersion", "name", "status", "cron", "timezone", "controlMessage", "approvedContextGrants", "principal.{type=user,id}", "nextRunAt?", "lastRunAt?", "lastStatus?", "lastError?", "createdBy", "updatedBy"],
+        "workflowSchedule": ["id", "workspaceId", "workflowId", "workflowVersion", "name", "status", "cron", "timezone", "inputs", "approvedContextGrants", "principal.{type=user,id}", "nextRunAt?", "lastRunAt?", "lastStatus?", "lastError?", "createdBy", "updatedBy"],
         "workflowSchedulePage": ["items", "summary.{total,active,paused,approvalGated,nextRunAt?}"],
         "workspaceApprovalInbox": ["query.{status?,limit?,cursor?,runId?,approvalId?}", "items[].{approvalId,runId,source,workflowId?,targetId?,summary,toolName,requestedBy?,expiresAt,status,decision?,decidedBy?,decidedAt?,requestedAt}", "pendingCount", "nextCursor?"]
       }

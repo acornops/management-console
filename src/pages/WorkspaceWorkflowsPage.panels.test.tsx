@@ -22,9 +22,9 @@ function workflowWithRun(run: WorkflowDefinition['runs'][number]): WorkflowDefin
     agents: [],
     requiredPermissions: [],
     contextGrants: [],
-    inputs: [],
+    parameters: [],
     policy: { mode: 'read_only', approvals: [] },
-    starterPrompt: 'Inspect @target[].',
+    starterPrompt: 'Inspect {{target:target}}.',
     runs: [run]
   };
 }
@@ -48,7 +48,7 @@ function renderRunsPanel(workflow: WorkflowDefinition): string {
         sendWorkflowRunMessage: vi.fn()
       }}
       approvalAction=""
-      workflowSessionId=""
+      workflowSessionIds={{}}
       runMessagesByRunId={{}}
       runMessageDrafts={{}}
       runMessageSendingId=""

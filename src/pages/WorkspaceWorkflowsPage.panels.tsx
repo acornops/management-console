@@ -12,9 +12,11 @@ import { TraceFooter } from '@/features/targets/chat/components/TraceFooter';
 import {
   AgentAssignmentList,
   CapabilityReviewRow,
+  WorkflowCapabilityLedger,
   WorkflowSection,
   WorkflowTabPanel
 } from '@/pages/WorkspaceWorkflowsPage.components';
+import { humanizeWorkflowParameterKey } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import type { WorkflowDefinition, WorkflowRunMessage } from '@/pages/workflows/workflowModel';
 import { getWorkflowAgentCapabilityReview, type WorkflowAgentCapabilityReview } from '@/pages/workflows/workflowAgentCapabilities';
 import { WorkflowRunResponse } from '@/pages/workflows/WorkflowRunResponse';
@@ -27,11 +29,67 @@ import {
 } from '@/pages/workflows/workflowPageHelpers';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
-import { getWorkflowExecution, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
+import { getWorkflowExecution, type WorkflowCapabilitiesPreview, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 type WorkflowActions = ReturnType<typeof useWorkspaceWorkflowActions>;
 type WorkflowAgentOption = WorkflowOptionsCatalog['agents'][number];
+
+export const WorkflowOverviewPanel: React.FC<{
+  workflow: WorkflowDefinition;
+  workspaceId: string;
+  preview: WorkflowCapabilitiesPreview | null;
+  previewLoading: boolean;
+  previewError: string;
+  onRetryPreview: () => void;
+  onReviewAgents: () => void;
+  launchError: string;
+  launchRecovery: McpReadinessRecovery | null;
+  launchResult: { workflowId: string; runId: string; toolCount: number } | null;
+}> = ({
+  workflow,
+  workspaceId,
+  preview,
+  previewLoading,
+  previewError,
+  onRetryPreview,
+  onReviewAgents,
+  launchError,
+  launchRecovery,
+  launchResult
+}) => {
+  const { t } = useTranslation();
+  return (
+    <WorkflowTabPanel tab="overview" title="Overview" description="Review assigned agents, the saved prompt, and runtime parameters.">
+      <WorkflowSection
+        title={t('workflowCoordination.agentsTitle')}
+        description={t('workflowCoordination.agentsDescription')}
+        action={<Button type="button" variant="secondary" size="sm" onClick={onReviewAgents}><ICONS.Bot className="h-4 w-4" aria-hidden="true" />Review agents</Button>}
+      >
+        <AgentAssignmentList
+          className="mt-4"
+          agents={workflow.agents}
+          labelForAgent={() => workflow.executionMode === 'direct' ? t('workflowCoordination.directLabel') : t('workflowCoordination.coordinatedLabel')}
+        />
+      </WorkflowSection>
+      <WorkflowSection title="Prompt" description="The saved workflow prompt is compiled by the control plane when a run starts.">
+        <div className="mt-3 rounded-md border border-ui-border bg-ui-bg px-4 py-3">
+          <p className="whitespace-pre-wrap break-words text-sm text-ui-text">{workflow.starterPrompt}</p>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {workflow.parameters.length > 0 ? workflow.parameters.map((parameter) => (
+            <span key={parameter.key} className="rounded-md border border-ui-border bg-ui-surface-subtle px-2.5 py-1.5 text-xs font-semibold text-ui-text-muted">
+              {humanizeWorkflowParameterKey(parameter.key)} · {parameter.type}
+            </span>
+          )) : <span className="type-caption text-ui-text-muted">No runtime input required.</span>}
+        </div>
+        <WorkflowCapabilityLedger workspaceId={workspaceId} preview={preview} loading={previewLoading} error={previewError} onRetry={onRetryPreview} />
+      </WorkflowSection>
+      {launchError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{launchError}{launchRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={launchRecovery.href}>{launchRecovery.label}</a>}</div>}
+      {launchResult?.workflowId === workflow.id && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">Run dispatched with {launchResult.toolCount} tools. Run ID: {launchResult.runId}.</div>}
+    </WorkflowTabPanel>
+  );
+};
 
 function formatWorkflowTimestamp(value: string): string {
   return formatUserDateTime(value, { fallback: value });
@@ -224,7 +282,7 @@ export const WorkflowRunsPanel: React.FC<{
   cancelRunAction: string;
   workflowActions: Pick<WorkflowActions, 'stopWorkflowRun' | 'decideApproval' | 'toggleRunLogs' | 'updateWorkflowRunMessageDraft' | 'sendWorkflowRunMessage'>;
   approvalAction: string;
-  workflowSessionId: string;
+  workflowSessionIds: Record<string, string>;
   runMessagesByRunId: Record<string, WorkflowRunMessage[]>;
   runMessageDrafts: Record<string, string>;
   runMessageSendingId: string;
@@ -242,7 +300,7 @@ export const WorkflowRunsPanel: React.FC<{
   cancelRunAction,
   workflowActions,
   approvalAction,
-  workflowSessionId,
+  workflowSessionIds,
   runMessagesByRunId,
   runMessageDrafts,
   runMessageSendingId,
@@ -313,6 +371,7 @@ export const WorkflowRunsPanel: React.FC<{
       const runMessageSending = runMessageSendingId === effectiveRunId;
       const runMessageError = runMessageErrorByRunId[effectiveRunId] || '';
       const runMessageRecovery = runMessageRecoveryByRunId[effectiveRunId];
+      const workflowSessionId = workflowSessionIds[effectiveRunId] || '';
       const discussionState = getRunDiscussionState(run, workflowSessionId);
       const canMessageRun = discussionState === 'active';
       return (

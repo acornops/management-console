@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests/fixtures',
   outputDir: './test-results/fixtures',
   fullyParallel: true,
-  workers: 2,
+  workers: process.platform === 'darwin' ? 1 : 2,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
   timeout: 60_000,

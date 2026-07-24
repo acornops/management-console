@@ -493,7 +493,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.workflowSchedules), summary: { total: state.workflowSchedules.length, active: state.workflowSchedules.filter((item) => item.status === 'enabled').length, paused: state.workflowSchedules.filter((item) => item.status === 'paused').length, approvalGated: 0 } });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', controlMessage: '', approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW, ...input };
+      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', inputs: {}, approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW, ...input };
       state.workflowSchedules.push(schedule);
       return json({ schedule }, 201);
     }

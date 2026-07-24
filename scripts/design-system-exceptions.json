@@ -2,6 +2,7 @@
   "activationContexts": [
     "src/pages/WorkspaceWorkflowsPage.tsx",
     "src/pages/WorkspaceWorkflowsPage.components.tsx",
+    "src/pages/WorkflowRunDrawer.tsx",
     "src/pages/WorkflowTemplateSetupDrawer.tsx",
     "src/design-system.tsx"
   ],

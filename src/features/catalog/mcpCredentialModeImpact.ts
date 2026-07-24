@@ -23,7 +23,7 @@ export async function enabledScheduleImpactForTarget(
   const previews = await Promise.allSettled(enabledSchedules.map((schedule) =>
     previewWorkflowCapabilities(workspaceId, schedule.workflowId, {
       approvedContextGrants: schedule.approvedContextGrants,
-      content: schedule.controlMessage
+      inputs: schedule.inputs
     })
   ));
   return enabledSchedules.filter((schedule, index) => {

@@ -38,7 +38,6 @@ export interface PromptReferenceToken {
   label: string;
   start: number;
   end: number;
-  state: 'placeholder' | 'concrete';
 }
 
 export interface PromptReferenceResolution {
@@ -46,8 +45,15 @@ export interface PromptReferenceResolution {
   promptDigest: string;
   bindingDigest: string;
   tokens: PromptReferenceToken[];
+  parameters: WorkflowParameterDefinition[];
   candidates: Array<PromptResourceCandidate | null>;
   blockers: Array<{ code: string; message: string; tokenIndex?: number; type?: string; retryable: boolean }>;
+}
+
+export interface WorkflowParameterDefinition {
+  key: string;
+  type: 'text' | 'target' | 'chat';
+  required: true;
 }
 
 export function listPromptReferenceTypes(workspaceId: string): Promise<PromptReferenceTypeDescriptor[]> {
@@ -71,7 +77,7 @@ export function suggestPromptReferences(
 
 export function resolvePromptReferences(
   workspaceId: string,
-  input: { prompt: string; workflowId?: string; workflowSessionId?: string; mode: 'authoring' | 'launch' }
+  input: { prompt: string; workflowId?: string }
 ): Promise<PromptReferenceResolution> {
   return requestJson<PromptReferenceResolution>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/prompt-references/resolve`,
