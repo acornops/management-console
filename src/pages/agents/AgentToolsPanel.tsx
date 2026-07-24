@@ -4,7 +4,15 @@ import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { Select } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { Tooltip } from '@/components/common/Tooltip';
+import { ICONS } from '@/constants';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
+import { FetchToolDrawer } from '@/pages/agents/FetchToolDrawer';
+import {
+  FETCH_TOOL_ID,
+  fetchToolConfigFromRecord,
+  type FetchToolConfig
+} from '@/pages/agents/fetchToolConfig';
 import {
   grantAgentNativeTool,
   revokeAgentNativeTool,
@@ -17,6 +25,7 @@ interface AgentToolsPanelProps {
   agent: AgentDefinition;
   nativeTools: WorkspaceNativeToolApi[];
   assignedNativeToolIds: string[];
+  nativeToolConfigs: Record<string, Record<string, unknown>>;
   tools: Array<{ server: AgentMcpServerApi; tool: AgentMcpServerApi['tools'][number] }>;
   busy: string;
   canManageAgents: boolean;
@@ -25,13 +34,55 @@ interface AgentToolsPanelProps {
   setError: React.Dispatch<React.SetStateAction<string>>;
   setNotice: React.Dispatch<React.SetStateAction<string>>;
   setAssignedNativeToolIds: React.Dispatch<React.SetStateAction<string[]>>;
+  setNativeToolConfigs: React.Dispatch<React.SetStateAction<Record<string, Record<string, unknown>>>>;
   run: (key: string, action: () => Promise<unknown>, message: string) => Promise<void>;
 }
+
+interface FetchToolActionsProps {
+  assigned: boolean;
+  busy: boolean;
+  canManageAgents: boolean;
+  saving: boolean;
+  onConfigure: () => void;
+  onRevoke: () => void;
+}
+
+export const FetchToolActions: React.FC<FetchToolActionsProps> = ({
+  assigned,
+  busy,
+  canManageAgents,
+  saving,
+  onConfigure,
+  onRevoke
+}) => (
+  <div className="flex items-center gap-2">
+    <Button
+      size="sm"
+      variant={assigned ? 'secondary' : 'primary'}
+      disabled={!canManageAgents || busy}
+      onClick={assigned ? onRevoke : onConfigure}
+    >
+      {saving ? 'Saving…' : assigned ? 'Revoke' : 'Grant'}
+    </Button>
+    <Tooltip content="Configure">
+      <Button
+        size="icon"
+        variant="icon"
+        disabled={!canManageAgents || busy}
+        onClick={onConfigure}
+        aria-label="Configure Fetch"
+      >
+        <ICONS.Settings className="h-4 w-4" aria-hidden="true" />
+      </Button>
+    </Tooltip>
+  </div>
+);
 
 export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
   agent,
   nativeTools,
   assignedNativeToolIds,
+  nativeToolConfigs,
   tools,
   busy,
   canManageAgents,
@@ -40,9 +91,19 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
   setError,
   setNotice,
   setAssignedNativeToolIds,
+  setNativeToolConfigs,
   run
 }) => {
   const { t } = useTranslation();
+  const [fetchDrawerOpen, setFetchDrawerOpen] = React.useState(false);
+  const fetchConfig = React.useMemo(
+    () => fetchToolConfigFromRecord(nativeToolConfigs[FETCH_TOOL_ID]),
+    [nativeToolConfigs]
+  );
+
+  React.useEffect(() => {
+    setFetchDrawerOpen(false);
+  }, [agent.id]);
 
   const toggleNativeTool = async (tool: WorkspaceNativeToolApi, assigned: boolean) => {
     const key = `native:${tool.id}`;
@@ -54,9 +115,34 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
         ? await revokeAgentNativeTool(agent.workspaceId, agent.id, tool.id)
         : await grantAgentNativeTool(agent.workspaceId, agent.id, tool.id);
       setAssignedNativeToolIds(updated.tools || []);
+      setNativeToolConfigs(updated.nativeToolConfigs || {});
       setNotice(`${tool.title} ${assigned ? 'revoked' : 'granted'}. Dependent workflow readiness was recomputed.`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'The native tool assignment failed.');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const saveFetchTool = async (config: FetchToolConfig) => {
+    const key = `native:${FETCH_TOOL_ID}`;
+    setBusy(key);
+    setError('');
+    setNotice('');
+    try {
+      const updated = await grantAgentNativeTool(
+        agent.workspaceId,
+        agent.id,
+        FETCH_TOOL_ID,
+        config as unknown as Record<string, unknown>
+      );
+      setAssignedNativeToolIds(updated.tools || []);
+      setNativeToolConfigs(updated.nativeToolConfigs || {});
+      setFetchDrawerOpen(false);
+      setNotice('Fetch configuration saved.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'The Fetch configuration could not be saved.');
+      throw cause;
     } finally {
       setBusy('');
     }
@@ -70,12 +156,30 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
           {nativeTools.length ? nativeTools.map((tool) => {
             const assigned = assignedNativeToolIds.includes(tool.id);
             return <div key={tool.id} className="flex flex-wrap items-start justify-between gap-3 py-4">
-              <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><strong className="text-sm">{tool.title}</strong><StatusBadge tone={assigned ? 'success' : 'neutral'}>{assigned ? t('agentsWorkflows.agents.details.capabilities.nativeTools.granted') : t('agentsWorkflows.agents.details.capabilities.nativeTools.notGranted')}</StatusBadge><StatusBadge tone="neutral">{t('agentsWorkflows.agents.details.capabilities.nativeTools.workflowOnly')}</StatusBadge></div><p className="type-caption mt-1 max-w-[70ch] text-ui-text-muted">{tool.description}</p><p className="type-code mt-1 text-ui-text-muted">{tool.id}</p></div>
-              <Button size="sm" variant={assigned ? 'secondary' : 'primary'} disabled={!canManageAgents || Boolean(busy)} onClick={() => void toggleNativeTool(tool, assigned)}>{busy === `native:${tool.id}` ? 'Saving…' : assigned ? 'Revoke' : 'Grant'}</Button>
+              <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><strong className="text-sm">{tool.title}</strong><StatusBadge tone={assigned ? 'success' : 'neutral'}>{assigned ? t('agentsWorkflows.agents.details.capabilities.nativeTools.granted') : t('agentsWorkflows.agents.details.capabilities.nativeTools.notGranted')}</StatusBadge></div><p className="type-caption mt-1 max-w-[70ch] text-ui-text-muted">{tool.targetCatalogDescription || tool.description}</p><p className="type-code mt-1 text-ui-text-muted">{tool.id}</p></div>
+              {tool.id === FETCH_TOOL_ID ? (
+                <FetchToolActions
+                  assigned={assigned}
+                  busy={Boolean(busy)}
+                  canManageAgents={canManageAgents}
+                  saving={busy === `native:${tool.id}`}
+                  onConfigure={() => setFetchDrawerOpen(true)}
+                  onRevoke={() => void toggleNativeTool(tool, true)}
+                />
+              ) : (
+                <Button size="sm" variant={assigned ? 'secondary' : 'primary'} disabled={!canManageAgents || Boolean(busy)} onClick={() => void toggleNativeTool(tool, assigned)}>{busy === `native:${tool.id}` ? 'Saving…' : assigned ? 'Revoke' : 'Grant'}</Button>
+              )}
             </div>;
           }) : <p className="py-5 text-sm text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.nativeTools.empty')}</p>}
         </div>
       </section>
+      <FetchToolDrawer
+        isOpen={fetchDrawerOpen}
+        saving={busy === `native:${FETCH_TOOL_ID}`}
+        initialConfig={fetchConfig}
+        onClose={() => setFetchDrawerOpen(false)}
+        onSave={saveFetchTool}
+      />
       <section aria-labelledby="mcp-discovered-tools-title">
         <h3 id="mcp-discovered-tools-title" className="type-panel-title">{t('agentsWorkflows.agents.details.capabilities.discoveredTools.title')}</h3>
         <p className="type-caption mb-3 mt-1 text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.discoveredTools.description')}</p>

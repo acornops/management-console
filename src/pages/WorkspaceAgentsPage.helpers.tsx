@@ -138,6 +138,7 @@ export const mapApiAgent = (
         .filter((tool) => tool.enabled && tool.reviewState === 'approved')
         .map((tool) => tool.alias))
     ],
+    nativeToolConfigs: item.nativeToolConfigs || {},
     skills: item.skillInstallations?.map((skill) => skill.name) || item.skills || [],
     skillInstallations: item.skillInstallations || [],
     semanticCapabilityIds: item.semanticCapabilityIds || [],

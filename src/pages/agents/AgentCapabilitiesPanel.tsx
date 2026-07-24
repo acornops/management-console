@@ -61,6 +61,9 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
   const [skills, setSkills] = React.useState<AgentSkillApi[]>(agent.skillInstallations || []);
   const [nativeTools, setNativeTools] = React.useState<WorkspaceNativeToolApi[]>([]);
   const [assignedNativeToolIds, setAssignedNativeToolIds] = React.useState<string[]>(agent.tools || []);
+  const [nativeToolConfigs, setNativeToolConfigs] = React.useState<Record<string, Record<string, unknown>>>(
+    agent.nativeToolConfigs || {}
+  );
   const [toolRefreshErrors, setToolRefreshErrors] = React.useState<Record<string, string>>({});
   const [credentialDialogServer, setCredentialDialogServer] = React.useState<AgentMcpServerApi | null>(null);
   const [busy, setBusy] = React.useState('');
@@ -113,6 +116,11 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
   React.useEffect(() => {
     void reload().catch(() => undefined);
   }, [reload]);
+
+  React.useEffect(() => {
+    setAssignedNativeToolIds(agent.tools || []);
+    setNativeToolConfigs(agent.nativeToolConfigs || {});
+  }, [agent.id, agent.nativeToolConfigs, agent.tools]);
 
   React.useEffect(() => {
     let mounted = true;
@@ -503,6 +511,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
           agent={agent}
           nativeTools={nativeTools}
           assignedNativeToolIds={assignedNativeToolIds}
+          nativeToolConfigs={nativeToolConfigs}
           tools={tools}
           busy={busy}
           canManageAgents={canManageAgents}
@@ -511,6 +520,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({
           setError={setError}
           setNotice={setNotice}
           setAssignedNativeToolIds={setAssignedNativeToolIds}
+          setNativeToolConfigs={setNativeToolConfigs}
           run={run}
         />
       )}

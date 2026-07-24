@@ -53,18 +53,28 @@ describe('agent control-plane api', () => {
   it('lists and assigns code-owned native tools through manage_agents routes', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
-      if (url.endsWith('/catalog/native-tools')) return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'reports.pdf.generate', title: 'Generate PDF report', invocationScopes: ['workflow'] }] }), { status: 200 }));
+      if (url.endsWith('/catalog/native-tools')) return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'reports.pdf.generate', title: 'Generate PDF report', targetCatalogDescription: 'Create a provenance-linked PDF incident report from the current assistant conversation and available evidence.', invocationScopes: ['workflow', 'target_chat'] }] }), { status: 200 }));
       return Promise.resolve(new Response(JSON.stringify({ agent: { id: 'agent-1', workspaceId: 'workspace-1', tools: init?.method === 'PUT' ? ['reports.pdf.generate'] : [] } }), { status: 200 }));
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(listWorkspaceNativeTools('workspace-1')).resolves.toMatchObject([{ id: 'reports.pdf.generate', invocationScopes: ['workflow'] }]);
+    await expect(listWorkspaceNativeTools('workspace-1')).resolves.toMatchObject([{
+      id: 'reports.pdf.generate',
+      targetCatalogDescription: 'Create a provenance-linked PDF incident report from the current assistant conversation and available evidence.',
+      invocationScopes: ['workflow', 'target_chat']
+    }]);
     await expect(grantAgentNativeTool('workspace-1', 'agent-1', 'reports.pdf.generate')).resolves.toMatchObject({ tools: ['reports.pdf.generate'] });
+    await grantAgentNativeTool('workspace-1', 'agent-1', 'http.fetch.get', {
+      allowedUrlPatterns: ['https://status.example.com/api/*']
+    });
     await expect(revokeAgentNativeTool('workspace-1', 'agent-1', 'reports.pdf.generate')).resolves.toMatchObject({ tools: [] });
 
     const mutations = fetchMock.mock.calls.filter((call) => ['PUT', 'DELETE'].includes(call[1]?.method as string));
-    expect(mutations.map((call) => call[1]?.method)).toEqual(['PUT', 'DELETE']);
+    expect(mutations.map((call) => call[1]?.method)).toEqual(['PUT', 'PUT', 'DELETE']);
     expect(String(mutations[0][0])).toContain('/agents/agent-1/native-tools/reports.pdf.generate');
+    expect(mutations[1][1]?.body).toBe(JSON.stringify({
+      config: { allowedUrlPatterns: ['https://status.example.com/api/*'] }
+    }));
   });
 
   it('creates and updates durable agents through workspace-scoped consumer payloads', async () => {

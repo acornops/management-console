@@ -8,14 +8,18 @@ export interface AgentMcpToolApi { name: string; serverId: string; alias: string
 export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; targetConstraints: { targetTypes: string[]; targetIds: string[] }; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[] }
 export interface WorkspaceNativeToolApi {
   id: string;
+  modelAlias: string;
   title: string;
   description: string;
+  targetCatalogDescription?: string;
+  targetToggleable?: boolean;
   semanticCapabilityId: string;
-  invocationScopes: Array<'workflow'>;
-  authorizationClass: 'selected_context' | 'internal_artifact';
+  invocationScopes: Array<'workflow' | 'target_chat'>;
+  authorizationClass: 'prompt_resource' | 'internal_artifact' | 'external_http_read';
   auditOperation: 'read' | 'write';
   approvalOperation: 'read' | 'write';
   requiredContextGrant?: string;
+  configSchema?: Record<string, unknown>;
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown>;
 }
@@ -92,6 +96,7 @@ export interface AgentDefinitionApi {
   mcpTools?: Array<{ serverId: string; toolName: string }>;
   mcpInstallations?: AgentMcpServerApi[];
   tools?: string[];
+  nativeToolConfigs?: Record<string, Record<string, unknown>>;
   skills?: string[];
   skillInstallations?: AgentSkillApi[];
   permissionMode?: RunPermissionMode;
@@ -142,10 +147,18 @@ export function listWorkspaceNativeTools(workspaceId: string): Promise<Workspace
   ).then((response) => response.items);
 }
 
-export function grantAgentNativeTool(workspaceId: string, agentId: string, toolId: string): Promise<AgentDefinitionApi> {
+export function grantAgentNativeTool(
+  workspaceId: string,
+  agentId: string,
+  toolId: string,
+  config?: Record<string, unknown>
+): Promise<AgentDefinitionApi> {
   return requestJson<{ agent: AgentDefinitionApi }>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/native-tools/${encodeURIComponent(toolId)}`,
-    { method: 'PUT' }
+    {
+      method: 'PUT',
+      ...(config ? { body: JSON.stringify({ config }) } : {})
+    }
   ).then((response) => response.agent);
 }
 

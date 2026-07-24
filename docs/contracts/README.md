@@ -59,6 +59,9 @@ The management console is the browser client for the control-plane API. Keep thi
 - Agent **Capabilities → Tools** lists AcornOps native tools separately from
   MCP-discovered tools. Native grant and revoke require `manage_agents` only,
   and Workflow traces expose authenticated PDF downloads.
+- Fetch is configured in that Tools tab with a fixed GET method and one to 20
+  complete public HTTPS URL patterns. The drawer validates wildcard placement
+  and unsafe URL forms and warns that paths and query values leave AcornOps.
 - Completed target-chat assistant turns expose a contextual **Generate PDF**
   action. The browser submits the run ID (and optional title), never replacement
   report content; the control plane exports the persisted assistant response
