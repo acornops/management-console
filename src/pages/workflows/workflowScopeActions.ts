@@ -12,7 +12,7 @@ export function createWorkflowScopeActions(ctx: Record<string, any>) {
   const {
     selectedWorkflow, workflows, setWorkflows, workspace, workflowOptions, ownerLabelsByUserId,
     scopeDrafts, setScopeDrafts, setScopeSaveError, setScopeSaveResult, setIsEditingScopeTab,
-    setSavingScope, setCompiledScopes
+    setSavingScope
   } = ctx;
 
   function updateScopeDraft(workflowId: string, update: (draft: ScopeDraft) => ScopeDraft): void {
@@ -63,11 +63,6 @@ export function createWorkflowScopeActions(ctx: Record<string, any>) {
       setWorkflows((current: any[]) => current.map((workflow) => workflow.id === selectedWorkflow.id
         ? { ...mapped, runs: workflow.runs, lastRun: workflow.lastRun }
         : workflow));
-      setCompiledScopes((current: Record<string, unknown>) => {
-        const next = { ...current };
-        delete next[selectedWorkflow.id];
-        return next;
-      });
       setScopeDrafts((current: Record<string, ScopeDraft>) => ({ ...current, [selectedWorkflow.id]: createScopeDraft(mapped) }));
       setScopeSaveResult({ tab, message: draft.restrictionMode === 'inherit'
         ? 'Workflow capability policy saved. Future sessions will inherit the selected Agents’ current capabilities.'

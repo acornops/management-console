@@ -53,9 +53,9 @@ The management console is the browser client for the control-plane API. Keep thi
   installed skills, and direct tools as distinct sources. Launch uses the
   workflow capability-preview endpoint to resolve exact target tools, remains
   blocked while that preview is loading, stale, failed, or blocked, and keeps
-  unsupported targets visible with a keyboard-readable reason. The run
-  response `compiledAccessScope`, rather than the session ceiling or preview,
-  becomes the displayed authority after dispatch.
+  unsupported targets visible with a keyboard-readable reason. Compiled scopes
+  remain internal; the console uses only the bounded capability preview and
+  public run status after dispatch.
 - Agent **Capabilities → Tools** lists AcornOps native tools separately from
   MCP-discovered tools. Native grant and revoke require `manage_agents` only,
   and Workflow traces expose authenticated PDF downloads.

@@ -40,7 +40,7 @@ truthful.
 
 ## Outcomes
 
-- Target chat, Agent runs, workflow launches, and workflow follow-ups now share
+- Target chat, Workflow launches, and Workflow follow-ups now share
   exact-installation recovery routing with focus but no automatic mutation.
 - Authenticated installations, catalog refreshes, disconnected/loading states,
   rate-limit countdowns, and schedule auto-pause recovery all use truthful,

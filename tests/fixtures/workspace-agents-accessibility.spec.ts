@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 const agentProfilePath = (tab: string) =>
   `/workspaces/fixture-workspace/agents?panel=profile&agent=fixture-specialist&agentTab=${tab}`;
 
-test('mobile agent profile scrolls the keyboard-selected tab fully into view', async ({ page }) => {
+test('mobile agent profile keeps the keyboard-selected tab fully in view', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(agentProfilePath('overview'), { waitUntil: 'domcontentloaded' });
 
@@ -24,14 +24,12 @@ test('mobile agent profile scrolls the keyboard-selected tab fully into view', a
     const listRect = element.getBoundingClientRect();
     const activeRect = active?.getBoundingClientRect();
     return {
-      scrollLeft: element.scrollLeft,
       activeLeft: activeRect?.left,
       activeRight: activeRect?.right,
       listLeft: listRect.left,
       listRight: listRect.right
     };
   });
-  expect(geometry.scrollLeft).toBeGreaterThan(0);
   expect(geometry.activeLeft).toBeGreaterThanOrEqual(geometry.listLeft);
   expect(geometry.activeRight).toBeLessThanOrEqual(geometry.listRight);
 });
@@ -44,7 +42,6 @@ test('mobile agent profile reveals the URL-selected tab on first render', async 
   const tablist = profile.getByRole('tablist', { name: 'Agent profile sections' });
   const settings = profile.getByRole('tab', { name: 'Settings' });
   await expect(settings).toHaveAttribute('aria-selected', 'true');
-  await expect.poll(() => tablist.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
   const [listBox, settingsBox] = await Promise.all([tablist.boundingBox(), settings.boundingBox()]);
   expect(settingsBox?.x).toBeGreaterThanOrEqual(listBox?.x || 0);
   expect((settingsBox?.x || 0) + (settingsBox?.width || 0)).toBeLessThanOrEqual((listBox?.x || 0) + (listBox?.width || 0));

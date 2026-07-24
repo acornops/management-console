@@ -1,5 +1,4 @@
-import type { AgentActivityRecordApi, AgentCapability, AgentMcpServerApi, AgentProviderType, AgentSkillApi, AgentStatus, AgentTargetScopeApi, AgentTriggerDefinitionApi, RunPermissionMode } from '@/services/control-plane/agentApi';
-import { formatUserDateTime } from '@/utils/dateTime';
+import type { AgentCapability, AgentMcpServerApi, AgentProviderType, AgentSkillApi, AgentStatus, AgentTargetScopeApi, RunPermissionMode } from '@/services/control-plane/agentApi';
 
 export interface AgentDefinition {
   id: string;
@@ -9,7 +8,6 @@ export interface AgentDefinition {
   instructions: string;
   status: AgentStatus;
   origin: { type: 'template' | 'manual'; templateId?: string; templateVersion?: number };
-  kind: 'specialist';
   reviewState: 'draft' | 'reviewed';
   providerType: AgentProviderType;
   ownerUserId?: string;
@@ -31,39 +29,10 @@ export interface AgentDefinition {
   };
   capabilities: AgentCapability[];
   workflowsUsingAgent: string[];
-  triggers: AgentTriggerDefinitionApi[];
-  activity: {
-    runCount: number;
+  workflowUsage: {
+    workflowRunCount: number;
     lastRunAt?: string;
-    lastStatus?: AgentActivityRecordApi['status'];
-  };
-  auditHistory: Array<{ id: string; summary: string; occurredAt: string }>;
-}
-
-export interface AgentActivitySummary {
-  lastRun: string;
-  status: string;
-  line: string;
-}
-
-function formatActivityTimestamp(value: string): string {
-  return formatUserDateTime(value, { fallback: value });
-}
-
-export function getAgentActivitySummary(agent: AgentDefinition): AgentActivitySummary {
-  if (!agent.activity.lastRunAt) {
-    return {
-      lastRun: 'No runs yet',
-      status: 'not run',
-      line: 'No runs yet'
-    };
-  }
-  const status = agent.activity.lastStatus || 'unknown';
-  const lastRun = formatActivityTimestamp(agent.activity.lastRunAt);
-  return {
-    lastRun,
-    status,
-    line: `Last run: ${lastRun} · ${status}`
+    lastStatus?: string;
   };
 }
 

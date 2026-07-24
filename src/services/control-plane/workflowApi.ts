@@ -98,7 +98,6 @@ export interface WorkflowSessionResponse {
     workspaceId: string;
     workflowVersion: number;
   } & Record<string, unknown>;
-  compiledAccessScope: Record<string, unknown>;
 }
 
 export type WorkflowCapabilityPreviewReasonCode =
@@ -123,6 +122,7 @@ export interface WorkflowCapabilityToolPreview {
   description?: string;
   access: 'read' | 'write';
   source: 'target' | 'mcp' | 'builtin';
+  serverId?: string;
 }
 
 interface WorkflowMcpRequirementPreviewBase {
@@ -153,7 +153,6 @@ export interface WorkflowCapabilitiesPreview {
   reasonCodes: WorkflowCapabilityPreviewReasonCode[];
   targetCandidates: WorkflowTargetCapabilityCandidate[];
   selectedTarget?: WorkflowTargetCapabilityCandidate;
-  compiledAccessScope?: Record<string, unknown>;
   tools: { read: WorkflowCapabilityToolPreview[]; write: WorkflowCapabilityToolPreview[] };
   directMcpServers: Array<{ id: string; name: string }>;
   enabledSkills: Array<{ id: string; name: string }>;
@@ -191,7 +190,6 @@ export function normalizeWorkflowCapabilitiesPreview(
     reasonCodes: previewArray<WorkflowCapabilityPreviewReasonCode>(value?.reasonCodes),
     targetCandidates,
     ...(value?.selectedTarget ? { selectedTarget: value.selectedTarget } : {}),
-    ...(value?.compiledAccessScope ? { compiledAccessScope: value.compiledAccessScope } : {}),
     tools: { read: readTools, write: writeTools },
     directMcpServers,
     enabledSkills,
@@ -213,15 +211,17 @@ export function normalizeWorkflowCapabilitiesPreview(
 export interface WorkflowMessageAccepted {
   message_id: string;
   run_id: string;
-  workflow_run_id: string;
   executionId: string;
   status: string;
-  compiledAccessScope: Record<string, unknown>;
 }
 
 export interface WorkflowRunSummary {
   id: string;
-  workflowRunId?: string;
+  executionId?: string;
+  executorRole?: 'coordinator' | 'specialist';
+  parentRunId?: string;
+  agentId?: string;
+  agentVersion?: number;
   status?: string;
   createdBy?: string;
   requestedAt?: string;

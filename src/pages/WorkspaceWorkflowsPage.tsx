@@ -66,12 +66,11 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
   const [workflowMessage, setWorkflowMessage] = useState('');
   const [workflowRunInputs, setWorkflowRunInputs] = useState<Record<string, Record<string, unknown>>>({});
   const [workflowSessionIds, setWorkflowSessionIds] = useState<Record<string, string>>({});
-  const [, setCompiledScopes] = useState<Record<string, Record<string, unknown>>>({});
   const [launchingWorkflowId, setLaunchingWorkflowId] = useState('');
   const [launchAcknowledgedId, setLaunchAcknowledgedId] = useState('');
   const [launchError, setLaunchError] = useState('');
   const [launchRecovery, setLaunchRecovery] = useState<McpReadinessRecovery | null>(null);
-  const [launchResult, setLaunchResult] = useState<{ workflowId: string; runId: string; workflowRunId: string; toolCount: number } | null>(null);
+  const [launchResult, setLaunchResult] = useState<{ workflowId: string; runId: string; toolCount: number } | null>(null);
   const [pendingWorkflowRuns, setPendingWorkflowRunsState] = useState<Record<string, WorkflowDefinition['runs']>>({});
   const pendingWorkflowRunsRef = React.useRef(pendingWorkflowRuns);
   const workflowRowRefs = React.useRef(new Map<string, HTMLButtonElement>());
@@ -352,7 +351,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
   const workflowActions = useWorkspaceWorkflowActions({
     workspace, workflows, setWorkflows,
     selectedWorkflow, selectedWorkflowEditDraft, workflowMessage, workflowRunInputs: selectedWorkflowRunInputs, workflowAgents, workflowSessionIds, setWorkflowSessionIds,
-    setCompiledScopes, setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setLaunchResult, setActiveTab: (tab: WorkflowTab) => selectWorkflowTab(tab, selectedWorkflow?.id), setApprovalRecords, setApprovalError,
+    setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setLaunchResult, setActiveTab: (tab: WorkflowTab) => selectWorkflowTab(tab, selectedWorkflow?.id), setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns,
     setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
     setRunLogError, setRunLogLoadingId, setCancelRunError, setCancelRunAction, setScopeSaveResult,
@@ -362,7 +361,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
      newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
      setDeleteWorkflowId, setEditingWorkflowId, setUpdatingWorkflowId, setDuplicatingWorkflowId, selectResultingWorkflow: selectWorkflow, selectWorkflowTab, setDeletingWorkflowId,
       createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
-      canManageWorkflowScope, workflowOptionsReady, launchBlocker, workflowOptions: effectiveWorkflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
+      canManageWorkflowScope, workflowOptionsReady, launchBlocker, capabilityPreview: capabilityPreviewState.preview, workflowOptions: effectiveWorkflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
      setEditingAgentSelectionId, setAgentSelectionError, setAgentSelectionResult, setSavingAgentSelectionId,
      ownerLabelsByUserId: workflowOwnerLabelsByUserId
   });
@@ -500,7 +499,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
                     />
                   </WorkflowSection>
                   {launchError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{launchError}{launchRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={launchRecovery.href}>{launchRecovery.label}</a>}</div>}
-                  {launchResult?.workflowId === selectedWorkflow.id && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">Run dispatched with {launchResult.toolCount} tools. Run ID: {launchResult.workflowRunId || launchResult.runId}.</div>}
+                  {launchResult?.workflowId === selectedWorkflow.id && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">Run dispatched with {launchResult.toolCount} tools. Run ID: {launchResult.runId}.</div>}
                 </WorkflowTabPanel>
               )}
 

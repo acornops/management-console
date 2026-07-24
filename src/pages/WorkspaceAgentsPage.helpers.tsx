@@ -4,10 +4,7 @@ import {
   filterAgentDefinitions,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
-import {
-  type AgentDefinitionApi,
-  type AgentActivityRecordApi
-} from '@/services/control-plane/agentApi';
+import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
@@ -127,7 +124,6 @@ export const mapApiAgent = (
     instructions: item.instructions || '',
     status: item.status || 'draft',
     origin: item.origin,
-    kind: item.kind,
     reviewState: item.reviewState,
     providerType: item.providerType || 'internal',
     ownerUserId,
@@ -151,31 +147,13 @@ export const mapApiAgent = (
     trustPolicy: trustPolicyFor(item.trustPolicy),
     capabilities: item.capabilities || [],
     workflowsUsingAgent: item.workflowsUsingAgent || [],
-    triggers: item.triggers || [],
-    activity: {
-      runCount: item.activity?.runCount ?? 0,
-      lastRunAt: item.activity?.lastRunAt,
-      lastStatus: item.activity?.lastStatus as AgentDefinition['activity']['lastStatus'] | undefined
-    },
-    auditHistory: []
+    workflowUsage: {
+      workflowRunCount: item.workflowUsage?.workflowRunCount ?? 0,
+      lastRunAt: item.workflowUsage?.lastRunAt,
+      lastStatus: item.workflowUsage?.lastStatus as AgentDefinition['workflowUsage']['lastStatus'] | undefined
+    }
   };
 };
-
-export const withAgentAuditHistoryEntry = (
-  agent: AgentDefinition,
-  summary: string,
-  occurredAt = new Date().toISOString()
-): AgentDefinition => ({
-  ...agent,
-  auditHistory: [
-    {
-      id: `agent-audit-${occurredAt}-${summary.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
-      summary,
-      occurredAt
-    },
-    ...agent.auditHistory
-  ]
-});
 
 export const canManageWorkspaceAgents = (workspace: Workspace): boolean => {
   return workspace.permissions?.manage_agents === true;
@@ -196,35 +174,8 @@ export function filterVisibleAgents(
     .sort((left, right) => statusOrder[left.status] - statusOrder[right.status] || left.name.localeCompare(right.name));
 }
 
-export const summarizeAgentActivityRecord = (activity: AgentActivityRecordApi): string => `Activity ${activity.status} on v${activity.agentVersion}`;
-
 export const formatAgentTimestamp = (value: string | undefined, fallback = '-', locale?: Intl.LocalesArgument): string =>
   formatUserDateTime(value, { fallback: value || fallback, locale });
-
-export const activityStateFromRecord = (
-  current: AgentDefinition['activity'],
-  activity: AgentActivityRecordApi | undefined,
-  activityCount: number
-): AgentDefinition['activity'] => activity
-  ? {
-    runCount: Math.max(current.runCount, activityCount),
-    lastRunAt: activity.updatedAt || activity.createdAt,
-    lastStatus: activity.status
-  }
-  : current;
-
-export const auditHistoryFromAgentActivity = (activity: AgentActivityRecordApi[]): AgentDefinition['auditHistory'] =>
-  activity.map((record) => ({ id: record.id, summary: summarizeAgentActivityRecord(record), occurredAt: record.updatedAt || record.createdAt }));
-
-export const mergeAgentAuditHistoryWithActivity = (
-  current: AgentDefinition['auditHistory'],
-  activity: AgentActivityRecordApi[]
-): AgentDefinition['auditHistory'] => {
-  const refreshed = auditHistoryFromAgentActivity(activity);
-  const refreshedIds = new Set(refreshed.map((entry) => entry.id));
-  return [...refreshed, ...current.filter((entry) => !refreshedIds.has(entry.id))]
-    .sort((left, right) => Date.parse(right.occurredAt) - Date.parse(left.occurredAt));
-};
 
 export const formatAgentDisplayValue = (value: string): string =>
   value

@@ -449,7 +449,7 @@ export function mapWorkflowRunSummary(run: WorkflowRunSummary): WorkflowDefiniti
                 ? 'cancelling'
                 : 'waiting_approval';
   return {
-    id: run.workflowRunId || run.id,
+    id: run.id,
     runId: run.id,
     status,
     actor: run.createdBy || 'Operator',

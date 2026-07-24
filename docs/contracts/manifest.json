@@ -29,15 +29,15 @@
         "statuses": ["needs_target", "ready", "blocked"],
         "targetStatuses": ["ready", "unavailable", "unsupported"],
         "mcpAuthRequirements": "Every credentialed MCP server in the compiled Agent scope emits mcpRequirements[].{serverId,serverName,authType,owningAgent.{id,name},connectionState,authRequirement.{scope,credentialLabel,requiredInformation[].{name,description}},action}; generic connection metadata and guidance only, never provider profiles, URLs, headers, or credential values",
-        "privacy": "Responses expose bounded reason codes and public compiled scope only; credentials, URLs, headers, tool arguments, input schemas, private connection state, and internal coordinator identity are excluded.",
-        "mutation": "Preview creates no session, execution, run, approval, or audit record. Dispatch recompiles and returns the authoritative compiledAccessScope."
+        "privacy": "Responses expose bounded reason codes and explicit capability-preview metadata only; compiled scopes, credentials, URLs, headers, tool arguments, input schemas, private connection state, and internal coordinator identity are excluded.",
+        "mutation": "Preview creates no session, execution, run, approval, or audit record. Dispatch recompiles an internal authoritative scope that is never returned by the public API."
       },
       "workspaceNativeToolContract": {
         "catalog": ["prompt.resources.read", "reports.pdf.generate"],
         "ownership": "Control-plane code owns workspace-native metadata, schemas, authorization class, audit operation, and execution.",
         "assignment": "manage_agents grants or revokes a tool on a specialist Agent and transactionally rebinds exact reviewed mappings and dependent readiness; manage_mcp is not required.",
         "modelAliases": { "prompt.resources.read": "_acornops_read_prompt_resources", "reports.pdf.generate": "acornops_generate_pdf_report" },
-        "invocationScopePolicy": "Workspace-native declarations carry invocationScopes. prompt.resources.read supports workflow; reports.pdf.generate supports workflow and target_chat; direct Agent invocation returns WORKSPACE_NATIVE_TOOL_SCOPE_DENIED.",
+        "invocationScopePolicy": "Workspace-native declarations carry invocationScopes. prompt.resources.read supports workflow; reports.pdf.generate supports workflow and target_chat; delegated specialist Workflow runs receive no workspace-native tools.",
         "artifactSafety": "reports.pdf.generate is a control-plane-owned internal_artifact available to workflows and target chat without crossing the target-adapter boundary. It is allowed in read-only runs without write approval, persisted as a write audit event, bounded, provenance-linked, authenticated, and idempotent by workflow run or target run plus tool_call_id.",
         "promptResources": "prompt.resources.read accepts binding IDs only and dispatches bounded reads through the providers authorized in the run's signed resource bindings.",
         "ui": "Agent Capabilities > Tools lists AcornOps native tools separately from MCP-discovered tools. Grant and revoke require manage_agents only.",
@@ -51,11 +51,11 @@
         "cancellation": "parent cancellation cascades to active coordinated child runs"
       },
       "systemAutomationDefinitions": {
-        "provisioning": "The greenfield baseline creates only the final schema. Current-version workspace provisioning atomically commits the two automatic specialist Agents, their two active workflows, and a completed starter installation. Opt-in definitions are installed explicitly, and coordinated definitions create system-owned coordination infrastructure transactionally when needed.",
+        "provisioning": "The greenfield baseline creates only the final schema. Current-version workspace provisioning atomically commits the two automatic specialist Agents, their two active workflows, and a completed starter installation. Opt-in definitions are installed explicitly; coordinated workflows use a versioned code-owned coordinator profile and create no hidden Agent.",
         "attribution": "Template-origin Agents and workflows are labeled as system provided and retain their template ID and version.",
-        "visibility": "Public Agent APIs contain specialists only. Manager creation or configuration returns MANAGER_SYSTEM_OWNED, direct access returns 404, and public workflow, compiled-scope, audit, search, and trace DTOs omit internal coordinator identity.",
+        "visibility": "Every public Agent is a specialist capability profile. Public workflow, compiled-scope, audit, search, and trace DTOs omit internal coordinator profile instructions and identity.",
         "mutation": "Visible template-origin definitions accept availability-status changes, supported external bindings, duplication, and deletion. Definition edits and version restore remain immutable; Agent deletion returns structured dependent workflows until those dependencies are removed.",
-        "duplication": "manage_agents or manage_workflows may copy the effective definition into a manual draft without capability installations, history, runs, schedules, sessions, activity, or triggers."
+        "duplication": "manage_agents or manage_workflows may copy the effective definition into a manual draft without capability installations, history, executions, schedules, sessions, or activity."
       },
       "catalogAuthorization": {
         "manageSources": "manage_catalog_sources",
@@ -68,7 +68,6 @@
       "publicMcpReadinessContract": {
         "paths": [
           "POST /api/v1/sessions/{sessionId}/messages",
-          "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/runs",
           "POST /api/v1/workflow-sessions/{sessionId}/messages"
         ],
         "status": 409,
@@ -241,14 +240,13 @@
         "runApprovalDecision": ["targetId", "targetType", "clusterId?", "summary?", "conflict.approval.{targetId,targetType,clusterId?,summary?}"],
         "postMessageAccepted": ["message_id", "run_id", "runtimeSelection.{provider,model,reasoningEffort}"],
         "runEventFrame": ["schema_version", "run_id", "seq", "ts", "type", "payload"],
-        "agent": ["id", "workspaceId", "name", "description?", "instructions", "status", "source", "kind", "providerType", "version", "ownerUserId", "mcpServers[]", "tools[]", "skills[]", "contextGrants[]", "targetScope", "approvalPolicy", "trustPolicy", "triggers[]", "activity", "readiness.{status,reasons[]}"],
-        "agentRunAccepted": ["runId", "activityId", "source=agent", "status"],
-        "automationDiagnostics": ["status", "runtime.{mode,workspaceEnabled,workerIntervalMs}", "dispatch.{byStatus,oldestPendingAgeSeconds}", "runs.{agentByStatus,workflowByStatus,active}", "triggers.{deliveriesByStatus,schedulerLagSeconds}", "approvals.{pending,oldestPendingAgeSeconds}", "templates.{byReadiness,items[]}", "reports.retainedSources", "checkedAt"],
-        "workflowExecutionAccepted": ["executionId", "run_id", "workflow_run_id", "status"],
+        "agent": ["id", "workspaceId", "name", "description?", "instructions", "status", "origin", "reviewState", "providerType", "version", "ownerUserId", "mcpServers[]", "tools[]", "skills[]", "contextGrants[]", "targetScope", "approvalPolicy", "trustPolicy", "workflowUsage.{workflowRunCount,lastRunAt?,lastStatus?}", "readiness.{status,reasons[]}"],
+        "automationDiagnostics": ["status", "runtime.{mode,workspaceEnabled,workerIntervalMs}", "dispatch.{byStatus,oldestPendingAgeSeconds}", "runs.{workflowByStatus,byExecutorRole,byGraphPosition,active}", "schedules.schedulerLagSeconds", "approvals.{pending,oldestPendingAgeSeconds}", "templates.{byReadiness,items[]}", "reports.retainedSources", "checkedAt"],
+        "workflowExecutionAccepted": ["executionId", "run_id", "status"],
         "promptReferenceDescriptor": ["type", "displayName", "description", "icon", "placeholderLabel", "availability", "unavailableReason?", "minimum", "maximum", "allowPinnedReferences", "provider", "providerVersion"],
         "promptReferenceResolution": ["prompt", "promptDigest", "bindingDigest", "tokens[]", "candidates[]", "bindings[]", "blockers[]", "resolvedAt"],
         "workflowReport": ["id", "executionId?", "runId?", "targetRunId?", "sourceVersion", "mediaType", "title", "sourceSizeBytes", "retentionExpiresAt", "downloadUrl", "no source or PDF bytes"],
-        "workflowSelectedAgents": ["orchestratorAgentId", "steps[].agentIds[]", "compiledAccessScope.selectedAgents[]", "jwtClaims.agent_id? explicit direct/delegated agent only", "jwtClaims.agent_version? explicit direct/delegated agent only", "jwtClaims.trigger_id?"],
+        "workflowSelectedAgents": ["agentIds[]", "executionMode=direct|coordinated", "internal session authorization ceiling selectedAgents[]", "jwtClaims.executor_role", "jwtClaims.agent_id? specialist only", "jwtClaims.agent_version? specialist only", "jwtClaims.trigger_id?"],
         "workflowSchedule": ["id", "workspaceId", "workflowId", "workflowVersion", "name", "status", "cron", "timezone", "controlMessage", "approvedContextGrants", "principal.{type=user,id}", "nextRunAt?", "lastRunAt?", "lastStatus?", "lastError?", "createdBy", "updatedBy"],
         "workflowSchedulePage": ["items", "summary.{total,active,paused,approvalGated,nextRunAt?}"],
         "workspaceApprovalInbox": ["query.{status?,limit?,cursor?,runId?,approvalId?}", "items[].{approvalId,runId,source,workflowId?,targetId?,summary,toolName,requestedBy?,expiresAt,status,decision?,decidedBy?,decidedAt?,requestedAt}", "pendingCount", "nextCursor?"]

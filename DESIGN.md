@@ -378,7 +378,7 @@ Motion is a state channel, never decoration. A small vocabulary of functional in
 - **Thinking Acorn** (`thinking-acorn`): The rolling acorn indicator shown while an agent or session is working.
 - **Reasoning Sheen** (`reasoning-summary-active`): A slow orange sheen swept across reasoning-summary text while a model is actively reasoning. This is the single sanctioned use of animated `background-clip: text`; it signals live reasoning state and falls back to solid `currentColor` under reduced motion. It is not decorative gradient text and does not license gradient text anywhere else.
 - **Loading Sweep** (`loading-bar-sweep`): An indeterminate progress sweep for pending loads.
-- **Pending Step Pulse** (`pending-agent-step-pulse`): A soft warning-tinted ring pulse marking a pending step in an agent run trace.
+- **Pending Step Pulse** (`pending-agent-step-pulse`): A soft warning-tinted ring pulse marking a pending step in a run trace.
 - **Theme Reveal** (`theme-reveal`): A `320ms` non-occluding radial ripple originating at the selected theme option. The live page recolors in place, so operational and illustration motion is never snapshotted. Preference changes with the same resolved appearance and operating-system changes under `System` do not add a ripple. Reduced-motion users switch instantly.
 - **Active Tab Indicator** (`active-tab-indicator`): A shared `2px` underline that moves between related tabs in `200ms`; reduced motion removes the travel.
 

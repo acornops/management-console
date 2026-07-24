@@ -10,7 +10,8 @@ describe('workflow run response synchronization', () => {
   it('maps a persisted assistant response to the public run id used by the discussion', () => {
     expect(mapPersistedWorkflowRunResponse({
       id: 'run-1',
-      workflowRunId: 'workflow-run-1',
+      executionId: 'workflow-execution-1',
+      executorRole: 'specialist',
       status: 'completed',
       endedAt: '2026-07-19T12:58:56.000Z',
       assistantMessage: { content: '## Findings\n\n- Scope mismatch' }
@@ -28,7 +29,6 @@ describe('workflow run response synchronization', () => {
   it('ignores empty assistant output and indexes saved responses across sessions', () => {
     const sessions = [{
       id: 'session-1', workflowId: 'workflow-1', workspaceId: 'workspace-1', workflowVersion: 1,
-      compiledAccessScope: {},
       runs: [
         { id: 'run-empty', assistantMessage: { content: '   ' } },
         { id: 'run-saved', requestedAt: '2026-07-19T12:57:45.000Z', assistantMessage: { content: 'Saved response' } }

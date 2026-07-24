@@ -174,23 +174,23 @@ export function createFixtureState(): FixtureState {
       description: 'Inspects repository state and prepares bounded operational changes.',
       instructions: 'Inspect repository evidence before proposing or applying a change.',
       status: 'active', origin: { type: 'template', templateId: 'repository-operator', templateVersion: 2 },
-      kind: 'specialist', reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
+      reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       version: 3, permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['target.read', 'issue.read'], targetScope: { type: 'workspace', targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [] },
       contextScope: ['workspace', 'targets'], contextGrants: ['workspace.summary'],
-      activity: { runCount: 8, lastRunAt: NOW, lastStatus: 'completed' }, readiness: { status: 'ready', reasons: [] },
+      workflowUsage: { workflowRunCount: 8, lastRunAt: NOW, lastStatus: 'completed' }, readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Repository inspection and issue triage', createdAt: EARLIER, updatedAt: NOW
     },
     {
       id: FIXTURE_IDS.specialistAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Kubernetes Specialist',
       description: 'Investigates Kubernetes health and workload failures.',
       instructions: 'Inspect live cluster evidence before recommending a change.',
-      status: 'active', origin: { type: 'manual' }, kind: 'specialist', reviewState: 'reviewed', providerType: 'internal',
+      status: 'active', origin: { type: 'manual' }, reviewState: 'reviewed', providerType: 'internal',
       createdBy: FIXTURE_IDS.user, ownerUserId: FIXTURE_IDS.user, version: 2,
       tools: [], skills: ['fixture-kubernetes-triage'],
       permissionMode: 'ask_before_changes', semanticCapabilityIds: ['target.kubernetes.read'],
       targetScope: { type: 'selected_target', targetTypes: ['kubernetes'], targetIds: [FIXTURE_IDS.cluster] },
-      contextScope: ['target'], contextGrants: ['target.snapshot'], activity: { runCount: 12, lastRunAt: NOW, lastStatus: 'completed' },
+      contextScope: ['target'], contextGrants: ['target.snapshot'], workflowUsage: { workflowRunCount: 12, lastRunAt: NOW, lastStatus: 'completed' },
       readiness: { status: 'ready', reasons: [] }, capabilitySummary: 'Kubernetes inspection and diagnostics', createdAt: EARLIER, updatedAt: NOW
     },
     {
@@ -198,10 +198,10 @@ export function createFixtureState(): FixtureState {
       description: 'Collects diagnostic evidence from an explicitly selected target.',
       instructions: 'Inspect only the exact target scope compiled for this run.',
       status: 'active', origin: { type: 'template', templateId: 'acornops-starter', templateVersion: 3 },
-      kind: 'specialist', reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
+      reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       version: 1, permissionMode: 'ask_before_changes', semanticCapabilityIds: ['target.diagnostics.read'],
       targetScope: { type: 'selected_target', targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [] },
-      contextScope: ['target'], contextGrants: [], activity: { runCount: 0 }, readiness: { status: 'ready', reasons: [] },
+      contextScope: ['target'], contextGrants: [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Target diagnostics', createdAt: EARLIER, updatedAt: NOW
     },
     {
@@ -209,10 +209,10 @@ export function createFixtureState(): FixtureState {
       description: 'Produces an incident report from explicitly granted evidence.',
       instructions: 'Use only evidence and context present in the compiled scope.',
       status: 'active', origin: { type: 'template', templateId: 'acornops-starter', templateVersion: 3 },
-      kind: 'specialist', reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
+      reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       version: 1, permissionMode: 'ask_before_changes', semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate'],
       targetScope: { type: 'workspace', targetTypes: [], targetIds: [] }, contextScope: ['workspace'],
-      contextGrants: [], activity: { runCount: 0 }, readiness: { status: 'ready', reasons: [] },
+      contextGrants: [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Incident reporting', createdAt: EARLIER, updatedAt: NOW
     }
   ];

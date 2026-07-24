@@ -83,7 +83,6 @@ export interface AgentDefinitionApi {
   instructions?: string;
   status?: AgentStatus;
   origin: { type: 'template' | 'manual'; templateId?: string; templateVersion?: number };
-  kind: 'specialist';
   reviewState: 'draft' | 'reviewed';
   providerType?: AgentProviderType;
   ownerUserId?: string;
@@ -102,8 +101,7 @@ export interface AgentDefinitionApi {
   contextGrants?: string[];
   approvalPolicy?: Record<string, unknown>;
   trustPolicy?: Record<string, unknown>;
-  triggers?: AgentTriggerDefinitionApi[];
-  activity?: { runCount?: number; lastRunAt?: string; lastStatus?: string };
+  workflowUsage?: { workflowRunCount?: number; lastRunAt?: string; lastStatus?: string };
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
   capabilitySummary?: string;
   capabilities?: AgentCapability[];
@@ -120,29 +118,6 @@ export type AgentCreateInput = Partial<Omit<AgentDefinitionApi, 'id' | 'workspac
 export type AgentUpdateInput = Partial<AgentCreateInput> & {
   status?: AgentStatus;
 };
-
-export interface AgentTriggerDefinitionApi {
-  id: string;
-  type: 'manual' | 'workflow_step' | 'schedule' | 'webhook' | 'target_event';
-  enabled: boolean;
-  name?: string;
-  schedule?: { cron: string; timezone: string };
-  eventFilter?: Record<string, unknown>;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface AgentActivityRecordApi {
-  id: string;
-  agentId: string;
-  workspaceId: string;
-  agentVersion: number;
-  triggerId?: string;
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
-  inputContext?: Record<string, unknown>;
-  createdAt: string;
-  updatedAt?: string;
-}
 
 export interface AgentVersionSnapshotApi {
   id: string;
@@ -282,85 +257,6 @@ export function restoreAgentVersion(
       body: JSON.stringify({ workspaceId })
     }
   ).then((response) => response.agent);
-}
-
-export function testAgent(
-  workspaceId: string,
-  agentId: string,
-  input: { approvedContextGrants?: string[]; inputContext?: Record<string, unknown>; triggerId?: string } = {}
-): Promise<{ compiledScope: Record<string, unknown>; executing: false }> {
-  return requestJson<{ compiledScope: Record<string, unknown>; executing: false }>(
-    `/api/v1/agents/${encodeURIComponent(agentId)}/test`,
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        workspaceId,
-        ...input
-      })
-    }
-  );
-}
-
-export function runAgent(
-  workspaceId: string,
-  agentId: string,
-  input: { prompt: string; inputContext?: Record<string, unknown>; targetId?: string; approvedContextGrants?: string[]; triggerId?: string; clientRequestId?: string }
-): Promise<{ runId: string; activityId: string; source: 'agent'; status: AgentActivityRecordApi['status'] }> {
-  return requestJson(
-    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/runs`,
-    { method: 'POST', body: JSON.stringify(input) }
-  );
-}
-
-export function listAgentActivity(workspaceId: string, agentId: string): Promise<AgentActivityRecordApi[]> {
-  return requestJson<{ items: AgentActivityRecordApi[] }>(
-    `/api/v1/agents/${encodeURIComponent(agentId)}/activity?workspaceId=${encodeURIComponent(workspaceId)}`
-  ).then((response) => response.items);
-}
-
-export function createAgentTrigger(
-  workspaceId: string,
-  agentId: string,
-  input: Omit<AgentTriggerDefinitionApi, 'id' | 'createdAt' | 'updatedAt'>
-): Promise<AgentTriggerDefinitionApi> {
-  return requestJson<{ trigger: AgentTriggerDefinitionApi }>(
-    `/api/v1/agents/${encodeURIComponent(agentId)}/triggers`,
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        workspaceId,
-        ...input
-      })
-    }
-  ).then((response) => response.trigger);
-}
-
-export function updateAgentTrigger(
-  workspaceId: string,
-  agentId: string,
-  triggerId: string,
-  input: Partial<Omit<AgentTriggerDefinitionApi, 'id' | 'createdAt' | 'updatedAt'>>
-): Promise<AgentTriggerDefinitionApi> {
-  return requestJson<{ trigger: AgentTriggerDefinitionApi }>(
-    `/api/v1/agents/${encodeURIComponent(agentId)}/triggers/${encodeURIComponent(triggerId)}`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify({
-        workspaceId,
-        ...input
-      })
-    }
-  ).then((response) => response.trigger);
-}
-
-export function deleteAgentTrigger(workspaceId: string, agentId: string, triggerId: string): Promise<void> {
-  return requestJson<void>(
-    `/api/v1/agents/${encodeURIComponent(agentId)}/triggers/${encodeURIComponent(triggerId)}`,
-    {
-      method: 'DELETE',
-      body: JSON.stringify({ workspaceId })
-    }
-  );
 }
 
 const agentCapabilityBase = (workspaceId: string, agentId: string) => `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}`;

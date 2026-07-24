@@ -170,11 +170,11 @@ describe('authenticated surface component vocabulary', () => {
     expect(workspaceWorkflowsPage).not.toContain('role="tablist" aria-label="Workflow section tabs" className="flex gap-2 overflow-x-auto border-b border-ui-border"');
     expect(workspaceAgentDetailPanel).toContain('<SegmentedTabs');
     expect(workspaceAgentDetailPanel).toContain('idBase="agent-profile"');
-    ['overview', 'capabilities', 'activity', 'versions', 'settings'].forEach((tab) => {
+    ['overview', 'capabilities', 'versions', 'settings'].forEach((tab) => {
       expect(workspaceAgentDetailPanel).toContain(`id="agent-profile-${tab}-panel"`);
       expect(workspaceAgentDetailPanel).toContain(`aria-labelledby="agent-profile-${tab}-tab"`);
     });
-    expect(workspaceAgentDetailPanel.match(/role="tabpanel"/g)).toHaveLength(5);
+    expect(workspaceAgentDetailPanel.match(/role="tabpanel"/g)).toHaveLength(4);
     expect(workspaceApprovalsPage).toContain('<FilterToggleGroup<ApprovalFilter>');
     expect(workspaceApprovalsPage).toContain("ariaLabel={t('approvals.filters.label')}");
     expect(workspaceAuditLogPage).toContain('<FilterToggleGroup');

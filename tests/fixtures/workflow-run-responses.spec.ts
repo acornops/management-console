@@ -15,7 +15,8 @@ test('saved workflow responses render as Markdown in the run summary and discuss
             workflowVersion: 2,
             runs: [{
               id: 'fixture-workflow-run',
-              workflowRunId: 'fixture-workflow-execution',
+              executionId: 'fixture-workflow-execution',
+              executorRole: 'specialist',
               status: 'completed',
               requestedAt: '2026-07-19T12:57:45.000Z',
               startedAt: '2026-07-19T12:57:46.000Z',

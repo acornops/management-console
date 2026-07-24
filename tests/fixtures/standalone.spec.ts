@@ -60,7 +60,7 @@ test('webhook settings expose history, confirmation, and one-time secret flows',
   await expect(page.getByText('whsec_fixture_local_only')).toBeVisible();
 });
 
-test('agent profile scopes lifecycle actions to Settings and icons its refresh controls', async ({ page }) => {
+test('agent profile scopes lifecycle actions to Settings and icons restore-point refresh', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/agents?panel=profile&agent=fixture-specialist&agentTab=overview', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('dialog', { name: 'Kubernetes Specialist' })).toBeVisible();
@@ -70,9 +70,6 @@ test('agent profile scopes lifecycle actions to Settings and icons its refresh c
   await page.getByRole('tab', { name: 'Settings' }).click();
   await expect(page.getByRole('button', { name: 'Disable agent' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete agent' })).toBeVisible();
-
-  await page.getByRole('tab', { name: 'Activity' }).click();
-  await expect(page.getByRole('button', { name: 'Refresh' }).locator('svg')).toBeVisible();
 
   await page.getByRole('tab', { name: 'Restore points' }).click();
   await expect(page.getByRole('button', { name: 'Refresh' }).locator('svg')).toBeVisible();

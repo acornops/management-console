@@ -234,7 +234,8 @@ describe('workflow control-plane api', () => {
             runs: [
               {
                 id: 'run-1',
-                workflowRunId: 'workflow-run-1',
+                executionId: 'workflow-execution-1',
+                executorRole: 'specialist',
                 status: 'completed',
                 createdBy: 'user-1',
                 requestedAt: '2026-06-23T00:00:00.000Z',
@@ -253,7 +254,8 @@ describe('workflow control-plane api', () => {
         runs: [
           {
             id: 'run-1',
-            workflowRunId: 'workflow-run-1',
+            executionId: 'workflow-execution-1',
+            executorRole: 'specialist',
             status: 'completed',
             createdBy: 'user-1',
             requestedAt: '2026-06-23T00:00:00.000Z',
@@ -266,19 +268,14 @@ describe('workflow control-plane api', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workflows/workflow-1/sessions?workspaceId=workspace-1');
   });
 
-  it('creates a workflow session with approved context grants and returns compiled access scope', async () => {
+  it('creates a workflow session with approved context grants without exposing compiled access scope', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (url.endsWith('/api/v1/auth/csrf')) {
         return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
       }
       return Promise.resolve(
         new Response(JSON.stringify({
-          session: { id: 'workflow-session-1' },
-          compiledAccessScope: {
-            workflowId: 'workflow-1',
-            tools: ['mcp.tools.list'],
-            contextGrants: ['workspace_metadata']
-          }
+          session: { id: 'workflow-session-1' }
         }), { status: 201 })
       );
     });
@@ -287,12 +284,7 @@ describe('workflow control-plane api', () => {
     await expect(createWorkflowSession('workspace-1', 'workflow-1', {
       approvedContextGrants: ['workspace_metadata']
     })).resolves.toEqual({
-      session: { id: 'workflow-session-1' },
-      compiledAccessScope: {
-        workflowId: 'workflow-1',
-        tools: ['mcp.tools.list'],
-        contextGrants: ['workspace_metadata']
-      }
+      session: { id: 'workflow-session-1' }
     });
 
     const sessionCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workflows/workflow-1/sessions'));

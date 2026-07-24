@@ -31,7 +31,7 @@ export function workflowCapabilityPreview(
     status,
     reasonCodes: status === 'needs_target' ? ['TARGET_REQUIRED'] : status === 'blocked' ? ['TARGET_NOT_FOUND'] : [],
     targetCandidates: candidates,
-    ...(selectedTarget ? { selectedTarget, compiledAccessScope: { mode: 'read_only', targetIds: [selectedTarget.id], allowedToolNames: tools.map((tool) => tool.name) } } : {}),
+    ...(selectedTarget ? { selectedTarget } : {}),
     tools: { read: tools, write: [] },
     directMcpServers: [],
     enabledSkills: [],

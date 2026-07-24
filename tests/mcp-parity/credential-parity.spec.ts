@@ -41,7 +41,7 @@ test('authenticated target creation enters credential verification before pendin
   await expect(page).toHaveURL(/\/mcp-servers$/);
 });
 
-test('Agent credential refresh, disconnect/reconnect, exact recovery focus, and rate limit countdown are safe', async ({ page }) => {
+test('Agent credential refresh, disconnect/reconnect, and rate limit countdown are safe', async ({ page }) => {
   const agentPath = `/workspaces/${workspaceId}/agents?agent=${agentId}&panel=profile&agentTab=capabilities&capabilityTab=mcp`;
   await page.goto(agentPath);
   await page.getByRole('button', { name: 'Add MCP server' }).click();
@@ -57,14 +57,8 @@ test('Agent credential refresh, disconnect/reconnect, exact recovery focus, and 
   await expect(page.getByText('fixture_discovered_tool')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Disconnect' }).click();
-  await expect(page.getByRole('button', { name: 'Connect your credential' })).toBeEnabled();
-  await page.getByRole('tab', { name: 'Activity' }).click();
-  await page.getByRole('button', { name: 'Run agent' }).click();
-  const recovery = page.getByRole('link', { name: 'Connect the required MCP server' });
-  await expect(recovery).toBeVisible();
-  await recovery.click();
   const connectButton = page.getByRole('button', { name: 'Connect your credential' });
-  await expect(connectButton).toBeFocused();
+  await expect(connectButton).toBeEnabled();
   await expect(page.getByRole('heading', { name: 'Connect your credential' })).toHaveCount(0);
 
   await connectButton.click();

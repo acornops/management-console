@@ -401,7 +401,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.agents) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const agent = { id: id('fixture-agent'), workspaceId: decode(match[1]), name: input.name, description: input.description || '', instructions: input.instructions || '', status: input.status || 'draft', origin: { type: 'manual' }, kind: 'specialist', reviewState: input.reviewState || 'draft', providerType: 'internal', createdBy: FIXTURE_IDS.user, version: 1, permissionMode: input.permissionMode || 'read_only', semanticCapabilityIds: input.semanticCapabilityIds || [], targetScope: input.targetScope || { type: 'workspace', targetTypes: [], targetIds: [] }, contextScope: input.contextScope || [], contextGrants: input.contextGrants || [], readiness: { status: 'ready', reasons: [] }, createdAt: NOW, updatedAt: NOW };
+      const agent = { id: id('fixture-agent'), workspaceId: decode(match[1]), name: input.name, description: input.description || '', instructions: input.instructions || '', status: input.status || 'draft', origin: { type: 'manual' }, reviewState: input.reviewState || 'draft', providerType: 'internal', createdBy: FIXTURE_IDS.user, version: 1, permissionMode: input.permissionMode || 'read_only', semanticCapabilityIds: input.semanticCapabilityIds || [], targetScope: input.targetScope || { type: 'workspace', targetTypes: [], targetIds: [] }, contextScope: input.contextScope || [], contextGrants: input.contextGrants || [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] }, createdAt: NOW, updatedAt: NOW };
       state.agents.push(agent);
       return json({ agent }, 201);
     }
@@ -430,34 +430,6 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (!agent) return notFound('Agent');
     const version = { id: `fixture-agent-version-${agent.version}`, agentId: agent.id, workspaceId: agent.workspaceId, version: agent.version || 1, snapshot: clone(agent), createdBy: FIXTURE_IDS.user, createdAt: NOW };
     return method === 'GET' ? json({ items: [version] }) : json({ version }, 201);
-  }
-  match = path.match(/^\/api\/v1\/agents\/([^/]+)\/activity$/);
-  if (match && method === 'GET') return json({ items: [{ id: 'fixture-agent-activity', agentId: decode(match[1]), workspaceId: FIXTURE_IDS.workspace, agentVersion: 1, status: 'completed', createdAt: NOW, updatedAt: NOW }] });
-  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents\/([^/]+)\/runs$/);
-  if (match && method === 'POST') {
-    const agentId = decode(match[2]);
-    const unavailable = state.agentMcpServers.find((server) => {
-      if (server.agentId !== agentId || server.credentialMode === 'none') return false;
-      return mcpConnection(state, 'agent', agentId, server).status !== 'connected';
-    });
-    if (unavailable) {
-      const connection = mcpConnection(state, 'agent', agentId, unavailable);
-      const action = connection.status === 'missing' ? 'connect_mcp_server' : 'verify_mcp_server';
-      return json({ error: {
-        code: 'MCP_CONNECTION_REQUIRED',
-        message: 'A required MCP credential connection is not ready.',
-        retryable: false,
-        details: {
-          readinessFailures: [{
-            serverId: unavailable.id,
-            toolName: 'fixture_discovered_tool',
-            code: connection.status === 'missing' ? 'MCP_CONNECTION_MISSING' : 'MCP_CONNECTION_ERROR',
-            action
-          }]
-        }
-      } }, 409);
-    }
-    return json({ runId: FIXTURE_IDS.run, activityId: 'fixture-agent-activity', source: 'agent', status: 'completed' }, 202);
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents\/([^/]+)\/mcp\/servers$/);
   if (match) {
@@ -548,10 +520,10 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (match) {
     const workflowId = decode(match[1]);
     if (method === 'GET') return json({ items: [{ id: 'fixture-workflow-session', workflowId, workspaceId: FIXTURE_IDS.workspace, workflowVersion: 2, runs: [{ id: FIXTURE_IDS.run, status: 'completed', requestedAt: NOW, assistantMessage: { content: 'Fixture workflow completed successfully.' } }] }] });
-    if (method === 'POST') return json({ session: { id: 'fixture-workflow-session', workflowId, workspaceId: FIXTURE_IDS.workspace, workflowVersion: 2 }, compiledAccessScope: { targetIds: [FIXTURE_IDS.cluster, FIXTURE_IDS.virtualMachine], mode: 'read_only' } }, 201);
+    if (method === 'POST') return json({ session: { id: 'fixture-workflow-session', workflowId, workspaceId: FIXTURE_IDS.workspace, workflowVersion: 2 } }, 201);
   }
   match = path.match(/^\/api\/v1\/workflow-sessions\/([^/]+)\/messages$/);
-  if (match && method === 'POST') return json({ message_id: id('fixture-workflow-message'), run_id: FIXTURE_IDS.run, workflow_run_id: FIXTURE_IDS.run, executionId: 'fixture-workflow-execution', status: 'completed', compiledAccessScope: { mode: 'read_only', allowedToolNames: ['get_resource'] } }, 202);
+  if (match && method === 'POST') return json({ message_id: id('fixture-workflow-message'), run_id: FIXTURE_IDS.run, executionId: 'fixture-workflow-execution', status: 'completed' }, 202);
 
   const catalogResponse = await routeCatalogFixtureRequest({ request, state, path, method });
   if (catalogResponse) return catalogResponse;

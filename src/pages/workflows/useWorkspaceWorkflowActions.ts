@@ -32,7 +32,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   const {
     workspace, workflows, setWorkflows,
     selectedWorkflow, selectedWorkflowEditDraft, workflowMessage, workflowRunInputs, workflowAgents, workflowSessionIds, setWorkflowSessionIds,
-    setCompiledScopes, setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setLaunchResult, setActiveTab, setApprovalRecords, setApprovalError,
+    capabilityPreview, setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setLaunchResult, setActiveTab, setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns, setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
     setRunLogError, setRunLogLoadingId, setCancelRunError, setCancelRunAction,
     workflowRunMessageDrafts, setWorkflowRunMessageDrafts, setWorkflowRunMessages,
@@ -120,21 +120,15 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         throw new Error('The control plane accepted the workflow message without returning a run ID.');
       }
       const runId = result.run_id;
-      const workflowRunId = result.workflow_run_id || runId;
-      const authoritativeScope = result.compiledAccessScope;
-      const authoritativeTools = Array.isArray(authoritativeScope?.tools)
-        ? authoritativeScope.tools.filter((tool): tool is string => typeof tool === 'string')
-        : [];
-      setCompiledScopes((current) => ({ ...current, [selectedWorkflow.id]: authoritativeScope }));
       const confirmedRun: WorkflowDefinition['runs'][number] = {
         ...optimisticRun,
-        id: workflowRunId || runId,
+        id: runId,
         runId,
         status: getOptimisticWorkflowRunStatus(selectedWorkflow),
         duration: 'Queued',
         output: 'Workflow run dispatched to execution engine.'
       };
-      setLaunchResult({ workflowId: selectedWorkflow.id, runId, workflowRunId, toolCount: authoritativeTools.length });
+      setLaunchResult({ workflowId: selectedWorkflow.id, runId, toolCount: capabilityPreview?.counts.tools || 0 });
       setPendingWorkflowRuns((current: Record<string, WorkflowDefinition['runs']>) => ({
         ...current,
         [selectedWorkflow.id]: [
@@ -471,11 +465,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       setWorkflows((current) => current.map((workflow) => workflow.id === selectedWorkflow.id
         ? { ...mapped, runs: workflow.runs, lastRun: workflow.lastRun }
         : workflow));
-      setCompiledScopes((current) => {
-        const next = { ...current };
-        delete next[selectedWorkflow.id];
-        return next;
-      });
       setAgentSelectionDrafts((current) => ({ ...current, [selectedWorkflow.id]: createAgentSelectionDraft(mapped) }));
       setAgentSelectionResult('Selected Agents saved. Future workflow sessions will use the updated execution mode.');
       setEditingAgentSelectionId('');

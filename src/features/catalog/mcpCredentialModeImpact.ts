@@ -29,10 +29,8 @@ export async function enabledScheduleImpactForTarget(
   return enabledSchedules.filter((schedule, index) => {
     const result = previews[index];
     if (result.status !== 'fulfilled' || result.value.selectedTarget?.id !== targetId) return false;
-    const refs = result.value.compiledAccessScope?.targetToolRefs;
-    return Array.isArray(refs) && refs.some((ref) => (
-      typeof ref === 'object' && ref !== null && 'serverId' in ref && ref.serverId === serverId
-    ));
+    return [...result.value.tools.read, ...result.value.tools.write]
+      .some((tool) => tool.source === 'target' && tool.serverId === serverId);
   });
 }
 

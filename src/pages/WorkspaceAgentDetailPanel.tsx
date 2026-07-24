@@ -10,13 +10,11 @@ import type { AgentVersionSnapshotApi } from '@/services/control-plane/agentApi'
 import { formatAgentTimestamp, isSystemProvidedAgent, statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
 import { AppPaths } from '@/utils/routes';
 import { AgentCapabilitiesPanel } from '@/pages/agents/AgentCapabilitiesPanel';
-import { Select } from '@/components/common/Select';
 import { InlineConfirmation } from '@/components/common/InlineConfirmation';
-import type { WorkflowOption } from '@/services/control-plane/workflowApi';
 
-export type AgentProfileTab = 'overview' | 'capabilities' | 'activity' | 'versions' | 'settings';
+export type AgentProfileTab = 'overview' | 'capabilities' | 'versions' | 'settings';
 
-export const agentProfileTabs: AgentProfileTab[] = ['overview', 'capabilities', 'activity', 'versions', 'settings'];
+export const agentProfileTabs: AgentProfileTab[] = ['overview', 'capabilities', 'versions', 'settings'];
 
 interface WorkspaceAgentDetailPanelProps {
   selectedAgent: AgentDefinition;
@@ -26,20 +24,14 @@ interface WorkspaceAgentDetailPanelProps {
   canManageAgents: boolean;
   canManageMcp: boolean;
   canManageSkills: boolean;
-  testingAgentId: string;
   updatingAgentId: string;
   duplicatingAgentId: string;
   agentVersionAction: string;
-  agentActivityAction: string;
   disableConfirmAgentId: string;
   setDisableConfirmAgentId: React.Dispatch<React.SetStateAction<string>>;
   deleteConfirmAgentId: string;
   setDeleteConfirmAgentId: React.Dispatch<React.SetStateAction<string>>;
   agentVersionHistories: Record<string, AgentVersionSnapshotApi[]>;
-  targetOptions: WorkflowOption[];
-  runTargetId: string;
-  onRunTargetChange: (targetId: string) => void;
-  onTestSelectedAgent: () => void;
   onOpenEditAgentDrawer: (agent: AgentDefinition) => void;
   onDuplicateSelectedAgent: () => void;
   onSaveSelectedAgentVersion: () => void;
@@ -48,7 +40,6 @@ interface WorkspaceAgentDetailPanelProps {
   onDeleteSelectedAgent: () => void;
   onRefreshSelectedAgentVersions: () => void;
   onRestoreSelectedAgentVersion: (version: AgentVersionSnapshotApi) => void;
-  onRefreshSelectedAgentActivity: () => void;
 }
 
 const workflowHref = (agent: AgentDefinition, workflow: string) => `${AppPaths.workspaceWorkflows(agent.workspaceId)}?${new URLSearchParams({ workflow }).toString()}`;
@@ -64,13 +55,6 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
   const { t, i18n } = useTranslation();
   const { selectedAgent } = props;
   const systemProvided = isSystemProvidedAgent(selectedAgent);
-  const requiresRunTarget = selectedAgent.semanticCapabilityIds.includes('target.diagnostics.read');
-  const exactTargetIds = new Set(selectedAgent.targetScope.filter((token) => token.startsWith('target:')).map((token) => token.slice(7)));
-  const targetTypes = new Set(selectedAgent.targetScope.filter((token) => token.startsWith('target-type:')).map((token) => token.slice(12)));
-  const runTargetOptions = props.targetOptions.filter((target) => (
-    (!exactTargetIds.size || exactTargetIds.has(target.value))
-    && (!targetTypes.size || Boolean(target.provenance?.targetType && targetTypes.has(target.provenance.targetType)))
-  ));
   const locale = i18n.resolvedLanguage || i18n.language;
   const disabledAction = !props.canManageAgents ? t('agentsWorkflows.agents.details.managePermission') : '';
   const versions = props.agentVersionHistories[selectedAgent.id] || [];
@@ -153,10 +137,9 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               <dl className="mt-2 grid divide-y divide-ui-border sm:grid-cols-2 sm:gap-x-8 sm:[&>*]:border-b sm:[&>*]:border-ui-border">
                 <Fact label={t('agentsWorkflows.agents.details.owner')} value={selectedAgent.owner} />
                 <Fact label={t('agentsWorkflows.agents.details.source')} value={systemProvided ? t('agentsWorkflows.systemProvided') : t('agentsWorkflows.definitionSource.user')} />
-                <Fact label={t('agentsWorkflows.agents.details.kind')} value={t(`agentsWorkflows.agents.details.kindValue.${selectedAgent.kind}`)} />
                 <Fact label={t('agentsWorkflows.agents.details.status')} value={t(`agentsWorkflows.agents.status.${selectedAgent.status}`)} />
                 <Fact label={t('agentsWorkflows.agents.details.provider')} value={t(`agentsWorkflows.agents.details.providerValue.${selectedAgent.providerType}`)} />
-                <Fact label={t('agentsWorkflows.agents.details.lastActivity')} value={formatAgentTimestamp(selectedAgent.activity.lastRunAt, t('agentsWorkflows.agents.details.noActivity'), locale)} />
+                <Fact label={t('agentsWorkflows.agents.details.lastActivity')} value={formatAgentTimestamp(selectedAgent.workflowUsage.lastRunAt, t('agentsWorkflows.agents.details.noActivity'), locale)} />
               </dl>
             </section>
             <section className="border-t border-ui-border pt-6">
@@ -188,25 +171,6 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               canManageSkills={props.canManageSkills}
             />
           </div>
-        )}
-
-        {props.activeTab === 'activity' && (
-          <section id="agent-profile-activity-panel" role="tabpanel" tabIndex={0} aria-labelledby="agent-profile-activity-tab" className="focus:outline-none">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div><h3 className="type-panel-title">{t('agentsWorkflows.agents.details.activityHistory')}</h3><p className="type-caption mt-1 text-ui-text-muted">{t('agentsWorkflows.agents.details.activityDescription')}</p></div>
-              <div className="flex flex-wrap items-end gap-2">
-                {requiresRunTarget && <label className="min-w-56"><span className="type-micro-label">{t('agentsWorkflows.agents.details.runTarget')}</span><Select<string> ariaLabel={t('agentsWorkflows.agents.details.agentRunTarget')} className="mt-1" value={props.runTargetId} options={[{ value: '', label: t('agentsWorkflows.agents.details.selectTarget') }, ...runTargetOptions.map((target) => ({ value: target.value, label: target.label, disabled: target.disabled }))]} onChange={props.onRunTargetChange} /></label>}
-                <Button type="button" variant="secondary" size="sm" onClick={props.onRefreshSelectedAgentActivity} disabled={props.agentActivityAction === selectedAgent.id}>
-                  <ICONS.RefreshCw className={`h-4 w-4 ${props.agentActivityAction === selectedAgent.id ? 'animate-spin' : ''}`} aria-hidden="true" />
-                  {props.agentActivityAction === selectedAgent.id ? t('agentsWorkflows.agents.details.refreshing') : t('common.refresh')}
-                </Button>
-                <Button type="button" variant="secondary" size="sm" onClick={props.onTestSelectedAgent} disabled={!props.canManageAgents || props.testingAgentId === selectedAgent.id || (requiresRunTarget && !props.runTargetId)}><ICONS.Activity className="h-4 w-4" aria-hidden="true" />{props.testingAgentId === selectedAgent.id ? t('agentsWorkflows.agents.details.queuing') : t('agentsWorkflows.agents.details.runAgent')}</Button>
-              </div>
-            </div>
-            <ol className="mt-4 divide-y divide-ui-border border-y border-ui-border">
-              {selectedAgent.auditHistory.length ? selectedAgent.auditHistory.map((entry) => <li key={entry.id} className="grid gap-1 py-3 sm:grid-cols-[11rem_minmax(0,1fr)]"><time className="type-caption font-semibold text-ui-text-muted">{formatAgentTimestamp(entry.occurredAt, entry.occurredAt, locale)}</time><span className="text-sm font-semibold text-ui-text">{entry.summary}</span></li>) : <li className="py-5 text-sm text-ui-text-muted">{t('agentsWorkflows.agents.details.noActivityRecords')}</li>}
-            </ol>
-          </section>
         )}
 
         {props.activeTab === 'versions' && (

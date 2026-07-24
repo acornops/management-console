@@ -12,7 +12,6 @@ const agent: AgentDefinition = {
   instructions: '',
   status: 'active',
   origin: { type: 'manual' },
-  kind: 'specialist',
   reviewState: 'reviewed',
   providerType: 'internal',
   createdBy: 'user-1',
@@ -38,9 +37,7 @@ const agent: AgentDefinition = {
     requiresApproval: false
   }],
   workflowsUsingAgent: [],
-  triggers: [],
-  activity: { runCount: 0 },
-  auditHistory: []
+  workflowUsage: { workflowRunCount: 0 }
 };
 
 const workflow: WorkflowDefinition = {
