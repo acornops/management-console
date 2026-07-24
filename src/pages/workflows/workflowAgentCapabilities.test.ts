@@ -19,6 +19,7 @@ const agent: AgentDefinition = {
   version: 1,
   mcpServers: ['acornops-target-agent'],
   tools: ['get_resource', 'get_resource_logs', 'list_resources'],
+  nativeToolConfigs: {},
   skills: ['acornops-observability', 'acornops-target-boundary-design'],
   semanticCapabilityIds: ['target.diagnostics.read'],
   targetScope: ['workspace'],

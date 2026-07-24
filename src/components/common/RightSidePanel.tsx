@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { twMerge } from 'tailwind-merge';
 import { sidePanelMotion } from '@/lib/motion';
@@ -14,6 +15,7 @@ interface RightSidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   overlayClassName?: string;
+  portalToBody?: boolean;
   style?: React.CSSProperties;
   titleId?: string;
 }
@@ -177,6 +179,7 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
   isOpen,
   onClose,
   overlayClassName: customOverlayClassName,
+  portalToBody = false,
   style,
   titleId
 }) => {
@@ -215,7 +218,7 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
     return applyRightSidePanelBackgroundInert(getRightSidePanelBackgroundTargets(containerRef.current, document.body));
   }, [isOpen]);
 
-  return (
+  const panel = (
     <AnimatePresence>
       {isOpen && (
         <div ref={containerRef} className={twMerge(containerClassName, customContainerClassName)}>
@@ -277,4 +280,8 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
       )}
     </AnimatePresence>
   );
+
+  return portalToBody && typeof document !== 'undefined'
+    ? createPortal(panel, document.body)
+    : panel;
 };

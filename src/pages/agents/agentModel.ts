@@ -17,6 +17,7 @@ export interface AgentDefinition {
   mcpServers: string[];
   mcpInstallations?: AgentMcpServerApi[];
   tools: string[];
+  nativeToolConfigs: Record<string, Record<string, unknown>>;
   skills: string[];
   skillInstallations?: AgentSkillApi[];
   semanticCapabilityIds: string[];
