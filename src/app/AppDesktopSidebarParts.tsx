@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import { NavCountBadge } from '@/app/NavCountBadge';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
+import { WorkspaceNavigationGroupBadge } from '@/app/WorkspaceNavigationGroupBadge';
 
 const navButtonClass = (
   active: boolean,
@@ -18,12 +19,14 @@ export const navIconClass = (active: boolean) =>
 
 export const SidebarSection: React.FC<{
   title: string;
+  badge?: string;
   children: React.ReactNode;
   compactAfter?: boolean;
-}> = ({ title, children, compactAfter = false }) => (
+}> = ({ title, badge, children, compactAfter = false }) => (
   <div className={`${compactAfter ? 'pb-5' : 'pb-7'} px-3`}>
     {title && <div className="mb-2 flex items-center justify-between px-3">
       <div className="text-xs font-bold uppercase tracking-[0.08em] text-ui-text-muted opacity-70">{title}</div>
+      {badge && <WorkspaceNavigationGroupBadge>{badge}</WorkspaceNavigationGroupBadge>}
     </div>}
     <div className="space-y-1">{children}</div>
   </div>

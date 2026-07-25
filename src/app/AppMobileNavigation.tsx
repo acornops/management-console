@@ -9,6 +9,7 @@ import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
+import { WorkspaceNavigationGroupBadge } from '@/app/WorkspaceNavigationGroupBadge';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
@@ -420,9 +421,16 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                     <>
                       <nav aria-label={t('app.workspaceNavigation')} className="space-y-3">
                         {workspaceNavigationGroups.map((group) => (
-                          <section key={group.id} aria-label={group.label || t('app.overview')} className={group.id === 'primary' ? '' : 'border-t border-ui-border pt-3'}>
+                          <section
+                            key={group.id}
+                            aria-label={[group.label || t('app.overview'), group.badge].filter(Boolean).join(', ')}
+                            className={group.id === 'primary' ? '' : 'border-t border-ui-border pt-3'}
+                          >
                             {group.label && (
-                              <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">{group.label}</p>
+                              <div className="mb-1 flex items-center justify-between gap-2 px-3">
+                                <p className="text-xs font-semibold uppercase tracking-normal text-ui-text-muted">{group.label}</p>
+                                {group.badge && <WorkspaceNavigationGroupBadge>{group.badge}</WorkspaceNavigationGroupBadge>}
+                              </div>
                             )}
                             <div className="grid grid-cols-1 gap-1">
                               {group.items.map((item) => {

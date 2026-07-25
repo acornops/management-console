@@ -27,6 +27,7 @@ export interface WorkspaceNavigationChildItem {
 export interface WorkspaceNavigationGroup {
   id: 'primary' | 'inventory' | 'automation' | 'governance' | 'utilities';
   label?: string;
+  badge?: string;
   items: WorkspaceNavigationItem[];
 }
 
@@ -64,6 +65,7 @@ export function getWorkspaceNavigationGroups({
     groups.push({
       id: 'automation',
       label: t('app.automation'),
+      badge: t('app.experimental'),
       items: [
         { id: 'agents', label: t('app.agents'), path: AppPaths.workspaceAgents(workspace.id), icon: ICONS.Bot, active: activeResourceNav === 'agents' },
         {

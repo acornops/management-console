@@ -330,7 +330,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   return group.id === 'utilities' ? (
                     <TargetSettingsDivider key={group.id}>{items}</TargetSettingsDivider>
                   ) : (
-                    <SidebarSection key={group.id} title={group.label || ''} compactAfter>
+                    <SidebarSection key={group.id} title={group.label || ''} badge={group.badge} compactAfter>
                       {items}
                     </SidebarSection>
                   );

@@ -111,6 +111,7 @@ export const en = {
     capabilities: 'Capabilities',
     inventory: 'Inventory',
     automation: 'Automation',
+    experimental: 'Experimental',
     governance: 'Governance',
     utilities: 'Utilities',
     cluster: 'Cluster',

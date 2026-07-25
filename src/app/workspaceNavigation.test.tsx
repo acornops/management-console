@@ -16,11 +16,15 @@ describe('workspace navigation model', () => {
   it('keeps navigation rows and groups visually separated', () => {
     const regular = renderToStaticMarkup(<SidebarSection title="Inventory"><span>Clusters</span></SidebarSection>);
     const compact = renderToStaticMarkup(<SidebarSection title="Inventory" compactAfter><span>Clusters</span></SidebarSection>);
+    const experimental = renderToStaticMarkup(<SidebarSection title="Automation" badge="Experimental"><span>Workflows</span></SidebarSection>);
 
     expect(regular).toContain('pb-7 px-3');
     expect(compact).toContain('pb-5 px-3');
     expect(regular).toContain('mb-2 flex');
     expect(regular).toContain('space-y-1');
+    expect(experimental).toContain('Automation');
+    expect(experimental).toContain('Experimental');
+    expect(experimental).toContain('bg-status-warning-soft');
   });
 
   it('groups all permitted destinations and marks Schedules as the current Workflows child', () => {
@@ -36,6 +40,7 @@ describe('workspace navigation model', () => {
       'overview', 'clusters', 'virtualMachines', 'agents', 'workflows', 'approvals', 'workspaceAuditLog', 'workspaceSettings', 'help'
     ]);
     expect(groups.flatMap((group) => group.items).some((item) => item.path.includes('/catalog'))).toBe(false);
+    expect(groups.find((group) => group.id === 'automation')?.badge).toBe('app.experimental');
     const workflows = groups.flatMap((group) => group.items).find((item) => item.id === 'workflows');
     expect(workflows).toMatchObject({
       active: true,

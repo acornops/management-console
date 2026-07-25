@@ -111,6 +111,7 @@ export const zh = {
     capabilities: '能力',
     inventory: '资源清单',
     automation: '自动化',
+    experimental: '实验性',
     governance: '治理',
     utilities: '实用工具',
     cluster: '集群',
