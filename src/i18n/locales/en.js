@@ -2253,6 +2253,32 @@ export const en = {
       activityFailed: 'Failed to load Insights activity.',
       loadingActivity: 'Loading Insights activity',
       closeActivity: 'Close Insights activity',
+      checkpoint: {
+        outcomes: {
+          applied: 'Applied',
+          noop: 'No learning',
+          invalid_response: 'Invalid response',
+          provider_failure: 'Provider failed'
+        },
+        reason: 'Reason',
+        reasons: {
+          no_durable_learning: 'No durable learning',
+          insufficient_evidence: 'Insufficient evidence',
+          already_captured: 'Already captured',
+          empty_response: 'Empty response',
+          invalid_json: 'Invalid JSON',
+          invalid_schema: 'Invalid patch schema',
+          mixed_noop: 'No-op mixed with changes',
+          unknown_entry: 'Unknown insight entry',
+          provider_failure: 'Provider request failed'
+        },
+        model: 'Model',
+        appliedCount: '{{count}} change applied',
+        appliedCount_other: '{{count}} changes applied',
+        rejectedCount: '{{count}} change rejected',
+        rejectedCount_other: '{{count}} changes rejected',
+        openSession: 'Open source session'
+      },
       settings: 'Settings',
       settingsTitle: 'Insights settings',
       settingsBody: 'Configure learning checkpoints and retrieval limits for this target.',

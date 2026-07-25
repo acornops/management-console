@@ -2253,6 +2253,32 @@ export const zh = {
       activityFailed: '加载洞察活动失败。',
       loadingActivity: '正在加载洞察活动',
       closeActivity: '关闭洞察活动',
+      checkpoint: {
+        outcomes: {
+          applied: '已应用',
+          noop: '无新增洞察',
+          invalid_response: '响应无效',
+          provider_failure: '提供方失败'
+        },
+        reason: '原因',
+        reasons: {
+          no_durable_learning: '没有持久洞察',
+          insufficient_evidence: '证据不足',
+          already_captured: '已记录',
+          empty_response: '响应为空',
+          invalid_json: 'JSON 无效',
+          invalid_schema: '补丁结构无效',
+          mixed_noop: '无更改与修改混合',
+          unknown_entry: '未知洞察条目',
+          provider_failure: '提供方请求失败'
+        },
+        model: '模型',
+        appliedCount: '已应用 {{count}} 项更改',
+        appliedCount_other: '已应用 {{count}} 项更改',
+        rejectedCount: '已拒绝 {{count}} 项更改',
+        rejectedCount_other: '已拒绝 {{count}} 项更改',
+        openSession: '打开来源会话'
+      },
       settings: '设置',
       settingsTitle: '洞察设置',
       settingsBody: '配置此目标的学习检查点和检索限制。',

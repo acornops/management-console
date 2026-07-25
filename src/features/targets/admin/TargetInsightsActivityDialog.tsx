@@ -4,20 +4,76 @@ import { Button } from '@/components/common/Button';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetToolItem, ControlPlaneWorkspaceAuditEvent } from '@/services/controlPlaneApi';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
+import { appHref } from '@/app/workspaceNavigation';
+import { AppPaths, withAssistantSession } from '@/utils/routes';
 
 interface TargetInsightsActivityDialogProps {
   workspaceId: string;
   targetId: string;
+  targetType: 'kubernetes' | 'virtual_machine';
   tool: ControlPlaneTargetToolItem;
   onClose: () => void;
+}
+
+type CheckpointOutcome = 'applied' | 'noop' | 'invalid_response' | 'provider_failure';
+
+function metadataString(event: ControlPlaneWorkspaceAuditEvent, key: string): string | null {
+  const value = event.metadata?.[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function metadataCount(event: ControlPlaneWorkspaceAuditEvent, key: string): number | null {
+  const value = event.metadata?.[key];
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null;
+}
+
+function checkpointOutcome(event: ControlPlaneWorkspaceAuditEvent): CheckpointOutcome | null {
+  const outcome = metadataString(event, 'outcome');
+  return outcome === 'applied' || outcome === 'noop' || outcome === 'invalid_response' || outcome === 'provider_failure'
+    ? outcome
+    : null;
+}
+
+export function targetInsightsCheckpointActivityDetails(
+  event: ControlPlaneWorkspaceAuditEvent,
+  target: { workspaceId: string; targetId: string; targetType: 'kubernetes' | 'virtual_machine' }
+) {
+  const outcome = checkpointOutcome(event);
+  const sessionId = metadataString(event, 'sessionId');
+  const sourcePath = sessionId
+    ? withAssistantSession(
+        target.targetType === 'kubernetes'
+          ? AppPaths.workspaceKubernetesClusterDiagnostics(target.workspaceId, target.targetId, 'chat')
+          : AppPaths.workspaceVirtualMachineDetail(target.workspaceId, target.targetId, 'chat'),
+        sessionId
+      )
+    : null;
+  return {
+    outcome,
+    reasonCode: metadataString(event, 'reasonCode'),
+    provider: metadataString(event, 'provider'),
+    model: metadataString(event, 'model'),
+    appliedPatchCount: metadataCount(event, 'appliedPatchCount'),
+    rejectedPatchCount: metadataCount(event, 'rejectedPatchCount'),
+    sourcePath,
+    tone: outcome === 'applied'
+      ? 'success' as const
+      : outcome === 'noop'
+        ? 'neutral' as const
+        : outcome
+          ? 'danger' as const
+          : null
+  };
 }
 
 export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialogProps> = ({
   workspaceId,
   targetId,
+  targetType,
   tool,
   onClose
 }) => {
@@ -77,12 +133,53 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
               <p className="type-caption mt-1 text-ui-text-muted">{t('tools.targetInsights.activityBody')}</p>
             </div>
             <div className="divide-y divide-ui-border">
-              {activity.length > 0 ? activity.map((event) => (
-                <div key={event.id} className="px-5 py-4">
-                  <p className="text-sm font-semibold text-ui-text">{event.summary}</p>
-                  <p className="type-caption mt-1 text-ui-text-muted">{event.eventType} · {new Date(event.occurredAt).toLocaleString()}</p>
-                </div>
-              )) : (
+              {activity.length > 0 ? activity.map((event) => {
+                const {
+                  outcome,
+                  reasonCode,
+                  provider,
+                  model,
+                  appliedPatchCount,
+                  rejectedPatchCount,
+                  sourcePath,
+                  tone
+                } = targetInsightsCheckpointActivityDetails(event, { workspaceId, targetId, targetType });
+
+                return (
+                  <div key={event.id} className="px-5 py-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-ui-text">{event.summary}</p>
+                      {outcome && tone ? (
+                        <StatusBadge tone={tone}>{t(`tools.targetInsights.checkpoint.outcomes.${outcome}`)}</StatusBadge>
+                      ) : null}
+                    </div>
+                    <p className="type-caption mt-1 text-ui-text-muted">{new Date(event.occurredAt).toLocaleString()}</p>
+                    {(reasonCode || provider || appliedPatchCount !== null || rejectedPatchCount !== null || sourcePath) ? (
+                      <div className="type-caption mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-ui-text-muted">
+                        {reasonCode ? (
+                          <span>{t('tools.targetInsights.checkpoint.reason')}: {t(`tools.targetInsights.checkpoint.reasons.${reasonCode}`, { defaultValue: reasonCode })}</span>
+                        ) : null}
+                        {provider ? (
+                          <span className="[overflow-wrap:anywhere]">{t('tools.targetInsights.checkpoint.model')}: {model ? `${provider} · ${model}` : provider}</span>
+                        ) : null}
+                        {appliedPatchCount ? (
+                          <span>{t('tools.targetInsights.checkpoint.appliedCount', { count: appliedPatchCount })}</span>
+                        ) : null}
+                        {rejectedPatchCount ? (
+                          <span>{t('tools.targetInsights.checkpoint.rejectedCount', { count: rejectedPatchCount })}</span>
+                        ) : null}
+                        {sourcePath ? (
+                          <a className="font-semibold text-ui-link hover:underline" href={appHref(sourcePath)}>
+                            {t('tools.targetInsights.checkpoint.openSession')}
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="type-caption mt-1 text-ui-text-muted">{event.eventType}</p>
+                    )}
+                  </div>
+                );
+              }) : (
                 <p className="type-caption px-5 py-6 text-ui-text-muted">{t('tools.targetInsights.noActivity')}</p>
               )}
             </div>

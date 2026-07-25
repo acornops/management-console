@@ -529,7 +529,13 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       )}
 
       {editingTool?.id === 'target_insights' && targetInsightsAction === 'activity' && (
-        <TargetInsightsActivityDialog workspaceId={target.workspaceId} targetId={target.id} tool={editingTool} onClose={closeConfigure} />
+        <TargetInsightsActivityDialog
+          workspaceId={target.workspaceId}
+          targetId={target.id}
+          targetType={target.targetType}
+          tool={editingTool}
+          onClose={closeConfigure}
+        />
       )}
 
       {editingTool?.id === 'target_insights' && targetInsightsAction === 'reset' && (

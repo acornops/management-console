@@ -495,7 +495,7 @@ export interface WorkspaceRoleCapabilityGroup {
   sortOrder: number;
 }
 
-export type WorkspaceAuditCategory = 'membership' | 'workspace' | 'target' | 'session' | 'run' | 'approval' | 'mcp' | 'tool';
+export type WorkspaceAuditCategory = 'membership' | 'workspace' | 'target' | 'session' | 'run' | 'approval' | 'mcp' | 'tool' | 'insights';
 export type WorkspaceAuditOperation = 'read' | 'write';
 
 export interface WorkspaceAuditEvent {
