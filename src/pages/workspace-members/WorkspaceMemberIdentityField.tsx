@@ -159,7 +159,7 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
           aria-invalid={invalid}
           aria-describedby={invalid ? 'workspace-invite-email-error' : undefined}
           autoComplete="off"
-        maxLength={discoveryMode === 'directory' ? 200 : 320}
+          maxLength={mode === 'directory' ? 200 : 320}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onFocus={() => {

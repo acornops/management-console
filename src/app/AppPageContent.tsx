@@ -24,7 +24,6 @@ import { AppRoute, AppPaths, ClusterCatalogReturnState, ClusterCatalogRouteState
 import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 
 const loadKubernetesClustersPage = () => import('@/pages/KubernetesClustersPage').then((module) => ({ default: module.KubernetesClustersPage }));
-
 const loadKubernetesClusterDetailPage = () => import('@/pages/KubernetesClusterDetailPage').then((module) => ({ default: module.KubernetesClusterDetailPage }));
 
 const loadNotFoundPage = () => import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }));
