@@ -126,6 +126,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   isVirtualMachineSidebar,
   isCreatingCluster,
   isCreatingWorkspace,
+  isRegisteredClusterAgentConnected,
   isDark,
   isDeletingWorkspace,
   isMobileNavOpen,
@@ -547,6 +548,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             isAddingCluster={isAddingCluster}
             isCreatingCluster={isCreatingCluster}
             isCreatingWorkspace={isCreatingWorkspace}
+            isRegisteredClusterAgentConnected={isRegisteredClusterAgentConnected}
             isDeletingWorkspace={isDeletingWorkspace}
             newClusterName={newClusterName}
             onClusterNameChange={setNewClusterName}

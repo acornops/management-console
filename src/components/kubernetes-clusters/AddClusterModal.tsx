@@ -3,6 +3,7 @@ import { Check, Copy, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
+import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
@@ -19,6 +20,7 @@ interface AddClusterModalProps {
   excludeNamespaces: string;
   clusterInstallCommand: string;
   clusterInstallWarnings: string[];
+  isAgentConnected: boolean;
   isCreatingCluster: boolean;
   onClose: () => void;
   onClusterNameChange: (value: string) => void;
@@ -80,6 +82,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
   excludeNamespaces,
   clusterInstallCommand,
   clusterInstallWarnings,
+  isAgentConnected,
   isCreatingCluster,
   onClose,
   onClusterNameChange,
@@ -286,10 +289,11 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                   <p className="type-caption mt-1 text-ui-text-muted">{namespaceScopeSummary}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-status-success/25 bg-status-success-soft px-4 py-3 text-xs font-extrabold text-status-success-text">
-                <div className="h-2 w-2 rounded-full bg-status-success"></div>
-                {t('clusterSetup.waitingForAgent')}
-              </div>
+              <AgentConnectionStatus
+                isConnected={isAgentConnected}
+                waitingLabel={t('clusterSetup.waitingForAgent')}
+                connectedLabel={t('clusterSetup.agentConnected')}
+              />
             </div>
             <div className="flex items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
               <Button
@@ -300,7 +304,11 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                 className="rounded-lg"
               >
                 <Zap className="h-4 w-4" />
-                {isCreatingCluster ? t('clusterSetup.checkingConnection') : t('clusterSetup.installedAgent')}
+                {isCreatingCluster
+                  ? t('clusterSetup.checkingConnection')
+                  : isAgentConnected
+                    ? t('clusterSetup.done')
+                    : t('clusterSetup.installedAgent')}
               </Button>
             </div>
           </>

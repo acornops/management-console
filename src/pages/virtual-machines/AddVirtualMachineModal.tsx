@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, Copy, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
@@ -12,6 +13,7 @@ interface AddVirtualMachineModalProps {
   creationStep: 'details' | 'instructions';
   vmName: string;
   installInstructions: string;
+  isAgentConnected: boolean;
   isRegistering: boolean;
   errorMessage?: string | null;
   onClose: () => void;
@@ -25,6 +27,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
   creationStep,
   vmName,
   installInstructions,
+  isAgentConnected,
   isRegistering,
   errorMessage,
   onClose,
@@ -165,10 +168,11 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                 <p className="type-row-title mt-1 truncate" title={vmName}>{vmName}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 rounded-lg border border-status-success/25 bg-status-success-soft px-4 py-3 text-xs font-extrabold text-status-success-text">
-              <div className="h-2 w-2 rounded-full bg-status-success"></div>
-              {t('virtualMachines.list.waitingForAgent')}
-            </div>
+            <AgentConnectionStatus
+              isConnected={isAgentConnected}
+              waitingLabel={t('virtualMachines.list.waitingForAgent')}
+              connectedLabel={t('virtualMachines.list.agentConnected')}
+            />
           </div>
           <div className="flex shrink-0 items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
             <Button
@@ -179,7 +183,11 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
               className="rounded-lg"
             >
               <Zap className="h-4 w-4" />
-              {isRegistering ? t('virtualMachines.list.checkingConnection') : t('virtualMachines.list.installedAgent')}
+              {isRegistering
+                ? t('virtualMachines.list.checkingConnection')
+                : isAgentConnected
+                  ? t('virtualMachines.list.done')
+                  : t('virtualMachines.list.installedAgent')}
             </Button>
           </div>
         </>

@@ -169,6 +169,12 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     onUpsertVirtualMachine: (virtualMachine) => onUpsertWorkspaceVirtualMachine(workspace.id, virtualMachine),
     t
   });
+  const isRegisteredVmAgentConnected = Boolean(
+    installInstructions?.vmId &&
+    virtualMachines.some((virtualMachine) =>
+      virtualMachine.id === installInstructions.vmId && virtualMachine.status !== 'unknown'
+    )
+  );
 
   React.useEffect(() => {
     if (!selectedId || selected || isLoading) return;
@@ -442,6 +448,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           creationStep={vmCreationStep}
           vmName={newVmName}
           installInstructions={newVmInstallInstructions}
+          isAgentConnected={isRegisteredVmAgentConnected}
           isRegistering={isRegisteringVm}
           errorMessage={vmCreationError}
           onClose={resetVmCreationState}

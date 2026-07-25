@@ -158,6 +158,7 @@ const App: React.FC = () => {
     isAddingCluster,
     isCreatingCluster,
     isCreatingWorkspace,
+    isRegisteredClusterAgentConnected,
     navigateToKubernetesCluster,
     newClusterName,
     setClusterCreationStep,
@@ -215,7 +216,6 @@ const App: React.FC = () => {
       navigate(targetWorkspace ? workspaceLandingPath(targetWorkspace) : AppPaths.workspaceOverview(targetWorkspaceId), { replace: true });
     }
   }, [user, route.kind, selectedWorkspaceId, workspaceById, workspaces, navigate]);
-
   useEffect(() => {
     if (!routeWorkspaceId || !isWorkspaceDataRoute(route)) {
       return;
@@ -535,6 +535,7 @@ const App: React.FC = () => {
       isVirtualMachineSidebar={isVirtualMachineSidebar}
       isCreatingCluster={isCreatingCluster}
       isCreatingWorkspace={isCreatingWorkspace}
+      isRegisteredClusterAgentConnected={isRegisteredClusterAgentConnected}
       isDark={isDark}
       isDeletingWorkspace={isDeletingWorkspace}
       isMobileNavOpen={isMobileNavOpen}

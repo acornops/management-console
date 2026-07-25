@@ -51,6 +51,7 @@ export interface AppShellProps {
   isVirtualMachineSidebar: boolean;
   isCreatingCluster: boolean;
   isCreatingWorkspace: boolean;
+  isRegisteredClusterAgentConnected: boolean;
   isDark: boolean;
   isDeletingWorkspace: boolean;
   isMobileNavOpen: boolean;
