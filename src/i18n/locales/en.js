@@ -101,6 +101,7 @@ export const en = {
     library: 'Library',
     workspaceNavigation: 'Workspace navigation',
     schedules: 'Schedules',
+    eventTriggers: 'Event triggers',
     approvals: 'Approvals',
     clusters: 'Kubernetes Clusters',
     virtualMachines: 'Virtual Machines',
@@ -307,6 +308,110 @@ export const en = {
       otherOwnerCredentialHelp: 'This schedule runs as another user. You cannot view or connect their individual MCP credentials; that user must repair their connection before the schedule can be enabled.',
       saveError: 'Failed saving workflow schedule.',
       deleteError: 'Failed deleting workflow schedule.'
+    }
+  },
+  eventTriggers: {
+    title: 'Event triggers',
+    subtitle: 'Start workflows when something happens in {{workspace}} or an external system.',
+    create: 'Create event trigger',
+    permissionNotice: 'You need manage_workflows to create or edit event triggers.',
+    noActiveWorkflows: 'Activate a workflow before creating an event trigger.',
+    listTitle: 'Workflow event triggers',
+    listDescription: 'Event triggers start one existing workflow. Schedules are managed separately.',
+    count: '{{count}} triggers',
+    count_one: '{{count}} trigger',
+    count_other: '{{count}} triggers',
+    emptyTitle: 'No event triggers',
+    emptyDescription: 'Create a trigger for an issue-created event or a signed webhook request.',
+    loadError: 'Failed loading event triggers.',
+    refreshing: 'Refreshing event triggers.',
+    saveError: 'Failed saving event trigger.',
+    updateError: 'Failed updating event trigger.',
+    deleteError: 'Failed deleting event trigger.',
+    rotateError: 'Failed rotating the signing secret.',
+    copyError: 'Could not copy to the clipboard.',
+    startsWorkflow: 'Starts {{workflow}}',
+    webhookDescription: 'Accepts signed requests with declared workflow inputs.',
+    issueCreatedDescription: 'Starts when AcornOps creates an issue.',
+    copyEndpoint: 'Copy endpoint',
+    lastTriggered: 'Last triggered {{time}}',
+    neverTriggered: 'Not triggered yet',
+    source: {
+      webhook: 'Webhook request',
+      acornopsEvent: 'AcornOps event'
+    },
+    status: {
+      enabled: 'Enabled',
+      paused: 'Paused',
+      autoPaused: 'Auto-paused'
+    },
+    lastStatus: {
+      dispatched: 'Dispatched',
+      failed: 'Failed',
+      auto_paused: 'Auto-paused',
+      rejected: 'Rejected'
+    },
+    actions: {
+      edit: 'Edit',
+      pause: 'Pause',
+      resume: 'Resume',
+      rotateSecret: 'Rotate secret',
+      delete: 'Delete'
+    },
+    delete: {
+      title: 'Delete {{name}}?',
+      description: 'New requests and events will stop immediately. Dispatches already in progress and existing workflow runs are unaffected.'
+    },
+    rotate: {
+      title: 'Rotate the signing secret for {{name}}?',
+      description: 'The current secret will stop working immediately. Update the sender with the replacement secret shown after rotation.'
+    },
+    secret: {
+      title: 'Save the credentials for {{name}}',
+      description: 'The signing secret is shown only once. Rotating it immediately invalidates the previous secret.',
+      endpoint: 'Endpoint',
+      signingSecret: 'Signing secret',
+      signingHelp: 'Send {"inputs":{"parameter":"value"}} and sign <timestamp>.<raw JSON> with HMAC-SHA256. Include X-AcornOps-Event-Id, X-AcornOps-Timestamp, and X-AcornOps-Signature: v1=<hex digest>.',
+      copyEndpoint: 'Copy endpoint',
+      copySecret: 'Copy secret',
+      endpointCopied: 'Endpoint copied.',
+      secretCopied: 'Signing secret copied.',
+      dismiss: 'Dismiss'
+    },
+    form: {
+      createTitle: 'Create event trigger',
+      editTitle: 'Edit event trigger',
+      description: 'Choose one event source and the existing workflow it starts.',
+      name: 'Name',
+      workflow: 'Workflow',
+      workflowHelp: 'The workflow cannot be changed after this trigger is created.',
+      source: 'Event source',
+      sourceHelp: 'The event source cannot be changed after this trigger is created.',
+      issueCreated: 'Issue created',
+      issueCreatedHelp: 'Map each workflow input from the issue and target that caused the event.',
+      selectBinding: 'Select an event field',
+      chatUnsupported: 'Issue events cannot supply the chat input “{{parameter}}”. Choose a workflow without chat inputs.',
+      noInputs: 'This workflow has no runtime inputs to map.',
+      bindingLabel: 'Event field for {{parameter}}',
+      webhookHelp: 'After creation, AcornOps shows a one-time signing secret. Requests supply the workflow inputs directly.',
+      runsAs: 'Runs as',
+      currentUser: 'Your current account',
+      runsAsHelp: 'Workspace membership and permissions are checked again for every event.',
+      approvedContextGrants: 'Approved context grants',
+      approvedContextGrantsHelp: 'Optional grants, separated by commas or new lines.',
+      enabled: 'Enabled',
+      save: 'Save event trigger',
+      saving: 'Saving...'
+    },
+    bindings: {
+      issue_id: 'Issue ID',
+      issue_title: 'Issue title',
+      issue_summary: 'Issue summary',
+      issue_severity: 'Issue severity',
+      issue_scope: 'Issue scope',
+      issue_object: 'Issue object',
+      target_id: 'Target ID',
+      target_type: 'Target type'
     }
   },
   approvals: {

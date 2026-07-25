@@ -29,6 +29,7 @@ export interface FixtureState {
   workflows: Array<Record<string, any>>;
   automationTemplates: Array<Record<string, any>>;
   workflowSchedules: Array<Record<string, any>>;
+  workflowEventTriggers: Array<Record<string, any>>;
   catalogSources: Array<Record<string, any>>;
   catalogArtifacts: Array<Record<string, any>>;
   sessions: Array<Record<string, any>>;
@@ -315,6 +316,21 @@ export function createFixtureState(): FixtureState {
     workflowSchedules: [
       { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW },
       { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW }
+    ],
+    workflowEventTriggers: [
+      {
+        id: 'fixture-issue-created-trigger', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
+        name: 'Triage new issues', status: 'enabled', sourceType: 'acornops_event',
+        eventType: 'issue.created.v1', inputBindings: { target: 'target.id' }, approvedContextGrants: ['workspace.summary'],
+        principal: { type: 'user', id: FIXTURE_IDS.user }, lastTriggeredAt: NOW, lastStatus: 'dispatched'
+      },
+      {
+        id: 'fixture-webhook-trigger', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
+        name: 'External production review', status: 'paused', sourceType: 'webhook',
+        eventType: null, inputBindings: {}, approvedContextGrants: ['workspace.summary'],
+        principal: { type: 'user', id: FIXTURE_IDS.user },
+        endpointUrl: '/api/v1/workflow-event-triggers/fixture-webhook-trigger/events'
+      }
     ],
     catalogSources: [{ id: 'fixture-catalog-source', workspaceId: FIXTURE_IDS.workspace, displayName: 'Internal MCP Registry', baseUrl: 'https://registry.internal.example', authType: 'none', credentialConfigured: false, networkRoute: 'direct', enabled: true, managementMode: 'bootstrap', bindings: [{ id: 'fixture-binding', artifactKind: 'mcp_server', adapterType: 'mcp_registry_v0_1', adapterBasePath: '/v0.1', syncStatus: 'ready', lastSyncAt: NOW }] }],
     catalogArtifacts: [{ id: 'fixture-catalog-artifact', workspaceId: FIXTURE_IDS.workspace, sourceId: 'fixture-catalog-source', bindingId: 'fixture-binding', artifactKind: 'mcp_server', name: 'github-observer', title: 'GitHub Observer', description: 'Read-only repository and pull request context for operational workflows.', version: '1.4.0', digest: 'sha256:fixture-catalog-digest', metadata: { publisher: 'AcornOps', categories: ['developer-tools'] }, compatible: true, remoteEndpoints: [{ type: 'streamable-http', url: 'https://mcp.fixture.acornops.dev/github', supported: true, supportedCredentialModes: ['workspace', 'individual'], recommendedCredentialMode: 'individual' }], publishedAt: EARLIER, upstreamUpdatedAt: NOW }],

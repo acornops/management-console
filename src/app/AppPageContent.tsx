@@ -13,7 +13,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import type { SettingsTab } from '@/pages/SettingsPage';
-import { workspaceLandingPath } from '@/app/appNavigationGuards';
+import { routeTargetsMissingWorkspace, workspaceLandingPath } from '@/app/appNavigationGuards';
 import {
   hasAnotherWorkspaceOwner,
   isKnownOnlyWorkspaceOwner,
@@ -47,6 +47,9 @@ const loadWorkspaceWorkflowsPage = () =>
 const loadWorkspaceSchedulesPage = () =>
   import('@/pages/WorkspaceSchedulesPage').then((module) => ({ default: module.WorkspaceSchedulesPage }));
 
+const loadWorkspaceEventTriggersPage = () =>
+  import('@/pages/WorkspaceEventTriggersPage').then((module) => ({ default: module.WorkspaceEventTriggersPage }));
+
 const loadWorkspaceApprovalsPage = () =>
   import('@/pages/WorkspaceApprovalsPage').then((module) => ({ default: module.WorkspaceApprovalsPage }));
 
@@ -71,6 +74,7 @@ const WorkspaceAgentsPage = React.lazy(loadWorkspaceAgentsPage);
 const WorkspaceCatalogPage = React.lazy(loadWorkspaceCatalogPage);
 const WorkspaceWorkflowsPage = React.lazy(loadWorkspaceWorkflowsPage);
 const WorkspaceSchedulesPage = React.lazy(loadWorkspaceSchedulesPage);
+const WorkspaceEventTriggersPage = React.lazy(loadWorkspaceEventTriggersPage);
 const WorkspaceApprovalsPage = React.lazy(loadWorkspaceApprovalsPage);
 const WorkspaceInvitePage = React.lazy(loadWorkspaceInvitePage);
 const WorkspaceOverviewPage = React.lazy(loadWorkspaceOverviewPage);
@@ -112,6 +116,9 @@ export function preloadAppRoutePage(route: AppRoute): void {
     case 'workspaceSchedules':
       void loadWorkspaceSchedulesPage();
       break;
+    case 'workspaceEventTriggers':
+      void loadWorkspaceEventTriggersPage();
+      break;
     case 'workspaceApprovals':
       void loadWorkspaceApprovalsPage();
       break;
@@ -137,30 +144,6 @@ export function preloadAppRoutePage(route: AppRoute): void {
     case 'workspaces':
       break;
   }
-}
-
-function routeTargetsMissingWorkspace(route: AppRoute, workspaceContext: Workspace | undefined, workspaceCount: number): boolean {
-  return (
-    workspaceCount === 0 &&
-    !workspaceContext &&
-    (
-      route.kind === 'workspaceOverview' ||
-      route.kind === 'workspaceAgents' ||
-      route.kind === 'workspaceCatalog' ||
-      route.kind === 'workspaceWorkflows' ||
-      route.kind === 'workspaceSchedules' ||
-      route.kind === 'workspaceApprovals' ||
-      route.kind === 'workspaceMembers' ||
-      route.kind === 'workspaceAiSettings' ||
-      route.kind === 'workspaceWebhooks' ||
-      route.kind === 'workspaceSettings' ||
-      route.kind === 'workspaceAuditLog' ||
-      route.kind === 'workspaceKubernetesClusters' ||
-      route.kind === 'workspaceVirtualMachines' ||
-      route.kind === 'workspaceVirtualMachineDetail' ||
-      route.kind === 'workspaceKubernetesClusterDiagnostics'
-    )
-  );
 }
 
 interface AppPageContentProps {
@@ -486,6 +469,10 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
 
           {route.kind === 'workspaceSchedules' && workspaceContext && (
             <WorkspaceSchedulesPage workspace={workspaceContext} createWorkflowId={route.createWorkflowId} />
+          )}
+
+          {route.kind === 'workspaceEventTriggers' && workspaceContext && (
+            <WorkspaceEventTriggersPage workspace={workspaceContext} />
           )}
 
           {route.kind === 'workspaceApprovals' && workspaceContext && (

@@ -19,6 +19,7 @@ describe('app navigation guards', () => {
     expect(isWorkspaceDataRoute({ kind: 'workspaceAiSettings', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceSettings', workspaceId: 'workspace-1' })).toBe(false);
     expect(isWorkspaceDataRoute({ kind: 'workspaceSchedules', workspaceId: 'workspace-1' })).toBe(true);
+    expect(isWorkspaceDataRoute({ kind: 'workspaceEventTriggers', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceApprovals', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceWebhooks', workspaceId: 'workspace-1' })).toBe(true);
   });

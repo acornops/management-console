@@ -8,6 +8,7 @@ const routes = [
   { path: '/workspaces/fixture-workspace/agents', text: 'Workflow Analyst' },
   { path: '/workspaces/fixture-workspace/workflows', text: 'Production health review' },
   { path: '/workspaces/fixture-workspace/schedules', text: 'Weekday morning review' },
+  { path: '/workspaces/fixture-workspace/event-triggers', text: 'Triage new issues' },
   { path: '/workspaces/fixture-workspace/approvals', text: 'No approvals waiting' },
   { path: '/workspaces/fixture-workspace/catalog', text: 'GitHub Observer' },
   { path: '/workspaces/fixture-workspace/catalog?destination=agent%3Afixture-specialist', text: 'Destination: Kubernetes Specialist' },

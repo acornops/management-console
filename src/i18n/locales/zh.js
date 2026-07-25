@@ -101,6 +101,7 @@ export const zh = {
     library: '工作流库',
     workspaceNavigation: '工作区导航',
     schedules: '计划',
+    eventTriggers: '事件触发器',
     approvals: '审批',
     clusters: 'Kubernetes 集群',
     virtualMachines: '虚拟机',
@@ -307,6 +308,110 @@ export const zh = {
       otherOwnerCredentialHelp: '此计划以其他用户身份运行。您无法查看或连接其个人 MCP 凭据；该用户必须先修复连接，计划才能启用。',
       saveError: '保存工作流计划失败。',
       deleteError: '删除工作流计划失败。'
+    }
+  },
+  eventTriggers: {
+    title: '事件触发器',
+    subtitle: '当 {{workspace}} 或外部系统中发生事件时启动工作流。',
+    create: '创建事件触发器',
+    permissionNotice: '需要 manage_workflows 权限才能创建或编辑事件触发器。',
+    noActiveWorkflows: '请先激活工作流，再创建事件触发器。',
+    listTitle: '工作流事件触发器',
+    listDescription: '每个事件触发器启动一个现有工作流。计划任务单独管理。',
+    count: '{{count}} 个触发器',
+    count_one: '{{count}} 个触发器',
+    count_other: '{{count}} 个触发器',
+    emptyTitle: '暂无事件触发器',
+    emptyDescription: '为问题创建事件或签名 Webhook 请求创建触发器。',
+    loadError: '加载事件触发器失败。',
+    refreshing: '正在刷新事件触发器。',
+    saveError: '保存事件触发器失败。',
+    updateError: '更新事件触发器失败。',
+    deleteError: '删除事件触发器失败。',
+    rotateError: '轮换签名密钥失败。',
+    copyError: '无法复制到剪贴板。',
+    startsWorkflow: '启动 {{workflow}}',
+    webhookDescription: '接收包含已声明工作流输入的签名请求。',
+    issueCreatedDescription: '当 AcornOps 创建问题时启动。',
+    copyEndpoint: '复制端点',
+    lastTriggered: '上次触发：{{time}}',
+    neverTriggered: '尚未触发',
+    source: {
+      webhook: 'Webhook 请求',
+      acornopsEvent: 'AcornOps 事件'
+    },
+    status: {
+      enabled: '已启用',
+      paused: '已暂停',
+      autoPaused: '已自动暂停'
+    },
+    lastStatus: {
+      dispatched: '已调度',
+      failed: '失败',
+      auto_paused: '已自动暂停',
+      rejected: '已拒绝'
+    },
+    actions: {
+      edit: '编辑',
+      pause: '暂停',
+      resume: '恢复',
+      rotateSecret: '轮换密钥',
+      delete: '删除'
+    },
+    delete: {
+      title: '删除 {{name}}？',
+      description: '新的请求和事件将立即停止。正在进行的调度和现有工作流运行不受影响。'
+    },
+    rotate: {
+      title: '轮换 {{name}} 的签名密钥？',
+      description: '当前密钥将立即失效。轮换后，请使用显示的新密钥更新发送方。'
+    },
+    secret: {
+      title: '保存 {{name}} 的凭据',
+      description: '签名密钥仅显示一次。轮换后，旧密钥会立即失效。',
+      endpoint: '端点',
+      signingSecret: '签名密钥',
+      signingHelp: '发送 {"inputs":{"parameter":"value"}}，并使用 HMAC-SHA256 对 <timestamp>.<原始 JSON> 签名。包含 X-AcornOps-Event-Id、X-AcornOps-Timestamp 和 X-AcornOps-Signature: v1=<十六进制摘要>。',
+      copyEndpoint: '复制端点',
+      copySecret: '复制密钥',
+      endpointCopied: '端点已复制。',
+      secretCopied: '签名密钥已复制。',
+      dismiss: '关闭'
+    },
+    form: {
+      createTitle: '创建事件触发器',
+      editTitle: '编辑事件触发器',
+      description: '选择一个事件源及其要启动的现有工作流。',
+      name: '名称',
+      workflow: '工作流',
+      workflowHelp: '触发器创建后无法更改工作流。',
+      source: '事件源',
+      sourceHelp: '触发器创建后无法更改事件源。',
+      issueCreated: '问题已创建',
+      issueCreatedHelp: '将每个工作流输入映射到触发事件的问题和目标。',
+      selectBinding: '选择事件字段',
+      chatUnsupported: '问题事件无法提供聊天输入“{{parameter}}”。请选择不包含聊天输入的工作流。',
+      noInputs: '此工作流没有需要映射的运行时输入。',
+      bindingLabel: '{{parameter}} 的事件字段',
+      webhookHelp: '创建后，AcornOps 会显示一次性签名密钥。请求直接提供工作流输入。',
+      runsAs: '运行身份',
+      currentUser: '您当前的账户',
+      runsAsHelp: '每次事件发生时都会重新检查工作区成员身份和权限。',
+      approvedContextGrants: '已批准上下文授权',
+      approvedContextGrantsHelp: '可选授权，使用逗号或换行分隔。',
+      enabled: '启用',
+      save: '保存事件触发器',
+      saving: '正在保存...'
+    },
+    bindings: {
+      issue_id: '问题 ID',
+      issue_title: '问题标题',
+      issue_summary: '问题摘要',
+      issue_severity: '问题严重程度',
+      issue_scope: '问题范围',
+      issue_object: '问题对象',
+      target_id: '目标 ID',
+      target_type: '目标类型'
     }
   },
   approvals: {

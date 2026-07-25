@@ -7,6 +7,7 @@ export type ActiveResourceNav =
   | 'catalog'
   | 'workflows'
   | 'schedules'
+  | 'eventTriggers'
   | 'approvals'
   | 'clusters'
   | 'virtualMachines'
@@ -40,6 +41,7 @@ export function getWorkspaceRouteId(route: AppRoute): string | null {
     route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceWorkflows' ||
     route.kind === 'workspaceSchedules' ||
+    route.kind === 'workspaceEventTriggers' ||
     route.kind === 'workspaceApprovals' ||
     route.kind === 'workspaceKubernetesClusters' ||
     route.kind === 'workspaceVirtualMachines' ||
@@ -85,6 +87,7 @@ export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
   if (route.kind === 'workspaceCatalog') return 'catalog';
   if (route.kind === 'workspaceWorkflows') return 'workflows';
   if (route.kind === 'workspaceSchedules') return 'schedules';
+  if (route.kind === 'workspaceEventTriggers') return 'eventTriggers';
   if (route.kind === 'workspaceApprovals') return 'approvals';
   if (route.kind === 'workspaceKubernetesClusters' || route.kind === 'kubernetesClusters') return 'clusters';
   if (route.kind === 'workspaceVirtualMachines') return 'virtualMachines';

@@ -306,6 +306,11 @@ describe('routes', () => {
       kind: 'workspaceSchedules',
       workspaceId: 'team-alpha'
     });
+    expect(AppPaths.workspaceEventTriggers('team-alpha')).toBe('/workspaces/team-alpha/event-triggers');
+    expect(parseAppRoute(AppPaths.workspaceEventTriggers('team-alpha'))).toEqual({
+      kind: 'workspaceEventTriggers',
+      workspaceId: 'team-alpha'
+    });
     expect(AppPaths.workspaceScheduleCreate('team-alpha', 'workflow/a')).toBe(
       '/workspaces/team-alpha/schedules?create=schedule&workflowId=workflow%2Fa'
     );

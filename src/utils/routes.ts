@@ -37,6 +37,7 @@ export type AppRoute =
   | ({ kind: 'workspaceCatalog'; workspaceId: string } & McpCatalogRouteState)
   | { kind: 'workspaceWorkflows'; workspaceId: string }
   | { kind: 'workspaceSchedules'; workspaceId: string; createWorkflowId?: string }
+  | { kind: 'workspaceEventTriggers'; workspaceId: string }
   | { kind: 'workspaceApprovals'; workspaceId: string; runId?: string; approvalId?: string }
   | { kind: 'workspaceMembers'; workspaceId: string }
   | { kind: 'workspaceAiSettings'; workspaceId: string; returnTo?: string }
@@ -272,7 +273,7 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceInvitation', token: decodeParam(inviteMatch[1]) };
   }
 
-  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|catalog|workflows|schedules|approvals|members|ai-settings|webhooks|settings|audit-log)$/);
+  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|catalog|workflows|schedules|event-triggers|approvals|members|ai-settings|webhooks|settings|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
@@ -286,6 +287,7 @@ export function parseAppRoute(path: string): AppRoute {
         ? { kind: 'workspaceSchedules', workspaceId, createWorkflowId }
         : { kind: 'workspaceSchedules', workspaceId };
     }
+    if (section === 'event-triggers') return { kind: 'workspaceEventTriggers', workspaceId };
     if (section === 'approvals') {
       const runId = params.get('runId') || undefined;
       const approvalId = params.get('approvalId') || undefined;
@@ -393,6 +395,8 @@ export const AppPaths = {
     `/workspaces/${encodeURIComponent(workspaceId)}/workflows`,
   workspaceSchedules: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/schedules`,
+  workspaceEventTriggers: (workspaceId: string): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/event-triggers`,
   workspaceScheduleCreate: (workspaceId: string, workflowId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/schedules?create=schedule&workflowId=${encodeURIComponent(workflowId)}`,
   workspaceApprovals: (workspaceId: string, focus?: { runId?: string; approvalId?: string }): string => {

@@ -6,6 +6,7 @@ import { targetSummary, targetToolCatalog, workflowOptions } from './presenters'
 import { routePromptReferenceFixtureRequest } from './promptReferenceRoutes';
 import { workflowCapabilityPreview } from './workflowCapabilityPreview';
 import { routeWebhookFixtureRequest } from './webhookRoutes';
+import { routeWorkflowEventTriggerFixtureRequest } from './workflowEventTriggerRoutes';
 
 export interface FixtureResponse {
   status: number;
@@ -508,6 +509,13 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'PATCH') { Object.assign(schedule, await bodyOf(request), { updatedAt: NOW }); return json({ schedule: clone(schedule) }); }
     if (method === 'DELETE') { state.workflowSchedules = state.workflowSchedules.filter((item) => item.id !== scheduleId); return noContent(); }
   }
+  const eventTriggerResponse = await routeWorkflowEventTriggerFixtureRequest({
+    request,
+    state,
+    path,
+    method
+  });
+  if (eventTriggerResponse) return eventTriggerResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/approvals$/);
   if (match && method === 'GET') return json({ items: [], pendingCount: 0 });
   match = path.match(/^\/api\/v1\/workflows\/([^/]+)\/capabilities-preview$/);

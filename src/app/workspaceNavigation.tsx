@@ -18,7 +18,7 @@ export interface WorkspaceNavigationItem {
 }
 
 export interface WorkspaceNavigationChildItem {
-  id: 'workflowLibrary' | 'workflowSchedules';
+  id: 'workflowLibrary' | 'workflowSchedules' | 'workflowEventTriggers';
   label: string;
   path: string;
   current: boolean;
@@ -47,7 +47,7 @@ export function getWorkspaceNavigationGroups({
   if (!workspace) return [];
   const canReadData = canReadWorkspaceData(workspace);
   const canReadAudit = canReadWorkspaceAuditLog(workspace);
-  const isWorkflowRoute = activeResourceNav === 'workflows' || activeResourceNav === 'schedules';
+  const isWorkflowRoute = activeResourceNav === 'workflows' || activeResourceNav === 'schedules' || activeResourceNav === 'eventTriggers';
   const groups: WorkspaceNavigationGroup[] = [];
   if (canReadData) {
     groups.push({
@@ -78,7 +78,8 @@ export function getWorkspaceNavigationGroups({
           children: isWorkflowRoute
             ? [
                 { id: 'workflowLibrary', label: t('app.library'), path: AppPaths.workspaceWorkflows(workspace.id), current: activeResourceNav === 'workflows' },
-                { id: 'workflowSchedules', label: t('app.schedules'), path: AppPaths.workspaceSchedules(workspace.id), current: activeResourceNav === 'schedules' }
+                { id: 'workflowSchedules', label: t('app.schedules'), path: AppPaths.workspaceSchedules(workspace.id), current: activeResourceNav === 'schedules' },
+                { id: 'workflowEventTriggers', label: t('app.eventTriggers'), path: AppPaths.workspaceEventTriggers(workspace.id), current: activeResourceNav === 'eventTriggers' }
               ]
             : undefined
         },

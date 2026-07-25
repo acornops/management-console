@@ -17,9 +17,26 @@ export function isWorkspaceDataRoute(route: AppRoute): boolean {
     route.kind === 'workspaceVirtualMachineDetail' ||
     route.kind === 'workspaceKubernetesClusterDiagnostics' ||
     route.kind === 'workspaceSchedules' ||
+    route.kind === 'workspaceEventTriggers' ||
     route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceApprovals' ||
     route.kind === 'workspaceWebhooks' ||
     route.kind === 'workspaceAiSettings'
+  );
+}
+
+export function routeTargetsMissingWorkspace(
+  route: AppRoute,
+  workspaceContext: Workspace | undefined,
+  workspaceCount: number
+): boolean {
+  if (workspaceCount !== 0 || workspaceContext) return false;
+  return (
+    isWorkspaceDataRoute(route)
+    || route.kind === 'workspaceAgents'
+    || route.kind === 'workspaceWorkflows'
+    || route.kind === 'workspaceMembers'
+    || route.kind === 'workspaceSettings'
+    || route.kind === 'workspaceAuditLog'
   );
 }
