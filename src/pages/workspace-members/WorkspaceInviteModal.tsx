@@ -1,20 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { Check, Copy, Link, Loader2 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Check, CheckCircle2, Copy, Link, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
 import { Dialog } from '@/components/common/Dialog';
-import { FieldValidationMessage, fieldInvalidClass } from '@/components/common/FieldValidationMessage';
+import { FieldValidationMessage } from '@/components/common/FieldValidationMessage';
 import { Select, SelectOption } from '@/components/common/Select';
-import { ProjectMember, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
+import { ProjectMember, WorkspaceInvitation, WorkspaceMemberCandidate, WorkspaceRoleTemplate } from '@/types';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { RoleTemplatePreview } from '@/pages/workspace-members/RoleTemplatePreview';
+import { WorkspaceMemberIdentityField } from '@/pages/workspace-members/WorkspaceMemberIdentityField';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WorkspaceInviteModalProps {
   canManageOwners: boolean;
   roleTemplates: WorkspaceRoleTemplate[];
+  workspaceId: string;
   onClose: () => void;
+  onAddMember?: (input: { userId: string; email: string; role: ProjectMember['role'] }) => Promise<ProjectMember>;
   onCreateInvitation?: (input: { email: string; role: ProjectMember['role'] }) => Promise<WorkspaceInvitation>;
 }
 
@@ -25,13 +28,18 @@ function isValidInviteEmail(value: string): boolean {
 export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
   canManageOwners,
   roleTemplates,
+  workspaceId,
   onClose,
+  onAddMember,
   onCreateInvitation
 }) => {
   const { t } = useTranslation();
   const defaultRole = roleTemplates.find((role) => !role.protected)?.key || roleTemplates[0]?.key || '';
-  const [inviteEmail, setInviteEmail] = useState('');
+  const [identityValue, setIdentityValue] = useState('');
   const [inviteRole, setInviteRole] = useState<ProjectMember['role']>(defaultRole);
+  const [selectedCandidate, setSelectedCandidate] = useState<WorkspaceMemberCandidate | null>(null);
+  const [matchedCandidate, setMatchedCandidate] = useState<WorkspaceMemberCandidate | null>(null);
+  const [addedMember, setAddedMember] = useState<ProjectMember | null>(null);
   const [createdInvite, setCreatedInvite] = useState<WorkspaceInvitation | null>(null);
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
   const [inviteErrorMessage, setInviteErrorMessage] = useState<string | null>(null);
@@ -43,6 +51,9 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
     disabled: role.protected && !canManageOwners
   }));
   const selectedInviteRoleTemplate = roleTemplates.find((role) => role.key === inviteRole);
+  const resolvedCandidate = selectedCandidate || matchedCandidate;
+  const isComplete = Boolean(addedMember || createdInvite);
+  const candidateBlocksSubmission = resolvedCandidate?.status === 'member' || resolvedCandidate?.status === 'invited';
 
   useEffect(() => {
     if (roleTemplates.some((role) => role.key === inviteRole)) return;
@@ -52,18 +63,12 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
     }
   }, [inviteRole, roleTemplates]);
 
-  const createInvite = async (event: React.FormEvent) => {
+  const setCandidateMatch = useCallback((candidate: WorkspaceMemberCandidate | null) => {
+    setMatchedCandidate(candidate);
+  }, []);
+
+  const submitMember = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!onCreateInvitation) return;
-    const normalizedEmail = inviteEmail.trim();
-    if (!normalizedEmail) {
-      setInviteEmailError(t('members.emailRequired'));
-      return;
-    }
-    if (!isValidInviteEmail(normalizedEmail)) {
-      setInviteEmailError(t('members.emailInvalid'));
-      return;
-    }
     const selectedRole = roleTemplates.find((role) => role.key === inviteRole);
     if (!selectedRole) {
       setInviteErrorMessage(t('members.createInviteFailed'));
@@ -73,16 +78,50 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
       setInviteErrorMessage(t('members.ownerInviteOnly'));
       return;
     }
+    if (resolvedCandidate?.status === 'member') {
+      setInviteErrorMessage(t('members.alreadyMember'));
+      return;
+    }
+    if (resolvedCandidate?.status === 'invited') {
+      setInviteErrorMessage(t('members.invitationPending'));
+      return;
+    }
+    const normalizedEmail = identityValue.trim();
+    if (!resolvedCandidate) {
+      if (!normalizedEmail) {
+        setInviteEmailError(t('members.emailRequired'));
+        return;
+      }
+      if (!isValidInviteEmail(normalizedEmail)) {
+        setInviteEmailError(t('members.emailInvalid'));
+        return;
+      }
+    }
     setInviteEmailError(undefined);
     setIsCreatingInvite(true);
     setInviteErrorMessage(null);
+    setAddedMember(null);
     setCreatedInvite(null);
     setHasCopiedInvite(false);
     try {
-      const invitation = await onCreateInvitation({ email: normalizedEmail, role: inviteRole });
-      setCreatedInvite(invitation);
+      if (resolvedCandidate) {
+        if (!onAddMember) throw new Error(t('members.addMemberFailed'));
+        const member = await onAddMember({
+          userId: resolvedCandidate.userId,
+          email: resolvedCandidate.email,
+          role: inviteRole
+        });
+        setAddedMember(member);
+      } else {
+        if (!onCreateInvitation) throw new Error(t('members.createInviteFailed'));
+        const invitation = await onCreateInvitation({ email: normalizedEmail, role: inviteRole });
+        setCreatedInvite(invitation);
+      }
     } catch (error) {
-      setInviteErrorMessage(formatMemberMutationError(error, t('members.createInviteFailed')));
+      setInviteErrorMessage(formatMemberMutationError(
+        error,
+        resolvedCandidate ? t('members.addMemberFailed') : t('members.createInviteFailed')
+      ));
     } finally {
       setIsCreatingInvite(false);
     }
@@ -118,24 +157,31 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
           />
         </div>
 
-        <form onSubmit={(event) => void createInvite(event)} className="flex min-h-0 flex-1 flex-col" noValidate>
+        <form onSubmit={(event) => void submitMember(event)} className="flex min-h-0 flex-1 flex-col" noValidate>
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 custom-scrollbar sm:p-6">
             <div className="grid gap-4 sm:grid-cols-[minmax(0,1.2fr)_minmax(12rem,0.8fr)]">
               <div className="space-y-2">
-                <label htmlFor="workspace-invite-email" className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.email')}</label>
-                <TextInput
-                  id="workspace-invite-email"
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(event) => {
+                <label htmlFor="workspace-invite-email" className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.personOrEmail')}</label>
+                <WorkspaceMemberIdentityField
+                  workspaceId={workspaceId}
+                  value={identityValue}
+                  selectedCandidate={selectedCandidate}
+                  onChange={(value) => {
                     setInviteEmailError(undefined);
-                    setInviteEmail(event.target.value);
+                    setInviteErrorMessage(null);
+                    setSelectedCandidate(null);
+                    setMatchedCandidate(null);
+                    setIdentityValue(value);
                   }}
-                  disabled={Boolean(createdInvite) || isCreatingInvite}
-                  placeholder={t('members.emailPlaceholder')}
-                  className={`px-4 ${inviteEmailError ? fieldInvalidClass : ''}`}
-                  aria-invalid={Boolean(inviteEmailError)}
-                  aria-describedby={inviteEmailError ? 'workspace-invite-email-error' : undefined}
+                  onMatchChange={setCandidateMatch}
+                  onSelect={(candidate) => {
+                    setInviteEmailError(undefined);
+                    setInviteErrorMessage(null);
+                    setSelectedCandidate(candidate);
+                    setIdentityValue(candidate.email);
+                  }}
+                  disabled={isComplete || isCreatingInvite}
+                  invalid={Boolean(inviteEmailError)}
                 />
                 <FieldValidationMessage id="workspace-invite-email-error" message={inviteEmailError} />
               </div>
@@ -146,7 +192,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
                   value={inviteRole}
                   options={roleOptions}
                   onChange={setInviteRole}
-                  disabled={Boolean(createdInvite) || isCreatingInvite}
+                  disabled={isComplete || isCreatingInvite}
                 />
               </div>
             </div>
@@ -155,11 +201,6 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
               roleTemplate={selectedInviteRoleTemplate}
               emptyMessage={t('members.rolePreviewUnavailable')}
             />
-
-            <div className="border-t border-ui-border pt-4 text-xs font-medium leading-5 text-ui-text-muted">
-              <p className="font-bold uppercase tracking-widest text-ui-text">{t('members.inviteHowItWorks')}</p>
-              <p className="mt-1">{t('members.inviteHowItWorksBody')}</p>
-            </div>
 
             {createdInvite && (
               <div className="space-y-3 rounded-lg border border-ui-border bg-ui-bg p-4">
@@ -191,6 +232,21 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
               </div>
             )}
 
+            {addedMember && (
+              <div className="flex items-start gap-3 rounded-lg border border-status-success/25 bg-status-success-soft p-4 text-status-success-text">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-bold">{t('members.accessAdded')}</p>
+                  <p className="mt-1 text-xs font-medium leading-5">
+                    {t('members.accessAddedBody', {
+                      name: addedMember.name,
+                      role: formatRole(addedMember.role, addedMember.roleTemplate || selectedInviteRoleTemplate)
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {inviteErrorMessage && (
               <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">
                 {inviteErrorMessage}
@@ -207,16 +263,20 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
             >
               {t('members.close')}
             </Button>
-            {!createdInvite && (
+            {!isComplete && (
               <Button
                 type="submit"
-                disabled={isCreatingInvite || !roleTemplates.some((role) => role.key === inviteRole)}
+                disabled={
+                  isCreatingInvite ||
+                  candidateBlocksSubmission ||
+                  !roleTemplates.some((role) => role.key === inviteRole)
+                }
                 variant="primary"
                 size="sm"
                 className="w-full text-xs uppercase tracking-widest sm:w-auto sm:min-w-40"
               >
                 {isCreatingInvite && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t('members.createLink')}
+                {resolvedCandidate ? t('members.addMember') : t('members.createLink')}
               </Button>
             )}
           </div>

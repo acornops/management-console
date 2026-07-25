@@ -4,6 +4,8 @@ import {
   ProjectMember,
   User,
   Workspace,
+  WorkspaceMemberCandidate,
+  WorkspaceMemberDiscoveryMode,
   WorkspaceAiSettings,
   WorkspaceAuditCategory,
   WorkspaceAuditEvent
@@ -48,6 +50,7 @@ import type {
   ControlPlaneWorkspace,
   ControlPlaneWorkspaceAuditEvent,
   ControlPlaneWorkspaceInvitation,
+  ControlPlaneWorkspaceMemberCandidateResponse,
   ControlPlaneWorkspaceMember,
   PagedResult
 } from './control-plane/types';
@@ -233,13 +236,34 @@ export const controlPlaneApi = {
 
   async addWorkspaceMember(
     workspaceId: string,
-    input: { email: string; displayName?: string; role: ProjectMember['role'] }
+    input: { userId: string; email: string; role: ProjectMember['role'] }
   ): Promise<ProjectMember> {
     const member = await requestJson<ControlPlaneWorkspaceMember>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/members`,
       { method: 'POST', body: JSON.stringify(input) }
     );
     return mapWorkspaceMember(member);
+  },
+
+  async searchWorkspaceMemberCandidates(
+    workspaceId: string,
+    query: string,
+    signal?: AbortSignal
+  ): Promise<{ mode: WorkspaceMemberDiscoveryMode; items: WorkspaceMemberCandidate[] }> {
+    const path = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/member-candidates${pageQuery({ q: query })}`;
+    const response = signal
+      ? await requestJson<ControlPlaneWorkspaceMemberCandidateResponse>(path, { signal })
+      : await requestJson<ControlPlaneWorkspaceMemberCandidateResponse>(path);
+    return {
+      mode: response.mode,
+      items: toArray(response.items).map((candidate) => ({
+        userId: candidate.userId,
+        email: candidate.email,
+        name: candidate.displayName || candidate.email,
+        authMethods: candidate.authMethods,
+        status: candidate.status
+      }))
+    };
   },
 
   async createWorkspaceInvitation(

@@ -1,5 +1,16 @@
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
-import { ProjectMember, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
+
+export async function addWorkspaceMemberAndRefresh(
+  workspaceId: string,
+  input: { userId: string; email: string; role: Workspace['members'][number]['role'] },
+  refreshMembers: (workspaceId: string) => Promise<void>
+) {
+  const member = await controlPlaneApi.addWorkspaceMember(workspaceId, input);
+  await refreshMembers(workspaceId);
+  return member;
+}
 
 export function formatRole(role: string, template?: WorkspaceRoleTemplate): string {
   if (template?.displayName) return template.displayName;

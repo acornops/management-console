@@ -228,6 +228,7 @@
         ],
         "roleTemplate": ["key", "displayName", "description", "kind", "capabilities", "capabilityGroups[].{key,capabilities,sortOrder}", "protected", "sortOrder"],
         "membership": ["role", "roleTemplate?"],
+        "memberDiscovery": ["GET /api/v1/workspaces/{workspaceId}/member-candidates", "mode=disabled|exact_email|directory", "items[].{userId,email,displayName,authMethods[]=oidc|password,status=available|member|invited}", "requires manage_members", "POST /api/v1/workspaces/{workspaceId}/members requires a candidate-bound {userId,email,role} and is unavailable when mode=disabled"],
         "invitation": ["role", "roleTemplate?"],
         "auditEvent": ["id", "workspaceId", "category", "eventType", "operation", "actor", "object", "summary", "metadata", "occurredAt"],
         "quotaExceeded": ["error.code=QUOTA_EXCEEDED", "error.details.{quotaKey,used,limit}"],

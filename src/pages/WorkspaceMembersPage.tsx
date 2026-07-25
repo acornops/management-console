@@ -25,6 +25,7 @@ interface WorkspaceMembersPageProps {
   canManageMembers: boolean;
   currentUserRole: ProjectMember['role'];
   embedded?: boolean;
+  onAddMember?: (input: { userId: string; email: string; role: ProjectMember['role'] }) => Promise<ProjectMember>;
   onCreateInvitation?: (input: { email: string; role: ProjectMember['role'] }) => Promise<WorkspaceInvitation>;
   onRevokeInvitation?: (invitation: WorkspaceInvitation) => Promise<void> | void;
   onUpdateMemberRole?: (member: ProjectMember, role: ProjectMember['role']) => Promise<void> | void;
@@ -38,6 +39,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   canManageMembers,
   currentUserRole,
   embedded = false,
+  onAddMember,
   onCreateInvitation,
   onRevokeInvitation,
   onUpdateMemberRole,
@@ -249,6 +251,17 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     const invitation = await onCreateInvitation(input);
     setInvitations((current) => mergeCreatedInvitation(current, invitation));
     return invitation;
+  };
+
+  const addMember = async (
+    input: { userId: string; email: string; role: ProjectMember['role'] }
+  ): Promise<ProjectMember> => {
+    if (!onAddMember) {
+      throw new Error(t('members.addMemberFailed'));
+    }
+    const member = await onAddMember(input);
+    await memberCollection.refresh();
+    return member;
   };
 
   const revokeInvitation = async (invitation: WorkspaceInvitation): Promise<void> => {
@@ -501,7 +514,9 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
           <WorkspaceInviteModal
             canManageOwners={canManageOwners}
             roleTemplates={roleTemplates}
+            workspaceId={workspace.id}
             onClose={() => setIsInviteModalOpen(false)}
+            onAddMember={onAddMember ? addMember : undefined}
             onCreateInvitation={onCreateInvitation ? createInvitation : undefined}
           />
         )}

@@ -442,6 +442,16 @@ export interface ProjectMember {
   source: 'OIDC' | 'Internal';
 }
 
+export type WorkspaceMemberDiscoveryMode = 'disabled' | 'exact_email' | 'directory';
+
+export interface WorkspaceMemberCandidate {
+  userId: string;
+  email: string;
+  name: string;
+  authMethods: Array<'oidc' | 'password'>;
+  status: 'available' | 'member' | 'invited';
+}
+
 export type WorkspaceCapability =
   | 'read_workspace_data'
   | 'read_members'

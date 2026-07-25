@@ -8,7 +8,7 @@ import type { TargetChatController } from '@/features/targets/chat/hooks/useTarg
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
-import { formatMemberMutationError } from '@/pages/workspace-members/memberUtils';
+import { addWorkspaceMemberAndRefresh, formatMemberMutationError } from '@/pages/workspace-members/memberUtils';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
@@ -563,6 +563,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               currentUserRole={workspaceContext ? getCurrentUserRoleForWorkspace(workspaceContext.id) : undefined}
               onDeleteWorkspace={onOpenDeleteWorkspace}
               onLeaveWorkspace={workspaceContext ? leaveWorkspace : undefined}
+              onAddMember={workspaceContext ? (input) => addWorkspaceMemberAndRefresh(workspaceContext.id, input, onRefreshWorkspaceMembers) : undefined}
               onCreateInvitation={workspaceContext ? createWorkspaceInvitation : undefined}
               onRevokeInvitation={workspaceContext ? revokeWorkspaceInvitation : undefined}
               onUpdateMemberRole={workspaceContext ? updateWorkspaceMemberRole : undefined}

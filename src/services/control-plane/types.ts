@@ -5,6 +5,7 @@ export type {
   ControlPlaneRoleTemplate,
   ControlPlaneWorkspace,
   ControlPlaneWorkspaceInvitation,
+  ControlPlaneWorkspaceMemberCandidateResponse,
   ControlPlaneWorkspaceMember
 } from './workspaceTypes';
 export type {

@@ -73,6 +73,7 @@
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs",
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources",
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions",
+  "GET /api/v1/workspaces/{workspaceId}/member-candidates",
   "GET /api/v1/workspaces/{workspaceId}/members",
   "GET /api/v1/workspaces/{workspaceId}/prompt-reference-types",
   "GET /api/v1/workspaces/{workspaceId}/prompt-references/suggestions",

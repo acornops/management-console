@@ -49,6 +49,7 @@ interface SettingsPageProps {
   currentUserRole?: ProjectMember['role'];
   onDeleteWorkspace: (workspaceId: string) => void;
   onLeaveWorkspace?: () => Promise<void>;
+  onAddMember?: (input: { userId: string; email: string; role: ProjectMember['role'] }) => Promise<ProjectMember>;
   onCreateInvitation?: (input: { email: string; role: ProjectMember['role'] }) => Promise<WorkspaceInvitation>;
   onRevokeInvitation?: (invitation: WorkspaceInvitation) => Promise<void> | void;
   onUpdateMemberRole?: (member: ProjectMember, role: ProjectMember['role']) => Promise<void> | void;
@@ -71,6 +72,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   currentUserRole = 'viewer',
   onDeleteWorkspace,
   onLeaveWorkspace,
+  onAddMember,
   onCreateInvitation,
   onRevokeInvitation,
   onUpdateMemberRole,
@@ -215,6 +217,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           workspace={workspace}
           currentUserRole={currentUserRole}
           canManageMembers={canManageMembers}
+          onAddMember={onAddMember}
           onCreateInvitation={onCreateInvitation}
           onRevokeInvitation={onRevokeInvitation}
           onUpdateMemberRole={onUpdateMemberRole}

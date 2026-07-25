@@ -25,6 +25,19 @@ export interface ControlPlaneWorkspaceMember {
   source: 'oidc' | 'internal';
 }
 
+export interface ControlPlaneWorkspaceMemberCandidate {
+  userId: string;
+  email: string;
+  displayName: string;
+  authMethods: Array<'oidc' | 'password'>;
+  status: 'available' | 'member' | 'invited';
+}
+
+export interface ControlPlaneWorkspaceMemberCandidateResponse {
+  mode: 'disabled' | 'exact_email' | 'directory';
+  items: ControlPlaneWorkspaceMemberCandidate[];
+}
+
 export interface ControlPlaneWorkspaceInvitation {
   id: string;
   workspaceId: string;
