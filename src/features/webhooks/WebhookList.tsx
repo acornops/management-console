@@ -25,6 +25,7 @@ interface WebhookListProps {
   history: ControlPlaneWebhookHistory[];
   isHistoryLoading: boolean;
   historyError: string | null;
+  onCreate: () => void;
   onRefresh: () => void;
   onEdit: (webhook: ControlPlaneWebhookSubscription) => void;
   onDelete: (webhook: ControlPlaneWebhookSubscription) => void;
@@ -49,6 +50,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
   history,
   isHistoryLoading,
   historyError,
+  onCreate,
   onRefresh,
   onEdit,
   onDelete,
@@ -56,6 +58,13 @@ export const WebhookList: React.FC<WebhookListProps> = ({
 }) => {
   const { t } = useTranslation();
   const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null);
+  const deleteTriggerRefs = React.useRef(new Map<string, HTMLButtonElement>());
+  const closeDeleteConfirmation = (webhookId: string) => {
+    setPendingDeleteId(null);
+    window.requestAnimationFrame(() => {
+      deleteTriggerRefs.current.get(webhookId)?.focus({ preventScroll: true });
+    });
+  };
   const phase = isLoading
     ? 'loading'
     : isRefreshing
@@ -69,12 +78,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
       heading={t('workspaceWebhooks.listTitle')}
       description={t('workspaceWebhooks.listDescription')}
       count={t('workspaceWebhooks.count', { count: webhooks.length })}
-      toolbar={(
-        <Button size="sm" variant="secondary" onClick={onRefresh} disabled={isLoading || isRefreshing}>
-          <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
-          {t('common.refresh')}
-        </Button>
-      )}
+      icon={<ICONS.Send className="h-5 w-5" aria-hidden="true" />}
     >
       <CollectionState
         phase={phase}
@@ -86,6 +90,9 @@ export const WebhookList: React.FC<WebhookListProps> = ({
             icon={<ICONS.Send />}
             title={t('workspaceWebhooks.emptyTitle')}
             description={t('workspaceWebhooks.emptyDescription')}
+            actions={canManageWebhooks
+              ? <Button size="sm" variant="primary" onClick={onCreate}><ICONS.Plus className="h-4 w-4" aria-hidden="true" />{t('workspaceWebhooks.create')}</Button>
+              : undefined}
           />
         )}
         error={(
@@ -132,7 +139,16 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                         <ICONS.Activity className="h-4 w-4" aria-hidden="true" />
                         {t('workspaceWebhooks.history')}
                       </Button>
-                      <Button size="sm" variant="danger" onClick={() => setPendingDeleteId(webhook.id)} disabled={deleting}>
+                      <Button
+                        ref={(node) => {
+                          if (node) deleteTriggerRefs.current.set(webhook.id, node);
+                          else deleteTriggerRefs.current.delete(webhook.id);
+                        }}
+                        size="sm"
+                        variant="danger"
+                        onClick={() => setPendingDeleteId(webhook.id)}
+                        disabled={deleting}
+                      >
                         <ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />
                         {deleting ? t('workspaceWebhooks.deleting') : t('workspaceWebhooks.delete')}
                       </Button>
@@ -151,7 +167,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                   confirmVariant="danger"
                   confirmDisabled={deleting}
                   cancelLabel={t('common.cancel')}
-                  onCancel={() => setPendingDeleteId(null)}
+                  onCancel={() => closeDeleteConfirmation(webhook.id)}
                   onConfirm={() => {
                     onDelete(webhook);
                     setPendingDeleteId(null);

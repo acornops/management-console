@@ -37,7 +37,7 @@ describe('workspace navigation model', () => {
 
     expect(groups.map((group) => group.id)).toEqual(['primary', 'inventory', 'automation', 'governance', 'utilities']);
     expect(groups.flatMap((group) => group.items).map((item) => item.id)).toEqual([
-      'overview', 'clusters', 'virtualMachines', 'agents', 'workflows', 'approvals', 'workspaceAuditLog', 'workspaceSettings', 'help'
+      'overview', 'clusters', 'virtualMachines', 'agents', 'workflows', 'outboundWebhooks', 'approvals', 'workspaceAuditLog', 'workspaceSettings', 'help'
     ]);
     expect(groups.flatMap((group) => group.items).some((item) => item.path.includes('/catalog'))).toBe(false);
     expect(groups.find((group) => group.id === 'automation')?.badge).toBe('app.experimental');
@@ -52,6 +52,24 @@ describe('workspace navigation model', () => {
       ]
     });
     expect(groups.flatMap((group) => group.items).find((item) => item.id === 'approvals')?.badge).toBe(100);
+  });
+
+  it('marks Outbound webhooks as a first-class Automation destination', () => {
+    const groups = getWorkspaceNavigationGroups({
+      workspace: workspace({ read_workspace_data: true }),
+      activeResourceNav: 'workspaceWebhooks',
+      t
+    });
+    const outboundWebhooks = groups
+      .find((group) => group.id === 'automation')
+      ?.items.find((item) => item.id === 'outboundWebhooks');
+
+    expect(outboundWebhooks).toMatchObject({
+      label: 'app.outboundWebhooks',
+      path: AppPaths.workspaceWebhooks('workspace-1'),
+      active: true
+    });
+    expect(groups.find((group) => group.id === 'utilities')?.items.find((item) => item.id === 'workspaceSettings')?.active).toBe(false);
   });
 
   it('marks Library as current and hides workflow children outside workflow routes', () => {

@@ -10,12 +10,14 @@ const editor = readSource('src/features/webhooks/WebhookEditor.tsx');
 const list = readSource('src/features/webhooks/WebhookList.tsx');
 const model = readSource('src/features/webhooks/webhookModel.ts');
 const appPageContent = readSource('src/app/AppPageContent.tsx');
+const settingsPage = readSource('src/pages/SettingsPage.tsx');
 const controlPlaneApi = readSource('src/services/controlPlaneApi.ts');
 const webhookApi = readSource('src/services/control-plane/webhookApi.ts');
 
 describe('WorkspaceWebhooksPage contract surface', () => {
   it('mounts the webhook route and uses the typed browser API client', () => {
     expect(appPageContent).toContain("route.kind === 'workspaceWebhooks'");
+    expect(appPageContent).toContain('<WorkspaceWebhooksPage');
     expect(controlPlaneApi).toContain('...webhookApi');
     expect(webhookApi).toContain('async listWebhooks(workspaceId: string)');
     expect(webhookApi).toContain('async createWebhook(workspaceId: string, input: ControlPlaneWebhookInput)');
@@ -24,9 +26,18 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(webhookApi).toContain('async listWebhookHistory(');
   });
 
+  it('renders as an Automation collection page rather than a Settings tab', () => {
+    expect(page).toContain('<PageShell>');
+    expect(page).toContain('<PageHeader');
+    expect(page).toContain('<DrawerFrame');
+    expect(settingsPage).not.toContain("'webhooks'");
+    expect(settingsPage).not.toContain('WorkspaceWebhooksPage');
+  });
+
   it('keeps read access separate from manage_webhooks mutations', () => {
     expect(page).toContain('canManageWebhooks');
-    expect(page).toContain('{canManageWebhooks && (');
+    expect(page).toContain('if (!canManageWebhooks) return;');
+    expect(page).toContain('open={canManageWebhooks && editorOpen}');
     expect(page).toContain('workspaceWebhooks.readOnlyTitle');
     expect(list).toContain('{canManageWebhooks && (');
   });

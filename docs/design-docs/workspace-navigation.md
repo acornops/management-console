@@ -9,9 +9,9 @@ not drift.
 
 - Overview is the explicit workspace landing destination.
 - Inventory contains Kubernetes Clusters and Virtual Machines.
-- Automation keeps Agents and Workflows adjacent, followed by MCP Catalog as a
-  capability-discovery destination. Schedules is a route-level view of Workflows,
-  not a separate sidebar destination.
+- Automation keeps Agents and Workflows adjacent, followed by Outbound webhooks
+  as the workspace event-delivery destination. Schedules is a route-level view
+  of Workflows, not a separate sidebar destination.
 - Governance contains Approvals for workspace-data readers and Audit Log for
   audit-log readers. Omit the group when neither destination is permitted.
 - Utilities contains Workspace Settings and Help and is visually separated from
@@ -27,6 +27,10 @@ clicks use client navigation; modified clicks and open-in-new-tab retain browser
 behavior. Keep workflow, schedule, approval, and schedule-creation URLs directly
 shareable. `/workflows` and `/schedules` activate the same sidebar destination,
 and both route headers expose `Workflows | Schedules` links.
+
+`/webhooks` remains a stable workspace route, but its navigation owner is
+Automation rather than Workspace Settings. The user-facing label is Outbound
+webhooks so it cannot be confused with workflow webhook triggers.
 
 Only the active destination uses `aria-current="page"`. Desktop and mobile
 navigation regions have accessible labels. The workspace switcher keeps a

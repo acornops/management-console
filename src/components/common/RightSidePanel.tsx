@@ -199,6 +199,9 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
     if (!isOpen) return undefined;
 
     const restoreTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const restoreBackground = applyRightSidePanelBackgroundInert(
+      getRightSidePanelBackgroundTargets(containerRef.current, document.body)
+    );
     const focusTimer = window.setTimeout(() => {
       const focusTarget = initialFocusRef?.current || panelRef.current;
       focusTarget?.focus({ preventScroll: true });
@@ -206,17 +209,12 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
 
     return () => {
       window.clearTimeout(focusTimer);
+      restoreBackground();
       if (restoreTarget && document.contains(restoreTarget)) {
         restoreTarget.focus({ preventScroll: true });
       }
     };
   }, [initialFocusRef, isOpen]);
-
-  React.useEffect(() => {
-    if (!isOpen) return undefined;
-
-    return applyRightSidePanelBackgroundInert(getRightSidePanelBackgroundTargets(containerRef.current, document.body));
-  }, [isOpen]);
 
   const panel = (
     <AnimatePresence>

@@ -37,8 +37,9 @@ for (const route of routes) {
   });
 }
 
-test('webhook settings expose history, confirmation, and one-time secret flows', async ({ page }) => {
+test('outbound webhooks expose history, confirmation, and one-time secret flows', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: 'Outbound webhooks' })).toBeVisible();
   await expect(page.getByText('Mattermost operations', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'History' }).click();
@@ -47,17 +48,55 @@ test('webhook settings expose history, confirmation, and one-time secret flows',
   await expect(page.getByText('Deliberately not sent because the issue state advanced.', { exact: true })).toBeVisible();
   await expect(page.getByText('run.failed.v1', { exact: true }).last()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Delete' }).click();
+  const webhookArticle = page.getByRole('article').filter({ hasText: 'Mattermost operations' });
+  const deleteWebhook = webhookArticle.getByRole('button', { name: 'Delete' });
+  await deleteWebhook.click();
   const confirmation = page.getByRole('alert').filter({ hasText: 'Delete Mattermost operations?' });
   await expect(confirmation).toBeFocused();
   await confirmation.getByRole('button', { name: 'Cancel' }).click();
+  await expect(deleteWebhook).toBeFocused();
   await expect(page.getByText('Mattermost operations', { exact: true })).toBeVisible();
 
-  await page.getByLabel('Name').fill('Mattermost incident channel');
-  await page.getByLabel('Delivery URL').fill('https://mattermost-bot.fixture.acornops.dev/webhooks/incidents');
-  await page.getByRole('button', { name: 'Create webhook' }).click();
+  const createWebhook = page.getByRole('button', { name: 'Create webhook' }).first();
+  await createWebhook.click();
+  let drawer = page.getByRole('dialog', { name: 'Create webhook' });
+  await expect(drawer).toBeVisible();
+  await drawer.getByRole('button', { name: 'Cancel' }).click();
+  await expect(createWebhook).toBeFocused();
+
+  await createWebhook.click();
+  drawer = page.getByRole('dialog', { name: 'Create webhook' });
+  await drawer.press('Escape');
+  await expect(createWebhook).toBeFocused();
+
+  await createWebhook.click();
+  drawer = page.getByRole('dialog', { name: 'Create webhook' });
+  await drawer.getByLabel('Name').fill('Mattermost incident channel');
+  await drawer.getByLabel('Delivery URL').fill('https://mattermost-bot.fixture.acornops.dev/webhooks/incidents');
+  await drawer.getByRole('button', { name: 'Create webhook' }).click();
   await expect(page.getByText('One-time signing secret for Mattermost incident channel')).toBeVisible();
   await expect(page.getByText('whsec_fixture_local_only')).toBeVisible();
+});
+
+test('outbound webhooks remain usable from compact navigation', async ({ browser }) => {
+  const context = await browser.newContext({
+    reducedMotion: 'reduce',
+    viewport: { width: 390, height: 844 }
+  });
+  const page = await context.newPage();
+
+  await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: 'Outbound webhooks' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open navigation' }).click();
+  const navigation = page.getByRole('dialog', { name: 'Navigation' });
+  await expect(navigation.getByRole('link', { name: 'Outbound webhooks' })).toHaveAttribute('aria-current', 'page');
+  await navigation.getByRole('button', { name: 'Close navigation' }).click();
+
+  await page.getByRole('button', { name: 'Create webhook' }).click();
+  await expect(page.getByRole('dialog', { name: 'Create webhook' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await context.close();
 });
 
 test('agent profile scopes lifecycle actions to Settings and icons restore-point refresh', async ({ page }) => {

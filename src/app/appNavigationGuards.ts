@@ -19,6 +19,7 @@ export function isWorkspaceDataRoute(route: AppRoute): boolean {
     route.kind === 'workspaceSchedules' ||
     route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceApprovals' ||
+    route.kind === 'workspaceWebhooks' ||
     route.kind === 'workspaceAiSettings'
   );
 }

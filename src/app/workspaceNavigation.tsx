@@ -7,7 +7,7 @@ import type { Workspace } from '@/types';
 import { AppPaths } from '@/utils/routes';
 
 export interface WorkspaceNavigationItem {
-  id: 'overview' | 'clusters' | 'virtualMachines' | 'agents' | 'workflows' | 'approvals' | 'workspaceAuditLog' | 'workspaceSettings' | 'help';
+  id: 'overview' | 'clusters' | 'virtualMachines' | 'agents' | 'workflows' | 'outboundWebhooks' | 'approvals' | 'workspaceAuditLog' | 'workspaceSettings' | 'help';
   label: string;
   path: string;
   icon: React.ElementType;
@@ -81,6 +81,13 @@ export function getWorkspaceNavigationGroups({
                 { id: 'workflowSchedules', label: t('app.schedules'), path: AppPaths.workspaceSchedules(workspace.id), current: activeResourceNav === 'schedules' }
               ]
             : undefined
+        },
+        {
+          id: 'outboundWebhooks',
+          label: t('app.outboundWebhooks'),
+          path: AppPaths.workspaceWebhooks(workspace.id),
+          icon: ICONS.Send,
+          active: activeResourceNav === 'workspaceWebhooks'
         }
       ]
     });

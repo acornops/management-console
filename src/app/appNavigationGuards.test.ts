@@ -20,6 +20,7 @@ describe('app navigation guards', () => {
     expect(isWorkspaceDataRoute({ kind: 'workspaceSettings', workspaceId: 'workspace-1' })).toBe(false);
     expect(isWorkspaceDataRoute({ kind: 'workspaceSchedules', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceApprovals', workspaceId: 'workspace-1' })).toBe(true);
+    expect(isWorkspaceDataRoute({ kind: 'workspaceWebhooks', workspaceId: 'workspace-1' })).toBe(true);
   });
 
   it('does not land users without workspace data access on AI settings', () => {

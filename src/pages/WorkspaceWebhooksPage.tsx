@@ -2,6 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/common/Button';
+import { DrawerFrame } from '@/components/common/OverlayFrames';
+import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { WebhookEditor } from '@/features/webhooks/WebhookEditor';
 import { WebhookList } from '@/features/webhooks/WebhookList';
 import {
@@ -33,6 +35,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const [webhooks, setWebhooks] = React.useState<ControlPlaneWebhookSubscription[]>([]);
   const [draft, setDraft] = React.useState<WebhookDraft>(emptyWebhookDraft);
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editorOpen, setEditorOpen] = React.useState(false);
   const [createdSecret, setCreatedSecret] = React.useState<{ name: string; secret: string } | null>(null);
   const [historyWebhookId, setHistoryWebhookId] = React.useState<string | null>(null);
   const [history, setHistory] = React.useState<ControlPlaneWebhookHistory[]>([]);
@@ -50,6 +53,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const historyRequestSequence = React.useRef(0);
   const saveRequestSequence = React.useRef(0);
   const deleteRequestSequence = React.useRef(0);
+  const editorFormId = React.useId();
   currentWorkspaceId.current = workspace.id;
 
   const loadWebhooks = React.useCallback(async (initial = false) => {
@@ -83,6 +87,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     setWebhooks([]);
     setDraft(emptyWebhookDraft());
     setEditingId(null);
+    setEditorOpen(false);
     setCreatedSecret(null);
     setHistory([]);
     setHistoryWebhookId(null);
@@ -100,6 +105,21 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const resetForm = () => {
     setDraft(emptyWebhookDraft());
     setEditingId(null);
+  };
+
+  const closeEditor = () => {
+    if (isSaving) return;
+    resetForm();
+    setEditorOpen(false);
+    setMutationError(null);
+  };
+
+  const openCreateEditor = () => {
+    if (!canManageWebhooks) return;
+    resetForm();
+    setCreatedSecret(null);
+    setMutationError(null);
+    setEditorOpen(true);
   };
 
   const saveWebhook = async () => {
@@ -130,6 +150,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         showToast(t('workspaceWebhooks.created'));
       }
       resetForm();
+      setEditorOpen(false);
       await loadWebhooks();
     } catch (saveFailure) {
       if (!isCurrentRequest()) return;
@@ -156,7 +177,10 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         setHistory([]);
         setHistoryWebhookId(null);
       }
-      if (editingId === webhook.id) resetForm();
+      if (editingId === webhook.id) {
+        resetForm();
+        setEditorOpen(false);
+      }
       showToast(t('workspaceWebhooks.deleted'));
       await loadWebhooks();
     } catch (deleteFailure) {
@@ -208,17 +232,46 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const editingWebhook = workspaceStateCurrent && editingId
     ? visibleWebhooks.find((webhook) => webhook.id === editingId)
     : undefined;
+  const canSaveDraft = visibleDraft.name.trim().length > 0
+    && visibleDraft.url.trim().length > 0
+    && visibleDraft.eventTypes.length > 0;
 
   return (
-    <div className="max-w-6xl space-y-6">
+    <PageShell>
+      <PageHeader
+        title={t('workspaceWebhooks.title')}
+        description={t('workspaceWebhooks.subtitle', { workspace: workspace.name })}
+        actions={<>
+          <Button
+            size="md"
+            variant="secondary"
+            onClick={() => void loadWebhooks()}
+            disabled={!workspaceStateCurrent || isInitialLoading || isRefreshing}
+          >
+            <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
+            {t('common.refresh')}
+          </Button>
+          <Button
+            size="md"
+            variant="primary"
+            onClick={openCreateEditor}
+            disabled={!canManageWebhooks}
+            title={!canManageWebhooks ? t('workspaceWebhooks.readOnlyDescription') : undefined}
+          >
+            <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+            {t('workspaceWebhooks.create')}
+          </Button>
+        </>}
+      />
+
       {workspaceStateCurrent && mutationError && (
-        <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-sm font-semibold text-status-danger-text">
+        <div role="alert" className="mb-5 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-sm font-semibold text-status-danger-text">
           {mutationError}
         </div>
       )}
 
       {!canManageWebhooks && (
-        <section className="rounded-lg border border-ui-border bg-ui-surface p-4">
+        <section className="mb-5 rounded-lg border border-ui-border bg-ui-surface p-4">
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-ui-text-muted">
               <ICONS.Lock className="h-5 w-5" aria-hidden="true" />
@@ -232,7 +285,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
       )}
 
       {canManageWebhooks && visibleCreatedSecret && (
-        <section className="rounded-lg border border-status-success/30 bg-status-success-soft p-4" aria-labelledby="webhook-secret-title">
+        <section className="mb-5 rounded-lg border border-status-success/30 bg-status-success-soft p-4" aria-labelledby="webhook-secret-title">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <h2 id="webhook-secret-title" className="text-sm font-bold text-status-success-text">
@@ -256,17 +309,6 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         </section>
       )}
 
-      {canManageWebhooks && (
-        <WebhookEditor
-          draft={visibleDraft}
-          editingName={editingWebhook?.name}
-          isSaving={workspaceStateCurrent && isSaving}
-          onChange={setDraft}
-          onCancel={resetForm}
-          onSave={() => void saveWebhook()}
-        />
-      )}
-
       <WebhookList
         webhooks={visibleWebhooks}
         canManageWebhooks={canManageWebhooks}
@@ -278,16 +320,60 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         history={workspaceStateCurrent ? history : []}
         isHistoryLoading={workspaceStateCurrent && isHistoryLoading}
         historyError={workspaceStateCurrent ? historyError : null}
+        onCreate={openCreateEditor}
         onRefresh={() => void loadWebhooks()}
         onEdit={(webhook) => {
           setEditingId(webhook.id);
           setDraft(draftFromWebhook(webhook));
           setCreatedSecret(null);
           setMutationError(null);
+          setEditorOpen(true);
         }}
         onDelete={(webhook) => void deleteWebhook(webhook)}
         onLoadHistory={(webhook) => void loadHistory(webhook)}
       />
-    </div>
+
+      <DrawerFrame
+        open={canManageWebhooks && editorOpen}
+        onClose={closeEditor}
+        closeDisabled={isSaving}
+        titleId="webhook-editor-title"
+        title={editingWebhook
+          ? t('workspaceWebhooks.editTitle', { name: editingWebhook.name })
+          : t('workspaceWebhooks.createTitle')}
+        description={<>
+          {t('workspaceWebhooks.editorDescription')}
+          <span className="mt-1 block">{t('workspaceWebhooks.workspaceWideScope')}</span>
+        </>}
+        closeLabel={t('common.close')}
+        width="xl"
+        footer={<>
+          <Button type="button" variant="tertiary" onClick={closeEditor} disabled={isSaving}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="submit"
+            form={editorFormId}
+            variant="primary"
+            disabled={isSaving || !canSaveDraft}
+          >
+            <ICONS.Send className="h-4 w-4" aria-hidden="true" />
+            {isSaving
+              ? t('common.saving')
+              : editingWebhook
+                ? t('workspaceWebhooks.save')
+                : t('workspaceWebhooks.create')}
+          </Button>
+        </>}
+      >
+        <WebhookEditor
+          draft={visibleDraft}
+          formId={editorFormId}
+          isSaving={workspaceStateCurrent && isSaving}
+          onChange={setDraft}
+          onSave={() => void saveWebhook()}
+        />
+      </DrawerFrame>
+    </PageShell>
   );
 };
