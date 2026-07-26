@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Copy, Loader2, MailPlus, Plus, Trash2, Users } from 'lucide-react';
+import { BotMessageSquare, Check, Copy, KeyRound, Loader2, MailPlus, Plus, Trash2, Users, Workflow } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
@@ -10,7 +10,7 @@ import { Select, SelectOption } from '@/components/common/Select';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 
-type CreateWorkspaceStep = 'details' | 'members';
+type CreateWorkspaceStep = 'details' | 'members' | 'ai';
 type InviteRowStatus = 'idle' | 'creating' | 'created' | 'failed';
 
 export interface CreateWorkspaceInviteRow {
@@ -27,6 +27,7 @@ interface CreateWorkspaceModalProps {
   currentUserEmail: string;
   onClose: () => void;
   onCreateWorkspace: (name: string) => Promise<Workspace>;
+  onOpenAiSettings: (workspaceId: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
   onCreateWorkspaceInvitation: (
     workspaceId: string,
@@ -93,6 +94,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   currentUserEmail,
   onClose,
   onCreateWorkspace,
+  onOpenAiSettings,
   onLoadWorkspaceRoles,
   onCreateWorkspaceInvitation
 }) => {
@@ -115,7 +117,8 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   const createSteps = React.useMemo(
     () => [
       { id: 'details', label: t('workspaceCreate.stepWorkspace') },
-      { id: 'members', label: t('workspaceCreate.stepInviteMembers') }
+      { id: 'members', label: t('workspaceCreate.stepInviteMembers') },
+      { id: 'ai', label: t('workspaceCreate.stepAiProvider') }
     ],
     [t]
   );
@@ -278,7 +281,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     if (!createdWorkspace || isCreatingInvites) return;
     const rowsToSubmit = getSubmittableInviteRows(inviteRows);
     if (rowsToSubmit.length === 0) {
-      onClose();
+      setStep('ai');
       return;
     }
     if (roleLoadError || roleTemplates.length === 0) {
@@ -376,7 +379,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
           <h3 id="create-workspace-title" className="text-sm font-extrabold tracking-tight text-ui-text">
             {t('app.createWorkspace')}
           </h3>
-          <ModalStepIndicator steps={createSteps} currentStepId={step} className="mt-4" />
+          <ModalStepIndicator steps={createSteps} currentStepId={step} compactOnMobile className="mt-4" />
         </div>
         <CloseButton
           onClick={onClose}
@@ -436,7 +439,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             </Button>
           </div>
         </form>
-      ) : (
+      ) : step === 'members' ? (
         <>
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6 custom-scrollbar">
             <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
@@ -561,8 +564,8 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             )}
           </div>
           <div className="flex flex-col-reverse gap-3 border-t border-ui-border bg-ui-bg px-6 py-4 sm:flex-row sm:justify-end">
-            <Button onClick={onClose} disabled={isCreatingInvites} variant="secondary" size="sm" className="rounded-lg">
-              {hasCreatedInvite ? t('workspaceCreate.done') : t('workspaceCreate.skipForNow')}
+            <Button onClick={() => setStep('ai')} disabled={isCreatingInvites} variant="secondary" size="sm" className="rounded-lg">
+              {hasCreatedInvite ? t('workspaceCreate.continue') : t('workspaceCreate.skipInvites')}
             </Button>
             {(hasRowsToSubmit || !hasCreatedInvite) && (
               <Button
@@ -576,6 +579,59 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                 {hasCreatedInvite ? t('workspaceCreate.retryInviteLinks') : t('workspaceCreate.createInviteLinks')}
               </Button>
             )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">
+            <div className="mx-auto max-w-2xl py-3 sm:py-6">
+              <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-accent/20 bg-accent-soft text-accent-strong">
+                <KeyRound className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <p className="type-micro-label mt-5 text-accent-strong">{t('workspaceCreate.aiSetupKicker')}</p>
+              <h4 className="type-section-title mt-2 text-ui-text">{t('workspaceCreate.aiSetupTitle')}</h4>
+              <p className="type-body mt-2 max-w-[65ch] text-ui-text-muted">
+                {t('workspaceCreate.aiSetupBody')}
+              </p>
+
+              <div className="mt-6 divide-y divide-ui-border border-y border-ui-border">
+                <div className="flex items-start gap-3 py-4">
+                  <BotMessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
+                  <div>
+                    <p className="type-row-title text-ui-text">{t('workspaceCreate.aiSetupAssistantTitle')}</p>
+                    <p className="type-caption mt-1 text-ui-text-muted">{t('workspaceCreate.aiSetupAssistantBody')}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 py-4">
+                  <Workflow className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
+                  <div>
+                    <p className="type-row-title text-ui-text">{t('workspaceCreate.aiSetupAutomationTitle')}</p>
+                    <p className="type-caption mt-1 text-ui-text-muted">{t('workspaceCreate.aiSetupAutomationBody')}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="type-caption mt-5 text-ui-text-muted">{t('workspaceCreate.aiSetupOptionalNote')}</p>
+            </div>
+          </div>
+          <div className="flex flex-col-reverse gap-3 border-t border-ui-border bg-ui-bg px-6 py-4 sm:flex-row sm:justify-end">
+            <Button onClick={onClose} variant="secondary" size="sm" className="rounded-lg">
+              {t('workspaceCreate.skipForNow')}
+            </Button>
+            <Button
+              onClick={() => {
+                if (createdWorkspace) {
+                  onOpenAiSettings(createdWorkspace.id);
+                }
+              }}
+              disabled={!createdWorkspace}
+              variant="primary"
+              size="sm"
+              className="rounded-lg"
+            >
+              <KeyRound className="h-4 w-4" aria-hidden="true" />
+              {t('workspaceCreate.openAiSettings')}
+            </Button>
           </div>
         </>
       )}

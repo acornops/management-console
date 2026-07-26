@@ -33,24 +33,25 @@ test('system Agents show AcornOps provenance while custom Agents retain their ow
   await expect(customHeader.getByText('Ning', { exact: true })).toBeVisible();
 });
 
-test('templates show publisher attribution while installed Workflows do not use provider badges', async ({ page }) => {
+test('recommendations retain attribution while added workflows become workspace-owned', async ({ page }) => {
   const installResponse = await page.request.post(`${fixtureApi}/workspaces/${workspaceId}/automation-templates/target-remediation/install`);
   expect(installResponse.ok(), `template install failed with ${installResponse.status()}`).toBe(true);
   const { workflowId } = await installResponse.json() as { workflowId: string };
 
   await page.goto(`/workspaces/${workspaceId}/workflows?workflow=${workflowId}`);
-  const systemRow = page.getByRole('button', { name: /Select workflow Target remediation/ });
-  await expect(systemRow.getByText('Provided by AcornOps')).toHaveCount(0);
-  const systemHeader = page.locator('[data-master-detail-pane-header="true"]');
-  await expect(systemHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(systemHeader.getByText('Built-in', { exact: true })).toBeVisible();
+  const addedRow = page.getByRole('button', { name: /Select workflow Target remediation/ });
+  await expect(addedRow.getByText('Provided by AcornOps')).toHaveCount(0);
+  const addedHeader = page.locator('[data-master-detail-pane-header="true"]');
+  await expect(addedHeader.getByText('Provided by AcornOps')).toHaveCount(0);
+  await expect(addedHeader.getByText('Built-in', { exact: true })).toHaveCount(0);
+  await expect(addedHeader.getByText('Ning', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: /Select workflow Production health review/ }).click();
   const customHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
   await expect(customHeader.getByText('Ning', { exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Install templates' }).click();
-  const templateDrawer = page.getByRole('dialog', { name: 'Install workflow templates' });
-  await expect(templateDrawer.getByText('By AcornOps').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Add workflows' }).click();
+  const recommendationDrawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
+  await expect(recommendationDrawer.getByText('Recommended by AcornOps').first()).toBeVisible();
 });

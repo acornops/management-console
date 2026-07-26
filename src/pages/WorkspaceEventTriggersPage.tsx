@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { InlineAlert } from '@/components/common/InlineAlert';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { DrawerFrame } from '@/components/common/OverlayFrames';
-import { DataSurface, PageHeader, PageShell } from '@/components/common/PageComposition';
+import { DataSurface, PageShell } from '@/components/common/PageComposition';
 import { Select, type SelectOption } from '@/components/common/Select';
 import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
@@ -31,9 +31,11 @@ import {
   type WorkflowEventTriggerSourceType
 } from '@/services/control-plane/workflowEventTriggerApi';
 import type { Workspace } from '@/types';
-import { AppPaths, type WorkflowTriggerType } from '@/utils/routes';
+import type { WorkflowTriggerType } from '@/utils/routes';
 import { humanizeWorkflowParameterKey } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import { WorkspaceEventTriggerCard } from '@/pages/WorkspaceEventTriggerCard';
+import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
+import { useWorkflowTriggerCreateIntent } from '@/pages/useWorkflowTriggerCreateIntent';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import {
   draftFromTrigger,
@@ -47,6 +49,7 @@ import {
 interface WorkspaceEventTriggersPageProps {
   workspace: Workspace;
   sourceType: WorkflowEventTriggerSourceType;
+  createTriggerType?: WorkflowTriggerType;
   navigate: (path: string) => void;
 }
 
@@ -58,6 +61,7 @@ const textareaClassName = formTextareaClassName('mt-2');
 export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProps> = ({
   workspace,
   sourceType,
+  createTriggerType,
   navigate
 }) => {
   const { t } = useTranslation();
@@ -203,6 +207,8 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setDrawerOpen(true);
   };
 
+  useWorkflowTriggerCreateIntent(createTriggerType, sourceType, phase === 'ready' && canManage && Boolean(activeWorkflows.length), openCreate);
+
   const openEdit = (trigger: WorkflowEventTrigger) => {
     const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
     setDraft(draftFromTrigger(
@@ -343,23 +349,21 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
 
   return (
     <PageShell>
-      <PageHeader
-        title={t('triggers.title')}
-        description={t('triggers.subtitle', { workspace: workspace.name })}
-        actions={<>
-          <Button size="md" variant="secondary" onClick={() => void refresh()} disabled={phase === 'loading' || phase === 'refreshing'}>
-            <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
-            {t('common.refresh')}
-          </Button>
-          <Button size="md" variant="primary" onClick={openCreate} disabled={!canManage || !activeWorkflows.length}>
-            <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
-            {t(sourceType === 'webhook'
-              ? 'triggers.actions.createWebhook'
-              : 'triggers.actions.createAcornOpsEvent')}
-          </Button>
-        </>}
+      <WorkflowTriggersPageHeader
+        workspace={workspace}
+        currentType={sourceType}
+        createDisabled={!canManage || !activeWorkflows.length}
+        refreshDisabled={phase === 'loading' || phase === 'refreshing'}
+        navigate={navigate}
+        onCreateCurrent={openCreate}
+        onRefresh={() => void refresh()}
       />
 
+      <div
+        id={`workflow-trigger-type-${sourceType}-panel`}
+        role="tabpanel"
+        aria-labelledby={`workflow-trigger-type-${sourceType}-tab`}
+      >
       {!canManage && <InlineAlert tone="neutral" className="mb-5">{t('eventTriggers.permissionNotice')}</InlineAlert>}
       {!activeWorkflows.length && phase === 'ready' && <InlineAlert tone="warning" className="mb-5">{t('eventTriggers.noActiveWorkflows')}</InlineAlert>}
       {workspaceStateCurrent && mutationError && <InlineAlert tone="danger" className="mb-5">{mutationError}</InlineAlert>}
@@ -406,18 +410,6 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
           ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: sourceTriggers.length })
           : t('eventTriggers.count', { count: sourceTriggers.length })}
         filters={[
-          createDiscoveryFilterGroup<WorkflowTriggerType>({
-            id: 'type',
-            label: t('triggers.filters.type'),
-            value: sourceType,
-            defaultValue: sourceType,
-            options: [
-              { value: 'schedule', label: t('triggers.types.schedule') },
-              { value: 'acornops_event', label: t('triggers.types.acornopsEvent') },
-              { value: 'webhook', label: t('triggers.types.webhook') }
-            ],
-            onChange: (value) => navigate(AppPaths.workspaceTriggers(workspace.id, value))
-          }),
           createDiscoveryFilterGroup<TriggerStatusFilter>({
             id: 'status',
             label: t('eventTriggers.filters.status'),
@@ -527,6 +519,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
           </div>
         </CollectionState>
       </DataSurface>
+      </div>
       <DrawerFrame
         open={workspaceStateCurrent && drawerOpen}
         onClose={closeDrawer}

@@ -163,7 +163,6 @@ export const WorkflowAgentsPanel: React.FC<{
   activeAgentOptions: WorkflowAgentOption[];
   isEditingAgentSelection: boolean;
   canManageWorkflowScope: boolean;
-  systemProvided: boolean;
   savingAgentSelectionId: string;
   agentSelectionError: string;
   agentSelectionResult: string;
@@ -174,7 +173,6 @@ export const WorkflowAgentsPanel: React.FC<{
   activeAgentOptions,
   isEditingAgentSelection,
   canManageWorkflowScope,
-  systemProvided,
   savingAgentSelectionId,
   agentSelectionError,
   agentSelectionResult,
@@ -205,7 +203,7 @@ export const WorkflowAgentsPanel: React.FC<{
     title={t('workflowCoordination.agentsTitle')}
     description={t('workflowCoordination.agentsDescription')}
     actions={!isEditingAgentSelection && (
-      <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflowScope || systemProvided} title={systemProvided ? 'Duplicate this system-provided workflow to edit its agents.' : !canManageWorkflowScope ? 'You need manage_workflows to edit workflow agents.' : undefined}>
+      <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflowScope} title={!canManageWorkflowScope ? 'You need manage_workflows to edit workflow agents.' : undefined}>
         <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
         Edit agents
       </Button>
@@ -213,7 +211,7 @@ export const WorkflowAgentsPanel: React.FC<{
   >
     {agentSelectionError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{agentSelectionError}</div>}
     {agentSelectionResult && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{agentSelectionResult}</div>}
-    {!systemProvided && !canManageWorkflowScope && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
+    {!canManageWorkflowScope && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
     {selectionFeedback && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-semibold text-ui-text">{selectionFeedback}</div>}
     {isEditingAgentSelection && selectedAgentSelectionDraft ? (
       <WorkflowSection title={t('workflowCoordination.agentsTitle')} description={t('workflowCoordination.agentsDescription')}>

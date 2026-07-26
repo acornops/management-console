@@ -156,13 +156,13 @@ export const zh = {
     logout: '退出登录',
     createFirstWorkspaceKicker: '工作区设置',
     createFirstWorkspace: '创建第一个工作区',
-    createFirstWorkspaceBody: '创建工作区，用于集中管理成员、MCP 服务器、自动化和排障上下文。创建后即可邀请队友。',
+    createFirstWorkspaceBody: '创建工作区并连接 AI 提供商，然后根据需要从自动化、集成或基础设施开始。',
     createFirstWorkspaceStepWorkspace: '命名工作区',
     createFirstWorkspaceStepWorkspaceBody: '以团队、环境或负责的运营范围作为起点。',
-    createFirstWorkspaceStepMembers: '邀请队友',
-    createFirstWorkspaceStepMembersBody: '可在设置过程中创建一次性邀请链接，也可以稍后管理成员。',
-    createFirstWorkspaceStepChat: '开始对话',
-    createFirstWorkspaceStepChatBody: '工作区准备好后，即可使用聊天、Agents 和工作流。',
+    createFirstWorkspaceStepAi: '连接 AI 提供商',
+    createFirstWorkspaceStepAiBody: '添加工作区 API 密钥，以启用助手对话和自动化运行。',
+    createFirstWorkspaceStepStart: '选择起点',
+    createFirstWorkspaceStepStartBody: '根据使用场景构建自动化、连接集成或添加基础设施目标。',
     createFirstWorkspaceInviteHint: '已有邀请？打开队友发送的邀请链接即可加入现有工作区。',
     createWorkspace: '创建新工作区',
     workspaceName: '工作区名称',
@@ -316,6 +316,7 @@ export const zh = {
   workspaceCreate: {
     stepWorkspace: '工作区',
     stepInviteMembers: '邀请成员',
+    stepAiProvider: 'AI 提供商',
     createAndContinue: '创建并继续',
     creating: '创建中...',
     ownerAccessTitle: '所有者访问权限',
@@ -335,6 +336,17 @@ export const zh = {
     createInviteLinks: '创建邀请链接',
     retryInviteLinks: '重试邀请链接',
     inviteCreated: '邀请链接已创建',
+    skipInvites: '跳过邀请',
+    continue: '继续',
+    aiSetupKicker: '工作区已创建',
+    aiSetupTitle: '连接 AI 提供商',
+    aiSetupBody: '添加仅写入的工作区 API 密钥以启用 AI 运行时。你可以跳过此步骤，稍后从 AI 设置返回。',
+    aiSetupAssistantTitle: '开始助手对话',
+    aiSetupAssistantBody: '使用已启用的提供商和模型进行调查与故障排查。',
+    aiSetupAutomationTitle: '运行自动化',
+    aiSetupAutomationBody: '启动手动、定时和事件触发的工作流运行。',
+    aiSetupOptionalNote: '目标和集成均为可选项。只需添加工作流和调查所需的内容。',
+    openAiSettings: '打开 AI 设置',
     skipForNow: '暂时跳过',
     done: '完成'
   },
@@ -349,17 +361,22 @@ export const zh = {
   triggers: {
     title: '触发器',
     subtitle: '选择 {{workspace}} 中工作流启动的时间和原因。',
-    filters: {
-      type: '按触发器类型筛选'
-    },
+    tabsLabel: '触发器类型',
     types: {
       schedule: '计划',
       acornopsEvent: 'AcornOps 事件',
       webhook: '传入 Webhook'
     },
     actions: {
+      create: '创建触发器',
+      createMenuLabel: '选择要创建的触发器类型',
       createAcornOpsEvent: '创建 AcornOps 事件',
       createWebhook: '创建传入 Webhook'
+    },
+    createDescriptions: {
+      schedule: '按周期运行工作流。',
+      acornopsEvent: '当 AcornOps 创建问题时启动。',
+      webhook: '通过签名的外部请求启动。'
     },
     empty: {
       acornopsEventTitle: '暂无 AcornOps 事件触发器',
@@ -2884,18 +2901,9 @@ export const zh = {
       availabilityBody: '选择是否可将此内置 Agent 分配给新任务。',
       externalBindingsTitle: '外部 MCP 绑定',
       externalBindingsBody: '仅分配工作区已批准的 MCP 服务器和工具。内置说明和策略保持不变。',
-      saveConfiguration: '保存配置',
-      workflowAgentsReadOnly: 'Agent 分配属于此 AcornOps 内置定义。复制为自定义草稿后即可编辑分配。',
-      workflowCapabilitiesReadOnly: '能力和策略由 AcornOps 维护。复制此工作流可创建可编辑的自定义草稿。',
-      workflowSettingsBody: '配置此工作区中的可用状态。工作流定义由 AcornOps 维护。',
-      workflowPromptReadOnly: '此默认提示属于内置定义。复制工作流后即可编辑。',
-      workflowTagsReadOnly: '标签由 AcornOps 维护。复制工作流后即可编辑。',
-      workflowNotDeletable: '当运行记录仍依赖此工作流时，无法删除该工作流。'
+      saveConfiguration: '保存配置'
     },
     workflowActions: {
-      customize: '创建可编辑副本',
-      customizing: '正在创建副本…',
-      customizePermission: '需要 manage_workflows 权限才能创建可编辑副本。',
       schedule: '设置计划',
       launch: '运行',
       starting: '正在启动…',
@@ -2976,26 +2984,32 @@ export const zh = {
       enabled: '创建后立即启用计划', cancel: '取消', create: '创建计划', creating: '正在创建…', createError: '无法创建工作流计划'
     }
   },
-  workflowTemplates: {
-    open: '安装模板',
-    title: '安装工作流模板',
-    description: '选择要添加到此工作区的受治理工作流，并在启用前完成所需设置。',
-    templateList: '工作流模板',
-    byAcornOps: '由 AcornOps 创建',
-    automatic: '自动安装',
-    optIn: '选择安装',
+  workflowRecommendations: {
+    open: '添加工作流',
+    title: '添加推荐工作流',
+    description: '使用 AcornOps 推荐内容作为起点。添加后，工作流归此工作区所有，AcornOps 不会覆盖它。',
+    list: '推荐工作流',
+    byAcornOps: 'AcornOps 推荐',
+    automatic: '默认添加',
+    optIn: '可选',
     community: '社区版',
-    loading: '正在加载模板...',
-    empty: '当前没有可用的工作流模板。',
-    loadFailed: '无法加载工作流模板。',
+    loading: '正在加载推荐内容...',
+    empty: '当前没有可用的推荐工作流。',
+    loadFailed: '无法加载推荐工作流。',
     retry: '重试',
     actionFailed: '无法完成此设置操作。',
-    install: '安装工作流',
-    installing: '正在安装...',
-    installPermission: '你可以浏览模板。安装或启用模板需要具备工作流和 Agent 权限的工作区管理员。',
+    install: '添加工作流',
+    installing: '正在添加...',
+    installPermission: '你可以浏览推荐内容。添加或启用工作流需要具备工作流和 Agent 权限的工作区管理员。',
     activate: '启用工作流',
     activating: '正在启用...',
-    completeSetup: '请先完成 Agent MCP 凭据要求。'
+    completeSetup: '请先完成 Agent MCP 凭据要求。',
+    status: {
+      notAdded: '尚未添加',
+      needsSetup: '需要设置',
+      ready: '可启用',
+      active: '已启用'
+    }
   },
   nodes: {
     title: '集群节点',

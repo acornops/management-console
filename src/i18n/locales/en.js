@@ -156,13 +156,13 @@ export const en = {
     logout: 'Logout',
     createFirstWorkspaceKicker: 'Workspace setup',
     createFirstWorkspace: 'Create your first workspace',
-    createFirstWorkspaceBody: 'Create a workspace to group people, MCP servers, automation, and investigation context. You can invite teammates right after it is created.',
+    createFirstWorkspaceBody: 'Create a workspace, connect an AI provider, then start with automation, integrations, or infrastructure when you need it.',
     createFirstWorkspaceStepWorkspace: 'Name the workspace',
     createFirstWorkspaceStepWorkspaceBody: 'Start with the team, environment, or operating area this space will own.',
-    createFirstWorkspaceStepMembers: 'Invite teammates',
-    createFirstWorkspaceStepMembersBody: 'Create one-time invite links during setup, or manage members later.',
-    createFirstWorkspaceStepChat: 'Chat away',
-    createFirstWorkspaceStepChatBody: 'Use chat, agents, and workflows once your workspace is ready.',
+    createFirstWorkspaceStepAi: 'Connect an AI provider',
+    createFirstWorkspaceStepAiBody: 'Add a workspace API key to enable assistant conversations and automation runs.',
+    createFirstWorkspaceStepStart: 'Choose your starting point',
+    createFirstWorkspaceStepStartBody: 'Build automation, connect integrations, or add infrastructure targets when they fit your use case.',
     createFirstWorkspaceInviteHint: 'Have an invite? Open the invitation link from your teammate to join an existing workspace.',
     createWorkspace: 'Create New Workspace',
     workspaceName: 'Workspace Name',
@@ -316,6 +316,7 @@ export const en = {
   workspaceCreate: {
     stepWorkspace: 'Workspace',
     stepInviteMembers: 'Invite Members',
+    stepAiProvider: 'AI Provider',
     createAndContinue: 'Create and continue',
     creating: 'Creating...',
     ownerAccessTitle: 'Owner access',
@@ -335,6 +336,17 @@ export const en = {
     createInviteLinks: 'Create invite links',
     retryInviteLinks: 'Retry invite links',
     inviteCreated: 'Invite link created',
+    skipInvites: 'Skip invites',
+    continue: 'Continue',
+    aiSetupKicker: 'Workspace created',
+    aiSetupTitle: 'Connect an AI provider',
+    aiSetupBody: 'Add a write-only workspace API key to activate the AI runtime. You can skip this step and return from AI Settings later.',
+    aiSetupAssistantTitle: 'Start assistant conversations',
+    aiSetupAssistantBody: 'Use an enabled provider and model for investigation and troubleshooting.',
+    aiSetupAutomationTitle: 'Run automations',
+    aiSetupAutomationBody: 'Start manual, scheduled, and event-triggered workflow runs.',
+    aiSetupOptionalNote: 'Targets and integrations are optional. Add only the ones your workflows and investigations need.',
+    openAiSettings: 'Open AI Settings',
     skipForNow: 'Skip for now',
     done: 'Done'
   },
@@ -349,17 +361,22 @@ export const en = {
   triggers: {
     title: 'Triggers',
     subtitle: 'Choose when and why workflows start in {{workspace}}.',
-    filters: {
-      type: 'Filter by trigger type'
-    },
+    tabsLabel: 'Trigger types',
     types: {
       schedule: 'Schedule',
       acornopsEvent: 'AcornOps event',
       webhook: 'Incoming webhook'
     },
     actions: {
+      create: 'Create trigger',
+      createMenuLabel: 'Choose a trigger type to create',
       createAcornOpsEvent: 'Create AcornOps event',
       createWebhook: 'Create incoming webhook'
+    },
+    createDescriptions: {
+      schedule: 'Run a workflow on a recurring cadence.',
+      acornopsEvent: 'Start when AcornOps creates an issue.',
+      webhook: 'Start from a signed external request.'
     },
     empty: {
       acornopsEventTitle: 'No AcornOps event triggers',
@@ -2884,18 +2901,9 @@ export const en = {
       availabilityBody: 'Choose whether this built-in can be assigned to new work.',
       externalBindingsTitle: 'External MCP bindings',
       externalBindingsBody: 'Assign only workspace-approved MCP servers and tools. The built-in instructions and policies remain unchanged.',
-      saveConfiguration: 'Save configuration',
-      workflowAgentsReadOnly: 'Agent assignments are part of this AcornOps built-in definition. Duplicate it to edit assignments in a custom draft.',
-      workflowCapabilitiesReadOnly: 'Capabilities and policy are maintained by AcornOps. Duplicate this workflow to create an editable custom draft.',
-      workflowSettingsBody: 'Configure availability for this workspace. AcornOps maintains the workflow definition.',
-      workflowPromptReadOnly: 'This saved prompt is part of the built-in definition. Duplicate the workflow to edit it.',
-      workflowTagsReadOnly: 'Tags are maintained by AcornOps. Duplicate the workflow to edit them.',
-      workflowNotDeletable: 'This workflow cannot be deleted while operational records still depend on it.'
+      saveConfiguration: 'Save configuration'
     },
     workflowActions: {
-      customize: 'Create editable copy',
-      customizing: 'Creating copy…',
-      customizePermission: 'You need manage_workflows to create an editable copy.',
       schedule: 'Schedule',
       launch: 'Launch',
       starting: 'Starting…',
@@ -2976,26 +2984,32 @@ export const en = {
       enabled: 'Start this schedule enabled', cancel: 'Cancel', create: 'Create schedule', creating: 'Creating...', createError: 'Unable to create workflow schedule'
     }
   },
-  workflowTemplates: {
-    open: 'Install templates',
-    title: 'Install workflow templates',
-    description: 'Choose a governed workflow to add to this workspace, then complete any required setup before activation.',
-    templateList: 'Workflow templates',
-    byAcornOps: 'By AcornOps',
-    automatic: 'Automatic',
-    optIn: 'Opt-in',
+  workflowRecommendations: {
+    open: 'Add workflows',
+    title: 'Add recommended workflows',
+    description: 'Use an AcornOps recommendation as a starting point. Once added, the workflow belongs to this workspace and AcornOps will not overwrite it.',
+    list: 'Recommended workflows',
+    byAcornOps: 'Recommended by AcornOps',
+    automatic: 'Added by default',
+    optIn: 'Optional',
     community: 'Community',
-    loading: 'Loading templates...',
-    empty: 'No workflow templates are available.',
-    loadFailed: 'Workflow templates could not be loaded.',
+    loading: 'Loading recommendations...',
+    empty: 'No recommended workflows are available.',
+    loadFailed: 'Recommended workflows could not be loaded.',
     retry: 'Retry',
     actionFailed: 'The setup action could not be completed.',
-    install: 'Install workflow',
-    installing: 'Installing...',
-    installPermission: 'You can browse templates. A workspace manager with workflow and Agent permissions must install or activate them.',
+    install: 'Add workflow',
+    installing: 'Adding...',
+    installPermission: 'You can browse recommendations. A workspace manager with workflow and Agent permissions must add or activate them.',
     activate: 'Activate workflow',
     activating: 'Activating...',
-    completeSetup: 'Complete the Agent MCP credential requirements before activation.'
+    completeSetup: 'Complete the Agent MCP credential requirements before activation.',
+    status: {
+      notAdded: 'Not added',
+      needsSetup: 'Needs setup',
+      ready: 'Ready to activate',
+      active: 'Active'
+    }
   },
   nodes: {
     title: 'Cluster Nodes',

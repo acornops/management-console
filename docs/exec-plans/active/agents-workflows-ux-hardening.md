@@ -24,10 +24,11 @@ catalog, pagination, and schedule-preview contracts.
 - Unavailable catalogs, loading, retry, permission, and mutation states explain
   the next action in English and Mandarin.
 - Agent profile actions use the shared button sizes and refresh icon treatment.
-- Template-origin Agents and workflows use compact `Built-in` provenance
-  text, never a `TEMPLATE` badge or the installing user's ownership label.
-- System-provided definitions expose duplication instead of definition editing;
-  workspace availability and supported external bindings remain configurable.
+- Template-origin Agents use compact `Built-in` provenance text, never a
+  `TEMPLATE` badge or the installing user's ownership label.
+- Default and recommended workflows are ordinary workspace-owned definitions.
+  They are directly editable and AcornOps never overwrites, upgrades, or
+  automatically restores them.
 - Visible system-provided definitions expose deletion. Agent deletion explains
   dependent workflows, and managed-response workflows label the hidden entry
   Agent as an AcornOps-managed coordinator without exposing its ID.
@@ -69,9 +70,12 @@ catalog, pagination, and schedule-preview contracts.
 
 ## Frontend fixture validation evidence
 
-- `VITE_APP_DATA_MODE=control-plane npm run validate` passed: 131 Vitest files
-  and 766 tests, 19 Playwright design tests with one expected skip, standalone
-  fixture smoke, membership/contracts/harness checks, production build, and
-  route smoke.
+- `VITE_APP_DATA_MODE=control-plane npm run validate` passed: 126 Vitest files
+  and 672 tests, 19 Playwright design tests with one expected skip, 162 repeated
+  standalone fixture checks, 21 repeated control-plane parity checks,
+  membership/contracts/harness checks, production build, and route smoke.
+- Live local verification confirmed workspace ownership labels, the canonical
+  `panel=recommendations` route, compatibility with legacy `panel=templates`
+  links, localized recommendation status labels, and route cleanup on close.
 - The production output contains no MSW fixture chunk. A production build with
   `VITE_APP_DATA_MODE=mock` is rejected with the configured startup error.

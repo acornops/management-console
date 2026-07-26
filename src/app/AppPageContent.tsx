@@ -406,8 +406,8 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                 <ol className="grid border-y border-ui-border text-left sm:grid-cols-3 sm:divide-x sm:divide-ui-border">
                   {([
                     ['workspace', ICONS.LayoutGrid, t('app.createFirstWorkspaceStepWorkspace'), t('app.createFirstWorkspaceStepWorkspaceBody')],
-                    ['members', ICONS.Users, t('app.createFirstWorkspaceStepMembers'), t('app.createFirstWorkspaceStepMembersBody')],
-                    ['chat', ICONS.BotMessageSquare, t('app.createFirstWorkspaceStepChat'), t('app.createFirstWorkspaceStepChatBody')]
+                    ['ai', ICONS.Settings, t('app.createFirstWorkspaceStepAi'), t('app.createFirstWorkspaceStepAiBody')],
+                    ['start', ICONS.Zap, t('app.createFirstWorkspaceStepStart'), t('app.createFirstWorkspaceStepStartBody')]
                   ] as const).map(([id, Icon, title, body], index) => (
                     <li key={id} className="border-b border-ui-border px-4 py-4 last:border-b-0 sm:border-b-0 sm:px-5">
                       <div className="flex items-center gap-2.5">
@@ -481,9 +481,9 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           {route.kind === 'workspaceTriggers' && workspaceContext && (
             route.triggerType === 'schedule'
               ? <WorkspaceSchedulesPage key={`${workspaceContext.id}:schedule`} workspace={workspaceContext}
-                  createWorkflowId={route.createWorkflowId} navigate={navigate} />
+                  createTriggerType={route.createTriggerType} createWorkflowId={route.createWorkflowId} navigate={navigate} />
               : <WorkspaceEventTriggersPage key={`${workspaceContext.id}:${route.triggerType}`} workspace={workspaceContext}
-                  sourceType={route.triggerType} navigate={navigate} />
+                  sourceType={route.triggerType} createTriggerType={route.createTriggerType} navigate={navigate} />
           )}
 
           {route.kind === 'workspaceApprovals' && workspaceContext && (

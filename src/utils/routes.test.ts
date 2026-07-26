@@ -340,6 +340,21 @@ describe('routes', () => {
       workspaceId: 'team-alpha',
       triggerType: 'webhook'
     });
+    expect(AppPaths.workspaceTriggerCreate('team-alpha', 'acornops_event')).toBe(
+      '/workspaces/team-alpha/triggers?create=acornops_event&type=acornops_event'
+    );
+    expect(parseAppRoute(AppPaths.workspaceTriggerCreate('team-alpha', 'acornops_event'))).toEqual({
+      kind: 'workspaceTriggers',
+      workspaceId: 'team-alpha',
+      triggerType: 'acornops_event',
+      createTriggerType: 'acornops_event'
+    });
+    expect(parseAppRoute(AppPaths.workspaceTriggerCreate('team-alpha', 'schedule'))).toEqual({
+      kind: 'workspaceTriggers',
+      workspaceId: 'team-alpha',
+      triggerType: 'schedule',
+      createTriggerType: 'schedule'
+    });
     expect(parseAppRoute('/workspaces/team-alpha/schedules')).toEqual({
       kind: 'notFound',
       path: '/workspaces/team-alpha/schedules'

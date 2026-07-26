@@ -570,6 +570,10 @@ export const AppShell: React.FC<AppShellProps> = ({
             onConfirmClusterInstalled={() => void handleConfirmAddCluster()}
             onConfirmDeleteWorkspace={(workspace) => handleDeleteWorkspace(workspace.id)}
             onCreateWorkspace={handleCreateWorkspace}
+            onOpenWorkspaceAiSettings={(workspaceId) => {
+              setIsCreatingWorkspace(false);
+              navigate(AppPaths.workspaceAiSettings(workspaceId));
+            }}
             onCreateWorkspaceInvitation={createWorkspaceInvitation}
             onExcludeNamespacesChange={setExcludeNamespaces}
             onIncludeNamespacesChange={setIncludeNamespaces}

@@ -10,8 +10,9 @@ export const ModalStepIndicator: React.FC<{
   steps: ModalStepIndicatorStep[];
   currentStepId: string;
   onStepSelect?: (stepId: string) => void;
+  compactOnMobile?: boolean;
   className?: string;
-}> = ({ steps, currentStepId, onStepSelect, className = '' }) => {
+}> = ({ steps, currentStepId, onStepSelect, compactOnMobile = false, className = '' }) => {
   const currentIndex = Math.max(0, steps.findIndex((step) => step.id === currentStepId));
 
   return (
@@ -30,12 +31,14 @@ export const ModalStepIndicator: React.FC<{
         const content = (
           <>
             {marker}
-            {step.label}
+            <span className={compactOnMobile && !active ? 'sr-only sm:not-sr-only' : undefined}>
+              {step.label}
+            </span>
           </>
         );
         return (
           <React.Fragment key={step.id}>
-            {index > 0 && <span className="h-px w-16 bg-ui-border" />}
+            {index > 0 && <span className={`h-px bg-ui-border ${compactOnMobile ? 'w-4 sm:w-16' : 'w-16'}`} />}
             {selectable ? (
               <button
                 type="button"

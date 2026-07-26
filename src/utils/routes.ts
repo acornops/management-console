@@ -52,6 +52,7 @@ export type AppRoute =
       kind: 'workspaceTriggers';
       workspaceId: string;
       triggerType: WorkflowTriggerType;
+      createTriggerType?: WorkflowTriggerType;
       createWorkflowId?: string;
     }
   | { kind: 'workspaceApprovals'; workspaceId: string; runId?: string; approvalId?: string }
@@ -336,9 +337,12 @@ export function parseAppRoute(path: string): AppRoute {
       const createWorkflowId = triggerType === 'schedule' && params.get('create') === 'schedule'
         ? params.get('workflowId') || undefined
         : undefined;
+      const createTriggerType = !createWorkflowId && params.get('create') === triggerType
+        ? triggerType
+        : undefined;
       return createWorkflowId
         ? { kind: 'workspaceTriggers', workspaceId, triggerType, createWorkflowId }
-        : { kind: 'workspaceTriggers', workspaceId, triggerType };
+        : { kind: 'workspaceTriggers', workspaceId, triggerType, ...(createTriggerType ? { createTriggerType } : {}) };
     }
     if (section === 'approvals') {
       const runId = params.get('runId') || undefined;
@@ -460,6 +464,11 @@ export const AppPaths = {
     return triggerType === 'schedule'
       ? path
       : appendQuery(path, new URLSearchParams({ type: triggerType }));
+  },
+  workspaceTriggerCreate: (workspaceId: string, triggerType: WorkflowTriggerType): string => {
+    const params = new URLSearchParams({ create: triggerType });
+    if (triggerType !== 'schedule') params.set('type', triggerType);
+    return appendQuery(`/workspaces/${encodeURIComponent(workspaceId)}/triggers`, params);
   },
   workspaceScheduleCreate: (workspaceId: string, workflowId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/triggers?create=schedule&workflowId=${encodeURIComponent(workflowId)}`,

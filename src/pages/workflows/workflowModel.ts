@@ -76,10 +76,6 @@ export interface WorkflowDefinition {
   runs: WorkflowRunRecord[];
 }
 
-export function isSystemProvidedWorkflow(workflow: Pick<WorkflowDefinition, 'origin' | 'source'>): boolean {
-  return workflow.origin?.type === 'template' || workflow.source === 'system';
-}
-
 export function getWorkflowDeleteBlocker(workflow: WorkflowDefinition | undefined, canManage: boolean): string {
   if (!workflow || canManage) return '';
   return 'You need manage_workflows to delete workflows.';

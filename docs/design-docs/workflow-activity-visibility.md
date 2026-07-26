@@ -18,9 +18,12 @@ Workflows has three route-level views:
 
 Outbound webhooks remain a separate Automation destination because they deliver
 AcornOps events to another system; they do not start workflows. The Triggers
-type selector uses one stable route and switches between the three trigger
-sources. A workflow's **Schedule** action opens the schedule creator on that
-route.
+page uses route-backed sub-tabs for the three trigger sources, keeping the
+active collection visible as stable navigation rather than a filter that
+replaces the table. The persistent **Create trigger** menu can open any of the
+three creators without first changing tabs. The selected creation intent is
+route-backed so the destination opens directly and remains resumable. A
+workflow's **Schedule** action opens the schedule creator on that route.
 
 ## Execution Model
 

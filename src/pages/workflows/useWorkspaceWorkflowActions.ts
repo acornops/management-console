@@ -1,11 +1,10 @@
-import { getOptimisticWorkflowRunStatus, isSystemProvidedWorkflow, type WorkflowDefinition, type WorkflowRunMessage } from '@/pages/workflows/workflowModel';
+import { getOptimisticWorkflowRunStatus, type WorkflowDefinition, type WorkflowRunMessage } from '@/pages/workflows/workflowModel';
 import {
   cancelWorkflowRun,
   createWorkflow,
   createWorkflowSession,
   decideWorkflowRunApproval,
   deleteWorkflow,
-  duplicateWorkflow,
   listWorkflowRunEvents,
   postWorkflowSessionMessage,
   updateWorkflow,
@@ -39,7 +38,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setWorkflowRunMessageSendingId, setWorkflowRunMessageErrorByRunId, setWorkflowRunMessageRecoveryByRunId,
     setNewWorkflowTag,
     newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
-    setDeleteWorkflowId, setEditingWorkflowId, setUpdatingWorkflowId, setDuplicatingWorkflowId, selectResultingWorkflow, selectWorkflowTab, setDeletingWorkflowId,
+    setDeleteWorkflowId, setEditingWorkflowId, setUpdatingWorkflowId, selectResultingWorkflow, setDeletingWorkflowId,
     createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
     canManageWorkflowScope, workflowOptionsReady, launchBlocker, workflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
     setEditingAgentSelectionId, setAgentSelectionError, setAgentSelectionResult, setSavingAgentSelectionId,
@@ -380,7 +379,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
 
   async function addWorkflowTag(workflowId: string): Promise<void> {
     const workflow = workflows.find((item: WorkflowDefinition) => item.id === workflowId);
-    if (!workflow || isSystemProvidedWorkflow(workflow)) return;
+    if (!workflow) return;
     const tag = newWorkflowTag.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     if (!tag) return;
     if (await persistWorkflowTags(workflow, uniqueValues([...workflow.tags, tag]))) {
@@ -390,12 +389,11 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
 
   async function removeWorkflowTag(workflowId: string, tag: string): Promise<void> {
     const workflow = workflows.find((item: WorkflowDefinition) => item.id === workflowId);
-    if (!workflow || isSystemProvidedWorkflow(workflow)) return;
+    if (!workflow) return;
     await persistWorkflowTags(workflow, workflow.tags.filter((value) => value !== tag));
   }
 
   function startEditingWorkflow(workflow: WorkflowDefinition): void {
-    if (isSystemProvidedWorkflow(workflow)) return;
     setWorkflowEditDrafts((current) => ({ ...current, [workflow.id]: createWorkflowEditDraft(workflow) }));
     setWorkflowUpdateError('');
     setWorkflowUpdateResult('');
@@ -421,7 +419,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   function startEditingAgentSelection(workflow: WorkflowDefinition): void {
-    if (isSystemProvidedWorkflow(workflow)) return;
     setAgentSelectionDrafts((current) => ({ ...current, [workflow.id]: current[workflow.id] || createAgentSelectionDraft(workflow) }));
     setAgentSelectionError('');
     setAgentSelectionResult('');
@@ -445,7 +442,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   async function saveAgentSelection(): Promise<void> {
-    if (!selectedWorkflow || isSystemProvidedWorkflow(selectedWorkflow)) return;
+    if (!selectedWorkflow) return;
     const draft = agentSelectionDrafts[selectedWorkflow.id] || createAgentSelectionDraft(selectedWorkflow);
     const selectedAgentIds = agentIdsFromDraft(draft);
     setAgentSelectionError('');
@@ -470,7 +467,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   async function saveWorkflowDefinition(): Promise<void> {
-    if (!selectedWorkflow || isSystemProvidedWorkflow(selectedWorkflow) || !selectedWorkflowEditDraft) return;
+    if (!selectedWorkflow || !selectedWorkflowEditDraft) return;
     const name = selectedWorkflowEditDraft.name.trim();
     if (!name) return;
     setWorkflowUpdateError('');
@@ -537,26 +534,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     }
   }
 
-  async function duplicateSystemWorkflow(): Promise<void> {
-    if (!selectedWorkflow || !isSystemProvidedWorkflow(selectedWorkflow) || !canManageWorkflowScope) return;
-    setDuplicatingWorkflowId(selectedWorkflow.id);
-    setWorkflowUpdateError('');
-    setWorkflowUpdateResult('');
-    try {
-      const created = await duplicateWorkflow(workspace.id, selectedWorkflow.id);
-      const mapped = mapApiWorkflowToDefinition(created, undefined, workspace.id, workflowOptions, ownerLabelsByUserId);
-      setWorkflows((current) => [mapped, ...current.filter((workflow: WorkflowDefinition) => workflow.id !== mapped.id)]);
-      setWorkflowEditDrafts((current) => ({ ...current, [mapped.id]: createWorkflowEditDraft(mapped) }));
-      setEditingWorkflowId(mapped.id);
-      selectWorkflowTab('settings', mapped.id);
-      setWorkflowUpdateResult(`Created an editable custom draft from ${selectedWorkflow.name}.`);
-    } catch (error) {
-      setWorkflowUpdateError(error instanceof Error ? error.message : 'Unable to duplicate this system-provided workflow.');
-    } finally {
-      setDuplicatingWorkflowId('');
-    }
-  }
-
   async function createNewWorkflow(): Promise<void> {
     if (!canManageWorkflowScope) {
       setCreateError('You need manage_workflows to create workflows.');
@@ -593,7 +570,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     createNewWorkflow,
     decideApproval,
     deleteSelectedWorkflow,
-    duplicateSystemWorkflow,
     launchSelectedWorkflow,
     removeWorkflowTag,
     saveAgentSelection,

@@ -209,28 +209,28 @@ test('agent profile scopes lifecycle actions to Settings and icons restore-point
   await expect(page.getByRole('button', { name: 'Refresh' }).locator('svg')).toBeVisible();
 });
 
-test('workflow templates install and activate without entering the library first', async ({ page }) => {
+test('recommended workflows can be added and activated without entering the library first', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Install templates' }).click();
+  await page.getByRole('button', { name: 'Add workflows' }).click();
+  await expect(page).toHaveURL(/panel=recommendations/);
 
-  const drawer = page.getByRole('dialog', { name: 'Install workflow templates' });
+  const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
   await expect(drawer).toBeVisible();
   await expect(drawer).toBeFocused();
   await expect(drawer.getByRole('button', { name: /Target diagnostics/ })).toBeVisible();
-  await expect(drawer.getByRole('button', { name: /Target remediation/ })).toBeVisible();
   await expect(drawer.getByRole('button', { name: /Target remediation/ })).toBeVisible();
   await expect(drawer.getByRole('button', { name: /Incident report/ })).toBeVisible();
   await expect(drawer.getByRole('button', { name: /Incident investigation/ })).toBeVisible();
 
   await drawer.getByRole('button', { name: /Target remediation/ }).click();
-  await expect(drawer.getByRole('button', { name: 'Install workflow' })).toBeEnabled();
-  await drawer.getByRole('button', { name: 'Install workflow' }).click();
+  await expect(drawer.getByRole('button', { name: 'Add workflow' })).toBeEnabled();
+  await drawer.getByRole('button', { name: 'Add workflow' }).click();
   await expect(drawer.getByRole('button', { name: 'Activate workflow' })).toBeEnabled();
   await drawer.getByRole('button', { name: 'Activate workflow' }).click();
-  await expect(drawer.getByText('active', { exact: true })).toBeVisible();
+  await expect(drawer.getByText('Active', { exact: true })).toBeVisible();
 });
 
-test('workflow template catalog failure is retryable without leaving the page', async ({ page }) => {
+test('recommended workflow catalog failure is retryable without leaving the page', async ({ page }) => {
   await page.addInitScript(() => {
     const originalFetch = window.fetch.bind(window);
     let rejectTemplateRequests = true;
@@ -240,7 +240,7 @@ test('workflow template catalog failure is retryable without leaving the page', 
     window.fetch = (input, init) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       if (rejectTemplateRequests && new URL(url, window.location.href).pathname.endsWith('/automation-templates')) {
-        return Promise.resolve(new Response(JSON.stringify({ error: { code: 'FIXTURE_TEMPLATE_FAILURE', message: 'Template catalog is temporarily unavailable.' } }), {
+        return Promise.resolve(new Response(JSON.stringify({ error: { code: 'FIXTURE_TEMPLATE_FAILURE', message: 'Recommendation catalog is temporarily unavailable.' } }), {
           status: 503,
           headers: { 'content-type': 'application/json' }
         }));
@@ -250,9 +250,9 @@ test('workflow template catalog failure is retryable without leaving the page', 
   });
 
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Install templates' }).click();
-  const drawer = page.getByRole('dialog', { name: 'Install workflow templates' });
-  await expect(drawer.getByRole('alert')).toContainText('Template catalog is temporarily unavailable.');
+  await page.getByRole('button', { name: 'Add workflows' }).click();
+  const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
+  await expect(drawer.getByRole('alert')).toContainText('Recommendation catalog is temporarily unavailable.');
   await page.evaluate(() => (window as typeof window & { __allowFixtureTemplateRequests: () => void }).__allowFixtureTemplateRequests());
   await drawer.getByRole('button', { name: 'Retry' }).click();
   await expect(drawer.getByRole('button', { name: /Target remediation/ })).toBeVisible();

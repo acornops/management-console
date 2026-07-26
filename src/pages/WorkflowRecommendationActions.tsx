@@ -1,10 +1,10 @@
 import { Button } from '@/components/common/Button';
 import { updateUrlSearch } from '@/hooks/useUrlSearchState';
-import { WorkflowTemplateSetupDrawer } from '@/pages/WorkflowTemplateSetupDrawer';
+import { WorkflowRecommendationDrawer } from '@/pages/WorkflowRecommendationDrawer';
 import type { Workspace } from '@/types';
 import { useTranslation } from 'react-i18next';
 
-export const WorkflowTemplateActions = ({
+export const WorkflowRecommendationActions = ({
   workspace,
   open,
   focusWorkflowId,
@@ -20,8 +20,8 @@ export const WorkflowTemplateActions = ({
   const { t } = useTranslation();
   const canInstall = Boolean(workspace.permissions?.manage_workflows && workspace.permissions?.manage_agents);
   return <>
-    <Button type="button" variant="secondary" size="md" onClick={() => { updateUrlSearch({ panel: 'templates' }); onOpenChange(true); }}>{t('workflowTemplates.open')}</Button>
-    <WorkflowTemplateSetupDrawer
+    <Button type="button" variant="secondary" size="md" onClick={() => { updateUrlSearch({ panel: 'recommendations' }); onOpenChange(true); }}>{t('workflowRecommendations.open')}</Button>
+    <WorkflowRecommendationDrawer
       open={open}
       workspaceId={workspace.id}
       focusWorkflowId={focusWorkflowId}

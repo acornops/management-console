@@ -35,10 +35,10 @@ describe('agent control-plane api', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/agents?includeInactive=true');
   });
 
-  it('validates automation template catalog responses at the control-plane boundary', async () => {
+  it('validates workflow recommendation catalog responses at the control-plane boundary', async () => {
     const validTemplate = {
-      id: 'target-remediation', version: 3, name: 'Target remediation', description: 'Safely change one target.',
-      installMode: 'opt_in', installationStatus: 'not_installed', setupSteps: ['Install workflow'],
+      id: 'target-remediation', version: 4, name: 'Target remediation', description: 'Safely change one target.',
+      installMode: 'opt_in', installationStatus: 'not_installed', setupSteps: ['Add paused workflow'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
     };
     const fetchMock = vi.fn()
@@ -47,7 +47,7 @@ describe('agent control-plane api', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(listAutomationTemplates('workspace-1')).resolves.toEqual({ templates: [validTemplate], installations: [] });
-    await expect(listAutomationTemplates('workspace-1')).rejects.toThrow('invalid template definition');
+    await expect(listAutomationTemplates('workspace-1')).rejects.toThrow('invalid recommendation');
   });
 
   it('lists and assigns code-owned native tools through manage_agents routes', async () => {

@@ -236,9 +236,9 @@ export function createFixtureState(): FixtureState {
     readiness: { status: 'ready', reasons: [] }
   }, {
     id: 'fixture-template-target-diagnostics', workspaceId: FIXTURE_IDS.workspace, version: 1,
-    origin: { type: 'template', templateId: 'acornops-starter', templateVersion: 3 }, source: 'system',
+    origin: { type: 'manual' }, source: 'user',
     name: 'Target diagnostics', description: 'Inspect one exact target using live diagnostic evidence.', status: 'draft',
-    createdBy: FIXTURE_IDS.user, createdAt: EARLIER,
+    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning', email: 'ning@fixture.acornops.dev' }, createdAt: EARLIER,
     prompt: 'Inspect {{target:target}} using live diagnostic evidence and summarize safe next actions.',
     agentIds: [FIXTURE_IDS.targetDiagnosticsAgent], executionMode: 'direct',
     resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [FIXTURE_IDS.cluster] } }],
@@ -247,9 +247,9 @@ export function createFixtureState(): FixtureState {
     readiness: { status: 'ready', reasons: [] }
   }, {
     id: 'fixture-template-incident-report', workspaceId: FIXTURE_IDS.workspace, version: 1,
-    origin: { type: 'template', templateId: 'acornops-starter', templateVersion: 3 }, source: 'system',
+    origin: { type: 'manual' }, source: 'user',
     name: 'Incident report', description: 'Generate an incident report from explicitly granted evidence.', status: 'active',
-    createdBy: FIXTURE_IDS.user, createdAt: EARLIER,
+    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning', email: 'ning@fixture.acornops.dev' }, createdAt: EARLIER,
     prompt: 'Generate {{text:report_title}} with provenance from {{chat:incident_context}}.',
     agentIds: [FIXTURE_IDS.incidentReporterAgent], executionMode: 'direct',
     resourceRequirements: [{ type: 'chat', minimum: 1, maximum: 20, requiredOperations: ['read'] }], category: 'Reporting', tags: ['incident'], parameters: [{ key: 'report_title', type: 'text', required: true }, { key: 'incident_context', type: 'chat', required: true }],
@@ -266,7 +266,7 @@ export function createFixtureState(): FixtureState {
     {
       id: 'target-remediation', version: 3, name: 'Target remediation',
       description: 'Diagnose and safely change one exact target with approval-gated writes.', installMode: 'opt_in',
-      installationStatus: 'not_installed', setupSteps: ['Install workflow', 'Select an exact Kubernetes target', 'Preview approval-gated tools', 'Activate'],
+      installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Select an exact Kubernetes target', 'Preview approval-gated tools', 'Activate'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
     },
     {
@@ -278,7 +278,7 @@ export function createFixtureState(): FixtureState {
     {
       id: 'incident-investigation', version: 3, name: 'Incident investigation',
       description: 'Coordinate target diagnostics and incident reporting for an exact target and selected chats.', installMode: 'opt_in',
-      installationStatus: 'not_installed', setupSteps: ['Install workflow', 'Select an exact target and incident chats', 'Preview coordinated access', 'Activate'],
+      installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Select an exact target and incident chats', 'Preview coordinated access', 'Activate'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
     }
   ];

@@ -342,9 +342,6 @@ function workflowOwnerLabel(
   fallback?: WorkflowDefinition,
   ownerLabelsByUserId?: Map<string, string>
 ): string {
-  if (workflow.origin?.type === 'template' || workflow.source === 'system' || fallback?.source === 'system') {
-    return 'AcornOps';
-  }
   const createdByUser = workflow.createdByUser;
   if (createdByUser) {
     return createdByUser.displayName || createdByUser.email || createdByUser.userId || createdByUser.id || fallback?.owner || 'Unknown user';
@@ -389,7 +386,7 @@ export function mapApiWorkflowToDefinition(
       required: true
     };
   });
-  const source = workflow.source || (workflow.origin?.type === 'template' ? 'system' : workflow.origin ? 'user' : fallback?.source);
+  const source = 'user';
 
   return {
     id: workflow.id,

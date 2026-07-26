@@ -8,10 +8,13 @@ import { retainDeclaredBindings } from './WorkspaceEventTriggersPage.model';
 const root = resolve(__dirname, '../..');
 const readSource = (path: string) => readFileSync(resolve(root, path), 'utf8');
 const page = readSource('src/pages/WorkspaceEventTriggersPage.tsx');
+const schedulesPage = readSource('src/pages/WorkspaceSchedulesPage.tsx');
 const appPageContent = readSource('src/app/AppPageContent.tsx');
 const navigation = readSource('src/app/workspaceNavigation.tsx');
 const pageModel = readSource('src/pages/WorkspaceEventTriggersPage.model.ts');
 const triggerCard = readSource('src/pages/WorkspaceEventTriggerCard.tsx');
+const createMenu = readSource('src/pages/WorkflowTriggerCreateMenu.tsx');
+const triggersPageHeader = readSource('src/pages/WorkflowTriggersPageHeader.tsx');
 const workflowApi = readSource('src/services/control-plane/workflowEventTriggerApi.ts');
 
 describe('WorkspaceEventTriggersPage contract surface', () => {
@@ -20,8 +23,33 @@ describe('WorkspaceEventTriggersPage contract surface', () => {
     expect(appPageContent).toContain('<WorkspaceEventTriggersPage');
     expect(navigation).toContain("id: 'workflowTriggers'");
     expect(navigation).toContain('AppPaths.workspaceTriggers(workspace.id)');
-    expect(page).toContain("id: 'type'");
     expect(page).toContain('trigger.sourceType === sourceType');
+  });
+
+  it('uses persistent trigger-type tabs instead of changing the collection from a filter', () => {
+    expect(triggersPageHeader).toContain('<SegmentedTabs<WorkflowTriggerType>');
+    expect(triggersPageHeader).toContain('idBase="workflow-trigger-type"');
+    expect(triggersPageHeader).toContain("t('triggers.tabsLabel')");
+    expect(triggersPageHeader).toContain('AppPaths.workspaceTriggers(workspace.id, triggerType)');
+    expect(triggersPageHeader).toContain('pendingTriggerTabFocus = { workspaceId: workspace.id, triggerType }');
+    expect(triggersPageHeader).toContain('document.getElementById(`workflow-trigger-type-${currentType}-tab`)?.focus()');
+    expect(page).toContain('role="tabpanel"');
+    expect(page).toContain('id={`workflow-trigger-type-${sourceType}-panel`}');
+    expect(schedulesPage).toContain('id="workflow-trigger-type-schedule-panel"');
+    expect(page).not.toContain("id: 'type'");
+    expect(schedulesPage).not.toContain("id: 'type'");
+  });
+
+  it('offers every trigger creator without requiring a type-filter change first', () => {
+    expect(page).toContain('<WorkflowTriggersPageHeader');
+    expect(triggersPageHeader).toContain('<WorkflowTriggerCreateMenu');
+    expect(triggersPageHeader).toContain('AppPaths.workspaceTriggerCreate(workspace.id, triggerType)');
+    expect(createMenu).toContain("['schedule', 'acornops_event', 'webhook']");
+    expect(createMenu).toContain('aria-haspopup="menu"');
+    expect(createMenu).toContain('role="menu"');
+    expect(createMenu).toContain('<MenuItem');
+    expect(createMenu).toContain("event.key === 'Escape'");
+    expect(appPageContent).toContain('createTriggerType={route.createTriggerType}');
   });
 
   it('uses the persisted event-trigger API for CRUD and secret rotation', () => {
@@ -52,7 +80,8 @@ describe('WorkspaceEventTriggersPage contract surface', () => {
 
   it('uses accessible collection, drawer, status, and destructive confirmation primitives', () => {
     expect(page).toContain('<PageShell>');
-    expect(page).toContain('<PageHeader');
+    expect(page).toContain('<WorkflowTriggersPageHeader');
+    expect(triggersPageHeader).toContain('<PageHeader');
     expect(page).toContain('<DiscoveryFilterBar');
     expect(page).toContain('<DataSurface');
     expect(page).toContain('<CollectionState');

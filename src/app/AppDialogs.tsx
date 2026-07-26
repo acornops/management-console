@@ -35,6 +35,7 @@ interface AppDialogsProps {
   onConfirmClusterInstalled: () => void;
   onConfirmDeleteWorkspace: (workspace: Workspace) => Promise<void>;
   onCreateWorkspace: (name: string) => Promise<Workspace>;
+  onOpenWorkspaceAiSettings: (workspaceId: string) => void;
   onCreateWorkspaceInvitation: (
     workspaceId: string,
     input: { email: string; role: ProjectMember['role'] }
@@ -71,6 +72,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onConfirmClusterInstalled,
   onConfirmDeleteWorkspace,
   onCreateWorkspace,
+  onOpenWorkspaceAiSettings,
   onCreateWorkspaceInvitation,
   onExcludeNamespacesChange,
   onIncludeNamespacesChange,
@@ -197,6 +199,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           currentUserEmail={currentUserEmail}
           onClose={onCloseWorkspaceCreate}
           onCreateWorkspace={onCreateWorkspace}
+          onOpenAiSettings={onOpenWorkspaceAiSettings}
           onLoadWorkspaceRoles={onLoadWorkspaceRoles}
           onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}
         />

@@ -1,14 +1,15 @@
 import { expect, test } from '@playwright/test';
 
-test('selected workflow actions stay concise while copy creation stays explicit', async ({ page }) => {
+test('default workflows are directly editable without creating a copy', async ({ page }) => {
   await page.goto(
     '/workspaces/fixture-workspace/workflows?workflow=fixture-template-target-diagnostics',
     { waitUntil: 'domcontentloaded' }
   );
 
-  await expect(page.getByRole('button', { name: 'Create editable copy' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create editable copy' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Activate', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Customize workflow' })).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Settings' }).click();
+  await expect(page.getByRole('button', { name: 'Edit workflow details' })).toBeEnabled();
 });
 
 test('parameterized workflow launch supports keyboard resource selection and resets on close', async ({ page }) => {

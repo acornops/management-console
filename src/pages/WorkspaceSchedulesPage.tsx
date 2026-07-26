@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { InlineAlert } from '@/components/common/InlineAlert';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { DrawerFrame } from '@/components/common/OverlayFrames';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { PageShell } from '@/components/common/PageComposition';
 import { Select, SelectOption } from '@/components/common/Select';
 import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
@@ -28,7 +28,7 @@ import {
   type WorkflowScheduleListResponse
 } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
-import { AppPaths, type WorkflowTriggerType } from '@/utils/routes';
+import type { WorkflowTriggerType } from '@/utils/routes';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';
@@ -38,10 +38,12 @@ import {
   WorkspaceScheduleMobileCard,
   WorkspaceScheduleTableRow
 } from '@/pages/WorkspaceScheduleRows';
+import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 
 interface WorkspaceSchedulesPageProps {
   workspace: Workspace;
+  createTriggerType?: WorkflowTriggerType;
   createWorkflowId?: string;
   navigate: (path: string) => void;
 }
@@ -101,12 +103,13 @@ function approvedContextGrants(value: string): string[] {
 
 export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   workspace,
+  createTriggerType,
   createWorkflowId,
   navigate
 }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
-  const consumedCreateWorkflowIdRef = React.useRef<string | undefined>(undefined);
+  const consumedCreateIntentRef = React.useRef('');
   const [schedulePage, setSchedulePage] = useState<WorkflowScheduleListResponse | null>(null);
   const [workflows, setWorkflows] = useState<WorkflowApiDefinition[]>([]);
   const [schedulePhase, setSchedulePhase] = useState<CursorCollectionPhase>('loading');
@@ -198,10 +201,20 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   };
 
   useEffect(() => {
-    if (!createWorkflowId || consumedCreateWorkflowIdRef.current === createWorkflowId) return;
-    consumedCreateWorkflowIdRef.current = createWorkflowId;
+    const createIntent = createWorkflowId
+      ? `workflow:${createWorkflowId}`
+      : createTriggerType === 'schedule'
+        ? 'schedule'
+        : '';
+    if (
+      !createIntent
+      || consumedCreateIntentRef.current === createIntent
+      || schedulePhase !== 'ready'
+      || !currentUser
+    ) return;
+    consumedCreateIntentRef.current = createIntent;
     openCreateDrawer(createWorkflowId);
-  }, [createWorkflowId]);
+  }, [createTriggerType, createWorkflowId, currentUser?.id, schedulePhase]);
 
   const openEditDrawer = (schedule: WorkflowSchedule) => {
     setDraft(scheduleToDraft(schedule));
@@ -362,21 +375,21 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
 
   return (
     <PageShell>
-      <PageHeader
-        title={t('triggers.title')}
-        description={t('triggers.subtitle', { workspace: workspace.name })}
-        actions={<>
-          <Button size="md" variant="secondary" onClick={() => void refreshSchedules()} disabled={schedulesBusy}>
-            <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
-            {t('common.refresh', { defaultValue: 'Refresh' })}
-          </Button>
-          <Button size="md" variant="primary" onClick={() => openCreateDrawer()} disabled={!canManageSchedules}>
-            <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
-            {t('schedules.actions.create')}
-          </Button>
-        </>}
+      <WorkflowTriggersPageHeader
+        workspace={workspace}
+        currentType="schedule"
+        createDisabled={!canManageSchedules || !activeWorkflows.length}
+        refreshDisabled={schedulesBusy}
+        navigate={navigate}
+        onCreateCurrent={() => openCreateDrawer()}
+        onRefresh={() => void refreshSchedules()}
       />
 
+      <div
+        id="workflow-trigger-type-schedule-panel"
+        role="tabpanel"
+        aria-labelledby="workflow-trigger-type-schedule-tab"
+      >
       {!canManageSchedules && (
         <div className="mb-5 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-sm font-medium text-ui-text-muted">
           {t('schedules.permissionNotice')}
@@ -397,18 +410,6 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
               nextRun: formatDateTime(summary.nextRunAt, t('schedules.nextRunUnavailable'))
             })}
         filters={[
-          createDiscoveryFilterGroup<WorkflowTriggerType>({
-            id: 'type',
-            label: t('triggers.filters.type'),
-            value: 'schedule',
-            defaultValue: 'schedule',
-            options: [
-              { value: 'schedule', label: t('triggers.types.schedule') },
-              { value: 'acornops_event', label: t('triggers.types.acornopsEvent') },
-              { value: 'webhook', label: t('triggers.types.webhook') }
-            ],
-            onChange: (value) => navigate(AppPaths.workspaceTriggers(workspace.id, value))
-          }),
           createDiscoveryFilterGroup<ScheduleStatusFilter>({
             id: 'status',
             label: t('schedules.filters.status'),
@@ -519,6 +520,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
           </div>
         )}
       </section>
+      </div>
 
       <DrawerFrame
         open={drawerOpen}
