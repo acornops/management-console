@@ -16,6 +16,7 @@ import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WebhookListProps {
   webhooks: ControlPlaneWebhookSubscription[];
+  hasActiveFilters: boolean;
   canManageWebhooks: boolean;
   isLoading: boolean;
   isRefreshing: boolean;
@@ -25,7 +26,7 @@ interface WebhookListProps {
   history: ControlPlaneWebhookHistory[];
   isHistoryLoading: boolean;
   historyError: string | null;
-  onCreate: () => void;
+  onClearFilters: () => void;
   onRefresh: () => void;
   onEdit: (webhook: ControlPlaneWebhookSubscription) => void;
   onDelete: (webhook: ControlPlaneWebhookSubscription) => void;
@@ -41,6 +42,7 @@ function deliveryStatusTone(entry: ControlPlaneWebhookHistory): 'success' | 'war
 
 export const WebhookList: React.FC<WebhookListProps> = ({
   webhooks,
+  hasActiveFilters,
   canManageWebhooks,
   isLoading,
   isRefreshing,
@@ -50,7 +52,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
   history,
   isHistoryLoading,
   historyError,
-  onCreate,
+  onClearFilters,
   onRefresh,
   onEdit,
   onDelete,
@@ -75,11 +77,13 @@ export const WebhookList: React.FC<WebhookListProps> = ({
 
   return (
     <DataSurface
-      heading={t('workspaceWebhooks.listTitle')}
-      description={t('workspaceWebhooks.listDescription')}
-      count={t('workspaceWebhooks.count', { count: webhooks.length })}
-      icon={<ICONS.Send className="h-5 w-5" aria-hidden="true" />}
+      aria-label={t('workspaceWebhooks.listTitle')}
     >
+      <div className="hidden grid-cols-[minmax(18rem,1.25fr)_minmax(14rem,0.8fr)_minmax(14rem,auto)] gap-4 border-b border-ui-border bg-ui-bg px-[var(--surface-padding)] py-2.5 lg:grid">
+        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.webhook')}</span>
+        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.events')}</span>
+        <span className="type-micro-label whitespace-nowrap text-right text-ui-text-muted">{t('workspaceWebhooks.columns.actions')}</span>
+      </div>
       <CollectionState
         phase={phase}
         itemCount={webhooks.length}
@@ -87,11 +91,11 @@ export const WebhookList: React.FC<WebhookListProps> = ({
         empty={(
           <EmptyState
             embedded
-            icon={<ICONS.Send />}
-            title={t('workspaceWebhooks.emptyTitle')}
-            description={t('workspaceWebhooks.emptyDescription')}
-            actions={canManageWebhooks
-              ? <Button size="sm" variant="primary" onClick={onCreate}><ICONS.Plus className="h-4 w-4" aria-hidden="true" />{t('workspaceWebhooks.create')}</Button>
+            icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Send />}
+            title={hasActiveFilters ? t('workspaceWebhooks.filters.emptyTitle') : t('workspaceWebhooks.emptyTitle')}
+            description={hasActiveFilters ? t('workspaceWebhooks.filters.emptyDescription') : t('workspaceWebhooks.emptyDescription')}
+            actions={hasActiveFilters
+              ? <Button size="sm" variant="secondary" onClick={onClearFilters}>{t('common.clearAll')}</Button>
               : undefined}
           />
         )}
@@ -111,26 +115,26 @@ export const WebhookList: React.FC<WebhookListProps> = ({
           return (
             <article key={webhook.id}>
               <div className="p-[var(--surface-padding)]">
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="grid gap-4 lg:grid-cols-[minmax(18rem,1.25fr)_minmax(14rem,0.8fr)_minmax(14rem,auto)] lg:items-start">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-bold text-ui-text">{webhook.name}</h3>
+                      <h2 className="text-sm font-bold text-ui-text">{webhook.name}</h2>
                       <StatusBadge tone={webhook.enabled ? 'success' : 'neutral'}>
                         {webhook.enabled ? t('workspaceWebhooks.enabled') : t('workspaceWebhooks.disabled')}
                       </StatusBadge>
                       {webhook.targetId && <StatusBadge tone="neutral">{t('workspaceWebhooks.targetScoped')}</StatusBadge>}
                     </div>
                     <p className="mt-2 break-all text-xs font-semibold text-ui-text-muted">{webhook.url}</p>
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {webhook.eventTypes.map((eventType) => (
-                        <span key={eventType} className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-[11px] font-semibold text-ui-text-muted">
-                          {eventType}
-                        </span>
-                      ))}
-                    </div>
+                  </div>
+                  <div className="flex min-w-0 flex-wrap content-start gap-1.5">
+                    {webhook.eventTypes.map((eventType) => (
+                      <span key={eventType} className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-[11px] font-semibold text-ui-text-muted">
+                        {eventType}
+                      </span>
+                    ))}
                   </div>
                   {canManageWebhooks && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
                       <Button size="sm" onClick={() => onEdit(webhook)} disabled={deleting}>
                         <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
                         {t('workspaceWebhooks.edit')}
@@ -145,7 +149,8 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                           else deleteTriggerRefs.current.delete(webhook.id);
                         }}
                         size="sm"
-                        variant="danger"
+                        variant="tertiary"
+                        className="text-status-danger-text hover:bg-status-danger-soft hover:text-status-danger-text"
                         onClick={() => setPendingDeleteId(webhook.id)}
                         disabled={deleting}
                       >
@@ -154,6 +159,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                       </Button>
                     </div>
                   )}
+                  {!canManageWebhooks && <div aria-hidden="true" />}
                 </div>
               </div>
 
@@ -178,7 +184,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
 
               {canManageWebhooks && showingHistory && (
                 <div className="border-t border-ui-border bg-ui-bg p-4">
-                  <h4 className="type-label text-ui-text">{t('workspaceWebhooks.recentDeliveries')}</h4>
+                  <h3 className="type-label text-ui-text">{t('workspaceWebhooks.recentDeliveries')}</h3>
                   {isHistoryLoading && <p className="mt-3 type-caption text-ui-text-muted">{t('workspaceWebhooks.historyLoading')}</p>}
                   {!isHistoryLoading && historyError && <p role="alert" className="mt-3 type-caption text-status-danger-text">{historyError}</p>}
                   {!isHistoryLoading && !historyError && history.length === 0 && (

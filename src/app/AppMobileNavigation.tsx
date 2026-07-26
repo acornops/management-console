@@ -24,6 +24,7 @@ interface AppMobileNavigationProps {
   activePrimaryNav: ActivePrimaryNav;
   activeResourceNav: ActiveResourceNav;
   pendingApprovalCount?: number;
+  openWorkflowRunCount?: number;
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;
   themePreference: ThemePreference;
@@ -56,6 +57,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   activePrimaryNav,
   activeResourceNav,
   pendingApprovalCount,
+  openWorkflowRunCount,
   isClusterSidebar,
   isVirtualMachineSidebar,
   themePreference,
@@ -95,6 +97,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
     workspace: selectedWorkspace,
     activeResourceNav,
     pendingApprovalCount,
+    openWorkflowRunCount,
     t
   });
 
@@ -451,7 +454,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                         <Icon className={`h-[18px] w-[18px] shrink-0 ${item.active ? 'text-accent-strong' : 'text-ui-text-muted'}`} />
                                         <span className="truncate">{item.label}</span>
                                       </span>
-                                      {item.id === 'approvals' && (
+                                      {(item.id === 'approvals' || item.id === 'workflows') && (
                                         <span className="ml-2 inline-flex min-w-8 shrink-0 justify-end" aria-hidden={item.badge === undefined || item.badge <= 0 ? 'true' : undefined}>
                                           {typeof item.badge === 'number' ? <NavCountBadge count={item.badge} /> : null}
                                         </span>
@@ -471,7 +474,10 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                                 : 'font-medium text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                                             }`}
                                           >
-                                            <span className="truncate">{child.label}</span>
+                                            <span className="min-w-0 flex-1 truncate">{child.label}</span>
+                                            {child.id === 'workflowRuns' && typeof child.badge === 'number' && child.badge > 0 && (
+                                              <NavCountBadge count={child.badge} />
+                                            )}
                                           </a>
                                         ))}
                                       </div>

@@ -12,8 +12,12 @@ export const FIXTURE_IDS = {
   run: 'fixture-run'
 } as const;
 
-const NOW = '2026-07-15T08:30:00.000Z';
-const EARLIER = '2026-07-15T07:45:00.000Z';
+const fixtureTime = (offsetMs = 0) => new Date(Date.now() + offsetMs).toISOString();
+const fixtureMinutesAgo = (minutes: number, secondsAfter = 0) => (
+  fixtureTime((-minutes * 60_000) + (secondsAfter * 1_000))
+);
+const NOW = fixtureTime();
+const EARLIER = fixtureMinutesAgo(45);
 
 export interface FixtureState {
   user: Record<string, unknown>;
@@ -30,6 +34,7 @@ export interface FixtureState {
   automationTemplates: Array<Record<string, any>>;
   workflowSchedules: Array<Record<string, any>>;
   workflowEventTriggers: Array<Record<string, any>>;
+  workflowExecutions: Array<Record<string, any>>;
   catalogSources: Array<Record<string, any>>;
   catalogArtifacts: Array<Record<string, any>>;
   sessions: Array<Record<string, any>>;
@@ -281,7 +286,7 @@ export function createFixtureState(): FixtureState {
     id: FIXTURE_IDS.session, workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', clusterId: FIXTURE_IDS.cluster,
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning' },
     title: 'Payments restart investigation', status: 'open', createdAt: EARLIER, updatedAt: NOW, lastMessageAt: NOW,
-    expiresAt: '2026-08-14T08:30:00.000Z'
+    expiresAt: fixtureTime(30 * 24 * 60 * 60_000)
   }];
   const messages = {
     [FIXTURE_IDS.session]: [
@@ -289,6 +294,170 @@ export function createFixtureState(): FixtureState {
       { id: 'fixture-message-assistant', sessionId: FIXTURE_IDS.session, runId: FIXTURE_IDS.run, role: 'assistant', kind: 'assistant_final', content: 'The worker is in CrashLoopBackOff after four restarts. Its latest event points to a failed container startup; inspect the application log and secret mount before changing the Deployment.', createdAt: NOW }
     ]
   };
+  const execution = (
+    id: string,
+    status: string,
+    origin: Record<string, any>,
+    targetId: string,
+    targetType: 'kubernetes' | 'virtual_machine',
+    createdAt: string,
+    options: { startedAt?: string; endedAt?: string; output?: string } = {}
+  ) => ({
+    id,
+    workspaceId: FIXTURE_IDS.workspace,
+    workflow: { id: FIXTURE_IDS.workflow, name: 'Production health review', version: 2 },
+    status,
+    origin,
+    rootRun: {
+      id: `${id}-run`,
+      targetId,
+      targetName: targetType === 'kubernetes' ? cluster.name : virtualMachine.name,
+      targetType,
+      requestedAt: createdAt,
+      ...(options.startedAt ? { startedAt: options.startedAt } : {}),
+      ...(options.endedAt ? { endedAt: options.endedAt } : {})
+    },
+    createdBy: FIXTURE_IDS.user,
+    createdAt,
+    ...(options.startedAt ? { startedAt: options.startedAt } : {}),
+    ...(options.endedAt ? { endedAt: options.endedAt } : {}),
+    updatedAt: options.endedAt || NOW,
+    output: options.output
+  });
+  const workflowExecutions = [
+    execution(
+      'fixture-execution-issue-approval',
+      'waiting_for_approval',
+      {
+        schemaVersion: 1,
+        kind: 'event_trigger',
+        label: 'Triage new issues',
+        triggerId: 'fixture-issue-created-trigger',
+        source: { kind: 'issue', label: 'Payments worker is restarting', id: 'fixture-issue', eventType: 'issue.created.v1', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes' }
+      },
+      FIXTURE_IDS.cluster,
+      'kubernetes',
+      fixtureMinutesAgo(3),
+      { startedAt: fixtureMinutesAgo(3, 5) }
+    ),
+    execution(
+      'fixture-execution-issue-running',
+      'running',
+      {
+        schemaVersion: 1,
+        kind: 'event_trigger',
+        label: 'Triage new issues',
+        triggerId: 'fixture-issue-created-trigger',
+        source: { kind: 'issue', label: 'Payments worker is restarting', id: 'fixture-issue', eventType: 'issue.created.v1', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes' }
+      },
+      FIXTURE_IDS.cluster,
+      'kubernetes',
+      fixtureMinutesAgo(4),
+      { startedAt: fixtureMinutesAgo(4, 8) }
+    ),
+    execution(
+      'fixture-execution-issue-review',
+      'needs_review',
+      {
+        schemaVersion: 1,
+        kind: 'event_trigger',
+        label: 'Escalate recurring workload failures with an exceptionally long trigger name',
+        triggerId: 'fixture-recurring-issue-trigger',
+        source: { kind: 'issue', label: 'Payments worker is restarting', id: 'fixture-issue', eventType: 'issue.created.v1', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes' }
+      },
+      FIXTURE_IDS.cluster,
+      'kubernetes',
+      fixtureMinutesAgo(6),
+      { startedAt: fixtureMinutesAgo(6, 4) }
+    ),
+    execution(
+      'fixture-execution-scheduled-running',
+      'running',
+      { schemaVersion: 1, kind: 'schedule', label: 'Weekday morning review', triggerId: 'fixture-schedule' },
+      FIXTURE_IDS.cluster,
+      'kubernetes',
+      fixtureMinutesAgo(9),
+      { startedAt: fixtureMinutesAgo(9, 5) }
+    ),
+    execution(
+      'fixture-execution-vm-failed',
+      'failed',
+      {
+        schemaVersion: 1,
+        kind: 'event_trigger',
+        label: 'Triage virtual machine service issues',
+        triggerId: 'fixture-vm-issue-trigger',
+        source: { kind: 'issue', label: 'Payment gateway service is degraded', id: 'fixture-vm-issue', eventType: 'issue.created.v1', targetId: FIXTURE_IDS.virtualMachine, targetType: 'virtual_machine' }
+      },
+      FIXTURE_IDS.virtualMachine,
+      'virtual_machine',
+      fixtureMinutesAgo(18),
+      {
+        startedAt: fixtureMinutesAgo(18, 3),
+        endedAt: fixtureMinutesAgo(17, 11),
+        output: 'The run stopped after the target agent became unavailable.'
+      }
+    ),
+    execution(
+      'fixture-execution-completed',
+      'completed',
+      { schemaVersion: 1, kind: 'manual', label: 'Manual' },
+      FIXTURE_IDS.cluster,
+      'kubernetes',
+      fixtureMinutesAgo(38),
+      {
+        startedAt: fixtureMinutesAgo(38, 5),
+        endedAt: fixtureMinutesAgo(35, 36),
+        output: 'Review completed. No platform changes were made.'
+      }
+    ),
+    execution(
+      'fixture-execution-deleted-trigger',
+      'completed',
+      {
+        schemaVersion: 1,
+        kind: 'event_trigger',
+        label: 'Deleted trigger',
+        triggerId: 'fixture-deleted-trigger',
+        source: { kind: 'webhook', label: 'Webhook event', eventType: 'deployment.alert.v1', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes' }
+      },
+      FIXTURE_IDS.cluster,
+      'kubernetes',
+      fixtureMinutesAgo(50),
+      { startedAt: fixtureMinutesAgo(50, 3), endedAt: fixtureMinutesAgo(48, 9) }
+    )
+  ];
+  const issueActivity = (issueId: string) => {
+    const related = workflowExecutions.filter((item) => item.origin.kind === 'event_trigger' && item.origin.source.id === issueId);
+    const open = related.filter((item) => !['completed', 'failed', 'cancelled'].includes(item.status));
+    return {
+      totalCount: related.length,
+      openCount: open.length,
+      attentionCount: related.filter((item) => ['waiting_for_approval', 'needs_review'].includes(item.status)).length,
+      ...(open[0] ? { openExecution: open[0] } : {}),
+      latestExecution: related[0]
+    };
+  };
+  const issues = [
+    {
+      id: 'fixture-issue', workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', targetName: cluster.name,
+      fingerprint: 'fixture/payments/crashloop', issueType: 'pod_crash_loop', status: 'active', severity: 'critical',
+      title: 'Payments worker is restarting', summary: 'One replica is in CrashLoopBackOff.', scopeKind: 'Pod',
+      scopeName: 'payments-worker-7c5b9f-demo', namespace: 'production', objectKind: 'Pod', objectName: 'payments-worker-7c5b9f-demo',
+      reason: 'CrashLoopBackOff', firstSeenAt: EARLIER, lastSeenAt: NOW, lastObservedSnapshotAt: NOW, occurrenceCount: 4,
+      reopenedCount: 0, cleanSnapshotCount: 0, latestEvidence: { restartCount: 4 }, createdAt: EARLIER, updatedAt: NOW,
+      workflowActivity: issueActivity('fixture-issue')
+    },
+    {
+      id: 'fixture-vm-issue', workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.virtualMachine, targetType: 'virtual_machine', targetName: virtualMachine.name,
+      fingerprint: 'fixture/payments/gateway-degraded', issueType: 'service_degraded', status: 'active', severity: 'warning',
+      title: 'Payment gateway service is degraded', summary: 'The service is responding slowly and one health check failed.',
+      scopeKind: 'Service', scopeName: 'payment-gateway.service', objectKind: 'Service', objectName: 'payment-gateway.service',
+      reason: 'Health check timeout', firstSeenAt: EARLIER, lastSeenAt: NOW, lastObservedSnapshotAt: NOW, occurrenceCount: 2,
+      reopenedCount: 0, cleanSnapshotCount: 0, latestEvidence: { responseTimeMs: 890 }, createdAt: EARLIER, updatedAt: NOW,
+      workflowActivity: issueActivity('fixture-vm-issue')
+    }
+  ];
   return {
     user: { id: FIXTURE_IDS.user, email: 'ning@fixture.acornops.dev', displayName: 'Ning', quota: { workspaceMemberships: { used: 1, limit: 10 } } },
     workspaces: [workspace],
@@ -297,10 +466,10 @@ export function createFixtureState(): FixtureState {
       { workspaceId: FIXTURE_IDS.workspace, userId: 'fixture-member-2', email: 'maya@fixture.acornops.dev', displayName: 'Maya Chen', role: 'admin', source: 'oidc' },
       { workspaceId: FIXTURE_IDS.workspace, userId: 'fixture-member-3', email: 'sam@fixture.acornops.dev', displayName: 'Sam Rivera', role: 'viewer', source: 'oidc' }
     ],
-    invitations: [{ id: 'fixture-invitation', workspaceId: FIXTURE_IDS.workspace, workspaceName: workspace.name, email: 'alex@fixture.acornops.dev', role: 'viewer', invitedBy: FIXTURE_IDS.user, status: 'pending', createdAt: NOW, expiresAt: '2026-07-22T08:30:00.000Z', token: 'fixture-invitation-token' }],
+    invitations: [{ id: 'fixture-invitation', workspaceId: FIXTURE_IDS.workspace, workspaceName: workspace.name, email: 'alex@fixture.acornops.dev', role: 'viewer', invitedBy: FIXTURE_IDS.user, status: 'pending', createdAt: NOW, expiresAt: fixtureTime(7 * 24 * 60 * 60_000), token: 'fixture-invitation-token' }],
     clusters: [cluster],
     virtualMachines: [virtualMachine],
-    issues: [{ id: 'fixture-issue', workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', targetName: cluster.name, fingerprint: 'fixture/payments/crashloop', issueType: 'pod_crash_loop', status: 'active', severity: 'critical', title: 'Payments worker is restarting', summary: 'One replica is in CrashLoopBackOff.', scopeKind: 'Pod', scopeName: 'payments-worker-7c5b9f-demo', namespace: 'production', objectKind: 'Pod', objectName: 'payments-worker-7c5b9f-demo', reason: 'CrashLoopBackOff', firstSeenAt: EARLIER, lastSeenAt: NOW, lastObservedSnapshotAt: NOW, occurrenceCount: 4, reopenedCount: 0, cleanSnapshotCount: 0, latestEvidence: { restartCount: 4 }, createdAt: EARLIER, updatedAt: NOW }],
+    issues,
     auditEvents: [{ id: 'fixture-audit', workspaceId: FIXTURE_IDS.workspace, category: 'target', eventType: 'target.snapshot.updated', operation: 'write', actor: { type: 'system', displayName: 'AgentK' }, object: { type: 'kubernetes_cluster', id: FIXTURE_IDS.cluster, name: cluster.name }, summary: 'Cluster snapshot and issue signals updated', metadata: { resourceCount: 12 }, occurredAt: NOW }],
     aiSettings: {
       workspaceId: FIXTURE_IDS.workspace, defaultProvider: 'openai', defaultModel: 'gpt-5.5', reasoningSummaryMode: 'concise', reasoningEffort: 'medium',
@@ -314,7 +483,7 @@ export function createFixtureState(): FixtureState {
     workflows,
     automationTemplates,
     workflowSchedules: [
-      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW },
+      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
       { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW }
     ],
     workflowEventTriggers: [
@@ -322,16 +491,20 @@ export function createFixtureState(): FixtureState {
         id: 'fixture-issue-created-trigger', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
         name: 'Triage new issues', status: 'enabled', sourceType: 'acornops_event',
         eventType: 'issue.created.v1', inputBindings: { target: 'target.id' }, approvedContextGrants: ['workspace.summary'],
-        principal: { type: 'user', id: FIXTURE_IDS.user }, lastTriggeredAt: NOW, lastStatus: 'dispatched'
+        principal: { type: 'user', id: FIXTURE_IDS.user }, lastTriggeredAt: NOW, lastStatus: 'dispatched',
+        lastExecutionId: 'fixture-execution-issue-running', lastRunId: 'fixture-execution-issue-running-run',
+        latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-issue-running')
       },
       {
         id: 'fixture-webhook-trigger', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
         name: 'External production review', status: 'paused', sourceType: 'webhook',
         eventType: null, inputBindings: {}, approvedContextGrants: ['workspace.summary'],
         principal: { type: 'user', id: FIXTURE_IDS.user },
-        endpointUrl: '/api/v1/workflow-event-triggers/fixture-webhook-trigger/events'
+        endpointUrl: '/api/v1/workflow-event-triggers/fixture-webhook-trigger/events',
+        lastTriggeredAt: NOW, lastStatus: 'failed', lastError: 'Dispatch rejected because the configured principal no longer has permission. No execution was created.'
       }
     ],
+    workflowExecutions,
     catalogSources: [{ id: 'fixture-catalog-source', workspaceId: FIXTURE_IDS.workspace, displayName: 'Internal MCP Registry', baseUrl: 'https://registry.internal.example', authType: 'none', credentialConfigured: false, networkRoute: 'direct', enabled: true, managementMode: 'bootstrap', bindings: [{ id: 'fixture-binding', artifactKind: 'mcp_server', adapterType: 'mcp_registry_v0_1', adapterBasePath: '/v0.1', syncStatus: 'ready', lastSyncAt: NOW }] }],
     catalogArtifacts: [{ id: 'fixture-catalog-artifact', workspaceId: FIXTURE_IDS.workspace, sourceId: 'fixture-catalog-source', bindingId: 'fixture-binding', artifactKind: 'mcp_server', name: 'github-observer', title: 'GitHub Observer', description: 'Read-only repository and pull request context for operational workflows.', version: '1.4.0', digest: 'sha256:fixture-catalog-digest', metadata: { publisher: 'AcornOps', categories: ['developer-tools'] }, compatible: true, remoteEndpoints: [{ type: 'streamable-http', url: 'https://mcp.fixture.acornops.dev/github', supported: true, supportedCredentialModes: ['workspace', 'individual'], recommendedCredentialMode: 'individual' }], publishedAt: EARLIER, upstreamUpdatedAt: NOW }],
     sessions,

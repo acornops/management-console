@@ -24,6 +24,7 @@ interface AppDialogsProps {
   isAddingCluster: boolean;
   isCreatingCluster: boolean;
   isCreatingWorkspace: boolean;
+  isRegisteredClusterAgentConnected: boolean;
   isDeletingWorkspace: boolean;
   newClusterName: string;
   onClusterNameChange: (value: string) => void;
@@ -59,6 +60,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   isAddingCluster,
   isCreatingCluster,
   isCreatingWorkspace,
+  isRegisteredClusterAgentConnected,
   isDeletingWorkspace,
   newClusterName,
   onClusterNameChange,
@@ -209,6 +211,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           excludeNamespaces={excludeNamespaces}
           clusterInstallCommand={clusterInstallCommand}
           clusterInstallWarnings={clusterInstallWarnings}
+          isAgentConnected={isRegisteredClusterAgentConnected}
           isCreatingCluster={isCreatingCluster}
           onClose={onCloseAddCluster}
           onClusterNameChange={onClusterNameChange}

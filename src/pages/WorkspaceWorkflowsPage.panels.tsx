@@ -31,7 +31,6 @@ import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import { getWorkflowExecution, type WorkflowCapabilitiesPreview, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
-
 type WorkflowActions = ReturnType<typeof useWorkspaceWorkflowActions>;
 type WorkflowAgentOption = WorkflowOptionsCatalog['agents'][number];
 
@@ -323,7 +322,7 @@ export const WorkflowRunsPanel: React.FC<{
     const loadCoordination = async () => {
       if (!loadedCoordinationIds.current.has(run.id)) setCoordinationLoadingId(run.id);
       try {
-        const response = await getWorkflowExecution(run.id);
+        const response = await getWorkflowExecution(run.executionId || run.id);
         if (cancelled) return;
         setCoordinationByExecutionId((current) => ({
           ...current,
@@ -375,12 +374,19 @@ export const WorkflowRunsPanel: React.FC<{
       const discussionState = getRunDiscussionState(run, workflowSessionId);
       const canMessageRun = discussionState === 'active';
       return (
-        <article key={run.id} className="rounded-lg border border-ui-border bg-ui-surface p-4">
+        <article
+          key={run.id}
+          id={run.executionId ? `workflow-execution-${run.executionId}` : undefined}
+          tabIndex={run.executionId ? -1 : undefined}
+          className={`rounded-lg border bg-ui-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-control-boundary ${
+            run.executionId && expandedRunLogId === effectiveRunId ? 'border-control-boundary' : 'border-ui-border'
+          }`}
+        >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="type-row-title">{run.id}</div>
               <div className="type-caption mt-1 text-ui-text-muted">{run.actor} · {formatWorkflowTimestamp(run.startedAt)} · {run.duration}</div>
-              <div className="mt-2"><StatusBadge tone={runStatusTone(run.status)}>{run.status.replace('_', ' ')}</StatusBadge></div>
+              <div className="mt-2"><StatusBadge tone={runStatusTone(run.status)}>{t(`workflowActivity.status.${run.status === 'waiting_approval' ? 'waiting_for_approval' : run.status}`)}</StatusBadge></div>
             </div>
             {isRunActive(run.status) && isServerBackedRun && (
               stopArmedRunId === effectiveRunId ? (
@@ -420,7 +426,9 @@ export const WorkflowRunsPanel: React.FC<{
           )}
           {isServerBackedRun && (
             <div className="mt-3 border-t border-ui-border pt-2">
-              <TraceFooter runId={effectiveRunId} trace={runTrace} isExpanded={traceExpanded} setExpanded={(runId, expanded) => expanded ? void workflowActions.toggleRunLogs(runId) : setExpandedRunLogId('')} compactStatusOnly className="max-w-none" />
+              <TraceFooter runId={effectiveRunId} trace={runTrace} isExpanded={traceExpanded} setExpanded={(runId, expanded) => expanded ? void workflowActions.toggleRunLogs(runId) : setExpandedRunLogId('')} compactStatusOnly
+                activityLabelOverride={run.status === 'waiting_approval' || run.status === 'needs_review' ? t(`workflowActivity.status.${run.status === 'waiting_approval' ? 'waiting_for_approval' : run.status}`) : undefined}
+                activeOverride={run.status === 'waiting_approval' || run.status === 'needs_review' ? false : undefined} className="max-w-none" />
             </div>
           )}
           {isServerBackedRun && traceExpanded && (

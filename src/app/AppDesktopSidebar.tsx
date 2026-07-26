@@ -24,6 +24,7 @@ interface AppDesktopSidebarProps {
   isVirtualMachineSidebar: boolean;
   activeResourceNav: ActiveResourceNav;
   pendingApprovalCount?: number;
+  openWorkflowRunCount?: number;
   selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmIssueCount: number;
@@ -66,6 +67,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   isVirtualMachineSidebar,
   activeResourceNav,
   pendingApprovalCount,
+  openWorkflowRunCount,
   selectedClusterIssueCount,
   clusterAssistantNavStatus,
   selectedVmIssueCount,
@@ -107,6 +109,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
     workspace: selectedWorkspace,
     activeResourceNav,
     pendingApprovalCount,
+    openWorkflowRunCount,
     t
   });
 
@@ -305,7 +308,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                             icon={<Icon className={navIconClass(item.active)} />}
                             label={item.label}
                             badge={item.badge}
-                            reserveBadgeSpace={item.id === 'approvals'}
+                            reserveBadgeSpace={item.id === 'approvals' || item.id === 'workflows'}
                             onClick={(event) => handleAppLinkClick(event, item.path, navigate)}
                           />
                           {item.children && (
@@ -317,7 +320,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                                   current={child.current}
                                   href={appHref(child.path)}
                                   label={child.label}
+                                  badge={child.badge}
                                   nested
+                                  reserveBadgeSpace={child.id === 'workflowRuns'}
                                   onClick={(event) => handleAppLinkClick(event, child.path, navigate)}
                                 />
                               ))}

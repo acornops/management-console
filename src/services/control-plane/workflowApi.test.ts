@@ -10,7 +10,6 @@ import {
   duplicateWorkflow,
   getWorkflowExecution,
   listWorkspaceApprovalInbox,
-  listWorkspaceWorkflowSchedules,
   deleteWorkflow,
   listWorkflowOptions,
   listWorkflowRunApprovals,
@@ -21,6 +20,7 @@ import {
   postWorkflowSessionMessage,
   previewWorkflowCapabilities,
   previewWorkflowSchedule,
+  listWorkspaceWorkflowSchedules,
   updateWorkflow,
   updateWorkflowSchedule
 } from './workflowApi';

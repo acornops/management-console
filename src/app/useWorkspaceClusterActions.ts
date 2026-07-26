@@ -280,6 +280,13 @@ export function useWorkspaceClusterActions(args: {
     }
   };
 
+  const registeredCluster = registeredClusterId
+    ? kubernetesClusters.find((cluster) => cluster.id === registeredClusterId)
+    : undefined;
+  const isRegisteredClusterAgentConnected = registeredCluster
+    ? getAgentConnectionState(registeredCluster) === 'connected'
+    : false;
+
   return {
     clusterCreationStep,
     clusterInstallCommand,
@@ -297,6 +304,7 @@ export function useWorkspaceClusterActions(args: {
     isAddingCluster,
     isCreatingCluster,
     isCreatingWorkspace,
+    isRegisteredClusterAgentConnected,
     navigateToKubernetesCluster,
     newClusterName,
     setClusterCreationStep,

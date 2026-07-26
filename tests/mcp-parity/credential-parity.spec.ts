@@ -79,7 +79,7 @@ test('Agent credential refresh, disconnect/reconnect, and rate limit countdown a
 });
 
 test('schedule auto-pause exposes the bounded reason and a manual workflow recovery path', async ({ page }) => {
-  await page.goto(`/workspaces/${workspaceId}/schedules`);
+  await page.goto(`/workspaces/${workspaceId}/triggers`);
   const row = page.getByRole('row', { name: /MCP recovery review/ });
   await expect(row.getByText('Auto-paused')).toBeVisible();
   await expect(row.getByText(/MCP_CONNECTION_REQUIRED/)).toBeVisible();

@@ -10,6 +10,8 @@ import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/se
 import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
 import { formatRelativeTime as formatReadableRelativeTime, formatUserTime } from '@/utils/dateTime';
 import { formatLastUpdated, getAgentConnectionState, getTelemetryFreshness, getTelemetryFreshnessLabel } from '@/utils/telemetry';
+import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
+import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 
 interface OverviewViewProps {
   cluster: KubernetesCluster;
@@ -105,7 +107,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const [clusterIssues, setClusterIssues] = useState<ControlPlaneIssueItem[] | null>(null);
   const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [issueRequestVersion, setIssueRequestVersion] = useState(0);
+  const workflowActivity = useWorkspaceWorkflowActivity();
+  const workflowActivityRevisionRef = React.useRef(workflowActivity.revision);
   const issueSectionTitleId = React.useId();
+  useEffect(() => {
+    if (workflowActivityRevisionRef.current === workflowActivity.revision) return;
+    workflowActivityRevisionRef.current = workflowActivity.revision;
+    if (workflowActivity.workspaceId === cluster.workspaceId) {
+      setIssueRequestVersion((value) => value + 1);
+    }
+  }, [cluster.workspaceId, workflowActivity.revision, workflowActivity.workspaceId]);
   useEffect(() => {
     let isCurrent = true;
 
@@ -275,6 +286,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                         </div>
                         <h3 className="type-row-title mt-2">{issue.title}</h3>
                         <p className="type-body mt-1">{issue.reason || issue.summary}</p>
+                        <IssueWorkflowActivity
+                          workspaceId={cluster.workspaceId}
+                          issueId={issue.id}
+                          activity={issue.workflowActivity}
+                        />
                       </td>
                       <td className="px-5 py-4 align-top">
                         <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>
@@ -289,7 +305,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       </td>
                       {onOpenCopilot && (
                         <td className="px-5 py-4 align-top text-right">
-                          <Button onClick={() => openIssueTriage(issue)} variant="primary" size="md">
+                          <Button
+                            onClick={() => openIssueTriage(issue)}
+                            variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                            size="md"
+                          >
                             <Terminal className="h-4 w-4" />
                             {t('clusterOverview.runTriage')}
                           </Button>
@@ -318,8 +338,18 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   </p>
                   <h3 className="type-row-title mt-4">{issue.title}</h3>
                   <p className="type-body mt-2">{issue.reason || issue.summary}</p>
+                  <IssueWorkflowActivity
+                    workspaceId={cluster.workspaceId}
+                    issueId={issue.id}
+                    activity={issue.workflowActivity}
+                  />
                   {onOpenCopilot && (
-                    <Button onClick={() => openIssueTriage(issue)} variant="primary" size="md" className="mt-4">
+                    <Button
+                      onClick={() => openIssueTriage(issue)}
+                      variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                      size="md"
+                      className="mt-4"
+                    >
                       <Terminal className="h-4 w-4" />
                       {t('clusterOverview.runTriage')}
                     </Button>

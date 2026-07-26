@@ -16,8 +16,8 @@ export function isWorkspaceDataRoute(route: AppRoute): boolean {
     route.kind === 'workspaceVirtualMachines' ||
     route.kind === 'workspaceVirtualMachineDetail' ||
     route.kind === 'workspaceKubernetesClusterDiagnostics' ||
-    route.kind === 'workspaceSchedules' ||
-    route.kind === 'workspaceEventTriggers' ||
+    route.kind === 'workspaceTriggers' ||
+    route.kind === 'workspaceRuns' ||
     route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceApprovals' ||
     route.kind === 'workspaceWebhooks' ||
@@ -35,6 +35,7 @@ export function routeTargetsMissingWorkspace(
     isWorkspaceDataRoute(route)
     || route.kind === 'workspaceAgents'
     || route.kind === 'workspaceWorkflows'
+    || route.kind === 'workspaceRuns'
     || route.kind === 'workspaceMembers'
     || route.kind === 'workspaceSettings'
     || route.kind === 'workspaceAuditLog'

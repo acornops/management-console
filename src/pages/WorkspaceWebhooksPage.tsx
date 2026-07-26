@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/common/Button';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
 import { DrawerFrame } from '@/components/common/OverlayFrames';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { WebhookEditor } from '@/features/webhooks/WebhookEditor';
@@ -19,6 +20,7 @@ import {
 } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { Workspace } from '@/types';
+import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 
 interface WorkspaceWebhooksPageProps {
   workspace: Workspace;
@@ -26,12 +28,15 @@ interface WorkspaceWebhooksPageProps {
   showToast: (message: string) => void;
 }
 
+type WebhookStatusFilter = 'all' | 'enabled' | 'disabled';
+
 export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   workspace,
   canManageWebhooks,
   showToast
 }) => {
   const { t } = useTranslation();
+  const urlSearch = useUrlSearchState();
   const [webhooks, setWebhooks] = React.useState<ControlPlaneWebhookSubscription[]>([]);
   const [draft, setDraft] = React.useState<WebhookDraft>(emptyWebhookDraft);
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -227,6 +232,27 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
 
   const workspaceStateCurrent = stateWorkspaceId === workspace.id;
   const visibleWebhooks = workspaceStateCurrent ? webhooks : [];
+  const query = urlSearch.get('q') || '';
+  const status = urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'disabled'
+    ? urlSearch.get('status') as Exclude<WebhookStatusFilter, 'all'>
+    : 'all';
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredWebhooks = React.useMemo(() => visibleWebhooks.filter((webhook) => {
+    if (status === 'enabled' && !webhook.enabled) return false;
+    if (status === 'disabled' && webhook.enabled) return false;
+    if (!normalizedQuery) return true;
+    return [
+      webhook.name,
+      webhook.url,
+      webhook.targetId,
+      ...webhook.eventTypes
+    ].some((value) => value?.toLowerCase().includes(normalizedQuery));
+  }), [normalizedQuery, status, visibleWebhooks]);
+  const hasActiveFilters = Boolean(normalizedQuery || status !== 'all');
+  const clearFilters = () => {
+    updateUrlSearch({ q: null, status: null }, { replace: true });
+    window.requestAnimationFrame(() => document.getElementById('outbound-webhooks-search')?.focus());
+  };
   const visibleDraft = workspaceStateCurrent ? draft : emptyWebhookDraft();
   const visibleCreatedSecret = workspaceStateCurrent ? createdSecret : null;
   const editingWebhook = workspaceStateCurrent && editingId
@@ -309,8 +335,40 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         </section>
       )}
 
+      {(!workspaceStateCurrent || isInitialLoading || visibleWebhooks.length > 0 || hasActiveFilters) && (
+        <DiscoveryFilterBar
+          idPrefix="outbound-webhooks"
+          query={query}
+          queryLabel={t('workspaceWebhooks.filters.search')}
+          queryPlaceholder={t('workspaceWebhooks.filters.search')}
+          queryClearLabel={t('common.clearSearch')}
+          resultSummary={hasActiveFilters
+            ? t('workspaceWebhooks.filters.showing', { count: filteredWebhooks.length, total: visibleWebhooks.length })
+            : t('workspaceWebhooks.count', { count: visibleWebhooks.length })}
+          filters={[
+            createDiscoveryFilterGroup<WebhookStatusFilter>({
+              id: 'status',
+              label: t('workspaceWebhooks.filters.status'),
+              value: status,
+              defaultValue: 'all',
+              options: [
+                { value: 'all', label: t('workspaceWebhooks.filters.allStatuses'), count: visibleWebhooks.length },
+                { value: 'enabled', label: t('workspaceWebhooks.enabled'), count: visibleWebhooks.filter((webhook) => webhook.enabled).length },
+                { value: 'disabled', label: t('workspaceWebhooks.disabled'), count: visibleWebhooks.filter((webhook) => !webhook.enabled).length }
+              ],
+              onChange: (value) => updateUrlSearch({ status: value === 'all' ? null : value })
+            })
+          ]}
+          clearAllLabel={t('common.clearAll')}
+          onQueryChange={(value) => updateUrlSearch({ q: value || null }, { replace: true })}
+          onClearAll={clearFilters}
+          className="mb-4"
+        />
+      )}
+
       <WebhookList
-        webhooks={visibleWebhooks}
+        webhooks={filteredWebhooks}
+        hasActiveFilters={hasActiveFilters}
         canManageWebhooks={canManageWebhooks}
         isLoading={!workspaceStateCurrent || isInitialLoading}
         isRefreshing={workspaceStateCurrent && isRefreshing}
@@ -320,7 +378,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         history={workspaceStateCurrent ? history : []}
         isHistoryLoading={workspaceStateCurrent && isHistoryLoading}
         historyError={workspaceStateCurrent ? historyError : null}
-        onCreate={openCreateEditor}
+        onClearFilters={clearFilters}
         onRefresh={() => void loadWebhooks()}
         onEdit={(webhook) => {
           setEditingId(webhook.id);
