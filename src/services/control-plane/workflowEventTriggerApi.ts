@@ -1,4 +1,5 @@
 import { requestJson } from './http';
+import type { WorkflowExecutionSummary } from './workflowApi';
 
 export type WorkflowEventTriggerSourceType = 'webhook' | 'acornops_event';
 export type WorkflowEventTriggerStatus = 'enabled' | 'paused';
@@ -28,6 +29,9 @@ export interface WorkflowEventTrigger {
   lastTriggeredAt?: string | null;
   lastStatus?: WorkflowEventTriggerLastStatus | null;
   lastError?: string | null;
+  lastExecutionId?: string | null;
+  lastRunId?: string | null;
+  latestExecution?: WorkflowExecutionSummary;
 }
 
 export interface WorkflowEventTriggerListResponse {

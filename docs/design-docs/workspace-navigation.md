@@ -10,8 +10,8 @@ not drift.
 - Overview is the explicit workspace landing destination.
 - Inventory contains Kubernetes Clusters and Virtual Machines.
 - Automation keeps Agents and Workflows adjacent, followed by Outbound webhooks
-  as the workspace event-delivery destination. Schedules and Event triggers are
-  route-level views of Workflows, not separate sidebar destinations.
+  as the workspace event-delivery destination. Workflows exposes Library, Runs,
+  and Triggers as its route-level views.
 - Governance contains Approvals for workspace-data readers and Audit Log for
   audit-log readers. Omit the group when neither destination is permitted.
 - Utilities contains Workspace Settings and Help and is visually separated from
@@ -24,14 +24,14 @@ not drift.
 
 Every destination is a genuine, base-path-aware anchor. Unmodified same-tab
 clicks use client navigation; modified clicks and open-in-new-tab retain browser
-behavior. Keep workflow, schedule, approval, and schedule-creation URLs directly
-shareable. `/workflows` and `/schedules` activate the same sidebar destination,
-and workflow-route navigation exposes `Library | Schedules | Event triggers`.
+behavior. Keep workflow, run, trigger, approval, and schedule-creation URLs
+directly shareable. `/workflows`, `/runs`, and `/triggers` activate the same
+sidebar destination, and workflow-route navigation exposes
+`Library | Runs | Triggers`.
 
 `/webhooks` remains a stable workspace route, but its navigation owner is
 Automation rather than Workspace Settings. The user-facing label is Outbound
-webhooks so it cannot be confused with inbound webhook requests configured
-inside Event triggers.
+webhooks so it cannot be confused with Incoming webhook triggers.
 
 Only the active destination uses `aria-current="page"`. Desktop and mobile
 navigation regions have accessible labels. The workspace switcher keeps a
@@ -48,7 +48,7 @@ keyboard focus.
 State changes are immediate with a 160ms color transition. Reduced-motion users
 receive zero-duration transitions. Do not add a sliding active marker.
 
-## Approval Signal
+## Operational Signals
 
 Approvals may show the normalized workspace pending count. Hide the badge when
 the count is zero or unavailable, show 1 through 99 exactly, and cap higher
@@ -56,3 +56,10 @@ values at `99+` while retaining the exact accessible label. Reserve badge space
 so polling cannot shift labels or row height. The shell refreshes immediately on
 workspace changes and approval decisions, every 30 seconds while visible, and
 on window focus. A transient request failure keeps the last successful value.
+
+Workflows and its Runs child may show the normalized open-execution count using
+the same badge rules. The shared workflow activity store refreshes the count on
+workspace entry, every two seconds while visible, and on focus. The parent badge
+keeps active work visible when the child links are collapsed; the child badge
+locates the ledger once Workflows is expanded. Attention-required detail belongs
+inside Runs and issue context rather than a second navigation badge.

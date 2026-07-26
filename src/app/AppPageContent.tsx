@@ -37,13 +37,13 @@ const loadHelpPage = () => import('@/pages/HelpPage').then((module) => ({ defaul
 const loadVirtualMachinesPage = () => import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
 
 const loadWorkspaceAgentsPage = () => import('@/pages/WorkspaceAgentsPage').then((module) => ({ default: module.WorkspaceAgentsPage }));
-
 const loadWorkspaceCatalogPage = () =>
   import('@/pages/WorkspaceCatalogPage').then((module) => ({ default: module.WorkspaceCatalogPage }));
 
 const loadWorkspaceWorkflowsPage = () =>
   import('@/pages/WorkspaceWorkflowsPage').then((module) => ({ default: module.WorkspaceWorkflowsPage }));
 
+const loadWorkspaceRunsPage = () => import('@/pages/WorkspaceRunsPage').then((module) => ({ default: module.WorkspaceRunsPage }));
 const loadWorkspaceSchedulesPage = () =>
   import('@/pages/WorkspaceSchedulesPage').then((module) => ({ default: module.WorkspaceSchedulesPage }));
 
@@ -73,6 +73,7 @@ const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
 const WorkspaceAgentsPage = React.lazy(loadWorkspaceAgentsPage);
 const WorkspaceCatalogPage = React.lazy(loadWorkspaceCatalogPage);
 const WorkspaceWorkflowsPage = React.lazy(loadWorkspaceWorkflowsPage);
+const WorkspaceRunsPage = React.lazy(loadWorkspaceRunsPage);
 const WorkspaceSchedulesPage = React.lazy(loadWorkspaceSchedulesPage);
 const WorkspaceEventTriggersPage = React.lazy(loadWorkspaceEventTriggersPage);
 const WorkspaceApprovalsPage = React.lazy(loadWorkspaceApprovalsPage);
@@ -113,11 +114,12 @@ export function preloadAppRoutePage(route: AppRoute): void {
     case 'workspaceWorkflows':
       void loadWorkspaceWorkflowsPage();
       break;
-    case 'workspaceSchedules':
-      void loadWorkspaceSchedulesPage();
+    case 'workspaceRuns':
+      void loadWorkspaceRunsPage();
       break;
-    case 'workspaceEventTriggers':
-      void loadWorkspaceEventTriggersPage();
+    case 'workspaceTriggers':
+      if (route.triggerType === 'schedule') void loadWorkspaceSchedulesPage();
+      else void loadWorkspaceEventTriggersPage();
       break;
     case 'workspaceApprovals':
       void loadWorkspaceApprovalsPage();
@@ -451,6 +453,15 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
+          {route.kind === 'workspaceRuns' && workspaceContext && (
+            <WorkspaceRunsPage
+              key={workspaceContext.id}
+              workspace={workspaceContext}
+              routeState={route}
+              navigate={navigate}
+            />
+          )}
+
           {route.kind === 'workspaceAgents' && workspaceContext && (
             <WorkspaceAgentsPage
               key={workspaceContext.id}
@@ -467,12 +478,12 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
-          {route.kind === 'workspaceSchedules' && workspaceContext && (
-            <WorkspaceSchedulesPage workspace={workspaceContext} createWorkflowId={route.createWorkflowId} />
-          )}
-
-          {route.kind === 'workspaceEventTriggers' && workspaceContext && (
-            <WorkspaceEventTriggersPage workspace={workspaceContext} />
+          {route.kind === 'workspaceTriggers' && workspaceContext && (
+            route.triggerType === 'schedule'
+              ? <WorkspaceSchedulesPage key={`${workspaceContext.id}:schedule`} workspace={workspaceContext}
+                  createWorkflowId={route.createWorkflowId} navigate={navigate} />
+              : <WorkspaceEventTriggersPage key={`${workspaceContext.id}:${route.triggerType}`} workspace={workspaceContext}
+                  sourceType={route.triggerType} navigate={navigate} />
           )}
 
           {route.kind === 'workspaceApprovals' && workspaceContext && (

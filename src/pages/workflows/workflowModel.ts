@@ -12,8 +12,9 @@ export interface WorkflowParameter {
 
 export interface WorkflowRunRecord {
   id: string;
+  executionId?: string;
   runId?: string;
-  status: 'queued' | 'dispatching' | 'running' | 'waiting_approval' | 'completed' | 'failed' | 'cancelled' | 'cancelling';
+  status: 'queued' | 'dispatching' | 'running' | 'waiting_approval' | 'needs_review' | 'completed' | 'failed' | 'cancelled' | 'cancelling';
   actor: string;
   duration: string;
   approvals: number;

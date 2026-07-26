@@ -29,9 +29,20 @@ describe('WorkspaceWebhooksPage contract surface', () => {
   it('renders as an Automation collection page rather than a Settings tab', () => {
     expect(page).toContain('<PageShell>');
     expect(page).toContain('<PageHeader');
+    expect(page).toContain('<DiscoveryFilterBar');
+    expect(list).not.toContain("heading={t('workspaceWebhooks.listTitle')}");
     expect(page).toContain('<DrawerFrame');
     expect(settingsPage).not.toContain("'webhooks'");
     expect(settingsPage).not.toContain('WorkspaceWebhooksPage');
+  });
+
+  it('shows URL-backed search while loading or useful and searches operational fields', () => {
+    expect(page).toContain("const query = urlSearch.get('q') || ''");
+    expect(page).toContain('!workspaceStateCurrent || isInitialLoading || visibleWebhooks.length > 0 || hasActiveFilters');
+    expect(page).toContain("queryLabel={t('workspaceWebhooks.filters.search')}");
+    expect(page).toContain('webhook.name');
+    expect(page).toContain('webhook.url');
+    expect(page).toContain('...webhook.eventTypes');
   });
 
   it('keeps read access separate from manage_webhooks mutations', () => {
@@ -50,6 +61,7 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(list).toContain('<EmptyState');
     expect(list).toContain('<StatusBadge');
     expect(list).toContain('<InlineConfirmation');
+    expect(list).toContain('hasActiveFilters');
   });
 
   it('expands current event groups without duplicating events', () => {

@@ -126,12 +126,12 @@ export const WorkflowLaunchActions: React.FC<{
     <div className="grid gap-1 sm:justify-items-end">
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
         {showCustomize && <Button className="w-full whitespace-nowrap sm:w-auto" variant="tertiary" size="md" onClick={onCustomize} disabled={!canManageWorkflowScope || customizing} title={!canManageWorkflowScope ? t('agentsWorkflows.workflowActions.customizePermission') : undefined}>
-          <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
+          <ICONS.CopyPlus className="h-4 w-4" aria-hidden="true" />
           {customizing ? t('agentsWorkflows.workflowActions.customizing') : t('agentsWorkflows.workflowActions.customize')}
         </Button>}
         {primaryAction === 'launch' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onSchedule} disabled={!canManageWorkflowScope} aria-describedby={!canManageWorkflowScope ? 'workflow-schedule-blocker' : undefined}>
           <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
-          Schedule workflow
+          {t('agentsWorkflows.workflowActions.schedule')}
         </Button>}
         {primaryAction === 'setup' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="primary" size="md" onClick={onSetup}>
           <ICONS.Settings className="h-4 w-4" aria-hidden="true" />
@@ -143,7 +143,7 @@ export const WorkflowLaunchActions: React.FC<{
         </Button>}
         {primaryAction === 'launch' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onLaunch} disabled={launching || Boolean(visibleLaunchBlocker) || needsLaunchAcknowledgement} title={visibleLaunchBlocker || undefined} aria-describedby={visibleLaunchBlocker ? 'workflow-launch-blocker' : needsLaunchAcknowledgement ? 'workflow-launch-acknowledgement' : undefined}>
           <ICONS.Send className="h-4 w-4" aria-hidden="true" />
-          {launching ? 'Starting...' : 'Launch workflow'}
+          {launching ? t('agentsWorkflows.workflowActions.starting') : t('agentsWorkflows.workflowActions.launch')}
         </Button>}
       </div>
       {primaryAction === 'launch' && !canManageWorkflowScope && <p id="workflow-schedule-blocker" className="text-xs font-semibold text-ui-text-muted sm:text-right">You need manage_workflows to schedule workflows.</p>}

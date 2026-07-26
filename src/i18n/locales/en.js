@@ -99,9 +99,9 @@ export const en = {
     agents: 'Agents',
     workflows: 'Workflows',
     library: 'Library',
+    runs: 'Runs',
     workspaceNavigation: 'Workspace navigation',
-    schedules: 'Schedules',
-    eventTriggers: 'Event triggers',
+    triggers: 'Triggers',
     approvals: 'Approvals',
     clusters: 'Kubernetes Clusters',
     virtualMachines: 'Virtual Machines',
@@ -217,6 +217,102 @@ export const en = {
     unknownCluster: 'Unknown Cluster',
     unknownVirtualMachine: 'Unknown VM'
   },
+  workflowActivity: {
+    title: 'Runs',
+    subtitle: 'Background, scheduled, event-triggered, and manual activity across {{workspace}}.',
+    ledgerLabel: 'Workflow execution ledger',
+    loading: 'Loading workflow runs...',
+    loadError: 'Workflow activity could not be loaded.',
+    loadErrorTitle: 'Workflow runs are unavailable',
+    emptyOpenTitle: 'No active workflow runs',
+    emptyOpenDescription: 'Completed runs remain available from the status filter.',
+    emptyFilteredTitle: 'No runs match these filters',
+    emptyFilteredDescription: 'Clear or adjust the filters to see other workflow activity.',
+    refreshError: 'Automatic run refresh is temporarily unavailable. Refresh manually or refocus this window to try again.',
+    openCount: '{{count}} open',
+    attentionCount: '{{count}} need attention',
+    target: 'Target',
+    workspaceScope: 'Workspace scope',
+    duration: 'Duration',
+    durationUnavailable: 'Duration unavailable',
+    notStarted: 'Not started',
+    announcements: {
+      started: 'A background workflow run started.',
+      attention: 'A workflow run needs attention.'
+    },
+    activity: 'Activity',
+    configuration: 'Configuration',
+    lastDispatch: 'Last dispatch',
+    latestExecution: 'Latest execution',
+    neverDispatched: 'Never dispatched',
+    noExecution: 'No execution was created',
+    scheduleMcpUnavailable: 'MCP prerequisites were not ready.',
+    scheduleRepairHint: 'Repair MCP before resuming. Resume remains a manual action.',
+    dispatch: {
+      dispatched: 'Dispatched',
+      failed: 'Failed',
+      auto_paused: 'Auto-paused',
+      skipped: 'Skipped',
+      rejected: 'Rejected'
+    },
+    relatedRuns: '{{count}} related runs',
+    relatedRuns_one: '{{count}} related run',
+    relatedRuns_other: '{{count}} related runs',
+    openRuns: '{{count}} open runs',
+    openRuns_one: '{{count}} open run',
+    openRuns_other: '{{count}} open runs',
+    origin: {
+      manual: 'Manual',
+      external_integration: 'External integration',
+      schedule: 'Schedule',
+      event_trigger: 'Event trigger'
+    },
+    status: {
+      queued: 'Queued',
+      dispatching: 'Dispatching',
+      running: 'Running',
+      waiting_for_approval: 'Waiting for approval',
+      needs_review: 'Needs review',
+      cancelling: 'Cancelling',
+      completed: 'Completed',
+      failed: 'Failed',
+      cancelled: 'Cancelled'
+    },
+    time: {
+      started: 'Started',
+      completed: 'Completed',
+      updated: 'Updated'
+    },
+    columns: {
+      run: 'Workflow and origin',
+      target: 'Target',
+      time: 'Activity',
+      duration: 'Duration',
+      action: 'Action'
+    },
+    filters: {
+      search: 'Search runs',
+      state: 'Filter by state',
+      origin: 'Filter by origin',
+      workflow: 'Filter by workflow',
+      allStates: 'All states',
+      allOrigins: 'All origins',
+      allWorkflows: 'All workflows',
+      open: 'Open',
+      attention: 'Needs attention',
+      completed: 'Completed',
+      failed: 'Failed',
+      cancelled: 'Cancelled',
+      issueApplied: 'Issue: {{issue}}'
+    },
+    actions: {
+      openRun: 'Open run',
+      reviewRun: 'Review run',
+      viewRuns: 'View runs',
+      reviewFailure: 'Review failure',
+      viewHistory: 'View history'
+    }
+  },
   workspaceCreate: {
     stepWorkspace: 'Workspace',
     stepInviteMembers: 'Invite Members',
@@ -250,24 +346,45 @@ export const en = {
     supportTitle: 'Contact Support',
     supportBody: 'Send the AcornOps team workspace or run context when something needs attention.'
   },
+  triggers: {
+    title: 'Triggers',
+    subtitle: 'Choose when and why workflows start in {{workspace}}.',
+    filters: {
+      type: 'Filter by trigger type'
+    },
+    types: {
+      schedule: 'Schedule',
+      acornopsEvent: 'AcornOps event',
+      webhook: 'Incoming webhook'
+    },
+    actions: {
+      createAcornOpsEvent: 'Create AcornOps event',
+      createWebhook: 'Create incoming webhook'
+    },
+    empty: {
+      acornopsEventTitle: 'No AcornOps event triggers',
+      acornopsEventDescription: 'Create a trigger that starts a workflow when AcornOps creates an issue.',
+      webhookTitle: 'No incoming webhook triggers',
+      webhookDescription: 'Create a signed endpoint that starts a workflow from an external system.'
+    },
+    form: {
+      createAcornOpsEventTitle: 'Create AcornOps event',
+      createWebhookTitle: 'Create incoming webhook'
+    }
+  },
   schedules: {
-    title: 'Schedules',
-    subtitle: 'Scheduled workflow automation for {{workspace}}.',
-    summaryLabel: 'Schedule summary',
-    queueTitle: 'Schedule queue',
-    queueBody: 'Schedules use each workflow\'s latest active definition.',
+    tableLabel: 'Workflow schedules',
     permissionNotice: 'You need manage_workflows to create or edit schedules.',
     emptyTitle: 'No workflow schedules',
     emptyBody: 'Create a schedule to dispatch an active workflow on a cron cadence.',
     loadError: 'Failed loading workflow schedules.',
-    totalLabel: 'total schedules',
-    contextGrantLabel: 'context grants',
-    summary: {
-      active: 'Active schedules',
-      paused: 'Paused schedules',
-      approvalGated: 'Approval gated',
-      nextRun: 'Next run'
-    },
+    nextRunUnavailable: 'No upcoming run',
+    runtimeValueCount: '{{count}} runtime values',
+    runtimeValueCount_one: '{{count}} runtime value',
+    runtimeValueCount_other: '{{count}} runtime values',
+    contextGrantCount: '{{count}} context grants',
+    contextGrantCount_one: '{{count}} context grant',
+    contextGrantCount_other: '{{count}} context grants',
     table: {
       schedule: 'Schedule',
       workflow: 'Workflow',
@@ -275,12 +392,25 @@ export const en = {
       nextRun: 'Next run',
       scope: 'Scope',
       approvalGate: 'Approval gate',
-      status: 'Status',
+      inputsAndAccess: 'Inputs & access',
       actions: 'Actions'
     },
     status: {
       active: 'Active',
       paused: 'Paused'
+    },
+    filters: {
+      search: 'Search schedules',
+      status: 'Filter by status',
+      workflow: 'Filter by workflow',
+      allStatuses: 'All statuses',
+      allWorkflows: 'All workflows',
+      showing: 'Showing {{count}} of {{total}} schedules',
+      summary: '{{count}} schedules · Next run: {{nextRun}}',
+      summary_one: '{{count}} schedule · Next run: {{nextRun}}',
+      summary_other: '{{count}} schedules · Next run: {{nextRun}}',
+      emptyTitle: 'No schedules match these filters',
+      emptyDescription: 'Adjust the search, status, or workflow filter.'
     },
     actions: {
       create: 'Create schedule',
@@ -293,14 +423,20 @@ export const en = {
     form: {
       createTitle: 'Create schedule',
       editTitle: 'Edit schedule',
-      body: 'Control-plane validation is authoritative for the prompt, cron, timezone, and grants.',
+      body: 'Choose when this workflow runs and provide the values it needs. AcornOps checks access before saving.',
       close: 'Close schedule drawer',
       workflow: 'Workflow',
       name: 'Name',
+      runsAs: 'Runs as',
+      runsAsHelp: 'Schedules keep their user owner. Workspace membership and permissions are rechecked for every run.',
       cron: 'Cron expression',
+      cronHelp: 'Example: 0 9 * * 1-5 runs at 9:00 AM on weekdays.',
       timezone: 'Timezone',
       enabled: 'Enabled',
       approvedContextGrants: 'Approved context grants',
+      approvedContextGrantsHelp: 'Enter one grant per line. Only approved context is available to scheduled runs.',
+      workflowInputs: 'Workflow inputs',
+      workflowInputsHelp: 'These values are validated and reauthorized for every occurrence.',
       required: 'Choose a workflow and provide name, cron, and timezone.',
       save: 'Save schedule',
       saving: 'Saving...',
@@ -311,18 +447,16 @@ export const en = {
     }
   },
   eventTriggers: {
-    title: 'Event triggers',
-    subtitle: 'Start workflows when something happens in {{workspace}} or an external system.',
-    create: 'Create event trigger',
     permissionNotice: 'You need manage_workflows to create or edit event triggers.',
     noActiveWorkflows: 'Activate a workflow before creating an event trigger.',
     listTitle: 'Workflow event triggers',
-    listDescription: 'Event triggers start one existing workflow. Schedules are managed separately.',
     count: '{{count}} triggers',
     count_one: '{{count}} trigger',
     count_other: '{{count}} triggers',
-    emptyTitle: 'No event triggers',
-    emptyDescription: 'Create a trigger for an issue-created event or a signed webhook request.',
+    columns: {
+      trigger: 'Trigger',
+      actions: 'Actions'
+    },
     loadError: 'Failed loading event triggers.',
     refreshing: 'Refreshing event triggers.',
     saveError: 'Failed saving event trigger.',
@@ -345,6 +479,17 @@ export const en = {
       paused: 'Paused',
       autoPaused: 'Auto-paused'
     },
+    filters: {
+      searchAcornOpsEvents: 'Search AcornOps event triggers',
+      searchIncomingWebhooks: 'Search incoming webhooks',
+      status: 'Filter by status',
+      workflow: 'Filter by workflow',
+      allStatuses: 'All statuses',
+      allWorkflows: 'All workflows',
+      showing: 'Showing {{count}} of {{total}} triggers',
+      emptyTitle: 'No event triggers match these filters',
+      emptyDescription: 'Adjust the search, status, or workflow filter.'
+    },
     lastStatus: {
       dispatched: 'Dispatched',
       failed: 'Failed',
@@ -353,6 +498,7 @@ export const en = {
     },
     actions: {
       edit: 'Edit',
+      reviewFailure: 'Review failure',
       pause: 'Pause',
       resume: 'Resume',
       rotateSecret: 'Rotate secret',
@@ -1162,6 +1308,7 @@ export const en = {
     enabled: 'Enabled',
     disabled: 'Disabled',
     eventGroups: 'Event groups',
+    eventGroupsHelp: 'Add a common event set, then adjust individual events below.',
     events: 'Events',
     selectEvent: 'Select at least one event.',
     groups: {
@@ -1189,12 +1336,25 @@ export const en = {
     listTitle: 'Configured webhooks',
     listDescription: 'HTTP endpoints subscribed to events from this workspace.',
     count: '{{count}} configured',
+    columns: {
+      webhook: 'Webhook',
+      events: 'Events',
+      actions: 'Actions'
+    },
+    filters: {
+      search: 'Search outbound webhooks',
+      status: 'Filter by status',
+      allStatuses: 'All statuses',
+      showing: 'Showing {{count}} of {{total}} webhooks',
+      emptyTitle: 'No webhooks match these filters',
+      emptyDescription: 'Adjust the search or status filter.'
+    },
     loading: 'Loading webhooks…',
     refreshing: 'Refreshing webhooks.',
     emptyTitle: 'No webhooks configured',
     emptyDescription: 'Create a webhook to deliver selected workspace events to Mattermost or another integration.',
     edit: 'Edit',
-    history: 'History',
+    history: 'Delivery history',
     delete: 'Delete',
     deleting: 'Deleting…',
     deleteTitle: 'Delete {{name}}?',
@@ -2733,12 +2893,15 @@ export const en = {
       workflowNotDeletable: 'This workflow cannot be deleted while operational records still depend on it.'
     },
     workflowActions: {
-      customize: 'Customize workflow',
-      customizing: 'Creating custom draft...',
-      customizePermission: 'You need manage_workflows to customize this workflow.',
+      customize: 'Create editable copy',
+      customizing: 'Creating copy…',
+      customizePermission: 'You need manage_workflows to create an editable copy.',
+      schedule: 'Schedule',
+      launch: 'Launch',
+      starting: 'Starting…',
       completeSetup: 'Complete setup',
-      activate: 'Activate workflow',
-      activating: 'Activating...',
+      activate: 'Activate',
+      activating: 'Activating…',
       activatePermission: 'You need manage_workflows to activate workflows.'
     },
     agents: {

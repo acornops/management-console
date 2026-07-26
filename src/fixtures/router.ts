@@ -7,6 +7,7 @@ import { routePromptReferenceFixtureRequest } from './promptReferenceRoutes';
 import { workflowCapabilityPreview } from './workflowCapabilityPreview';
 import { routeWebhookFixtureRequest } from './webhookRoutes';
 import { routeWorkflowEventTriggerFixtureRequest } from './workflowEventTriggerRoutes';
+import { routeWorkflowActivityFixtureRequest } from './workflowActivityRoutes';
 
 export interface FixtureResponse {
   status: number;
@@ -14,7 +15,7 @@ export interface FixtureResponse {
   headers?: Record<string, string>;
 }
 
-const NOW = '2026-07-15T08:30:00.000Z';
+const NOW = new Date().toISOString();
 
 function json(body: unknown, status = 200): FixtureResponse {
   return { status, body, headers: { 'content-type': 'application/json' } };
@@ -382,9 +383,28 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     return { status: 200, body: `data: ${JSON.stringify(event)}\n\n`, headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' } };
   }
   match = path.match(/^\/api\/v1\/runs\/([^/]+)\/events$/);
-  if (match && method === 'GET') return json([{ schema_version: 1, run_id: decode(match[1]), seq: 1, ts: NOW, type: 'run.completed', payload: { status: 'completed' } }]);
+  if (match && method === 'GET') {
+    const runId = decode(match[1]);
+    const execution = state.workflowExecutions.find((item) => item.rootRun?.id === runId);
+    const eventStatus = execution?.status || 'completed';
+    const event = eventStatus === 'waiting_for_approval' ? { schema_version: 1, run_id: runId, seq: 1, ts: NOW, type: 'tool_approval_requested', payload: { tool: 'restart_workload', arguments: { target: execution?.rootRun?.targetId } } } : { schema_version: 1, run_id: runId, seq: 1, ts: NOW, type: `run.${eventStatus}`, payload: { status: eventStatus } };
+    return json([event]);
+  }
   match = path.match(/^\/api\/v1\/runs\/([^/]+)\/approvals$/);
-  if (match && method === 'GET') return json([]);
+  if (match && method === 'GET') {
+    const runId = decode(match[1]);
+    const waiting = state.workflowExecutions.find((item) => item.rootRun?.id === runId)?.status === 'waiting_for_approval';
+    return json(waiting ? [{
+      id: 'fixture-run-approval',
+      runId,
+      workspaceId: FIXTURE_IDS.workspace,
+      toolName: 'restart_workload',
+      summary: 'Restart the affected workload after reviewing the current replica state.',
+      status: 'pending',
+      createdAt: NOW,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60_000).toISOString()
+    }] : []);
+  }
   match = path.match(/^\/api\/v1\/runs\/([^/]+)\/cancel$/);
   if (match && method === 'POST') {
     const run = state.runs[decode(match[1])];
@@ -489,6 +509,13 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'PATCH') { Object.assign(workflow, await bodyOf(request), { version: Number(workflow.version || 0) + 1 }); return json({ workflow: clone(workflow) }); }
     if (method === 'DELETE') { state.workflows = state.workflows.filter((item) => item.id !== workflowId); return json({ deleted: true }); }
   }
+  const workflowActivityResponse = routeWorkflowActivityFixtureRequest({
+    method,
+    path,
+    url,
+    state
+  });
+  if (workflowActivityResponse) return workflowActivityResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/workflow-schedules$/);
   if (match) {
     if (method === 'GET') return json({ items: clone(state.workflowSchedules), summary: { total: state.workflowSchedules.length, active: state.workflowSchedules.filter((item) => item.status === 'enabled').length, paused: state.workflowSchedules.filter((item) => item.status === 'paused').length, approvalGated: 0 } });
@@ -527,7 +554,6 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   match = path.match(/^\/api\/v1\/workflows\/([^/]+)\/sessions$/);
   if (match) {
     const workflowId = decode(match[1]);
-    if (method === 'GET') return json({ items: [{ id: 'fixture-workflow-session', workflowId, workspaceId: FIXTURE_IDS.workspace, workflowVersion: 2, runs: [{ id: FIXTURE_IDS.run, status: 'completed', requestedAt: NOW, assistantMessage: { content: 'Fixture workflow completed successfully.' } }] }] });
     if (method === 'POST') return json({ session: { id: 'fixture-workflow-session', workflowId, workspaceId: FIXTURE_IDS.workspace, workflowVersion: 2 } }, 201);
   }
   match = path.match(/^\/api\/v1\/workflow-sessions\/([^/]+)\/messages$/);

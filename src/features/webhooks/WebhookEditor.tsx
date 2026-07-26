@@ -114,6 +114,7 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({
               </Button>
             ))}
           </div>
+          <HelpText>{t('workspaceWebhooks.eventGroupsHelp')}</HelpText>
         </div>
         <fieldset className="max-h-72 overflow-y-auto rounded-lg border border-ui-border bg-ui-bg p-3 custom-scrollbar">
           <legend className="px-1 type-label text-ui-text">{t('workspaceWebhooks.events')}</legend>
@@ -127,7 +128,7 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({
           </div>
         </fieldset>
         {draft.eventTypes.length === 0 && (
-          <p role="alert" className="type-caption text-status-danger-text">{t('workspaceWebhooks.selectEvent')}</p>
+          <p className="type-caption text-ui-text-muted">{t('workspaceWebhooks.selectEvent')}</p>
         )}
       </div>
     </form>

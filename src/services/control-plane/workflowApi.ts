@@ -1,6 +1,7 @@
 import { requestJson } from './http';
 import type { ControlPlaneRunEvent, ControlPlaneRunToolApproval } from './types';
 import type { PromptResourceRequirement, WorkflowParameterDefinition } from './promptResourcesApi';
+import type { WorkflowExecutionSummary } from './workflowActivityApi';
 
 export {
   listPromptReferenceTypes,
@@ -15,6 +16,17 @@ export type {
   PromptResourceRequirement,
   WorkflowParameterDefinition
 } from './promptResourcesApi';
+export {
+  listWorkspaceWorkflowExecutions
+} from './workflowActivityApi';
+export type {
+  WorkflowActivitySummary,
+  WorkflowExecutionOrigin,
+  WorkflowExecutionPage,
+  WorkflowExecutionStatus,
+  WorkflowExecutionSummary,
+  WorkspaceWorkflowExecutionFilters
+} from './workflowActivityApi';
 
 export type WorkflowApiDefinition = Record<string, unknown> & {
   id: string;
@@ -252,6 +264,9 @@ export interface WorkflowSchedule {
   lastRunAt?: string;
   lastStatus?: 'dispatched' | 'failed' | 'auto_paused' | 'skipped';
   lastError?: string;
+  lastExecutionId?: string;
+  lastRunId?: string;
+  latestExecution?: WorkflowExecutionSummary;
 }
 
 export interface WorkflowScheduleSummary {

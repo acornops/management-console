@@ -24,6 +24,7 @@ import { useWorkspaceWorkflowsUrlState } from '@/pages/workflows/useWorkspaceWor
 import { useWorkflowCapabilityPreview } from '@/pages/workflows/useWorkflowCapabilityPreview';
 import { indexPersistedWorkflowRunResponses, mergePersistedWorkflowRunResponses } from '@/pages/workflows/workflowRunSync';
 import { isServerWorkflowRunId, serverWorkflowRunIds } from '@/pages/workflows/workflowRunIdentity';
+import { useWorkflowExecutionDeepLink } from '@/pages/workflows/useWorkflowExecutionDeepLink';
 import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 import { WorkflowTemplateActions } from '@/pages/WorkflowTemplateActions';
 import { WorkflowRunDrawer } from '@/pages/WorkflowRunDrawer';
@@ -238,6 +239,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
     setEditingAgentSelectionId('');
   }, [selectedWorkflow?.id, effectiveWorkflowOptions]);
   const selectedWorkflowHasActiveRuns = Boolean(selectedWorkflow?.runs.some((run) => isRunActive(run.status)));
+  useWorkflowExecutionDeepLink(activeTab, selectedWorkflow, setExpandedRunLogId);
   React.useEffect(() => {
     if (!workflowCatalogReady || !selectedWorkflow) return;
     let mounted = true;
@@ -399,7 +401,6 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
           {!canManageWorkflowScope && <span className="type-caption max-w-64 font-semibold text-ui-text-muted lg:text-right">Ask a workspace manager for manage_workflows to create or edit workflow definitions.</span>}
         </div>}
       />
-
       {workflowLoadError && <WorkflowLoadErrorNotice onRetry={() => setWorkflowCatalogReloadKey((value) => value + 1)} />}
       {workflowOptionsError && <div role="alert" className="mb-4 flex flex-col gap-3 rounded-md border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
         <div><strong>Workflow options could not be loaded.</strong> {workflowOptionsError}</div><Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>Retry</Button>
@@ -417,7 +418,6 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
           ready={workflowCatalogReady} query={query} totalCount={workflows.length} visibleCount={visibleWorkflows.length} workflowSearchTags={workflowSearchTags}
           onQueryChange={(next) => { setQuery(next); updateUrlSearch({ q: next || null }, { replace: true }); }}
         />
-
         <MasterDetailLayout
         showDetailOnCompact={hasExplicitWorkflowSelection}
         compactBackLabel="Back to workflows"

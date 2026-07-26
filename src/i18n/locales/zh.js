@@ -99,9 +99,9 @@ export const zh = {
     agents: 'Agent',
     workflows: '工作流',
     library: '工作流库',
+    runs: '运行',
     workspaceNavigation: '工作区导航',
-    schedules: '计划',
-    eventTriggers: '事件触发器',
+    triggers: '触发器',
     approvals: '审批',
     clusters: 'Kubernetes 集群',
     virtualMachines: '虚拟机',
@@ -217,6 +217,102 @@ export const zh = {
     unknownCluster: '未知集群',
     unknownVirtualMachine: '未知虚拟机'
   },
+  workflowActivity: {
+    title: '运行',
+    subtitle: '{{workspace}} 中的后台、计划、事件触发和手动活动。',
+    ledgerLabel: '工作流执行台账',
+    loading: '正在加载工作流运行...',
+    loadError: '无法加载工作流活动。',
+    loadErrorTitle: '工作流运行暂不可用',
+    emptyOpenTitle: '暂无进行中的工作流运行',
+    emptyOpenDescription: '可通过状态筛选查看已完成的运行。',
+    emptyFilteredTitle: '没有符合筛选条件的运行',
+    emptyFilteredDescription: '清除或调整筛选条件以查看其他工作流活动。',
+    refreshError: '自动刷新运行暂不可用。请手动刷新，或重新聚焦此窗口后重试。',
+    openCount: '{{count}} 个进行中',
+    attentionCount: '{{count}} 个需要关注',
+    target: '目标',
+    workspaceScope: '工作区范围',
+    duration: '持续时间',
+    durationUnavailable: '持续时间不可用',
+    notStarted: '尚未开始',
+    announcements: {
+      started: '后台工作流运行已开始。',
+      attention: '有工作流运行需要关注。'
+    },
+    activity: '活动',
+    configuration: '配置',
+    lastDispatch: '最近分派',
+    latestExecution: '最近执行',
+    neverDispatched: '从未分派',
+    noExecution: '未创建执行',
+    scheduleMcpUnavailable: 'MCP 前置条件尚未就绪。',
+    scheduleRepairHint: '恢复前请先修复 MCP。恢复仍需手动操作。',
+    dispatch: {
+      dispatched: '已分派',
+      failed: '失败',
+      auto_paused: '已自动暂停',
+      skipped: '已跳过',
+      rejected: '已拒绝'
+    },
+    relatedRuns: '{{count}} 个相关运行',
+    relatedRuns_one: '{{count}} 个相关运行',
+    relatedRuns_other: '{{count}} 个相关运行',
+    openRuns: '{{count}} 个进行中的运行',
+    openRuns_one: '{{count}} 个进行中的运行',
+    openRuns_other: '{{count}} 个进行中的运行',
+    origin: {
+      manual: '手动',
+      external_integration: '外部集成',
+      schedule: '计划',
+      event_trigger: '事件触发器'
+    },
+    status: {
+      queued: '已排队',
+      dispatching: '正在分派',
+      running: '运行中',
+      waiting_for_approval: '等待审批',
+      needs_review: '需要审核',
+      cancelling: '正在取消',
+      completed: '已完成',
+      failed: '失败',
+      cancelled: '已取消'
+    },
+    time: {
+      started: '开始于',
+      completed: '完成于',
+      updated: '更新于'
+    },
+    columns: {
+      run: '工作流和来源',
+      target: '目标',
+      time: '活动',
+      duration: '持续时间',
+      action: '操作'
+    },
+    filters: {
+      search: '搜索运行',
+      state: '按状态筛选',
+      origin: '按来源筛选',
+      workflow: '按工作流筛选',
+      allStates: '所有状态',
+      allOrigins: '所有来源',
+      allWorkflows: '所有工作流',
+      open: '进行中',
+      attention: '需要关注',
+      completed: '已完成',
+      failed: '失败',
+      cancelled: '已取消',
+      issueApplied: '问题：{{issue}}'
+    },
+    actions: {
+      openRun: '打开运行',
+      reviewRun: '审核运行',
+      viewRuns: '查看运行',
+      reviewFailure: '审核失败',
+      viewHistory: '查看历史'
+    }
+  },
   workspaceCreate: {
     stepWorkspace: '工作区',
     stepInviteMembers: '邀请成员',
@@ -250,24 +346,45 @@ export const zh = {
     supportTitle: '联系支持',
     supportBody: '需要协助时，请向 AcornOps 团队发送工作区或运行上下文。'
   },
+  triggers: {
+    title: '触发器',
+    subtitle: '选择 {{workspace}} 中工作流启动的时间和原因。',
+    filters: {
+      type: '按触发器类型筛选'
+    },
+    types: {
+      schedule: '计划',
+      acornopsEvent: 'AcornOps 事件',
+      webhook: '传入 Webhook'
+    },
+    actions: {
+      createAcornOpsEvent: '创建 AcornOps 事件',
+      createWebhook: '创建传入 Webhook'
+    },
+    empty: {
+      acornopsEventTitle: '暂无 AcornOps 事件触发器',
+      acornopsEventDescription: '创建一个在 AcornOps 生成问题时启动工作流的触发器。',
+      webhookTitle: '暂无传入 Webhook 触发器',
+      webhookDescription: '创建一个签名端点，让外部系统能够启动工作流。'
+    },
+    form: {
+      createAcornOpsEventTitle: '创建 AcornOps 事件',
+      createWebhookTitle: '创建传入 Webhook'
+    }
+  },
   schedules: {
-    title: '计划',
-    subtitle: '{{workspace}} 的计划工作流自动化。',
-    summaryLabel: '计划摘要',
-    queueTitle: '计划队列',
-    queueBody: '计划任务会使用各工作流最新的活跃定义。',
+    tableLabel: '工作流计划',
     permissionNotice: '需要 manage_workflows 权限才能创建或编辑计划。',
     emptyTitle: '暂无工作流计划',
     emptyBody: '创建计划后，可按 cron 频率调度活跃工作流。',
     loadError: '加载工作流计划失败。',
-    totalLabel: '个计划',
-    contextGrantLabel: '个上下文授权',
-    summary: {
-      active: '活跃计划',
-      paused: '已暂停计划',
-      approvalGated: '需审批计划',
-      nextRun: '下次运行'
-    },
+    nextRunUnavailable: '暂无后续运行',
+    runtimeValueCount: '{{count}} 个运行时值',
+    runtimeValueCount_one: '{{count}} 个运行时值',
+    runtimeValueCount_other: '{{count}} 个运行时值',
+    contextGrantCount: '{{count}} 个上下文授权',
+    contextGrantCount_one: '{{count}} 个上下文授权',
+    contextGrantCount_other: '{{count}} 个上下文授权',
     table: {
       schedule: '计划',
       workflow: '工作流',
@@ -275,12 +392,25 @@ export const zh = {
       nextRun: '下次运行',
       scope: '范围',
       approvalGate: '审批门控',
-      status: '状态',
+      inputsAndAccess: '输入和权限',
       actions: '操作'
     },
     status: {
       active: '活跃',
       paused: '已暂停'
+    },
+    filters: {
+      search: '搜索计划',
+      status: '按状态筛选',
+      workflow: '按工作流筛选',
+      allStatuses: '所有状态',
+      allWorkflows: '所有工作流',
+      showing: '显示 {{total}} 个计划中的 {{count}} 个',
+      summary: '{{count}} 个计划 · 下次运行：{{nextRun}}',
+      summary_one: '{{count}} 个计划 · 下次运行：{{nextRun}}',
+      summary_other: '{{count}} 个计划 · 下次运行：{{nextRun}}',
+      emptyTitle: '没有符合筛选条件的计划',
+      emptyDescription: '请调整搜索、状态或工作流筛选条件。'
     },
     actions: {
       create: '创建计划',
@@ -293,14 +423,20 @@ export const zh = {
     form: {
       createTitle: '创建计划',
       editTitle: '编辑计划',
-      body: '提示词、cron、时区和授权以控制平面校验为准。',
+      body: '选择此工作流的运行时间并提供所需值。保存前，AcornOps 会检查访问权限。',
       close: '关闭计划抽屉',
       workflow: '工作流',
       name: '名称',
+      runsAs: '运行身份',
+      runsAsHelp: '计划会保留其用户所有者。每次运行都会重新检查工作区成员身份和权限。',
       cron: 'Cron 表达式',
+      cronHelp: '例如：0 9 * * 1-5 表示工作日上午 9:00 运行。',
       timezone: '时区',
       enabled: '启用',
       approvedContextGrants: '已批准上下文授权',
+      approvedContextGrantsHelp: '每行输入一项授权。计划运行只能使用已批准的上下文。',
+      workflowInputs: '工作流输入',
+      workflowInputsHelp: '每次发生计划任务时，都会重新验证并授权这些值。',
       required: '请选择工作流并填写名称、cron 和时区。',
       save: '保存计划',
       saving: '正在保存...',
@@ -311,18 +447,16 @@ export const zh = {
     }
   },
   eventTriggers: {
-    title: '事件触发器',
-    subtitle: '当 {{workspace}} 或外部系统中发生事件时启动工作流。',
-    create: '创建事件触发器',
     permissionNotice: '需要 manage_workflows 权限才能创建或编辑事件触发器。',
     noActiveWorkflows: '请先激活工作流，再创建事件触发器。',
     listTitle: '工作流事件触发器',
-    listDescription: '每个事件触发器启动一个现有工作流。计划任务单独管理。',
     count: '{{count}} 个触发器',
     count_one: '{{count}} 个触发器',
     count_other: '{{count}} 个触发器',
-    emptyTitle: '暂无事件触发器',
-    emptyDescription: '为问题创建事件或签名 Webhook 请求创建触发器。',
+    columns: {
+      trigger: '触发器',
+      actions: '操作'
+    },
     loadError: '加载事件触发器失败。',
     refreshing: '正在刷新事件触发器。',
     saveError: '保存事件触发器失败。',
@@ -345,6 +479,17 @@ export const zh = {
       paused: '已暂停',
       autoPaused: '已自动暂停'
     },
+    filters: {
+      searchAcornOpsEvents: '搜索 AcornOps 事件触发器',
+      searchIncomingWebhooks: '搜索传入 Webhook',
+      status: '按状态筛选',
+      workflow: '按工作流筛选',
+      allStatuses: '所有状态',
+      allWorkflows: '所有工作流',
+      showing: '显示 {{total}} 个触发器中的 {{count}} 个',
+      emptyTitle: '没有符合筛选条件的事件触发器',
+      emptyDescription: '请调整搜索、状态或工作流筛选条件。'
+    },
     lastStatus: {
       dispatched: '已调度',
       failed: '失败',
@@ -353,6 +498,7 @@ export const zh = {
     },
     actions: {
       edit: '编辑',
+      reviewFailure: '审核失败',
       pause: '暂停',
       resume: '恢复',
       rotateSecret: '轮换密钥',
@@ -1162,6 +1308,7 @@ export const zh = {
     enabled: '已启用',
     disabled: '已停用',
     eventGroups: '事件组',
+    eventGroupsHelp: '先添加常用事件集，再在下方调整具体事件。',
     events: '事件',
     selectEvent: '请至少选择一个事件。',
     groups: {
@@ -1189,12 +1336,25 @@ export const zh = {
     listTitle: '已配置的 Webhook',
     listDescription: '订阅此工作区事件的 HTTP 端点。',
     count: '已配置 {{count}} 个',
+    columns: {
+      webhook: 'Webhook',
+      events: '事件',
+      actions: '操作'
+    },
+    filters: {
+      search: '搜索出站 Webhook',
+      status: '按状态筛选',
+      allStatuses: '所有状态',
+      showing: '显示 {{total}} 个 Webhook 中的 {{count}} 个',
+      emptyTitle: '没有符合筛选条件的 Webhook',
+      emptyDescription: '请调整搜索或状态筛选条件。'
+    },
     loading: '正在加载 Webhook…',
     refreshing: '正在刷新 Webhook。',
     emptyTitle: '尚未配置 Webhook',
     emptyDescription: '创建 Webhook，将选定的工作区事件投递到 Mattermost 或其他集成。',
     edit: '编辑',
-    history: '历史',
+    history: '投递历史',
     delete: '删除',
     deleting: '正在删除…',
     deleteTitle: '删除 {{name}}？',
@@ -2733,11 +2893,14 @@ export const zh = {
       workflowNotDeletable: '当运行记录仍依赖此工作流时，无法删除该工作流。'
     },
     workflowActions: {
-      customize: '自定义工作流',
-      customizing: '正在创建自定义草稿…',
-      customizePermission: '需要 manage_workflows 权限才能自定义此工作流。',
+      customize: '创建可编辑副本',
+      customizing: '正在创建副本…',
+      customizePermission: '需要 manage_workflows 权限才能创建可编辑副本。',
+      schedule: '设置计划',
+      launch: '运行',
+      starting: '正在启动…',
       completeSetup: '完成设置',
-      activate: '启用工作流',
+      activate: '启用',
       activating: '正在启用…',
       activatePermission: '需要 manage_workflows 权限才能启用工作流。'
     },

@@ -18,10 +18,11 @@ export interface WorkspaceNavigationItem {
 }
 
 export interface WorkspaceNavigationChildItem {
-  id: 'workflowLibrary' | 'workflowSchedules' | 'workflowEventTriggers';
+  id: 'workflowLibrary' | 'workflowRuns' | 'workflowTriggers';
   label: string;
   path: string;
   current: boolean;
+  badge?: number;
 }
 
 export interface WorkspaceNavigationGroup {
@@ -35,6 +36,7 @@ interface WorkspaceNavigationOptions {
   workspace: Workspace | undefined;
   activeResourceNav: ActiveResourceNav;
   pendingApprovalCount?: number;
+  openWorkflowRunCount?: number;
   t: TFunction;
 }
 
@@ -42,12 +44,15 @@ export function getWorkspaceNavigationGroups({
   workspace,
   activeResourceNav,
   pendingApprovalCount,
+  openWorkflowRunCount,
   t
 }: WorkspaceNavigationOptions): WorkspaceNavigationGroup[] {
   if (!workspace) return [];
   const canReadData = canReadWorkspaceData(workspace);
   const canReadAudit = canReadWorkspaceAuditLog(workspace);
-  const isWorkflowRoute = activeResourceNav === 'workflows' || activeResourceNav === 'schedules' || activeResourceNav === 'eventTriggers';
+  const isWorkflowRoute = activeResourceNav === 'workflows'
+    || activeResourceNav === 'runs'
+    || activeResourceNav === 'triggers';
   const groups: WorkspaceNavigationGroup[] = [];
   if (canReadData) {
     groups.push({
@@ -75,11 +80,12 @@ export function getWorkspaceNavigationGroups({
           icon: ICONS.GitBranch,
           active: isWorkflowRoute,
           current: false,
+          badge: openWorkflowRunCount,
           children: isWorkflowRoute
             ? [
                 { id: 'workflowLibrary', label: t('app.library'), path: AppPaths.workspaceWorkflows(workspace.id), current: activeResourceNav === 'workflows' },
-                { id: 'workflowSchedules', label: t('app.schedules'), path: AppPaths.workspaceSchedules(workspace.id), current: activeResourceNav === 'schedules' },
-                { id: 'workflowEventTriggers', label: t('app.eventTriggers'), path: AppPaths.workspaceEventTriggers(workspace.id), current: activeResourceNav === 'eventTriggers' }
+                { id: 'workflowRuns', label: t('app.runs'), path: AppPaths.workspaceRuns(workspace.id), current: activeResourceNav === 'runs', badge: openWorkflowRunCount },
+                { id: 'workflowTriggers', label: t('app.triggers'), path: AppPaths.workspaceTriggers(workspace.id), current: activeResourceNav === 'triggers' }
               ]
             : undefined
         },

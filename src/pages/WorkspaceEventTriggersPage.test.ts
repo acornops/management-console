@@ -11,14 +11,17 @@ const page = readSource('src/pages/WorkspaceEventTriggersPage.tsx');
 const appPageContent = readSource('src/app/AppPageContent.tsx');
 const navigation = readSource('src/app/workspaceNavigation.tsx');
 const pageModel = readSource('src/pages/WorkspaceEventTriggersPage.model.ts');
+const triggerCard = readSource('src/pages/WorkspaceEventTriggerCard.tsx');
 const workflowApi = readSource('src/services/control-plane/workflowEventTriggerApi.ts');
 
 describe('WorkspaceEventTriggersPage contract surface', () => {
-  it('mounts Event triggers as a Workflow child route', () => {
-    expect(appPageContent).toContain("route.kind === 'workspaceEventTriggers'");
+  it('mounts event sources inside the shared Triggers child route', () => {
+    expect(appPageContent).toContain("route.kind === 'workspaceTriggers'");
     expect(appPageContent).toContain('<WorkspaceEventTriggersPage');
-    expect(navigation).toContain("id: 'workflowEventTriggers'");
-    expect(navigation).toContain('AppPaths.workspaceEventTriggers(workspace.id)');
+    expect(navigation).toContain("id: 'workflowTriggers'");
+    expect(navigation).toContain('AppPaths.workspaceTriggers(workspace.id)');
+    expect(page).toContain("id: 'type'");
+    expect(page).toContain('trigger.sourceType === sourceType');
   });
 
   it('uses the persisted event-trigger API for CRUD and secret rotation', () => {
@@ -50,11 +53,23 @@ describe('WorkspaceEventTriggersPage contract surface', () => {
   it('uses accessible collection, drawer, status, and destructive confirmation primitives', () => {
     expect(page).toContain('<PageShell>');
     expect(page).toContain('<PageHeader');
+    expect(page).toContain('<DiscoveryFilterBar');
     expect(page).toContain('<DataSurface');
     expect(page).toContain('<CollectionState');
     expect(page).toContain('<DrawerFrame');
-    expect(page).toContain('<StatusBadge');
-    expect(page).toContain('<InlineConfirmation');
+    expect(triggerCard).toContain('<StatusBadge');
+    expect(triggerCard).toContain('<InlineConfirmation');
+    expect(page).not.toContain("heading={t('eventTriggers.listTitle')}");
+  });
+
+  it('keeps URL-backed search visible and labels it for the selected trigger type', () => {
+    expect(page).toContain("const query = urlSearch.get('q') || ''");
+    expect(page).toContain("'eventTriggers.filters.searchIncomingWebhooks'");
+    expect(page).toContain("'eventTriggers.filters.searchAcornOpsEvents'");
+    expect(page).toContain('queryLabel={searchLabel}');
+    expect(page).toContain('trigger.name');
+    expect(page).toContain('workflow?.name');
+    expect(page).toContain('trigger.endpointUrl');
   });
 
   it('discloses webhook secrets once in component state and fences refreshes by workspace', () => {

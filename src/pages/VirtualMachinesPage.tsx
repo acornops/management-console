@@ -41,6 +41,7 @@ import { useVirtualMachineIssueSummaries } from '@/pages/virtual-machines/useVir
 import { useVirtualMachineAgentSetup } from '@/pages/virtual-machines/useVirtualMachineAgentSetup';
 import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/pages/virtual-machines/virtualMachineTargetPrompt';
 import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
+import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 
 interface VirtualMachinesPageProps {
   workspace: Workspace;
@@ -91,6 +92,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   onPendingTargetPromptConsumed
 }) => {
   const { t } = useTranslation();
+  const workflowActivity = useWorkspaceWorkflowActivity();
+  const workflowActivityRevision = workflowActivity.workspaceId === workspace.id
+    ? workflowActivity.revision
+    : 0;
   const [inventory, setInventory] = React.useState<Record<string, unknown>[]>([]);
   const [issues, setIssues] = React.useState<ControlPlaneIssueItem[] | null>(null);
   const [isLoadingIssueEvidence, setIsLoadingIssueEvidence] = React.useState(false);
@@ -292,7 +297,14 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     }
     setIsLoadingIssueEvidence(false);
     setIssueLoadFailed(false);
-  }, [loadVmInventory, loadVmLogs, selected, view, workspace.id]);
+  }, [
+    loadVmInventory,
+    loadVmLogs,
+    selected,
+    view,
+    workflowActivityRevision,
+    workspace.id
+  ]);
 
   React.useEffect(() => {
     if (isVmResourceSubview(view)) {
@@ -507,6 +519,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         } />
 
         <VirtualMachineIssuesPanel
+          workspaceId={workspace.id}
           issues={issues}
           issueSummary={issueSummary || null}
           isLoading={isLoadingIssueEvidence}

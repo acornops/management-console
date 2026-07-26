@@ -69,6 +69,18 @@
         "dispatchPolicy": "Every delivery recompiles current workflow parameters, user-principal authorization, capability mappings, MCP readiness, AI policy, approvals, and execution idempotency; configuration failures auto-pause the trigger",
         "secretPolicy": "Webhook secrets are encrypted at rest and returned only on creation or explicit rotation; rotation invalidates an already-verified request before durable acceptance"
       },
+      "workflowActivityVisibility": {
+        "paths": [
+          "GET /api/v1/workspaces/{workspaceId}/workflow-executions",
+          "GET /api/v1/workflow-executions/{executionId}"
+        ],
+        "authorization": "Browser users require read_workspace_data in the exact workspace; workspace activity routes are not exposed to external-integration credentials.",
+        "pagination": "The ledger uses an opaque stable cursor and returns {items,nextCursor?,summary.{openCount,attentionCount}} with bounded status, origin, workflow, and issue filters.",
+        "provenance": "Every execution returns an immutable safe origin snapshot for manual, external_integration, schedule, or event_trigger dispatch. Trigger labels survive deletion; webhook payloads and occurrence keys are never projected.",
+        "refresh": "The console uses two-second visible-window polling and immediate focus refresh so background activity remains current without a second workspace event transport.",
+        "context": "Issue rows expose a compact workflowActivity summary without per-issue queries. Schedule and event-trigger rows keep configuration, last dispatch outcome, and latest successful execution pointer separate.",
+        "statusAuthority": "The aggregate execution status is authoritative; dispatch failure does not imply a running execution and terminal execution status never renders as in progress."
+      },
       "systemAutomationDefinitions": {
         "provisioning": "The greenfield baseline creates only the final schema. Current-version workspace provisioning atomically commits the two automatic specialist Agents, their two active workflows, and a completed starter installation. Opt-in definitions are installed explicitly; coordinated workflows use a versioned code-owned coordinator profile and create no hidden Agent.",
         "attribution": "Template-origin Agents and workflows are labeled as system provided and retain their template ID and version.",
@@ -272,9 +284,12 @@
         "promptReferenceResolution": ["prompt", "promptDigest", "bindingDigest", "tokens[]", "candidates[]", "bindings[]", "blockers[]", "resolvedAt"],
         "workflowReport": ["id", "executionId?", "runId?", "targetRunId?", "sourceVersion", "mediaType", "title", "sourceSizeBytes", "retentionExpiresAt", "downloadUrl", "no source or PDF bytes"],
         "workflowSelectedAgents": ["agentIds[]", "executionMode=direct|coordinated", "internal session authorization ceiling selectedAgents[]", "jwtClaims.executor_role", "jwtClaims.agent_id? specialist only", "jwtClaims.agent_version? specialist only", "jwtClaims.trigger_id?"],
-        "workflowSchedule": ["id", "workspaceId", "workflowId", "workflowVersion", "name", "status", "cron", "timezone", "inputs", "approvedContextGrants", "principal.{type=user,id}", "nextRunAt?", "lastRunAt?", "lastStatus?", "lastError?", "createdBy", "updatedBy"],
+        "workflowExecutionSummary": ["id", "workspaceId", "workflow.{id,name,version}", "status", "origin", "rootRun?", "createdBy?", "createdAt", "startedAt?", "endedAt?", "updatedAt"],
+        "workflowExecutionPage": ["items", "nextCursor?", "summary.{openCount,attentionCount,latestUpdatedAt?}"],
+        "workflowActivitySummary": ["totalCount", "openCount", "attentionCount", "openExecution?", "latestExecution?"],
+        "workflowSchedule": ["id", "workspaceId", "workflowId", "workflowVersion", "name", "status", "cron", "timezone", "inputs", "approvedContextGrants", "principal.{type=user,id}", "nextRunAt?", "lastRunAt?", "lastStatus?", "lastExecutionId?", "lastRunId?", "latestExecution?", "lastError?", "createdBy", "updatedBy"],
         "workflowSchedulePage": ["items", "summary.{total,active,paused,approvalGated,nextRunAt?}"],
-        "workflowEventTrigger": ["id", "workspaceId", "workflowId", "name", "status=enabled|paused", "sourceType=webhook|acornops_event", "eventType?", "inputBindings", "approvedContextGrants", "principal.{type=user,id}", "endpointUrl? webhook only", "lastTriggeredAt?", "lastStatus?", "lastError?"],
+        "workflowEventTrigger": ["id", "workspaceId", "workflowId", "name", "status=enabled|paused", "sourceType=webhook|acornops_event", "eventType?", "inputBindings", "approvedContextGrants", "principal.{type=user,id}", "endpointUrl? webhook only", "lastTriggeredAt?", "lastStatus?", "lastExecutionId?", "lastRunId?", "latestExecution?", "lastError?"],
         "workflowEventTriggerPage": ["items"],
         "workflowEventTriggerSecret": ["url", "secret", "secretDisclosure=one_time"],
         "workspaceApprovalInbox": ["query.{status?,limit?,cursor?,runId?,approvalId?}", "items[].{approvalId,runId,source,workflowId?,targetId?,summary,toolName,requestedBy?,expiresAt,status,decision?,decidedBy?,decidedAt?,requestedAt}", "pendingCount", "nextCursor?"]

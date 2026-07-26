@@ -52,7 +52,7 @@ export function workflowStatusTone(status: WorkflowStatus): 'success' | 'warning
 
 export function runStatusTone(status: WorkflowDefinition['runs'][number]['status']): 'success' | 'warning' | 'neutral' {
   if (status === 'completed') return 'success';
-  if (status === 'waiting_approval' || status === 'running' || status === 'dispatching' || status === 'queued' || status === 'cancelling') return 'warning';
+  if (status === 'waiting_approval' || status === 'needs_review' || status === 'running' || status === 'dispatching' || status === 'queued' || status === 'cancelling') return 'warning';
   return 'neutral';
 }
 
@@ -167,7 +167,7 @@ export function workflowRunToTrace(run: WorkflowDefinition['runs'][number], even
     status: workflowRunTraceStatus(run.status),
     steps: [{
       id: `${runId}-status`,
-      label: run.status === 'completed' ? 'Completed' : isRunActive(run.status) ? 'Workflow running' : titleFromInputName(run.status),
+      label: run.status === 'completed' ? 'Completed' : run.status === 'waiting_approval' ? 'Waiting for approval' : isRunActive(run.status) ? 'Workflow running' : titleFromInputName(run.status),
       detail: run.output,
       status: run.status === 'failed' || run.status === 'cancelled' ? 'error' : run.status === 'completed' ? 'success' : 'info',
       timestamp: Date.now()
@@ -438,15 +438,29 @@ export function mapWorkflowRunSummary(run: WorkflowRunSummary): WorkflowDefiniti
               ? 'queued'
               : run.status === 'cancelling'
                 ? 'cancelling'
+                : run.status === 'needs_review'
+                  ? 'needs_review'
                 : 'waiting_approval';
   return {
     id: run.id,
+    executionId: run.executionId,
     runId: run.id,
     status,
     actor: run.createdBy || 'Operator',
-    duration: run.endedAt && run.startedAt ? formatElapsedDuration(run.startedAt, run.endedAt) : 'In progress',
+    duration: run.endedAt && run.startedAt
+      ? formatElapsedDuration(run.startedAt, run.endedAt)
+      : status === 'waiting_approval'
+        ? 'Waiting for approval'
+        : ['completed', 'failed', 'cancelled', 'needs_review'].includes(status)
+          ? 'Duration unavailable'
+          : 'In progress',
     approvals: 0,
-    output: run.assistantMessage?.content || (status === 'completed' ? 'Completed without assistant output.' : 'Workflow run is in progress.'),
+    output: run.assistantMessage?.content
+      || (status === 'waiting_approval'
+        ? 'Workflow run is waiting for approval.'
+        : ['completed', 'failed', 'cancelled', 'needs_review'].includes(status)
+          ? 'No assistant output was recorded.'
+          : 'Workflow run is in progress.'),
     startedAt: run.requestedAt || run.startedAt || 'Unknown'
   };
 }
