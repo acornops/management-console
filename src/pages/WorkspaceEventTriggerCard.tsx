@@ -26,6 +26,9 @@ interface WorkspaceEventTriggerCardProps {
   onRequestDelete: () => void;
 }
 
+export const workspaceEventTriggerLedgerGridClass =
+  'grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-[minmax(11rem,0.9fr)_minmax(9rem,0.75fr)_minmax(0,1fr)_minmax(11rem,0.9fr)_4.5rem]';
+
 function triggerStatusTone(
   trigger: WorkflowEventTrigger
 ): React.ComponentProps<typeof StatusBadge>['tone'] {
@@ -61,8 +64,8 @@ export const WorkspaceEventTriggerCard: React.FC<WorkspaceEventTriggerCardProps>
 
   return (
     <article>
-      <div className="p-[var(--surface-padding)]">
-        <div className="grid gap-4 lg:grid-cols-[minmax(13rem,0.9fr)_minmax(12rem,0.75fr)_minmax(15rem,1fr)_minmax(14rem,0.9fr)_minmax(3rem,auto)] lg:items-start">
+      <div className="p-[var(--surface-padding)] xl:px-8 xl:py-6">
+        <div className={`grid gap-4 xl:items-start ${workspaceEventTriggerLedgerGridClass}`}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="type-row-title text-ui-text">{trigger.name}</h2>
@@ -76,13 +79,13 @@ export const WorkspaceEventTriggerCard: React.FC<WorkspaceEventTriggerCardProps>
             </div>
           </div>
 
-          <div className="min-w-0">
-            <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('eventTriggers.columns.workflow')}</p>
+          <div className="col-span-2 min-w-0 xl:col-span-1">
+            <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('eventTriggers.columns.workflow')}</p>
             <p className="text-sm font-semibold text-ui-text">{workflowName}</p>
           </div>
 
-          <div className="min-w-0">
-            <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('eventTriggers.columns.configuration')}</p>
+          <div className="col-span-2 min-w-0 xl:col-span-1">
+            <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('eventTriggers.columns.configuration')}</p>
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge tone="neutral">
                 {trigger.sourceType === 'webhook'
@@ -106,13 +109,13 @@ export const WorkspaceEventTriggerCard: React.FC<WorkspaceEventTriggerCardProps>
             </p>
           </div>
 
-          <div className="min-w-0">
-            <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('workflowActivity.activity')}</p>
+          <div className="col-span-2 min-w-0 xl:col-span-1">
+            <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('workflowActivity.activity')}</p>
             <WorkspaceEventTriggerExecutionFacts trigger={trigger} ledger />
           </div>
 
           {canManage ? (
-            <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
+            <div className="col-start-2 row-start-1 flex shrink-0 flex-wrap items-center justify-end gap-2 xl:col-start-auto xl:row-start-auto">
               {needsFailureReview && (
                 <Button size="sm" variant="primary" onClick={onEdit} disabled={busy}>
                   {t('eventTriggers.actions.reviewFailure')}
@@ -149,7 +152,14 @@ export const WorkspaceEventTriggerCard: React.FC<WorkspaceEventTriggerCardProps>
                 </>}
               </OverflowActionMenu>
             </div>
-          ) : <div aria-hidden="true" className="text-right type-caption text-ui-text-muted">—</div>}
+          ) : (
+            <div
+              aria-hidden="true"
+              className="col-start-2 row-start-1 text-right type-caption text-ui-text-muted xl:col-start-auto xl:row-start-auto"
+            >
+              —
+            </div>
+          )}
         </div>
       </div>
 

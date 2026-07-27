@@ -2,12 +2,16 @@ import React from 'react';
 import { Filter, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
+import { DataTableGridHeader, DataTableGridHeaderCell } from '@/components/common/DataTable';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
 import { EmptyState } from '@/components/common/EmptyState';
 import { InlineAlert } from '@/components/common/InlineAlert';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { WorkflowExecutionRow } from '@/features/workflow-activity/WorkflowActivityUi';
+import {
+  WorkflowExecutionRow,
+  workflowExecutionLedgerGridClass
+} from '@/features/workflow-activity/WorkflowActivityUi';
 import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 import {
   listWorkspaceWorkflowExecutions,
@@ -130,7 +134,7 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
   ].filter(Boolean).length;
 
   return (
-    <PageShell>
+    <PageShell width="content">
       <PageHeader
         title={t('workflowActivity.title')}
         description={t('workflowActivity.subtitle', { workspace: workspace.name })}
@@ -202,18 +206,22 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
 
       <section
         aria-label={t('workflowActivity.ledgerLabel')}
-        className="flex min-h-[24rem] flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface"
+        className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm"
       >
         <div className="min-w-0">
-          <div className="hidden grid-cols-[minmax(16rem,1.5fr)_minmax(11rem,0.8fr)_minmax(10rem,0.7fr)_8rem_6.75rem] gap-3 border-b border-ui-border bg-ui-bg px-5 py-2.5 lg:grid">
-            <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workflowActivity.columns.run')}</span>
-            <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workflowActivity.columns.target')}</span>
-            <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workflowActivity.columns.time')}</span>
-            <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workflowActivity.columns.duration')}</span>
-            <span className="type-micro-label whitespace-nowrap text-right text-ui-text-muted">{t('workflowActivity.columns.action')}</span>
-          </div>
+          <DataTableGridHeader
+            showAt="xl"
+            className={`gap-3 ${workflowExecutionLedgerGridClass}`}
+            collectionState={{ phase, itemCount: items.length }}
+          >
+            <DataTableGridHeaderCell>{t('workflowActivity.columns.run')}</DataTableGridHeaderCell>
+            <DataTableGridHeaderCell>{t('workflowActivity.columns.target')}</DataTableGridHeaderCell>
+            <DataTableGridHeaderCell>{t('workflowActivity.columns.time')}</DataTableGridHeaderCell>
+            <DataTableGridHeaderCell>{t('workflowActivity.columns.duration')}</DataTableGridHeaderCell>
+            <DataTableGridHeaderCell numeric>{t('workflowActivity.columns.action')}</DataTableGridHeaderCell>
+          </DataTableGridHeader>
           {phase === 'loading' ? (
-            <div className="flex min-h-64 items-center justify-center px-5 py-10">
+            <div className="flex min-h-48 items-center justify-center px-5 py-10">
               <InlineLoadingIndicator label={t('workflowActivity.loading')} />
             </div>
           ) : phase === 'error' ? (
@@ -252,7 +260,6 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
             </div>
           )}
         </div>
-
       </section>
     </PageShell>
   );

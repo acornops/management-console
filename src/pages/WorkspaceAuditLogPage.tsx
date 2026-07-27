@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CloseButton, FilterToggleGroup, type CompactControlItem } from '@/components/common/ComponentVocabulary';
 import { EmptyState } from '@/components/common/EmptyState';
-import { DataTableStateRow } from '@/components/common/DataTable';
+import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@/components/common/DataTable';
 import { PageSearchInput, pageSearchInputClassName } from '@/components/common/PageSearchInput';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { RightSidePanel } from '@/components/common/RightSidePanel';
@@ -408,25 +408,30 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
           </div>
           <div className="min-w-0">
             <table className="w-full table-fixed text-left" aria-label={t('auditLog.title')}>
-              <thead className="bg-ui-bg">
+              <DataTableHeader
+                collectionState={{
+                  phase: isLoading ? 'loading' : errorMessage ? 'error' : 'ready',
+                  itemCount: events.length
+                }}
+              >
                 <tr>
-                  <th className="type-label px-3 py-4 sm:px-5">{t('auditLog.time')}</th>
-                  <th className="type-label px-3 py-4 sm:px-5">{t('auditLog.event')}</th>
-                  <th className="type-label hidden px-3 py-4 sm:px-5 md:table-cell">{t('auditLog.actor')}</th>
-                  <th className="type-label hidden px-3 py-4 sm:px-5 md:table-cell">{t('auditLog.object')}</th>
-                  <th className="type-label px-3 py-4 text-right sm:px-5">{t('auditLog.details')}</th>
+                  <DataTableHeaderCell>{t('auditLog.time')}</DataTableHeaderCell>
+                  <DataTableHeaderCell>{t('auditLog.event')}</DataTableHeaderCell>
+                  <DataTableHeaderCell className="hidden xl:table-cell">{t('auditLog.actor')}</DataTableHeaderCell>
+                  <DataTableHeaderCell className="hidden xl:table-cell">{t('auditLog.object')}</DataTableHeaderCell>
+                  <DataTableHeaderCell numeric>{t('auditLog.details')}</DataTableHeaderCell>
                 </tr>
-              </thead>
+              </DataTableHeader>
               <tbody>
                 {events.map((event) => (
                   <tr key={event.id} className="border-b border-ui-bg transition-colors hover:bg-accent-soft/35">
-                    <td className="px-3 py-4 align-top sm:px-5">
+                    <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
                       <span className="type-caption break-words text-ui-text">{formatUserDateTime(event.occurredAt)}</span>
                     </td>
-                    <td className="px-3 py-4 align-top sm:px-5">
+                    <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
                       <p className="type-row-title break-words">{event.summary}</p>
                       <p className="type-caption mt-1 break-words">{event.eventType} · {formatOperation(event, t)}</p>
-                      <dl className="mt-3 grid gap-1 md:hidden">
+                      <dl className="mt-3 grid gap-1 xl:hidden">
                         <div className="min-w-0">
                           <dt className="type-micro-label">{t('auditLog.actor')}</dt>
                           <dd className="type-caption mt-0.5 break-words text-ui-text">{formatActor(event)}</dd>
@@ -437,14 +442,14 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                         </div>
                       </dl>
                     </td>
-                    <td className="hidden px-3 py-4 align-top sm:px-5 md:table-cell">
+                    <td className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
                       <p className="type-ui break-words text-ui-text">{formatActor(event)}</p>
                     </td>
-                    <td className="hidden px-3 py-4 align-top sm:px-5 md:table-cell">
+                    <td className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
                       <p className="type-ui break-words text-ui-text">{formatObject(event)}</p>
                       <p className="type-caption mt-1 break-words">{event.object.type}</p>
                     </td>
-                    <td className="px-3 py-4 text-right align-top sm:px-5">
+                    <td className="px-4 py-5 text-right align-top sm:px-6 lg:px-8 lg:py-6">
                       <Tooltip content={t('auditLog.viewDetails')}>
                         <button
                           type="button"

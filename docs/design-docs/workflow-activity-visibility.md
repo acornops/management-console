@@ -75,9 +75,11 @@ repeats the page title.
 
 Desktop ledgers retain concise, single-line column headings during loading,
 error, empty, filtered-empty, and populated states. Compact layouts replace
-desktop columns with labeled cards. Dense three-filter toolbars remain stacked
-until the viewport can accommodate the sidebar and every control without
-clipping.
+desktop columns with labeled cards. Populated ledgers end after their final row;
+only loading and state messages reserve enough height to remain legible.
+Desktop rows do not repeat labels already supplied by the column headings.
+Dense three-filter toolbars remain stacked until the viewport can accommodate
+the sidebar and every control without clipping.
 
 Outbound-webhook discovery stays visible while loading, when items exist, or
 when URL filters are active. It is omitted for a confirmed empty, unfiltered

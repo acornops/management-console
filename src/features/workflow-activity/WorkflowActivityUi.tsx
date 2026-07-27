@@ -20,6 +20,9 @@ const durationSettledStatuses = new Set<WorkflowExecutionStatus>([
   'needs_review'
 ]);
 
+export const workflowExecutionLedgerGridClass =
+  'xl:grid-cols-[minmax(18rem,1fr)_minmax(10rem,14rem)_minmax(9rem,12rem)_5.5rem_6.25rem]';
+
 function executionStatusTone(
   status: WorkflowExecutionStatus
 ): React.ComponentProps<typeof StatusBadge>['tone'] {
@@ -149,9 +152,9 @@ export function WorkflowExecutionRow({
     <a
       href={appHref(path)}
       onClick={(event) => handleAppLinkClick(event, path, navigate)}
-      className="control-target grid w-full min-w-0 gap-3 px-4 py-4 text-left outline-none transition-colors hover:bg-ui-bg focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-control-boundary sm:px-5 lg:grid-cols-[minmax(16rem,1.5fr)_minmax(11rem,0.8fr)_minmax(10rem,0.7fr)_8rem_6.75rem] lg:items-center"
+      className={`control-target grid w-full min-w-0 gap-3 px-4 py-4 text-left outline-none transition-colors hover:bg-ui-bg focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-control-boundary sm:grid-cols-2 sm:gap-x-6 sm:px-6 xl:items-center xl:px-8 xl:py-6 ${workflowExecutionLedgerGridClass}`}
     >
-      <span className="min-w-0">
+      <span className="min-w-0 sm:col-span-2 xl:col-span-1">
         <span className="flex flex-wrap items-center gap-2">
           <span className="type-row-title break-words text-ui-text">{execution.workflow.name}</span>
           <ExecutionStatusBadge status={execution.status} />
@@ -161,33 +164,33 @@ export function WorkflowExecutionRow({
         </span>
       </span>
       <span className="min-w-0">
-        <span className="type-micro-label block text-ui-text-muted">{t('workflowActivity.target')}</span>
-        <span className="type-caption mt-1 block truncate text-ui-text">
+        <span className="type-micro-label block text-ui-text-muted xl:hidden">{t('workflowActivity.target')}</span>
+        <span className="type-caption mt-1 block truncate text-ui-text xl:mt-0">
           {execution.rootRun?.targetName
             || execution.rootRun?.targetId
             || t('workflowActivity.workspaceScope')}
         </span>
       </span>
       <span className="min-w-0">
-        <span className="type-micro-label block text-ui-text-muted">{t(`workflowActivity.time.${timestamp.label.toLowerCase()}`)}</span>
+        <span className="type-micro-label block text-ui-text-muted xl:hidden">{t(`workflowActivity.time.${timestamp.label.toLowerCase()}`)}</span>
         <time
           dateTime={timestamp.value}
           title={formatUserDateTime(timestamp.value)}
-          className="type-caption mt-1 block text-ui-text"
+          className="type-caption mt-1 block text-ui-text xl:mt-0"
         >
           {formatRelativeTime(timestamp.value)}
         </time>
       </span>
       <span className="min-w-0">
-        <span className="type-micro-label block text-ui-text-muted">{t('workflowActivity.duration')}</span>
-        <span className="type-caption mt-1 block tabular-nums text-ui-text">
+        <span className="type-micro-label block text-ui-text-muted xl:hidden">{t('workflowActivity.duration')}</span>
+        <span className="type-caption mt-1 block tabular-nums text-ui-text xl:mt-0">
           {executionDuration(execution, {
             notStarted: t('workflowActivity.notStarted'),
             unavailable: t('workflowActivity.durationUnavailable')
           })}
         </span>
       </span>
-      <span className="type-caption inline-flex items-center gap-1.5 font-semibold text-ui-text lg:justify-self-end">
+      <span className="type-caption inline-flex items-center gap-1.5 font-semibold text-ui-text sm:self-end sm:justify-self-end xl:self-auto">
         {actionLabel}
         <ArrowRight className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
       </span>

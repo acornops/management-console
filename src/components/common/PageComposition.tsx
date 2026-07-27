@@ -10,7 +10,7 @@ export interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const pageWidthClasses: Record<NonNullable<PageShellProps['width']>, string> = {
   full: 'max-w-none',
-  content: 'mx-auto max-w-[96rem]',
+  content: 'mx-auto max-w-[88rem]',
   narrow: 'mx-auto max-w-5xl'
 };
 

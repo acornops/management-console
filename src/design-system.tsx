@@ -14,7 +14,7 @@ import { FieldLabel, HelpText, MenuItem, MenuTrigger, Radio, Switch } from '@/co
 import { InlineAlert } from '@/components/common/InlineAlert';
 import { DialogFrame, DrawerFrame } from '@/components/common/OverlayFrames';
 import { DataSurface, PageBackLink, PageHeader, PageSection, PageShell, TableToolbar } from '@/components/common/PageComposition';
-import { DataTable, DataTableFrame, DataTableHeaderCell, DataTableStateRow } from '@/components/common/DataTable';
+import { DataTable, DataTableFrame, DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@/components/common/DataTable';
 import { Select } from '@/components/common/Select';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import '@/fonts';
@@ -269,7 +269,7 @@ const Catalog = () => {
         <CollectionState phase="ready" itemCount={0} filtered loading={null} empty={null} filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No matching targets" description="Clear filters to restore the inventory." />} error={null} />
         <DataTableFrame className="mt-4">
           <DataTable caption="Collection table state example">
-            <thead><tr><DataTableHeaderCell>Name</DataTableHeaderCell><DataTableHeaderCell numeric>Status</DataTableHeaderCell></tr></thead>
+            <DataTableHeader collectionState={{ phase: 'loading', itemCount: 0 }}><tr><DataTableHeaderCell>Name</DataTableHeaderCell><DataTableHeaderCell numeric>Status</DataTableHeaderCell></tr></DataTableHeader>
             <tbody><DataTableStateRow columns={2} phase="loading" itemCount={0} loading={<div className="p-surface type-body" role="status">Loading rows…</div>} empty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No rows" description="Rows will appear here when available." />} error={<InlineAlert tone="danger">Rows could not be loaded.</InlineAlert>} /></tbody>
           </DataTable>
         </DataTableFrame>

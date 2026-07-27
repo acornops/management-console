@@ -321,9 +321,14 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
             title={isLoading ? t('virtualMachines.list.loadingTitle') : hasLoadError ? t('virtualMachines.list.loadFailedTitle') : hasActiveFilter ? t('virtualMachines.list.noMatchingVms') : t('virtualMachines.list.emptyTitle')}
             description={isLoading ? t('virtualMachines.list.loadingBody') : hasLoadError ? t('virtualMachines.list.loadFailedBody') : hasActiveFilter ? t('virtualMachines.list.noMatchingVmsBody') : t('virtualMachines.list.emptyBody')}
             actions={!isLoading && hasLoadError ? (
-                <Button type="button" variant="secondary" size="sm" onClick={onRetryLoad}>
-                  {t('common.retry')}
-                </Button>
+              <Button type="button" variant="secondary" size="sm" onClick={onRetryLoad}>
+                {t('common.retry')}
+              </Button>
+            ) : !isLoading && !hasLoadError && !hasActiveFilter && canManageTargets ? (
+              <Button type="button" variant="primary" size="md" onClick={onOpenRegisterVm}>
+                <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+                {t('virtualMachines.list.connectVm')}
+              </Button>
             ) : undefined}
           />
         )}

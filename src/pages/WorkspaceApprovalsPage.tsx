@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CollectionState } from '@/components/common/CollectionState';
 import { FilterToggleGroup, type CompactControlItem } from '@/components/common/ComponentVocabulary';
+import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
 import { EmptyState } from '@/components/common/EmptyState';
 import { InlineAlert } from '@/components/common/InlineAlert';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
@@ -275,18 +276,18 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-[72rem] w-full border-collapse text-left">
-              <thead className="border-b border-ui-border bg-ui-surface">
-                <tr className="type-micro-label text-ui-text-muted">
-                  <th scope="col" className="px-4 py-3">{t('approvals.table.approval')}</th>
-                  <th scope="col" className="px-4 py-3">{t('approvals.table.workflowRun')}</th>
-                  <th scope="col" className="px-4 py-3">{t('approvals.table.requestedBy')}</th>
-                  <th scope="col" className="px-4 py-3">{t('approvals.table.target')}</th>
-                  <th scope="col" className="px-4 py-3">{t('approvals.table.risk')}</th>
-                  <th scope="col" className="px-4 py-3">{t('approvals.table.expires')}</th>
-                  <th scope="col" className="px-4 py-3">{t('approvals.table.status')}</th>
-                  <th scope="col" className="px-4 py-3">{t('approvals.table.decision')}</th>
+              <DataTableHeader>
+                <tr>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.approval')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.workflowRun')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.requestedBy')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.target')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.risk')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.expires')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.status')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.decision')}</DataTableHeaderCell>
                 </tr>
-              </thead>
+              </DataTableHeader>
               <tbody className="divide-y divide-ui-border">
                 {approvals.map((approval) => {
                   const decision = decisionState[approval.approvalId];

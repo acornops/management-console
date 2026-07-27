@@ -315,6 +315,17 @@ Cards are used for repeated items, dialogs, framed tools, and list groups. Page 
 - **Internal Padding:** Usually `16px` to `20px`; dense rows can use `12px`.
 - **Interactive State:** Hover and focus-within may strengthen the border with a low-opacity orange and lift the surface tonally. Do not add a larger shadow.
 
+### Collection tables / ledgers
+
+Operator-facing collection tables use the Kubernetes MCP Servers table as the visual reference and compose the shared `DataTableHeader` / `DataTableHeaderCell` or `DataTableGridHeader` / `DataTableGridHeaderCell` vocabulary. Both semantic tables and responsive grid ledgers use the same warm inset header surface, bottom border, `type-label` hierarchy, muted ink, and right-aligned numeric or action columns.
+
+- **Standard header:** `16px / 24px / 32px` horizontal padding and `16px / 20px` vertical padding across compact, `sm`, and large layouts.
+- **Dense header:** The `dense` header-cell variant is reserved for operational tables with seven or more columns, such as Schedules and Approvals.
+- **Row rhythm:** Standard collection rows align to the header padding and use `20px / 24px` vertical breathing room. A feature may retain denser rows when scan speed or decision density requires it, but it must keep the shared header anatomy.
+- **Responsive disclosure:** Do not reveal the desktop column layout until the content area can support it beside the workspace sidebar. Below that breakpoint, hide secondary columns only when their values remain available as labeled metadata inside the primary row, or use the feature's compact card composition. Compact ledger cards keep identity and actions together on the first row, then stack each labeled fact across the available width; they never preserve desktop minimum column widths without the desktop grid.
+- **Alignment contract:** Responsive grid ledgers define one reusable grid template for both header and rows so action columns cannot drift or clip independently.
+- **Zero-row anatomy:** Terminal empty, filtered-empty, error, and permission states replace the table anatomy, including column headers. Initial loading with generic progress is also headerless. Populated and background-refresh states retain headers; a table-shaped skeleton may explicitly retain them when its placeholders align to the columns.
+
 ### Empty states
 
 Route-level collections use the shared `EmptyState` component. Standalone states
@@ -330,11 +341,13 @@ queues, and master-detail panes use the embedded surface mode with the compact
 creating nested cards.
 
 Genuinely empty inventory and filtered no-results states share the component but
-keep distinct copy and icons. Route-header creation actions are not duplicated in
-the empty state; a state-local action is reserved for recovery or for a full-page
-setup state with no route header. Compact field absences such as no run history or
-no assigned capabilities remain inline text rather than expanding into a
-collection empty state.
+keep distinct copy and icons. A permission-gated, genuinely empty infrastructure
+inventory may repeat its connect action at the point of explanation so the setup
+path remains visible in the route header and in the first-run state. Filtered
+no-results, loading, and failure states never repeat that creation action. Other
+route-header creation actions are not duplicated in collection states. Compact
+field absences such as no run history or no assigned capabilities remain inline
+text rather than expanding into a collection empty state.
 
 ### Inputs / Fields
 
@@ -356,7 +369,7 @@ Navigation is familiar product chrome driven by one route model. Workspace desti
 
 Tabs and filters share the canonical compact-control vocabulary rather than page-local pills.
 
-- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
+- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. A route-selected or keyboard-selected tab must be fully visible inside an overflowing strip on arrival and after selection. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
 - **Top-level discovery:** Collection pages use `DiscoveryFilterBar` with a labeled `PageSearchInput`, zero or more typed filter-group definitions created by `createDiscoveryFilterGroup`, and a polite result summary. `DiscoveryFilterBar` and nested resource search both compose `SearchFilterFrame`, the canonical bordered paper surface with `16px` padding, a restrained shadow, `12px` gaps, and stable `44px` controls. Search is the dominant flexible field while categorical controls stay approximately `11rem` to `14rem` wide.
 - **Visible discovery filters:** Typed categorical groups render as always-visible shared `Select` controls. Clusters, virtual machines, and agents expose Status; MCP Catalog exposes Source and Compatibility; Workflows uses the search-only composition. Stable option counts appear inside the select when supplied. Below `sm`, search, selects, trailing actions, and the result summary stack full-width. From `sm` to below `lg`, search owns the first row while multiple selects share equal columns. At `lg` and wider, the toolbar settles into one balanced row without overflow.
 - **Discovery clearing:** Search clear and Escape remove only the query and retain search focus. Choosing a default select option clears only that categorical condition. Clear all appears at two or more active conditions, counting the query and every non-default group; it clears the complete route-backed discovery state atomically and restores search focus. The bar is hidden for a genuinely empty, unfiltered collection and remains visible when active filters produce no matches.

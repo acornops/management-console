@@ -2,7 +2,7 @@
 
 ## Scope
 
-All authenticated console surfaces use the operator's-ledger visual language. The Schedules route is the baseline for responsive margins, route hierarchy, neutral creation actions, table density, borders, and surface treatment. Login remains a separate brand composition while sharing color and typography tokens.
+All authenticated console surfaces use the operator's-ledger visual language. The Schedules route is the baseline for responsive margins, route hierarchy, neutral creation actions, borders, and surface treatment; the Kubernetes MCP Servers table is the baseline for collection-header hierarchy and spacing. Login remains a separate brand composition while sharing color and typography tokens.
 
 This work changes UI composition only. URLs, permissions, route state, table columns, workflows, API payloads, and control-plane contracts remain unchanged.
 
@@ -12,6 +12,7 @@ Page code supplies content and semantic intent through typed shared primitives:
 
 - `PageShell`, `PageBackLink`, `PageHeader`, and `PageSection` compose routes and embedded sections.
 - `DataSurface` and `TableToolbar` compose framed operational data and its loading, empty, and error states.
+- `DataTableHeader`, `DataTableHeaderCell`, `DataTableGridHeader`, and `DataTableGridHeaderCell` provide one header anatomy for semantic tables and responsive grid ledgers.
 - `SearchFilterFrame`, `DiscoveryFilterBar`, and typed definitions from `createDiscoveryFilterGroup` compose the canonical framed collection search, visible categorical filters, result feedback, and no-match recovery.
 - `DialogFrame` and `DrawerFrame` provide the canonical overlay header, body, footer, close control, width presets, focus containment, Escape behavior, and focus restoration.
 - `Button`, `Select`, `Checkbox`, `Radio`, `Switch`, `MenuTrigger`, `MenuItem`, `ThemeMenu`, `FieldLabel`, and `HelpText` provide the control vocabulary.
@@ -33,6 +34,18 @@ Categorical groups render as always-visible shared `Select` controls. Clusters, 
 Each Select applies its typed route-owned `onChange` handler and restores focus to its trigger after selection. Choosing the default option resets only that group. Search clear and Escape remove only the query and retain search focus. Clear all appears when the query plus non-default groups total at least two, clears route-backed discovery state atomically, and restores search focus. Warm neutral tokens carry the frame and controls; orange is limited to focus and selected state.
 
 Top-level discovery state remains route-backed using each page's existing parameter names and history policy. Nested resource explorers and audit-log searches may retain denser local patterns because they are not top-level collection discovery.
+
+## Collection ledger anatomy
+
+MCP Servers is the visual reference for operator-facing collection headers. Semantic tables use `DataTableHeader` and `DataTableHeaderCell`; card-like ledgers whose compact layout carries inline labels use the parallel `DataTableGridHeader` and `DataTableGridHeaderCell` primitives. Both variants own the same inset surface, border, label role, muted color, responsive horizontal padding, and numeric/action alignment.
+
+The standard header uses `16px`, `24px`, and `32px` horizontal padding across compact, `sm`, and large layouts, with `16px` vertical padding increasing to `20px` on large layouts. The `dense` header-cell variant is limited to seven-or-more-column decision tables such as Schedules and Approvals. Feature-owned row content may remain denser, but its leading edges and action column must align with the header.
+
+Responsive ledgers keep one shared grid-template constant for header and rows. Runs, Event Triggers, and Outbound Webhooks reveal that grid only at `xl`, after the workspace content area can support all columns; below `xl`, their rows keep identity and actions together on the first row, then stack labeled metadata across the full card width. Compact rows do not retain desktop minimum column widths. Schedules keeps its compact ledger through widths below `2xl` because its seven columns cannot remain legible beside the desktop sidebar. Members and Audit Log similarly withhold secondary columns until `xl` and repeat those values inside the primary compact row, preventing clipped or broken metadata without losing information.
+
+The shared headers also own zero-row visibility. Ready, refreshing, and loading-more collections with rows keep their column headers. Terminal empty, filtered-empty, error, and permission states replace the table anatomy, so they do not sit beneath orphaned labels. Initial loading with generic progress is headerless; only a column-aligned table skeleton may opt into headers through `showDuringInitialLoading`.
+
+Horizontally scrollable tab strips preserve route resumability by revealing the active tab on first render and after keyboard or pointer selection. The strip adjusts only as far as needed to place the selected tab fully inside its viewport; it does not animate or reset unrelated user scrolling.
 
 ## Catalog master-detail layout
 
@@ -61,6 +74,7 @@ Pages may retain layouts that match their work: tables, split panes, resource ex
 - token-only surfaces, borders, text, and status colors in both themes;
 - the docs-derived dark neutral ramp: `#121110`, `#1E1A18`, `#2D2827`, `#464140`, `#F5F1EF`, and `#A6A1A0`;
 - shared loading, empty, error, destructive, dialog, and drawer anatomy.
+- shared collection-header surface, label hierarchy, responsive spacing, and action alignment.
 
 `scripts/design-system-exceptions.json` is the reviewed source of embedded-route and brand-illustration exceptions. Each entry requires a durable reason. It is not a general allowlist for local styling.
 

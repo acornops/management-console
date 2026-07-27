@@ -4,14 +4,28 @@ import {
   auditLogPage,
   chatSubmit,
   clusterOverviewView,
+  dataTable,
+  dashboardPage,
   enLocale,
   fieldValidationMessage,
   loginAuthPanel,
   loginAuthPanelParts,
   loginPasswordAuthForm,
   markdownComponents,
+  mcpServersInventory,
   membersPage,
+  pageComposition,
+  resourceCategoryTabs,
   resourcesView,
+  targetSkillsInventory,
+  targetToolsView,
+  virtualMachinesListView,
+  webhookList,
+  workflowActivityUi,
+  workspaceApprovalsPage,
+  workspaceEventTriggersPage,
+  workspaceRunsPage,
+  workspaceSchedulesPage,
   workspaceInviteModal
 } from './stylesTestSupport';
 
@@ -45,11 +59,74 @@ describe('surface behavior contracts', () => {
     expect(markdownComponents).toContain('<tr className={`transition-colors ${tableRowHoverClass}`}>{children}</tr>');
   });
 
+  it('keeps the populated workflow ledger compact and leaves field labels to compact layouts', () => {
+    expect(workspaceRunsPage).toContain('<PageShell width="content">');
+    expect(workspaceRunsPage).toContain('bg-ui-surface shadow-sm');
+    expect(workspaceRunsPage).not.toContain('min-h-[24rem]');
+    expect(pageComposition).toContain("content: 'mx-auto max-w-[88rem]'");
+    expect(workflowActivityUi).toContain('sm:grid-cols-2 sm:gap-x-6');
+    expect(workflowActivityUi).toContain('sm:col-span-2 xl:col-span-1');
+    expect(workspaceRunsPage).toContain('workflowExecutionLedgerGridClass');
+    expect(workflowActivityUi.match(/xl:grid-cols-\[minmax\(18rem,1fr\)/g)).toHaveLength(1);
+    expect(workflowActivityUi.match(/text-ui-text-muted xl:hidden/g)).toHaveLength(3);
+    expect(workflowActivityUi.match(/xl:mt-0/g)).toHaveLength(3);
+  });
+
+  it('offers the permission-gated connect action in both infrastructure inventory empty states', () => {
+    expect(dashboardPage.match(/t\('dashboard\.addCluster'\)/g)).toHaveLength(2);
+    expect(virtualMachinesListView.match(/t\('virtualMachines\.list\.connectVm'\)/g)).toHaveLength(2);
+    expect(virtualMachinesListView).toContain('!isLoading && !hasLoadError && !hasActiveFilter && canManageTargets');
+  });
+
+  it('keeps collection tables on the shared header anatomy', () => {
+    expect(dataTable).toContain('export const DataTableHeader');
+    expect(dataTable).toContain('export const DataTableGridHeader');
+    [
+      mcpServersInventory,
+      targetSkillsInventory,
+      targetToolsView,
+      workspaceSchedulesPage,
+      workspaceApprovalsPage,
+      auditLogPage,
+      membersPage
+    ].forEach((surface) => expect(surface).toContain('<DataTableHeader'));
+    [
+      workspaceRunsPage,
+      workspaceEventTriggersPage,
+      webhookList
+    ].forEach((surface) => expect(surface).toContain('<DataTableGridHeader'));
+    [
+      mcpServersInventory,
+      targetSkillsInventory,
+      targetToolsView,
+      workspaceSchedulesPage,
+      auditLogPage,
+      membersPage,
+      workspaceRunsPage,
+      workspaceEventTriggersPage,
+      webhookList
+    ].forEach((surface) => expect(surface).toContain('collectionState={{'));
+    expect(workspaceSchedulesPage).toContain('density="dense"');
+    expect(workspaceApprovalsPage).toContain('density="dense"');
+  });
+
+  it('reveals the active resource category when compact tab strips overflow', () => {
+    expect(resourceCategoryTabs).toContain('React.useLayoutEffect(() => {');
+    expect(resourceCategoryTabs).toContain('const activeTab = tabRefs.current[activeIndex];');
+    expect(resourceCategoryTabs).toContain('tabList.scrollLeft +=');
+    expect(resourceCategoryTabs).toContain('ref={tabListRef}');
+  });
+
   it('keeps workspace members and audit log tables inside the viewport', () => {
     expect(membersPage).not.toContain('overflow-x-auto');
     expect(membersPage).not.toContain('min-w-[760px]');
+    expect(membersPage).toContain('xl:table-cell');
     expect(auditLogPage).not.toContain('overflow-x-auto');
     expect(auditLogPage).not.toContain('min-w-[920px]');
+    expect(auditLogPage).toContain('xl:table-cell');
+    expect(auditLogPage).toContain('xl:hidden');
+    expect(workspaceSchedulesPage).toContain('className="2xl:hidden"');
+    expect(workspaceSchedulesPage).toContain('className="hidden overflow-x-auto 2xl:block"');
   });
 
   it('keeps workspace member actions in the table rhythm on wide screens', () => {
@@ -57,7 +134,8 @@ describe('surface behavior contracts', () => {
     expect(membersPage).not.toContain('<th className="hidden px-4 py-4 md:block" aria-hidden="true" />');
     expect(membersPage).not.toContain('<td className="hidden md:block" aria-hidden="true" />');
     expect(membersPage).toContain('table-fixed');
-    expect(membersPage).toContain('md:table-cell');
+    expect(membersPage).toContain('xl:table-cell');
+    expect(membersPage).toContain('text-ui-text-muted xl:hidden');
     expect(membersPage).not.toContain('lg:grid-cols-[minmax(18rem,24rem)_9rem_8rem_9rem_4rem]');
     expect(membersPage).toContain('<span className="sr-only">{t(\'members.manage\')}</span>');
   });

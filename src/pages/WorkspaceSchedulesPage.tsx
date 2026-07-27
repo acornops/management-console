@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { CollectionState } from '@/components/common/CollectionState';
+import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
 import { EmptyState } from '@/components/common/EmptyState';
 import { InlineAlert } from '@/components/common/InlineAlert';
@@ -413,7 +414,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
       />
 
       <section aria-label={t('schedules.tableLabel')} className="min-w-0 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="lg:hidden">
+        <div className="2xl:hidden">
           <CollectionState
             phase={schedulePhase}
             itemCount={visibleSchedules.length}
@@ -442,19 +443,19 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
             </div>
           </CollectionState>
         </div>
-        <div className="hidden overflow-x-auto lg:block">
+        <div className="hidden overflow-x-auto 2xl:block">
           <table className="min-w-[58rem] w-full border-collapse text-left">
-            <thead className="border-b border-ui-border bg-ui-bg">
-              <tr className="type-micro-label text-ui-text-muted">
-                <th scope="col" className="whitespace-nowrap px-4 py-3">{t('schedules.table.schedule')}</th>
-                <th scope="col" className="whitespace-nowrap px-4 py-3">{t('schedules.table.workflow')}</th>
-                <th scope="col" className="whitespace-nowrap px-4 py-3">{t('schedules.table.cadence')}</th>
-                <th scope="col" className="whitespace-nowrap px-4 py-3">{t('schedules.table.nextRun')}</th>
-                <th scope="col" className="whitespace-nowrap px-4 py-3">{t('schedules.table.inputsAndAccess')}</th>
-                <th scope="col" className="whitespace-nowrap px-4 py-3">{t('workflowActivity.activity')}</th>
-                <th scope="col" className="whitespace-nowrap px-4 py-3">{t('schedules.table.actions')}</th>
+            <DataTableHeader collectionState={{ phase: schedulePhase, itemCount: visibleSchedules.length }}>
+              <tr>
+                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.schedule')}</DataTableHeaderCell>
+                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.workflow')}</DataTableHeaderCell>
+                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.cadence')}</DataTableHeaderCell>
+                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.nextRun')}</DataTableHeaderCell>
+                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.inputsAndAccess')}</DataTableHeaderCell>
+                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('workflowActivity.activity')}</DataTableHeaderCell>
+                <DataTableHeaderCell density="dense" numeric className="whitespace-nowrap">{t('schedules.table.actions')}</DataTableHeaderCell>
               </tr>
-            </thead>
+            </DataTableHeader>
             <tbody className="divide-y divide-ui-border">
               {visibleSchedules.length > 0 ? visibleSchedules.map((schedule) => (
                 <WorkspaceScheduleTableRow

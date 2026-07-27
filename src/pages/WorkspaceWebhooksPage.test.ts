@@ -68,6 +68,13 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(list).toContain('hasActiveFilters');
   });
 
+  it('stacks webhook facts below an in-view compact action row until the desktop ledger fits', () => {
+    expect(list).toContain('grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-[');
+    expect(list.match(/col-span-2 min-w-0 xl:col-span-1/g)).toHaveLength(3);
+    expect(list).toContain('col-start-2 row-start-1 flex justify-end');
+    expect(list).toContain('xl:col-start-auto xl:row-start-auto');
+  });
+
   it('toggles complete event groups, exposes selected state, and scrolls selected events into view', () => {
     expect(editor).toContain('toggleEventGroup(group.eventTypes)');
     expect(editor).toContain('aria-pressed={groupSelected}');

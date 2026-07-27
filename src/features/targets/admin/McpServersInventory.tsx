@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
 import { Select } from '@/components/common/Select';
 import type { SelectOption } from '@/components/common/Select';
 import { formInputClassName } from '@/components/common/formControlStyles';
@@ -174,15 +175,15 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
               <col className="w-[21%]" />
               <col className="w-[11%]" />
             </colgroup>
-            <thead>
-              <tr className="border-b border-ui-border">
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('mcpServers.server')}</th>
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('mcpServers.status')}</th>
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('mcpServers.enabled')}</th>
-                <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">{t('mcpServers.tools')}</th>
-                <th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">{t('mcpServers.actions')}</th>
+            <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredServers.length }}>
+              <tr>
+                <DataTableHeaderCell>{t('mcpServers.server')}</DataTableHeaderCell>
+                <DataTableHeaderCell>{t('mcpServers.status')}</DataTableHeaderCell>
+                <DataTableHeaderCell>{t('mcpServers.enabled')}</DataTableHeaderCell>
+                <DataTableHeaderCell className="hidden md:table-cell">{t('mcpServers.tools')}</DataTableHeaderCell>
+                <DataTableHeaderCell numeric>{t('mcpServers.actions')}</DataTableHeaderCell>
               </tr>
-            </thead>
+            </DataTableHeader>
             <tbody>
               {filteredServers.length > 0 ? (
                 filteredServers.map((server) => (

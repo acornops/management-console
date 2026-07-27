@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { Dialog } from '@/components/common/Dialog';
 import { EmptyState } from '@/components/common/EmptyState';
-import { DataTableStateRow } from '@/components/common/DataTable';
+import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@/components/common/DataTable';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { Select } from '@/components/common/Select';
 import type { SelectOption } from '@/components/common/Select';
@@ -467,15 +467,15 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   <col className="w-[21%]" />
                   <col className="w-[11%]" />
                 </colgroup>
-                <thead>
-                  <tr className="border-b border-ui-border">
-                    <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('tools.toolColumn')}</th>
-                    <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('tools.capabilityColumn')}</th>
-                    <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('tools.enabledColumn')}</th>
-                    <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">{t('tools.runtimeColumn')}</th>
-                    <th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">{t('tools.actionsColumn')}</th>
+                <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredTools.length }}>
+                  <tr>
+                    <DataTableHeaderCell>{t('tools.toolColumn')}</DataTableHeaderCell>
+                    <DataTableHeaderCell>{t('tools.capabilityColumn')}</DataTableHeaderCell>
+                    <DataTableHeaderCell>{t('tools.enabledColumn')}</DataTableHeaderCell>
+                    <DataTableHeaderCell className="hidden md:table-cell">{t('tools.runtimeColumn')}</DataTableHeaderCell>
+                    <DataTableHeaderCell numeric>{t('tools.actionsColumn')}</DataTableHeaderCell>
                   </tr>
-                </thead>
+                </DataTableHeader>
                 <tbody>
                   {filteredTools.map((tool) => (
                     <TargetToolRow

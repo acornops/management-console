@@ -101,6 +101,13 @@ describe('WorkspaceEventTriggersPage contract surface', () => {
     expect(page).not.toContain("heading={t('eventTriggers.listTitle')}");
   });
 
+  it('stacks event-trigger facts below an in-view compact action row until the desktop ledger fits', () => {
+    expect(triggerCard).toContain('grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-[');
+    expect(triggerCard.match(/col-span-2 min-w-0 xl:col-span-1/g)).toHaveLength(3);
+    expect(triggerCard).toContain('col-start-2 row-start-1 flex shrink-0');
+    expect(triggerCard).toContain('xl:col-start-auto xl:row-start-auto');
+  });
+
   it('keeps URL-backed search visible and labels it for the selected trigger type', () => {
     expect(page).toContain("const query = urlSearch.get('q') || ''");
     expect(page).toContain("'eventTriggers.filters.searchIncomingWebhooks'");

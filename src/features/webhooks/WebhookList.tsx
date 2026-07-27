@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/common/Button';
 import { CollectionState } from '@/components/common/CollectionState';
+import { DataTableGridHeader, DataTableGridHeaderCell } from '@/components/common/DataTable';
 import { EmptyState } from '@/components/common/EmptyState';
 import { MenuItem } from '@/components/common/FormControls';
 import { OverflowActionMenu } from '@/components/common/OverflowActionMenu';
@@ -34,6 +35,9 @@ interface WebhookListProps {
   onDelete: (webhook: ControlPlaneWebhookSubscription) => void;
   onLoadHistory: (webhook: ControlPlaneWebhookSubscription) => void;
 }
+
+const webhookLedgerGridClass =
+  'grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-[minmax(11rem,0.85fr)_minmax(0,1.2fr)_minmax(11rem,1fr)_minmax(9rem,0.75fr)_4.5rem]';
 
 function deliveryStatusTone(entry: ControlPlaneWebhookHistory): 'success' | 'warning' | 'danger' | 'neutral' {
   if (entry.status === 'success') return 'success';
@@ -74,13 +78,17 @@ export const WebhookList: React.FC<WebhookListProps> = ({
     <DataSurface
       aria-label={t('workspaceWebhooks.listTitle')}
     >
-      <div className="hidden grid-cols-[minmax(12rem,0.8fr)_minmax(16rem,1.2fr)_minmax(13rem,1fr)_minmax(10rem,0.7fr)_minmax(3rem,auto)] gap-4 border-b border-ui-border bg-ui-bg px-[var(--surface-padding)] py-2.5 lg:grid">
-        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.webhook')}</span>
-        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.destination')}</span>
-        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.events')}</span>
-        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.modified')}</span>
-        <span className="type-micro-label whitespace-nowrap text-right text-ui-text-muted">{t('workspaceWebhooks.columns.actions')}</span>
-      </div>
+      <DataTableGridHeader
+        showAt="xl"
+        className={webhookLedgerGridClass}
+        collectionState={{ phase, itemCount: webhooks.length }}
+      >
+        <DataTableGridHeaderCell>{t('workspaceWebhooks.columns.webhook')}</DataTableGridHeaderCell>
+        <DataTableGridHeaderCell>{t('workspaceWebhooks.columns.destination')}</DataTableGridHeaderCell>
+        <DataTableGridHeaderCell>{t('workspaceWebhooks.columns.events')}</DataTableGridHeaderCell>
+        <DataTableGridHeaderCell>{t('workspaceWebhooks.columns.modified')}</DataTableGridHeaderCell>
+        <DataTableGridHeaderCell numeric>{t('workspaceWebhooks.columns.actions')}</DataTableGridHeaderCell>
+      </DataTableGridHeader>
       <CollectionState
         phase={phase}
         itemCount={webhooks.length}
@@ -117,8 +125,8 @@ export const WebhookList: React.FC<WebhookListProps> = ({
           };
           return (
             <article key={webhook.id}>
-              <div className="p-[var(--surface-padding)]">
-                <div className="grid gap-4 lg:grid-cols-[minmax(12rem,0.8fr)_minmax(16rem,1.2fr)_minmax(13rem,1fr)_minmax(10rem,0.7fr)_minmax(3rem,auto)] lg:items-start">
+              <div className="p-[var(--surface-padding)] xl:px-8 xl:py-6">
+                <div className={`grid gap-4 xl:items-start ${webhookLedgerGridClass}`}>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-sm font-bold text-ui-text">{webhook.name}</h2>
@@ -128,12 +136,12 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                       {webhook.targetId && <StatusBadge tone="neutral">{t('workspaceWebhooks.targetScoped')}</StatusBadge>}
                     </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('workspaceWebhooks.columns.destination')}</p>
+                  <div className="col-span-2 min-w-0 xl:col-span-1">
+                    <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('workspaceWebhooks.columns.destination')}</p>
                     <p className="break-all text-xs font-semibold text-ui-text-muted">{webhook.url}</p>
                   </div>
-                  <div className="min-w-0">
-                    <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('workspaceWebhooks.columns.events')}</p>
+                  <div className="col-span-2 min-w-0 xl:col-span-1">
+                    <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('workspaceWebhooks.columns.events')}</p>
                     <p className="type-caption mb-2 font-semibold text-ui-text">{t('workspaceWebhooks.eventCount', { count: webhook.eventTypes.length })}</p>
                     <div className="flex flex-wrap content-start gap-1.5">
                       {webhook.eventTypes.slice(0, 3).map((eventType) => (
@@ -148,8 +156,8 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                       )}
                     </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('workspaceWebhooks.columns.modified')}</p>
+                  <div className="col-span-2 min-w-0 xl:col-span-1">
+                    <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('workspaceWebhooks.columns.modified')}</p>
                     <time className="type-caption font-semibold text-ui-text-muted" dateTime={modifiedAt}>
                       {modifiedAt
                         ? formatUserDateTime(modifiedAt, { fallback: modifiedAt })
@@ -157,7 +165,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                     </time>
                   </div>
                   {canManageWebhooks && (
-                    <div className="flex justify-end">
+                    <div className="col-start-2 row-start-1 flex justify-end xl:col-start-auto xl:row-start-auto">
                       <OverflowActionMenu
                         ref={(node) => {
                           if (node) actionButtonRefs.current.set(webhook.id, node);
@@ -184,7 +192,14 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                       </OverflowActionMenu>
                     </div>
                   )}
-                  {!canManageWebhooks && <div aria-hidden="true" className="text-right type-caption text-ui-text-muted">—</div>}
+                  {!canManageWebhooks && (
+                    <div
+                      aria-hidden="true"
+                      className="col-start-2 row-start-1 text-right type-caption text-ui-text-muted xl:col-start-auto xl:row-start-auto"
+                    >
+                      —
+                    </div>
+                  )}
                 </div>
               </div>
 

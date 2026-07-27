@@ -4,7 +4,7 @@ import { Mail, MoreVertical, Search, UserPlus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { EmptyState } from '@/components/common/EmptyState';
-import { DataTableStateRow } from '@/components/common/DataTable';
+import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@/components/common/DataTable';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { Select, SelectOption } from '@/components/common/Select';
 import { Tooltip } from '@/components/common/Tooltip';
@@ -401,23 +401,28 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
           <table className="w-full table-fixed text-left" aria-label={t('members.title')}>
             <caption className="sr-only">{t('members.description')}</caption>
             <colgroup>
-              <col className="w-[52%] md:w-[42%]" />
-              <col className="w-[33%] md:w-[22%]" />
-              <col className="hidden md:table-column md:w-[14%]" />
-              <col className="hidden md:table-column md:w-[14%]" />
-              <col className="w-[15%] md:w-[8%]" />
+              <col className="w-[52%] xl:w-[42%]" />
+              <col className="w-[33%] xl:w-[22%]" />
+              <col className="hidden xl:table-column xl:w-[14%]" />
+              <col className="hidden xl:table-column xl:w-[14%]" />
+              <col className="w-[15%] xl:w-[8%]" />
             </colgroup>
-            <thead>
-              <tr className="border-b border-ui-border">
-                <th scope="col" className="type-label px-4 py-4 sm:px-5 lg:px-6">{t('members.user')}</th>
-                <th scope="col" className="type-label px-4 py-4 sm:px-5 lg:px-6">{t('members.role')}</th>
-                <th scope="col" className="type-label hidden px-4 py-4 sm:px-5 md:table-cell lg:px-6">{t('members.source')}</th>
-                <th scope="col" className="type-label hidden px-4 py-4 sm:px-5 md:table-cell lg:px-6">{t('members.status')}</th>
-                <th scope="col" className="type-label px-2 py-4 text-right sm:px-3 lg:px-3">
+            <DataTableHeader
+              collectionState={{
+                phase: isLoadingInitial ? 'loading' : listError ? 'error' : 'ready',
+                itemCount: members.length
+              }}
+            >
+              <tr>
+                <DataTableHeaderCell>{t('members.user')}</DataTableHeaderCell>
+                <DataTableHeaderCell>{t('members.role')}</DataTableHeaderCell>
+                <DataTableHeaderCell className="hidden xl:table-cell">{t('members.source')}</DataTableHeaderCell>
+                <DataTableHeaderCell className="hidden xl:table-cell">{t('members.status')}</DataTableHeaderCell>
+                <DataTableHeaderCell numeric className="px-2 sm:px-3 lg:px-3">
                   <span className="sr-only">{t('members.manage')}</span>
-                </th>
+                </DataTableHeaderCell>
               </tr>
-            </thead>
+            </DataTableHeader>
             <tbody>
               {members.map((member) => {
                 const roleTemplate = member.roleTemplate || fallbackRoleTemplate(member.role);
@@ -426,7 +431,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                     key={member.email}
                     className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45"
                   >
-                  <td className="px-4 py-4 sm:px-5 lg:px-6">
+                  <td className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
                     <div className="flex min-w-0 items-center gap-3 lg:gap-4">
                       <div className="type-ui flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong ring-4 ring-ui-surface shadow-sm transition-colors group-hover:bg-control-activation group-hover:text-control-activation-fg">
                         {getInitials(member)}
@@ -437,17 +442,25 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                           <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                           <span className="min-w-0 truncate">{member.email}</span>
                         </p>
+                        <p className="type-caption mt-2 flex items-center gap-2 text-ui-text-muted xl:hidden">
+                          <span className="type-label">{member.source}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="inline-flex items-center gap-1.5 text-ui-text">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
+                            {t('members.active')}
+                          </span>
+                        </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-4 sm:px-5 lg:px-6">
+                  <td className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
                     <MemberRoleCell
                       member={member}
                       roleTemplate={roleTemplate}
                     />
                   </td>
-                  <td className="type-label hidden break-words px-4 py-4 sm:px-5 md:table-cell lg:px-6">{member.source}</td>
-                  <td className="hidden px-4 py-4 sm:px-5 md:table-cell lg:px-6">
+                  <td className="type-label hidden break-words px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">{member.source}</td>
+                  <td className="hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="h-2 w-2 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
                       <span className="type-row-title min-w-0 break-words">{t('members.active')}</span>

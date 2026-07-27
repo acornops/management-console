@@ -28,7 +28,40 @@ export const DataTable: React.FC<DataTableProps> = ({ caption, captionHidden = t
   </table>
 );
 
+export interface DataTableHeaderCollectionState {
+  phase: CursorCollectionPhase;
+  itemCount: number;
+  showDuringInitialLoading?: boolean;
+}
+
+export const shouldRenderDataTableHeader = ({
+  phase,
+  itemCount,
+  showDuringInitialLoading = false
+}: DataTableHeaderCollectionState): boolean => (
+  itemCount > 0 || (phase === 'loading' && showDuringInitialLoading)
+);
+
+export interface DataTableHeaderProps extends React.HTMLAttributes<HTMLTableSectionElement> {
+  collectionState?: DataTableHeaderCollectionState;
+}
+
+export const DataTableHeader: React.FC<DataTableHeaderProps> = ({
+  children,
+  className,
+  collectionState,
+  ...props
+}) => {
+  if (collectionState && !shouldRenderDataTableHeader(collectionState)) return null;
+  return (
+    <thead className={twMerge('border-b border-ui-border bg-ui-bg', className)} {...props}>
+      {children}
+    </thead>
+  );
+};
+
 export interface DataTableHeaderCellProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
+  density?: 'standard' | 'dense';
   numeric?: boolean;
   sortDirection?: 'ascending' | 'descending' | 'none';
   onSort?: () => void;
@@ -37,6 +70,7 @@ export interface DataTableHeaderCellProps extends React.ThHTMLAttributes<HTMLTab
 export const DataTableHeaderCell: React.FC<DataTableHeaderCellProps> = ({
   children,
   className,
+  density = 'standard',
   numeric = false,
   onSort,
   sortDirection,
@@ -45,11 +79,69 @@ export const DataTableHeaderCell: React.FC<DataTableHeaderCellProps> = ({
   <th
     scope="col"
     aria-sort={sortDirection}
-    className={twMerge(clsx('type-label bg-ui-bg px-4 py-3 text-ui-text-muted', numeric && 'text-right tabular-nums', className))}
+    className={twMerge(clsx(
+      'type-label bg-ui-bg text-ui-text-muted',
+      density === 'standard'
+        ? 'px-4 py-4 sm:px-6 lg:px-8 lg:py-5'
+        : 'px-4 py-4',
+      numeric && 'text-right tabular-nums',
+      className
+    ))}
     {...props}
   >
     {onSort ? <button type="button" className="control-target rounded-md px-1 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary" onClick={onSort}>{children}</button> : children}
   </th>
+);
+
+export interface DataTableGridHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  collectionState?: DataTableHeaderCollectionState;
+  showAt?: 'lg' | 'xl';
+}
+
+export const DataTableGridHeader: React.FC<DataTableGridHeaderProps> = ({
+  children,
+  className,
+  collectionState,
+  showAt = 'lg',
+  ...props
+}) => {
+  if (collectionState && !shouldRenderDataTableHeader(collectionState)) return null;
+  return (
+    <div
+      className={twMerge(clsx(
+        'hidden gap-4 border-b border-ui-border bg-ui-bg px-4 py-4 sm:px-6',
+        showAt === 'lg'
+          ? 'lg:grid lg:px-8 lg:py-5'
+          : 'xl:grid xl:px-8 xl:py-5',
+        className
+      ))}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+export interface DataTableGridHeaderCellProps extends React.HTMLAttributes<HTMLSpanElement> {
+  numeric?: boolean;
+}
+
+export const DataTableGridHeaderCell: React.FC<DataTableGridHeaderCellProps> = ({
+  children,
+  className,
+  numeric = false,
+  ...props
+}) => (
+  <span
+    className={twMerge(clsx(
+      'type-label whitespace-nowrap text-ui-text-muted',
+      numeric && 'text-right tabular-nums',
+      className
+    ))}
+    {...props}
+  >
+    {children}
+  </span>
 );
 
 export interface DataTableStateRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
@@ -74,8 +166,8 @@ export const DataTableStateRow: React.FC<DataTableStateRowProps> = ({
   phase,
   ...props
 }) => {
-  if (itemCount > 0 || phase === 'refreshing' || phase === 'loadingMore') return null;
-  const content = phase === 'loading'
+  if (itemCount > 0) return null;
+  const content = phase === 'loading' || phase === 'refreshing' || phase === 'loadingMore'
     ? loading
     : phase === 'error'
       ? error

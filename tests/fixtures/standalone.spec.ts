@@ -150,6 +150,16 @@ test('automation collection search is clear and usable on compact layouts', asyn
   await page.setViewportSize({ width: 390, height: 844 });
 
   await page.goto('/workspaces/fixture-workspace/triggers?type=acornops_event', { waitUntil: 'domcontentloaded' });
+  const triggerArticle = page.getByRole('article').filter({ hasText: 'Triage new issues' });
+  const triggerAction = triggerArticle.getByRole('button', { name: 'Trigger actions for Triage new issues' });
+  await expect(triggerAction).toBeVisible();
+  const [triggerArticleBox, triggerActionBox] = await Promise.all([
+    triggerArticle.boundingBox(),
+    triggerAction.boundingBox()
+  ]);
+  expect(triggerActionBox?.x).toBeGreaterThanOrEqual(triggerArticleBox?.x || 0);
+  expect((triggerActionBox?.x || 0) + (triggerActionBox?.width || 0))
+    .toBeLessThanOrEqual((triggerArticleBox?.x || 0) + (triggerArticleBox?.width || 0));
   const eventSearch = page.getByRole('searchbox', { name: 'Search AcornOps event triggers' });
   await expect(eventSearch).toBeVisible();
   await eventSearch.fill('production health');
@@ -158,6 +168,16 @@ test('automation collection search is clear and usable on compact layouts', asyn
   await expect(page.getByText('No event triggers match these filters', { exact: true })).toBeVisible();
 
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
+  const webhookArticle = page.getByRole('article').filter({ hasText: 'Mattermost operations' });
+  const webhookAction = webhookArticle.getByRole('button', { name: 'Webhook actions for Mattermost operations' });
+  await expect(webhookAction).toBeVisible();
+  const [webhookArticleBox, webhookActionBox] = await Promise.all([
+    webhookArticle.boundingBox(),
+    webhookAction.boundingBox()
+  ]);
+  expect(webhookActionBox?.x).toBeGreaterThanOrEqual(webhookArticleBox?.x || 0);
+  expect((webhookActionBox?.x || 0) + (webhookActionBox?.width || 0))
+    .toBeLessThanOrEqual((webhookArticleBox?.x || 0) + (webhookArticleBox?.width || 0));
   const webhookSearch = page.getByRole('searchbox', { name: 'Search outbound webhooks' });
   await expect(webhookSearch).toBeVisible();
   await webhookSearch.fill('run.failed.v1');
@@ -168,8 +188,27 @@ test('automation collection search is clear and usable on compact layouts', asyn
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-test('automation ledgers retain concise desktop headings through filtered-empty states', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 800 });
+test('mobile VM resource routes reveal the URL-selected category tab', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(
+    '/workspaces/fixture-workspace/virtual-machines/fixture-vm/network',
+    { waitUntil: 'domcontentloaded' }
+  );
+
+  const tabList = page.getByRole('tablist', { name: 'VM resource categories' });
+  const networkTab = tabList.getByRole('tab', { name: /Network/ });
+  await expect(networkTab).toHaveAttribute('aria-selected', 'true');
+  const [tabListBox, networkTabBox] = await Promise.all([
+    tabList.boundingBox(),
+    networkTab.boundingBox()
+  ]);
+  expect(networkTabBox?.x).toBeGreaterThanOrEqual(tabListBox?.x || 0);
+  expect((networkTabBox?.x || 0) + (networkTabBox?.width || 0))
+    .toBeLessThanOrEqual((tabListBox?.x || 0) + (tabListBox?.width || 0));
+});
+
+test('automation ledgers replace column headings with filtered-empty states', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
 
   await page.goto('/workspaces/fixture-workspace/triggers', { waitUntil: 'domcontentloaded' });
   const scheduleLedger = page.getByRole('region', { name: 'Workflow schedules' });
@@ -193,7 +232,7 @@ test('automation ledgers retain concise desktop headings through filtered-empty 
   await expect(scheduleActions).toBeFocused();
   await page.getByRole('searchbox', { name: 'Search schedules' }).fill('not configured');
   await expect(page.getByRole('heading', { name: 'No schedules match these filters' })).toBeVisible();
-  await expect(scheduleLedger.getByRole('columnheader')).toHaveCount(7);
+  await expect(scheduleLedger.getByRole('columnheader')).toHaveCount(0);
 
   await page.goto('/workspaces/fixture-workspace/triggers?type=acornops_event', { waitUntil: 'domcontentloaded' });
   const triggerLedger = page.getByRole('region', { name: 'Workflow event triggers' });
@@ -212,7 +251,7 @@ test('automation ledgers retain concise desktop headings through filtered-empty 
   await expect(eventTriggerActions).toBeFocused();
   await page.getByRole('searchbox', { name: 'Search AcornOps event triggers' }).fill('not configured');
   await expect(page.getByText('No event triggers match these filters', { exact: true })).toBeVisible();
-  await expect(triggerLedger.locator('span').filter({ hasText: /^Trigger$/ })).toBeVisible();
+  await expect(triggerLedger.locator('span').filter({ hasText: /^Trigger$/ })).toHaveCount(0);
 
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
   const webhookLedger = page.getByRole('region', { name: 'Configured webhooks' });
@@ -223,7 +262,7 @@ test('automation ledgers retain concise desktop headings through filtered-empty 
   await expect(webhookLedger.locator('span').filter({ hasText: /^Actions$/ })).toBeVisible();
   await page.getByRole('searchbox', { name: 'Search outbound webhooks' }).fill('not configured');
   await expect(page.getByText('No webhooks match these filters', { exact: true })).toBeVisible();
-  await expect(webhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toBeVisible();
+  await expect(webhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 

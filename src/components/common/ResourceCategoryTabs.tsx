@@ -68,7 +68,26 @@ export const ResourceCategoryTabs = <T extends string,>({
     getLabel,
     translate: (key) => t(key)
   });
+  const tabLayoutSignature = tabs
+    .map((tab) => `${tab.value}:${tab.label}:${tab.count ?? ''}`)
+    .join('|');
+  const tabListRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  React.useLayoutEffect(() => {
+    const tabList = tabListRef.current;
+    const activeIndex = tabs.findIndex((tab) => tab.isActive);
+    const activeTab = tabRefs.current[activeIndex];
+    if (!tabList || !activeTab) return;
+
+    const listRect = tabList.getBoundingClientRect();
+    const activeRect = activeTab.getBoundingClientRect();
+    const edgeInset = 1;
+    if (activeRect.left < listRect.left + edgeInset) {
+      tabList.scrollLeft -= listRect.left + edgeInset - activeRect.left;
+    } else if (activeRect.right > listRect.right - edgeInset) {
+      tabList.scrollLeft += activeRect.right - listRect.right + edgeInset;
+    }
+  }, [active, tabLayoutSignature]);
   const focusTab = (index: number) => {
     const nextTab = tabs[index];
     if (!nextTab) return;
@@ -94,6 +113,7 @@ export const ResourceCategoryTabs = <T extends string,>({
   return (
     <LayoutGroup id={layoutGroupId}>
       <div
+        ref={tabListRef}
         role="tablist"
         aria-label={ariaLabel}
         className={twMerge(clsx('no-scrollbar flex w-full max-w-full shrink-0 items-center overflow-x-auto border-b border-ui-border', className))}

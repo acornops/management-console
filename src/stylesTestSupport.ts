@@ -55,6 +55,12 @@ export const mcpServerToolsDialog = readSource(
 export const mcpServersInventory = readSource(
   'src/features/targets/admin/McpServersInventory.tsx'
 );
+export const targetSkillsInventory = readSource(
+  'src/features/targets/admin/TargetSkillsInventory.tsx'
+);
+export const targetToolsView = readSource(
+  'src/features/targets/admin/TargetToolsView.tsx'
+);
 export const chatView = [
   readSource('src/features/targets/chat/components/TargetChatView.tsx'),
   readSource('src/features/targets/chat/components/TargetChatViewBody.tsx'),
@@ -110,6 +116,7 @@ export const clusterSettingsView = readSource(
 export const traceFooter = readSource('src/features/targets/chat/components/TraceFooter.tsx');
 export const markdownComponents = readSource('src/features/targets/chat/lib/markdown.tsx');
 export const buttonComponent = readSource('src/components/common/Button.tsx');
+export const dataTable = readSource('src/components/common/DataTable.tsx');
 export const pageComposition = readSource('src/components/common/PageComposition.tsx');
 export const resourceCategoryTabs = readSource('src/components/common/ResourceCategoryTabs.tsx');
 export const addClusterModal = readSource('src/components/kubernetes-clusters/AddClusterModal.tsx');
@@ -125,6 +132,13 @@ export const loginPasswordAuthForm = readSource('src/pages/login/LoginPasswordAu
 export const loginAuthPanelParts = readSource('src/pages/login/LoginAuthPanelParts.tsx');
 export const fieldValidationMessage = readSource('src/components/common/FieldValidationMessage.tsx');
 export const auditLogPage = readSource('src/pages/WorkspaceAuditLogPage.tsx');
+export const workspaceApprovalsPage = readSource('src/pages/WorkspaceApprovalsPage.tsx');
+export const workspaceSchedulesPage = readSource('src/pages/WorkspaceSchedulesPage.tsx');
+export const workspaceEventTriggersPage = readSource('src/pages/WorkspaceEventTriggersPage.tsx');
+export const webhookList = readSource('src/features/webhooks/WebhookList.tsx');
+export const workspaceRunsPage = readSource('src/pages/WorkspaceRunsPage.tsx');
+export const workflowActivityUi = readSource('src/features/workflow-activity/WorkflowActivityUi.tsx');
+export const virtualMachinesListView = readSource('src/pages/virtual-machines/VirtualMachinesListView.tsx');
 export const workloadsExplorer = readSource(
   'src/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer.tsx'
 );

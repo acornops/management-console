@@ -1,6 +1,7 @@
 import React from 'react';
 import { MenuItem, Switch } from '@/components/common/FormControls';
 import { EmptyState } from '@/components/common/EmptyState';
+import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
 import { createPortal } from 'react-dom';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -287,15 +288,15 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
               <col className="w-[21%]" />
               <col className="w-[11%]" />
             </colgroup>
-            <thead>
-              <tr className="border-b border-ui-border">
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('targetSkills.skillColumn')}</th>
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('targetSkills.assistantStateColumn')}</th>
-                <th scope="col" className="type-label px-4 py-5 sm:px-6 lg:px-8">{t('targetSkills.enabledColumn')}</th>
-                <th scope="col" className="type-label hidden px-4 py-5 sm:px-6 md:table-cell lg:px-8">{t('targetSkills.filesColumn')}</th>
-                <th scope="col" className="type-label px-4 py-5 text-right sm:px-6 lg:px-8">{t('targetSkills.actionsColumn')}</th>
+            <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredSkills.length }}>
+              <tr>
+                <DataTableHeaderCell>{t('targetSkills.skillColumn')}</DataTableHeaderCell>
+                <DataTableHeaderCell>{t('targetSkills.assistantStateColumn')}</DataTableHeaderCell>
+                <DataTableHeaderCell>{t('targetSkills.enabledColumn')}</DataTableHeaderCell>
+                <DataTableHeaderCell className="hidden md:table-cell">{t('targetSkills.filesColumn')}</DataTableHeaderCell>
+                <DataTableHeaderCell numeric>{t('targetSkills.actionsColumn')}</DataTableHeaderCell>
               </tr>
-            </thead>
+            </DataTableHeader>
             <tbody>
               {filteredSkills.length > 0 ? filteredSkills.map((skill) => (
                 <TargetSkillRow

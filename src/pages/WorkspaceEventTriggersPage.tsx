@@ -5,6 +5,7 @@ import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { CollectionState } from '@/components/common/CollectionState';
+import { DataTableGridHeader, DataTableGridHeaderCell } from '@/components/common/DataTable';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
 import { EmptyState } from '@/components/common/EmptyState';
 import { InlineAlert } from '@/components/common/InlineAlert';
@@ -15,10 +16,7 @@ import { Select, type SelectOption } from '@/components/common/Select';
 import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
-import {
-  listWorkspaceWorkflows,
-  type WorkflowApiDefinition
-} from '@/services/control-plane/workflowApi';
+import { listWorkspaceWorkflows, type WorkflowApiDefinition } from '@/services/control-plane/workflowApi';
 import {
   createWorkflowEventTrigger,
   deleteWorkflowEventTrigger,
@@ -33,7 +31,7 @@ import {
 import type { Workspace } from '@/types';
 import type { WorkflowTriggerType } from '@/utils/routes';
 import { humanizeWorkflowParameterKey } from '@/pages/WorkspaceWorkflowsPage.launchFields';
-import { WorkspaceEventTriggerCard } from '@/pages/WorkspaceEventTriggerCard';
+import { WorkspaceEventTriggerCard, workspaceEventTriggerLedgerGridClass } from '@/pages/WorkspaceEventTriggerCard';
 import { WorkspaceEventTriggerDeleteDialog } from '@/pages/WorkspaceEventTriggerDeleteDialog';
 import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
 import { useWorkflowTriggerCreateIntent } from '@/pages/useWorkflowTriggerCreateIntent';
@@ -436,13 +434,13 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         className="mb-4"
       />
       <DataSurface aria-label={t('eventTriggers.listTitle')}>
-        <div className="hidden grid-cols-[minmax(13rem,0.9fr)_minmax(12rem,0.75fr)_minmax(15rem,1fr)_minmax(14rem,0.9fr)_minmax(3rem,auto)] gap-4 border-b border-ui-border bg-ui-bg px-[var(--surface-padding)] py-2.5 lg:grid">
-          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.trigger')}</span>
-          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.workflow')}</span>
-          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.configuration')}</span>
-          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workflowActivity.activity')}</span>
-          <span className="type-micro-label whitespace-nowrap text-right text-ui-text-muted">{t('eventTriggers.columns.actions')}</span>
-        </div>
+        <DataTableGridHeader showAt="xl" className={workspaceEventTriggerLedgerGridClass} collectionState={{ phase: workspaceStateCurrent ? phase : 'loading', itemCount: visibleTriggers.length }}>
+          <DataTableGridHeaderCell>{t('eventTriggers.columns.trigger')}</DataTableGridHeaderCell>
+          <DataTableGridHeaderCell>{t('eventTriggers.columns.workflow')}</DataTableGridHeaderCell>
+          <DataTableGridHeaderCell>{t('eventTriggers.columns.configuration')}</DataTableGridHeaderCell>
+          <DataTableGridHeaderCell>{t('workflowActivity.activity')}</DataTableGridHeaderCell>
+          <DataTableGridHeaderCell numeric>{t('eventTriggers.columns.actions')}</DataTableGridHeaderCell>
+        </DataTableGridHeader>
         <CollectionState
           phase={workspaceStateCurrent ? phase : 'loading'}
           itemCount={visibleTriggers.length}
