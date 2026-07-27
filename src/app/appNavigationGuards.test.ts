@@ -18,8 +18,12 @@ describe('app navigation guards', () => {
   it('treats AI settings, but not workspace settings, as a workspace data route', () => {
     expect(isWorkspaceDataRoute({ kind: 'workspaceAiSettings', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceSettings', workspaceId: 'workspace-1' })).toBe(false);
-    expect(isWorkspaceDataRoute({ kind: 'workspaceSchedules', workspaceId: 'workspace-1' })).toBe(true);
-    expect(isWorkspaceDataRoute({ kind: 'workspaceEventTriggers', workspaceId: 'workspace-1' })).toBe(true);
+    expect(isWorkspaceDataRoute({
+      kind: 'workspaceTriggers',
+      workspaceId: 'workspace-1',
+      triggerType: 'schedule'
+    })).toBe(true);
+    expect(isWorkspaceDataRoute({ kind: 'workspaceRuns', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceApprovals', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceWebhooks', workspaceId: 'workspace-1' })).toBe(true);
   });

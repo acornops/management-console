@@ -13,6 +13,8 @@ interface TraceFooterProps {
   setExpanded: (runId: string, expanded: boolean) => void;
   suppressCompactReasoningSummary?: boolean;
   compactStatusOnly?: boolean;
+  activityLabelOverride?: string;
+  activeOverride?: boolean;
   className?: string;
 }
 
@@ -155,12 +157,16 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   setExpanded,
   suppressCompactReasoningSummary = false,
   compactStatusOnly = false,
+  activityLabelOverride,
+  activeOverride,
   className
 }) => {
   const contentId = React.useId();
   const shouldReduceMotion = useReducedMotion();
-  const isInProgress = trace.status === 'connecting' || trace.status === 'running';
-  const statusLabel = getTraceActivityLabel(trace);
+  const isInProgress = activeOverride ?? (
+    trace.status === 'connecting' || trace.status === 'running'
+  );
+  const statusLabel = activityLabelOverride || getTraceActivityLabel(trace);
   const completedToolCalls = trace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length;
   const skillLoads = trace.skillLoads || [];
   const reasoningSummaryCount = trace.reasoningSummaries?.length || 0;

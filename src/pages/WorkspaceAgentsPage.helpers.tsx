@@ -46,9 +46,6 @@ export const statusTone = (status: AgentDefinition['status']): 'success' | 'warn
   return 'danger';
 };
 
-export const isSystemProvidedAgent = (agent: Pick<AgentDefinition, 'origin'>): boolean =>
-  agent.origin.type === 'template';
-
 export const splitInput = (value: string): string[] =>
   value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
 
@@ -113,9 +110,7 @@ export const mapApiAgent = (
   ownerLabelsByUserId: Map<string, string> = new Map()
 ): AgentDefinition => {
   const ownerUserId = item.ownerUserId;
-  const owner = item.origin.type === 'template'
-    ? 'AcornOps'
-    : ownerUserId ? ownerLabelsByUserId.get(ownerUserId) || ownerUserId : workspaceName;
+  const owner = ownerUserId ? ownerLabelsByUserId.get(ownerUserId) || ownerUserId : workspaceName;
   return {
     id: item.id,
     workspaceId: item.workspaceId,

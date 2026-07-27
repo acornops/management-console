@@ -48,7 +48,7 @@ function normalizeAutomationTemplate(value: unknown): AutomationTemplateApi {
     || !Array.isArray(template.setupSteps)
     || !Array.isArray(template.blockerCodes)
   ) {
-    throw new Error('The automation template catalog returned an invalid template definition.');
+    throw new Error('The workflow recommendation catalog returned an invalid recommendation.');
   }
   return template as unknown as AutomationTemplateApi;
 }
@@ -61,7 +61,7 @@ export function normalizeAutomationTemplateCatalog(value: unknown): {
     ? value as Record<string, unknown>
     : {};
   if (!Array.isArray(catalog.templates) || !Array.isArray(catalog.installations)) {
-    throw new Error('The automation template catalog returned an invalid response.');
+    throw new Error('The workflow recommendation catalog returned an invalid response.');
   }
   return {
     templates: catalog.templates.map(normalizeAutomationTemplate),

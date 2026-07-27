@@ -24,4 +24,22 @@ describe('SearchFilterFrame', () => {
     expect(markup).toContain('data-search-filter-frame-summary="true"');
     expect(markup).toContain('lg:flex-nowrap');
   });
+
+  it('keeps dense three-filter toolbars stacked until 2xl', () => {
+    const markup = renderToStaticMarkup(
+      <SearchFilterFrame
+        search={<input aria-label="Search" />}
+        filterControls={[
+          <button key="status">Status</button>,
+          <button key="source">Source</button>,
+          <button key="workflow">Workflow</button>
+        ]}
+        resultSummary={<span role="status">3 results</span>}
+      />
+    );
+
+    expect(markup).toContain('sm:grid-cols-2 lg:grid-cols-3 2xl:contents');
+    expect(markup).toContain('2xl:w-[clamp(10.5rem,14vw,14rem)]');
+    expect(markup).toContain('2xl:flex-nowrap');
+  });
 });

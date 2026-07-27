@@ -11,7 +11,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
-import { appendWorkflowSearchTag, isSystemProvidedWorkflow, type WorkflowAgentReference, type WorkflowDefinition, type WorkflowPrimaryAction, type WorkflowTab } from '@/pages/workflows/workflowModel';
+import { appendWorkflowSearchTag, type WorkflowAgentReference, type WorkflowDefinition, type WorkflowPrimaryAction, type WorkflowTab } from '@/pages/workflows/workflowModel';
 import {
   titleFromInputName,
   workflowStatusTone
@@ -20,9 +20,7 @@ import { formatUserDateTime } from '@/utils/dateTime';
 import type { WorkflowCapabilitiesPreview, WorkflowCapabilityToolPreview, WorkflowMcpRequirementPreview } from '@/services/control-plane/workflowApi';
 
 function workflowProvenanceLabel(workflow: WorkflowDefinition): string {
-  return isSystemProvidedWorkflow(workflow)
-    ? 'Built-in'
-    : workflow.owner;
+  return workflow.owner;
 }
 
 function formatWorkflowTimestamp(value: string, fallback: string): string {
@@ -85,7 +83,6 @@ export const WorkflowTagsEditor: React.FC<{
 export const WorkflowLaunchActions: React.FC<{
   activating: boolean;
   canManageWorkflowScope: boolean;
-  customizing: boolean;
   isWriteCapable: boolean;
   launchAcknowledged: boolean;
   launchBlocker: string | null;
@@ -94,14 +91,12 @@ export const WorkflowLaunchActions: React.FC<{
   needsLaunchAcknowledgement: boolean;
   onAcknowledgementChange: (checked: boolean) => void;
   onActivate: () => void;
-  onCustomize: () => void;
+  onEdit: () => void;
   onLaunch: () => void;
   onSchedule: () => void;
-  onSetup: () => void;
   primaryAction: WorkflowPrimaryAction;
-  showCustomize: boolean;
   tags: string[];
-}> = ({ activating, canManageWorkflowScope, customizing, isWriteCapable, launchAcknowledged, launchBlocker, launchFields, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onActivate, onCustomize, onLaunch, onSchedule, onSetup, primaryAction, showCustomize, tags }) => {
+}> = ({ activating, canManageWorkflowScope, isWriteCapable, launchAcknowledged, launchBlocker, launchFields, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onActivate, onEdit, onLaunch, onSchedule, primaryAction, tags }) => {
   const { t } = useTranslation();
   const visibleLaunchBlocker = primaryAction === 'launch' ? launchBlocker : null;
 
@@ -125,17 +120,13 @@ export const WorkflowLaunchActions: React.FC<{
     </div>
     <div className="grid gap-1 sm:justify-items-end">
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-        {showCustomize && <Button className="w-full whitespace-nowrap sm:w-auto" variant="tertiary" size="md" onClick={onCustomize} disabled={!canManageWorkflowScope || customizing} title={!canManageWorkflowScope ? t('agentsWorkflows.workflowActions.customizePermission') : undefined}>
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onEdit} disabled={!canManageWorkflowScope}>
           <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
-          {customizing ? t('agentsWorkflows.workflowActions.customizing') : t('agentsWorkflows.workflowActions.customize')}
-        </Button>}
+          {t('agentsWorkflows.workflowActions.edit')}
+        </Button>
         {primaryAction === 'launch' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onSchedule} disabled={!canManageWorkflowScope} aria-describedby={!canManageWorkflowScope ? 'workflow-schedule-blocker' : undefined}>
           <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
-          Schedule workflow
-        </Button>}
-        {primaryAction === 'setup' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="primary" size="md" onClick={onSetup}>
-          <ICONS.Settings className="h-4 w-4" aria-hidden="true" />
-          {t('agentsWorkflows.workflowActions.completeSetup')}
+          {t('agentsWorkflows.workflowActions.schedule')}
         </Button>}
         {primaryAction === 'activate' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onActivate} disabled={!canManageWorkflowScope || activating} aria-describedby={!canManageWorkflowScope ? 'workflow-activate-blocker' : undefined}>
           <ICONS.Zap className="h-4 w-4" aria-hidden="true" />
@@ -143,7 +134,7 @@ export const WorkflowLaunchActions: React.FC<{
         </Button>}
         {primaryAction === 'launch' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onLaunch} disabled={launching || Boolean(visibleLaunchBlocker) || needsLaunchAcknowledgement} title={visibleLaunchBlocker || undefined} aria-describedby={visibleLaunchBlocker ? 'workflow-launch-blocker' : needsLaunchAcknowledgement ? 'workflow-launch-acknowledgement' : undefined}>
           <ICONS.Send className="h-4 w-4" aria-hidden="true" />
-          {launching ? 'Starting...' : 'Launch workflow'}
+          {launching ? t('agentsWorkflows.workflowActions.starting') : t('agentsWorkflows.workflowActions.launch')}
         </Button>}
       </div>
       {primaryAction === 'launch' && !canManageWorkflowScope && <p id="workflow-schedule-blocker" className="text-xs font-semibold text-ui-text-muted sm:text-right">You need manage_workflows to schedule workflows.</p>}
@@ -225,7 +216,7 @@ export const WorkflowLibraryList: React.FC<{
     {ready && visibleWorkflows.length === 0 && !loadError && (
       <MasterDetailEmptyState
         title={workflows.length === 0 ? 'No workflows configured.' : 'No workflows match this search.'}
-        description={workflows.length === 0 ? 'Install a reviewed template to start quickly, or create a workflow with your own Agents, access, and governed run policy.' : 'Clear the search to return to the full workflow library.'}
+        description={workflows.length === 0 ? 'Add a recommended workflow to start quickly, or create one with your own Agents, access, and governed run policy.' : 'Clear the search to return to the full workflow library.'}
       />
     )}
   </section>
@@ -277,7 +268,6 @@ export const WorkflowDeleteDialog: React.FC<{
       <div className="space-y-4 px-5 py-5">
         <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-medium leading-6 text-status-danger-text">
           Deleting {deleteTargetWorkflow.name} removes the workflow definition for future runs. Existing run records and audit events are retained.
-          {isSystemProvidedWorkflow(deleteTargetWorkflow) && ' This starter will not be restored automatically.'}
         </div>
         <div>
           <label htmlFor="delete-workflow-confirmation-input" className="mb-1.5 block px-1 text-xs font-bold text-ui-text-muted">

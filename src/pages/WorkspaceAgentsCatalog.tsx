@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/common/PageComposition';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
-import { isSystemProvidedAgent, statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
+import { statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
 import { AppPaths } from '@/utils/routes';
 
 export type AgentFocusFilter = 'all' | 'active' | 'draft' | 'disabled';
@@ -221,14 +221,9 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                       <span className="block min-w-0 pr-8 lg:pr-0">
                         <span className="flex min-w-0 flex-wrap items-center gap-2">
                           <span className="type-row-title break-words text-ui-text transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong [overflow-wrap:anywhere]">{agent.name}</span>
-                          {isSystemProvidedAgent(agent) && (
-                            <span className="type-micro-label shrink-0 rounded-full bg-accent-soft/45 px-2 py-0.5 text-accent-readable">
-                              {t('common.providedByAcornOps')}
-                            </span>
-                          )}
                         </span>
                         <span className="type-caption mt-1 block break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.description}</span>
-                        {!isSystemProvidedAgent(agent) && <span className="type-caption mt-1.5 block break-words font-semibold text-ui-text-muted [overflow-wrap:anywhere]">{agent.owner}</span>}
+                        <span className="type-caption mt-1.5 block break-words font-semibold text-ui-text-muted [overflow-wrap:anywhere]">{agent.owner}</span>
                       </span>
                     </CatalogCell>
                     <CatalogCell label={t('agentsWorkflows.agents.fields.status')}>

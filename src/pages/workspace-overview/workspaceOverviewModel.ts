@@ -17,6 +17,7 @@ export interface WorkspaceOverviewIssue {
   lastSeenAt: string;
   detail: string;
   evidence: string;
+  workflowActivity?: ControlPlaneIssueItem['workflowActivity'];
 }
 
 export interface WorkspaceOverviewTargetCard {
@@ -99,7 +100,8 @@ export function mapControlPlaneIssueToOverviewIssue(
     firstSeenAt: item.firstSeenAt,
     lastSeenAt: item.lastSeenAt,
     detail: issueDetail(item, t),
-    evidence: compactText(item.reason) || compactText(item.summary)
+    evidence: compactText(item.reason) || compactText(item.summary),
+    ...(item.workflowActivity ? { workflowActivity: item.workflowActivity } : {})
   };
 }
 

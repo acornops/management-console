@@ -2,7 +2,7 @@ export type WorkflowStatus = 'active' | 'draft' | 'paused';
 export type WorkflowCapabilityMode = 'read_only' | 'read_write';
 export type WorkflowCapabilityRestrictionMode = 'inherit' | 'restrict';
 export type WorkflowTab = 'overview' | 'agents' | 'capabilities' | 'runs' | 'settings';
-export type WorkflowPrimaryAction = 'launch' | 'activate' | 'setup';
+export type WorkflowPrimaryAction = 'launch' | 'activate';
 
 export interface WorkflowParameter {
   key: string;
@@ -12,8 +12,9 @@ export interface WorkflowParameter {
 
 export interface WorkflowRunRecord {
   id: string;
+  executionId?: string;
   runId?: string;
-  status: 'queued' | 'dispatching' | 'running' | 'waiting_approval' | 'completed' | 'failed' | 'cancelled' | 'cancelling';
+  status: 'queued' | 'dispatching' | 'running' | 'waiting_approval' | 'needs_review' | 'completed' | 'failed' | 'cancelled' | 'cancelling';
   actor: string;
   duration: string;
   approvals: number;
@@ -73,10 +74,6 @@ export interface WorkflowDefinition {
   };
   starterPrompt: string;
   runs: WorkflowRunRecord[];
-}
-
-export function isSystemProvidedWorkflow(workflow: Pick<WorkflowDefinition, 'origin' | 'source'>): boolean {
-  return workflow.origin?.type === 'template' || workflow.source === 'system';
 }
 
 export function getWorkflowDeleteBlocker(workflow: WorkflowDefinition | undefined, canManage: boolean): string {
@@ -151,7 +148,6 @@ export function getOptimisticWorkflowRunStatus(workflow: WorkflowDefinition): Wo
 }
 
 export function getWorkflowPrimaryAction(workflow: WorkflowDefinition): WorkflowPrimaryAction {
-  if (workflow.readiness?.status && workflow.readiness.status !== 'ready') return 'setup';
   return workflow.status === 'active' ? 'launch' : 'activate';
 }
 

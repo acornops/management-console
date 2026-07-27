@@ -27,11 +27,12 @@ describe('workspace navigation model', () => {
     expect(experimental).toContain('bg-status-warning-soft');
   });
 
-  it('groups all permitted destinations and marks Schedules as the current Workflows child', () => {
+  it('groups all permitted destinations and marks Triggers as the current Workflows child', () => {
     const groups = getWorkspaceNavigationGroups({
       workspace: workspace({ read_workspace_data: true, read_audit_log: true }),
-      activeResourceNav: 'schedules',
+      activeResourceNav: 'triggers',
       pendingApprovalCount: 100,
+      openWorkflowRunCount: 3,
       t
     });
 
@@ -48,10 +49,11 @@ describe('workspace navigation model', () => {
       path: AppPaths.workspaceWorkflows('workspace-1'),
       children: [
         { id: 'workflowLibrary', path: AppPaths.workspaceWorkflows('workspace-1'), current: false },
-        { id: 'workflowSchedules', path: AppPaths.workspaceSchedules('workspace-1'), current: true },
-        { id: 'workflowEventTriggers', path: AppPaths.workspaceEventTriggers('workspace-1'), current: false }
+        { id: 'workflowRuns', path: AppPaths.workspaceRuns('workspace-1'), current: false, badge: 3 },
+        { id: 'workflowTriggers', path: AppPaths.workspaceTriggers('workspace-1'), current: true }
       ]
     });
+    expect(workflows?.badge).toBe(3);
     expect(groups.flatMap((group) => group.items).find((item) => item.id === 'approvals')?.badge).toBe(100);
   });
 
@@ -82,8 +84,8 @@ describe('workspace navigation model', () => {
     const workflows = workflowGroups.flatMap((group) => group.items).find((item) => item.id === 'workflows');
     expect(workflows?.children?.map((child) => [child.id, child.current])).toEqual([
       ['workflowLibrary', true],
-      ['workflowSchedules', false],
-      ['workflowEventTriggers', false]
+      ['workflowRuns', false],
+      ['workflowTriggers', false]
     ]);
 
     const overviewGroups = getWorkspaceNavigationGroups({
@@ -114,7 +116,7 @@ describe('workspace navigation model', () => {
 
   it('styles Workflows as an active parent while reserving page semantics for its child', () => {
     const parent = renderToStaticMarkup(<WorkspaceSidebarNavLink active current={false} href="/base/workspaces/1/workflows" icon={<span />} label="Workflows" onClick={() => undefined} />);
-    const child = renderToStaticMarkup(<WorkspaceSidebarNavLink active current nested href="/base/workspaces/1/schedules" label="Schedules" onClick={() => undefined} />);
+    const child = renderToStaticMarkup(<WorkspaceSidebarNavLink active current nested href="/base/workspaces/1/triggers" label="Triggers" onClick={() => undefined} />);
     expect(parent).toContain('bg-ui-bg');
     expect(parent).not.toContain('aria-current');
     expect(child).toContain('aria-current="page"');

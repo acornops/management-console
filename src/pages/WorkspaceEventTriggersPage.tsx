@@ -5,14 +5,13 @@ import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import { Button } from '@/components/common/Button';
 import { Checkbox } from '@/components/common/Checkbox';
 import { CollectionState } from '@/components/common/CollectionState';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
 import { EmptyState } from '@/components/common/EmptyState';
 import { InlineAlert } from '@/components/common/InlineAlert';
-import { InlineConfirmation } from '@/components/common/InlineConfirmation';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
 import { DrawerFrame } from '@/components/common/OverlayFrames';
-import { DataSurface, PageHeader, PageShell } from '@/components/common/PageComposition';
+import { DataSurface, PageShell } from '@/components/common/PageComposition';
 import { Select, type SelectOption } from '@/components/common/Select';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
@@ -32,8 +31,13 @@ import {
   type WorkflowEventTriggerSourceType
 } from '@/services/control-plane/workflowEventTriggerApi';
 import type { Workspace } from '@/types';
-import { formatUserDateTime } from '@/utils/dateTime';
+import type { WorkflowTriggerType } from '@/utils/routes';
 import { humanizeWorkflowParameterKey } from '@/pages/WorkspaceWorkflowsPage.launchFields';
+import { WorkspaceEventTriggerCard } from '@/pages/WorkspaceEventTriggerCard';
+import { WorkspaceEventTriggerDeleteDialog } from '@/pages/WorkspaceEventTriggerDeleteDialog';
+import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
+import { useWorkflowTriggerCreateIntent } from '@/pages/useWorkflowTriggerCreateIntent';
+import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import {
   draftFromTrigger,
   emptyTriggerDraft,
@@ -45,26 +49,24 @@ import {
 
 interface WorkspaceEventTriggersPageProps {
   workspace: Workspace;
+  sourceType: WorkflowEventTriggerSourceType;
+  createTriggerType?: WorkflowTriggerType;
+  navigate: (path: string) => void;
 }
+
+type TriggerStatusFilter = 'all' | 'enabled' | 'paused';
 
 const inputClassName = formInputClassName('mt-2');
 const textareaClassName = formTextareaClassName('mt-2');
 
-function triggerStatusTone(trigger: WorkflowEventTrigger): React.ComponentProps<typeof StatusBadge>['tone'] {
-  if (trigger.status === 'paused' && trigger.lastStatus === 'auto_paused') return 'warning';
-  if (trigger.status === 'enabled') return 'success';
-  return 'neutral';
-}
-
-function lastStatusTone(status?: WorkflowEventTrigger['lastStatus']): React.ComponentProps<typeof StatusBadge>['tone'] {
-  if (status === 'dispatched') return 'success';
-  if (status === 'failed' || status === 'rejected') return 'danger';
-  if (status === 'auto_paused') return 'warning';
-  return 'neutral';
-}
-
-export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProps> = ({ workspace }) => {
+export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProps> = ({
+  workspace,
+  sourceType,
+  createTriggerType,
+  navigate
+}) => {
   const { t } = useTranslation();
+  const urlSearch = useUrlSearchState();
   const [triggerPage, setTriggerPage] = useState<WorkflowEventTriggerListResponse | null>(null);
   const [workflows, setWorkflows] = useState<WorkflowApiDefinition[]>([]);
   const [stateWorkspaceId, setStateWorkspaceId] = useState(workspace.id);
@@ -79,8 +81,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
   const [pendingRotateId, setPendingRotateId] = useState('');
   const [secretDisclosure, setSecretDisclosure] = useState<SecretDisclosure | null>(null);
   const [copyFeedback, setCopyFeedback] = useState('');
-  const deleteButtonRefs = useRef(new Map<string, HTMLButtonElement>());
-  const rotateButtonRefs = useRef(new Map<string, HTMLButtonElement>());
+  const actionButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const currentWorkspaceId = useRef(workspace.id);
   const refreshSequence = useRef(0);
   const mutationSequence = useRef(0);
@@ -128,6 +129,12 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
 
   const workspaceStateCurrent = stateWorkspaceId === workspace.id;
   const triggers = workspaceStateCurrent ? triggerPage?.items || [] : [];
+  const query = urlSearch.get('q') || '';
+  const status = urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'paused'
+    ? urlSearch.get('status') as Exclude<TriggerStatusFilter, 'all'>
+    : 'all';
+  const workflowFilter = urlSearch.get('workflow') || 'all';
+  const normalizedQuery = query.trim().toLowerCase();
   const activeWorkflows = useMemo(
     () => workspaceStateCurrent ? workflows.filter((workflow) => workflow.status === 'active') : [],
     [workflows, workspaceStateCurrent]
@@ -140,6 +147,35 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     })) : [],
     [workflows, workspaceStateCurrent]
   );
+  const sourceTriggers = useMemo(() => triggers.filter(
+    (trigger) => trigger.sourceType === sourceType
+  ), [sourceType, triggers]);
+  const searchLabel = t(sourceType === 'webhook'
+    ? 'eventTriggers.filters.searchIncomingWebhooks'
+    : 'eventTriggers.filters.searchAcornOpsEvents');
+  const visibleTriggers = useMemo(() => sourceTriggers.filter((trigger) => {
+    if (status !== 'all' && trigger.status !== status) return false;
+    if (workflowFilter !== 'all' && trigger.workflowId !== workflowFilter) return false;
+    if (!normalizedQuery) return true;
+    const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
+    return [
+      trigger.name,
+      workflow?.name,
+      trigger.endpointUrl,
+      trigger.eventType,
+      trigger.sourceType === 'webhook'
+        ? t('eventTriggers.source.webhook')
+        : t('eventTriggers.source.acornopsEvent')
+    ].some((value) => value?.toLowerCase().includes(normalizedQuery));
+  }), [normalizedQuery, sourceTriggers, status, t, workflowFilter, workflows]);
+  const hasActiveFilters = Boolean(normalizedQuery || status !== 'all' || workflowFilter !== 'all');
+  const clearFilters = () => {
+    updateUrlSearch(
+      { q: null, status: null, workflow: null },
+      { replace: true }
+    );
+    window.requestAnimationFrame(() => document.getElementById('workflow-triggers-search')?.focus());
+  };
   const selectedWorkflow = workspaceStateCurrent
     ? workflows.find((workflow) => workflow.id === draft.workflowId)
     : undefined;
@@ -149,23 +185,25 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
   const missingIssueBinding = draft.sourceType === 'acornops_event'
     ? selectedWorkflow?.parameters.find((parameter) => !draft.inputBindings[parameter.key])
     : undefined;
-  const canSave = Boolean(
-    draft.name.trim()
-    && draft.workflowId
-    && !unsupportedIssueParameter
-    && !missingIssueBinding
-  );
+  const canSave = Boolean(draft.name.trim() && draft.workflowId
+    && !unsupportedIssueParameter && !missingIssueBinding);
+  const deleteTargetTrigger = pendingDeleteId
+    ? triggers.find((trigger) => trigger.id === pendingDeleteId)
+    : undefined;
 
   const openCreate = () => {
     const workflow = activeWorkflows[0];
     setDraft({
       ...emptyTriggerDraft(),
+      sourceType,
       workflowId: workflow?.id || '',
       approvedContextGrants: workflow?.capabilityPolicy.contextGrants.join('\n') || ''
     });
     setMutationError('');
     setDrawerOpen(true);
   };
+
+  useWorkflowTriggerCreateIntent(createTriggerType, sourceType, phase === 'ready' && canManage && Boolean(activeWorkflows.length), openCreate);
 
   const openEdit = (trigger: WorkflowEventTrigger) => {
     const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
@@ -295,10 +333,6 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     }
   };
 
-  const setSourceType = (sourceType: WorkflowEventTriggerSourceType) => {
-    setDraft((current) => ({ ...current, sourceType, inputBindings: {} }));
-  };
-
   const updateWorkflow = (workflowId: string) => {
     const workflow = workflows.find((candidate) => candidate.id === workflowId);
     setDraft((current) => ({
@@ -311,24 +345,24 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
 
   return (
     <PageShell>
-      <PageHeader
-        title={t('eventTriggers.title')}
-        description={t('eventTriggers.subtitle', { workspace: workspace.name })}
-        actions={<>
-          <Button size="md" variant="secondary" onClick={() => void refresh()} disabled={phase === 'loading' || phase === 'refreshing'}>
-            <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
-            {t('common.refresh')}
-          </Button>
-          <Button size="md" variant="primary" onClick={openCreate} disabled={!canManage || !activeWorkflows.length}>
-            <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
-            {t('eventTriggers.create')}
-          </Button>
-        </>}
+      <WorkflowTriggersPageHeader
+        workspace={workspace}
+        currentType={sourceType}
+        createDisabled={!canManage || !activeWorkflows.length}
+        refreshDisabled={phase === 'loading' || phase === 'refreshing'}
+        navigate={navigate}
+        onCreateCurrent={openCreate}
+        onRefresh={() => void refresh()}
       />
 
+      <div
+        id={`workflow-trigger-type-${sourceType}-panel`}
+        role="tabpanel"
+        aria-labelledby={`workflow-trigger-type-${sourceType}-tab`}
+      >
       {!canManage && <InlineAlert tone="neutral" className="mb-5">{t('eventTriggers.permissionNotice')}</InlineAlert>}
       {!activeWorkflows.length && phase === 'ready' && <InlineAlert tone="warning" className="mb-5">{t('eventTriggers.noActiveWorkflows')}</InlineAlert>}
-      {workspaceStateCurrent && mutationError && <InlineAlert tone="danger" className="mb-5">{mutationError}</InlineAlert>}
+      {workspaceStateCurrent && mutationError && !deleteTargetTrigger && <InlineAlert tone="danger" className="mb-5">{mutationError}</InlineAlert>}
       {copyFeedback && <p role="status" className="sr-only">{copyFeedback}</p>}
 
       {workspaceStateCurrent && secretDisclosure && (
@@ -362,23 +396,68 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         </section>
       )}
 
-      <DataSurface
-        heading={t('eventTriggers.listTitle')}
-        description={t('eventTriggers.listDescription')}
-        count={t('eventTriggers.count', { count: triggers.length })}
-        icon={<ICONS.Zap className="h-5 w-5" aria-hidden="true" />}
-      >
+      <DiscoveryFilterBar
+        idPrefix="workflow-triggers"
+        query={query}
+        queryLabel={searchLabel}
+        queryPlaceholder={searchLabel}
+        queryClearLabel={t('common.clearSearch')}
+        resultSummary={hasActiveFilters
+          ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: sourceTriggers.length })
+          : t('eventTriggers.count', { count: sourceTriggers.length })}
+        filters={[
+          createDiscoveryFilterGroup<TriggerStatusFilter>({
+            id: 'status',
+            label: t('eventTriggers.filters.status'),
+            value: status,
+            defaultValue: 'all',
+            options: [
+              { value: 'all', label: t('eventTriggers.filters.allStatuses'), count: sourceTriggers.length },
+              { value: 'enabled', label: t('eventTriggers.status.enabled'), count: sourceTriggers.filter((trigger) => trigger.status === 'enabled').length },
+              { value: 'paused', label: t('eventTriggers.status.paused'), count: sourceTriggers.filter((trigger) => trigger.status === 'paused').length }
+            ],
+            onChange: (value) => updateUrlSearch({ status: value === 'all' ? null : value })
+          }),
+          createDiscoveryFilterGroup<string>({
+            id: 'workflow',
+            label: t('eventTriggers.filters.workflow'),
+            value: workflowFilter,
+            defaultValue: 'all',
+            options: [
+              { value: 'all', label: t('eventTriggers.filters.allWorkflows') },
+              ...workflows.map((workflow) => ({ value: workflow.id, label: workflow.name }))
+            ],
+            onChange: (value) => updateUrlSearch({ workflow: value === 'all' ? null : value })
+          })
+        ]}
+        clearAllLabel={t('common.clearAll')}
+        onQueryChange={(value) => updateUrlSearch({ q: value || null }, { replace: true })}
+        onClearAll={clearFilters}
+        className="mb-4"
+      />
+      <DataSurface aria-label={t('eventTriggers.listTitle')}>
+        <div className="hidden grid-cols-[minmax(13rem,0.9fr)_minmax(12rem,0.75fr)_minmax(15rem,1fr)_minmax(14rem,0.9fr)_minmax(3rem,auto)] gap-4 border-b border-ui-border bg-ui-bg px-[var(--surface-padding)] py-2.5 lg:grid">
+          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.trigger')}</span>
+          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.workflow')}</span>
+          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.configuration')}</span>
+          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workflowActivity.activity')}</span>
+          <span className="type-micro-label whitespace-nowrap text-right text-ui-text-muted">{t('eventTriggers.columns.actions')}</span>
+        </div>
         <CollectionState
           phase={workspaceStateCurrent ? phase : 'loading'}
-          itemCount={triggers.length}
+          itemCount={visibleTriggers.length}
           loading={<InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />}
           empty={<EmptyState
             embedded
-            icon={<ICONS.Zap />}
-            title={t('eventTriggers.emptyTitle')}
-            description={t('eventTriggers.emptyDescription')}
-            actions={canManage && activeWorkflows.length
-              ? <Button size="sm" variant="primary" onClick={openCreate}><ICONS.Plus className="h-4 w-4" aria-hidden="true" />{t('eventTriggers.create')}</Button>
+            icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Zap />}
+            title={hasActiveFilters
+              ? t('eventTriggers.filters.emptyTitle')
+              : t(sourceType === 'webhook' ? 'triggers.empty.webhookTitle' : 'triggers.empty.acornopsEventTitle')}
+            description={hasActiveFilters
+              ? t('eventTriggers.filters.emptyDescription')
+              : t(sourceType === 'webhook' ? 'triggers.empty.webhookDescription' : 'triggers.empty.acornopsEventDescription')}
+            actions={hasActiveFilters
+              ? <Button size="sm" variant="secondary" onClick={clearFilters}>{t('common.clearAll')}</Button>
               : undefined}
           />}
           error={<EmptyState
@@ -390,147 +469,74 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
             actions={<Button size="sm" variant="secondary" onClick={() => void refresh()}>{t('common.retry')}</Button>}
           />}
           feedback={loadError ? <InlineAlert tone="danger" className="m-4">{loadError}</InlineAlert> : null}
-          announcement={phase === 'refreshing' ? t('eventTriggers.refreshing') : undefined}
+          announcement={phase === 'refreshing'
+            ? t('eventTriggers.refreshing')
+            : phase === 'ready'
+              ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: sourceTriggers.length })
+              : undefined}
         >
           <div className="divide-y divide-ui-border">
-            {triggers.map((trigger) => {
+            {visibleTriggers.map((trigger) => {
               const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
               const busy = mutatingId === trigger.id;
               return (
-                <article key={trigger.id}>
-                  <div className="p-[var(--surface-padding)]">
-                    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="type-row-title text-ui-text">{trigger.name}</h3>
-                          <StatusBadge tone={triggerStatusTone(trigger)}>
-                            {trigger.status === 'paused' && trigger.lastStatus === 'auto_paused'
-                              ? t('eventTriggers.status.autoPaused')
-                              : trigger.status === 'enabled'
-                                ? t('eventTriggers.status.enabled')
-                                : t('eventTriggers.status.paused')}
-                          </StatusBadge>
-                          <StatusBadge tone="neutral">
-                            {trigger.sourceType === 'webhook'
-                              ? t('eventTriggers.source.webhook')
-                              : t('eventTriggers.source.acornopsEvent')}
-                          </StatusBadge>
-                        </div>
-                        <p className="mt-2 text-sm font-semibold text-ui-text">
-                          {t('eventTriggers.startsWorkflow', { workflow: workflow?.name || trigger.workflowId })}
-                        </p>
-                        <p className="mt-1 type-caption text-ui-text-muted">
-                          {trigger.sourceType === 'webhook'
-                            ? t('eventTriggers.webhookDescription')
-                            : t('eventTriggers.issueCreatedDescription')}
-                        </p>
-                        {trigger.sourceType === 'webhook' && trigger.endpointUrl && (
-                          <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
-                            <code className="max-w-full break-all rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-xs text-ui-text-muted">{trigger.endpointUrl}</code>
-                            <Button size="sm" variant="tertiary" onClick={() => void copy(trigger.endpointUrl!, t('eventTriggers.secret.endpointCopied'))}>
-                              {t('eventTriggers.copyEndpoint')}
-                            </Button>
-                          </div>
-                        )}
-                        <div className="mt-3 flex flex-wrap items-center gap-2 type-caption text-ui-text-muted">
-                          {trigger.lastStatus && <StatusBadge tone={lastStatusTone(trigger.lastStatus)}>{t(`eventTriggers.lastStatus.${trigger.lastStatus}`)}</StatusBadge>}
-                          <span>
-                            {trigger.lastTriggeredAt
-                              ? t('eventTriggers.lastTriggered', { time: formatUserDateTime(trigger.lastTriggeredAt, { fallback: trigger.lastTriggeredAt }) })
-                              : t('eventTriggers.neverTriggered')}
-                          </span>
-                        </div>
-                        {trigger.lastError && <p className="mt-2 max-w-3xl type-caption text-status-danger-text">{trigger.lastError}</p>}
-                      </div>
-                      {canManage && (
-                        <div className="flex shrink-0 flex-wrap gap-2">
-                          <Button size="sm" onClick={() => openEdit(trigger)} disabled={busy}>{t('eventTriggers.actions.edit')}</Button>
-                          <Button size="sm" onClick={() => void toggle(trigger)} disabled={busy}>
-                            {trigger.status === 'enabled' ? t('eventTriggers.actions.pause') : t('eventTriggers.actions.resume')}
-                          </Button>
-                          {trigger.sourceType === 'webhook' && (
-                            <Button
-                              ref={(node) => {
-                                if (node) rotateButtonRefs.current.set(trigger.id, node);
-                                else rotateButtonRefs.current.delete(trigger.id);
-                              }}
-                              size="sm"
-                              onClick={() => {
-                                setPendingDeleteId('');
-                                setPendingRotateId(trigger.id);
-                              }}
-                              disabled={busy}
-                            >
-                              {t('eventTriggers.actions.rotateSecret')}
-                            </Button>
-                          )}
-                          <Button
-                            ref={(node) => {
-                              if (node) deleteButtonRefs.current.set(trigger.id, node);
-                              else deleteButtonRefs.current.delete(trigger.id);
-                            }}
-                            size="sm"
-                            variant="danger"
-                            onClick={() => {
-                              setPendingRotateId('');
-                              setPendingDeleteId(trigger.id);
-                            }}
-                            disabled={busy}
-                          >
-                            {t('eventTriggers.actions.delete')}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {pendingRotateId === trigger.id && (
-                    <InlineConfirmation
-                      id={`rotate-event-trigger-secret-${trigger.id}`}
-                      title={t('eventTriggers.rotate.title', { name: trigger.name })}
-                      description={t('eventTriggers.rotate.description')}
-                      tone="warning"
-                      confirmLabel={t('eventTriggers.actions.rotateSecret')}
-                      confirmDisabled={busy}
-                      cancelLabel={t('common.cancel')}
-                      onCancel={() => {
-                        setPendingRotateId('');
-                        window.requestAnimationFrame(() => rotateButtonRefs.current.get(trigger.id)?.focus({ preventScroll: true }));
-                      }}
-                      onConfirm={() => void rotateSecret(trigger)}
-                      className="border-t border-status-warning/20"
-                    />
-                  )}
-                  {pendingDeleteId === trigger.id && (
-                    <InlineConfirmation
-                      id={`delete-event-trigger-${trigger.id}`}
-                      title={t('eventTriggers.delete.title', { name: trigger.name })}
-                      description={t('eventTriggers.delete.description')}
-                      tone="danger"
-                      confirmLabel={t('eventTriggers.actions.delete')}
-                      confirmVariant="danger"
-                      confirmDisabled={busy}
-                      cancelLabel={t('common.cancel')}
-                      onCancel={() => {
-                        setPendingDeleteId('');
-                        window.requestAnimationFrame(() => deleteButtonRefs.current.get(trigger.id)?.focus({ preventScroll: true }));
-                      }}
-                      onConfirm={() => void remove(trigger)}
-                      className="border-t border-status-danger/20"
-                    />
-                  )}
-                </article>
+                <WorkspaceEventTriggerCard
+                  key={trigger.id}
+                  trigger={trigger}
+                  workflowName={workflow?.name || trigger.workflowId}
+                  canManage={canManage}
+                  busy={busy}
+                  pendingRotate={pendingRotateId === trigger.id}
+                  actionButtonRefs={actionButtonRefs}
+                  onCopyEndpoint={(endpoint) => void copy(endpoint, t('eventTriggers.secret.endpointCopied'))}
+                  onEdit={() => openEdit(trigger)}
+                  onToggle={() => void toggle(trigger)}
+                  onRequestRotate={() => {
+                    setPendingDeleteId('');
+                    setPendingRotateId(trigger.id);
+                  }}
+                  onCancelRotate={() => {
+                    setPendingRotateId('');
+                    window.requestAnimationFrame(() => actionButtonRefs.current.get(trigger.id)?.focus({ preventScroll: true }));
+                  }}
+                  onConfirmRotate={() => void rotateSecret(trigger)}
+                  onRequestDelete={() => {
+                    setPendingRotateId('');
+                    setMutationError('');
+                    setPendingDeleteId(trigger.id);
+                  }}
+                />
               );
             })}
           </div>
         </CollectionState>
       </DataSurface>
-
+      </div>
+      <WorkspaceEventTriggerDeleteDialog
+        trigger={deleteTargetTrigger}
+        error={mutationError}
+        pending={Boolean(deleteTargetTrigger && mutatingId === deleteTargetTrigger.id)}
+        onCancel={() => {
+          if (!deleteTargetTrigger || mutatingId) return;
+          const triggerId = deleteTargetTrigger.id;
+          setPendingDeleteId('');
+          setMutationError('');
+          window.requestAnimationFrame(() => actionButtonRefs.current.get(triggerId)?.focus({ preventScroll: true }));
+        }}
+        onConfirm={() => {
+          if (deleteTargetTrigger) void remove(deleteTargetTrigger);
+        }}
+      />
       <DrawerFrame
         open={workspaceStateCurrent && drawerOpen}
         onClose={closeDrawer}
         closeDisabled={saving}
         titleId="event-trigger-drawer-title"
-        title={draft.id ? t('eventTriggers.form.editTitle') : t('eventTriggers.form.createTitle')}
+        title={draft.id
+          ? t('eventTriggers.form.editTitle')
+          : t(sourceType === 'webhook'
+              ? 'triggers.form.createWebhookTitle'
+              : 'triggers.form.createAcornOpsEventTitle')}
         description={t('eventTriggers.form.description')}
         closeLabel={t('common.close')}
         width="lg"
@@ -564,21 +570,15 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
           />
           <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.workflowHelp')}</span>
         </label>
-        <label className="block text-sm font-semibold text-ui-text">
+        <div className="block text-sm font-semibold text-ui-text">
           {t('eventTriggers.form.source')}
-          <Select<WorkflowEventTriggerSourceType>
-            value={draft.sourceType}
-            options={[
-              { value: 'acornops_event', label: t('eventTriggers.source.acornopsEvent') },
-              { value: 'webhook', label: t('eventTriggers.source.webhook') }
-            ]}
-            onChange={setSourceType}
-            disabled={Boolean(draft.id)}
-            className="mt-2"
-            ariaLabel={t('eventTriggers.form.source')}
-          />
+          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 font-normal text-ui-text">
+            {t(draft.sourceType === 'webhook'
+              ? 'triggers.types.webhook'
+              : 'triggers.types.acornopsEvent')}
+          </div>
           <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.sourceHelp')}</span>
-        </label>
+        </div>
 
         {draft.sourceType === 'acornops_event' ? (
           <section className="rounded-lg border border-ui-border bg-ui-bg p-4">

@@ -11,6 +11,10 @@ import { useCreateWorkspaceInviteSetup } from '@/app/useCreateWorkspaceInviteSet
 import { useTargetIssueSummary } from '@/app/useTargetIssueSummary';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { useWorkspaceApprovalSummary } from '@/hooks/useWorkspaceApprovalSummary';
+import {
+  WorkspaceWorkflowActivityProvider,
+  useWorkspaceWorkflowActivityStore
+} from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 import { PageLoadingFallback } from '@/components/common/Loading';
 import { ToastViewport } from '@/components/common/ToastViewport';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
@@ -199,6 +203,10 @@ export const AppShell: React.FC<AppShellProps> = ({
   const previousRouteRef = React.useRef<AppRoute | null>(null);
   const selectedWorkspaceInitials = getWorkspaceInitials(selectedWorkspace?.name);
   const approvalSummary = useWorkspaceApprovalSummary(
+    selectedWorkspaceId,
+    canReadWorkspaceData(selectedWorkspace)
+  );
+  const workflowActivity = useWorkspaceWorkflowActivityStore(
     selectedWorkspaceId,
     canReadWorkspaceData(selectedWorkspace)
   );
@@ -437,6 +445,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   );
 
   return (
+    <WorkspaceWorkflowActivityProvider value={workflowActivity}>
     <div className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-ui-bg text-ui-text font-sans transition-colors duration-300 lg:flex-row">
       <AppMobileNavigation
         activeClusterSubview={activeClusterSubview}
@@ -444,6 +453,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         activePrimaryNav={activePrimaryNav}
         activeResourceNav={activeResourceNav}
         pendingApprovalCount={approvalSummary.pendingCount}
+        openWorkflowRunCount={workflowActivity.openCount}
         isClusterSidebar={isClusterSidebar}
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         themePreference={themePreference}
@@ -487,6 +497,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         activeResourceNav={activeResourceNav}
         pendingApprovalCount={approvalSummary.pendingCount}
+        openWorkflowRunCount={workflowActivity.openCount}
         selectedClusterIssueCount={selectedClusterIssueCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmIssueCount={selectedVmIssueCount}
@@ -559,6 +570,10 @@ export const AppShell: React.FC<AppShellProps> = ({
             onConfirmClusterInstalled={() => void handleConfirmAddCluster()}
             onConfirmDeleteWorkspace={(workspace) => handleDeleteWorkspace(workspace.id)}
             onCreateWorkspace={handleCreateWorkspace}
+            onOpenWorkspaceAiSettings={(workspaceId) => {
+              setIsCreatingWorkspace(false);
+              navigate(AppPaths.workspaceAiSettings(workspaceId));
+            }}
             onCreateWorkspaceInvitation={createWorkspaceInvitation}
             onExcludeNamespacesChange={setExcludeNamespaces}
             onIncludeNamespacesChange={setIncludeNamespaces}
@@ -572,5 +587,6 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       <ToastViewport toasts={toasts} isDark={isDark} onDismiss={dismissToast} />
     </div>
+    </WorkspaceWorkflowActivityProvider>
   );
 };

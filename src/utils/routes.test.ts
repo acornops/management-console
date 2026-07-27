@@ -301,22 +301,75 @@ describe('routes', () => {
       kind: 'workspaceWorkflows',
       workspaceId: 'team-alpha'
     });
-    expect(AppPaths.workspaceSchedules('team-alpha')).toBe('/workspaces/team-alpha/schedules');
-    expect(parseAppRoute(AppPaths.workspaceSchedules('team-alpha'))).toEqual({
-      kind: 'workspaceSchedules',
-      workspaceId: 'team-alpha'
+    expect(AppPaths.workspaceRuns('team-alpha', {
+      q: 'production review',
+      state: 'attention',
+      origin: 'event_trigger',
+      workflowId: 'workflow/a',
+      issueId: 'issue/c'
+    })).toBe('/workspaces/team-alpha/runs?q=production+review&state=attention&origin=event_trigger&workflow=workflow%2Fa&issue=issue%2Fc');
+    expect(parseAppRoute(AppPaths.workspaceRuns('team-alpha', {
+      q: 'production review',
+      state: 'attention',
+      origin: 'event_trigger',
+      workflowId: 'workflow/a',
+      issueId: 'issue/c'
+    }))).toEqual({
+      kind: 'workspaceRuns',
+      workspaceId: 'team-alpha',
+      q: 'production review',
+      state: 'attention',
+      origin: 'event_trigger',
+      workflowId: 'workflow/a',
+      issueId: 'issue/c'
     });
-    expect(AppPaths.workspaceEventTriggers('team-alpha')).toBe('/workspaces/team-alpha/event-triggers');
-    expect(parseAppRoute(AppPaths.workspaceEventTriggers('team-alpha'))).toEqual({
-      kind: 'workspaceEventTriggers',
-      workspaceId: 'team-alpha'
+    expect(AppPaths.workspaceWorkflowRun('team-alpha', 'workflow/a', 'execution/b')).toBe(
+      '/workspaces/team-alpha/workflows?workflow=workflow%2Fa&tab=runs&execution=execution%2Fb'
+    );
+    expect(AppPaths.workspaceTriggers('team-alpha')).toBe('/workspaces/team-alpha/triggers');
+    expect(parseAppRoute(AppPaths.workspaceTriggers('team-alpha'))).toEqual({
+      kind: 'workspaceTriggers',
+      workspaceId: 'team-alpha',
+      triggerType: 'schedule'
+    });
+    expect(AppPaths.workspaceTriggers('team-alpha', 'acornops_event')).toBe(
+      '/workspaces/team-alpha/triggers?type=acornops_event'
+    );
+    expect(parseAppRoute(AppPaths.workspaceTriggers('team-alpha', 'webhook'))).toEqual({
+      kind: 'workspaceTriggers',
+      workspaceId: 'team-alpha',
+      triggerType: 'webhook'
+    });
+    expect(AppPaths.workspaceTriggerCreate('team-alpha', 'acornops_event')).toBe(
+      '/workspaces/team-alpha/triggers?create=acornops_event&type=acornops_event'
+    );
+    expect(parseAppRoute(AppPaths.workspaceTriggerCreate('team-alpha', 'acornops_event'))).toEqual({
+      kind: 'workspaceTriggers',
+      workspaceId: 'team-alpha',
+      triggerType: 'acornops_event',
+      createTriggerType: 'acornops_event'
+    });
+    expect(parseAppRoute(AppPaths.workspaceTriggerCreate('team-alpha', 'schedule'))).toEqual({
+      kind: 'workspaceTriggers',
+      workspaceId: 'team-alpha',
+      triggerType: 'schedule',
+      createTriggerType: 'schedule'
+    });
+    expect(parseAppRoute('/workspaces/team-alpha/schedules')).toEqual({
+      kind: 'notFound',
+      path: '/workspaces/team-alpha/schedules'
+    });
+    expect(parseAppRoute('/workspaces/team-alpha/event-triggers')).toEqual({
+      kind: 'notFound',
+      path: '/workspaces/team-alpha/event-triggers'
     });
     expect(AppPaths.workspaceScheduleCreate('team-alpha', 'workflow/a')).toBe(
-      '/workspaces/team-alpha/schedules?create=schedule&workflowId=workflow%2Fa'
+      '/workspaces/team-alpha/triggers?create=schedule&workflowId=workflow%2Fa'
     );
     expect(parseAppRoute(AppPaths.workspaceScheduleCreate('team-alpha', 'workflow/a'))).toEqual({
-      kind: 'workspaceSchedules',
+      kind: 'workspaceTriggers',
       workspaceId: 'team-alpha',
+      triggerType: 'schedule',
       createWorkflowId: 'workflow/a'
     });
     expect(AppPaths.workspaceApprovals('team-alpha')).toBe('/workspaces/team-alpha/approvals');

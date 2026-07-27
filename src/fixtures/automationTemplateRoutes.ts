@@ -34,15 +34,16 @@ export function routeAutomationTemplateFixtureRequest({
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/automation-templates\/([^/]+)\/install$/);
   if (match && method === 'POST') {
     const template = state.automationTemplates.find((candidate) => candidate.id === decode(match![2]));
-    if (!template) return notFound('Automation template');
+    if (!template) return notFound('Recommended workflow');
     if (template.workflowId && state.workflows.some((workflow) => workflow.id === template.workflowId)) {
       return json({ workflowId: template.workflowId, alreadyInstalled: true });
     }
     const workflowId = id('fixture-template-workflow');
     state.workflows.unshift({
       id: workflowId, workspaceId: decode(match[1]), version: 1,
-      origin: { type: 'template', templateId: 'acornops-starter', templateVersion: template.version }, source: 'system',
-      name: template.name, description: template.description, status: 'paused', createdBy: FIXTURE_IDS.user, createdAt: NOW,
+      origin: { type: 'manual' }, source: 'user',
+      name: template.name, description: template.description, status: 'paused', createdBy: FIXTURE_IDS.user,
+      createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning', email: 'ning@fixture.acornops.dev' }, createdAt: NOW,
       prompt: `Run ${template.name}.`, starterPrompt: `Run ${template.name}.`,
       agentIds: [FIXTURE_IDS.workflowAnalystAgent], executionMode: 'direct', targetConstraints: { targetTypes: [], targetIds: [] },
       tags: [], parameters: [], requiredPermissions: [],
@@ -56,7 +57,7 @@ export function routeAutomationTemplateFixtureRequest({
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/automation-templates\/([^/]+)\/activate$/);
   if (match && method === 'POST') {
     const template = state.automationTemplates.find((candidate) => candidate.id === decode(match![2]));
-    if (!template?.workflowId) return notFound('Installed automation template');
+    if (!template?.workflowId) return notFound('Added recommended workflow');
     const workflow = state.workflows.find((candidate) => candidate.id === template.workflowId);
     if (!workflow) return notFound('Installed workflow');
     workflow.status = 'active';

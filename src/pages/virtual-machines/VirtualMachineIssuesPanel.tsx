@@ -7,8 +7,10 @@ import { issueStatusTone } from '@/pages/issues/issueUi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { issueSeverityTone } from '@/pages/virtual-machines/virtualMachineUi';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
 
 interface VirtualMachineIssuesPanelProps {
+  workspaceId: string;
   issues: ControlPlaneIssueItem[] | null;
   issueSummary: ControlPlaneTargetIssueSummary | null;
   isLoading: boolean;
@@ -31,6 +33,7 @@ function issueSeverityRank(severity: ControlPlaneIssueItem['severity']): number 
 }
 
 export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps> = ({
+  workspaceId,
   issues,
   issueSummary,
   isLoading,
@@ -119,6 +122,11 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       </div>
                       <h2 className="type-row-title mt-2">{issue.title}</h2>
                       <p className="type-body mt-1">{issue.reason || issue.summary}</p>
+                      <IssueWorkflowActivity
+                        workspaceId={workspaceId}
+                        issueId={issue.id}
+                        activity={issue.workflowActivity}
+                      />
                     </td>
                     <td className="px-5 py-4 align-top">
                       <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>
@@ -132,7 +140,11 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       {formatUserDateTime(issueTimestamp(issue))}
                     </td>
                     <td className="px-5 py-4 align-top text-right">
-                      <Button onClick={() => onOpenIssueTriage(issue)} variant="primary" size="md">
+                      <Button
+                        onClick={() => onOpenIssueTriage(issue)}
+                        variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                        size="md"
+                      >
                         <Terminal className="h-4 w-4" />
                         {t('virtualMachines.overview.runTriage')}
                       </Button>
@@ -159,7 +171,17 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                 </p>
                 <h2 className="type-row-title mt-4">{issue.title}</h2>
                 <p className="type-body mt-2">{issue.reason || issue.summary}</p>
-                <Button onClick={() => onOpenIssueTriage(issue)} variant="primary" size="md" className="mt-4">
+                <IssueWorkflowActivity
+                  workspaceId={workspaceId}
+                  issueId={issue.id}
+                  activity={issue.workflowActivity}
+                />
+                <Button
+                  onClick={() => onOpenIssueTriage(issue)}
+                  variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                  size="md"
+                  className="mt-4"
+                >
                   <Terminal className="h-4 w-4" />
                   {t('virtualMachines.overview.runTriage')}
                 </Button>

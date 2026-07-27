@@ -1,5 +1,4 @@
 import { updateWorkflowScope } from '@/services/control-plane/workflowApi';
-import { isSystemProvidedWorkflow } from './workflowModel';
 import {
   createScopeDraft,
   mapApiWorkflowToDefinition,
@@ -25,7 +24,7 @@ export function createWorkflowScopeActions(ctx: Record<string, any>) {
   }
 
   function startEditingScopeTab(tab: 'capabilities'): void {
-    if (!selectedWorkflow || isSystemProvidedWorkflow(selectedWorkflow)) return;
+    if (!selectedWorkflow) return;
     setScopeSaveError(null);
     setScopeSaveResult(null);
     setIsEditingScopeTab(tab);
@@ -43,7 +42,7 @@ export function createWorkflowScopeActions(ctx: Record<string, any>) {
   }
 
   async function saveWorkflowScope(tab: 'capabilities'): Promise<void> {
-    if (!selectedWorkflow || isSystemProvidedWorkflow(selectedWorkflow)) return;
+    if (!selectedWorkflow) return;
     const draft = scopeDrafts[selectedWorkflow.id] || createScopeDraft(selectedWorkflow);
     setScopeSaveError(null);
     setScopeSaveResult(null);

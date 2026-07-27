@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { WorkflowDefinition } from './workflows/workflowModel';
 import { WorkflowRunsPanel } from './WorkspaceWorkflowsPage.panels';
+import { mapWorkflowRunSummary } from './workflows/workflowPageHelpers';
 
 function workflowWithRun(run: WorkflowDefinition['runs'][number]): WorkflowDefinition {
   return {
@@ -90,5 +91,31 @@ describe('WorkflowRunsPanel run identity boundary', () => {
 
     expect(html).toContain('aria-label="Stop workflow run"');
     expect(html).toContain('Show run details');
+  });
+
+  it('labels approval and review pauses without implying that work is still progressing', () => {
+    const waiting = mapWorkflowRunSummary({
+      id: 'run-waiting',
+      executionId: 'execution-waiting',
+      status: 'waiting_for_approval',
+      requestedAt: '2026-07-15T08:00:00.000Z'
+    });
+    const needsReview = mapWorkflowRunSummary({
+      id: 'run-review',
+      executionId: 'execution-review',
+      status: 'needs_review',
+      requestedAt: '2026-07-15T08:00:00.000Z'
+    });
+
+    const waitingHtml = renderRunsPanel(workflowWithRun(waiting));
+    const reviewHtml = renderRunsPanel(workflowWithRun(needsReview));
+
+    expect(waiting.duration).toBe('Waiting for approval');
+    expect(waiting.output).toBe('Workflow run is waiting for approval.');
+    expect(waitingHtml).toContain('Waiting for approval');
+    expect(waitingHtml).not.toContain('Workflow run is in progress.');
+    expect(waitingHtml).not.toContain('Workflow running');
+    expect(reviewHtml).toContain('workflowActivity.status.needs_review');
+    expect(reviewHtml).not.toContain('Working');
   });
 });

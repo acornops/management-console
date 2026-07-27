@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CollectionState } from '@/components/common/CollectionState';
 import { EmptyState } from '@/components/common/EmptyState';
-import { InlineConfirmation } from '@/components/common/InlineConfirmation';
+import { MenuItem } from '@/components/common/FormControls';
+import { OverflowActionMenu } from '@/components/common/OverflowActionMenu';
 import { DataSurface } from '@/components/common/PageComposition';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
@@ -16,6 +17,7 @@ import { formatUserDateTime } from '@/utils/dateTime';
 
 interface WebhookListProps {
   webhooks: ControlPlaneWebhookSubscription[];
+  hasActiveFilters: boolean;
   canManageWebhooks: boolean;
   isLoading: boolean;
   isRefreshing: boolean;
@@ -25,7 +27,8 @@ interface WebhookListProps {
   history: ControlPlaneWebhookHistory[];
   isHistoryLoading: boolean;
   historyError: string | null;
-  onCreate: () => void;
+  actionButtonRefs: React.MutableRefObject<Map<string, HTMLButtonElement>>;
+  onClearFilters: () => void;
   onRefresh: () => void;
   onEdit: (webhook: ControlPlaneWebhookSubscription) => void;
   onDelete: (webhook: ControlPlaneWebhookSubscription) => void;
@@ -41,6 +44,7 @@ function deliveryStatusTone(entry: ControlPlaneWebhookHistory): 'success' | 'war
 
 export const WebhookList: React.FC<WebhookListProps> = ({
   webhooks,
+  hasActiveFilters,
   canManageWebhooks,
   isLoading,
   isRefreshing,
@@ -50,21 +54,14 @@ export const WebhookList: React.FC<WebhookListProps> = ({
   history,
   isHistoryLoading,
   historyError,
-  onCreate,
+  actionButtonRefs,
+  onClearFilters,
   onRefresh,
   onEdit,
   onDelete,
   onLoadHistory
 }) => {
   const { t } = useTranslation();
-  const [pendingDeleteId, setPendingDeleteId] = React.useState<string | null>(null);
-  const deleteTriggerRefs = React.useRef(new Map<string, HTMLButtonElement>());
-  const closeDeleteConfirmation = (webhookId: string) => {
-    setPendingDeleteId(null);
-    window.requestAnimationFrame(() => {
-      deleteTriggerRefs.current.get(webhookId)?.focus({ preventScroll: true });
-    });
-  };
   const phase = isLoading
     ? 'loading'
     : isRefreshing
@@ -75,11 +72,15 @@ export const WebhookList: React.FC<WebhookListProps> = ({
 
   return (
     <DataSurface
-      heading={t('workspaceWebhooks.listTitle')}
-      description={t('workspaceWebhooks.listDescription')}
-      count={t('workspaceWebhooks.count', { count: webhooks.length })}
-      icon={<ICONS.Send className="h-5 w-5" aria-hidden="true" />}
+      aria-label={t('workspaceWebhooks.listTitle')}
     >
+      <div className="hidden grid-cols-[minmax(12rem,0.8fr)_minmax(16rem,1.2fr)_minmax(13rem,1fr)_minmax(10rem,0.7fr)_minmax(3rem,auto)] gap-4 border-b border-ui-border bg-ui-bg px-[var(--surface-padding)] py-2.5 lg:grid">
+        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.webhook')}</span>
+        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.destination')}</span>
+        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.events')}</span>
+        <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workspaceWebhooks.columns.modified')}</span>
+        <span className="type-micro-label whitespace-nowrap text-right text-ui-text-muted">{t('workspaceWebhooks.columns.actions')}</span>
+      </div>
       <CollectionState
         phase={phase}
         itemCount={webhooks.length}
@@ -87,11 +88,11 @@ export const WebhookList: React.FC<WebhookListProps> = ({
         empty={(
           <EmptyState
             embedded
-            icon={<ICONS.Send />}
-            title={t('workspaceWebhooks.emptyTitle')}
-            description={t('workspaceWebhooks.emptyDescription')}
-            actions={canManageWebhooks
-              ? <Button size="sm" variant="primary" onClick={onCreate}><ICONS.Plus className="h-4 w-4" aria-hidden="true" />{t('workspaceWebhooks.create')}</Button>
+            icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Send />}
+            title={hasActiveFilters ? t('workspaceWebhooks.filters.emptyTitle') : t('workspaceWebhooks.emptyTitle')}
+            description={hasActiveFilters ? t('workspaceWebhooks.filters.emptyDescription') : t('workspaceWebhooks.emptyDescription')}
+            actions={hasActiveFilters
+              ? <Button size="sm" variant="secondary" onClick={onClearFilters}>{t('common.clearAll')}</Button>
               : undefined}
           />
         )}
@@ -108,77 +109,88 @@ export const WebhookList: React.FC<WebhookListProps> = ({
         {webhooks.map((webhook) => {
           const showingHistory = historyWebhookId === webhook.id;
           const deleting = deletingId === webhook.id;
+          const modifiedAt = webhook.updatedAt || webhook.createdAt;
+          const runAction = (close: () => void, action: () => void) => {
+            close();
+            actionButtonRefs.current.get(webhook.id)?.focus({ preventScroll: true });
+            action();
+          };
           return (
             <article key={webhook.id}>
               <div className="p-[var(--surface-padding)]">
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="grid gap-4 lg:grid-cols-[minmax(12rem,0.8fr)_minmax(16rem,1.2fr)_minmax(13rem,1fr)_minmax(10rem,0.7fr)_minmax(3rem,auto)] lg:items-start">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-bold text-ui-text">{webhook.name}</h3>
+                      <h2 className="text-sm font-bold text-ui-text">{webhook.name}</h2>
                       <StatusBadge tone={webhook.enabled ? 'success' : 'neutral'}>
                         {webhook.enabled ? t('workspaceWebhooks.enabled') : t('workspaceWebhooks.disabled')}
                       </StatusBadge>
                       {webhook.targetId && <StatusBadge tone="neutral">{t('workspaceWebhooks.targetScoped')}</StatusBadge>}
                     </div>
-                    <p className="mt-2 break-all text-xs font-semibold text-ui-text-muted">{webhook.url}</p>
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {webhook.eventTypes.map((eventType) => (
+                  </div>
+                  <div className="min-w-0">
+                    <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('workspaceWebhooks.columns.destination')}</p>
+                    <p className="break-all text-xs font-semibold text-ui-text-muted">{webhook.url}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('workspaceWebhooks.columns.events')}</p>
+                    <p className="type-caption mb-2 font-semibold text-ui-text">{t('workspaceWebhooks.eventCount', { count: webhook.eventTypes.length })}</p>
+                    <div className="flex flex-wrap content-start gap-1.5">
+                      {webhook.eventTypes.slice(0, 3).map((eventType) => (
                         <span key={eventType} className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-[11px] font-semibold text-ui-text-muted">
                           {eventType}
                         </span>
                       ))}
+                      {webhook.eventTypes.length > 3 && (
+                        <span className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-[11px] font-semibold text-ui-text-muted">
+                          {t('workspaceWebhooks.moreEvents', { count: webhook.eventTypes.length - 3 })}
+                        </span>
+                      )}
                     </div>
                   </div>
+                  <div className="min-w-0">
+                    <p className="type-micro-label mb-1 text-ui-text-muted lg:hidden">{t('workspaceWebhooks.columns.modified')}</p>
+                    <time className="type-caption font-semibold text-ui-text-muted" dateTime={modifiedAt}>
+                      {modifiedAt
+                        ? formatUserDateTime(modifiedAt, { fallback: modifiedAt })
+                        : t('workspaceWebhooks.modifiedUnavailable')}
+                    </time>
+                  </div>
                   {canManageWebhooks && (
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" onClick={() => onEdit(webhook)} disabled={deleting}>
-                        <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
-                        {t('workspaceWebhooks.edit')}
-                      </Button>
-                      <Button size="sm" onClick={() => onLoadHistory(webhook)} disabled={deleting || (showingHistory && isHistoryLoading)}>
-                        <ICONS.Activity className="h-4 w-4" aria-hidden="true" />
-                        {t('workspaceWebhooks.history')}
-                      </Button>
-                      <Button
+                    <div className="flex justify-end">
+                      <OverflowActionMenu
                         ref={(node) => {
-                          if (node) deleteTriggerRefs.current.set(webhook.id, node);
-                          else deleteTriggerRefs.current.delete(webhook.id);
+                          if (node) actionButtonRefs.current.set(webhook.id, node);
+                          else actionButtonRefs.current.delete(webhook.id);
                         }}
-                        size="sm"
-                        variant="danger"
-                        onClick={() => setPendingDeleteId(webhook.id)}
+                        label={t('workspaceWebhooks.actionsFor', { name: webhook.name })}
                         disabled={deleting}
+                        estimatedHeight={152}
                       >
-                        <ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />
-                        {deleting ? t('workspaceWebhooks.deleting') : t('workspaceWebhooks.delete')}
-                      </Button>
+                        {(close) => <>
+                          <MenuItem onClick={() => runAction(close, () => onEdit(webhook))}>
+                            <ICONS.Pencil className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                            {t('workspaceWebhooks.edit')}
+                          </MenuItem>
+                          <MenuItem disabled={showingHistory && isHistoryLoading} onClick={() => runAction(close, () => onLoadHistory(webhook))}>
+                            <ICONS.Activity className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                            {t('workspaceWebhooks.history')}
+                          </MenuItem>
+                          <MenuItem destructive onClick={() => runAction(close, () => onDelete(webhook))}>
+                            <ICONS.Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            {deleting ? t('workspaceWebhooks.deleting') : t('workspaceWebhooks.delete')}
+                          </MenuItem>
+                        </>}
+                      </OverflowActionMenu>
                     </div>
                   )}
+                  {!canManageWebhooks && <div aria-hidden="true" className="text-right type-caption text-ui-text-muted">—</div>}
                 </div>
               </div>
 
-              {pendingDeleteId === webhook.id && (
-                <InlineConfirmation
-                  id={`delete-webhook-${webhook.id}`}
-                  title={t('workspaceWebhooks.deleteTitle', { name: webhook.name })}
-                  description={t('workspaceWebhooks.deleteDescription')}
-                  tone="danger"
-                  confirmLabel={t('workspaceWebhooks.delete')}
-                  confirmVariant="danger"
-                  confirmDisabled={deleting}
-                  cancelLabel={t('common.cancel')}
-                  onCancel={() => closeDeleteConfirmation(webhook.id)}
-                  onConfirm={() => {
-                    onDelete(webhook);
-                    setPendingDeleteId(null);
-                  }}
-                  className="border-t border-status-danger/20"
-                />
-              )}
-
               {canManageWebhooks && showingHistory && (
                 <div className="border-t border-ui-border bg-ui-bg p-4">
-                  <h4 className="type-label text-ui-text">{t('workspaceWebhooks.recentDeliveries')}</h4>
+                  <h3 className="type-label text-ui-text">{t('workspaceWebhooks.recentDeliveries')}</h3>
                   {isHistoryLoading && <p className="mt-3 type-caption text-ui-text-muted">{t('workspaceWebhooks.historyLoading')}</p>}
                   {!isHistoryLoading && historyError && <p role="alert" className="mt-3 type-caption text-status-danger-text">{historyError}</p>}
                   {!isHistoryLoading && !historyError && history.length === 0 && (

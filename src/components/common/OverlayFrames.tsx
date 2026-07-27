@@ -25,6 +25,7 @@ const drawerWidths: Record<FrameWidth, string> = {
 interface FrameContentProps {
   bodyClassName?: string;
   children: React.ReactNode;
+  closeDisabled?: boolean;
   closeLabel?: string;
   description?: React.ReactNode;
   footer?: React.ReactNode;
@@ -33,14 +34,14 @@ interface FrameContentProps {
   titleId: string;
 }
 
-const FrameContent: React.FC<FrameContentProps> = ({ bodyClassName, children, closeLabel = 'Close', description, footer, onClose, title, titleId }) => (
+const FrameContent: React.FC<FrameContentProps> = ({ bodyClassName, children, closeDisabled = false, closeLabel = 'Close', description, footer, onClose, title, titleId }) => (
   <>
     <header className="flex min-w-0 items-start justify-between gap-4 border-b border-ui-border px-[var(--overlay-padding-x)] py-[var(--overlay-padding-y)]">
       <div className="min-w-0">
         <h2 id={titleId} className="type-section-title break-words text-ui-text">{title}</h2>
         {description && <div className="type-caption mt-1 max-w-[65ch] text-ui-text-muted">{description}</div>}
       </div>
-      <CloseButton onClick={onClose} label={closeLabel} />
+      <CloseButton onClick={onClose} label={closeLabel} disabled={closeDisabled} />
     </header>
     <div className={twMerge('min-h-0 flex-1 overflow-y-auto px-[var(--overlay-padding-x)] py-[var(--overlay-padding-y)] custom-scrollbar', bodyClassName)}>{children}</div>
     {footer && <footer className="flex flex-wrap justify-end gap-2 border-t border-ui-border px-[var(--overlay-padding-x)] py-[var(--overlay-padding-y)]">{footer}</footer>}
@@ -65,7 +66,7 @@ export const DialogFrame: React.FC<DialogFrameProps> = ({ closeDisabled = false,
       onClose={content.onClose}
       className={twMerge('flex max-h-[min(90vh,52rem)] w-full flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl', dialogWidths[width])}
     >
-      <FrameContent {...content} />
+      <FrameContent {...content} closeDisabled={closeDisabled} />
     </Dialog>
   );
 };
@@ -86,7 +87,7 @@ export const DrawerFrame: React.FC<DrawerFrameProps> = ({ closeDisabled = false,
     titleId={content.titleId}
     className={drawerWidths[width]}
   >
-    <FrameContent {...content} />
+    <FrameContent {...content} closeDisabled={closeDisabled} />
   </RightSidePanel>
 );
 

@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+
 export default defineConfig({
   testDir: './tests/design-system',
   outputDir: './test-results/design-system',
@@ -14,9 +16,7 @@ export default defineConfig({
     browserName: 'chromium',
     headless: true,
     reducedMotion: 'reduce',
-    launchOptions: {
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome'
-    }
+    launchOptions: chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : {}
   },
   projects: [
     { name: 'desktop', use: { viewport: { width: 1440, height: 1000 } } },

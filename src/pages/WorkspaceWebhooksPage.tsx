@@ -2,6 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/common/Button';
+import { DestructiveConfirmationDialog } from '@/components/common/DestructiveConfirmationDialog';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
 import { DrawerFrame } from '@/components/common/OverlayFrames';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { WebhookEditor } from '@/features/webhooks/WebhookEditor';
@@ -19,6 +21,7 @@ import {
 } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { Workspace } from '@/types';
+import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 
 interface WorkspaceWebhooksPageProps {
   workspace: Workspace;
@@ -26,12 +29,15 @@ interface WorkspaceWebhooksPageProps {
   showToast: (message: string) => void;
 }
 
+type WebhookStatusFilter = 'all' | 'enabled' | 'disabled';
+
 export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   workspace,
   canManageWebhooks,
   showToast
 }) => {
   const { t } = useTranslation();
+  const urlSearch = useUrlSearchState();
   const [webhooks, setWebhooks] = React.useState<ControlPlaneWebhookSubscription[]>([]);
   const [draft, setDraft] = React.useState<WebhookDraft>(emptyWebhookDraft);
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -43,6 +49,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = React.useState<string | null>(null);
   const [isHistoryLoading, setIsHistoryLoading] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [mutationError, setMutationError] = React.useState<string | null>(null);
@@ -53,6 +60,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const historyRequestSequence = React.useRef(0);
   const saveRequestSequence = React.useRef(0);
   const deleteRequestSequence = React.useRef(0);
+  const webhookActionButtonRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const editorFormId = React.useId();
   currentWorkspaceId.current = workspace.id;
 
@@ -98,6 +106,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     setIsRefreshing(false);
     setIsSaving(false);
     setDeletingId(null);
+    setDeleteTargetId(null);
     setIsHistoryLoading(false);
     void loadWebhooks(true);
   }, [loadWebhooks]);
@@ -161,8 +170,8 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     }
   };
 
-  const deleteWebhook = async (webhook: ControlPlaneWebhookSubscription) => {
-    if (!canManageWebhooks) return;
+  const deleteWebhook = async (webhook: ControlPlaneWebhookSubscription): Promise<boolean> => {
+    if (!canManageWebhooks) return false;
     const requestedWorkspaceId = workspace.id;
     const requestSequence = ++deleteRequestSequence.current;
     const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
@@ -172,7 +181,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     setCreatedSecret(null);
     try {
       await controlPlaneApi.deleteWebhook(requestedWorkspaceId, webhook.id);
-      if (!isCurrentRequest()) return;
+      if (!isCurrentRequest()) return false;
       if (historyWebhookId === webhook.id) {
         setHistory([]);
         setHistoryWebhookId(null);
@@ -183,9 +192,11 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
       }
       showToast(t('workspaceWebhooks.deleted'));
       await loadWebhooks();
+      return true;
     } catch (deleteFailure) {
-      if (!isCurrentRequest()) return;
+      if (!isCurrentRequest()) return false;
       setMutationError(formatControlPlaneError(deleteFailure, t('workspaceWebhooks.deleteFailed'), { area: 'webhooks' }));
+      return false;
     } finally {
       if (!isCurrentRequest()) return;
       setDeletingId(null);
@@ -227,10 +238,34 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
 
   const workspaceStateCurrent = stateWorkspaceId === workspace.id;
   const visibleWebhooks = workspaceStateCurrent ? webhooks : [];
+  const query = urlSearch.get('q') || '';
+  const status = urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'disabled'
+    ? urlSearch.get('status') as Exclude<WebhookStatusFilter, 'all'>
+    : 'all';
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredWebhooks = React.useMemo(() => visibleWebhooks.filter((webhook) => {
+    if (status === 'enabled' && !webhook.enabled) return false;
+    if (status === 'disabled' && webhook.enabled) return false;
+    if (!normalizedQuery) return true;
+    return [
+      webhook.name,
+      webhook.url,
+      webhook.targetId,
+      ...webhook.eventTypes
+    ].some((value) => value?.toLowerCase().includes(normalizedQuery));
+  }), [normalizedQuery, status, visibleWebhooks]);
+  const hasActiveFilters = Boolean(normalizedQuery || status !== 'all');
+  const clearFilters = () => {
+    updateUrlSearch({ q: null, status: null }, { replace: true });
+    window.requestAnimationFrame(() => document.getElementById('outbound-webhooks-search')?.focus());
+  };
   const visibleDraft = workspaceStateCurrent ? draft : emptyWebhookDraft();
   const visibleCreatedSecret = workspaceStateCurrent ? createdSecret : null;
   const editingWebhook = workspaceStateCurrent && editingId
     ? visibleWebhooks.find((webhook) => webhook.id === editingId)
+    : undefined;
+  const deleteTargetWebhook = workspaceStateCurrent && deleteTargetId
+    ? visibleWebhooks.find((webhook) => webhook.id === deleteTargetId)
     : undefined;
   const canSaveDraft = visibleDraft.name.trim().length > 0
     && visibleDraft.url.trim().length > 0
@@ -264,7 +299,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         </>}
       />
 
-      {workspaceStateCurrent && mutationError && (
+      {workspaceStateCurrent && mutationError && !deleteTargetWebhook && (
         <div role="alert" className="mb-5 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-sm font-semibold text-status-danger-text">
           {mutationError}
         </div>
@@ -309,8 +344,40 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         </section>
       )}
 
+      {(!workspaceStateCurrent || isInitialLoading || visibleWebhooks.length > 0 || hasActiveFilters) && (
+        <DiscoveryFilterBar
+          idPrefix="outbound-webhooks"
+          query={query}
+          queryLabel={t('workspaceWebhooks.filters.search')}
+          queryPlaceholder={t('workspaceWebhooks.filters.search')}
+          queryClearLabel={t('common.clearSearch')}
+          resultSummary={hasActiveFilters
+            ? t('workspaceWebhooks.filters.showing', { count: filteredWebhooks.length, total: visibleWebhooks.length })
+            : t('workspaceWebhooks.count', { count: visibleWebhooks.length })}
+          filters={[
+            createDiscoveryFilterGroup<WebhookStatusFilter>({
+              id: 'status',
+              label: t('workspaceWebhooks.filters.status'),
+              value: status,
+              defaultValue: 'all',
+              options: [
+                { value: 'all', label: t('workspaceWebhooks.filters.allStatuses'), count: visibleWebhooks.length },
+                { value: 'enabled', label: t('workspaceWebhooks.enabled'), count: visibleWebhooks.filter((webhook) => webhook.enabled).length },
+                { value: 'disabled', label: t('workspaceWebhooks.disabled'), count: visibleWebhooks.filter((webhook) => !webhook.enabled).length }
+              ],
+              onChange: (value) => updateUrlSearch({ status: value === 'all' ? null : value })
+            })
+          ]}
+          clearAllLabel={t('common.clearAll')}
+          onQueryChange={(value) => updateUrlSearch({ q: value || null }, { replace: true })}
+          onClearAll={clearFilters}
+          className="mb-4"
+        />
+      )}
+
       <WebhookList
-        webhooks={visibleWebhooks}
+        webhooks={filteredWebhooks}
+        hasActiveFilters={hasActiveFilters}
         canManageWebhooks={canManageWebhooks}
         isLoading={!workspaceStateCurrent || isInitialLoading}
         isRefreshing={workspaceStateCurrent && isRefreshing}
@@ -320,7 +387,8 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         history={workspaceStateCurrent ? history : []}
         isHistoryLoading={workspaceStateCurrent && isHistoryLoading}
         historyError={workspaceStateCurrent ? historyError : null}
-        onCreate={openCreateEditor}
+        actionButtonRefs={webhookActionButtonRefs}
+        onClearFilters={clearFilters}
         onRefresh={() => void loadWebhooks()}
         onEdit={(webhook) => {
           setEditingId(webhook.id);
@@ -329,8 +397,37 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
           setMutationError(null);
           setEditorOpen(true);
         }}
-        onDelete={(webhook) => void deleteWebhook(webhook)}
+        onDelete={(webhook) => {
+          setMutationError(null);
+          setDeleteTargetId(webhook.id);
+        }}
         onLoadHistory={(webhook) => void loadHistory(webhook)}
+      />
+
+      <DestructiveConfirmationDialog
+        open={Boolean(deleteTargetWebhook)}
+        titleId="delete-webhook-title"
+        title={deleteTargetWebhook ? t('workspaceWebhooks.deleteTitle', { name: deleteTargetWebhook.name }) : ''}
+        subtitle={t('common.irreversibleAction')}
+        description={t('workspaceWebhooks.deleteDescription')}
+        error={deleteTargetWebhook ? mutationError : null}
+        confirmLabel={t('workspaceWebhooks.delete')}
+        loadingLabel={t('workspaceWebhooks.deleting')}
+        cancelLabel={t('common.cancel')}
+        pending={Boolean(deleteTargetWebhook && deletingId === deleteTargetWebhook.id)}
+        onCancel={() => {
+          if (deletingId) return;
+          const webhookId = deleteTargetWebhook?.id;
+          setDeleteTargetId(null);
+          setMutationError(null);
+          if (webhookId) window.requestAnimationFrame(() => webhookActionButtonRefs.current.get(webhookId)?.focus({ preventScroll: true }));
+        }}
+        onConfirm={() => {
+          if (!deleteTargetWebhook) return;
+          void deleteWebhook(deleteTargetWebhook).then((deleted) => {
+            if (deleted) setDeleteTargetId(null);
+          });
+        }}
       />
 
       <DrawerFrame

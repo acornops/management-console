@@ -9,7 +9,7 @@ import { WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalog
 import { PageShell } from '@/components/common/PageComposition';
 import { AgentWorkspaceDrawer, CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
 import { agentProfileTabs, type AgentProfileTab } from '@/pages/WorkspaceAgentDetailPanel';
-import { Notice, canManageWorkspaceAgents, createAgentEditDraft, filterVisibleAgents, getAgentEditChangeSummary, isSystemProvidedAgent, isWorkspaceCatalogAgent, mapApiAgent, shouldRefreshAgentEditDraft, splitInput, type AgentDraft, type AgentEditDraft, type AgentEditDraftSource, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
+import { Notice, canManageWorkspaceAgents, createAgentEditDraft, filterVisibleAgents, getAgentEditChangeSummary, isWorkspaceCatalogAgent, mapApiAgent, shouldRefreshAgentEditDraft, splitInput, type AgentDraft, type AgentEditDraft, type AgentEditDraftSource, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createAgent as createWorkspaceAgent,
   createAgentVersion as createWorkspaceAgentVersion,
@@ -162,17 +162,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const workspaceCatalogAgents = useMemo(() => agents.filter(isWorkspaceCatalogAgent), [agents]);
   const visibleAgents = useMemo(() => filterVisibleAgents(workspaceCatalogAgents, query, catalogFilters), [workspaceCatalogAgents, query, catalogFilters]);
   const selectedAgent = workspaceCatalogAgents.find((agent) => agent.id === selectedAgentId);
-  const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId && !isSystemProvidedAgent(agent)) : undefined;
+  const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
   const createDirty = Boolean(createDraft.name || createDraft.description || createDraft.instructions);
   const editDirty = editChangeSummary.length > 0;
-  React.useEffect(() => {
-    if (!agentCatalogReady || !editPanelOpen) return;
-    const requestedAgent = agents.find((agent) => agent.id === editingAgentId);
-    if (requestedAgent && isSystemProvidedAgent(requestedAgent)) {
-      updateUrlSearch({ panel: 'profile', agent: requestedAgent.id, agentTab });
-    }
-  }, [agentCatalogReady, agentTab, agents, editPanelOpen, editingAgentId]);
   React.useEffect(() => {
     if (!createDirty && !editDirty) return;
     const warnBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
@@ -235,7 +228,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     editDraftSourceRef.current = null;
   };
   const openEditAgentDrawer = (agent: AgentDefinition) => {
-    if (isSystemProvidedAgent(agent)) return;
     setEditingAgentId(agent.id);
     if (agentCatalogReady) {
       const draft = createAgentEditDraft(agent);
@@ -255,7 +247,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     openEditAgentDrawer(agent);
   };
   const saveSelectedAgentVersion = async () => {
-    if (!selectedAgent || !canManageAgents || isSystemProvidedAgent(selectedAgent)) return;
+    if (!selectedAgent || !canManageAgents) return;
     setAgentVersionAction(selectedAgent.id);
     setLocalNotice(null);
     try {
@@ -287,7 +279,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     }
   };
   const restoreSelectedAgentVersion = async (version: AgentVersionSnapshotApi) => {
-    if (!selectedAgent || !canManageAgents || isSystemProvidedAgent(selectedAgent)) return;
+    if (!selectedAgent || !canManageAgents) return;
     setAgentVersionAction(`${selectedAgent.id}:restore:${version.id}`);
     setLocalNotice(null);
     try {
@@ -400,16 +392,16 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setEditingAgentId(mapped.id);
       editDraftSourceRef.current = { agentId: mapped.id, draft };
       setEditDraft(draft);
-      setLocalNotice({ tone: 'success', message: `Duplicated ${selectedAgent.name} as a custom draft.` });
+      setLocalNotice({ tone: 'success', message: `Duplicated ${selectedAgent.name} as a draft.` });
       updateUrlSearch({ agent: mapped.id, panel: 'edit', agentTab: null });
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not duplicate this built-in agent.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not duplicate this agent.' });
     } finally {
       setDuplicatingAgentId('');
     }
   };
   const saveAgentEdits = async () => {
-    if (!editingAgent || isSystemProvidedAgent(editingAgent) || !editDraft || !editDraft.name.trim() || !editDraft.description.trim()) return;
+    if (!editingAgent || !editDraft || !editDraft.name.trim() || !editDraft.description.trim()) return;
     setUpdatingAgentId(editingAgent.id);
     setLocalNotice(null);
     try {

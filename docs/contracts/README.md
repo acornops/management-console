@@ -101,6 +101,12 @@ The management console is the browser client for the control-plane API. Keep thi
   retain direct discovery and review.
 - Kubernetes clusters and VMs retain target-scoped MCP servers, skills, and tools for their generic target agents. These target capabilities are administered on the target and are not reassigned to workspace agents.
 - Workflow schedule create and update requests contain only the current user principal. Service identities remain available for non-schedule platform uses but are not presented in schedule UI.
+- Workspace workflow activity uses the cursor-paginated execution endpoint for
+  open and attention counts, URL-backed filtering, and safe immutable
+  provenance. Issue payloads carry compact activity summaries. Schedule and
+  event-trigger responses expose the latest successful execution pointer
+  separately from configuration and last-dispatch state; a rejected dispatch
+  never implies that an execution is running.
 - The console consumes versioned automation-template metadata and exposes explicit idempotent install and activation actions. The Workflow Library lists only definitions installed in the workspace. Automatic templates are provisioned active; opt-in Target remediation and Incident investigation remain in the template catalog until installation, then stay paused until setup is complete and the user activates them.
 - Workflow authoring sends only a unique, non-empty `agentIds` set. One selected
   Agent is labeled `Direct`; multiple selected Agents are labeled
@@ -110,7 +116,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - Coordinated run detail renders the sanitized `AcornOps coordination` parent
   and bounded child capability, target, Agent, status, and failure fields. It
   does not infer coordinator records or display hidden execution scope.
-- Visible template-origin Agents and workflows are system provided. The console permits availability changes, supported external-binding configuration, duplication, and deletion; definition edits and version restore require duplication into a manual draft. Agent deletion explains dependent workflows before it can proceed.
+- Default Agents and workflows are ordinary workspace-owned definitions that can be edited, versioned, restored, duplicated, disabled, or deleted directly. Legacy template-origin Agents follow the same mutation rules. AcornOps never overwrites, upgrades, or automatically restores these defaults. Agent deletion explains dependent workflows before it can proceed.
 - Authorized users may duplicate an effective definition into a manual draft without copying capability installations or operational history.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
 - The target-chat `/` picker sends structured tool runtime aliases and target

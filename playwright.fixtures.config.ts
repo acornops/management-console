@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+
 export default defineConfig({
   testDir: './tests/fixtures',
   outputDir: './test-results/fixtures',
@@ -18,9 +20,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     viewport: { width: 1440, height: 1000 },
-    launchOptions: {
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome'
-    }
+    launchOptions: chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : {}
   },
   webServer: {
     command: 'VITE_APP_DATA_MODE=mock VITE_CONTROL_PLANE_API_BASE_URL=http://127.0.0.1:59999 npm run dev -- --host 127.0.0.1 --port 4186 --strictPort',

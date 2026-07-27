@@ -31,7 +31,6 @@ import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import { getWorkflowExecution, type WorkflowCapabilitiesPreview, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
-
 type WorkflowActions = ReturnType<typeof useWorkspaceWorkflowActions>;
 type WorkflowAgentOption = WorkflowOptionsCatalog['agents'][number];
 
@@ -164,7 +163,6 @@ export const WorkflowAgentsPanel: React.FC<{
   activeAgentOptions: WorkflowAgentOption[];
   isEditingAgentSelection: boolean;
   canManageWorkflowScope: boolean;
-  systemProvided: boolean;
   savingAgentSelectionId: string;
   agentSelectionError: string;
   agentSelectionResult: string;
@@ -175,7 +173,6 @@ export const WorkflowAgentsPanel: React.FC<{
   activeAgentOptions,
   isEditingAgentSelection,
   canManageWorkflowScope,
-  systemProvided,
   savingAgentSelectionId,
   agentSelectionError,
   agentSelectionResult,
@@ -206,7 +203,7 @@ export const WorkflowAgentsPanel: React.FC<{
     title={t('workflowCoordination.agentsTitle')}
     description={t('workflowCoordination.agentsDescription')}
     actions={!isEditingAgentSelection && (
-      <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflowScope || systemProvided} title={systemProvided ? 'Duplicate this system-provided workflow to edit its agents.' : !canManageWorkflowScope ? 'You need manage_workflows to edit workflow agents.' : undefined}>
+      <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflowScope} title={!canManageWorkflowScope ? 'You need manage_workflows to edit workflow agents.' : undefined}>
         <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
         Edit agents
       </Button>
@@ -214,7 +211,7 @@ export const WorkflowAgentsPanel: React.FC<{
   >
     {agentSelectionError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{agentSelectionError}</div>}
     {agentSelectionResult && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{agentSelectionResult}</div>}
-    {!systemProvided && !canManageWorkflowScope && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
+    {!canManageWorkflowScope && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
     {selectionFeedback && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-semibold text-ui-text">{selectionFeedback}</div>}
     {isEditingAgentSelection && selectedAgentSelectionDraft ? (
       <WorkflowSection title={t('workflowCoordination.agentsTitle')} description={t('workflowCoordination.agentsDescription')}>
@@ -323,7 +320,7 @@ export const WorkflowRunsPanel: React.FC<{
     const loadCoordination = async () => {
       if (!loadedCoordinationIds.current.has(run.id)) setCoordinationLoadingId(run.id);
       try {
-        const response = await getWorkflowExecution(run.id);
+        const response = await getWorkflowExecution(run.executionId || run.id);
         if (cancelled) return;
         setCoordinationByExecutionId((current) => ({
           ...current,
@@ -375,12 +372,19 @@ export const WorkflowRunsPanel: React.FC<{
       const discussionState = getRunDiscussionState(run, workflowSessionId);
       const canMessageRun = discussionState === 'active';
       return (
-        <article key={run.id} className="rounded-lg border border-ui-border bg-ui-surface p-4">
+        <article
+          key={run.id}
+          id={run.executionId ? `workflow-execution-${run.executionId}` : undefined}
+          tabIndex={run.executionId ? -1 : undefined}
+          className={`rounded-lg border bg-ui-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-control-boundary ${
+            run.executionId && expandedRunLogId === effectiveRunId ? 'border-control-boundary' : 'border-ui-border'
+          }`}
+        >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="type-row-title">{run.id}</div>
               <div className="type-caption mt-1 text-ui-text-muted">{run.actor} · {formatWorkflowTimestamp(run.startedAt)} · {run.duration}</div>
-              <div className="mt-2"><StatusBadge tone={runStatusTone(run.status)}>{run.status.replace('_', ' ')}</StatusBadge></div>
+              <div className="mt-2"><StatusBadge tone={runStatusTone(run.status)}>{t(`workflowActivity.status.${run.status === 'waiting_approval' ? 'waiting_for_approval' : run.status}`)}</StatusBadge></div>
             </div>
             {isRunActive(run.status) && isServerBackedRun && (
               stopArmedRunId === effectiveRunId ? (
@@ -420,7 +424,9 @@ export const WorkflowRunsPanel: React.FC<{
           )}
           {isServerBackedRun && (
             <div className="mt-3 border-t border-ui-border pt-2">
-              <TraceFooter runId={effectiveRunId} trace={runTrace} isExpanded={traceExpanded} setExpanded={(runId, expanded) => expanded ? void workflowActions.toggleRunLogs(runId) : setExpandedRunLogId('')} compactStatusOnly className="max-w-none" />
+              <TraceFooter runId={effectiveRunId} trace={runTrace} isExpanded={traceExpanded} setExpanded={(runId, expanded) => expanded ? void workflowActions.toggleRunLogs(runId) : setExpandedRunLogId('')} compactStatusOnly
+                activityLabelOverride={run.status === 'waiting_approval' || run.status === 'needs_review' ? t(`workflowActivity.status.${run.status === 'waiting_approval' ? 'waiting_for_approval' : run.status}`) : undefined}
+                activeOverride={run.status === 'waiting_approval' || run.status === 'needs_review' ? false : undefined} className="max-w-none" />
             </div>
           )}
           {isServerBackedRun && traceExpanded && (

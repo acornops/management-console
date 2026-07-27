@@ -1,11 +1,25 @@
 import { expect, test } from '@playwright/test';
 
+test('default workflows are directly editable without creating a copy', async ({ page }) => {
+  await page.goto(
+    '/workspaces/fixture-workspace/workflows?workflow=fixture-template-target-diagnostics',
+    { waitUntil: 'domcontentloaded' }
+  );
+
+  await expect(page.getByRole('button', { name: 'Create editable copy' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Schedule', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Launch', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Settings' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByLabel('Workflow name')).toHaveValue('Target diagnostics');
+});
+
 test('parameterized workflow launch supports keyboard resource selection and resets on close', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows?workflow=fixture-workflow', {
     waitUntil: 'domcontentloaded'
   });
 
-  const launchFromOverview = page.getByRole('button', { name: 'Launch workflow' });
+  const launchFromOverview = page.getByRole('button', { name: 'Launch', exact: true });
   await expect(launchFromOverview).toBeEnabled();
   await launchFromOverview.click();
 
@@ -78,7 +92,7 @@ test('schedule creation uses the same generated runtime parameter controls', asy
   await page.goto('/workspaces/fixture-workspace/workflows?workflow=fixture-workflow', {
     waitUntil: 'domcontentloaded'
   });
-  await page.getByRole('button', { name: 'Schedule workflow' }).click();
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
 
   const drawer = page.getByRole('dialog', { name: 'Schedule workflow' });
   await expect(drawer.getByRole('heading', { name: 'Workflow inputs' })).toBeVisible();

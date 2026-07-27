@@ -107,6 +107,7 @@
   "GET /api/v1/workspaces/{workspaceId}/webhooks/{webhookId}",
   "GET /api/v1/workspaces/{workspaceId}/webhooks/{webhookId}/history",
   "GET /api/v1/workspaces/{workspaceId}/workflow-event-triggers",
+  "GET /api/v1/workspaces/{workspaceId}/workflow-executions",
   "GET /api/v1/workspaces/{workspaceId}/workflow-options",
   "GET /api/v1/workspaces/{workspaceId}/workflow-schedules",
   "GET /api/v1/workspaces/{workspaceId}/workflows",
