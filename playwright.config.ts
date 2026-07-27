@@ -1,11 +1,12 @@
 import { defineConfig } from '@playwright/test';
 
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+const snapshotDirectory = process.platform === 'linux' ? '__snapshots__/linux' : '__snapshots__';
 
 export default defineConfig({
   testDir: './tests/design-system',
   outputDir: './test-results/design-system',
-  snapshotPathTemplate: '{testDir}/__snapshots__/{projectName}/{arg}{ext}',
+  snapshotPathTemplate: `{testDir}/${snapshotDirectory}/{projectName}/{arg}{ext}`,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
