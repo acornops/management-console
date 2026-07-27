@@ -179,9 +179,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       read: items.filter((tool) => toolCapability(tool) === 'read').length,
       write: items.filter((tool) => toolCapability(tool) === 'write').length,
       assistantVisible: items.filter((tool) => (
-        tool.enabled
-        && tool.availability?.available !== false
-        && tool.visibility?.appearsInAssistantToolList
+        tool.enabled && tool.availability?.available !== false && tool.visibility?.appearsInAssistantToolList
       )).length
     };
   }, [catalog]);
