@@ -42,7 +42,7 @@ describe('workspace overview style contract', () => {
     expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
       overviewPage.indexOf('data-connected-targets="true"')
     );
-    expect(overviewPage).toContain("t('overview.runTriageIssue')");
+    expect(overviewPage).toContain("t('overview.openAssistantIssue')");
     expect(overviewPage).toContain("t('overview.viewMoreIssue')");
     expect(overviewPage).toContain('onRunTriage({');
     expect(overviewPage).toContain("t('overview.connectedTargetCount'");

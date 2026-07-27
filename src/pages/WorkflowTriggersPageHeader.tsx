@@ -89,7 +89,7 @@ export const WorkflowTriggersPageHeader: React.FC<WorkflowTriggersPageHeaderProp
             value: 'acornops_event',
             label: <>
               <span className="sm:hidden">{t('triggers.typesCompact.acornopsEvent')}</span>
-              <span className="hidden sm:inline">{t('triggers.types.acornopsEvent')}</span>
+              <span className="hidden sm:inline">{t('triggers.typesCompact.acornopsEvent')}</span>
             </>,
             icon: <Zap className="h-4 w-4" aria-hidden="true" />
           },

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { mapClusterResourcePageItems } from '@/services/control-plane/clusterMappers';
 import { FIXTURE_IDS, getFixtureState, resetFixtureStore } from './store';
 import { routeFixtureRequest } from './router';
 
@@ -28,6 +29,16 @@ describe('frontend fixture router', () => {
       expect(response.status, path).toBe(200);
       expect(response.body, path).toBeTruthy();
     }
+  });
+
+  it('keeps resource page fixture items aligned with the normalized resource contract', () => {
+    const mapped = mapClusterResourcePageItems(getFixtureState().resources);
+
+    expect(mapped.workloads).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'checkout-api', type: 'Deployment', namespace: 'production' }),
+      expect.objectContaining({ name: 'payments-worker-7c5b9f-demo', status: 'CrashLoopBackOff' }),
+      expect.objectContaining({ name: 'checkout-api-6f8c7d9d4c-rollout', status: 'Pending' })
+    ]));
   });
 
   it('persists workspace, membership, settings, agent, workflow, session, and message mutations', async () => {

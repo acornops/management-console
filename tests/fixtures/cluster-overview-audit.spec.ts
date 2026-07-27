@@ -3,11 +3,26 @@ import { expect, test } from '@playwright/test';
 const overviewPath = '/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster/overview';
 
 test('cluster overview exposes coherent headings and accessible metric data', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { level: 1, name: 'Cluster Overview' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Current Issues' })).toBeVisible();
   await expect(page.locator('h3:visible').filter({ hasText: 'Payments worker is restarting' })).toHaveCount(1);
+  await expect(page.getByText('1 issue', { exact: true })).toBeVisible();
+  await expect(page.getByText('1 critical issue', { exact: true })).toBeVisible();
+  await expect(page.getByText('Review 1 active or recovering issue. Prioritize critical issues before warnings.', { exact: true })).toBeVisible();
+  const issueRow = page.getByRole('row').filter({ hasText: 'Payments worker is restarting' });
+  await expect(issueRow).toBeHidden();
+  const issueCard = page.getByRole('article').filter({ hasText: 'Payments worker is restarting' });
+  await expect(issueCard.getByText('production', { exact: true })).toBeVisible();
+  const assistantButton = issueCard.getByRole('button', { name: 'Open assistant' });
+  await expect(assistantButton).toBeVisible();
+  const assistantButtonBox = await assistantButton.boundingBox();
+  expect(assistantButtonBox).not.toBeNull();
+  if (!assistantButtonBox) throw new Error('Open assistant button has no layout box');
+  expect(assistantButtonBox.x + assistantButtonBox.width).toBeLessThanOrEqual(1280);
+  await expect(issueCard.getByText('3 open runs', { exact: true })).toHaveCount(1);
   await expect(page.getByRole('heading', { level: 2, name: 'CPU Usage' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Memory' })).toBeVisible();
 
@@ -17,6 +32,21 @@ test('cluster overview exposes coherent headings and accessible metric data', as
   await expect(metricTables.nth(0).locator('tbody tr')).toHaveCount(2);
   await expect(metricTables.nth(1).locator('caption')).toHaveText('Memory data');
   await expect(page.locator('svg[role="img"][aria-label="CPU Usage"]')).toHaveCount(0);
+
+  await assistantButton.click();
+  await expect(page.getByRole('dialog', { name: 'Cluster Assistant' })).toBeVisible();
+});
+
+test('cluster resources keep transient Pending visible without adding a durable issue', async ({ page }) => {
+  await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('1 issue', { exact: true })).toBeVisible();
+
+  await page.goto('/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster/resources', {
+    waitUntil: 'domcontentloaded'
+  });
+
+  await expect(page.getByText('checkout-api-6f8c7d9d4c-rollout', { exact: true })).toBeVisible();
+  await expect(page.getByText('Pending', { exact: true })).toBeVisible();
 });
 
 test('cluster overview reports telemetry history failures with retry', async ({ page }) => {

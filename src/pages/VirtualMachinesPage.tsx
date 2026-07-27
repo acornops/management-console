@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Gauge, Terminal } from 'lucide-react';
+import { Activity, Bot, Gauge } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@/components/common/Button';
@@ -393,7 +393,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     const prompt = t('virtualMachines.overview.triageIssuePrompt', {
       title: issue.title,
       severity: issue.severity,
-      source: issue.objectName || issue.objectKind || issue.reason || 'host',
+      source: issue.objectName || issue.objectKind || issue.reason || t('virtualMachines.overview.hostSource'),
       message: issue.summary
     });
     setPendingChatPrompt(prompt);
@@ -508,7 +508,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         <PageHeader title={t('virtualMachines.overview.title')} description={t('virtualMachines.overview.latestTelemetryFor', { name: selected.name })} actions={
           <>
             <Button onClick={() => openVmTriage()} variant="secondary" size="md" className="whitespace-nowrap">
-              <Terminal className="h-4 w-4" />
+              <Bot className="h-4 w-4" aria-hidden="true" />
               {t('virtualMachines.overview.openAssistant')}
             </Button>
             <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">

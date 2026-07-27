@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, CircleCheck, Cpu, Terminal } from 'lucide-react';
+import { Activity, AlertTriangle, Bot, CircleCheck, Cpu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { MetricChart } from '@/components/common/MetricChart';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { issueStatusTone } from '@/pages/issues/issueUi';
+import { issueStatusTone, issueTargetScopeLabel, kubernetesIssueNamespace } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
@@ -196,7 +196,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const scopedResourceCount = cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
   const openIssueTriage = (issue: ControlPlaneIssueItem) => {
-    const prompt = `Triage "${issue.title}" on ${cluster.name}. Severity: ${issue.severity}. Status: ${issue.status}. Scope: ${issue.scopeName || issue.namespace || t('clusterOverview.clusterWide')}. Issue summary: ${issue.summary}`;
+    const namespace = kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'));
+    const scope = issueTargetScopeLabel(issue, namespace);
+    const prompt = `Triage "${issue.title}" on ${cluster.name}. Severity: ${issue.severity}. Status: ${issue.status}. Scope: ${scope}. Namespace: ${namespace}. Issue summary: ${issue.summary}`;
     onOpenCopilot?.(prompt);
   };
   const retryMetricHistory = () => setMetricHistoryRequestVersion((version) => version + 1);
@@ -231,7 +233,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               </p>
               {hasIssueCounts && (
                 <p className="type-body mt-2 max-w-3xl">
-                  {t('clusterOverview.activeIssuesBody', { issues: issueCount, critical: criticalIssues, warning: warningIssues })}
+                  {t('clusterOverview.activeIssuesBody', { count: issueCount })}
                 </p>
               )}
             </div>
@@ -261,7 +263,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
         ) : reportedIssues.length > 0 ? (
           <>
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden overflow-x-auto 2xl:block">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-ui-border">
@@ -284,8 +286,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                             {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
                           </span>
                         </div>
-                        <h3 className="type-row-title mt-2">{issue.title}</h3>
-                        <p className="type-body mt-1">{issue.reason || issue.summary}</p>
+                        <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
+                        <p className="type-body mt-1 break-words">{issue.reason || issue.summary}</p>
                         <IssueWorkflowActivity
                           workspaceId={cluster.workspaceId}
                           issueId={issue.id}
@@ -297,8 +299,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                           {t(`issues.severity.${issue.severity}`)}
                         </span>
                       </td>
-                      <td className="type-caption px-5 py-4 align-top">
-                        {issue.scopeName || issue.namespace || t('clusterOverview.clusterWide')}
+                      <td className="type-caption break-words px-5 py-4 align-top">
+                        {kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}
                       </td>
                       <td className="type-caption px-5 py-4 align-top">
                         {formatRelativeTime(issueTimestamp(issue))}
@@ -309,9 +311,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                             onClick={() => openIssueTriage(issue)}
                             variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
                             size="md"
+                            className="whitespace-nowrap"
                           >
-                            <Terminal className="h-4 w-4" />
-                            {t('clusterOverview.runTriage')}
+                            <Bot className="h-4 w-4" aria-hidden="true" />
+                            {t('clusterOverview.openAssistant')}
                           </Button>
                         </td>
                       )}
@@ -321,7 +324,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               </table>
             </div>
 
-            <div className="divide-y divide-ui-border md:hidden">
+            <div className="divide-y divide-ui-border 2xl:hidden">
               {reportedIssues.map((issue) => (
                 <article key={issue.id} className="p-5">
                   <div className="flex flex-wrap items-center gap-2">
@@ -331,13 +334,23 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
                       {t(`issues.status.${issue.status}`)}
                     </span>
-                    <span className="type-caption">{formatRelativeTime(issueTimestamp(issue))}</span>
                   </div>
-                  <p className="type-caption mt-3 text-ui-text-muted">
-                    {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
-                  </p>
-                  <h3 className="type-row-title mt-4">{issue.title}</h3>
-                  <p className="type-body mt-2">{issue.reason || issue.summary}</p>
+                  <h3 className="type-row-title mt-4 break-words">{issue.title}</h3>
+                  <p className="type-body mt-2 break-words">{issue.reason || issue.summary}</p>
+                  <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <dt className="type-micro-label text-ui-text-muted">{t('clusterOverview.namespace')}</dt>
+                      <dd className="type-caption mt-1 break-words">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</dd>
+                    </div>
+                    <div>
+                      <dt className="type-micro-label text-ui-text-muted">{t('overview.firstSeenLabel')}</dt>
+                      <dd className="type-caption mt-1">{formatRelativeTime(issueFirstSeenTimestamp(issue))}</dd>
+                    </div>
+                    <div>
+                      <dt className="type-micro-label text-ui-text-muted">{t('overview.lastSeenLabel')}</dt>
+                      <dd className="type-caption mt-1">{formatRelativeTime(issueTimestamp(issue))}</dd>
+                    </div>
+                  </dl>
                   <IssueWorkflowActivity
                     workspaceId={cluster.workspaceId}
                     issueId={issue.id}
@@ -350,8 +363,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       size="md"
                       className="mt-4"
                     >
-                      <Terminal className="h-4 w-4" />
-                      {t('clusterOverview.runTriage')}
+                      <Bot className="h-4 w-4" aria-hidden="true" />
+                      {t('clusterOverview.openAssistant')}
                     </Button>
                   )}
                 </article>

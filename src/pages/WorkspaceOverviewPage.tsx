@@ -1,8 +1,8 @@
 import React from 'react';
 import {
   ArrowRight,
-  Clock3,
-  Terminal
+  Bot,
+  Clock3
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, buttonClassName } from '@/components/common/Button';
@@ -168,7 +168,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     </div>
   );
 
-  const runTriage = (item: WorkspaceOverviewAttentionItem) => {
+  const openAssistantForIssue = (item: WorkspaceOverviewAttentionItem) => {
     const issue = item.issue;
     const prompt = item.targetType === 'virtual_machine'
       ? t('virtualMachines.overview.triageIssuePrompt', {
@@ -306,20 +306,20 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
           </div>
           <div className="flex w-full shrink-0 flex-col gap-2 self-start sm:w-auto sm:flex-row lg:justify-end">
             <Button
-              onClick={() => runTriage(item)}
+              onClick={() => openAssistantForIssue(item)}
               variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
               size="sm"
               className="w-full justify-center sm:w-auto"
             >
-              <Terminal className="h-4 w-4" />
-              {t('overview.runTriageIssue')}
+              <Bot className="h-4 w-4" aria-hidden="true" />
+              {t('overview.openAssistantIssue')}
             </Button>
             <a
               href={appHref(path)}
               onClick={(event) => handleAppLinkClick(event, path, navigate)}
               className={buttonClassName({ variant: 'tertiary', size: 'sm', className: 'w-full justify-center sm:w-auto' })}
             >
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
               {t('overview.viewMoreIssue')}
             </a>
           </div>

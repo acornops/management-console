@@ -1,5 +1,5 @@
 import React from 'react';
-import { Terminal } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { ICONS } from '@/constants';
@@ -41,6 +41,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
   onOpenIssueTriage
 }) => {
   const { t } = useTranslation();
+  const issueSectionTitleId = React.useId();
   const reportedIssues = [...(issues || [])].sort((left, right) => {
     const severityDelta = issueSeverityRank(left.severity) - issueSeverityRank(right.severity);
     if (severityDelta !== 0) return severityDelta;
@@ -61,14 +62,17 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
   const shouldShowIssueLoadFailure = issueLoadFailed && (!issueSummary || issueSummary.total > 0);
 
   return (
-    <section className="mb-10 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+    <section
+      aria-labelledby={issueSectionTitleId}
+      className="mb-10 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm"
+    >
       <div className="flex flex-col gap-6 border-b border-ui-border bg-ui-bg px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 items-start gap-4">
           <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface/70 text-accent-strong">
-            <ICONS.AlertTriangle className="h-5 w-5" />
+            <ICONS.AlertTriangle className="h-5 w-5" aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <p className="type-row-title">{t('virtualMachines.overview.activeIssues')}</p>
+            <h2 id={issueSectionTitleId} className="type-row-title">{t('virtualMachines.overview.activeIssues')}</h2>
             <p className="mt-1 text-sm leading-6 text-ui-text-muted">
               {t('virtualMachines.overview.activeIssuesBody')}
             </p>
@@ -90,14 +94,14 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
       {isLoading ? (
         <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
           <div className="rounded-md border border-ui-border bg-ui-bg p-3 text-accent-strong">
-            <ICONS.RefreshCw className="h-5 w-5 animate-spin" />
+            <ICONS.RefreshCw className="h-5 w-5 animate-spin" aria-hidden="true" />
           </div>
-          <h2 className="type-row-title mt-4">{t('virtualMachines.overview.loadingIssuesTitle')}</h2>
+          <h3 className="type-row-title mt-4">{t('virtualMachines.overview.loadingIssuesTitle')}</h3>
           <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.loadingIssuesBody')}</p>
         </div>
       ) : reportedIssues.length > 0 ? (
         <>
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden overflow-x-auto 2xl:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-ui-border">
@@ -120,8 +124,8 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                           {t('overview.firstSeenLabel')}: {formatUserDateTime(issueFirstSeenTimestamp(issue))}
                         </span>
                       </div>
-                      <h2 className="type-row-title mt-2">{issue.title}</h2>
-                      <p className="type-body mt-1">{issue.reason || issue.summary}</p>
+                      <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
+                      <p className="type-body mt-1 break-words">{issue.reason || issue.summary}</p>
                       <IssueWorkflowActivity
                         workspaceId={workspaceId}
                         issueId={issue.id}
@@ -133,8 +137,8 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                         {t(`issues.severity.${issue.severity}`)}
                       </span>
                     </td>
-                    <td className="type-caption px-5 py-4 align-top">
-                      {issue.objectName || issue.objectKind || issue.reason || 'host'}
+                    <td className="type-caption break-words px-5 py-4 align-top">
+                      {issue.objectName || issue.objectKind || issue.reason || t('virtualMachines.overview.hostSource')}
                     </td>
                     <td className="type-caption px-5 py-4 align-top">
                       {formatUserDateTime(issueTimestamp(issue))}
@@ -144,9 +148,10 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                         onClick={() => onOpenIssueTriage(issue)}
                         variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
                         size="md"
+                        className="whitespace-nowrap"
                       >
-                        <Terminal className="h-4 w-4" />
-                        {t('virtualMachines.overview.runTriage')}
+                        <Bot className="h-4 w-4" aria-hidden="true" />
+                        {t('virtualMachines.overview.openAssistant')}
                       </Button>
                     </td>
                   </tr>
@@ -155,7 +160,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
             </table>
           </div>
 
-          <div className="divide-y divide-ui-border md:hidden">
+          <div className="divide-y divide-ui-border 2xl:hidden">
             {reportedIssues.map((issue) => (
               <article key={issue.id} className="p-5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -166,11 +171,24 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                     {t(`issues.status.${issue.status}`)}
                   </span>
                 </div>
-                <p className="type-caption mt-3 text-ui-text-muted">
-                  {t('overview.firstSeenLabel')}: {formatUserDateTime(issueFirstSeenTimestamp(issue))}
-                </p>
-                <h2 className="type-row-title mt-4">{issue.title}</h2>
-                <p className="type-body mt-2">{issue.reason || issue.summary}</p>
+                <h3 className="type-row-title mt-4 break-words">{issue.title}</h3>
+                <p className="type-body mt-2 break-words">{issue.reason || issue.summary}</p>
+                <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <dt className="type-micro-label text-ui-text-muted">{t('virtualMachines.overview.source')}</dt>
+                    <dd className="type-caption mt-1 break-words">
+                      {issue.objectName || issue.objectKind || issue.reason || t('virtualMachines.overview.hostSource')}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="type-micro-label text-ui-text-muted">{t('overview.firstSeenLabel')}</dt>
+                    <dd className="type-caption mt-1">{formatUserDateTime(issueFirstSeenTimestamp(issue))}</dd>
+                  </div>
+                  <div>
+                    <dt className="type-micro-label text-ui-text-muted">{t('overview.lastSeenLabel')}</dt>
+                    <dd className="type-caption mt-1">{formatUserDateTime(issueTimestamp(issue))}</dd>
+                  </div>
+                </dl>
                 <IssueWorkflowActivity
                   workspaceId={workspaceId}
                   issueId={issue.id}
@@ -182,27 +200,27 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                   size="md"
                   className="mt-4"
                 >
-                  <Terminal className="h-4 w-4" />
-                  {t('virtualMachines.overview.runTriage')}
+                  <Bot className="h-4 w-4" aria-hidden="true" />
+                  {t('virtualMachines.overview.openAssistant')}
                 </Button>
               </article>
             ))}
           </div>
         </>
       ) : shouldShowIssueLoadFailure ? (
-        <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center" role="alert">
           <div className="rounded-md border border-status-warning/20 bg-status-warning-soft p-3 text-status-warning-text">
-            <ICONS.AlertTriangle className="h-5 w-5" />
+            <ICONS.AlertTriangle className="h-5 w-5" aria-hidden="true" />
           </div>
-          <h2 className="type-row-title mt-4">{t('virtualMachines.overview.issueLoadFailedTitle')}</h2>
+          <h3 className="type-row-title mt-4">{t('virtualMachines.overview.issueLoadFailedTitle')}</h3>
           <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.issueLoadFailedBody')}</p>
         </div>
       ) : (
         <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
           <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
-            <ICONS.CheckCircle2 className="h-5 w-5" />
+            <ICONS.CheckCircle2 className="h-5 w-5" aria-hidden="true" />
           </div>
-          <h2 className="type-row-title mt-4">{t('virtualMachines.overview.noIssuesTitle')}</h2>
+          <h3 className="type-row-title mt-4">{t('virtualMachines.overview.noIssuesTitle')}</h3>
           <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.noIssuesBody')}</p>
         </div>
       )}

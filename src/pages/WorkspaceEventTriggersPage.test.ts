@@ -32,6 +32,8 @@ describe('WorkspaceEventTriggersPage contract surface', () => {
     expect(triggersPageHeader).toContain('<SegmentedTabs<WorkflowTriggerType>');
     expect(triggersPageHeader).toContain('idBase="workflow-trigger-type"');
     expect(triggersPageHeader).toContain("t('triggers.tabsLabel')");
+    expect(triggersPageHeader.match(/t\('triggers\.typesCompact\.acornopsEvent'\)/g)).toHaveLength(2);
+    expect(triggersPageHeader).not.toContain("t('triggers.types.acornopsEvent')");
     expect(triggersPageHeader).toContain('AppPaths.workspaceTriggers(workspace.id, triggerType)');
     expect(triggersPageHeader).toContain('pendingTriggerTabFocus = { workspaceId: workspace.id, triggerType }');
     expect(triggersPageHeader).toContain('document.getElementById(`workflow-trigger-type-${currentType}-tab`)?.focus()');

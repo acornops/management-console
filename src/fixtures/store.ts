@@ -1,3 +1,5 @@
+import type { ControlPlaneResourcePageItem } from '@/services/controlPlaneApi';
+
 export const FIXTURE_IDS = {
   user: 'fixture-user',
   workspace: 'fixture-workspace',
@@ -40,7 +42,7 @@ export interface FixtureState {
   sessions: Array<Record<string, any>>;
   messages: Record<string, Array<Record<string, any>>>;
   runs: Record<string, Record<string, any>>;
-  resources: Array<Record<string, any>>;
+  resources: ControlPlaneResourcePageItem[];
   targetTools: Array<Record<string, any>>;
   targetToolSettings: Record<string, boolean>;
   targetSkills: Array<Record<string, any>>;
@@ -95,9 +97,14 @@ function clusterSnapshot() {
           },
           {
             name: 'payments-worker-7c5b9f-demo', namespace: 'production', uid: 'pod-payments',
-            creationTimestamp: EARLIER, phase: 'Pending', nodeName: 'fixture-control-plane', restartCount: 4,
+            creationTimestamp: EARLIER, phase: 'Running', nodeName: 'fixture-control-plane', restartCount: 4,
             labels: { app: 'payments-worker' },
             containerStatuses: [{ name: 'worker', ready: false, restartCount: 4, state: { waiting: { reason: 'CrashLoopBackOff', message: 'back-off restarting failed container' } } }]
+          },
+          {
+            name: 'checkout-api-6f8c7d9d4c-rollout', namespace: 'production', uid: 'pod-checkout-rollout',
+            creationTimestamp: fixtureTime(-30_000), phase: 'Pending', restartCount: 0,
+            labels: { app: 'checkout-api' }, containerStatuses: []
           }
         ],
         nodes: [{
@@ -150,9 +157,9 @@ export function createFixtureState(): FixtureState {
     namespaceExclude: ['kube-system'],
     writeConfirmationPolicy: { effectiveRequired: true, overrideRequired: null, source: 'deployment_default' },
     summary: {
-      resourceCount: 12, findingCount: 2, criticalFindingCount: 1, namespaceCount: 2, nodeCount: 1,
-      resourceFamilyCounts: { workloads: 6, network: 3, storage: 1, cluster: 2 },
-      resourceKindCounts: { Pod: 2, Deployment: 2, Service: 1, Ingress: 1, PersistentVolumeClaim: 1, Node: 1, Namespace: 2 }
+      resourceCount: 13, findingCount: 3, criticalFindingCount: 1, namespaceCount: 2, nodeCount: 1,
+      resourceFamilyCounts: { workloads: 7, network: 3, storage: 1, cluster: 2 },
+      resourceKindCounts: { Pod: 3, Deployment: 2, Service: 1, Ingress: 1, PersistentVolumeClaim: 1, Node: 1, Namespace: 2 }
     },
     latestSnapshot: clusterSnapshot()
   };
@@ -470,7 +477,7 @@ export function createFixtureState(): FixtureState {
     clusters: [cluster],
     virtualMachines: [virtualMachine],
     issues,
-    auditEvents: [{ id: 'fixture-audit', workspaceId: FIXTURE_IDS.workspace, category: 'target', eventType: 'target.snapshot.updated', operation: 'write', actor: { type: 'system', displayName: 'AgentK' }, object: { type: 'kubernetes_cluster', id: FIXTURE_IDS.cluster, name: cluster.name }, summary: 'Cluster snapshot and issue signals updated', metadata: { resourceCount: 12 }, occurredAt: NOW }],
+    auditEvents: [{ id: 'fixture-audit', workspaceId: FIXTURE_IDS.workspace, category: 'target', eventType: 'target.snapshot.updated', operation: 'write', actor: { type: 'system', displayName: 'AgentK' }, object: { type: 'kubernetes_cluster', id: FIXTURE_IDS.cluster, name: cluster.name }, summary: 'Cluster snapshot and issue signals updated', metadata: { resourceCount: 13 }, occurredAt: NOW }],
     aiSettings: {
       workspaceId: FIXTURE_IDS.workspace, defaultProvider: 'openai', defaultModel: 'gpt-5.5', reasoningSummaryMode: 'concise', reasoningEffort: 'medium',
       allowedReasoningSummaryModes: ['off', 'auto', 'concise', 'detailed'], allowedReasoningEfforts: ['off', 'low', 'medium', 'high'], reasoningSummariesEnabled: true,
@@ -532,8 +539,28 @@ export function createFixtureState(): FixtureState {
     },
     runs: { [FIXTURE_IDS.run]: { id: FIXTURE_IDS.run, workspaceId: FIXTURE_IDS.workspace, sessionId: FIXTURE_IDS.session, messageId: 'fixture-message-user', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', clusterId: FIXTURE_IDS.cluster, status: 'completed', requestedAt: EARLIER, startedAt: EARLIER, endedAt: NOW, usage: { input_tokens: 640, output_tokens: 118, tool_calls: 2 }, assistantMessage: { content: messages[FIXTURE_IDS.session][1].content, format: 'markdown' } } },
     resources: [
-      { id: 'production/checkout-api', family: 'workloads', kind: 'Deployment', name: 'checkout-api', namespace: 'production', status: 'Healthy', clusterId: FIXTURE_IDS.cluster, clusterName: cluster.name, item: { replicas: 3, readyReplicas: 3, availableReplicas: 3 } },
-      { id: 'production/payments-worker', family: 'workloads', kind: 'Pod', name: 'payments-worker-7c5b9f-demo', namespace: 'production', status: 'Critical', node: 'fixture-control-plane', clusterId: FIXTURE_IDS.cluster, clusterName: cluster.name, item: { phase: 'Running', restartCount: 4 } }
+      {
+        id: 'production/checkout-api', family: 'workloads', kind: 'Deployment', name: 'checkout-api',
+        namespace: 'production', status: 'Healthy', clusterId: FIXTURE_IDS.cluster, clusterName: cluster.name,
+        item: { uid: 'deploy-checkout', name: 'checkout-api', namespace: 'production', creationTimestamp: EARLIER, replicas: 3, readyReplicas: 3, availableReplicas: 3 }
+      },
+      {
+        id: 'production/payments-worker', family: 'workloads', kind: 'Pod', name: 'payments-worker-7c5b9f-demo',
+        namespace: 'production', status: 'Critical', node: 'fixture-control-plane', clusterId: FIXTURE_IDS.cluster, clusterName: cluster.name,
+        item: {
+          uid: 'pod-payments', name: 'payments-worker-7c5b9f-demo', namespace: 'production',
+          creationTimestamp: EARLIER, phase: 'Running', nodeName: 'fixture-control-plane', restartCount: 4,
+          containerStatuses: [{ name: 'worker', ready: false, restartCount: 4, state: { waiting: { reason: 'CrashLoopBackOff' } } }]
+        }
+      },
+      {
+        id: 'production/checkout-api-rollout', family: 'workloads', kind: 'Pod', name: 'checkout-api-6f8c7d9d4c-rollout',
+        namespace: 'production', status: 'Pending', clusterId: FIXTURE_IDS.cluster, clusterName: cluster.name,
+        item: {
+          uid: 'pod-checkout-rollout', name: 'checkout-api-6f8c7d9d4c-rollout', namespace: 'production',
+          creationTimestamp: fixtureTime(-30_000), phase: 'Pending', restartCount: 0, containerStatuses: []
+        }
+      }
     ],
     targetTools,
     targetToolSettings: {

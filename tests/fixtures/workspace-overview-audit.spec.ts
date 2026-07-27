@@ -14,6 +14,7 @@ test('workspace overview exposes real links with a coherent heading structure', 
   const virtualMachineLink = page.locator('[data-connected-targets="true"] a').filter({ hasText: 'Payments VM' });
   const issueLink = page.getByRole('link', { name: 'View More' }).first();
 
+  await expect(page.getByRole('button', { name: 'Open assistant' }).first()).toBeVisible();
   await expect(clusterLink).toHaveAttribute('href', '/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster');
   await expect(virtualMachineLink).toHaveAttribute('href', '/workspaces/fixture-workspace/virtual-machines/fixture-vm');
   await expect(issueLink).toHaveAttribute('href', '/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster');
