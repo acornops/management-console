@@ -44,19 +44,21 @@ test('outbound webhooks expose history, confirmation, and one-time secret flows'
   await expect(page.getByRole('heading', { name: 'Outbound webhooks' })).toBeVisible();
   await expect(page.getByText('Mattermost operations', { exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Delivery history' }).click();
+  const webhookArticle = page.getByRole('article').filter({ hasText: 'Mattermost operations' });
+  const webhookActions = webhookArticle.getByRole('button', { name: 'Webhook actions for Mattermost operations' });
+  await webhookActions.click();
+  await page.getByRole('menuitem', { name: 'Delivery history' }).click();
   await expect(page.getByText('Delivered', { exact: true })).toBeVisible();
   await expect(page.getByText('Superseded', { exact: true })).toBeVisible();
   await expect(page.getByText('Deliberately not sent because the issue state advanced.', { exact: true })).toBeVisible();
   await expect(page.getByText('run.failed.v1', { exact: true }).last()).toBeVisible();
 
-  const webhookArticle = page.getByRole('article').filter({ hasText: 'Mattermost operations' });
-  const deleteWebhook = webhookArticle.getByRole('button', { name: 'Delete' });
-  await deleteWebhook.click();
-  const confirmation = page.getByRole('alert').filter({ hasText: 'Delete Mattermost operations?' });
+  await webhookActions.click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
+  const confirmation = page.getByRole('dialog', { name: 'Delete Mattermost operations?' });
   await expect(confirmation).toBeFocused();
   await confirmation.getByRole('button', { name: 'Cancel' }).click();
-  await expect(deleteWebhook).toBeFocused();
+  await expect(webhookActions).toBeFocused();
   await expect(page.getByText('Mattermost operations', { exact: true })).toBeVisible();
 
   const createWebhook = page.getByRole('button', { name: 'Create webhook' }).first();
@@ -159,27 +161,48 @@ test('automation ledgers retain concise desktop headings through filtered-empty 
     'Activity',
     'Actions'
   ]);
+  const scheduleRow = scheduleLedger.getByRole('row').filter({ hasText: 'Weekday morning review' });
+  const scheduleActions = scheduleRow.getByRole('button', { name: 'Schedule actions for Weekday morning review' });
+  await scheduleActions.click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
+  const scheduleDeleteDialog = page.getByRole('dialog', { name: 'Delete “Weekday morning review”?' });
+  await expect(scheduleDeleteDialog).toBeVisible();
+  await scheduleDeleteDialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(scheduleDeleteDialog).toHaveCount(0);
+  await expect(scheduleActions).toBeFocused();
   await page.getByRole('searchbox', { name: 'Search schedules' }).fill('not configured');
   await expect(page.getByRole('heading', { name: 'No schedules match these filters' })).toBeVisible();
   await expect(scheduleLedger.getByRole('columnheader')).toHaveCount(7);
 
   await page.goto('/workspaces/fixture-workspace/triggers?type=acornops_event', { waitUntil: 'domcontentloaded' });
   const triggerLedger = page.getByRole('region', { name: 'Workflow event triggers' });
-  await expect(triggerLedger.getByText('Trigger', { exact: true })).toBeVisible();
-  await expect(triggerLedger.getByText('Activity', { exact: true })).toBeVisible();
-  await expect(triggerLedger.getByText('Actions', { exact: true })).toBeVisible();
+  await expect(triggerLedger.locator('span').filter({ hasText: /^Trigger$/ })).toBeVisible();
+  await expect(triggerLedger.locator('span').filter({ hasText: /^Workflow$/ })).toBeVisible();
+  await expect(triggerLedger.locator('span').filter({ hasText: /^Configuration$/ })).toBeVisible();
+  await expect(triggerLedger.locator('span').filter({ hasText: /^Activity$/ })).toBeVisible();
+  await expect(triggerLedger.locator('span').filter({ hasText: /^Actions$/ })).toBeVisible();
+  const eventTriggerArticle = triggerLedger.getByRole('article').filter({ hasText: 'Triage new issues' });
+  const eventTriggerActions = eventTriggerArticle.getByRole('button', { name: 'Trigger actions for Triage new issues' });
+  await eventTriggerActions.click();
+  await expect(page.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Pause' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(eventTriggerActions).toBeFocused();
   await page.getByRole('searchbox', { name: 'Search AcornOps event triggers' }).fill('not configured');
   await expect(page.getByText('No event triggers match these filters', { exact: true })).toBeVisible();
-  await expect(triggerLedger.getByText('Trigger', { exact: true })).toBeVisible();
+  await expect(triggerLedger.locator('span').filter({ hasText: /^Trigger$/ })).toBeVisible();
 
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
   const webhookLedger = page.getByRole('region', { name: 'Configured webhooks' });
-  await expect(webhookLedger.getByText('Webhook', { exact: true })).toBeVisible();
-  await expect(webhookLedger.getByText('Events', { exact: true })).toBeVisible();
-  await expect(webhookLedger.getByText('Actions', { exact: true })).toBeVisible();
+  await expect(webhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toBeVisible();
+  await expect(webhookLedger.locator('span').filter({ hasText: /^Destination$/ })).toBeVisible();
+  await expect(webhookLedger.locator('span').filter({ hasText: /^Events$/ })).toBeVisible();
+  await expect(webhookLedger.locator('span').filter({ hasText: /^Modified$/ })).toBeVisible();
+  await expect(webhookLedger.locator('span').filter({ hasText: /^Actions$/ })).toBeVisible();
   await page.getByRole('searchbox', { name: 'Search outbound webhooks' }).fill('not configured');
   await expect(page.getByText('No webhooks match these filters', { exact: true })).toBeVisible();
-  await expect(webhookLedger.getByText('Webhook', { exact: true })).toBeVisible();
+  await expect(webhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
@@ -198,6 +221,7 @@ test('agent profile scopes lifecycle actions to Settings and icons restore-point
   await page.goto('/workspaces/fixture-workspace/agents?panel=profile&agent=fixture-specialist&agentTab=overview', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('dialog', { name: 'Kubernetes Specialist' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Disable agent' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Delete agent' })).toHaveCount(0);
 

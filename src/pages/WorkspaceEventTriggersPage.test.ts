@@ -13,6 +13,8 @@ const appPageContent = readSource('src/app/AppPageContent.tsx');
 const navigation = readSource('src/app/workspaceNavigation.tsx');
 const pageModel = readSource('src/pages/WorkspaceEventTriggersPage.model.ts');
 const triggerCard = readSource('src/pages/WorkspaceEventTriggerCard.tsx');
+const deleteDialog = readSource('src/pages/WorkspaceEventTriggerDeleteDialog.tsx');
+const scheduleDeleteDialog = readSource('src/pages/WorkspaceScheduleDeleteDialog.tsx');
 const createMenu = readSource('src/pages/WorkflowTriggerCreateMenu.tsx');
 const triggersPageHeader = readSource('src/pages/WorkflowTriggersPageHeader.tsx');
 const workflowApi = readSource('src/services/control-plane/workflowEventTriggerApi.ts');
@@ -88,6 +90,14 @@ describe('WorkspaceEventTriggersPage contract surface', () => {
     expect(page).toContain('<DrawerFrame');
     expect(triggerCard).toContain('<StatusBadge');
     expect(triggerCard).toContain('<InlineConfirmation');
+    expect(triggerCard).toContain('<OverflowActionMenu');
+    expect(page).toContain("t('eventTriggers.columns.workflow')");
+    expect(page).toContain("t('eventTriggers.columns.configuration')");
+    expect(schedulesPage).toContain('actionButtonRefs={scheduleActionButtonRefs}');
+    expect(page).toContain('<WorkspaceEventTriggerDeleteDialog');
+    expect(deleteDialog).toContain('<DestructiveConfirmationDialog');
+    expect(schedulesPage).toContain('<WorkspaceScheduleDeleteDialog');
+    expect(scheduleDeleteDialog).toContain('<DestructiveConfirmationDialog');
     expect(page).not.toContain("heading={t('eventTriggers.listTitle')}");
   });
 

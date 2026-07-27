@@ -147,6 +147,12 @@ const Dashboard: React.FC<DashboardProps> = ({
           icon={<ICONS.Layers />}
           title={t('dashboard.noClusters')}
           description={t('dashboard.noClustersBody')}
+          actions={onAddCluster ? (
+            <Button onClick={onAddCluster} variant="primary" size="md">
+              <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+              {t('dashboard.addCluster')}
+            </Button>
+          ) : undefined}
         />
       )}
 

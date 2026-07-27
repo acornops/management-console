@@ -12,6 +12,7 @@ export const en = {
     refresh: 'Refresh',
     close: 'Close',
     cancel: 'Cancel',
+    irreversibleAction: 'This action cannot be undone.',
     saving: 'Saving...',
     saveChanges: 'Save Changes',
     clearSearch: 'Clear search',
@@ -340,13 +341,14 @@ export const en = {
     continue: 'Continue',
     aiSetupKicker: 'Workspace created',
     aiSetupTitle: 'Connect an AI provider',
-    aiSetupBody: 'Add a write-only workspace API key to activate the AI runtime. You can skip this step and return from AI Settings later.',
+    aiSetupBody: 'Add your API key to activate the AI runtime. You can skip this step and add one later from AI Settings.',
     aiSetupAssistantTitle: 'Start assistant conversations',
     aiSetupAssistantBody: 'Use an enabled provider and model for investigation and troubleshooting.',
     aiSetupAutomationTitle: 'Run automations',
     aiSetupAutomationBody: 'Start manual, scheduled, and event-triggered workflow runs.',
     aiSetupOptionalNote: 'Targets and integrations are optional. Add only the ones your workflows and investigations need.',
-    openAiSettings: 'Open AI Settings',
+    aiSettingsTransition: 'This finishes workspace setup and opens Workspace Settings → AI.',
+    openAiSettings: 'Finish and open AI Settings',
     skipForNow: 'Skip for now',
     done: 'Done'
   },
@@ -366,6 +368,11 @@ export const en = {
       schedule: 'Schedule',
       acornopsEvent: 'AcornOps event',
       webhook: 'Incoming webhook'
+    },
+    typesCompact: {
+      schedule: 'Schedule',
+      acornopsEvent: 'Events',
+      webhook: 'Webhooks'
     },
     actions: {
       create: 'Create trigger',
@@ -437,6 +444,11 @@ export const en = {
       repairAndResume: 'Repair and resume',
       delete: 'Delete'
     },
+    actionsFor: 'Schedule actions for {{name}}',
+    delete: {
+      title: 'Delete “{{name}}”?',
+      description: 'This schedule will stop dispatching its workflow and will be permanently removed.'
+    },
     form: {
       createTitle: 'Create schedule',
       editTitle: 'Edit schedule',
@@ -472,6 +484,8 @@ export const en = {
     count_other: '{{count}} triggers',
     columns: {
       trigger: 'Trigger',
+      workflow: 'Workflow',
+      configuration: 'Configuration',
       actions: 'Actions'
     },
     loadError: 'Failed loading event triggers.',
@@ -481,10 +495,13 @@ export const en = {
     deleteError: 'Failed deleting event trigger.',
     rotateError: 'Failed rotating the signing secret.',
     copyError: 'Could not copy to the clipboard.',
-    startsWorkflow: 'Starts {{workflow}}',
-    webhookDescription: 'Accepts signed requests with declared workflow inputs.',
-    issueCreatedDescription: 'Starts when AcornOps creates an issue.',
     copyEndpoint: 'Copy endpoint',
+    inputCount: '{{count}} mapped inputs',
+    inputCount_one: '{{count}} mapped input',
+    inputCount_other: '{{count}} mapped inputs',
+    contextGrantCount: '{{count}} context grants',
+    contextGrantCount_one: '{{count}} context grant',
+    contextGrantCount_other: '{{count}} context grants',
     lastTriggered: 'Last triggered {{time}}',
     neverTriggered: 'Not triggered yet',
     source: {
@@ -521,6 +538,7 @@ export const en = {
       rotateSecret: 'Rotate secret',
       delete: 'Delete'
     },
+    actionsFor: 'Trigger actions for {{name}}',
     delete: {
       title: 'Delete {{name}}?',
       description: 'New requests and events will stop immediately. Dispatches already in progress and existing workflow runs are unaffected.'
@@ -1355,9 +1373,17 @@ export const en = {
     count: '{{count}} configured',
     columns: {
       webhook: 'Webhook',
+      destination: 'Destination',
       events: 'Events',
+      modified: 'Modified',
       actions: 'Actions'
     },
+    eventCount: '{{count}} events',
+    eventCount_one: '{{count}} event',
+    eventCount_other: '{{count}} events',
+    moreEvents: '+{{count}} more',
+    modifiedUnavailable: 'Not available',
+    actionsFor: 'Webhook actions for {{name}}',
     filters: {
       search: 'Search outbound webhooks',
       status: 'Filter by status',
@@ -2890,32 +2916,21 @@ export const en = {
     reviewWorkflowAccess: 'Review workflow access'
   },
   agentsWorkflows: {
-    definitionSource: { system: 'Built-in', user: 'Custom' },
-    systemProvided: 'Built-in',
-    duplicateToEdit: 'Duplicate this system-provided definition to create an editable custom draft.',
+    definitionSource: { user: 'Workspace-owned' },
     configure: 'Configure', duplicate: 'Duplicate', duplicating: 'Duplicating...',
-    builtIn: {
-      agentConfigTitle: 'Configure built-in',
-      agentConfigBody: 'Built-in definitions are maintained by AcornOps. Workspace configuration is preserved across upgrades.',
-      availabilityTitle: 'Available in this workspace',
-      availabilityBody: 'Choose whether this built-in can be assigned to new work.',
-      externalBindingsTitle: 'External MCP bindings',
-      externalBindingsBody: 'Assign only workspace-approved MCP servers and tools. The built-in instructions and policies remain unchanged.',
-      saveConfiguration: 'Save configuration'
-    },
     workflowActions: {
+      edit: 'Edit',
       schedule: 'Schedule',
       launch: 'Launch',
       starting: 'Starting…',
-      completeSetup: 'Complete setup',
       activate: 'Activate',
       activating: 'Activating…',
       activatePermission: 'You need manage_workflows to activate workflows.'
     },
     agents: {
-      title: 'Agents', description: 'Browse agent presets and inspect the capabilities available to workflows.', catalogLabel: 'Agent catalog',
+      title: 'Agents', description: 'Browse workspace Agents and inspect the capabilities available to workflows.', catalogLabel: 'Agent catalog',
       toolbarLabel: 'Agent catalog search and filters', searchPlaceholder: 'Search agents', searchLabel: 'Search agents', statusFilterLabel: 'Filter agents by status',
-      resultCount: '{{visible}} of {{total}} agents', totalCount: '{{count}} agents', totalCount_one: '{{count}} agent', totalCount_other: '{{count}} agents', newAgent: 'New agent', createPermission: 'You need manage_agents to create agents.', emptyTitle: 'No agents in this workspace', emptyBody: 'Create an agent preset to make capabilities available to workflows.', emptyReadOnlyBody: 'Agents will appear here after a workspace manager creates them.',
+      resultCount: '{{visible}} of {{total}} agents', totalCount: '{{count}} agents', totalCount_one: '{{count}} agent', totalCount_other: '{{count}} agents', newAgent: 'New agent', createPermission: 'You need manage_agents to create agents.', emptyTitle: 'No agents in this workspace', emptyBody: 'Create an Agent to make capabilities available to workflows.', emptyReadOnlyBody: 'Agents will appear here after a workspace manager creates them.',
       noResultsTitle: 'No agents match', noResultsBody: 'Adjust the search or status filter.', filters: { all: 'All' },
       status: { active: 'Active', draft: 'Draft', disabled: 'Disabled' }, tabs: { overview: 'Overview', capabilities: 'Capabilities', versions: 'Restore points', settings: 'Settings' },
       fields: { identity: 'Agent', status: 'Status', capabilities: 'Capabilities', assignment: 'Assignment' },
@@ -2932,7 +2947,6 @@ export const en = {
         overflow: '+{{count}}', open: 'Open {{name}} in Workflows'
       },
       edit: 'Edit agent', reactivate: 'Reactivate', dangerZone: 'Danger zone', retryAll: 'Retry all', unavailable: 'Some live data is unavailable',
-      builtInDefinitionReadOnly: 'AcornOps maintains this definition. Change workspace availability here and review its capability ceiling in the Capabilities tab.',
       details: {
         profileSections: 'Agent profile sections',
         tabs: { overview: 'Overview', capabilities: 'Capabilities', versions: 'Restore points', settings: 'Settings' },
@@ -2945,15 +2959,15 @@ export const en = {
         permissionModeLabel: 'Permission mode', approvalGateLabel: 'Approval gate', trustBoundary: 'Trust boundary', dataAccess: 'Data access',
         permissionMode: { read_only: 'Read only', ask_before_changes: 'Ask before changes', auto_allowed_changes: 'Automatic routine changes' },
         approvalGate: { read_only: 'Writes are disabled', ask_before_changes: 'Before every write-capable tool', auto_allowed_changes: 'Before high-risk or destructive writes' },
-        restorePoints: 'Saved restore points', systemRestorePointsDescription: 'AcornOps maintains restore points for this built-in definition.', customRestorePointsDescription: 'Save the current Agent definition, or restore a saved point as a new current revision.',
+        restorePoints: 'Saved restore points', customRestorePointsDescription: 'Save the current Agent definition, or restore a saved point as a new current revision.',
         saving: 'Saving...', saveRestorePoint: 'Save restore point', restore: 'Restore', noRestorePoints: 'No restore points saved yet.', revisionLabel: 'Revision {{version}}',
         restoreConfirmationTitle: 'Restore revision {{version}}?', restoreConfirmationDescription: 'This creates a new current revision from the saved restore point. Existing runs are unchanged.', confirmRestore: 'Restore point',
         agentLifecycle: 'Agent lifecycle', lifecycleDescription: 'Manage whether this agent can receive new assignments, or permanently remove it.',
         disableAgent: 'Disable agent', disableDescription: 'Stop this agent from being selected for new assignments. Existing workflow references stay in place.', confirmDisableTitle: 'Confirm disable agent', confirmDisable: 'Confirm disable',
         disableImpact: 'Disabling may interrupt {{count}} assigned workflows.', disableImpact_one: 'Disabling may interrupt {{count}} assigned workflow.', disableImpact_other: 'Disabling may interrupt {{count}} assigned workflows.',
-        deleteAgent: 'Delete agent', deleteSystemDescription: 'Permanently remove this starter Agent. It will not be restored automatically.', deleteCustomDescription: 'Permanently delete this custom agent and its history. This cannot be undone.',
+        deleteAgent: 'Delete agent', deleteCustomDescription: 'Permanently delete this workspace Agent and its history. This cannot be undone.',
         deleteBlocked: 'Remove this agent from its {{count}} workflows before deleting it.', deleteBlocked_one: 'Remove this agent from its {{count}} workflow before deleting it.', deleteBlocked_other: 'Remove this agent from its {{count}} workflows before deleting it.',
-        confirmDeleteTitle: 'Confirm delete agent', confirmDeleteSystem: 'Delete this starter Agent? AcornOps will not reinstall it automatically.', confirmDeleteCustom: 'Delete this custom agent and its history? This cannot be undone.',
+        confirmDeleteTitle: 'Confirm delete agent', confirmDeleteCustom: 'Delete this workspace Agent and its history? This cannot be undone.',
         capabilities: {
           sectionsLabel: 'Agent capability sections', tabs: { tools: 'Tools', skills: 'Skills' },
           actions: { rename: 'Rename', edit: 'Edit', save: 'Save', remove: 'Remove', enable: 'Enable', disable: 'Disable', reimport: 'Re-import' },

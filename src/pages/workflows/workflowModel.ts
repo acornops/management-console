@@ -2,7 +2,7 @@ export type WorkflowStatus = 'active' | 'draft' | 'paused';
 export type WorkflowCapabilityMode = 'read_only' | 'read_write';
 export type WorkflowCapabilityRestrictionMode = 'inherit' | 'restrict';
 export type WorkflowTab = 'overview' | 'agents' | 'capabilities' | 'runs' | 'settings';
-export type WorkflowPrimaryAction = 'launch' | 'activate' | 'setup';
+export type WorkflowPrimaryAction = 'launch' | 'activate';
 
 export interface WorkflowParameter {
   key: string;
@@ -148,7 +148,6 @@ export function getOptimisticWorkflowRunStatus(workflow: WorkflowDefinition): Wo
 }
 
 export function getWorkflowPrimaryAction(workflow: WorkflowDefinition): WorkflowPrimaryAction {
-  if (workflow.readiness?.status && workflow.readiness.status !== 'ready') return 'setup';
   return workflow.status === 'active' ? 'launch' : 'activate';
 }
 

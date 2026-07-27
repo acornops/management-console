@@ -34,6 +34,7 @@ import type { Workspace } from '@/types';
 import type { WorkflowTriggerType } from '@/utils/routes';
 import { humanizeWorkflowParameterKey } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import { WorkspaceEventTriggerCard } from '@/pages/WorkspaceEventTriggerCard';
+import { WorkspaceEventTriggerDeleteDialog } from '@/pages/WorkspaceEventTriggerDeleteDialog';
 import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
 import { useWorkflowTriggerCreateIntent } from '@/pages/useWorkflowTriggerCreateIntent';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
@@ -80,8 +81,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
   const [pendingRotateId, setPendingRotateId] = useState('');
   const [secretDisclosure, setSecretDisclosure] = useState<SecretDisclosure | null>(null);
   const [copyFeedback, setCopyFeedback] = useState('');
-  const deleteButtonRefs = useRef(new Map<string, HTMLButtonElement>());
-  const rotateButtonRefs = useRef(new Map<string, HTMLButtonElement>());
+  const actionButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const currentWorkspaceId = useRef(workspace.id);
   const refreshSequence = useRef(0);
   const mutationSequence = useRef(0);
@@ -147,10 +147,9 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     })) : [],
     [workflows, workspaceStateCurrent]
   );
-  const sourceTriggers = useMemo(
-    () => triggers.filter((trigger) => trigger.sourceType === sourceType),
-    [sourceType, triggers]
-  );
+  const sourceTriggers = useMemo(() => triggers.filter(
+    (trigger) => trigger.sourceType === sourceType
+  ), [sourceType, triggers]);
   const searchLabel = t(sourceType === 'webhook'
     ? 'eventTriggers.filters.searchIncomingWebhooks'
     : 'eventTriggers.filters.searchAcornOpsEvents');
@@ -169,9 +168,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         : t('eventTriggers.source.acornopsEvent')
     ].some((value) => value?.toLowerCase().includes(normalizedQuery));
   }), [normalizedQuery, sourceTriggers, status, t, workflowFilter, workflows]);
-  const hasActiveFilters = Boolean(
-    normalizedQuery || status !== 'all' || workflowFilter !== 'all'
-  );
+  const hasActiveFilters = Boolean(normalizedQuery || status !== 'all' || workflowFilter !== 'all');
   const clearFilters = () => {
     updateUrlSearch(
       { q: null, status: null, workflow: null },
@@ -188,12 +185,11 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
   const missingIssueBinding = draft.sourceType === 'acornops_event'
     ? selectedWorkflow?.parameters.find((parameter) => !draft.inputBindings[parameter.key])
     : undefined;
-  const canSave = Boolean(
-    draft.name.trim()
-    && draft.workflowId
-    && !unsupportedIssueParameter
-    && !missingIssueBinding
-  );
+  const canSave = Boolean(draft.name.trim() && draft.workflowId
+    && !unsupportedIssueParameter && !missingIssueBinding);
+  const deleteTargetTrigger = pendingDeleteId
+    ? triggers.find((trigger) => trigger.id === pendingDeleteId)
+    : undefined;
 
   const openCreate = () => {
     const workflow = activeWorkflows[0];
@@ -366,7 +362,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
       >
       {!canManage && <InlineAlert tone="neutral" className="mb-5">{t('eventTriggers.permissionNotice')}</InlineAlert>}
       {!activeWorkflows.length && phase === 'ready' && <InlineAlert tone="warning" className="mb-5">{t('eventTriggers.noActiveWorkflows')}</InlineAlert>}
-      {workspaceStateCurrent && mutationError && <InlineAlert tone="danger" className="mb-5">{mutationError}</InlineAlert>}
+      {workspaceStateCurrent && mutationError && !deleteTargetTrigger && <InlineAlert tone="danger" className="mb-5">{mutationError}</InlineAlert>}
       {copyFeedback && <p role="status" className="sr-only">{copyFeedback}</p>}
 
       {workspaceStateCurrent && secretDisclosure && (
@@ -440,8 +436,10 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         className="mb-4"
       />
       <DataSurface aria-label={t('eventTriggers.listTitle')}>
-        <div className="hidden grid-cols-[minmax(16rem,1fr)_minmax(16rem,0.9fr)_minmax(13rem,auto)] gap-4 border-b border-ui-border bg-ui-bg px-[var(--surface-padding)] py-2.5 lg:grid">
+        <div className="hidden grid-cols-[minmax(13rem,0.9fr)_minmax(12rem,0.75fr)_minmax(15rem,1fr)_minmax(14rem,0.9fr)_minmax(3rem,auto)] gap-4 border-b border-ui-border bg-ui-bg px-[var(--surface-padding)] py-2.5 lg:grid">
           <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.trigger')}</span>
+          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.workflow')}</span>
+          <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('eventTriggers.columns.configuration')}</span>
           <span className="type-micro-label whitespace-nowrap text-ui-text-muted">{t('workflowActivity.activity')}</span>
           <span className="type-micro-label whitespace-nowrap text-right text-ui-text-muted">{t('eventTriggers.columns.actions')}</span>
         </div>
@@ -489,9 +487,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
                   canManage={canManage}
                   busy={busy}
                   pendingRotate={pendingRotateId === trigger.id}
-                  pendingDelete={pendingDeleteId === trigger.id}
-                  rotateButtonRefs={rotateButtonRefs}
-                  deleteButtonRefs={deleteButtonRefs}
+                  actionButtonRefs={actionButtonRefs}
                   onCopyEndpoint={(endpoint) => void copy(endpoint, t('eventTriggers.secret.endpointCopied'))}
                   onEdit={() => openEdit(trigger)}
                   onToggle={() => void toggle(trigger)}
@@ -501,18 +497,14 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
                   }}
                   onCancelRotate={() => {
                     setPendingRotateId('');
-                    window.requestAnimationFrame(() => rotateButtonRefs.current.get(trigger.id)?.focus({ preventScroll: true }));
+                    window.requestAnimationFrame(() => actionButtonRefs.current.get(trigger.id)?.focus({ preventScroll: true }));
                   }}
                   onConfirmRotate={() => void rotateSecret(trigger)}
                   onRequestDelete={() => {
                     setPendingRotateId('');
+                    setMutationError('');
                     setPendingDeleteId(trigger.id);
                   }}
-                  onCancelDelete={() => {
-                    setPendingDeleteId('');
-                    window.requestAnimationFrame(() => deleteButtonRefs.current.get(trigger.id)?.focus({ preventScroll: true }));
-                  }}
-                  onConfirmDelete={() => void remove(trigger)}
                 />
               );
             })}
@@ -520,6 +512,21 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         </CollectionState>
       </DataSurface>
       </div>
+      <WorkspaceEventTriggerDeleteDialog
+        trigger={deleteTargetTrigger}
+        error={mutationError}
+        pending={Boolean(deleteTargetTrigger && mutatingId === deleteTargetTrigger.id)}
+        onCancel={() => {
+          if (!deleteTargetTrigger || mutatingId) return;
+          const triggerId = deleteTargetTrigger.id;
+          setPendingDeleteId('');
+          setMutationError('');
+          window.requestAnimationFrame(() => actionButtonRefs.current.get(triggerId)?.focus({ preventScroll: true }));
+        }}
+        onConfirm={() => {
+          if (deleteTargetTrigger) void remove(deleteTargetTrigger);
+        }}
+      />
       <DrawerFrame
         open={workspaceStateCurrent && drawerOpen}
         onClose={closeDrawer}

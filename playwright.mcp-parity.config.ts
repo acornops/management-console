@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+
 export default defineConfig({
   testDir: './tests/mcp-parity',
   outputDir: './test-results/mcp-parity',
@@ -18,9 +20,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     viewport: { width: 1440, height: 1000 },
-    launchOptions: {
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome'
-    }
+    launchOptions: chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : {}
   },
   webServer: [
     {

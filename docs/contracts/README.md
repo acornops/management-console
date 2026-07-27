@@ -116,7 +116,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - Coordinated run detail renders the sanitized `AcornOps coordination` parent
   and bounded child capability, target, Agent, status, and failure fields. It
   does not infer coordinator records or display hidden execution scope.
-- Visible template-origin Agents are system provided. The console permits availability changes, supported external-binding configuration, duplication, and deletion; Agent definition edits and version restore require duplication into a manual draft. Default and recommended workflows are ordinary workspace-owned definitions that can be edited directly and are never overwritten or automatically restored by AcornOps. Agent deletion explains dependent workflows before it can proceed.
+- Default Agents and workflows are ordinary workspace-owned definitions that can be edited, versioned, restored, duplicated, disabled, or deleted directly. Legacy template-origin Agents follow the same mutation rules. AcornOps never overwrites, upgrades, or automatically restores these defaults. Agent deletion explains dependent workflows before it can proceed.
 - Authorized users may duplicate an effective definition into a manual draft without copying capability installations or operational history.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
 - The target-chat `/` picker sends structured tool runtime aliases and target

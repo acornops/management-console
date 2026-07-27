@@ -612,6 +612,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
               </div>
 
               <p className="type-caption mt-5 text-ui-text-muted">{t('workspaceCreate.aiSetupOptionalNote')}</p>
+              <p className="type-caption mt-3 font-semibold text-ui-text-muted">{t('workspaceCreate.aiSettingsTransition')}</p>
             </div>
           </div>
           <div className="flex flex-col-reverse gap-3 border-t border-ui-border bg-ui-bg px-6 py-4 sm:flex-row sm:justify-end">

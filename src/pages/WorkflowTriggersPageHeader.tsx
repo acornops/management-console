@@ -79,17 +79,26 @@ export const WorkflowTriggersPageHeader: React.FC<WorkflowTriggersPageHeaderProp
         items={[
           {
             value: 'schedule',
-            label: t('triggers.types.schedule'),
+            label: <>
+              <span className="sm:hidden">{t('triggers.typesCompact.schedule')}</span>
+              <span className="hidden sm:inline">{t('triggers.types.schedule')}</span>
+            </>,
             icon: <CalendarClock className="h-4 w-4" aria-hidden="true" />
           },
           {
             value: 'acornops_event',
-            label: t('triggers.types.acornopsEvent'),
+            label: <>
+              <span className="sm:hidden">{t('triggers.typesCompact.acornopsEvent')}</span>
+              <span className="hidden sm:inline">{t('triggers.types.acornopsEvent')}</span>
+            </>,
             icon: <Zap className="h-4 w-4" aria-hidden="true" />
           },
           {
             value: 'webhook',
-            label: t('triggers.types.webhook'),
+            label: <>
+              <span className="sm:hidden">{t('triggers.typesCompact.webhook')}</span>
+              <span className="hidden sm:inline">{t('triggers.types.webhook')}</span>
+            </>,
             icon: <Webhook className="h-4 w-4" aria-hidden="true" />
           }
         ]}

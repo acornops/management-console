@@ -7,7 +7,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { ICONS } from '@/constants';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { AgentVersionSnapshotApi } from '@/services/control-plane/agentApi';
-import { formatAgentTimestamp, isSystemProvidedAgent, statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
+import { formatAgentTimestamp, statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
 import { AppPaths } from '@/utils/routes';
 import { AgentCapabilitiesPanel } from '@/pages/agents/AgentCapabilitiesPanel';
 import { InlineConfirmation } from '@/components/common/InlineConfirmation';
@@ -54,7 +54,6 @@ const Fact: React.FC<{ label: string; value: React.ReactNode }> = ({ label, valu
 export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps> = (props) => {
   const { t, i18n } = useTranslation();
   const { selectedAgent } = props;
-  const systemProvided = isSystemProvidedAgent(selectedAgent);
   const locale = i18n.resolvedLanguage || i18n.language;
   const disabledAction = !props.canManageAgents ? t('agentsWorkflows.agents.details.managePermission') : '';
   const versions = props.agentVersionHistories[selectedAgent.id] || [];
@@ -95,12 +94,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge tone={statusTone(selectedAgent.status)}>{t(`agentsWorkflows.agents.status.${selectedAgent.status}`)}</StatusBadge>
-              {systemProvided && (
-                <span className="type-micro-label shrink-0 rounded-full bg-accent-soft/45 px-2 py-0.5 text-accent-readable">
-                  {t('common.providedByAcornOps')}
-                </span>
-              )}
-              {!systemProvided && <span className="type-caption font-semibold text-ui-text-muted">{selectedAgent.owner}</span>}
+              <span className="type-caption font-semibold text-ui-text-muted">{selectedAgent.owner}</span>
             </div>
             <h2 id={props.titleId} className="mt-2 type-section-title">{selectedAgent.name}</h2>
             <p className="type-caption mt-1 max-w-3xl text-ui-text-muted">{selectedAgent.description}</p>
@@ -108,14 +102,10 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             {selectedAgent.status === 'disabled' && <Button type="button" variant="secondary" size="sm" onClick={props.onReactivateSelectedAgent} disabled={!props.canManageAgents || props.updatingAgentId === selectedAgent.id}>{t('agentsWorkflows.agents.reactivate')}</Button>}
-            {systemProvided ? (
-              <Button type="button" variant="primary" size="sm" onClick={props.onDuplicateSelectedAgent} disabled={!props.canManageAgents || props.duplicatingAgentId === selectedAgent.id}>{props.duplicatingAgentId === selectedAgent.id ? t('agentsWorkflows.duplicating') : t('agentsWorkflows.duplicate')}</Button>
-            ) : (
-              <Button type="button" variant="primary" size="sm" onClick={() => props.onOpenEditAgentDrawer(selectedAgent)} disabled={!props.canManageAgents || props.updatingAgentId === selectedAgent.id}><ICONS.Pencil className="h-4 w-4" />{t('agentsWorkflows.agents.edit')}</Button>
-            )}
+            <Button type="button" variant="secondary" size="sm" onClick={props.onDuplicateSelectedAgent} disabled={!props.canManageAgents || props.duplicatingAgentId === selectedAgent.id}>{props.duplicatingAgentId === selectedAgent.id ? t('agentsWorkflows.duplicating') : t('agentsWorkflows.duplicate')}</Button>
+            <Button type="button" variant="primary" size="sm" onClick={() => props.onOpenEditAgentDrawer(selectedAgent)} disabled={!props.canManageAgents || props.updatingAgentId === selectedAgent.id}><ICONS.Pencil className="h-4 w-4" />{t('agentsWorkflows.agents.edit')}</Button>
           </div>
         </div>
-        {systemProvided && <p className="type-caption mt-3 max-w-3xl text-ui-text-muted">{t('agentsWorkflows.duplicateToEdit')}</p>}
         {disabledAction && <p className="type-caption mt-3 text-ui-text-muted">{disabledAction}</p>}
       </header>
 
@@ -136,7 +126,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               <h3 className="type-panel-title">{t('agentsWorkflows.agents.details.identityAssignment')}</h3>
               <dl className="mt-2 grid divide-y divide-ui-border sm:grid-cols-2 sm:gap-x-8 sm:[&>*]:border-b sm:[&>*]:border-ui-border">
                 <Fact label={t('agentsWorkflows.agents.details.owner')} value={selectedAgent.owner} />
-                <Fact label={t('agentsWorkflows.agents.details.source')} value={systemProvided ? t('agentsWorkflows.systemProvided') : t('agentsWorkflows.definitionSource.user')} />
+                <Fact label={t('agentsWorkflows.agents.details.source')} value={t('agentsWorkflows.definitionSource.user')} />
                 <Fact label={t('agentsWorkflows.agents.details.status')} value={t(`agentsWorkflows.agents.status.${selectedAgent.status}`)} />
                 <Fact label={t('agentsWorkflows.agents.details.provider')} value={t(`agentsWorkflows.agents.details.providerValue.${selectedAgent.providerType}`)} />
                 <Fact label={t('agentsWorkflows.agents.details.lastActivity')} value={formatAgentTimestamp(selectedAgent.workflowUsage.lastRunAt, t('agentsWorkflows.agents.details.noActivity'), locale)} />
@@ -178,11 +168,11 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 ref={versionsHeadingRef} tabIndex={-1} className="type-panel-title outline-none">{t('agentsWorkflows.agents.details.restorePoints')}</h3>
-                <p className="type-caption mt-1 text-ui-text-muted">{t(systemProvided ? 'agentsWorkflows.agents.details.systemRestorePointsDescription' : 'agentsWorkflows.agents.details.customRestorePointsDescription')}</p>
+                <p className="type-caption mt-1 text-ui-text-muted">{t('agentsWorkflows.agents.details.customRestorePointsDescription')}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="secondary" size="sm" onClick={props.onRefreshSelectedAgentVersions} disabled={props.agentVersionAction === `${selectedAgent.id}:history`}><ICONS.RefreshCw className={`h-4 w-4 ${props.agentVersionAction === `${selectedAgent.id}:history` ? 'animate-spin' : ''}`} aria-hidden="true" />{t('common.refresh')}</Button>
-                {!systemProvided && <Button type="button" variant="secondary" size="sm" onClick={props.onSaveSelectedAgentVersion} disabled={!props.canManageAgents || props.agentVersionAction === selectedAgent.id}><ICONS.Save className="h-4 w-4" aria-hidden="true" />{props.agentVersionAction === selectedAgent.id ? t('agentsWorkflows.agents.details.saving') : t('agentsWorkflows.agents.details.saveRestorePoint')}</Button>}
+                <Button type="button" variant="secondary" size="sm" onClick={props.onSaveSelectedAgentVersion} disabled={!props.canManageAgents || props.agentVersionAction === selectedAgent.id}><ICONS.Save className="h-4 w-4" aria-hidden="true" />{props.agentVersionAction === selectedAgent.id ? t('agentsWorkflows.agents.details.saving') : t('agentsWorkflows.agents.details.saveRestorePoint')}</Button>
               </div>
             </div>
             <div className="mt-4 divide-y divide-ui-border border-y border-ui-border">
@@ -190,18 +180,16 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                 <div key={version.id}>
                   <div className="flex flex-wrap items-center justify-between gap-3 py-3">
                     <span><strong className="text-sm text-ui-text">{t('agentsWorkflows.agents.details.revisionLabel', { version: version.version })}</strong><span className="type-caption ml-3 text-ui-text-muted">{formatAgentTimestamp(version.createdAt, version.createdAt, locale)}</span></span>
-                    {!systemProvided && (
-                      <Button
-                        ref={(node) => { if (node) restoreTriggerRefs.current.set(version.id, node); else restoreTriggerRefs.current.delete(version.id); }}
-                        type="button"
-                        variant="tertiary"
-                        size="sm"
-                        onClick={() => setRestoreConfirmVersionId(version.id)}
-                        disabled={!props.canManageAgents || props.agentVersionAction === `${selectedAgent.id}:restore:${version.id}`}
-                      >
-                        {t('agentsWorkflows.agents.details.restore')}
-                      </Button>
-                    )}
+                    <Button
+                      ref={(node) => { if (node) restoreTriggerRefs.current.set(version.id, node); else restoreTriggerRefs.current.delete(version.id); }}
+                      type="button"
+                      variant="tertiary"
+                      size="sm"
+                      onClick={() => setRestoreConfirmVersionId(version.id)}
+                      disabled={!props.canManageAgents || props.agentVersionAction === `${selectedAgent.id}:restore:${version.id}`}
+                    >
+                      {t('agentsWorkflows.agents.details.restore')}
+                    </Button>
                   </div>
                   {restoreConfirmVersionId === version.id && (
                     <InlineConfirmation
@@ -271,9 +259,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               <DangerZoneRow
                 id="agent-delete-title"
                 title={t('agentsWorkflows.agents.details.deleteAgent')}
-                description={systemProvided
-                  ? t('agentsWorkflows.agents.details.deleteSystemDescription')
-                  : t('agentsWorkflows.agents.details.deleteCustomDescription')}
+                description={t('agentsWorkflows.agents.details.deleteCustomDescription')}
                 headingLevel="h3"
                 tone="danger"
                 actionClassName="sm:w-44"
@@ -300,7 +286,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                 <InlineConfirmation
                   id="agent-delete-confirmation"
                   title={t('agentsWorkflows.agents.details.confirmDeleteTitle')}
-                  description={t(systemProvided ? 'agentsWorkflows.agents.details.confirmDeleteSystem' : 'agentsWorkflows.agents.details.confirmDeleteCustom')}
+                  description={t('agentsWorkflows.agents.details.confirmDeleteCustom')}
                   tone="danger"
                   cancelLabel={t('common.cancel')}
                   confirmLabel={t('agentsWorkflows.agents.details.deleteAgent')}

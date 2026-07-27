@@ -11,9 +11,8 @@ catalog, pagination, and schedule-preview contracts.
 - URL parameters restore selected resources, tabs, filters, and drawers.
 - Closing a drawer removes only its panel-specific parameters.
 - Agent inspection uses one stable profile workspace with Overview,
-  Capabilities, Activity, Versions, and Settings tabs. Optional test runs live
-  in Activity and do not gate assignment. Disable and delete actions appear
-  only in Settings.
+  Capabilities, Restore points, and Settings tabs. Disable and delete actions
+  appear only in Settings.
 - Agent catalog state comes only from the control-plane statuses `active`,
   `draft`, and `disabled`; readiness terminology and locally derived health are
   not part of the Agents UI.
@@ -24,14 +23,15 @@ catalog, pagination, and schedule-preview contracts.
 - Unavailable catalogs, loading, retry, permission, and mutation states explain
   the next action in English and Mandarin.
 - Agent profile actions use the shared button sizes and refresh icon treatment.
-- Template-origin Agents use compact `Built-in` provenance text, never a
-  `TEMPLATE` badge or the installing user's ownership label.
+- Default Agents are ordinary workspace-owned definitions. Legacy
+  template-origin records follow the same edit, version, restore, duplicate,
+  disable, and delete rules.
 - Default and recommended workflows are ordinary workspace-owned definitions.
   They are directly editable and AcornOps never overwrites, upgrades, or
   automatically restores them.
-- Visible system-provided definitions expose deletion. Agent deletion explains
-  dependent workflows, and managed-response workflows label the hidden entry
-  Agent as an AcornOps-managed coordinator without exposing its ID.
+- Agent deletion explains dependent workflows, and managed-response workflows
+  label the hidden entry Agent as an AcornOps-managed coordinator without
+  exposing its ID.
 
 ## Validation Plan
 

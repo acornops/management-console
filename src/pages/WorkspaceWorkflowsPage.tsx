@@ -440,6 +440,10 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
                   needsLaunchAcknowledgement={!parameterizedLaunch && needsLaunchAcknowledgement}
                   onAcknowledgementChange={(checked) => setLaunchAcknowledgedId(checked ? selectedWorkflow.id : '')}
                   onActivate={() => void workflowActions.toggleWorkflowActive(selectedWorkflow, true)}
+                  onEdit={() => {
+                    selectWorkflowTab('settings', selectedWorkflow.id);
+                    workflowActions.startEditingWorkflow(selectedWorkflow);
+                  }}
                   onLaunch={() => {
                     if (parameterizedLaunch) {
                       setLaunchInputErrors({});
@@ -449,7 +453,6 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
                     }
                   }}
                   onSchedule={() => updateUrlSearch({ workflow: selectedWorkflow.id, panel: 'schedule' })}
-                  onSetup={() => selectWorkflowTab('capabilities', selectedWorkflow.id)}
                   primaryAction={workflowPrimaryAction}
                   tags={selectedWorkflow.tags}
                 />}

@@ -2,6 +2,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/common/Button';
+import { MenuItem } from '@/components/common/FormControls';
+import { OverflowActionMenu } from '@/components/common/OverflowActionMenu';
+import { ICONS } from '@/constants';
 import { WorkspaceScheduleExecutionFacts } from '@/pages/WorkspaceScheduleExecutionFacts';
 import { agentMcpConfigurationPath } from '@/services/control-plane/mcpReadinessRecovery';
 import type { WorkflowApiDefinition, WorkflowSchedule } from '@/services/control-plane/workflowApi';
@@ -15,6 +18,7 @@ interface WorkspaceScheduleRowProps {
   canManage: boolean;
   updating: boolean;
   deleting: boolean;
+  actionButtonRefs: React.MutableRefObject<Map<string, HTMLButtonElement>>;
   onEdit: () => void;
   onRepair: () => void;
   onToggle: () => void;
@@ -60,45 +64,56 @@ function scheduleMcpRecoveryPath(
   });
 }
 
-function ScheduleActions({
-  schedule,
-  canManage,
-  updating,
-  deleting,
-  mcpAutoPaused,
-  onEdit,
-  onRepair,
-  onToggle,
-  onDelete
-}: Omit<WorkspaceScheduleRowProps, 'workflows' | 'workspaceId'> & { mcpAutoPaused: boolean }) {
+function ScheduleActionMenu(props: WorkspaceScheduleRowProps & { mcpAutoPaused: boolean }) {
   const { t } = useTranslation();
+  const {
+    schedule,
+    canManage,
+    updating,
+    deleting,
+    actionButtonRefs,
+    mcpAutoPaused,
+    onEdit,
+    onRepair,
+    onToggle,
+    onDelete
+  } = props;
+  const runAction = (close: () => void, action: () => void) => {
+    close();
+    actionButtonRefs.current.get(schedule.id)?.focus({ preventScroll: true });
+    action();
+  };
+
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button size="sm" variant="secondary" onClick={onEdit} disabled={!canManage}>
-        {t('schedules.actions.edit')}
-      </Button>
-      <Button
-        size="sm"
-        variant={mcpAutoPaused ? 'primary' : 'secondary'}
-        onClick={mcpAutoPaused ? onRepair : onToggle}
-        disabled={!canManage || updating}
-      >
-        {mcpAutoPaused
-          ? t('schedules.actions.repairAndResume')
-          : schedule.status === 'enabled'
-            ? t('schedules.actions.pause')
-            : t('schedules.actions.resume')}
-      </Button>
-      <Button
-        size="sm"
-        variant="tertiary"
-        className="text-status-danger-text hover:bg-status-danger-soft hover:text-status-danger-text"
-        onClick={onDelete}
-        disabled={!canManage || deleting}
-      >
-        {t('schedules.actions.delete')}
-      </Button>
-    </div>
+    <OverflowActionMenu
+      ref={(node) => {
+        if (node) actionButtonRefs.current.set(schedule.id, node);
+        else actionButtonRefs.current.delete(schedule.id);
+      }}
+      label={t('schedules.actionsFor', { name: schedule.name })}
+      disabled={!canManage || deleting}
+    >
+      {(close) => <>
+        <MenuItem onClick={() => runAction(close, onEdit)}>
+          <ICONS.Pencil className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+          {t('schedules.actions.edit')}
+        </MenuItem>
+        <MenuItem disabled={updating} onClick={() => runAction(close, mcpAutoPaused ? onRepair : onToggle)}>
+          {mcpAutoPaused
+            ? <ICONS.Wrench className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+            : <ICONS.Zap className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />}
+          {mcpAutoPaused
+            ? t('schedules.actions.repairAndResume')
+            : schedule.status === 'enabled'
+              ? t('schedules.actions.pause')
+              : t('schedules.actions.resume')}
+        </MenuItem>
+        <MenuItem destructive onClick={() => runAction(close, onDelete)}>
+          <ICONS.Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+          {t('schedules.actions.delete')}
+        </MenuItem>
+      </>}
+    </OverflowActionMenu>
   );
 }
 
@@ -142,7 +157,14 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
         />
       </div>
       <div className="mt-4 border-t border-ui-border pt-4">
-        <ScheduleActions {...props} mcpAutoPaused={mcpAutoPaused} />
+        <div className="flex items-center justify-end gap-2">
+          {mcpAutoPaused && (
+            <Button size="sm" variant="primary" onClick={props.onRepair} disabled={!props.canManage || props.updating}>
+              {t('schedules.actions.repairAndResume')}
+            </Button>
+          )}
+          <ScheduleActionMenu {...props} mcpAutoPaused={mcpAutoPaused} />
+        </div>
       </div>
     </article>
   );
@@ -176,7 +198,14 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
         </div>
       </td>
       <td className="px-4 py-4">
-        <ScheduleActions {...props} mcpAutoPaused={mcpAutoPaused} />
+        <div className="flex items-center justify-end gap-2">
+          {mcpAutoPaused && (
+            <Button size="sm" variant="primary" onClick={props.onRepair} disabled={!props.canManage || props.updating}>
+              {t('schedules.actions.repairAndResume')}
+            </Button>
+          )}
+          <ScheduleActionMenu {...props} mcpAutoPaused={mcpAutoPaused} />
+        </div>
       </td>
     </tr>
   );

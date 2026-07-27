@@ -12,6 +12,7 @@ export const zh = {
     refresh: '刷新',
     close: '关闭',
     cancel: '取消',
+    irreversibleAction: '此操作无法撤销。',
     saving: '保存中...',
     saveChanges: '保存更改',
     clearSearch: '清除搜索',
@@ -340,13 +341,14 @@ export const zh = {
     continue: '继续',
     aiSetupKicker: '工作区已创建',
     aiSetupTitle: '连接 AI 提供商',
-    aiSetupBody: '添加仅写入的工作区 API 密钥以启用 AI 运行时。你可以跳过此步骤，稍后从 AI 设置返回。',
+    aiSetupBody: '添加你的 API 密钥以启用 AI 运行时。你可以跳过此步骤，稍后在 AI 设置中添加。',
     aiSetupAssistantTitle: '开始助手对话',
     aiSetupAssistantBody: '使用已启用的提供商和模型进行调查与故障排查。',
     aiSetupAutomationTitle: '运行自动化',
     aiSetupAutomationBody: '启动手动、定时和事件触发的工作流运行。',
     aiSetupOptionalNote: '目标和集成均为可选项。只需添加工作流和调查所需的内容。',
-    openAiSettings: '打开 AI 设置',
+    aiSettingsTransition: '这将完成工作区设置，并打开“工作区设置 → AI”。',
+    openAiSettings: '完成并打开 AI 设置',
     skipForNow: '暂时跳过',
     done: '完成'
   },
@@ -366,6 +368,11 @@ export const zh = {
       schedule: '计划',
       acornopsEvent: 'AcornOps 事件',
       webhook: '传入 Webhook'
+    },
+    typesCompact: {
+      schedule: '计划',
+      acornopsEvent: '事件',
+      webhook: 'Webhook'
     },
     actions: {
       create: '创建触发器',
@@ -437,6 +444,11 @@ export const zh = {
       repairAndResume: '修复并恢复',
       delete: '删除'
     },
+    actionsFor: '{{name}} 的计划操作',
+    delete: {
+      title: '删除“{{name}}”？',
+      description: '此计划将停止调度其工作流，并被永久删除。'
+    },
     form: {
       createTitle: '创建计划',
       editTitle: '编辑计划',
@@ -472,6 +484,8 @@ export const zh = {
     count_other: '{{count}} 个触发器',
     columns: {
       trigger: '触发器',
+      workflow: '工作流',
+      configuration: '配置',
       actions: '操作'
     },
     loadError: '加载事件触发器失败。',
@@ -481,10 +495,13 @@ export const zh = {
     deleteError: '删除事件触发器失败。',
     rotateError: '轮换签名密钥失败。',
     copyError: '无法复制到剪贴板。',
-    startsWorkflow: '启动 {{workflow}}',
-    webhookDescription: '接收包含已声明工作流输入的签名请求。',
-    issueCreatedDescription: '当 AcornOps 创建问题时启动。',
     copyEndpoint: '复制端点',
+    inputCount: '{{count}} 个已映射输入',
+    inputCount_one: '{{count}} 个已映射输入',
+    inputCount_other: '{{count}} 个已映射输入',
+    contextGrantCount: '{{count}} 个上下文授权',
+    contextGrantCount_one: '{{count}} 个上下文授权',
+    contextGrantCount_other: '{{count}} 个上下文授权',
     lastTriggered: '上次触发：{{time}}',
     neverTriggered: '尚未触发',
     source: {
@@ -521,6 +538,7 @@ export const zh = {
       rotateSecret: '轮换密钥',
       delete: '删除'
     },
+    actionsFor: '{{name}} 的触发器操作',
     delete: {
       title: '删除 {{name}}？',
       description: '新的请求和事件将立即停止。正在进行的调度和现有工作流运行不受影响。'
@@ -1355,9 +1373,17 @@ export const zh = {
     count: '已配置 {{count}} 个',
     columns: {
       webhook: 'Webhook',
+      destination: '目标端点',
       events: '事件',
+      modified: '修改时间',
       actions: '操作'
     },
+    eventCount: '{{count}} 个事件',
+    eventCount_one: '{{count}} 个事件',
+    eventCount_other: '{{count}} 个事件',
+    moreEvents: '另有 {{count}} 个',
+    modifiedUnavailable: '暂无',
+    actionsFor: '{{name}} 的 Webhook 操作',
     filters: {
       search: '搜索出站 Webhook',
       status: '按状态筛选',
@@ -2890,32 +2916,21 @@ export const zh = {
     reviewWorkflowAccess: '检查工作流访问权限'
   },
   agentsWorkflows: {
-    definitionSource: { system: '内置', user: '自定义' },
-    systemProvided: '内置',
-    duplicateToEdit: '复制此系统提供的定义，以创建可编辑的自定义草稿。',
+    definitionSource: { user: '工作区所有' },
     configure: '配置', duplicate: '复制', duplicating: '正在复制…',
-    builtIn: {
-      agentConfigTitle: '配置内置 Agent',
-      agentConfigBody: '内置定义由 AcornOps 维护。工作区配置会在升级后保留。',
-      availabilityTitle: '在此工作区中可用',
-      availabilityBody: '选择是否可将此内置 Agent 分配给新任务。',
-      externalBindingsTitle: '外部 MCP 绑定',
-      externalBindingsBody: '仅分配工作区已批准的 MCP 服务器和工具。内置说明和策略保持不变。',
-      saveConfiguration: '保存配置'
-    },
     workflowActions: {
+      edit: '编辑',
       schedule: '设置计划',
       launch: '运行',
       starting: '正在启动…',
-      completeSetup: '完成设置',
       activate: '启用',
       activating: '正在启用…',
       activatePermission: '需要 manage_workflows 权限才能启用工作流。'
     },
     agents: {
-      title: 'Agents', description: '浏览 Agent 预设，并检查工作流可用的能力。', catalogLabel: 'Agent 目录',
+      title: 'Agents', description: '浏览工作区 Agent，并检查工作流可用的能力。', catalogLabel: 'Agent 目录',
       toolbarLabel: 'Agent 目录搜索和筛选', searchPlaceholder: '搜索 Agent', searchLabel: '搜索 Agent', statusFilterLabel: '按状态筛选 Agent',
-      resultCount: '显示 {{visible}} 个，共 {{total}} 个 Agent', totalCount: '{{count}} 个 Agent', totalCount_one: '{{count}} 个 Agent', totalCount_other: '{{count}} 个 Agent', newAgent: '新建 Agent', createPermission: '需要 manage_agents 权限才能创建 Agent。', emptyTitle: '此工作区暂无 Agent', emptyBody: '创建 Agent 预设，为工作流提供能力。', emptyReadOnlyBody: '工作区管理员创建 Agent 后，它们会显示在这里。',
+      resultCount: '显示 {{visible}} 个，共 {{total}} 个 Agent', totalCount: '{{count}} 个 Agent', totalCount_one: '{{count}} 个 Agent', totalCount_other: '{{count}} 个 Agent', newAgent: '新建 Agent', createPermission: '需要 manage_agents 权限才能创建 Agent。', emptyTitle: '此工作区暂无 Agent', emptyBody: '创建 Agent，为工作流提供能力。', emptyReadOnlyBody: '工作区管理员创建 Agent 后，它们会显示在这里。',
       noResultsTitle: '没有匹配的 Agent', noResultsBody: '请调整搜索或状态筛选。', filters: { all: '全部' },
       status: { active: '已启用', draft: '草稿', disabled: '已停用' }, tabs: { overview: '概览', capabilities: '能力', versions: '恢复点', settings: '设置' },
       fields: { identity: 'Agent', status: '状态', capabilities: '能力', assignment: '工作流分配' },
@@ -2932,7 +2947,6 @@ export const zh = {
         overflow: '+{{count}}', open: '在工作流中打开 {{name}}'
       },
       edit: '编辑 Agent', reactivate: '重新启用', dangerZone: '危险操作', retryAll: '全部重试', unavailable: '部分实时数据暂不可用',
-      builtInDefinitionReadOnly: '此定义由 AcornOps 维护。你可以在此更改工作区可用状态，并在「能力」页查看其能力上限。',
       details: {
         profileSections: 'Agent 资料分区',
         tabs: { overview: '概览', capabilities: '能力', versions: '恢复点', settings: '设置' },
@@ -2945,15 +2959,15 @@ export const zh = {
         permissionModeLabel: '权限模式', approvalGateLabel: '审批关卡', trustBoundary: '信任边界', dataAccess: '数据访问',
         permissionMode: { read_only: '只读', ask_before_changes: '更改前询问', auto_allowed_changes: '自动执行常规更改' },
         approvalGate: { read_only: '已禁用写入', ask_before_changes: '每个可写工具执行前', auto_allowed_changes: '高风险或破坏性写入前' },
-        restorePoints: '已保存的恢复点', systemRestorePointsDescription: 'AcornOps 为此内置定义维护恢复点。', customRestorePointsDescription: '保存当前 Agent 定义，或从已保存的恢复点创建新的当前修订版。',
+        restorePoints: '已保存的恢复点', customRestorePointsDescription: '保存当前 Agent 定义，或从已保存的恢复点创建新的当前修订版。',
         saving: '正在保存...', saveRestorePoint: '保存恢复点', restore: '恢复', noRestorePoints: '尚未保存恢复点。', revisionLabel: '修订版 {{version}}',
         restoreConfirmationTitle: '恢复修订版 {{version}}？', restoreConfirmationDescription: '这会从已保存的恢复点创建新的当前修订版。现有运行不受影响。', confirmRestore: '恢复此恢复点',
         agentLifecycle: 'Agent 生命周期', lifecycleDescription: '管理此 Agent 是否可接收新分配，或将其永久删除。',
         disableAgent: '停用 Agent', disableDescription: '停止将此 Agent 用于新的分配。现有工作流引用会保留。', confirmDisableTitle: '确认停用 Agent', confirmDisable: '确认停用',
         disableImpact: '停用可能中断 {{count}} 个已分配的工作流。', disableImpact_one: '停用可能中断 {{count}} 个已分配的工作流。', disableImpact_other: '停用可能中断 {{count}} 个已分配的工作流。',
-        deleteAgent: '删除 Agent', deleteSystemDescription: '永久删除此初始 Agent。系统不会自动恢复它。', deleteCustomDescription: '永久删除此自定义 Agent 及其历史记录。此操作无法撤销。',
+        deleteAgent: '删除 Agent', deleteCustomDescription: '永久删除此工作区 Agent 及其历史记录。此操作无法撤销。',
         deleteBlocked: '删除前，请先从 {{count}} 个工作流中移除此 Agent。', deleteBlocked_one: '删除前，请先从 {{count}} 个工作流中移除此 Agent。', deleteBlocked_other: '删除前，请先从 {{count}} 个工作流中移除此 Agent。',
-        confirmDeleteTitle: '确认删除 Agent', confirmDeleteSystem: '删除此初始 Agent？AcornOps 不会自动重新安装它。', confirmDeleteCustom: '删除此自定义 Agent 及其历史记录？此操作无法撤销。',
+        confirmDeleteTitle: '确认删除 Agent', confirmDeleteCustom: '删除此工作区 Agent 及其历史记录？此操作无法撤销。',
         capabilities: {
           sectionsLabel: 'Agent 能力分区', tabs: { tools: '工具', skills: '技能' },
           actions: { rename: '重命名', edit: '编辑', save: '保存', remove: '移除', enable: '启用', disable: '停用', reimport: '重新导入' },

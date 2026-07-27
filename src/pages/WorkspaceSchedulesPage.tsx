@@ -27,17 +27,24 @@ import {
   type WorkflowSchedule,
   type WorkflowScheduleListResponse
 } from '@/services/control-plane/workflowApi';
-import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
 import type { WorkflowTriggerType } from '@/utils/routes';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import { WorkflowMcpCredentialDialog, WorkflowPreviewAuthRow, workflowCapabilityBlockerMessage } from '@/pages/WorkspaceWorkflowsPage.components';
 import {
+  approvedContextGrants,
+  createEmptyDraft,
+  formatScheduleDateTime,
+  scheduleToDraft,
+  type ScheduleDraft
+} from '@/pages/WorkspaceSchedulesPage.helpers';
+import {
   scheduleWorkflowName,
   WorkspaceScheduleMobileCard,
   WorkspaceScheduleTableRow
 } from '@/pages/WorkspaceScheduleRows';
+import { WorkspaceScheduleDeleteDialog } from '@/pages/WorkspaceScheduleDeleteDialog';
 import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 
@@ -50,56 +57,8 @@ interface WorkspaceSchedulesPageProps {
 
 type ScheduleStatusFilter = 'all' | 'enabled' | 'paused';
 
-interface ScheduleDraft {
-  id?: string;
-  workflowId: string;
-  name: string;
-  cron: string;
-  timezone: string;
-  enabled: boolean;
-  approvedContextGrants: string;
-  inputs: Record<string, string>;
-  runsAsUserId: string;
-}
-
-const createEmptyDraft = (): ScheduleDraft => ({
-  workflowId: '',
-  name: '',
-  cron: '0 9 * * 1-5',
-  timezone: getUserTimeZone(),
-  enabled: true,
-  approvedContextGrants: 'workspace_metadata',
-  inputs: {},
-  runsAsUserId: ''
-});
-
 const scheduleFormInputClassName = formInputClassName('mt-2');
 const scheduleFormTextareaClassName = formTextareaClassName('mt-2');
-
-function formatDateTime(value: string | undefined, fallback: string): string {
-  return formatUserDateTime(value, { fallback: value || fallback });
-}
-
-function scheduleToDraft(schedule: WorkflowSchedule): ScheduleDraft {
-  return {
-    id: schedule.id,
-    workflowId: schedule.workflowId,
-    name: schedule.name,
-    cron: schedule.cron,
-    timezone: schedule.timezone,
-    enabled: schedule.status === 'enabled',
-    approvedContextGrants: schedule.approvedContextGrants.join('\n'),
-    inputs: schedule.inputs,
-    runsAsUserId: schedule.principal.id
-  };
-}
-
-function approvedContextGrants(value: string): string[] {
-  return value
-    .split(/\n|,/)
-    .map((grant) => grant.trim())
-    .filter(Boolean);
-}
 
 export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   workspace,
@@ -119,6 +78,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   const [draftError, setDraftError] = useState('');
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [deletingScheduleId, setDeletingScheduleId] = useState('');
+  const [deleteTargetId, setDeleteTargetId] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const [updatingScheduleId, setUpdatingScheduleId] = useState('');
   const [currentUser, setCurrentUser] = useState<{ id: string; label: string } | null>(null);
   const [capabilityPreview, setCapabilityPreview] = useState<WorkflowCapabilitiesPreview | null>(null);
@@ -127,6 +88,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   const [credentialRequirement, setCredentialRequirement] = useState<WorkflowMcpRequirementPreview | null>(null);
   const [capabilityPreviewRevision, setCapabilityPreviewRevision] = useState(0);
   const capabilityPreviewRequestRef = React.useRef(0);
+  const scheduleActionButtonRefs = React.useRef(new Map<string, HTMLButtonElement>());
 
   const canManageSchedules = hasWorkspacePermission(workspace, 'manage_workflows');
 
@@ -153,10 +115,13 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   };
 
   useEffect(() => {
+    setDeleteTargetId('');
+    setDeleteError('');
     void refreshSchedules();
   }, [workspace.id]);
 
   const schedules = schedulePage?.items || [];
+  const deleteTargetSchedule = schedules.find((schedule) => schedule.id === deleteTargetId);
   const summary = schedulePage?.summary || { total: 0, active: 0, paused: 0, approvalGated: 0 };
   const query = urlSearch.get('q') || '';
   const status = urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'paused'
@@ -184,6 +149,10 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     window.requestAnimationFrame(() => document.getElementById('workflow-triggers-search')?.focus());
   };
   const schedulesBusy = schedulePhase === 'loading' || schedulePhase === 'refreshing';
+  const openDeleteDialog = (schedule: WorkflowSchedule) => {
+    setDeleteError('');
+    setDeleteTargetId(schedule.id);
+  };
   const activeWorkflows = useMemo(() => workflows.filter((workflow) => workflow.status !== 'paused'), [workflows]);
   const workflowOptions = useMemo<Array<SelectOption<string>>>(
     () => workflows.map((workflow) => ({ value: workflow.id, label: workflow.name })),
@@ -330,14 +299,17 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     }
   };
 
-  const deleteSchedule = async (schedule: WorkflowSchedule) => {
-    if (!canManageSchedules || deletingScheduleId) return;
+  const deleteSchedule = async (schedule: WorkflowSchedule): Promise<boolean> => {
+    if (!canManageSchedules || deletingScheduleId) return false;
+    setDeleteError('');
     setDeletingScheduleId(schedule.id);
     try {
       await deleteWorkflowSchedule(workspace.id, schedule.id);
       await refreshSchedules();
+      return true;
     } catch (err) {
-      setScheduleError(err instanceof Error ? err.message : t('schedules.form.deleteError'));
+      setDeleteError(err instanceof Error ? err.message : t('schedules.form.deleteError'));
+      return false;
     } finally {
       setDeletingScheduleId('');
     }
@@ -407,7 +379,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
           ? t('schedules.filters.showing', { count: visibleSchedules.length, total: schedules.length })
           : t('schedules.filters.summary', {
               count: schedules.length,
-              nextRun: formatDateTime(summary.nextRunAt, t('schedules.nextRunUnavailable'))
+              nextRun: formatScheduleDateTime(summary.nextRunAt, t('schedules.nextRunUnavailable'))
             })}
         filters={[
           createDiscoveryFilterGroup<ScheduleStatusFilter>({
@@ -460,10 +432,11 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                   canManage={canManageSchedules}
                   updating={updatingScheduleId === schedule.id}
                   deleting={deletingScheduleId === schedule.id}
+                  actionButtonRefs={scheduleActionButtonRefs}
                   onEdit={() => openEditDrawer(schedule)}
                   onRepair={() => openMcpRepairDrawer(schedule)}
                   onToggle={() => void toggleSchedule(schedule)}
-                  onDelete={() => void deleteSchedule(schedule)}
+                  onDelete={() => openDeleteDialog(schedule)}
                 />
               ))}
             </div>
@@ -492,10 +465,11 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                   canManage={canManageSchedules}
                   updating={updatingScheduleId === schedule.id}
                   deleting={deletingScheduleId === schedule.id}
+                  actionButtonRefs={scheduleActionButtonRefs}
                   onEdit={() => openEditDrawer(schedule)}
                   onRepair={() => openMcpRepairDrawer(schedule)}
                   onToggle={() => void toggleSchedule(schedule)}
-                  onDelete={() => void deleteSchedule(schedule)}
+                  onDelete={() => openDeleteDialog(schedule)}
                 />
               )) : (
                 <tr>
@@ -521,6 +495,25 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         )}
       </section>
       </div>
+
+      <WorkspaceScheduleDeleteDialog
+        schedule={deleteTargetSchedule}
+        error={deleteError}
+        pending={Boolean(deleteTargetSchedule && deletingScheduleId === deleteTargetSchedule.id)}
+        onCancel={() => {
+          if (deletingScheduleId) return;
+          const scheduleId = deleteTargetSchedule?.id;
+          setDeleteTargetId('');
+          setDeleteError('');
+          if (scheduleId) window.requestAnimationFrame(() => scheduleActionButtonRefs.current.get(scheduleId)?.focus({ preventScroll: true }));
+        }}
+        onConfirm={() => {
+          if (!deleteTargetSchedule) return;
+          void deleteSchedule(deleteTargetSchedule).then((deleted) => {
+            if (deleted) setDeleteTargetId('');
+          });
+        }}
+      />
 
       <DrawerFrame
         open={drawerOpen}

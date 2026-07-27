@@ -12,20 +12,21 @@ test.beforeEach(async ({ page }) => {
   await reset(page);
 });
 
-test('system Agents show AcornOps provenance while custom Agents retain their owner', async ({ page }) => {
+test('default and custom Agents are presented as workspace-owned and editable', async ({ page }) => {
   await page.goto(`/workspaces/${workspaceId}/agents`);
 
-  const systemRow = page.locator('[data-agent-catalog-row="fixture-workflow-analyst"]');
-  await expect(systemRow.getByText('Provided by AcornOps')).toBeVisible();
+  const defaultRow = page.locator('[data-agent-catalog-row="fixture-workflow-analyst"]');
+  await expect(defaultRow.getByText('Provided by AcornOps')).toHaveCount(0);
+  await expect(defaultRow.getByText('AcornOps Fixture Lab', { exact: true })).toBeVisible();
   const customRow = page.locator('[data-agent-catalog-row="fixture-specialist"]');
   await expect(customRow.getByText('Provided by AcornOps')).toHaveCount(0);
 
   await page.getByRole('button', { name: /Open Workflow Analyst agent profile/ }).click();
-  const systemHeader = page.getByRole('heading', { name: 'Workflow Analyst' }).locator('..');
-  await expect(systemHeader.getByText('Provided by AcornOps')).toBeVisible();
-  const systemOverview = page.getByRole('tabpanel', { name: 'Overview' });
-  await expect(systemOverview.getByText('AcornOps', { exact: true })).toBeVisible();
-  await expect(systemOverview.getByText('Built-in', { exact: true })).toBeVisible();
+  const defaultHeader = page.getByRole('heading', { name: 'Workflow Analyst' }).locator('..');
+  await expect(defaultHeader.getByText('Provided by AcornOps')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
+  const defaultOverview = page.getByRole('tabpanel', { name: 'Overview' });
+  await expect(defaultOverview.getByText('Workspace-owned', { exact: true })).toBeVisible();
 
   await page.goto(`/workspaces/${workspaceId}/agents?agent=fixture-specialist&panel=profile`);
   const customHeader = page.getByRole('heading', { name: 'Kubernetes Specialist' }).locator('..');

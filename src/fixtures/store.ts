@@ -237,7 +237,7 @@ export function createFixtureState(): FixtureState {
   }, {
     id: 'fixture-template-target-diagnostics', workspaceId: FIXTURE_IDS.workspace, version: 1,
     origin: { type: 'manual' }, source: 'user',
-    name: 'Target diagnostics', description: 'Inspect one exact target using live diagnostic evidence.', status: 'draft',
+    name: 'Target diagnostics', description: 'Inspect one exact target using live diagnostic evidence.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning', email: 'ning@fixture.acornops.dev' }, createdAt: EARLIER,
     prompt: 'Inspect {{target:target}} using live diagnostic evidence and summarize safe next actions.',
     agentIds: [FIXTURE_IDS.targetDiagnosticsAgent], executionMode: 'direct',
@@ -260,7 +260,7 @@ export function createFixtureState(): FixtureState {
     {
       id: 'target-diagnostics', version: 3, name: 'Target diagnostics',
       description: 'Inspect one exact target using live diagnostic evidence.', installMode: 'automatic',
-      installationStatus: 'ready', setupSteps: [], blockerCodes: [],
+      installationStatus: 'active', setupSteps: [], blockerCodes: [],
       workflowId: 'fixture-template-target-diagnostics'
     },
     {

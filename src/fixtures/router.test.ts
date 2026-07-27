@@ -37,6 +37,16 @@ describe('frontend fixture router', () => {
     }));
     expect(createdWorkspace.status).toBe(201);
     expect(getFixtureState().workspaces).toHaveLength(2);
+    const createdWorkspaceId = (createdWorkspace.body as { id: string }).id;
+    for (const path of [
+      `/api/v1/workspaces/${createdWorkspaceId}/kubernetes-clusters`,
+      `/api/v1/workspaces/${createdWorkspaceId}/virtual-machines`,
+      `/api/v1/workspaces/${createdWorkspaceId}/targets`,
+      `/api/v1/workspaces/${createdWorkspaceId}/issues`
+    ]) {
+      const response = await routeFixtureRequest(request(path));
+      expect(response.body, path).toEqual({ items: [] });
+    }
 
     await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/members`, {
       method: 'POST',

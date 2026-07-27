@@ -91,12 +91,12 @@ export const WorkflowLaunchActions: React.FC<{
   needsLaunchAcknowledgement: boolean;
   onAcknowledgementChange: (checked: boolean) => void;
   onActivate: () => void;
+  onEdit: () => void;
   onLaunch: () => void;
   onSchedule: () => void;
-  onSetup: () => void;
   primaryAction: WorkflowPrimaryAction;
   tags: string[];
-}> = ({ activating, canManageWorkflowScope, isWriteCapable, launchAcknowledged, launchBlocker, launchFields, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onActivate, onLaunch, onSchedule, onSetup, primaryAction, tags }) => {
+}> = ({ activating, canManageWorkflowScope, isWriteCapable, launchAcknowledged, launchBlocker, launchFields, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onActivate, onEdit, onLaunch, onSchedule, primaryAction, tags }) => {
   const { t } = useTranslation();
   const visibleLaunchBlocker = primaryAction === 'launch' ? launchBlocker : null;
 
@@ -120,13 +120,13 @@ export const WorkflowLaunchActions: React.FC<{
     </div>
     <div className="grid gap-1 sm:justify-items-end">
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onEdit} disabled={!canManageWorkflowScope}>
+          <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
+          {t('agentsWorkflows.workflowActions.edit')}
+        </Button>
         {primaryAction === 'launch' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onSchedule} disabled={!canManageWorkflowScope} aria-describedby={!canManageWorkflowScope ? 'workflow-schedule-blocker' : undefined}>
           <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
           {t('agentsWorkflows.workflowActions.schedule')}
-        </Button>}
-        {primaryAction === 'setup' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="primary" size="md" onClick={onSetup}>
-          <ICONS.Settings className="h-4 w-4" aria-hidden="true" />
-          {t('agentsWorkflows.workflowActions.completeSetup')}
         </Button>}
         {primaryAction === 'activate' && <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onActivate} disabled={!canManageWorkflowScope || activating} aria-describedby={!canManageWorkflowScope ? 'workflow-activate-blocker' : undefined}>
           <ICONS.Zap className="h-4 w-4" aria-hidden="true" />

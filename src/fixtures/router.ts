@@ -239,9 +239,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/audit-log$/);
   if (match && method === 'GET') return json({ items: clone(state.auditEvents) });
-
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/issues$/);
-  if (match && method === 'GET') return json({ items: clone(state.issues) });
+  if (match && method === 'GET') return json({ items: clone(state.issues.filter((issue) => issue.workspaceId === decode(match![1]))) });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/issues\/([^/]+)$/);
   if (match && method === 'GET') {
     const issue = state.issues.find((item) => item.id === decode(match![2]));
@@ -251,7 +250,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (match && method === 'GET') return json({ items: state.issues.length ? [{ id: 'fixture-observation', issueId: decode(match[2]), workspaceId: decode(match[1]), targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', snapshotTs: NOW, severity: 'critical', title: 'CrashLoopBackOff observed', message: 'Container restart back-off remains active.', reason: 'CrashLoopBackOff', evidence: { restartCount: 4 }, createdAt: NOW }] : [] });
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets$/);
-  if (match && method === 'GET') return json({ items: [...state.clusters, ...state.virtualMachines].map(targetSummary) });
+  if (match && method === 'GET') return json({ items: [...state.clusters, ...state.virtualMachines].filter((target) => target.workspaceId === decode(match![1])).map(targetSummary) });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)$/);
   if (match && method === 'GET') {
     const target = [...state.clusters, ...state.virtualMachines].find((item) => item.id === decode(match![2]));
@@ -260,12 +259,13 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/metrics\/history$/);
   if (match && method === 'GET') {
+    const workspaceId = decode(match[1]);
     const points = [{ timestamp: '2026-07-15T08:00:00.000Z', cpuCores: 0.25, memoryBytes: 734003200 }, { timestamp: NOW, cpuCores: 0.325, memoryBytes: 805306368 }];
-    return json({ workspaceId: decode(match[1]), windowMs: 21600000, items: state.clusters.map((cluster) => ({ clusterId: cluster.id, points })) });
+    return json({ workspaceId, windowMs: 21600000, items: state.clusters.filter((cluster) => cluster.workspaceId === workspaceId).map((cluster) => ({ clusterId: cluster.id, points })) });
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters$/);
   if (match) {
-    if (method === 'GET') return json({ items: clone(state.clusters) });
+    if (method === 'GET') return json({ items: clone(state.clusters.filter((cluster) => cluster.workspaceId === decode(match![1]))) });
     if (method === 'POST') {
       const input = await bodyOf(request);
       const cluster = { ...clone(state.clusters[0]), id: id('fixture-cluster'), workspaceId: decode(match[1]), name: String(input.name || 'Fixture cluster'), status: 'offline', latestSnapshot: null };
@@ -301,7 +301,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines$/);
   if (match) {
-    if (method === 'GET') return json({ items: clone(state.virtualMachines) });
+    if (method === 'GET') return json({ items: clone(state.virtualMachines.filter((target) => target.workspaceId === decode(match![1]))) });
     if (method === 'POST') {
       const input = await bodyOf(request);
       const virtualMachine = { ...clone(state.virtualMachines[0]), id: id('fixture-vm'), workspaceId: decode(match[1]), name: String(input.name || 'Fixture VM'), hostname: input.hostname, status: 'offline', createdAt: NOW, updatedAt: NOW, latestSnapshot: null };

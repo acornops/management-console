@@ -7,9 +7,11 @@ test('default workflows are directly editable without creating a copy', async ({
   );
 
   await expect(page.getByRole('button', { name: 'Create editable copy' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Activate', exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: 'Settings' }).click();
-  await expect(page.getByRole('button', { name: 'Edit workflow details' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Schedule', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Launch', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Settings' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByLabel('Workflow name')).toHaveValue('Target diagnostics');
 });
 
 test('parameterized workflow launch supports keyboard resource selection and resets on close', async ({ page }) => {
