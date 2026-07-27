@@ -1343,14 +1343,17 @@ export const zh = {
     enabled: '已启用',
     disabled: '已停用',
     eventGroups: '事件组',
-    eventGroupsHelp: '先添加常用事件集，再在下方调整具体事件。',
+    eventGroupsHelp: '每个事件只属于一个事件组。数量表示该组控制的具体事件数。',
     events: '事件',
     selectEvent: '请至少选择一个事件。',
     groups: {
       issueAlerts: '问题告警',
-      runAlerts: '运行告警',
+      runAlerts: '运行生命周期',
       targetHealth: '目标健康状况',
-      workspaceChanges: '工作区变更'
+      workspaceChanges: '工作区和目标生命周期',
+      agentChanges: '代理变更',
+      sessionActivity: '会话活动',
+      toolingActivity: '工具和 MCP 活动'
     },
     create: '创建 Webhook',
     save: '保存 Webhook',
