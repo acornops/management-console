@@ -2511,6 +2511,8 @@ export const zh = {
     actionsColumn: '操作',
     enabled: '已启用',
     disabled: '已禁用',
+    unavailable: '不可用',
+    openAiResponsesRequired: '需要 OpenAI Responses API。当前部署使用 Chat Completions。',
     enableNamed: '启用 {{tool}}',
     disableNamed: '禁用 {{tool}}',
     actionsNamed: '{{tool}} 的操作',

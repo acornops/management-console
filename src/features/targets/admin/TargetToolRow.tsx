@@ -37,6 +37,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   const isBlockedByOtherToolToggle = Boolean(pendingToolId && !isTogglingTool);
   const canEditTool = canEditTools && (tool.permissions?.canEdit ?? true);
   const isPlatformNative = tool.origin === 'platform_native';
+  const isUnavailable = tool.enabled && tool.availability?.available === false;
   const isToggleable = tool.toggleable ?? !isPlatformNative;
   const canToggleTool = isToggleable && canEditTool && !isBlockedByOtherToolToggle && !isTogglingTool;
   const capabilityBadgeClassName = capability === 'write'
@@ -134,8 +135,18 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
               <span className="type-micro-label shrink-0 rounded-full bg-accent-soft/45 px-2 py-0.5 text-accent-readable">
                 {t('common.providedByAcornOps')}
               </span>
+              {isUnavailable && (
+                <span className="type-micro-label shrink-0 rounded-full bg-status-warning-soft px-2 py-0.5 text-status-warning-text">
+                  {t('tools.unavailable')}
+                </span>
+              )}
             </span>
             <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={tool.description}>{tool.description}</span>
+            {isUnavailable && tool.availability?.unavailableReason === 'openai_responses_api_required' && (
+              <span className="mt-1 block text-xs leading-5 text-status-warning-text">
+                {t('tools.openAiResponsesRequired')}
+              </span>
+            )}
             <span className="mt-2 block text-xs text-ui-text-muted md:hidden">{runtimeLabel}</span>
           </div>
         </div>

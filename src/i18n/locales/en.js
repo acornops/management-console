@@ -2511,6 +2511,8 @@ export const en = {
     actionsColumn: 'Actions',
     enabled: 'Enabled',
     disabled: 'Disabled',
+    unavailable: 'Unavailable',
+    openAiResponsesRequired: 'Requires the OpenAI Responses API. This deployment uses Chat Completions.',
     enableNamed: 'Enable {{tool}}',
     disableNamed: 'Disable {{tool}}',
     actionsNamed: 'Actions for {{tool}}',

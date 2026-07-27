@@ -82,10 +82,10 @@ export function getWorkspaceNavigationGroups({
           current: false,
           badge: openWorkflowRunCount,
           children: isWorkflowRoute
-            ? [
+              ? [
                 { id: 'workflowLibrary', label: t('app.library'), path: AppPaths.workspaceWorkflows(workspace.id), current: activeResourceNav === 'workflows' },
-                { id: 'workflowRuns', label: t('app.runs'), path: AppPaths.workspaceRuns(workspace.id), current: activeResourceNav === 'runs', badge: openWorkflowRunCount },
-                { id: 'workflowTriggers', label: t('app.triggers'), path: AppPaths.workspaceTriggers(workspace.id), current: activeResourceNav === 'triggers' }
+                { id: 'workflowTriggers', label: t('app.triggers'), path: AppPaths.workspaceTriggers(workspace.id), current: activeResourceNav === 'triggers' },
+                { id: 'workflowRuns', label: t('app.runs'), path: AppPaths.workspaceRuns(workspace.id), current: activeResourceNav === 'runs', badge: openWorkflowRunCount }
               ]
             : undefined
         },

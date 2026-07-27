@@ -39,6 +39,10 @@ export interface ControlPlaneTargetToolItem {
     learningAvailable: boolean;
     learningPausedReason: 'ai_settings_missing' | 'provider_not_allowed' | 'model_not_allowed' | null;
   };
+  availability?: {
+    available: boolean;
+    unavailableReason: 'openai_responses_api_required' | null;
+  };
   permissions?: {
     canEdit: boolean;
   };

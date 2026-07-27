@@ -49,8 +49,8 @@ describe('workspace navigation model', () => {
       path: AppPaths.workspaceWorkflows('workspace-1'),
       children: [
         { id: 'workflowLibrary', path: AppPaths.workspaceWorkflows('workspace-1'), current: false },
-        { id: 'workflowRuns', path: AppPaths.workspaceRuns('workspace-1'), current: false, badge: 3 },
-        { id: 'workflowTriggers', path: AppPaths.workspaceTriggers('workspace-1'), current: true }
+        { id: 'workflowTriggers', path: AppPaths.workspaceTriggers('workspace-1'), current: true },
+        { id: 'workflowRuns', path: AppPaths.workspaceRuns('workspace-1'), current: false, badge: 3 }
       ]
     });
     expect(workflows?.badge).toBe(3);
@@ -84,8 +84,8 @@ describe('workspace navigation model', () => {
     const workflows = workflowGroups.flatMap((group) => group.items).find((item) => item.id === 'workflows');
     expect(workflows?.children?.map((child) => [child.id, child.current])).toEqual([
       ['workflowLibrary', true],
-      ['workflowRuns', false],
-      ['workflowTriggers', false]
+      ['workflowTriggers', false],
+      ['workflowRuns', false]
     ]);
 
     const overviewGroups = getWorkspaceNavigationGroups({
