@@ -1325,14 +1325,17 @@ export const en = {
     enabled: 'Enabled',
     disabled: 'Disabled',
     eventGroups: 'Event groups',
-    eventGroupsHelp: 'Add a common event set, then adjust individual events below.',
+    eventGroupsHelp: 'Every event belongs to one group. Counts show how many individual events each group controls.',
     events: 'Events',
     selectEvent: 'Select at least one event.',
     groups: {
       issueAlerts: 'Issue alerts',
-      runAlerts: 'Run alerts',
+      runAlerts: 'Run lifecycle',
       targetHealth: 'Target health',
-      workspaceChanges: 'Workspace changes'
+      workspaceChanges: 'Workspace and target lifecycle',
+      agentChanges: 'Agent changes',
+      sessionActivity: 'Session activity',
+      toolingActivity: 'Tool and MCP activity'
     },
     create: 'Create webhook',
     save: 'Save webhook',

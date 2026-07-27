@@ -131,6 +131,10 @@ The management console is the browser client for the control-plane API. Keep thi
 
 - The console depends on the control plane for auth state, current workspace role, permissions, and all server-side authorization decisions.
 - Password signup does not imply workspace membership.
+- The outbound webhook selector mirrors the control-plane catalog. Workspace
+  creation remains visible in audit history but is not selectable for outbound
+  delivery because no workspace-scoped subscription can exist before creation;
+  workspace deletion remains selectable as a final snapshotted notification.
 - Webhook, MCP, Target Insights, workspace audit, AI settings, and target mutation screens should treat denied mutations as normal permission outcomes.
 - Run streams and run-event frames are control-plane contracts; UI code should map them in one place before rendering.
 - Approval deep links may include exact `runId` and `approvalId` filters; the console keeps approval decisions on the run-scoped control-plane endpoint.

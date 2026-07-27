@@ -1,5 +1,4 @@
 export const CONTROL_PLANE_WEBHOOK_EVENT_TYPES = [
-  'workspace.created.v1',
   'workspace.deleted.v1',
   'target.registered.v1',
   'target.updated.v1',

@@ -73,6 +73,27 @@ test('outbound webhooks expose history, confirmation, and one-time secret flows'
 
   await createWebhook.click();
   drawer = page.getByRole('dialog', { name: 'Create webhook' });
+  const issueAlerts = drawer.getByRole('button', { name: 'Issue alerts' });
+  const eventList = drawer.locator('[data-event-scroll-region]');
+  const eventScrollbar = drawer.locator('[data-event-scrollbar]');
+  const eventScrollThumb = drawer.locator('[data-event-scroll-thumb]');
+  const issueEvents = [
+    drawer.getByRole('checkbox', { name: 'issue / created' }),
+    drawer.getByRole('checkbox', { name: 'issue / reopened' }),
+    drawer.getByRole('checkbox', { name: 'issue / resolved' })
+  ];
+  await expect(issueAlerts).toHaveAttribute('aria-pressed', 'true');
+  await expect(eventList).toHaveCSS('overflow-y', 'scroll');
+  await expect(eventScrollbar).toBeVisible();
+  await issueAlerts.click();
+  await expect(issueAlerts).toHaveAttribute('aria-pressed', 'false');
+  for (const eventCheckbox of issueEvents) await expect(eventCheckbox).not.toBeChecked();
+  await issueAlerts.click();
+  await expect(issueAlerts).toHaveAttribute('aria-pressed', 'true');
+  for (const eventCheckbox of issueEvents) await expect(eventCheckbox).toBeChecked();
+  await expect.poll(() => eventList.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await expect(eventScrollThumb).not.toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+
   await drawer.getByLabel('Name').fill('Mattermost incident channel');
   await drawer.getByLabel('Delivery URL').fill('https://mattermost-bot.fixture.acornops.dev/webhooks/incidents');
   await drawer.getByRole('button', { name: 'Create webhook' }).click();
@@ -91,7 +112,7 @@ test('outbound webhooks remain usable from compact navigation', async ({ browser
   await expect(page.getByRole('heading', { name: 'Outbound webhooks' })).toBeVisible();
   await page.getByRole('button', { name: 'Open navigation' }).click();
   const navigation = page.getByRole('dialog', { name: 'Navigation' });
-  await expect(navigation.getByRole('link', { name: 'Outbound webhooks' })).toHaveAttribute('aria-current', 'page');
+  await expect(navigation.getByRole('link', { name: 'Outbound Webhook' })).toHaveAttribute('aria-current', 'page');
   await navigation.getByRole('button', { name: 'Close navigation' }).click();
 
   await page.getByRole('button', { name: 'Create webhook' }).click();

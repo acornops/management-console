@@ -64,9 +64,14 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(list).toContain('hasActiveFilters');
   });
 
-  it('expands current event groups without duplicating events', () => {
-    expect(editor).toContain('applyEventGroup(group.eventTypes)');
-    expect(model).toContain('return [...new Set(events)]');
+  it('toggles complete event groups, exposes selected state, and scrolls selected events into view', () => {
+    expect(editor).toContain('toggleEventGroup(group.eventTypes)');
+    expect(editor).toContain('aria-pressed={groupSelected}');
+    expect(editor).toContain('eventList.scrollTo({');
+    expect(editor).toContain('data-event-scroll-region');
+    expect(editor).toContain('eventScrollIndicator.height');
+    expect(model).toContain('if (groupSelected) next.delete(eventType)');
+    expect(model).toContain('else next.add(eventType)');
     expect(model).toContain("id: 'issueAlerts'");
     expect(model).toContain("eventTypes: ['issue.created.v1', 'issue.reopened.v1', 'issue.resolved.v1']");
     expect(model).toContain("id: 'runAlerts'");
