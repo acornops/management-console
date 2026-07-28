@@ -14,7 +14,6 @@ import {
   markdownComponents,
   mcpServersInventory,
   membersPage,
-  pageComposition,
   resourceCategoryTabs,
   resourcesView,
   targetSkillsInventory,
@@ -60,10 +59,10 @@ describe('surface behavior contracts', () => {
   });
 
   it('keeps the populated workflow ledger compact and leaves field labels to compact layouts', () => {
-    expect(workspaceRunsPage).toContain('<PageShell width="content">');
+    expect(workspaceRunsPage).toContain('<PageShell>');
+    expect(workspaceRunsPage).not.toContain('<PageShell width=');
     expect(workspaceRunsPage).toContain('bg-ui-surface shadow-sm');
     expect(workspaceRunsPage).not.toContain('min-h-[24rem]');
-    expect(pageComposition).toContain("content: 'mx-auto max-w-[88rem]'");
     expect(workflowActivityUi).toContain('sm:grid-cols-2 sm:gap-x-6');
     expect(workflowActivityUi).toContain('sm:col-span-2 xl:col-span-1');
     expect(workspaceRunsPage).toContain('workflowExecutionLedgerGridClass');

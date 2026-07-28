@@ -134,7 +134,7 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
   ].filter(Boolean).length;
 
   return (
-    <PageShell width="content">
+    <PageShell>
       <PageHeader
         title={t('workflowActivity.title')}
         description={t('workflowActivity.subtitle', { workspace: workspace.name })}

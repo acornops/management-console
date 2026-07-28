@@ -1,5 +1,5 @@
 import React from 'react';
-import { BotMessageSquare, Check, Copy, KeyRound, Loader2, MailPlus, Plus, Trash2, Users, Workflow } from 'lucide-react';
+import { BotMessageSquare, Check, KeyRound, Loader2, MailPlus, Plus, Trash2, Users, Workflow } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/common/Button';
 import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
@@ -7,8 +7,15 @@ import { Dialog } from '@/components/common/Dialog';
 import { FieldValidationMessage, fieldInvalidClass } from '@/components/common/FieldValidationMessage';
 import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
 import { Select, SelectOption } from '@/components/common/Select';
+import { CreateWorkspaceMemberResult } from '@/components/workspaces/CreateWorkspaceMemberResult';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
-import { ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
+import {
+  ProjectMember,
+  Workspace,
+  WorkspaceInvitation,
+  WorkspaceMemberAccessResult,
+  WorkspaceRoleTemplate
+} from '@/types';
 
 type CreateWorkspaceStep = 'details' | 'members' | 'ai';
 type InviteRowStatus = 'idle' | 'creating' | 'created' | 'failed';
@@ -19,6 +26,7 @@ export interface CreateWorkspaceInviteRow {
   role: ProjectMember['role'];
   status?: InviteRowStatus;
   error?: string;
+  member?: ProjectMember;
   invitation?: WorkspaceInvitation;
 }
 
@@ -29,10 +37,10 @@ interface CreateWorkspaceModalProps {
   onCreateWorkspace: (name: string) => Promise<Workspace>;
   onOpenAiSettings: (workspaceId: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
-  onCreateWorkspaceInvitation: (
+  onAddOrInviteWorkspaceMember: (
     workspaceId: string,
     input: { email: string; role: ProjectMember['role'] }
-  ) => Promise<WorkspaceInvitation>;
+  ) => Promise<WorkspaceMemberAccessResult>;
 }
 
 export const MAX_CREATE_WORKSPACE_INVITE_ROWS = 5;
@@ -96,7 +104,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   onCreateWorkspace,
   onOpenAiSettings,
   onLoadWorkspaceRoles,
-  onCreateWorkspaceInvitation
+  onAddOrInviteWorkspaceMember
 }) => {
   const { t } = useTranslation();
   const workspaceNameInputRef = React.useRef<HTMLInputElement>(null);
@@ -126,7 +134,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     () => roleTemplates.map((role) => ({ value: role.key, label: formatRole(role.key, role) })),
     [roleTemplates]
   );
-  const hasCreatedInvite = inviteRows.some((row) => row.status === 'created');
+  const hasCompletedMemberSetup = inviteRows.some((row) => row.status === 'created');
   const hasRowsToSubmit = getSubmittableInviteRows(inviteRows).length > 0;
   const closeDisabled = isCreatingWorkspace || isCreatingInvites;
 
@@ -277,7 +285,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     return errorsByRowId.size > 0;
   };
 
-  const createInvites = async () => {
+  const addOrInviteMembers = async () => {
     if (!createdWorkspace || isCreatingInvites) return;
     const rowsToSubmit = getSubmittableInviteRows(inviteRows);
     if (rowsToSubmit.length === 0) {
@@ -289,7 +297,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       return;
     }
     if (markValidationErrors(inviteRows)) {
-      setInviteSummaryError(t('workspaceCreate.fixInviteErrors'));
+      setInviteSummaryError(t('workspaceCreate.fixMemberAccessErrors'));
       return;
     }
 
@@ -302,24 +310,21 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
 
     const results = await Promise.allSettled(
       rowsToSubmit.map(async (row) => {
-        const invitation = await onCreateWorkspaceInvitation(createdWorkspace.id, {
+        const access = await onAddOrInviteWorkspaceMember(createdWorkspace.id, {
           email: normalizeInviteEmail(row.email),
           role: row.role
         });
-        if (!invitation.inviteLink) {
-          throw new Error(t('app.invitationTokenMissing'));
-        }
-        return { rowId: row.id, invitation };
+        return { rowId: row.id, access };
       })
     );
 
-    const successes = new Map<string, WorkspaceInvitation>();
+    const successes = new Map<string, WorkspaceMemberAccessResult>();
     const failures = new Map<string, string>();
     results.forEach((result, index) => {
       const row = rowsToSubmit[index];
       if (!row) return;
       if (result.status === 'fulfilled') {
-        successes.set(result.value.rowId, result.value.invitation);
+        successes.set(result.value.rowId, result.value.access);
       } else {
         failures.set(row.id, formatWorkspaceCreationError(result.reason, t('members.createInviteFailed')));
       }
@@ -327,14 +332,26 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
 
     setInviteRows((current) =>
       current.map((row) => {
-        const invitation = successes.get(row.id);
-        if (invitation) {
+        const access = successes.get(row.id);
+        if (access?.kind === 'member') {
           return {
             ...row,
-            email: invitation.email,
-            role: invitation.role,
+            email: access.member.email,
+            role: access.member.role,
             status: 'created',
-            invitation,
+            member: access.member,
+            invitation: undefined,
+            error: undefined
+          };
+        }
+        if (access?.kind === 'invitation') {
+          return {
+            ...row,
+            email: access.invitation.email,
+            role: access.invitation.role,
+            status: 'created',
+            member: undefined,
+            invitation: access.invitation,
             error: undefined
           };
         }
@@ -345,7 +362,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
         return row;
       })
     );
-    setInviteSummaryError(failures.size > 0 ? t('workspaceCreate.partialInviteFailure') : null);
+    setInviteSummaryError(failures.size > 0 ? t('workspaceCreate.partialMemberAccessFailure') : null);
     setIsCreatingInvites(false);
   };
 
@@ -447,7 +464,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                 <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
                   <MailPlus className="h-4 w-4" aria-hidden="true" />
                 </span>
-                <p>{t('workspaceCreate.inviteBody')}</p>
+                <p>{t('workspaceCreate.memberAccessBody')}</p>
               </div>
             </div>
 
@@ -472,7 +489,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                     <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-start">
                       <div className="space-y-2">
                         <label htmlFor={`create-workspace-invite-${row.id}-email`} className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                          {t('workspaceCreate.inviteEmailLabel', { number: index + 1 })}
+                          {t('workspaceCreate.memberEmailLabel', { number: index + 1 })}
                         </label>
                         <TextInput
                           id={`create-workspace-invite-${row.id}-email`}
@@ -510,32 +527,20 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                           variant="icon"
                           size="icon"
                           className="sm:h-11 sm:w-11"
-                          aria-label={t('workspaceCreate.removeInviteRow')}
+                          aria-label={t('workspaceCreate.removeMemberRow')}
                         >
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
 
-                    {row.status === 'created' && row.invitation && (
-                      <div className="mt-4 space-y-3 border-t border-ui-border pt-4">
-                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                          <Check className="h-4 w-4 text-status-success-text" aria-hidden="true" />
-                          {t('workspaceCreate.inviteCreated')}
-                        </div>
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                          <TextInput
-                            readOnly
-                            value={row.invitation.inviteLink || ''}
-                            onFocus={(event) => event.currentTarget.select()}
-                            className="min-w-0 flex-1"
-                          />
-                          <Button onClick={() => void copyInviteLink(row)} variant="secondary" size="sm" className="uppercase tracking-widest">
-                            {copiedInviteRowId === row.id ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-                            {copiedInviteRowId === row.id ? t('members.copied') : t('members.copy')}
-                          </Button>
-                        </div>
-                      </div>
+                    {row.status === 'created' && (row.member || row.invitation) && (
+                      <CreateWorkspaceMemberResult
+                        member={row.member}
+                        invitation={row.invitation}
+                        copied={copiedInviteRowId === row.id}
+                        onCopyInvitation={() => void copyInviteLink(row)}
+                      />
                     )}
                   </div>
                 );
@@ -550,10 +555,10 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                 size="sm"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
-                {t('workspaceCreate.addInviteRow')}
+                {t('workspaceCreate.addMemberRow')}
               </Button>
               <span className="text-xs font-semibold text-ui-text-muted">
-                {t('workspaceCreate.inviteRowLimit', { count: inviteRows.length, max: MAX_CREATE_WORKSPACE_INVITE_ROWS })}
+                {t('workspaceCreate.memberRowLimit', { count: inviteRows.length, max: MAX_CREATE_WORKSPACE_INVITE_ROWS })}
               </span>
             </div>
 
@@ -565,18 +570,18 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
           </div>
           <div className="flex flex-col-reverse gap-3 border-t border-ui-border bg-ui-bg px-6 py-4 sm:flex-row sm:justify-end">
             <Button onClick={() => setStep('ai')} disabled={isCreatingInvites} variant="secondary" size="sm" className="rounded-lg">
-              {hasCreatedInvite ? t('workspaceCreate.continue') : t('workspaceCreate.skipInvites')}
+              {hasCompletedMemberSetup ? t('workspaceCreate.continue') : t('workspaceCreate.skipForNow')}
             </Button>
-            {(hasRowsToSubmit || !hasCreatedInvite) && (
+            {(hasRowsToSubmit || !hasCompletedMemberSetup) && (
               <Button
-                onClick={() => void createInvites()}
-                disabled={isCreatingInvites || isLoadingRoles || Boolean(roleLoadError) || roleTemplates.length === 0 || (!hasRowsToSubmit && !hasCreatedInvite)}
+                onClick={() => void addOrInviteMembers()}
+                disabled={isCreatingInvites || isLoadingRoles || Boolean(roleLoadError) || roleTemplates.length === 0 || (!hasRowsToSubmit && !hasCompletedMemberSetup)}
                 variant="primary"
                 size="sm"
                 className="rounded-lg"
               >
                 {isCreatingInvites && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                {hasCreatedInvite ? t('workspaceCreate.retryInviteLinks') : t('workspaceCreate.createInviteLinks')}
+                {hasCompletedMemberSetup ? t('workspaceCreate.retryFailedMembers') : t('workspaceCreate.addOrInviteMembers')}
               </Button>
             )}
           </div>

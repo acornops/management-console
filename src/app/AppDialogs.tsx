@@ -9,7 +9,13 @@ import { formInputClassName } from '@/components/common/formControlStyles';
 import { ICONS } from '@/constants';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import type { AgentAccessMode } from '@/services/control-plane/types';
-import { KubernetesCluster, ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
+import {
+  KubernetesCluster,
+  ProjectMember,
+  Workspace,
+  WorkspaceMemberAccessResult,
+  WorkspaceRoleTemplate
+} from '@/types';
 
 interface AppDialogsProps {
   clusterCreationStep: 'details' | 'instructions';
@@ -36,10 +42,10 @@ interface AppDialogsProps {
   onConfirmDeleteWorkspace: (workspace: Workspace) => Promise<void>;
   onCreateWorkspace: (name: string) => Promise<Workspace>;
   onOpenWorkspaceAiSettings: (workspaceId: string) => void;
-  onCreateWorkspaceInvitation: (
+  onAddOrInviteWorkspaceMember: (
     workspaceId: string,
     input: { email: string; role: ProjectMember['role'] }
-  ) => Promise<WorkspaceInvitation>;
+  ) => Promise<WorkspaceMemberAccessResult>;
   onExcludeNamespacesChange: (value: string) => void;
   onIncludeNamespacesChange: (value: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
@@ -73,7 +79,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onConfirmDeleteWorkspace,
   onCreateWorkspace,
   onOpenWorkspaceAiSettings,
-  onCreateWorkspaceInvitation,
+  onAddOrInviteWorkspaceMember,
   onExcludeNamespacesChange,
   onIncludeNamespacesChange,
   onLoadWorkspaceRoles,
@@ -201,7 +207,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           onCreateWorkspace={onCreateWorkspace}
           onOpenAiSettings={onOpenWorkspaceAiSettings}
           onLoadWorkspaceRoles={onLoadWorkspaceRoles}
-          onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}
+          onAddOrInviteWorkspaceMember={onAddOrInviteWorkspaceMember}
         />
       </AnimatePresence>
 

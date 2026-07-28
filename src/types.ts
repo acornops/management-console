@@ -362,6 +362,10 @@ export interface WorkspaceInvitation {
   inviteLink?: string;
 }
 
+export type WorkspaceMemberAccessResult =
+  | { kind: 'member'; member: ProjectMember }
+  | { kind: 'invitation'; invitation: WorkspaceInvitation };
+
 export interface ChatSession {
   id: string;
   name: string;

@@ -188,7 +188,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   workspaces
 }) => {
   const { t } = useTranslation();
-  const { loadWorkspaceRoles, createWorkspaceInvitation } = useCreateWorkspaceInviteSetup({
+  const { loadWorkspaceRoles, addOrInviteWorkspaceMember } = useCreateWorkspaceInviteSetup({
     invitationTokenMissingMessage,
     setWorkspaces,
     toWorkspaceInvitation
@@ -574,7 +574,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               setIsCreatingWorkspace(false);
               navigate(AppPaths.workspaceAiSettings(workspaceId));
             }}
-            onCreateWorkspaceInvitation={createWorkspaceInvitation}
+            onAddOrInviteWorkspaceMember={addOrInviteWorkspaceMember}
             onExcludeNamespacesChange={setExcludeNamespaces}
             onIncludeNamespacesChange={setIncludeNamespaces}
             onLoadWorkspaceRoles={loadWorkspaceRoles}
