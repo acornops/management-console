@@ -312,6 +312,9 @@ export interface WorkspaceApprovalInboxRow {
   summary: string;
   toolName: string;
   requestedBy?: string;
+  sessionId?: string;
+  sessionOrigin?: 'manual' | 'auto_triage';
+  sessionTitle?: string;
   expiresAt: string;
   status: 'pending' | 'approved' | 'rejected' | 'expired';
   decision?: 'approved' | 'rejected';

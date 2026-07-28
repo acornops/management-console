@@ -42,6 +42,7 @@ import { useVirtualMachineAgentSetup } from '@/pages/virtual-machines/useVirtual
 import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/pages/virtual-machines/virtualMachineTargetPrompt';
 import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
 import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
+import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
 
 interface VirtualMachinesPageProps {
   workspace: Workspace;
@@ -53,6 +54,7 @@ interface VirtualMachinesPageProps {
   isDark: boolean;
   canManageTargets: boolean;
   canManageAgentKeys: boolean;
+  canCreateReadWriteRuns: boolean;
   navigate: (path: string, options?: NavigateOptions) => void;
   onUpdateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
@@ -82,6 +84,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   isDark,
   canManageTargets,
   canManageAgentKeys,
+  canCreateReadWriteRuns,
   navigate,
   onUpdateWorkspace,
   onReplaceWorkspaceVirtualMachines,
@@ -122,6 +125,17 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
   const view = route.kind === 'workspaceVirtualMachineDetail' ? activeSubview : 'overview';
   const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
+  const refreshVisibleVmIssues = React.useCallback(async () => {
+    if (!selected || view !== 'overview') return;
+    try {
+      const page = await controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 });
+      setIssues(page.items || []);
+      setIssueLoadFailed(false);
+    } catch (error) {
+      console.error('Failed refreshing virtual machine issues', error);
+    }
+  }, [selected, view, workspace.id]);
+  useVisibilityAwareRefresh(refreshVisibleVmIssues, { enabled: Boolean(selected && view === 'overview') });
   const selectedTargetPrompt = getSelectedVmTargetPrompt(pendingTargetPrompt, workspace.id, selectedId);
   const activeResourceCategory = isVmResourceSubview(view)
     ? vmSubviewToResourceCategory(view)
@@ -619,6 +633,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         isRotatingKey={isRotatingAgentKey}
         rotationError={agentKeyRotationError}
         onDeleteVirtualMachine={canManageTargets ? () => deleteVirtualMachine(selected) : undefined}
+        canManageTargets={canManageTargets}
+        canCreateReadWriteRuns={canCreateReadWriteRuns}
       />
     );
   }

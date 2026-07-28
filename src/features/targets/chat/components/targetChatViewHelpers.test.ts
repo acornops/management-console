@@ -4,9 +4,10 @@ import {
   resolveComposerReasoningEffort,
   resolveComposerRuntimeSelection,
   buildComposerModelOptions,
+  isMessageOwnedByCurrentUser,
   shouldDismissHistoryOnKeyDown
 } from '@/features/targets/chat/components/targetChatViewHelpers';
-import type { WorkspaceAiSettings } from '@/types';
+import type { ChatMessage, ChatSession, WorkspaceAiSettings } from '@/types';
 
 function aiSettings(overrides: Partial<WorkspaceAiSettings> = {}): WorkspaceAiSettings {
   return {
@@ -37,6 +38,25 @@ describe('target chat view helpers', () => {
     expect(shouldDismissHistoryOnKeyDown('Escape', true)).toBe(true);
     expect(shouldDismissHistoryOnKeyDown('Escape', false)).toBe(false);
     expect(shouldDismissHistoryOnKeyDown('Tab', true)).toBe(false);
+  });
+
+  it('preserves legacy manual ownership while requiring per-message authorship in shared investigations', () => {
+    const message = { createdBy: undefined } as ChatMessage;
+    expect(isMessageOwnedByCurrentUser(
+      { origin: 'manual', createdBy: 'user-1' } as ChatSession,
+      message,
+      'user-1'
+    )).toBe(true);
+    expect(isMessageOwnedByCurrentUser(
+      { origin: 'auto_triage', createdBy: 'system-auto-triage' } as ChatSession,
+      message,
+      'user-1'
+    )).toBe(false);
+    expect(isMessageOwnedByCurrentUser(
+      { origin: 'auto_triage', createdBy: 'system-auto-triage' } as ChatSession,
+      { ...message, createdBy: 'user-1' },
+      'user-1'
+    )).toBe(true);
   });
 
   it('uses the workspace reasoning effort default until the user changes the composer effort', () => {

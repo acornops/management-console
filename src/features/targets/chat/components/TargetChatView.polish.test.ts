@@ -284,7 +284,7 @@ describe('target chat polish contracts', () => {
     expect(userMessageTurn).toContain('<span className="sr-only">{t(\'chat.roleUser\')}</span>');
     expect(userMessageTurn).toContain('align="right"');
     expect(userMessageTurn).toContain('copyText={message.content}');
-    expect(userMessageTurn).toContain('timestampLabel={timestampLabel}');
+    expect(userMessageTurn).toContain('timestampLabel={showAuthor ? undefined : timestampLabel}');
     expect(userMessageTurn).toContain('{!isEditing && (');
     expect(chatView).toContain('const lastUserMessageIndex = React.useMemo(() => {');
     expect(chatView).toContain('const userTurnRunIdsByIndex = React.useMemo(() => {');

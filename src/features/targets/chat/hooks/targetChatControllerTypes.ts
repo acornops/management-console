@@ -21,16 +21,19 @@ export interface UseTargetChatArgs {
   sessionApi?: {
     createSession?: (workspaceId: string, targetId: string, title: string) => Promise<ControlPlaneSession>;
     listSessions?: (workspaceId: string, targetId: string, options?: { limit?: number; cursor?: string; q?: string; status?: string }) => Promise<ControlPlaneSessionListPage>;
+    getSession?: (sessionId: string) => Promise<ControlPlaneSession>;
     getTargetChatActivity?: (workspaceId: string, targetId: string) => Promise<ControlPlaneTargetChatActivity>;
   };
 }
 
 export interface TargetChatController {
+  currentUserId?: string;
   sessions: ChatSession[];
   activeSessionId: string | null;
   activeSession: ChatSession | null;
   isActiveSessionOwner: boolean;
   conversationNotice: string | null;
+  sessionDeepLinkError?: string | null;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
   inputValue: string;
   isLoading: boolean;

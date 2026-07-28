@@ -119,6 +119,15 @@ The management console is the browser client for the control-plane API. Keep thi
 - Default Agents and workflows are ordinary workspace-owned definitions that can be edited, versioned, restored, duplicated, disabled, or deleted directly. Legacy template-origin Agents follow the same mutation rules. AcornOps never overwrites, upgrades, or automatically restores these defaults. Agent deletion explains dependent workflows before it can proceed.
 - Authorized users may duplicate an effective definition into a manual draft without copying capability installations or operational history.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
+- Experimental target auto-triage is configured only from Kubernetes and VM
+  Settings and uses the same Experimental badge treatment as Automation. The
+  browser uses the control plane's revisioned settings, readiness, and
+  effective-policy preview; it never starts current issues as a side effect of
+  enabling the feature. Automatic chats remain in the normal target history,
+  preserve the existing approval and retention paths, and relax creator-only
+  reply ownership only when `origin=auto_triage`. Target auto-triage settings,
+  issue activity, and chat context do not depend on Automation navigation,
+  Workflow permissions, or Workflow UI modules.
 - The target-chat `/` picker sends structured tool runtime aliases and target
   skill IDs separately from prompt text. It never repurposes `@` prompt
   references, and stale references remain visible when the control plane

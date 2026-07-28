@@ -153,6 +153,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   );
 
   const {
+    currentUserId,
     sessions,
     activeSessionId,
     composerRuntimeSelection,
@@ -161,6 +162,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
     workspaceAiSettingsError,
     isActiveSessionOwner,
     conversationNotice,
+    sessionDeepLinkError,
     recentActivityWarning,
     inputValue,
     isRunActive,
@@ -299,10 +301,12 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             )}
             {activeView === 'chat' && (
               <TargetChatView
+                currentUserId={currentUserId}
                 isDark={isDark}
                 canChat={canChat}
                 isConversationOwner={isActiveSessionOwner}
                 conversationNotice={conversationNotice}
+                sessionDeepLinkError={sessionDeepLinkError}
                 recentActivityWarning={recentActivityWarning}
                 canRequestWriteRuns={canRequestWriteRuns}
                 canApproveWriteActions={canRequestWriteRuns}
@@ -354,6 +358,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 workspaceName={workspaceName}
                 canManageCluster={canManageCluster}
                 canManageAgentKeys={canManageAgentKeys}
+                canCreateReadWriteRuns={canRequestWriteRuns}
                 onUpdateName={onUpdateName}
                 onEditNamespaceScope={onUpdateNamespaceScope ? () => setIsNamespaceScopeDialogOpen(true) : undefined}
                 onUpdateWriteConfirmationPolicy={onUpdateWriteConfirmationPolicy}

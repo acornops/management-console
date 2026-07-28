@@ -42,7 +42,9 @@ import {
   findReusableDraftSession
 } from '@/features/targets/chat/hooks/chatDraftSession';
 import { isInFlightAssistantMessage } from '@/features/targets/chat/hooks/chatMessageVisibility';
+import { useTargetChatSessionDeepLink } from '@/features/targets/chat/hooks/useTargetChatSessionDeepLink';
 export type { TargetChatController } from '@/features/targets/chat/hooks/targetChatControllerTypes';
+
 export function useTargetChat({
   target,
   currentUserId,
@@ -93,12 +95,8 @@ export function useTargetChat({
     delete activeRunStreamControlsRef.current[runId];
   }, []);
   const hasLocalRunStream = useCallback((runId: string) => Boolean(activeRunStreamControlsRef.current[runId]), []);
-  const activeSession = sessions.find((s) => s.id === activeSessionId) || {
-    id: 'default',
-    name: t('chat.newConversation'),
-    messages: [],
-    timestamp: Date.now()
-  };
+  const activeSession = sessions.find((s) => s.id === activeSessionId)
+    || { id: 'default', name: t('chat.newConversation'), messages: [], timestamp: Date.now() };
   const activeSessionRecord = sessions.find((s) => s.id === activeSessionId) || null;
   const {
     composerRuntimeSelection,
@@ -174,12 +172,8 @@ export function useTargetChat({
     activeRunStreamControlsRef.current = {};
     shouldStickToBottomRef.current = true;
   }, [target.id]);
-  useEffect(() => {
-    runTracesByRunIdRef.current = runTracesByRunId;
-  }, [runTracesByRunId]);
-  useEffect(() => {
-    latestSessionsRef.current = sessions;
-  }, [sessions]);
+  useEffect(() => { runTracesByRunIdRef.current = runTracesByRunId; }, [runTracesByRunId]);
+  useEffect(() => { latestSessionsRef.current = sessions; }, [sessions]);
 
   const { isSessionsLoading, clearHydratingSession } = useControlPlaneChatSessionSync({
     target,
@@ -193,6 +187,11 @@ export function useTargetChat({
     suppressedHydrationRunIdsRef,
     runCancelledMessage: t('chat.runCancelledMessage'),
     listSessions: sessionApi?.listSessions
+  });
+  const { sessionDeepLinkError, updateSessionQuery } = useTargetChatSessionDeepLink({
+    initialActiveSessionId, isSessionsLoading, sessions,
+    target, unavailableMessage: t('chat.sessionUnavailable'), onInitialSession: setActiveSessionId,
+    onUpdateSessions, getSession: sessionApi?.getSession
   });
   useWatchedRunStream({
     activeRunId,
@@ -308,6 +307,7 @@ export function useTargetChat({
   });
 
   const activateDraftSession = async (): Promise<ChatSession> => {
+    updateSessionQuery();
     const reusableDraft = findReusableDraftSession(latestSessionsRef.current);
     if (reusableDraft) {
       if (reusableDraft.recentActivityWarning?.dismissed) {
@@ -375,6 +375,7 @@ export function useTargetChat({
       ]));
     }
     setActiveSessionId(sessionId);
+    updateSessionQuery(sessionId);
     shouldStickToBottomRef.current = true;
   };
 
@@ -456,6 +457,7 @@ export function useTargetChat({
 
   const handleSelectSession = (sessionId: string) => {
     setActiveSessionId(sessionId);
+    updateSessionQuery(sessionId);
     clearActivityWatchedRunForSession(sessionId);
     shouldStickToBottomRef.current = true;
   };
@@ -600,11 +602,13 @@ export function useTargetChat({
   };
 
   return {
+    currentUserId,
     sessions,
     activeSessionId,
     activeSession: activeSessionRecord,
     isActiveSessionOwner,
     conversationNotice,
+    sessionDeepLinkError,
     recentActivityWarning,
     inputValue,
     isLoading,

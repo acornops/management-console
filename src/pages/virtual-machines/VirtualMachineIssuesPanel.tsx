@@ -8,6 +8,10 @@ import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/se
 import { issueSeverityTone } from '@/pages/virtual-machines/virtualMachineUi';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
+import {
+  AutomaticInvestigationActivity,
+  shouldShowManualAssistantFallback
+} from '@/features/auto-triage/AutomaticInvestigationActivity';
 
 interface VirtualMachineIssuesPanelProps {
   workspaceId: string;
@@ -131,6 +135,13 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                         issueId={issue.id}
                         activity={issue.workflowActivity}
                       />
+                      <AutomaticInvestigationActivity
+                        workspaceId={workspaceId}
+                        targetId={issue.targetId}
+                        targetType="virtual_machine"
+                        issueId={issue.id}
+                        activity={issue.automaticInvestigation}
+                      />
                     </td>
                     <td className="px-5 py-4 align-top">
                       <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>
@@ -144,15 +155,17 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       {formatUserDateTime(issueTimestamp(issue))}
                     </td>
                     <td className="px-5 py-4 align-top text-right">
-                      <Button
-                        onClick={() => onOpenIssueTriage(issue)}
-                        variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
-                        size="md"
-                        className="whitespace-nowrap"
-                      >
-                        <Bot className="h-4 w-4" aria-hidden="true" />
-                        {t('virtualMachines.overview.openAssistant')}
-                      </Button>
+                      {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
+                        <Button
+                          onClick={() => onOpenIssueTriage(issue)}
+                          variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                          size="md"
+                          className="whitespace-nowrap"
+                        >
+                          <Bot className="h-4 w-4" aria-hidden="true" />
+                          {t('virtualMachines.overview.openAssistant')}
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -194,15 +207,24 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                   issueId={issue.id}
                   activity={issue.workflowActivity}
                 />
-                <Button
-                  onClick={() => onOpenIssueTriage(issue)}
-                  variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
-                  size="md"
-                  className="mt-4"
-                >
-                  <Bot className="h-4 w-4" aria-hidden="true" />
-                  {t('virtualMachines.overview.openAssistant')}
-                </Button>
+                <AutomaticInvestigationActivity
+                  workspaceId={workspaceId}
+                  targetId={issue.targetId}
+                  targetType="virtual_machine"
+                  issueId={issue.id}
+                  activity={issue.automaticInvestigation}
+                />
+                {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
+                  <Button
+                    onClick={() => onOpenIssueTriage(issue)}
+                    variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                    size="md"
+                    className="mt-4"
+                  >
+                    <Bot className="h-4 w-4" aria-hidden="true" />
+                    {t('virtualMachines.overview.openAssistant')}
+                  </Button>
+                )}
               </article>
             ))}
           </div>

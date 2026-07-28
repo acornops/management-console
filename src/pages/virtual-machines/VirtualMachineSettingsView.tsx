@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
+import { TargetAutoTriageSettingsSection } from '@/features/targets/auto-triage/TargetAutoTriageSettingsSection';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { formatSnapshotTime, getVmStatusLabel } from '@/pages/virtual-machines/virtualMachineUi';
@@ -51,7 +52,19 @@ export const VirtualMachineSettingsView: React.FC<{
   isRotatingKey?: boolean;
   rotationError?: string | null;
   onDeleteVirtualMachine?: () => void | Promise<void>;
-}> = ({ vm, workspace, installInstructions, onRotateKey, isRotatingKey = false, rotationError, onDeleteVirtualMachine }) => {
+  canManageTargets?: boolean;
+  canCreateReadWriteRuns?: boolean;
+}> = ({
+  vm,
+  workspace,
+  installInstructions,
+  onRotateKey,
+  isRotatingKey = false,
+  rotationError,
+  onDeleteVirtualMachine,
+  canManageTargets = false,
+  canCreateReadWriteRuns = false
+}) => {
   const { t } = useTranslation();
   const allowedLogs = vm.allowedLogSources?.join(', ') || t('virtualMachines.settings.defaultAllowedLogs');
 
@@ -111,6 +124,13 @@ export const VirtualMachineSettingsView: React.FC<{
             description={t('virtualMachines.settings.defaultSnapshotCadence')}
           />
         </SettingSection>
+
+        <TargetAutoTriageSettingsSection
+          workspaceId={workspace.id}
+          targetId={vm.id}
+          canManageTargets={canManageTargets}
+          canCreateReadWriteRuns={canCreateReadWriteRuns}
+        />
 
         <SettingSection
           title={t('virtualMachines.settings.agentInstallTitle')}

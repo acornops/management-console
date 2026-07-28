@@ -6,6 +6,7 @@ import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 
 export interface TargetChatViewProps {
+  currentUserId?: string;
   target: TargetDescriptor;
   isDark: boolean;
   titleKey?: string;
@@ -20,6 +21,7 @@ export interface TargetChatViewProps {
   canChat: boolean;
   isConversationOwner: boolean;
   conversationNotice: string | null;
+  sessionDeepLinkError?: string | null;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
   canRequestWriteRuns: boolean;
   canApproveWriteActions: boolean;

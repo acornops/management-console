@@ -26,6 +26,11 @@ import type { TargetPromptRequest } from '@/pages/target-prompts/targetPromptMod
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { AppPaths } from '@/utils/routes';
 import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
+import {
+  AutomaticInvestigationActivity,
+  shouldShowManualAssistantFallback
+} from '@/features/auto-triage/AutomaticInvestigationActivity';
+import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
 import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 
 interface WorkspaceOverviewPageProps {
@@ -75,6 +80,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     pageSize: 24,
     strategy: 'manual'
   });
+  useVisibilityAwareRefresh(issueCollection.refresh);
   const loadVirtualMachinePage = React.useCallback(async ({ cursor, limit, signal }: { cursor?: string; limit: number; signal: AbortSignal }) => {
     try {
       return await controlPlaneApi.listVirtualMachinesForWorkspace(workspace.id, { limit, cursor, signal });
@@ -303,17 +309,27 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
               activity={issue.workflowActivity}
               navigate={navigate}
             />
+            <AutomaticInvestigationActivity
+              workspaceId={workspace.id}
+              targetId={issue.targetId}
+              targetType={issue.targetType}
+              issueId={issue.id}
+              activity={issue.automaticInvestigation}
+              navigate={navigate}
+            />
           </div>
           <div className="flex w-full shrink-0 flex-col gap-2 self-start sm:w-auto sm:flex-row lg:justify-end">
-            <Button
-              onClick={() => openAssistantForIssue(item)}
-              variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
-              size="sm"
-              className="w-full justify-center sm:w-auto"
-            >
-              <Bot className="h-4 w-4" aria-hidden="true" />
-              {t('overview.openAssistantIssue')}
-            </Button>
+            {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
+              <Button
+                onClick={() => openAssistantForIssue(item)}
+                variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                size="sm"
+                className="w-full justify-center sm:w-auto"
+              >
+                <Bot className="h-4 w-4" aria-hidden="true" />
+                {t('overview.openAssistantIssue')}
+              </Button>
+            )}
             <a
               href={appHref(path)}
               onClick={(event) => handleAppLinkClick(event, path, navigate)}

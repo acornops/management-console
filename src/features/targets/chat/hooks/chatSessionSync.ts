@@ -90,6 +90,8 @@ export function mapControlPlaneSessionToChatSession(
     status: session.status,
     createdBy: session.createdBy,
     createdByUser: session.createdByUser,
+    origin: session.origin || 'manual',
+    automaticInvestigation: session.automaticInvestigation,
     name: session.title,
     hydrated: existing?.hydrated ?? false,
     messagesLoadFailed: existing?.messagesLoadFailed,

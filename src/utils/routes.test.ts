@@ -1,8 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
-import { AppPaths, parseAppRoute, validateAssistantReturnTo, withAssistantSession } from '@/utils/routes';
+import {
+  AppPaths,
+  assistantSessionFromLocation,
+  parseAppRoute,
+  validateAssistantReturnTo,
+  withAssistantSession
+} from '@/utils/routes';
 
 describe('routes', () => {
+  it('reads assistant session deep links from direct and hash routes', () => {
+    expect(assistantSessionFromLocation({
+      hash: '',
+      search: '?session=session%2Fdirect'
+    })).toBe('session/direct');
+    expect(assistantSessionFromLocation({
+      hash: '#/workspaces/one/virtual-machines/two/chat?session=session%2Fhash',
+      search: ''
+    })).toBe('session/hash');
+    expect(assistantSessionFromLocation({ hash: '', search: '?session=%20' })).toBeNull();
+  });
+
   it('round-trips same-workspace assistant return paths through AI Settings', () => {
     const returnTo = withAssistantSession(
       AppPaths.workspaceVirtualMachineDetail('team alpha', 'vm/one', 'chat'),

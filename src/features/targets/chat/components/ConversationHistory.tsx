@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { History, MessageSquare, Plus, Search, Trash2 } from 'lucide-react';
+import { Bot, History, MessageSquare, Plus, Search, Trash2 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
@@ -191,6 +191,12 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                   <>
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="truncate text-sm font-semibold text-ui-text">{session.name}</span>
+                      {session.origin === 'auto_triage' && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded border border-ui-border bg-ui-bg px-1.5 py-0.5 text-[10px] font-semibold text-ui-text-muted">
+                          <Bot className="h-3 w-3" aria-hidden="true" />
+                          {t('chat.automatic')}
+                        </span>
+                      )}
                       <AssistantNavStatusIndicator
                         status={assistantStatus}
                         label={assistantStatusLabel}
@@ -212,6 +218,12 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                         />
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-ui-text-muted">
+                        {session.origin === 'auto_triage' && (
+                          <span className="inline-flex items-center gap-1 rounded border border-ui-border bg-ui-surface px-1.5 py-0.5 text-ui-text-muted">
+                            <Bot className="h-3 w-3" aria-hidden="true" />
+                            {t('chat.automatic')}
+                          </span>
+                        )}
                         <span>{formatSessionTime(session.timestamp)}</span>
                         {session.createdByUser?.displayName && (
                           <>
@@ -219,7 +231,11 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                             <span>{session.createdByUser.displayName}</span>
                           </>
                         )}
-                        {isRecentSession(session.timestamp) && <span className="rounded border border-ui-border bg-ui-surface px-1.5 py-0.5 text-ui-text-muted">Recent</span>}
+                        {isRecentSession(session.timestamp) && (
+                          <span className="rounded border border-ui-border bg-ui-surface px-1.5 py-0.5 text-ui-text-muted">
+                            {t('chat.recent')}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </>

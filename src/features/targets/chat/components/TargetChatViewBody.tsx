@@ -13,7 +13,9 @@ import { TargetChatPanelControls } from '@/features/targets/chat/components/Targ
 import { ChatEmptyPrompt, ChatTranscriptLoadError, ChatTranscriptSkeleton } from '@/features/targets/chat/components/ChatTranscriptStates';
 import { DeleteConversationDialog } from '@/features/targets/chat/components/DeleteConversationDialog';
 import { UserMessageTurn } from '@/features/targets/chat/components/UserMessageTurn';
-import { formatMessageTime } from '@/features/targets/chat/components/targetChatViewHelpers';
+import { AutomaticInvestigationBrief } from '@/features/targets/chat/components/AutomaticInvestigationBrief';
+import { TargetChatContextNotices } from '@/features/targets/chat/components/TargetChatContextNotices';
+import { formatMessageTime, isMessageOwnedByCurrentUser } from '@/features/targets/chat/components/targetChatViewHelpers';
 import { useTargetChatHistoryWorkspace } from '@/features/targets/chat/components/useTargetChatHistoryWorkspace';
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
 import { getComposerReferenceProps } from '@/features/targets/chat/components/targetChatReferenceProps';
@@ -42,6 +44,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     composerSubmitUnavailableReason,
     composerTextareaRef,
     conversationNotice,
+    currentUserId,
+    sessionDeepLinkError,
     deleteSessionError,
     deleteTargetSession,
     deletingSessionId,
@@ -169,11 +173,9 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     selectSession,
     setIsHistoryOpen
   });
-
   React.useEffect(() => {
     const content = contentRef.current;
     if (!content) return;
-
     if (hasBlockingGate) {
       content.setAttribute('inert', '');
       return () => {
@@ -362,6 +364,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           )}
         </header>
 
+        <TargetChatContextNotices activeSession={activeSession} isPanel={isPanel} sessionDeepLinkError={sessionDeepLinkError} t={t} />
+
         <div
           ref={transcriptRef}
           onScroll={onChatScroll}
@@ -407,6 +411,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
               )}
               {visibleMessages.map((message, messageIndex) => {
                 const isUser = message.role === 'user';
+                const isAutomaticBrief = isUser && activeSession?.origin === 'auto_triage'
+                  && message.metadata?.presentation === 'automatic_investigation_brief';
                 const isInFlightPlaceholder = !isUser && isInFlightAssistantPlaceholder(message);
                 const messageTrace = !isUser && message.runId ? runTracesByRunId[message.runId] : undefined;
                 const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;
@@ -437,6 +443,10 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   !isUser &&
                   hasLaterUserMessage &&
                   traceToRender?.status === 'cancelled';
+                if (isAutomaticBrief) {
+                  return <AutomaticInvestigationBrief key={message.id} session={activeSession} message={message}
+                    timestampLabel={formatMessageTime(message.timestamp)} t={t} />;
+                }
                 if (!isUser) {
                   return (
                     <div key={messageKey} className="flex w-full justify-start">
@@ -470,6 +480,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   !isComposerRuntimeUnavailable &&
                   messageIndex === lastUserMessageIndex &&
                   Boolean(userTurnRunId) &&
+                  isMessageOwnedByCurrentUser(activeSession, message, currentUserId) &&
                   (userTurnTrace?.status === 'cancelled' || userTurnTrace?.status === 'failed');
                 const isEditingMessage = editingMessageId === message.id;
 
@@ -479,6 +490,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                     message={message}
                     markdownComponents={userMarkdownComponents}
                     timestampLabel={formatMessageTime(message.timestamp)}
+                    showAuthor={activeSession?.origin === 'auto_triage'}
                     canEdit={canEditUserMessage}
                     isEditing={isEditingMessage}
                     editValue={editingMessageValue}
