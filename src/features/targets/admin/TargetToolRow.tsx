@@ -1,11 +1,11 @@
 import React from 'react';
-import { MenuItem, Switch } from '@/components/common/FormControls';
+import { MenuItem, Switch } from '@acornops/ui';
 import { createPortal } from 'react-dom';
 import { Activity, BookOpen, Check, Download, Eye, FileText, Globe2, MoreVertical, RotateCcw, Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuSurfaceClassName } from '@/components/common/menuStyles';
+import { menuSurfaceClassName } from '@acornops/ui';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
-import { useFloatingActionMenu } from '@/hooks/useFloatingActionMenu';
+import { useFloatingActionMenu } from '@acornops/ui';
 
 interface TargetToolRowProps {
   tool: ControlPlaneTargetToolItem;

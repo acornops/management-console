@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Check, ChevronDown, Copy, Loader2, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Dialog } from '@/components/common/Dialog';
-import { CollectionState } from '@/components/common/CollectionState';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { Dialog } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { WorkspaceInvitation } from '@/types';
 import { formatInvitationStatus, formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { formatUserDateTime } from '@/utils/dateTime';

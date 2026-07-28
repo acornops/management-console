@@ -3,10 +3,10 @@ import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadiness
 import { isServerWorkflowRunId } from '@/pages/workflows/workflowRunIdentity';
 import { Loader2, SendHorizontal, Square } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { Select } from '@/components/common/Select';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { TraceFooter } from '@/features/targets/chat/components/TraceFooter';
 import {

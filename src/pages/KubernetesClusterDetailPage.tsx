@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { ICONS, THEME_CLASSES } from '@/constants';
 import KubernetesClusterDetail from '@/features/kubernetes-cluster-detail/KubernetesClusterDetail';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RightSidePanel } from '@/components/common/RightSidePanel';
+import { RightSidePanel } from '@acornops/ui';
 import { ClusterChatPanel } from '@/features/kubernetes-cluster-detail/components/detail/ClusterChatPanel';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { KubernetesCluster, Workspace } from '@/types';

@@ -3,13 +3,13 @@ import { AnimatePresence } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
 import { Server, Settings, Trash2 } from 'lucide-react';
 import { ICONS } from '@/constants';
-import { Button } from '@/components/common/Button';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { EmptyState } from '@/components/common/EmptyState';
-import { MenuItem } from '@/components/common/FormControls';
-import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { Dialog } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { MenuItem } from '@acornops/ui';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
 import {
   TargetCatalogActionHint,
   TargetCatalogActionMenu,

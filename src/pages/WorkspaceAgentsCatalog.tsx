@@ -1,12 +1,12 @@
 import React from 'react';
-import { CollectionState } from '@/components/common/CollectionState';
+import { CollectionState } from '@acornops/ui';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { createDiscoveryFilterGroup, DiscoveryFilterBar, type DiscoveryFilterOption } from '@/components/common/DiscoveryFilterBar';
-import { EmptyState } from '@/components/common/EmptyState';
-import { PageHeader } from '@/components/common/PageComposition';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar, type DiscoveryFilterOption } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { PageHeader } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { statusTone } from '@/pages/WorkspaceAgentsPage.helpers';

@@ -2,8 +2,8 @@ import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { TFunction } from 'i18next';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { getDialogFocusWrapIndex } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { getDialogFocusWrapIndex } from '@acornops/ui';
 import type { ChatSession } from '@/types';
 
 const focusableSelector = [

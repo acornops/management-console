@@ -94,6 +94,8 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium
       - name: Run validation
+        env:
+          CHANGESET_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: npm run validate:ci
       - name: Upload browser failure artifacts
         if: failure()

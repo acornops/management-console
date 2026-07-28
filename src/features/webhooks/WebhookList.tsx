@@ -1,14 +1,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { DataTableGridHeader, DataTableGridHeaderCell } from '@/components/common/DataTable';
-import { EmptyState } from '@/components/common/EmptyState';
-import { MenuItem } from '@/components/common/FormControls';
-import { OverflowActionMenu } from '@/components/common/OverflowActionMenu';
-import { DataSurface } from '@/components/common/PageComposition';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { MenuItem } from '@acornops/ui';
+import { OverflowActionMenu } from '@acornops/ui';
+import { DataSurface } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type {
   ControlPlaneWebhookHistory,
@@ -125,7 +125,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
           };
           return (
             <article key={webhook.id}>
-              <div className="p-[var(--surface-padding)] xl:px-8 xl:py-6">
+              <div className="p-[var(--ao-surface-padding)] xl:px-8 xl:py-6">
                 <div className={`grid gap-4 xl:items-start ${webhookLedgerGridClass}`}>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">

@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { FieldLabel, HelpText } from '@/components/common/FormControls';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { FieldLabel, HelpText } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import {
   CONTROL_PLANE_WEBHOOK_EVENT_TYPES,

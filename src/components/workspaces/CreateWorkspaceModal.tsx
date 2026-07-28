@@ -1,12 +1,12 @@
 import React from 'react';
 import { BotMessageSquare, Check, Copy, KeyRound, Loader2, MailPlus, Plus, Trash2, Users, Workflow } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { FieldValidationMessage, fieldInvalidClass } from '@/components/common/FieldValidationMessage';
-import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
-import { Select, SelectOption } from '@/components/common/Select';
+import { Button } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { FieldValidationMessage, fieldInvalidClass } from '@acornops/ui';
+import { ModalStepIndicator } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 

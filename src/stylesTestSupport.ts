@@ -4,11 +4,11 @@ import { resolve } from 'node:path';
 const root = resolve(__dirname, '..');
 const readSource = (path: string) => readFileSync(resolve(root, path), 'utf8');
 
-export const styles = readSource('src/styles.css');
-export const tailwindConfig = readSource('tailwind.config.js');
+export const styles = `${readSource('packages/ui/tokens.css')}\n${readSource('src/styles.css')}`;
+export const tailwindConfig = `${readSource('packages/ui/tailwind-preset.js')}\n${readSource('tailwind.config.js')}`;
 export const indexHtml = readSource('index.html');
 export const designSystemHtml = readSource('design-system.html');
-export const fonts = readSource('src/fonts.ts');
+export const fonts = readSource('packages/ui/fonts.js');
 export const nginxConfig = readSource('nginx.conf');
 export const loginPage = readSource('src/pages/LoginPage.tsx');
 export const themeTransitionHook = readSource('src/hooks/useThemeTransition.ts');
@@ -115,9 +115,9 @@ export const clusterSettingsView = readSource(
 );
 export const traceFooter = readSource('src/features/targets/chat/components/TraceFooter.tsx');
 export const markdownComponents = readSource('src/features/targets/chat/lib/markdown.tsx');
-export const buttonComponent = readSource('src/components/common/Button.tsx');
-export const dataTable = readSource('src/components/common/DataTable.tsx');
-export const pageComposition = readSource('src/components/common/PageComposition.tsx');
+export const buttonComponent = readSource('packages/ui/src/Button.tsx');
+export const dataTable = readSource('packages/ui/src/DataTable.tsx');
+export const pageComposition = readSource('packages/ui/src/PageComposition.tsx');
 export const resourceCategoryTabs = readSource('src/components/common/ResourceCategoryTabs.tsx');
 export const addClusterModal = readSource('src/components/kubernetes-clusters/AddClusterModal.tsx');
 export const membersPage = [
@@ -130,7 +130,7 @@ export const workspaceInviteModal = readSource('src/pages/workspace-members/Work
 export const loginAuthPanel = readSource('src/pages/login/LoginAuthPanel.tsx');
 export const loginPasswordAuthForm = readSource('src/pages/login/LoginPasswordAuthForm.tsx');
 export const loginAuthPanelParts = readSource('src/pages/login/LoginAuthPanelParts.tsx');
-export const fieldValidationMessage = readSource('src/components/common/FieldValidationMessage.tsx');
+export const fieldValidationMessage = readSource('packages/ui/src/FieldValidationMessage.tsx');
 export const auditLogPage = readSource('src/pages/WorkspaceAuditLogPage.tsx');
 export const workspaceApprovalsPage = readSource('src/pages/WorkspaceApprovalsPage.tsx');
 export const workspaceSchedulesPage = readSource('src/pages/WorkspaceSchedulesPage.tsx');

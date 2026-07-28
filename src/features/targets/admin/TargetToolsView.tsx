@@ -1,14 +1,14 @@
 import React from 'react';
 import { Search, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Dialog } from '@/components/common/Dialog';
-import { EmptyState } from '@/components/common/EmptyState';
-import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@/components/common/DataTable';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { Select } from '@/components/common/Select';
-import type { SelectOption } from '@/components/common/Select';
-import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
+import { Button } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import type { SelectOption } from '@acornops/ui';
+import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
   ControlPlaneTargetToolItem,

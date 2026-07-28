@@ -1,6 +1,6 @@
 import React from 'react';
-import { Checkbox } from '@/components/common/Checkbox';
-import { TextInput } from '@/components/common/ComponentVocabulary';
+import { Checkbox } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { splitLines } from '@/pages/workflows/workflowPageHelpers';

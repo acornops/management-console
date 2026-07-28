@@ -378,8 +378,8 @@ describe('target chat polish contracts', () => {
     expect(assistantTurn).toContain(': { duration: 0.24, ease: [0.16, 1, 0.3, 1] };');
     expect(assistantTurn).toContain('const shouldShowWorkingShimmer = Boolean(inlineWorkingText && isAssistantWorking && shouldReduceMotion !== true);');
     expect(assistantTurn).toContain('const workingShimmerDurationSeconds = activeReasoningSummary ? 5 : 3.8;');
-    expect(styles).toContain('color: color-mix(in oklab, var(--brand-orange-strong), var(--text-muted) 68%);');
-    expect(styles).toContain('rgb(var(--brand-orange-bright-rgb) / 0.52) 48%');
+    expect(styles).toContain('color: color-mix(in oklab, var(--ao-brand-orange-strong), var(--ao-text-muted) 68%);');
+    expect(styles).toContain('rgb(var(--ao-brand-orange-bright-rgb) / 0.52) 48%');
     expect(assistantTurn).toContain('previousWorkingTextRef.current = inlineWorkingText;');
     expect(assistantTurn).toContain(".replace(/\\*\\*(.*?)\\*\\*/g, '$1')");
     expect(assistantTurn).toContain('const workingLine = inlineWorkingText ? (');
@@ -461,7 +461,7 @@ describe('target chat polish contracts', () => {
     expect(messageActions).toContain("align === 'right' ? 'justify-end text-ui-text-muted' : 'justify-start'");
     expect(styles).toContain('.reasoning-summary-active {');
     expect(styles).toContain('animation: reasoning-summary-text-sheen var(--reasoning-summary-shimmer-duration, 3.8s) cubic-bezier(0.22, 1, 0.36, 1) infinite;');
-    expect(styles).toContain('rgb(var(--brand-orange-bright-rgb) / 0.52)');
+    expect(styles).toContain('rgb(var(--ao-brand-orange-bright-rgb) / 0.52)');
     expect(styles).toContain('-webkit-background-clip: text;');
     expect(styles).toContain('-webkit-text-fill-color: transparent;');
     expect(styles).toContain('@keyframes reasoning-summary-text-sheen');

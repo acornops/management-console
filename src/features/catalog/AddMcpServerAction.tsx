@@ -2,7 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Link2, Plus, Search } from 'lucide-react';
 
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 
 interface AddMcpServerActionProps {
   browseHref: string;

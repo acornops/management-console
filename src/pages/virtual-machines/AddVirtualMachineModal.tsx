@@ -1,11 +1,11 @@
 import React from 'react';
 import { Check, Copy, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { ModalStepIndicator } from '@acornops/ui';
 import { ICONS } from '@/constants';
 
 interface AddVirtualMachineModalProps {

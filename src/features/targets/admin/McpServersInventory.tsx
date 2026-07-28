@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
-import { Select } from '@/components/common/Select';
-import type { SelectOption } from '@/components/common/Select';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import type { SelectOption } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import type { McpConnection } from '@/services/control-plane/catalogApi';

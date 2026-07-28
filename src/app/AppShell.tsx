@@ -15,8 +15,8 @@ import {
   WorkspaceWorkflowActivityProvider,
   useWorkspaceWorkflowActivityStore
 } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
-import { PageLoadingFallback } from '@/components/common/Loading';
-import { ToastViewport } from '@/components/common/ToastViewport';
+import { PageLoadingFallback } from '@acornops/ui';
+import { ToastViewport } from '@acornops/ui';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { KubernetesCluster, Workspace } from '@/types';

@@ -3,28 +3,28 @@ import ReactDOM from 'react-dom/client';
 import { MotionConfig } from 'framer-motion';
 import { Check, Clock, Moon, MoreHorizontal, Plus, Rocket, Sun, Trash2 } from 'lucide-react';
 
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { CollectionState } from '@/components/common/CollectionState';
-import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
-import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
-import { EmptyState } from '@/components/common/EmptyState';
-import { FieldValidationMessage } from '@/components/common/FieldValidationMessage';
-import { FieldLabel, HelpText, MenuItem, MenuTrigger, Radio, Switch } from '@/components/common/FormControls';
-import { InlineAlert } from '@/components/common/InlineAlert';
-import { DialogFrame, DrawerFrame } from '@/components/common/OverlayFrames';
-import { DataSurface, PageBackLink, PageHeader, PageSection, PageShell, TableToolbar } from '@/components/common/PageComposition';
-import { DataTable, DataTableFrame, DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@/components/common/DataTable';
-import { Select } from '@/components/common/Select';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import '@/fonts';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { FieldValidationMessage } from '@acornops/ui';
+import { FieldLabel, HelpText, MenuItem, MenuTrigger, Radio, Switch } from '@acornops/ui';
+import { InlineAlert } from '@acornops/ui';
+import { DialogFrame, DrawerFrame } from '@acornops/ui';
+import { DataSurface, PageBackLink, PageHeader, PageSection, PageShell, TableToolbar } from '@acornops/ui';
+import { DataTable, DataTableFrame, DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
+import '@acornops/ui/fonts';
 import {
   CloseButton,
   FilterToggleGroup,
   SegmentedTabs,
   TextInput,
   type CompactControlItem
-} from '@/components/common/ComponentVocabulary';
+} from '@acornops/ui';
 import '@/styles.css';
 
 type CatalogTab = 'overview' | 'runs';

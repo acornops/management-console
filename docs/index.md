@@ -18,6 +18,7 @@ This `docs/` tree is the repository-local system of record for agent-readable de
 - [Design Index](/docs/design-docs/index.md)
 - [Core Beliefs](/docs/design-docs/core-beliefs.md)
 - [Authenticated Console Design System](/docs/design-docs/design-system-standardization.md)
+- [Shared UI Package](/docs/design-docs/shared-ui-package.md)
 - [Interaction Patterns](/docs/design-docs/interaction-patterns.md)
 - [Workflow Activity Visibility](/docs/design-docs/workflow-activity-visibility.md)
 

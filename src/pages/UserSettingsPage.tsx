@@ -1,12 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { handleAppLinkClick } from '@/app/workspaceNavigation';
-import { Button } from '@/components/common/Button';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { PageBackLink, PageHeader, PageShell } from '@/components/common/PageComposition';
-import { Select } from '@/components/common/Select';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { Button } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { PageBackLink, PageHeader, PageShell } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { ExternalIntegrationSettingsPanel } from '@/features/external-integrations/ExternalIntegrationSettingsPanel';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';

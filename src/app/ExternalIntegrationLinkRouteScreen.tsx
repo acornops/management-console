@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { MiniProgressBar } from '@/components/common/Loading';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { MiniProgressBar } from '@acornops/ui';
 import {
   buildExternalIntegrationWorkspaceGrants,
   createExternalIntegrationGrantDraft,

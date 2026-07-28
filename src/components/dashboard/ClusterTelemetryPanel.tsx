@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { formatCpuCores, formatMemoryGiB, getClusterTelemetrySnapshot } from '@/components/dashboard/clusterTelemetryModel';
 import { TelemetryTrendSummary } from '@/features/targets/catalog/TelemetryTrendSummary';
 import { ICONS } from '@/constants';

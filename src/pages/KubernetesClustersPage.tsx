@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { useTranslation } from 'react-i18next';
 import Dashboard from '@/components/dashboard/Dashboard';
-import { Button } from '@/components/common/Button';
-import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
+import { Button } from '@acornops/ui';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { useTargetIssueSummaries } from '@/features/targets/catalog/useTargetIssueSummaries';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';

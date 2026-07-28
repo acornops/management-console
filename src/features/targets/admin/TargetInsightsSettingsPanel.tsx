@@ -2,8 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkspaceAiSettings } from '@/types';
 import type { SettingsDraft } from '@/features/targets/admin/targetInsightsDialogViewModel';
-import { Checkbox } from '@/components/common/Checkbox';
-import { Select } from '@/components/common/Select';
+import { Checkbox } from '@acornops/ui';
+import { Select } from '@acornops/ui';
 
 interface TargetInsightsSettingsPanelProps {
   settingsDraft: SettingsDraft;

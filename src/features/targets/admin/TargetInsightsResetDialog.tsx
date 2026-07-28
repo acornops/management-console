@@ -1,9 +1,9 @@
 import React from 'react';
 import { RotateCcw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';

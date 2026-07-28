@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight } from 'lucide-react';
 import { ICONS } from '@/constants';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { PageHeader, PageShell } from '@acornops/ui';
 
 const HelpAction: React.FC<{
   icon: React.ElementType;

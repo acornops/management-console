@@ -1,193 +1,8 @@
+@import '@acornops/ui/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  color-scheme: light;
-  --logo-brown: oklch(0.43 0.026 61);
-  --logo-cream: oklch(0.95 0.012 86);
-  --brand-orange: oklch(0.712 0.187 39.7);
-  --brand-orange-bright: oklch(0.755 0.154 42.2);
-  --brand-orange-strong: oklch(0.651 0.179 38.9);
-  --brand-orange-readable: oklch(0.48 0.145 38.9);
-  --brand-orange-soft: oklch(0.96 0.035 52);
-  --bg: oklch(0.985 0.006 85);
-  --surface: oklch(0.996 0.004 85);
-  --surface-strong: oklch(0.962 0.012 74);
-  --border: oklch(0.925 0.012 74);
-  --text: oklch(0.3 0.008 72);
-  --text-muted: oklch(0.54 0.025 54);
-  --logo-brown-rgb: 88 71 56;
-  --logo-cream-rgb: 241 234 218;
-  --bg-rgb: 252 250 246;
-  --surface-rgb: 255 254 251;
-  --surface-strong-rgb: 247 241 234;
-  --border-rgb: 235 229 222;
-  --text-rgb: 48 45 41;
-  --text-muted-rgb: 123 107 97;
-  --brand-orange-rgb: 255 112 59;
-  --brand-orange-strong-rgb: 230 95 47;
-  --brand-orange-bright-rgb: 255 139 92;
-  --brand-orange-readable-rgb: 172 65 24;
-  --brand-orange-soft-rgb: 255 236 221;
-  --metric-blue: oklch(0.52 0.085 244);
-  --metric-blue-rgb: 58 110 150;
-  --code-bg: oklch(0.225 0.02 250);
-  --code-bg-rgb: 21 29 37;
-  --code-text: oklch(0.94 0.008 80);
-  --code-text-rgb: 238 235 229;
-  --status-success: oklch(0.52 0.13 160);
-  --status-success-soft: oklch(0.96 0.03 160);
-  --status-success-text: oklch(0.4 0.12 160);
-  --status-warning: oklch(0.58 0.115 105);
-  --status-warning-soft: oklch(0.955 0.035 108);
-  --status-warning-text: oklch(0.37 0.095 105);
-  --status-danger: oklch(0.54 0.18 20);
-  --status-danger-soft: oklch(0.96 0.035 20);
-  --status-danger-text: oklch(0.45 0.16 20);
-  --status-success-rgb: 0 127 78;
-  --status-success-soft-rgb: 225 248 235;
-  --status-success-text-rgb: 0 90 48;
-  --status-warning-rgb: 132 124 0;
-  --status-warning-soft-rgb: 244 243 209;
-  --status-warning-text-rgb: 70 82 0;
-  --status-danger-rgb: 193 49 64;
-  --status-danger-soft-rgb: 255 233 232;
-  --status-danger-text-rgb: 154 28 46;
-  --control-primary-bg: var(--text);
-  --control-primary-bg-rgb: 48 45 41;
-  --control-primary-hover: oklch(0.379934 0.00707 31.086);
-  --control-primary-hover-rgb: 70 65 64;
-  --control-primary-fg: var(--bg);
-  --control-primary-fg-rgb: 252 250 246;
-  --control-secondary-bg: var(--surface);
-  --control-secondary-bg-rgb: 255 254 251;
-  --control-secondary-hover: var(--surface-strong);
-  --control-secondary-hover-rgb: 247 241 234;
-  --control-secondary-fg: var(--text);
-  --control-secondary-fg-rgb: 48 45 41;
-  --control-activation-bg: var(--brand-orange);
-  --control-activation-bg-rgb: 255 112 59;
-  --control-activation-hover: var(--brand-orange-bright);
-  --control-activation-hover-rgb: 255 139 92;
-  --control-activation-fg: var(--logo-cream);
-  --control-activation-fg-rgb: 241 234 218;
-  --control-danger-bg: var(--status-danger);
-  --control-danger-bg-rgb: 193 49 64;
-  --control-danger-hover: var(--status-danger-text);
-  --control-danger-hover-rgb: 154 28 46;
-  --control-danger-fg: var(--bg);
-  --control-danger-fg-rgb: 252 250 246;
-  --control-boundary: var(--text-muted);
-  --control-boundary-rgb: 123 107 97;
-  --route-padding-x: 1rem;
-  --route-padding-y: 1.5rem;
-  --header-content-gap: 2rem;
-  --section-gap: 1.5rem;
-  --surface-padding: 1rem;
-  --table-row-padding-y: 0.875rem;
-  --control-height-compact: 2.25rem;
-  --control-height-default: 2.75rem;
-  --overlay-padding-x: 1.25rem;
-  --overlay-padding-y: 1rem;
-}
-
-@media (min-width: 640px) {
-  :root {
-    --route-padding-x: 1.5rem;
-    --surface-padding: 1.25rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --route-padding-x: 2.5rem;
-    --route-padding-y: 2rem;
-    --section-gap: 2rem;
-    --overlay-padding-x: 1.5rem;
-    --overlay-padding-y: 1.25rem;
-  }
-}
-
-.dark {
-  color-scheme: dark;
-  --logo-brown: oklch(0.53 0.027 61);
-  --logo-cream: oklch(0.91 0.014 86);
-  --brand-orange: oklch(0.712 0.187 39.7);
-  --brand-orange-bright: oklch(0.755 0.154 42.2);
-  --brand-orange-strong: oklch(0.78 0.13 42);
-  --brand-orange-readable: oklch(0.82 0.12 42);
-  --brand-orange-soft: oklch(0.29 0.055 38);
-  --bg: oklch(0.178407 0.002613 67.659);
-  --surface: oklch(0.221666 0.007407 48.368);
-  --surface-strong: oklch(0.281925 0.00766 31.115);
-  --border: oklch(0.379934 0.00707 31.086);
-  --text: oklch(0.960674 0.00508 48.686);
-  --text-muted: oklch(0.712881 0.005998 31.059);
-  --logo-brown-rgb: 116 93 72;
-  --logo-cream-rgb: 241 234 218;
-  --bg-rgb: 18 17 16;
-  --surface-rgb: 30 26 24;
-  --surface-strong-rgb: 45 40 39;
-  --border-rgb: 70 65 64;
-  --text-rgb: 245 241 239;
-  --text-muted-rgb: 166 161 160;
-  --brand-orange-rgb: 255 112 59;
-  --brand-orange-strong-rgb: 255 154 112;
-  --brand-orange-bright-rgb: 255 139 92;
-  --brand-orange-readable-rgb: 255 169 130;
-  --brand-orange-soft-rgb: 66 33 22;
-  --metric-blue: oklch(0.68 0.085 244);
-  --metric-blue-rgb: 105 158 201;
-  --code-bg: oklch(0.175 0.02 250);
-  --code-bg-rgb: 10 17 25;
-  --code-text: oklch(0.94 0.008 80);
-  --code-text-rgb: 238 235 229;
-  --status-success: oklch(0.72 0.13 160);
-  --status-success-soft: oklch(0.3 0.055 160);
-  --status-success-text: oklch(0.78 0.11 160);
-  --status-warning: oklch(0.76 0.11 105);
-  --status-warning-soft: oklch(0.32 0.04 105);
-  --status-warning-text: oklch(0.83 0.095 105);
-  --status-danger: oklch(0.72 0.17 20);
-  --status-danger-soft: oklch(0.33 0.06 20);
-  --status-danger-text: oklch(0.8 0.13 20);
-  --status-success-rgb: 76 189 136;
-  --status-success-soft-rgb: 15 54 36;
-  --status-success-text-rgb: 115 205 159;
-  --status-warning-rgb: 190 196 88;
-  --status-warning-soft-rgb: 45 52 24;
-  --status-warning-text-rgb: 220 224 122;
-  --status-danger-rgb: 253 114 119;
-  --status-danger-soft-rgb: 80 40 40;
-  --status-danger-text-rgb: 255 154 155;
-  --control-primary-bg: var(--surface-strong);
-  --control-primary-bg-rgb: 45 40 39;
-  --control-primary-hover: var(--border);
-  --control-primary-hover-rgb: 70 65 64;
-  --control-primary-fg: var(--text);
-  --control-primary-fg-rgb: 245 241 239;
-  --control-secondary-bg: var(--surface);
-  --control-secondary-bg-rgb: 30 26 24;
-  --control-secondary-hover: var(--surface-strong);
-  --control-secondary-hover-rgb: 45 40 39;
-  --control-secondary-fg: var(--text);
-  --control-secondary-fg-rgb: 245 241 239;
-  --control-activation-bg: var(--brand-orange);
-  --control-activation-bg-rgb: 255 112 59;
-  --control-activation-hover: var(--brand-orange-bright);
-  --control-activation-hover-rgb: 255 139 92;
-  --control-activation-fg: var(--logo-cream);
-  --control-activation-fg-rgb: 241 234 218;
-  --control-danger-bg: oklch(0.492682 0.160451 18.505);
-  --control-danger-bg-rgb: 169 44 60;
-  --control-danger-hover: oklch(0.425723 0.140503 17.414);
-  --control-danger-hover-rgb: 139 33 49;
-  --control-danger-fg: var(--text);
-  --control-danger-fg-rgb: 245 241 239;
-  --control-boundary: oklch(0.558455 0.00583 48.624);
-  --control-boundary-rgb: 119 115 113;
-}
 
 html,
 body,
@@ -198,8 +13,8 @@ body,
 body {
   margin: 0;
   overflow: hidden;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--ao-bg);
+  color: var(--ao-text);
   font-family: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-kerning: normal;
   font-optical-sizing: auto;
@@ -207,21 +22,6 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Explicit fallback target for intentionally raw controls. Shared primitives
-   own their sizing; this utility keeps page-local controls accessible until a
-   semantic shared component is the better fit. */
-.control-target {
-  min-width: var(--control-height-default);
-  min-height: var(--control-height-default);
-}
-
-@media (min-width: 640px) {
-  .control-target {
-    min-width: var(--control-height-compact);
-    min-height: var(--control-height-compact);
-  }
 }
 
 /* Theme changes recolour the page in place: token-driven surfaces ease through
@@ -238,8 +38,8 @@ body {
   opacity: 0;
   background: radial-gradient(
     circle at var(--theme-reveal-x) var(--theme-reveal-y),
-    rgb(var(--brand-orange-rgb) / 0.16),
-    rgb(var(--brand-orange-rgb) / 0.06) 45%,
+    rgb(var(--ao-brand-orange-rgb) / 0.16),
+    rgb(var(--ao-brand-orange-rgb) / 0.06) 45%,
     transparent 72%
   );
   clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
@@ -263,31 +63,13 @@ body {
   }
 }
 
-.ui-checkbox {
-  appearance: none;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 0.58rem 0.58rem;
-}
-
-.ui-checkbox:checked {
-  border-color: rgb(var(--brand-orange-rgb) / 0.72);
-  background-color: var(--surface);
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M4 8.25 6.75 11 12.25 5' stroke='%23e65f2f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
-}
-
-.loading-bar-sweep {
-  animation: loading-bar-sweep 1.25s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-  transform: translateX(-110%);
-}
-
 .reasoning-summary-active {
   animation: reasoning-summary-text-sheen var(--reasoning-summary-shimmer-duration, 3.8s) cubic-bezier(0.22, 1, 0.36, 1) infinite;
   background-image: linear-gradient(
     105deg,
     currentColor 0%,
     currentColor 34%,
-    rgb(var(--brand-orange-bright-rgb) / 0.52) 48%,
+    rgb(var(--ao-brand-orange-bright-rgb) / 0.52) 48%,
     currentColor 62%,
     currentColor 100%
   );
@@ -306,7 +88,7 @@ body {
   height: 0.875rem;
   align-items: center;
   justify-content: center;
-  color: color-mix(in oklab, var(--brand-orange-strong), var(--text-muted) 68%);
+  color: color-mix(in oklab, var(--ao-brand-orange-strong), var(--ao-text-muted) 68%);
   pointer-events: none;
 }
 
@@ -364,9 +146,9 @@ body {
   background:
     radial-gradient(
       125% 105% at 72% 16%,
-      color-mix(in oklab, rgb(var(--surface-strong-rgb)), rgb(var(--brand-orange-rgb)) 6%) 0%,
-      rgb(var(--surface-strong-rgb)) 52%,
-      rgb(var(--bg-rgb)) 100%
+      color-mix(in oklab, rgb(var(--ao-surface-strong-rgb)), rgb(var(--ao-brand-orange-rgb)) 6%) 0%,
+      rgb(var(--ao-surface-strong-rgb)) 52%,
+      rgb(var(--ao-bg-rgb)) 100%
     );
 }
 
@@ -449,16 +231,6 @@ body {
   animation: login-hunt-dot 2.2s ease-in-out infinite;
 }
 
-@keyframes loading-bar-sweep {
-  0% {
-    transform: translateX(-110%);
-  }
-
-  100% {
-    transform: translateX(260%);
-  }
-}
-
 @keyframes reasoning-summary-text-sheen {
   0%,
   28% {
@@ -476,22 +248,22 @@ body {
 
 .pending-agent-step-pulse {
   animation: pending-agent-step-pulse 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-  box-shadow: 0 0 0 0 rgb(var(--status-warning-rgb) / 0);
+  box-shadow: 0 0 0 0 rgb(var(--ao-status-warning-rgb) / 0);
 }
 
 @keyframes pending-agent-step-pulse {
   0%,
   72%,
   100% {
-    box-shadow: 0 0 0 0 rgb(var(--status-warning-rgb) / 0);
+    box-shadow: 0 0 0 0 rgb(var(--ao-status-warning-rgb) / 0);
   }
 
   18% {
-    box-shadow: 0 0 0 4px rgb(var(--status-warning-rgb) / 0.08);
+    box-shadow: 0 0 0 4px rgb(var(--ao-status-warning-rgb) / 0.08);
   }
 
   42% {
-    box-shadow: 0 0 0 7px rgb(var(--status-warning-rgb) / 0);
+    box-shadow: 0 0 0 7px rgb(var(--ao-status-warning-rgb) / 0);
   }
 }
 
@@ -640,99 +412,6 @@ body {
   }
 }
 
-@layer components {
-  .type-route-title {
-    color: var(--text);
-    font-size: 1.875rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    line-height: 2.25rem;
-    text-wrap: balance;
-  }
-
-  .type-section-title {
-    color: var(--text);
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    line-height: 1.75rem;
-    text-wrap: balance;
-  }
-
-  .type-panel-title {
-    color: var(--text);
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    line-height: 1.5rem;
-  }
-
-  .type-row-title {
-    color: var(--text);
-    font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    line-height: 1.25rem;
-  }
-
-  .type-body {
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    font-weight: 400;
-    line-height: 1.5rem;
-  }
-
-  .type-ui {
-    font-size: 0.875rem;
-    font-weight: 500;
-    letter-spacing: 0;
-    line-height: 1.25rem;
-  }
-
-  .type-caption {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    font-weight: 450;
-    line-height: 1.25rem;
-  }
-
-  .type-label {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    line-height: 1rem;
-    text-transform: uppercase;
-  }
-
-  .type-micro-label {
-    color: var(--text-muted);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.055em;
-    line-height: 0.875rem;
-    text-transform: uppercase;
-  }
-
-  .type-data {
-    color: var(--text);
-    font-size: 1.25rem;
-    font-variant-numeric: tabular-nums lining-nums;
-    font-weight: 600;
-    letter-spacing: 0;
-    line-height: 1.75rem;
-  }
-
-  .type-code {
-    font-family: 'Ubuntu Mono', ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
-    font-size: 0.8125rem;
-    font-variant-ligatures: none;
-    font-variant-numeric: tabular-nums lining-nums;
-    letter-spacing: 0;
-    line-height: 1.25rem;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -741,11 +420,6 @@ body {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .loading-bar-sweep {
-    animation: none !important;
-    transform: translateX(75%);
   }
 
   .reasoning-summary-active {
@@ -794,46 +468,6 @@ select {
 
 .mono {
   font-family: theme('fontFamily.mono');
-}
-
-.stable-scrollbar-gutter {
-  scrollbar-gutter: stable both-edges;
-}
-
-.custom-scrollbar {
-  scrollbar-color: rgb(var(--text-muted-rgb) / 28%) transparent;
-  scrollbar-width: thin;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(var(--text-muted-rgb) / 28%);
-  background-clip: padding-box;
-  border: 2px solid transparent;
-  border-radius: 999px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--text-muted-rgb) / 44%);
-  background-clip: padding-box;
-  border: 2px solid transparent;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 .management-console-mobile-navigation {

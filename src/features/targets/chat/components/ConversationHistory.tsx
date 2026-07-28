@@ -3,12 +3,12 @@ import { History, MessageSquare, Plus, Search, Trash2 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
-import { Button } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { PageSearchInput } from '@/components/common/PageSearchInput';
-import { Tooltip } from '@/components/common/Tooltip';
+import { Button } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { PageSearchInput } from '@acornops/ui';
+import { Tooltip } from '@acornops/ui';
 import { ChatSession } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
 

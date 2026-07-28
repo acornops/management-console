@@ -1,9 +1,9 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { Trash2 } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
 
 interface DeleteConversationDialogProps {
   sessionName: string;

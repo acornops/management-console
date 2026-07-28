@@ -1,7 +1,7 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import ReactMarkdown, { type Components } from 'react-markdown';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { BookOpen, Wrench } from 'lucide-react';
 import { MessageActions } from '@/features/targets/chat/components/MessageActions';
 import { markdownRemarkPlugins } from '@/features/targets/chat/lib/markdown';

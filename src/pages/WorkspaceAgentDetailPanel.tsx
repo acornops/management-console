@@ -1,16 +1,16 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { SegmentedTabs, type CompactControlItem } from '@/components/common/ComponentVocabulary';
-import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { SegmentedTabs, type CompactControlItem } from '@acornops/ui';
+import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { AgentVersionSnapshotApi } from '@/services/control-plane/agentApi';
 import { formatAgentTimestamp, statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
 import { AppPaths } from '@/utils/routes';
 import { AgentCapabilitiesPanel } from '@/pages/agents/AgentCapabilitiesPanel';
-import { InlineConfirmation } from '@/components/common/InlineConfirmation';
+import { InlineConfirmation } from '@acornops/ui';
 
 export type AgentProfileTab = 'overview' | 'capabilities' | 'versions' | 'settings';
 

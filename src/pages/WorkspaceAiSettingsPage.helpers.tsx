@@ -1,5 +1,5 @@
 import React from 'react';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { formInputClassName } from '@acornops/ui';
 import type { WorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';
 import { LlmProvider, ReasoningEffort, ReasoningSummaryMode, Workspace, WorkspaceAiSettings } from '@/types';
 

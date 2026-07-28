@@ -1,8 +1,8 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Check, Loader2, Search, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CollectionState } from '@/components/common/CollectionState';
-import { TextInput } from '@/components/common/ComponentVocabulary';
+import { CollectionState } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { WorkspaceMemberCandidate, WorkspaceMemberDiscoveryMode } from '@/types';
 

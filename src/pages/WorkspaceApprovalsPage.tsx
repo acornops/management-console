@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { FilterToggleGroup, type CompactControlItem } from '@/components/common/ComponentVocabulary';
-import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineAlert } from '@/components/common/InlineAlert';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { FilterToggleGroup, type CompactControlItem } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { InlineAlert } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { Workspace } from '@/types';
 import {

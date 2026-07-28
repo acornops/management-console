@@ -2,9 +2,9 @@ import React from 'react';
 import { Activity, Bot, Gauge } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { MetricChart } from '@/components/common/MetricChart';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import {
   controlPlaneApi,

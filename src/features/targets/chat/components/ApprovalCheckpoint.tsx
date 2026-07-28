@@ -1,7 +1,7 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { CheckCircle2, ShieldCheck, XCircle } from 'lucide-react';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { PendingApproval } from '@/types';
 
 interface ApprovalCheckpointProps {

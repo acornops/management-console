@@ -2,10 +2,10 @@ import React from 'react';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 
 interface McpCredentialDialogProps {

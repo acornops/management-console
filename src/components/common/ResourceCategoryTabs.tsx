@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import { LayoutGroup } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { twMerge } from 'tailwind-merge';
-import { ActiveTabIndicator } from '@/components/common/ActiveTabIndicator';
+import { ActiveTabIndicator } from '@acornops/ui';
 
 export interface ResourceCategoryTabModel<T extends string> {
   value: T;

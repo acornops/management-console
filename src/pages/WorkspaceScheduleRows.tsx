@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { MenuItem } from '@/components/common/FormControls';
-import { OverflowActionMenu } from '@/components/common/OverflowActionMenu';
+import { Button } from '@acornops/ui';
+import { MenuItem } from '@acornops/ui';
+import { OverflowActionMenu } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkspaceScheduleExecutionFacts } from '@/pages/WorkspaceScheduleExecutionFacts';
 import { agentMcpConfigurationPath } from '@/services/control-plane/mcpReadinessRecovery';
@@ -126,7 +126,7 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
   });
 
   return (
-    <article className="p-[var(--surface-padding)]">
+    <article className="p-[var(--ao-surface-padding)]">
       <h2 className="type-row-title text-ui-text">{schedule.name}</h2>
       <p className="type-caption mt-1 font-semibold text-ui-text-muted">
         {scheduleWorkflowName(workflows, schedule.workflowId)}

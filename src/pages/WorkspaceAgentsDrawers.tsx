@@ -1,11 +1,11 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { CloseButton, Textarea, TextInput } from '@/components/common/ComponentVocabulary';
-import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
-import { RightSidePanel } from '@/components/common/RightSidePanel';
-import { Select, SelectOption } from '@/components/common/Select';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { CloseButton, Textarea, TextInput } from '@acornops/ui';
+import { ModalStepIndicator } from '@acornops/ui';
+import { RightSidePanel } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowOption } from '@/services/control-plane/workflowApi';

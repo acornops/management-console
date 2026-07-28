@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { TFunction } from 'i18next';
-import { TOAST_DURATION_MS, type AppToast } from '@/components/common/ToastViewport';
+import { TOAST_DURATION_MS, type AppToast } from '@acornops/ui';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canManageWorkspaceMembers, canReadWorkspaceData } from '@/app/workspacePermissions';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';

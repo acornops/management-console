@@ -1,11 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { Radio } from '@/components/common/FormControls';
-import { RightSidePanel } from '@/components/common/RightSidePanel';
-import { Select } from '@/components/common/Select';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { Radio } from '@acornops/ui';
+import { RightSidePanel } from '@acornops/ui';
+import { Select } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
 import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';

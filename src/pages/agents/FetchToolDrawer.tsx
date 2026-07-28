@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from '@/components/common/Button';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { RightSidePanel } from '@/components/common/RightSidePanel';
+import { Button } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { RightSidePanel } from '@acornops/ui';
 import {
   MAX_FETCH_PATTERN_LENGTH,
   MAX_FETCH_PATTERNS,

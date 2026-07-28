@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { InlineAlert } from '@/components/common/InlineAlert';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { Select, SelectOption } from '@/components/common/Select';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { InlineAlert } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { isAiRuntimeReady, resolveAiRuntimeReadiness } from '@/features/ai/aiRuntimeReadiness';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';

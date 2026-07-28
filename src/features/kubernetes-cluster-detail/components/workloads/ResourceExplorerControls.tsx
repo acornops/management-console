@@ -1,9 +1,9 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Select, SelectOption } from '@/components/common/Select';
-import { SearchFilterFrame } from '@/components/common/SearchFilterFrame';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { Select, SelectOption } from '@acornops/ui';
+import { SearchFilterFrame } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { Workload } from '@/types';
 import {
   classNames,
@@ -27,7 +27,7 @@ type ResourceCategoryValue =
 
 const resourceSearchInputClassName = formInputClassName('h-11 py-3 pl-11 pr-4 font-normal');
 const resourceScopeDisplayClassName =
-  'flex h-11 min-h-11 w-full items-center rounded-lg border border-ui-border bg-ui-bg/60 px-4 py-3 text-sm font-semibold text-ui-text-muted shadow-[inset_0_1px_0_rgb(var(--surface-rgb)/0.75)]';
+  'flex h-11 min-h-11 w-full items-center rounded-lg border border-ui-border bg-ui-bg/60 px-4 py-3 text-sm font-semibold text-ui-text-muted shadow-[inset_0_1px_0_rgb(var(--ao-surface-rgb)/0.75)]';
 
 export const WorkloadTriageShortcut: React.FC<{
   unhealthyPodCount: number;

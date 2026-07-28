@@ -9,7 +9,8 @@ ARG VITE_CONTROL_PLANE_API_BASE_URL=
 ENV VITE_CONTROL_PLANE_API_BASE_URL=${VITE_CONTROL_PLANE_API_BASE_URL}
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+COPY packages/ui/package.json ./packages/ui/package.json
+RUN npm ci --ignore-scripts
 
 COPY . .
 RUN npm run build
@@ -25,9 +26,11 @@ ARG VITE_CONTROL_PLANE_API_BASE_URL=http://localhost:8081
 ENV VITE_CONTROL_PLANE_API_BASE_URL=${VITE_CONTROL_PLANE_API_BASE_URL}
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+COPY packages/ui/package.json ./packages/ui/package.json
+RUN npm ci --ignore-scripts
 
 COPY . .
+RUN npm run ui:build
 
 EXPOSE 5173
 

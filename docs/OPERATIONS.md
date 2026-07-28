@@ -78,3 +78,18 @@ For production image or nginx config changes, also run:
 ```bash
 npm run smoke:nginx
 ```
+
+## UI Package Releases
+
+`@acornops/ui` is a private package published to
+`https://npm.pkg.github.com`. Package changes require a Changeset. A merge to
+`main` causes `.github/workflows/release-package.yml` to open or update the
+Changesets release pull request; merging that pull request publishes with the
+workflow `GITHUB_TOKEN`.
+
+The initial minor Changeset versions the package from `0.0.0` to `0.1.0`.
+Package publishing does not create a Management Console image tag and the
+tag-driven image release does not publish the npm package.
+
+The workflow grants write access only to repository contents, pull requests,
+and packages. It uses no repository-stored npm credential.

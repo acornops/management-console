@@ -5,11 +5,11 @@ import {
   Clock3
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, buttonClassName } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { Button, buttonClassName } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
 import { ICONS } from '@/constants';
 import { issueStatusTone } from '@/pages/issues/issueUi';

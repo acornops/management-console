@@ -55,50 +55,50 @@ describe('theme color contract', () => {
   it('exposes the v2 neutral surfaces with a restrained orange accent', () => {
     expect(styles).toContain('color-scheme: light');
     expect(styles).toContain('color-scheme: dark');
-    expect(lightTheme).toContain('--brand-orange: oklch(0.712 0.187 39.7)');
-    expect(lightTheme).toContain('--brand-orange-rgb: 255 112 59');
-    expect(lightTheme).toContain('--brand-orange-strong-rgb: 230 95 47');
-    expect(lightTheme).toContain('--brand-orange-soft-rgb: 255 236 221');
-    expect(lightTheme).toContain('--bg: oklch(0.985 0.006 85)');
-    expect(lightTheme).toContain('--surface: oklch(0.996 0.004 85)');
-    expect(lightTheme).toContain('--surface-strong: oklch(0.962 0.012 74)');
-    expect(lightTheme).toContain('--border: oklch(0.925 0.012 74)');
-    expect(lightTheme).toContain('--text: oklch(0.3 0.008 72)');
-    expect(lightTheme).toContain('--text-muted: oklch(0.54 0.025 54)');
-    expect(lightTheme).toContain('--bg-rgb: 252 250 246');
-    expect(lightTheme).toContain('--surface-rgb: 255 254 251');
-    expect(lightTheme).toContain('--surface-strong-rgb: 247 241 234');
-    expect(lightTheme).toContain('--border-rgb: 235 229 222');
-    expect(lightTheme).toContain('--text-rgb: 48 45 41');
-    expect(lightTheme).toContain('--text-muted-rgb: 123 107 97');
-    expect(lightTheme).toContain('--code-text: oklch(0.94 0.008 80)');
-    expect(lightTheme).toContain('--code-text-rgb: 238 235 229');
+    expect(lightTheme).toContain('--ao-brand-orange: oklch(0.712 0.187 39.7)');
+    expect(lightTheme).toContain('--ao-brand-orange-rgb: 255 112 59');
+    expect(lightTheme).toContain('--ao-brand-orange-strong-rgb: 230 95 47');
+    expect(lightTheme).toContain('--ao-brand-orange-soft-rgb: 255 236 221');
+    expect(lightTheme).toContain('--ao-bg: oklch(0.985 0.006 85)');
+    expect(lightTheme).toContain('--ao-surface: oklch(0.996 0.004 85)');
+    expect(lightTheme).toContain('--ao-surface-strong: oklch(0.962 0.012 74)');
+    expect(lightTheme).toContain('--ao-border: oklch(0.925 0.012 74)');
+    expect(lightTheme).toContain('--ao-text: oklch(0.3 0.008 72)');
+    expect(lightTheme).toContain('--ao-text-muted: oklch(0.54 0.025 54)');
+    expect(lightTheme).toContain('--ao-bg-rgb: 252 250 246');
+    expect(lightTheme).toContain('--ao-surface-rgb: 255 254 251');
+    expect(lightTheme).toContain('--ao-surface-strong-rgb: 247 241 234');
+    expect(lightTheme).toContain('--ao-border-rgb: 235 229 222');
+    expect(lightTheme).toContain('--ao-text-rgb: 48 45 41');
+    expect(lightTheme).toContain('--ao-text-muted-rgb: 123 107 97');
+    expect(lightTheme).toContain('--ao-code-text: oklch(0.94 0.008 80)');
+    expect(lightTheme).toContain('--ao-code-text-rgb: 238 235 229');
 
-    expect(darkTheme).toContain('--bg: oklch(0.178407 0.002613 67.659)');
-    expect(darkTheme).toContain('--surface: oklch(0.221666 0.007407 48.368)');
-    expect(darkTheme).toContain('--surface-strong: oklch(0.281925 0.00766 31.115)');
-    expect(darkTheme).toContain('--border: oklch(0.379934 0.00707 31.086)');
-    expect(darkTheme).toContain('--text: oklch(0.960674 0.00508 48.686)');
-    expect(darkTheme).toContain('--text-muted: oklch(0.712881 0.005998 31.059)');
-    expect(darkTheme).toContain('--bg-rgb: 18 17 16');
-    expect(darkTheme).toContain('--surface-rgb: 30 26 24');
-    expect(darkTheme).toContain('--surface-strong-rgb: 45 40 39');
-    expect(darkTheme).toContain('--border-rgb: 70 65 64');
-    expect(darkTheme).toContain('--text-rgb: 245 241 239');
-    expect(darkTheme).toContain('--text-muted-rgb: 166 161 160');
-    expect(darkTheme).toContain('--code-text: oklch(0.94 0.008 80)');
-    expect(darkTheme).toContain('--code-text-rgb: 238 235 229');
+    expect(darkTheme).toContain('--ao-bg: oklch(0.178407 0.002613 67.659)');
+    expect(darkTheme).toContain('--ao-surface: oklch(0.221666 0.007407 48.368)');
+    expect(darkTheme).toContain('--ao-surface-strong: oklch(0.281925 0.00766 31.115)');
+    expect(darkTheme).toContain('--ao-border: oklch(0.379934 0.00707 31.086)');
+    expect(darkTheme).toContain('--ao-text: oklch(0.960674 0.00508 48.686)');
+    expect(darkTheme).toContain('--ao-text-muted: oklch(0.712881 0.005998 31.059)');
+    expect(darkTheme).toContain('--ao-bg-rgb: 18 17 16');
+    expect(darkTheme).toContain('--ao-surface-rgb: 30 26 24');
+    expect(darkTheme).toContain('--ao-surface-strong-rgb: 45 40 39');
+    expect(darkTheme).toContain('--ao-border-rgb: 70 65 64');
+    expect(darkTheme).toContain('--ao-text-rgb: 245 241 239');
+    expect(darkTheme).toContain('--ao-text-muted-rgb: 166 161 160');
+    expect(darkTheme).toContain('--ao-code-text: oklch(0.94 0.008 80)');
+    expect(darkTheme).toContain('--ao-code-text-rgb: 238 235 229');
 
-    expect(styles).not.toContain('--bg-rgb: 246 248 251');
-    expect(styles).not.toContain('--surface-rgb: 252 253 255');
-    expect(styles).not.toContain('--border-rgb: 216 225 235');
-    expect(styles).not.toContain('--surface: #FFFFFF');
+    expect(styles).not.toContain('--ao-bg-rgb: 246 248 251');
+    expect(styles).not.toContain('--ao-surface-rgb: 252 253 255');
+    expect(styles).not.toContain('--ao-border-rgb: 216 225 235');
+    expect(styles).not.toContain('--ao-surface: #FFFFFF');
 
-    expect(styles).toContain('--status-success-text-rgb:');
-    expect(styles).toContain('--status-warning-text-rgb:');
-    expect(styles).toContain('--status-danger-text-rgb:');
-    expect(styles).toContain('--status-warning-soft: oklch(0.955 0.035 108)');
-    expect(styles).toContain('--metric-blue: oklch(0.52 0.085 244)');
+    expect(styles).toContain('--ao-status-success-text-rgb:');
+    expect(styles).toContain('--ao-status-warning-text-rgb:');
+    expect(styles).toContain('--ao-status-danger-text-rgb:');
+    expect(styles).toContain('--ao-status-warning-soft: oklch(0.955 0.035 108)');
+    expect(styles).toContain('--ao-metric-blue: oklch(0.52 0.085 244)');
 
     expect(tailwindConfig).toContain("'accent-strong'");
     expect(tailwindConfig).toContain("'status-success-text'");
@@ -108,19 +108,19 @@ describe('theme color contract', () => {
     expect(tailwindConfig).toContain("'control-activation-fg'");
     expect(tailwindConfig).toContain("'control-danger-fg'");
     expect(tailwindConfig).toContain("'control-boundary'");
-    expect(tailwindConfig).toContain("'code-text': 'rgb(var(--code-text-rgb) / <alpha-value>)'");
+    expect(tailwindConfig).toContain("'code-text': 'rgb(var(--ao-code-text-rgb) / <alpha-value>)'");
   });
 
   it('keeps muted and status-soft text contrast readable', () => {
-    expect(contrastRatio(rgbVariableValue(lightTheme, '--text-muted-rgb'), rgbVariableValue(lightTheme, '--bg-rgb')))
+    expect(contrastRatio(rgbVariableValue(lightTheme, '--ao-text-muted-rgb'), rgbVariableValue(lightTheme, '--ao-bg-rgb')))
       .toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(rgbVariableValue(lightTheme, '--text-muted-rgb'), rgbVariableValue(lightTheme, '--surface-rgb')))
+    expect(contrastRatio(rgbVariableValue(lightTheme, '--ao-text-muted-rgb'), rgbVariableValue(lightTheme, '--ao-surface-rgb')))
       .toBeGreaterThanOrEqual(4.5);
 
     [
-      ['--status-success-text-rgb', '--status-success-soft-rgb'],
-      ['--status-warning-text-rgb', '--status-warning-soft-rgb'],
-      ['--status-danger-text-rgb', '--status-danger-soft-rgb']
+      ['--ao-status-success-text-rgb', '--ao-status-success-soft-rgb'],
+      ['--ao-status-warning-text-rgb', '--ao-status-warning-soft-rgb'],
+      ['--ao-status-danger-text-rgb', '--ao-status-danger-soft-rgb']
     ].forEach(([textVariable, backgroundVariable]) => {
       expect(contrastRatio(rgbVariableValue(lightTheme, textVariable), rgbVariableValue(lightTheme, backgroundVariable)))
         .toBeGreaterThanOrEqual(4.5);
@@ -132,8 +132,8 @@ describe('theme color contract', () => {
   it('keeps code text readable against both code surfaces', () => {
     for (const theme of [lightTheme, darkTheme]) {
       expect(contrastRatio(
-        rgbVariableValue(theme, '--code-text-rgb'),
-        rgbVariableValue(theme, '--code-bg-rgb')
+        rgbVariableValue(theme, '--ao-code-text-rgb'),
+        rgbVariableValue(theme, '--ao-code-bg-rgb')
       )).toBeGreaterThanOrEqual(4.5);
     }
   });
@@ -231,7 +231,7 @@ describe('theme color contract', () => {
       'login-hunt-bloom'
     ].forEach((needle) => expect(loginPreview).toContain(needle));
     // Colours must resolve through theme tokens (works in light + dark), never hardcoded.
-    expect(loginPreview).toContain('rgb(var(--brand-orange');
+    expect(loginPreview).toContain('rgb(var(--ao-brand-orange');
     expect(loginPreview).toContain('status-warning');
     expect(loginPreview).toContain('status-success');
     // The earlier alert-debug / evidence-run treatments must stay gone.
@@ -257,7 +257,7 @@ describe('theme color contract', () => {
     ].forEach((needle) => expect(styles).not.toContain(needle));
     expect(styles).not.toContain('steps(1, end)');
     expect(loginPreview.match(/#[0-9a-f]{3,8}\b/i)).toBeNull();
-    expect(styles).toContain('rgb(var(--surface-strong-rgb))');
+    expect(styles).toContain('rgb(var(--ao-surface-strong-rgb))');
     expect(styles).not.toContain('login-ambient-float');
     expect(styles).not.toContain('.login-visual-slide:not(:first-child)');
     expect(loginPage).toContain('min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto');
@@ -492,12 +492,12 @@ describe('theme color contract', () => {
 
   it('meets WCAG AA contrast for standard filled buttons and records the branded activation exception', () => {
     const textPairs = [
-      ['--control-primary-fg-rgb', '--control-primary-bg-rgb'],
-      ['--control-primary-fg-rgb', '--control-primary-hover-rgb'],
-      ['--control-secondary-fg-rgb', '--control-secondary-bg-rgb'],
-      ['--control-secondary-fg-rgb', '--control-secondary-hover-rgb'],
-      ['--control-danger-fg-rgb', '--control-danger-bg-rgb'],
-      ['--control-danger-fg-rgb', '--control-danger-hover-rgb']
+      ['--ao-control-primary-fg-rgb', '--ao-control-primary-bg-rgb'],
+      ['--ao-control-primary-fg-rgb', '--ao-control-primary-hover-rgb'],
+      ['--ao-control-secondary-fg-rgb', '--ao-control-secondary-bg-rgb'],
+      ['--ao-control-secondary-fg-rgb', '--ao-control-secondary-hover-rgb'],
+      ['--ao-control-danger-fg-rgb', '--ao-control-danger-bg-rgb'],
+      ['--ao-control-danger-fg-rgb', '--ao-control-danger-hover-rgb']
     ];
 
     for (const theme of [lightTheme, darkTheme]) {
@@ -505,11 +505,11 @@ describe('theme color contract', () => {
         expect(contrastRatio(rgbVariableValue(theme, foreground), rgbVariableValue(theme, background)))
           .toBeGreaterThanOrEqual(4.5);
       }
-      expect(rgbVariableValue(theme, '--control-activation-fg-rgb'))
-        .toEqual(rgbVariableValue(theme, '--logo-cream-rgb'));
-      for (const surrounding of ['--bg-rgb', '--surface-rgb']) {
+      expect(rgbVariableValue(theme, '--ao-control-activation-fg-rgb'))
+        .toEqual(rgbVariableValue(theme, '--ao-logo-cream-rgb'));
+      for (const surrounding of ['--ao-bg-rgb', '--ao-surface-rgb']) {
         expect(contrastRatio(
-          rgbVariableValue(theme, '--control-boundary-rgb'),
+          rgbVariableValue(theme, '--ao-control-boundary-rgb'),
           rgbVariableValue(theme, surrounding)
         )).toBeGreaterThanOrEqual(3);
       }
@@ -520,15 +520,15 @@ describe('theme color contract', () => {
   });
 
   it('separates warning severity color from the orange workflow accent', () => {
-    expect(lightTheme).toContain('--brand-orange: oklch(0.712 0.187 39.7)');
-    expect(lightTheme).toContain('--status-warning: oklch(0.58 0.115 105)');
-    expect(lightTheme).toContain('--status-warning-soft: oklch(0.955 0.035 108)');
-    expect(lightTheme).toContain('--status-warning-text: oklch(0.37 0.095 105)');
-    expect(darkTheme).toContain('--status-warning: oklch(0.76 0.11 105)');
-    expect(darkTheme).toContain('--status-warning-soft: oklch(0.32 0.04 105)');
-    expect(darkTheme).toContain('--status-warning-text: oklch(0.83 0.095 105)');
-    expect(lightTheme).not.toContain('--status-warning: oklch(0.6 0.135 76)');
-    expect(darkTheme).not.toContain('--status-warning: oklch(0.76 0.13 78)');
+    expect(lightTheme).toContain('--ao-brand-orange: oklch(0.712 0.187 39.7)');
+    expect(lightTheme).toContain('--ao-status-warning: oklch(0.58 0.115 105)');
+    expect(lightTheme).toContain('--ao-status-warning-soft: oklch(0.955 0.035 108)');
+    expect(lightTheme).toContain('--ao-status-warning-text: oklch(0.37 0.095 105)');
+    expect(darkTheme).toContain('--ao-status-warning: oklch(0.76 0.11 105)');
+    expect(darkTheme).toContain('--ao-status-warning-soft: oklch(0.32 0.04 105)');
+    expect(darkTheme).toContain('--ao-status-warning-text: oklch(0.83 0.095 105)');
+    expect(lightTheme).not.toContain('--ao-status-warning: oklch(0.6 0.135 76)');
+    expect(darkTheme).not.toContain('--ao-status-warning: oklch(0.76 0.13 78)');
   });
 
   it('keeps app page-header action buttons at the medium size', () => {
@@ -589,7 +589,7 @@ describe('theme color contract', () => {
 
   it('keeps primary workspace pages on the shared full-width shell', () => {
     expect(styles).toContain('scrollbar-gutter: stable both-edges;');
-    expect(pageComposition).toContain('px-[var(--route-padding-x)] py-[var(--route-padding-y)] custom-scrollbar stable-scrollbar-gutter');
+    expect(pageComposition).toContain('px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)] custom-scrollbar stable-scrollbar-gutter');
     expect(overviewPage).toContain('<PageShell>');
     expect(dashboardPage).toContain('<PageShell>');
     expect(overviewPage).not.toContain('max-w-[90rem]');

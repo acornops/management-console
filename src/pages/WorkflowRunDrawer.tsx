@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { DrawerFrame } from '@/components/common/OverlayFrames';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkflowCapabilityLedger } from '@/pages/WorkspaceWorkflowsPage.components';
 import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';

@@ -2,10 +2,10 @@ import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Trans } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
-import { Dialog } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { formatControlPlaneError, type ControlPlaneErrorArea } from '@/services/control-plane/errorFormatting';
 

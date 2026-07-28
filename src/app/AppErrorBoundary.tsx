@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { reportBrowserError } from '@/observability/browserErrors';
 
 export const AppRecoveryScreen: React.FC = () => (

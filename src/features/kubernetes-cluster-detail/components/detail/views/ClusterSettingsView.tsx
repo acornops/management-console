@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { Select, SelectOption } from '@/components/common/Select';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { Button } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';

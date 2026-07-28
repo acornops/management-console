@@ -1,6 +1,8 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { Sidebar } from '@acornops/ui';
+
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
@@ -158,7 +160,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   );
 
   return (
-    <aside className="management-console-desktop-sidebar relative z-40 h-full min-h-0 w-64 shrink-0 flex-col overflow-visible border-r border-ui-border bg-ui-surface lg:self-stretch">
+    <Sidebar className="management-console-desktop-sidebar relative z-40 h-full min-h-0 w-64 shrink-0 overflow-visible lg:self-stretch">
       <div className="flex items-center gap-3 px-6 py-5">
         <button
           className="control-target flex items-center gap-3 cursor-pointer"
@@ -592,6 +594,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
           )}
         </AnimatePresence>
       </div>
-    </aside>
+    </Sidebar>
   );
 };

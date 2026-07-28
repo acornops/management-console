@@ -1,12 +1,12 @@
 import React from 'react';
 import { RefreshCw, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { Button } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { PageHeader, PageShell } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 export type VmResourceCategory = 'all' | 'services' | 'processes' | 'network' | 'logs';

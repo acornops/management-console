@@ -1,8 +1,8 @@
 import React from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { RightSidePanel } from '@/components/common/RightSidePanel';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
+import { RightSidePanel } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
 import {
   classNames,
   ResourceMetaPair,

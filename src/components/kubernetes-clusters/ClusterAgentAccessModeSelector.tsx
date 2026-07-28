@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AgentAccessMode } from '@/services/control-plane/types';
-import { Radio } from '@/components/common/FormControls';
+import { Radio } from '@acornops/ui';
 
 interface ClusterAgentAccessModeSelectorProps {
   value: AgentAccessMode;

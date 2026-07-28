@@ -1,11 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { DestructiveConfirmationDialog } from '@/components/common/DestructiveConfirmationDialog';
-import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
-import { DrawerFrame } from '@/components/common/OverlayFrames';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { Button } from '@acornops/ui';
+import { DestructiveConfirmationDialog } from '@acornops/ui';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { WebhookEditor } from '@/features/webhooks/WebhookEditor';
 import { WebhookList } from '@/features/webhooks/WebhookList';
 import {

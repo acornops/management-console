@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { InlineConfirmation } from '@/components/common/InlineConfirmation';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { InlineConfirmation } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import {
   controlPlaneApi,

@@ -1,10 +1,12 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { MobileNavigation } from '@acornops/ui';
+
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import { NavCountBadge } from '@/app/NavCountBadge';
-import { Dialog } from '@/components/common/Dialog';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
+import { Dialog } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
@@ -103,7 +105,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
 
   return (
     <>
-      <div className="management-console-mobile-navigation relative z-40 h-16 shrink-0 items-center justify-between border-b border-ui-border bg-ui-surface px-4">
+      <MobileNavigation className="management-console-mobile-navigation">
         <button
           type="button"
           className="flex min-h-11 items-center gap-3"
@@ -134,7 +136,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
         >
           <ICONS.Menu className="h-5 w-5" />
         </motion.button>
-      </div>
+      </MobileNavigation>
 
       <AnimatePresence>
         {isMobileNavOpen && (

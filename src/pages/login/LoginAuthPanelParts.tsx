@@ -1,7 +1,7 @@
 import React from 'react';
 import { ICONS } from '@/constants';
-import { FieldValidationMessage, fieldInvalidClass } from '@/components/common/FieldValidationMessage';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { FieldValidationMessage, fieldInvalidClass } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 
 export const fieldWrapClass = 'relative block';
 export const inputClass = formInputClassName('px-4');

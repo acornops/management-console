@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Check, CheckCircle2, Copy, Link, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { FieldValidationMessage } from '@/components/common/FieldValidationMessage';
-import { Select, SelectOption } from '@/components/common/Select';
+import { Button } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { FieldValidationMessage } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
 import { ProjectMember, WorkspaceInvitation, WorkspaceMemberCandidate, WorkspaceRoleTemplate } from '@/types';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { RoleTemplatePreview } from '@/pages/workspace-members/RoleTemplatePreview';

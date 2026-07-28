@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, Bot, CircleCheck, Cpu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { MetricChart } from '@/components/common/MetricChart';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { issueStatusTone, issueTargetScopeLabel, kubernetesIssueNamespace } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';

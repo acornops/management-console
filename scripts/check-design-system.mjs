@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const srcRoot = join(root, 'src');
+const uiSourceRoot = join(root, 'packages/ui/src');
 const exceptions = JSON.parse(readFileSync(join(root, 'scripts/design-system-exceptions.json'), 'utf8'));
 const failures = [];
 
@@ -67,11 +68,28 @@ function report(path, rule, detail) {
   failures.push(`${relative(root, path)}: ${rule}: ${detail}`);
 }
 
-const files = sourceFiles(srcRoot);
-const productionSources = productionFiles(srcRoot);
+const files = [srcRoot, uiSourceRoot].flatMap(sourceFiles);
+const productionSources = [srcRoot, uiSourceRoot].flatMap(productionFiles);
 const namedTailwindPalette = /(?:^|[\s'"`])(?:[a-z-]+:)*(?:bg|text|border|divide|ring|outline|shadow|fill|stroke|from|via|to|decoration|caret|accent)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950)(?:\/[^\s'"`}]+)?/g;
-const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
+const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|navigationItemClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
 const canonicalButtonTarget = /(?:^|[\s'"`])(?:control-target|min-h-11|h-11|min-h-12|h-12|min-h-control|h-control)(?=$|[\s'"`])/;
+const canonicalModules = new Set([
+  'Button.tsx',
+  'Checkbox.tsx',
+  'CollectionState.tsx',
+  'ComponentVocabulary.tsx',
+  'DangerZone.tsx',
+  'DataTable.tsx',
+  'Dialog.tsx',
+  'DiscoveryFilterBar.tsx',
+  'EmptyState.tsx',
+  'FormControls.tsx',
+  'OverlayFrames.tsx',
+  'PageComposition.tsx',
+  'RightSidePanel.tsx',
+  'Select.tsx',
+  'Tooltip.tsx'
+]);
 
 for (const path of productionSources) {
   const source = readFileSync(path, 'utf8');
@@ -87,18 +105,32 @@ for (const path of productionSources) {
 for (const path of files) {
   const source = readFileSync(path, 'utf8');
   const repoPath = relative(root, path).replaceAll('\\', '/');
+  const isPackageSource = repoPath.startsWith('packages/ui/src/');
 
-  if (repoPath !== 'src/components/common/Select.tsx' && /<select(?:\s|>)/.test(source)) {
+  if (repoPath !== 'packages/ui/src/Select.tsx' && /<select(?:\s|>)/.test(source)) {
     report(path, 'shared-select', 'use the typed Select primitive');
   }
-  if (repoPath !== 'src/components/common/Checkbox.tsx' && /type=["']checkbox["']/.test(source)) {
+  if (repoPath !== 'packages/ui/src/Checkbox.tsx' && /type=["']checkbox["']/.test(source)) {
     report(path, 'shared-checkbox', 'use the Checkbox primitive');
   }
-  if (repoPath !== 'src/components/common/FormControls.tsx' && /type=["']radio["']/.test(source)) {
+  if (repoPath !== 'packages/ui/src/FormControls.tsx' && /type=["']radio["']/.test(source)) {
     report(path, 'shared-radio', 'use the Radio primitive');
   }
-  if (repoPath !== 'src/components/common/FormControls.tsx' && /role=["']switch["']/.test(source)) {
+  if (repoPath !== 'packages/ui/src/FormControls.tsx' && /role=["']switch["']/.test(source)) {
     report(path, 'shared-switch', 'use the Switch primitive');
+  }
+  if (isPackageSource && /(?:from\s+|import\s*)["']@\/|(?:from\s+|import\s*)["'][^"']*\/src\//.test(source)) {
+    report(path, 'package-boundary', 'package modules cannot import Management Console application modules');
+  }
+  if (repoPath.startsWith('src/components/common/') && canonicalModules.has(repoPath.split('/').at(-1))) {
+    report(path, 'local-reimplementation', 'canonical components must be imported from @acornops/ui');
+  }
+  if (isPackageSource) {
+    for (const match of source.matchAll(/var\((--[a-z0-9-]+)/g)) {
+      if (!match[1].startsWith('--ao-')) {
+        report(path, 'namespaced-token', `${match[1]} must use the --ao-* namespace`);
+      }
+    }
   }
   if (/variant\s*=\s*["']accent["']|variant\s*:\s*["']accent["']/.test(source)) {
     report(path, 'button-intent', 'accent was renamed to activation');

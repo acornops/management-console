@@ -1,16 +1,16 @@
 import React from 'react';
 import { LayoutGroup } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Tooltip } from '@/components/common/Tooltip';
-import { EmptyState } from '@/components/common/EmptyState';
+import { Tooltip } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { useWorkspaceAiSettingsResource } from '@/hooks/useWorkspaceAiSettingsResource';
 import type { ProjectMember, Workspace, WorkspaceInvitation } from '@/types';
 import { WorkspaceAiSettingsPage } from '@/pages/WorkspaceAiSettingsPage';
 import { WorkspaceMembersPage } from '@/pages/WorkspaceMembersPage';
 import { WorkspaceSettingsPage } from '@/pages/WorkspaceSettingsPage';
-import { ActiveTabIndicator } from '@/components/common/ActiveTabIndicator';
-import { PageBackLink, PageHeader, PageShell } from '@/components/common/PageComposition';
+import { ActiveTabIndicator } from '@acornops/ui';
+import { PageBackLink, PageHeader, PageShell } from '@acornops/ui';
 
 export type SettingsTab = 'workspace' | 'members' | 'ai';
 

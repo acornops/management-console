@@ -2,7 +2,7 @@ import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { TFunction } from 'i18next';
 import { ICONS } from '@/constants';
-import { FieldValidationMessage } from '@/components/common/FieldValidationMessage';
+import { FieldValidationMessage } from '@acornops/ui';
 import {
   EmailField,
   ErrorMessage,

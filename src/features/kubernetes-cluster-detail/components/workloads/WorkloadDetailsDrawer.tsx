@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, buttonClassName } from '@/components/common/Button';
-import { Select, SelectOption } from '@/components/common/Select';
-import { Checkbox } from '@/components/common/Checkbox';
+import { Button, buttonClassName } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlanePodLogs } from '@/services/controlPlaneApi';
 import { DetailRow, ResourceMetricInline, SidePanel } from '@/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout';

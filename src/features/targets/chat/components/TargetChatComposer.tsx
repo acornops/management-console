@@ -1,8 +1,8 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, Check, ChevronDown, ChevronRight, FileText, Image as ImageIcon, Loader2, Plus, Square, X } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Tooltip } from '@/components/common/Tooltip';
+import { Button } from '@acornops/ui';
+import { Tooltip } from '@acornops/ui';
 import { AssistantCapabilityPreviewControl } from '@/features/targets/chat/components/AssistantCapabilityPreviewControl';
 import { TargetChatReferenceChips, TargetChatReferenceMenu } from '@/features/targets/chat/components/TargetChatReferencePicker';
 import { formatAttachmentSize, providerLabel } from '@/features/targets/chat/components/targetChatViewHelpers';

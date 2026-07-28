@@ -1,8 +1,8 @@
 import React, { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { EmptyState } from '@/components/common/EmptyState';
-import { PageLoadingFallback } from '@/components/common/Loading';
+import { Button } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { PageLoadingFallback } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';

@@ -1,12 +1,12 @@
 import React from 'react';
 import { GitBranch, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { TextInput } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { Select } from '@/components/common/Select';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { Select } from '@acornops/ui';
 import { controlPlaneApi, ControlPlaneTargetSkillDetail, ControlPlaneTargetSkillsCatalog, GitTargetSkillImportInput } from '@/services/controlPlaneApi';
 import { GitSkillImportError, importTargetSkillFromGit } from '@/services/gitSkillImport';
 import {

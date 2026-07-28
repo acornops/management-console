@@ -1,5 +1,5 @@
 import React from 'react';
-import { MenuItem, Switch } from '@/components/common/FormControls';
+import { MenuItem, Switch } from '@acornops/ui';
 import { createPortal } from 'react-dom';
 import {
   Edit3,
@@ -13,12 +13,12 @@ import {
   Unlink2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuSurfaceClassName } from '@/components/common/menuStyles';
+import { menuSurfaceClassName } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { formatDiscoveryTimestamp, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
 import type { McpConnection } from '@/services/control-plane/catalogApi';
-import { useFloatingActionMenu } from '@/hooks/useFloatingActionMenu';
+import { useFloatingActionMenu } from '@acornops/ui';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 interface McpServerCardProps {

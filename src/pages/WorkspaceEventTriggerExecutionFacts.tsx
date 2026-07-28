@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { StatusBadge } from '@acornops/ui';
 import { WorkflowExecutionLink } from '@/features/workflow-activity/WorkflowActivityUi';
 import type { WorkflowEventTrigger } from '@/services/control-plane/workflowEventTriggerApi';
 import { formatUserDateTime } from '@/utils/dateTime';

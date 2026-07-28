@@ -2,10 +2,10 @@ import React from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { EmptyState } from '@/components/common/EmptyState';
-import { Select } from '@/components/common/Select';
+import { Button } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { Select } from '@acornops/ui';
 import {
   catalogApi,
   type CatalogSource,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { issueStatusTone } from '@/pages/issues/issueUi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';

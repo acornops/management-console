@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 
 export const AppUnavailableScreen: React.FC<{
   logoSrc: string;

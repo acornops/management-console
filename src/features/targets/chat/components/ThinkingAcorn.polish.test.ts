@@ -6,7 +6,7 @@ describe('thinking acorn polish contract', () => {
     expect(styles).toContain('.thinking-acorn {');
     expect(styles).toContain('width: 0.875rem;');
     expect(styles).toContain('height: 0.875rem;');
-    expect(styles).toContain('color: color-mix(in oklab, var(--brand-orange-strong), var(--text-muted) 68%);');
+    expect(styles).toContain('color: color-mix(in oklab, var(--ao-brand-orange-strong), var(--ao-text-muted) 68%);');
     expect(styles).toContain('.thinking-acorn__spinner > svg');
     expect(styles).toContain(".thinking-acorn:not([data-reduced-motion='true']) .thinking-acorn__spinner");
     expect(styles).toContain('animation: thinking-acorn-spin 1.35s linear infinite;');

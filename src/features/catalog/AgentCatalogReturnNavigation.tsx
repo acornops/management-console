@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { PageBackLink } from '@/components/common/PageComposition';
+import { PageBackLink } from '@acornops/ui';
 import { AppPaths } from '@/utils/routes';
 
 export interface AgentCatalogReturnNavigation {

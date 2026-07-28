@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from '@/components/common/Button';
-import { Textarea, TextInput } from '@/components/common/ComponentVocabulary';
+import { Button } from '@acornops/ui';
+import { Textarea, TextInput } from '@acornops/ui';
 import type { WorkflowDefinition, WorkflowParameter } from '@/pages/workflows/workflowModel';
 import {
   listPromptReferenceTypes,

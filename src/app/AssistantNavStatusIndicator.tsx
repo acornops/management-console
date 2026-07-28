@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@/components/common/Tooltip';
+import { Tooltip } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 

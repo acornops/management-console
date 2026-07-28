@@ -115,7 +115,7 @@ function StepCardFrame({ card }: { card: StepCard }) {
           borderRadius: px(16),
           padding: `${px(15)} ${px(18)} ${px(14)}`,
           animationDelay: card.delay,
-          boxShadow: `0 ${px(8)} ${px(22)} rgb(var(--logo-brown-rgb) / 0.12)`
+          boxShadow: `0 ${px(8)} ${px(22)} rgb(var(--ao-logo-brown-rgb) / 0.12)`
         }}
       >
         <div className="flex items-baseline" style={{ gap: px(8) }}>
@@ -149,12 +149,12 @@ export function LoginPreview({ showCards = true, showTagline = true }: LoginPrev
     >
       <div
         className="login-hunt-bloom -right-16 -top-20 h-[300px] w-[300px]"
-        style={{ background: 'radial-gradient(circle, rgb(var(--logo-cream-rgb) / 0.38), transparent 68%)' }}
+        style={{ background: 'radial-gradient(circle, rgb(var(--ao-logo-cream-rgb) / 0.38), transparent 68%)' }}
       />
       <div
         className="login-hunt-bloom -bottom-[70px] -left-[50px] h-[260px] w-[260px]"
         style={{
-          background: 'radial-gradient(circle, rgb(var(--brand-orange-rgb) / 0.1), transparent 70%)',
+          background: 'radial-gradient(circle, rgb(var(--ao-brand-orange-rgb) / 0.1), transparent 70%)',
           animationDuration: '11s'
         }}
       />
@@ -166,20 +166,20 @@ export function LoginPreview({ showCards = true, showTagline = true }: LoginPrev
         aria-hidden="true"
         style={
           {
-            '--fur': 'rgb(var(--brand-orange-rgb))',
-            '--fur-bright': 'rgb(var(--brand-orange-bright-rgb))',
-            '--fur-strong': 'rgb(var(--brand-orange-strong-rgb))',
-            '--fur-deep': 'color-mix(in oklab, rgb(var(--brand-orange-strong-rgb)), rgb(var(--text-rgb)) 24%)',
-            '--belly': 'rgb(var(--logo-cream-rgb))',
-            '--ink': 'rgb(var(--code-bg-rgb))',
-            '--smile': 'rgb(var(--text-muted-rgb))',
-            '--acorn-body': 'color-mix(in oklab, rgb(var(--brand-orange-bright-rgb)), rgb(var(--logo-cream-rgb)) 42%)',
-            '--acorn-shade': 'rgb(var(--brand-orange-strong-rgb))',
-            '--acorn-cap': 'rgb(var(--logo-brown-rgb))',
-            '--acorn-line': 'color-mix(in oklab, rgb(var(--logo-brown-rgb)), rgb(var(--text-rgb)) 34%)',
-            '--hunt': 'rgb(var(--status-warning-rgb))',
-            '--dust': 'color-mix(in oklab, rgb(var(--surface-strong-rgb)), rgb(var(--logo-brown-rgb)) 14%)',
-            '--shadow-fur': 'rgb(var(--logo-brown-rgb))'
+            '--fur': 'rgb(var(--ao-brand-orange-rgb))',
+            '--fur-bright': 'rgb(var(--ao-brand-orange-bright-rgb))',
+            '--fur-strong': 'rgb(var(--ao-brand-orange-strong-rgb))',
+            '--fur-deep': 'color-mix(in oklab, rgb(var(--ao-brand-orange-strong-rgb)), rgb(var(--ao-text-rgb)) 24%)',
+            '--belly': 'rgb(var(--ao-logo-cream-rgb))',
+            '--ink': 'rgb(var(--ao-code-bg-rgb))',
+            '--smile': 'rgb(var(--ao-text-muted-rgb))',
+            '--acorn-body': 'color-mix(in oklab, rgb(var(--ao-brand-orange-bright-rgb)), rgb(var(--ao-logo-cream-rgb)) 42%)',
+            '--acorn-shade': 'rgb(var(--ao-brand-orange-strong-rgb))',
+            '--acorn-cap': 'rgb(var(--ao-logo-brown-rgb))',
+            '--acorn-line': 'color-mix(in oklab, rgb(var(--ao-logo-brown-rgb)), rgb(var(--ao-text-rgb)) 34%)',
+            '--hunt': 'rgb(var(--ao-status-warning-rgb))',
+            '--dust': 'color-mix(in oklab, rgb(var(--ao-surface-strong-rgb)), rgb(var(--ao-logo-brown-rgb)) 14%)',
+            '--shadow-fur': 'rgb(var(--ao-logo-brown-rgb))'
           } as CSSProperties
         }
       >

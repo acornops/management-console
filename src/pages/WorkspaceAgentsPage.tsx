@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { SelectOption } from '@/components/common/Select';
+import { SelectOption } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
   targetScopeFromTokens,
   type AgentDefinition
 } from '@/pages/agents/agentModel';
 import { WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
-import { PageShell } from '@/components/common/PageComposition';
+import { PageShell } from '@acornops/ui';
 import { AgentWorkspaceDrawer, CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
 import { agentProfileTabs, type AgentProfileTab } from '@/pages/WorkspaceAgentDetailPanel';
 import { Notice, canManageWorkspaceAgents, createAgentEditDraft, filterVisibleAgents, getAgentEditChangeSummary, isWorkspaceCatalogAgent, mapApiAgent, shouldRefreshAgentEditDraft, splitInput, type AgentDraft, type AgentEditDraft, type AgentEditDraftSource, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';

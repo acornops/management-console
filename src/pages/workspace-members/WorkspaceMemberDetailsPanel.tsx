@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
-import { RightSidePanel } from '@/components/common/RightSidePanel';
-import { Select, SelectOption } from '@/components/common/Select';
+import { Button } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { RightSidePanel } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
 import { ProjectMember, WorkspaceRoleTemplate } from '@/types';
 import { formatRole, getInitials } from './memberUtils';
 import { RoleTemplatePreview } from './RoleTemplatePreview';

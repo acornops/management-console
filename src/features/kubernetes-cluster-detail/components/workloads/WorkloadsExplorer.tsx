@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { SelectOption } from '@/components/common/Select';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { SelectOption } from '@acornops/ui';
 import { Workload } from '@/types';
 import { InfrastructureResource } from '@/features/kubernetes-cluster-detail/components/workloads/ResourceDetailsDrawer';
 import {

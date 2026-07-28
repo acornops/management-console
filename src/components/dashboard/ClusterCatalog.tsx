@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { Settings, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { EmptyState } from '@/components/common/EmptyState';
-import { MenuItem } from '@/components/common/FormControls';
+import { Button } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { MenuItem } from '@acornops/ui';
 import { ClusterTelemetryPanel } from '@/components/dashboard/ClusterTelemetryPanel';
 import { ICONS } from '@/constants';
 import {

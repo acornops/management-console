@@ -1,8 +1,8 @@
 import React from 'react';
 import { KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { Button } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';

@@ -1,8 +1,8 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { Bot, LoaderCircle, Settings } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { EmptyState } from '@/components/common/EmptyState';
+import { Button } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
 import type { AiRuntimeReadinessStatus } from '@/features/ai/aiRuntimeReadiness';
 
 interface TargetAssistantReadinessStateProps {

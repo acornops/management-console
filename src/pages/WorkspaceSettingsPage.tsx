@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { Button } from '@acornops/ui';
+import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { isKnownOnlyWorkspaceOwner } from '@/app/workspaceLeave';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';

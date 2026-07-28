@@ -1,5 +1,5 @@
 import React from 'react';
-import { SelectOption } from '@/components/common/Select';
+import { SelectOption } from '@acornops/ui';
 import {
   filterAgentDefinitions,
   type AgentDefinition

@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { ICONS } from '@/constants';
 
 interface PendingVirtualMachineSetupProps {

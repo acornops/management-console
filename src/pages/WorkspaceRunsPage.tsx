@@ -1,13 +1,13 @@
 import React from 'react';
 import { Filter, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { DataTableGridHeader, DataTableGridHeaderCell } from '@/components/common/DataTable';
-import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineAlert } from '@/components/common/InlineAlert';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { Button } from '@acornops/ui';
+import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { InlineAlert } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import {
   WorkflowExecutionRow,
   workflowExecutionLedgerGridClass

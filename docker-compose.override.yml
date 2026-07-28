@@ -14,8 +14,11 @@ services:
       WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}
       VITE_APP_DATA_MODE: ${VITE_APP_DATA_MODE:-mock}
       VITE_CONTROL_PLANE_API_BASE_URL: ${VITE_CONTROL_PLANE_API_BASE_URL:-http://localhost:8081}
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173", "--strictPort"]
-    ports:
+    command:
+      - sh
+      - -c
+      - npm install --ignore-scripts --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
+    ports: !override
       - "${MANAGEMENT_CONSOLE_PORT:-3000}:5173"
     volumes:
       - ./:/app

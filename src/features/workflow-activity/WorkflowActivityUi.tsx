@@ -2,8 +2,8 @@ import React from 'react';
 import { ArrowRight, CircleDot, GitBranch, PauseCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
-import { buttonClassName } from '@/components/common/Button';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { buttonClassName } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import {
   type WorkflowActivitySummary,
   type WorkflowExecutionOrigin,

@@ -1,17 +1,17 @@
 import React from 'react';
-import { MenuItem, Switch } from '@/components/common/FormControls';
-import { EmptyState } from '@/components/common/EmptyState';
-import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
+import { MenuItem, Switch } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { createPortal } from 'react-dom';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuSurfaceClassName } from '@/components/common/menuStyles';
-import { Select } from '@/components/common/Select';
-import type { SelectOption } from '@/components/common/Select';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { menuSurfaceClassName } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import type { SelectOption } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import type { ControlPlaneTargetSkillsCatalog } from '@/services/controlPlaneApi';
 import { sourceLabel, summarizeBytes, syncLabel } from '@/features/targets/admin/targetSkillsViewModel';
-import { useFloatingActionMenu } from '@/hooks/useFloatingActionMenu';
+import { useFloatingActionMenu } from '@acornops/ui';
 
 type TargetSkillSummary = ControlPlaneTargetSkillsCatalog['items'][number];
 

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Archive, CheckCircle2, ChevronDown, FilePlus2, FileText, Folder, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { Tooltip } from '@/components/common/Tooltip';
+import { Button } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { Tooltip } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
   ControlPlaneTargetInsightsCatalog,

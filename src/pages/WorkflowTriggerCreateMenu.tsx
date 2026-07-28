@@ -2,9 +2,9 @@ import React from 'react';
 import { CalendarClock, ChevronDown, Plus, Webhook, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { MenuItem } from '@/components/common/FormControls';
-import { menuSurfaceClassName } from '@/components/common/menuStyles';
+import { Button } from '@acornops/ui';
+import { MenuItem } from '@acornops/ui';
+import { menuSurfaceClassName } from '@acornops/ui';
 import type { WorkflowTriggerType } from '@/utils/routes';
 
 interface WorkflowTriggerCreateMenuProps {

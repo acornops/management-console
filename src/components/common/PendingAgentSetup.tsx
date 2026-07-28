@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Check, Clock, Wrench } from 'lucide-react';
 
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 
 interface PendingAgentSetupProps {
   targetId: string;

@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { DrawerFrame } from '@/components/common/OverlayFrames';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import {
   activateAutomationTemplate,
   installAutomationTemplate,

@@ -1,8 +1,8 @@
 import React from 'react';
 import { ChevronRight, MoreHorizontal } from 'lucide-react';
 
-import { Button } from '@/components/common/Button';
-import { menuSurfaceClassName } from '@/components/common/menuStyles';
+import { Button } from '@acornops/ui';
+import { menuSurfaceClassName } from '@acornops/ui';
 
 export type TargetCatalogKind = 'cluster' | 'vm';
 

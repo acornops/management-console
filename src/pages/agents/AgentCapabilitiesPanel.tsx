@@ -1,11 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { SegmentedTabs, type CompactControlItem } from '@/components/common/ComponentVocabulary';
-import { InlineConfirmation } from '@/components/common/InlineConfirmation';
-import { Select } from '@/components/common/Select';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { SegmentedTabs, type CompactControlItem } from '@acornops/ui';
+import { InlineConfirmation } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
 import { AddMcpServerAction } from '@/features/catalog/AddMcpServerAction';
 import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';

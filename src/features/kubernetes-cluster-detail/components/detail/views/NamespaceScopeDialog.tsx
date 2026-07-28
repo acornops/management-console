@@ -2,10 +2,10 @@ import React from 'react';
 import { Loader2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { menuOptionClassName, menuSurfaceClassName } from '@/components/common/menuStyles';
+import { Button } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { menuOptionClassName, menuSurfaceClassName } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 
