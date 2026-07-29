@@ -1,9 +1,6 @@
 import React from 'react';
 import { SelectOption } from '@acornops/ui';
-import {
-  filterAgentDefinitions,
-  type AgentDefinition
-} from '@/pages/agents/agentModel';
+import { filterAgentDefinitions, type AgentDefinition } from '@/pages/agents/agentModel';
 import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
@@ -36,7 +33,12 @@ export type AgentEditDraftSource = {
   draft: AgentEditDraft;
 };
 
-export type LocalNotice = { tone: 'success' | 'danger'; message: string; actionHref?: string; actionLabel?: string };
+export type LocalNotice = {
+  tone: 'success' | 'danger';
+  message: string;
+  actionHref?: string;
+  actionLabel?: string;
+};
 export type AgentCapabilityOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
 export type AgentCatalogFocus = 'all' | 'active' | 'draft' | 'disabled';
 
@@ -47,14 +49,23 @@ export const statusTone = (status: AgentDefinition['status']): 'success' | 'warn
 };
 
 export const splitInput = (value: string): string[] =>
-  value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
+  value
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 const joinInput = (values: string[]): string => values.join('\n');
 
 const normalizeAgentCapabilityOption = (option: unknown): AgentCapabilityOptions['mcpServers'][number] | null => {
   if (typeof option === 'string' && option.trim()) return { value: option.trim(), label: option.trim() };
   if (!option || typeof option !== 'object') return null;
-  const value = option as { value?: unknown; label?: unknown; description?: unknown; disabled?: unknown; disabledReason?: unknown };
+  const value = option as {
+    value?: unknown;
+    label?: unknown;
+    description?: unknown;
+    disabled?: unknown;
+    disabledReason?: unknown;
+  };
   if (typeof value.value !== 'string' || !value.value.trim()) return null;
   return {
     value: value.value,
@@ -65,19 +76,13 @@ const normalizeAgentCapabilityOption = (option: unknown): AgentCapabilityOptions
   };
 };
 
-const normalizeAgentCapabilityOptionList = (
-  options: unknown
-): AgentCapabilityOptions['mcpServers'] => {
+const normalizeAgentCapabilityOptionList = (options: unknown): AgentCapabilityOptions['mcpServers'] => {
   if (!Array.isArray(options)) return [];
-  const normalized = options
-    .map(normalizeAgentCapabilityOption)
-    .filter((option): option is NonNullable<typeof option> => Boolean(option));
+  const normalized = options.map(normalizeAgentCapabilityOption).filter((option): option is NonNullable<typeof option> => Boolean(option));
   return normalized;
 };
 
-export const normalizeAgentCapabilityOptions = (
-  catalog: WorkflowOptionsCatalog
-): AgentCapabilityOptions => ({
+export const normalizeAgentCapabilityOptions = (catalog: WorkflowOptionsCatalog): AgentCapabilityOptions => ({
   mcpServers: normalizeAgentCapabilityOptionList(catalog.mcpServers),
   mcpTools: normalizeAgentCapabilityOptionList(catalog.mcpTools),
   skills: normalizeAgentCapabilityOptionList(catalog.skills)
@@ -104,11 +109,7 @@ const trustPolicyFor = (policy: AgentDefinitionApi['trustPolicy']): AgentDefinit
   dataEgress: policy?.allowExternalData === true ? 'Additional data access allowed by policy' : 'Workspace approved context only'
 });
 
-export const mapApiAgent = (
-  item: AgentDefinitionApi,
-  workspaceName: string,
-  ownerLabelsByUserId: Map<string, string> = new Map()
-): AgentDefinition => {
+export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, ownerLabelsByUserId: Map<string, string> = new Map()): AgentDefinition => {
   const ownerUserId = item.ownerUserId;
   const owner = ownerUserId ? ownerLabelsByUserId.get(ownerUserId) || ownerUserId : workspaceName;
   return {
@@ -129,9 +130,7 @@ export const mapApiAgent = (
     mcpInstallations: item.mcpInstallations || [],
     tools: [
       ...(item.tools || []),
-      ...(item.mcpInstallations || []).flatMap((server) => server.tools
-        .filter((tool) => tool.enabled && tool.reviewState === 'approved')
-        .map((tool) => tool.alias))
+      ...(item.mcpInstallations || []).flatMap((server) => server.tools.filter((tool) => tool.enabled && tool.reviewState === 'approved').map((tool) => tool.alias))
     ],
     nativeToolConfigs: item.nativeToolConfigs || {},
     skills: item.skillInstallations?.map((skill) => skill.name) || item.skills || [],
@@ -159,12 +158,12 @@ export const isWorkspaceCatalogAgent = (agent: AgentDefinition): boolean => {
   return Boolean(agent.id);
 };
 
-export function filterVisibleAgents(
-  agents: AgentDefinition[],
-  query: string,
-  filters: { focus: AgentCatalogFocus }
-): AgentDefinition[] {
-  const statusOrder: Record<AgentDefinition['status'], number> = { active: 0, draft: 1, disabled: 2 };
+export function filterVisibleAgents(agents: AgentDefinition[], query: string, filters: { focus: AgentCatalogFocus }): AgentDefinition[] {
+  const statusOrder: Record<AgentDefinition['status'], number> = {
+    active: 0,
+    draft: 1,
+    disabled: 2
+  };
   return filterAgentDefinitions(agents.filter(isWorkspaceCatalogAgent), query)
     .filter((agent) => filters.focus === 'all' || agent.status === filters.focus)
     .sort((left, right) => statusOrder[left.status] - statusOrder[right.status] || left.name.localeCompare(right.name));
@@ -173,10 +172,7 @@ export function filterVisibleAgents(
 export const formatAgentTimestamp = (value: string | undefined, fallback = '-', locale?: Intl.LocalesArgument): string =>
   formatUserDateTime(value, { fallback: value || fallback, locale });
 
-export const formatAgentDisplayValue = (value: string): string =>
-  value
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+export const formatAgentDisplayValue = (value: string): string => value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 export const statusOptions: Array<SelectOption<AgentDefinition['status']>> = [
   { value: 'draft', label: 'Draft' },
   { value: 'active', label: 'Active' },
@@ -201,11 +197,8 @@ export const createAgentEditDraft = (agent: AgentDefinition): AgentEditDraft => 
 export const agentEditDraftsEqual = (left: AgentEditDraft, right: AgentEditDraft): boolean =>
   Object.keys(left).every((key) => left[key as keyof AgentEditDraft] === right[key as keyof AgentEditDraft]);
 
-export const shouldRefreshAgentEditDraft = (
-  agentId: string,
-  currentDraft: AgentEditDraft | null,
-  source: AgentEditDraftSource | null
-): boolean => !currentDraft || !source || source.agentId !== agentId || agentEditDraftsEqual(currentDraft, source.draft);
+export const shouldRefreshAgentEditDraft = (agentId: string, currentDraft: AgentEditDraft | null, source: AgentEditDraftSource | null): boolean =>
+  !currentDraft || !source || source.agentId !== agentId || agentEditDraftsEqual(currentDraft, source.draft);
 
 export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEditDraft): string[] => {
   const changes: string[] = [];
@@ -226,15 +219,30 @@ export const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ 
   <div className="min-w-0">
     <div className="type-micro-label">{title}</div>
     <div className="mt-2 grid gap-1">
-      {values.length > 0
-        ? values.map((value) => <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 text-xs text-ui-text-muted [overflow-wrap:anywhere]">{value}</span>)
-        : <span className="type-caption text-ui-text-muted">No values configured.</span>}
+      {values.length > 0 ? (
+        values.map((value) => (
+          <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 text-xs text-ui-text-muted [overflow-wrap:anywhere]">
+            {value}
+          </span>
+        ))
+      ) : (
+        <span className="type-caption text-ui-text-muted">No values configured.</span>
+      )}
     </div>
   </div>
 );
 
-export const Notice: React.FC<React.PropsWithChildren<{ title?: string; actionLabel?: string; onAction?: () => void }>> = ({ actionLabel, children, onAction, title }) => (
-  <section role="status" className="mb-4 whitespace-normal break-words rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted shadow-sm [overflow-wrap:anywhere]">
+export const Notice: React.FC<
+  React.PropsWithChildren<{
+    title?: string;
+    actionLabel?: string;
+    onAction?: () => void;
+  }>
+> = ({ actionLabel, children, onAction, title }) => (
+  <section
+    role="status"
+    className="mb-4 whitespace-normal break-words rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted shadow-sm [overflow-wrap:anywhere]"
+  >
     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         {title && <div className="type-micro-label text-ui-text">{title}</div>}
@@ -244,7 +252,7 @@ export const Notice: React.FC<React.PropsWithChildren<{ title?: string; actionLa
         <button
           type="button"
           onClick={onAction}
-          className="control-target min-h-8 shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 text-xs font-bold text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          className="control-target min-h-8 shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 text-xs type-ui text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
         >
           {actionLabel}
         </button>

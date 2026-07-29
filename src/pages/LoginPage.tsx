@@ -76,7 +76,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <div className="mb-8 flex justify-center">
             <div className="flex items-center gap-3">
               <img src={logoSrc} alt="AcornOps" className="h-9 w-9 shrink-0" />
-              <div className="text-3xl font-bold tracking-tight">
+              <div className="type-route-title">
                 <span className="text-ui-text">Acorn</span>
                 <span className="text-accent-bright">Ops</span>
               </div>

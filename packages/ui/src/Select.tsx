@@ -34,20 +34,13 @@ const sizeClasses: Record<NonNullable<SelectProps<string>['size']>, string> = {
 
 const getOptionId = (baseId: string, index: number) => `${baseId}-option-${index}`;
 
-export const getBoundaryEnabledOptionIndex = <T extends string | number>(
-  options: Array<SelectOption<T>>,
-  boundary: Boundary
-) => {
+export const getBoundaryEnabledOptionIndex = <T extends string | number>(options: Array<SelectOption<T>>, boundary: Boundary) => {
   const indexes = options.map((_, index) => index);
   const orderedIndexes = boundary === 'first' ? indexes : indexes.reverse();
   return orderedIndexes.find((index) => !options[index].disabled) ?? -1;
 };
 
-export const getNextEnabledOptionIndex = <T extends string | number>(
-  options: Array<SelectOption<T>>,
-  currentIndex: number,
-  direction: 1 | -1
-) => {
+export const getNextEnabledOptionIndex = <T extends string | number>(options: Array<SelectOption<T>>, currentIndex: number, direction: 1 | -1) => {
   if (options.length === 0 || options.every((option) => option.disabled)) return -1;
 
   let nextIndex = currentIndex;
@@ -58,17 +51,7 @@ export const getNextEnabledOptionIndex = <T extends string | number>(
   return -1;
 };
 
-export const Select = <T extends string | number>({
-  value,
-  options,
-  onChange,
-  id,
-  ariaLabel,
-  disabled = false,
-  placeholder,
-  size = 'md',
-  className
-}: SelectProps<T>) => {
+export const Select = <T extends string | number>({ value, options, onChange, id, ariaLabel, disabled = false, placeholder, size = 'md', className }: SelectProps<T>) => {
   const reactId = useId();
   const baseId = id || `select-${reactId}`;
   const listboxId = `${baseId}-listbox`;
@@ -81,9 +64,7 @@ export const Select = <T extends string | number>({
   const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : undefined;
 
   const enabledSelectedIndex = selectedOption?.disabled ? -1 : selectedIndex;
-  const initialActiveIndex = enabledSelectedIndex >= 0
-    ? enabledSelectedIndex
-    : getBoundaryEnabledOptionIndex(options, 'first');
+  const initialActiveIndex = enabledSelectedIndex >= 0 ? enabledSelectedIndex : getBoundaryEnabledOptionIndex(options, 'first');
 
   const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;
@@ -93,9 +74,7 @@ export const Select = <T extends string | number>({
     const estimatedMenuHeight = Math.min(256, Math.max(44, options.length * 40));
     const spaceBelow = window.innerHeight - rect.bottom;
     const shouldOpenAbove = spaceBelow < estimatedMenuHeight + menuOffsetPx && rect.top > spaceBelow;
-    const top = shouldOpenAbove
-      ? Math.max(menuOffsetPx, rect.top - estimatedMenuHeight - menuOffsetPx)
-      : rect.bottom + menuOffsetPx;
+    const top = shouldOpenAbove ? Math.max(menuOffsetPx, rect.top - estimatedMenuHeight - menuOffsetPx) : rect.bottom + menuOffsetPx;
 
     setMenuStyle({
       left: rect.left,
@@ -105,24 +84,30 @@ export const Select = <T extends string | number>({
     });
   }, [options.length]);
 
-  const openMenu = useCallback((nextActiveIndex = initialActiveIndex) => {
-    if (disabled) return;
-    setActiveIndex(nextActiveIndex);
-    setIsOpen(true);
-  }, [disabled, initialActiveIndex]);
+  const openMenu = useCallback(
+    (nextActiveIndex = initialActiveIndex) => {
+      if (disabled) return;
+      setActiveIndex(nextActiveIndex);
+      setIsOpen(true);
+    },
+    [disabled, initialActiveIndex]
+  );
 
   const closeMenu = useCallback(() => {
     setIsOpen(false);
     setActiveIndex(-1);
   }, []);
 
-  const selectOption = useCallback((index: number) => {
-    const option = options[index];
-    if (!option || option.disabled) return;
-    onChange(option.value);
-    closeMenu();
-    triggerRef.current?.focus();
-  }, [closeMenu, onChange, options]);
+  const selectOption = useCallback(
+    (index: number) => {
+      const option = options[index];
+      if (!option || option.disabled) return;
+      onChange(option.value);
+      closeMenu();
+      triggerRef.current?.focus();
+    },
+    [closeMenu, onChange, options]
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -200,14 +185,7 @@ export const Select = <T extends string | number>({
     if (!isOpen || !menuStyle || typeof document === 'undefined') return null;
 
     return createPortal(
-      <div
-        ref={menuRef}
-        id={listboxId}
-        role="listbox"
-        aria-label={ariaLabel}
-        className={menuSurfaceClassName('type-ui fixed z-[140] max-h-64 py-1')}
-        style={menuStyle}
-      >
+      <div ref={menuRef} id={listboxId} role="listbox" aria-label={ariaLabel} className={menuSurfaceClassName('type-ui fixed z-[140] max-h-64 py-1')} style={menuStyle}>
         {options.map((option, index) => {
           const isSelected = option.value === value;
           const isActive = index === activeIndex;
@@ -261,17 +239,17 @@ export const Select = <T extends string | number>({
           }
         }}
         onKeyDown={handleKeyDown}
-        className={`control-target ${twMerge(clsx(
-          'type-ui flex w-full items-center justify-between gap-3 rounded-md border bg-ui-surface text-ui-text shadow-sm outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60',
-          sizeClasses[size],
-          isOpen
-            ? 'border-accent/35 bg-ui-bg ring-2 ring-accent/10'
-            : 'border-ui-border hover:border-accent/25 hover:bg-ui-bg focus-visible:border-accent/35 focus-visible:ring-2 focus-visible:ring-accent/15'
-        ))}`}
+        className={`control-target ${twMerge(
+          clsx(
+            'type-ui flex w-full items-center justify-between gap-3 rounded-md border bg-ui-surface text-ui-text shadow-sm outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+            sizeClasses[size],
+            isOpen
+              ? 'border-accent/35 bg-ui-bg ring-2 ring-accent/10'
+              : 'border-ui-border hover:border-accent/25 hover:bg-ui-bg focus-visible:border-accent/35 focus-visible:ring-2 focus-visible:ring-accent/15'
+          )
+        )}`}
       >
-        <span className={clsx('min-w-0 truncate text-left', !selectedOption && 'text-ui-text-muted')}>
-          {selectedOption?.label ?? placeholder}
-        </span>
+        <span className={clsx('min-w-0 truncate text-left', !selectedOption && 'text-ui-text-muted')}>{selectedOption?.label ?? placeholder}</span>
         <ChevronDown className={clsx('h-4 w-4 shrink-0 text-ui-text-muted transition-transform', isOpen && 'rotate-180 text-accent-strong')} aria-hidden="true" />
       </button>
       {menu}

@@ -25,14 +25,7 @@ function isValidInviteEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
-  canManageOwners,
-  roleTemplates,
-  workspaceId,
-  onClose,
-  onAddMember,
-  onCreateInvitation
-}) => {
+export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canManageOwners, roleTemplates, workspaceId, onClose, onAddMember, onCreateInvitation }) => {
   const { t } = useTranslation();
   const defaultRole = roleTemplates.find((role) => !role.protected)?.key || roleTemplates[0]?.key || '';
   const [identityValue, setIdentityValue] = useState('');
@@ -114,14 +107,14 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
         setAddedMember(member);
       } else {
         if (!onCreateInvitation) throw new Error(t('members.createInviteFailed'));
-        const invitation = await onCreateInvitation({ email: normalizedEmail, role: inviteRole });
+        const invitation = await onCreateInvitation({
+          email: normalizedEmail,
+          role: inviteRole
+        });
         setCreatedInvite(invitation);
       }
     } catch (error) {
-      setInviteErrorMessage(formatMemberMutationError(
-        error,
-        resolvedCandidate ? t('members.addMemberFailed') : t('members.createInviteFailed')
-      ));
+      setInviteErrorMessage(formatMemberMutationError(error, resolvedCandidate ? t('members.addMemberFailed') : t('members.createInviteFailed')));
     } finally {
       setIsCreatingInvite(false);
     }
@@ -145,142 +138,123 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({
       overlayClassName="z-[110] p-6"
       className="relative flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
     >
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-ui-border px-5 py-4 sm:px-6 sm:py-5">
-          <div className="min-w-0">
-            <h2 id="invite-member-title" className="text-lg font-bold tracking-tight text-ui-text">{t('members.inviteMember')}</h2>
-            <p className="mt-1 text-xs font-medium text-ui-text-muted">{t('members.inviteBody')}</p>
-          </div>
-          <CloseButton
-            onClick={onClose}
-            className="shrink-0"
-            aria-label={t('members.closeInvite')}
-          />
+      <div className="flex shrink-0 items-start justify-between gap-4 border-b border-ui-border px-5 py-4 sm:px-6 sm:py-5">
+        <div className="min-w-0">
+          <h2 id="invite-member-title" className="type-section-title">
+            {t('members.inviteMember')}
+          </h2>
+          <p className="mt-1 text-xs font-medium text-ui-text-muted">{t('members.inviteBody')}</p>
         </div>
+        <CloseButton onClick={onClose} className="shrink-0" aria-label={t('members.closeInvite')} />
+      </div>
 
-        <form onSubmit={(event) => void submitMember(event)} className="flex min-h-0 flex-1 flex-col" noValidate>
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 custom-scrollbar sm:p-6">
-            <div className="grid gap-4 sm:grid-cols-[minmax(0,1.2fr)_minmax(12rem,0.8fr)]">
-              <div className="space-y-2">
-                <label htmlFor="workspace-invite-email" className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.personOrEmail')}</label>
-                <WorkspaceMemberIdentityField
-                  workspaceId={workspaceId}
-                  value={identityValue}
-                  selectedCandidate={selectedCandidate}
-                  onChange={(value) => {
-                    setInviteEmailError(undefined);
-                    setInviteErrorMessage(null);
-                    setSelectedCandidate(null);
-                    setMatchedCandidate(null);
-                    setIdentityValue(value);
-                  }}
-                  onMatchChange={setCandidateMatch}
-                  onSelect={(candidate) => {
-                    setInviteEmailError(undefined);
-                    setInviteErrorMessage(null);
-                    setSelectedCandidate(candidate);
-                    setIdentityValue(candidate.email);
-                  }}
-                  disabled={isComplete || isCreatingInvite}
-                  invalid={Boolean(inviteEmailError)}
-                />
-                <FieldValidationMessage id="workspace-invite-email-error" message={inviteEmailError} />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('members.role')}</label>
-                <Select<ProjectMember['role']>
-                  value={inviteRole}
-                  options={roleOptions}
-                  onChange={setInviteRole}
-                  disabled={isComplete || isCreatingInvite}
-                />
-              </div>
+      <form onSubmit={(event) => void submitMember(event)} className="flex min-h-0 flex-1 flex-col" noValidate>
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 custom-scrollbar sm:p-6">
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,1.2fr)_minmax(12rem,0.8fr)]">
+            <div className="space-y-2">
+              <label htmlFor="workspace-invite-email" className="block type-label">
+                {t('members.personOrEmail')}
+              </label>
+              <WorkspaceMemberIdentityField
+                workspaceId={workspaceId}
+                value={identityValue}
+                selectedCandidate={selectedCandidate}
+                onChange={(value) => {
+                  setInviteEmailError(undefined);
+                  setInviteErrorMessage(null);
+                  setSelectedCandidate(null);
+                  setMatchedCandidate(null);
+                  setIdentityValue(value);
+                }}
+                onMatchChange={setCandidateMatch}
+                onSelect={(candidate) => {
+                  setInviteEmailError(undefined);
+                  setInviteErrorMessage(null);
+                  setSelectedCandidate(candidate);
+                  setIdentityValue(candidate.email);
+                }}
+                disabled={isComplete || isCreatingInvite}
+                invalid={Boolean(inviteEmailError)}
+              />
+              <FieldValidationMessage id="workspace-invite-email-error" message={inviteEmailError} />
             </div>
 
-            <RoleTemplatePreview
-              roleTemplate={selectedInviteRoleTemplate}
-              emptyMessage={t('members.rolePreviewUnavailable')}
-            />
+            <div className="space-y-2">
+              <label className="block type-label">{t('members.role')}</label>
+              <Select<ProjectMember['role']> value={inviteRole} options={roleOptions} onChange={setInviteRole} disabled={isComplete || isCreatingInvite} />
+            </div>
+          </div>
 
-            {createdInvite && (
-              <div className="space-y-3 rounded-lg border border-ui-border bg-ui-bg p-4">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                  <Link className="h-4 w-4 text-accent-strong" />
-                  {t('members.inviteLink')}
+          <RoleTemplatePreview roleTemplate={selectedInviteRoleTemplate} emptyMessage={t('members.rolePreviewUnavailable')} />
+
+          {createdInvite && (
+            <div className="space-y-3 rounded-lg border border-ui-border bg-ui-bg p-4">
+              <div className="flex items-center gap-2 type-label">
+                <Link className="h-4 w-4 text-accent-strong" />
+                {t('members.inviteLink')}
+              </div>
+              {createdInvite.inviteLink ? (
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <TextInput readOnly value={createdInvite.inviteLink} onFocus={(event) => event.currentTarget.select()} className="min-w-0 flex-1" />
+                  <Button onClick={() => void copyInviteLink()} variant="secondary" size="sm" className="type-ui">
+                    {hasCopiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {hasCopiedInvite ? t('members.copied') : t('members.copy')}
+                  </Button>
                 </div>
-                {createdInvite.inviteLink ? (
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <TextInput
-                      readOnly
-                      value={createdInvite.inviteLink}
-                      onFocus={(event) => event.currentTarget.select()}
-                      className="min-w-0 flex-1"
-                    />
-                    <Button onClick={() => void copyInviteLink()} variant="secondary" size="sm" className="uppercase tracking-widest">
-                      {hasCopiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      {hasCopiedInvite ? t('members.copied') : t('members.copy')}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 text-xs font-semibold leading-5 text-status-warning-text">
-                    {t('members.linkReturnedOnce')}
-                  </div>
-                )}
-                <p className="text-xs font-medium leading-5 text-ui-text-muted">
-                  {t('members.recipientMustUseEmail', { email: createdInvite.email, time: formatUserDateTime(createdInvite.expiresAt) })}
+              ) : (
+                <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 text-xs font-semibold leading-5 text-status-warning-text">
+                  {t('members.linkReturnedOnce')}
+                </div>
+              )}
+              <p className="text-xs font-medium leading-5 text-ui-text-muted">
+                {t('members.recipientMustUseEmail', {
+                  email: createdInvite.email,
+                  time: formatUserDateTime(createdInvite.expiresAt)
+                })}
+              </p>
+            </div>
+          )}
+
+          {addedMember && (
+            <div className="flex items-start gap-3 rounded-lg border border-status-success/25 bg-status-success-soft p-4 text-status-success-text">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+              <div>
+                <p className="text-sm type-emphasis">{t('members.accessAdded')}</p>
+                <p className="mt-1 text-xs font-medium leading-5">
+                  {t('members.accessAddedBody', {
+                    name: addedMember.name,
+                    role: formatRole(addedMember.role, addedMember.roleTemplate || selectedInviteRoleTemplate)
+                  })}
                 </p>
               </div>
-            )}
+            </div>
+          )}
 
-            {addedMember && (
-              <div className="flex items-start gap-3 rounded-lg border border-status-success/25 bg-status-success-soft p-4 text-status-success-text">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-                <div>
-                  <p className="text-sm font-bold">{t('members.accessAdded')}</p>
-                  <p className="mt-1 text-xs font-medium leading-5">
-                    {t('members.accessAddedBody', {
-                      name: addedMember.name,
-                      role: formatRole(addedMember.role, addedMember.roleTemplate || selectedInviteRoleTemplate)
-                    })}
-                  </p>
-                </div>
-              </div>
-            )}
+          {inviteErrorMessage && (
+            <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">
+              {inviteErrorMessage}
+            </div>
+          )}
+        </div>
 
-            {inviteErrorMessage && (
-              <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">
-                {inviteErrorMessage}
-              </div>
-            )}
-          </div>
-
-          <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-ui-border bg-ui-surface px-5 py-4 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
+        <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-ui-border bg-ui-surface px-5 py-4 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
+          <Button onClick={onClose} variant="secondary" size="sm" className="w-full type-ui sm:w-auto sm:min-w-36">
+            {t('members.close')}
+          </Button>
+          {!isComplete && (
             <Button
-              onClick={onClose}
-              variant="secondary"
+              type="submit"
+              disabled={isCreatingInvite || candidateBlocksSubmission || !roleTemplates.some((role) => role.key === inviteRole)}
+              variant="primary"
               size="sm"
-              className="w-full text-xs uppercase tracking-widest sm:w-auto sm:min-w-36"
+              className="w-full type-ui sm:w-auto sm:min-w-40"
             >
-              {t('members.close')}
+              {isCreatingInvite && <Loader2 className="h-4 w-4 animate-spin" />}
+              {resolvedCandidate ? t('members.addMember') : t('members.createLink')}
             </Button>
-            {!isComplete && (
-              <Button
-                type="submit"
-                disabled={
-                  isCreatingInvite ||
-                  candidateBlocksSubmission ||
-                  !roleTemplates.some((role) => role.key === inviteRole)
-                }
-                variant="primary"
-                size="sm"
-                className="w-full text-xs uppercase tracking-widest sm:w-auto sm:min-w-40"
-              >
-                {isCreatingInvite && <Loader2 className="h-4 w-4 animate-spin" />}
-                {resolvedCandidate ? t('members.addMember') : t('members.createLink')}
-              </Button>
-            )}
-          </div>
-        </form>
+          )}
+        </div>
+      </form>
     </Dialog>
   );
 };

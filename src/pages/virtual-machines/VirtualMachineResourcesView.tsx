@@ -290,11 +290,11 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                         return (
                           <tr key={String(item.itemId || index)} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
                             <td className="max-w-[24rem] px-5 py-4">
-                              <p className="truncate text-sm font-bold text-ui-text">{String(item.name || t('virtualMachines.resources.item'))}</p>
+                              <p className="truncate type-row-title">{String(item.name || t('virtualMachines.resources.item'))}</p>
                               <p className="mt-1 truncate text-xs font-semibold text-ui-text-muted">{String(item.kind || '')}</p>
                             </td>
                             <td className="px-5 py-4 align-top">
-                              <span className="rounded-full bg-ui-bg px-2.5 py-1 text-xs font-bold capitalize text-ui-text-muted">
+                              <span className="rounded-full bg-ui-bg px-2.5 py-1 text-xs type-emphasis capitalize text-ui-text-muted">
                                 {category}
                               </span>
                             </td>
@@ -315,12 +315,12 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                   {filteredInventory.map((item, index) => (
                     <article key={String(item.itemId || index)} className="px-4 py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-ui-bg px-2.5 py-1 text-xs font-bold capitalize text-ui-text-muted">
+                        <span className="rounded-full bg-ui-bg px-2.5 py-1 text-xs type-emphasis capitalize text-ui-text-muted">
                           {getInventoryCategory(item) || t('virtualMachines.resources.inventory')}
                         </span>
                         <span className="text-xs font-semibold text-ui-text-muted">{getInventoryStatus(item)}</span>
                       </div>
-                      <h2 className="mt-3 truncate text-sm font-bold text-ui-text">{String(item.name || t('virtualMachines.resources.item'))}</h2>
+                      <h2 className="mt-3 truncate type-row-title">{String(item.name || t('virtualMachines.resources.item'))}</h2>
                       <p className="mt-1 break-words text-sm font-medium leading-6 text-ui-text-muted">{getInventoryDetail(item) || String(item.kind || t('virtualMachines.resources.noAdditionalDetail'))}</p>
                     </article>
                   ))}

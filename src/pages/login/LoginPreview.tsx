@@ -119,8 +119,8 @@ function StepCardFrame({ card }: { card: StepCard }) {
         }}
       >
         <div className="flex items-baseline" style={{ gap: px(8) }}>
-          <span className="font-bold text-accent-strong" style={{ fontSize: px(13) }}>{card.order}</span>
-          <span className="font-semibold tracking-[0.18em] text-ui-text-muted" style={{ fontSize: px(9.5) }}>
+          <span className="type-emphasis text-accent-strong" style={{ fontSize: px(13) }}>{card.order}</span>
+          <span className="type-micro-label" style={{ fontSize: px(9.5) }}>
             {card.phase}
           </span>
         </div>
@@ -319,7 +319,7 @@ export function LoginPreview({ showCards = true, showTagline = true }: LoginPrev
 
       {showTagline && (
         <div className="relative z-[2] max-w-[36rem]">
-          <h2 className="text-[1.9rem] font-semibold leading-[1.16] tracking-[-0.02em] text-ui-text">
+          <h2 className="type-route-title text-ui-text">
             collecting <span className="text-accent-strong">acorns</span> for everything ops
           </h2>
           <p className="mt-3 max-w-[31rem] text-base leading-relaxed text-ui-text-muted">

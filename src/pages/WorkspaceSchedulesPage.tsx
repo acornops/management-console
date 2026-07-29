@@ -578,7 +578,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
               {workflows.find((workflow) => workflow.id === draft.workflowId) ? (
                 <section className="grid gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-ui-text">{t('schedules.form.workflowInputs')}</h3>
+                    <h3 className="type-row-title text-ui-text">{t('schedules.form.workflowInputs')}</h3>
                     <p className="type-caption mt-1 text-ui-text-muted">{t('schedules.form.workflowInputsHelp')}</p>
                   </div>
                   <WorkflowParameterFields

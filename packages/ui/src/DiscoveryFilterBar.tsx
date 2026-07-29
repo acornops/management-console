@@ -29,9 +29,7 @@ export interface DiscoveryFilterGroup {
   onChange: (value: string) => void;
 }
 
-export function createDiscoveryFilterGroup<T extends string>(
-  definition: DiscoveryFilterGroupDefinition<T>
-): DiscoveryFilterGroup {
+export function createDiscoveryFilterGroup<T extends string>(definition: DiscoveryFilterGroupDefinition<T>): DiscoveryFilterGroup {
   return {
     ...definition,
     onChange: (value) => {
@@ -44,10 +42,7 @@ export function createDiscoveryFilterGroup<T extends string>(
 type FocusTarget = Pick<HTMLElement, 'focus'>;
 type FocusScheduler = (callback: () => void) => void;
 
-export function restoreDiscoveryFocus(
-  target: FocusTarget | null,
-  schedule?: FocusScheduler
-): void {
+export function restoreDiscoveryFocus(target: FocusTarget | null, schedule?: FocusScheduler): void {
   const focus = () => target?.focus();
   if (schedule) {
     schedule(focus);
@@ -75,9 +70,7 @@ export interface DiscoveryFilterBarProps {
 const filterOptionLabel = (option: DiscoveryFilterOption<string>) => (
   <span className="flex w-full min-w-0 items-center justify-between gap-3">
     <span className="min-w-0 truncate">{option.label}</span>
-    {typeof option.count === 'number' && (
-      <span className="type-data shrink-0 text-xs text-ui-text-muted">{option.count}</span>
-    )}
+    {typeof option.count === 'number' && <span className="type-data shrink-0 text-xs text-ui-text-muted">{option.count}</span>}
   </span>
 );
 
@@ -96,8 +89,7 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
 }) => {
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const hasQuery = query.length > 0;
-  const activeConditionCount = (query.trim() ? 1 : 0)
-    + filters.filter((filter) => filter.value !== filter.defaultValue).length;
+  const activeConditionCount = (query.trim() ? 1 : 0) + filters.filter((filter) => filter.value !== filter.defaultValue).length;
 
   const handleClearSearch = () => {
     onQueryChange('');
@@ -111,7 +103,9 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
 
   const search = (
     <div className="relative min-w-0">
-      <label htmlFor={`${idPrefix}-search`} className="sr-only">{queryLabel}</label>
+      <label htmlFor={`${idPrefix}-search`} className="sr-only">
+        {queryLabel}
+      </label>
       <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
       <PageSearchInput
         ref={searchInputRef}
@@ -155,37 +149,22 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
     />
   ));
 
-  const clearAllAction = activeConditionCount >= 2 ? (
-    <Button
-      type="button"
-      variant="tertiary"
-      size="md"
-      onClick={handleClearAll}
-      className="w-full whitespace-nowrap px-3 lg:w-auto"
-    >
-      {clearAllLabel}
-    </Button>
-  ) : undefined;
+  const clearAllAction =
+    activeConditionCount >= 2 ? (
+      <Button type="button" variant="tertiary" size="md" onClick={handleClearAll} className="w-full whitespace-nowrap px-3 lg:w-auto">
+        {clearAllLabel}
+      </Button>
+    ) : undefined;
 
   const liveResultSummary = (
-    <span
-      className="min-w-0 text-ui-text-muted type-caption tabular-nums lg:whitespace-nowrap"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >
+    <span className="min-w-0 text-ui-text-muted type-caption tabular-nums lg:whitespace-nowrap" role="status" aria-live="polite" aria-atomic="true">
       {resultSummary}
     </span>
   );
 
   return (
     <div data-discovery-filter-bar="true" className={className}>
-      <SearchFilterFrame
-        search={search}
-        filterControls={filterControls}
-        trailingActions={clearAllAction}
-        resultSummary={liveResultSummary}
-      />
+      <SearchFilterFrame search={search} filterControls={filterControls} trailingActions={clearAllAction} resultSummary={liveResultSummary} />
     </div>
   );
 };

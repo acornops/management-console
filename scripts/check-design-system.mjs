@@ -24,11 +24,11 @@ function productionFiles(directory) {
   }).filter((path) => ['.ts', '.tsx', '.css'].includes(extname(path)) && !path.includes('.test.'));
 }
 
-function jsxButtonOpenings(source) {
+function jsxOpenings(source, startPattern) {
   const openings = [];
-  const startPattern = /<(?:motion\.)?button\b/g;
   let match;
 
+  startPattern.lastIndex = 0;
   while ((match = startPattern.exec(source)) !== null) {
     let braceDepth = 0;
     let quote = '';
@@ -71,6 +71,9 @@ function report(path, rule, detail) {
 const files = [srcRoot, uiSourceRoot].flatMap(sourceFiles);
 const productionSources = [srcRoot, uiSourceRoot].flatMap(productionFiles);
 const namedTailwindPalette = /(?:^|[\s'"`])(?:[a-z-]+:)*(?:bg|text|border|divide|ring|outline|shadow|fill|stroke|from|via|to|decoration|caret|accent)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950)(?:\/[^\s'"`}]+)?/g;
+const prohibitedTypographyUtility = /(?:^|[\s'"`])(?:font-(?:bold|extrabold)|uppercase|tracking-(?:wider|widest)|tracking-\[[^\]]+\]|text-\[(?:9|10|11)px\]|text-\[(?:0\.5625|0\.625|0\.68|0\.6875)rem\])(?=$|[\s'"`}])/g;
+const canonicalHeadingRole = /(?:^|[\s'"`])type-(?:route-title|section-title|panel-title|row-title|data)(?=$|[\s'"`}])/;
+const prohibitedActionTypography = /(?:^|[\s'"`])(?:type-(?:label|micro-label|emphasis)|font-(?:bold|extrabold)|uppercase|tracking-(?:wide|wider|widest))(?=$|[\s'"`}])/;
 const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|navigationItemClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
 const canonicalButtonTarget = /(?:^|[\s'"`])(?:control-target|min-h-11|h-11|min-h-12|h-12|min-h-control|h-control)(?=$|[\s'"`])/;
 const canonicalModules = new Set([
@@ -99,6 +102,9 @@ for (const path of productionSources) {
   }
   if (/\bbackdrop-blur(?:-|\b)/.test(source)) {
     report(path, 'no-glass', 'backdrop blur is prohibited; use an opaque token scrim or surface');
+  }
+  for (const match of source.matchAll(prohibitedTypographyUtility)) {
+    report(path, 'semantic-typography', `${match[0].trim()} must be replaced by a documented semantic typography role`);
   }
 }
 
@@ -160,12 +166,24 @@ for (const path of files) {
     report(path, 'async-collection-state', 'compose loading and empty precedence through CollectionState or add a documented contextual exception');
   }
 
-  for (const opening of jsxButtonOpenings(source)) {
+  for (const opening of jsxOpenings(source, /<(?:motion\.)?button\b/g)) {
     const isDesktopSidebarNavigationRow = repoPath === 'src/app/AppDesktopSidebarParts.tsx' && /navButtonClass\(/.test(opening.source);
     if (!approvedButtonSizingHelpers.test(opening.source) && !canonicalButtonTarget.test(opening.source) && !isDesktopSidebarNavigationRow) {
       const line = source.slice(0, opening.start).split('\n').length;
       report(path, 'raw-button-target', `line ${line}: raw buttons require an approved shared sizing helper or a 44px mobile target (36px compact targets may begin at sm)`);
     }
+  }
+
+  for (const opening of jsxOpenings(source, /<(?:Button|(?:motion\.)?button)\b/g)) {
+    if (!prohibitedActionTypography.test(opening.source)) continue;
+    const line = source.slice(0, opening.start).split('\n').length;
+    report(path, 'action-typography', `line ${line}: actions use type-ui sentence case; label, emphasis, uppercase, and wide-tracking roles are prohibited`);
+  }
+
+  for (const opening of jsxOpenings(source, /<h[1-6]\b/g)) {
+    if (canonicalHeadingRole.test(opening.source)) continue;
+    const line = source.slice(0, opening.start).split('\n').length;
+    report(path, 'heading-typography', `line ${line}: headings require a canonical route, section, panel, row, or data typography role`);
   }
 }
 

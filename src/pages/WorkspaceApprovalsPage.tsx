@@ -234,7 +234,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
           ].map((metric) => (
             <div key={metric.labelKey} className="px-4 py-3">
               <div className="type-micro-label text-ui-text-muted">{t(metric.labelKey)}</div>
-              <div className="mt-1 text-sm font-bold text-ui-text">{metric.value}</div>
+              <div className="mt-1 type-row-title">{metric.value}</div>
             </div>
           ))}
         </div>

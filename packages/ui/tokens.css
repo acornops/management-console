@@ -238,6 +238,14 @@
   line-height: 1.25rem;
 }
 
+.type-emphasis {
+  font-weight: 600;
+}
+
+.type-wordmark {
+  font-weight: 700;
+}
+
 .type-caption {
   color: var(--ao-text-muted);
   font-size: 0.75rem;

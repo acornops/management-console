@@ -29,10 +29,7 @@ interface CreateWorkspaceModalProps {
   onCreateWorkspace: (name: string) => Promise<Workspace>;
   onOpenAiSettings: (workspaceId: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
-  onCreateWorkspaceInvitation: (
-    workspaceId: string,
-    input: { email: string; role: ProjectMember['role'] }
-  ) => Promise<WorkspaceInvitation>;
+  onCreateWorkspaceInvitation: (workspaceId: string, input: { email: string; role: ProjectMember['role'] }) => Promise<WorkspaceInvitation>;
 }
 
 export const MAX_CREATE_WORKSPACE_INVITE_ROWS = 5;
@@ -123,18 +120,25 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     [t]
   );
   const roleOptions: Array<SelectOption<ProjectMember['role']>> = React.useMemo(
-    () => roleTemplates.map((role) => ({ value: role.key, label: formatRole(role.key, role) })),
+    () =>
+      roleTemplates.map((role) => ({
+        value: role.key,
+        label: formatRole(role.key, role)
+      })),
     [roleTemplates]
   );
   const hasCreatedInvite = inviteRows.some((row) => row.status === 'created');
   const hasRowsToSubmit = getSubmittableInviteRows(inviteRows).length > 0;
   const closeDisabled = isCreatingWorkspace || isCreatingInvites;
 
-  React.useEffect(() => () => {
-    if (copiedInviteTimerRef.current) {
-      window.clearTimeout(copiedInviteTimerRef.current);
-    }
-  }, []);
+  React.useEffect(
+    () => () => {
+      if (copiedInviteTimerRef.current) {
+        window.clearTimeout(copiedInviteTimerRef.current);
+      }
+    },
+    []
+  );
 
   React.useEffect(() => {
     if (isOpen) return;
@@ -211,11 +215,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
 
   const addInviteRow = () => {
     const nextRole = defaultInviteRole(roleTemplates);
-    setInviteRows((current) =>
-      current.length >= MAX_CREATE_WORKSPACE_INVITE_ROWS
-        ? current
-        : [...current, createInviteRow(nextRole)]
-    );
+    setInviteRows((current) => (current.length >= MAX_CREATE_WORKSPACE_INVITE_ROWS ? current : [...current, createInviteRow(nextRole)]));
   };
 
   const removeInviteRow = (rowId: string) => {
@@ -296,9 +296,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     setIsCreatingInvites(true);
     setInviteSummaryError(null);
     const rowIds = new Set(rowsToSubmit.map((row) => row.id));
-    setInviteRows((current) =>
-      current.map((row) => rowIds.has(row.id) ? { ...row, status: 'creating', error: undefined } : row)
-    );
+    setInviteRows((current) => current.map((row) => (rowIds.has(row.id) ? { ...row, status: 'creating', error: undefined } : row)));
 
     const results = await Promise.allSettled(
       rowsToSubmit.map(async (row) => {
@@ -358,7 +356,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       }
       setCopiedInviteRowId(row.id);
       copiedInviteTimerRef.current = window.setTimeout(() => {
-        setCopiedInviteRowId((current) => current === row.id ? null : current);
+        setCopiedInviteRowId((current) => (current === row.id ? null : current));
         copiedInviteTimerRef.current = null;
       }, 2200);
     } catch {
@@ -376,16 +374,12 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     >
       <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
         <div>
-          <h3 id="create-workspace-title" className="text-sm font-extrabold tracking-tight text-ui-text">
+          <h3 id="create-workspace-title" className="type-panel-title">
             {t('app.createWorkspace')}
           </h3>
           <ModalStepIndicator steps={createSteps} currentStepId={step} compactOnMobile className="mt-4" />
         </div>
-        <CloseButton
-          onClick={onClose}
-          disabled={closeDisabled}
-          aria-label={t('app.closeCreateWorkspaceDialog')}
-        />
+        <CloseButton onClick={onClose} disabled={closeDisabled} aria-label={t('app.closeCreateWorkspaceDialog')} />
       </div>
 
       {step === 'details' ? (
@@ -393,7 +387,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
           <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 custom-scrollbar md:grid-cols-[minmax(0,1fr)_18rem]">
             <div className="space-y-5 rounded-lg border border-ui-border bg-ui-bg p-5">
               <section className="space-y-3">
-                <label htmlFor="create-workspace-name-input" className="block px-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
+                <label htmlFor="create-workspace-name-input" className="block px-1 type-micro-label">
                   {t('app.workspaceName')}
                 </label>
                 <TextInput
@@ -422,9 +416,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                 </span>
                 <div>
                   <h4 className="type-row-title">{t('workspaceCreate.ownerAccessTitle')}</h4>
-                  <p className="type-caption mt-2 text-ui-text-muted">
-                    {t('workspaceCreate.ownerAccessBody')}
-                  </p>
+                  <p className="type-caption mt-2 text-ui-text-muted">{t('workspaceCreate.ownerAccessBody')}</p>
                 </div>
               </div>
             </aside>
@@ -471,14 +463,20 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                   <div key={row.id} className="rounded-lg border border-ui-border bg-ui-surface p-4">
                     <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-start">
                       <div className="space-y-2">
-                        <label htmlFor={`create-workspace-invite-${row.id}-email`} className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                          {t('workspaceCreate.inviteEmailLabel', { number: index + 1 })}
+                        <label htmlFor={`create-workspace-invite-${row.id}-email`} className="block type-label">
+                          {t('workspaceCreate.inviteEmailLabel', {
+                            number: index + 1
+                          })}
                         </label>
                         <TextInput
                           id={`create-workspace-invite-${row.id}-email`}
                           type="email"
                           value={row.email}
-                          onChange={(event) => updateInviteRow(row.id, { email: event.target.value })}
+                          onChange={(event) =>
+                            updateInviteRow(row.id, {
+                              email: event.target.value
+                            })
+                          }
                           disabled={rowDisabled}
                           placeholder={t('members.emailPlaceholder')}
                           className={`px-4 ${row.error ? fieldInvalidClass : ''}`}
@@ -489,7 +487,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor={`create-workspace-invite-${row.id}-role`} className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
+                        <label htmlFor={`create-workspace-invite-${row.id}-role`} className="block type-label">
                           {t('members.role')}
                         </label>
                         <Select<ProjectMember['role']>
@@ -519,18 +517,13 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
 
                     {row.status === 'created' && row.invitation && (
                       <div className="mt-4 space-y-3 border-t border-ui-border pt-4">
-                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">
+                        <div className="flex items-center gap-2 type-label">
                           <Check className="h-4 w-4 text-status-success-text" aria-hidden="true" />
                           {t('workspaceCreate.inviteCreated')}
                         </div>
                         <div className="flex flex-col gap-2 sm:flex-row">
-                          <TextInput
-                            readOnly
-                            value={row.invitation.inviteLink || ''}
-                            onFocus={(event) => event.currentTarget.select()}
-                            className="min-w-0 flex-1"
-                          />
-                          <Button onClick={() => void copyInviteLink(row)} variant="secondary" size="sm" className="uppercase tracking-widest">
+                          <TextInput readOnly value={row.invitation.inviteLink || ''} onFocus={(event) => event.currentTarget.select()} className="min-w-0 flex-1" />
+                          <Button onClick={() => void copyInviteLink(row)} variant="secondary" size="sm" className="type-ui">
                             {copiedInviteRowId === row.id ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                             {copiedInviteRowId === row.id ? t('members.copied') : t('members.copy')}
                           </Button>
@@ -553,7 +546,10 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                 {t('workspaceCreate.addInviteRow')}
               </Button>
               <span className="text-xs font-semibold text-ui-text-muted">
-                {t('workspaceCreate.inviteRowLimit', { count: inviteRows.length, max: MAX_CREATE_WORKSPACE_INVITE_ROWS })}
+                {t('workspaceCreate.inviteRowLimit', {
+                  count: inviteRows.length,
+                  max: MAX_CREATE_WORKSPACE_INVITE_ROWS
+                })}
               </span>
             </div>
 
@@ -590,9 +586,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
               </span>
               <p className="type-micro-label mt-5 text-accent-strong">{t('workspaceCreate.aiSetupKicker')}</p>
               <h4 className="type-section-title mt-2 text-ui-text">{t('workspaceCreate.aiSetupTitle')}</h4>
-              <p className="type-body mt-2 max-w-[65ch] text-ui-text-muted">
-                {t('workspaceCreate.aiSetupBody')}
-              </p>
+              <p className="type-body mt-2 max-w-[65ch] text-ui-text-muted">{t('workspaceCreate.aiSetupBody')}</p>
 
               <div className="mt-6 divide-y divide-ui-border border-y border-ui-border">
                 <div className="flex items-start gap-3 py-4">

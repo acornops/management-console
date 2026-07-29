@@ -7,12 +7,7 @@ import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
 import { ClusterTelemetryPanel } from '@/components/dashboard/ClusterTelemetryPanel';
 import { ICONS } from '@/constants';
-import {
-  TargetCatalogActionHint,
-  TargetCatalogActionMenu,
-  TargetCatalogCard,
-  TargetCatalogStatusPill
-} from '@/features/targets/catalog/TargetCatalogPrimitives';
+import { TargetCatalogActionHint, TargetCatalogActionMenu, TargetCatalogCard, TargetCatalogStatusPill } from '@/features/targets/catalog/TargetCatalogPrimitives';
 import { useCatalogNow } from '@/features/targets/catalog/useCatalogNow';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { HealthStatus, KubernetesCluster } from '@/types';
@@ -74,8 +69,10 @@ function getClusterStatusLabel(cluster: KubernetesCluster, requiresAgentInstall:
 function getClusterStatusClass(cluster: KubernetesCluster, requiresAgentInstall: boolean, issueSummary?: ControlPlaneTargetIssueSummary): string {
   const status = getEffectiveHealthStatus(cluster);
   if (requiresAgentInstall) return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
-  if (getAgentConnectionState(cluster) === 'disconnected' || status === HealthStatus.RED || (issueSummary?.critical ?? 0) > 0) return 'border-status-danger/25 bg-status-danger-soft text-status-danger-text';
-  if (status === HealthStatus.YELLOW || (issueSummary?.warning ?? 0) > 0 || (issueSummary?.active ?? 0) > 0) return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
+  if (getAgentConnectionState(cluster) === 'disconnected' || status === HealthStatus.RED || (issueSummary?.critical ?? 0) > 0)
+    return 'border-status-danger/25 bg-status-danger-soft text-status-danger-text';
+  if (status === HealthStatus.YELLOW || (issueSummary?.warning ?? 0) > 0 || (issueSummary?.active ?? 0) > 0)
+    return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
   return 'border-status-success/25 bg-status-success-soft text-status-success-text';
 }
 
@@ -90,13 +87,17 @@ function getClusterStateReason(
   const agentState = getAgentConnectionState(cluster);
   if (requiresAgentInstall) return t('dashboard.clusterStateInstallAgent');
   if (agentState === 'disconnected') return t('dashboard.clusterStateAgentOffline');
-  if (issueSummaryLoadState === 'error') return issueSummary
-    ? t('dashboard.clusterStateIssuesRefreshFailed')
-    : t('dashboard.clusterStateIssuesUnavailable');
+  if (issueSummaryLoadState === 'error') return issueSummary ? t('dashboard.clusterStateIssuesRefreshFailed') : t('dashboard.clusterStateIssuesUnavailable');
   if (!issueSummary) return t('dashboard.clusterStateCheckingIssues');
-  if (issueSummary.critical > 0) return t('dashboard.clusterStateCriticalIssues', { count: issueSummary.critical });
+  if (issueSummary.critical > 0)
+    return t('dashboard.clusterStateCriticalIssues', {
+      count: issueSummary.critical
+    });
   if (status === HealthStatus.RED) return t('dashboard.clusterStateCritical');
-  if (issueSummary.warning > 0) return t('dashboard.clusterStateWarningIssues', { count: issueSummary.warning });
+  if (issueSummary.warning > 0)
+    return t('dashboard.clusterStateWarningIssues', {
+      count: issueSummary.warning
+    });
   if (issueSummary.active > 0) return t('dashboard.clusterStateIssues', { count: issueSummary.active });
   if (status === HealthStatus.YELLOW) return t('dashboard.clusterStateWarning');
   return t('dashboard.clusterStateClear');
@@ -113,14 +114,11 @@ function getClusterScopeLabel(cluster: KubernetesCluster, t: Translate): string 
 function getClusterResourceCount(cluster: KubernetesCluster): number {
   const summaryCount = cluster.resourceSummary?.resourceCount;
   if (typeof summaryCount === 'number' && Number.isFinite(summaryCount)) return summaryCount;
-  return cluster.workloads.length + cluster.services.length + cluster.ingresses.length +
-    cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
+  return cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
 }
 
 function getWriteGuardLabel(cluster: KubernetesCluster, t: Translate): string {
-  return cluster.writeConfirmationPolicy?.effectiveRequired ?? true
-    ? t('clusterSetup.writeConfirmationsRequired')
-    : t('clusterSetup.writeConfirmationsNotRequired');
+  return cluster.writeConfirmationPolicy?.effectiveRequired ?? true ? t('clusterSetup.writeConfirmationsRequired') : t('clusterSetup.writeConfirmationsNotRequired');
 }
 
 const ClusterStatusPill: React.FC<{
@@ -130,11 +128,7 @@ const ClusterStatusPill: React.FC<{
   label: string;
   reason: string;
 }> = ({ cluster, requiresAgentInstall, issueSummary, label, reason }) => (
-  <TargetCatalogStatusPill
-    label={label}
-    reason={reason}
-    toneClassName={getClusterStatusClass(cluster, requiresAgentInstall, issueSummary)}
-  />
+  <TargetCatalogStatusPill label={label} reason={reason} toneClassName={getClusterStatusClass(cluster, requiresAgentInstall, issueSummary)} />
 );
 
 const ClusterMetadata: React.FC<{ cluster: KubernetesCluster }> = ({ cluster }) => {
@@ -167,20 +161,28 @@ const ClusterActionMenu: React.FC<{
 }> = ({ cluster, isOpen, onOpenChange, onOpenSettings, canDeleteCluster, onOpenDelete }) => {
   const { t } = useTranslation();
   return (
-    <TargetCatalogActionMenu
-      targetKind="cluster"
-      label={t('dashboard.clusterActionsFor', { name: cluster.name })}
-      open={isOpen}
-      onOpenChange={onOpenChange}
-    >
+    <TargetCatalogActionMenu targetKind="cluster" label={t('dashboard.clusterActionsFor', { name: cluster.name })} open={isOpen} onOpenChange={onOpenChange}>
       {onOpenSettings && (
-        <MenuItem data-cluster-overflow-action="settings" onClick={() => { onOpenChange(false); onOpenSettings(cluster); }}>
+        <MenuItem
+          data-cluster-overflow-action="settings"
+          onClick={() => {
+            onOpenChange(false);
+            onOpenSettings(cluster);
+          }}
+        >
           <Settings className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
           {t('dashboard.clusterSettings')}
         </MenuItem>
       )}
       {canDeleteCluster && (
-        <MenuItem data-cluster-overflow-action="delete" destructive onClick={() => { onOpenChange(false); onOpenDelete(cluster); }}>
+        <MenuItem
+          data-cluster-overflow-action="delete"
+          destructive
+          onClick={() => {
+            onOpenChange(false);
+            onOpenDelete(cluster);
+          }}
+        >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
           {t('dashboard.deleteCluster')}
         </MenuItem>
@@ -205,18 +207,25 @@ interface ClusterItemProps {
   onInstallAgent?: (clusterId: string) => void;
 }
 
-function useClusterPresentation(cluster: KubernetesCluster, issueSummary: ControlPlaneTargetIssueSummary | undefined, issueSummaryLoadState: 'loading' | 'ready' | 'error' | undefined) {
+function useClusterPresentation(
+  cluster: KubernetesCluster,
+  issueSummary: ControlPlaneTargetIssueSummary | undefined,
+  issueSummaryLoadState: 'loading' | 'ready' | 'error' | undefined
+) {
   const { t } = useTranslation();
   const agentState = getAgentConnectionState(cluster);
   const requiresAgentInstall = agentState === 'not_installed';
   const statusLabel = getClusterStatusLabel(cluster, requiresAgentInstall, issueSummary, t);
   const statusReason = getClusterStateReason(cluster, requiresAgentInstall, issueSummary, issueSummaryLoadState, t);
-  const actionLabel = requiresAgentInstall
-    ? t('dashboard.setUp')
-    : clusterNeedsAttention(cluster, issueSummary)
-      ? t('dashboard.investigate')
-      : t('dashboard.openCluster');
-  return { t, agentState, requiresAgentInstall, statusLabel, statusReason, actionLabel };
+  const actionLabel = requiresAgentInstall ? t('dashboard.setUp') : clusterNeedsAttention(cluster, issueSummary) ? t('dashboard.investigate') : t('dashboard.openCluster');
+  return {
+    t,
+    agentState,
+    requiresAgentInstall,
+    statusLabel,
+    statusReason,
+    actionLabel
+  };
 }
 
 const ClusterSetupTelemetry: React.FC<{
@@ -269,9 +278,18 @@ const ClusterSetupTelemetry: React.FC<{
           </div>
         </div>
         <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 font-medium text-ui-text-muted" aria-hidden="true">
-          <span className="truncate"><span className="xl:hidden min-[1440px]:inline">{t('dashboard.clusterRegistered')}</span><span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.clusterRegisteredShort')}</span></span>
-          <span className="truncate text-center"><span className="xl:hidden min-[1440px]:inline">{t('dashboard.telemetryPending')}</span><span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.telemetryPendingShort')}</span></span>
-          <span className="truncate text-right"><span className="xl:hidden min-[1440px]:inline">{t('dashboard.agentRequired')}</span><span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.agentRequiredShort')}</span></span>
+          <span className="truncate">
+            <span className="xl:hidden min-[1440px]:inline">{t('dashboard.clusterRegistered')}</span>
+            <span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.clusterRegisteredShort')}</span>
+          </span>
+          <span className="truncate text-center">
+            <span className="xl:hidden min-[1440px]:inline">{t('dashboard.telemetryPending')}</span>
+            <span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.telemetryPendingShort')}</span>
+          </span>
+          <span className="truncate text-right">
+            <span className="xl:hidden min-[1440px]:inline">{t('dashboard.agentRequired')}</span>
+            <span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.agentRequiredShort')}</span>
+          </span>
         </div>
       </div>
     </section>
@@ -281,21 +299,38 @@ const ClusterSetupTelemetry: React.FC<{
 const ClusterOperationalDetails: React.FC<{ cluster: KubernetesCluster }> = ({ cluster }) => {
   const { t } = useTranslation();
   const details = [
-    { label: t('dashboard.scope'), compactLabel: t('dashboard.scope'), value: getClusterScopeLabel(cluster, t), Icon: ICONS.Layers },
-    { label: t('dashboard.writeGuard'), compactLabel: t('dashboard.writeGuardShort'), value: getWriteGuardLabel(cluster, t), Icon: ICONS.Shield },
-    { label: t('resources.title'), compactLabel: t('dashboard.resourceCountShort'), value: String(getClusterResourceCount(cluster)), Icon: ICONS.Box }
+    {
+      label: t('dashboard.scope'),
+      compactLabel: t('dashboard.scope'),
+      value: getClusterScopeLabel(cluster, t),
+      Icon: ICONS.Layers
+    },
+    {
+      label: t('dashboard.writeGuard'),
+      compactLabel: t('dashboard.writeGuardShort'),
+      value: getWriteGuardLabel(cluster, t),
+      Icon: ICONS.Shield
+    },
+    {
+      label: t('resources.title'),
+      compactLabel: t('dashboard.resourceCountShort'),
+      value: String(getClusterResourceCount(cluster)),
+      Icon: ICONS.Box
+    }
   ];
 
   return (
     <dl className="mx-4 grid grid-cols-3 gap-3 border-t border-ui-border/60 pb-4 pt-3">
       {details.map(({ label, compactLabel, value, Icon }) => (
         <div key={label} className="min-w-0">
-          <dt className="type-micro-label flex min-w-0 items-center gap-0.5 text-ui-text-muted tracking-[0.02em]" title={label}>
+          <dt className="type-micro-label flex min-w-0 items-center gap-0.5 text-ui-text-muted" title={label}>
             <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="hidden truncate 2xl:inline">{label}</span>
             <span className="truncate 2xl:hidden">{compactLabel}</span>
           </dt>
-          <dd className="type-caption mt-1 break-words font-semibold leading-4 text-ui-text [overflow-wrap:anywhere]" title={value}>{value}</dd>
+          <dd className="type-caption mt-1 break-words font-semibold leading-4 text-ui-text [overflow-wrap:anywhere]" title={value}>
+            {value}
+          </dd>
         </div>
       ))}
     </dl>
@@ -308,51 +343,60 @@ const ClusterCatalogCard: React.FC<ClusterItemProps> = (props) => {
   const actionLabelNamed = view.requiresAgentInstall
     ? view.t('dashboard.installAgentNamed', { name: cluster.name })
     : clusterNeedsAttention(cluster, issueSummary)
-      ? view.t('dashboard.investigateClusterNamed', { name: cluster.name })
-      : view.t('dashboard.viewClusterNamed', { name: cluster.name });
+    ? view.t('dashboard.investigateClusterNamed', { name: cluster.name })
+    : view.t('dashboard.viewClusterNamed', { name: cluster.name });
   return (
     <TargetCatalogCard
       targetKind="cluster"
       actionLabel={actionLabelNamed}
       disabled={view.requiresAgentInstall && !props.onInstallAgent}
-      onActivate={() => view.requiresAgentInstall ? props.onInstallAgent?.(cluster.id) : props.onSelectKubernetesCluster(cluster)}
+      onActivate={() => (view.requiresAgentInstall ? props.onInstallAgent?.(cluster.id) : props.onSelectKubernetesCluster(cluster))}
     >
-        <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong"><ICONS.Layers className="h-4 w-4" /></span>
-            <div className="min-w-0 flex-1">
-              <h3 className="type-panel-title break-words text-ui-text">{cluster.name}</h3>
-              <ClusterMetadata cluster={cluster} />
-              {!view.requiresAgentInstall && <TargetCatalogActionHint label={view.actionLabel} />}
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <div className="xl:hidden 2xl:block">
-              <ClusterStatusPill cluster={cluster} requiresAgentInstall={view.requiresAgentInstall} issueSummary={issueSummary} label={view.statusLabel} reason={view.statusReason} />
-            </div>
-            <ClusterActionMenu
-              cluster={cluster}
-              isOpen={props.openClusterActionMenuId === cluster.id}
-              onOpenChange={(open) => props.onOpenClusterActionMenuChange(open ? cluster.id : null)}
-              onOpenSettings={view.requiresAgentInstall ? undefined : props.onOpenSettings}
-              canDeleteCluster={props.canDeleteCluster}
-              onOpenDelete={props.onOpenDelete}
-            />
+      <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong">
+            <ICONS.Layers className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="type-panel-title break-words text-ui-text">{cluster.name}</h3>
+            <ClusterMetadata cluster={cluster} />
+            {!view.requiresAgentInstall && <TargetCatalogActionHint label={view.actionLabel} />}
           </div>
         </div>
-        <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
-          <ClusterStatusPill cluster={cluster} requiresAgentInstall={view.requiresAgentInstall} issueSummary={issueSummary} label={view.statusLabel} reason={view.statusReason} />
+        <div className="flex shrink-0 items-center gap-1">
+          <div className="xl:hidden 2xl:block">
+            <ClusterStatusPill cluster={cluster} requiresAgentInstall={view.requiresAgentInstall} issueSummary={issueSummary} label={view.statusLabel} reason={view.statusReason} />
+          </div>
+          <ClusterActionMenu
+            cluster={cluster}
+            isOpen={props.openClusterActionMenuId === cluster.id}
+            onOpenChange={(open) => props.onOpenClusterActionMenuChange(open ? cluster.id : null)}
+            onOpenSettings={view.requiresAgentInstall ? undefined : props.onOpenSettings}
+            canDeleteCluster={props.canDeleteCluster}
+            onOpenDelete={props.onOpenDelete}
+          />
         </div>
+      </div>
+      <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
+        <ClusterStatusPill cluster={cluster} requiresAgentInstall={view.requiresAgentInstall} issueSummary={issueSummary} label={view.statusLabel} reason={view.statusReason} />
+      </div>
 
-        {view.requiresAgentInstall
-          ? <ClusterSetupTelemetry cluster={cluster} onInstallAgent={props.onInstallAgent} />
-          : <ClusterTelemetryPanel cluster={cluster} now={now} compact loadState={props.metricLoadState} onRetry={props.onRetryTelemetry} />}
-        <ClusterOperationalDetails cluster={cluster} />
+      {view.requiresAgentInstall ? (
+        <ClusterSetupTelemetry cluster={cluster} onInstallAgent={props.onInstallAgent} />
+      ) : (
+        <ClusterTelemetryPanel cluster={cluster} now={now} compact loadState={props.metricLoadState} onRetry={props.onRetryTelemetry} />
+      )}
+      <ClusterOperationalDetails cluster={cluster} />
     </TargetCatalogCard>
   );
 };
 
-const ClusterCatalogEmptyState: React.FC<{ filtered: boolean; isLoading: boolean; loadError: boolean; onRetry?: () => void }> = ({ filtered, isLoading, loadError, onRetry }) => {
+const ClusterCatalogEmptyState: React.FC<{
+  filtered: boolean;
+  isLoading: boolean;
+  loadError: boolean;
+  onRetry?: () => void;
+}> = ({ filtered, isLoading, loadError, onRetry }) => {
   const { t } = useTranslation();
   const EmptyIcon = loadError ? ICONS.AlertCircle : filtered ? ICONS.Search : ICONS.Layers;
   return (
@@ -360,12 +404,22 @@ const ClusterCatalogEmptyState: React.FC<{ filtered: boolean; isLoading: boolean
       headingLevel={3}
       icon={<EmptyIcon />}
       title={isLoading ? t('dashboard.loadingClusters') : loadError ? t('dashboard.clusterLoadFailed') : filtered ? t('dashboard.noMatchingClusters') : t('dashboard.noClusters')}
-      description={isLoading ? t('dashboard.loadingClustersBody') : loadError ? t('dashboard.clusterLoadFailedBody') : filtered ? t('dashboard.noMatchingClustersBody') : t('dashboard.noClustersBody')}
-      actions={!isLoading && loadError && onRetry ? (
+      description={
+        isLoading
+          ? t('dashboard.loadingClustersBody')
+          : loadError
+          ? t('dashboard.clusterLoadFailedBody')
+          : filtered
+          ? t('dashboard.noMatchingClustersBody')
+          : t('dashboard.noClustersBody')
+      }
+      actions={
+        !isLoading && loadError && onRetry ? (
           <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
             {t('common.retry')}
           </Button>
-      ) : undefined}
+        ) : undefined
+      }
     />
   );
 };
@@ -394,10 +448,14 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
 }) => {
   const { t } = useTranslation();
   const now = useCatalogNow();
-  const sortedClusters = useMemo(() => [...kubernetesClusters].sort((left, right) => {
-    const priorityDifference = getClusterPriority(left, issueSummaryByClusterId[left.id]) - getClusterPriority(right, issueSummaryByClusterId[right.id]);
-    return priorityDifference || left.name.localeCompare(right.name);
-  }), [issueSummaryByClusterId, kubernetesClusters]);
+  const sortedClusters = useMemo(
+    () =>
+      [...kubernetesClusters].sort((left, right) => {
+        const priorityDifference = getClusterPriority(left, issueSummaryByClusterId[left.id]) - getClusterPriority(right, issueSummaryByClusterId[right.id]);
+        return priorityDifference || left.name.localeCompare(right.name);
+      }),
+    [issueSummaryByClusterId, kubernetesClusters]
+  );
 
   const itemProps = (cluster: KubernetesCluster): ClusterItemProps => ({
     cluster,
@@ -417,23 +475,30 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
 
   return (
     <section id="cluster-catalog-panel" data-cluster-catalog="true" aria-labelledby="cluster-catalog-heading" className="grid min-w-0 shrink-0 content-start gap-4">
-      <h2 id="cluster-catalog-heading" className="sr-only">{t('dashboard.clusterCatalog')}</h2>
-      {controls && (
-        <div data-cluster-catalog-controls="true">{controls}</div>
-      )}
+      <h2 id="cluster-catalog-heading" className="type-section-title sr-only">
+        {t('dashboard.clusterCatalog')}
+      </h2>
+      {controls && <div data-cluster-catalog-controls="true">{controls}</div>}
 
       {loadError && sortedClusters.length > 0 && (
-        <div role="alert" className="flex flex-col gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
+        <div
+          role="alert"
+          className="flex flex-col gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between"
+        >
           <div className="min-w-0">
             <p className="type-row-title">{t('dashboard.clusterLoadFailed')}</p>
             <p className="type-caption mt-1 text-status-danger-text/80">{t('dashboard.clusterLoadFailedBody')}</p>
           </div>
-          {onRetry && <Button type="button" variant="secondary" size="sm" onClick={onRetry} className="shrink-0">{t('common.retry')}</Button>}
+          {onRetry && (
+            <Button type="button" variant="secondary" size="sm" onClick={onRetry} className="shrink-0">
+              {t('common.retry')}
+            </Button>
+          )}
         </div>
       )}
 
       <CollectionState
-        phase={loadError ? 'error' : isLoading ? sortedClusters.length > 0 ? 'refreshing' : 'loading' : 'ready'}
+        phase={loadError ? 'error' : isLoading ? (sortedClusters.length > 0 ? 'refreshing' : 'loading') : 'ready'}
         itemCount={sortedClusters.length}
         filtered={hasActiveFilter}
         loading={<ClusterCatalogEmptyState filtered={false} isLoading loadError={false} onRetry={onRetry} />}
@@ -442,7 +507,9 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
         error={<ClusterCatalogEmptyState filtered={hasActiveFilter} isLoading={false} loadError onRetry={onRetry} />}
       >
         <div data-cluster-card-grid="true" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {sortedClusters.map((cluster) => <ClusterCatalogCard key={cluster.id} {...itemProps(cluster)} />)}
+          {sortedClusters.map((cluster) => (
+            <ClusterCatalogCard key={cluster.id} {...itemProps(cluster)} />
+          ))}
         </div>
       </CollectionState>
       {footer && <div className="shrink-0">{footer}</div>}

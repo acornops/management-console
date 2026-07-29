@@ -10,14 +10,7 @@ interface ChatEmptyPromptProps {
   onSendSuggestion: (suggestion: string) => void | Promise<void>;
 }
 
-export function ChatEmptyPrompt({
-  isPanel,
-  title,
-  body,
-  suggestions,
-  canSendSuggestion,
-  onSendSuggestion
-}: ChatEmptyPromptProps) {
+export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSuggestion, onSendSuggestion }: ChatEmptyPromptProps) {
   const shouldReduceMotion = useReducedMotion();
 
   return (
@@ -32,12 +25,8 @@ export function ChatEmptyPrompt({
             <BotMessageSquare className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h2 className={`${isPanel ? 'text-lg' : 'text-xl'} font-semibold tracking-tight text-ui-text`}>
-              {title}
-            </h2>
-            <p className={`${isPanel ? 'mt-2 text-sm' : 'mt-2 max-w-2xl text-sm'} leading-6 text-ui-text-muted`}>
-              {body}
-            </p>
+            <h2 className={`type-section-title ${isPanel ? '' : ''} text-ui-text`}>{title}</h2>
+            <p className={`${isPanel ? 'mt-2 text-sm' : 'mt-2 max-w-2xl text-sm'} leading-6 text-ui-text-muted`}>{body}</p>
           </div>
         </div>
       </div>
@@ -64,31 +53,23 @@ export function ChatTranscriptSkeleton({ isPanel, label }: { isPanel: boolean; l
     <div className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} mx-auto space-y-5 pb-2`} aria-busy="true" role="status" aria-live="polite">
       <span className="sr-only">{label}</span>
       <div aria-hidden="true" className="contents">
-      <div className="flex w-full justify-end">
-        <div className="h-16 w-[min(28rem,78%)] animate-pulse rounded-lg bg-ui-text/10 motion-reduce:animate-none" />
-      </div>
-      <div className="w-full max-w-[72ch] space-y-3">
-        <div className="h-4 w-28 animate-pulse rounded bg-ui-text-muted/15 motion-reduce:animate-none" />
-        <div className="h-4 w-[72%] animate-pulse rounded bg-ui-text-muted/15 motion-reduce:animate-none" />
-        <div className="h-4 w-[46%] animate-pulse rounded bg-ui-text-muted/10 motion-reduce:animate-none" />
-      </div>
-      <div className="w-full max-w-[72ch] border-t border-ui-border/70 pt-3">
-        <div className="h-9 w-[min(34rem,90%)] animate-pulse rounded-md bg-ui-surface motion-reduce:animate-none" />
-      </div>
+        <div className="flex w-full justify-end">
+          <div className="h-16 w-[min(28rem,78%)] animate-pulse rounded-lg bg-ui-text/10 motion-reduce:animate-none" />
+        </div>
+        <div className="w-full max-w-[72ch] space-y-3">
+          <div className="h-4 w-28 animate-pulse rounded bg-ui-text-muted/15 motion-reduce:animate-none" />
+          <div className="h-4 w-[72%] animate-pulse rounded bg-ui-text-muted/15 motion-reduce:animate-none" />
+          <div className="h-4 w-[46%] animate-pulse rounded bg-ui-text-muted/10 motion-reduce:animate-none" />
+        </div>
+        <div className="w-full max-w-[72ch] border-t border-ui-border/70 pt-3">
+          <div className="h-9 w-[min(34rem,90%)] animate-pulse rounded-md bg-ui-surface motion-reduce:animate-none" />
+        </div>
       </div>
     </div>
   );
 }
 
-export function ChatTranscriptLoadError({
-  isPanel,
-  title,
-  body
-}: {
-  isPanel: boolean;
-  title: string;
-  body: string;
-}) {
+export function ChatTranscriptLoadError({ isPanel, title, body }: { isPanel: boolean; title: string; body: string }) {
   return (
     <div className={`mx-auto ${isPanel ? 'max-w-3xl pt-2' : 'max-w-4xl pt-6 lg:pt-10'}`} role="status">
       <div className="flex max-w-[72ch] items-start gap-3 border-t border-ui-border pt-4 text-sm">

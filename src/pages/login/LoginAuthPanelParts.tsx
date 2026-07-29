@@ -8,30 +8,18 @@ export const inputClass = formInputClassName('px-4');
 export const iconInputClass = `${inputClass} pl-10`;
 export const passwordInputClass = `${iconInputClass} pr-11`;
 export const invalidInputClass = fieldInvalidClass;
-export const primaryButtonClass = 'flex w-full items-center justify-center gap-2 rounded-lg border border-control-boundary bg-control-primary px-4 py-3 text-sm font-bold text-control-primary-fg transition-colors hover:bg-control-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg disabled:cursor-not-allowed disabled:opacity-60';
-export const secondaryButtonClass = 'w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2.5 text-sm font-bold text-ui-text transition-colors hover:bg-ui-surface focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60';
+export const primaryButtonClass =
+  'type-ui flex w-full items-center justify-center gap-2 rounded-lg border border-control-boundary bg-control-primary px-4 py-3 text-control-primary-fg transition-colors hover:bg-control-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg disabled:cursor-not-allowed disabled:opacity-60';
+export const secondaryButtonClass =
+  'type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2.5 transition-colors hover:bg-ui-surface focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60';
 
-export function NoticeCard({
-  icon,
-  title,
-  body,
-  status,
-  danger
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-  status?: string;
-  danger?: boolean;
-}) {
+export function NoticeCard({ icon, title, body, status, danger }: { icon: React.ReactNode; title: string; body: string; status?: string; danger?: boolean }) {
   return (
     <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4">
       <div className="mb-3 flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">
-          {icon}
-        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">{icon}</span>
         <div>
-          <h2 className="text-base font-bold text-ui-text">{title}</h2>
+          <h2 className="type-panel-title text-ui-text">{title}</h2>
           <p className="text-sm leading-5 text-ui-text-muted">{body}</p>
         </div>
       </div>
@@ -64,7 +52,7 @@ export function EmailField({
   const errorId = `${id}-error`;
   return (
     <label className="block" htmlFor={id}>
-      <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{label}</span>
+      <span className="mb-2 block type-label">{label}</span>
       <span className={fieldWrapClass}>
         <ICONS.Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
         <input
@@ -113,7 +101,7 @@ export function PasswordField({
   const errorId = `${id}-error`;
   return (
     <label className="block" htmlFor={id}>
-      <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{label}</span>
+      <span className="mb-2 block type-label">{label}</span>
       <span className={fieldWrapClass}>
         <ICONS.Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
         <input
@@ -160,10 +148,8 @@ export function OidcLoginButton({
       type="button"
       onClick={onLogin}
       disabled={isAuthLoading}
-      className={`control-target mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm font-bold transition-[background-color,border-color,color,box-shadow,transform] focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
-        passwordAuthEnabled
-          ? 'bg-ui-bg text-ui-text hover:bg-ui-surface'
-          : 'border-control-boundary bg-control-primary text-control-primary-fg hover:bg-control-primary-hover'
+      className={`control-target mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm type-ui transition-[background-color,border-color,color,box-shadow,transform] focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
+        passwordAuthEnabled ? 'bg-ui-bg text-ui-text hover:bg-ui-surface' : 'border-control-boundary bg-control-primary text-control-primary-fg hover:bg-control-primary-hover'
       }`}
     >
       {isAuthLoading ? (
@@ -178,17 +164,7 @@ export function OidcLoginButton({
   );
 }
 
-export function SignupSwitchFooter({
-  isAuthLoading,
-  onSwitch,
-  prompt,
-  actionLabel
-}: {
-  isAuthLoading: boolean;
-  onSwitch: () => void;
-  prompt: string;
-  actionLabel: string;
-}) {
+export function SignupSwitchFooter({ isAuthLoading, onSwitch, prompt, actionLabel }: { isAuthLoading: boolean; onSwitch: () => void; prompt: string; actionLabel: string }) {
   return (
     <div className="border-t border-ui-border bg-ui-bg p-6 text-center">
       <p className="text-sm font-medium text-ui-text-muted">
@@ -197,7 +173,7 @@ export function SignupSwitchFooter({
           type="button"
           onClick={onSwitch}
           disabled={isAuthLoading}
-          className="control-target rounded-sm font-bold text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="control-target rounded-sm type-ui text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {actionLabel}
         </button>

@@ -185,7 +185,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 <div className="min-w-0">
                   <p className="type-label truncate text-ui-text">{activeFile?.path || 'SKILL.md'}</p>
                   {detail && (
-                    <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
+                    <div className="mt-1 flex flex-wrap gap-2 type-caption">
                       {detail.source.type === 'git_import' && (
                         <span className="rounded-full border border-ui-border px-2 py-1 text-ui-text-muted">{sourceLabel(detail)}</span>
                       )}

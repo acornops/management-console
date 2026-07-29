@@ -38,7 +38,7 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.hpaOverrideConfirmed')");
     expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.genericTarget'");
     expect(approvalCheckpoint).toContain('className="px-4 py-4"');
-    expect(approvalCheckpoint).toContain('<h3 className="text-sm font-semibold leading-6 text-ui-text">{t(\'chat.guardTitle\')}</h3>');
+    expect(approvalCheckpoint).toContain('<h3 className="type-row-title text-ui-text">{t(\'chat.guardTitle\')}</h3>');
     expect(approvalCheckpoint).toContain('<p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">');
     expect(approvalCheckpoint).toContain("t('chat.approvalAdvancedDetails')");
     expect(approvalCheckpoint).toContain('<details');
@@ -285,7 +285,7 @@ describe('target chat polish contracts', () => {
     expect(userMessageTurn).toContain('align="right"');
     expect(userMessageTurn).toContain('copyText={message.content}');
     expect(userMessageTurn).toContain('timestampLabel={timestampLabel}');
-    expect(userMessageTurn).toContain('{!isEditing && (');
+    expect(userMessageTurn).toContain('!isEditing && <MessageActions');
     expect(chatView).toContain('const lastUserMessageIndex = React.useMemo(() => {');
     expect(chatView).toContain('const userTurnRunIdsByIndex = React.useMemo(() => {');
     expect(chatView).toContain('runIdsByIndex.set(index, message.runId || currentTurnRunId);');
@@ -505,7 +505,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('const hasCompactReasoningSummary = Boolean(compactReasoningSummary);');
     expect(traceFooter).toContain('const shouldShowCompactStatusLabel = hasCompactReasoningSummary || !isInProgress || !suppressCompactReasoningSummary;');
     expect(traceFooter).toContain("const compactStatusLabel = hasCompactReasoningSummary ? 'Working through' : statusLabel;");
-    expect(traceFooter).toContain("const activitySummary = trace.status === 'connecting'");
+    expect(traceFooter).toMatch(/const activitySummary =\s*trace\.status === 'connecting'/);
     expect(traceFooter).toContain("? 'Waiting for progress'");
     expect(traceFooter).toContain('`${trace.steps.length} steps`');
     expect(traceFooter).toContain('`${completedToolCalls} of ${trace.toolCalls.length} function calls complete`');
@@ -525,7 +525,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain("shouldReduceMotion");
     expect(traceFooter).toContain('animate-pulse motion-reduce:animate-none');
     expect(traceFooter).toContain("'transition-transform duration-150 ease-out'");
-    expect(traceFooter).toContain("${isExpanded ? 'rotate-90' : 'rotate-0'}");
+    expect(traceFooter).toMatch(/\$\{\s*isExpanded \? 'rotate-90' : 'rotate-0'\s*\}/);
     expect(traceFooter).toMatch(/<ChevronRight className="h-4 w-4" \/>[\s\S]*?<span className=\{`h-2 w-2 shrink-0 rounded-full/);
     expect(traceFooter).not.toContain('{isExpanded ? <ChevronDown');
     expect(traceFooter).toContain('bg-ui-surface/45 text-ui-text-muted hover:bg-ui-surface/75 hover:text-ui-text');

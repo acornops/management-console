@@ -20,6 +20,8 @@ Use the shared CSS role classes from `src/styles.css` instead of repeating ad ho
 | `type-row-title` | Table/list row names and compact item headings |
 | `type-body` | Explanatory prose and helper copy |
 | `type-ui` | Buttons, select triggers, and standard UI controls |
+| `type-emphasis` | Inline emphasis that must inherit its surrounding size and line height |
+| `type-wordmark` | AcornOps wordmark lettering only |
 | `type-caption` | Secondary metadata and dense supporting copy |
 | `type-label` | Table headers, form labels, badges, and short status labels |
 | `type-micro-label` | Very compact labels in charts, chips, trace rows, and dense controls |
@@ -29,6 +31,8 @@ Use the shared CSS role classes from `src/styles.css` instead of repeating ad ho
 ## Operating Rules
 
 - Prefer semantic roles over `font-bold`, `font-extrabold`, `text-[10px]`, `text-[11px]`, or wide uppercase tracking.
+- Use `type-emphasis` only for inline emphasis. Headings, rows, labels, data, and controls must use their complete semantic role instead.
+- Keep `type-wordmark` limited to the AcornOps wordmark; it is not a general bold-text utility.
 - Keep uppercase labels compact. Use `type-label` or `type-micro-label`; avoid `tracking-widest` and exaggerated letter spacing.
 - Use `type-data` for numbers that operators compare across rows or panels. It enables tabular numeric rendering.
 - Use `type-code` for monospace surfaces only. Do not use monospace for decorative emphasis.

@@ -30,12 +30,7 @@ import {
   resourceRowActionClass,
   resourceRowGridClass
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
-import {
-  InfrastructureRow,
-  ResourceDetailsAction,
-  ResourceList,
-  ResourceMetricInline
-} from '@/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout';
+import { InfrastructureRow, ResourceDetailsAction, ResourceList, ResourceMetricInline } from '@/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout';
 import type { ControlPlanePodLogs, ControlPlanePodLogsOptions } from '@/services/controlPlaneApi';
 
 interface WorkloadsSectionProps {
@@ -70,15 +65,15 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage
               <div
                 className={classNames(
                   'flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border',
-                  workload.type === 'Deployment'
-                    ? 'border-metric-blue/20 bg-metric-blue/10 text-metric-blue'
-                    : 'border-accent/20 bg-accent-soft text-accent-strong'
+                  workload.type === 'Deployment' ? 'border-metric-blue/20 bg-metric-blue/10 text-metric-blue' : 'border-accent/20 bg-accent-soft text-accent-strong'
                 )}
               >
                 {getIcon(workload.type)}
               </div>
               <div className="min-w-0">
-                <h3 className="type-panel-title break-words [overflow-wrap:anywhere]" title={workload.name}>{workload.name}</h3>
+                <h3 className="type-panel-title break-words [overflow-wrap:anywhere]" title={workload.name}>
+                  {workload.name}
+                </h3>
                 <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
                   <ResourceMetaPair label={t('resources.row.kind')} value={workload.type} />
                   <ResourceMetaPair label={t('resources.row.scope')} value={workload.namespace} tone="accent" />
@@ -88,13 +83,9 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage
             </div>
             <div className={resourceMetricGridClass}>
               {metrics.length > 0 ? (
-                metrics.map((metric) => (
-                  <ResourceMetricInline key={metric.label} label={metric.label} value={metric.value} />
-                ))
+                metrics.map((metric) => <ResourceMetricInline key={metric.label} label={metric.label} value={metric.value} />)
               ) : (
-                <p className="type-label col-span-2">
-                  {t('workloads.noAdditionalFields')}
-                </p>
+                <p className="type-label col-span-2">{t('workloads.noAdditionalFields')}</p>
               )}
             </div>
             <div className={resourceRowActionClass}>
@@ -118,14 +109,13 @@ interface NetworkSectionProps {
 
 export const NetworkSection: React.FC<NetworkSectionProps> = ({ activeCategory, emptyMessage, ingresses, onSelect, services }) => {
   const { t } = useTranslation();
-  const items = sortAttentionFirst([
-    ...(activeCategory === 'All' || activeCategory === 'Service'
-      ? services.map((item) => ({ kind: 'service' as const, item }))
-      : []),
-    ...(activeCategory === 'All' || activeCategory === 'Ingress'
-      ? ingresses.map((item) => ({ kind: 'ingress' as const, item }))
-      : [])
-  ], (resource) => resource.kind === 'ingress' && !hasReportedValue(resource.item.address));
+  const items = sortAttentionFirst(
+    [
+      ...(activeCategory === 'All' || activeCategory === 'Service' ? services.map((item) => ({ kind: 'service' as const, item })) : []),
+      ...(activeCategory === 'All' || activeCategory === 'Ingress' ? ingresses.map((item) => ({ kind: 'ingress' as const, item })) : [])
+    ],
+    (resource) => resource.kind === 'ingress' && !hasReportedValue(resource.item.address)
+  );
 
   return (
     <ResourceList
@@ -214,14 +204,13 @@ interface ClusterSectionProps {
 
 export const ClusterSection: React.FC<ClusterSectionProps> = ({ activeCategory, emptyMessage, namespaces, nodes, onSelect }) => {
   const { t } = useTranslation();
-  const items = sortAttentionFirst([
-    ...(activeCategory === 'All' || activeCategory === 'Node'
-      ? nodes.map((item) => ({ kind: 'node' as const, item }))
-      : []),
-    ...(activeCategory === 'All' || activeCategory === 'Namespace'
-      ? namespaces.map((item) => ({ kind: 'namespace' as const, item }))
-      : [])
-  ], (resource) => !isHealthyStatus(resource.item.status));
+  const items = sortAttentionFirst(
+    [
+      ...(activeCategory === 'All' || activeCategory === 'Node' ? nodes.map((item) => ({ kind: 'node' as const, item })) : []),
+      ...(activeCategory === 'All' || activeCategory === 'Namespace' ? namespaces.map((item) => ({ kind: 'namespace' as const, item })) : [])
+    ],
+    (resource) => !isHealthyStatus(resource.item.status)
+  );
 
   return (
     <ResourceList
@@ -286,16 +275,7 @@ export const WorkloadsExplorerDrawers: React.FC<WorkloadsExplorerDrawersProps> =
   workload
 }) => (
   <>
-    <WorkloadDetailsDrawer
-      selectedWorkload={workload}
-      canReadPodLogs={canReadPodLogs}
-      onClose={onCloseWorkload}
-      onAnalyzePod={onAnalyzePod}
-      onLoadPodLogs={onLoadPodLogs}
-    />
-    <ResourceDetailsDrawer
-      resource={resource}
-      onClose={onCloseResource}
-    />
+    <WorkloadDetailsDrawer selectedWorkload={workload} canReadPodLogs={canReadPodLogs} onClose={onCloseWorkload} onAnalyzePod={onAnalyzePod} onLoadPodLogs={onLoadPodLogs} />
+    <ResourceDetailsDrawer resource={resource} onClose={onCloseResource} />
   </>
 );

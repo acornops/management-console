@@ -45,16 +45,9 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
   const errorId = React.useId();
   const contextId = React.useId();
   const credentialByteLength = new TextEncoder().encode(credential).byteLength;
-  const credentialValidationError = credential.length === 0
-    ? ''
-    : credentialByteLength > 8192
-      ? t('mcpServers.credentialTooLong')
-      : /\p{Cc}/u.test(credential)
-        ? t('mcpServers.credentialControlCharacters')
-        : '';
-  const error = submissionError
-    ? formatMcpError(submissionError, t('mcpServers.connectionFailed'), retryAfterSeconds).message
-    : '';
+  const credentialValidationError =
+    credential.length === 0 ? '' : credentialByteLength > 8192 ? t('mcpServers.credentialTooLong') : /\p{Cc}/u.test(credential) ? t('mcpServers.credentialControlCharacters') : '';
+  const error = submissionError ? formatMcpError(submissionError, t('mcpServers.connectionFailed'), retryAfterSeconds).message : '';
   const canSubmit = credential.length > 0 && !credentialValidationError && consentGranted && !pending && retryAfterSeconds === 0;
   let destinationOrigin = t('mcpServers.destinationUnavailable');
   if (serverUrl) {
@@ -67,9 +60,7 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
       // Do not display a malformed URL because it may contain a sensitive path or query.
     }
   }
-  const headerMode = authType === 'custom_header'
-    ? (authHeaderName || t('mcpServers.configuredCustomHeader'))
-    : 'Authorization: Bearer';
+  const headerMode = authType === 'custom_header' ? authHeaderName || t('mcpServers.configuredCustomHeader') : 'Authorization: Bearer';
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -100,9 +91,16 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
               {t(credentialMode === 'workspace' ? 'mcpServers.workspaceCredential' : 'mcpServers.individualCredential')}
             </div>
             <h2 id={titleId} className="type-section-title">
-              {t(credentialMode === 'workspace'
-                ? mode === 'replace' ? 'mcpServers.replaceWorkspaceCredentialTitle' : 'mcpServers.connectWorkspaceCredentialTitle'
-                : mode === 'replace' ? 'mcpServers.replaceIndividualCredentialTitle' : 'mcpServers.connectIndividualCredentialTitle', { name: serverName })}
+              {t(
+                credentialMode === 'workspace'
+                  ? mode === 'replace'
+                    ? 'mcpServers.replaceWorkspaceCredentialTitle'
+                    : 'mcpServers.connectWorkspaceCredentialTitle'
+                  : mode === 'replace'
+                  ? 'mcpServers.replaceIndividualCredentialTitle'
+                  : 'mcpServers.connectIndividualCredentialTitle',
+                { name: serverName }
+              )}
             </h2>
             <p id={descriptionId} className="type-caption mt-2 text-ui-text-muted">
               {t(credentialMode === 'workspace' ? 'mcpServers.workspaceCredentialDescription' : 'mcpServers.individualCredentialDescription')}
@@ -113,13 +111,19 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
 
         <div className="space-y-5 px-6 py-5">
           <dl id={contextId} className={`grid gap-3 rounded-lg border border-ui-border bg-ui-bg px-4 py-3 ${serverUrl ? 'sm:grid-cols-2' : ''}`}>
-            {serverUrl && <div className="min-w-0">
-              <dt className="type-micro-label text-ui-text-muted">{t('mcpServers.destinationOrigin')}</dt>
-              <dd className="type-code mt-1 truncate text-ui-text" title={destinationOrigin}>{destinationOrigin}</dd>
-            </div>}
+            {serverUrl && (
+              <div className="min-w-0">
+                <dt className="type-micro-label text-ui-text-muted">{t('mcpServers.destinationOrigin')}</dt>
+                <dd className="type-code mt-1 truncate text-ui-text" title={destinationOrigin}>
+                  {destinationOrigin}
+                </dd>
+              </div>
+            )}
             <div className="min-w-0">
               <dt className="type-micro-label text-ui-text-muted">{t('mcpServers.headerMode')}</dt>
-              <dd className="type-code mt-1 truncate text-ui-text" title={headerMode}>{headerMode}</dd>
+              <dd className="type-code mt-1 truncate text-ui-text" title={headerMode}>
+                {headerMode}
+              </dd>
             </div>
           </dl>
           <div>
@@ -153,9 +157,7 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
                 {showCredential ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
               </button>
             </div>
-            <p className="type-caption mt-2 text-ui-text-muted">
-              {t(authType === 'custom_header' ? 'mcpServers.customHeaderCredentialHelp' : 'mcpServers.bearerCredentialHelp')}
-            </p>
+            <p className="type-caption mt-2 text-ui-text-muted">{t(authType === 'custom_header' ? 'mcpServers.customHeaderCredentialHelp' : 'mcpServers.bearerCredentialHelp')}</p>
             {credentialValidationError && (
               <p id={errorId} role="alert" className="type-caption mt-2 text-status-danger-text">
                 {credentialValidationError}
@@ -164,12 +166,7 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
           </div>
 
           <label className="flex items-start gap-3 rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text">
-            <Checkbox
-              checked={consentGranted}
-              disabled={pending}
-              onChange={(event) => setConsentGranted(event.target.checked)}
-              className="mt-0.5 shrink-0"
-            />
+            <Checkbox checked={consentGranted} disabled={pending} onChange={(event) => setConsentGranted(event.target.checked)} className="mt-0.5 shrink-0" />
             <span>{t(credentialMode === 'workspace' ? 'mcpServers.workspaceCredentialConsent' : 'mcpServers.individualCredentialConsent')}</span>
           </label>
 
@@ -188,8 +185,8 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
             {retryAfterSeconds > 0
               ? `Try again in ${retryAfterSeconds}s`
               : pending
-                ? t('mcpServers.verifyingCredential')
-                : t(mode === 'replace' ? 'mcpServers.replaceAndVerifyCredential' : 'mcpServers.saveAndVerifyCredential')}
+              ? t('mcpServers.verifyingCredential')
+              : t(mode === 'replace' ? 'mcpServers.replaceAndVerifyCredential' : 'mcpServers.saveAndVerifyCredential')}
           </Button>
         </div>
       </form>

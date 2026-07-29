@@ -13,19 +13,12 @@ export interface CompactControlItem<T extends string> {
   disabled?: boolean;
 }
 
-export interface SegmentedTabModel<T extends string>
-  extends CompactControlItem<T> {
+export interface SegmentedTabModel<T extends string> extends CompactControlItem<T> {
   isActive: boolean;
   ariaSelected: boolean;
 }
 
-export function getSegmentedTabModel<T extends string>({
-  items,
-  activeValue
-}: {
-  items: ReadonlyArray<CompactControlItem<T>>;
-  activeValue: T;
-}): Array<SegmentedTabModel<T>> {
+export function getSegmentedTabModel<T extends string>({ items, activeValue }: { items: ReadonlyArray<CompactControlItem<T>>; activeValue: T }): Array<SegmentedTabModel<T>> {
   return items.map((item) => ({
     ...item,
     count: item.count,
@@ -35,19 +28,11 @@ export function getSegmentedTabModel<T extends string>({
   }));
 }
 
-export function segmentedTabButtonClassName({
-  isActive,
-  className
-}: {
-  isActive: boolean;
-  className?: string;
-}): string {
+export function segmentedTabButtonClassName({ isActive, className }: { isActive: boolean; className?: string }): string {
   return twMerge(
     clsx(
-      'relative -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-xs font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25',
-      isActive
-        ? 'border-transparent text-accent-strong'
-        : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text',
+      'type-ui relative -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25',
+      isActive ? 'border-transparent text-accent-strong' : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text',
       className
     )
   );
@@ -63,15 +48,7 @@ export interface SegmentedTabsProps<T extends string> {
   onValueChange: (value: T) => void;
 }
 
-export const SegmentedTabs = <T extends string,>({
-  activeValue,
-  allPanelsMounted = true,
-  ariaLabel,
-  className,
-  idBase,
-  items,
-  onValueChange
-}: SegmentedTabsProps<T>) => {
+export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted = true, ariaLabel, className, idBase, items, onValueChange }: SegmentedTabsProps<T>) => {
   const layoutGroupId = React.useId();
   const tablistRef = React.useRef<HTMLDivElement>(null);
   const tabs = getSegmentedTabModel({ items, activeValue });
@@ -80,9 +57,7 @@ export const SegmentedTabs = <T extends string,>({
   React.useEffect(() => {
     if (!idBase) return undefined;
     const frame = window.requestAnimationFrame(() => {
-      const activeTab = tablistRef.current?.querySelector<HTMLElement>(
-        `#${CSS.escape(`${idBase}-${activeValue}-tab`)}`
-      );
+      const activeTab = tablistRef.current?.querySelector<HTMLElement>(`#${CSS.escape(`${idBase}-${activeValue}-tab`)}`);
       activeTab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
     return () => window.cancelAnimationFrame(frame);
@@ -100,10 +75,7 @@ export const SegmentedTabs = <T extends string,>({
   const selectRelativeTab = (value: T, offset: number) => {
     const index = enabledTabs.findIndex((tab) => tab.value === value);
     if (index < 0 || enabledTabs.length === 0) return;
-    const nextTab =
-      enabledTabs[
-        (index + offset + enabledTabs.length) % enabledTabs.length
-      ];
+    const nextTab = enabledTabs[(index + offset + enabledTabs.length) % enabledTabs.length];
     if (nextTab) {
       onValueChange(nextTab.value);
       focusSegmentedTab(nextTab.value);
@@ -112,41 +84,23 @@ export const SegmentedTabs = <T extends string,>({
 
   return (
     <LayoutGroup id={layoutGroupId}>
-      <div
-        ref={tablistRef}
-        role="tablist"
-        aria-label={ariaLabel}
-        className={twMerge(
-          'no-scrollbar flex gap-2 overflow-x-auto border-b border-ui-border',
-          className
-        )}
-      >
+      <div ref={tablistRef} role="tablist" aria-label={ariaLabel} className={twMerge('no-scrollbar flex gap-2 overflow-x-auto border-b border-ui-border', className)}>
         {tabs.map((tab) => (
           <button
             key={tab.value}
             id={idBase ? `${idBase}-${tab.value}-tab` : undefined}
             type="button"
             role="tab"
-            aria-controls={
-              idBase && (allPanelsMounted || tab.isActive)
-                ? `${idBase}-${tab.value}-panel`
-                : undefined
-            }
+            aria-controls={idBase && (allPanelsMounted || tab.isActive) ? `${idBase}-${tab.value}-panel` : undefined}
             aria-selected={tab.ariaSelected}
             disabled={tab.disabled}
             tabIndex={tab.isActive ? 0 : -1}
             onClick={() => onValueChange(tab.value)}
             onKeyDown={(event) => {
-              if (
-                event.key === 'ArrowRight' ||
-                event.key === 'ArrowDown'
-              ) {
+              if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
                 event.preventDefault();
                 selectRelativeTab(tab.value, 1);
-              } else if (
-                event.key === 'ArrowLeft' ||
-                event.key === 'ArrowUp'
-              ) {
+              } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
                 event.preventDefault();
                 selectRelativeTab(tab.value, -1);
               } else if (event.key === 'Home') {
@@ -171,9 +125,7 @@ export const SegmentedTabs = <T extends string,>({
             {tab.icon}
             <span>{tab.label}</span>
             {typeof tab.count === 'number' && (
-              <span className="rounded-full border border-ui-border bg-ui-bg px-1.5 py-0.5 text-[10px] leading-none text-ui-text-muted">
-                {tab.count}
-              </span>
+              <span className="rounded-full border border-ui-border bg-ui-bg px-1.5 py-0.5 type-caption leading-none text-ui-text-muted">{tab.count}</span>
             )}
             {tab.isActive && <ActiveTabIndicator />}
           </button>
@@ -183,19 +135,12 @@ export const SegmentedTabs = <T extends string,>({
   );
 };
 
-export interface FilterToggleModel<T extends string>
-  extends CompactControlItem<T> {
+export interface FilterToggleModel<T extends string> extends CompactControlItem<T> {
   isActive: boolean;
   ariaPressed: boolean;
 }
 
-export function getFilterToggleModel<T extends string>({
-  items,
-  activeValue
-}: {
-  items: ReadonlyArray<CompactControlItem<T>>;
-  activeValue: T;
-}): Array<FilterToggleModel<T>> {
+export function getFilterToggleModel<T extends string>({ items, activeValue }: { items: ReadonlyArray<CompactControlItem<T>>; activeValue: T }): Array<FilterToggleModel<T>> {
   return items.map((item) => ({
     ...item,
     count: item.count,
@@ -205,19 +150,11 @@ export function getFilterToggleModel<T extends string>({
   }));
 }
 
-export function filterToggleButtonClassName({
-  isActive,
-  className
-}: {
-  isActive: boolean;
-  className?: string;
-}): string {
+export function filterToggleButtonClassName({ isActive, className }: { isActive: boolean; className?: string }): string {
   return twMerge(
     clsx(
       'type-ui inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50',
-      isActive
-        ? 'border-accent/35 bg-ui-surface text-ui-text shadow-sm'
-        : 'border-ui-border bg-ui-bg text-ui-text-muted hover:bg-ui-surface hover:text-ui-text',
+      isActive ? 'border-accent/35 bg-ui-surface text-ui-text shadow-sm' : 'border-ui-border bg-ui-bg text-ui-text-muted hover:bg-ui-surface hover:text-ui-text',
       className
     )
   );
@@ -231,24 +168,11 @@ export interface FilterToggleGroupProps<T extends string> {
   onValueChange: (value: T) => void;
 }
 
-export const FilterToggleGroup = <T extends string,>({
-  activeValue,
-  ariaLabel,
-  className,
-  items,
-  onValueChange
-}: FilterToggleGroupProps<T>) => {
+export const FilterToggleGroup = <T extends string>({ activeValue, ariaLabel, className, items, onValueChange }: FilterToggleGroupProps<T>) => {
   const filters = getFilterToggleModel({ items, activeValue });
 
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      className={twMerge(
-        'flex max-w-full flex-wrap items-center gap-2 overflow-visible',
-        className
-      )}
-    >
+    <div role="group" aria-label={ariaLabel} className={twMerge('flex max-w-full flex-wrap items-center gap-2 overflow-visible', className)}>
       {filters.map((filter) => (
         <button
           key={filter.value}
@@ -263,9 +187,7 @@ export const FilterToggleGroup = <T extends string,>({
           {filter.icon}
           <span>{filter.label}</span>
           {typeof filter.count === 'number' && (
-            <span className="rounded-full border border-ui-border bg-ui-surface px-1.5 py-0.5 text-[10px] leading-none text-ui-text-muted">
-              {filter.count}
-            </span>
+            <span className="rounded-full border border-ui-border bg-ui-surface px-1.5 py-0.5 type-caption leading-none text-ui-text-muted">{filter.count}</span>
           )}
         </button>
       ))}

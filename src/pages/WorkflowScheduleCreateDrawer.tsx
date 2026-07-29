@@ -276,7 +276,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         {scheduleWorkflow ? (
           <section className="grid gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-ui-text">Workflow inputs</h3>
+              <h3 className="type-row-title text-ui-text">Workflow inputs</h3>
               <p className="type-caption mt-1 text-ui-text-muted">Stored values are reauthorized against the active workflow on every occurrence.</p>
             </div>
             {scheduleWorkflow.parameters.length > 0

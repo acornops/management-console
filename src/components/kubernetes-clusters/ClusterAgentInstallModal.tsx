@@ -20,11 +20,7 @@ interface ClusterAgentInstallModalProps {
   onClose: () => void;
 }
 
-export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> = ({
-  cluster,
-  workspaceName,
-  onClose
-}) => {
+export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> = ({ cluster, workspaceName, onClose }) => {
   const { t } = useTranslation();
   const [agentKey, setAgentKey] = React.useState<string | null>(null);
   const [keyVersion, setKeyVersion] = React.useState<number | null>(null);
@@ -44,8 +40,8 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
       ? t('clusterSetup.rotateAndRegenerateCommand')
       : t('clusterSetup.rotateAndGenerateCommand')
     : command
-      ? t('clusterSetup.regenerateCommand')
-      : t('clusterSetup.generateCommand');
+    ? t('clusterSetup.regenerateCommand')
+    : t('clusterSetup.generateCommand');
 
   React.useEffect(() => {
     if (!isGenerating) {
@@ -104,114 +100,98 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
       className="relative flex max-h-[min(92vh,56rem)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
       onClose={onClose}
     >
-        <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
-          <div>
-            <h3 id="install-agent-title" className="font-bold tracking-tight text-ui-text">
-              {t(isReinstall ? 'clusterSetup.reinstallAgent' : 'clusterSetup.installAgent')}
-            </h3>
-            <p className="mt-1 text-xs font-medium text-ui-text-muted">{workspaceName} / {cluster.name}</p>
+      <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
+        <div>
+          <h3 id="install-agent-title" className="type-panel-title">
+            {t(isReinstall ? 'clusterSetup.reinstallAgent' : 'clusterSetup.installAgent')}
+          </h3>
+          <p className="mt-1 text-xs font-medium text-ui-text-muted">
+            {workspaceName} / {cluster.name}
+          </p>
+        </div>
+        <CloseButton onClick={onClose} aria-label={t('clusterSetup.closeInstallAgentDialog')} />
+      </div>
+
+      <div className="space-y-4 overflow-y-auto p-6">
+        <div className="rounded-xl border border-accent/20 bg-accent-soft/60 p-4">
+          <p className="text-sm font-medium text-ui-text">{t(isReinstall ? 'clusterSetup.reinstallAgentHelp' : 'clusterSetup.installAgentFirst')}</p>
+        </div>
+
+        {isReinstall && (
+          <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
+            {t('clusterSetup.rotateAgentKeyWarning')}
           </div>
-          <CloseButton
-            onClick={onClose}
-            aria-label={t('clusterSetup.closeInstallAgentDialog')}
-          />
-        </div>
+        )}
 
-        <div className="space-y-4 overflow-y-auto p-6">
-          <div className="rounded-xl border border-accent/20 bg-accent-soft/60 p-4">
-            <p className="text-sm font-medium text-ui-text">
-              {t(isReinstall ? 'clusterSetup.reinstallAgentHelp' : 'clusterSetup.installAgentFirst')}
-            </p>
+        {errorMessage && <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-3 text-xs font-medium text-status-danger-text">{errorMessage}</div>}
+
+        <ClusterAgentAccessModeSelector idPrefix="install-cluster" value={agentAccessMode} onChange={handleAccessModeChange} disabled={isGenerating} />
+
+        {command && (
+          <div className="rounded-xl border border-ui-border bg-ui-bg shadow-sm">
+            <div className="flex items-center justify-between gap-3 px-4 pt-4">
+              <span className="type-micro-label">{t('clusterSetup.installCommand')}</span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                disabled={isCopying}
+                className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-wait disabled:opacity-70"
+                aria-label={isCopying ? t('clusterSetup.copied') : t('clusterSetup.copy')}
+              >
+                {isCopying ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </button>
+            </div>
+            <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text">
+              <pre className="whitespace-pre">{command}</pre>
+            </div>
           </div>
+        )}
 
-          {isReinstall && (
-            <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
-              {t('clusterSetup.rotateAgentKeyWarning')}
-            </div>
-          )}
+        {agentKey && !command && (
+          <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
+            {t('clusterSetup.missingInstallCommand')}
+          </div>
+        )}
 
-          {errorMessage && (
-            <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-3 text-xs font-medium text-status-danger-text">
-              {errorMessage}
-            </div>
-          )}
+        {installWarnings.length > 0 && (
+          <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
+            {installWarnings.map((warning) => (
+              <p key={warning}>{warning}</p>
+            ))}
+          </div>
+        )}
 
-          <ClusterAgentAccessModeSelector
-            idPrefix="install-cluster"
-            value={agentAccessMode}
-            onChange={handleAccessModeChange}
-            disabled={isGenerating}
-          />
+        {!agentKey && !command && <p className="text-xs font-medium text-ui-text-muted">{t('clusterSetup.generateCommandHelp')}</p>}
 
-          {command && (
-            <div className="rounded-xl border border-ui-border bg-ui-bg shadow-sm">
-              <div className="flex items-center justify-between gap-3 px-4 pt-4">
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-ui-text-muted">{t('clusterSetup.installCommand')}</span>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  disabled={isCopying}
-                  className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-wait disabled:opacity-70"
-                  aria-label={isCopying ? t('clusterSetup.copied') : t('clusterSetup.copy')}
-                >
-                  {isCopying ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </button>
-              </div>
-              <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text">
-                <pre className="whitespace-pre">{command}</pre>
-              </div>
-            </div>
-          )}
+        {command && (
+          <p className="type-caption">
+            {keyVersion ? t('clusterSetup.agentKeyVersion', { version: keyVersion }) : t('clusterSetup.agentKeyPending')} {t('clusterSetup.rotateHelp')}
+          </p>
+        )}
+      </div>
 
-          {agentKey && !command && (
-            <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
-              {t('clusterSetup.missingInstallCommand')}
-            </div>
-          )}
-
-          {installWarnings.length > 0 && (
-            <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
-              {installWarnings.map((warning) => (
-                <p key={warning}>{warning}</p>
-              ))}
-            </div>
-          )}
-
-          {!agentKey && !command && (
-            <p className="text-xs font-medium text-ui-text-muted">
-              {t('clusterSetup.generateCommandHelp')}
-            </p>
-          )}
-
-          {command && (
-            <p className="text-[11px] leading-5 text-ui-text-muted">
-              {keyVersion ? t('clusterSetup.agentKeyVersion', { version: keyVersion }) : t('clusterSetup.agentKeyPending')} {t('clusterSetup.rotateHelp')}
-            </p>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-sm font-bold text-ui-text-muted transition-colors hover:bg-ui-bg"
-          >
-            {t('app.close')}
-          </button>
-          <Button
-            ref={generateCommandButtonRef}
-            onClick={handleGenerate}
-            variant="primary"
-            size="sm"
-            className={isGenerating ? 'cursor-wait' : ''}
-            aria-busy={isGenerating}
-            aria-disabled={isGenerating}
-            aria-label={isGenerating ? t('clusterSetup.generating') : generateCommandLabel}
-          >
-            {showGenerateSpinner && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            {generateCommandLabel}
-          </Button>
-        </div>
+      <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title-muted transition-colors hover:bg-ui-bg"
+        >
+          {t('app.close')}
+        </button>
+        <Button
+          ref={generateCommandButtonRef}
+          onClick={handleGenerate}
+          variant="primary"
+          size="sm"
+          className={isGenerating ? 'cursor-wait' : ''}
+          aria-busy={isGenerating}
+          aria-disabled={isGenerating}
+          aria-label={isGenerating ? t('clusterSetup.generating') : generateCommandLabel}
+        >
+          {showGenerateSpinner && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+          {generateCommandLabel}
+        </Button>
+      </div>
     </Dialog>
   );
 };

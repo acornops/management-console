@@ -17,7 +17,7 @@ export const AgentConnectionStatus: React.FC<AgentConnectionStatusProps> = ({
     aria-live="polite"
     aria-atomic="true"
     className={clsx(
-      'flex items-center gap-3 rounded-lg border px-4 py-3 text-xs font-extrabold',
+      'type-ui flex items-center gap-3 rounded-lg border px-4 py-3',
       isConnected
         ? 'border-status-success/25 bg-status-success-soft text-status-success-text'
         : 'border-ui-border bg-ui-bg text-ui-text-muted'

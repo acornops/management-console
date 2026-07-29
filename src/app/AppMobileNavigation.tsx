@@ -92,9 +92,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   const mobileNavTitleId = React.useId();
   const mobileNavPanelId = React.useId();
   const hasWorkspaceDataAccess = canReadWorkspaceData(selectedWorkspace);
-  const workspaceHomePath = selectedWorkspace
-    ? workspaceLandingPath(selectedWorkspace)
-    : AppPaths.workspaces();
+  const workspaceHomePath = selectedWorkspace ? workspaceLandingPath(selectedWorkspace) : AppPaths.workspaces();
   const workspaceNavigationGroups = getWorkspaceNavigationGroups({
     workspace: selectedWorkspace,
     activeResourceNav,
@@ -106,19 +104,12 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   return (
     <>
       <MobileNavigation className="management-console-mobile-navigation">
-        <button
-          type="button"
-          className="flex min-h-11 items-center gap-3"
-          onClick={() => navigate(workspaceHomePath)}
-          aria-label={t('app.goHome')}
-        >
+        <button type="button" className="flex min-h-11 items-center gap-3" onClick={() => navigate(workspaceHomePath)} aria-label={t('app.goHome')}>
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
           <div className="text-left font-sans text-lg leading-none tracking-tighter">
-            <span className="font-bold text-brand-brown dark:text-brand-cream">acorn</span>
-            <span className="font-bold text-accent-bright">ops</span>
-            <span className="type-micro-label mt-1 block max-w-[10rem] truncate">
-              {selectedWorkspace?.name || t('app.noWorkspace')}
-            </span>
+            <span className="type-wordmark text-brand-brown dark:text-brand-cream">acorn</span>
+            <span className="type-wordmark text-accent-bright">ops</span>
+            <span className="type-micro-label mt-1 block max-w-[10rem] truncate">{selectedWorkspace?.name || t('app.noWorkspace')}</span>
           </div>
         </button>
         <motion.button
@@ -150,16 +141,12 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
           >
             <div className="flex items-center justify-between border-b border-ui-border px-4 py-3">
               <div>
-                <h2 id={mobileNavTitleId} className="text-xs font-bold text-ui-text">
+                <h2 id={mobileNavTitleId} className="type-row-title text-ui-text">
                   {t('app.navigation')}
                 </h2>
                 <p className="type-caption mt-0.5">{t('app.navigationHint')}</p>
               </div>
-              <CloseButton
-                ref={mobileNavCloseButtonRef}
-                onClick={() => onSetMobileNavOpen(false)}
-                aria-label={t('app.closeNavigation')}
-              />
+              <CloseButton ref={mobileNavCloseButtonRef} onClick={() => onSetMobileNavOpen(false)} aria-label={t('app.closeNavigation')} />
             </div>
 
             <div className="no-scrollbar max-h-[calc(100vh-6.5rem)] divide-y divide-ui-border overflow-y-auto">
@@ -172,9 +159,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                       navigate(AppPaths.workspaces());
                     }}
                     className={`min-h-11 rounded-md px-3 py-2 text-xs font-semibold transition-colors ${
-                      activePrimaryNav === 'workspaces'
-                        ? 'bg-accent-soft text-accent-strong'
-                        : 'bg-ui-bg text-ui-text-muted hover:text-ui-text'
+                      activePrimaryNav === 'workspaces' ? 'bg-accent-soft text-accent-strong' : 'bg-ui-bg text-ui-text-muted hover:text-ui-text'
                     }`}
                   >
                     {t('app.workspaces')}
@@ -193,9 +178,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                       }}
                       disabled={!selectedWorkspaceId}
                       className={`min-h-11 rounded-md px-3 py-2 text-xs font-semibold transition-colors ${
-                        activePrimaryNav === 'clusters'
-                          ? 'bg-accent-soft text-accent-strong'
-                          : 'bg-ui-bg text-ui-text-muted hover:text-ui-text'
+                        activePrimaryNav === 'clusters' ? 'bg-accent-soft text-accent-strong' : 'bg-ui-bg text-ui-text-muted hover:text-ui-text'
                       } ${!selectedWorkspaceId ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {t('app.clusters')}
@@ -206,9 +189,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
 
               <section className="px-4 py-3">
                 {(isClusterSidebar || isVirtualMachineSidebar) && (
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                    {t(isClusterSidebar ? 'app.clusterDestinations' : 'app.virtualMachineDestinations')}
-                  </p>
+                  <p className="mb-2 type-label tracking-normal">{t(isClusterSidebar ? 'app.clusterDestinations' : 'app.virtualMachineDestinations')}</p>
                 )}
                 <div className="grid grid-cols-1 gap-1">
                   {isClusterSidebar ? (
@@ -219,20 +200,20 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           onSetMobileNavOpen(false);
                           onBackToWorkspaceSidebar();
                         }}
-                        className="min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
+                        className="min-h-11 rounded-md px-3 py-2 text-left text-xs type-ui text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
                       >
                         {t('app.backToWorkspace')}
                       </button>
                       <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                          {t('app.operations')}
-                        </p>
+                        <p className="mb-2 type-label tracking-normal">{t('app.operations')}</p>
                         <div className="grid grid-cols-1 gap-1">
-                          {([
-                            ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount],
-                            ['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0],
-                            ['resources', t('app.resources'), ICONS.Activity, 0]
-                          ] as Array<[ClusterSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
+                          {(
+                            [
+                              ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount],
+                              ['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0],
+                              ['resources', t('app.resources'), ICONS.Activity, 0]
+                            ] as Array<[ClusterSubview, string, React.ElementType, number]>
+                          ).map(([tab, label, Icon, badge]) => (
                             <button
                               key={tab}
                               type="button"
@@ -241,10 +222,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateClusterSubview(tab);
                               }}
                               disabled={!selectedSidebarCluster}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
-                                activeClusterSubview === tab
-                                  ? 'bg-accent-soft text-accent-strong'
-                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs type-ui transition-colors ${
+                                activeClusterSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span className="flex w-full items-center justify-between gap-3">
@@ -256,9 +235,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                   {badge > 0 && <NavCountBadge count={badge} />}
                                   <AssistantNavStatusIndicator
                                     status={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
-                                    label={tab === 'chat' && clusterAssistantNavStatus !== 'idle'
-                                      ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`)
-                                      : undefined}
+                                    label={tab === 'chat' && clusterAssistantNavStatus !== 'idle' ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`) : undefined}
                                     withTooltip={false}
                                   />
                                 </span>
@@ -268,15 +245,15 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         </div>
                       </div>
                       <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                          {t('app.capabilities')}
-                        </p>
+                        <p className="mb-2 type-label tracking-normal">{t('app.capabilities')}</p>
                         <div className="grid grid-cols-1 gap-1">
-                          {([
-                            ['mcpServers', t('app.mcpServers'), ICONS.Server],
-                            ['skills', t('app.skills'), ICONS.BookOpen],
-                            ['tools', t('app.tools'), ICONS.Wrench]
-                          ] as Array<[ClusterSubview, string, React.ElementType]>).map(([tab, label, Icon]) => (
+                          {(
+                            [
+                              ['mcpServers', t('app.mcpServers'), ICONS.Server],
+                              ['skills', t('app.skills'), ICONS.BookOpen],
+                              ['tools', t('app.tools'), ICONS.Wrench]
+                            ] as Array<[ClusterSubview, string, React.ElementType]>
+                          ).map(([tab, label, Icon]) => (
                             <button
                               key={tab}
                               type="button"
@@ -285,10 +262,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateClusterSubview(tab);
                               }}
                               disabled={!selectedSidebarCluster}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
-                                activeClusterSubview === tab
-                                  ? 'bg-accent-soft text-accent-strong'
-                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs type-ui transition-colors ${
+                                activeClusterSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span className="flex min-w-0 items-center gap-2">
@@ -307,10 +282,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             onNavigateClusterSubview('settings');
                           }}
                           disabled={!selectedSidebarCluster}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
-                            activeClusterSubview === 'settings'
-                              ? 'bg-accent-soft text-accent-strong'
-                              : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs type-ui transition-colors ${
+                            activeClusterSubview === 'settings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                         >
                           <span className="flex min-w-0 items-center gap-2">
@@ -328,20 +301,20 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           onSetMobileNavOpen(false);
                           onBackToWorkspaceSidebar();
                         }}
-                        className="min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
+                        className="min-h-11 rounded-md px-3 py-2 text-left text-xs type-ui text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
                       >
                         {t('app.backToWorkspace')}
                       </button>
                       <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                          {t('app.operations')}
-                        </p>
+                        <p className="mb-2 type-label tracking-normal">{t('app.operations')}</p>
                         <div className="grid grid-cols-1 gap-1">
-                          {([
-                            ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount],
-                            ['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0],
-                            ['resources', t('app.resources'), ICONS.Activity, 0]
-                          ] as Array<[VmSubview, string, React.ElementType, number]>).map(([tab, label, Icon, badge]) => (
+                          {(
+                            [
+                              ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount],
+                              ['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0],
+                              ['resources', t('app.resources'), ICONS.Activity, 0]
+                            ] as Array<[VmSubview, string, React.ElementType, number]>
+                          ).map(([tab, label, Icon, badge]) => (
                             <button
                               key={tab}
                               type="button"
@@ -350,10 +323,16 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateVmSubview(tab);
                               }}
                               disabled={!selectedSidebarVm}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
-                                (tab === 'resources'
-                                  ? activeVmSubview === 'resources' || activeVmSubview === 'services' || activeVmSubview === 'processes' || activeVmSubview === 'network' || activeVmSubview === 'logs'
-                                  : activeVmSubview === tab)
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs type-ui transition-colors ${
+                                (
+                                  tab === 'resources'
+                                    ? activeVmSubview === 'resources' ||
+                                      activeVmSubview === 'services' ||
+                                      activeVmSubview === 'processes' ||
+                                      activeVmSubview === 'network' ||
+                                      activeVmSubview === 'logs'
+                                    : activeVmSubview === tab
+                                )
                                   ? 'bg-accent-soft text-accent-strong'
                                   : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
@@ -370,15 +349,15 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         </div>
                       </div>
                       <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                          {t('app.capabilities')}
-                        </p>
+                        <p className="mb-2 type-label tracking-normal">{t('app.capabilities')}</p>
                         <div className="grid grid-cols-1 gap-1">
-                          {([
-                            ['mcpServers', t('app.mcpServers'), ICONS.Server],
-                            ['skills', t('app.skills'), ICONS.BookOpen],
-                            ['tools', t('app.tools'), ICONS.Wrench]
-                          ] as Array<[VmSubview, string, React.ElementType]>).map(([tab, label, Icon]) => (
+                          {(
+                            [
+                              ['mcpServers', t('app.mcpServers'), ICONS.Server],
+                              ['skills', t('app.skills'), ICONS.BookOpen],
+                              ['tools', t('app.tools'), ICONS.Wrench]
+                            ] as Array<[VmSubview, string, React.ElementType]>
+                          ).map(([tab, label, Icon]) => (
                             <button
                               key={tab}
                               type="button"
@@ -387,10 +366,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateVmSubview(tab);
                               }}
                               disabled={!selectedSidebarVm}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
-                                activeVmSubview === tab
-                                  ? 'bg-accent-soft text-accent-strong'
-                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                              className={`min-h-11 rounded-md px-3 py-2 text-left text-xs type-ui transition-colors ${
+                                activeVmSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               <span className="flex min-w-0 items-center gap-2">
@@ -409,10 +386,8 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             onNavigateVmSubview('settings');
                           }}
                           disabled={!selectedSidebarVm}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs font-bold transition-colors ${
-                            activeVmSubview === 'settings'
-                              ? 'bg-accent-soft text-accent-strong'
-                              : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs type-ui transition-colors ${
+                            activeVmSubview === 'settings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                         >
                           <span className="flex min-w-0 items-center gap-2">
@@ -433,7 +408,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           >
                             {group.label && (
                               <div className="mb-1 flex items-center justify-between gap-2 px-3">
-                                <p className="text-xs font-semibold uppercase tracking-normal text-ui-text-muted">{group.label}</p>
+                                <p className="type-label tracking-normal">{group.label}</p>
                                 {group.badge && <WorkspaceNavigationGroupBadge>{group.badge}</WorkspaceNavigationGroupBadge>}
                               </div>
                             )}
@@ -445,11 +420,9 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                     <a
                                       href={appHref(item.path)}
                                       onClick={(event) => handleAppLinkClick(event, item.path, navigate, () => onSetMobileNavOpen(false))}
-                                      aria-current={(item.current ?? item.active) ? 'page' : undefined}
+                                      aria-current={item.current ?? item.active ? 'page' : undefined}
                                       className={`flex min-h-11 items-center justify-between rounded-md px-3 py-2 text-left text-xs transition-colors duration-[160ms] motion-reduce:duration-0 ${
-                                        item.active
-                                          ? 'bg-ui-bg font-semibold text-ui-text'
-                                          : 'font-medium text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                                        item.active ? 'bg-ui-bg font-semibold text-ui-text' : 'font-medium text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                                       }`}
                                     >
                                       <span className="flex min-w-0 items-center gap-3">
@@ -457,7 +430,10 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                         <span className="truncate">{item.label}</span>
                                       </span>
                                       {(item.id === 'approvals' || item.id === 'workflows') && (
-                                        <span className="ml-2 inline-flex min-w-8 shrink-0 justify-end" aria-hidden={item.badge === undefined || item.badge <= 0 ? 'true' : undefined}>
+                                        <span
+                                          className="ml-2 inline-flex min-w-8 shrink-0 justify-end"
+                                          aria-hidden={item.badge === undefined || item.badge <= 0 ? 'true' : undefined}
+                                        >
                                           {typeof item.badge === 'number' ? <NavCountBadge count={item.badge} /> : null}
                                         </span>
                                       )}
@@ -477,9 +453,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                             }`}
                                           >
                                             <span className="min-w-0 flex-1 truncate">{child.label}</span>
-                                            {child.id === 'workflowRuns' && typeof child.badge === 'number' && child.badge > 0 && (
-                                              <NavCountBadge count={child.badge} />
-                                            )}
+                                            {child.id === 'workflowRuns' && typeof child.badge === 'number' && child.badge > 0 && <NavCountBadge count={child.badge} />}
                                           </a>
                                         ))}
                                       </div>
@@ -498,17 +472,11 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
 
               <section className="px-4 py-3">
                 <div className="mb-2 flex min-h-11 items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                    {t('app.workspaceContext')}
-                  </p>
-                  <span className="min-w-0 truncate text-right text-xs font-bold text-ui-text">
-                    {selectedWorkspace?.name || t('app.selectWorkspace')}
-                  </span>
+                  <p className="type-label tracking-normal">{t('app.workspaceContext')}</p>
+                  <span className="min-w-0 truncate text-right text-xs type-emphasis text-ui-text">{selectedWorkspace?.name || t('app.selectWorkspace')}</span>
                 </div>
                 <div className="no-scrollbar max-h-60 space-y-1 overflow-y-auto">
-                  {workspaces.length === 0 && (
-                    <p className="text-xs text-ui-text-muted">{t('app.noWorkspacesAvailable')}</p>
-                  )}
+                  {workspaces.length === 0 && <p className="text-xs text-ui-text-muted">{t('app.noWorkspacesAvailable')}</p>}
                   {workspaces.map((workspace) => {
                     const count = workspaceClusterCounts.get(workspace.id) || 0;
                     const isSelected = workspace.id === selectedWorkspaceId;
@@ -519,9 +487,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                         onClick={() => onSelectWorkspaceContext(workspace.id)}
                         aria-current={isSelected ? 'true' : undefined}
                         className={`min-h-11 w-full rounded-md px-3 py-2 text-left text-xs transition-colors ${
-                          isSelected
-                            ? 'bg-accent-soft text-accent-strong'
-                            : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                          isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                         }`}
                       >
                         <span className="block truncate font-semibold">{workspace.name}</span>
@@ -533,9 +499,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
               </section>
 
               <section className="px-4 py-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-ui-text-muted">
-                  {t('app.userSettings')}
-                </p>
+                <p className="mb-2 type-label tracking-normal">{t('app.userSettings')}</p>
                 <div className="grid grid-cols-1 gap-2">
                   <button
                     type="button"
@@ -545,9 +509,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                     }}
                     aria-current={activeResourceNav === 'accountSettings' ? 'page' : undefined}
                     className={`flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors ${
-                      activeResourceNav === 'accountSettings'
-                        ? 'bg-accent-soft text-accent-strong'
-                        : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                      activeResourceNav === 'accountSettings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                     }`}
                   >
                     <span className="flex min-w-0 items-center gap-3">
@@ -556,22 +518,17 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                       </span>
                       <span className="min-w-0">
                         <span className="type-micro-label block">{t('app.accountSettings')}</span>
-                        <span className="block truncate text-xs font-bold text-ui-text">{user.name}</span>
+                        <span className="block truncate text-xs type-emphasis text-ui-text">{user.name}</span>
                         <span className="type-caption block truncate">{user.email}</span>
                       </span>
                     </span>
                     <ICONS.ChevronRight className="h-4 w-4 shrink-0" />
                   </button>
-                  <ThemeMenu
-                    preference={themePreference}
-                    resolvedTheme={resolvedTheme}
-                    variant="mobile"
-                    onSelect={onSelectTheme}
-                  />
+                  <ThemeMenu preference={themePreference} resolvedTheme={resolvedTheme} variant="mobile" onSelect={onSelectTheme} />
                   <button
                     type="button"
                     onClick={onLogout}
-                    className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-bold text-ui-text transition-colors hover:bg-ui-bg"
+                    className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs type-ui text-ui-text transition-colors hover:bg-ui-bg"
                   >
                     {t('app.logout')}
                   </button>

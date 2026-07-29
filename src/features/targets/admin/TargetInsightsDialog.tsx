@@ -7,11 +7,7 @@ import { Dialog } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type {
-  ControlPlaneTargetInsightsCatalog,
-  ControlPlaneTargetToolItem,
-  TargetInsightsEntryInput
-} from '@/services/controlPlaneApi';
+import type { ControlPlaneTargetInsightsCatalog, ControlPlaneTargetToolItem, TargetInsightsEntryInput } from '@/services/controlPlaneApi';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
 import { UnsavedChangesDialog } from '@/features/targets/admin/UnsavedChangesDialog';
 import {
@@ -36,14 +32,7 @@ interface TargetInsightsDialogProps {
   onClose: () => void;
 }
 
-export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
-  workspaceId,
-  targetId,
-  tool,
-  canEdit,
-  savingTool,
-  onClose
-}) => {
+export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ workspaceId, targetId, tool, canEdit, savingTool, onClose }) => {
   const { t } = useTranslation();
   const titleInputRef = React.useRef<HTMLInputElement>(null);
   const pendingDiscardActionRef = React.useRef<(() => void) | null>(null);
@@ -57,36 +46,35 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
   const [fileSearch, setFileSearch] = React.useState('');
   const [showDiscardDialog, setShowDiscardDialog] = React.useState(false);
 
-  const selectedEntry = React.useMemo(
-    () => catalog?.items.find((entry) => entry.id === selectedEntryId) || null,
-    [catalog, selectedEntryId]
-  );
+  const selectedEntry = React.useMemo(() => catalog?.items.find((entry) => entry.id === selectedEntryId) || null, [catalog, selectedEntryId]);
   const files = React.useMemo(() => (catalog?.items || []).map(entryToInsightFile), [catalog]);
   const filteredFiles = React.useMemo(() => {
     const query = fileSearch.trim().toLowerCase();
     if (!query) return files;
     return files.filter((file) => file.searchableText.includes(query));
   }, [fileSearch, files]);
-  const filesByStatus = React.useMemo(() => Object.fromEntries(
-    statusOrder.map((status) => [status, filteredFiles.filter((file) => file.status === status)])
-  ) as Record<InsightFileStatus, InsightFile[]>, [filteredFiles]);
+  const filesByStatus = React.useMemo(
+    () => Object.fromEntries(statusOrder.map((status) => [status, filteredFiles.filter((file) => file.status === status)])) as Record<InsightFileStatus, InsightFile[]>,
+    [filteredFiles]
+  );
   const hasOpenDraft = Boolean(selectedEntry || creatingNewFile);
-  const selectedFileName = selectedEntry
-    ? buildInsightFilePath(selectedEntry).split('/').pop() || 'insight-file.md'
-    : `${slugifyTitle(draft.title) || 'new-file'}.md`;
+  const selectedFileName = selectedEntry ? buildInsightFilePath(selectedEntry).split('/').pop() || 'insight-file.md' : `${slugifyTitle(draft.title) || 'new-file'}.md`;
   const selectedStatus = selectedEntry?.status || 'active';
   const draftDirty = hasOpenDraft && hasDraftChanges(selectedEntry, draft);
   const canMutateFile = canEdit && !fileSaving && !savingTool;
   const hasSearchQuery = Boolean(fileSearch.trim());
 
-  const requestDiscard = React.useCallback((action: () => void) => {
-    if (!draftDirty || !canEdit) {
-      action();
-      return;
-    }
-    pendingDiscardActionRef.current = action;
-    setShowDiscardDialog(true);
-  }, [canEdit, draftDirty]);
+  const requestDiscard = React.useCallback(
+    (action: () => void) => {
+      if (!draftDirty || !canEdit) {
+        action();
+        return;
+      }
+      pendingDiscardActionRef.current = action;
+      setShowDiscardDialog(true);
+    },
+    [canEdit, draftDirty]
+  );
 
   const cancelDiscard = () => {
     pendingDiscardActionRef.current = null;
@@ -184,17 +172,19 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
     setFileSaving(true);
     setError('');
     try {
-      const saved = action === 'archive'
-        ? await controlPlaneApi.archiveTargetInsightsEntry(workspaceId, targetId, selectedEntry.id)
-        : await controlPlaneApi.promoteTargetInsightsEntry(workspaceId, targetId, selectedEntry.id);
+      const saved =
+        action === 'archive'
+          ? await controlPlaneApi.archiveTargetInsightsEntry(workspaceId, targetId, selectedEntry.id)
+          : await controlPlaneApi.promoteTargetInsightsEntry(workspaceId, targetId, selectedEntry.id);
       setCatalog((current) => applySavedEntryToCatalog(current, saved));
       setSelectedEntryId(saved.id);
       setCreatingNewFile(false);
       setDraft(draftFromEntry(saved));
     } catch (err) {
-      const key = action === 'archive'
-        ? 'tools.targetInsights.archiveFileFailed'
-        : action === 'restore'
+      const key =
+        action === 'archive'
+          ? 'tools.targetInsights.archiveFileFailed'
+          : action === 'restore'
           ? 'tools.targetInsights.restoreFileFailed'
           : 'tools.targetInsights.promoteFileFailed';
       setError(formatError(err, t(key), 'targetInsights'));
@@ -228,7 +218,9 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
         </div>
       </div>
       <div className="border-b border-ui-border p-3">
-        <label htmlFor="target-insights-file-search" className="sr-only">{t('tools.targetInsights.searchFiles')}</label>
+        <label htmlFor="target-insights-file-search" className="sr-only">
+          {t('tools.targetInsights.searchFiles')}
+        </label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
           <input
@@ -264,22 +256,24 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
                         <span className="truncate">{selectedFileName}</span>
                       </div>
                     )}
-                    {statusFiles.length > 0 ? statusFiles.map((file) => (
-                      <button
-                        key={file.entry.id}
-                        type="button"
-                        onClick={() => selectFile(file)}
-                        className={`control-target flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left text-xs transition-colors ${
-                          file.entry.id === selectedEntryId && !creatingNewFile
-                            ? 'bg-accent-soft/20 text-accent-strong'
-                            : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
-                        }`}
-                        title={file.path}
-                      >
-                        <FileText className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{file.fileName}</span>
-                      </button>
-                    )) : status !== 'active' || !creatingNewFile ? (
+                    {statusFiles.length > 0 ? (
+                      statusFiles.map((file) => (
+                        <button
+                          key={file.entry.id}
+                          type="button"
+                          onClick={() => selectFile(file)}
+                          className={`control-target flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left text-xs transition-colors ${
+                            file.entry.id === selectedEntryId && !creatingNewFile
+                              ? 'bg-accent-soft/20 text-accent-strong'
+                              : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
+                          }`}
+                          title={file.path}
+                        >
+                          <FileText className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{file.fileName}</span>
+                        </button>
+                      ))
+                    ) : status !== 'active' || !creatingNewFile ? (
                       <p className="type-caption py-1.5 pl-7 pr-2 text-ui-text-muted/75">{t('tools.targetInsights.emptyFolder')}</p>
                     ) : null}
                   </div>
@@ -332,103 +326,111 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({
         onClose={guardedClose}
         className="flex max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl"
       >
-      <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
-        <div className="min-w-0">
-          <h3 id="target-insights-dialog-title" className="type-panel-title">{t('tools.targetInsights.title')}</h3>
-          <p className="type-caption mt-1 text-ui-text-muted">{tool.description}</p>
+        <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
+          <div className="min-w-0">
+            <h3 id="target-insights-dialog-title" className="type-panel-title">
+              {t('tools.targetInsights.title')}
+            </h3>
+            <p className="type-caption mt-1 text-ui-text-muted">{tool.description}</p>
+          </div>
+          <CloseButton onClick={guardedClose} disabled={fileSaving || savingTool} aria-label={t('tools.targetInsights.close')} />
         </div>
-        <CloseButton
-          onClick={guardedClose}
-          disabled={fileSaving || savingTool}
-          aria-label={t('tools.targetInsights.close')}
-        />
-      </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">
-        {loading ? (
-          <div className="flex min-h-[34rem] items-center justify-center">
-            <InlineLoadingIndicator label={t('tools.targetInsights.loading')} />
-          </div>
-        ) : (
-          <div className="grid min-h-[34rem] gap-0 overflow-hidden rounded-lg border border-ui-border bg-ui-bg lg:grid-cols-[17rem_minmax(0,1fr)]">
-            {renderFileTree()}
-            <section className="flex min-w-0 flex-col bg-ui-surface">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ui-border px-4 py-3">
-                <div className="min-w-0">
-                  <p className="type-label truncate text-ui-text">
-                    {hasOpenDraft
-                      ? `${selectedFileName} (${t(`tools.targetInsights.status.${selectedStatus}`)})`
-                      : t('tools.targetInsights.files')}
-                  </p>
-                </div>
-                <div className="flex flex-wrap justify-end gap-2">{renderStatusActions()}</div>
-              </div>
-              {error && (
-                <div className="type-caption m-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
-                  {error}
-                </div>
-              )}
-              {hasOpenDraft ? (
-                <div className="min-h-0 flex-1 space-y-3 p-4">
-                  <label className="block">
-                    <span className="type-label">{t('tools.targetInsights.fields.title')}</span>
-                    <input
-                      ref={titleInputRef}
-                      className="mt-2 w-full rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-70"
-                      value={draft.title}
-                      readOnly={!canEdit}
-                      onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
-                      placeholder={t('tools.targetInsights.titlePlaceholder')}
-                    />
-                  </label>
-                  <textarea
-                    value={draft.bodyMarkdown}
-                    readOnly={!canEdit}
-                    onChange={(event) => setDraft((current) => ({ ...current, bodyMarkdown: event.target.value }))}
-                    className="min-h-[22rem] w-full flex-1 resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono text-sm leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
-                    spellCheck={false}
-                    placeholder={t('tools.targetInsights.bodyPlaceholder')}
-                  />
-                </div>
-              ) : (
-                <div className="flex min-h-[28rem] flex-1 items-center justify-center px-6 text-center">
-                  <div className="max-w-sm">
-                    <p className="type-row-title">{t('tools.targetInsights.noFiles')}</p>
-                    <p className="type-caption mt-2 text-ui-text-muted">{t('tools.targetInsights.noFilesHelp')}</p>
-                    {canEdit && (
-                      <Button variant="secondary" size="sm" className="mt-4" onClick={startNewFile}>
-                        <FilePlus2 className="h-4 w-4" />
-                        {t('tools.targetInsights.newFile')}
-                      </Button>
-                    )}
+        <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">
+          {loading ? (
+            <div className="flex min-h-[34rem] items-center justify-center">
+              <InlineLoadingIndicator label={t('tools.targetInsights.loading')} />
+            </div>
+          ) : (
+            <div className="grid min-h-[34rem] gap-0 overflow-hidden rounded-lg border border-ui-border bg-ui-bg lg:grid-cols-[17rem_minmax(0,1fr)]">
+              {renderFileTree()}
+              <section className="flex min-w-0 flex-col bg-ui-surface">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ui-border px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="type-label truncate text-ui-text">
+                      {hasOpenDraft ? `${selectedFileName} (${t(`tools.targetInsights.status.${selectedStatus}`)})` : t('tools.targetInsights.files')}
+                    </p>
                   </div>
+                  <div className="flex flex-wrap justify-end gap-2">{renderStatusActions()}</div>
                 </div>
-              )}
-            </section>
-          </div>
-        )}
-      </div>
+                {error && <div className="type-caption m-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{error}</div>}
+                {hasOpenDraft ? (
+                  <div className="min-h-0 flex-1 space-y-3 p-4">
+                    <label className="block">
+                      <span className="type-label">{t('tools.targetInsights.fields.title')}</span>
+                      <input
+                        ref={titleInputRef}
+                        className="mt-2 w-full rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-70"
+                        value={draft.title}
+                        readOnly={!canEdit}
+                        onChange={(event) =>
+                          setDraft((current) => ({
+                            ...current,
+                            title: event.target.value
+                          }))
+                        }
+                        placeholder={t('tools.targetInsights.titlePlaceholder')}
+                      />
+                    </label>
+                    <textarea
+                      value={draft.bodyMarkdown}
+                      readOnly={!canEdit}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          bodyMarkdown: event.target.value
+                        }))
+                      }
+                      className="min-h-[22rem] w-full flex-1 resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono text-sm leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
+                      spellCheck={false}
+                      placeholder={t('tools.targetInsights.bodyPlaceholder')}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex min-h-[28rem] flex-1 items-center justify-center px-6 text-center">
+                    <div className="max-w-sm">
+                      <p className="type-row-title">{t('tools.targetInsights.noFiles')}</p>
+                      <p className="type-caption mt-2 text-ui-text-muted">{t('tools.targetInsights.noFilesHelp')}</p>
+                      {canEdit && (
+                        <Button variant="secondary" size="sm" className="mt-4" onClick={startNewFile}>
+                          <FilePlus2 className="h-4 w-4" />
+                          {t('tools.targetInsights.newFile')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+        </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-        {!canEdit ? (
-          <>
-            <span />
-            <div className="flex justify-end gap-3">
-              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={fileSaving || savingTool}>{t('common.close')}</Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <Button variant="secondary" size="sm" onClick={resetDraft} disabled={!draftDirty || fileSaving || savingTool}>{t('tools.targetInsights.resetChanges')}</Button>
-            <div className="flex justify-end gap-3">
-              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={fileSaving || savingTool}>{t('tools.targetInsights.cancel')}</Button>
-              <Button variant="primary" size="sm" onClick={() => void saveFile()} disabled={!hasOpenDraft || fileSaving || !draftDirty || !draft.title.trim()}>
-                {fileSaving ? t('common.saving') : t('tools.targetInsights.saveChanges')}
+        <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
+          {!canEdit ? (
+            <>
+              <span />
+              <div className="flex justify-end gap-3">
+                <Button variant="secondary" size="sm" onClick={guardedClose} disabled={fileSaving || savingTool}>
+                  {t('common.close')}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Button variant="secondary" size="sm" onClick={resetDraft} disabled={!draftDirty || fileSaving || savingTool}>
+                {t('tools.targetInsights.resetChanges')}
               </Button>
-            </div>
-          </>
-        )}
-      </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="secondary" size="sm" onClick={guardedClose} disabled={fileSaving || savingTool}>
+                  {t('tools.targetInsights.cancel')}
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => void saveFile()} disabled={!hasOpenDraft || fileSaving || !draftDirty || !draft.title.trim()}>
+                  {fileSaving ? t('common.saving') : t('tools.targetInsights.saveChanges')}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </Dialog>
       {showDiscardDialog && (
         <UnsavedChangesDialog

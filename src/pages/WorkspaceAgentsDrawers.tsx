@@ -283,7 +283,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
           <p className="rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-sm text-ui-text-muted">This form edits the Agent definition only. Its workspace-owned capability ceiling is configured independently and remains visible in the Capabilities tab.</p>
 
           <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
-            <h3 className="type-micro-label">Target scope</h3>
+            <h3 className="type-row-title ">Target scope</h3>
             <p className="type-caption mt-2 text-ui-text-muted">Allow target types broadly, then optionally narrow the Agent to exact targets.</p>
             <div className="mt-3 flex flex-wrap gap-4">
               {([
@@ -323,14 +323,14 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
           </section>
 
           {editChangeSummary.length > 0 && <section className="border-y border-ui-border py-4">
-            <h3 className="type-micro-label">Changes before save</h3>
+            <h3 className="type-row-title ">Changes before save</h3>
             <ul className="mt-3 grid gap-2 text-sm font-semibold">
               {editChangeSummary.map((change) => <li key={change}>{change}</li>)}
             </ul>
           </section>}
 
           <section className="border-y border-ui-border py-4">
-            <h3 className="type-micro-label">Affected workflows</h3>
+            <h3 className="type-row-title ">Affected workflows</h3>
             <div className="mt-3 grid gap-2">
               {editingAgent.workflowsUsingAgent.length > 0
                 ? editingAgent.workflowsUsingAgent.map((workflow) => (

@@ -8,17 +8,9 @@ import { DrawerFrame } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { WebhookEditor } from '@/features/webhooks/WebhookEditor';
 import { WebhookList } from '@/features/webhooks/WebhookList';
-import {
-  draftFromWebhook,
-  emptyWebhookDraft,
-  type WebhookDraft
-} from '@/features/webhooks/webhookModel';
+import { draftFromWebhook, emptyWebhookDraft, type WebhookDraft } from '@/features/webhooks/webhookModel';
 import { ICONS } from '@/constants';
-import {
-  controlPlaneApi,
-  type ControlPlaneWebhookHistory,
-  type ControlPlaneWebhookSubscription
-} from '@/services/controlPlaneApi';
+import { controlPlaneApi, type ControlPlaneWebhookHistory, type ControlPlaneWebhookSubscription } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { Workspace } from '@/types';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
@@ -31,18 +23,17 @@ interface WorkspaceWebhooksPageProps {
 
 type WebhookStatusFilter = 'all' | 'enabled' | 'disabled';
 
-export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
-  workspace,
-  canManageWebhooks,
-  showToast
-}) => {
+export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ workspace, canManageWebhooks, showToast }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
   const [webhooks, setWebhooks] = React.useState<ControlPlaneWebhookSubscription[]>([]);
   const [draft, setDraft] = React.useState<WebhookDraft>(emptyWebhookDraft);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editorOpen, setEditorOpen] = React.useState(false);
-  const [createdSecret, setCreatedSecret] = React.useState<{ name: string; secret: string } | null>(null);
+  const [createdSecret, setCreatedSecret] = React.useState<{
+    name: string;
+    secret: string;
+  } | null>(null);
   const [historyWebhookId, setHistoryWebhookId] = React.useState<string | null>(null);
   const [history, setHistory] = React.useState<ControlPlaneWebhookHistory[]>([]);
   const [isInitialLoading, setIsInitialLoading] = React.useState(true);
@@ -64,27 +55,29 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const editorFormId = React.useId();
   currentWorkspaceId.current = workspace.id;
 
-  const loadWebhooks = React.useCallback(async (initial = false) => {
-    const requestedWorkspaceId = workspace.id;
-    const requestSequence = ++webhookRequestSequence.current;
-    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
-      && webhookRequestSequence.current === requestSequence;
-    if (initial) setIsInitialLoading(true);
-    else setIsRefreshing(true);
-    setLoadError(null);
-    try {
-      const items = await controlPlaneApi.listWebhooks(requestedWorkspaceId);
-      if (!isCurrentRequest()) return;
-      setWebhooks(items);
-    } catch (loadFailure) {
-      if (!isCurrentRequest()) return;
-      setLoadError(formatControlPlaneError(loadFailure, t('workspaceWebhooks.loadFailed'), { area: 'webhooks' }));
-    } finally {
-      if (!isCurrentRequest()) return;
-      setIsInitialLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [t, workspace.id]);
+  const loadWebhooks = React.useCallback(
+    async (initial = false) => {
+      const requestedWorkspaceId = workspace.id;
+      const requestSequence = ++webhookRequestSequence.current;
+      const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId && webhookRequestSequence.current === requestSequence;
+      if (initial) setIsInitialLoading(true);
+      else setIsRefreshing(true);
+      setLoadError(null);
+      try {
+        const items = await controlPlaneApi.listWebhooks(requestedWorkspaceId);
+        if (!isCurrentRequest()) return;
+        setWebhooks(items);
+      } catch (loadFailure) {
+        if (!isCurrentRequest()) return;
+        setLoadError(formatControlPlaneError(loadFailure, t('workspaceWebhooks.loadFailed'), { area: 'webhooks' }));
+      } finally {
+        if (!isCurrentRequest()) return;
+        setIsInitialLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [t, workspace.id]
+  );
 
   React.useEffect(() => {
     webhookRequestSequence.current += 1;
@@ -135,8 +128,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     if (!canManageWebhooks) return;
     const requestedWorkspaceId = workspace.id;
     const requestSequence = ++saveRequestSequence.current;
-    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
-      && saveRequestSequence.current === requestSequence;
+    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId && saveRequestSequence.current === requestSequence;
     setIsSaving(true);
     setMutationError(null);
     setCreatedSecret(null);
@@ -174,8 +166,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     if (!canManageWebhooks) return false;
     const requestedWorkspaceId = workspace.id;
     const requestSequence = ++deleteRequestSequence.current;
-    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
-      && deleteRequestSequence.current === requestSequence;
+    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId && deleteRequestSequence.current === requestSequence;
     setDeletingId(webhook.id);
     setMutationError(null);
     setCreatedSecret(null);
@@ -207,8 +198,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
     if (!canManageWebhooks) return;
     const requestedWorkspaceId = workspace.id;
     const requestSequence = ++historyRequestSequence.current;
-    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
-      && historyRequestSequence.current === requestSequence;
+    const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId && historyRequestSequence.current === requestSequence;
     setHistoryWebhookId(webhook.id);
     setHistory([]);
     setHistoryError(null);
@@ -239,21 +229,18 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   const workspaceStateCurrent = stateWorkspaceId === workspace.id;
   const visibleWebhooks = workspaceStateCurrent ? webhooks : [];
   const query = urlSearch.get('q') || '';
-  const status = urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'disabled'
-    ? urlSearch.get('status') as Exclude<WebhookStatusFilter, 'all'>
-    : 'all';
+  const status = urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'disabled' ? (urlSearch.get('status') as Exclude<WebhookStatusFilter, 'all'>) : 'all';
   const normalizedQuery = query.trim().toLowerCase();
-  const filteredWebhooks = React.useMemo(() => visibleWebhooks.filter((webhook) => {
-    if (status === 'enabled' && !webhook.enabled) return false;
-    if (status === 'disabled' && webhook.enabled) return false;
-    if (!normalizedQuery) return true;
-    return [
-      webhook.name,
-      webhook.url,
-      webhook.targetId,
-      ...webhook.eventTypes
-    ].some((value) => value?.toLowerCase().includes(normalizedQuery));
-  }), [normalizedQuery, status, visibleWebhooks]);
+  const filteredWebhooks = React.useMemo(
+    () =>
+      visibleWebhooks.filter((webhook) => {
+        if (status === 'enabled' && !webhook.enabled) return false;
+        if (status === 'disabled' && webhook.enabled) return false;
+        if (!normalizedQuery) return true;
+        return [webhook.name, webhook.url, webhook.targetId, ...webhook.eventTypes].some((value) => value?.toLowerCase().includes(normalizedQuery));
+      }),
+    [normalizedQuery, status, visibleWebhooks]
+  );
   const hasActiveFilters = Boolean(normalizedQuery || status !== 'all');
   const clearFilters = () => {
     updateUrlSearch({ q: null, status: null }, { replace: true });
@@ -261,42 +248,35 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
   };
   const visibleDraft = workspaceStateCurrent ? draft : emptyWebhookDraft();
   const visibleCreatedSecret = workspaceStateCurrent ? createdSecret : null;
-  const editingWebhook = workspaceStateCurrent && editingId
-    ? visibleWebhooks.find((webhook) => webhook.id === editingId)
-    : undefined;
-  const deleteTargetWebhook = workspaceStateCurrent && deleteTargetId
-    ? visibleWebhooks.find((webhook) => webhook.id === deleteTargetId)
-    : undefined;
-  const canSaveDraft = visibleDraft.name.trim().length > 0
-    && visibleDraft.url.trim().length > 0
-    && visibleDraft.eventTypes.length > 0;
+  const editingWebhook = workspaceStateCurrent && editingId ? visibleWebhooks.find((webhook) => webhook.id === editingId) : undefined;
+  const deleteTargetWebhook = workspaceStateCurrent && deleteTargetId ? visibleWebhooks.find((webhook) => webhook.id === deleteTargetId) : undefined;
+  const canSaveDraft = visibleDraft.name.trim().length > 0 && visibleDraft.url.trim().length > 0 && visibleDraft.eventTypes.length > 0;
 
   return (
     <PageShell>
       <PageHeader
         title={t('workspaceWebhooks.title')}
-        description={t('workspaceWebhooks.subtitle', { workspace: workspace.name })}
-        actions={<>
-          <Button
-            size="md"
-            variant="secondary"
-            onClick={() => void loadWebhooks()}
-            disabled={!workspaceStateCurrent || isInitialLoading || isRefreshing}
-          >
-            <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
-            {t('common.refresh')}
-          </Button>
-          <Button
-            size="md"
-            variant="primary"
-            onClick={openCreateEditor}
-            disabled={!canManageWebhooks}
-            title={!canManageWebhooks ? t('workspaceWebhooks.readOnlyDescription') : undefined}
-          >
-            <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
-            {t('workspaceWebhooks.create')}
-          </Button>
-        </>}
+        description={t('workspaceWebhooks.subtitle', {
+          workspace: workspace.name
+        })}
+        actions={
+          <>
+            <Button size="md" variant="secondary" onClick={() => void loadWebhooks()} disabled={!workspaceStateCurrent || isInitialLoading || isRefreshing}>
+              <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
+              {t('common.refresh')}
+            </Button>
+            <Button
+              size="md"
+              variant="primary"
+              onClick={openCreateEditor}
+              disabled={!canManageWebhooks}
+              title={!canManageWebhooks ? t('workspaceWebhooks.readOnlyDescription') : undefined}
+            >
+              <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+              {t('workspaceWebhooks.create')}
+            </Button>
+          </>
+        }
       />
 
       {workspaceStateCurrent && mutationError && !deleteTargetWebhook && (
@@ -312,7 +292,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
               <ICONS.Lock className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-ui-text">{t('workspaceWebhooks.readOnlyTitle')}</h2>
+              <h2 className="type-row-title">{t('workspaceWebhooks.readOnlyTitle')}</h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-ui-text-muted">{t('workspaceWebhooks.readOnlyDescription')}</p>
             </div>
           </div>
@@ -323,8 +303,10 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         <section className="mb-5 rounded-lg border border-status-success/30 bg-status-success-soft p-4" aria-labelledby="webhook-secret-title">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <h2 id="webhook-secret-title" className="text-sm font-bold text-status-success-text">
-                {t('workspaceWebhooks.secretTitle', { name: visibleCreatedSecret.name })}
+              <h2 id="webhook-secret-title" className="type-row-title text-status-success-text">
+                {t('workspaceWebhooks.secretTitle', {
+                  name: visibleCreatedSecret.name
+                })}
               </h2>
               <p className="mt-1 type-caption text-status-success-text">{t('workspaceWebhooks.secretDescription')}</p>
               <code className="mt-2 block break-all rounded-md border border-status-success/25 bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text">
@@ -351,9 +333,14 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
           queryLabel={t('workspaceWebhooks.filters.search')}
           queryPlaceholder={t('workspaceWebhooks.filters.search')}
           queryClearLabel={t('common.clearSearch')}
-          resultSummary={hasActiveFilters
-            ? t('workspaceWebhooks.filters.showing', { count: filteredWebhooks.length, total: visibleWebhooks.length })
-            : t('workspaceWebhooks.count', { count: visibleWebhooks.length })}
+          resultSummary={
+            hasActiveFilters
+              ? t('workspaceWebhooks.filters.showing', {
+                  count: filteredWebhooks.length,
+                  total: visibleWebhooks.length
+                })
+              : t('workspaceWebhooks.count', { count: visibleWebhooks.length })
+          }
           filters={[
             createDiscoveryFilterGroup<WebhookStatusFilter>({
               id: 'status',
@@ -361,9 +348,21 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
               value: status,
               defaultValue: 'all',
               options: [
-                { value: 'all', label: t('workspaceWebhooks.filters.allStatuses'), count: visibleWebhooks.length },
-                { value: 'enabled', label: t('workspaceWebhooks.enabled'), count: visibleWebhooks.filter((webhook) => webhook.enabled).length },
-                { value: 'disabled', label: t('workspaceWebhooks.disabled'), count: visibleWebhooks.filter((webhook) => !webhook.enabled).length }
+                {
+                  value: 'all',
+                  label: t('workspaceWebhooks.filters.allStatuses'),
+                  count: visibleWebhooks.length
+                },
+                {
+                  value: 'enabled',
+                  label: t('workspaceWebhooks.enabled'),
+                  count: visibleWebhooks.filter((webhook) => webhook.enabled).length
+                },
+                {
+                  value: 'disabled',
+                  label: t('workspaceWebhooks.disabled'),
+                  count: visibleWebhooks.filter((webhook) => !webhook.enabled).length
+                }
               ],
               onChange: (value) => updateUrlSearch({ status: value === 'all' ? null : value })
             })
@@ -407,7 +406,13 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
       <DestructiveConfirmationDialog
         open={Boolean(deleteTargetWebhook)}
         titleId="delete-webhook-title"
-        title={deleteTargetWebhook ? t('workspaceWebhooks.deleteTitle', { name: deleteTargetWebhook.name }) : ''}
+        title={
+          deleteTargetWebhook
+            ? t('workspaceWebhooks.deleteTitle', {
+                name: deleteTargetWebhook.name
+              })
+            : ''
+        }
         subtitle={t('common.irreversibleAction')}
         description={t('workspaceWebhooks.deleteDescription')}
         error={deleteTargetWebhook ? mutationError : null}
@@ -435,41 +440,28 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({
         onClose={closeEditor}
         closeDisabled={isSaving}
         titleId="webhook-editor-title"
-        title={editingWebhook
-          ? t('workspaceWebhooks.editTitle', { name: editingWebhook.name })
-          : t('workspaceWebhooks.createTitle')}
-        description={<>
-          {t('workspaceWebhooks.editorDescription')}
-          <span className="mt-1 block">{t('workspaceWebhooks.workspaceWideScope')}</span>
-        </>}
+        title={editingWebhook ? t('workspaceWebhooks.editTitle', { name: editingWebhook.name }) : t('workspaceWebhooks.createTitle')}
+        description={
+          <>
+            {t('workspaceWebhooks.editorDescription')}
+            <span className="mt-1 block">{t('workspaceWebhooks.workspaceWideScope')}</span>
+          </>
+        }
         closeLabel={t('common.close')}
         width="xl"
-        footer={<>
-          <Button type="button" variant="tertiary" onClick={closeEditor} disabled={isSaving}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            type="submit"
-            form={editorFormId}
-            variant="primary"
-            disabled={isSaving || !canSaveDraft}
-          >
-            <ICONS.Send className="h-4 w-4" aria-hidden="true" />
-            {isSaving
-              ? t('common.saving')
-              : editingWebhook
-                ? t('workspaceWebhooks.save')
-                : t('workspaceWebhooks.create')}
-          </Button>
-        </>}
+        footer={
+          <>
+            <Button type="button" variant="tertiary" onClick={closeEditor} disabled={isSaving}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" form={editorFormId} variant="primary" disabled={isSaving || !canSaveDraft}>
+              <ICONS.Send className="h-4 w-4" aria-hidden="true" />
+              {isSaving ? t('common.saving') : editingWebhook ? t('workspaceWebhooks.save') : t('workspaceWebhooks.create')}
+            </Button>
+          </>
+        }
       >
-        <WebhookEditor
-          draft={visibleDraft}
-          formId={editorFormId}
-          isSaving={workspaceStateCurrent && isSaving}
-          onChange={setDraft}
-          onSave={() => void saveWebhook()}
-        />
+        <WebhookEditor draft={visibleDraft} formId={editorFormId} isSaving={workspaceStateCurrent && isSaving} onChange={setDraft} onSave={() => void saveWebhook()} />
       </DrawerFrame>
     </PageShell>
   );

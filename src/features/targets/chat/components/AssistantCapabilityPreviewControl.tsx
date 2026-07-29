@@ -21,28 +21,24 @@ const TOOL_CAPABILITY_ORDER: Record<ControlPlaneTargetAssistantCapabilityToolPre
   read: 1
 };
 
-function compareCapabilityToolPreviewItems(
-  first: ControlPlaneTargetAssistantCapabilityToolPreviewItem,
-  second: ControlPlaneTargetAssistantCapabilityToolPreviewItem
-): number {
+function compareCapabilityToolPreviewItems(first: ControlPlaneTargetAssistantCapabilityToolPreviewItem, second: ControlPlaneTargetAssistantCapabilityToolPreviewItem): number {
   const capabilityOrder = TOOL_CAPABILITY_ORDER[first.capability] - TOOL_CAPABILITY_ORDER[second.capability];
   if (capabilityOrder !== 0) return capabilityOrder;
   const firstLabel = first.label || first.name;
   const secondLabel = second.label || second.name;
-  return firstLabel.localeCompare(secondLabel, undefined, { sensitivity: 'base' });
+  return firstLabel.localeCompare(secondLabel, undefined, {
+    sensitivity: 'base'
+  });
 }
 
-function compareSkillPreviewItems(
-  first: ControlPlaneTargetAssistantCapabilitySkillPreviewItem,
-  second: ControlPlaneTargetAssistantCapabilitySkillPreviewItem
-): number {
-  return first.name.localeCompare(second.name, undefined, { sensitivity: 'base' });
+function compareSkillPreviewItems(first: ControlPlaneTargetAssistantCapabilitySkillPreviewItem, second: ControlPlaneTargetAssistantCapabilitySkillPreviewItem): number {
+  return first.name.localeCompare(second.name, undefined, {
+    sensitivity: 'base'
+  });
 }
 
 function capabilityBadgeClassName(capability: ControlPlaneTargetAssistantCapabilityToolPreviewItem['capability']): string {
-  return capability === 'write'
-    ? 'border border-status-warning/25 bg-status-warning-soft text-status-warning-text'
-    : 'border border-ui-border bg-ui-surface text-ui-text-muted';
+  return capability === 'write' ? 'border border-status-warning/25 bg-status-warning-soft text-status-warning-text' : 'border border-ui-border bg-ui-surface text-ui-text-muted';
 }
 
 function capabilityChipLabel(
@@ -57,41 +53,32 @@ function capabilityChipLabel(
   const skillCount = preview?.skillSummary.totalAvailable ?? 0;
   const toolLabel = t(toolCount === 1 ? 'chat.capabilityPreviewChipTool' : 'chat.capabilityPreviewChipTools', { count: toolCount });
   const skillLabel = t(skillCount === 1 ? 'chat.capabilityPreviewChipSkill' : 'chat.capabilityPreviewChipSkills', { count: skillCount });
-  if (toolCount > 0 && skillCount > 0) return t('chat.capabilityPreviewChipToolsSkills', { toolsLabel: toolLabel, skillsLabel: skillLabel });
+  if (toolCount > 0 && skillCount > 0)
+    return t('chat.capabilityPreviewChipToolsSkills', {
+      toolsLabel: toolLabel,
+      skillsLabel: skillLabel
+    });
   if (skillCount > 0) return skillLabel;
   return toolLabel;
 }
 
-export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPreviewControlProps> = ({
-  canChat,
-  isLoading,
-  error,
-  preview,
-  requestedToolAccessMode
-}) => {
+export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPreviewControlProps> = ({ canChat, isLoading, error, preview, requestedToolAccessMode }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
   const controlId = React.useId();
   const buttonId = `${controlId}-button`;
   const panelId = `${controlId}-panel`;
-  const modeLabel = requestedToolAccessMode === 'read_write'
-    ? t('chat.capabilityPreviewModeReadWrite')
-    : t('chat.capabilityPreviewModeReadOnly');
+  const modeLabel = requestedToolAccessMode === 'read_write' ? t('chat.capabilityPreviewModeReadWrite') : t('chat.capabilityPreviewModeReadOnly');
   const chipLabel = capabilityChipLabel(preview, isLoading, error, t);
-  const writeUnavailableLabel = preview?.writeUnavailableReason === 'run_read_only'
-    ? t('chat.capabilityPreviewWriteUnavailableReadOnly')
-    : preview?.writeUnavailableReason === 'agent_write_disabled'
+  const writeUnavailableLabel =
+    preview?.writeUnavailableReason === 'run_read_only'
+      ? t('chat.capabilityPreviewWriteUnavailableReadOnly')
+      : preview?.writeUnavailableReason === 'agent_write_disabled'
       ? t('chat.capabilityPreviewWriteUnavailableAgent')
       : '';
-  const toolItems = React.useMemo(
-    () => [...(preview?.tools ?? [])].sort(compareCapabilityToolPreviewItems),
-    [preview?.tools]
-  );
-  const skillItems = React.useMemo(
-    () => [...(preview?.skills ?? [])].sort(compareSkillPreviewItems),
-    [preview?.skills]
-  );
+  const toolItems = React.useMemo(() => [...(preview?.tools ?? [])].sort(compareCapabilityToolPreviewItems), [preview?.tools]);
+  const skillItems = React.useMemo(() => [...(preview?.skills ?? [])].sort(compareSkillPreviewItems), [preview?.skills]);
   const showToolPolicyNote = toolItems.length > 0 || Boolean(writeUnavailableLabel);
 
   React.useEffect(() => {
@@ -166,11 +153,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-ui-text">{t('chat.capabilityPreviewTitle')}</p>
                 <p className="mt-1 text-xs font-medium leading-5 text-ui-text-muted">
-                  {error
-                    ? t('chat.capabilityPreviewUnavailableBody')
-                    : isLoading
-                      ? t('chat.capabilityPreviewLoading')
-                      : modeLabel}
+                  {error ? t('chat.capabilityPreviewUnavailableBody') : isLoading ? t('chat.capabilityPreviewLoading') : modeLabel}
                 </p>
               </div>
             </div>
@@ -181,29 +164,25 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                     {preview.confirmationRequiredForWrite && preview.toolSummary.writeAllowed > 0
                       ? t('chat.capabilityPreviewApprovalRequired')
                       : t('chat.capabilityPreviewApprovalNotRequired')}
-                    {writeUnavailableLabel && (
-                      <span className="mt-1 block text-status-warning-text">{writeUnavailableLabel}</span>
-                    )}
+                    {writeUnavailableLabel && <span className="mt-1 block text-status-warning-text">{writeUnavailableLabel}</span>}
                   </div>
                 )}
                 <div className="mt-3 max-h-56 overflow-y-auto pr-1">
                   {toolItems.length === 0 && skillItems.length === 0 ? (
-                    <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">
-                      {t('chat.capabilityPreviewEmpty')}
-                    </p>
+                    <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">{t('chat.capabilityPreviewEmpty')}</p>
                   ) : (
                     <div className="space-y-3">
                       <div>
                         <div className="flex items-center gap-2 px-1 pb-1">
-                          <span className="inline-flex min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-ui-text-muted">
+                          <span className="inline-flex min-w-0 items-center gap-1.5 type-micro-label">
                             <Wrench className="h-3 w-3 shrink-0" aria-hidden="true" />
-                            {t('chat.capabilityPreviewToolsWithCount', { count: toolItems.length })}
+                            {t('chat.capabilityPreviewToolsWithCount', {
+                              count: toolItems.length
+                            })}
                           </span>
                         </div>
                         {toolItems.length === 0 ? (
-                          <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">
-                            {t('chat.capabilityPreviewNoTools')}
-                          </p>
+                          <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">{t('chat.capabilityPreviewNoTools')}</p>
                         ) : (
                           <div className="space-y-1.5">
                             {toolItems.map((tool) => (
@@ -213,9 +192,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                                     <Wrench className="h-3.5 w-3.5 shrink-0 text-ui-text-muted" aria-hidden="true" />
                                     <span className="truncate text-xs font-semibold text-ui-text">{tool.label || tool.name}</span>
                                   </span>
-                                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${capabilityBadgeClassName(tool.capability)}`}>
-                                    {tool.capability}
-                                  </span>
+                                  <span className={`shrink-0 rounded-full px-2 py-0.5 type-micro-label ${capabilityBadgeClassName(tool.capability)}`}>{tool.capability}</span>
                                 </div>
                               </div>
                             ))}
@@ -224,15 +201,15 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                       </div>
                       <div>
                         <div className="flex items-center gap-2 px-1 pb-1">
-                          <span className="inline-flex min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-ui-text-muted">
+                          <span className="inline-flex min-w-0 items-center gap-1.5 type-micro-label">
                             <BookOpen className="h-3 w-3 shrink-0" aria-hidden="true" />
-                            {t('chat.capabilityPreviewSkillsWithCount', { count: skillItems.length })}
+                            {t('chat.capabilityPreviewSkillsWithCount', {
+                              count: skillItems.length
+                            })}
                           </span>
                         </div>
                         {skillItems.length === 0 ? (
-                          <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">
-                            {t('chat.capabilityPreviewNoSkills')}
-                          </p>
+                          <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">{t('chat.capabilityPreviewNoSkills')}</p>
                         ) : (
                           <div className="space-y-1.5">
                             {skillItems.map((skill) => (
@@ -244,7 +221,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                           </div>
                         )}
                       </div>
-                      <p className="px-1 text-[10px] font-medium text-ui-text-muted">{t('chat.capabilityPreviewFrozenWhenSent')}</p>
+                      <p className="px-1 type-caption">{t('chat.capabilityPreviewFrozenWhenSent')}</p>
                     </div>
                   )}
                 </div>

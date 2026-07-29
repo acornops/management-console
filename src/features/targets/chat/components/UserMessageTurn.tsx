@@ -49,10 +49,7 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
   return (
     <div className="group flex w-full justify-end">
       <div className={`min-w-0 ${isEditing ? 'w-[min(42rem,88%)]' : 'max-w-[min(42rem,88%)]'}`}>
-        <div
-          className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4"
-          aria-label={t('chat.roleUser')}
-        >
+        <div className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4" aria-label={t('chat.roleUser')}>
           <span className="sr-only">{t('chat.roleUser')}</span>
           {isEditing ? (
             <form
@@ -99,7 +96,11 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
                   {message.assistantReferences!.map((reference) => {
                     const Icon = reference.kind === 'tool' ? Wrench : BookOpen;
                     return (
-                      <span key={`${reference.kind}:${reference.id}`} role="listitem" className="inline-flex items-center gap-1 rounded bg-ui-bg/15 px-1.5 py-0.5 text-[11px] font-semibold">
+                      <span
+                        key={`${reference.kind}:${reference.id}`}
+                        role="listitem"
+                        className="inline-flex items-center gap-1 rounded bg-ui-bg/15 px-1.5 py-0.5 type-caption font-semibold"
+                      >
                         <Icon className="h-3 w-3" aria-hidden="true" />
                         {reference.label}
                       </span>
@@ -113,15 +114,7 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
             </>
           )}
         </div>
-        {!isEditing && (
-          <MessageActions
-            align="right"
-            copyText={message.content}
-            timestampLabel={timestampLabel}
-            onEdit={canEdit ? onStartEdit : undefined}
-            t={t}
-          />
-        )}
+        {!isEditing && <MessageActions align="right" copyText={message.content} timestampLabel={timestampLabel} onEdit={canEdit ? onStartEdit : undefined} t={t} />}
       </div>
     </div>
   );

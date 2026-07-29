@@ -55,7 +55,7 @@ export const VirtualMachineTelemetrySummary: React.FC<{ latestTelemetryPoint: Vm
             </div>
             <div className="min-w-0">
               <p className="type-micro-label text-ui-text-muted">{label}</p>
-              <p className="mt-1 text-lg font-bold text-ui-text">{value}</p>
+              <p className="mt-1 type-data">{value}</p>
             </div>
           </div>
           <p className="type-caption mt-3 truncate text-ui-text-muted">{detail}</p>

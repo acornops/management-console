@@ -15,31 +15,27 @@ export interface OverflowActionMenuProps {
   label: string;
 }
 
-export const OverflowActionMenu = React.forwardRef<HTMLButtonElement, OverflowActionMenuProps>(({
-  children,
-  disabled = false,
-  estimatedHeight = 152,
-  label
-}, forwardedRef) => {
+export const OverflowActionMenu = React.forwardRef<HTMLButtonElement, OverflowActionMenuProps>(({ children, disabled = false, estimatedHeight = 152, label }, forwardedRef) => {
   const menuId = React.useId();
   const [open, setOpen] = React.useState(false);
   const pendingFocusRef = React.useRef<MenuFocusTarget>('first');
-  const {
-    triggerRef,
-    menuRef,
-    style,
-    close
-  } = useFloatingActionMenu({ open, setOpen, estimatedHeight, width: 208 });
+  const { triggerRef, menuRef, style, close } = useFloatingActionMenu({
+    open,
+    setOpen,
+    estimatedHeight,
+    width: 208
+  });
 
-  const setTriggerRef = React.useCallback((node: HTMLButtonElement | null) => {
-    triggerRef.current = node;
-    if (typeof forwardedRef === 'function') forwardedRef(node);
-    else if (forwardedRef) forwardedRef.current = node;
-  }, [forwardedRef, triggerRef]);
+  const setTriggerRef = React.useCallback(
+    (node: HTMLButtonElement | null) => {
+      triggerRef.current = node;
+      if (typeof forwardedRef === 'function') forwardedRef(node);
+      else if (forwardedRef) forwardedRef.current = node;
+    },
+    [forwardedRef, triggerRef]
+  );
 
-  const menuItems = React.useCallback(() => (
-    Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [])
-  ), [menuRef]);
+  const menuItems = React.useCallback(() => Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? []), [menuRef]);
 
   const openMenu = (focusTarget: MenuFocusTarget) => {
     pendingFocusRef.current = focusTarget;
@@ -49,7 +45,9 @@ export const OverflowActionMenu = React.forwardRef<HTMLButtonElement, OverflowAc
   React.useLayoutEffect(() => {
     if (!open || !style) return undefined;
     const items = menuItems();
-    items.forEach((item) => { item.tabIndex = -1; });
+    items.forEach((item) => {
+      item.tabIndex = -1;
+    });
     const target = pendingFocusRef.current === 'last' ? items[items.length - 1] : items[0];
     const frame = window.requestAnimationFrame(() => target?.focus());
     return () => window.cancelAnimationFrame(frame);
@@ -79,22 +77,15 @@ export const OverflowActionMenu = React.forwardRef<HTMLButtonElement, OverflowAc
     items[nextIndex]?.focus();
   };
 
-  const menu = open && style && typeof document !== 'undefined'
-    ? createPortal(
-        <div
-          ref={menuRef}
-          id={menuId}
-          role="menu"
-          aria-label={label}
-          onKeyDown={handleMenuKeyDown}
-          className={menuSurfaceClassName('fixed z-[130] p-1 text-sm')}
-          style={style}
-        >
-          {children(close)}
-        </div>,
-        document.body
-      )
-    : null;
+  const menu =
+    open && style && typeof document !== 'undefined'
+      ? createPortal(
+          <div ref={menuRef} id={menuId} role="menu" aria-label={label} onKeyDown={handleMenuKeyDown} className={menuSurfaceClassName('fixed z-[130] p-1 text-sm')} style={style}>
+            {children(close)}
+          </div>,
+          document.body
+        )
+      : null;
 
   return (
     <>

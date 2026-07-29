@@ -18,7 +18,7 @@ const HelpAction: React.FC<{
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
     <span className="min-w-0">
-      <span className="block text-sm font-bold text-ui-text">{title}</span>
+      <span className="block type-row-title">{title}</span>
       <span className="mt-1 block text-xs leading-5 text-ui-text-muted">{description}</span>
     </span>
     <ArrowUpRight className="h-4 w-4 text-ui-text-muted transition-colors group-hover:text-accent-strong" aria-hidden="true" />

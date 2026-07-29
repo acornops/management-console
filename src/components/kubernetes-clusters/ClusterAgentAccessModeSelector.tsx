@@ -38,7 +38,7 @@ export const ClusterAgentAccessModeSelector: React.FC<ClusterAgentAccessModeSele
 
   return (
     <fieldset aria-labelledby={labelId} aria-disabled={disabled} className="rounded-lg border border-ui-border bg-ui-bg p-4">
-      <div id={labelId} className="px-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
+      <div id={labelId} className="px-1 type-micro-label">
         {t('clusterSetup.accessMode')}
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -68,7 +68,7 @@ export const ClusterAgentAccessModeSelector: React.FC<ClusterAgentAccessModeSele
                 className="mt-1"
               />
               <span className="min-w-0">
-                <span className="block text-sm font-bold text-ui-text">{t(mode.labelKey)}</span>
+                <span className="block type-row-title">{t(mode.labelKey)}</span>
                 <span className="mt-0.5 block text-xs font-medium leading-5 text-ui-text-muted">{t(mode.descriptionKey)}</span>
               </span>
             </label>

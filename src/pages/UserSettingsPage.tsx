@@ -33,7 +33,7 @@ const SettingSection: React.FC<{
 }> = ({ title, description, children }) => (
   <div className="mb-12">
     <div className="mb-6 px-1">
-      <h2 className="mb-1 text-xl font-bold tracking-tight text-ui-text">{title}</h2>
+      <h2 className="mb-1 type-section-title">{title}</h2>
       <p className="text-sm text-ui-text-muted">{description}</p>
     </div>
     <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
@@ -52,7 +52,7 @@ const SettingRow: React.FC<{
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0">
-        <p className="mb-0.5 text-sm font-bold text-ui-text">{label}</p>
+        <p className="mb-0.5 type-row-title">{label}</p>
         <p className="break-words text-xs text-ui-text-muted">{description}</p>
       </div>
     </div>
@@ -79,15 +79,8 @@ const PasswordField: React.FC<{
   onChange: (value: string) => void;
 }> = ({ id, label, value, autoComplete, onChange }) => (
   <label className="block">
-    <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{label}</span>
-    <input
-      id={id}
-      type="password"
-      value={value}
-      autoComplete={autoComplete}
-      onChange={(event) => onChange(event.target.value)}
-      className={inputClassName}
-    />
+    <span className="mb-2 block type-label">{label}</span>
+    <input id={id} type="password" value={value} autoComplete={autoComplete} onChange={(event) => onChange(event.target.value)} className={inputClassName} />
   </label>
 );
 
@@ -110,20 +103,14 @@ const SecurityDialog: React.FC<{
     onClose={onClose}
   >
     <div className="mb-5 flex items-center justify-between gap-4">
-      <h2 id="account-security-dialog-title" className="text-lg font-bold text-ui-text">{title}</h2>
-      <CloseButton
-        onClick={onClose}
-        disabled={isSubmitting}
-        aria-label={closeLabel}
-      />
+      <h2 id="account-security-dialog-title" className="type-data">
+        {title}
+      </h2>
+      <CloseButton onClick={onClose} disabled={isSubmitting} aria-label={closeLabel} />
     </div>
     <form className="space-y-4" onSubmit={onSubmit}>
       {children}
-      {error && (
-        <div className="rounded-lg border border-status-danger/20 bg-status-danger-soft px-3 py-2 text-sm text-status-danger-text">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-lg border border-status-danger/20 bg-status-danger-soft px-3 py-2 text-sm text-status-danger-text">{error}</div>}
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
           {cancelLabel}
@@ -136,15 +123,7 @@ const SecurityDialog: React.FC<{
   </Dialog>
 );
 
-export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
-  user,
-  language,
-  languageOptions,
-  onGoToWorkspaces,
-  onLogout,
-  onSetLanguage,
-  embedded = false
-}) => {
+export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, language, languageOptions, onGoToWorkspaces, onLogout, onSetLanguage, embedded = false }) => {
   const { t } = useTranslation();
   const [authMethods, setAuthMethods] = React.useState<ControlPlaneAuthMethods | null>(null);
   const [securityError, setSecurityError] = React.useState<string | null>(null);
@@ -166,7 +145,11 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
       setAuthMethods(await controlPlaneApi.getAuthMethods());
       setSecurityError(null);
     } catch (error) {
-      setSecurityError(formatControlPlaneError(error, t('settings.authMethodsError'), { area: 'auth' }));
+      setSecurityError(
+        formatControlPlaneError(error, t('settings.authMethodsError'), {
+          area: 'auth'
+        })
+      );
     }
   }, [t]);
 
@@ -196,7 +179,11 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
       closeSecurityDialog();
       await refreshAuthMethods();
     } catch (error) {
-      setDialogError(formatControlPlaneError(error, t('settings.passwordChangeFailed'), { area: 'auth' }));
+      setDialogError(
+        formatControlPlaneError(error, t('settings.passwordChangeFailed'), {
+          area: 'auth'
+        })
+      );
     } finally {
       setIsSubmittingSecurity(false);
     }
@@ -213,7 +200,11 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
       });
       window.location.assign(url);
     } catch (error) {
-      setDialogError(formatControlPlaneError(error, t('settings.ssoLinkFailed'), { area: 'auth' }));
+      setDialogError(
+        formatControlPlaneError(error, t('settings.ssoLinkFailed'), {
+          area: 'auth'
+        })
+      );
       setIsSubmittingSecurity(false);
     }
   };
@@ -222,10 +213,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
     <PageShell embedded={embedded}>
       {!embedded && (
         <>
-          <PageBackLink
-            href={AppPaths.workspaces()}
-            onClick={(event) => handleAppLinkClick(event, AppPaths.workspaces(), () => onGoToWorkspaces())}
-          >
+          <PageBackLink href={AppPaths.workspaces()} onClick={(event) => handleAppLinkClick(event, AppPaths.workspaces(), () => onGoToWorkspaces())}>
             {t('settings.backToWorkspaces')}
           </PageBackLink>
           <PageHeader title={t('settings.title')} description={t('settings.subtitle')} />
@@ -242,28 +230,16 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
             action={
               <div className="flex items-center gap-2 rounded-lg bg-status-success-soft px-3 py-1.5 text-status-success-text">
                 <ICONS.CheckCircle2 className="h-4 w-4" />
-                <span className="text-xs font-bold">{t('settings.verified')}</span>
+                <span className="text-xs type-emphasis">{t('settings.verified')}</span>
               </div>
             }
           />
-          <SettingRow
-            icon={ICONS.LayoutGrid}
-            label={t('settings.workspacesJoined')}
-            description={formatQuota(user.quota?.workspaceMemberships, t('settings.quotaUnavailable'))}
-          />
+          <SettingRow icon={ICONS.LayoutGrid} label={t('settings.workspacesJoined')} description={formatQuota(user.quota?.workspaceMemberships, t('settings.quotaUnavailable'))} />
         </SettingSection>
 
         <SettingSection title={t('settings.securityTitle')} description={t('settings.securityBody')}>
-          {securityError && (
-            <div className="border-b border-ui-border bg-status-danger-soft px-6 py-3 text-sm text-status-danger-text">
-              {securityError}
-            </div>
-          )}
-          {securityNotice && (
-            <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 text-sm text-status-success-text">
-              {securityNotice}
-            </div>
-          )}
+          {securityError && <div className="border-b border-ui-border bg-status-danger-soft px-6 py-3 text-sm text-status-danger-text">{securityError}</div>}
+          {securityNotice && <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 text-sm text-status-success-text">{securityNotice}</div>}
           <SettingRow
             icon={ICONS.Lock}
             label={t('settings.password')}
@@ -271,14 +247,18 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
               !authMethods
                 ? t('settings.loadingAuthMethods')
                 : authMethods.capabilities.canChangePassword
-                ? t('settings.passwordLastChanged', { date: passwordChangedAt || t('settings.recently') })
+                ? t('settings.passwordLastChanged', {
+                    date: passwordChangedAt || t('settings.recently')
+                  })
                 : oidcMethod
                 ? t('settings.passwordManagedByProvider')
                 : t('settings.passwordNotConfigured')
             }
             action={
               authMethods?.capabilities.canChangePassword ? (
-                <Button size="sm" onClick={() => setActiveDialog('password')}>{t('settings.changePassword')}</Button>
+                <Button size="sm" onClick={() => setActiveDialog('password')}>
+                  {t('settings.changePassword')}
+                </Button>
               ) : undefined
             }
           />
@@ -294,20 +274,16 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
             }
             action={
               authMethods?.capabilities.canLinkOidc ? (
-                <Button size="sm" onClick={() => setActiveDialog('sso')}>{t('settings.connectSso')}</Button>
+                <Button size="sm" onClick={() => setActiveDialog('sso')}>
+                  {t('settings.connectSso')}
+                </Button>
               ) : undefined
             }
           />
           <SettingRow
             icon={ICONS.Smartphone}
             label={t('settings.twoFactor')}
-            description={
-              !authMethods
-                ? t('settings.loadingAuthMethods')
-                : oidcMethod
-                ? t('settings.twoFactorManagedByProvider')
-                : t('settings.twoFactorUnavailable')
-            }
+            description={!authMethods ? t('settings.loadingAuthMethods') : oidcMethod ? t('settings.twoFactorManagedByProvider') : t('settings.twoFactorUnavailable')}
           />
         </SettingSection>
 
@@ -334,11 +310,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
               />
             }
           />
-          <SettingRow
-            icon={ICONS.Bell}
-            label={t('settings.notifications')}
-            description={t('settings.notificationsBody')}
-          />
+          <SettingRow icon={ICONS.Bell} label={t('settings.notifications')} description={t('settings.notificationsBody')} />
         </SettingSection>
 
         <SettingSection title={t('settings.accountTitle')} description={t('settings.accountBody')}>
@@ -347,13 +319,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
             label={t('app.logout')}
             description={t('settings.logoutBody')}
             action={
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={onLogout}
-                className="w-full sm:w-auto"
-              >
+              <Button type="button" variant="secondary" size="sm" onClick={onLogout} className="w-full sm:w-auto">
                 <ICONS.LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                 {t('app.logout')}
               </Button>

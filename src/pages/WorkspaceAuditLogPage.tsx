@@ -122,9 +122,7 @@ function formatObject(event: WorkspaceAuditEvent): string {
 function formatMetadata(metadata: Record<string, unknown>): string {
   const entries = Object.entries(metadata).filter(([, value]) => value !== undefined && value !== null && value !== '');
   if (entries.length === 0) return '';
-  return entries
-    .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`)
-    .join('\n');
+  return entries.map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`).join('\n');
 }
 
 function toIsoDateTimeFilter(value: string): string | undefined {
@@ -196,31 +194,29 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
 
   const applyNormalizedFilters = useCallback((nextFilters: AuditFilters) => {
     const normalizedFilters = normalizeFilters(nextFilters);
-    setAppliedFilters((current) => filtersEqual(current, normalizedFilters) ? current : normalizedFilters);
+    setAppliedFilters((current) => (filtersEqual(current, normalizedFilters) ? current : normalizedFilters));
   }, []);
 
-  const loadAuditPage = useCallback(async ({ cursor, filters, limit, signal }: {
-    cursor?: string;
-    filters: AuditFilters;
-    limit: number;
-    signal: AbortSignal;
-  }) => {
-    try {
-      return await controlPlaneApi.listWorkspaceAuditEvents(workspace.id, {
-        limit,
-        cursor,
-        category: filters.category,
-        eventType: filters.eventType.trim() || undefined,
-        actorUserId: filters.actorUserId.trim() || undefined,
-        objectType: filters.objectType.trim() || undefined,
-        from: toIsoDateTimeFilter(filters.from),
-        to: toIsoDateTimeFilter(filters.to),
-        signal
-      });
-    } catch (error) {
-      throw new Error(formatControlPlaneError(error, t('auditLog.loadFailed')));
-    }
-  }, [t, workspace.id]);
+  const loadAuditPage = useCallback(
+    async ({ cursor, filters, limit, signal }: { cursor?: string; filters: AuditFilters; limit: number; signal: AbortSignal }) => {
+      try {
+        return await controlPlaneApi.listWorkspaceAuditEvents(workspace.id, {
+          limit,
+          cursor,
+          category: filters.category,
+          eventType: filters.eventType.trim() || undefined,
+          actorUserId: filters.actorUserId.trim() || undefined,
+          objectType: filters.objectType.trim() || undefined,
+          from: toIsoDateTimeFilter(filters.from),
+          to: toIsoDateTimeFilter(filters.to),
+          signal
+        });
+      } catch (error) {
+        throw new Error(formatControlPlaneError(error, t('auditLog.loadFailed')));
+      }
+    },
+    [t, workspace.id]
+  );
   const auditCollection = useCursorCollection({
     filters: appliedFilters,
     getKey: (event: WorkspaceAuditEvent) => event.id,
@@ -241,10 +237,14 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
 
   const visibleCount = useMemo(() => events.length, [events.length]);
   const selectedMetadata = selectedEvent ? formatMetadata(selectedEvent.metadata) : '';
-  const timePresetItems = useMemo<Array<CompactControlItem<AuditTimePreset>>>(() => timePresetOptions.map((value) => ({
-    value,
-    label: t(`auditLog.timePresets.${value}`)
-  })), [t]);
+  const timePresetItems = useMemo<Array<CompactControlItem<AuditTimePreset>>>(
+    () =>
+      timePresetOptions.map((value) => ({
+        value,
+        label: t(`auditLog.timePresets.${value}`)
+      })),
+    [t]
+  );
   const clearFilters = () => {
     setDraftFilters(defaultFilters);
     applyNormalizedFilters(defaultFilters);
@@ -261,271 +261,294 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
 
   return (
     <PageShell>
-        <PageHeader title={t('auditLog.title')} description={t('auditLog.description')} actions={
-            <Button variant="secondary" size="md" onClick={() => void auditCollection.refresh()} disabled={isLoading} className="whitespace-nowrap">
-              <ICONS.Clock className="h-4 w-4" />
-              {t('auditLog.refresh')}
-            </Button>
-        } />
+      <PageHeader
+        title={t('auditLog.title')}
+        description={t('auditLog.description')}
+        actions={
+          <Button variant="secondary" size="md" onClick={() => void auditCollection.refresh()} disabled={isLoading} className="whitespace-nowrap">
+            <ICONS.Clock className="h-4 w-4" />
+            {t('auditLog.refresh')}
+          </Button>
+        }
+      />
 
-        {errorMessage && (
-          <div className="mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-semibold text-status-danger-text">
-            {errorMessage}
-          </div>
-        )}
+      {errorMessage && (
+        <div className="mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-semibold text-status-danger-text">{errorMessage}</div>
+      )}
 
-        <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">
-          <form
-            className="border-b border-ui-border px-4 py-4 sm:px-6 lg:px-8"
-            onSubmit={(event) => {
-              event.preventDefault();
-              applyNormalizedFilters(draftFilters);
-            }}
-          >
-            <div data-audit-filter-toolbar="true" className="grid gap-3 xl:grid-cols-[minmax(11rem,13rem)_minmax(14rem,1.15fr)_repeat(2,minmax(10rem,0.8fr))]">
-              <div className="min-w-0">
-                <label className="sr-only" htmlFor="audit-filter-category">{t('auditLog.category')}</label>
-                <Select<WorkspaceAuditCategory | 'all'>
-                  id="audit-filter-category"
-                  value={draftFilters.category}
-                  options={categoryOptions.map((option) => ({
-                    ...option,
-                    label: option.value === 'all' ? t('auditLog.allCategories') : t(`auditLog.categories.${option.value}`)
-                  }))}
-                  onChange={(value) => setDraftFilters((current) => ({ ...current, category: value }))}
-                  ariaLabel={t('auditLog.filterCategory')}
-                  className="w-full"
-                />
-              </div>
-              <div className="min-w-0">
-                <label className="sr-only" htmlFor="audit-filter-event-type">{t('auditLog.eventType')}</label>
-                <Select<string>
-                  id="audit-filter-event-type"
-                  value={draftFilters.eventType}
-                  onChange={(value) => setDraftFilters((current) => ({ ...current, eventType: value }))}
-                  options={[
-                    { value: '', label: t('auditLog.allEventTypes') },
-                    ...eventTypeOptions.map((value) => ({ value, label: value }))
-                  ]}
-                  ariaLabel={t('auditLog.filterEventType')}
-                  className="w-full"
-                />
-              </div>
-              <label className="min-w-0" htmlFor="audit-filter-actor">
-                <span className="sr-only">{t('auditLog.actor')}</span>
-                <PageSearchInput
-                  id="audit-filter-actor"
-                  type="text"
-                  value={draftFilters.actorUserId}
-                  onChange={(event) => setDraftFilters((current) => ({ ...current, actorUserId: event.target.value }))}
-                  placeholder={t('auditLog.filterActor')}
-                  aria-label={t('auditLog.filterActor')}
-                  className="lg:w-full"
-                />
+      <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">
+        <form
+          className="border-b border-ui-border px-4 py-4 sm:px-6 lg:px-8"
+          onSubmit={(event) => {
+            event.preventDefault();
+            applyNormalizedFilters(draftFilters);
+          }}
+        >
+          <div data-audit-filter-toolbar="true" className="grid gap-3 xl:grid-cols-[minmax(11rem,13rem)_minmax(14rem,1.15fr)_repeat(2,minmax(10rem,0.8fr))]">
+            <div className="min-w-0">
+              <label className="sr-only" htmlFor="audit-filter-category">
+                {t('auditLog.category')}
               </label>
-              <div className="min-w-0">
-                <label className="sr-only" htmlFor="audit-filter-object-type">{t('auditLog.object')}</label>
-                <Select<string>
-                  id="audit-filter-object-type"
-                  value={draftFilters.objectType}
-                  onChange={(value) => setDraftFilters((current) => ({ ...current, objectType: value }))}
-                  options={[
-                    { value: '', label: t('auditLog.allObjectTypes') },
-                    ...objectTypeOptions
-                  ]}
-                  ariaLabel={t('auditLog.filterObjectType')}
-                  className="w-full"
-                />
-              </div>
+              <Select<WorkspaceAuditCategory | 'all'>
+                id="audit-filter-category"
+                value={draftFilters.category}
+                options={categoryOptions.map((option) => ({
+                  ...option,
+                  label: option.value === 'all' ? t('auditLog.allCategories') : t(`auditLog.categories.${option.value}`)
+                }))}
+                onChange={(value) =>
+                  setDraftFilters((current) => ({
+                    ...current,
+                    category: value
+                  }))
+                }
+                ariaLabel={t('auditLog.filterCategory')}
+                className="w-full"
+              />
             </div>
-            <div className="mt-3 flex flex-col gap-3 border-t border-ui-border/70 pt-3 lg:flex-row lg:items-start lg:justify-between">
-              <fieldset className="min-w-0">
-                <legend className="sr-only">{t('auditLog.timeRange')}</legend>
-                <div className="flex flex-wrap gap-2">
-                  <FilterToggleGroup
-                    activeValue={activeTimePreset || 'none'}
-                    ariaLabel={t('auditLog.timeRange')}
-                    items={timePresetItems}
-                    onValueChange={applyTimePreset}
-                  />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setIsCustomRangeOpen((current) => !current)}
-                    aria-pressed={Boolean(isCustomRangeOpen || (!activeTimePreset && (draftFilters.from || draftFilters.to)))}
-                    aria-expanded={isCustomRangeOpen}
-                    aria-controls="audit-custom-range-controls"
-                  >
-                    <ICONS.Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t('auditLog.customRange')}
-                    <ICONS.ChevronDown className={`h-3.5 w-3.5 transition-transform ${isCustomRangeOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-                  </Button>
-                </div>
-              </fieldset>
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button variant="secondary" size="md" onClick={clearFilters} type="button">
-                  {t('auditLog.clearFilters')}
+            <div className="min-w-0">
+              <label className="sr-only" htmlFor="audit-filter-event-type">
+                {t('auditLog.eventType')}
+              </label>
+              <Select<string>
+                id="audit-filter-event-type"
+                value={draftFilters.eventType}
+                onChange={(value) =>
+                  setDraftFilters((current) => ({
+                    ...current,
+                    eventType: value
+                  }))
+                }
+                options={[{ value: '', label: t('auditLog.allEventTypes') }, ...eventTypeOptions.map((value) => ({ value, label: value }))]}
+                ariaLabel={t('auditLog.filterEventType')}
+                className="w-full"
+              />
+            </div>
+            <label className="min-w-0" htmlFor="audit-filter-actor">
+              <span className="sr-only">{t('auditLog.actor')}</span>
+              <PageSearchInput
+                id="audit-filter-actor"
+                type="text"
+                value={draftFilters.actorUserId}
+                onChange={(event) =>
+                  setDraftFilters((current) => ({
+                    ...current,
+                    actorUserId: event.target.value
+                  }))
+                }
+                placeholder={t('auditLog.filterActor')}
+                aria-label={t('auditLog.filterActor')}
+                className="lg:w-full"
+              />
+            </label>
+            <div className="min-w-0">
+              <label className="sr-only" htmlFor="audit-filter-object-type">
+                {t('auditLog.object')}
+              </label>
+              <Select<string>
+                id="audit-filter-object-type"
+                value={draftFilters.objectType}
+                onChange={(value) =>
+                  setDraftFilters((current) => ({
+                    ...current,
+                    objectType: value
+                  }))
+                }
+                options={[{ value: '', label: t('auditLog.allObjectTypes') }, ...objectTypeOptions]}
+                ariaLabel={t('auditLog.filterObjectType')}
+                className="w-full"
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex flex-col gap-3 border-t border-ui-border/70 pt-3 lg:flex-row lg:items-start lg:justify-between">
+            <fieldset className="min-w-0">
+              <legend className="sr-only">{t('auditLog.timeRange')}</legend>
+              <div className="flex flex-wrap gap-2">
+                <FilterToggleGroup activeValue={activeTimePreset || 'none'} ariaLabel={t('auditLog.timeRange')} items={timePresetItems} onValueChange={applyTimePreset} />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsCustomRangeOpen((current) => !current)}
+                  aria-pressed={Boolean(isCustomRangeOpen || (!activeTimePreset && (draftFilters.from || draftFilters.to)))}
+                  aria-expanded={isCustomRangeOpen}
+                  aria-controls="audit-custom-range-controls"
+                >
+                  <ICONS.Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                  {t('auditLog.customRange')}
+                  <ICONS.ChevronDown className={`h-3.5 w-3.5 transition-transform ${isCustomRangeOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </Button>
               </div>
-            </div>
-            {isCustomRangeOpen && (
-              <div id="audit-custom-range-controls" className="mt-3 grid gap-3 rounded-lg border border-ui-border bg-ui-bg/70 p-3 sm:grid-cols-2 lg:w-[34rem] lg:max-w-full">
-                <label className="grid gap-2" htmlFor="audit-filter-from">
-                  <span className="type-caption">{t('auditLog.filterFrom')}</span>
-                  <input
-                    id="audit-filter-from"
-                    type="datetime-local"
-                    value={draftFilters.from}
-                    onChange={(event) => {
-                      setActiveTimePreset(undefined);
-                      setDraftFilters((current) => ({ ...current, from: event.target.value }));
-                    }}
-                    aria-label={t('auditLog.filterFrom')}
-                    className={pageSearchInputClassName('lg:w-full')}
-                  />
-                </label>
-                <label className="grid gap-2" htmlFor="audit-filter-to">
-                  <span className="type-caption">{t('auditLog.filterTo')}</span>
-                  <input
-                    id="audit-filter-to"
-                    type="datetime-local"
-                    value={draftFilters.to}
-                    onChange={(event) => {
-                      setActiveTimePreset(undefined);
-                      setDraftFilters((current) => ({ ...current, to: event.target.value }));
-                    }}
-                    aria-label={t('auditLog.filterTo')}
-                    className={pageSearchInputClassName('lg:w-full')}
-                  />
-                </label>
-              </div>
-            )}
-          </form>
-          <div className="flex items-center justify-between gap-3 border-b border-ui-border px-4 py-3">
-            <p className="type-caption text-ui-text-muted">
-              {t('auditLog.loadedCount', { count: visibleCount })}
-            </p>
-          </div>
-          <div className="min-w-0">
-            <table className="w-full table-fixed text-left" aria-label={t('auditLog.title')}>
-              <DataTableHeader
-                collectionState={{
-                  phase: isLoading ? 'loading' : errorMessage ? 'error' : 'ready',
-                  itemCount: events.length
-                }}
-              >
-                <tr>
-                  <DataTableHeaderCell>{t('auditLog.time')}</DataTableHeaderCell>
-                  <DataTableHeaderCell>{t('auditLog.event')}</DataTableHeaderCell>
-                  <DataTableHeaderCell className="hidden xl:table-cell">{t('auditLog.actor')}</DataTableHeaderCell>
-                  <DataTableHeaderCell className="hidden xl:table-cell">{t('auditLog.object')}</DataTableHeaderCell>
-                  <DataTableHeaderCell numeric>{t('auditLog.details')}</DataTableHeaderCell>
-                </tr>
-              </DataTableHeader>
-              <tbody>
-                {events.map((event) => (
-                  <tr key={event.id} className="border-b border-ui-bg transition-colors hover:bg-accent-soft/35">
-                    <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
-                      <span className="type-caption break-words text-ui-text">{formatUserDateTime(event.occurredAt)}</span>
-                    </td>
-                    <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
-                      <p className="type-row-title break-words">{event.summary}</p>
-                      <p className="type-caption mt-1 break-words">{event.eventType} · {formatOperation(event, t)}</p>
-                      <dl className="mt-3 grid gap-1 xl:hidden">
-                        <div className="min-w-0">
-                          <dt className="type-micro-label">{t('auditLog.actor')}</dt>
-                          <dd className="type-caption mt-0.5 break-words text-ui-text">{formatActor(event)}</dd>
-                        </div>
-                        <div className="min-w-0">
-                          <dt className="type-micro-label">{t('auditLog.object')}</dt>
-                          <dd className="type-caption mt-0.5 break-words text-ui-text">{formatObject(event)} · {event.object.type}</dd>
-                        </div>
-                      </dl>
-                    </td>
-                    <td className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
-                      <p className="type-ui break-words text-ui-text">{formatActor(event)}</p>
-                    </td>
-                    <td className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
-                      <p className="type-ui break-words text-ui-text">{formatObject(event)}</p>
-                      <p className="type-caption mt-1 break-words">{event.object.type}</p>
-                    </td>
-                    <td className="px-4 py-5 text-right align-top sm:px-6 lg:px-8 lg:py-6">
-                      <Tooltip content={t('auditLog.viewDetails')}>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedEvent(event)}
-                          className="control-target inline-flex h-9 w-9 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg hover:text-ui-text"
-                          aria-label={t('auditLog.viewDetails')}
-                        >
-                          <ICONS.Eye className="h-4 w-4" />
-                        </button>
-                      </Tooltip>
-                    </td>
-                  </tr>
-                ))}
-                <DataTableStateRow
-                  columns={5}
-                  phase={isLoading ? 'loading' : errorMessage ? 'error' : 'ready'}
-                  itemCount={events.length}
-                  filtered={Object.values(appliedFilters).some(Boolean)}
-                  loading={<div role="status" className="p-5 text-sm text-ui-text-muted">{t('auditLog.loading')}</div>}
-                  empty={<EmptyState embedded headingLevel={3} icon={<ICONS.Activity />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
-                  filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
-                  error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={t('auditLog.loadFailed')} description={errorMessage} />}
-                />
-              </tbody>
-            </table>
-          </div>
-          {nextCursor && (
-            <div ref={auditCollection.sentinelRef} className="border-t border-ui-border px-4 py-4 text-center">
-              <Button variant="secondary" size="md" onClick={() => void auditCollection.loadMore()} disabled={isLoadingMore}>
-                {isLoadingMore ? t('auditLog.loadingMore') : t('auditLog.loadMore')}
+            </fieldset>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button variant="secondary" size="md" onClick={clearFilters} type="button">
+                {t('auditLog.clearFilters')}
               </Button>
             </div>
-          )}
-        </div>
-        <RightSidePanel
-          isOpen={Boolean(selectedEvent)}
-          onClose={() => setSelectedEvent(null)}
-          titleId="audit-event-title"
-          initialFocusRef={closeAuditDetailsButtonRef}
-          className="block overflow-y-auto p-6"
-        >
-          {selectedEvent && (
-            <>
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <div>
-                  <p className="type-micro-label">{selectedEvent.category}</p>
-                  <h2 id="audit-event-title" className="type-section-title mt-2">{selectedEvent.summary}</h2>
-                </div>
-                <CloseButton
-                  ref={closeAuditDetailsButtonRef}
-                  onClick={() => setSelectedEvent(null)}
-                  aria-label={t('auditLog.closeDetails')}
+          </div>
+          {isCustomRangeOpen && (
+            <div id="audit-custom-range-controls" className="mt-3 grid gap-3 rounded-lg border border-ui-border bg-ui-bg/70 p-3 sm:grid-cols-2 lg:w-[34rem] lg:max-w-full">
+              <label className="grid gap-2" htmlFor="audit-filter-from">
+                <span className="type-caption">{t('auditLog.filterFrom')}</span>
+                <input
+                  id="audit-filter-from"
+                  type="datetime-local"
+                  value={draftFilters.from}
+                  onChange={(event) => {
+                    setActiveTimePreset(undefined);
+                    setDraftFilters((current) => ({
+                      ...current,
+                      from: event.target.value
+                    }));
+                  }}
+                  aria-label={t('auditLog.filterFrom')}
+                  className={pageSearchInputClassName('lg:w-full')}
                 />
-              </div>
-              <dl className="divide-y divide-ui-border border-y border-ui-border">
-                {[
-                  [t('auditLog.time'), formatUserDateTime(selectedEvent.occurredAt)],
-                  [t('auditLog.eventType'), selectedEvent.eventType],
-                  [t('auditLog.operation'), formatOperation(selectedEvent, t)],
-                  [t('auditLog.actor'), formatActor(selectedEvent)],
-                  [t('auditLog.object'), formatObject(selectedEvent)]
-                ].map(([label, value]) => (
-                  <div key={label} className="grid grid-cols-[9rem,1fr] gap-4 px-1 py-3">
-                    <dt className="type-label">{label}</dt>
-                    <dd className="type-ui min-w-0 break-words text-ui-text">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-              {selectedMetadata && (
-                <pre className="type-code mt-5 whitespace-pre-wrap break-words border border-ui-border bg-ui-surface p-4 text-ui-text">
-                  {selectedMetadata}
-                </pre>
-              )}
-            </>
+              </label>
+              <label className="grid gap-2" htmlFor="audit-filter-to">
+                <span className="type-caption">{t('auditLog.filterTo')}</span>
+                <input
+                  id="audit-filter-to"
+                  type="datetime-local"
+                  value={draftFilters.to}
+                  onChange={(event) => {
+                    setActiveTimePreset(undefined);
+                    setDraftFilters((current) => ({
+                      ...current,
+                      to: event.target.value
+                    }));
+                  }}
+                  aria-label={t('auditLog.filterTo')}
+                  className={pageSearchInputClassName('lg:w-full')}
+                />
+              </label>
+            </div>
           )}
-        </RightSidePanel>
-      </PageShell>
+        </form>
+        <div className="flex items-center justify-between gap-3 border-b border-ui-border px-4 py-3">
+          <p className="type-caption text-ui-text-muted">{t('auditLog.loadedCount', { count: visibleCount })}</p>
+        </div>
+        <div className="min-w-0">
+          <table className="w-full table-fixed text-left" aria-label={t('auditLog.title')}>
+            <DataTableHeader
+              collectionState={{
+                phase: isLoading ? 'loading' : errorMessage ? 'error' : 'ready',
+                itemCount: events.length
+              }}
+            >
+              <tr>
+                <DataTableHeaderCell>{t('auditLog.time')}</DataTableHeaderCell>
+                <DataTableHeaderCell>{t('auditLog.event')}</DataTableHeaderCell>
+                <DataTableHeaderCell className="hidden xl:table-cell">{t('auditLog.actor')}</DataTableHeaderCell>
+                <DataTableHeaderCell className="hidden xl:table-cell">{t('auditLog.object')}</DataTableHeaderCell>
+                <DataTableHeaderCell numeric>{t('auditLog.details')}</DataTableHeaderCell>
+              </tr>
+            </DataTableHeader>
+            <tbody>
+              {events.map((event) => (
+                <tr key={event.id} className="border-b border-ui-bg transition-colors hover:bg-accent-soft/35">
+                  <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
+                    <span className="type-caption break-words text-ui-text">{formatUserDateTime(event.occurredAt)}</span>
+                  </td>
+                  <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
+                    <p className="type-row-title break-words">{event.summary}</p>
+                    <p className="type-caption mt-1 break-words">
+                      {event.eventType} · {formatOperation(event, t)}
+                    </p>
+                    <dl className="mt-3 grid gap-1 xl:hidden">
+                      <div className="min-w-0">
+                        <dt className="type-micro-label">{t('auditLog.actor')}</dt>
+                        <dd className="type-caption mt-0.5 break-words text-ui-text">{formatActor(event)}</dd>
+                      </div>
+                      <div className="min-w-0">
+                        <dt className="type-micro-label">{t('auditLog.object')}</dt>
+                        <dd className="type-caption mt-0.5 break-words text-ui-text">
+                          {formatObject(event)} · {event.object.type}
+                        </dd>
+                      </div>
+                    </dl>
+                  </td>
+                  <td className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
+                    <p className="type-ui break-words text-ui-text">{formatActor(event)}</p>
+                  </td>
+                  <td className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
+                    <p className="type-ui break-words text-ui-text">{formatObject(event)}</p>
+                    <p className="type-caption mt-1 break-words">{event.object.type}</p>
+                  </td>
+                  <td className="px-4 py-5 text-right align-top sm:px-6 lg:px-8 lg:py-6">
+                    <Tooltip content={t('auditLog.viewDetails')}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEvent(event)}
+                        className="control-target inline-flex h-9 w-9 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg hover:text-ui-text"
+                        aria-label={t('auditLog.viewDetails')}
+                      >
+                        <ICONS.Eye className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
+                  </td>
+                </tr>
+              ))}
+              <DataTableStateRow
+                columns={5}
+                phase={isLoading ? 'loading' : errorMessage ? 'error' : 'ready'}
+                itemCount={events.length}
+                filtered={Object.values(appliedFilters).some(Boolean)}
+                loading={
+                  <div role="status" className="p-5 text-sm text-ui-text-muted">
+                    {t('auditLog.loading')}
+                  </div>
+                }
+                empty={<EmptyState embedded headingLevel={3} icon={<ICONS.Activity />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
+                filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
+                error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={t('auditLog.loadFailed')} description={errorMessage} />}
+              />
+            </tbody>
+          </table>
+        </div>
+        {nextCursor && (
+          <div ref={auditCollection.sentinelRef} className="border-t border-ui-border px-4 py-4 text-center">
+            <Button variant="secondary" size="md" onClick={() => void auditCollection.loadMore()} disabled={isLoadingMore}>
+              {isLoadingMore ? t('auditLog.loadingMore') : t('auditLog.loadMore')}
+            </Button>
+          </div>
+        )}
+      </div>
+      <RightSidePanel
+        isOpen={Boolean(selectedEvent)}
+        onClose={() => setSelectedEvent(null)}
+        titleId="audit-event-title"
+        initialFocusRef={closeAuditDetailsButtonRef}
+        className="block overflow-y-auto p-6"
+      >
+        {selectedEvent && (
+          <>
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="type-micro-label">{selectedEvent.category}</p>
+                <h2 id="audit-event-title" className="type-section-title mt-2">
+                  {selectedEvent.summary}
+                </h2>
+              </div>
+              <CloseButton ref={closeAuditDetailsButtonRef} onClick={() => setSelectedEvent(null)} aria-label={t('auditLog.closeDetails')} />
+            </div>
+            <dl className="divide-y divide-ui-border border-y border-ui-border">
+              {[
+                [t('auditLog.time'), formatUserDateTime(selectedEvent.occurredAt)],
+                [t('auditLog.eventType'), selectedEvent.eventType],
+                [t('auditLog.operation'), formatOperation(selectedEvent, t)],
+                [t('auditLog.actor'), formatActor(selectedEvent)],
+                [t('auditLog.object'), formatObject(selectedEvent)]
+              ].map(([label, value]) => (
+                <div key={label} className="grid grid-cols-[9rem,1fr] gap-4 px-1 py-3">
+                  <dt className="type-label">{label}</dt>
+                  <dd className="type-ui min-w-0 break-words text-ui-text">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            {selectedMetadata && <pre className="type-code mt-5 whitespace-pre-wrap break-words border border-ui-border bg-ui-surface p-4 text-ui-text">{selectedMetadata}</pre>}
+          </>
+        )}
+      </RightSidePanel>
+    </PageShell>
   );
 };

@@ -236,6 +236,8 @@ The shared theme menu appears on login and authenticated desktop and mobile navi
 - **Row Title** (600, `0.875rem`, `1.25rem`): List items, resource names, table-leading labels.
 - **Body** (400, `0.875rem`, `1.5rem`): Descriptions and explanatory copy, capped around 65 to 75 characters when prose is not tabular.
 - **UI Text** (500, `0.875rem`, `1.25rem`): Interactive control text: buttons, tabs, menu items, and inline actions.
+- **Inline Emphasis** (600, inherited size and line height): Strong text inside an existing semantic role. It does not replace a heading, row, label, data, or control role.
+- **Wordmark** (700, inherited size and line height): AcornOps wordmark lettering only.
 - **Caption** (450, `0.75rem`, `1.25rem`): Quiet secondary captions and helper text where the uppercase Label style would read too loud.
 - **Label** (600, `0.75rem`, `0.04em`, uppercase): Compact labels, metadata headings, and form field labels.
 - **Micro Label** (600, `0.6875rem`, `0.055em`, uppercase): Dense operational labels and small panel metadata.

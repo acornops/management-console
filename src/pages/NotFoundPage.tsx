@@ -11,7 +11,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onGoHome }) => {
   const { t } = useTranslation();
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-      <h2 className="mb-2 text-3xl font-bold text-ui-text">{t('notFound.title')}</h2>
+      <h2 className="mb-2 type-route-title">{t('notFound.title')}</h2>
       <p className="mb-6 text-sm text-ui-text-muted">
         {t('notFound.body')}
       </p>

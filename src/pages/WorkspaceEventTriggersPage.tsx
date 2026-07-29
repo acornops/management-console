@@ -367,7 +367,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         <section className="mb-5 rounded-lg border border-status-success/30 bg-status-success-soft p-4" aria-labelledby="event-trigger-secret-title">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
-              <h2 id="event-trigger-secret-title" className="text-sm font-bold text-status-success-text">
+              <h2 id="event-trigger-secret-title" className="type-row-title text-status-success-text">
                 {t('eventTriggers.secret.title', { name: secretDisclosure.name })}
               </h2>
               <p className="mt-1 type-caption text-status-success-text">{t('eventTriggers.secret.description')}</p>

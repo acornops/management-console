@@ -584,7 +584,7 @@ const AgentCapabilityReviewList: React.FC<{
       {agentReviews.map((agent) => (
         <section key={agent.agentId} className="grid gap-4 border-t border-ui-border py-5 first:border-t-0 first:pt-0 last:pb-0 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-10">
           <div className="min-w-0">
-            <h4 className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 text-base font-semibold leading-6 text-ui-text">
+            <h4 className="type-panel-title grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 text-ui-text">
               <span className="flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
                 <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
               </span>

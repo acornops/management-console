@@ -36,7 +36,7 @@ export const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> =
         </div>
         <div>
           <h3 id="delete-conversation-title" className="type-panel-title">{t('chat.deleteConversation')}</h3>
-          <p className="mt-0.5 text-[11px] font-semibold text-ui-text-muted">{t('chat.deleteConversationSubtitle')}</p>
+          <p className="mt-0.5 type-caption">{t('chat.deleteConversationSubtitle')}</p>
         </div>
       </div>
       <CloseButton

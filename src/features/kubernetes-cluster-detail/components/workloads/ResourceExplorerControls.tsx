@@ -18,12 +18,7 @@ import {
   workloadCategories
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 
-type ResourceCategoryValue =
-  | 'All'
-  | Workload['type']
-  | NetworkResourceCategory
-  | StorageResourceCategory
-  | ClusterResourceCategory;
+type ResourceCategoryValue = 'All' | Workload['type'] | NetworkResourceCategory | StorageResourceCategory | ClusterResourceCategory;
 
 const resourceSearchInputClassName = formInputClassName('h-11 py-3 pl-11 pr-4 font-normal');
 const resourceScopeDisplayClassName =
@@ -40,11 +35,13 @@ export const WorkloadTriageShortcut: React.FC<{
     <div className="flex min-w-0 w-full max-w-full lg:w-auto lg:shrink-0">
       <button
         type="button"
-        aria-label={t('resources.filters.unhealthyPodsCount', { count: unhealthyPodCount })}
+        aria-label={t('resources.filters.unhealthyPodsCount', {
+          count: unhealthyPodCount
+        })}
         aria-pressed={showUnhealthyPodsOnly}
         onClick={onToggle}
         className={classNames(
-          'type-label flex h-11 w-full min-w-0 max-w-full items-center gap-2 rounded-md border px-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 lg:w-auto',
+          'type-ui flex h-11 w-full min-w-0 max-w-full items-center gap-2 rounded-md border px-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 lg:w-auto',
           showUnhealthyPodsOnly
             ? 'border-accent/30 bg-accent-soft text-accent-strong'
             : 'border-ui-border bg-ui-surface text-ui-text-muted hover:border-accent/30 hover:text-accent-strong'
@@ -52,10 +49,7 @@ export const WorkloadTriageShortcut: React.FC<{
       >
         <span
           aria-hidden="true"
-          className={classNames(
-            'relative h-3.5 w-6 shrink-0 overflow-hidden rounded-full transition-colors',
-            showUnhealthyPodsOnly ? 'bg-accent' : 'bg-ui-border'
-          )}
+          className={classNames('relative h-3.5 w-6 shrink-0 overflow-hidden rounded-full transition-colors', showUnhealthyPodsOnly ? 'bg-accent' : 'bg-ui-border')}
         >
           <span
             className={classNames(
@@ -123,10 +117,10 @@ export const ResourceSearchFilterBar: React.FC<{
     activeResourceFamily === 'workloads'
       ? activeCategory
       : activeResourceFamily === 'network'
-        ? activeNetworkCategory
-        : activeResourceFamily === 'storage'
-          ? activeStorageCategory
-          : activeClusterCategory;
+      ? activeNetworkCategory
+      : activeResourceFamily === 'storage'
+      ? activeStorageCategory
+      : activeClusterCategory;
   const getCategoryCount = (category: ResourceCategoryValue) => {
     if (activeResourceFamily === 'workloads') {
       return workloadCategoryCounts[category as 'All' | Workload['type']];
@@ -143,10 +137,10 @@ export const ResourceSearchFilterBar: React.FC<{
     activeResourceFamily === 'workloads'
       ? workloadCategories
       : activeResourceFamily === 'network'
-        ? networkResourceCategories
-        : activeResourceFamily === 'storage'
-          ? storageResourceCategories
-          : clusterResourceCategories
+      ? networkResourceCategories
+      : activeResourceFamily === 'storage'
+      ? storageResourceCategories
+      : clusterResourceCategories
   ).map((category) => {
     const labelPrefix = activeResourceFamily === 'workloads' ? 'workloads.categories' : 'resources.categories';
     const categoryCount = getCategoryCount(category);
@@ -156,9 +150,7 @@ export const ResourceSearchFilterBar: React.FC<{
       label: (
         <span className="flex min-w-0 items-center justify-between gap-3">
           <span className="min-w-0 truncate">{t(`${labelPrefix}.${category}`)}</span>
-          {typeof categoryCount === 'number' && (
-            <span className="type-data shrink-0 text-xs text-ui-text-muted">{categoryCount}</span>
-          )}
+          {typeof categoryCount === 'number' && <span className="type-data shrink-0 text-xs text-ui-text-muted">{categoryCount}</span>}
         </span>
       )
     };
@@ -178,9 +170,11 @@ export const ResourceSearchFilterBar: React.FC<{
   return (
     <div data-resource-search-filter-bar="true">
       <SearchFilterFrame
-        search={(
+        search={
           <div className="relative min-w-0">
-            <label htmlFor="resource-search" className="sr-only">{t('resources.filters.search')}</label>
+            <label htmlFor="resource-search" className="sr-only">
+              {t('resources.filters.search')}
+            </label>
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
             <input
               id="resource-search"
@@ -191,7 +185,7 @@ export const ResourceSearchFilterBar: React.FC<{
               className={resourceSearchInputClassName}
             />
           </div>
-        )}
+        }
         filterControls={[
           <div key="category" data-resource-category-select="true" className="min-w-0">
             <Select<ResourceCategoryValue>
@@ -204,19 +198,9 @@ export const ResourceSearchFilterBar: React.FC<{
           </div>,
           <div key="scope" className="min-w-0">
             {showNamespaceFilter ? (
-              <Select<string>
-                value={selectedNamespace}
-                options={namespaceOptions}
-                onChange={onNamespaceChange}
-                className="w-full"
-                ariaLabel={t('workloads.namespace')}
-              />
+              <Select<string> value={selectedNamespace} options={namespaceOptions} onChange={onNamespaceChange} className="w-full" ariaLabel={t('workloads.namespace')} />
             ) : (
-              <div
-                className={resourceScopeDisplayClassName}
-                aria-label={t('resources.clusterScoped')}
-                title={t('resources.clusterScoped')}
-              >
+              <div className={resourceScopeDisplayClassName} aria-label={t('resources.clusterScoped')} title={t('resources.clusterScoped')}>
                 <span className="min-w-0 truncate">{t('resources.clusterScoped')}</span>
               </div>
             )}

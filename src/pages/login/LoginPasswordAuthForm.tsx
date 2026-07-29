@@ -3,15 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { TFunction } from 'i18next';
 import { ICONS } from '@/constants';
 import { FieldValidationMessage } from '@acornops/ui';
-import {
-  EmailField,
-  ErrorMessage,
-  PasswordField,
-  fieldWrapClass,
-  invalidInputClass,
-  iconInputClass,
-  primaryButtonClass
-} from '@/pages/login/LoginAuthPanelParts';
+import { EmailField, ErrorMessage, PasswordField, fieldWrapClass, invalidInputClass, iconInputClass, primaryButtonClass } from '@/pages/login/LoginAuthPanelParts';
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 
@@ -141,7 +133,7 @@ export function LoginPasswordAuthForm({
                 inputId="auth-email"
               />
               <label className="block" htmlFor="auth-username">
-                <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('login.username')}</span>
+                <span className="mb-2 block type-label">{t('login.username')}</span>
                 <span className={fieldWrapClass}>
                   <ICONS.User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
                   <input
@@ -172,7 +164,7 @@ export function LoginPasswordAuthForm({
               className="block"
               htmlFor="auth-identifier"
             >
-              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('login.usernameOrEmail')}</span>
+              <span className="mb-2 block type-label">{t('login.usernameOrEmail')}</span>
               <span className={fieldWrapClass}>
                 <ICONS.Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
                 <input
@@ -216,7 +208,7 @@ export function LoginPasswordAuthForm({
             <button
               type="button"
               onClick={onForgotPassword}
-              className="control-target rounded-sm text-xs font-bold text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
+              className="control-target rounded-sm text-xs type-ui text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               {t('login.forgotPassword')}
             </button>
@@ -225,12 +217,7 @@ export function LoginPasswordAuthForm({
 
         <AnimatePresence initial={false}>
           {mode === 'signup' && canSignup && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-            >
+            <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}>
               <PasswordField
                 value={confirmPassword}
                 onChange={(value) => {
@@ -253,12 +240,7 @@ export function LoginPasswordAuthForm({
 
       <AnimatePresence initial={false}>
         {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-          >
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}>
             <ErrorMessage message={error} />
           </motion.div>
         )}

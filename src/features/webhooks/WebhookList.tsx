@@ -129,7 +129,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                 <div className={`grid gap-4 xl:items-start ${webhookLedgerGridClass}`}>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-sm font-bold text-ui-text">{webhook.name}</h2>
+                      <h2 className="type-row-title">{webhook.name}</h2>
                       <StatusBadge tone={webhook.enabled ? 'success' : 'neutral'}>
                         {webhook.enabled ? t('workspaceWebhooks.enabled') : t('workspaceWebhooks.disabled')}
                       </StatusBadge>
@@ -145,12 +145,12 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                     <p className="type-caption mb-2 font-semibold text-ui-text">{t('workspaceWebhooks.eventCount', { count: webhook.eventTypes.length })}</p>
                     <div className="flex flex-wrap content-start gap-1.5">
                       {webhook.eventTypes.slice(0, 3).map((eventType) => (
-                        <span key={eventType} className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-[11px] font-semibold text-ui-text-muted">
+                        <span key={eventType} className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 type-caption">
                           {eventType}
                         </span>
                       ))}
                       {webhook.eventTypes.length > 3 && (
-                        <span className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-[11px] font-semibold text-ui-text-muted">
+                        <span className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 type-caption">
                           {t('workspaceWebhooks.moreEvents', { count: webhook.eventTypes.length - 3 })}
                         </span>
                       )}
@@ -205,7 +205,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
 
               {canManageWebhooks && showingHistory && (
                 <div className="border-t border-ui-border bg-ui-bg p-4">
-                  <h3 className="type-label text-ui-text">{t('workspaceWebhooks.recentDeliveries')}</h3>
+                  <h3 className="type-row-title text-ui-text">{t('workspaceWebhooks.recentDeliveries')}</h3>
                   {isHistoryLoading && <p className="mt-3 type-caption text-ui-text-muted">{t('workspaceWebhooks.historyLoading')}</p>}
                   {!isHistoryLoading && historyError && <p role="alert" className="mt-3 type-caption text-status-danger-text">{historyError}</p>}
                   {!isHistoryLoading && !historyError && history.length === 0 && (

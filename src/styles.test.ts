@@ -112,41 +112,36 @@ describe('theme color contract', () => {
   });
 
   it('keeps muted and status-soft text contrast readable', () => {
-    expect(contrastRatio(rgbVariableValue(lightTheme, '--ao-text-muted-rgb'), rgbVariableValue(lightTheme, '--ao-bg-rgb')))
-      .toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(rgbVariableValue(lightTheme, '--ao-text-muted-rgb'), rgbVariableValue(lightTheme, '--ao-surface-rgb')))
-      .toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(rgbVariableValue(lightTheme, '--ao-text-muted-rgb'), rgbVariableValue(lightTheme, '--ao-bg-rgb'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(rgbVariableValue(lightTheme, '--ao-text-muted-rgb'), rgbVariableValue(lightTheme, '--ao-surface-rgb'))).toBeGreaterThanOrEqual(4.5);
 
     [
       ['--ao-status-success-text-rgb', '--ao-status-success-soft-rgb'],
       ['--ao-status-warning-text-rgb', '--ao-status-warning-soft-rgb'],
       ['--ao-status-danger-text-rgb', '--ao-status-danger-soft-rgb']
     ].forEach(([textVariable, backgroundVariable]) => {
-      expect(contrastRatio(rgbVariableValue(lightTheme, textVariable), rgbVariableValue(lightTheme, backgroundVariable)))
-        .toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(rgbVariableValue(darkTheme, textVariable), rgbVariableValue(darkTheme, backgroundVariable)))
-        .toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(rgbVariableValue(lightTheme, textVariable), rgbVariableValue(lightTheme, backgroundVariable))).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(rgbVariableValue(darkTheme, textVariable), rgbVariableValue(darkTheme, backgroundVariable))).toBeGreaterThanOrEqual(4.5);
     });
   });
 
   it('keeps code text readable against both code surfaces', () => {
     for (const theme of [lightTheme, darkTheme]) {
-      expect(contrastRatio(
-        rgbVariableValue(theme, '--ao-code-text-rgb'),
-        rgbVariableValue(theme, '--ao-code-bg-rgb')
-      )).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(rgbVariableValue(theme, '--ao-code-text-rgb'), rgbVariableValue(theme, '--ao-code-bg-rgb'))).toBeGreaterThanOrEqual(4.5);
     }
   });
 
-  it('enforces token palettes, no-glass surfaces, and tested raw-button targets', () => {
-    [
-      'slate', 'gray', 'zinc', 'neutral', 'stone', 'red', 'orange', 'amber', 'yellow',
-      'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet',
-      'purple', 'fuchsia', 'pink', 'rose'
-    ].forEach((palette) => expect(designSystemCheck).toContain(palette));
+  it('enforces tokens, semantic typography, action casing, and tested raw-button targets', () => {
+    ['slate', 'gray', 'zinc', 'neutral', 'stone', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].forEach((palette) => expect(designSystemCheck).toContain(palette));
     expect(designSystemCheck).toContain("report(path, 'named-tailwind-palette'");
     expect(designSystemCheck).toContain("report(path, 'no-glass'");
     expect(designSystemCheck).toContain("report(path, 'raw-button-target'");
+    expect(designSystemCheck).toContain("report(path, 'semantic-typography'");
+    expect(designSystemCheck).toContain("report(path, 'action-typography'");
+    expect(designSystemCheck).toContain("report(path, 'heading-typography'");
+    expect(designSystemCheck).toContain('prohibitedTypographyUtility');
+    expect(designSystemCheck).toContain('prohibitedActionTypography');
+    expect(designSystemCheck).toContain('canonicalHeadingRole');
     expect(designSystemCheck).toContain('approvedButtonSizingHelpers');
     expect(designSystemCheck).toContain('canonicalButtonTarget');
     expect(designSystemCheck).toContain("repoPath === 'src/app/AppDesktopSidebarParts.tsx'");
@@ -165,19 +160,7 @@ describe('theme color contract', () => {
   });
 
   it('exposes semantic typography roles on Outfit and Ubuntu Mono', () => {
-    const expectedRoles = [
-      'type-route-title',
-      'type-section-title',
-      'type-panel-title',
-      'type-row-title',
-      'type-body',
-      'type-ui',
-      'type-caption',
-      'type-label',
-      'type-micro-label',
-      'type-data',
-      'type-code'
-    ];
+    const expectedRoles = ['type-route-title', 'type-section-title', 'type-panel-title', 'type-row-title', 'type-body', 'type-ui', 'type-emphasis', 'type-wordmark', 'type-caption', 'type-label', 'type-micro-label', 'type-data', 'type-code'];
 
     for (const weight of [400, 500, 600, 700, 800]) {
       expect(fonts).toContain(`@fontsource/outfit/latin-${weight}.css`);
@@ -200,7 +183,7 @@ describe('theme color contract', () => {
     });
     expect(designDocsIndex).toContain('[Typography](/docs/design-docs/typography.md)');
     expect(buttonComponent).toContain("'type-ui inline-flex");
-    expect(resourceExplorerControls).toContain("'type-label flex h-11");
+    expect(resourceExplorerControls).toContain("'type-ui flex h-11");
     expect(resourceExplorerLayout).toContain('className="type-micro-label');
     expect(markdownComponents).toContain('type-code');
   });
@@ -219,15 +202,40 @@ describe('theme color contract', () => {
     // The right-sidebar illustration is the "Squirrel Chasing Acorns" chase: a
     // squirrel bounding after acorns past three ops triage step cards.
     [
-      'data-login-visual-variant="hunt-chase"', 'collecting ', 'for everything ops',
+      'data-login-visual-variant="hunt-chase"',
+      'collecting ',
+      'for everything ops',
       'Turn operational knowledge into AI-powered workflows.',
-      "order: '01'", "order: '02'", "order: '03'", 'OBSERVE', 'CORRELATE', 'RESOLVE',
-      'Pod events', 'CrashLoopBackOff spike', 'Deploy diff', 'Memory limit reduced',
-      'Endpoints', 'Service path clear', 'Restart surge', 'Limit change', 'Probe healthy',
-      '<svg', 'viewBox="0 0 920 700"', 'preserveAspectRatio', 'foreignObject',
-      'login-hunt-scene', 'login-hunt-squirrel', 'login-hunt-tail',
-      'login-hunt-leg-front', 'login-hunt-leg-hind', 'login-hunt-shadow', 'login-hunt-streak',
-      'login-hunt-trail', 'login-hunt-dust', 'login-hunt-acorn', 'login-hunt-card',
+      "order: '01'",
+      "order: '02'",
+      "order: '03'",
+      'OBSERVE',
+      'CORRELATE',
+      'RESOLVE',
+      'Pod events',
+      'CrashLoopBackOff spike',
+      'Deploy diff',
+      'Memory limit reduced',
+      'Endpoints',
+      'Service path clear',
+      'Restart surge',
+      'Limit change',
+      'Probe healthy',
+      '<svg',
+      'viewBox="0 0 920 700"',
+      'preserveAspectRatio',
+      'foreignObject',
+      'login-hunt-scene',
+      'login-hunt-squirrel',
+      'login-hunt-tail',
+      'login-hunt-leg-front',
+      'login-hunt-leg-hind',
+      'login-hunt-shadow',
+      'login-hunt-streak',
+      'login-hunt-trail',
+      'login-hunt-dust',
+      'login-hunt-acorn',
+      'login-hunt-card',
       'login-hunt-bloom'
     ].forEach((needle) => expect(loginPreview).toContain(needle));
     // Colours must resolve through theme tokens (works in light + dark), never hardcoded.
@@ -235,26 +243,11 @@ describe('theme color contract', () => {
     expect(loginPreview).toContain('status-warning');
     expect(loginPreview).toContain('status-success');
     // The earlier alert-debug / evidence-run treatments must stay gone.
-    [
-      'data-login-visual-variant="alert-debug"', 'An alert is only the beginning.', 'Live incident triage',
-      'DebugSquirrel', 'AcornEvidence', 'useAnimate', 'useReducedMotion', 'ResizeObserver',
-      'data-login-visual-variant="evidence-run"', 'SquirrelRunner', 'AcornToken',
-      'login-debug-squirrel', 'login-incident-panel', 'login-squirrel-tail', 'login-acorn-runner',
-      'Payments API', 'Payment restart loop', 'Triage focus'
-    ].forEach((needle) => expect(loginPreview).not.toContain(needle));
-    [
-      'login-hunt-panel', 'login-hunt-scene', 'login-hunt-squirrel', 'login-hunt-tail',
-      'login-hunt-leg-front', 'login-hunt-leg-hind', 'login-hunt-shadow', 'login-hunt-streak',
-      'login-hunt-trail', 'login-hunt-dust', 'login-hunt-acorn', 'login-hunt-card', 'login-hunt-dot',
-      'login-hunt-bloom', 'login-hunt-bound', 'login-hunt-tail-wave', 'login-hunt-front-reach',
-      'login-hunt-hind-kick', 'login-hunt-hop', 'login-hunt-card-float', 'login-hunt-puff'
-    ].forEach((needle) => expect(styles).toContain(needle));
-    [
-      'login-debug-glow', 'login-debug-glow-breathe', 'login-debug-scene', 'login-incident-panel',
-      'login-debug-squirrel', 'login-squirrel-tail', 'login-squirrel-body', 'login-squirrel-head',
-      'login-squirrel-paws', 'login-squirrel-mouth', 'login-squirrel-eye', 'login-squirrel-blink',
-      'login-debug-acorn', 'login-acorn-runner', 'login-evidence-node', 'login-signal-travel'
-    ].forEach((needle) => expect(styles).not.toContain(needle));
+    ['data-login-visual-variant="alert-debug"', 'An alert is only the beginning.', 'Live incident triage', 'DebugSquirrel', 'AcornEvidence', 'useAnimate', 'useReducedMotion', 'ResizeObserver', 'data-login-visual-variant="evidence-run"', 'SquirrelRunner', 'AcornToken', 'login-debug-squirrel', 'login-incident-panel', 'login-squirrel-tail', 'login-acorn-runner', 'Payments API', 'Payment restart loop', 'Triage focus'].forEach((needle) => expect(loginPreview).not.toContain(needle));
+    ['login-hunt-panel', 'login-hunt-scene', 'login-hunt-squirrel', 'login-hunt-tail', 'login-hunt-leg-front', 'login-hunt-leg-hind', 'login-hunt-shadow', 'login-hunt-streak', 'login-hunt-trail', 'login-hunt-dust', 'login-hunt-acorn', 'login-hunt-card', 'login-hunt-dot', 'login-hunt-bloom', 'login-hunt-bound', 'login-hunt-tail-wave', 'login-hunt-front-reach', 'login-hunt-hind-kick', 'login-hunt-hop', 'login-hunt-card-float', 'login-hunt-puff'].forEach((needle) =>
+      expect(styles).toContain(needle)
+    );
+    ['login-debug-glow', 'login-debug-glow-breathe', 'login-debug-scene', 'login-incident-panel', 'login-debug-squirrel', 'login-squirrel-tail', 'login-squirrel-body', 'login-squirrel-head', 'login-squirrel-paws', 'login-squirrel-mouth', 'login-squirrel-eye', 'login-squirrel-blink', 'login-debug-acorn', 'login-acorn-runner', 'login-evidence-node', 'login-signal-travel'].forEach((needle) => expect(styles).not.toContain(needle));
     expect(styles).not.toContain('steps(1, end)');
     expect(loginPreview.match(/#[0-9a-f]{3,8}\b/i)).toBeNull();
     expect(styles).toContain('rgb(var(--ao-surface-strong-rgb))');
@@ -288,7 +281,7 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('handleAppLinkClick(event, path, navigate)');
     expect(overviewPage).toContain('readRecentInvestigation(workspace.id, currentUserId)');
     expect(traceFooter).toContain('Show run details');
-    expect(traceFooter).toMatch(/const activitySummary = trace\.status === 'connecting'[\s\S]*'Waiting for progress'/);
+    expect(traceFooter).toMatch(/const activitySummary =\s*trace\.status === 'connecting'[\s\S]*'Waiting for progress'/);
   });
 
   it('keeps the compact assistant rail independent from the primary navigation shell', () => {
@@ -322,6 +315,13 @@ describe('theme color contract', () => {
     expect(addClusterModal).not.toContain('kubernetesClusters');
   });
 
+  it('keeps same-level settings headings aligned and member actions in sentence case', () => {
+    expect(workspaceSettingsPage).toContain('<h2 className="mb-1 type-section-title">{title}</h2>');
+    expect(membersPage).toContain('<h2 className="type-section-title">{t(\'members.title\')}</h2>');
+    expect(membersPage).toContain('className="type-ui whitespace-nowrap"');
+    expect(membersPage).not.toContain('className="type-label whitespace-nowrap"');
+  });
+
   it('keeps workspace settings copy action-oriented and specific', () => {
     [
       "subtitle: 'Review workspace details, quota usage, member access, and deletion controls.'",
@@ -337,13 +337,7 @@ describe('theme color contract', () => {
       "dangerBody: 'Permanently removes this workspace, member access, saved settings, cluster registrations, VM registrations, diagnostics context, and chat history. Agents and in-cluster resources are not removed.'"
     ].forEach((needle) => expect(enLocale).toContain(needle));
 
-    [
-      "organizationTitle: '工作区详情'",
-      "accessTitle: '成员和角色'",
-      "rbac: '角色权限'",
-      "inherited: '由角色决定'",
-      "dangerTitle: '删除工作区'"
-    ].forEach((needle) => expect(zhLocale).toContain(needle));
+    ["organizationTitle: '工作区详情'", "accessTitle: '成员和角色'", "rbac: '角色权限'", "inherited: '由角色决定'", "dangerTitle: '删除工作区'"].forEach((needle) => expect(zhLocale).toContain(needle));
   });
 
   it('keeps workload filter controls compact and aligned', () => {
@@ -359,7 +353,7 @@ describe('theme color contract', () => {
     expect(resourceCategoryTabs).toContain('tabIndex={tab.isActive ? 0 : -1}');
     expect(resourceCategoryTabs).toContain("event.key === 'ArrowRight'");
     expect(workloadsExplorer).toContain('<ResourceCategoryTabs<ResourceFamily>');
-    expect(workloadsExplorer).toContain("labelPrefix=\"resources.families\"");
+    expect(workloadsExplorer).toContain('labelPrefix="resources.families"');
     expect(resourceCategoryTabs).not.toContain('min-w-[8.5rem]');
     expect(resourceCategoryTabs).toContain('whitespace-nowrap');
     expect(resourceCategoryTabs).toContain('border-b-2');
@@ -369,16 +363,16 @@ describe('theme color contract', () => {
     expect(workloadsExplorer).toContain("const [resourceSearchTerm, setResourceSearchTerm] = useState('');");
     expect(workloadsExplorer).toContain('matchesResourceSearch(resourceSearchTerm');
     expect(workloadsExplorer).toContain('q: resourceSearchTerm.trim() || undefined');
-    expect(resourceExplorerControls).toContain('aria-label={t(\'resources.filters.unhealthyPodsCount\'');
+    expect(resourceExplorerControls).toContain("aria-label={t('resources.filters.unhealthyPodsCount'");
     expect(workloadsExplorer).toContain('getDefaultExplorerSelection(unhealthyPodCount)');
     expect(workloadsExplorer).toContain('flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden');
     expect(appPageContent).toContain('flex-1 min-w-0 w-full max-w-full');
-    expect(workloadsExplorerSurface).toContain('<ResourceMetaPair label={t(\'resources.row.kind\')}');
+    expect(workloadsExplorerSurface).toContain("<ResourceMetaPair label={t('resources.row.kind')}");
     expect(workloadsExplorerSurface).toContain('<ResourceStatusPill status={workload.status} healthy={isHealthy} />');
     expect(resourceExplorerControls).toContain("showUnhealthyPodsOnly ? 'bg-accent' : 'bg-ui-border'");
     expect(workloadsExplorerSurface).toContain('sortAttentionFirst');
     expect(workloadsExplorerSurface).toContain('(workload) => !isHealthyStatus(workload.status)');
-    expect(workloadsExplorerSurface).toContain("(ingress) => !hasReportedValue(ingress.address)");
+    expect(workloadsExplorerSurface).toContain('(ingress) => !hasReportedValue(ingress.address)');
     expect(workloadsExplorerSurface).toContain('(pvc) => !isHealthyStatus(pvc.status)');
     expect(workloadsExplorerSurface).toContain('(node) => !isHealthyStatus(node.status)');
     expect(workloadsExplorerSurface).toContain('healthy={isHealthyStatus(namespace.status)}');
@@ -404,29 +398,19 @@ describe('theme color contract', () => {
     expect(resourceExplorerLayout).toContain("t('resources.table.metrics')");
     expect(resourceExplorerLayout).toContain("t('resources.table.status')");
     expect(workloadExplorerParts).toContain('export const resourceMetricGridClass =');
-    expect(workloadExplorerParts).toContain(
-      'xl:grid-cols-[minmax(0,1fr)_minmax(3.75rem,max-content)]'
-    );
+    expect(workloadExplorerParts).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(3.75rem,max-content)]');
     expect(workloadsExplorerSurface).toContain('resourceMetricGridClass,');
     expect(workloadsExplorerSurface).toContain('className={resourceMetricGridClass}');
     expect(resourceExplorerLayout).toContain('className={resourceMetricGridClass}');
     expect(workloadsExplorer).not.toContain('grid min-w-0 grid-cols-2 gap-x-5 gap-y-2');
     expect(workloadExplorerParts).not.toContain('grid min-w-0 grid-cols-2 gap-x-5 gap-y-2');
-    expect(workloadExplorerParts).not.toContain(
-      'xl:grid-cols-[minmax(16rem,1.15fr)_minmax(14rem,0.8fr)_max-content]'
-    );
-    expect(workloadsExplorer).not.toContain(
-      'xl:grid-cols-[minmax(16rem,1.15fr)_minmax(14rem,0.8fr)_max-content]'
-    );
+    expect(workloadExplorerParts).not.toContain('xl:grid-cols-[minmax(16rem,1.15fr)_minmax(14rem,0.8fr)_max-content]');
+    expect(workloadsExplorer).not.toContain('xl:grid-cols-[minmax(16rem,1.15fr)_minmax(14rem,0.8fr)_max-content]');
     expect(workloadExplorerParts).toContain('export const resourceRowActionClass =');
-    expect(workloadExplorerParts).toContain(
-      'flex min-w-0 flex-wrap items-center justify-start gap-3 xl:flex-nowrap xl:justify-end xl:justify-self-end'
-    );
+    expect(workloadExplorerParts).toContain('flex min-w-0 flex-wrap items-center justify-start gap-3 xl:flex-nowrap xl:justify-end xl:justify-self-end');
     expect(workloadsExplorerSurface).toContain('className={resourceRowActionClass}');
     expect(resourceExplorerLayout).toContain('className={resourceRowActionClass}');
-    expect(workloadExplorerParts).toContain(
-      'inline-flex min-w-0 max-w-full items-center gap-2 rounded-full'
-    );
+    expect(workloadExplorerParts).toContain('inline-flex min-w-0 max-w-full items-center gap-2 rounded-full');
     expect(workloadExplorerParts).toContain('[overflow-wrap:anywhere]');
     expect(resourceExplorerLayout).toContain('type-ui inline-flex shrink-0 items-center gap-1');
     expect(resourceExplorerLayout).toContain('type-panel-title break-words [overflow-wrap:anywhere]');
@@ -451,7 +435,9 @@ describe('theme color contract', () => {
     expect(workloadExplorerParts).not.toContain('ResourceInventorySummary');
     expect(workloadExplorerParts).toContain('ResourceStatusPill');
     expect(resourceExplorerLayout).toContain('ChevronRight');
-    ["search: 'Search resources'", "label: 'Resource families'", "unhealthyPods: 'Unhealthy only'", "unhealthyPodsCount: 'Show unhealthy pods only. {{count}} unhealthy pods found.'", "kind: 'Kind'", "resource: 'Resource'", "metrics: 'Metrics'", "status: 'Status'", "logTime: 'Time'", "logSource: 'Source'", "logMessage: 'Message'", "emptyFiltered: 'No resources match the current search and filters.'", "noSearchResults: 'No VM resources match the current search.'"].forEach((snippet) => expect(enLocale).toContain(snippet));
+    ["search: 'Search resources'", "label: 'Resource families'", "unhealthyPods: 'Unhealthy only'", "unhealthyPodsCount: 'Show unhealthy pods only. {{count}} unhealthy pods found.'", "kind: 'Kind'", "resource: 'Resource'", "metrics: 'Metrics'", "status: 'Status'", "logTime: 'Time'", "logSource: 'Source'", "logMessage: 'Message'", "emptyFiltered: 'No resources match the current search and filters.'", "noSearchResults: 'No VM resources match the current search.'"].forEach((snippet) =>
+      expect(enLocale).toContain(snippet)
+    );
     ['filtersInventory', 'searchChip', 'resourceMix', 'categoryDescriptions', 'serviceCount'].forEach((snippet) => expect(enLocale).not.toContain(snippet));
     ["search: '搜索资源'", "label: '资源类别'", "unhealthyPods: '仅异常'", "unhealthyPodsCount: '仅显示异常 Pod。发现 {{count}} 个异常 Pod。'", "kind: '类型'", "resource: '资源'", "metrics: '指标'", "status: '状态'", "logTime: '时间'", "logSource: '来源'", "logMessage: '消息'", "emptyFiltered: '没有资源匹配当前搜索和筛选条件。'", "noSearchResults: '没有虚拟机资源匹配当前搜索。'"].forEach((snippet) => expect(zhLocale).toContain(snippet));
     ['filtersInventory', 'searchChip', 'resourceMix', 'categoryDescriptions', 'serviceCount'].forEach((snippet) => expect(zhLocale).not.toContain(snippet));
@@ -502,16 +488,11 @@ describe('theme color contract', () => {
 
     for (const theme of [lightTheme, darkTheme]) {
       for (const [foreground, background] of textPairs) {
-        expect(contrastRatio(rgbVariableValue(theme, foreground), rgbVariableValue(theme, background)))
-          .toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(rgbVariableValue(theme, foreground), rgbVariableValue(theme, background))).toBeGreaterThanOrEqual(4.5);
       }
-      expect(rgbVariableValue(theme, '--ao-control-activation-fg-rgb'))
-        .toEqual(rgbVariableValue(theme, '--ao-logo-cream-rgb'));
+      expect(rgbVariableValue(theme, '--ao-control-activation-fg-rgb')).toEqual(rgbVariableValue(theme, '--ao-logo-cream-rgb'));
       for (const surrounding of ['--ao-bg-rgb', '--ao-surface-rgb']) {
-        expect(contrastRatio(
-          rgbVariableValue(theme, '--ao-control-boundary-rgb'),
-          rgbVariableValue(theme, surrounding)
-        )).toBeGreaterThanOrEqual(3);
+        expect(contrastRatio(rgbVariableValue(theme, '--ao-control-boundary-rgb'), rgbVariableValue(theme, surrounding))).toBeGreaterThanOrEqual(3);
       }
     }
 
@@ -615,9 +596,7 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('border-y border-ui-border py-3');
     expect(overviewPage).toContain('w-full justify-center sm:w-auto');
     expect(overviewPage).toContain('group flex w-full items-center justify-between gap-4 px-4 py-3');
-    expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
-      overviewPage.indexOf('data-connected-targets="true"')
-    );
+    expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(overviewPage.indexOf('data-connected-targets="true"'));
     expect(overviewPage).not.toContain('{card.targetTypeLabel}');
     expect(overviewPage).not.toContain('{issue.summary &&');
     expect(overviewPage).not.toContain('data-primary-issue-card');
@@ -645,5 +624,4 @@ describe('theme color contract', () => {
     expect(membersPage).toContain('onCreateInvitation ? createInvitation : undefined');
     expect(membersPage).not.toContain('[loadInvitations, workspace.id, workspace.invitations]');
   });
-
 });

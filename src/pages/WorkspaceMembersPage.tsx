@@ -64,18 +64,21 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     role: 'all' | ProjectMember['role'];
     source: 'all' | ProjectMember['source'];
   }>({ q: '', role: 'all', source: 'all' });
-  const loadMemberPage = useCallback(async ({ cursor, filters, limit, signal }: {
-    cursor?: string;
-    filters: typeof appliedMemberFilters;
-    limit: number;
-    signal: AbortSignal;
-  }) => {
-    try {
-      return await controlPlaneApi.listWorkspaceMembers(workspace.id, { limit, cursor, ...filters, signal });
-    } catch {
-      throw new Error(t('members.loadMembersFailed'));
-    }
-  }, [t, workspace.id]);
+  const loadMemberPage = useCallback(
+    async ({ cursor, filters, limit, signal }: { cursor?: string; filters: typeof appliedMemberFilters; limit: number; signal: AbortSignal }) => {
+      try {
+        return await controlPlaneApi.listWorkspaceMembers(workspace.id, {
+          limit,
+          cursor,
+          ...filters,
+          signal
+        });
+      } catch {
+        throw new Error(t('members.loadMembersFailed'));
+      }
+    },
+    [t, workspace.id]
+  );
   const memberCollection = useCursorCollection({
     filters: appliedMemberFilters,
     getKey: (member: ProjectMember) => member.userId || member.email,
@@ -83,33 +86,33 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     pageSize: 50,
     strategy: 'sentinel'
   });
-  const loadInvitationPage = useCallback(async ({ cursor, limit, signal }: {
-    cursor?: string;
-    filters: { workspaceId: string };
-    limit: number;
-    signal: AbortSignal;
-  }) => {
-    try {
-      const page = await controlPlaneApi.listWorkspaceInvitationsPage(workspace.id, { limit, cursor, signal });
-      return {
-        ...page,
-        items: page.items.map((invitation): WorkspaceInvitation => ({
-          id: invitation.id,
-          email: invitation.email,
-          role: invitation.role,
-          roleTemplate: invitation.roleTemplate,
-          status: invitation.status,
-          invitedBy: invitation.invitedBy,
-          createdAt: invitation.createdAt,
-          expiresAt: invitation.expiresAt,
-          acceptedAt: invitation.acceptedAt,
-          revokedAt: invitation.revokedAt
-        }))
-      };
-    } catch {
-      throw new Error(t('members.loadInvitationsFailed'));
-    }
-  }, [t, workspace.id]);
+  const loadInvitationPage = useCallback(
+    async ({ cursor, limit, signal }: { cursor?: string; filters: { workspaceId: string }; limit: number; signal: AbortSignal }) => {
+      try {
+        const page = await controlPlaneApi.listWorkspaceInvitationsPage(workspace.id, { limit, cursor, signal });
+        return {
+          ...page,
+          items: page.items.map(
+            (invitation): WorkspaceInvitation => ({
+              id: invitation.id,
+              email: invitation.email,
+              role: invitation.role,
+              roleTemplate: invitation.roleTemplate,
+              status: invitation.status,
+              invitedBy: invitation.invitedBy,
+              createdAt: invitation.createdAt,
+              expiresAt: invitation.expiresAt,
+              acceptedAt: invitation.acceptedAt,
+              revokedAt: invitation.revokedAt
+            })
+          )
+        };
+      } catch {
+        throw new Error(t('members.loadInvitationsFailed'));
+      }
+    },
+    [t, workspace.id]
+  );
   const invitationCollection = useCursorCollection({
     filters: { workspaceId: workspace.id },
     getKey: (invitation: WorkspaceInvitation) => invitation.id,
@@ -124,18 +127,11 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   const roleTemplateByKey = new Map(roleTemplates.map((role) => [role.key, role]));
   const fallbackRoleTemplate = (role: string): WorkspaceRoleTemplate | undefined => roleTemplateByKey.get(role);
   const selectedMemberRoleTemplate = selectedMember ? selectedMember.roleTemplate || fallbackRoleTemplate(selectedMember.role) : undefined;
-  const pendingRoleTemplate = selectedMember && selectedMember.role === pendingRole
-    ? selectedMember.roleTemplate || fallbackRoleTemplate(pendingRole)
-    : fallbackRoleTemplate(pendingRole);
+  const pendingRoleTemplate =
+    selectedMember && selectedMember.role === pendingRole ? selectedMember.roleTemplate || fallbackRoleTemplate(pendingRole) : fallbackRoleTemplate(pendingRole);
   const hasPendingRoleChange = Boolean(selectedMember && pendingRole !== selectedMember.role);
-  const canEditSelectedMember = Boolean(
-    selectedMember && canManageMembers && (canManageOwners || selectedMemberRoleTemplate?.protected === false)
-  );
-  const hasCompleteUnfilteredMemberPage =
-    !nextCursor &&
-    searchTerm.trim().length === 0 &&
-    roleFilter === 'all' &&
-    sourceFilter === 'all';
+  const canEditSelectedMember = Boolean(selectedMember && canManageMembers && (canManageOwners || selectedMemberRoleTemplate?.protected === false));
+  const hasCompleteUnfilteredMemberPage = !nextCursor && searchTerm.trim().length === 0 && roleFilter === 'all' && sourceFilter === 'all';
   const hasMemberFilters = searchTerm.trim().length > 0 || roleFilter !== 'all' || sourceFilter !== 'all';
   const memberCountLabel = hasMemberFilters
     ? t('members.loadedMatchingCount', { count: members.length })
@@ -143,26 +139,23 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
         loaded: members.length,
         total: workspace.memberCount ?? members.length
       });
-  const memberEmptyTitle = listError
-    ? t('members.loadFailedTitle')
-    : t(hasMemberFilters ? 'members.emptyFilteredTitle' : 'members.emptyTitle');
+  const memberEmptyTitle = listError ? t('members.loadFailedTitle') : t(hasMemberFilters ? 'members.emptyFilteredTitle' : 'members.emptyTitle');
   const memberEmptyDescription = listError || t(hasMemberFilters ? 'members.emptyFiltered' : 'members.empty');
   const hasInvitationWork = Boolean(
     invitationCollection.phase === 'loading' ||
-    invitationCollection.error ||
-    invitations.some((invitation) => invitation.status === 'pending' || invitation.status === 'expired') ||
-    invitationCollection.nextCursor ||
-    invitationCollection.phase === 'loadingMore'
+      invitationCollection.error ||
+      invitations.some((invitation) => invitation.status === 'pending' || invitation.status === 'expired') ||
+      invitationCollection.nextCursor ||
+      invitationCollection.phase === 'loadingMore'
   );
   const ownerCount = members.filter((member) => member.role === 'owner').length;
-  const selectedMemberIsOnlyOwner = Boolean(
-    hasCompleteUnfilteredMemberPage &&
-    selectedMember?.role === 'owner' &&
-    ownerCount <= 1
-  );
+  const selectedMemberIsOnlyOwner = Boolean(hasCompleteUnfilteredMemberPage && selectedMember?.role === 'owner' && ownerCount <= 1);
   const roleFilterOptions: Array<SelectOption<typeof roleFilter>> = [
     { value: 'all', label: t('members.allRoles') },
-    ...roleTemplates.map((role) => ({ value: role.key, label: formatRole(role.key, role) }))
+    ...roleTemplates.map((role) => ({
+      value: role.key,
+      label: formatRole(role.key, role)
+    }))
   ];
   const sourceFilterOptions: Array<SelectOption<typeof sourceFilter>> = [
     { value: 'all', label: t('members.allSources') },
@@ -211,7 +204,11 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAppliedMemberFilters({ q: searchTerm, role: roleFilter, source: sourceFilter });
+      setAppliedMemberFilters({
+        q: searchTerm,
+        role: roleFilter,
+        source: sourceFilter
+      });
     }, 300);
     return () => window.clearTimeout(timer);
   }, [roleFilter, searchTerm, sourceFilter]);
@@ -253,9 +250,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     return invitation;
   };
 
-  const addMember = async (
-    input: { userId: string; email: string; role: ProjectMember['role'] }
-  ): Promise<ProjectMember> => {
+  const addMember = async (input: { userId: string; email: string; role: ProjectMember['role'] }): Promise<ProjectMember> => {
     if (!onAddMember) {
       throw new Error(t('members.addMemberFailed'));
     }
@@ -267,9 +262,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   const revokeInvitation = async (invitation: WorkspaceInvitation): Promise<void> => {
     if (!onRevokeInvitation) return;
     await onRevokeInvitation(invitation);
-    setInvitations((current) =>
-      current.map((item) => item.id === invitation.id ? { ...item, status: 'revoked' } : item)
-    );
+    setInvitations((current) => current.map((item) => (item.id === invitation.id ? { ...item, status: 'revoked' } : item)));
   };
 
   const saveMember = async () => {
@@ -327,25 +320,29 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     <PageShell embedded={embedded}>
       {embedded ? (
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div><h2 className="type-section-title">{t('members.title')}</h2><p className="type-body mt-2">{t('members.description')}</p></div>
-          <Button onClick={openInviteModal} disabled={!canManageMembers || roleTemplates.length === 0} variant="primary" size="md" className="type-label whitespace-nowrap"><UserPlus className="h-4 w-4" aria-hidden="true" />{t('members.inviteMember')}</Button>
+          <div>
+            <h2 className="type-section-title">{t('members.title')}</h2>
+            <p className="type-body mt-2">{t('members.description')}</p>
+          </div>
+          <Button onClick={openInviteModal} disabled={!canManageMembers || roleTemplates.length === 0} variant="primary" size="md" className="type-ui whitespace-nowrap">
+            <UserPlus className="h-4 w-4" aria-hidden="true" />
+            {t('members.inviteMember')}
+          </Button>
         </div>
-      ) : <PageHeader title={t('members.title')} description={t('members.description')} actions={
-        <Button
-          onClick={openInviteModal}
-          disabled={!canManageMembers || roleTemplates.length === 0}
-          variant="primary"
-          size="md"
-          className="type-label whitespace-nowrap"
-        >
-          <UserPlus className="w-4 h-4" aria-hidden="true" />
-          {t('members.inviteMember')}
-        </Button>
-      } />}
+      ) : (
+        <PageHeader
+          title={t('members.title')}
+          description={t('members.description')}
+          actions={
+            <Button onClick={openInviteModal} disabled={!canManageMembers || roleTemplates.length === 0} variant="primary" size="md" className="type-ui whitespace-nowrap">
+              <UserPlus className="w-4 h-4" aria-hidden="true" />
+              {t('members.inviteMember')}
+            </Button>
+          }
+        />
+      )}
 
-      <div
-        className="w-full overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm"
-      >
+      <div className="w-full overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">
         <div className="flex flex-col gap-4 border-b border-ui-border px-5 py-4 sm:px-6 xl:flex-row xl:items-center">
           <div className="flex-1 relative">
             <label htmlFor="workspace-member-search" className="sr-only">
@@ -361,41 +358,17 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
               className={memberSearchInputClassName}
             />
           </div>
-          <Select<typeof roleFilter>
-            value={roleFilter}
-            options={roleFilterOptions}
-            onChange={setRoleFilter}
-            className="min-w-40"
-            ariaLabel={t('members.filterRole')}
-          />
-          <Select<typeof sourceFilter>
-            value={sourceFilter}
-            options={sourceFilterOptions}
-            onChange={setSourceFilter}
-            className="min-w-36"
-            ariaLabel={t('members.filterSource')}
-          />
-          <span className="type-label rounded-full border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">
-            {memberCountLabel}
-          </span>
+          <Select<typeof roleFilter> value={roleFilter} options={roleFilterOptions} onChange={setRoleFilter} className="min-w-40" ariaLabel={t('members.filterRole')} />
+          <Select<typeof sourceFilter> value={sourceFilter} options={sourceFilterOptions} onChange={setSourceFilter} className="min-w-36" ariaLabel={t('members.filterSource')} />
+          <span className="type-label rounded-full border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">{memberCountLabel}</span>
           {hasMemberFilters && (
-            <Button
-              type="button"
-              variant="tertiary"
-              size="sm"
-              onClick={clearMemberFilters}
-              className="w-full sm:w-auto"
-            >
+            <Button type="button" variant="tertiary" size="sm" onClick={clearMemberFilters} className="w-full sm:w-auto">
               <X className="h-4 w-4" aria-hidden="true" />
               {t('members.clearFilters')}
             </Button>
           )}
         </div>
-        {roleLoadError && (
-          <div className="type-caption border-b border-status-warning/20 bg-status-warning-soft px-5 py-3 text-status-warning-text sm:px-6">
-            {roleLoadError}
-          </div>
-        )}
+        {roleLoadError && <div className="type-caption border-b border-status-warning/20 bg-status-warning-soft px-5 py-3 text-status-warning-text sm:px-6">{roleLoadError}</div>}
 
         <div className="min-w-0">
           <table className="w-full table-fixed text-left" aria-label={t('members.title')}>
@@ -427,57 +400,57 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
               {members.map((member) => {
                 const roleTemplate = member.roleTemplate || fallbackRoleTemplate(member.role);
                 return (
-                  <tr
-                    key={member.email}
-                    className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45"
-                  >
-                  <td className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-                    <div className="flex min-w-0 items-center gap-3 lg:gap-4">
-                      <div className="type-ui flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong ring-4 ring-ui-surface shadow-sm transition-colors group-hover:bg-control-activation group-hover:text-control-activation-fg">
-                        {getInitials(member)}
+                  <tr key={member.email} className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
+                    <td className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                      <div className="flex min-w-0 items-center gap-3 lg:gap-4">
+                        <div className="type-ui flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong ring-4 ring-ui-surface shadow-sm transition-colors group-hover:bg-control-activation group-hover:text-control-activation-fg">
+                          {getInitials(member)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="type-panel-title truncate">{member.name}</p>
+                          <p className="type-body mt-1 inline-flex max-w-full min-w-0 items-center gap-2">
+                            <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            <span className="min-w-0 truncate">{member.email}</span>
+                          </p>
+                          <p className="type-caption mt-2 flex items-center gap-2 text-ui-text-muted xl:hidden">
+                            <span className="type-label">{member.source}</span>
+                            <span aria-hidden="true">·</span>
+                            <span className="inline-flex items-center gap-1.5 text-ui-text">
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
+                              {t('members.active')}
+                            </span>
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="type-panel-title truncate">{member.name}</p>
-                        <p className="type-body mt-1 inline-flex max-w-full min-w-0 items-center gap-2">
-                          <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                          <span className="min-w-0 truncate">{member.email}</span>
-                        </p>
-                        <p className="type-caption mt-2 flex items-center gap-2 text-ui-text-muted xl:hidden">
-                          <span className="type-label">{member.source}</span>
-                          <span aria-hidden="true">·</span>
-                          <span className="inline-flex items-center gap-1.5 text-ui-text">
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
-                            {t('members.active')}
-                          </span>
-                        </p>
+                    </td>
+                    <td className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                      <MemberRoleCell member={member} roleTemplate={roleTemplate} />
+                    </td>
+                    <td className="type-label hidden break-words px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">{member.source}</td>
+                    <td className="hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="h-2 w-2 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
+                        <span className="type-row-title min-w-0 break-words">{t('members.active')}</span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-                    <MemberRoleCell
-                      member={member}
-                      roleTemplate={roleTemplate}
-                    />
-                  </td>
-                  <td className="type-label hidden break-words px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">{member.source}</td>
-                  <td className="hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="h-2 w-2 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
-                      <span className="type-row-title min-w-0 break-words">{t('members.active')}</span>
-                    </div>
-                  </td>
-                  <td className="px-2 py-4 text-right sm:px-3 lg:px-3">
-                    <Tooltip content={t('members.manageNamed', { name: member.name })}>
-                      <button
-                        type="button"
-                        onClick={() => openMember(member)}
-                        className="control-target rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-                        aria-label={t('members.manageNamed', { name: member.name })}
+                    </td>
+                    <td className="px-2 py-4 text-right sm:px-3 lg:px-3">
+                      <Tooltip
+                        content={t('members.manageNamed', {
+                          name: member.name
+                        })}
                       >
-                        <MoreVertical className="w-4 h-4" aria-hidden="true" />
-                      </button>
-                    </Tooltip>
-                  </td>
+                        <button
+                          type="button"
+                          onClick={() => openMember(member)}
+                          className="control-target rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                          aria-label={t('members.manageNamed', {
+                            name: member.name
+                          })}
+                        >
+                          <MoreVertical className="w-4 h-4" aria-hidden="true" />
+                        </button>
+                      </Tooltip>
+                    </td>
                   </tr>
                 );
               })}
@@ -486,7 +459,11 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                 phase={isLoadingInitial ? 'loading' : listError ? 'error' : 'ready'}
                 itemCount={members.length}
                 filtered={hasMemberFilters}
-                loading={<div role="status" className="p-6 text-sm text-ui-text-muted">{t('members.loadingMembers')}</div>}
+                loading={
+                  <div role="status" className="p-6 text-sm text-ui-text-muted">
+                    {t('members.loadingMembers')}
+                  </div>
+                }
                 empty={<EmptyState embedded headingLevel={3} icon={<ICONS.Users />} title={memberEmptyTitle} description={memberEmptyDescription} />}
                 filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={memberEmptyTitle} description={memberEmptyDescription} />}
                 error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={memberEmptyTitle} description={memberEmptyDescription} />}
@@ -495,12 +472,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
           </table>
           {nextCursor && (
             <div ref={memberCollection.sentinelRef} className="flex justify-center px-6 py-4">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => void memberCollection.loadMore()}
-                disabled={isLoadingMore}
-              >
+              <Button type="button" variant="secondary" onClick={() => void memberCollection.loadMore()} disabled={isLoadingMore}>
                 {isLoadingMore ? t('common.loading') : t('common.loadMore')}
               </Button>
             </div>

@@ -43,7 +43,7 @@ export const GeneratedReportCard: React.FC<GeneratedReportCardProps> = ({ trace,
             </span>
             <div className="min-w-0">
               <p className="type-micro-label text-ui-text-muted">{t('chat.generatedIncidentReport')}</p>
-              <h3 id={`generated-report-${report.reportId}`} className="mt-0.5 truncate text-sm font-semibold text-ui-text">
+              <h3 id={`generated-report-${report.reportId}`} className="type-row-title mt-0.5 truncate text-ui-text">
                 {report.title}
               </h3>
               <p className="type-caption mt-1 text-ui-text-muted">

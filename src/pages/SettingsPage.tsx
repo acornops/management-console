@@ -22,13 +22,7 @@ interface TabUnavailableInput {
   t: (key: string) => string;
 }
 
-function getTabUnavailableReason({
-  tab,
-  hasWorkspace,
-  canReadWorkspaceData,
-  canReadMembers,
-  t
-}: TabUnavailableInput): string | undefined {
+function getTabUnavailableReason({ tab, hasWorkspace, canReadWorkspaceData, canReadMembers, t }: TabUnavailableInput): string | undefined {
   if (!hasWorkspace) return t('settingsPage.selectWorkspaceForTab');
   if (tab === 'members' && !canReadMembers) return t('settingsPage.membersAccessRequired');
   if (tab === 'ai' && !canReadWorkspaceData) return t('settingsPage.workspaceAccessRequired');
@@ -85,10 +79,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const aiTabDisabled = !workspace || !canReadWorkspaceData;
   const membersTabDisabled = !workspace || !canReadMembers;
   const hasWorkspace = Boolean(workspace);
-  const aiSettingsResource = useWorkspaceAiSettingsResource(
-    workspace?.id,
-    activeTab === 'ai' && !aiTabDisabled
-  );
+  const aiSettingsResource = useWorkspaceAiSettingsResource(workspace?.id, activeTab === 'ai' && !aiTabDisabled);
 
   React.useEffect(() => {
     setActiveTab(initialTab);
@@ -109,7 +100,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     label: string;
     icon: React.ElementType;
   }> = [
-    { id: 'workspace', label: t('settingsPage.workspaceTab'), icon: ICONS.LayoutGrid },
+    {
+      id: 'workspace',
+      label: t('settingsPage.workspaceTab'),
+      icon: ICONS.LayoutGrid
+    },
     { id: 'members', label: t('settingsPage.membersTab'), icon: ICONS.Users },
     { id: 'ai', label: t('settingsPage.aiTab'), icon: ICONS.Bot }
   ];
@@ -145,47 +140,40 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       <LayoutGroup id={settingsTabsLayoutGroupId}>
         <div className="mb-8 flex max-w-4xl flex-wrap gap-2 border-b border-ui-border">
           {tabs.map(({ id, label, icon: Icon }) => {
-          const isActive = activeTab === id;
-          const unavailableReason = getTabUnavailableReason({
-            tab: id,
-            hasWorkspace,
-            canReadWorkspaceData,
-            canReadMembers,
-            t
-          });
-          return (
-            <Tooltip key={id} content={unavailableReason || label} disabled={!unavailableReason}>
-              <button
-                type="button"
-                onClick={() => handleSelectTab(id)}
-                aria-disabled={Boolean(unavailableReason)}
-                aria-pressed={isActive}
-                className={`relative -mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 text-sm font-bold transition-colors ${
-                  isActive
-                    ? 'border-transparent text-accent-strong'
-                    : unavailableReason
+            const isActive = activeTab === id;
+            const unavailableReason = getTabUnavailableReason({
+              tab: id,
+              hasWorkspace,
+              canReadWorkspaceData,
+              canReadMembers,
+              t
+            });
+            return (
+              <Tooltip key={id} content={unavailableReason || label} disabled={!unavailableReason}>
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab(id)}
+                  aria-disabled={Boolean(unavailableReason)}
+                  aria-pressed={isActive}
+                  className={`relative -mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 text-sm type-ui transition-colors ${
+                    isActive
+                      ? 'border-transparent text-accent-strong'
+                      : unavailableReason
                       ? 'border-transparent text-ui-text-muted/60'
                       : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text'
-                } ${unavailableReason ? 'cursor-not-allowed' : ''}`}
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {label}
-                {isActive && <ActiveTabIndicator />}
-              </button>
-            </Tooltip>
-          );
+                  } ${unavailableReason ? 'cursor-not-allowed' : ''}`}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  {label}
+                  {isActive && <ActiveTabIndicator />}
+                </button>
+              </Tooltip>
+            );
           })}
         </div>
       </LayoutGroup>
 
-      {!workspace && (
-        <EmptyState
-          className="max-w-4xl"
-          icon={<ICONS.LayoutGrid />}
-          title={t('settingsPage.noWorkspaceTitle')}
-          description={t('settingsPage.noWorkspaceBody')}
-        />
-      )}
+      {!workspace && <EmptyState className="max-w-4xl" icon={<ICONS.LayoutGrid />} title={t('settingsPage.noWorkspaceTitle')} description={t('settingsPage.noWorkspaceBody')} />}
 
       {activeTab === 'workspace' && workspace && !workspaceTabDisabled && (
         <WorkspaceSettingsPage
@@ -226,7 +214,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           showToast={showToast}
         />
       )}
-
     </PageShell>
   );
 };

@@ -44,7 +44,7 @@ export const DangerZoneRow: React.FC<{
       data-danger-zone-row={tone}
     >
       <div className="min-w-0">
-        <Heading id={id} className={`mb-1 text-sm font-bold ${tone === 'danger' ? 'text-status-danger-text' : 'text-ui-text'}`}>
+        <Heading id={id} className={`type-row-title mb-1 ${tone === 'danger' ? 'text-status-danger-text' : 'text-ui-text'}`}>
           {title}
         </Heading>
         <p className="max-w-2xl text-xs leading-5 text-ui-text-muted">{description}</p>

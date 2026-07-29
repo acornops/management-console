@@ -42,13 +42,13 @@ export const PendingAgentSetup: React.FC<PendingAgentSetupProps> = ({
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-status-success-soft text-status-success-text ring-[3px] ring-status-success-soft/55">
             <Check className="h-3.5 w-3.5" />
           </span>
-          <span className="max-w-full truncate text-[0.8125rem] font-bold leading-5 text-ui-text">{completedLabel}</span>
+          <span className="max-w-full truncate type-ui text-ui-text">{completedLabel}</span>
         </li>
         <li className="relative z-10 flex min-w-0 flex-col items-center gap-1.5 text-center">
           <span className="pending-agent-step-pulse flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ui-border bg-ui-surface text-ui-text-muted">
             <Clock className="h-3.5 w-3.5" />
           </span>
-          <span className="max-w-full truncate text-[0.8125rem] font-bold leading-5 text-ui-text-muted">{pendingLabel}</span>
+          <span className="max-w-full truncate type-ui text-ui-text-muted">{pendingLabel}</span>
         </li>
       </ol>
 

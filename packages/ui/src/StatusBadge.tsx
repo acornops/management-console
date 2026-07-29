@@ -14,7 +14,7 @@ export const StatusBadge: React.FC<{
           : 'border-ui-border bg-ui-bg text-ui-text-muted';
 
   return (
-    <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-widest ${toneClass}`}>
+    <span className={`rounded-full border px-2 py-0.5 type-micro-label ${toneClass}`}>
       {children}
     </span>
   );

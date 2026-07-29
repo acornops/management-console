@@ -111,7 +111,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
             <AlertTriangle className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <h2 id={dialogTitleId} className="text-base font-semibold leading-6 text-ui-text">
+            <h2 id={dialogTitleId} className="type-panel-title text-ui-text">
               {title}
             </h2>
             <p id={dialogBodyId} className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">
@@ -133,13 +133,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
             {t('chat.continueSeparateChat')}
           </Button>
           {actionSessionId && (
-            <Button
-              ref={primaryActionRef}
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => onOpenRecentActivitySession(actionSessionId)}
-            >
+            <Button ref={primaryActionRef} type="button" variant="primary" size="sm" onClick={() => onOpenRecentActivitySession(actionSessionId)}>
               {recentActivityActionLabel || t('chat.openConversation')}
             </Button>
           )}

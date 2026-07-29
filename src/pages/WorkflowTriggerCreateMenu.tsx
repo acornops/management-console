@@ -14,10 +14,7 @@ interface WorkflowTriggerCreateMenuProps {
 
 const triggerTypes: WorkflowTriggerType[] = ['schedule', 'acornops_event', 'webhook'];
 
-export function getWorkflowTriggerCreateMenuFocusIndex(
-  currentIndex: number,
-  key: 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'
-): number {
+export function getWorkflowTriggerCreateMenuFocusIndex(currentIndex: number, key: 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'): number {
   if (key === 'Home') return 0;
   if (key === 'End') return triggerTypes.length - 1;
   if (key === 'ArrowDown') return (currentIndex + 1) % triggerTypes.length;
@@ -30,10 +27,7 @@ function triggerIcon(triggerType: WorkflowTriggerType): React.ReactNode {
   return <Webhook className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />;
 }
 
-export const WorkflowTriggerCreateMenu: React.FC<WorkflowTriggerCreateMenuProps> = ({
-  disabled = false,
-  onCreate
-}) => {
+export const WorkflowTriggerCreateMenu: React.FC<WorkflowTriggerCreateMenuProps> = ({ disabled = false, onCreate }) => {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const wrapperRef = React.useRef<HTMLDivElement>(null);
@@ -70,10 +64,7 @@ export const WorkflowTriggerCreateMenu: React.FC<WorkflowTriggerCreateMenuProps>
 
     event.preventDefault();
     const currentIndex = itemRefs.current.findIndex((item) => item === document.activeElement);
-    const nextIndex = getWorkflowTriggerCreateMenuFocusIndex(
-      currentIndex < 0 ? 0 : currentIndex,
-      event.key as 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'
-    );
+    const nextIndex = getWorkflowTriggerCreateMenuFocusIndex(currentIndex < 0 ? 0 : currentIndex, event.key as 'ArrowDown' | 'ArrowUp' | 'Home' | 'End');
     itemRefs.current[nextIndex]?.focus({ preventScroll: true });
   };
 
@@ -116,7 +107,9 @@ export const WorkflowTriggerCreateMenu: React.FC<WorkflowTriggerCreateMenuProps>
           {triggerTypes.map((triggerType, index) => (
             <MenuItem
               key={triggerType}
-              ref={(element) => { itemRefs.current[index] = element; }}
+              ref={(element) => {
+                itemRefs.current[index] = element;
+              }}
               tabIndex={index === 0 ? 0 : -1}
               className="items-start"
               onClick={() => {

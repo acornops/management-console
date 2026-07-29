@@ -9,11 +9,7 @@ interface PendingVirtualMachineSetupProps {
   onInstallAgent?: (vmId: string) => void;
 }
 
-export const PendingVirtualMachineSetup: React.FC<PendingVirtualMachineSetupProps> = ({
-  vmId,
-  vmName,
-  onInstallAgent
-}) => {
+export const PendingVirtualMachineSetup: React.FC<PendingVirtualMachineSetupProps> = ({ vmId, vmName, onInstallAgent }) => {
   const { t } = useTranslation();
   const metrics = [
     { label: t('virtualMachines.list.load1m'), Icon: ICONS.Activity },

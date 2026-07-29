@@ -23,12 +23,14 @@ export const formatCapability = (capability: string) => capability.replaceAll('_
 export const formatGroupLabel = (key: string) => key.replaceAll('_', ' ').replaceAll('-', ' ');
 
 export function getRoleCapabilityGroups(role: WorkspaceRoleTemplate): DisplayCapabilityGroup[] {
-  const fallbackGroup: DisplayCapabilityGroup = { key: 'permissions', capabilities: role.capabilities, sortOrder: 0 };
-  return (role.capabilityGroups?.length
-    ? [...role.capabilityGroups].sort((left, right) => left.sortOrder - right.sortOrder || left.key.localeCompare(right.key))
-    : [fallbackGroup]
-  )
-    .filter((group) => group.capabilities.length > 0);
+  const fallbackGroup: DisplayCapabilityGroup = {
+    key: 'permissions',
+    capabilities: role.capabilities,
+    sortOrder: 0
+  };
+  return (
+    role.capabilityGroups?.length ? [...role.capabilityGroups].sort((left, right) => left.sortOrder - right.sortOrder || left.key.localeCompare(right.key)) : [fallbackGroup]
+  ).filter((group) => group.capabilities.length > 0);
 }
 
 export function getRoleKindLabels(role: WorkspaceRoleTemplate): RoleKindLabelKey[] {
@@ -38,11 +40,7 @@ export function getRoleKindLabels(role: WorkspaceRoleTemplate): RoleKindLabelKey
   return labels;
 }
 
-export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({
-  roleTemplate,
-  emptyMessage,
-  className
-}) => {
+export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({ roleTemplate, emptyMessage, className }) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -87,7 +85,7 @@ export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({
             aria-expanded={isExpanded}
             aria-controls={expandedPanelId}
             onClick={() => setIsExpanded((expanded) => !expanded)}
-            className="control-target type-label inline-flex items-center gap-2 rounded-md px-1 py-1 text-ui-text-muted transition-colors hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+            className="control-target type-ui inline-flex items-center gap-2 rounded-md px-1 py-1 text-ui-text-muted transition-colors hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
           >
             {t('members.rolePreviewCapabilities')}
             <ChevronDown className={clsx('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} aria-hidden="true" />
@@ -98,13 +96,19 @@ export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({
               {groupedCapabilities.map((group) => (
                 <div key={group.key} className="min-w-0">
                   <p className="type-label text-ui-text">
-                    {t(`members.capabilityGroups.${group.key}`, { defaultValue: formatGroupLabel(group.key) })}
+                    {t(`members.capabilityGroups.${group.key}`, {
+                      defaultValue: formatGroupLabel(group.key)
+                    })}
                   </p>
                   <ul className="mt-2 space-y-2">
                     {group.capabilities.map((capability) => (
                       <li key={capability} className="type-caption flex items-start gap-2 text-ui-text-muted">
                         <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-status-success" aria-hidden="true" />
-                        <span>{t(`members.capabilityLabels.${capability}`, { defaultValue: formatCapability(capability) })}</span>
+                        <span>
+                          {t(`members.capabilityLabels.${capability}`, {
+                            defaultValue: formatCapability(capability)
+                          })}
+                        </span>
                       </li>
                     ))}
                   </ul>

@@ -10,24 +10,21 @@ interface MessageActionsProps {
   t: TFunction;
 }
 
-export const MessageActions: React.FC<MessageActionsProps> = ({
-  align,
-  copyText,
-  timestampLabel,
-  onEdit,
-  t
-}) => {
+export const MessageActions: React.FC<MessageActionsProps> = ({ align, copyText, timestampLabel, onEdit, t }) => {
   const [hasCopied, setHasCopied] = React.useState(false);
   const copyResetTimeoutRef = React.useRef<number | null>(null);
   const canCopy = copyText.trim().length > 0;
   const canUseClipboard = typeof navigator !== 'undefined' && Boolean(navigator.clipboard?.writeText);
   const canCopyToClipboard = canCopy && canUseClipboard;
 
-  React.useEffect(() => () => {
-    if (copyResetTimeoutRef.current !== null) {
-      window.clearTimeout(copyResetTimeoutRef.current);
-    }
-  }, []);
+  React.useEffect(
+    () => () => {
+      if (copyResetTimeoutRef.current !== null) {
+        window.clearTimeout(copyResetTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   React.useEffect(() => {
     setHasCopied(false);
@@ -57,7 +54,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
 
   return (
     <div
-      className={`mt-1 flex items-center gap-2 text-[11px] font-medium text-ui-text-muted opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${
+      className={`mt-1 flex items-center gap-2 type-caption opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 ${
         align === 'right' ? 'justify-end text-ui-text-muted' : 'justify-start'
       }`}
     >

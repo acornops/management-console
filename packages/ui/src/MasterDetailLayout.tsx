@@ -27,21 +27,15 @@ export interface MasterDetailRowProps {
   onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
 }
 
-export const MasterDetailListHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div data-master-detail-list-header="true" className="border-b border-ui-border px-4 py-3"><h2 className="type-panel-title">{children}</h2></div>
+export const MasterDetailListHeader: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => (
+  <div data-master-detail-list-header="true" className="border-b border-ui-border px-4 py-3">
+    <h2 className="type-panel-title">{children}</h2>
+  </div>
 );
 
-export const MasterDetailRow: React.FC<MasterDetailRowProps> = ({
-  title,
-  description,
-  metadata,
-  status,
-  selected,
-  ariaLabel,
-  buttonRef,
-  onClick,
-  onKeyDown
-}) => {
+export const MasterDetailRow: React.FC<MasterDetailRowProps> = ({ title, description, metadata, status, selected, ariaLabel, buttonRef, onClick, onKeyDown }) => {
   const descriptionId = React.useId();
   const statusId = React.useId();
   const metadataId = React.useId();
@@ -58,25 +52,38 @@ export const MasterDetailRow: React.FC<MasterDetailRowProps> = ({
       aria-describedby={describedBy}
       onClick={onClick}
       onKeyDown={onKeyDown}
-      className={`control-target min-h-24 w-full px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${selected ? 'bg-accent-soft/45' : 'hover:bg-ui-bg/70'}`}
+      className={`control-target min-h-24 w-full px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
+        selected ? 'bg-accent-soft/45' : 'hover:bg-ui-bg/70'
+      }`}
     >
       <span className="flex items-start gap-3">
         <span className="min-w-0 flex-1">
           <span className="type-row-title block break-words text-ui-text [overflow-wrap:anywhere]">{title}</span>
-          <span id={descriptionId} className="type-caption mt-1 block whitespace-normal leading-5 text-ui-text-muted">{description}</span>
+          <span id={descriptionId} className="type-caption mt-1 block whitespace-normal leading-5 text-ui-text-muted">
+            {description}
+          </span>
         </span>
-        <span id={statusId} className="shrink-0">{status}</span>
+        <span id={statusId} className="shrink-0">
+          {status}
+        </span>
       </span>
-      <span id={metadataId} className="type-caption mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-ui-text-muted">{metadata}</span>
+      <span id={metadataId} className="type-caption mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-ui-text-muted">
+        {metadata}
+      </span>
     </button>
   );
 };
 
 export const MasterDetailLoading: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p data-master-detail-loading="true" role="status" className="p-5 text-sm text-ui-text-muted">{children}</p>
+  <p data-master-detail-loading="true" role="status" className="p-5 text-sm text-ui-text-muted">
+    {children}
+  </p>
 );
 
-export const MasterDetailEmptyState: React.FC<{ title: React.ReactNode; description: React.ReactNode }> = ({ title, description }) => (
+export const MasterDetailEmptyState: React.FC<{
+  title: React.ReactNode;
+  description: React.ReactNode;
+}> = ({ title, description }) => (
   <div data-master-detail-empty="true">
     <EmptyState embedded headingLevel={3} icon={<Search className="h-4 w-4" />} title={title} description={description} />
   </div>
@@ -103,16 +110,12 @@ export const MasterDetailPaneHeader: React.FC<MasterDetailPaneHeaderProps> = ({ 
 );
 
 export const MasterDetailPaneBody: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <div data-master-detail-pane-body="true" className="grid gap-5 bg-ui-bg/45 p-4 sm:p-5">{children}</div>
+  <div data-master-detail-pane-body="true" className="grid gap-5 bg-ui-bg/45 p-4 sm:p-5">
+    {children}
+  </div>
 );
 
-export const MasterDetailLayout: React.FC<MasterDetailLayoutProps> = ({
-  list,
-  detail,
-  showDetailOnCompact,
-  compactBackLabel,
-  onCompactBack
-}) => (
+export const MasterDetailLayout: React.FC<MasterDetailLayoutProps> = ({ list, detail, showDetailOnCompact, compactBackLabel, onCompactBack }) => (
   <div data-master-detail-layout="true" className={masterDetailGridClass}>
     <div data-master-detail-list="true" className={`${showDetailOnCompact ? 'hidden lg:block' : 'block'} min-w-0 lg:border-r lg:border-ui-border`}>
       {list}
