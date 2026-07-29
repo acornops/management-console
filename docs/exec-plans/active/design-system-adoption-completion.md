@@ -121,7 +121,21 @@ control-plane-mode validation suite all pass.
 - PASS: isolated worktree creation from `origin/main`.
 - PASS: original worktree inspection confirmed the dirty
   `feat/agent-chat-workspace` checkout remains separate.
-- PENDING: Stage 0 validation.
+- PASS: Stage 0 AST adoption enforcement.
+  - `npm run design:adoption -- --report` audited 382 production source files.
+  - Baseline active counts: 189 native-control bypasses, 38 low-level
+    overlays, 122 non-exempt native table elements, 593 raw typography
+    reconstructions, and 2 local shadows of public UI-package exports.
+  - Exception inventory: one permanent Markdown-renderer structural exception
+    and zero temporary exceptions.
+  - `npx vitest run scripts/design-adoption.test.mjs` passed 9 mutation and
+    metadata tests.
+- PASS: `npm run design:check`
+  - Existing design-system policy passed across 382 source files.
+- PASS: `npm run lint`
+  - UI-package and application TypeScript checks passed.
+- PASS: `npm run test -- --reporter=dot`
+  - 136 files and 711 tests passed.
 - PENDING: Stage 1 validation.
 - PENDING: Stages 2 through 4 validation.
 - PENDING: Stage 5 and final validation.

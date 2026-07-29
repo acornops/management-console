@@ -17,6 +17,7 @@
     "predesign:catalog": "npm run ui:build",
     "design:catalog": "vite --host 127.0.0.1 --open /design-system.html",
     "design:check": "node scripts/check-design-system.mjs",
+    "design:adoption": "node scripts/design-adoption.mjs",
     "design:snapshots": "playwright test",
     "design:snapshots:update": "playwright test --update-snapshots",
     "design:routes": "playwright test --config=playwright.design-routes.config.ts",
@@ -41,8 +42,8 @@
     "changeset": "changeset",
     "version:packages": "changeset version",
     "release:packages": "changeset publish",
-    "validate": "npm run ui:check && npm run design:check && npm run lint && npm run test && npm run design:snapshots && npm run design:routes && npm run smoke:fixtures && npm run smoke:mcp-parity && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run bundle:check && npm run smoke:routes",
-    "validate:ci": "npm run ui:check && npm run design:check && npm run lint && npm run test:coverage && npm run design:snapshots && npm run design:routes && npm run smoke:fixtures && npm run smoke:mcp-parity && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run bundle:check && npm run smoke:routes"
+    "validate": "npm run ui:check && npm run design:check && npm run design:adoption && npm run lint && npm run test && npm run design:snapshots && npm run design:routes && npm run smoke:fixtures && npm run smoke:mcp-parity && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run bundle:check && npm run smoke:routes",
+    "validate:ci": "npm run ui:check && npm run design:check && npm run design:adoption && npm run lint && npm run test:coverage && npm run design:snapshots && npm run design:routes && npm run smoke:fixtures && npm run smoke:mcp-parity && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run bundle:check && npm run smoke:routes"
   },
   "dependencies": {
     "@acornops/ui": "workspace:*",
