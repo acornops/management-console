@@ -3,7 +3,7 @@ import { Check, Copy, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
 import { ICONS } from '@/constants';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -94,7 +94,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="install-agent-title"
       initialFocusRef={generateCommandButtonRef}
       className="relative flex max-h-[min(92vh,56rem)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
@@ -192,6 +192,6 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           {generateCommandLabel}
         </Button>
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

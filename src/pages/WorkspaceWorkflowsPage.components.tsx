@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { DiscoveryFilterBar } from '@acornops/ui';
 import { MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, MasterDetailRow, masterDetailDiscoverySpacingClass } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
@@ -247,7 +247,7 @@ export const WorkflowDeleteDialog: React.FC<{
   if (!deleteTargetWorkflow) return null;
 
   return (
-    <Dialog titleId="delete-workflow-title" closeDisabled={deletingWorkflowId === deleteTargetWorkflow.id} className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl" onClose={onClose}>
+    <DialogFrame unframed titleId="delete-workflow-title" closeDisabled={deletingWorkflowId === deleteTargetWorkflow.id} className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl" onClose={onClose}>
       <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
@@ -284,7 +284,7 @@ export const WorkflowDeleteDialog: React.FC<{
           {deletingWorkflowId === deleteTargetWorkflow.id ? 'Deleting...' : 'Delete workflow'}
         </Button>
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };
 
@@ -541,16 +541,16 @@ export const WorkflowMcpCredentialDialog: React.FC<{
   const connection = connections[requirement.serverId];
   if (loadingByServerId[requirement.serverId] || !connection) {
     return (
-      <Dialog titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
+      <DialogFrame unframed titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
         <h2 id={titleId} className="type-section-title">
           {t('mcpServers.loadingCredentialStatus')}
         </h2>
-      </Dialog>
+      </DialogFrame>
     );
   }
   if (!connection.canManage) {
     return (
-      <Dialog titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
+      <DialogFrame unframed titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
         <h2 id={titleId} className="type-section-title">
           {t('mcpServers.workspaceCredentialRequired')}
         </h2>
@@ -560,7 +560,7 @@ export const WorkflowMcpCredentialDialog: React.FC<{
             {t('common.close')}
           </Button>
         </div>
-      </Dialog>
+      </DialogFrame>
     );
   }
   return (

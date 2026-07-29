@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { handleAppLinkClick } from '@/app/workspaceNavigation';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { PageBackLink, PageHeader, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
@@ -96,7 +96,7 @@ const SecurityDialog: React.FC<{
   onClose: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }> = ({ title, submitLabel, cancelLabel, savingLabel, closeLabel, isSubmitting, error, children, onClose, onSubmit }) => (
-  <Dialog
+  <DialogFrame unframed
     titleId="account-security-dialog-title"
     className="w-full max-w-md rounded-xl border border-ui-border bg-ui-surface p-6 shadow-xl"
     closeDisabled={isSubmitting}
@@ -120,7 +120,7 @@ const SecurityDialog: React.FC<{
         </Button>
       </div>
     </form>
-  </Dialog>
+  </DialogFrame>
 );
 
 export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, language, languageOptions, onGoToWorkspaces, onLogout, onSetLanguage, embedded = false }) => {

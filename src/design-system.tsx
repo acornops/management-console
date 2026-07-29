@@ -393,7 +393,24 @@ const Catalog = () => {
         <p className="type-body text-ui-text-muted">Both frames share close controls, focus containment, restoration, padding, and footer anatomy.</p>
       </PageSection>
 
-      <DialogFrame open={dialogOpen} onClose={() => setDialogOpen(false)} titleId="catalog-dialog-title" title="Confirm change" description="Review the consequence before applying it." footer={<><Button variant="tertiary" onClick={() => setDialogOpen(false)}>Cancel</Button><Button variant="primary" onClick={() => setDialogOpen(false)}>Save</Button></>}><InlineAlert tone="warning">This change affects future workflow runs.</InlineAlert></DialogFrame>
+      <DialogFrame
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        titleId="catalog-dialog-title"
+        title="Confirm change"
+        description="Review the consequence before applying it."
+        footer={(
+          <>
+            <Button variant="tertiary" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="primary" onClick={() => setDialogOpen(false)}>Save</Button>
+          </>
+        )}
+      >
+        <div className="space-y-4">
+          <InlineAlert tone="warning">This change affects future workflow runs.</InlineAlert>
+          <Button variant="danger" onClick={() => setDestructiveDialogOpen(true)}>Open nested confirmation</Button>
+        </div>
+      </DialogFrame>
       <DrawerFrame open={drawerOpen} onClose={() => setDrawerOpen(false)} titleId="catalog-drawer-title" title="Create schedule" description="Drawer anatomy remains stable at every width." footer={<><Button variant="tertiary" onClick={() => setDrawerOpen(false)}>Cancel</Button><Button variant="primary" onClick={() => setDrawerOpen(false)}>Create</Button></>}><FieldLabel htmlFor="catalog-schedule">Schedule name</FieldLabel><TextInput id="catalog-schedule" className="mt-2" /></DrawerFrame>
       <DestructiveConfirmationDialog
         open={destructiveDialogOpen}

@@ -5,7 +5,7 @@ import {
   CloseButton,
   DataTableGridHeader,
   DataTableGridHeaderCell,
-  RightSidePanel
+  DrawerFrame
 } from '@acornops/ui';
 import {
   classNames,
@@ -136,12 +136,12 @@ export const SidePanel: React.FC<{
 }> = ({ isOpen, onClose, title, children }) => {
   const { t } = useTranslation();
   return (
-    <RightSidePanel isOpen={isOpen} onClose={onClose} ariaLabel={title}>
+    <DrawerFrame unframed isOpen={isOpen} onClose={onClose} ariaLabel={title}>
       <div className="flex items-center justify-between border-b border-ui-border px-4 py-5 sm:px-8 sm:py-6">
         <h3 className="type-section-title">{title}</h3>
         <CloseButton onClick={onClose} aria-label={t('workloads.closeDetails')} />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">{children}</div>
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

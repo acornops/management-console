@@ -1,13 +1,13 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
 import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModal';
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
 import { CloseButton } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
-import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import type { AgentAccessMode } from '@/services/control-plane/types';
 import { KubernetesCluster, ProjectMember, Workspace, WorkspaceAiSettings, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 
@@ -97,23 +97,14 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
     <>
       <AnimatePresence>
         {deleteTargetWorkspace && (
-          <motion.div
-            {...modalOverlayMotion}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-ui-text/45 p-4 dark:bg-ui-bg/75"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget && !isDeletingWorkspace) {
-                handleCloseWorkspaceDelete();
-              }
-            }}
+          <DialogFrame
+            unframed
+            titleId="delete-workspace-title"
+            closeDisabled={isDeletingWorkspace}
+            onClose={handleCloseWorkspaceDelete}
+            overlayClassName="bg-ui-text/45 dark:bg-ui-bg/75"
+            className="relative w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
           >
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="delete-workspace-title"
-              {...modalPanelMotion}
-              className="relative w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
-              onMouseDown={(event) => event.stopPropagation()}
-            >
               <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-5 py-4">
                 <div className="flex items-center gap-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
@@ -190,8 +181,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                   </button>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+          </DialogFrame>
         )}
 
         <CreateWorkspaceModal

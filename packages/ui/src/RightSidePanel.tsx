@@ -16,11 +16,13 @@ export interface RightSidePanelProps {
   closeDisabled?: boolean;
   containerClassName?: string;
   descriptionId?: string;
+  id?: string;
   initialFocusRef?: React.RefObject<HTMLElement | null>;
   isOpen: boolean;
   onClose: () => void;
   overlayClassName?: string;
   portalToBody?: boolean;
+  side?: 'left' | 'right';
   style?: React.CSSProperties;
   titleId?: string;
 }
@@ -28,7 +30,13 @@ export interface RightSidePanelProps {
 const containerClassName = 'fixed inset-0 z-[100] flex justify-end';
 const overlayClassName = 'absolute inset-0 bg-ui-text/25 dark:bg-ui-bg/70';
 const panelClassName =
-  'relative flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-ui-border bg-ui-surface shadow-2xl';
+  'relative flex h-full w-full max-w-xl flex-col overflow-hidden bg-ui-surface shadow-2xl';
+const leftSidePanelMotion = {
+  initial: { x: -24, opacity: 0 },
+  animate: { x: 0, opacity: 1 },
+  exit: { x: -24, opacity: 0 },
+  transition: { duration: 0.16, ease: [0.16, 1, 0.3, 1] }
+} as const;
 
 export {
   applyModalBackgroundInert as applyRightSidePanelBackgroundInert,
@@ -42,11 +50,13 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
   closeDisabled = false,
   containerClassName: customContainerClassName,
   descriptionId,
+  id,
   initialFocusRef,
   isOpen,
   onClose,
   overlayClassName: customOverlayClassName,
   portalToBody = false,
+  side = 'right',
   style,
   titleId
 }) => {
@@ -68,12 +78,12 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
       exit: { opacity: 0 },
       transition: { duration: 0.01 }
     }
-    : sidePanelMotion;
+    : side === 'left' ? leftSidePanelMotion : sidePanelMotion;
 
   const panel = (
     <AnimatePresence>
       {isOpen && (
-        <div ref={containerRef} className={twMerge(containerClassName, customContainerClassName)}>
+        <div ref={containerRef} className={twMerge(containerClassName, side === 'left' && 'justify-start', customContainerClassName)}>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -87,14 +97,15 @@ export const RightSidePanel: React.FC<RightSidePanelProps> = ({
             }}
           />
           <motion.aside
+            id={id}
             ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label={ariaLabel}
-            aria-labelledby={titleId}
+            aria-labelledby={ariaLabel ? undefined : titleId}
             aria-describedby={descriptionId}
             tabIndex={-1}
-            className={twMerge(panelClassName, className)}
+            className={twMerge(panelClassName, side === 'left' ? 'border-r border-ui-border' : 'border-l border-ui-border', className)}
             style={style}
             {...panelMotion}
             onKeyDown={onKeyDown}

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton, TextInput } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { ICONS } from '@/constants';
 
@@ -57,7 +57,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="add-vm-title"
       initialFocusRef={vmNameInputRef}
       closeDisabled={isRegistering}
@@ -163,6 +163,6 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
           </div>
         </>
       )}
-    </Dialog>
+    </DialogFrame>
   );
 };

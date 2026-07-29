@@ -6,7 +6,7 @@ import { EmptyState } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
 import { PageSearchInput, pageSearchInputClassName } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -513,7 +513,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
           </div>
         )}
       </div>
-      <RightSidePanel
+      <DrawerFrame unframed
         isOpen={Boolean(selectedEvent)}
         onClose={() => setSelectedEvent(null)}
         titleId="audit-event-title"
@@ -548,7 +548,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
             {selectedMetadata && <pre className="type-code mt-5 whitespace-pre-wrap break-words border border-ui-border bg-ui-surface p-4 text-ui-text">{selectedMetadata}</pre>}
           </>
         )}
-      </RightSidePanel>
+      </DrawerFrame>
     </PageShell>
   );
 };

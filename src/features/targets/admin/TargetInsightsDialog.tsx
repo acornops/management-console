@@ -3,7 +3,7 @@ import { Archive, CheckCircle2, ChevronDown, FilePlus2, FileText, Folder, Search
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -320,7 +320,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
 
   return (
     <>
-      <Dialog
+      <DialogFrame unframed
         titleId="target-insights-dialog-title"
         closeDisabled={fileSaving || savingTool || showDiscardDialog}
         onClose={guardedClose}
@@ -431,7 +431,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
             </>
           )}
         </div>
-      </Dialog>
+      </DialogFrame>
       {showDiscardDialog && (
         <UnsavedChangesDialog
           title={t('tools.targetInsights.discardTitle')}

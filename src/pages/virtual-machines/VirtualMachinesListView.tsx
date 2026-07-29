@@ -9,7 +9,7 @@ import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { TargetCatalogActionHint, TargetCatalogActionMenu, TargetCatalogCard, TargetCatalogStatusPill } from '@/features/targets/catalog/TargetCatalogPrimitives';
 import { useCatalogNow } from '@/features/targets/catalog/useCatalogNow';
 import { AppPaths, type VmCatalogReturnState } from '@/utils/routes';
@@ -379,7 +379,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
       </section>
       <AnimatePresence>
         {deleteTargetVm && (
-          <Dialog
+          <DialogFrame unframed
             titleId="delete-vm-title"
             closeDisabled={isDeletingVm}
             className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
@@ -440,7 +440,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                 {isDeletingVm ? t('dashboard.deleting') : t('dashboard.delete')}
               </Button>
             </div>
-          </Dialog>
+          </DialogFrame>
         )}
       </AnimatePresence>
     </PageShell>

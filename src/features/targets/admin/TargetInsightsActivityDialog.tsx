@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -102,7 +102,7 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
   }, [targetId, t, workspaceId]);
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="target-insights-activity-dialog-title"
       onClose={onClose}
       className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl"
@@ -189,6 +189,6 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
       <div className="flex items-center justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
         <Button variant="secondary" size="sm" onClick={onClose}>{t('common.close')}</Button>
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

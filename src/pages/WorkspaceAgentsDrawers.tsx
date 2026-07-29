@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, Textarea, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
@@ -69,7 +69,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
     { label: 'Instructions', value: createDraft.instructions.trim() || createDraft.description.trim() || 'Assignment purpose will be used.' }
   ];
   return (
-    <RightSidePanel
+    <DrawerFrame unframed
       isOpen
       onClose={close}
       titleId="create-agent-title"
@@ -172,7 +172,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
           )}
         </div>
       </div>
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };
 
@@ -220,7 +220,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
     ].join('\n')
   }));
   return (
-  <RightSidePanel
+  <DrawerFrame unframed
     isOpen
     onClose={onClose}
     titleId="edit-agent-title"
@@ -349,7 +349,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
           {updatingAgentId === editingAgent.id ? 'Saving...' : 'Save changes'}
         </Button>
       </div>
-  </RightSidePanel>
+  </DrawerFrame>
   );
 };
 
@@ -365,7 +365,7 @@ export const AgentWorkspaceDrawer: React.FC<AgentWorkspaceDrawerProps> = ({
   onClose,
   ...detailProps
 }) => (
-  <RightSidePanel
+  <DrawerFrame unframed
     isOpen={isOpen}
     onClose={onClose}
     titleId="agent-details-title"
@@ -379,5 +379,5 @@ export const AgentWorkspaceDrawer: React.FC<AgentWorkspaceDrawerProps> = ({
       className="absolute right-4 top-4 z-10 shadow-sm"
     />
     <WorkspaceAgentDetailPanel {...detailProps} />
-  </RightSidePanel>
+  </DrawerFrame>
 );

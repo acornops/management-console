@@ -6,7 +6,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
@@ -157,7 +157,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <AnimatePresence>
         {deleteTargetCluster && (
-          <Dialog
+          <DialogFrame unframed
             titleId="delete-cluster-title"
             closeDisabled={isDeletingCluster}
             className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
@@ -228,7 +228,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {isDeletingCluster ? t('dashboard.deleting') : t('dashboard.delete')}
               </button>
             </div>
-          </Dialog>
+          </DialogFrame>
         )}
       </AnimatePresence>
     </PageShell>

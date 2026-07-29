@@ -137,7 +137,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
             transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
             id={panelId}
             className="absolute bottom-full right-0 z-50 mb-3 w-72 rounded-2xl border border-ui-border bg-ui-surface-strong p-3 text-sm shadow-xl shadow-ui-text/10"
-            role="dialog"
+            role="region"
             aria-labelledby={buttonId}
           >
             <div className="flex items-start gap-2">

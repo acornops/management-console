@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
@@ -11,9 +10,9 @@ import { Select, SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import type { TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { getToolLabel, ServerFormState } from '@/features/targets/admin/mcpServersCatalog';
-import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';
 import { InlineConfirmation } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 
 const mcpServerInputClassName = formInputClassName('px-4 font-medium');
 const mcpPublicHeaderInputClassName = formInputClassName('min-h-10 min-w-0 font-medium');
@@ -135,21 +134,14 @@ export const McpServerFormDialog: React.FC<{
     );
   };
   return (
-    <motion.div
-      {...modalOverlayMotion}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ui-text/45 p-4 dark:bg-ui-bg/75"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !pending) onClose();
-      }}
+    <DialogFrame
+      unframed
+      titleId="mcp-server-form-title"
+      closeDisabled={pending}
+      onClose={onClose}
+      overlayClassName="bg-ui-text/45 dark:bg-ui-bg/75"
+      className="flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl"
     >
-      <motion.div
-        {...modalPanelMotion}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="mcp-server-form-title"
-        className="flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
         <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
           <div>
             <h3 id="mcp-server-form-title" className="type-panel-title">
@@ -438,8 +430,7 @@ export const McpServerFormDialog: React.FC<{
             </>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+    </DialogFrame>
   );
 };
 
@@ -452,21 +443,14 @@ export const DeleteMcpServerDialog: React.FC<{
 }> = ({ server, mutationError, pending, onClose, onDelete }) => {
   const { t } = useTranslation();
   return (
-    <motion.div
-      {...modalOverlayMotion}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ui-text/45 p-4 dark:bg-ui-bg/75"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !pending) onClose();
-      }}
+    <DialogFrame
+      unframed
+      titleId="delete-mcp-server-title"
+      closeDisabled={pending}
+      onClose={onClose}
+      overlayClassName="bg-ui-text/45 dark:bg-ui-bg/75"
+      className="w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
     >
-      <motion.div
-        {...modalPanelMotion}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="delete-mcp-server-title"
-        className="w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
         <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
@@ -506,7 +490,6 @@ export const DeleteMcpServerDialog: React.FC<{
             {pending ? t('app.deleting') : t('mcpServers.deleteAction')}
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+    </DialogFrame>
   );
 };

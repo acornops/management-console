@@ -3,7 +3,7 @@ import { BotMessageSquare, Check, Copy, KeyRound, Loader2, MailPlus, Plus, Trash
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { FieldValidationMessage, fieldInvalidClass } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
@@ -365,7 +365,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="create-workspace-title"
       initialFocusRef={workspaceNameInputRef}
       closeDisabled={closeDisabled}
@@ -643,6 +643,6 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
           </div>
         </>
       )}
-    </Dialog>
+    </DialogFrame>
   );
 };

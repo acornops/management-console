@@ -5,7 +5,7 @@ import { ICONS } from '@/constants';
 import { Button } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
@@ -123,7 +123,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="add-cluster-title"
       initialFocusRef={clusterNameInputRef}
       closeDisabled={isCreatingCluster}
@@ -272,6 +272,6 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
           </div>
         </>
       )}
-    </Dialog>
+    </DialogFrame>
   );
 };

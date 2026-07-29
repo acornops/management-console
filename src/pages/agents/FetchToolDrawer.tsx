@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { MAX_FETCH_PATTERN_LENGTH, MAX_FETCH_PATTERNS, validateFetchPatterns, type FetchToolConfig } from '@/pages/agents/fetchToolConfig';
 
 interface FetchToolDrawerProps {
@@ -48,7 +48,7 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({ initialConfig,
   };
 
   return (
-    <RightSidePanel
+    <DrawerFrame unframed
       isOpen={isOpen}
       onClose={close}
       closeDisabled={saving}
@@ -178,6 +178,6 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({ initialConfig,
           {saving ? 'Saving…' : 'Save Fetch tool'}
         </Button>
       </div>
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

@@ -3,7 +3,7 @@ import { Check, CheckCircle2, Copy, Link, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { FieldValidationMessage } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { ProjectMember, WorkspaceInvitation, WorkspaceMemberCandidate, WorkspaceRoleTemplate } from '@/types';
@@ -132,7 +132,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="invite-member-title"
       onClose={onClose}
       overlayClassName="z-[110] p-6"
@@ -255,6 +255,6 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
           )}
         </div>
       </form>
-    </Dialog>
+    </DialogFrame>
   );
 };

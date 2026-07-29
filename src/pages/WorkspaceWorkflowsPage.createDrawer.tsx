@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { createWorkflowDraft, type CreateWorkflowDraft } from '@/pages/workflows/workflowPageHelpers';
@@ -94,7 +94,7 @@ export const WorkflowCreateDrawer: React.FC<{
   };
 
   return (
-    <RightSidePanel isOpen onClose={close} titleId="create-workflow-title" descriptionId="create-workflow-description" className="max-w-2xl">
+    <DrawerFrame unframed isOpen onClose={close} titleId="create-workflow-title" descriptionId="create-workflow-description" className="max-w-2xl">
       <div className="border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -199,6 +199,6 @@ export const WorkflowCreateDrawer: React.FC<{
           )}
         </div>
       </div>
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

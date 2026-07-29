@@ -5,7 +5,7 @@ import { Trans } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { DangerZone, DangerZoneRow } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { formatControlPlaneError, type ControlPlaneErrorArea } from '@/services/control-plane/errorFormatting';
 
@@ -97,7 +97,7 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
 
       <AnimatePresence>
         {isOpen && (
-          <Dialog
+          <DialogFrame unframed
             titleId={titleId}
             closeDisabled={isDeleting}
             initialFocusRef={inputRef}
@@ -158,7 +158,7 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
                 {isDeleting ? deletingLabel : deleteLabel}
               </Button>
             </div>
-          </Dialog>
+          </DialogFrame>
         )}
       </AnimatePresence>
     </>

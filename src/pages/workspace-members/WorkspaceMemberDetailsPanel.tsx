@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DangerZone, DangerZoneRow } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { ProjectMember, WorkspaceRoleTemplate } from '@/types';
 import { formatRole, getInitials } from './memberUtils';
@@ -56,7 +56,7 @@ export const WorkspaceMemberDetailsPanel: React.FC<WorkspaceMemberDetailsPanelPr
   const { t } = useTranslation();
 
   return (
-    <RightSidePanel isOpen={Boolean(selectedMember)} onClose={onClose} titleId="member-details-title" initialFocusRef={closeButtonRef}>
+    <DrawerFrame unframed isOpen={Boolean(selectedMember)} onClose={onClose} titleId="member-details-title" initialFocusRef={closeButtonRef}>
       {selectedMember && (
         <>
           <div className="flex items-center justify-between border-b border-ui-border px-8 py-6">
@@ -135,6 +135,6 @@ export const WorkspaceMemberDetailsPanel: React.FC<WorkspaceMemberDetailsPanelPr
           </div>
         </>
       )}
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

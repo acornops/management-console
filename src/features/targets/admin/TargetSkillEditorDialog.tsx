@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import type { ControlPlaneTargetSkillDetail } from '@/services/controlPlaneApi';
 import { TargetSkillFileTree } from '@/features/targets/admin/TargetSkillFileTree';
@@ -108,7 +108,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
 
   return (
     <>
-      <Dialog
+      <DialogFrame unframed
         titleId="target-skill-editor-title"
         closeDisabled={saving || showDiscardDialog}
         onClose={guardedClose}
@@ -272,7 +272,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
           </>
         )}
       </div>
-      </Dialog>
+      </DialogFrame>
       {showDiscardDialog && (
         <UnsavedChangesDialog
           title="Discard unsaved changes?"

@@ -2,6 +2,7 @@ import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MessagesSquare, Plus, Search, Upload } from 'lucide-react';
 import { Button } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { ConversationHistory } from '@/features/targets/chat/components/ConversationHistory';
 import { LiveRunTrace } from '@/features/targets/chat/types';
@@ -551,32 +552,19 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           )}
         </div>
 
-        <AnimatePresence>
-          {!isPanel && isHistoryOpen && (
-            <motion.div
-              className="absolute inset-0 z-[110] bg-ui-text/20 dark:bg-ui-bg/65 lg:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget) setIsHistoryOpen(false);
-              }}
-            >
-              <motion.aside
-                ref={historyPanelRef}
-                id={mobileHistoryPanelId}
-                role="dialog"
-                aria-modal="true"
-                aria-label={t('chat.chats')}
-                tabIndex={-1}
-                initial={{ x: -24, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -24, opacity: 0 }}
-                transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute left-12 top-0 flex h-full w-[min(21rem,calc(100vw-5rem))] flex-col overflow-hidden border-r border-ui-border bg-ui-surface shadow-xl outline-none"
-                onMouseDown={(event) => event.stopPropagation()}
-              >
+        <DrawerFrame
+          unframed
+          isOpen={!isPanel && isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+          ariaLabel={t('chat.chats')}
+          titleId={mobileHistoryPanelId}
+          id={mobileHistoryPanelId}
+          initialFocusRef={historyPanelRef}
+          side="left"
+          containerClassName="absolute z-[110] lg:hidden"
+          overlayClassName="bg-ui-text/20 dark:bg-ui-bg/65"
+          className="ml-12 h-full w-[min(21rem,calc(100vw-5rem))] max-w-none border-l-0 bg-ui-surface shadow-xl outline-none"
+        >
                 <ConversationHistory
                   appName={target.name}
                   sessions={sessions}
@@ -591,10 +579,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   canDeleteSessions={canDeleteSessions}
                   t={t}
                 />
-              </motion.aside>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </DrawerFrame>
 
         {deleteTargetSession && (
           <DeleteConversationDialog

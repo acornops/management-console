@@ -19,6 +19,7 @@ export interface DialogProps {
   initialFocusRef?: React.RefObject<HTMLElement | null>;
   overlayClassName?: string;
   onClose: () => void;
+  style?: React.CSSProperties;
 }
 
 const dialogOverlayClassName =
@@ -39,7 +40,8 @@ export const Dialog: React.FC<DialogProps> = ({
   id,
   initialFocusRef,
   overlayClassName,
-  onClose
+  onClose,
+  style
 }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const panelRef = React.useRef<HTMLDivElement>(null);
@@ -80,6 +82,7 @@ export const Dialog: React.FC<DialogProps> = ({
         aria-describedby={descriptionId}
         tabIndex={-1}
         className={className}
+        style={style}
         onKeyDown={onKeyDown}
         onMouseDown={(event) => event.stopPropagation()}
       >

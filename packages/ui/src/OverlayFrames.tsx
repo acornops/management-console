@@ -31,7 +31,7 @@ export interface FrameContentProps {
   descriptionId?: string;
   footer?: React.ReactNode;
   onClose: () => void;
-  title: React.ReactNode;
+  title?: React.ReactNode;
   titleId: string;
 }
 
@@ -50,50 +50,116 @@ const FrameContent: React.FC<FrameContentProps> = ({ bodyClassName, children, cl
 );
 
 export interface DialogFrameProps extends FrameContentProps {
+  className?: string;
   closeDisabled?: boolean;
+  id?: string;
   initialFocusRef?: React.RefObject<HTMLElement | null>;
   open?: boolean;
+  overlayClassName?: string;
+  unframed?: boolean;
   width?: FrameWidth;
 }
 
-export const DialogFrame: React.FC<DialogFrameProps> = ({ closeDisabled = false, initialFocusRef, open = true, width = 'md', ...content }) => {
+export const DialogFrame: React.FC<DialogFrameProps> = ({
+  className,
+  closeDisabled = false,
+  id,
+  initialFocusRef,
+  open = true,
+  overlayClassName,
+  unframed = false,
+  width = 'md',
+  ...content
+}) => {
   if (!open) return null;
   const descriptionId = content.description ? content.descriptionId ?? `${content.titleId}-description` : undefined;
 
   return (
     <Dialog
+      id={id}
       titleId={content.titleId}
       descriptionId={descriptionId}
       closeDisabled={closeDisabled}
       initialFocusRef={initialFocusRef}
+      overlayClassName={overlayClassName}
       onClose={content.onClose}
-      className={twMerge('flex max-h-[min(90vh,52rem)] w-full flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl', dialogWidths[width])}
+      style={unframed ? undefined : {
+        maxWidth: 'calc(100vw - 2rem)',
+        minWidth: 0,
+        width: 'calc(100vw - 2rem)'
+      }}
+      className={twMerge(
+        !unframed && 'flex min-w-0 max-h-[min(90vh,52rem)] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl',
+        !unframed && dialogWidths[width],
+        className
+      )}
     >
-      <FrameContent {...content} descriptionId={descriptionId} closeDisabled={closeDisabled} />
+      {unframed
+        ? content.children
+        : <FrameContent {...content} descriptionId={descriptionId} closeDisabled={closeDisabled} />}
     </Dialog>
   );
 };
 
-export interface DrawerFrameProps extends FrameContentProps {
+export interface DrawerFrameProps extends Omit<FrameContentProps, 'titleId'> {
+  ariaLabel?: string;
+  className?: string;
   closeDisabled?: boolean;
+  containerClassName?: string;
   initialFocusRef?: React.RefObject<HTMLElement | null>;
-  open: boolean;
+  id?: string;
+  isOpen?: boolean;
+  open?: boolean;
+  overlayClassName?: string;
+  portalToBody?: boolean;
+  side?: 'left' | 'right';
+  style?: React.CSSProperties;
+  titleId?: string;
+  unframed?: boolean;
   width?: FrameWidth;
 }
 
-export const DrawerFrame: React.FC<DrawerFrameProps> = ({ closeDisabled = false, initialFocusRef, open, width = 'md', ...content }) => {
-  const descriptionId = content.description ? content.descriptionId ?? `${content.titleId}-description` : undefined;
+export const DrawerFrame: React.FC<DrawerFrameProps> = ({
+  ariaLabel,
+  className,
+  closeDisabled = false,
+  containerClassName,
+  initialFocusRef,
+  id,
+  isOpen,
+  open,
+  overlayClassName,
+  portalToBody,
+  side,
+  style,
+  unframed = false,
+  width = 'md',
+  ...content
+}) => {
+  const generatedTitleId = React.useId();
+  const resolvedOpen = open ?? isOpen ?? false;
+  const titleId = content.titleId ?? generatedTitleId;
+  const descriptionId = content.description ? content.descriptionId ?? `${titleId}-description` : undefined;
   return (
     <RightSidePanel
-      isOpen={open}
+      ariaLabel={ariaLabel}
+      id={id}
+      isOpen={resolvedOpen}
       onClose={content.onClose}
       closeDisabled={closeDisabled}
+      containerClassName={containerClassName}
       initialFocusRef={initialFocusRef}
-      titleId={content.titleId}
+      titleId={unframed && ariaLabel ? undefined : titleId}
       descriptionId={descriptionId}
-      className={drawerWidths[width]}
+      overlayClassName={overlayClassName}
+      portalToBody={portalToBody}
+      side={side}
+      style={style}
+      className={twMerge(!unframed && drawerWidths[width], className)}
     >
-      <FrameContent {...content} descriptionId={descriptionId} closeDisabled={closeDisabled} />
+      {unframed
+        ? content.children
+        : <FrameContent {...content} titleId={titleId} descriptionId={descriptionId} closeDisabled={closeDisabled} />}
     </RightSidePanel>
   );
 };

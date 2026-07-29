@@ -306,7 +306,10 @@ describe('theme color contract', () => {
     expect(chatView).toContain('data-chat-history-resize-handle="true"');
     expect(chatView).toContain('setIsHistoryOpen(false)');
     expect(chatView).toContain('lg:flex');
-    expect(chatView).toContain('absolute inset-0 z-[110] bg-ui-text/20 dark:bg-ui-bg/65 lg:hidden');
+    expect(chatView).toContain('<DrawerFrame');
+    expect(chatView).toContain('containerClassName="absolute z-[110] lg:hidden"');
+    expect(chatView).toContain('overlayClassName="bg-ui-text/20 dark:bg-ui-bg/65"');
+    expect(chatView).toContain('side="left"');
     expect(chatView).not.toContain('xl:w-80');
   });
 

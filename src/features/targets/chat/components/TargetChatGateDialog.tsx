@@ -1,20 +1,9 @@
 import React from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 import type { TFunction } from 'i18next';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@acornops/ui';
-import { getDialogFocusWrapIndex } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import type { ChatSession } from '@/types';
-
-const focusableSelector = [
-  'a[href]',
-  'button:not([disabled])',
-  'textarea:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  '[contenteditable="true"]',
-  '[tabindex]:not([tabindex="-1"])'
-].join(',');
 
 interface TargetChatGateDialogProps {
   activeSessionId: string | null;
@@ -33,79 +22,30 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
   onOpenRecentActivitySession,
   t
 }) => {
-  const shouldReduceMotion = useReducedMotion();
   const dialogTitleId = React.useId();
   const dialogBodyId = React.useId();
-  const dialogRef = React.useRef<HTMLElement>(null);
   const primaryActionRef = React.useRef<HTMLButtonElement>(null);
   const actionSessionId = recentActivityWarning?.actionSessionId;
   const recentActivityBody = recentActivityWarning?.message.trim();
   const recentActivityActionLabel = recentActivityWarning?.actionLabel?.trim();
-  const hasRecentActivityAction = Boolean(recentActivityWarning && (activeSessionId || actionSessionId));
-
-  React.useEffect(() => {
-    const restoreTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const primaryAction = primaryActionRef.current;
-    if (primaryAction && !primaryAction.disabled) {
-      primaryAction.focus({ preventScroll: true });
-    } else {
-      dialogRef.current?.focus({ preventScroll: true });
-    }
-
-    return () => {
-      if (restoreTarget && document.contains(restoreTarget)) {
-        restoreTarget.focus({ preventScroll: true });
-      }
-    };
-  }, [activeSessionId, actionSessionId]);
 
   if (!recentActivityWarning) return null;
 
   const title = t('chat.recentActivityActionTitle');
   const body = recentActivityBody || t('chat.chooseRecentActivityAction');
-  const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-    if (event.key !== 'Tab' || !hasRecentActivityAction) return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const focusableElements = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector)).filter((element) => {
-      if (element.getAttribute('aria-hidden') === 'true' || element.hasAttribute('hidden')) return false;
-      const style = window.getComputedStyle(element);
-      return style.display !== 'none' && style.visibility !== 'hidden';
-    });
-    const targetIndex = getDialogFocusWrapIndex({
-      currentIndex: focusableElements.findIndex((element) => element === document.activeElement),
-      focusableCount: focusableElements.length,
-      shiftKey: event.shiftKey
-    });
-    if (targetIndex !== null) {
-      event.preventDefault();
-      event.stopPropagation();
-      (focusableElements[targetIndex] || dialog).focus({ preventScroll: true });
-    }
-  };
-
   return (
-    <motion.div
-      className="absolute inset-0 z-[150] flex items-center justify-center bg-ui-bg/88 p-4 dark:bg-ui-bg/92"
-      initial={shouldReduceMotion ? false : { opacity: 0 }}
-      animate={shouldReduceMotion ? undefined : { opacity: 1 }}
-      exit={shouldReduceMotion ? undefined : { opacity: 0 }}
-      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+    <DialogFrame
+      unframed
+      titleId={dialogTitleId}
+      descriptionId={dialogBodyId}
+      initialFocusRef={primaryActionRef}
+      closeDisabled={!activeSessionId}
+      onClose={() => {
+        if (activeSessionId) onDismissRecentActivityWarning(activeSessionId);
+      }}
+      overlayClassName="absolute z-[150] bg-ui-bg/88 dark:bg-ui-bg/92"
+      className={`${isPanel ? 'max-w-sm' : 'max-w-md'} w-full rounded-lg border border-ui-border bg-ui-surface p-5 text-ui-text shadow-2xl shadow-ui-text/15 outline-none`}
     >
-      <motion.section
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={dialogTitleId}
-        aria-describedby={dialogBodyId}
-        tabIndex={-1}
-        onKeyDown={handleDialogKeyDown}
-        initial={shouldReduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
-        animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
-        exit={shouldReduceMotion ? undefined : { opacity: 0, y: 10, scale: 0.98 }}
-        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-        className={`${isPanel ? 'max-w-sm' : 'max-w-md'} w-full rounded-lg border border-ui-border bg-ui-surface p-5 text-ui-text shadow-2xl shadow-ui-text/15 outline-none`}
-      >
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-ui-text-muted">
             <AlertTriangle className="h-5 w-5" />
@@ -138,7 +78,6 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
             </Button>
           )}
         </div>
-      </motion.section>
-    </motion.div>
+    </DialogFrame>
   );
 };

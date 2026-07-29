@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { menuOptionClassName, menuSurfaceClassName } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
@@ -220,7 +220,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
   const excludeListOpen = activeScope === 'exclude';
 
   return (
-    <Dialog
+    <DialogFrame unframed
       className="relative flex max-h-[86vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
       closeDisabled={isSaving}
       overlayClassName="z-[120]"
@@ -407,6 +407,6 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
           {t('clusterSetup.saveNamespaceScope')}
         </Button>
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

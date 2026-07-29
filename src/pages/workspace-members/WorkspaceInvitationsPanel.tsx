@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Check, ChevronDown, Copy, Loader2, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
@@ -235,7 +235,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
       </div>
 
       {createdReplacementInvite && (
-        <Dialog
+        <DialogFrame unframed
           titleId="replacement-invite-title"
           onClose={closeReplacementInviteDialog}
           className="relative flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
@@ -312,7 +312,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               {t('members.close')}
             </button>
           </div>
-        </Dialog>
+        </DialogFrame>
       )}
     </>
   );

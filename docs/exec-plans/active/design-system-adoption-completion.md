@@ -163,7 +163,30 @@ control-plane-mode validation suite all pass.
 - PASS: `npm run bundle:check`
   - 76 JavaScript chunks passed; largest was
     `vendor-react-BaiCVyGu.js` at 312,686 bytes.
-- PENDING: Stages 2 through 4 validation.
+- PASS: Stage 2 application overlay migration.
+  - All production uses of low-level `Dialog`, `RightSidePanel`, and handmade
+    dialog anatomy now compose through `DialogFrame`, `DrawerFrame`, or
+    `DestructiveConfirmationDialog`; the low-level overlay adoption category
+    reports exactly zero detections and zero exceptions across 384 production
+    files.
+  - Unframed compatibility preserves existing application chrome while the
+    shared frames own focus containment and restoration, topmost Escape
+    handling, background inertness, scroll locking, and nested overlay state.
+  - The shared drawer supports left-side compact history, and framed dialogs
+    are explicitly bounded to the viewport under enlarged text.
+  - `npx playwright test tests/design-system/catalog.spec.ts -g "overlay
+    frames" --project=desktop --project=mobile` passed 2 checks covering focus
+    wrapping, Escape dismissal, trigger restoration, inert background,
+    scroll-lock restoration, nested overlays, reduced motion, compact dark
+    mode without horizontal overflow, and 200% text.
+- PASS: Stage 2 validation.
+  - `npm run design:check` passed across 384 source files.
+  - `npm run design:adoption -- --report` reported zero low-level overlays and
+    zero temporary exceptions.
+  - `npm run lint` passed.
+  - `npm run test -- --reporter=dot --maxWorkers=4` passed 139 files and 719
+    tests.
+- PENDING: Stages 3 and 4 validation.
 - PENDING: Stage 5 and final validation.
 
 ## Publishing Log

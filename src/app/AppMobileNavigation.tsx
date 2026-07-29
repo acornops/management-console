@@ -5,7 +5,7 @@ import { MobileNavigation } from '@acornops/ui';
 
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import { NavCountBadge } from '@/app/NavCountBadge';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
@@ -131,7 +131,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
 
       <AnimatePresence>
         {isMobileNavOpen && (
-          <Dialog
+          <DialogFrame unframed
             className="max-h-[calc(100vh-6rem)] w-[calc(100%-1.5rem)] overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-xl"
             id={mobileNavPanelId}
             titleId={mobileNavTitleId}
@@ -535,7 +535,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                 </div>
               </section>
             </div>
-          </Dialog>
+          </DialogFrame>
         )}
       </AnimatePresence>
     </>

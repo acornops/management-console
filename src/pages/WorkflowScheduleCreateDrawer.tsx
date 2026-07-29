@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { Radio } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
@@ -196,7 +196,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   const readinessError = fieldError('mcpReadiness') || fieldError('readiness');
 
   return (
-    <RightSidePanel isOpen={Boolean(scheduleWorkflow)} onClose={onClose} closeDisabled={saving} titleId="workflow-schedule-create-title" descriptionId="workflow-schedule-create-description" className="w-full max-w-2xl">
+    <DrawerFrame unframed isOpen={Boolean(scheduleWorkflow)} onClose={onClose} closeDisabled={saving} titleId="workflow-schedule-create-title" descriptionId="workflow-schedule-create-description" className="w-full max-w-2xl">
       <div className="flex min-w-0 items-start justify-between gap-3 border-b border-ui-border px-4 py-4 sm:px-5">
         <div className="min-w-0">
           <h2 id="workflow-schedule-create-title" className="type-section-title">{t('agentsWorkflows.schedule.title')}</h2>
@@ -371,6 +371,6 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
           onConnected={() => setPreviewRevision((value) => value + 1)}
         />
       )}
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

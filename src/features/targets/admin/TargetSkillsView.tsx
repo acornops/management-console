@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { TextInput } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
@@ -430,7 +430,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
       )}
 
       {isImportDialogOpen && (
-        <Dialog titleId="import-target-skill-title" onClose={closeImportDialog} className="w-full max-w-xl rounded-lg border border-ui-border bg-ui-surface shadow-xl">
+        <DialogFrame unframed titleId="import-target-skill-title" onClose={closeImportDialog} className="w-full max-w-xl rounded-lg border border-ui-border bg-ui-surface shadow-xl">
           <div className="border-b border-ui-border px-6 py-4">
             <h3 id="import-target-skill-title" className="type-panel-title text-ui-text">
               {t('targetSkills.importTitle')}
@@ -519,11 +519,11 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
               {editorSaving ? t('targetSkills.importing') : t('targetSkills.importSkill')}
             </Button>
           </div>
-        </Dialog>
+        </DialogFrame>
       )}
 
       {confirmDeleteSkillId && (
-        <Dialog
+        <DialogFrame unframed
           titleId="delete-target-skill-title"
           onClose={() => setConfirmDeleteSkillId(null)}
           className="w-full max-w-lg rounded-lg border border-ui-border bg-ui-surface shadow-xl"
@@ -542,11 +542,11 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
               {pendingDangerAction === confirmDeleteSkillId ? t('targetSkills.deleting') : t('targetSkills.deleteSkill')}
             </Button>
           </div>
-        </Dialog>
+        </DialogFrame>
       )}
 
       {confirmReimportSkillId && (
-        <Dialog
+        <DialogFrame unframed
           titleId="reimport-target-skill-title"
           onClose={() => setConfirmReimportSkillId(null)}
           className="w-full max-w-lg rounded-lg border border-ui-border bg-ui-surface shadow-xl"
@@ -578,7 +578,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
               {pendingDangerAction === confirmReimportSkillId ? t('targetSkills.reimporting') : t('targetSkills.reimport')}
             </Button>
           </div>
-        </Dialog>
+        </DialogFrame>
       )}
     </PageShell>
   );

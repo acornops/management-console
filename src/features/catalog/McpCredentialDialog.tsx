@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 
 interface McpCredentialDialogProps {
@@ -76,7 +76,7 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId={titleId}
       initialFocusRef={credentialRef}
       closeDisabled={pending}
@@ -190,6 +190,6 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
           </Button>
         </div>
       </form>
-    </Dialog>
+    </DialogFrame>
   );
 };

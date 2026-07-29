@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { TargetInsightsSettingsPanel } from '@/features/targets/admin/TargetInsightsSettingsPanel';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -136,7 +136,7 @@ export const TargetInsightsSettingsDialog: React.FC<TargetInsightsSettingsDialog
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="target-insights-settings-dialog-title"
       closeDisabled={settingsSaving || savingTool}
       onClose={onClose}
@@ -193,6 +193,6 @@ export const TargetInsightsSettingsDialog: React.FC<TargetInsightsSettingsDialog
           </>
         )}
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

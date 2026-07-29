@@ -3,7 +3,7 @@ import { RotateCcw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
@@ -42,7 +42,7 @@ export const TargetInsightsResetDialog: React.FC<TargetInsightsResetDialogProps>
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="target-insights-reset-dialog-title"
       closeDisabled={saving}
       onClose={onClose}
@@ -85,6 +85,6 @@ export const TargetInsightsResetDialog: React.FC<TargetInsightsResetDialogProps>
           </>
         )}
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

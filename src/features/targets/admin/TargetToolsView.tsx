@@ -2,7 +2,7 @@ import React from 'react';
 import { Search, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
 import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
@@ -545,7 +545,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       )}
 
       {editingTool && editingTool.id !== 'target_insights' && draft && (
-        <Dialog
+        <DialogFrame unframed
           className="w-full max-w-2xl rounded-2xl border border-ui-border bg-ui-surface p-0 shadow-2xl"
           titleId="target-tool-config-title"
           closeDisabled={saving}
@@ -642,7 +642,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               </Button>
             )}
           </div>
-        </Dialog>
+        </DialogFrame>
       )}
     </PageShell>
   );
