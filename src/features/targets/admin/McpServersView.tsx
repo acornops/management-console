@@ -449,25 +449,35 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     }
   };
 
-  const handleToggleTool = async (server: TargetToolCatalogServer, tool: TargetToolCatalogItem, requestedEnabled?: boolean) => {
+  const handleToggleTool = async (
+    server: TargetToolCatalogServer,
+    tool: TargetToolCatalogItem,
+    requestedEnabled?: boolean,
+    requestedCapability?: 'read' | 'write'
+  ) => {
     if (!canManageTools || pendingToolName) return;
     const nextEnabled = requestedEnabled ?? !tool.enabledConfigured;
-    if (nextEnabled === tool.enabledConfigured) return;
+    const nextCapability = requestedCapability ?? tool.capability;
+    if (nextEnabled === tool.enabledConfigured && nextCapability === tool.capability) return;
     setPendingToolName(tool.name);
     setToolMutationError(null);
     try {
       await controlPlaneApi.updateTargetMcpServerTool(target.workspaceId, target.id, server.id, tool.name, {
         enabled: nextEnabled,
-        capability: tool.capability
+        capability: nextCapability
       });
       updateCatalogLocal((current) => ({
         ...current,
         servers: current.servers.map((candidate) => {
           if (candidate.id !== server.id) return candidate;
-          const nextTool = {
+          const nextToolBasis = {
             ...tool,
+            capability: nextCapability
+          };
+          const nextTool = {
+            ...nextToolBasis,
             enabledConfigured: nextEnabled,
-            ...getOptimisticToolEffectiveState(candidate, tool, nextEnabled)
+            ...getOptimisticToolEffectiveState(candidate, nextToolBasis, nextEnabled)
           };
           const tools: TargetToolCatalogItem[] = candidate.tools.map((item) =>
             item.name === tool.name
@@ -627,6 +637,16 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
             } : null}
             onToggleReviewTool={(tool, enabled) => {
               if (createReviewServerWithPagedTools) void handleToggleTool(createReviewServerWithPagedTools, tool, enabled).catch(() => undefined);
+            }}
+            onChangeReviewToolCapability={(tool, capability) => {
+              if (createReviewServerWithPagedTools) {
+                void handleToggleTool(
+                  createReviewServerWithPagedTools,
+                  tool,
+                  tool.enabledConfigured,
+                  capability
+                ).catch(() => undefined);
+              }
             }}
             onFinishReview={closeServerModal}
           />

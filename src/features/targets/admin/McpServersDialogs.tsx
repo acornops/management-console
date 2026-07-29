@@ -36,6 +36,7 @@ export const McpServerFormDialog: React.FC<{
   onFormChange: React.Dispatch<React.SetStateAction<ServerFormState>>;
   onSubmit: () => void;
   onToggleReviewTool?: (tool: TargetToolCatalogItem, enabled: boolean) => void | Promise<void>;
+  onChangeReviewToolCapability?: (tool: TargetToolCatalogItem, capability: 'read' | 'write') => void | Promise<void>;
   onFinishReview?: () => void;
   credentialModeConfirmation?: {
     serverName: string;
@@ -62,6 +63,7 @@ export const McpServerFormDialog: React.FC<{
   onFormChange,
   onSubmit,
   onToggleReviewTool,
+  onChangeReviewToolCapability,
   onFinishReview,
   credentialModeConfirmation
 }) => {
@@ -71,6 +73,10 @@ export const McpServerFormDialog: React.FC<{
     { value: 'none', label: t('mcpServers.authNone') },
     { value: 'bearer_token', label: t('mcpServers.authBearer') },
     { value: 'custom_header', label: t('mcpServers.authCustomHeader') }
+  ];
+  const capabilityOptions: Array<SelectOption<'read' | 'write'>> = [
+    { value: 'read', label: t('mcpServers.capabilityRead') },
+    { value: 'write', label: t('mcpServers.capabilityWrite') }
   ];
   const addPublicHeader = () => {
     onFormChange((current) => ({
@@ -103,16 +109,21 @@ export const McpServerFormDialog: React.FC<{
   const renderReviewTool = (tool: TargetToolCatalogItem) => {
     const pendingTool = pendingToolName === tool.name;
     return (
-      <div key={tool.name} className="grid min-w-0 grid-cols-1 gap-3 border-b border-ui-border px-4 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_6rem_auto] sm:items-center">
+      <div key={tool.name} className="grid min-w-0 grid-cols-1 gap-3 border-b border-ui-border px-4 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_7rem_auto] sm:items-center">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
             <h4 className="type-row-title truncate" title={getToolLabel(tool)}>{getToolLabel(tool)}</h4>
           </div>
           <p className="type-code mt-1 truncate text-ui-text-muted" title={tool.name}>{tool.name}</p>
         </div>
-        <span className={`type-micro-label w-fit rounded-full px-2 py-1 ${tool.capability === 'write' ? 'bg-status-warning-soft text-status-warning-text' : 'bg-status-success-soft text-status-success-text'}`}>
-          {tool.capability === 'write' ? t('mcpServers.capabilityWrite') : t('mcpServers.capabilityRead')}
-        </span>
+        <Select<'read' | 'write'>
+          value={tool.capability}
+          options={capabilityOptions}
+          size="sm"
+          disabled={!canManageTools || pendingTool || pending}
+          ariaLabel={t('mcpServers.capabilityForTool', { name: getToolLabel(tool) })}
+          onChange={(capability) => onChangeReviewToolCapability?.(tool, capability)}
+        />
         <Switch
           checked={tool.enabledConfigured}
           disabled={!canManageTools || pendingTool || pending}
