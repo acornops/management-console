@@ -9,7 +9,7 @@ import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import type { AgentAccessMode } from '@/services/control-plane/types';
-import { KubernetesCluster, ProjectMember, Workspace, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
+import { KubernetesCluster, ProjectMember, Workspace, WorkspaceAiSettings, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
 
 interface AppDialogsProps {
   clusterCreationStep: 'details' | 'instructions';
@@ -35,6 +35,7 @@ interface AppDialogsProps {
   onConfirmClusterInstalled: () => void;
   onConfirmDeleteWorkspace: (workspace: Workspace) => Promise<void>;
   onCreateWorkspace: (name: string) => Promise<Workspace>;
+  onLoadWorkspaceAiSettings: (workspaceId: string) => Promise<WorkspaceAiSettings>;
   onOpenWorkspaceAiSettings: (workspaceId: string) => void;
   onCreateWorkspaceInvitation: (workspaceId: string, input: { email: string; role: ProjectMember['role'] }) => Promise<WorkspaceInvitation>;
   onExcludeNamespacesChange: (value: string) => void;
@@ -69,6 +70,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onConfirmClusterInstalled,
   onConfirmDeleteWorkspace,
   onCreateWorkspace,
+  onLoadWorkspaceAiSettings,
   onOpenWorkspaceAiSettings,
   onCreateWorkspaceInvitation,
   onExcludeNamespacesChange,
@@ -197,6 +199,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           currentUserEmail={currentUserEmail}
           onClose={onCloseWorkspaceCreate}
           onCreateWorkspace={onCreateWorkspace}
+          onLoadWorkspaceAiSettings={onLoadWorkspaceAiSettings}
           onOpenAiSettings={onOpenWorkspaceAiSettings}
           onLoadWorkspaceRoles={onLoadWorkspaceRoles}
           onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}

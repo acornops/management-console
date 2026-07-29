@@ -5,9 +5,15 @@
   "counterparts": {
     "control-plane": {
       "authContract": {
-        "config": "GET /api/v1/auth/config returns the real OIDC capability flag and never exposes admission policy.",
+        "config": "GET /api/v1/auth/config returns effective workspace-user OIDC and password capability flags without exposing admission policy.",
         "logout": "POST /api/v1/auth/logout returns {status=ok,mode=oidc|local,redirectPath}; redirectPath is an AcornOps path and never a provider URL.",
         "browserResults": ["auth_result=oidc_access_denied", "logout_result=success", "logout_result=local_only", "logout_result=incomplete"]
+      },
+      "workspaceAiCredentialContract": {
+        "statusFields": ["provider", "configured", "enabled", "source=workspace|platform_default|none"],
+        "precedence": "A workspace override takes precedence over the inherited platform default.",
+        "privacy": "Provider keys are write-only and never appear in responses.",
+        "workspaceCreation": "The console omits AI setup step 3 only after the new workspace reports at least one configured source=platform_default provider; status lookup failure retains the step."
       },
       "workflowCapabilityCeiling": {
         "rule": "A workflow selects one or more active reviewed specialist Agents. restrictionMode=inherit resolves their current combined ceiling at session creation; restrictionMode=restrict requires semanticCapabilityIds to be an explicit subset.",

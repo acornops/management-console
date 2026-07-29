@@ -46,12 +46,12 @@ test('recommendations retain attribution while added workflows become workspace-
   const addedHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(addedHeader.getByText('Provided by AcornOps')).toHaveCount(0);
   await expect(addedHeader.getByText('Built-in', { exact: true })).toHaveCount(0);
-  await expect(addedHeader.getByText('Ning', { exact: true })).toBeVisible();
+  await expect(addedHeader.getByText('Test User', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: /Select workflow Production health review/ }).click();
   const customHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(customHeader.getByText('Ning', { exact: true })).toBeVisible();
+  await expect(customHeader.getByText('Test User', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Add workflows' }).click();
   const recommendationDrawer = page.getByRole('dialog', { name: 'Add recommended workflows' });

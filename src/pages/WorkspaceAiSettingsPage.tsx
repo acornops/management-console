@@ -10,9 +10,29 @@ import { isAiRuntimeReady, resolveAiRuntimeReadiness } from '@/features/ai/aiRun
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { LlmProvider, ReasoningEffort, ReasoningSummaryMode } from '@/types';
-import { behaviorDraftChanged, behaviorDraftFromSettings, credentialInputClassName, EMPTY_CREDENTIAL_ERRORS, EMPTY_PROVIDER_KEYS, modelsForProvider, PROVIDERS, providerLabel, reasoningEffortLabel, reasoningModeLabel, reasoningPolicyDisabled, REASONING_EFFORTS, REASONING_SUMMARY_MODES, SettingSection, WorkspaceAiSettingsSkeleton, type BehaviorDraft, type WorkspaceAiSettingsPageProps } from '@/pages/WorkspaceAiSettingsPage.helpers';
-
-export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({ workspace, canManageAiSettings, aiSettingsResource, showToast, returnTo, onReturnToAssistant, embedded = false }) => {
+import {
+  behaviorDraftChanged,
+  behaviorDraftFromSettings,
+  credentialInputClassName,
+  EMPTY_CREDENTIAL_ERRORS,
+  EMPTY_PROVIDER_KEYS,
+  modelsForProvider,
+  PROVIDERS,
+  providerLabel,
+  reasoningEffortLabel,
+  reasoningModeLabel,
+  reasoningPolicyDisabled,
+  REASONING_EFFORTS,
+  REASONING_SUMMARY_MODES,
+  SettingSection,
+  WorkspaceAiSettingsSkeleton,
+  type BehaviorDraft,
+  type WorkspaceAiSettingsPageProps
+} from '@/pages/WorkspaceAiSettingsPage.helpers';
+export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({
+  workspace, canManageAiSettings, aiSettingsResource, showToast, returnTo, onReturnToAssistant,
+  embedded = false
+}) => {
   const { t } = useTranslation();
   const currentAiSettings = aiSettingsResource.settings?.workspaceId === workspace.id ? aiSettingsResource.settings : null;
   const [behaviorError, setBehaviorError] = useState('');
@@ -108,19 +128,20 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
   const isReasoningPolicyDisabled = reasoningPolicyDisabled(currentAiSettings);
   const canSaveBehavior = Boolean(canManageAiSettings && currentAiSettings && behaviorDraft && hasBehaviorChanges && currentAiSettings.allowedProviders.includes(behaviorDraft.defaultProvider) && providerModels.includes(behaviorDraft.defaultModel) && currentAiSettings.allowedReasoningSummaryModes.includes(behaviorDraft.reasoningSummaryMode) && currentAiSettings.allowedReasoningEfforts.includes(behaviorDraft.reasoningEffort));
   const isSaving = Boolean(savingAction);
-  const displayedProviderStatuses =
-    currentAiSettings?.providers ||
-    PROVIDERS.map((provider) => ({
-      provider,
-      configured: false,
-      enabled: false
-    }));
+  const displayedProviderStatuses = currentAiSettings?.providers || PROVIDERS.map((provider) => (
+    { provider, configured: false, enabled: false, source: 'none' as const }
+  ));
   const providerStatusByProvider = useMemo(() => {
     return new Map(displayedProviderStatuses.map((status) => [status.provider, status]));
   }, [displayedProviderStatuses]);
   const savedDefaultProviderStatus = currentAiSettings ? providerStatusByProvider.get(currentAiSettings.defaultProvider) : undefined;
   const savedDefaultProviderConfigured = Boolean(savedDefaultProviderStatus?.configured);
   const savedDefaultProviderEnabled = Boolean(savedDefaultProviderStatus?.enabled);
+  const savedDefaultCredentialSourceBadgeKey = savedDefaultProviderStatus?.source === 'workspace'
+    ? 'workspaceAiSettings.workspaceKeyBadge'
+    : savedDefaultProviderStatus?.source === 'platform_default'
+      ? 'workspaceAiSettings.platformDefaultBadge'
+      : null;
   const savedDefaultProviderMissingCredential = Boolean(currentAiSettings && savedDefaultProviderStatus && savedDefaultProviderEnabled && !savedDefaultProviderConfigured);
   const savedDefaultProviderDisabled = Boolean(currentAiSettings && savedDefaultProviderStatus && !savedDefaultProviderEnabled);
   const hasReadyAiRuntime = isAiRuntimeReady(
@@ -250,7 +271,9 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     setSavingAction(`save:${provider}`);
     setCredentialErrors((current) => ({ ...current, [provider]: '' }));
     try {
-      const wasConfigured = currentAiSettings.providers.some((status) => status.provider === provider && status.configured);
+      const wasConfigured = currentAiSettings.providers.some(
+        (status) => status.provider === provider && status.source === 'workspace'
+      );
       const updated = await controlPlaneApi.saveWorkspaceAiProviderCredential(workspace.id, provider, apiKey);
       if (!isCurrentWorkspaceRequest()) return;
       aiSettingsResource.update(updated);
@@ -329,7 +352,12 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                 <div className="bg-ui-surface p-5">
                   <p className="mb-2 type-label">{t('workspaceAiSettings.defaultCredential')}</p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge tone={savedDefaultProviderConfigured ? 'success' : savedDefaultProviderDisabled ? 'warning' : 'neutral'}>{savedDefaultProviderConfigured ? t('workspaceAiSettings.credentialConfiguredBadge') : t('workspaceAiSettings.credentialMissingBadge')}</StatusBadge>
+                    <StatusBadge tone={savedDefaultProviderConfigured ? 'success' : savedDefaultProviderDisabled ? 'warning' : 'neutral'}>
+                      {t(savedDefaultProviderConfigured ? 'workspaceAiSettings.credentialConfiguredBadge' : 'workspaceAiSettings.credentialMissingBadge')}
+                    </StatusBadge>
+                    {savedDefaultProviderConfigured && savedDefaultCredentialSourceBadgeKey && (
+                      <StatusBadge tone="neutral">{t(savedDefaultCredentialSourceBadgeKey)}</StatusBadge>
+                    )}
                     {savedDefaultProviderDisabled && <StatusBadge tone="warning">{t('workspaceAiSettings.providerDisabled')}</StatusBadge>}
                   </div>
                 </div>
@@ -451,6 +479,13 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                 const isDeleteConfirming = deleteCandidate === provider;
                 const isEditingCredential = credentialEditorProvider === provider;
                 const credentialError = credentialErrors[provider];
+                const isWorkspaceOverride = providerStatus.source === 'workspace';
+                const isPlatformDefault = providerStatus.source === 'platform_default';
+                const credentialSourceBadgeKey = isWorkspaceOverride
+                  ? 'workspaceAiSettings.workspaceKeyBadge'
+                  : isPlatformDefault
+                    ? 'workspaceAiSettings.platformDefaultBadge'
+                    : null;
                 return (
                   <div key={provider} className="border-b border-ui-border p-6 last:border-0">
                     <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -461,14 +496,29 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                         <div className="min-w-0">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
                             <p className="type-row-title">{providerLabel(provider)}</p>
-                            <StatusBadge tone={providerStatus.configured ? 'success' : 'neutral'}>{providerStatus.configured ? t('workspaceAiSettings.credentialConfiguredBadge') : t('workspaceAiSettings.credentialMissingBadge')}</StatusBadge>
-                            {!providerStatus.enabled && <StatusBadge tone="warning">{t('workspaceAiSettings.providerDisabled')}</StatusBadge>}
+                            <StatusBadge tone={providerStatus.configured ? 'success' : 'neutral'}>
+                              {t(providerStatus.configured ? 'workspaceAiSettings.credentialConfiguredBadge' : 'workspaceAiSettings.credentialMissingBadge')}
+                            </StatusBadge>
+                            {providerStatus.configured && credentialSourceBadgeKey && (
+                              <StatusBadge tone="neutral">{t(credentialSourceBadgeKey)}</StatusBadge>
+                            )}
+                            {!providerStatus.enabled && (
+                              <StatusBadge tone="warning">{t('workspaceAiSettings.providerDisabled')}</StatusBadge>
+                            )}
                           </div>
-                          <p className="text-xs leading-5 text-ui-text-muted">{!providerStatus.enabled ? t('workspaceAiSettings.credentialDisabledDescription') : providerStatus.configured ? t('workspaceAiSettings.credentialConfigured') : t('workspaceAiSettings.credentialMissing')}</p>
+                          <p className={`text-xs leading-5 text-ui-text-muted ${isPlatformDefault ? 'lg:whitespace-nowrap' : ''}`}>
+                            {!providerStatus.enabled
+                              ? t('workspaceAiSettings.credentialDisabledDescription')
+                              : isWorkspaceOverride
+                                ? t('workspaceAiSettings.credentialConfigured')
+                                : isPlatformDefault
+                                  ? t('workspaceAiSettings.credentialInherited')
+                                : t('workspaceAiSettings.credentialMissing')}
+                          </p>
                         </div>
                       </div>
                       {(canManageAiSettings || isEditingCredential || credentialError) && (
-                        <div className="flex w-full flex-col gap-3 lg:w-[28rem]">
+                        <div className="flex w-full flex-col gap-3 lg:w-auto">
                           {!isEditingCredential && canManageAiSettings && (
                             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                               <Button
@@ -477,15 +527,18 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                 size="sm"
                                 onClick={() => openCredentialEditor(provider)}
                                 disabled={!currentAiSettings || isSaving || !providerStatus.enabled}
-                                className="w-full sm:w-28"
-                                aria-label={t(providerStatus.configured ? 'workspaceAiSettings.rotateKeyForProvider' : 'workspaceAiSettings.addKeyForProvider', {
-                                  provider: providerLabel(provider)
-                                })}
+                                className="w-full whitespace-nowrap sm:w-auto"
+                                aria-label={t(
+                                  isWorkspaceOverride
+                                    ? 'workspaceAiSettings.rotateKeyForProvider'
+                                    : 'workspaceAiSettings.addKeyForProvider',
+                                  { provider: providerLabel(provider) }
+                                )}
                               >
                                 <ICONS.CheckCircle2 className="h-4 w-4" />
-                                {providerStatus.configured ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addKey')}
+                                {isWorkspaceOverride ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addWorkspaceKey')}
                               </Button>
-                              {isDeleteConfirming ? (
+                              {isWorkspaceOverride && (isDeleteConfirming ? (
                                 <>
                                   <Button type="button" variant="danger" size="sm" onClick={() => handleDeleteProviderKey(provider)} disabled={!currentAiSettings || isSaving} aria-label={t('workspaceAiSettings.confirmDeleteForProvider', { provider: providerLabel(provider) })}>
                                     <ICONS.Trash2 className="h-4 w-4" />
@@ -507,19 +560,21 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                     }));
                                     setDeleteCandidate(provider);
                                   }}
-                                  disabled={!currentAiSettings || isSaving || !providerStatus.configured}
+                                  disabled={!currentAiSettings || isSaving}
                                   aria-label={t('workspaceAiSettings.deleteKeyForProvider', { provider: providerLabel(provider) })}
                                 >
                                   <ICONS.Trash2 className="h-4 w-4" />
                                   {t('workspaceAiSettings.deleteKey')}
                                 </Button>
-                              )}
+                              ))}
                             </div>
                           )}
                           {isEditingCredential && (
                             <div className="rounded-lg border border-ui-border bg-ui-bg p-4">
                               <label className="block">
-                                <span className="mb-1 block type-label">{providerStatus.configured ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addKey')}</span>
+                                <span className="mb-1 block type-label">
+                                  {isWorkspaceOverride ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addWorkspaceKey')}
+                                </span>
                                 <input
                                   type="password"
                                   value={providerKeys[provider]}
@@ -530,10 +585,13 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                     }))
                                   }
                                   disabled={!canManageAiSettings || !currentAiSettings || !providerStatus.enabled || isSaving}
-                                  aria-label={t(providerStatus.configured ? 'workspaceAiSettings.rotateKeyForProvider' : 'workspaceAiSettings.addKeyForProvider', {
-                                    provider: providerLabel(provider)
-                                  })}
-                                  placeholder={providerStatus.configured ? t('workspaceAiSettings.apiKeyRotatePlaceholder') : t('workspaceAiSettings.apiKeyAddPlaceholder')}
+                                  aria-label={t(
+                                    isWorkspaceOverride
+                                      ? 'workspaceAiSettings.rotateKeyForProvider'
+                                      : 'workspaceAiSettings.addKeyForProvider',
+                                    { provider: providerLabel(provider) }
+                                  )}
+                                  placeholder={isWorkspaceOverride ? t('workspaceAiSettings.apiKeyRotatePlaceholder') : t('workspaceAiSettings.apiKeyAddPlaceholder')}
                                   className={credentialInputClassName}
                                   autoComplete="off"
                                 />
@@ -546,13 +604,16 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                   size="sm"
                                   onClick={() => handleSaveProviderKey(provider)}
                                   disabled={!canManageAiSettings || !currentAiSettings || !providerKeys[provider].trim() || isSaving || !providerStatus.enabled}
-                                  className="w-full sm:w-28"
-                                  aria-label={t(providerStatus.configured ? 'workspaceAiSettings.rotateKeyForProvider' : 'workspaceAiSettings.addKeyForProvider', {
-                                    provider: providerLabel(provider)
-                                  })}
+                                  className="w-full whitespace-nowrap sm:w-auto"
+                                  aria-label={t(
+                                    isWorkspaceOverride
+                                      ? 'workspaceAiSettings.rotateKeyForProvider'
+                                    : 'workspaceAiSettings.addKeyForProvider',
+                                    { provider: providerLabel(provider) }
+                                  )}
                                 >
                                   <ICONS.CheckCircle2 className="h-4 w-4" />
-                                  {savingAction === `save:${provider}` ? t('workspaceAiSettings.saving') : providerStatus.configured ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addKey')}
+                                  {savingAction === `save:${provider}` ? t('workspaceAiSettings.saving') : isWorkspaceOverride ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addWorkspaceKey')}
                                 </Button>
                                 <Button type="button" variant="secondary" size="sm" onClick={() => closeCredentialEditor(provider)} disabled={isSaving}>
                                   {t('app.cancel')}

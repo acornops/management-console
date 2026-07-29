@@ -529,6 +529,7 @@ export interface WorkspaceAiProviderStatus {
   provider: LlmProvider;
   configured: boolean;
   enabled: boolean;
+  source: 'workspace' | 'platform_default' | 'none';
 }
 
 export type LlmProviderModels = Record<LlmProvider, string[]>;

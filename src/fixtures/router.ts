@@ -343,7 +343,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.sessions.filter((item) => item.targetId === targetId)) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const session = { id: id('fixture-session'), workspaceId: decode(match[1]), targetId, targetType: targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning' }, title: String(input.title || 'Fixture conversation'), status: 'open', createdAt: NOW, updatedAt: NOW, lastMessageAt: NOW, expiresAt: '2026-08-14T08:30:00.000Z' };
+      const session = { id: id('fixture-session'), workspaceId: decode(match[1]), targetId, targetType: targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' }, title: String(input.title || 'Fixture conversation'), status: 'open', createdAt: NOW, updatedAt: NOW, lastMessageAt: NOW, expiresAt: '2026-08-14T08:30:00.000Z' };
       state.sessions.push(session);
       state.messages[session.id] = [];
       return json(session, 201);
@@ -516,7 +516,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.workflowSchedules), summary: { total: state.workflowSchedules.length, active: state.workflowSchedules.filter((item) => item.status === 'enabled').length, paused: state.workflowSchedules.filter((item) => item.status === 'paused').length, approvalGated: 0 } });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', inputs: {}, approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW, ...input };
+      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', inputs: {}, approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW, ...input };
       state.workflowSchedules.push(schedule);
       return json({ schedule }, 201);
     }

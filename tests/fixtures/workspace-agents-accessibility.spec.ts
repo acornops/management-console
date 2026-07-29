@@ -68,12 +68,25 @@ test('Agent lifecycle confirmations announce themselves, receive focus, and rest
 test('Agent Chat follows the selected Chinese application locale', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem('app_language', 'zh');
-    window.localStorage.setItem('acornops_profile_preferences:ning%40fixture.acornops.dev:language', 'zh');
+    window.localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:language', 'zh');
   });
   await page.goto(agentDetailPath('chat'), { waitUntil: 'domcontentloaded' });
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
   await expect(page.getByText('新对话默认为只读。只有任务需要写入工具时才明确启用更改。')).toBeVisible();
+});
+
+test('Agent tools follow the selected Chinese application locale', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('app_language', 'zh');
+    window.localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:language', 'zh');
+  });
+  await page.goto(agentDetailPath('tools'), { waitUntil: 'domcontentloaded' });
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await expect(page.getByRole('tab', { name: '工具' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('heading', { name: 'AcornOps 原生工具' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'MCP 发现的工具' })).toBeVisible();
 });
 
 test('Agent tools use the dedicated stable route without nested capability navigation', async ({ page }) => {
