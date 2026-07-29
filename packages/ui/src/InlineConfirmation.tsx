@@ -47,7 +47,7 @@ export const InlineConfirmation: React.FC<InlineConfirmationProps> = ({
       aria-describedby={`${id}-description`}
       className={`${toneClassName} px-5 py-4 outline-none sm:px-6 ${className}`}
     >
-      <p id={`${id}-title`} className="text-sm font-semibold">{title}</p>
+      <p id={`${id}-title`} className="type-row-title">{title}</p>
       <p id={`${id}-description`} className="type-caption mt-1">{description}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" variant="tertiary" size="sm" onClick={onCancel}>{cancelLabel}</Button>

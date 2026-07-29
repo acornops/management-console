@@ -65,7 +65,7 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage
               <div
                 className={classNames(
                   'flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border',
-                  workload.type === 'Deployment' ? 'border-metric-blue/20 bg-metric-blue/10 text-metric-blue' : 'border-accent/20 bg-accent-soft text-accent-strong'
+                  workload.type === 'Deployment' ? 'border-metric-blue/20 bg-metric-blue/10 text-metric-blue' : 'border-accent/20 bg-accent-soft text-accent-readable'
                 )}
               >
                 {getIcon(workload.type)}

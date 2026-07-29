@@ -32,7 +32,7 @@ export function segmentedTabButtonClassName({ isActive, className }: { isActive:
   return twMerge(
     clsx(
       'type-ui relative -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25',
-      isActive ? 'border-transparent text-accent-strong' : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text',
+      isActive ? 'border-transparent text-accent-readable' : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text',
       className
     )
   );

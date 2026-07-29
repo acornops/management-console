@@ -116,7 +116,7 @@ export const DataTableHeaderCell: React.FC<DataTableHeaderCellProps> = ({
     scope="col"
     aria-sort={sortDirection}
     className={twMerge(clsx(
-      'type-label bg-ui-bg text-ui-text-muted',
+      'type-label bg-ui-bg text-left text-ui-text-muted',
       dataTableHeaderCellDensityClassNames[density],
       numeric && 'text-right tabular-nums',
       className

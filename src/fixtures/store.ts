@@ -37,6 +37,7 @@ export interface FixtureState {
   workflowSchedules: Array<Record<string, any>>;
   workflowEventTriggers: Array<Record<string, any>>;
   workflowExecutions: Array<Record<string, any>>;
+  approvals: Array<Record<string, any>>;
   catalogSources: Array<Record<string, any>>;
   catalogArtifacts: Array<Record<string, any>>;
   sessions: Array<Record<string, any>>;
@@ -509,6 +510,37 @@ export function createFixtureState(): FixtureState {
         principal: { type: 'user', id: FIXTURE_IDS.user },
         endpointUrl: '/api/v1/workflow-event-triggers/fixture-webhook-trigger/events',
         lastTriggeredAt: NOW, lastStatus: 'failed', lastError: 'Dispatch rejected because the configured principal no longer has permission. No execution was created.'
+      }
+    ],
+    approvals: [
+      {
+        approvalId: 'fixture-workspace-approval',
+        runId: 'fixture-execution-issue-review-run',
+        source: 'workflow_tool',
+        workflowId: FIXTURE_IDS.workflow,
+        targetId: FIXTURE_IDS.cluster,
+        targetType: 'kubernetes',
+        summary: 'Restart the payments worker after reviewing its current replica state',
+        toolName: 'restart_workload',
+        requestedBy: 'Workflow Analyst',
+        expiresAt: fixtureTime(24 * 60 * 60_000),
+        status: 'pending',
+        requestedAt: NOW
+      },
+      {
+        approvalId: 'fixture-decided-approval',
+        runId: 'fixture-execution-completed-run',
+        source: 'workflow_gate',
+        workflowId: FIXTURE_IDS.workflow,
+        summary: 'Apply the reviewed production health recommendation',
+        toolName: 'workflow_gate',
+        requestedBy: 'Workflow Analyst',
+        expiresAt: fixtureTime(24 * 60 * 60_000),
+        status: 'approved',
+        decision: 'approved',
+        decidedBy: 'Ning',
+        decidedAt: NOW,
+        requestedAt: EARLIER
       }
     ],
     workflowExecutions,

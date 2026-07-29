@@ -30,7 +30,7 @@ export const NavigationSection: React.FC<NavigationSectionProps> = ({ badge, chi
   <div className={twMerge(compactAfter ? 'pb-5 px-3' : 'pb-7 px-3', className)} {...props}>
     {title && (
       <div className="mb-2 flex items-center justify-between px-3">
-        <div className="type-label text-ui-text-muted opacity-70">{title}</div>
+        <div className="type-label text-ui-text-muted">{title}</div>
         {badge}
       </div>
     )}

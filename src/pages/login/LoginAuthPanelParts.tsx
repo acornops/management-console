@@ -173,7 +173,7 @@ export function SignupSwitchFooter({ isAuthLoading, onSwitch, prompt, actionLabe
           type="button"
           onClick={onSwitch}
           disabled={isAuthLoading}
-          className="control-target rounded-sm type-ui text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="control-target rounded-sm type-ui text-accent-readable transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {actionLabel}
         </button>

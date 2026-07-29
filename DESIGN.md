@@ -170,9 +170,14 @@ The palette is warm, inspectable, and intentionally quiet. The canonical source 
 
 ### Primary
 - **Controlled Signal Orange** (`signal-orange`): Used for focus rings, selected state, hover accents, and activation moments. Filled orange buttons are reserved for workflow launch or activation.
-- **Strong Signal Orange** (`signal-orange-strong`): Used for icons and text when an orange element needs readable contrast without filling the surface.
-- **Readable Signal Orange** (`signal-orange-readable`): Used only when orange text must meet contrast on light surfaces, such as the wordmark.
+- **Strong Signal Orange** (`signal-orange-strong`): The canonical stronger brand orange used for icons and non-body signal accents. Its color value is immutable brand identity, not an accessibility-adjustment token.
+- **Readable Signal Orange** (`signal-orange-readable`): Used when functional orange text must meet contrast on light surfaces.
 - **Soft Signal Wash** (`signal-orange-soft`): Used for selected, hover, and low-pressure accent backgrounds.
+
+The orange `ops` lettering in the AcornOps wordmark keeps the canonical bright
+brand color in every theme. It is an explicit contrast exception marked with
+`data-brand-wordmark`, excluded only from automated color-contrast evaluation,
+and must not be generalized to navigation labels, links, body copy, or controls.
 
 ### Secondary
 - **Metric Blue** (`metric-blue`): Used for chart contrast and comparative metrics only. It is not a second brand accent.
@@ -376,7 +381,7 @@ Navigation is familiar product chrome driven by one route model. Workspace desti
 
 Tabs and filters share the canonical compact-control vocabulary rather than page-local pills.
 
-- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. A route-selected or keyboard-selected tab must be fully visible inside an overflowing strip on arrival and after selection. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
+- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. A route-selected or keyboard-selected tab must be fully visible inside an overflowing strip on arrival and after selection. The active tab uses readable orange signal text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
 - **Top-level discovery:** Collection pages use `DiscoveryFilterBar` with a labeled `PageSearchInput`, zero or more typed filter-group definitions created by `createDiscoveryFilterGroup`, and a polite result summary. `DiscoveryFilterBar` and nested resource search both compose `SearchFilterFrame`, the canonical bordered paper surface with `16px` padding, a restrained shadow, `12px` gaps, and stable `44px` controls. Search is the dominant flexible field while categorical controls stay approximately `11rem` to `14rem` wide.
 - **Visible discovery filters:** Typed categorical groups render as always-visible shared `Select` controls. Clusters, virtual machines, and agents expose Status; MCP Catalog exposes Source and Compatibility; Workflows uses the search-only composition. Stable option counts appear inside the select when supplied. Below `sm`, search, selects, trailing actions, and the result summary stack full-width. From `sm` to below `lg`, search owns the first row while multiple selects share equal columns. At `lg` and wider, the toolbar settles into one balanced row without overflow.
 - **Discovery clearing:** Search clear and Escape remove only the query and retain search focus. Choosing a default select option clears only that categorical condition. Clear all appears at two or more active conditions, counting the query and every non-default group; it clears the complete route-backed discovery state atomically and restores search focus. The bar is hidden for a genuinely empty, unfiltered collection and remains visible when active filters produce no matches.
@@ -411,6 +416,16 @@ The desktop login surface may carry the themed “Squirrel Chasing Acorns” ope
 **The Motion Explains State Rule.** Every animation maps to a real state: working, pending, loading, resolving. If an animation would run while nothing is happening, it is decoration and is prohibited. All motion respects `prefers-reduced-motion`.
 
 **The Fresh Data Rule.** Shared-element motion is limited to stable application chrome such as theme controls and active tab indicators. Do not morph routes, list rows, charts, or list-to-detail content because operational data may have changed between states. See [Focused Application Motion](/docs/design-docs/motion.md).
+
+### Validation contract
+
+The development catalog at `/design-system.html` covers every public UI module
+through `scripts/design-system-catalog.json`; new exports must be demonstrated,
+identified as an existing composition, or documented as non-visual. Production
+route baselines cover wide desktop tables, compact mobile layouts, both themes,
+WCAG 2.1 AA automation, 200% text reflow, forced-colors focus visibility, and
+populated permission/state fixtures. Production JavaScript chunks must remain
+within the enforced 350 KiB raw-size budget.
 
 ## 6. Do's and Don'ts
 

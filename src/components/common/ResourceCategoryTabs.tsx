@@ -133,7 +133,7 @@ export const ResourceCategoryTabs = <T extends string>({
             className={twMerge(
               clsx(
                 'relative inline-flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-4 type-ui text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25',
-                tab.isActive ? 'border-transparent text-accent-strong' : 'border-transparent hover:text-ui-text'
+                tab.isActive ? 'border-transparent text-accent-readable' : 'border-transparent hover:text-ui-text'
               )
             )}
           >

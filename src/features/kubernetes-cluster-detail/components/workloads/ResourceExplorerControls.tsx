@@ -43,7 +43,7 @@ export const WorkloadTriageShortcut: React.FC<{
         className={classNames(
           'type-ui flex h-11 w-full min-w-0 max-w-full items-center gap-2 rounded-md border px-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 lg:w-auto',
           showUnhealthyPodsOnly
-            ? 'border-accent/30 bg-accent-soft text-accent-strong'
+            ? 'border-accent/30 bg-accent-soft text-accent-readable'
             : 'border-ui-border bg-ui-surface text-ui-text-muted hover:border-accent/30 hover:text-accent-strong'
         )}
       >
@@ -60,7 +60,7 @@ export const WorkloadTriageShortcut: React.FC<{
         </span>
         <span className="min-w-0 truncate">{t('resources.filters.unhealthyPods')}</span>
         {unhealthyPodCount > 0 && (
-          <span className="type-data flex h-4 min-w-4 items-center justify-center rounded-full border border-accent/25 px-1 text-xs leading-none text-accent-strong">
+          <span className="type-data flex h-4 min-w-4 items-center justify-center rounded-full border border-accent/25 px-1 text-xs leading-none text-accent-readable">
             {unhealthyPodCount}
           </span>
         )}

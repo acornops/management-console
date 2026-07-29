@@ -52,7 +52,7 @@ export const ToastViewport: React.FC<ToastViewportProps> = ({
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </div>
-                <p className="flex-1 text-sm font-medium text-ui-text">
+                <p className="type-ui flex-1 text-ui-text">
                   {toast.message}
                 </p>
                 <CloseButton

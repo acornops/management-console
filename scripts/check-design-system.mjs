@@ -8,7 +8,10 @@ const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const srcRoot = join(root, 'src');
 const uiSourceRoot = join(root, 'packages/ui/src');
 const exceptions = JSON.parse(readFileSync(join(root, 'scripts/design-system-exceptions.json'), 'utf8'));
+const catalogInventory = JSON.parse(readFileSync(join(root, 'scripts/design-system-catalog.json'), 'utf8'));
 const appPageContentPath = join(root, 'src/app/AppPageContent.tsx');
+const uiIndexPath = join(root, 'packages/ui/src/index.ts');
+const catalogPath = join(root, 'src/design-system.tsx');
 const failures = [];
 
 function sourceFiles(directory) {
@@ -77,6 +80,7 @@ const canonicalHeadingRole = /(?:^|[\s'"`])type-(?:route-title|section-title|pan
 const prohibitedActionTypography = /(?:^|[\s'"`])(?:type-(?:label|micro-label|emphasis)|font-(?:bold|extrabold)|uppercase|tracking-(?:wide|wider|widest))(?=$|[\s'"`}])/;
 const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|navigationItemClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
 const canonicalButtonTarget = /(?:^|[\s'"`])(?:control-target|min-h-11|h-11|min-h-12|h-12|min-h-control|h-control)(?=$|[\s'"`])/;
+const semanticTextRole = /(?:^|[\s'"`])type-(?:body|caption|ui|label|micro-label|emphasis|row-title)(?=$|[\s'"`}])/;
 const canonicalModules = new Set([
   'Button.tsx',
   'Checkbox.tsx',
@@ -103,6 +107,13 @@ for (const path of productionSources) {
   }
   if (/\bbackdrop-blur(?:-|\b)/.test(source)) {
     report(path, 'no-glass', 'backdrop blur is prohibited; use an opaque token scrim or surface');
+  }
+  if (extname(path) === '.tsx') {
+    for (const opening of jsxOpenings(source, /<[A-Za-z][A-Za-z0-9.]*(?=[\s>])/g)) {
+      if (!/\btext-accent-bright\b/.test(opening.source) || /\bdata-brand-wordmark\b/.test(opening.source)) continue;
+      const line = source.slice(0, opening.start).split('\n').length;
+      report(path, 'readable-accent-text', `line ${line}: text-accent-bright is limited to explicitly marked brand wordmarks`);
+    }
   }
   for (const match of source.matchAll(prohibitedTypographyUtility)) {
     report(path, 'semantic-typography', `${match[0].trim()} must be replaced by a documented semantic typography role`);
@@ -190,12 +201,57 @@ for (const path of files) {
     report(path, 'heading-typography', `line ${line}: headings require a canonical route, section, panel, row, or data typography role`);
   }
 
+  if (isPackageSource) {
+    for (const opening of jsxOpenings(source, /<[A-Za-z][A-Za-z0-9.]*(?=[\s>])/g)) {
+      if (!/\brole\s*=\s*["'](?:alert|status)["']/.test(opening.source)) continue;
+      if (!/\btext-(?:xs|sm|base|lg|xl)\b/.test(opening.source) || semanticTextRole.test(opening.source)) continue;
+      const line = source.slice(0, opening.start).split('\n').length;
+      report(path, 'status-typography', `line ${line}: shared alert and status surfaces with explicit sizing require a semantic typography role`);
+    }
+  }
+
   if (repoPath !== 'packages/ui/src/DataTable.tsx' && !exceptions.rawTableHeaderExceptions?.[repoPath]) {
     for (const opening of jsxOpenings(source, /<th\b/g)) {
       if (/\bscope\s*=\s*["']row["']/.test(opening.source)) continue;
       const line = source.slice(0, opening.start).split('\n').length;
       report(path, 'shared-table-header', `line ${line}: visible column headers must compose through DataTableHeaderCell`);
     }
+  }
+}
+
+const uiIndexSource = readFileSync(uiIndexPath, 'utf8');
+const catalogSource = readFileSync(catalogPath, 'utf8');
+const exportedModules = new Set(
+  [...uiIndexSource.matchAll(/export \* from ['"]\.\/([^'"]+)['"]/g)].map((match) => match[1])
+);
+const catalogGroups = [
+  ['catalogedModules', catalogInventory.catalogedModules],
+  ['composedModules', catalogInventory.composedModules],
+  ['nonVisualModules', catalogInventory.nonVisualModules]
+];
+const classifiedModules = new Map();
+
+for (const [group, entries] of catalogGroups) {
+  for (const [moduleName, evidence] of Object.entries(entries)) {
+    if (classifiedModules.has(moduleName)) {
+      report(uiIndexPath, 'catalog-inventory', `${moduleName} is classified more than once`);
+    }
+    classifiedModules.set(moduleName, group);
+    if (!exportedModules.has(moduleName)) {
+      report(uiIndexPath, 'catalog-inventory', `${moduleName} is classified but is not a public module`);
+    }
+    if (typeof evidence !== 'string' || evidence.trim().length < (group === 'catalogedModules' ? 3 : 30)) {
+      report(catalogPath, 'catalog-evidence', `${moduleName} requires durable ${group} evidence`);
+    }
+    if (group === 'catalogedModules' && !catalogSource.includes(evidence)) {
+      report(catalogPath, 'catalog-evidence', `${moduleName} evidence token ${evidence} is absent from the catalog`);
+    }
+  }
+}
+
+for (const moduleName of exportedModules) {
+  if (!classifiedModules.has(moduleName)) {
+    report(uiIndexPath, 'catalog-inventory', `${moduleName} must be cataloged, composed, or documented as non-visual`);
   }
 }
 

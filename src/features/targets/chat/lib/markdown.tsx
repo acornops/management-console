@@ -38,7 +38,7 @@ export function createMarkdownComponents(tone: MarkdownTone = 'assistant'): Comp
   const tableRowHoverClass = isUserTone ? 'hover:bg-ui-bg/10' : 'hover:bg-ui-bg/70';
   const linkClass = isUserTone
     ? 'text-ui-bg underline-offset-2 hover:text-ui-bg/80'
-    : 'text-accent-strong underline-offset-2 hover:text-accent-bright';
+    : 'text-accent-readable underline-offset-2 hover:text-accent-readable';
 
   return {
     h1: ({ children }) => (

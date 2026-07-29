@@ -27,7 +27,7 @@ export const ModalStepIndicator: React.FC<{
         const marker = (
           <span
             className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full type-caption ${
-              active ? 'bg-control-activation text-control-activation-fg' : complete ? 'bg-accent-soft text-accent-strong' : 'border border-ui-border bg-ui-surface'
+              active ? 'bg-control-activation text-control-activation-fg' : complete ? 'bg-accent-soft text-accent-readable' : 'border border-ui-border bg-ui-surface'
             }`}
           >
             {complete ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : index + 1}
@@ -47,14 +47,14 @@ export const ModalStepIndicator: React.FC<{
                 type="button"
                 onClick={() => onStepSelect?.(step.id)}
                 className={`type-ui -mx-2 inline-flex min-h-11 items-center gap-2 rounded-md px-2 transition-colors hover:bg-accent-soft/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 sm:min-h-8 ${
-                  complete ? 'text-accent-strong' : 'text-ui-text-muted hover:text-accent-strong'
+                  complete ? 'text-accent-readable' : 'text-ui-text-muted hover:text-accent-readable'
                 }`}
                 aria-label={`Go to ${step.label}`}
               >
                 {content}
               </button>
             ) : (
-              <span className={`type-micro-label inline-flex items-center gap-2 ${active || complete ? 'text-accent-strong' : 'text-ui-text-muted'}`}>{content}</span>
+              <span className={`type-micro-label inline-flex items-center gap-2 ${active || complete ? 'text-accent-readable' : 'text-ui-text-muted'}`}>{content}</span>
             )}
           </React.Fragment>
         );

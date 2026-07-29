@@ -102,13 +102,15 @@ test('collection discovery supports responsive layouts, keyboard filters, and no
   await statusSelect.click();
   const statusListbox = page.getByRole('listbox', { name: 'Agent status' });
   await expect(statusListbox).toBeVisible();
-  await statusListbox.getByRole('option', { name: /All 12/ }).click();
+  await statusSelect.press('Home');
+  await statusSelect.press('Enter');
   await expect(statusSelect).toBeFocused();
   await expect(statusSelect).toContainText('All');
   await expect(single.getByRole('status')).toHaveText('12 agents');
 
   await statusSelect.click();
-  await page.getByRole('listbox', { name: 'Agent status' }).getByRole('option', { name: /Needs attention 2/ }).click();
+  await statusSelect.press('End');
+  await statusSelect.press('Enter');
   await expect(statusSelect).toBeFocused();
   await singleSearch.fill('agent');
   await expect(single.getByRole('button', { name: 'Clear all' })).toBeVisible();

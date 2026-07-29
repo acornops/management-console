@@ -82,10 +82,18 @@ export function WorkflowExecutionLink({
   );
 }
 
-function ProvenanceChain({ origin }: { origin: WorkflowExecutionOrigin }) {
+function ProvenanceChain({
+  origin,
+  tone = 'muted'
+}: {
+  origin: WorkflowExecutionOrigin;
+  tone?: 'muted' | 'danger';
+}) {
   const { t } = useTranslation();
   return (
-    <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 text-ui-text-muted">
+    <span className={`inline-flex max-w-full min-w-0 items-center gap-1.5 ${
+      tone === 'danger' ? 'text-status-danger-text' : 'text-ui-text-muted'
+    }`}>
       <GitBranch className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <span className="min-w-0 truncate">
         {t(`workflowActivity.origin.${origin.kind}`)}
@@ -258,8 +266,15 @@ export function IssueWorkflowActivity({
               </span>
             )}
           </div>
-          <p className="type-caption mt-1 min-w-0"><ProvenanceChain origin={execution.origin} /></p>
-          <p className="type-caption mt-1 text-ui-text-muted">
+          <p className="type-caption mt-1 min-w-0">
+            <ProvenanceChain
+              origin={execution.origin}
+              tone={execution.status === 'failed' ? 'danger' : 'muted'}
+            />
+          </p>
+          <p className={`type-caption mt-1 ${
+            execution.status === 'failed' ? 'text-status-danger-text' : 'text-ui-text-muted'
+          }`}>
             {t(`workflowActivity.time.${timestamp.label.toLowerCase()}`)} {formatRelativeTime(timestamp.value)}
           </p>
         </div>

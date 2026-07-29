@@ -162,7 +162,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
           <div className="font-sans text-xl leading-none tracking-tighter antialiased">
             <span className="type-wordmark text-brand-brown dark:text-brand-cream">acorn</span>
-            <span className="type-wordmark text-accent-bright">ops</span>
+            <span data-brand-wordmark className="type-wordmark text-accent-bright">ops</span>
           </div>
         </button>
       </div>
@@ -186,7 +186,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   >
                     <span className="flex min-w-0 items-center gap-3">
                       <span className="w-8 h-8 rounded bg-accent-soft flex items-center justify-center shrink-0">
-                        <span className="text-accent-strong type-emphasis font-mono text-xs">{selectedWorkspaceInitials}</span>
+                        <span className="text-accent-readable type-emphasis font-mono text-xs">{selectedWorkspaceInitials}</span>
                       </span>
                       <span className="min-w-0 flex flex-col items-start">
                         <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm type-emphasis leading-tight text-ui-text" title={selectedWorkspaceName}>

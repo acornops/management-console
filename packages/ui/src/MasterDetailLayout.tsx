@@ -75,7 +75,7 @@ export const MasterDetailRow: React.FC<MasterDetailRowProps> = ({ title, descrip
 };
 
 export const MasterDetailLoading: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p data-master-detail-loading="true" role="status" className="p-5 text-sm text-ui-text-muted">
+  <p data-master-detail-loading="true" role="status" className="type-body p-5 text-ui-text-muted">
     {children}
   </p>
 );

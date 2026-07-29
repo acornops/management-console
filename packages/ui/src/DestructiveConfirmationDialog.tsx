@@ -61,7 +61,7 @@ export const DestructiveConfirmationDialog: React.FC<DestructiveConfirmationDial
       />
     )}
   >
-    <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-medium leading-6 text-status-danger-text">
+    <div className="type-body rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
       {description}
     </div>
     {error && (

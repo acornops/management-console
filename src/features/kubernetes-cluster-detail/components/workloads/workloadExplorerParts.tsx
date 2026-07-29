@@ -338,7 +338,7 @@ export const ResourceMetaPair: React.FC<{
       className={classNames(
         'min-w-0 max-w-full break-words rounded-full border px-2 py-0.5 normal-case tracking-normal [overflow-wrap:anywhere]',
         tone === 'accent'
-          ? 'border-accent/20 bg-accent-soft text-accent-strong'
+          ? 'border-accent/20 bg-accent-soft text-accent-readable'
           : tone === 'metric'
             ? 'border-metric-blue/20 bg-metric-blue/10 text-metric-blue'
             : 'border-ui-border bg-ui-bg text-ui-text'

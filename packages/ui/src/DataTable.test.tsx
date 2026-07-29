@@ -103,7 +103,7 @@ describe('DataTable primitives', () => {
       <DataTableGridHeader showAt="xl"><DataTableGridHeaderCell>Target</DataTableGridHeaderCell></DataTableGridHeader>
     );
     expect(tableMarkup).toContain('border-b border-ui-border bg-ui-bg');
-    expect(tableMarkup).toContain('type-label bg-ui-bg text-ui-text-muted');
+    expect(tableMarkup).toContain('type-label bg-ui-bg text-left text-ui-text-muted');
     expect(tableMarkup).toContain('lg:px-8 lg:py-5');
     expect(gridMarkup).toContain('border-b border-ui-border bg-ui-bg');
     expect(gridMarkup).toContain('xl:grid xl:px-8 xl:py-5');
@@ -114,7 +114,7 @@ describe('DataTable primitives', () => {
     const markup = renderToStaticMarkup(
       <table><thead><tr><DataTableHeaderCell density="dense">Decision</DataTableHeaderCell></tr></thead></table>
     );
-    expect(markup).toContain('type-label bg-ui-bg text-ui-text-muted px-4 py-4');
+    expect(markup).toContain('type-label bg-ui-bg text-left text-ui-text-muted px-4 py-4');
     expect(markup).not.toContain('lg:px-8');
   });
 
@@ -128,7 +128,7 @@ describe('DataTable primitives', () => {
       </DataTableGridHeader>
     );
 
-    expect(tableMarkup).toContain('type-label bg-ui-bg text-ui-text-muted px-5 py-3');
+    expect(tableMarkup).toContain('type-label bg-ui-bg text-left text-ui-text-muted px-5 py-3');
     expect(gridMarkup).toContain('border-b border-ui-border bg-ui-bg px-5 py-3 md:grid');
     expect(gridMarkup).not.toContain('lg:px-8');
   });

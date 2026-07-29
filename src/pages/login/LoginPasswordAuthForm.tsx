@@ -208,7 +208,7 @@ export function LoginPasswordAuthForm({
             <button
               type="button"
               onClick={onForgotPassword}
-              className="control-target rounded-sm text-xs type-ui text-accent-bright transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
+              className="control-target rounded-sm text-xs type-ui text-accent-readable transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               {t('login.forgotPassword')}
             </button>

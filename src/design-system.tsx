@@ -19,10 +19,27 @@ import { Select } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import '@acornops/ui/fonts';
 import {
+  cardClassName,
   CloseButton,
+  DestructiveConfirmationDialog,
   FilterToggleGroup,
+  InlineConfirmation,
+  InlineLoadingIndicator,
+  MasterDetailLayout,
+  MasterDetailListHeader,
+  MasterDetailPaneBody,
+  MasterDetailPaneHeader,
+  MasterDetailRow,
+  MiniProgressBar,
+  ModalStepIndicator,
+  NavigationItem,
+  NavigationSection,
+  OverflowActionMenu,
   SegmentedTabs,
+  Sidebar,
   TextInput,
+  ToastViewport,
+  Tooltip,
   type CompactControlItem
 } from '@acornops/ui';
 import '@/styles.css';
@@ -56,6 +73,9 @@ const Catalog = () => {
   const [multiFilterCompatibility, setMultiFilterCompatibility] = React.useState<CatalogCompatibilityFilter>('incompatible');
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [destructiveDialogOpen, setDestructiveDialogOpen] = React.useState(false);
+  const [inlineConfirmationOpen, setInlineConfirmationOpen] = React.useState(false);
+  const [toastVisible, setToastVisible] = React.useState(false);
   const multiFilterActive = Boolean(multiFilterQuery.trim()) || multiFilterSource !== 'all' || multiFilterCompatibility !== 'all';
 
   React.useEffect(() => {
@@ -277,12 +297,109 @@ const Catalog = () => {
         <pre className="type-code mt-4 overflow-x-auto rounded-lg border border-code-text/10 bg-code-bg p-4 text-code-text" data-catalog-code-surface="true"><code>kubectl get pods --all-namespaces</code></pre>
       </PageSection>
 
-      <PageSection title="Overlays" actions={<><Button onClick={() => setDialogOpen(true)}>Open dialog</Button><Button onClick={() => setDrawerOpen(true)}>Open drawer</Button></>}>
+      <PageSection title="Composite patterns" description="Public navigation, progress, disclosure, feedback, and master-detail primitives remain available as tested compositions.">
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div className={cardClassName({ className: 'overflow-hidden' })} data-catalog-component="Navigation">
+            <Sidebar className="h-64 w-full border-r-0" aria-label="Catalog navigation">
+              <NavigationSection title="Workspace" className="py-4">
+                <NavigationItem active leading={<Clock className="h-4 w-4" />}>Overview</NavigationItem>
+                <NavigationItem leading={<Rocket className="h-4 w-4" />}>Workflows</NavigationItem>
+              </NavigationSection>
+            </Sidebar>
+          </div>
+          <div className={cardClassName({ className: 'space-y-5 p-surface' })} data-catalog-component="Loading">
+            <InlineLoadingIndicator label="Refreshing inventory" />
+            <div>
+              <p className="type-caption mb-2 text-ui-text-muted">Import in progress</p>
+              <MiniProgressBar />
+            </div>
+            <ModalStepIndicator
+              steps={[{ id: 'describe', label: 'Describe' }, { id: 'access', label: 'Access' }, { id: 'review', label: 'Review' }]}
+              currentStepId="access"
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <Tooltip content="Explains an unfamiliar action">
+                <Button variant="secondary">Hover for help</Button>
+              </Tooltip>
+              <OverflowActionMenu label="Catalog overflow actions">
+                {(close) => (
+                  <>
+                    <MenuItem onClick={() => close()}>Duplicate</MenuItem>
+                    <MenuItem destructive onClick={() => close()}><Trash2 className="h-4 w-4" />Delete</MenuItem>
+                  </>
+                )}
+              </OverflowActionMenu>
+              <Button variant="secondary" onClick={() => setToastVisible(true)}>Show toast</Button>
+              <Button variant="secondary" onClick={() => setInlineConfirmationOpen(true)}>Show inline confirmation</Button>
+            </div>
+            {inlineConfirmationOpen && (
+              <InlineConfirmation
+                id="catalog-inline-confirmation"
+                title="Pause this schedule?"
+                description="Existing runs continue while future starts are paused."
+                tone="warning"
+                confirmLabel="Pause schedule"
+                cancelLabel="Cancel"
+                onCancel={() => setInlineConfirmationOpen(false)}
+                onConfirm={() => setInlineConfirmationOpen(false)}
+              />
+            )}
+          </div>
+          <div className="xl:col-span-2" data-catalog-component="MasterDetailLayout">
+            <MasterDetailLayout
+              showDetailOnCompact={false}
+              compactBackLabel="Back to targets"
+              onCompactBack={() => undefined}
+              list={(
+                <>
+                  <MasterDetailListHeader>Targets</MasterDetailListHeader>
+                  <MasterDetailRow
+                    title="Singapore Production"
+                    description="Kubernetes cluster"
+                    metadata="Updated just now"
+                    status={<StatusBadge tone="success">Healthy</StatusBadge>}
+                    selected
+                    onClick={() => undefined}
+                  />
+                </>
+              )}
+              detail={(
+                <>
+                  <MasterDetailPaneHeader
+                    badges={<StatusBadge tone="success">Connected</StatusBadge>}
+                    title="Singapore Production"
+                    description="Selected-target detail stays readable without leaving the collection."
+                  />
+                  <MasterDetailPaneBody>
+                    <InlineAlert tone="neutral">Shared pane anatomy preserves context on wide and compact screens.</InlineAlert>
+                  </MasterDetailPaneBody>
+                </>
+              )}
+            />
+          </div>
+        </div>
+      </PageSection>
+
+      <PageSection title="Overlays" actions={<><Button onClick={() => setDialogOpen(true)}>Open dialog</Button><Button onClick={() => setDrawerOpen(true)}>Open drawer</Button><Button variant="danger" onClick={() => setDestructiveDialogOpen(true)}>Open destructive dialog</Button></>}>
         <p className="type-body text-ui-text-muted">Both frames share close controls, focus containment, restoration, padding, and footer anatomy.</p>
       </PageSection>
 
       <DialogFrame open={dialogOpen} onClose={() => setDialogOpen(false)} titleId="catalog-dialog-title" title="Confirm change" description="Review the consequence before applying it." footer={<><Button variant="tertiary" onClick={() => setDialogOpen(false)}>Cancel</Button><Button variant="primary" onClick={() => setDialogOpen(false)}>Save</Button></>}><InlineAlert tone="warning">This change affects future workflow runs.</InlineAlert></DialogFrame>
       <DrawerFrame open={drawerOpen} onClose={() => setDrawerOpen(false)} titleId="catalog-drawer-title" title="Create schedule" description="Drawer anatomy remains stable at every width." footer={<><Button variant="tertiary" onClick={() => setDrawerOpen(false)}>Cancel</Button><Button variant="primary" onClick={() => setDrawerOpen(false)}>Create</Button></>}><FieldLabel htmlFor="catalog-schedule">Schedule name</FieldLabel><TextInput id="catalog-schedule" className="mt-2" /></DrawerFrame>
+      <DestructiveConfirmationDialog
+        open={destructiveDialogOpen}
+        onCancel={() => setDestructiveDialogOpen(false)}
+        onConfirm={() => setDestructiveDialogOpen(false)}
+        titleId="catalog-destructive-dialog-title"
+        title="Delete workspace"
+        subtitle="This action cannot be undone."
+        description="All workspace resources, history, and saved configuration will be permanently removed."
+        confirmLabel="Delete workspace"
+      />
+      <ToastViewport
+        toasts={toastVisible ? [{ id: 'catalog-toast', message: 'Workspace settings saved' }] : []}
+        onDismiss={() => setToastVisible(false)}
+      />
     </PageShell>
   );
 };

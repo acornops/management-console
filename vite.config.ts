@@ -36,8 +36,14 @@ export default defineConfig(({ command, mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
+            if (id.includes('/src/i18n/locales/')) {
+              return 'app-locales';
+            }
             if (!id.includes('node_modules')) {
               return undefined;
+            }
+            if (id.includes('tailwind-merge') || id.includes('/clsx/')) {
+              return 'vendor-utilities';
             }
             if (id.includes('framer-motion')) {
               return 'vendor-motion';
@@ -58,7 +64,7 @@ export default defineConfig(({ command, mode }) => {
     },
     test: {
       environment: 'node',
-      exclude: [...configDefaults.exclude, 'tests/design-system/**', 'tests/fixtures/**', 'tests/mcp-parity/**'],
+      exclude: [...configDefaults.exclude, 'tests/design-system/**', 'tests/design-routes/**', 'tests/fixtures/**', 'tests/mcp-parity/**'],
       testTimeout: 10000,
       passWithNoTests: false,
       clearMocks: true,

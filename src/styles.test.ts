@@ -20,8 +20,8 @@ import {
   fonts,
   indexHtml,
   lightTheme,
-  loginAuthPanel,
   loginPage,
+  loginAuthPanel,
   loginPreview,
   markdownComponents,
   mcpServerCard,
@@ -31,7 +31,6 @@ import {
   mcpServersView,
   mcpServersViewHeader,
   membersPage,
-  mobileNavigation,
   nginxConfig,
   overviewPage,
   pageComposition,
@@ -125,6 +124,19 @@ describe('theme color contract', () => {
       expect(contrastRatio(rgbVariableValue(lightTheme, textVariable), rgbVariableValue(lightTheme, backgroundVariable))).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(rgbVariableValue(darkTheme, textVariable), rgbVariableValue(darkTheme, backgroundVariable))).toBeGreaterThanOrEqual(4.5);
     });
+  });
+
+  it('keeps the readable orange text role accessible across route and selected surfaces', () => {
+    for (const theme of [lightTheme, darkTheme]) {
+      for (const background of ['--ao-bg-rgb', '--ao-surface-rgb', '--ao-brand-orange-soft-rgb']) {
+        expect(
+          contrastRatio(
+            rgbVariableValue(theme, '--ao-brand-orange-readable-rgb'),
+            rgbVariableValue(theme, background)
+          )
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 
   it('keeps code text readable against both code surfaces', () => {

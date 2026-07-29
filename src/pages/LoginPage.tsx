@@ -78,7 +78,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <img src={logoSrc} alt="AcornOps" className="h-9 w-9 shrink-0" />
               <div className="type-route-title">
                 <span className="text-ui-text">Acorn</span>
-                <span className="text-accent-bright">Ops</span>
+                <span data-brand-wordmark className="text-accent-bright">Ops</span>
               </div>
             </div>
           </div>

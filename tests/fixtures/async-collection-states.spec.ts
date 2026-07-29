@@ -15,7 +15,7 @@ const cases = [
     delayPath: '/approvals',
     boundary: '.collection-state',
     pendingEmptyCopy: 'No approvals waiting',
-    resolvedCopy: 'No approvals waiting'
+    resolvedCopy: 'Restart the payments worker'
   },
   {
     name: 'Agents',
