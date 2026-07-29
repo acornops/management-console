@@ -2,6 +2,8 @@
 
 Place active multi-step plans in this directory.
 
+- [Design-System Adoption Completion](design-system-adoption-completion.md)
+
 Recommended contents for each plan:
 
 - goal
