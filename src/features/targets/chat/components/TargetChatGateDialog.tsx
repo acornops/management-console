@@ -2,8 +2,8 @@ import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { TFunction } from 'i18next';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { getDialogFocusWrapIndex } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { getDialogFocusWrapIndex } from '@acornops/ui';
 import type { ChatSession } from '@/types';
 
 const focusableSelector = [
@@ -111,7 +111,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
             <AlertTriangle className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <h2 id={dialogTitleId} className="text-base font-semibold leading-6 text-ui-text">
+            <h2 id={dialogTitleId} className="type-panel-title text-ui-text">
               {title}
             </h2>
             <p id={dialogBodyId} className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">
@@ -133,13 +133,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
             {t('chat.continueSeparateChat')}
           </Button>
           {actionSessionId && (
-            <Button
-              ref={primaryActionRef}
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => onOpenRecentActivitySession(actionSessionId)}
-            >
+            <Button ref={primaryActionRef} type="button" variant="primary" size="sm" onClick={() => onOpenRecentActivitySession(actionSessionId)}>
               {recentActivityActionLabel || t('chat.openConversation')}
             </Button>
           )}

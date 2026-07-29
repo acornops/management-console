@@ -85,7 +85,7 @@ export const MetricChart: React.FC<{
   });
   const linePath = coords.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
   const areaPath = `${linePath} L ${coords[coords.length - 1].x} ${plotBottom} L ${coords[0].x} ${plotBottom} Z`;
-  const stroke = type === 'area' ? 'var(--brand-orange)' : 'rgb(var(--metric-blue-rgb))';
+  const stroke = type === 'area' ? 'var(--ao-brand-orange)' : 'rgb(var(--ao-metric-blue-rgb))';
 
   return (
     <div className="rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm sm:p-5">
@@ -106,15 +106,15 @@ export const MetricChart: React.FC<{
             const label = tick === 0 ? '0' : formatMetricValue(valueLabel);
             return (
               <g key={tick}>
-                <line x1={plotLeft} y1={y} x2={plotRight} y2={y} stroke="var(--border)" strokeDasharray="3 3" />
+                <line x1={plotLeft} y1={y} x2={plotRight} y2={y} stroke="var(--ao-border)" strokeDasharray="3 3" />
                 <text x={plotLeft - yAxisLabelGap} y={y + 4} textAnchor="end" className="type-micro-label fill-ui-text-muted">{label}</text>
               </g>
             );
           })}
-          {type === 'area' && <path d={areaPath} fill="var(--brand-orange)" opacity="0.08" />}
+          {type === 'area' && <path d={areaPath} fill="var(--ao-brand-orange)" opacity="0.08" />}
           <path d={linePath} fill="none" stroke={stroke} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
           {coords.map((point, index) => (
-            <circle key={`${point.label}-${index}-dot`} cx={point.x} cy={point.y} r={4} fill={stroke} stroke="var(--surface)" strokeWidth={2} />
+            <circle key={`${point.label}-${index}-dot`} cx={point.x} cy={point.y} r={4} fill={stroke} stroke="var(--ao-surface)" strokeWidth={2} />
           ))}
           {coords.map((point, index) => index === 0 || index === coords.length - 1 ? (
             <text key={`${point.label}-${index}-label`} x={point.x} y={height - 4} textAnchor={index === 0 ? 'start' : 'end'} className="type-micro-label fill-ui-text-muted">

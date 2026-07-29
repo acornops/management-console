@@ -3,11 +3,8 @@ import { AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
-import { Button } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { TargetMcpServerTestConnectionResult, controlPlaneApi } from '@/services/controlPlaneApi';
+import { Button, CollectionState, EmptyState, InlineLoadingIndicator, PageShell } from '@acornops/ui';
+import { TargetMcpServerTestConnectionResult, controlPlaneApi, CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
 import { DeleteMcpServerDialog, McpServerFormDialog } from '@/features/targets/admin/McpServersDialogs';
@@ -422,9 +419,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setServerMutationError(null);
     applyServerEnabledState(server.id, enabled);
     try {
-      await controlPlaneApi.updateTargetMcpServer(target.workspaceId, target.id, server.id, {
-        enabled
-      });
+      await controlPlaneApi.updateTargetMcpServer(target.workspaceId, target.id, server.id, { enabled });
       await loadCatalog({ syncParent: true });
     } catch (error) {
       applyServerEnabledState(server.id, server.enabled);
@@ -488,7 +483,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <McpServersViewHeader
         target={target}
         canEditServers={canEditServers}
@@ -640,6 +635,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           />
         )}
       </AnimatePresence>
-    </div>
+    </PageShell>
   );
 };

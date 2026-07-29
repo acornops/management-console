@@ -6,7 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const srcRoot = join(root, 'src');
+const uiSourceRoot = join(root, 'packages/ui/src');
 const exceptions = JSON.parse(readFileSync(join(root, 'scripts/design-system-exceptions.json'), 'utf8'));
+const catalogInventory = JSON.parse(readFileSync(join(root, 'scripts/design-system-catalog.json'), 'utf8'));
+const appPageContentPath = join(root, 'src/app/AppPageContent.tsx');
+const uiIndexPath = join(root, 'packages/ui/src/index.ts');
+const catalogPath = join(root, 'src/design-system.tsx');
 const failures = [];
 
 function sourceFiles(directory) {
@@ -23,11 +28,11 @@ function productionFiles(directory) {
   }).filter((path) => ['.ts', '.tsx', '.css'].includes(extname(path)) && !path.includes('.test.'));
 }
 
-function jsxButtonOpenings(source) {
+function jsxOpenings(source, startPattern) {
   const openings = [];
-  const startPattern = /<(?:motion\.)?button\b/g;
   let match;
 
+  startPattern.lastIndex = 0;
   while ((match = startPattern.exec(source)) !== null) {
     let braceDepth = 0;
     let quote = '';
@@ -67,11 +72,32 @@ function report(path, rule, detail) {
   failures.push(`${relative(root, path)}: ${rule}: ${detail}`);
 }
 
-const files = sourceFiles(srcRoot);
-const productionSources = productionFiles(srcRoot);
+const files = [srcRoot, uiSourceRoot].flatMap(sourceFiles);
+const productionSources = [srcRoot, uiSourceRoot].flatMap(productionFiles);
 const namedTailwindPalette = /(?:^|[\s'"`])(?:[a-z-]+:)*(?:bg|text|border|divide|ring|outline|shadow|fill|stroke|from|via|to|decoration|caret|accent)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950)(?:\/[^\s'"`}]+)?/g;
-const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
+const prohibitedTypographyUtility = /(?:^|[\s'"`])(?:font-(?:bold|extrabold)|uppercase|tracking-(?:wider|widest)|tracking-\[[^\]]+\]|text-\[(?:9|10|11)px\]|text-\[(?:0\.5625|0\.625|0\.68|0\.6875)rem\])(?=$|[\s'"`}])/g;
+const canonicalHeadingRole = /(?:^|[\s'"`])type-(?:route-title|section-title|panel-title|row-title|data)(?=$|[\s'"`}])/;
+const prohibitedActionTypography = /(?:^|[\s'"`])(?:type-(?:label|micro-label|emphasis)|font-(?:bold|extrabold)|uppercase|tracking-(?:wide|wider|widest))(?=$|[\s'"`}])/;
+const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|navigationItemClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
 const canonicalButtonTarget = /(?:^|[\s'"`])(?:control-target|min-h-11|h-11|min-h-12|h-12|min-h-control|h-control)(?=$|[\s'"`])/;
+const semanticTextRole = /(?:^|[\s'"`])type-(?:body|caption|ui|label|micro-label|emphasis|row-title)(?=$|[\s'"`}])/;
+const canonicalModules = new Set([
+  'Button.tsx',
+  'Checkbox.tsx',
+  'CollectionState.tsx',
+  'ComponentVocabulary.tsx',
+  'DangerZone.tsx',
+  'DataTable.tsx',
+  'Dialog.tsx',
+  'DiscoveryFilterBar.tsx',
+  'EmptyState.tsx',
+  'FormControls.tsx',
+  'OverlayFrames.tsx',
+  'PageComposition.tsx',
+  'RightSidePanel.tsx',
+  'Select.tsx',
+  'Tooltip.tsx'
+]);
 
 for (const path of productionSources) {
   const source = readFileSync(path, 'utf8');
@@ -82,23 +108,50 @@ for (const path of productionSources) {
   if (/\bbackdrop-blur(?:-|\b)/.test(source)) {
     report(path, 'no-glass', 'backdrop blur is prohibited; use an opaque token scrim or surface');
   }
+  if (extname(path) === '.tsx') {
+    for (const opening of jsxOpenings(source, /<[A-Za-z][A-Za-z0-9.]*(?=[\s>])/g)) {
+      if (!/\btext-accent-bright\b/.test(opening.source) || /\bdata-brand-wordmark\b/.test(opening.source)) continue;
+      const line = source.slice(0, opening.start).split('\n').length;
+      report(path, 'readable-accent-text', `line ${line}: text-accent-bright is limited to explicitly marked brand wordmarks`);
+    }
+  }
+  for (const match of source.matchAll(prohibitedTypographyUtility)) {
+    report(path, 'semantic-typography', `${match[0].trim()} must be replaced by a documented semantic typography role`);
+  }
+  if (/text-xl[^\n"'`]*font-semibold[^\n"'`]*tracking-tight|text-xl[^\n"'`]*tracking-tight[^\n"'`]*font-semibold/.test(source)) {
+    report(path, 'data-typography', 'metric and count readouts must use the type-data semantic role');
+  }
 }
 
 for (const path of files) {
   const source = readFileSync(path, 'utf8');
   const repoPath = relative(root, path).replaceAll('\\', '/');
+  const isPackageSource = repoPath.startsWith('packages/ui/src/');
 
-  if (repoPath !== 'src/components/common/Select.tsx' && /<select(?:\s|>)/.test(source)) {
+  if (repoPath !== 'packages/ui/src/Select.tsx' && /<select(?:\s|>)/.test(source)) {
     report(path, 'shared-select', 'use the typed Select primitive');
   }
-  if (repoPath !== 'src/components/common/Checkbox.tsx' && /type=["']checkbox["']/.test(source)) {
+  if (repoPath !== 'packages/ui/src/Checkbox.tsx' && /type=["']checkbox["']/.test(source)) {
     report(path, 'shared-checkbox', 'use the Checkbox primitive');
   }
-  if (repoPath !== 'src/components/common/FormControls.tsx' && /type=["']radio["']/.test(source)) {
+  if (repoPath !== 'packages/ui/src/FormControls.tsx' && /type=["']radio["']/.test(source)) {
     report(path, 'shared-radio', 'use the Radio primitive');
   }
-  if (repoPath !== 'src/components/common/FormControls.tsx' && /role=["']switch["']/.test(source)) {
+  if (repoPath !== 'packages/ui/src/FormControls.tsx' && /role=["']switch["']/.test(source)) {
     report(path, 'shared-switch', 'use the Switch primitive');
+  }
+  if (isPackageSource && /(?:from\s+|import\s*)["']@\/|(?:from\s+|import\s*)["'][^"']*\/src\//.test(source)) {
+    report(path, 'package-boundary', 'package modules cannot import Management Console application modules');
+  }
+  if (repoPath.startsWith('src/components/common/') && canonicalModules.has(repoPath.split('/').at(-1))) {
+    report(path, 'local-reimplementation', 'canonical components must be imported from @acornops/ui');
+  }
+  if (isPackageSource) {
+    for (const match of source.matchAll(/var\((--[a-z0-9-]+)/g)) {
+      if (!match[1].startsWith('--ao-')) {
+        report(path, 'namespaced-token', `${match[1]} must use the --ao-* namespace`);
+      }
+    }
   }
   if (/variant\s*=\s*["']accent["']|variant\s*:\s*["']accent["']/.test(source)) {
     report(path, 'button-intent', 'accent was renamed to activation');
@@ -112,8 +165,8 @@ for (const path of files) {
     report(path, 'token-colors', 'component-local literal colors are prohibited');
   }
 
-  if (repoPath.startsWith('src/pages/') && /px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10/.test(source)) {
-    report(path, 'route-shell-copy', 'use PageShell instead of copying route margins and scrolling');
+  if (repoPath.startsWith('src/') && /px-4[^\n"'`]*sm:px-6[^\n"'`]*lg:px-10/.test(source)) {
+    report(path, 'route-shell-copy', 'use PageShell or route padding tokens instead of copying responsive route margins');
   }
 
   const hasHandRolledLoadingBranch = /\{[^\n]*(?:isLoading\w*|loading)[^\n]*(?:\?|&&)/i.test(source);
@@ -128,12 +181,96 @@ for (const path of files) {
     report(path, 'async-collection-state', 'compose loading and empty precedence through CollectionState or add a documented contextual exception');
   }
 
-  for (const opening of jsxButtonOpenings(source)) {
+  for (const opening of jsxOpenings(source, /<(?:motion\.)?button\b/g)) {
     const isDesktopSidebarNavigationRow = repoPath === 'src/app/AppDesktopSidebarParts.tsx' && /navButtonClass\(/.test(opening.source);
     if (!approvedButtonSizingHelpers.test(opening.source) && !canonicalButtonTarget.test(opening.source) && !isDesktopSidebarNavigationRow) {
       const line = source.slice(0, opening.start).split('\n').length;
       report(path, 'raw-button-target', `line ${line}: raw buttons require an approved shared sizing helper or a 44px mobile target (36px compact targets may begin at sm)`);
     }
+  }
+
+  for (const opening of jsxOpenings(source, /<(?:Button|(?:motion\.)?button)\b/g)) {
+    if (!prohibitedActionTypography.test(opening.source)) continue;
+    const line = source.slice(0, opening.start).split('\n').length;
+    report(path, 'action-typography', `line ${line}: actions use type-ui sentence case; label, emphasis, uppercase, and wide-tracking roles are prohibited`);
+  }
+
+  for (const opening of jsxOpenings(source, /<h[1-6]\b/g)) {
+    if (canonicalHeadingRole.test(opening.source)) continue;
+    const line = source.slice(0, opening.start).split('\n').length;
+    report(path, 'heading-typography', `line ${line}: headings require a canonical route, section, panel, row, or data typography role`);
+  }
+
+  if (isPackageSource) {
+    for (const opening of jsxOpenings(source, /<[A-Za-z][A-Za-z0-9.]*(?=[\s>])/g)) {
+      if (!/\brole\s*=\s*["'](?:alert|status)["']/.test(opening.source)) continue;
+      if (!/\btext-(?:xs|sm|base|lg|xl)\b/.test(opening.source) || semanticTextRole.test(opening.source)) continue;
+      const line = source.slice(0, opening.start).split('\n').length;
+      report(path, 'status-typography', `line ${line}: shared alert and status surfaces with explicit sizing require a semantic typography role`);
+    }
+  }
+
+  if (repoPath !== 'packages/ui/src/DataTable.tsx' && !exceptions.rawTableHeaderExceptions?.[repoPath]) {
+    for (const opening of jsxOpenings(source, /<th\b/g)) {
+      if (/\bscope\s*=\s*["']row["']/.test(opening.source)) continue;
+      const line = source.slice(0, opening.start).split('\n').length;
+      report(path, 'shared-table-header', `line ${line}: visible column headers must compose through DataTableHeaderCell`);
+    }
+  }
+}
+
+const uiIndexSource = readFileSync(uiIndexPath, 'utf8');
+const catalogSource = readFileSync(catalogPath, 'utf8');
+const exportedModules = new Set(
+  [...uiIndexSource.matchAll(/export \* from ['"]\.\/([^'"]+)['"]/g)].map((match) => match[1])
+);
+const catalogGroups = [
+  ['catalogedModules', catalogInventory.catalogedModules],
+  ['composedModules', catalogInventory.composedModules],
+  ['nonVisualModules', catalogInventory.nonVisualModules]
+];
+const classifiedModules = new Map();
+
+for (const [group, entries] of catalogGroups) {
+  for (const [moduleName, evidence] of Object.entries(entries)) {
+    if (classifiedModules.has(moduleName)) {
+      report(uiIndexPath, 'catalog-inventory', `${moduleName} is classified more than once`);
+    }
+    classifiedModules.set(moduleName, group);
+    if (!exportedModules.has(moduleName)) {
+      report(uiIndexPath, 'catalog-inventory', `${moduleName} is classified but is not a public module`);
+    }
+    if (typeof evidence !== 'string' || evidence.trim().length < (group === 'catalogedModules' ? 3 : 30)) {
+      report(catalogPath, 'catalog-evidence', `${moduleName} requires durable ${group} evidence`);
+    }
+    if (group === 'catalogedModules' && !catalogSource.includes(evidence)) {
+      report(catalogPath, 'catalog-evidence', `${moduleName} evidence token ${evidence} is absent from the catalog`);
+    }
+  }
+}
+
+for (const moduleName of exportedModules) {
+  if (!classifiedModules.has(moduleName)) {
+    report(uiIndexPath, 'catalog-inventory', `${moduleName} must be cataloged, composed, or documented as non-visual`);
+  }
+}
+
+const appPageContentSource = readFileSync(appPageContentPath, 'utf8');
+const routedAuthenticatedPagePaths = new Set(
+  [...appPageContentSource.matchAll(/import\(["']@\/pages\/([^"']+)["']\)/g)]
+    .map((match) => `src/pages/${match[1]}.tsx`)
+);
+const authenticatedRoutePagePaths = new Set(exceptions.authenticatedRoutePages);
+
+for (const repoPath of routedAuthenticatedPagePaths) {
+  if (!authenticatedRoutePagePaths.has(repoPath)) {
+    report(appPageContentPath, 'authenticated-route-inventory', `${repoPath} must be listed in authenticatedRoutePages`);
+  }
+}
+
+for (const repoPath of authenticatedRoutePagePaths) {
+  if (!routedAuthenticatedPagePaths.has(repoPath)) {
+    report(appPageContentPath, 'authenticated-route-inventory', `${repoPath} is not loaded by AppPageContent`);
   }
 }
 
@@ -141,6 +278,9 @@ for (const repoPath of exceptions.authenticatedRoutePages) {
   const source = readFileSync(join(root, repoPath), 'utf8');
   if (!source.includes('PageShell') && !exceptions.embeddedRouteExceptions[repoPath]) {
     report(join(root, repoPath), 'authenticated-route-shell', 'route must compose through PageShell');
+  }
+  if (jsxOpenings(source, /<PageShell\b/g).some((opening) => /\bwidth\s*=/.test(opening.source))) {
+    report(join(root, repoPath), 'authenticated-route-width', 'authenticated routes use the default full-width PageShell');
   }
   if (!source.includes('PageHeader') && !exceptions.routeHeaderDelegates[repoPath] && !exceptions.embeddedRouteExceptions[repoPath]) {
     report(join(root, repoPath), 'authenticated-route-header', 'route must compose through PageHeader');
@@ -163,6 +303,12 @@ for (const [repoPath, reason] of Object.entries(exceptions.embeddedRouteExceptio
 for (const [repoPath, reason] of Object.entries(exceptions.asyncCollectionStateExceptions || {})) {
   if (typeof reason !== 'string' || reason.trim().length < 30) {
     report(join(root, repoPath), 'documented-exception', 'async collection exceptions require a durable contextual reason');
+  }
+}
+
+for (const [repoPath, reason] of Object.entries(exceptions.rawTableHeaderExceptions || {})) {
+  if (typeof reason !== 'string' || reason.trim().length < 30) {
+    report(join(root, repoPath), 'documented-exception', 'raw table-header exceptions require a durable contextual reason');
   }
 }
 

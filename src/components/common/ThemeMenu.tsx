@@ -17,10 +17,7 @@ export interface ThemeMenuProps {
 
 const themePreferences: ThemePreference[] = ['system', 'light', 'dark'];
 
-export function getThemeMenuFocusIndex(
-  currentIndex: number,
-  key: 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'
-): number {
+export function getThemeMenuFocusIndex(currentIndex: number, key: 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'): number {
   if (key === 'Home') return 0;
   if (key === 'End') return themePreferences.length - 1;
   if (key === 'ArrowDown') return (currentIndex + 1) % themePreferences.length;
@@ -33,12 +30,7 @@ function preferenceIcon(preference: ThemePreference, className: string): React.R
   return <Moon className={className} aria-hidden="true" />;
 }
 
-export const ThemeMenu: React.FC<ThemeMenuProps> = ({
-  preference,
-  resolvedTheme,
-  variant,
-  onSelect
-}) => {
+export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme, variant, onSelect }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(false);
   const wrapperRef = React.useRef<HTMLDivElement>(null);
@@ -81,25 +73,22 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({
 
     event.preventDefault();
     const currentIndex = itemRefs.current.findIndex((item) => item === document.activeElement);
-    focusItem(getThemeMenuFocusIndex(
-      currentIndex < 0 ? selectedIndex : currentIndex,
-      event.key as 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'
-    ));
+    focusItem(getThemeMenuFocusIndex(currentIndex < 0 ? selectedIndex : currentIndex, event.key as 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'));
   };
 
-  const wrapperClass = variant === 'login'
-    ? 'fixed right-4 top-4 z-[70]'
-    : 'relative w-full';
-  const menuPlacementClass = variant === 'login'
-    ? 'fixed bottom-4 left-4 right-4 grid grid-cols-3 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:block'
-    : variant === 'account'
+  const wrapperClass = variant === 'login' ? 'fixed right-4 top-4 z-[70]' : 'relative w-full';
+  const menuPlacementClass =
+    variant === 'login'
+      ? 'fixed bottom-4 left-4 right-4 grid grid-cols-3 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:block'
+      : variant === 'account'
       ? 'bottom-0 left-full ml-2'
       : 'bottom-full right-0 mb-2';
-  const triggerClass = variant === 'login'
-    ? 'flex h-11 w-11 items-center justify-center rounded-lg border border-control-boundary bg-ui-surface/95 text-ui-text-muted shadow-sm transition-colors duration-[160ms] hover:bg-ui-surface-strong hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg motion-reduce:duration-0'
-    : variant === 'account'
+  const triggerClass =
+    variant === 'login'
+      ? 'flex h-11 w-11 items-center justify-center rounded-lg border border-control-boundary bg-ui-surface/95 text-ui-text-muted shadow-sm transition-colors duration-[160ms] hover:bg-ui-surface-strong hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg motion-reduce:duration-0'
+      : variant === 'account'
       ? 'group/theme flex min-h-12 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0'
-      : 'flex min-h-11 w-full items-center justify-between rounded-md px-3 py-2 text-xs font-bold text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0';
+      : 'type-ui flex min-h-11 w-full items-center justify-between rounded-md px-3 py-2 text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0';
 
   return (
     <div ref={wrapperRef} className={wrapperClass} data-theme-menu={variant}>
@@ -135,7 +124,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({
               <ThemeToggleIcon resolvedTheme={resolvedTheme} />
             </span>
             <span className="min-w-0">
-              <span className="block text-sm font-bold leading-5">{t('app.theme')}</span>
+              <span className="type-row-title block">{t('app.theme')}</span>
               <span className="block text-xs leading-4 text-ui-text-muted">{selectedLabel}</span>
             </span>
           </span>
@@ -156,12 +145,18 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({
             id={menuId}
             role="menu"
             aria-label={t('app.themeMenuLabel')}
-            initial={{ opacity: 0, y: variant === 'mobile' ? 4 : -4, scale: 0.985 }}
+            initial={{
+              opacity: 0,
+              y: variant === 'mobile' ? 4 : -4,
+              scale: 0.985
+            }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: variant === 'mobile' ? 4 : -4, scale: 0.99 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
             onKeyDown={handleMenuKeyDown}
-            className={`${variant === 'login' ? 'w-auto sm:w-48' : 'absolute w-48'} z-[70] rounded-lg border border-control-boundary bg-ui-surface p-1.5 text-ui-text shadow-xl ${menuPlacementClass}`}
+            className={`${
+              variant === 'login' ? 'w-auto sm:w-48' : 'absolute w-48'
+            } z-[70] rounded-lg border border-control-boundary bg-ui-surface p-1.5 text-ui-text shadow-xl ${menuPlacementClass}`}
             data-resolved-theme={resolvedTheme}
           >
             {themePreferences.map((option, index) => {
@@ -170,7 +165,9 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({
               return (
                 <button
                   key={option}
-                  ref={(element) => { itemRefs.current[index] = element; }}
+                  ref={(element) => {
+                    itemRefs.current[index] = element;
+                  }}
                   type="button"
                   role="menuitemradio"
                   aria-checked={isSelected}
@@ -183,9 +180,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({
                     isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                   }`}
                 >
-                  <span className="flex h-5 w-5 items-center justify-center">
-                    {preferenceIcon(option, 'h-4 w-4')}
-                  </span>
+                  <span className="flex h-5 w-5 items-center justify-center">{preferenceIcon(option, 'h-4 w-4')}</span>
                   <span className="flex-1">{label}</span>
                   <span className="flex h-4 w-4 items-center justify-center" aria-hidden="true">
                     {isSelected && <Check className="h-3.5 w-3.5" />}

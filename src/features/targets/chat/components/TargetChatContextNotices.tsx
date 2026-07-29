@@ -2,7 +2,7 @@ import React from 'react';
 import type { TFunction } from 'i18next';
 import { Bot } from 'lucide-react';
 
-import { InlineAlert } from '@/components/common/InlineAlert';
+import { InlineAlert } from '@acornops/ui';
 import type { ChatSession } from '@/types';
 
 export const TargetChatContextNotices: React.FC<{

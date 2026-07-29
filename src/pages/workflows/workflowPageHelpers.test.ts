@@ -44,11 +44,11 @@ describe('workflow ownership mapping', () => {
       undefined,
       'workspace-1',
       undefined,
-      new Map([['user-1', 'Ning Tan']])
+      new Map([['user-1', 'Test User']])
     );
 
     expect(mapped.source).toBe('user');
-    expect(mapped.owner).toBe('Ning Tan');
+    expect(mapped.owner).toBe('Test User');
     expect(mapped.origin).toEqual({
       type: 'template',
       templateId: 'acornops-starter',
@@ -62,8 +62,8 @@ describe('workflow ownership mapping', () => {
         origin: { type: 'manual' },
         createdByUser: {
           id: 'user-1',
-          displayName: 'Ning Tan',
-          email: 'ning@example.com'
+          displayName: 'Test User',
+          email: 'test-user@example.com'
         }
       }),
       undefined,
@@ -71,6 +71,6 @@ describe('workflow ownership mapping', () => {
     );
 
     expect(mapped.source).toBe('user');
-    expect(mapped.owner).toBe('Ning Tan');
+    expect(mapped.owner).toBe('Test User');
   });
 });

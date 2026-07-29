@@ -1,5 +1,5 @@
 import React from 'react';
-import { MiniProgressBar } from '@/components/common/Loading';
+import { MiniProgressBar } from '@acornops/ui';
 
 interface AppSessionRestoringScreenProps {
   logoSrc: string;

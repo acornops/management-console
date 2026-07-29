@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { InlineConfirmation } from '@/components/common/InlineConfirmation';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { InlineConfirmation } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import {
   controlPlaneApi,
@@ -74,7 +74,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
     <div className="border-b border-ui-border p-6 last:border-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-bold text-ui-text">{link.clientDisplayName}</p>
+          <p className="type-row-title">{link.clientDisplayName}</p>
           <p className="mt-1 break-words text-xs text-ui-text-muted">
             {link.provider} · {link.externalDisplayName || link.externalUserId}
           </p>

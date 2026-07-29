@@ -1,9 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, Bot, CircleCheck, Cpu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import {
+  Button,
+  DataTableHeader,
+  DataTableHeaderCell,
+  PageHeader,
+  PageShell
+} from '@acornops/ui';
 import { MetricChart } from '@/components/common/MetricChart';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
 import { issueStatusTone, issueTargetScopeLabel, kubernetesIssueNamespace } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
@@ -71,19 +76,13 @@ function getPersistedMetricTimeline(points: ClusterMetricHistoryPoint[]): Metric
       return {
         timestamp,
         cpu: typeof point.cpuCores === 'number' && Number.isFinite(point.cpuCores) ? point.cpuCores : null,
-        memory: typeof point.memoryBytes === 'number' && Number.isFinite(point.memoryBytes)
-          ? point.memoryBytes / (1024 ** 3)
-          : null
+        memory: typeof point.memoryBytes === 'number' && Number.isFinite(point.memoryBytes) ? point.memoryBytes / 1024 ** 3 : null
       };
     })
     .filter((point): point is MetricTimelinePoint => point !== null);
 }
 
-export const OverviewView: React.FC<OverviewViewProps> = ({
-  cluster,
-  issueSummary,
-  onOpenCopilot
-}) => {
+export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummary, onOpenCopilot }) => {
   const { t } = useTranslation();
   const podCount = getPodCount(cluster);
   const telemetryFreshness = getTelemetryFreshness(cluster);
@@ -97,14 +96,20 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     () =>
       persistedMetricTimeline
         .filter((point): point is MetricTimelinePoint & { cpu: number } => point.cpu !== null)
-        .map((point) => ({ label: formatTime(point.timestamp), value: point.cpu })),
+        .map((point) => ({
+          label: formatTime(point.timestamp),
+          value: point.cpu
+        })),
     [persistedMetricTimeline]
   );
   const memorySeries = useMemo(
     () =>
       persistedMetricTimeline
         .filter((point): point is MetricTimelinePoint & { memory: number } => point.memory !== null)
-        .map((point) => ({ label: formatTime(point.timestamp), value: point.memory })),
+        .map((point) => ({
+          label: formatTime(point.timestamp),
+          value: point.memory
+        })),
     [persistedMetricTimeline]
   );
   const hasMetricSamples = cpuSeries.length > 0 || memorySeries.length > 0;
@@ -138,7 +143,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
     setMetricHistory(cluster.metricHistory || []);
     setMetricHistoryStatus('loading');
-    void controlPlaneApi.getClusterMetricsHistory(cluster.workspaceId, cluster.id, { window: '6h', limit: 48 })
+    void controlPlaneApi
+      .getClusterMetricsHistory(cluster.workspaceId, cluster.id, {
+        window: '6h',
+        limit: 48
+      })
       .then((points) => {
         if (!isCurrent) return;
         setMetricHistory(points);
@@ -159,7 +168,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     let isCurrent = true;
     setIssueLoadStatus('loading');
 
-    void controlPlaneApi.listTargetIssues(cluster.workspaceId, cluster.id, { limit: 50 })
+    void controlPlaneApi
+      .listTargetIssues(cluster.workspaceId, cluster.id, { limit: 50 })
       .then((page) => {
         if (!isCurrent) return;
         setClusterIssues(page.items);
@@ -188,18 +198,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const hasIssueRows = clusterIssues !== null;
   const hasIssueCounts = issueSummary !== null || hasIssueRows;
   const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);
-  const criticalIssues = issueSummary
-    ? issueSummary.critical
-    : hasIssueRows
-      ? reportedIssues.filter((issue) => issue.severity === 'critical').length
-    : 0;
-  const warningIssues = issueSummary
-    ? issueSummary.warning
-    : hasIssueRows
-      ? reportedIssues.filter((issue) => issue.severity === 'warning').length
-    : 0;
+  const criticalIssues = issueSummary ? issueSummary.critical : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'critical').length : 0;
+  const warningIssues = issueSummary ? issueSummary.warning : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'warning').length : 0;
   const shouldShowIssueLoadFailure = issueLoadStatus === 'error' && (!issueSummary || issueSummary.total > 0);
-  const scopedResourceCount = cluster.resourceSummary?.resourceCount ??
+  const scopedResourceCount =
+    cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
   const openIssueTriage = (issue: ControlPlaneIssueItem) => {
     const namespace = kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'));
@@ -214,41 +217,50 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     <PageShell>
       <PageHeader
         title={t('clusterOverview.title')}
-        description={t('clusterOverview.latestTelemetryFor', { name: cluster.name })}
-        actions={(
+        description={t('clusterOverview.latestTelemetryFor', {
+          name: cluster.name
+        })}
+        actions={
           <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">
             <div
-              className={`h-2 w-2 rounded-full ${telemetryFreshness === 'current' ? 'bg-status-success' : telemetryFreshness === 'stale' ? 'bg-status-warning' : 'bg-status-danger'}`}
+              className={`h-2 w-2 rounded-full ${
+                telemetryFreshness === 'current' ? 'bg-status-success' : telemetryFreshness === 'stale' ? 'bg-status-warning' : 'bg-status-danger'
+              }`}
               aria-hidden="true"
             />
-            <span className="type-label">{telemetryLabel} · {formatLastUpdated(cluster.lastUpdate)}</span>
+            <span className="type-label">
+              {telemetryLabel} · {formatLastUpdated(cluster.lastUpdate)}
+            </span>
           </div>
-        )}
+        }
       />
 
-      <section aria-labelledby={issueSectionTitleId} aria-busy={issueLoadStatus === 'loading' || undefined} className="mb-8 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+      <section
+        aria-labelledby={issueSectionTitleId}
+        aria-busy={issueLoadStatus === 'loading' || undefined}
+        className="mb-8 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm"
+      >
         <div className="flex flex-col gap-6 border-b border-ui-border bg-ui-bg px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-start gap-4">
             <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface/70 text-accent-strong">
               <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <h2 id={issueSectionTitleId} className="type-row-title">{t('clusterOverview.activeIssues')}</h2>
+              <h2 id={issueSectionTitleId} className="type-row-title">
+                {t('clusterOverview.activeIssues')}
+              </h2>
               <p className="type-caption mt-2 max-w-3xl">
-                {t('clusterOverview.activeIssuesScope', { pods: podCount, resources: scopedResourceCount })}
+                {t('clusterOverview.activeIssuesScope', {
+                  pods: podCount,
+                  resources: scopedResourceCount
+                })}
               </p>
-              {hasIssueCounts && (
-                <p className="type-body mt-2 max-w-3xl">
-                  {t('clusterOverview.activeIssuesBody', { count: issueCount })}
-                </p>
-              )}
+              {hasIssueCounts && <p className="type-body mt-2 max-w-3xl">{t('clusterOverview.activeIssuesBody', { count: issueCount })}</p>}
             </div>
           </div>
           {hasIssueCounts && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="type-caption rounded-full bg-ui-surface px-3 py-1">
-                {t('clusterOverview.issueCount', { count: issueCount })}
-              </span>
+              <span className="type-caption rounded-full bg-ui-surface px-3 py-1">{t('clusterOverview.issueCount', { count: issueCount })}</span>
               <span className="type-caption rounded-full bg-status-danger-soft px-3 py-1 text-status-danger-text">
                 {t('clusterOverview.criticalIssues', { count: criticalIssues })}
               </span>
@@ -271,23 +283,21 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <>
             <div className="hidden overflow-x-auto 2xl:block">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-ui-border">
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.issue')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.severity')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.namespace')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('overview.lastSeenLabel')}</th>
-                    {onOpenCopilot && <th className="type-label px-5 py-3 text-right">{t('clusterOverview.action')}</th>}
+                <DataTableHeader>
+                  <tr>
+                    <DataTableHeaderCell density="compact">{t('clusterOverview.issue')}</DataTableHeaderCell>
+                    <DataTableHeaderCell density="compact">{t('clusterOverview.severity')}</DataTableHeaderCell>
+                    <DataTableHeaderCell density="compact">{t('clusterOverview.namespace')}</DataTableHeaderCell>
+                    <DataTableHeaderCell density="compact">{t('overview.lastSeenLabel')}</DataTableHeaderCell>
+                    {onOpenCopilot && <DataTableHeaderCell density="compact" numeric>{t('clusterOverview.action')}</DataTableHeaderCell>}
                   </tr>
-                </thead>
+                </DataTableHeader>
                 <tbody>
                   {reportedIssues.map((issue) => (
                     <tr key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
                       <td className="max-w-[34rem] px-5 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
-                            {t(`issues.status.${issue.status}`)}
-                          </span>
+                          <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
                           <span className="type-caption text-ui-text-muted">
                             {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
                           </span>
@@ -308,16 +318,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                         />
                       </td>
                       <td className="px-5 py-4 align-top">
-                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>
-                          {t(`issues.severity.${issue.severity}`)}
-                        </span>
+                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
                       </td>
-                      <td className="type-caption break-words px-5 py-4 align-top">
-                        {kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}
-                      </td>
-                      <td className="type-caption px-5 py-4 align-top">
-                        {formatRelativeTime(issueTimestamp(issue))}
-                      </td>
+                      <td className="type-caption break-words px-5 py-4 align-top">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</td>
+                      <td className="type-caption px-5 py-4 align-top">{formatRelativeTime(issueTimestamp(issue))}</td>
                       {onOpenCopilot && (
                         <td className="px-5 py-4 align-top text-right">
                           {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
@@ -343,12 +347,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               {reportedIssues.map((issue) => (
                 <article key={issue.id} className="p-5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>
-                      {t(`issues.severity.${issue.severity}`)}
-                    </span>
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
-                      {t(`issues.status.${issue.status}`)}
-                    </span>
+                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
+                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
                   </div>
                   <h3 className="type-row-title mt-4 break-words">{issue.title}</h3>
                   <p className="type-body mt-2 break-words">{issue.reason || issue.summary}</p>
@@ -399,9 +399,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             </div>
             <h3 className="type-row-title mt-4">{t('clusterOverview.issueLoadFailedTitle')}</h3>
-            <p className="type-body mt-2 max-w-xl">
-              {t(issueSummary ? 'clusterOverview.issueLoadFailedBody' : 'clusterOverview.issueLoadFailedWithoutSummaryBody')}
-            </p>
+            <p className="type-body mt-2 max-w-xl">{t(issueSummary ? 'clusterOverview.issueLoadFailedBody' : 'clusterOverview.issueLoadFailedWithoutSummaryBody')}</p>
             <Button onClick={retryIssues} variant="secondary" size="sm" className="mt-4">
               {t('common.retry')}
             </Button>
@@ -418,7 +416,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       </section>
 
       {metricHistoryStatus === 'error' && (
-        <div className="mb-4 flex flex-col gap-3 rounded-md border border-status-warning/25 bg-status-warning-soft px-4 py-4 text-status-warning-text sm:flex-row sm:items-center sm:justify-between" role="alert">
+        <div
+          className="mb-4 flex flex-col gap-3 rounded-md border border-status-warning/25 bg-status-warning-soft px-4 py-4 text-status-warning-text sm:flex-row sm:items-center sm:justify-between"
+          role="alert"
+        >
           <div className="flex min-w-0 items-start gap-3">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <div className="min-w-0">
@@ -460,7 +461,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           />
         </div>
       )}
-
     </PageShell>
   );
 };

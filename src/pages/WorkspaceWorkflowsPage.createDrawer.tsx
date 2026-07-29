@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
-import { RightSidePanel } from '@/components/common/RightSidePanel';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { ModalStepIndicator } from '@acornops/ui';
+import { RightSidePanel } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { createWorkflowDraft, type CreateWorkflowDraft } from '@/pages/workflows/workflowPageHelpers';

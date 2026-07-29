@@ -43,7 +43,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - Audit-log detail preserves `operation`, `objectType`, and `object`.
 - Target mutation UI is gated by `permissions.manage_targets`.
 - Workspace AI settings UI is gated by `permissions.manage_ai_settings`.
-- AI provider credential flows must never expect or display API key values.
+- AI provider credential flows must never expect or display API key values. Provider status identifies whether the effective key is a workspace override, an inherited platform default, or absent; workspace overrides take precedence.
 - MCP registry role, policy, and editability data comes from the control plane; the console must not hard-code editable role keys or workspace-management availability.
 - Workspace MCP credentials are write-only; responses expose only whether a credential is configured. Workflows inherit MCP servers and tools from selected agents unless a narrower restriction is saved.
 - Workflow create always sends `restrictionMode`: `inherit` by default after
@@ -110,6 +110,14 @@ The management console is the browser client for the control-plane API. Keep thi
   enter credential connection before pending-tool review; unauthenticated installations
   retain direct discovery and review.
 - Kubernetes clusters and VMs retain target-scoped MCP servers, skills, and tools for their generic target agents. These target capabilities are administered on the target and are not reassigned to workspace agents.
+- Platform MCP and skill defaults copied when the workspace was created appear
+  as disabled rows in the existing Agent, Kubernetes, and VM inventories with a
+  `Platform default` label. Their source cannot be edited or removed while they
+  remain untouched initialization entries. Explicit enablement creates a normal
+  workspace-owned installation used by the existing credential or skill flow.
+  Later Platform Admin changes do not modify that workspace snapshot or any
+  enabled workspace-managed copy. Local additions remain fully
+  manageable, and built-in Tools are unchanged.
 - Workflow schedule create and update requests contain only the current user principal. Service identities remain available for non-schedule platform uses but are not presented in schedule UI.
 - Workspace workflow activity uses the cursor-paginated execution endpoint for
   open and attention counts, URL-backed filtering, and safe immutable

@@ -135,11 +135,15 @@ This full-stack flow uses the deployment repo `Taskfile.yml` and requires the `t
 In full-stack local mode, the management console is exposed via the edge proxy at `http://console.acornops.localhost:8088/`.
 Do not run this repository's local compose stack and `acornops-deployment` local stack at the same time on the same host ports.
 
-When dependencies change (`package.json` or lockfile), rebuild once:
+When dependencies change (`package.json`, a workspace package manifest, or the
+lockfile), rebuild once:
 
 ```bash
 docker compose up -d --build
 ```
+
+The development container reconciles the mounted `node_modules` volume at
+startup, so adding a workspace package does not require deleting the volume.
 
 The management console port is configurable with `MANAGEMENT_CONSOLE_PORT` (default `3000`).
 The production container listens on port `8080` internally and runs nginx as a non-root user.

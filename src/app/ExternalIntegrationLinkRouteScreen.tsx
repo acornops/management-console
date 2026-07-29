@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { MiniProgressBar } from '@/components/common/Loading';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { MiniProgressBar } from '@acornops/ui';
 import {
   buildExternalIntegrationWorkspaceGrants,
   createExternalIntegrationGrantDraft,
@@ -142,7 +142,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-ui-border bg-ui-surface text-accent-strong">
             <Link2 aria-hidden="true" className="h-5 w-5" />
           </div>
-          <h1 className="text-2xl font-semibold text-ui-text">
+          <h1 className="type-route-title text-ui-text">
             {preview
               ? t('externalIntegrationLink.approvalTitleNamed', { name: preview.clientDisplayName })
               : t('externalIntegrationLink.approvalTitle')}
@@ -159,24 +159,24 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
           <>
             <dl className="grid w-full gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm">
               <div>
-                <dt className="text-xs font-medium uppercase text-ui-text-muted">{t('externalIntegrationLink.integration')}</dt>
+                <dt className="type-label">{t('externalIntegrationLink.integration')}</dt>
                 <dd className="mt-1 break-words font-medium text-ui-text">{preview.clientDisplayName}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-ui-text-muted">{t('externalIntegrationLink.provider')}</dt>
+                <dt className="type-label">{t('externalIntegrationLink.provider')}</dt>
                 <dd className="mt-1 break-all font-medium text-ui-text">{preview.provider}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-ui-text-muted">{t('externalIntegrationLink.externalAccount')}</dt>
+                <dt className="type-label">{t('externalIntegrationLink.externalAccount')}</dt>
                 <dd className="mt-1 break-all font-medium text-ui-text">{preview.externalDisplayName || preview.externalUserId}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-ui-text-muted">{t('externalIntegrationLink.signedInAs')}</dt>
+                <dt className="type-label">{t('externalIntegrationLink.signedInAs')}</dt>
                 <dd className="mt-1 break-all font-medium text-ui-text">{preview.signedInUser.email}</dd>
               </div>
             </dl>
             <div className="w-full rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left">
-              <h2 className="text-sm font-semibold text-ui-text">{t('externalIntegrationLink.workspaceAccess')}</h2>
+              <h2 className="type-row-title text-ui-text">{t('externalIntegrationLink.workspaceAccess')}</h2>
               <div className="mt-3 grid gap-3">
                 {(preview.grantableWorkspaces || []).map((workspace) => {
                   const selectedCapabilities = grantDraft[workspace.workspaceId] || [];

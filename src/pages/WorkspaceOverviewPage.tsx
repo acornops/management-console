@@ -1,15 +1,11 @@
 import React from 'react';
-import {
-  ArrowRight,
-  Bot,
-  Clock3
-} from 'lucide-react';
+import { ArrowRight, Bot, Clock3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, buttonClassName } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { Button, buttonClassName } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
 import { ICONS } from '@/constants';
 import { issueStatusTone } from '@/pages/issues/issueUi';
@@ -17,11 +13,7 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import { controlPlaneApi, type ControlPlaneIssueItem, type ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { type KubernetesCluster, type Workspace } from '@/types';
 import { readRecentInvestigation } from '@/pages/workspace-overview/recentInvestigation';
-import {
-  buildWorkspaceOverviewCards,
-  type WorkspaceOverviewAttentionItem,
-  type WorkspaceOverviewTargetCard
-} from '@/pages/workspace-overview/workspaceOverviewModel';
+import { buildWorkspaceOverviewCards, type WorkspaceOverviewAttentionItem, type WorkspaceOverviewTargetCard } from '@/pages/workspace-overview/workspaceOverviewModel';
 import type { TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { AppPaths } from '@/utils/routes';
@@ -66,13 +58,20 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   const workflowActivity = useWorkspaceWorkflowActivity();
   const workflowActivityRevisionRef = React.useRef(workflowActivity.revision);
   const [workspaceVirtualMachines, setWorkspaceVirtualMachines] = React.useState(virtualMachines);
-  const loadIssuePage = React.useCallback(async ({ cursor, limit, signal }: { cursor?: string; limit: number; signal: AbortSignal }) => {
-    try {
-      return await controlPlaneApi.listWorkspaceIssues(workspace.id, { limit, cursor, signal });
-    } catch (error) {
-      throw new Error(formatControlPlaneError(error, t('overview.clusterIssuesUnavailable')));
-    }
-  }, [t, workspace.id]);
+  const loadIssuePage = React.useCallback(
+    async ({ cursor, limit, signal }: { cursor?: string; limit: number; signal: AbortSignal }) => {
+      try {
+        return await controlPlaneApi.listWorkspaceIssues(workspace.id, {
+          limit,
+          cursor,
+          signal
+        });
+      } catch (error) {
+        throw new Error(formatControlPlaneError(error, t('overview.clusterIssuesUnavailable')));
+      }
+    },
+    [t, workspace.id]
+  );
   const issueCollection = useCursorCollection({
     filters: { workspaceId: workspace.id },
     getKey: (issue: ControlPlaneIssueItem) => issue.id,
@@ -103,9 +102,8 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   const workspaceIssues = issueCollection.items;
   const isLoadingIssues = issueCollection.phase === 'loading' || issueCollection.phase === 'refreshing';
   const hasPriorVirtualMachineData = hasLoadedWorkspaceVirtualMachines || workspaceVirtualMachines.length > 0;
-  const isLoadingVirtualMachines = !hasLoadedWorkspaceVirtualMachines
-    && virtualMachines.length === 0
-    && (virtualMachineCollection.phase === 'loading' || virtualMachineCollection.phase === 'refreshing');
+  const isLoadingVirtualMachines =
+    !hasLoadedWorkspaceVirtualMachines && virtualMachines.length === 0 && (virtualMachineCollection.phase === 'loading' || virtualMachineCollection.phase === 'refreshing');
   const issueLoadError = issueCollection.error || null;
   const virtualMachineLoadError = virtualMachineCollection.error || null;
 
@@ -121,10 +119,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     onReplaceWorkspaceVirtualMachines(workspace.id, virtualMachineCollection.items);
   }, [onReplaceWorkspaceVirtualMachines, virtualMachineCollection.items, virtualMachineCollection.phase, workspace.id]);
 
-  const recentInvestigation = React.useMemo(
-    () => readRecentInvestigation(workspace.id, currentUserId),
-    [currentUserId, workspace.id]
-  );
+  const recentInvestigation = React.useMemo(() => readRecentInvestigation(workspace.id, currentUserId), [currentUserId, workspace.id]);
   const { attentionItems, connectedClusterCards, connectedVirtualMachineCards, criticalIssueCount, warningIssueCount } = React.useMemo(
     () =>
       buildWorkspaceOverviewCards({
@@ -140,28 +135,21 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   const recentInvestigationUpdated = recentInvestigation ? formatRelativeTime(recentInvestigation.timestamp, t) : '';
   const recentInvestigationBody = recentInvestigation
     ? t('overview.quickActionsResumeBody', {
-      targetName: recentInvestigation.targetName,
-      updated: recentInvestigationUpdated
-    })
+        targetName: recentInvestigation.targetName,
+        updated: recentInvestigationUpdated
+      })
     : '';
 
-  const targetPath = (card: { targetId: string; targetType: 'kubernetes' | 'virtual_machine' }) => (
+  const targetPath = (card: { targetId: string; targetType: 'kubernetes' | 'virtual_machine' }) =>
     card.targetType === 'kubernetes'
       ? AppPaths.workspaceKubernetesClusterDiagnostics(workspace.id, card.targetId)
-      : AppPaths.workspaceVirtualMachineDetail(workspace.id, card.targetId)
-  );
+      : AppPaths.workspaceVirtualMachineDetail(workspace.id, card.targetId);
 
-  const renderCollectionRecovery = (
-    message: string,
-    retry: () => Promise<void>,
-    tone: 'danger' | 'warning' = 'danger'
-  ) => (
+  const renderCollectionRecovery = (message: string, retry: () => Promise<void>, tone: 'danger' | 'warning' = 'danger') => (
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
       className={`flex flex-col gap-3 rounded-md border px-4 py-4 sm:flex-row sm:items-center sm:justify-between ${
-        tone === 'danger'
-          ? 'border-status-danger/25 bg-status-danger-soft text-status-danger-text'
-          : 'border-status-warning/25 bg-status-warning-soft text-status-warning-text'
+        tone === 'danger' ? 'border-status-danger/25 bg-status-danger-soft text-status-danger-text' : 'border-status-warning/25 bg-status-warning-soft text-status-warning-text'
       }`}
     >
       <div className="flex min-w-0 items-start gap-3">
@@ -176,14 +164,15 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
 
   const openAssistantForIssue = (item: WorkspaceOverviewAttentionItem) => {
     const issue = item.issue;
-    const prompt = item.targetType === 'virtual_machine'
-      ? t('virtualMachines.overview.triageIssuePrompt', {
-        title: issue.title,
-        severity: issue.severity,
-        source: issue.detail,
-        message: issue.evidence || issue.title
-      })
-      : `Triage "${issue.title}" on ${item.targetName}. Severity: ${issue.severity}. Scope: ${issue.detail}. Issue summary: ${issue.evidence || issue.title}`;
+    const prompt =
+      item.targetType === 'virtual_machine'
+        ? t('virtualMachines.overview.triageIssuePrompt', {
+            title: issue.title,
+            severity: issue.severity,
+            source: issue.detail,
+            message: issue.evidence || issue.title
+          })
+        : `Triage "${issue.title}" on ${item.targetName}. Severity: ${issue.severity}. Scope: ${issue.detail}. Issue summary: ${issue.evidence || issue.title}`;
 
     onRunTriage({
       targetId: item.targetId,
@@ -222,24 +211,17 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
       </div>
       <div>
         {state?.isLoading ? (
-          <div className="px-4 py-5 sm:px-5"><InlineLoadingIndicator label={t('overview.loadingVirtualMachines')} /></div>
+          <div className="px-4 py-5 sm:px-5">
+            <InlineLoadingIndicator label={t('overview.loadingVirtualMachines')} />
+          </div>
         ) : state?.error && state.retry ? (
           <div className="px-4 py-5 sm:px-5">{renderCollectionRecovery(state.error, state.retry)}</div>
         ) : cards.length === 0 ? (
-          <EmptyState
-            embedded
-            headingLevel={3}
-            className="min-h-0 px-4 py-6 sm:px-5"
-            icon={<Icon />}
-            title={emptyTitle}
-            description={emptyBody}
-          />
+          <EmptyState embedded headingLevel={3} className="min-h-0 px-4 py-6 sm:px-5" icon={<Icon />} title={emptyTitle} description={emptyBody} />
         ) : (
           <>
             {state?.retainedError && state.retry && (
-              <div className="border-b border-ui-border px-4 py-4 sm:px-5">
-                {renderCollectionRecovery(state.retainedError, state.retry, 'warning')}
-              </div>
+              <div className="border-b border-ui-border px-4 py-4 sm:px-5">{renderCollectionRecovery(state.retainedError, state.retry, 'warning')}</div>
             )}
             <div className="divide-y divide-ui-border">
               {cards.map((card) => {
@@ -252,9 +234,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
                     className="control-target group flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25 sm:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className={`type-micro-label shrink-0 rounded-full px-2.5 py-1 ${card.postureTone}`}>
-                        {card.postureLabel}
-                      </span>
+                      <span className={`type-micro-label shrink-0 rounded-full px-2.5 py-1 ${card.postureTone}`}>{card.postureLabel}</span>
                       <h3 className="type-row-title break-words text-ui-text">{card.name}</h3>
                     </div>
                     <ArrowRight className="h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" aria-hidden="true" />
@@ -272,10 +252,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     const issue = item.issue;
     const path = targetPath(item);
     return (
-      <article
-        key={`${issue.id}-${item.targetType}-${item.targetId}`}
-        className="w-full px-5 py-4 text-left transition-colors hover:bg-ui-bg sm:px-6"
-      >
+      <article key={`${issue.id}-${item.targetType}-${item.targetId}`} className="w-full px-5 py-4 text-left transition-colors hover:bg-ui-bg sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -284,20 +261,22 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
                   issue.severity === 'critical'
                     ? 'bg-status-danger-soft text-status-danger-text'
                     : issue.severity === 'warning'
-                      ? 'bg-status-warning-soft text-status-warning-text'
-                      : 'bg-ui-surface text-ui-text-muted'
+                    ? 'bg-status-warning-soft text-status-warning-text'
+                    : 'bg-ui-surface text-ui-text-muted'
                 }`}
               >
                 {t(`issues.severity.${issue.severity}`)}
               </span>
-              <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
-                {t(`issues.status.${issue.status}`)}
-              </span>
+              <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
             </div>
             <h3 className="mt-2 type-panel-title break-words">{issue.title}</h3>
             <p className="type-caption mt-1 break-words text-ui-text-muted">
               <span className="text-ui-text">{item.targetName}</span>
-              {' · '}{item.targetTypeLabel}{' · '}{issue.detail}{' · '}
+              {' · '}
+              {item.targetTypeLabel}
+              {' · '}
+              {issue.detail}
+              {' · '}
               {t('overview.lastSeenLabel')} {formatRelativeTime(issue.timestamp, t)}
             </p>
             {issue.evidence && (
@@ -333,7 +312,11 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             <a
               href={appHref(path)}
               onClick={(event) => handleAppLinkClick(event, path, navigate)}
-              className={buttonClassName({ variant: 'tertiary', size: 'sm', className: 'w-full justify-center sm:w-auto' })}
+              className={buttonClassName({
+                variant: 'tertiary',
+                size: 'sm',
+                className: 'w-full justify-center sm:w-auto'
+              })}
             >
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
               {t('overview.viewMoreIssue')}
@@ -361,17 +344,18 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
           <a
             href={appHref(recentInvestigation.path)}
             onClick={(event) => handleAppLinkClick(event, recentInvestigation.path, navigate)}
-            className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'w-full justify-center sm:w-auto' })}
+            className={buttonClassName({
+              variant: 'secondary',
+              size: 'sm',
+              className: 'w-full justify-center sm:w-auto'
+            })}
           >
             {t('overview.resumeRecentInvestigation')}
           </a>
         </section>
       )}
 
-      <section
-        data-attention-board="true"
-        className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface"
-      >
+      <section data-attention-board="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
         <div className="border-b border-ui-border px-5 py-4 sm:px-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
@@ -397,8 +381,12 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
         <CollectionState
           phase={issueCollection.phase}
           itemCount={attentionItems.length}
-          loading={<div className="px-5 py-5 sm:px-6"><InlineLoadingIndicator label={t('overview.loadingBoard')} /></div>}
-          empty={(
+          loading={
+            <div className="px-5 py-5 sm:px-6">
+              <InlineLoadingIndicator label={t('overview.loadingBoard')} />
+            </div>
+          }
+          empty={
             <EmptyState
               embedded
               headingLevel={3}
@@ -407,17 +395,19 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
               title={t('overview.noAttentionTargetsTitle')}
               description={t('overview.noAttentionTargetsBody')}
             />
-          )}
+          }
           error={issueLoadError ? <div className="px-5 py-5 sm:px-6">{renderCollectionRecovery(issueLoadError, issueCollection.retry)}</div> : null}
-          feedback={issueLoadError
-            ? <div className="px-5 py-4 sm:px-6">{renderCollectionRecovery(issueLoadError, issueCollection.retry, 'warning')}</div>
-            : isLoadingIssues
-              ? <div className="px-5 py-4 sm:px-6"><InlineLoadingIndicator label={t('overview.loadingBoard')} /></div>
-              : null}
+          feedback={
+            issueLoadError ? (
+              <div className="px-5 py-4 sm:px-6">{renderCollectionRecovery(issueLoadError, issueCollection.retry, 'warning')}</div>
+            ) : isLoadingIssues ? (
+              <div className="px-5 py-4 sm:px-6">
+                <InlineLoadingIndicator label={t('overview.loadingBoard')} />
+              </div>
+            ) : null
+          }
         >
-          <div className="divide-y divide-ui-border">
-            {attentionItems.map(renderAttentionIssueRow)}
-          </div>
+          <div className="divide-y divide-ui-border">{attentionItems.map(renderAttentionIssueRow)}</div>
         </CollectionState>
       </section>
 

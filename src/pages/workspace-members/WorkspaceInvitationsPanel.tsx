@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Check, ChevronDown, Copy, Loader2, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Dialog } from '@/components/common/Dialog';
-import { CollectionState } from '@/components/common/CollectionState';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { Dialog } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { WorkspaceInvitation } from '@/types';
 import { formatInvitationStatus, formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { formatUserDateTime } from '@/utils/dateTime';
@@ -45,9 +45,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
   const [inviteErrorMessage, setInviteErrorMessage] = useState<string | null>(null);
   const [replacementInviteErrorMessage, setReplacementInviteErrorMessage] = useState<string | null>(null);
 
-  const visibleInvitations = invitations.filter(
-    (invitation) => invitation.status === 'pending' || invitation.status === 'expired'
-  );
+  const visibleInvitations = invitations.filter((invitation) => invitation.status === 'pending' || invitation.status === 'expired');
   const shouldShowInvitations = isExpanded || Boolean(inviteErrorMessage) || Boolean(loadError);
 
   const copyExistingInviteLink = async (invitation: WorkspaceInvitation) => {
@@ -55,7 +53,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
     try {
       await navigator.clipboard.writeText(invitation.inviteLink);
       setCopiedInvitationId(invitation.id);
-      window.setTimeout(() => setCopiedInvitationId((current) => current === invitation.id ? null : current), 2200);
+      window.setTimeout(() => setCopiedInvitationId((current) => (current === invitation.id ? null : current)), 2200);
     } catch {
       setInviteErrorMessage(t('members.copyFailed'));
     }
@@ -67,7 +65,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
     try {
       await navigator.clipboard.writeText(createdReplacementInvite.inviteLink);
       setCopiedReplacementInviteId(createdReplacementInvite.id);
-      window.setTimeout(() => setCopiedReplacementInviteId((current) => current === createdReplacementInvite.id ? null : current), 2200);
+      window.setTimeout(() => setCopiedReplacementInviteId((current) => (current === createdReplacementInvite.id ? null : current)), 2200);
     } catch {
       setReplacementInviteErrorMessage(t('members.copyFailed'));
     }
@@ -88,7 +86,10 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
       if (onRevokeInvitation) {
         await onRevokeInvitation(invitation);
       }
-      const replacementInvite = await onCreateInvitation({ email: invitation.email, role: invitation.role });
+      const replacementInvite = await onCreateInvitation({
+        email: invitation.email,
+        role: invitation.role
+      });
       setCreatedReplacementInvite(replacementInvite);
       setCopiedReplacementInviteId(null);
     } catch (error) {
@@ -114,9 +115,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
   const noInvitationsState = (
     <div className="type-body px-5 py-8 text-center">
       {loadError && (
-        <div className="type-caption mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-left text-status-danger-text">
-          {loadError}
-        </div>
+        <div className="type-caption mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-left text-status-danger-text">{loadError}</div>
       )}
       {t('members.noPendingInvitations')}
       {hasMoreInvitations && (
@@ -125,7 +124,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
             type="button"
             onClick={onLoadMoreInvitations}
             disabled={isLoadingMoreInvitations}
-            className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
+            className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
@@ -145,95 +144,94 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="type-label w-fit rounded-full border border-ui-border bg-ui-bg px-3 py-1">
-              {t('members.inviteLinksCount', { count: visibleInvitations.length })}
+              {t('members.inviteLinksCount', {
+                count: visibleInvitations.length
+              })}
             </span>
             <button
               type="button"
               aria-expanded={shouldShowInvitations}
               onClick={() => setIsExpanded((expanded) => !expanded)}
-              className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+              className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
             >
               {shouldShowInvitations ? t('members.hideInvitations') : t('members.showInvitations')}
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${shouldShowInvitations ? 'rotate-180' : ''}`} aria-hidden="true" />
             </button>
           </div>
         </div>
-        {shouldShowInvitations && <CollectionState
-          phase={phase}
-          itemCount={visibleInvitations.length}
-          loading={null}
-          empty={noInvitationsState}
-          error={noInvitationsState}
-          feedback={isLoadingMoreInvitations ? <span className="sr-only">{t('members.loadingInvitations')}</span> : null}
-        >
-          <div className="divide-y divide-ui-border">
-            {inviteErrorMessage && (
-              <div className="type-caption bg-status-danger-soft px-5 py-3 text-status-danger-text">
-                {inviteErrorMessage}
-              </div>
-            )}
-            {loadError && (
-              <div className="type-caption bg-status-danger-soft px-5 py-3 text-status-danger-text">
-                {loadError}
-              </div>
-            )}
-            {visibleInvitations.map((invitation) => (
-              <div key={invitation.id} className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="min-w-0">
-                  <p className="type-row-title truncate">{invitation.email}</p>
-                  <p className="type-label mt-1">
-                    {formatRole(invitation.role, invitation.roleTemplate)} · {formatInvitationStatus(invitation.status)} · {t('members.expires', { time: formatUserDateTime(invitation.expiresAt) })}
-                  </p>
+        {shouldShowInvitations && (
+          <CollectionState
+            phase={phase}
+            itemCount={visibleInvitations.length}
+            loading={null}
+            empty={noInvitationsState}
+            error={noInvitationsState}
+            feedback={isLoadingMoreInvitations ? <span className="sr-only">{t('members.loadingInvitations')}</span> : null}
+          >
+            <div className="divide-y divide-ui-border">
+              {inviteErrorMessage && <div className="type-caption bg-status-danger-soft px-5 py-3 text-status-danger-text">{inviteErrorMessage}</div>}
+              {loadError && <div className="type-caption bg-status-danger-soft px-5 py-3 text-status-danger-text">{loadError}</div>}
+              {visibleInvitations.map((invitation) => (
+                <div key={invitation.id} className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="type-row-title truncate">{invitation.email}</p>
+                    <p className="type-label mt-1">
+                      {formatRole(invitation.role, invitation.roleTemplate)} · {formatInvitationStatus(invitation.status)} ·{' '}
+                      {t('members.expires', {
+                        time: formatUserDateTime(invitation.expiresAt)
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    {invitation.inviteLink && (
+                      <button
+                        type="button"
+                        onClick={() => void copyExistingInviteLink(invitation)}
+                        className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
+                      >
+                        {copiedInvitationId === invitation.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copiedInvitationId === invitation.id ? t('members.copied') : t('members.copy')}
+                      </button>
+                    )}
+                    {!invitation.inviteLink && invitation.status === 'pending' && onCreateInvitation && (
+                      <button
+                        type="button"
+                        onClick={() => void recreateInvitation(invitation)}
+                        disabled={recreatingInvitationId === invitation.id}
+                        className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {recreatingInvitationId === invitation.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                        {recreatingInvitationId === invitation.id ? t('members.recreatingInvite') : t('members.recreateInvite')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void revokeInvitation(invitation)}
+                      disabled={!onRevokeInvitation || invitation.status !== 'pending' || revokingInvitationId === invitation.id}
+                      className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text transition-colors hover:bg-status-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {revokingInvitationId === invitation.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      {t('members.revoke')}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
-                  {invitation.inviteLink && (
-                    <button
-                      type="button"
-                      onClick={() => void copyExistingInviteLink(invitation)}
-                      className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
-                    >
-                      {copiedInvitationId === invitation.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                      {copiedInvitationId === invitation.id ? t('members.copied') : t('members.copy')}
-                    </button>
-                  )}
-                  {!invitation.inviteLink && invitation.status === 'pending' && onCreateInvitation && (
-                    <button
-                      type="button"
-                      onClick={() => void recreateInvitation(invitation)}
-                      disabled={recreatingInvitationId === invitation.id}
-                      className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {recreatingInvitationId === invitation.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
-                      {recreatingInvitationId === invitation.id ? t('members.recreatingInvite') : t('members.recreateInvite')}
-                    </button>
-                  )}
+              ))}
+              {hasMoreInvitations && (
+                <div ref={loadMoreSentinelRef} className="flex justify-center px-5 py-4">
                   <button
                     type="button"
-                    onClick={() => void revokeInvitation(invitation)}
-                    disabled={!onRevokeInvitation || invitation.status !== 'pending' || revokingInvitationId === invitation.id}
-                    className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text transition-colors hover:bg-status-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={onLoadMoreInvitations}
+                    disabled={isLoadingMoreInvitations}
+                    className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {revokingInvitationId === invitation.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                    {t('members.revoke')}
+                    {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
                   </button>
                 </div>
-              </div>
-            ))}
-            {hasMoreInvitations && (
-              <div ref={loadMoreSentinelRef} className="flex justify-center px-5 py-4">
-                <button
-                  type="button"
-                  onClick={onLoadMoreInvitations}
-                  disabled={isLoadingMoreInvitations}
-                  className="control-target type-label inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
-                </button>
-              </div>
-            )}
-          </div>
-        </CollectionState>}
+              )}
+            </div>
+          </CollectionState>
+        )}
       </div>
 
       {createdReplacementInvite && (
@@ -248,13 +246,12 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                 {t('members.replacementInviteCreated')}
               </h2>
               <p className="type-body mt-1">
-                {t('members.replacementInviteBody', { email: createdReplacementInvite.email })}
+                {t('members.replacementInviteBody', {
+                  email: createdReplacementInvite.email
+                })}
               </p>
             </div>
-            <CloseButton
-              onClick={closeReplacementInviteDialog}
-              aria-label={t('members.closeReplacementInvite')}
-            />
+            <CloseButton onClick={closeReplacementInviteDialog} aria-label={t('members.closeReplacementInvite')} />
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-6 custom-scrollbar sm:px-8">
@@ -262,7 +259,10 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               <p className="type-label">{t('members.email')}</p>
               <p className="type-row-title mt-1 break-all">{createdReplacementInvite.email}</p>
               <p className="type-label mt-2">
-                {formatRole(createdReplacementInvite.role, createdReplacementInvite.roleTemplate)} · {t('members.expires', { time: formatUserDateTime(createdReplacementInvite.expiresAt) })}
+                {formatRole(createdReplacementInvite.role, createdReplacementInvite.roleTemplate)} ·{' '}
+                {t('members.expires', {
+                  time: formatUserDateTime(createdReplacementInvite.expiresAt)
+                })}
               </p>
             </div>
 
@@ -282,7 +282,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                   <button
                     type="button"
                     onClick={() => void copyReplacementInviteLink()}
-                    className="type-label inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text transition-colors hover:bg-ui-bg"
+                    className="type-ui inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text transition-colors hover:bg-ui-bg"
                   >
                     {copiedReplacementInviteId === createdReplacementInvite.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     {copiedReplacementInviteId === createdReplacementInvite.id ? t('members.copied') : t('members.copy')}
@@ -290,27 +290,24 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                 </div>
               </div>
             ) : (
-              <p className="type-caption rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">
-                {t('members.linkReturnedOnce')}
-              </p>
+              <p className="type-caption rounded-lg border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">{t('members.linkReturnedOnce')}</p>
             )}
 
             <p className="type-caption">
-              {t('members.recipientMustUseEmail', { email: createdReplacementInvite.email, time: formatUserDateTime(createdReplacementInvite.expiresAt) })}
+              {t('members.recipientMustUseEmail', {
+                email: createdReplacementInvite.email,
+                time: formatUserDateTime(createdReplacementInvite.expiresAt)
+              })}
             </p>
 
-            {replacementInviteErrorMessage && (
-              <p className="type-caption rounded-lg bg-status-danger-soft px-3 py-2 text-status-danger-text">
-                {replacementInviteErrorMessage}
-              </p>
-            )}
+            {replacementInviteErrorMessage && <p className="type-caption rounded-lg bg-status-danger-soft px-3 py-2 text-status-danger-text">{replacementInviteErrorMessage}</p>}
           </div>
 
           <div className="flex shrink-0 justify-end border-t border-ui-border bg-ui-surface px-6 py-4 sm:px-8">
             <button
               type="button"
               onClick={closeReplacementInviteDialog}
-              className="control-target type-label inline-flex items-center justify-center rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
+              className="control-target type-ui inline-flex items-center justify-center rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
             >
               {t('members.close')}
             </button>

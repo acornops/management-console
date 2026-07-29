@@ -3,8 +3,7 @@ import { ArrowRight, Bot, Clock3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
-import { Button, buttonClassName } from '@/components/common/Button';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button, StatusBadge, buttonClassName } from '@acornops/ui';
 import type { AutomaticInvestigationSummary, TargetType } from '@/services/controlPlaneApi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';

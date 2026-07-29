@@ -3,10 +3,10 @@ import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadiness
 import { isServerWorkflowRunId } from '@/pages/workflows/workflowRunIdentity';
 import { Loader2, SendHorizontal, Square } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { Select } from '@/components/common/Select';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { TraceFooter } from '@/features/targets/chat/components/TraceFooter';
 import {
@@ -584,7 +584,7 @@ const AgentCapabilityReviewList: React.FC<{
       {agentReviews.map((agent) => (
         <section key={agent.agentId} className="grid gap-4 border-t border-ui-border py-5 first:border-t-0 first:pt-0 last:pb-0 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-10">
           <div className="min-w-0">
-            <h4 className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 text-base font-semibold leading-6 text-ui-text">
+            <h4 className="type-panel-title grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 text-ui-text">
               <span className="flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
                 <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
               </span>

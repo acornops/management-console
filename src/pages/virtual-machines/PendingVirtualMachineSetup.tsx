@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { ICONS } from '@/constants';
 
 interface PendingVirtualMachineSetupProps {
@@ -9,11 +9,7 @@ interface PendingVirtualMachineSetupProps {
   onInstallAgent?: (vmId: string) => void;
 }
 
-export const PendingVirtualMachineSetup: React.FC<PendingVirtualMachineSetupProps> = ({
-  vmId,
-  vmName,
-  onInstallAgent
-}) => {
+export const PendingVirtualMachineSetup: React.FC<PendingVirtualMachineSetupProps> = ({ vmId, vmName, onInstallAgent }) => {
   const { t } = useTranslation();
   const metrics = [
     { label: t('virtualMachines.list.load1m'), Icon: ICONS.Activity },

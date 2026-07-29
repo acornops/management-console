@@ -7,21 +7,7 @@ import { LoginPasswordAuthForm } from '@/pages/login/LoginPasswordAuthForm';
 import { isPlausibleAuthEmailToken, isValidEmailAddress, routeToken } from '@/pages/login/loginAuthPanelState';
 import type { AuthMode, LoginAuthPanelProps, PasswordResetRequestState, PendingVerificationState, ResetLinkState, VerifyLinkState } from '@/pages/login/loginAuthPanelState';
 
-export function LoginAuthPanel({
-  isAuthLoading,
-  oidcEnabled,
-  passwordAuthEnabled,
-  passwordSignupEnabled,
-  passwordResetEnabled,
-  sessionNotice,
-  onLogin,
-  onPasswordLogin,
-  onPasswordSignup,
-  onVerifyEmail,
-  onResendVerification,
-  onRequestPasswordReset,
-  onResetPassword
-}: LoginAuthPanelProps) {
+export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled, passwordSignupEnabled, passwordResetEnabled, sessionNotice, onLogin, onPasswordLogin, onPasswordSignup, onVerifyEmail, onResendVerification, onRequestPasswordReset, onResetPassword }: LoginAuthPanelProps) {
   const { t } = useTranslation();
   const [mode, setMode] = React.useState<AuthMode>('login');
   const [identifier, setIdentifier] = React.useState('');
@@ -49,17 +35,7 @@ export function LoginAuthPanel({
   const canSignup = passwordAuthEnabled && passwordSignupEnabled;
   const canResetPassword = passwordAuthEnabled && passwordResetEnabled;
   const hasAuthMethod = oidcEnabled || passwordAuthEnabled;
-  const loginSubtitle = !hasAuthMethod
-    ? t('login.noAuthMethods')
-    : passwordAuthEnabled
-      ? mode === 'signup' && canSignup
-        ? t('login.startManaging')
-        : mode === 'forgot'
-          ? ''
-          : mode === 'reset'
-            ? t('login.resetSubtitle')
-            : t('login.accessWorkspace')
-      : t('login.ssoOnly');
+  const loginSubtitle = !hasAuthMethod ? t('login.noAuthMethods') : passwordAuthEnabled ? (mode === 'signup' && canSignup ? t('login.startManaging') : mode === 'forgot' ? '' : mode === 'reset' ? t('login.resetSubtitle') : t('login.accessWorkspace')) : t('login.ssoOnly');
 
   React.useEffect(() => {
     if (mode === 'signup' && !canSignup) {
@@ -173,7 +149,10 @@ export function LoginAuthPanel({
       if (mode === 'login') {
         const result = await onPasswordLogin(identifier, password);
         if (result.status === 'verification_required') {
-          setPendingVerification({ email: result.email, resendAfterSeconds: result.resendAfterSeconds });
+          setPendingVerification({
+            email: result.email,
+            resendAfterSeconds: result.resendAfterSeconds
+          });
           setResendEmail(result.email);
         }
         return;
@@ -301,13 +280,7 @@ export function LoginAuthPanel({
   };
 
   const renderPasswordToggle = () => (
-    <button
-      type="button"
-      onClick={() => setShowPassword((current) => !current)}
-      className="control-target absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus:ring-2 focus:ring-accent/20"
-      aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
-      aria-pressed={showPassword}
-    >
+    <button type="button" onClick={() => setShowPassword((current) => !current)} className="control-target absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus:ring-2 focus:ring-accent/20" aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')} aria-pressed={showPassword}>
       {showPassword ? <ICONS.EyeOff className="h-4 w-4" /> : <ICONS.Eye className="h-4 w-4" />}
     </button>
   );
@@ -317,21 +290,26 @@ export function LoginAuthPanel({
       <NoticeCard
         icon={<ICONS.Mail className="h-4 w-4" />}
         title={t('login.checkEmail')}
-        body={pendingVerification?.deliveryFailed
-          ? t('login.verificationPendingDeliveryFailedBody', { email: pendingVerification.email })
-          : t('login.verificationPendingBody', { email: pendingVerification?.email })}
-        status={pendingVerification?.notice ||
+        body={
+          pendingVerification?.deliveryFailed
+            ? t('login.verificationPendingDeliveryFailedBody', {
+                email: pendingVerification.email
+              })
+            : t('login.verificationPendingBody', {
+                email: pendingVerification?.email
+              })
+        }
+        status={
+          pendingVerification?.notice ||
           (pendingVerification?.resendAfterSeconds
-            ? t('login.verificationThrottled', { time: Math.ceil(pendingVerification.resendAfterSeconds / 60) })
-            : undefined)}
+            ? t('login.verificationThrottled', {
+                time: Math.ceil(pendingVerification.resendAfterSeconds / 60)
+              })
+            : undefined)
+        }
         danger={Boolean(pendingVerification?.resendAfterSeconds)}
       />
-      <button
-        type="button"
-        onClick={() => void resendVerification()}
-        disabled={isAuthLoading || Boolean(pendingVerification?.resendAfterSeconds)}
-        className={`control-target ${primaryButtonClass}`}
-      >
+      <button type="button" onClick={() => void resendVerification()} disabled={isAuthLoading || Boolean(pendingVerification?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
         <ICONS.Send className="h-4 w-4" />
         <span>{t('login.resendEmail')}</span>
       </button>
@@ -362,15 +340,7 @@ export function LoginAuthPanel({
     const canResend = verifyLinkState === 'expired' || verifyLinkState === 'invalid' || verifyLinkState === 'error';
     return (
       <div className="space-y-5">
-        <NoticeCard
-          icon={verifyLinkState === 'loading'
-            ? <span className="h-4 w-4 rounded-full border-2 border-accent-strong border-t-transparent animate-spin" />
-            : verifyLinkState === 'success'
-              ? <ICONS.CheckCircle2 className="h-4 w-4" />
-              : <ICONS.AlertCircle className="h-4 w-4" />}
-          title={stateCopy[0]}
-          body={stateCopy[1]}
-        />
+        <NoticeCard icon={verifyLinkState === 'loading' ? <span className="h-4 w-4 rounded-full border-2 border-accent-strong border-t-transparent animate-spin" /> : verifyLinkState === 'success' ? <ICONS.CheckCircle2 className="h-4 w-4" /> : <ICONS.AlertCircle className="h-4 w-4" />} title={stateCopy[0]} body={stateCopy[1]} />
         {canResend && (
           <form className="space-y-3" onSubmit={(event) => void resendVerification(event)} noValidate>
             <EmailField
@@ -397,9 +367,7 @@ export function LoginAuthPanel({
 
   const resetRequestForEmail = (emailValue: string) => {
     if (!passwordResetRequest) return null;
-    return passwordResetRequest.email.trim().toLowerCase() === emailValue.trim().toLowerCase()
-      ? passwordResetRequest
-      : null;
+    return passwordResetRequest.email.trim().toLowerCase() === emailValue.trim().toLowerCase() ? passwordResetRequest : null;
   };
 
   const renderPasswordResetNotice = (request: PasswordResetRequestState) => (
@@ -407,10 +375,14 @@ export function LoginAuthPanel({
       icon={<ICONS.Mail className="h-4 w-4" />}
       title={t('login.resetCheckEmail')}
       body={t('login.resetCheckEmailBody', { email: request.email })}
-      status={request.notice ||
+      status={
+        request.notice ||
         (request.resendAfterSeconds
-          ? t('login.resetThrottled', { time: Math.ceil(request.resendAfterSeconds / 60) })
-          : undefined)}
+          ? t('login.resetThrottled', {
+              time: Math.ceil(request.resendAfterSeconds / 60)
+            })
+          : undefined)
+      }
       danger={Boolean(request.resendAfterSeconds)}
     />
   );
@@ -432,11 +404,7 @@ export function LoginAuthPanel({
           inputId="forgot-password-email"
         />
         {error && <ErrorMessage message={error} />}
-        <button
-          type="submit"
-          disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)}
-          className={`control-target ${primaryButtonClass}`}
-        >
+        <button type="submit" disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
           {isAuthLoading ? (
             <span className="h-4 w-4 rounded-full border-2 border-ui-bg border-t-transparent animate-spin" />
           ) : (
@@ -481,11 +449,7 @@ export function LoginAuthPanel({
     if (resetLinkState === 'success') {
       return (
         <div className="space-y-5">
-          <NoticeCard
-            icon={<ICONS.CheckCircle2 className="h-4 w-4" />}
-            title={t('login.passwordUpdated')}
-            body={t('login.passwordUpdatedBody')}
-          />
+          <NoticeCard icon={<ICONS.CheckCircle2 className="h-4 w-4" />} title={t('login.passwordUpdated')} body={t('login.passwordUpdatedBody')} />
           <button type="button" onClick={() => changeMode('login')} className={`control-target ${primaryButtonClass}`}>
             <span>{t('login.signInTab')}</span>
             <ICONS.ArrowRight className="h-4 w-4" />
@@ -501,11 +465,7 @@ export function LoginAuthPanel({
       }[resetLinkState];
       return (
         <div className="space-y-5">
-          <NoticeCard
-            icon={<ICONS.AlertCircle className="h-4 w-4" />}
-            title={copy[0]}
-            body={copy[1]}
-          />
+          <NoticeCard icon={<ICONS.AlertCircle className="h-4 w-4" />} title={copy[0]} body={copy[1]} />
           {renderResetRequestForm()}
           {error && <ErrorMessage message={error} />}
           <button type="button" onClick={() => changeMode('login')} className={`control-target ${secondaryButtonClass}`}>
@@ -516,26 +476,8 @@ export function LoginAuthPanel({
     }
     return (
       <form className="space-y-5" onSubmit={(event) => void submitResetPassword(event)} noValidate>
-        <PasswordField
-          value={resetPasswordValue}
-          onChange={setResetPasswordValue}
-          disabled={isAuthLoading}
-          showPassword={showPassword}
-          autoComplete="new-password"
-          label={t('login.newPassword')}
-          minLength={15}
-          renderPasswordToggle={renderPasswordToggle}
-        />
-        <PasswordField
-          value={resetConfirmPassword}
-          onChange={setResetConfirmPassword}
-          disabled={isAuthLoading}
-          showPassword={showPassword}
-          autoComplete="new-password"
-          label={t('login.confirmPassword')}
-          minLength={15}
-          renderPasswordToggle={renderPasswordToggle}
-        />
+        <PasswordField value={resetPasswordValue} onChange={setResetPasswordValue} disabled={isAuthLoading} showPassword={showPassword} autoComplete="new-password" label={t('login.newPassword')} minLength={15} renderPasswordToggle={renderPasswordToggle} />
+        <PasswordField value={resetConfirmPassword} onChange={setResetConfirmPassword} disabled={isAuthLoading} showPassword={showPassword} autoComplete="new-password" label={t('login.confirmPassword')} minLength={15} renderPasswordToggle={renderPasswordToggle} />
         {error && <ErrorMessage message={error} />}
         <button type="submit" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
           {isAuthLoading ? (
@@ -561,54 +503,50 @@ export function LoginAuthPanel({
             {sessionNotice}
           </div>
         )}
-        <h1 className="mb-2 text-center text-2xl font-bold text-ui-text">
-          {mode === 'signup' && canSignup
-            ? t('login.createAccount')
-            : mode === 'forgot'
-              ? t('login.forgotPasswordTitle')
-              : mode === 'reset'
-                ? t('login.resetPasswordTitle')
-                : t('login.welcomeBack')}
-        </h1>
-        {loginSubtitle && (
-          <p className="mb-8 text-center text-sm font-medium leading-6 text-ui-text-muted">{loginSubtitle}</p>
-        )}
+        <h1 className="type-route-title mb-2 text-center text-ui-text">{mode === 'signup' && canSignup ? t('login.createAccount') : mode === 'forgot' ? t('login.forgotPasswordTitle') : mode === 'reset' ? t('login.resetPasswordTitle') : t('login.welcomeBack')}</h1>
+        {loginSubtitle && <p className="mb-8 text-center text-sm font-medium leading-6 text-ui-text-muted">{loginSubtitle}</p>}
 
         {verifyLinkContent || pendingVerification ? (
           <>
             {verifyLinkContent || renderPendingVerification()}
-            {pendingVerification && error && <div className="mt-5"><ErrorMessage message={error} /></div>}
+            {pendingVerification && error && (
+              <div className="mt-5">
+                <ErrorMessage message={error} />
+              </div>
+            )}
           </>
         ) : mode === 'forgot' ? (
           renderForgotPassword()
         ) : mode === 'reset' ? (
           renderResetPassword()
-        ) : passwordAuthEnabled && (
-          <LoginPasswordAuthForm
-            mode={mode}
-            canSignup={canSignup}
-            canResetPassword={canResetPassword}
-            isAuthLoading={isAuthLoading}
-            error={error}
-            email={email}
-            identifier={identifier}
-            username={username}
-            password={password}
-            confirmPassword={confirmPassword}
-            showPassword={showPassword}
-            onEmailChange={setEmail}
-            onIdentifierChange={setIdentifier}
-            onUsernameChange={setUsername}
-            onPasswordChange={setPassword}
-            onConfirmPasswordChange={setConfirmPassword}
-            onForgotPassword={() => {
-              setForgotEmail(identifier.includes('@') ? identifier : '');
-              changeMode('forgot');
-            }}
-            onSubmit={submitPasswordAuth}
-            renderPasswordToggle={renderPasswordToggle}
-            t={t}
-          />
+        ) : (
+          passwordAuthEnabled && (
+            <LoginPasswordAuthForm
+              mode={mode}
+              canSignup={canSignup}
+              canResetPassword={canResetPassword}
+              isAuthLoading={isAuthLoading}
+              error={error}
+              email={email}
+              identifier={identifier}
+              username={username}
+              password={password}
+              confirmPassword={confirmPassword}
+              showPassword={showPassword}
+              onEmailChange={setEmail}
+              onIdentifierChange={setIdentifier}
+              onUsernameChange={setUsername}
+              onPasswordChange={setPassword}
+              onConfirmPasswordChange={setConfirmPassword}
+              onForgotPassword={() => {
+                setForgotEmail(identifier.includes('@') ? identifier : '');
+                changeMode('forgot');
+              }}
+              onSubmit={submitPasswordAuth}
+              renderPasswordToggle={renderPasswordToggle}
+              t={t}
+            />
+          )
         )}
 
         {passwordAuthEnabled && oidcEnabled && mode !== 'forgot' && mode !== 'reset' && !pendingVerification && !verifyLinkContent && (
@@ -617,29 +555,15 @@ export function LoginAuthPanel({
               <div className="w-full border-t border-ui-border" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-ui-surface px-2 font-bold uppercase tracking-widest text-ui-text-muted">{t('login.orContinueWith')}</span>
+              <span className="bg-ui-surface px-2 type-label">{t('login.orContinueWith')}</span>
             </div>
           </div>
         )}
 
-        {oidcEnabled && mode !== 'forgot' && mode !== 'reset' && !pendingVerification && !verifyLinkContent && (
-          <OidcLoginButton
-            isAuthLoading={isAuthLoading}
-            passwordAuthEnabled={passwordAuthEnabled}
-            onLogin={onLogin}
-            label={t('login.continueWithOidc')}
-          />
-        )}
+        {oidcEnabled && mode !== 'forgot' && mode !== 'reset' && !pendingVerification && !verifyLinkContent && <OidcLoginButton isAuthLoading={isAuthLoading} passwordAuthEnabled={passwordAuthEnabled} onLogin={onLogin} label={t('login.continueWithOidc')} />}
       </div>
 
-      {passwordAuthEnabled && canSignup && mode !== 'forgot' && mode !== 'reset' && !pendingVerification && !verifyLinkContent && (
-        <SignupSwitchFooter
-          isAuthLoading={isAuthLoading}
-          onSwitch={() => changeMode(mode === 'login' ? 'signup' : 'login')}
-          prompt={mode === 'login' ? t('login.dontHaveAccount') : t('login.alreadyHaveAccount')}
-          actionLabel={mode === 'login' ? t('login.signUp') : t('login.signInTab')}
-        />
-      )}
+      {passwordAuthEnabled && canSignup && mode !== 'forgot' && mode !== 'reset' && !pendingVerification && !verifyLinkContent && <SignupSwitchFooter isAuthLoading={isAuthLoading} onSwitch={() => changeMode(mode === 'login' ? 'signup' : 'login')} prompt={mode === 'login' ? t('login.dontHaveAccount') : t('login.alreadyHaveAccount')} actionLabel={mode === 'login' ? t('login.signUp') : t('login.signInTab')} />}
     </div>
   );
 }

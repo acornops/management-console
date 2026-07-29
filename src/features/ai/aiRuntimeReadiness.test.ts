@@ -15,7 +15,7 @@ function aiSettings(overrides: Partial<WorkspaceAiSettings> = {}): WorkspaceAiSe
     allowedProviderModels: { openai: ['gpt-5'], anthropic: [], gemini: [] },
     allowedReasoningSummaryModes: ['auto', 'off'],
     allowedReasoningEfforts: ['low', 'medium', 'high'],
-    providers: [{ provider: 'openai', configured: true, enabled: true }],
+    providers: [{ provider: 'openai', configured: true, enabled: true, source: 'workspace' }],
     ...overrides
   };
 }
@@ -30,11 +30,11 @@ describe('AI runtime readiness', () => {
   it('requires an allowed model on an allowed, enabled, configured provider', () => {
     expect(resolveAiRuntimeReadiness({ settings: aiSettings(), isLoading: false }).status).toBe('ready');
     expect(resolveAiRuntimeReadiness({
-      settings: aiSettings({ providers: [{ provider: 'openai', configured: true, enabled: false }] }),
+      settings: aiSettings({ providers: [{ provider: 'openai', configured: true, enabled: false, source: 'workspace' }] }),
       isLoading: false
     }).status).toBe('unconfigured');
     expect(resolveAiRuntimeReadiness({
-      settings: aiSettings({ providers: [{ provider: 'openai', configured: false, enabled: true }] }),
+      settings: aiSettings({ providers: [{ provider: 'openai', configured: false, enabled: true, source: 'none' }] }),
       isLoading: false
     }).status).toBe('unconfigured');
     expect(resolveAiRuntimeReadiness({
@@ -48,8 +48,8 @@ describe('AI runtime readiness', () => {
       allowedProviders: ['openai', 'anthropic'],
       allowedProviderModels: { openai: ['gpt-5'], anthropic: ['claude-sonnet-4-5'], gemini: [] },
       providers: [
-        { provider: 'openai', configured: false, enabled: true },
-        { provider: 'anthropic', configured: true, enabled: true }
+        { provider: 'openai', configured: false, enabled: true, source: 'none' },
+        { provider: 'anthropic', configured: true, enabled: true, source: 'platform_default' }
       ]
     });
 

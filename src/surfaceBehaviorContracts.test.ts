@@ -15,9 +15,12 @@ import {
   mcpServersInventory,
   membersPage,
   resourceCategoryTabs,
+  resourceExplorerLayout,
   resourcesView,
   targetSkillsInventory,
   targetToolsView,
+  virtualMachineIssuesPanel,
+  virtualMachineResourcesView,
   virtualMachinesListView,
   webhookList,
   workflowActivityUi,
@@ -87,12 +90,17 @@ describe('surface behavior contracts', () => {
       workspaceSchedulesPage,
       workspaceApprovalsPage,
       auditLogPage,
-      membersPage
+      membersPage,
+      clusterOverviewView,
+      virtualMachineIssuesPanel,
+      virtualMachineResourcesView
     ].forEach((surface) => expect(surface).toContain('<DataTableHeader'));
     [
       workspaceRunsPage,
       workspaceEventTriggersPage,
-      webhookList
+      webhookList,
+      resourceExplorerLayout,
+      virtualMachineResourcesView
     ].forEach((surface) => expect(surface).toContain('<DataTableGridHeader'));
     [
       mcpServersInventory,
@@ -107,6 +115,9 @@ describe('surface behavior contracts', () => {
     ].forEach((surface) => expect(surface).toContain('collectionState={{'));
     expect(workspaceSchedulesPage).toContain('density="dense"');
     expect(workspaceApprovalsPage).toContain('density="dense"');
+    expect(clusterOverviewView).toContain('density="compact"');
+    expect(virtualMachineIssuesPanel).toContain('density="compact"');
+    expect(virtualMachineResourcesView).not.toContain('<th');
   });
 
   it('reveals the active resource category when compact tab strips overflow', () => {

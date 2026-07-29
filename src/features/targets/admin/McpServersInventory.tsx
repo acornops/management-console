@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
-import { Select } from '@/components/common/Select';
-import type { SelectOption } from '@/components/common/Select';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import type { SelectOption } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import type { McpConnection } from '@/services/control-plane/catalogApi';
@@ -111,26 +111,26 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
           </div>
           <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.serversMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.serverCount}</p>
+            <p className="type-data mt-0.5">{toolAccessSummary.serverCount}</p>
           </div>
           <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.totalTools}</p>
+            <p className="type-data mt-0.5">{toolAccessSummary.totalTools}</p>
           </div>
           <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.enabledTools}</p>
+            <p className="type-data mt-0.5">{toolAccessSummary.enabledTools}</p>
           </div>
           <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
-            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.readOnlyTools}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
-            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.writeCapableTools}
               <span className="h-2 w-2 rounded-full bg-status-warning" />
             </p>

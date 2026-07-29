@@ -136,6 +136,7 @@ export interface ClusterToolCatalogServer {
   connectionStatus: 'unknown' | 'ok' | 'error';
   lastDiscoveryAt: string | null;
   lastDiscoveryError: string | null;
+  inherited?: boolean;
   toolCounts: {
     total: number;
     enabledConfigured: number;
@@ -553,6 +554,7 @@ export interface WorkspaceAiProviderStatus {
   provider: LlmProvider;
   configured: boolean;
   enabled: boolean;
+  source: 'workspace' | 'platform_default' | 'none';
 }
 
 export type LlmProviderModels = Record<LlmProvider, string[]>;

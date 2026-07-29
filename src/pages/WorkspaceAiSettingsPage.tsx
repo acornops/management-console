@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { InlineAlert } from '@/components/common/InlineAlert';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { Select, SelectOption } from '@/components/common/Select';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { InlineAlert } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { isAiRuntimeReady, resolveAiRuntimeReadiness } from '@/features/ai/aiRuntimeReadiness';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -29,19 +29,14 @@ import {
   type BehaviorDraft,
   type WorkspaceAiSettingsPageProps
 } from '@/pages/WorkspaceAiSettingsPage.helpers';
-
 export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({
   workspace, canManageAiSettings, aiSettingsResource, showToast, returnTo, onReturnToAssistant,
   embedded = false
 }) => {
   const { t } = useTranslation();
-  const currentAiSettings = aiSettingsResource.settings?.workspaceId === workspace.id
-    ? aiSettingsResource.settings
-    : null;
+  const currentAiSettings = aiSettingsResource.settings?.workspaceId === workspace.id ? aiSettingsResource.settings : null;
   const [behaviorError, setBehaviorError] = useState('');
-  const [behaviorDraft, setBehaviorDraft] = useState<BehaviorDraft | null>(() => (
-    currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : null
-  ));
+  const [behaviorDraft, setBehaviorDraft] = useState<BehaviorDraft | null>(() => (currentAiSettings ? behaviorDraftFromSettings(currentAiSettings) : null));
   const [providerKeys, setProviderKeys] = useState<Record<LlmProvider, string>>(EMPTY_PROVIDER_KEYS);
   const [credentialErrors, setCredentialErrors] = useState<Record<LlmProvider, string>>(EMPTY_CREDENTIAL_ERRORS);
   const [savingAction, setSavingAction] = useState('');
@@ -93,99 +88,117 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     return allowedProviders.includes(behaviorDraft.defaultProvider) ? allowedProviders : [behaviorDraft.defaultProvider, ...allowedProviders];
   }, [behaviorDraft, currentAiSettings?.allowedProviders]);
   const providerOptions = useMemo<Array<SelectOption<LlmProvider>>>(
-    () => selectableProviders.map((provider) => ({
-      value: provider,
-      label: providerLabel(provider),
-      disabled: currentAiSettings ? !currentAiSettings.allowedProviders.includes(provider) : false
-    })),
+    () =>
+      selectableProviders.map((provider) => ({
+        value: provider,
+        label: providerLabel(provider),
+        disabled: currentAiSettings ? !currentAiSettings.allowedProviders.includes(provider) : false
+      })),
     [currentAiSettings, selectableProviders]
   );
   const modelOptions = useMemo<Array<SelectOption<string>>>(
-    () => selectableModels.map((model) => ({
-      value: model,
-      label: model,
-      disabled: !providerModels.includes(model)
-    })),
+    () =>
+      selectableModels.map((model) => ({
+        value: model,
+        label: model,
+        disabled: !providerModels.includes(model)
+      })),
     [providerModels, selectableModels]
   );
   const reasoningSummaryModeOptions = useMemo<Array<SelectOption<ReasoningSummaryMode>>>(
-    () => REASONING_SUMMARY_MODES.map((mode) => ({
-      value: mode,
-      label: t(reasoningModeLabel(mode)),
-      disabled: currentAiSettings ? !currentAiSettings.allowedReasoningSummaryModes.includes(mode) : false
-    })),
+    () =>
+      REASONING_SUMMARY_MODES.map((mode) => ({
+        value: mode,
+        label: t(reasoningModeLabel(mode)),
+        disabled: currentAiSettings ? !currentAiSettings.allowedReasoningSummaryModes.includes(mode) : false
+      })),
     [currentAiSettings, t]
   );
   const reasoningEffortOptions = useMemo<Array<SelectOption<ReasoningEffort>>>(
-    () => REASONING_EFFORTS.map((effort) => ({
-      value: effort,
-      label: t(reasoningEffortLabel(effort)),
-      disabled: currentAiSettings ? !currentAiSettings.allowedReasoningEfforts.includes(effort) : false
-    })),
+    () =>
+      REASONING_EFFORTS.map((effort) => ({
+        value: effort,
+        label: t(reasoningEffortLabel(effort)),
+        disabled: currentAiSettings ? !currentAiSettings.allowedReasoningEfforts.includes(effort) : false
+      })),
     [currentAiSettings, t]
   );
 
   const hasBehaviorChanges = Boolean(currentAiSettings && behaviorDraft && behaviorDraftChanged(currentAiSettings, behaviorDraft));
   const isReasoningPolicyDisabled = reasoningPolicyDisabled(currentAiSettings);
-  const canSaveBehavior = Boolean(
-    canManageAiSettings
-      && currentAiSettings
-      && behaviorDraft
-      && hasBehaviorChanges
-      && currentAiSettings.allowedProviders.includes(behaviorDraft.defaultProvider)
-      && providerModels.includes(behaviorDraft.defaultModel)
-      && currentAiSettings.allowedReasoningSummaryModes.includes(behaviorDraft.reasoningSummaryMode)
-      && currentAiSettings.allowedReasoningEfforts.includes(behaviorDraft.reasoningEffort)
-  );
+  const canSaveBehavior = Boolean(canManageAiSettings && currentAiSettings && behaviorDraft && hasBehaviorChanges && currentAiSettings.allowedProviders.includes(behaviorDraft.defaultProvider) && providerModels.includes(behaviorDraft.defaultModel) && currentAiSettings.allowedReasoningSummaryModes.includes(behaviorDraft.reasoningSummaryMode) && currentAiSettings.allowedReasoningEfforts.includes(behaviorDraft.reasoningEffort));
   const isSaving = Boolean(savingAction);
-  const displayedProviderStatuses = currentAiSettings?.providers || PROVIDERS.map((provider) => ({
-    provider,
-    configured: false,
-    enabled: false
-  }));
+  const displayedProviderStatuses = currentAiSettings?.providers || PROVIDERS.map((provider) => (
+    { provider, configured: false, enabled: false, source: 'none' as const }
+  ));
   const providerStatusByProvider = useMemo(() => {
     return new Map(displayedProviderStatuses.map((status) => [status.provider, status]));
   }, [displayedProviderStatuses]);
-  const savedDefaultProviderStatus = currentAiSettings
-    ? providerStatusByProvider.get(currentAiSettings.defaultProvider)
-    : undefined;
+  const savedDefaultProviderStatus = currentAiSettings ? providerStatusByProvider.get(currentAiSettings.defaultProvider) : undefined;
   const savedDefaultProviderConfigured = Boolean(savedDefaultProviderStatus?.configured);
   const savedDefaultProviderEnabled = Boolean(savedDefaultProviderStatus?.enabled);
+  const savedDefaultCredentialSourceBadgeKey = savedDefaultProviderStatus?.source === 'workspace'
+    ? 'workspaceAiSettings.workspaceKeyBadge'
+    : savedDefaultProviderStatus?.source === 'platform_default'
+      ? 'workspaceAiSettings.platformDefaultBadge'
+      : null;
   const savedDefaultProviderMissingCredential = Boolean(currentAiSettings && savedDefaultProviderStatus && savedDefaultProviderEnabled && !savedDefaultProviderConfigured);
   const savedDefaultProviderDisabled = Boolean(currentAiSettings && savedDefaultProviderStatus && !savedDefaultProviderEnabled);
-  const hasReadyAiRuntime = isAiRuntimeReady(resolveAiRuntimeReadiness({ settings: currentAiSettings, isLoading: aiSettingsResource.isLoading && !currentAiSettings, error: aiSettingsResource.error }));
+  const hasReadyAiRuntime = isAiRuntimeReady(
+    resolveAiRuntimeReadiness({
+      settings: currentAiSettings,
+      isLoading: aiSettingsResource.isLoading && !currentAiSettings,
+      error: aiSettingsResource.error
+    })
+  );
   const isCurrentWorkspaceRequest = () => isMountedRef.current && workspaceIdRef.current === workspace.id;
   const readinessNotice = !canManageAiSettings
     ? { tone: 'neutral' as const, message: t('workspaceAiSettings.noAccess') }
     : hasReadyAiRuntime
-      ? { tone: 'neutral' as const, message: t('workspaceAiSettings.readinessReady') }
-      : savedDefaultProviderDisabled
-      ? {
-          tone: 'danger' as const,
-          message: t('workspaceAiSettings.defaultProviderDisabledWarning', { provider: providerLabel(currentAiSettings!.defaultProvider) })
-        }
-      : savedDefaultProviderMissingCredential
-        ? {
-            tone: 'warning' as const,
-            message: t('workspaceAiSettings.defaultCredentialMissingWarning', { provider: providerLabel(currentAiSettings!.defaultProvider) })
-          }
-        : { tone: 'neutral' as const, message: t('workspaceAiSettings.readinessReady') };
-  const readinessAction = returnTo && hasReadyAiRuntime
-    ? { label: t('workspaceAiSettings.returnToAssistant'), onClick: () => onReturnToAssistant?.(returnTo) }
-    : savedDefaultProviderMissingCredential
     ? {
-        label: t('workspaceAiSettings.readinessAddCredentialAction', { provider: providerLabel(currentAiSettings!.defaultProvider) }),
-        onClick: () => {
-          if (!currentAiSettings) return;
-          const provider = currentAiSettings.defaultProvider;
-          setCredentialEditorProvider(provider);
-          setDeleteCandidate(null);
-          setCredentialErrors((current) => ({ ...current, [provider]: '' }));
-          setProviderKeys((current) => ({ ...current, [provider]: '' }));
-          credentialsSectionRef.current?.scrollIntoView({ block: 'start' });
-        }
+        tone: 'neutral' as const,
+        message: t('workspaceAiSettings.readinessReady')
       }
     : savedDefaultProviderDisabled
+    ? {
+        tone: 'danger' as const,
+        message: t('workspaceAiSettings.defaultProviderDisabledWarning', {
+          provider: providerLabel(currentAiSettings!.defaultProvider)
+        })
+      }
+    : savedDefaultProviderMissingCredential
+    ? {
+        tone: 'warning' as const,
+        message: t('workspaceAiSettings.defaultCredentialMissingWarning', {
+          provider: providerLabel(currentAiSettings!.defaultProvider)
+        })
+      }
+    : {
+        tone: 'neutral' as const,
+        message: t('workspaceAiSettings.readinessReady')
+      };
+  const readinessAction =
+    returnTo && hasReadyAiRuntime
+      ? {
+          label: t('workspaceAiSettings.returnToAssistant'),
+          onClick: () => onReturnToAssistant?.(returnTo)
+        }
+      : savedDefaultProviderMissingCredential
+      ? {
+          label: t('workspaceAiSettings.readinessAddCredentialAction', {
+            provider: providerLabel(currentAiSettings!.defaultProvider)
+          }),
+          onClick: () => {
+            if (!currentAiSettings) return;
+            const provider = currentAiSettings.defaultProvider;
+            setCredentialEditorProvider(provider);
+            setDeleteCandidate(null);
+            setCredentialErrors((current) => ({ ...current, [provider]: '' }));
+            setProviderKeys((current) => ({ ...current, [provider]: '' }));
+            credentialsSectionRef.current?.scrollIntoView({ block: 'start' });
+          }
+        }
+      : savedDefaultProviderDisabled
       ? {
           label: t('workspaceAiSettings.readinessChooseProviderAction'),
           onClick: () => {
@@ -207,9 +220,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       return {
         ...current,
         defaultProvider: provider,
-        defaultModel: nextProviderModels.length > 0 && !nextProviderModels.includes(current.defaultModel)
-          ? nextProviderModels[0]
-          : current.defaultModel
+        defaultModel: nextProviderModels.length > 0 && !nextProviderModels.includes(current.defaultModel) ? nextProviderModels[0] : current.defaultModel
       };
     });
   };
@@ -231,7 +242,11 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       showToast(t('workspaceAiSettings.settingsSaved'));
     } catch (error) {
       if (!isCurrentWorkspaceRequest()) return;
-      setBehaviorError(formatControlPlaneError(error, t('workspaceAiSettings.saveFailed'), { area: 'aiSettings' }));
+      setBehaviorError(
+        formatControlPlaneError(error, t('workspaceAiSettings.saveFailed'), {
+          area: 'aiSettings'
+        })
+      );
     } finally {
       if (isCurrentWorkspaceRequest()) setSavingAction('');
     }
@@ -256,15 +271,19 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
     setSavingAction(`save:${provider}`);
     setCredentialErrors((current) => ({ ...current, [provider]: '' }));
     try {
-      const wasConfigured = currentAiSettings.providers.some((status) => status.provider === provider && status.configured);
+      const wasConfigured = currentAiSettings.providers.some(
+        (status) => status.provider === provider && status.source === 'workspace'
+      );
       const updated = await controlPlaneApi.saveWorkspaceAiProviderCredential(workspace.id, provider, apiKey);
       if (!isCurrentWorkspaceRequest()) return;
       aiSettingsResource.update(updated);
       setProviderKeys((current) => ({ ...current, [provider]: '' }));
       setCredentialEditorProvider(null);
-      showToast(t(wasConfigured ? 'workspaceAiSettings.keyRotated' : 'workspaceAiSettings.keyAdded', {
-        provider: providerLabel(provider)
-      }));
+      showToast(
+        t(wasConfigured ? 'workspaceAiSettings.keyRotated' : 'workspaceAiSettings.keyAdded', {
+          provider: providerLabel(provider)
+        })
+      );
     } catch (error) {
       if (!isCurrentWorkspaceRequest()) return;
       setCredentialErrors((current) => ({
@@ -287,7 +306,11 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       setDeleteCandidate(null);
       setCredentialEditorProvider(null);
       setProviderKeys((current) => ({ ...current, [provider]: '' }));
-      showToast(t('workspaceAiSettings.keyDeleted', { provider: providerLabel(provider) }));
+      showToast(
+        t('workspaceAiSettings.keyDeleted', {
+          provider: providerLabel(provider)
+        })
+      );
     } catch (error) {
       if (!isCurrentWorkspaceRequest()) return;
       setCredentialErrors((current) => ({
@@ -301,25 +324,15 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
 
   return (
     <PageShell embedded={embedded}>
-      {!embedded && (
-        <PageHeader title={t('workspaceAiSettings.title')} description={t('workspaceAiSettings.subtitle')} />
-      )}
+      {!embedded && <PageHeader title={t('workspaceAiSettings.title')} description={t('workspaceAiSettings.subtitle')} />}
 
       <div className="max-w-4xl">
-        {aiSettingsResource.isLoading && !currentAiSettings && (
-          <WorkspaceAiSettingsSkeleton label={t('workspaceAiSettings.loading')} />
-        )}
+        {aiSettingsResource.isLoading && !currentAiSettings && <WorkspaceAiSettingsSkeleton label={t('workspaceAiSettings.loading')} />}
 
         {!aiSettingsResource.isLoading && !currentAiSettings && aiSettingsResource.error && (
           <div className="mb-8">
             <InlineAlert tone="danger">{aiSettingsResource.error}</InlineAlert>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="mt-3"
-              onClick={aiSettingsResource.retry}
-            >
+            <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={aiSettingsResource.retry}>
               <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
               {t('common.retry')}
             </Button>
@@ -328,54 +341,48 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
 
         {currentAiSettings && behaviorDraft && (
           <>
-            <SettingSection
-              title={t('workspaceAiSettings.readinessTitle')}
-              description={t('workspaceAiSettings.readinessBody')}
-            >
+            <SettingSection title={t('workspaceAiSettings.readinessTitle')} description={t('workspaceAiSettings.readinessBody')}>
               <div className="grid gap-px bg-ui-border sm:grid-cols-3">
                 <div className="bg-ui-surface p-5">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.defaultRuntime')}</p>
-                  <p className="min-w-0 truncate text-sm font-bold text-ui-text">
+                  <p className="mb-2 type-label">{t('workspaceAiSettings.defaultRuntime')}</p>
+                  <p className="min-w-0 truncate type-row-title">
                     {providerLabel(currentAiSettings.defaultProvider)} / {currentAiSettings.defaultModel}
                   </p>
                 </div>
                 <div className="bg-ui-surface p-5">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.defaultCredential')}</p>
+                  <p className="mb-2 type-label">{t('workspaceAiSettings.defaultCredential')}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge tone={savedDefaultProviderConfigured ? 'success' : savedDefaultProviderDisabled ? 'warning' : 'neutral'}>
-                      {savedDefaultProviderConfigured ? t('workspaceAiSettings.credentialConfiguredBadge') : t('workspaceAiSettings.credentialMissingBadge')}
+                      {t(savedDefaultProviderConfigured ? 'workspaceAiSettings.credentialConfiguredBadge' : 'workspaceAiSettings.credentialMissingBadge')}
                     </StatusBadge>
-                    {savedDefaultProviderDisabled && (
-                      <StatusBadge tone="warning">{t('workspaceAiSettings.providerDisabled')}</StatusBadge>
+                    {savedDefaultProviderConfigured && savedDefaultCredentialSourceBadgeKey && (
+                      <StatusBadge tone="neutral">{t(savedDefaultCredentialSourceBadgeKey)}</StatusBadge>
                     )}
+                    {savedDefaultProviderDisabled && <StatusBadge tone="warning">{t('workspaceAiSettings.providerDisabled')}</StatusBadge>}
                   </div>
                 </div>
                 <div className="bg-ui-surface p-5">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.reasoningReadiness')}</p>
-                  <p className="text-sm font-bold text-ui-text">
+                  <p className="mb-2 type-label">{t('workspaceAiSettings.reasoningReadiness')}</p>
+                  <p className="type-row-title">
                     {t('workspaceAiSettings.reasoningSummaryStatus', {
-                      mode: isReasoningPolicyDisabled
-                        ? t('workspaceAiSettings.reasoningSummaryUnavailable')
-                        : t(reasoningModeLabel(currentAiSettings.reasoningSummaryMode))
+                      mode: isReasoningPolicyDisabled ? t('workspaceAiSettings.reasoningSummaryUnavailable') : t(reasoningModeLabel(currentAiSettings.reasoningSummaryMode))
                     })}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-ui-text-muted">
-                    {t('workspaceAiSettings.reasoningEffortStatus', { effort: t(reasoningEffortLabel(currentAiSettings.reasoningEffort)) })}
+                    {t('workspaceAiSettings.reasoningEffortStatus', {
+                      effort: t(reasoningEffortLabel(currentAiSettings.reasoningEffort))
+                    })}
                   </p>
                 </div>
               </div>
               <div className="border-t border-ui-border bg-ui-bg/35 p-5">
-                <InlineAlert tone={readinessNotice.tone} className="min-h-14">{readinessNotice.message}</InlineAlert>
+                <InlineAlert tone={readinessNotice.tone} className="min-h-14">
+                  {readinessNotice.message}
+                </InlineAlert>
                 {(canManageAiSettings || Boolean(returnTo && hasReadyAiRuntime)) && (
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="type-caption">{t('workspaceAiSettings.nextAction')}</p>
-                    <Button
-                      type="button"
-                      variant={savedDefaultProviderMissingCredential || savedDefaultProviderDisabled ? 'secondary' : 'tertiary'}
-                      size="sm"
-                      onClick={() => readinessAction.onClick()}
-                      className="w-full sm:w-auto"
-                    >
+                    <Button type="button" variant={savedDefaultProviderMissingCredential || savedDefaultProviderDisabled ? 'secondary' : 'tertiary'} size="sm" onClick={() => readinessAction.onClick()} className="w-full sm:w-auto">
                       <ICONS.ArrowRight className="h-4 w-4" aria-hidden="true" />
                       {readinessAction.label}
                     </Button>
@@ -384,118 +391,101 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
               </div>
             </SettingSection>
 
-            <SettingSection
-              title={t('workspaceAiSettings.behaviorTitle')}
-              description={t('workspaceAiSettings.behaviorBody')}
-              sectionRef={behaviorSectionRef}
-              className="scroll-mt-8"
-            >
+            <SettingSection title={t('workspaceAiSettings.behaviorTitle')} description={t('workspaceAiSettings.behaviorBody')} sectionRef={behaviorSectionRef} className="scroll-mt-8">
               <div className="p-6">
                 <div className="mb-5 flex min-w-0 items-center gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong shadow-sm">
                     <ICONS.Zap className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0">
-                    <p className="mb-0.5 text-sm font-bold text-ui-text">{t('workspaceAiSettings.behavior')}</p>
+                    <p className="mb-0.5 type-row-title">{t('workspaceAiSettings.behavior')}</p>
                     <p className="text-xs leading-5 text-ui-text-muted">{t('workspaceAiSettings.behaviorDescription')}</p>
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="block">
-                    <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.provider')}</span>
-                    <Select<LlmProvider>
-                      value={behaviorDraft.defaultProvider}
-                      options={providerOptions}
-                      onChange={handleDefaultProviderChange}
-                      disabled={!canManageAiSettings || !currentAiSettings || isSaving}
-                      ariaLabel={t('workspaceAiSettings.provider')}
-                    />
+                    <span className="mb-1 block type-label">{t('workspaceAiSettings.provider')}</span>
+                    <Select<LlmProvider> value={behaviorDraft.defaultProvider} options={providerOptions} onChange={handleDefaultProviderChange} disabled={!canManageAiSettings || !currentAiSettings || isSaving} ariaLabel={t('workspaceAiSettings.provider')} />
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('workspaceAiSettings.model')}</span>
+                    <span className="mb-1 block type-label">{t('workspaceAiSettings.model')}</span>
                     <Select<string>
                       value={behaviorDraft.defaultModel}
                       options={modelOptions}
                       onChange={(defaultModel) => {
                         setBehaviorError('');
-                        setBehaviorDraft((current) => ({ ...current, defaultModel }));
+                        setBehaviorDraft((current) => ({
+                          ...current,
+                          defaultModel
+                        }));
                       }}
                       disabled={!canManageAiSettings || !currentAiSettings || isSaving}
                       ariaLabel={t('workspaceAiSettings.model')}
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                      {t('workspaceAiSettings.reasoningSummaryMode')}
-                    </span>
+                    <span className="mb-1 block type-label">{t('workspaceAiSettings.reasoningSummaryMode')}</span>
                     <Select<ReasoningSummaryMode>
                       value={behaviorDraft.reasoningSummaryMode}
                       options={reasoningSummaryModeOptions}
                       onChange={(reasoningSummaryMode) => {
                         setBehaviorError('');
-                        setBehaviorDraft((current) => ({ ...current, reasoningSummaryMode }));
+                        setBehaviorDraft((current) => ({
+                          ...current,
+                          reasoningSummaryMode
+                        }));
                       }}
                       disabled={!canManageAiSettings || !currentAiSettings || isReasoningPolicyDisabled || isSaving}
                       ariaLabel={t('workspaceAiSettings.reasoningSummaryMode')}
                     />
-                    <p className="mt-2 text-xs font-medium leading-5 text-ui-text-muted">
-                      {isReasoningPolicyDisabled
-                        ? t('workspaceAiSettings.reasoningPolicyDisabled')
-                        : t('workspaceAiSettings.reasoningDescription')}
-                    </p>
+                    <p className="mt-2 text-xs font-medium leading-5 text-ui-text-muted">{isReasoningPolicyDisabled ? t('workspaceAiSettings.reasoningPolicyDisabled') : t('workspaceAiSettings.reasoningDescription')}</p>
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                      {t('workspaceAiSettings.reasoningEffortLabel')}
-                    </span>
+                    <span className="mb-1 block type-label">{t('workspaceAiSettings.reasoningEffortLabel')}</span>
                     <Select<ReasoningEffort>
                       value={behaviorDraft.reasoningEffort}
                       options={reasoningEffortOptions}
                       onChange={(reasoningEffort) => {
                         setBehaviorError('');
-                        setBehaviorDraft((current) => ({ ...current, reasoningEffort }));
+                        setBehaviorDraft((current) => ({
+                          ...current,
+                          reasoningEffort
+                        }));
                       }}
                       disabled={!canManageAiSettings || !currentAiSettings || isSaving}
                       ariaLabel={t('workspaceAiSettings.reasoningEffortLabel')}
                     />
-                    <p className="mt-2 min-h-10 text-xs font-medium leading-5 text-ui-text-muted">
-                      {behaviorDraft.reasoningSummaryMode === 'off'
-                        ? t('workspaceAiSettings.reasoningEffortOffHelp')
-                        : t('workspaceAiSettings.reasoningEffortHelp')}
-                    </p>
+                    <p className="mt-2 min-h-10 text-xs font-medium leading-5 text-ui-text-muted">{behaviorDraft.reasoningSummaryMode === 'off' ? t('workspaceAiSettings.reasoningEffortOffHelp') : t('workspaceAiSettings.reasoningEffortHelp')}</p>
                   </label>
                 </div>
-                {behaviorError && <InlineAlert tone="danger" className="mt-5">{behaviorError}</InlineAlert>}
+                {behaviorError && (
+                  <InlineAlert tone="danger" className="mt-5">
+                    {behaviorError}
+                  </InlineAlert>
+                )}
               </div>
               <div className="flex flex-col gap-3 border-t border-ui-border bg-ui-bg/35 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs font-medium leading-5 text-ui-text-muted">
-                  {hasBehaviorChanges ? t('workspaceAiSettings.behaviorUnsavedFooter') : t('workspaceAiSettings.behaviorSavedFooter')}
-                </p>
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  onClick={handleSaveBehavior}
-                  disabled={!canSaveBehavior || isSaving}
-                  className="w-full sm:w-36"
-                >
+                <p className="text-xs font-medium leading-5 text-ui-text-muted">{hasBehaviorChanges ? t('workspaceAiSettings.behaviorUnsavedFooter') : t('workspaceAiSettings.behaviorSavedFooter')}</p>
+                <Button type="button" variant="primary" size="sm" onClick={handleSaveBehavior} disabled={!canSaveBehavior || isSaving} className="w-full sm:w-36">
                   {savingAction === 'behavior' ? <ICONS.RefreshCw className="h-4 w-4 animate-spin" /> : <ICONS.CheckCircle2 className="h-4 w-4" />}
                   {savingAction === 'behavior' ? t('workspaceAiSettings.saving') : t('workspaceAiSettings.saveBehavior')}
                 </Button>
               </div>
             </SettingSection>
 
-            <SettingSection
-              title={t('workspaceAiSettings.credentialsTitle')}
-              description={t('workspaceAiSettings.credentialsBody')}
-              sectionRef={credentialsSectionRef}
-              className="scroll-mt-8"
-            >
+            <SettingSection title={t('workspaceAiSettings.credentialsTitle')} description={t('workspaceAiSettings.credentialsBody')} sectionRef={credentialsSectionRef} className="scroll-mt-8">
               {displayedProviderStatuses.map((providerStatus) => {
                 const provider = providerStatus.provider;
                 const isDeleteConfirming = deleteCandidate === provider;
                 const isEditingCredential = credentialEditorProvider === provider;
                 const credentialError = credentialErrors[provider];
+                const isWorkspaceOverride = providerStatus.source === 'workspace';
+                const isPlatformDefault = providerStatus.source === 'platform_default';
+                const credentialSourceBadgeKey = isWorkspaceOverride
+                  ? 'workspaceAiSettings.workspaceKeyBadge'
+                  : isPlatformDefault
+                    ? 'workspaceAiSettings.platformDefaultBadge'
+                    : null;
                 return (
                   <div key={provider} className="border-b border-ui-border p-6 last:border-0">
                     <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -505,25 +495,30 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                         </div>
                         <div className="min-w-0">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-bold text-ui-text">{providerLabel(provider)}</p>
+                            <p className="type-row-title">{providerLabel(provider)}</p>
                             <StatusBadge tone={providerStatus.configured ? 'success' : 'neutral'}>
-                              {providerStatus.configured ? t('workspaceAiSettings.credentialConfiguredBadge') : t('workspaceAiSettings.credentialMissingBadge')}
+                              {t(providerStatus.configured ? 'workspaceAiSettings.credentialConfiguredBadge' : 'workspaceAiSettings.credentialMissingBadge')}
                             </StatusBadge>
+                            {providerStatus.configured && credentialSourceBadgeKey && (
+                              <StatusBadge tone="neutral">{t(credentialSourceBadgeKey)}</StatusBadge>
+                            )}
                             {!providerStatus.enabled && (
                               <StatusBadge tone="warning">{t('workspaceAiSettings.providerDisabled')}</StatusBadge>
                             )}
                           </div>
-                          <p className="text-xs leading-5 text-ui-text-muted">
+                          <p className={`text-xs leading-5 text-ui-text-muted ${isPlatformDefault ? 'lg:whitespace-nowrap' : ''}`}>
                             {!providerStatus.enabled
                               ? t('workspaceAiSettings.credentialDisabledDescription')
-                              : providerStatus.configured
+                              : isWorkspaceOverride
                                 ? t('workspaceAiSettings.credentialConfigured')
+                                : isPlatformDefault
+                                  ? t('workspaceAiSettings.credentialInherited')
                                 : t('workspaceAiSettings.credentialMissing')}
                           </p>
                         </div>
                       </div>
                       {(canManageAiSettings || isEditingCredential || credentialError) && (
-                        <div className="flex w-full flex-col gap-3 lg:w-[28rem]">
+                        <div className="flex w-full flex-col gap-3 lg:w-auto">
                           {!isEditingCredential && canManageAiSettings && (
                             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                               <Button
@@ -532,27 +527,20 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                 size="sm"
                                 onClick={() => openCredentialEditor(provider)}
                                 disabled={!currentAiSettings || isSaving || !providerStatus.enabled}
-                                className="w-full sm:w-28"
+                                className="w-full whitespace-nowrap sm:w-auto"
                                 aria-label={t(
-                                  providerStatus.configured
+                                  isWorkspaceOverride
                                     ? 'workspaceAiSettings.rotateKeyForProvider'
                                     : 'workspaceAiSettings.addKeyForProvider',
                                   { provider: providerLabel(provider) }
                                 )}
                               >
                                 <ICONS.CheckCircle2 className="h-4 w-4" />
-                                {providerStatus.configured ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addKey')}
+                                {isWorkspaceOverride ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addWorkspaceKey')}
                               </Button>
-                              {isDeleteConfirming ? (
+                              {isWorkspaceOverride && (isDeleteConfirming ? (
                                 <>
-                                  <Button
-                                    type="button"
-                                    variant="danger"
-                                    size="sm"
-                                    onClick={() => handleDeleteProviderKey(provider)}
-                                    disabled={!currentAiSettings || isSaving}
-                                    aria-label={t('workspaceAiSettings.confirmDeleteForProvider', { provider: providerLabel(provider) })}
-                                  >
+                                  <Button type="button" variant="danger" size="sm" onClick={() => handleDeleteProviderKey(provider)} disabled={!currentAiSettings || isSaving} aria-label={t('workspaceAiSettings.confirmDeleteForProvider', { provider: providerLabel(provider) })}>
                                     <ICONS.Trash2 className="h-4 w-4" />
                                     {t('workspaceAiSettings.confirmDelete')}
                                   </Button>
@@ -566,43 +554,49 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                   variant="danger"
                                   size="sm"
                                   onClick={() => {
-                                    setCredentialErrors((current) => ({ ...current, [provider]: '' }));
+                                    setCredentialErrors((current) => ({
+                                      ...current,
+                                      [provider]: ''
+                                    }));
                                     setDeleteCandidate(provider);
                                   }}
-                                  disabled={!currentAiSettings || isSaving || !providerStatus.configured}
+                                  disabled={!currentAiSettings || isSaving}
                                   aria-label={t('workspaceAiSettings.deleteKeyForProvider', { provider: providerLabel(provider) })}
                                 >
                                   <ICONS.Trash2 className="h-4 w-4" />
                                   {t('workspaceAiSettings.deleteKey')}
                                 </Button>
-                              )}
+                              ))}
                             </div>
                           )}
                           {isEditingCredential && (
                             <div className="rounded-lg border border-ui-border bg-ui-bg p-4">
                               <label className="block">
-                                <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
-                                  {providerStatus.configured ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addKey')}
+                                <span className="mb-1 block type-label">
+                                  {isWorkspaceOverride ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addWorkspaceKey')}
                                 </span>
                                 <input
                                   type="password"
                                   value={providerKeys[provider]}
-                                  onChange={(event) => setProviderKeys((current) => ({ ...current, [provider]: event.target.value }))}
+                                  onChange={(event) =>
+                                    setProviderKeys((current) => ({
+                                      ...current,
+                                      [provider]: event.target.value
+                                    }))
+                                  }
                                   disabled={!canManageAiSettings || !currentAiSettings || !providerStatus.enabled || isSaving}
                                   aria-label={t(
-                                    providerStatus.configured
+                                    isWorkspaceOverride
                                       ? 'workspaceAiSettings.rotateKeyForProvider'
                                       : 'workspaceAiSettings.addKeyForProvider',
                                     { provider: providerLabel(provider) }
                                   )}
-                                  placeholder={providerStatus.configured ? t('workspaceAiSettings.apiKeyRotatePlaceholder') : t('workspaceAiSettings.apiKeyAddPlaceholder')}
+                                  placeholder={isWorkspaceOverride ? t('workspaceAiSettings.apiKeyRotatePlaceholder') : t('workspaceAiSettings.apiKeyAddPlaceholder')}
                                   className={credentialInputClassName}
                                   autoComplete="off"
                                 />
                               </label>
-                              <p className="mt-2 text-xs font-medium leading-5 text-ui-text-muted">
-                                {t('workspaceAiSettings.credentialEditorHelp')}
-                              </p>
+                              <p className="mt-2 text-xs font-medium leading-5 text-ui-text-muted">{t('workspaceAiSettings.credentialEditorHelp')}</p>
                               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
                                 <Button
                                   type="button"
@@ -610,16 +604,16 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                   size="sm"
                                   onClick={() => handleSaveProviderKey(provider)}
                                   disabled={!canManageAiSettings || !currentAiSettings || !providerKeys[provider].trim() || isSaving || !providerStatus.enabled}
-                                  className="w-full sm:w-28"
+                                  className="w-full whitespace-nowrap sm:w-auto"
                                   aria-label={t(
-                                    providerStatus.configured
+                                    isWorkspaceOverride
                                       ? 'workspaceAiSettings.rotateKeyForProvider'
-                                      : 'workspaceAiSettings.addKeyForProvider',
+                                    : 'workspaceAiSettings.addKeyForProvider',
                                     { provider: providerLabel(provider) }
                                   )}
                                 >
                                   <ICONS.CheckCircle2 className="h-4 w-4" />
-                                  {savingAction === `save:${provider}` ? t('workspaceAiSettings.saving') : providerStatus.configured ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addKey')}
+                                  {savingAction === `save:${provider}` ? t('workspaceAiSettings.saving') : isWorkspaceOverride ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addWorkspaceKey')}
                                 </Button>
                                 <Button type="button" variant="secondary" size="sm" onClick={() => closeCredentialEditor(provider)} disabled={isSaving}>
                                   {t('app.cancel')}

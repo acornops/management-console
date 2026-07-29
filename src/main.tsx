@@ -2,8 +2,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MotionConfig } from 'framer-motion';
+import '@acornops/ui/fonts';
+
 import App from './App';
-import './fonts';
 import { AppErrorBoundary } from './app/AppErrorBoundary';
 import { getAppDataMode } from './config/appDataMode';
 import { initializeI18n } from './i18n';

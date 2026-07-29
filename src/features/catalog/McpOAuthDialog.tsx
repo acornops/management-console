@@ -2,12 +2,7 @@ import React from 'react';
 import { ExternalLink, KeyRound, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { Select } from '@/components/common/Select';
+import { Button, Checkbox, CloseButton, Dialog, InlineLoadingIndicator, Select } from '@acornops/ui';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 import type {
   McpOAuthIssuerCandidate,

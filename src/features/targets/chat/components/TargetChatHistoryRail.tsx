@@ -1,8 +1,7 @@
 import { Bot, MessagesSquare, Search } from 'lucide-react';
 import type { MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Tooltip } from '@/components/common/Tooltip';
+import { Button, Tooltip } from '@acornops/ui';
 
 interface TargetChatHistoryRailProps {
   desktopHistoryPanelId: string;

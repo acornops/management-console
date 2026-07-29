@@ -1,8 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Upload } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Tooltip } from '@/components/common/Tooltip';
+import { Button, Tooltip } from '@acornops/ui';
 import { ConversationHistory } from '@/features/targets/chat/components/ConversationHistory';
 import { LiveRunTrace } from '@/features/targets/chat/types';
 import { AssistantTurn } from '@/features/targets/chat/components/AssistantTurn';

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { CheckCircle2, ShieldCheck, XCircle } from 'lucide-react';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { PendingApproval } from '@/types';
 
 interface ApprovalCheckpointProps {
@@ -13,12 +13,19 @@ interface ApprovalCheckpointProps {
 }
 
 function cleanText(value: unknown): string {
-  return String(value ?? '').replace(/[\p{Cc}\p{Cf}]+/gu, ' ').replace(/\s+/g, ' ').trim();
+  return String(value ?? '')
+    .replace(/[\p{Cc}\p{Cf}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function formatApprovalArguments(value: Record<string, unknown>): string {
   return JSON.stringify(value, null, 2).replace(/\p{Cf}/gu, (character) =>
-    character.split('').map((unit) => `\\u${unit.charCodeAt(0).toString(16).padStart(4, '0')}`).join(''));
+    character
+      .split('')
+      .map((unit) => `\\u${unit.charCodeAt(0).toString(16).padStart(4, '0')}`)
+      .join('')
+  );
 }
 
 function targetLabel(t: TFunction, argumentsValue: Record<string, unknown> | undefined, defaultKind?: string): string {
@@ -31,24 +38,22 @@ function targetLabel(t: TFunction, argumentsValue: Record<string, unknown> | und
   if (name) return `${kind ? `${kind} ` : ''}${name}`;
   if (target) return `${kind ? `${kind} ` : ''}${target}`;
   if (namespace) {
-    return kind
-      ? t('chat.approvalFallbackTarget.kindNamespace', { kind, namespace })
-      : t('chat.approvalFallbackTarget.namespace', { namespace });
+    return kind ? t('chat.approvalFallbackTarget.kindNamespace', { kind, namespace }) : t('chat.approvalFallbackTarget.namespace', { namespace });
   }
   return kind ? t('chat.approvalFallbackTarget.selectedKind', { kind }) : '';
 }
 
 function patchChangeSummary(change: unknown, t: TFunction): { text: string; rollout: boolean; routing: boolean } {
-  const value = change && typeof change === 'object' && !Array.isArray(change) ? change as Record<string, unknown> : {};
+  const value = change && typeof change === 'object' && !Array.isArray(change) ? (change as Record<string, unknown>) : {};
   const type = cleanText(value.type);
-  const scope = value.scope === 'pod_template'
-    ? t('chat.approvalFallbackSummary.patchPodTemplate')
-    : t('chat.approvalFallbackSummary.patchResource');
+  const scope = value.scope === 'pod_template' ? t('chat.approvalFallbackSummary.patchPodTemplate') : t('chat.approvalFallbackSummary.patchResource');
   const key = cleanText(value.key);
   if (type === 'set_image') {
     return {
       text: t('chat.approvalFallbackSummary.patchSetImage', {
-        container: cleanText(value.container), before: cleanText(value.expected_image), after: cleanText(value.image)
+        container: cleanText(value.container),
+        before: cleanText(value.expected_image),
+        after: cleanText(value.image)
       }),
       rollout: true,
       routing: false
@@ -57,7 +62,9 @@ function patchChangeSummary(change: unknown, t: TFunction): { text: string; roll
   if (type === 'set_label' || type === 'remove_label') {
     return {
       text: t(`chat.approvalFallbackSummary.${type === 'set_label' ? 'patchSetLabel' : 'patchRemoveLabel'}`, {
-        scope, key, value: cleanText(value.value)
+        scope,
+        key,
+        value: cleanText(value.value)
       }),
       rollout: value.scope === 'pod_template',
       routing: false
@@ -73,13 +80,18 @@ function patchChangeSummary(change: unknown, t: TFunction): { text: string; roll
   if (type === 'set_service_selector' || type === 'remove_service_selector') {
     return {
       text: t(`chat.approvalFallbackSummary.${type === 'set_service_selector' ? 'patchSetServiceSelector' : 'patchRemoveServiceSelector'}`, {
-        key, value: cleanText(value.value)
+        key,
+        value: cleanText(value.value)
       }),
       rollout: false,
       routing: true
     };
   }
-  return { text: t('chat.approvalFallbackSummary.patchValidatedField'), rollout: false, routing: false };
+  return {
+    text: t('chat.approvalFallbackSummary.patchValidatedField'),
+    rollout: false,
+    routing: false
+  };
 }
 
 function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): string {
@@ -93,16 +105,18 @@ function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): strin
     const replicas = cleanText(approval.arguments?.replicas);
     const target = targetLabel(t, approval.arguments, t('chat.approvalFallbackTarget.workload'));
     const guards = [
-      replicas === '0' && approval.arguments?.confirm_scale_to_zero === true
-        ? t('chat.approvalFallbackSummary.scaleToZeroConfirmed')
-        : '',
-      approval.arguments?.confirm_hpa_override === true
-        ? t('chat.approvalFallbackSummary.hpaOverrideConfirmed')
-        : ''
-    ].filter(Boolean).join('; ');
+      replicas === '0' && approval.arguments?.confirm_scale_to_zero === true ? t('chat.approvalFallbackSummary.scaleToZeroConfirmed') : '',
+      approval.arguments?.confirm_hpa_override === true ? t('chat.approvalFallbackSummary.hpaOverrideConfirmed') : ''
+    ]
+      .filter(Boolean)
+      .join('; ');
     return replicas
       ? guards
-        ? t('chat.approvalFallbackSummary.scaleReplicasGuarded', { target, replicas, guards })
+        ? t('chat.approvalFallbackSummary.scaleReplicasGuarded', {
+            target,
+            replicas,
+            guards
+          })
         : t('chat.approvalFallbackSummary.scaleReplicas', { target, replicas })
       : t('chat.approvalFallbackSummary.scale', { target });
   }
@@ -112,13 +126,18 @@ function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): strin
     const rawChanges = Array.isArray(approval.arguments?.changes) ? approval.arguments.changes : [];
     const summaries = rawChanges.slice(0, 10).map((change) => patchChangeSummary(change, t));
     const visible = summaries.slice(0, 3).map((summary) => summary.text);
-    if (rawChanges.length > 3) visible.push(t('chat.approvalFallbackSummary.patchAndMore', { count: rawChanges.length - 3 }));
+    if (rawChanges.length > 3)
+      visible.push(
+        t('chat.approvalFallbackSummary.patchAndMore', {
+          count: rawChanges.length - 3
+        })
+      );
     const guards = [
-      summaries.some((summary) => summary.rollout)
-        ? t(`chat.approvalFallbackSummary.${isCronJob ? 'patchAffectsFutureJobs' : 'patchTriggersRollout'}`)
-        : '',
+      summaries.some((summary) => summary.rollout) ? t(`chat.approvalFallbackSummary.${isCronJob ? 'patchAffectsFutureJobs' : 'patchTriggersRollout'}`) : '',
       summaries.some((summary) => summary.routing) ? t('chat.approvalFallbackSummary.patchRedirectsTraffic') : ''
-    ].filter(Boolean).join('; ');
+    ]
+      .filter(Boolean)
+      .join('; ');
     return t(guards ? 'chat.approvalFallbackSummary.patchGuarded' : 'chat.approvalFallbackSummary.patch', {
       target,
       changes: visible.join('; ') || t('chat.approvalFallbackSummary.patchValidatedField'),
@@ -135,13 +154,7 @@ function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): strin
   return cleanText(approval.action) || t('chat.approvalFallbackSummary.generic');
 }
 
-export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
-  approval,
-  canApproveWriteActions,
-  onApprove,
-  onReject,
-  t
-}) => {
+export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({ approval, canApproveWriteActions, onApprove, onReject, t }) => {
   const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval, t);
   const approvalStatus = approval.status || 'pending';
   const isPending = approvalStatus === 'pending';
@@ -150,8 +163,8 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
     approvalStatus === 'approved'
       ? 'border-status-success/30 bg-status-success-soft text-status-success-text'
       : approvalStatus === 'pending'
-        ? 'border-status-warning/30 bg-status-warning-soft text-status-warning-text'
-        : 'border-status-danger/30 bg-status-danger-soft text-status-danger-text';
+      ? 'border-status-warning/30 bg-status-warning-soft text-status-warning-text'
+      : 'border-status-danger/30 bg-status-danger-soft text-status-danger-text';
 
   return (
     <section
@@ -166,27 +179,19 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
               <StatusIcon className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold leading-6 text-ui-text">{t('chat.guardTitle')}</h3>
-              <p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">
-                {approvalSummary}
-              </p>
+              <h3 className="type-row-title text-ui-text">{t('chat.guardTitle')}</h3>
+              <p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">{approvalSummary}</p>
             </div>
           </div>
           <p className={`type-micro-label shrink-0 rounded-full border px-2.5 py-1 ${statusToneClass}`} aria-live="polite">
             {t(`chat.approvalStatusLabel.${approvalStatus}`)}
           </p>
         </div>
-        {!isPending && (
-          <p className="mt-2 text-xs leading-5 text-ui-text-muted">{t(`chat.approvalStatus.${approvalStatus}`)}</p>
-        )}
-        {isPending && !canApproveWriteActions && (
-          <p className="mt-2 text-xs leading-5 text-status-warning-text">{t('chat.approvalNoPermission')}</p>
-        )}
+        {!isPending && <p className="mt-2 text-xs leading-5 text-ui-text-muted">{t(`chat.approvalStatus.${approvalStatus}`)}</p>}
+        {isPending && !canApproveWriteActions && <p className="mt-2 text-xs leading-5 text-status-warning-text">{t('chat.approvalNoPermission')}</p>}
         {approval.arguments && Object.keys(approval.arguments).length > 0 && (
           <details className="mt-3 rounded-md border border-ui-border bg-ui-surface/40 px-3 py-2">
-            <summary className="cursor-pointer select-none text-xs font-semibold leading-5 text-ui-text-muted">
-              {t('chat.approvalAdvancedDetails')}
-            </summary>
+            <summary className="cursor-pointer select-none text-xs font-semibold leading-5 text-ui-text-muted">{t('chat.approvalAdvancedDetails')}</summary>
             <pre className="type-code mt-1 max-h-36 overflow-auto rounded-md border border-ui-border bg-code-bg px-3 py-2 text-code-text">
               {formatApprovalArguments(approval.arguments)}
             </pre>
@@ -194,23 +199,11 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({
         )}
         {isPending && (
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button
-              onClick={() => void onReject(approval.id)}
-              variant="secondary"
-              size="sm"
-              className="w-full sm:w-auto"
-              disabled={!canApproveWriteActions}
-            >
+            <Button onClick={() => void onReject(approval.id)} variant="secondary" size="sm" className="w-full sm:w-auto" disabled={!canApproveWriteActions}>
               <XCircle className="h-4 w-4" />
               {t('chat.rejectAction')}
             </Button>
-            <Button
-              onClick={() => void onApprove(approval.id)}
-              variant="primary"
-              size="sm"
-              className="w-full sm:w-auto"
-              disabled={!canApproveWriteActions}
-            >
+            <Button onClick={() => void onApprove(approval.id)} variant="primary" size="sm" className="w-full sm:w-auto" disabled={!canApproveWriteActions}>
               <CheckCircle2 className="h-4 w-4" />
               {t('chat.approveAction')}
             </Button>

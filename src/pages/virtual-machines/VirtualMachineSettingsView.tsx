@@ -1,8 +1,8 @@
 import React from 'react';
 import { KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { Button } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
 import { TargetAutoTriageSettingsSection } from '@/features/targets/auto-triage/TargetAutoTriageSettingsSection';
@@ -17,7 +17,7 @@ const SettingSection: React.FC<{
 }> = ({ title, description, children }) => (
   <section className="mb-10 last:mb-0">
     <div className="mb-6 px-1">
-      <h2 className="mb-1 text-xl font-bold tracking-tight text-ui-text">{title}</h2>
+      <h2 className="mb-1 type-section-title">{title}</h2>
       <p className="max-w-3xl text-sm leading-6 text-ui-text-muted">{description}</p>
     </div>
     <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
@@ -36,7 +36,7 @@ const SettingRow: React.FC<{
         <Icon className="h-5 w-5" aria-hidden="true" />
       </div>
       <div className="min-w-0">
-        <p className="mb-0.5 text-sm font-bold text-ui-text">{label}</p>
+        <p className="mb-0.5 type-row-title">{label}</p>
         <div className="break-words text-xs leading-5 text-ui-text-muted">{description}</div>
       </div>
     </div>
@@ -151,7 +151,7 @@ export const VirtualMachineSettingsView: React.FC<{
           {rotationError && <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft p-4 text-sm font-semibold text-status-danger-text">{rotationError}</div>}
           {installInstructions && (
             <div className="border-t border-ui-border bg-ui-bg/60 p-6">
-              <p className="mb-2 text-sm font-bold text-ui-text">{t('virtualMachines.settings.installInstructions')}</p>
+              <p className="mb-2 type-row-title">{t('virtualMachines.settings.installInstructions')}</p>
               <pre className="max-h-80 overflow-auto rounded-md border border-ui-border bg-ui-surface p-4 text-xs leading-5 text-ui-text">
                 {installInstructions}
               </pre>

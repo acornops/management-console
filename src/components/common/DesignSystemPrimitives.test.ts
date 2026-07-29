@@ -5,13 +5,12 @@ import { createElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { buttonClassName } from './Button';
-import { PageBackLink } from './PageComposition';
+import { buttonClassName, PageBackLink } from '@acornops/ui';
 
 const root = resolve(__dirname, '../../..');
-const pageComposition = readFileSync(resolve(root, 'src/components/common/PageComposition.tsx'), 'utf8');
-const overlayFrames = readFileSync(resolve(root, 'src/components/common/OverlayFrames.tsx'), 'utf8');
-const formControls = readFileSync(resolve(root, 'src/components/common/FormControls.tsx'), 'utf8');
+const pageComposition = readFileSync(resolve(root, 'packages/ui/src/PageComposition.tsx'), 'utf8');
+const overlayFrames = readFileSync(resolve(root, 'packages/ui/src/OverlayFrames.tsx'), 'utf8');
+const formControls = readFileSync(resolve(root, 'packages/ui/src/FormControls.tsx'), 'utf8');
 const catalog = readFileSync(resolve(root, 'src/design-system.tsx'), 'utf8');
 
 describe('design-system primitives', () => {
@@ -25,8 +24,8 @@ describe('design-system primitives', () => {
 
   it('owns route scrolling, responsive tokens, header wrapping, and embedded mode', () => {
     expect(pageComposition).toMatch(/embedded\s*\? 'page-shell--embedded'/);
-    expect(pageComposition).toContain('px-[var(--route-padding-x)]');
-    expect(pageComposition).toContain('mb-[var(--header-content-gap)]');
+    expect(pageComposition).toContain('px-[var(--ao-route-padding-x)]');
+    expect(pageComposition).toContain('mb-[var(--ao-header-content-gap)]');
     expect(pageComposition).toContain('sm:flex-row sm:items-start sm:justify-between');
     expect(pageComposition).toContain('DataSurfaceState');
     expect(pageComposition).toContain('<TableToolbar>');
@@ -58,7 +57,7 @@ describe('design-system primitives', () => {
     expect(formControls).toContain('appearance-none');
     expect(formControls).toContain('rounded-full');
     expect(formControls).toContain('checked:border-accent');
-    expect(formControls).toContain('checked:bg-[radial-gradient(circle_at_center,rgb(var(--brand-orange-rgb))_0_35%,transparent_40%)]');
+    expect(formControls).toContain('checked:bg-[radial-gradient(circle_at_center,rgb(var(--ao-brand-orange-rgb))_0_35%,transparent_40%)]');
     expect(formControls).toContain('outline-none');
     expect(formControls).toContain('focus-visible:ring-2');
     expect(formControls).toContain('focus-visible:ring-control-boundary');

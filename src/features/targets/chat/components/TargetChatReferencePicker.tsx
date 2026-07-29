@@ -48,29 +48,20 @@ interface TargetChatReferenceMenuProps {
   t: TFunction;
 }
 
-export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = ({
-  id,
-  references,
-  activeIndex,
-  query,
-  onActiveIndexChange,
-  onSelect,
-  t
-}) => {
+export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = ({ id, references, activeIndex, query, onActiveIndexChange, onSelect, t }) => {
   const renderGroup = (kind: ChatAssistantReference['kind'], label: string) => {
-    const items = references
-      .map((reference, index) => ({ reference, index }))
-      .filter(({ reference }) => reference.kind === kind);
+    const items = references.map((reference, index) => ({ reference, index })).filter(({ reference }) => reference.kind === kind);
     if (items.length === 0) return null;
     return (
       <div role="group" aria-label={label}>
-        <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-ui-text-muted">{label}</p>
+        <p className="px-3 pb-1 pt-2 type-micro-label">{label}</p>
         {items.map(({ reference, index }) => {
           const Icon = reference.kind === 'tool' ? Wrench : BookOpen;
           const isActive = index === activeIndex;
-          const metadata = reference.kind === 'tool'
-            ? [reference.capability, reference.source === 'mcp' ? 'MCP' : t('chat.referenceBuiltIn')].filter(Boolean).join(' · ')
-            : reference.source === 'git_import'
+          const metadata =
+            reference.kind === 'tool'
+              ? [reference.capability, reference.source === 'mcp' ? 'MCP' : t('chat.referenceBuiltIn')].filter(Boolean).join(' · ')
+              : reference.source === 'git_import'
               ? t('chat.referenceImportedSkill')
               : t('chat.referenceSkill');
           return (
@@ -83,16 +74,16 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
               onMouseEnter={() => onActiveIndexChange(index)}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => onSelect(reference)}
-              className={`control-target flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors focus:outline-none ${isActive ? 'bg-ui-bg text-ui-text' : 'text-ui-text hover:bg-ui-bg'}`}
+              className={`control-target flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors focus:outline-none ${
+                isActive ? 'bg-ui-bg text-ui-text' : 'text-ui-text hover:bg-ui-bg'
+              }`}
             >
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold">{reference.label}</span>
-                <span className="mt-0.5 block truncate text-xs font-medium text-ui-text-muted">
-                  {reference.description || metadata}
-                </span>
+                <span className="mt-0.5 block truncate text-xs font-medium text-ui-text-muted">{reference.description || metadata}</span>
               </span>
-              <span className="shrink-0 pt-0.5 text-[10px] font-semibold uppercase tracking-wide text-ui-text-muted">{metadata}</span>
+              <span className="shrink-0 pt-0.5 type-micro-label">{metadata}</span>
             </button>
           );
         })}
@@ -108,9 +99,7 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
       className="absolute bottom-full left-2 right-2 z-50 mb-2 max-h-72 overflow-y-auto rounded-xl border border-ui-border bg-ui-surface-strong p-1.5 shadow-xl shadow-ui-text/10 custom-scrollbar"
     >
       {references.length === 0 ? (
-        <p className="px-3 py-3 text-sm font-medium text-ui-text-muted">
-          {query ? t('chat.referenceNoMatches') : t('chat.referenceNoneAvailable')}
-        </p>
+        <p className="px-3 py-3 text-sm font-medium text-ui-text-muted">{query ? t('chat.referenceNoMatches') : t('chat.referenceNoneAvailable')}</p>
       ) : (
         <>
           {renderGroup('tool', t('chat.capabilityPreviewTools'))}

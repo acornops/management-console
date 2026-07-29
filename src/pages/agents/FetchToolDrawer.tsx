@@ -1,13 +1,8 @@
 import React from 'react';
-import { Button } from '@/components/common/Button';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { RightSidePanel } from '@/components/common/RightSidePanel';
-import {
-  MAX_FETCH_PATTERN_LENGTH,
-  MAX_FETCH_PATTERNS,
-  validateFetchPatterns,
-  type FetchToolConfig
-} from '@/pages/agents/fetchToolConfig';
+import { Button } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { RightSidePanel } from '@acornops/ui';
+import { MAX_FETCH_PATTERN_LENGTH, MAX_FETCH_PATTERNS, validateFetchPatterns, type FetchToolConfig } from '@/pages/agents/fetchToolConfig';
 
 interface FetchToolDrawerProps {
   initialConfig: FetchToolConfig;
@@ -17,13 +12,7 @@ interface FetchToolDrawerProps {
   onSave: (config: FetchToolConfig) => Promise<void>;
 }
 
-export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({
-  initialConfig,
-  isOpen,
-  saving,
-  onClose,
-  onSave
-}) => {
+export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({ initialConfig, isOpen, saving, onClose, onSave }) => {
   const [urls, setUrls] = React.useState<string[]>(['']);
   const [errors, setErrors] = React.useState<Record<number, string>>({});
   const [saveError, setSaveError] = React.useState('');
@@ -71,7 +60,9 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({
     >
       <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-5 py-4">
         <div>
-          <h2 id="fetch-tool-title" className="type-section-title">Configure Fetch</h2>
+          <h2 id="fetch-tool-title" className="type-section-title">
+            Configure Fetch
+          </h2>
           <p id="fetch-tool-description" className="type-caption mt-1 text-ui-text-muted">
             Allow this agent to read text or JSON from specific public HTTPS URLs.
           </p>
@@ -88,23 +79,18 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({
           )}
           <label className="block">
             <span className="type-micro-label">Method</span>
-            <TextInput
-              aria-label="HTTP method"
-              value="GET"
-              disabled
-              className="mt-2 bg-ui-bg text-ui-text-muted"
-            />
+            <TextInput aria-label="HTTP method" value="GET" disabled className="mt-2 bg-ui-bg text-ui-text-muted" />
           </label>
 
           <fieldset>
             <div className="flex items-end justify-between gap-4">
               <div>
                 <legend className="type-micro-label">Allowed URLs</legend>
-                <p className="type-caption mt-1 text-ui-text-muted">
-                  Paste complete URLs. Use * only in a path or query value.
-                </p>
+                <p className="type-caption mt-1 text-ui-text-muted">Paste complete URLs. Use * only in a path or query value.</p>
               </div>
-              <span className="type-caption shrink-0 text-ui-text-muted">{urls.length}/{MAX_FETCH_PATTERNS}</span>
+              <span className="type-caption shrink-0 text-ui-text-muted">
+                {urls.length}/{MAX_FETCH_PATTERNS}
+              </span>
             </div>
 
             <div className="mt-3 space-y-3">
@@ -114,7 +100,9 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({
                   <div key={index}>
                     <div className="flex items-start gap-2">
                       <div className="min-w-0 flex-1">
-                        <label htmlFor={`fetch-url-${index}`} className="sr-only">Allowed URL {index + 1}</label>
+                        <label htmlFor={`fetch-url-${index}`} className="sr-only">
+                          Allowed URL {index + 1}
+                        </label>
                         <TextInput
                           ref={index === 0 ? firstUrlRef : undefined}
                           id={`fetch-url-${index}`}
@@ -122,17 +110,13 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({
                           inputMode="url"
                           maxLength={MAX_FETCH_PATTERN_LENGTH}
                           value={url}
-                          placeholder={index === 0
-                            ? 'https://api.example.com/v1/services/*'
-                            : 'https://status.example.com/api/health'}
+                          placeholder={index === 0 ? 'https://api.example.com/v1/services/*' : 'https://status.example.com/api/health'}
                           aria-invalid={Boolean(errors[index])}
                           aria-describedby={errors[index] ? errorId : undefined}
                           disabled={saving}
                           onChange={(event) => {
                             const value = event.target.value;
-                            setUrls((current) => current.map((item, itemIndex) => (
-                              itemIndex === index ? value : item
-                            )));
+                            setUrls((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
                             setErrors((current) => {
                               const next = { ...current };
                               delete next[index];
@@ -181,15 +165,15 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({
 
           <div className="rounded-md border border-status-warning/30 bg-status-warning-soft px-4 py-3">
             <p className="text-sm font-semibold text-status-warning-text">External data notice</p>
-            <p className="type-caption mt-1 text-status-warning-text">
-              URL paths and query values are sent to the configured external service. Do not include secrets.
-            </p>
+            <p className="type-caption mt-1 text-status-warning-text">URL paths and query values are sent to the configured external service. Do not include secrets.</p>
           </div>
         </div>
       </div>
 
       <div className="flex justify-end gap-2 border-t border-ui-border bg-ui-bg px-5 py-4">
-        <Button variant="tertiary" disabled={saving} onClick={close}>Cancel</Button>
+        <Button variant="tertiary" disabled={saving} onClick={close}>
+          Cancel
+        </Button>
         <Button variant="primary" disabled={saving} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save Fetch tool'}
         </Button>

@@ -2,9 +2,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarClock, Webhook, Zap } from 'lucide-react';
 
-import { Button } from '@/components/common/Button';
-import { SegmentedTabs } from '@/components/common/ComponentVocabulary';
-import { PageHeader } from '@/components/common/PageComposition';
+import { Button } from '@acornops/ui';
+import { SegmentedTabs } from '@acornops/ui';
+import { PageHeader } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkflowTriggerCreateMenu } from '@/pages/WorkflowTriggerCreateMenu';
 import type { Workspace } from '@/types';

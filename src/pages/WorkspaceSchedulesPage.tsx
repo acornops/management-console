@@ -1,18 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { CollectionState } from '@/components/common/CollectionState';
-import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
-import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineAlert } from '@/components/common/InlineAlert';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { DrawerFrame } from '@/components/common/OverlayFrames';
-import { PageShell } from '@/components/common/PageComposition';
-import { Select, SelectOption } from '@/components/common/Select';
-import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { InlineAlert } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
+import { PageShell } from '@acornops/ui';
+import { Select, SelectOption } from '@acornops/ui';
+import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { Workspace } from '@/types';
 import {
@@ -578,7 +578,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
               {workflows.find((workflow) => workflow.id === draft.workflowId) ? (
                 <section className="grid gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-ui-text">{t('schedules.form.workflowInputs')}</h3>
+                    <h3 className="type-row-title text-ui-text">{t('schedules.form.workflowInputs')}</h3>
                     <p className="type-caption mt-1 text-ui-text-muted">{t('schedules.form.workflowInputsHelp')}</p>
                   </div>
                   <WorkflowParameterFields

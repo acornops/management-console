@@ -13,9 +13,13 @@
   "authenticatedRoutePages": [
     "src/pages/WorkspaceOverviewPage.tsx",
     "src/pages/WorkspaceAgentsPage.tsx",
+    "src/pages/WorkspaceCatalogPage.tsx",
     "src/pages/WorkspaceWorkflowsPage.tsx",
+    "src/pages/WorkspaceRunsPage.tsx",
     "src/pages/WorkspaceSchedulesPage.tsx",
+    "src/pages/WorkspaceEventTriggersPage.tsx",
     "src/pages/WorkspaceApprovalsPage.tsx",
+    "src/pages/WorkspaceWebhooksPage.tsx",
     "src/pages/WorkspaceAuditLogPage.tsx",
     "src/pages/SettingsPage.tsx",
     "src/pages/UserSettingsPage.tsx",
@@ -33,12 +37,17 @@
     "src/pages/KubernetesClustersPage.tsx": "Delegates canonical route composition to the Dashboard inventory surface.",
     "src/pages/VirtualMachinesPage.tsx": "Delegates route composition to list, overview, resource, settings, and chat subviews.",
     "src/pages/KubernetesClusterDetailPage.tsx": "Full-height target workbench embeds tab-specific views inside a stable split-pane shell.",
-    "src/pages/WorkspaceInvitePage.tsx": "Focused invitation handoff intentionally uses a centered task surface instead of authenticated route chrome.",
-    "src/pages/NotFoundPage.tsx": "Recovery-only error route intentionally uses a centered task surface instead of authenticated route chrome."
+    "src/pages/WorkspaceInvitePage.tsx": "Focused invitation handoff uses shared PageShell spacing but intentionally replaces PageHeader with a centered task surface.",
+    "src/pages/NotFoundPage.tsx": "Recovery-only error route uses shared PageShell spacing but intentionally replaces PageHeader with a centered task surface."
   },
   "asyncCollectionStateExceptions": {
     "src/components/workspaces/CreateWorkspaceModal.tsx": "The detected branches belong to role-template form options inside a create mutation, not to a rendered read collection.",
     "src/features/targets/admin/TargetInsightsDialog.tsx": "The detected branches belong to a single insight editor and its validation state, not to a paginated or list collection.",
     "src/features/targets/chat/components/AssistantCapabilityPreviewControl.tsx": "The detected branches belong to one lazy capability preview resource, not to a user-facing collection surface."
+  },
+  "rawTableHeaderExceptions": {
+    "src/components/common/MetricChart.tsx": "The raw table is screen-reader-only alternative content for a visual chart, not an application collection ledger.",
+    "src/features/targets/catalog/TelemetryTrendSummary.tsx": "The raw table is screen-reader-only alternative content for a compact visual trend, not an application collection ledger.",
+    "src/features/targets/chat/lib/markdown.tsx": "These cells render user-authored Markdown content and do not represent Management Console collection-table chrome."
   }
 }

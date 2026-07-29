@@ -1,14 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { SelectOption } from '@/components/common/Select';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { PageShell } from '@acornops/ui';
+import { SelectOption } from '@acornops/ui';
 import { Workload } from '@/types';
 import { InfrastructureResource } from '@/features/kubernetes-cluster-detail/components/workloads/ResourceDetailsDrawer';
-import {
-  ResourceSearchFilterBar,
-  WorkloadTriageShortcut
-} from '@/features/kubernetes-cluster-detail/components/workloads/ResourceExplorerControls';
+import { ResourceSearchFilterBar, WorkloadTriageShortcut } from '@/features/kubernetes-cluster-detail/components/workloads/ResourceExplorerControls';
 import {
   ClusterSection,
   NetworkSection,
@@ -89,19 +87,14 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   onAnalyzePod
 }) => {
   const { t } = useTranslation();
-  const unhealthyPodCount = useMemo(
-    () => workloads.filter(isUnhealthyPod).length,
-    [workloads]
-  );
+  const unhealthyPodCount = useMemo(() => workloads.filter(isUnhealthyPod).length, [workloads]);
   const initialSelection = getDefaultExplorerSelection(unhealthyPodCount);
   const persistedShowUnhealthyPodsOnly = getInitialShowUnhealthyPodsOnly();
   const shouldShowUnhealthyPodsInitially = initialSelection.showUnhealthyPodsOnly && persistedShowUnhealthyPodsOnly;
   const [selectedWorkload, setSelectedWorkload] = useState<WorkloadExplorerItem | null>(null);
   const [selectedResource, setSelectedResource] = useState<InfrastructureResource | null>(null);
   const [activeResourceFamily, setActiveResourceFamily] = useState<ResourceFamily>(initialSelection.activeResourceFamily);
-  const [activeCategory, setActiveCategory] = useState<'All' | Workload['type']>(
-    shouldShowUnhealthyPodsInitially ? initialSelection.activeCategory : 'All'
-  );
+  const [activeCategory, setActiveCategory] = useState<'All' | Workload['type']>(shouldShowUnhealthyPodsInitially ? initialSelection.activeCategory : 'All');
   const [activeNetworkCategory, setActiveNetworkCategory] = useState<NetworkResourceCategory>('All');
   const [activeStorageCategory, setActiveStorageCategory] = useState<StorageResourceCategory>('All');
   const [activeClusterCategory, setActiveClusterCategory] = useState<ClusterResourceCategory>('All');
@@ -123,19 +116,20 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   const namespaces = useMemo(
     () => [
       'All',
-      ...Array.from(new Set([
-        ...reportedNamespaces.map((namespace) => namespace.name),
-        ...workloads.map((workload) => workload.namespace),
-        ...services.map((service) => service.namespace),
-        ...ingresses.map((ingress) => ingress.namespace),
-        ...pvcs.map((pvc) => pvc.namespace)
-      ])).sort()
+      ...Array.from(
+        new Set([
+          ...reportedNamespaces.map((namespace) => namespace.name),
+          ...workloads.map((workload) => workload.namespace),
+          ...services.map((service) => service.namespace),
+          ...ingresses.map((ingress) => ingress.namespace),
+          ...pvcs.map((pvc) => pvc.namespace)
+        ])
+      ).sort()
     ],
     [ingresses, pvcs, reportedNamespaces, services, workloads]
   );
   const namespaceScopedWorkloads = useMemo(
-    () =>
-      workloads.filter((workload) => selectedNamespace === 'All' || workload.namespace === selectedNamespace),
+    () => workloads.filter((workload) => selectedNamespace === 'All' || workload.namespace === selectedNamespace),
     [selectedNamespace, workloads]
   );
   const searchedWorkloads = useMemo(
@@ -161,47 +155,36 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   const filteredWorkloads = useMemo(
     () =>
       sortAttentionFirst(
-        searchedWorkloads.filter((workload) =>
-          showUnhealthyWorkloadsOnly
-            ? isUnhealthyPod(workload)
-            : activeCategory === 'All' || workload.type === activeCategory
-        ),
+        searchedWorkloads.filter((workload) => (showUnhealthyWorkloadsOnly ? isUnhealthyPod(workload) : activeCategory === 'All' || workload.type === activeCategory)),
         (workload) => !isHealthyStatus(workload.status)
       ),
     [activeCategory, searchedWorkloads, showUnhealthyWorkloadsOnly]
   );
   const filteredServices = useMemo(
     () =>
-      services.filter((service) =>
-        (selectedNamespace === 'All' || service.namespace === selectedNamespace) &&
-        matchesResourceSearch(resourceSearchTerm, [
-          service.name,
-          service.id,
-          service.type,
-          service.namespace,
-          service.clusterName,
-          service.clusterIP,
-          service.ports,
-          service.age
-        ])
+      services.filter(
+        (service) =>
+          (selectedNamespace === 'All' || service.namespace === selectedNamespace) &&
+          matchesResourceSearch(resourceSearchTerm, [service.name, service.id, service.type, service.namespace, service.clusterName, service.clusterIP, service.ports, service.age])
       ),
     [resourceSearchTerm, selectedNamespace, services]
   );
   const filteredIngresses = useMemo(
     () =>
       sortAttentionFirst(
-        ingresses.filter((ingress) =>
-          (selectedNamespace === 'All' || ingress.namespace === selectedNamespace) &&
-          matchesResourceSearch(resourceSearchTerm, [
-            ingress.name,
-            ingress.id,
-            'Ingress',
-            ingress.namespace,
-            ingress.clusterName,
-            ingress.address,
-            ingress.hosts.join(' '),
-            ingress.age
-          ])
+        ingresses.filter(
+          (ingress) =>
+            (selectedNamespace === 'All' || ingress.namespace === selectedNamespace) &&
+            matchesResourceSearch(resourceSearchTerm, [
+              ingress.name,
+              ingress.id,
+              'Ingress',
+              ingress.namespace,
+              ingress.clusterName,
+              ingress.address,
+              ingress.hosts.join(' '),
+              ingress.age
+            ])
         ),
         (ingress) => !hasReportedValue(ingress.address)
       ),
@@ -210,22 +193,23 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   const filteredPVCs = useMemo(
     () =>
       sortAttentionFirst(
-        pvcs.filter((pvc) =>
-          (selectedNamespace === 'All' || pvc.namespace === selectedNamespace) &&
-          matchesResourceSearch(resourceSearchTerm, [
-            pvc.name,
-            pvc.id,
-            'PersistentVolumeClaim',
-            pvc.namespace,
-            pvc.clusterName,
-            pvc.status,
-            pvc.capacity,
-            pvc.storageClass,
-            pvc.accessModes.join(' '),
-            pvc.volumeName,
-            pvc.volumeMode,
-            pvc.age
-          ])
+        pvcs.filter(
+          (pvc) =>
+            (selectedNamespace === 'All' || pvc.namespace === selectedNamespace) &&
+            matchesResourceSearch(resourceSearchTerm, [
+              pvc.name,
+              pvc.id,
+              'PersistentVolumeClaim',
+              pvc.namespace,
+              pvc.clusterName,
+              pvc.status,
+              pvc.capacity,
+              pvc.storageClass,
+              pvc.accessModes.join(' '),
+              pvc.volumeName,
+              pvc.volumeMode,
+              pvc.age
+            ])
         ),
         (pvc) => !isHealthyStatus(pvc.status)
       ),
@@ -240,7 +224,7 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
         ingresses,
         pvcs,
         nodes
-    }),
+      }),
     [ingresses, nodes, pvcs, reportedNamespaces, services, workloads]
   );
   const filteredNodes = useMemo(
@@ -305,9 +289,7 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
       count: resourceFamilyCounts?.cluster ?? nodes.length + namespaceItems.length
     }
   ];
-  const resourceFamilyCountsForTabs: Partial<Record<ResourceFamily, number>> = Object.fromEntries(
-    resourceFamilies.map((family) => [family.id, family.count])
-  );
+  const resourceFamilyCountsForTabs: Partial<Record<ResourceFamily, number>> = Object.fromEntries(resourceFamilies.map((family) => [family.id, family.count]));
   const showNamespaceFilter = activeResourceFamily !== 'cluster';
   const hasResourceSearch = resourceSearchTerm.trim().length > 0;
   const filteredEmptyMessage = hasResourceSearch ? t('resources.emptyFiltered') : undefined;
@@ -317,23 +299,23 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   }));
 
   const useTotalKindCounts = selectedNamespace === 'All';
-  const getKindCount = (kind: string) => useTotalKindCounts ? resourceKindCounts?.[kind] : undefined;
+  const getKindCount = (kind: string) => (useTotalKindCounts ? resourceKindCounts?.[kind] : undefined);
   const loadedWorkloadCategoryCounts: WorkloadCategoryCounts = buildWorkloadCategoryCounts({
     workloads,
     selectedNamespace
   });
-  const workloadCategoryCounts: WorkloadCategoryCounts = useTotalKindCounts && resourceKindCounts
-    ? {
-        All: (resourceFamilyCounts?.workloads ?? workloadCategories.reduce((total, category) =>
-          category === 'All' ? total : total + (resourceKindCounts[category] || 0), 0)),
-        Deployment: resourceKindCounts.Deployment || 0,
-        StatefulSet: resourceKindCounts.StatefulSet || 0,
-        DaemonSet: resourceKindCounts.DaemonSet || 0,
-        CronJob: resourceKindCounts.CronJob || 0,
-        Job: resourceKindCounts.Job || 0,
-        Pod: resourceKindCounts.Pod || 0
-      }
-    : loadedWorkloadCategoryCounts;
+  const workloadCategoryCounts: WorkloadCategoryCounts =
+    useTotalKindCounts && resourceKindCounts
+      ? {
+          All: resourceFamilyCounts?.workloads ?? workloadCategories.reduce((total, category) => (category === 'All' ? total : total + (resourceKindCounts[category] || 0)), 0),
+          Deployment: resourceKindCounts.Deployment || 0,
+          StatefulSet: resourceKindCounts.StatefulSet || 0,
+          DaemonSet: resourceKindCounts.DaemonSet || 0,
+          CronJob: resourceKindCounts.CronJob || 0,
+          Job: resourceKindCounts.Job || 0,
+          Pod: resourceKindCounts.Pod || 0
+        }
+      : loadedWorkloadCategoryCounts;
   const serviceCount = getKindCount('Service') ?? filteredServices.length;
   const ingressCount = getKindCount('Ingress') ?? filteredIngresses.length;
   const pvcCount = getKindCount('PersistentVolumeClaim') ?? filteredPVCs.length;
@@ -368,10 +350,10 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
       activeResourceFamily === 'workloads'
         ? activeCategory
         : activeResourceFamily === 'network'
-          ? activeNetworkCategory
-          : activeResourceFamily === 'storage'
-            ? activeStorageCategory
-            : activeClusterCategory;
+        ? activeNetworkCategory
+        : activeResourceFamily === 'storage'
+        ? activeStorageCategory
+        : activeClusterCategory;
     onResourceQueryChange({
       family: activeResourceFamily,
       kind: showUnhealthyWorkloadsOnly ? 'Pod' : category === 'All' ? undefined : category,
@@ -395,7 +377,7 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   const markResourceSelectionChanged = () => setHasManualResourceSelection(true);
 
   return (
-    <div className="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <header className="mb-8 min-w-0 w-full max-w-full">
         <div className="min-w-0 w-full max-w-full">
           <h1 className="type-route-title">{title || t('resources.title')}</h1>
@@ -473,57 +455,47 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
           )}
         </ResourceSearchFilterBar>
       </div>
-      <div id="resource-family-panel" role="tabpanel" tabIndex={0} aria-labelledby={`resource-family-${activeResourceFamily}-tab`} className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
+      <div
+        id="resource-family-panel"
+        role="tabpanel"
+        tabIndex={0}
+        aria-labelledby={`resource-family-${activeResourceFamily}-tab`}
+        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+      >
         {activeResourceFamily === 'workloads' && (
-          <WorkloadsSection
-          emptyMessage={filteredEmptyMessage}
-          items={filteredWorkloads}
-          onSelect={setSelectedWorkload}
-          showUnhealthyOnly={showUnhealthyWorkloadsOnly}
-        />
+          <WorkloadsSection emptyMessage={filteredEmptyMessage} items={filteredWorkloads} onSelect={setSelectedWorkload} showUnhealthyOnly={showUnhealthyWorkloadsOnly} />
         )}
         {activeResourceFamily === 'network' && (
-        <NetworkSection
-          activeCategory={activeNetworkCategory}
-          emptyMessage={filteredEmptyMessage}
-          ingresses={filteredIngresses}
-          onSelect={setSelectedResource}
-          services={filteredServices}
-        />
+          <NetworkSection
+            activeCategory={activeNetworkCategory}
+            emptyMessage={filteredEmptyMessage}
+            ingresses={filteredIngresses}
+            onSelect={setSelectedResource}
+            services={filteredServices}
+          />
         )}
         {activeResourceFamily === 'storage' && (
-        <StorageSection
-          activeCategory={activeStorageCategory}
-          emptyMessage={filteredEmptyMessage}
-          items={filteredPVCs}
-          onSelect={setSelectedResource}
-        />
+          <StorageSection activeCategory={activeStorageCategory} emptyMessage={filteredEmptyMessage} items={filteredPVCs} onSelect={setSelectedResource} />
         )}
         {activeResourceFamily === 'cluster' && (
-        <ClusterSection
-          activeCategory={activeClusterCategory}
-          emptyMessage={filteredEmptyMessage}
-          namespaces={filteredNamespaceItems}
-          nodes={filteredNodes}
-          onSelect={setSelectedResource}
-        />
+          <ClusterSection
+            activeCategory={activeClusterCategory}
+            emptyMessage={filteredEmptyMessage}
+            namespaces={filteredNamespaceItems}
+            nodes={filteredNodes}
+            onSelect={setSelectedResource}
+          />
         )}
       </div>
       <div ref={loadMoreSentinelRef} className="mt-5 flex flex-col items-center gap-3">
-        {resourceListError && (
-          <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
-            {resourceListError}
-          </p>
-        )}
-        {isLoadingInitial && (
-          <InlineLoadingIndicator label={t('resources.loading')} />
-        )}
+        {resourceListError && <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{resourceListError}</p>}
+        {isLoadingInitial && <InlineLoadingIndicator label={t('resources.loading')} />}
         {hasMoreResources && (
           <button
             type="button"
             onClick={onLoadMoreResources}
             disabled={isLoadingInitial || isLoadingMore}
-            className="control-target type-label rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+            className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isLoadingMore ? t('resources.loadingMore') : t('resources.loadMore')}
           </button>
@@ -538,6 +510,6 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
         resource={selectedResource}
         workload={selectedWorkload}
       />
-    </div>
+    </PageShell>
   );
 };

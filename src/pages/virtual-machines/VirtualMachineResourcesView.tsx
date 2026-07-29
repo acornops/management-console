@@ -1,12 +1,20 @@
 import React from 'react';
 import { RefreshCw, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
+import {
+  Button,
+  DataTable,
+  DataTableGridHeader,
+  DataTableGridHeaderCell,
+  DataTableHeader,
+  DataTableHeaderCell,
+  EmptyState,
+  InlineLoadingIndicator,
+  PageHeader,
+  PageShell,
+  formInputClassName
+} from '@acornops/ui';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { formInputClassName } from '@/components/common/formControlStyles';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 export type VmResourceCategory = 'all' | 'services' | 'processes' | 'network' | 'logs';
@@ -232,17 +240,17 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                 description={t(hasResourceSearch ? 'virtualMachines.resources.noSearchResultsHelp' : 'virtualMachines.resources.emptyHelp')}
               />
             ) : (
-              <div className="divide-y divide-ui-border">
-                <div className="hidden border-b border-ui-border bg-ui-bg/60 px-4 py-3 md:grid md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)]">
-                  <span className="type-label">{t('virtualMachines.resources.logTime')}</span>
-                  <span className="type-label">{t('virtualMachines.resources.logSource')}</span>
-                  <span className="type-label">{t('virtualMachines.resources.logMessage')}</span>
-                </div>
+              <div>
+                <DataTableGridHeader showAt="md" className="md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)]">
+                  <DataTableGridHeaderCell>{t('virtualMachines.resources.logTime')}</DataTableGridHeaderCell>
+                  <DataTableGridHeaderCell>{t('virtualMachines.resources.logSource')}</DataTableGridHeaderCell>
+                  <DataTableGridHeaderCell>{t('virtualMachines.resources.logMessage')}</DataTableGridHeaderCell>
+                </DataTableGridHeader>
                 {filteredLogs.map((entry, index) => (
-                  <article key={String(entry.entryId || index)} className="grid gap-2 px-4 py-3 text-sm md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)]">
-                    <span className="font-mono text-xs text-ui-text-muted">{formatUserDateTime(String(entry.timestamp || ''), { fallback: String(entry.timestamp || '') })}</span>
-                    <span className="truncate font-semibold text-ui-text">{String(entry.source || t('virtualMachines.resources.host'))}</span>
-                    <span className="min-w-0 break-words text-ui-text-muted">{String(entry.message || '')}</span>
+                  <article key={String(entry.entryId || index)} className="grid gap-2 border-b border-ui-border px-4 py-5 last:border-b-0 sm:px-6 md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)] lg:px-8 lg:py-6">
+                    <span className="type-code text-ui-text-muted">{formatUserDateTime(String(entry.timestamp || ''), { fallback: String(entry.timestamp || '') })}</span>
+                    <span className="type-row-title truncate">{String(entry.source || t('virtualMachines.resources.host'))}</span>
+                    <span className="type-body min-w-0 break-words">{String(entry.message || '')}</span>
                   </article>
                 ))}
               </div>
@@ -275,53 +283,53 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
             ) : (
               <>
                 <div className="hidden overflow-x-auto md:block">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-ui-border">
-                        <th className="type-label px-5 py-3 text-left">{t('virtualMachines.resources.name')}</th>
-                        <th className="type-label px-5 py-3 text-left">{t('virtualMachines.resources.category')}</th>
-                        <th className="type-label px-5 py-3 text-left">{t('virtualMachines.resources.status')}</th>
-                        <th className="type-label px-5 py-3 text-left">{t('virtualMachines.resources.detail')}</th>
+                  <DataTable caption={t('virtualMachines.resources.pageDescription', { name: vmName })}>
+                    <DataTableHeader>
+                      <tr>
+                        <DataTableHeaderCell>{t('virtualMachines.resources.name')}</DataTableHeaderCell>
+                        <DataTableHeaderCell>{t('virtualMachines.resources.category')}</DataTableHeaderCell>
+                        <DataTableHeaderCell>{t('virtualMachines.resources.status')}</DataTableHeaderCell>
+                        <DataTableHeaderCell>{t('virtualMachines.resources.detail')}</DataTableHeaderCell>
                       </tr>
-                    </thead>
+                    </DataTableHeader>
                     <tbody>
                       {filteredInventory.map((item, index) => {
                         const category = getInventoryCategory(item) || t('virtualMachines.resources.inventory');
                         return (
                           <tr key={String(item.itemId || index)} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                            <td className="max-w-[24rem] px-5 py-4">
-                              <p className="truncate text-sm font-bold text-ui-text">{String(item.name || t('virtualMachines.resources.item'))}</p>
-                              <p className="mt-1 truncate text-xs font-semibold text-ui-text-muted">{String(item.kind || '')}</p>
+                            <td className="max-w-[24rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                              <p className="truncate type-row-title">{String(item.name || t('virtualMachines.resources.item'))}</p>
+                              <p className="type-caption mt-1 truncate">{String(item.kind || '')}</p>
                             </td>
-                            <td className="px-5 py-4 align-top">
-                              <span className="rounded-full bg-ui-bg px-2.5 py-1 text-xs font-bold capitalize text-ui-text-muted">
+                            <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
+                              <span className="type-micro-label rounded-full bg-ui-bg px-2.5 py-1">
                                 {category}
                               </span>
                             </td>
-                            <td className="px-5 py-4 align-top text-sm font-semibold text-ui-text-muted">
+                            <td className="type-ui px-4 py-5 align-top text-ui-text-muted sm:px-6 lg:px-8 lg:py-6">
                               {getInventoryStatus(item)}
                             </td>
-                            <td className="max-w-[28rem] px-5 py-4 align-top text-sm font-medium text-ui-text-muted">
+                            <td className="type-body max-w-[28rem] px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
                               <span className="line-clamp-2">{getInventoryDetail(item) || t('virtualMachines.resources.noAdditionalDetail')}</span>
                             </td>
                           </tr>
                         );
                       })}
                     </tbody>
-                  </table>
+                  </DataTable>
                 </div>
 
                 <div className="divide-y divide-ui-border md:hidden">
                   {filteredInventory.map((item, index) => (
                     <article key={String(item.itemId || index)} className="px-4 py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-ui-bg px-2.5 py-1 text-xs font-bold capitalize text-ui-text-muted">
+                        <span className="type-micro-label rounded-full bg-ui-bg px-2.5 py-1">
                           {getInventoryCategory(item) || t('virtualMachines.resources.inventory')}
                         </span>
-                        <span className="text-xs font-semibold text-ui-text-muted">{getInventoryStatus(item)}</span>
+                        <span className="type-caption">{getInventoryStatus(item)}</span>
                       </div>
-                      <h2 className="mt-3 truncate text-sm font-bold text-ui-text">{String(item.name || t('virtualMachines.resources.item'))}</h2>
-                      <p className="mt-1 break-words text-sm font-medium leading-6 text-ui-text-muted">{getInventoryDetail(item) || String(item.kind || t('virtualMachines.resources.noAdditionalDetail'))}</p>
+                      <h2 className="mt-3 truncate type-row-title">{String(item.name || t('virtualMachines.resources.item'))}</h2>
+                      <p className="type-body mt-1 break-words">{getInventoryDetail(item) || String(item.kind || t('virtualMachines.resources.noAdditionalDetail'))}</p>
                     </article>
                   ))}
                 </div>

@@ -1,11 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { MenuItem } from '@/components/common/FormControls';
-import { InlineConfirmation } from '@/components/common/InlineConfirmation';
-import { OverflowActionMenu } from '@/components/common/OverflowActionMenu';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { MenuItem } from '@acornops/ui';
+import { InlineConfirmation } from '@acornops/ui';
+import { OverflowActionMenu } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkspaceEventTriggerExecutionFacts } from '@/pages/WorkspaceEventTriggerExecutionFacts';
 import type { WorkflowEventTrigger } from '@/services/control-plane/workflowEventTriggerApi';
@@ -64,7 +64,7 @@ export const WorkspaceEventTriggerCard: React.FC<WorkspaceEventTriggerCardProps>
 
   return (
     <article>
-      <div className="p-[var(--surface-padding)] xl:px-8 xl:py-6">
+      <div className="p-[var(--ao-surface-padding)] xl:px-8 xl:py-6">
         <div className={`grid gap-4 xl:items-start ${workspaceEventTriggerLedgerGridClass}`}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">

@@ -2,18 +2,18 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { CollectionState } from '@/components/common/CollectionState';
-import { DataTableGridHeader, DataTableGridHeaderCell } from '@/components/common/DataTable';
-import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@/components/common/DiscoveryFilterBar';
-import { EmptyState } from '@/components/common/EmptyState';
-import { InlineAlert } from '@/components/common/InlineAlert';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { DrawerFrame } from '@/components/common/OverlayFrames';
-import { DataSurface, PageShell } from '@/components/common/PageComposition';
-import { Select, type SelectOption } from '@/components/common/Select';
-import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
+import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { InlineAlert } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
+import { DataSurface, PageShell } from '@acornops/ui';
+import { Select, type SelectOption } from '@acornops/ui';
+import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { listWorkspaceWorkflows, type WorkflowApiDefinition } from '@/services/control-plane/workflowApi';
@@ -367,7 +367,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         <section className="mb-5 rounded-lg border border-status-success/30 bg-status-success-soft p-4" aria-labelledby="event-trigger-secret-title">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
-              <h2 id="event-trigger-secret-title" className="text-sm font-bold text-status-success-text">
+              <h2 id="event-trigger-secret-title" className="type-row-title text-status-success-text">
                 {t('eventTriggers.secret.title', { name: secretDisclosure.name })}
               </h2>
               <p className="mt-1 type-caption text-status-success-text">{t('eventTriggers.secret.description')}</p>

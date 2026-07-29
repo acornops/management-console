@@ -33,7 +33,7 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
 
   await page.evaluate(() => {
     window.localStorage.setItem('acornops_active_theme_preference', 'dark');
-    window.localStorage.setItem('acornops_profile_preferences:ning%40fixture.acornops.dev:theme', 'dark');
+    window.localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:theme', 'dark');
   });
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/dark/);

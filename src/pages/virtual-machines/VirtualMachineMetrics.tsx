@@ -114,7 +114,7 @@ export const VmOperationalDetails: React.FC<{ vm: ControlPlaneVirtualMachine; is
     <dl className="mx-4 grid grid-cols-3 gap-3 border-t border-ui-border/60 pb-4 pt-3">
       {details.map(({ label, compactLabel, value, Icon }) => (
         <div key={label} className="min-w-0">
-          <dt className="type-micro-label flex min-w-0 items-center gap-0.5 text-ui-text-muted tracking-[0.02em]" title={label}>
+          <dt className="type-micro-label flex min-w-0 items-center gap-0.5 text-ui-text-muted" title={label}>
             <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="hidden truncate 2xl:inline">{label}</span>
             <span className="truncate 2xl:hidden">{compactLabel}</span>

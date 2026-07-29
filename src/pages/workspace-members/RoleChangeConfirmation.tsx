@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { WorkspaceCapability, WorkspaceRoleTemplate } from '@/types';
 import { formatRole } from './memberUtils';
 import { formatCapability } from './RoleTemplatePreview';

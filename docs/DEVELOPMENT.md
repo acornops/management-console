@@ -27,6 +27,19 @@ Run the Vite dev server:
 npm run dev
 ```
 
+`npm install` and `npm run dev` build the local `@acornops/ui` workspace before
+Vite starts. Package work can be checked directly with:
+
+```bash
+npm run ui:check
+```
+
+Add a Changeset for every change under `packages/ui`:
+
+```bash
+npm run changeset
+```
+
 This standalone path defaults to `VITE_APP_DATA_MODE=mock`. The browser fixture
 worker starts before React, intercepts the existing control-plane HTTP boundary,
 and resets its mutable data on reload. No control-plane process is required.
@@ -68,6 +81,9 @@ npm run smoke:nginx
 ```
 
 Run contract-sensitive validation as `VITE_APP_DATA_MODE=control-plane npm run validate`.
+
+The design catalog imports `@acornops/ui` through the same public export map as
+production screens. Do not add catalog-only imports from package internals.
 
 `npm run smoke:nginx` requires Docker. Use it for production image or nginx config changes; it is intentionally outside `npm run validate`.
 

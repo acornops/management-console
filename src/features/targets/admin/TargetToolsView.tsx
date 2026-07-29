@@ -1,14 +1,14 @@
 import React from 'react';
 import { Search, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Dialog } from '@/components/common/Dialog';
-import { EmptyState } from '@/components/common/EmptyState';
-import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@/components/common/DataTable';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { Select } from '@/components/common/Select';
-import type { SelectOption } from '@/components/common/Select';
-import { formInputClassName, formTextareaClassName } from '@/components/common/formControlStyles';
+import { Button } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
+import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import type { SelectOption } from '@acornops/ui';
+import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
   ControlPlaneTargetToolItem,
@@ -368,7 +368,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     : null;
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <header className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <h1 className="type-route-title">{t('tools.title')}</h1>
@@ -405,29 +405,29 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               </div>
               <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
                 <p className="type-caption text-ui-text-muted">{t('tools.toolsMetric')}</p>
-                <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolSummary.total}</p>
+                <p className="type-data mt-0.5">{toolSummary.total}</p>
               </div>
               <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
                 <p className="type-caption text-ui-text-muted">{t('tools.enabledToolsMetric')}</p>
-                <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolSummary.enabled}</p>
+                <p className="type-data mt-0.5">{toolSummary.enabled}</p>
               </div>
               <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
                 <p className="type-caption text-ui-text-muted">{t('tools.readOnlyTools')}</p>
-                <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+                <p className="type-data mt-0.5 inline-flex items-center gap-2">
                   {toolSummary.read}
                   <span className="h-2 w-2 rounded-full bg-status-success" />
                 </p>
               </div>
               <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
                 <p className="type-caption text-ui-text-muted">{t('tools.writeCapableTools')}</p>
-                <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+                <p className="type-data mt-0.5 inline-flex items-center gap-2">
                   {toolSummary.write}
                   <span className="h-2 w-2 rounded-full bg-status-warning" />
                 </p>
               </div>
               <div className="px-5 py-3.5">
                 <p className="type-caption text-ui-text-muted">{t('tools.assistantVisibleTools')}</p>
-                <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolSummary.assistantVisible}</p>
+                <p className="type-data mt-0.5">{toolSummary.assistantVisible}</p>
               </div>
             </div>
           </section>
@@ -644,6 +644,6 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
           </div>
         </Dialog>
       )}
-    </div>
+    </PageShell>
   );
 };

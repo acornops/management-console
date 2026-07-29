@@ -15,7 +15,7 @@ describe('focused application motion source contracts', () => {
   const themeMenu = readSource('src/components/common/ThemeMenu.tsx');
   const themeToggleIcon = readSource('src/components/common/ThemeToggleIcon.tsx');
   const appPageContent = readSource('src/app/AppPageContent.tsx');
-  const pageComposition = readSource('src/components/common/PageComposition.tsx');
+  const pageComposition = readSource('packages/ui/src/PageComposition.tsx');
   const kubernetesClusterDetail = readSource('src/features/kubernetes-cluster-detail/KubernetesClusterDetail.tsx');
   const styles = readSource('src/styles.css');
 

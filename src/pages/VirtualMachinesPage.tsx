@@ -2,9 +2,9 @@ import React from 'react';
 import { Activity, Bot, Gauge } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { MetricChart } from '@/components/common/MetricChart';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import {
   controlPlaneApi,
@@ -495,7 +495,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       <div className="flex h-full items-center justify-center bg-ui-bg px-6">
         <div className="max-w-xl text-center">
           <ICONS.Server className="mx-auto h-10 w-10 text-ui-text-muted" />
-          <h2 className="mt-4 text-lg font-bold text-ui-text">{t('virtualMachines.notFoundTitle')}</h2>
+          <h2 className="mt-4 type-data">{t('virtualMachines.notFoundTitle')}</h2>
           <p className="mt-2 text-sm text-ui-text-muted">{t('virtualMachines.notFoundBody')}</p>
           <Button onClick={() => navigate(AppPaths.workspaceVirtualMachines(workspace.id, catalogReturnState))} className="mt-5">
             <ICONS.ChevronLeft className="h-4 w-4" />
@@ -578,7 +578,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-ui-border bg-ui-surface p-4 shadow-sm sm:p-6">
               <p className="type-micro-label text-ui-text-muted">{label}</p>
-              <p className="mt-2 text-sm font-bold text-ui-text">{value}</p>
+              <p className="mt-2 type-row-title">{value}</p>
             </div>
           ))}
         </div>

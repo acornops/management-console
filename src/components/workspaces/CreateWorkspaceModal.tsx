@@ -1,40 +1,35 @@
 import React from 'react';
 import { BotMessageSquare, Check, KeyRound, Loader2, MailPlus, Plus, Trash2, Users, Workflow } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { FieldValidationMessage, fieldInvalidClass } from '@/components/common/FieldValidationMessage';
-import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
-import { Select, SelectOption } from '@/components/common/Select';
+import { Button, CloseButton, Dialog, FieldValidationMessage, fieldInvalidClass, ModalStepIndicator, Select, TextInput } from '@acornops/ui';
+import type { SelectOption } from '@acornops/ui';
 import { CreateWorkspaceMemberResult } from '@/components/workspaces/CreateWorkspaceMemberResult';
 import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import {
   ProjectMember,
   Workspace,
+  WorkspaceAiSettings,
   WorkspaceInvitation,
   WorkspaceMemberAccessResult,
   WorkspaceRoleTemplate
 } from '@/types';
-
-type CreateWorkspaceStep = 'details' | 'members' | 'ai';
-type InviteRowStatus = 'idle' | 'creating' | 'created' | 'failed';
-
-export interface CreateWorkspaceInviteRow {
-  id: string;
-  email: string;
-  role: ProjectMember['role'];
-  status?: InviteRowStatus;
-  error?: string;
-  member?: ProjectMember;
-  invitation?: WorkspaceInvitation;
-}
+import {
+  type CreateWorkspaceInviteRow,
+  getDuplicateInviteEmailKeys,
+  getSubmittableInviteRows,
+  hasInheritedPlatformLlmCredential,
+  isSelfInviteEmail,
+  isValidWorkspaceInviteEmail,
+  MAX_CREATE_WORKSPACE_INVITE_ROWS,
+  normalizeInviteEmail
+} from '@/components/workspaces/CreateWorkspaceModal.helpers';
 
 interface CreateWorkspaceModalProps {
   isOpen: boolean;
   currentUserEmail: string;
   onClose: () => void;
   onCreateWorkspace: (name: string) => Promise<Workspace>;
+  onLoadWorkspaceAiSettings: (workspaceId: string) => Promise<WorkspaceAiSettings>;
   onOpenAiSettings: (workspaceId: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
   onAddOrInviteWorkspaceMember: (
@@ -43,41 +38,9 @@ interface CreateWorkspaceModalProps {
   ) => Promise<WorkspaceMemberAccessResult>;
 }
 
-export const MAX_CREATE_WORKSPACE_INVITE_ROWS = 5;
-
+type CreateWorkspaceStep = 'details' | 'members' | 'ai';
 function createRowId(): string {
   return globalThis.crypto?.randomUUID?.() || `invite-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-export function normalizeInviteEmail(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-export function isValidWorkspaceInviteEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
-
-export function isSelfInviteEmail(value: string, currentUserEmail: string): boolean {
-  return Boolean(currentUserEmail.trim()) && normalizeInviteEmail(value) === normalizeInviteEmail(currentUserEmail);
-}
-
-export function getDuplicateInviteEmailKeys(rows: CreateWorkspaceInviteRow[]): Set<string> {
-  const seen = new Set<string>();
-  const duplicates = new Set<string>();
-  for (const row of rows) {
-    if (row.status === 'created') continue;
-    const email = normalizeInviteEmail(row.email);
-    if (!email) continue;
-    if (seen.has(email)) {
-      duplicates.add(email);
-    }
-    seen.add(email);
-  }
-  return duplicates;
-}
-
-export function getSubmittableInviteRows(rows: CreateWorkspaceInviteRow[]): CreateWorkspaceInviteRow[] {
-  return rows.filter((row) => row.status !== 'created' && Boolean(row.email.trim()));
 }
 
 function createInviteRow(role: ProjectMember['role'] = ''): CreateWorkspaceInviteRow {
@@ -102,6 +65,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   currentUserEmail,
   onClose,
   onCreateWorkspace,
+  onLoadWorkspaceAiSettings,
   onOpenAiSettings,
   onLoadWorkspaceRoles,
   onAddOrInviteWorkspaceMember
@@ -111,6 +75,8 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   const [step, setStep] = React.useState<CreateWorkspaceStep>('details');
   const [workspaceName, setWorkspaceName] = React.useState('');
   const [createdWorkspace, setCreatedWorkspace] = React.useState<Workspace | null>(null);
+  const [hasInheritedLlmCredential, setHasInheritedLlmCredential] = React.useState(false);
+  const [isLoadingAiDefaults, setIsLoadingAiDefaults] = React.useState(false);
   const [isCreatingWorkspace, setIsCreatingWorkspace] = React.useState(false);
   const [createError, setCreateError] = React.useState<string | null>(null);
   const [roleTemplates, setRoleTemplates] = React.useState<WorkspaceRoleTemplate[]>([]);
@@ -122,27 +88,33 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   const [copiedInviteRowId, setCopiedInviteRowId] = React.useState<string | null>(null);
   const copiedInviteTimerRef = React.useRef<number | null>(null);
 
-  const createSteps = React.useMemo(
-    () => [
+  const createSteps = React.useMemo(() => [
       { id: 'details', label: t('workspaceCreate.stepWorkspace') },
       { id: 'members', label: t('workspaceCreate.stepInviteMembers') },
-      { id: 'ai', label: t('workspaceCreate.stepAiProvider') }
+      ...(!hasInheritedLlmCredential ? [{ id: 'ai', label: t('workspaceCreate.stepAiProvider') }] : [])
     ],
-    [t]
+    [hasInheritedLlmCredential, t]
   );
   const roleOptions: Array<SelectOption<ProjectMember['role']>> = React.useMemo(
-    () => roleTemplates.map((role) => ({ value: role.key, label: formatRole(role.key, role) })),
+    () =>
+      roleTemplates.map((role) => ({
+        value: role.key,
+        label: formatRole(role.key, role)
+      })),
     [roleTemplates]
   );
   const hasCompletedMemberSetup = inviteRows.some((row) => row.status === 'created');
   const hasRowsToSubmit = getSubmittableInviteRows(inviteRows).length > 0;
   const closeDisabled = isCreatingWorkspace || isCreatingInvites;
 
-  React.useEffect(() => () => {
-    if (copiedInviteTimerRef.current) {
-      window.clearTimeout(copiedInviteTimerRef.current);
-    }
-  }, []);
+  React.useEffect(
+    () => () => {
+      if (copiedInviteTimerRef.current) {
+        window.clearTimeout(copiedInviteTimerRef.current);
+      }
+    },
+    []
+  );
 
   React.useEffect(() => {
     if (isOpen) return;
@@ -153,6 +125,8 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     setStep('details');
     setWorkspaceName('');
     setCreatedWorkspace(null);
+    setHasInheritedLlmCredential(false);
+    setIsLoadingAiDefaults(false);
     setIsCreatingWorkspace(false);
     setCreateError(null);
     setRoleTemplates([]);
@@ -199,6 +173,27 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     };
   }, [createdWorkspace, isOpen, onLoadWorkspaceRoles, step, t]);
 
+  React.useEffect(() => {
+    if (!isOpen || !createdWorkspace) return undefined;
+    let cancelled = false;
+    setIsLoadingAiDefaults(true);
+    void onLoadWorkspaceAiSettings(createdWorkspace.id)
+      .then((settings) => {
+        if (!cancelled) {
+          setHasInheritedLlmCredential(hasInheritedPlatformLlmCredential(settings));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setHasInheritedLlmCredential(false);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingAiDefaults(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [createdWorkspace, isOpen, onLoadWorkspaceAiSettings]);
+
   if (!isOpen) {
     return null;
   }
@@ -219,11 +214,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
 
   const addInviteRow = () => {
     const nextRole = defaultInviteRole(roleTemplates);
-    setInviteRows((current) =>
-      current.length >= MAX_CREATE_WORKSPACE_INVITE_ROWS
-        ? current
-        : [...current, createInviteRow(nextRole)]
-    );
+    setInviteRows((current) => (current.length >= MAX_CREATE_WORKSPACE_INVITE_ROWS ? current : [...current, createInviteRow(nextRole)]));
   };
 
   const removeInviteRow = (rowId: string) => {
@@ -242,6 +233,10 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     setCreateError(null);
     try {
       const workspace = await onCreateWorkspace(name);
+      // Block the members-step actions before the effect-driven lookup starts.
+      // Otherwise a fast click can enter the AI step during the render between
+      // creating the workspace and beginning the inherited-default request.
+      setIsLoadingAiDefaults(true);
       setCreatedWorkspace(workspace);
       setStep('members');
     } catch (error) {
@@ -286,10 +281,14 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   };
 
   const addOrInviteMembers = async () => {
-    if (!createdWorkspace || isCreatingInvites) return;
+    if (!createdWorkspace || isCreatingInvites || isLoadingAiDefaults) return;
     const rowsToSubmit = getSubmittableInviteRows(inviteRows);
     if (rowsToSubmit.length === 0) {
-      setStep('ai');
+      if (hasInheritedLlmCredential) {
+        onClose();
+      } else {
+        setStep('ai');
+      }
       return;
     }
     if (roleLoadError || roleTemplates.length === 0) {
@@ -304,9 +303,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     setIsCreatingInvites(true);
     setInviteSummaryError(null);
     const rowIds = new Set(rowsToSubmit.map((row) => row.id));
-    setInviteRows((current) =>
-      current.map((row) => rowIds.has(row.id) ? { ...row, status: 'creating', error: undefined } : row)
-    );
+    setInviteRows((current) => current.map((row) => (rowIds.has(row.id) ? { ...row, status: 'creating', error: undefined } : row)));
 
     const results = await Promise.allSettled(
       rowsToSubmit.map(async (row) => {
@@ -375,7 +372,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       }
       setCopiedInviteRowId(row.id);
       copiedInviteTimerRef.current = window.setTimeout(() => {
-        setCopiedInviteRowId((current) => current === row.id ? null : current);
+        setCopiedInviteRowId((current) => (current === row.id ? null : current));
         copiedInviteTimerRef.current = null;
       }, 2200);
     } catch {
@@ -393,16 +390,12 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     >
       <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
         <div>
-          <h3 id="create-workspace-title" className="text-sm font-extrabold tracking-tight text-ui-text">
+          <h3 id="create-workspace-title" className="type-panel-title">
             {t('app.createWorkspace')}
           </h3>
           <ModalStepIndicator steps={createSteps} currentStepId={step} compactOnMobile className="mt-4" />
         </div>
-        <CloseButton
-          onClick={onClose}
-          disabled={closeDisabled}
-          aria-label={t('app.closeCreateWorkspaceDialog')}
-        />
+        <CloseButton onClick={onClose} disabled={closeDisabled} aria-label={t('app.closeCreateWorkspaceDialog')} />
       </div>
 
       {step === 'details' ? (
@@ -410,7 +403,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
           <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 custom-scrollbar md:grid-cols-[minmax(0,1fr)_18rem]">
             <div className="space-y-5 rounded-lg border border-ui-border bg-ui-bg p-5">
               <section className="space-y-3">
-                <label htmlFor="create-workspace-name-input" className="block px-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-ui-text-muted">
+                <label htmlFor="create-workspace-name-input" className="block px-1 type-micro-label">
                   {t('app.workspaceName')}
                 </label>
                 <TextInput
@@ -439,9 +432,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                 </span>
                 <div>
                   <h4 className="type-row-title">{t('workspaceCreate.ownerAccessTitle')}</h4>
-                  <p className="type-caption mt-2 text-ui-text-muted">
-                    {t('workspaceCreate.ownerAccessBody')}
-                  </p>
+                  <p className="type-caption mt-2 text-ui-text-muted">{t('workspaceCreate.ownerAccessBody')}</p>
                 </div>
               </div>
             </aside>
@@ -488,14 +479,18 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                   <div key={row.id} className="rounded-lg border border-ui-border bg-ui-surface p-4">
                     <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-start">
                       <div className="space-y-2">
-                        <label htmlFor={`create-workspace-invite-${row.id}-email`} className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
+                        <label htmlFor={`create-workspace-invite-${row.id}-email`} className="block type-label">
                           {t('workspaceCreate.memberEmailLabel', { number: index + 1 })}
                         </label>
                         <TextInput
                           id={`create-workspace-invite-${row.id}-email`}
                           type="email"
                           value={row.email}
-                          onChange={(event) => updateInviteRow(row.id, { email: event.target.value })}
+                          onChange={(event) =>
+                            updateInviteRow(row.id, {
+                              email: event.target.value
+                            })
+                          }
                           disabled={rowDisabled}
                           placeholder={t('members.emailPlaceholder')}
                           className={`px-4 ${row.error ? fieldInvalidClass : ''}`}
@@ -506,7 +501,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor={`create-workspace-invite-${row.id}-role`} className="block text-xs font-bold uppercase tracking-widest text-ui-text-muted">
+                        <label htmlFor={`create-workspace-invite-${row.id}-role`} className="block type-label">
                           {t('members.role')}
                         </label>
                         <Select<ProjectMember['role']>
@@ -569,13 +564,26 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             )}
           </div>
           <div className="flex flex-col-reverse gap-3 border-t border-ui-border bg-ui-bg px-6 py-4 sm:flex-row sm:justify-end">
-            <Button onClick={() => setStep('ai')} disabled={isCreatingInvites} variant="secondary" size="sm" className="rounded-lg">
-              {hasCompletedMemberSetup ? t('workspaceCreate.continue') : t('workspaceCreate.skipForNow')}
+            <Button
+              onClick={() => hasInheritedLlmCredential ? onClose() : setStep('ai')}
+              disabled={isCreatingInvites || isLoadingAiDefaults}
+              variant="secondary"
+              size="sm"
+              className="rounded-lg"
+            >
+              {isLoadingAiDefaults && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+              {isLoadingAiDefaults
+                ? t('workspaceCreate.checkingAiDefaults')
+                : hasInheritedLlmCredential
+                  ? t('workspaceCreate.done')
+                  : hasCompletedMemberSetup
+                    ? t('workspaceCreate.continue')
+                    : t('workspaceCreate.skipInvites')}
             </Button>
             {(hasRowsToSubmit || !hasCompletedMemberSetup) && (
               <Button
                 onClick={() => void addOrInviteMembers()}
-                disabled={isCreatingInvites || isLoadingRoles || Boolean(roleLoadError) || roleTemplates.length === 0 || (!hasRowsToSubmit && !hasCompletedMemberSetup)}
+                disabled={isCreatingInvites || isLoadingAiDefaults || isLoadingRoles || Boolean(roleLoadError) || roleTemplates.length === 0 || (!hasRowsToSubmit && !hasCompletedMemberSetup)}
                 variant="primary"
                 size="sm"
                 className="rounded-lg"
@@ -595,9 +603,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
               </span>
               <p className="type-micro-label mt-5 text-accent-strong">{t('workspaceCreate.aiSetupKicker')}</p>
               <h4 className="type-section-title mt-2 text-ui-text">{t('workspaceCreate.aiSetupTitle')}</h4>
-              <p className="type-body mt-2 max-w-[65ch] text-ui-text-muted">
-                {t('workspaceCreate.aiSetupBody')}
-              </p>
+              <p className="type-body mt-2 max-w-[65ch] text-ui-text-muted">{t('workspaceCreate.aiSetupBody')}</p>
 
               <div className="mt-6 divide-y divide-ui-border border-y border-ui-border">
                 <div className="flex items-start gap-3 py-4">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Checkbox } from '@/components/common/Checkbox';
+import { Checkbox } from '@acornops/ui';
 import type { WorkflowOption } from '@/services/control-plane/workflowApi';
 
 type WorkflowTargetType = 'kubernetes' | 'virtual_machine';

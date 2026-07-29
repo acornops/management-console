@@ -22,7 +22,7 @@ function aiSettings(overrides: Partial<WorkspaceAiSettings> = {}): WorkspaceAiSe
     allowedProviders: ['openai'],
     allowedProviderModels: { openai: ['gpt-5-nano'], anthropic: [], gemini: [] },
     allowedModels: [],
-    providers: [{ provider: 'openai', configured: true, enabled: true }],
+    providers: [{ provider: 'openai', configured: true, enabled: true, source: 'workspace' }],
     ...overrides
   };
 }

@@ -1,4 +1,4 @@
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { updateUrlSearch } from '@/hooks/useUrlSearchState';
 import { WorkflowRecommendationDrawer } from '@/pages/WorkflowRecommendationDrawer';
 import type { Workspace } from '@/types';

@@ -1,15 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { DrawerFrame } from '@/components/common/OverlayFrames';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import {
-  activateAutomationTemplate,
-  installAutomationTemplate,
-  listAutomationTemplates,
-  type AutomationTemplateApi
-} from '@/services/control-plane/agentApi';
+import { Button } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
+import { activateAutomationTemplate, installAutomationTemplate, listAutomationTemplates, type AutomationTemplateApi } from '@/services/control-plane/agentApi';
 
 interface WorkflowRecommendationDrawerProps {
   open: boolean;
@@ -20,14 +15,7 @@ interface WorkflowRecommendationDrawerProps {
   onChanged: (workflowId?: string) => void;
 }
 
-export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawerProps> = ({
-  open,
-  workspaceId,
-  focusWorkflowId,
-  canInstall,
-  onClose,
-  onChanged
-}) => {
+export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawerProps> = ({ open, workspaceId, focusWorkflowId, canInstall, onClose, onChanged }) => {
   const { t } = useTranslation();
   const titleId = React.useId();
   const [recommendations, setRecommendations] = React.useState<AutomationTemplateApi[]>([]);
@@ -50,12 +38,13 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
       .then(({ templates: next }) => {
         if (!active) return;
         setRecommendations(next);
-        setSelectedId((current) => (
-          next.find((recommendation) => recommendation.workflowId === focusWorkflowId)?.id
-          || (next.some((recommendation) => recommendation.id === current) ? current : '')
-          || next[0]?.id
-          || ''
-        ));
+        setSelectedId(
+          (current) =>
+            next.find((recommendation) => recommendation.workflowId === focusWorkflowId)?.id ||
+            (next.some((recommendation) => recommendation.id === current) ? current : '') ||
+            next[0]?.id ||
+            ''
+        );
       })
       .catch((cause) => {
         if (!active) return;
@@ -66,7 +55,9 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [focusWorkflowId, open, reloadKey, t, workspaceId]);
 
   const run = async (key: string, operation: () => Promise<void>) => {
@@ -82,46 +73,52 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
     }
   };
 
-  const install = () => selected && run('install', async () => {
-    const result = await installAutomationTemplate(workspaceId, selected.id);
-    onChanged(result.workflowId);
-  });
-  const activate = () => selected && run('activate', async () => {
-    const result = await activateAutomationTemplate(workspaceId, selected.id);
-    onChanged(result.workflowId);
-  });
+  const install = () =>
+    selected &&
+    run('install', async () => {
+      const result = await installAutomationTemplate(workspaceId, selected.id);
+      onChanged(result.workflowId);
+    });
+  const activate = () =>
+    selected &&
+    run('activate', async () => {
+      const result = await activateAutomationTemplate(workspaceId, selected.id);
+      onChanged(result.workflowId);
+    });
 
   return (
-      <DrawerFrame
-        open={open}
-        width="xl"
-        titleId={titleId}
-        title={t('workflowRecommendations.title')}
-        description={t('workflowRecommendations.description')}
-        onClose={onClose}
-      >
-        {loading ? (
-          <p role="status" aria-live="polite" className="text-sm text-ui-text-muted">{t('workflowRecommendations.loading')}</p>
-        ) : loadError ? (
-          <div className="space-y-4">
-            <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 text-sm text-status-danger-text">
-              <strong>{t('workflowRecommendations.loadFailed')}</strong>
-              <span className="mt-1 block">{loadError}</span>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => setReloadKey((value) => value + 1)}>{t('workflowRecommendations.retry')}</Button>
+    <DrawerFrame open={open} width="xl" titleId={titleId} title={t('workflowRecommendations.title')} description={t('workflowRecommendations.description')} onClose={onClose}>
+      {loading ? (
+        <p role="status" aria-live="polite" className="text-sm text-ui-text-muted">
+          {t('workflowRecommendations.loading')}
+        </p>
+      ) : loadError ? (
+        <div className="space-y-4">
+          <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 text-sm text-status-danger-text">
+            <strong>{t('workflowRecommendations.loadFailed')}</strong>
+            <span className="mt-1 block">{loadError}</span>
           </div>
-        ) : recommendations.length === 0 ? (
-          <p className="text-sm text-ui-text-muted">{t('workflowRecommendations.empty')}</p>
-        ) : (
-          <div className="grid gap-6 lg:grid-cols-[minmax(13rem,0.75fr)_minmax(0,1.6fr)]">
+          <Button variant="secondary" size="sm" onClick={() => setReloadKey((value) => value + 1)}>
+            {t('workflowRecommendations.retry')}
+          </Button>
+        </div>
+      ) : recommendations.length === 0 ? (
+        <p className="text-sm text-ui-text-muted">{t('workflowRecommendations.empty')}</p>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(13rem,0.75fr)_minmax(0,1.6fr)]">
           <nav aria-label={t('workflowRecommendations.list')} className="space-y-2">
             {recommendations.map((recommendation) => (
               <button
                 key={recommendation.id}
                 type="button"
                 aria-current={selected?.id === recommendation.id ? 'true' : undefined}
-                onClick={() => { setSelectedId(recommendation.id); setActionError(''); }}
-                className={`min-h-11 w-full rounded-lg border px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-control-boundary ${selected?.id === recommendation.id ? 'border-accent/40 bg-accent/5' : 'border-ui-border bg-ui-bg hover:bg-ui-surface'}`}
+                onClick={() => {
+                  setSelectedId(recommendation.id);
+                  setActionError('');
+                }}
+                className={`min-h-11 w-full rounded-lg border px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-control-boundary ${
+                  selected?.id === recommendation.id ? 'border-accent/40 bg-accent/5' : 'border-ui-border bg-ui-bg hover:bg-ui-surface'
+                }`}
               >
                 <span className="type-label block text-ui-text">{recommendation.name}</span>
                 <span className="type-caption mt-1 flex flex-wrap items-center gap-1.5 text-ui-text-muted">
@@ -143,10 +140,10 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
                     {selected.installationStatus === 'not_installed'
                       ? t('workflowRecommendations.status.notAdded')
                       : selected.installationStatus === 'needs_setup'
-                        ? t('workflowRecommendations.status.needsSetup')
-                        : selected.installationStatus === 'ready'
-                          ? t('workflowRecommendations.status.ready')
-                          : t('workflowRecommendations.status.active')}
+                      ? t('workflowRecommendations.status.needsSetup')
+                      : selected.installationStatus === 'ready'
+                      ? t('workflowRecommendations.status.ready')
+                      : t('workflowRecommendations.status.active')}
                   </StatusBadge>
                 </div>
                 <p className="type-caption mt-2 text-ui-text-muted">{selected.description}</p>
@@ -154,7 +151,12 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
 
               {selected.setupSteps.length > 0 && (
                 <ol className="space-y-2 rounded-lg border border-ui-border bg-ui-bg p-4">
-                  {selected.setupSteps.map((step, index) => <li key={step} className="flex gap-3 text-sm text-ui-text"><span className="type-micro-label mt-0.5 text-ui-text-muted">{index + 1}</span><span>{step}</span></li>)}
+                  {selected.setupSteps.map((step, index) => (
+                    <li key={step} className="flex gap-3 text-sm text-ui-text">
+                      <span className="type-micro-label mt-0.5 text-ui-text-muted">{index + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
                 </ol>
               )}
 
@@ -163,17 +165,30 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
               )}
 
               {selected.installationStatus === 'not_installed' && (
-                <Button variant="secondary" disabled={!canInstall || Boolean(pending)} onClick={install}>{pending === 'install' ? t('workflowRecommendations.installing') : t('workflowRecommendations.install')}</Button>
+                <Button variant="secondary" disabled={!canInstall || Boolean(pending)} onClick={install}>
+                  {pending === 'install' ? t('workflowRecommendations.installing') : t('workflowRecommendations.install')}
+                </Button>
               )}
 
               {selected.installationStatus !== 'active' && selected.installationStatus !== 'not_installed' && (
-                <Button variant="activation" disabled={!canInstall || Boolean(pending) || selected.blockerCodes.length > 0} title={selected.blockerCodes.length > 0 ? t('workflowRecommendations.completeSetup') : undefined} onClick={activate}>{pending === 'activate' ? t('workflowRecommendations.activating') : t('workflowRecommendations.activate')}</Button>
+                <Button
+                  variant="activation"
+                  disabled={!canInstall || Boolean(pending) || selected.blockerCodes.length > 0}
+                  title={selected.blockerCodes.length > 0 ? t('workflowRecommendations.completeSetup') : undefined}
+                  onClick={activate}
+                >
+                  {pending === 'activate' ? t('workflowRecommendations.activating') : t('workflowRecommendations.activate')}
+                </Button>
               )}
-              {actionError && <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 text-sm text-status-danger-text">{actionError}</div>}
+              {actionError && (
+                <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 text-sm text-status-danger-text">
+                  {actionError}
+                </div>
+              )}
             </section>
           ) : null}
-          </div>
-        )}
-      </DrawerFrame>
+        </div>
+      )}
+    </DrawerFrame>
   );
 };

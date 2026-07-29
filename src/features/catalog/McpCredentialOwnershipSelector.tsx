@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Radio } from '@/components/common/FormControls';
+import { Radio } from '@acornops/ui';
 
 export type McpCredentialMode = 'individual' | 'workspace';
 

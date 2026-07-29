@@ -1,7 +1,7 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import ReactMarkdown, { type Components } from 'react-markdown';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { BookOpen, Wrench } from 'lucide-react';
 import { MessageActions } from '@/features/targets/chat/components/MessageActions';
 import { markdownRemarkPlugins } from '@/features/targets/chat/lib/markdown';
@@ -106,7 +106,11 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
                   {message.assistantReferences!.map((reference) => {
                     const Icon = reference.kind === 'tool' ? Wrench : BookOpen;
                     return (
-                      <span key={`${reference.kind}:${reference.id}`} role="listitem" className="inline-flex items-center gap-1 rounded bg-ui-bg/15 px-1.5 py-0.5 text-[11px] font-semibold">
+                      <span
+                        key={`${reference.kind}:${reference.id}`}
+                        role="listitem"
+                        className="inline-flex items-center gap-1 rounded bg-ui-bg/15 px-1.5 py-0.5 type-caption font-semibold"
+                      >
                         <Icon className="h-3 w-3" aria-hidden="true" />
                         {reference.label}
                       </span>

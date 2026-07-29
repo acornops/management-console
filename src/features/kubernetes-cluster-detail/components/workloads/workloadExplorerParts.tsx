@@ -182,10 +182,7 @@ export function classNames(...values: Array<string | false | undefined>): string
 }
 
 export const resourceRowGridClass =
-  'group grid w-full min-w-0 max-w-full grid-cols-1 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ui-bg/70 sm:px-5 sm:py-4 xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5';
-
-export const resourceRowHeaderClass =
-  'hidden w-full min-w-0 max-w-full bg-ui-bg/60 px-4 py-3 sm:px-5 xl:grid xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5';
+  'group grid w-full min-w-0 max-w-full grid-cols-1 items-center gap-3 border-b border-ui-border px-4 py-5 text-left transition-colors last:border-b-0 hover:bg-ui-bg/70 sm:px-6 lg:px-8 lg:py-6 xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5';
 
 export const resourceRowActionClass =
   'flex min-w-0 flex-wrap items-center justify-start gap-3 xl:flex-nowrap xl:justify-end xl:justify-self-end';
@@ -341,7 +338,7 @@ export const ResourceMetaPair: React.FC<{
       className={classNames(
         'min-w-0 max-w-full break-words rounded-full border px-2 py-0.5 normal-case tracking-normal [overflow-wrap:anywhere]',
         tone === 'accent'
-          ? 'border-accent/20 bg-accent-soft text-accent-strong'
+          ? 'border-accent/20 bg-accent-soft text-accent-readable'
           : tone === 'metric'
             ? 'border-metric-blue/20 bg-metric-blue/10 text-metric-blue'
             : 'border-ui-border bg-ui-bg text-ui-text'

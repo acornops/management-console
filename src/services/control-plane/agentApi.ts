@@ -5,7 +5,7 @@ export type AgentProviderType = 'internal' | 'external';
 export type AgentTargetScopeApi = { type?: 'workspace' | 'selected_target'; targetTypes?: string[]; targetIds?: string[] };
 export type RunPermissionMode = 'read_only' | 'ask_before_changes' | 'auto_allowed_changes';
 export interface AgentMcpToolApi { name: string; serverId: string; alias: string; description?: string; capability: 'read' | 'write'; enabled: boolean; reviewState: 'pending' | 'approved' | 'rejected'; riskLevel: 'read_only' | 'non_destructive_write' | 'high_risk' | 'destructive'; autoAllowed: boolean }
-export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; targetConstraints: { targetTypes: string[]; targetIds: string[] }; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[] }
+export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; targetConstraints: { targetTypes: string[]; targetIds: string[] }; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
 export interface WorkspaceNativeToolApi {
   id: string;
   modelAlias: string;
@@ -23,7 +23,7 @@ export interface WorkspaceNativeToolApi {
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown>;
 }
-export interface AgentSkillApi { id: string; name: string; description: string; enabled: boolean; revision: number; contentDigest: string; source: { type: 'manual' | 'git' | 'template'; provider?: 'github' | 'gitlab'; url?: string; apiBaseUrl?: string; ref?: string; path?: string; pinnedCommit?: string }; files: Array<{ path: string; content: string; contentDigest: string }> }
+export interface AgentSkillApi { id: string; name: string; description: string; enabled: boolean; revision: number; contentDigest: string; source: { type: 'manual' | 'git' | 'template'; provider?: 'github' | 'gitlab'; url?: string; apiBaseUrl?: string; ref?: string; path?: string; pinnedCommit?: string }; files: Array<{ path: string; content: string; contentDigest: string }>; inherited?: boolean }
 export interface ServiceIdentityApi { id: string; workspaceId: string; name: string; status: 'active' | 'disabled'; role: string; createdBy: string; createdAt: string; updatedAt: string }
 export interface AutomationTemplateApi {
   id: string; version: number; name: string; description: string; installMode: 'automatic' | 'opt_in';

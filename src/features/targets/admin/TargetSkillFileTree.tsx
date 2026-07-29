@@ -46,9 +46,7 @@ function validateTreeItemName(value: string, type: FileAction): string | null {
   const trimmedValue = value.trim();
   if (!trimmedValue) return type === 'file' ? 'Enter a file name.' : 'Enter a folder name.';
   if (trimmedValue.includes('/') || trimmedValue.includes('\\')) {
-    return type === 'file'
-      ? 'Enter a file name. Select a folder first to create files inside it.'
-      : 'Create one folder at a time.';
+    return type === 'file' ? 'Enter a file name. Select a folder first to create files inside it.' : 'Create one folder at a time.';
   }
   return null;
 }
@@ -66,16 +64,19 @@ function buildFileTree(files: SkillDraftFile[], draftFolders: string[] = []): Fi
   const ensureFolder = (folderPath: string): FileTreeFolder => {
     let currentFolder = root;
     let currentPath = '';
-    folderPath.split('/').filter(Boolean).forEach((part) => {
-      currentPath = currentPath ? `${currentPath}/${part}` : part;
-      let folder = foldersByPath.get(currentPath);
-      if (!folder) {
-        folder = { name: part, path: currentPath, folders: [], files: [] };
-        currentFolder.folders.push(folder);
-        foldersByPath.set(currentPath, folder);
-      }
-      currentFolder = folder;
-    });
+    folderPath
+      .split('/')
+      .filter(Boolean)
+      .forEach((part) => {
+        currentPath = currentPath ? `${currentPath}/${part}` : part;
+        let folder = foldersByPath.get(currentPath);
+        if (!folder) {
+          folder = { name: part, path: currentPath, folders: [], files: [] };
+          currentFolder.folders.push(folder);
+          foldersByPath.set(currentPath, folder);
+        }
+        currentFolder = folder;
+      });
     return currentFolder;
   };
 
@@ -102,14 +103,7 @@ function buildFileTree(files: SkillDraftFile[], draftFolders: string[] = []): Fi
   return root;
 }
 
-export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
-  files,
-  activeFilePath,
-  canEditSkills,
-  resetKey,
-  onFilesChange,
-  onActiveFilePathChange
-}) => {
+export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files, activeFilePath, canEditSkills, resetKey, onFilesChange, onActiveFilePathChange }) => {
   const [fileAction, setFileAction] = React.useState<FileAction | null>(null);
   const [fileActionValue, setFileActionValue] = React.useState('');
   const [fileActionError, setFileActionError] = React.useState<string | null>(null);
@@ -196,7 +190,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
   };
 
   const addDraftFolder = (folderPath: string) => {
-    setDraftFolders((current) => current.includes(folderPath) ? current : [...current, folderPath].sort((left, right) => left.localeCompare(right)));
+    setDraftFolders((current) => (current.includes(folderPath) ? current : [...current, folderPath].sort((left, right) => left.localeCompare(right))));
   };
 
   const toggleFolderCollapsed = (path: string) => {
@@ -224,9 +218,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
       return;
     }
     const nextPath = createPathInSelectedFolder(fileAction, fileActionValue.trim());
-    const validationError = fileAction === 'file'
-      ? validateSkillFilePath(nextPath, files)
-      : validateSkillFolderPath(nextPath, files, draftFolders);
+    const validationError = fileAction === 'file' ? validateSkillFilePath(nextPath, files) : validateSkillFolderPath(nextPath, files, draftFolders);
     if (validationError) {
       setFileActionError(validationError);
       return;
@@ -266,23 +258,39 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
       return;
     }
 
-    const validationError = renameTarget.type === 'file'
-      ? validateSkillFilePath(nextPath, files, renameTarget.path)
-      : validateSkillFolderPath(nextPath, files, draftFolders.filter((folderPath) => folderPath !== renameTarget.path && !folderPath.startsWith(`${renameTarget.path}/`)));
+    const validationError =
+      renameTarget.type === 'file'
+        ? validateSkillFilePath(nextPath, files, renameTarget.path)
+        : validateSkillFolderPath(
+            nextPath,
+            files,
+            draftFolders.filter((folderPath) => folderPath !== renameTarget.path && !folderPath.startsWith(`${renameTarget.path}/`))
+          );
     if (validationError) {
       setRenameError(validationError);
       return;
     }
 
     if (renameTarget.type === 'file') {
-      onFilesChange(sortDraftFiles(files.map((file) => file.path === renameTarget.path ? { ...file, path: nextPath } : file)));
+      onFilesChange(sortDraftFiles(files.map((file) => (file.path === renameTarget.path ? { ...file, path: nextPath } : file))));
       if (activeFilePath === renameTarget.path) onActiveFilePathChange(nextPath);
       cancelRename();
       return;
     }
 
     const oldFolderPath = renameTarget.path;
-    onFilesChange(sortDraftFiles(files.map((file) => file.path.startsWith(`${oldFolderPath}/`) ? { ...file, path: replacePathPrefix(file.path, oldFolderPath, nextPath) } : file)));
+    onFilesChange(
+      sortDraftFiles(
+        files.map((file) =>
+          file.path.startsWith(`${oldFolderPath}/`)
+            ? {
+                ...file,
+                path: replacePathPrefix(file.path, oldFolderPath, nextPath)
+              }
+            : file
+        )
+      )
+    );
     setDraftFolders((current) => {
       const nextFolders = current.map((folderPath) => replacePathPrefix(folderPath, oldFolderPath, nextPath));
       nextFolders.push(nextPath);
@@ -357,28 +365,28 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
     );
   };
 
-  const renderFileButton = (file: SkillDraftFile, className = '', depth = 0) => (
-    renameTarget?.type === 'file' && renameTarget.path === file.path ? renderRenameRow(renameTarget, depth) :
-    <button
-      key={file.path}
-      type="button"
-      onClick={() => {
-        setSelectedFolderPath('');
-        onActiveFilePathChange(file.path);
-      }}
-      onDoubleClick={() => startRename({ type: 'file', path: file.path })}
-      className={`control-target relative flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left text-xs transition-colors ${
-        activeFilePath === file.path
-          ? 'bg-accent-soft/20 text-accent-strong'
-          : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
-      } ${className}`}
-      style={{ paddingLeft: `${0.625 + depth * 1.1}rem` }}
-      title={file.path}
-    >
-      <FileText className="h-3.5 w-3.5 shrink-0" />
-      <span className="truncate">{getFileLabel(file.path)}</span>
-    </button>
-  );
+  const renderFileButton = (file: SkillDraftFile, className = '', depth = 0) =>
+    renameTarget?.type === 'file' && renameTarget.path === file.path ? (
+      renderRenameRow(renameTarget, depth)
+    ) : (
+      <button
+        key={file.path}
+        type="button"
+        onClick={() => {
+          setSelectedFolderPath('');
+          onActiveFilePathChange(file.path);
+        }}
+        onDoubleClick={() => startRename({ type: 'file', path: file.path })}
+        className={`control-target relative flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left text-xs transition-colors ${
+          activeFilePath === file.path ? 'bg-accent-soft/20 text-accent-strong' : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
+        } ${className}`}
+        style={{ paddingLeft: `${0.625 + depth * 1.1}rem` }}
+        title={file.path}
+      >
+        <FileText className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{getFileLabel(file.path)}</span>
+      </button>
+    );
 
   const renderInlineCreateRow = (depth = 0) => {
     if (!fileAction) return null;
@@ -430,11 +438,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
-        {fileAction === 'folder' && fileActionValue.trim() && (
-          <p className="type-caption mt-1 pl-5 text-ui-text-muted">
-            Creates folder {createPreviewPath}.
-          </p>
-        )}
+        {fileAction === 'folder' && fileActionValue.trim() && <p className="type-caption mt-1 pl-5 text-ui-text-muted">Creates folder {createPreviewPath}.</p>}
         {fileActionError && <p className="type-caption mt-1 pl-5 text-status-danger-text">{fileActionError}</p>}
       </form>
     );
@@ -444,12 +448,12 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
     const collapsed = collapsedFolderPaths.has(folder.path);
     return (
       <div key={folder.path} className="space-y-1">
-        {renameTarget?.type === 'folder' && renameTarget.path === folder.path ? renderRenameRow(renameTarget, depth) : (
+        {renameTarget?.type === 'folder' && renameTarget.path === folder.path ? (
+          renderRenameRow(renameTarget, depth)
+        ) : (
           <div
             className={`flex w-full min-w-0 items-center rounded-md pr-2 text-left text-xs font-semibold transition-colors ${
-              selectedFolderPath === folder.path
-                ? 'bg-accent-soft/20 text-accent-strong'
-                : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
+              selectedFolderPath === folder.path ? 'bg-accent-soft/20 text-accent-strong' : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
             }`}
             style={{ paddingLeft: `${0.375 + depth * 1.1}rem` }}
             title={folder.path}
@@ -489,22 +493,37 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({
         <div className="flex items-center justify-between gap-2">
           <h4 className="type-row-title">Files</h4>
           <div className="flex gap-1">
-            <button type="button" className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50" disabled={!canEditSkills} onClick={() => openFileAction('file')} title="Add file" aria-label="Add file">
+            <button
+              type="button"
+              className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
+              disabled={!canEditSkills}
+              onClick={() => openFileAction('file')}
+              title="Add file"
+              aria-label="Add file"
+            >
               <FilePlus2 className="h-3.5 w-3.5" />
             </button>
-            <button type="button" className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50" disabled={!canEditSkills} onClick={() => openFileAction('folder')} title="Add folder" aria-label="Add folder">
+            <button
+              type="button"
+              className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
+              disabled={!canEditSkills}
+              onClick={() => openFileAction('folder')}
+              title="Add folder"
+              aria-label="Add folder"
+            >
               <FolderPlus className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
       </div>
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-3 custom-scrollbar">
-        {renderFileButton({ path: 'SKILL.md', content: files.find((file) => file.path === 'SKILL.md')?.content || '' })}
+        {renderFileButton({
+          path: 'SKILL.md',
+          content: files.find((file) => file.path === 'SKILL.md')?.content || ''
+        })}
         {fileAction && !selectedFolderPath && renderInlineCreateRow()}
         {fileTree.files.length === 0 && fileTree.folders.length === 0 ? (
-          <p className="type-caption ml-7 rounded-md px-2 py-1.5 text-ui-text-muted">
-            No supporting files.
-          </p>
+          <p className="type-caption ml-7 rounded-md px-2 py-1.5 text-ui-text-muted">No supporting files.</p>
         ) : (
           <div className="space-y-1">
             {fileTree.folders.map((folder) => renderFolder(folder, 0))}

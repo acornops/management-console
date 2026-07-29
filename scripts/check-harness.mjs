@@ -65,6 +65,8 @@ const productIndex = read('docs/product-specs/index.md');
 const readme = read('README.md');
 const packageJson = JSON.parse(read('package.json'));
 const releaseWorkflow = read('.github/workflows/release.yml');
+const dockerfile = read('Dockerfile');
+const composeOverride = read('docker-compose.override.yml');
 
 expect(agents.split('\n').length <= 140, 'AGENTS.md should stay short enough to serve as a table of contents');
 expect(!agents.includes('/Users/'), 'AGENTS.md should use portable relative links, not workstation-specific absolute paths');
@@ -154,6 +156,24 @@ expectIncludes(readme, 'docs/index.md', 'README docs index link');
 expectIncludes(readme, 'docs/DEVELOPMENT.md', 'README development guide link');
 expectIncludes(readme, 'docs/OPERATIONS.md', 'README operations guide link');
 expectIncludes(readme, 'system-architecture.md', 'README system architecture link');
+expect(
+  dockerfile.split('COPY packages/ui/package.json ./packages/ui/package.json').length === 3,
+  'Docker build and development stages must copy the UI workspace manifest before installing dependencies'
+);
+expect(
+  dockerfile.split('RUN npm ci --ignore-scripts').length === 3,
+  'Docker build and development stages must install workspaces without running prepare before source is copied'
+);
+expectIncludes(
+  composeOverride,
+  'npm install --ignore-scripts --no-audit --no-fund',
+  'Local Compose startup must reconcile the persisted node_modules workspace links'
+);
+expectIncludes(
+  composeOverride,
+  'ports: !override',
+  'Local Compose must replace the production port mapping instead of publishing port 3000 twice'
+);
 
 const defaultMaxSourceLines = 650;
 const focusedSourceBudgets = new Map([

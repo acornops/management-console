@@ -66,7 +66,7 @@ test('agent lifecycle confirmations announce themselves, receive focus, and rest
 test('agent profile follows the selected Chinese application locale', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem('app_language', 'zh');
-    window.localStorage.setItem('acornops_profile_preferences:ning%40fixture.acornops.dev:language', 'zh');
+    window.localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:language', 'zh');
   });
   await page.goto(agentProfilePath('overview'), { waitUntil: 'domcontentloaded' });
 
@@ -81,7 +81,7 @@ test('agent profile follows the selected Chinese application locale', async ({ p
 test('nested agent capabilities follow the selected Chinese application locale', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem('app_language', 'zh');
-    window.localStorage.setItem('acornops_profile_preferences:ning%40fixture.acornops.dev:language', 'zh');
+    window.localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:language', 'zh');
   });
   await page.goto(`${agentProfilePath('capabilities')}&capabilityTab=tools`, { waitUntil: 'domcontentloaded' });
 

@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import { LayoutGroup } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { twMerge } from 'tailwind-merge';
-import { ActiveTabIndicator } from '@/components/common/ActiveTabIndicator';
+import { ActiveTabIndicator } from '@acornops/ui';
 
 export interface ResourceCategoryTabModel<T extends string> {
   value: T;
@@ -35,7 +35,7 @@ export function getResourceCategoryTabModel<T extends string>({
   }));
 }
 
-export const ResourceCategoryTabs = <T extends string,>({
+export const ResourceCategoryTabs = <T extends string>({
   categories,
   active,
   counts,
@@ -68,9 +68,7 @@ export const ResourceCategoryTabs = <T extends string,>({
     getLabel,
     translate: (key) => t(key)
   });
-  const tabLayoutSignature = tabs
-    .map((tab) => `${tab.value}:${tab.label}:${tab.count ?? ''}`)
-    .join('|');
+  const tabLayoutSignature = tabs.map((tab) => `${tab.value}:${tab.label}:${tab.count ?? ''}`).join('|');
   const tabListRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   React.useLayoutEffect(() => {
@@ -119,32 +117,30 @@ export const ResourceCategoryTabs = <T extends string,>({
         className={twMerge(clsx('no-scrollbar flex w-full max-w-full shrink-0 items-center overflow-x-auto border-b border-ui-border', className))}
       >
         {tabs.map((tab, index) => (
-        <button
-          key={tab.value}
-          ref={(element) => { tabRefs.current[index] = element; }}
-          type="button"
-          role="tab"
-          id={`${idBase}-${tab.value}-tab`}
-          aria-controls={controlsId}
-          aria-selected={tab.isActive}
-          tabIndex={tab.isActive ? 0 : -1}
-          onClick={() => onSelect(tab.value)}
-          onKeyDown={(event) => handleTabKeyDown(event, index)}
-          className={twMerge(clsx(
-            'relative inline-flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-4 text-xs font-bold uppercase tracking-[0.04em] text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25',
-            tab.isActive
-              ? 'border-transparent text-accent-strong'
-              : 'border-transparent hover:text-ui-text'
-          ))}
-        >
-          <span>{tab.label}</span>
-          {typeof tab.count === 'number' && (
-            <span className="type-data text-xs text-ui-text-muted">
-              {tab.count}
-            </span>
-          )}
-          {tab.isActive && <ActiveTabIndicator />}
-        </button>
+          <button
+            key={tab.value}
+            ref={(element) => {
+              tabRefs.current[index] = element;
+            }}
+            type="button"
+            role="tab"
+            id={`${idBase}-${tab.value}-tab`}
+            aria-controls={controlsId}
+            aria-selected={tab.isActive}
+            tabIndex={tab.isActive ? 0 : -1}
+            onClick={() => onSelect(tab.value)}
+            onKeyDown={(event) => handleTabKeyDown(event, index)}
+            className={twMerge(
+              clsx(
+                'relative inline-flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-4 type-ui text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25',
+                tab.isActive ? 'border-transparent text-accent-readable' : 'border-transparent hover:text-ui-text'
+              )
+            )}
+          >
+            <span>{tab.label}</span>
+            {typeof tab.count === 'number' && <span className="type-data text-xs text-ui-text-muted">{tab.count}</span>}
+            {tab.isActive && <ActiveTabIndicator />}
+          </button>
         ))}
       </div>
     </LayoutGroup>

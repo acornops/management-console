@@ -23,8 +23,7 @@ const FOLLOW_LATEST_THRESHOLD_PX = 24;
 function isLatestEventInFollowZone(scrollContainer: HTMLDivElement, latestEvent: HTMLDivElement): boolean {
   const containerBounds = scrollContainer.getBoundingClientRect();
   const latestEventBounds = latestEvent.getBoundingClientRect();
-  return latestEventBounds.bottom >= containerBounds.top - FOLLOW_LATEST_THRESHOLD_PX
-    && latestEventBounds.bottom <= containerBounds.bottom + FOLLOW_LATEST_THRESHOLD_PX;
+  return latestEventBounds.bottom >= containerBounds.top - FOLLOW_LATEST_THRESHOLD_PX && latestEventBounds.bottom <= containerBounds.bottom + FOLLOW_LATEST_THRESHOLD_PX;
 }
 
 function inferTimelineStepType(label: string): RunTraceTimelineEvent['type'] {
@@ -42,11 +41,7 @@ function buildTimelineEvents(trace: LiveRunTrace): RunTraceTimelineEvent[] {
     return trace.timelineEvents;
   }
 
-  const fallbackToolTimestamp = Math.max(
-    0,
-    ...trace.steps.map((step) => step.timestamp),
-    ...(trace.reasoningSummaries || []).map((summary) => summary.timestamp)
-  );
+  const fallbackToolTimestamp = Math.max(0, ...trace.steps.map((step) => step.timestamp), ...(trace.reasoningSummaries || []).map((summary) => summary.timestamp));
 
   return [
     ...trace.steps.map((step) => ({
@@ -80,11 +75,7 @@ function buildTimelineEvents(trace: LiveRunTrace): RunTraceTimelineEvent[] {
 function getTimelineEventMeta(event: RunTraceTimelineEvent): string {
   if (event.type === 'reasoning') {
     const source = [event.provider, event.model].filter(Boolean).join(' / ');
-    const status = event.status === 'unavailable'
-      ? 'Unavailable'
-      : event.status === 'completed'
-        ? 'Completed'
-        : 'Live';
+    const status = event.status === 'unavailable' ? 'Unavailable' : event.status === 'completed' ? 'Completed' : 'Live';
     return [source, status].filter(Boolean).join(' · ');
   }
 
@@ -163,16 +154,12 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
 }) => {
   const contentId = React.useId();
   const shouldReduceMotion = useReducedMotion();
-  const isInProgress = activeOverride ?? (
-    trace.status === 'connecting' || trace.status === 'running'
-  );
+  const isInProgress = activeOverride ?? (trace.status === 'connecting' || trace.status === 'running');
   const statusLabel = activityLabelOverride || getTraceActivityLabel(trace);
   const completedToolCalls = trace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length;
   const skillLoads = trace.skillLoads || [];
   const reasoningSummaryCount = trace.reasoningSummaries?.length || 0;
-  const compactReasoningSummary = isInProgress && !suppressCompactReasoningSummary
-    ? trace.activeReasoningSummary?.trim()
-    : '';
+  const compactReasoningSummary = isInProgress && !suppressCompactReasoningSummary ? trace.activeReasoningSummary?.trim() : '';
   const hasCompactReasoningSummary = Boolean(compactReasoningSummary);
   const shouldShowCompactStatusLabel = hasCompactReasoningSummary || !isInProgress || !suppressCompactReasoningSummary;
   const compactStatusLabel = hasCompactReasoningSummary ? 'Working through' : statusLabel;
@@ -196,87 +183,72 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
     setArtifactView(undefined);
   }, [runId]);
 
-  const openArtifact = React.useCallback(async (toolCall: LiveRunTrace['toolCalls'][number]) => {
-    if (!toolCall.artifact) return;
-    if (artifactView?.callId === toolCall.callId) {
-      artifactRequestRef.current += 1;
-      setArtifactView(undefined);
-      return;
-    }
-    const requestId = artifactRequestRef.current + 1;
-    artifactRequestRef.current = requestId;
-    setArtifactView({ callId: toolCall.callId, loading: true });
-    try {
-      const result = await controlPlaneApi.getToolResultArtifact(runId, toolCall.artifact.id);
-      if (artifactRequestRef.current !== requestId) return;
-      const serialized = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
-      const viewerLimit = 100_000;
-      setArtifactView({
-        callId: toolCall.callId,
-        content: serialized.length > viewerLimit
-          ? `${serialized.slice(0, viewerLimit)}\n\n[Viewer limited to ${viewerLimit.toLocaleString()} characters]`
-          : serialized
-      });
-    } catch (error) {
-      if (artifactRequestRef.current !== requestId) return;
-      setArtifactView({
-        callId: toolCall.callId,
-        error: getFullResultErrorMessage(error)
-      });
-    }
-  }, [artifactView?.callId, runId]);
+  const openArtifact = React.useCallback(
+    async (toolCall: LiveRunTrace['toolCalls'][number]) => {
+      if (!toolCall.artifact) return;
+      if (artifactView?.callId === toolCall.callId) {
+        artifactRequestRef.current += 1;
+        setArtifactView(undefined);
+        return;
+      }
+      const requestId = artifactRequestRef.current + 1;
+      artifactRequestRef.current = requestId;
+      setArtifactView({ callId: toolCall.callId, loading: true });
+      try {
+        const result = await controlPlaneApi.getToolResultArtifact(runId, toolCall.artifact.id);
+        if (artifactRequestRef.current !== requestId) return;
+        const serialized = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+        const viewerLimit = 100_000;
+        setArtifactView({
+          callId: toolCall.callId,
+          content: serialized.length > viewerLimit ? `${serialized.slice(0, viewerLimit)}\n\n[Viewer limited to ${viewerLimit.toLocaleString()} characters]` : serialized
+        });
+      } catch (error) {
+        if (artifactRequestRef.current !== requestId) return;
+        setArtifactView({
+          callId: toolCall.callId,
+          error: getFullResultErrorMessage(error)
+        });
+      }
+    },
+    [artifactView?.callId, runId]
+  );
   const latestTimelineEventKey = timelineEvents.at(-1)
-    ? [
-        timelineEvents.at(-1)?.id,
-        timelineEvents.at(-1)?.timestamp,
-        timelineEvents.at(-1)?.status,
-        timelineEvents.at(-1)?.detail || ''
-      ].join(':')
+    ? [timelineEvents.at(-1)?.id, timelineEvents.at(-1)?.timestamp, timelineEvents.at(-1)?.status, timelineEvents.at(-1)?.detail || ''].join(':')
     : '';
-  const compactToolSummary =
-    trace.toolCalls.length > 0
-      ? `${completedToolCalls} of ${trace.toolCalls.length} function calls complete`
-      : 'No function tool calls';
+  const compactToolSummary = trace.toolCalls.length > 0 ? `${completedToolCalls} of ${trace.toolCalls.length} function calls complete` : 'No function tool calls';
   const compactSkillSummary = formatCompactSkillSummary(skillLoads);
-  const activitySummary = trace.status === 'connecting'
-    ? 'Waiting for progress'
-    : [
-        `${trace.steps.length} steps`,
-        reasoningSummaryCount > 0 ? `${reasoningSummaryCount} summaries` : undefined,
-        compactSkillSummary,
-        compactToolSummary,
-        trace.status === 'completed' ? usageDetail : undefined
-      ].filter(Boolean).join(' · ');
+  const activitySummary =
+    trace.status === 'connecting'
+      ? 'Waiting for progress'
+      : [
+          `${trace.steps.length} steps`,
+          reasoningSummaryCount > 0 ? `${reasoningSummaryCount} summaries` : undefined,
+          compactSkillSummary,
+          compactToolSummary,
+          trace.status === 'completed' ? usageDetail : undefined
+        ]
+          .filter(Boolean)
+          .join(' · ');
   const disclosureLabel = isExpanded ? 'Hide run details' : 'Show run details';
   const disclosureSummary = hasCompactReasoningSummary ? compactReasoningSummary : activitySummary;
-  const statusDotClass = trace.status === 'completed'
-    ? 'bg-status-success'
-    : trace.status === 'failed' || trace.status === 'cancelled'
-      ? 'bg-status-danger'
-      : 'bg-accent';
+  const statusDotClass = trace.status === 'completed' ? 'bg-status-success' : trace.status === 'failed' || trace.status === 'cancelled' ? 'bg-status-danger' : 'bg-accent';
 
   const handleTimelineScroll = React.useCallback(() => {
     if (!isInProgress || !timelineScrollRef.current || !latestTimelineEventRef.current) return;
-    shouldFollowLatestRef.current = isLatestEventInFollowZone(
-      timelineScrollRef.current,
-      latestTimelineEventRef.current
-    );
+    shouldFollowLatestRef.current = isLatestEventInFollowZone(timelineScrollRef.current, latestTimelineEventRef.current);
   }, [isInProgress]);
 
   React.useLayoutEffect(() => {
     const previousDisclosure = previousDisclosureRef.current;
-    const shouldResetFollow = previousDisclosure.runId !== runId
-      || (!previousDisclosure.isExpanded && isExpanded);
+    const shouldResetFollow = previousDisclosure.runId !== runId || (!previousDisclosure.isExpanded && isExpanded);
     previousDisclosureRef.current = { runId, isExpanded };
     if (shouldResetFollow) shouldFollowLatestRef.current = true;
     if (!isExpanded || !isInProgress || !timelineScrollRef.current || !latestTimelineEventRef.current) return;
     if (!shouldFollowLatestRef.current) return;
     const scrollContainer = timelineScrollRef.current;
     const latestEvent = latestTimelineEventRef.current;
-    scrollContainer.scrollTop = Math.max(
-      0,
-      latestEvent.offsetTop + latestEvent.offsetHeight - scrollContainer.clientHeight
-    );
+    scrollContainer.scrollTop = Math.max(0, latestEvent.offsetTop + latestEvent.offsetHeight - scrollContainer.clientHeight);
   }, [isExpanded, isInProgress, latestTimelineEventKey, runId, timelineEvents.length]);
 
   return (
@@ -293,39 +265,19 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
         aria-controls={contentId}
       >
         <span
-          className={`-ml-1 shrink-0 text-ui-text-muted group-hover:text-ui-text ${
-            shouldReduceMotion
-              ? ''
-              : 'transition-transform duration-150 ease-out'
-          } ${isExpanded ? 'rotate-90' : 'rotate-0'}`}
+          className={`-ml-1 shrink-0 text-ui-text-muted group-hover:text-ui-text ${shouldReduceMotion ? '' : 'transition-transform duration-150 ease-out'} ${
+            isExpanded ? 'rotate-90' : 'rotate-0'
+          }`}
           aria-hidden="true"
         >
           <ChevronRight className="h-4 w-4" />
         </span>
         <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotClass} ${isInProgress ? 'animate-pulse motion-reduce:animate-none' : ''}`} />
-        <span className="type-caption shrink-0 text-ui-text">
-          {disclosureLabel}
-        </span>
-        <span
-          className="flex min-w-0 max-w-[min(34rem,54vw)] flex-1 items-center gap-1.5"
-          aria-live="polite"
-        >
-          {shouldShowCompactStatusLabel && (
-            <span className="type-micro-label shrink-0 text-ui-text-muted">
-              {compactStatusLabel}
-            </span>
-          )}
-          {shouldShowCompactStatusLabel && (
-            <span className="type-caption shrink-0 text-ui-text-muted/70">·</span>
-          )}
-          <span
-            className={`type-caption min-w-0 truncate ${
-              hasCompactReasoningSummary
-                ? 'text-ui-text'
-                : 'text-ui-text-muted'
-            }`}
-            title={disclosureSummary}
-          >
+        <span className="type-caption shrink-0 text-ui-text">{disclosureLabel}</span>
+        <span className="flex min-w-0 max-w-[min(34rem,54vw)] flex-1 items-center gap-1.5" aria-live="polite">
+          {shouldShowCompactStatusLabel && <span className="type-micro-label shrink-0 text-ui-text-muted">{compactStatusLabel}</span>}
+          {shouldShowCompactStatusLabel && <span className="type-caption shrink-0 text-ui-text-muted/70">·</span>}
+          <span className={`type-caption min-w-0 truncate ${hasCompactReasoningSummary ? 'text-ui-text' : 'text-ui-text-muted'}`} title={disclosureSummary}>
             {disclosureSummary}
           </span>
         </span>
@@ -339,11 +291,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
             animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div
-              ref={timelineScrollRef}
-              className="relative max-h-80 overflow-y-auto overscroll-contain"
-              onScroll={handleTimelineScroll}
-            >
+            <div ref={timelineScrollRef} className="relative max-h-80 overflow-y-auto overscroll-contain" onScroll={handleTimelineScroll}>
               {timelineEvents.length > 0 ? (
                 <div className="divide-y divide-ui-border">
                   {timelineEvents.map((event) => (
@@ -368,18 +316,11 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                           <p className="type-caption min-w-0 truncate text-ui-text" title={event.label}>
                             {event.label}
                           </p>
-                          <span
-                            className={`type-micro-label max-w-[45%] shrink truncate ${getTimelineEventToneClass(event)}`}
-                            title={getTimelineEventMeta(event)}
-                          >
+                          <span className={`type-micro-label max-w-[45%] shrink truncate ${getTimelineEventToneClass(event)}`} title={getTimelineEventMeta(event)}>
                             {getTimelineEventMeta(event)}
                           </span>
                         </div>
-                        {event.detail && (
-                          <p className="type-caption mt-0.5 whitespace-pre-wrap break-words text-ui-text-muted">
-                            {event.detail}
-                          </p>
-                        )}
+                        {event.detail && <p className="type-caption mt-0.5 whitespace-pre-wrap break-words text-ui-text-muted">{event.detail}</p>}
                       </div>
                     </div>
                   ))}
@@ -399,9 +340,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="min-w-0">
                             <p className="type-caption truncate text-ui-text">{toolCall.tool}</p>
-                            {!toolCall.artifact && (
-                              <p className="type-caption text-ui-text-muted">Full result unavailable</p>
-                            )}
+                            {!toolCall.artifact && <p className="type-caption text-ui-text-muted">Full result unavailable</p>}
                           </div>
                           {toolCall.artifact && (
                             <button
@@ -410,9 +349,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                               className="control-target type-caption inline-flex min-h-9 items-center rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                               aria-expanded={artifactView?.callId === toolCall.callId}
                             >
-                              {artifactView?.callId === toolCall.callId
-                                ? 'Hide full result'
-                                : 'View full result'}
+                              {artifactView?.callId === toolCall.callId ? 'Hide full result' : 'View full result'}
                             </button>
                           )}
                         </div>
@@ -423,9 +360,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                             ) : artifactView.error ? (
                               <p className="type-caption text-status-danger-text">{artifactView.error}</p>
                             ) : (
-                              <pre className="whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono text-xs text-ui-on-strong">
-                                {artifactView.content}
-                              </pre>
+                              <pre className="whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono text-xs text-ui-on-strong">{artifactView.content}</pre>
                             )}
                           </div>
                         )}

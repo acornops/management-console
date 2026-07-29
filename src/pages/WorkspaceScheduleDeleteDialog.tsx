@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DestructiveConfirmationDialog } from '@/components/common/DestructiveConfirmationDialog';
+import { DestructiveConfirmationDialog } from '@acornops/ui';
 import type { WorkflowSchedule } from '@/services/control-plane/workflowApi';
 
 interface WorkspaceScheduleDeleteDialogProps {

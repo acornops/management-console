@@ -12,12 +12,9 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { appHref } from '@/app/workspaceNavigation';
-import { Button, buttonClassName } from '@/components/common/Button';
+import { Button, InlineAlert, Select, Switch, buttonClassName, formInputClassName } from '@acornops/ui';
+import type { SelectOption } from '@acornops/ui';
 import { ExperimentalBadge } from '@/components/common/ExperimentalBadge';
-import { Switch } from '@/components/common/FormControls';
-import { InlineAlert } from '@/components/common/InlineAlert';
-import { Select, type SelectOption } from '@/components/common/Select';
-import { formInputClassName } from '@/components/common/formControlStyles';
 import {
   controlPlaneApi,
   type AutoTriageMinimumSeverity,

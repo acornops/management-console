@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
+import { Button } from '@acornops/ui';
+import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { isKnownOnlyWorkspaceOwner } from '@/app/workspaceLeave';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -29,7 +29,7 @@ const SettingSection: React.FC<{
 }> = ({ title, description, children }) => (
   <section className="mb-10 last:mb-0">
     <div className="mb-6 px-1">
-      <h2 className="mb-1 text-xl font-bold tracking-tight text-ui-text">{title}</h2>
+      <h2 className="mb-1 type-section-title">{title}</h2>
       <p className="max-w-3xl text-sm leading-6 text-ui-text-muted">{description}</p>
     </div>
     <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
@@ -48,7 +48,7 @@ const SettingRow: React.FC<{
         <Icon className="h-5 w-5" aria-hidden="true" />
       </div>
       <div className="min-w-0">
-        <p className="mb-0.5 text-sm font-bold text-ui-text">{label}</p>
+        <p className="mb-0.5 type-row-title">{label}</p>
         <p className="text-xs leading-5 text-ui-text-muted">{description}</p>
       </div>
     </div>
@@ -96,48 +96,31 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
     try {
       await onLeaveWorkspace();
     } catch (error) {
-      setLeaveError(formatControlPlaneError(error, t('workspaceSettings.leaveFailed'), {
-        area: 'members',
-        ownerConflictMessage: t('workspaceSettings.leaveOnlyOwnerError')
-      }));
+      setLeaveError(
+        formatControlPlaneError(error, t('workspaceSettings.leaveFailed'), {
+          area: 'members',
+          ownerConflictMessage: t('workspaceSettings.leaveOnlyOwnerError')
+        })
+      );
       setIsLeaving(false);
     }
   };
 
   return (
     <PageShell embedded={embedded}>
-      {!embedded && (
-        <PageHeader title={t('workspaceSettings.title')} description={t('workspaceSettings.subtitle')} />
-      )}
+      {!embedded && <PageHeader title={t('workspaceSettings.title')} description={t('workspaceSettings.subtitle')} />}
 
       <div className="max-w-4xl">
         {canReadWorkspaceData ? (
           <>
-            <SettingSection
-              title={t('workspaceSettings.organizationTitle')}
-              description={t('workspaceSettings.organizationBody')}
-            >
-              <SettingRow
-                icon={ICONS.LayoutGrid}
-                label={t('workspaceSettings.workspaceName')}
-                description={workspace.name}
-              />
-              <SettingRow
-                icon={ICONS.Globe}
-                label={t('workspaceSettings.plan')}
-                description={workspace.plan?.name || t('workspaceSettings.planUnavailable')}
-              />
+            <SettingSection title={t('workspaceSettings.organizationTitle')} description={t('workspaceSettings.organizationBody')}>
+              <SettingRow icon={ICONS.LayoutGrid} label={t('workspaceSettings.workspaceName')} description={workspace.name} />
+              <SettingRow icon={ICONS.Globe} label={t('workspaceSettings.plan')} description={workspace.plan?.name || t('workspaceSettings.planUnavailable')} />
             </SettingSection>
 
-            <WorkspaceCatalogSources
-              workspaceId={workspace.id}
-              canManage={Boolean(workspace.permissions?.manage_catalog_sources)}
-            />
+            <WorkspaceCatalogSources workspaceId={workspace.id} canManage={Boolean(workspace.permissions?.manage_catalog_sources)} />
 
-            <SettingSection
-              title={t('workspaceSettings.quotasTitle')}
-              description={t('workspaceSettings.quotasBody')}
-            >
+            <SettingSection title={t('workspaceSettings.quotasTitle')} description={t('workspaceSettings.quotasBody')}>
               <SettingRow
                 icon={ICONS.Users}
                 label={t('workspaceSettings.workspaceMembers')}
@@ -155,15 +138,12 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
               />
             </SettingSection>
 
-            <SettingSection
-              title={t('workspaceSettings.accessTitle')}
-              description={t('workspaceSettings.accessBody')}
-            >
+            <SettingSection title={t('workspaceSettings.accessTitle')} description={t('workspaceSettings.accessBody')}>
               <SettingRow
                 icon={ICONS.Users}
                 label={t('workspaceSettings.members')}
                 description={t('workspaceSettings.membersBody')}
-                action={(
+                action={
                   <Button
                     type="button"
                     variant="secondary"
@@ -176,17 +156,17 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                     <ICONS.Users className="h-4 w-4" aria-hidden="true" />
                     {t('workspaceSettings.manageMembers')}
                   </Button>
-                )}
+                }
               />
               <SettingRow
                 icon={ICONS.Shield}
                 label={t('workspaceSettings.rbac')}
                 description={t('workspaceSettings.rbacBody')}
-                action={(
+                action={
                   <span className="type-label inline-flex min-h-9 w-full items-center justify-center rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted sm:w-auto">
                     {t('workspaceSettings.inherited')}
                   </span>
-                )}
+                }
               />
             </SettingSection>
           </>
@@ -197,7 +177,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                 <ICONS.Shield className="h-5 w-5" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <h2 className="mb-1 text-sm font-bold text-ui-text">{t('workspaceSettings.limitedAccessTitle')}</h2>
+                <h2 className="mb-1 type-row-title">{t('workspaceSettings.limitedAccessTitle')}</h2>
                 <p className="max-w-2xl text-sm leading-6 text-ui-text-muted">{t('workspaceSettings.limitedAccessBody')}</p>
               </div>
             </div>
@@ -209,12 +189,10 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
             id="workspace-leave-title"
             title={t('workspaceSettings.leaveTitle')}
             description={t('workspaceSettings.leaveBody')}
-            detail={(
+            detail={
               <>
                 {leaveBlockedByKnownOnlyOwner && (
-                  <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-status-warning-text">
-                    {t('workspaceSettings.leaveOnlyOwnerWarning')}
-                  </p>
+                  <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-status-warning-text">{t('workspaceSettings.leaveOnlyOwnerWarning')}</p>
                 )}
                 {leaveError && (
                   <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-status-danger-text" role="alert">
@@ -222,8 +200,8 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                   </p>
                 )}
               </>
-            )}
-            action={(
+            }
+            action={
               <div>
                 {isConfirmingLeave ? (
                   <div className="grid grid-cols-2 gap-2">
@@ -247,7 +225,9 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                       className="w-full"
                       onClick={() => void handleLeaveWorkspace()}
                       disabled={isLeaving || leaveBlockedByKnownOnlyOwner}
-                      aria-label={t('workspaceSettings.leaveNamedWorkspace', { name: workspace.name })}
+                      aria-label={t('workspaceSettings.leaveNamedWorkspace', {
+                        name: workspace.name
+                      })}
                     >
                       <ICONS.LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                       {isLeaving ? t('workspaceSettings.leaving') : t('workspaceSettings.confirmLeave')}
@@ -261,15 +241,23 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                     className="w-full"
                     onClick={() => setIsConfirmingLeave(true)}
                     disabled={!onLeaveWorkspace || leaveBlockedByKnownOnlyOwner}
-                    aria-label={t('workspaceSettings.leaveNamedWorkspace', { name: workspace.name })}
-                    title={leaveBlockedByKnownOnlyOwner ? t('workspaceSettings.leaveOnlyOwnerWarning') : t('workspaceSettings.leaveNamedWorkspace', { name: workspace.name })}
+                    aria-label={t('workspaceSettings.leaveNamedWorkspace', {
+                      name: workspace.name
+                    })}
+                    title={
+                      leaveBlockedByKnownOnlyOwner
+                        ? t('workspaceSettings.leaveOnlyOwnerWarning')
+                        : t('workspaceSettings.leaveNamedWorkspace', {
+                            name: workspace.name
+                          })
+                    }
                   >
                     <ICONS.LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                     {t('workspaceSettings.leaveAction')}
                   </Button>
                 )}
               </div>
-            )}
+            }
           />
 
           <DangerZoneRow
@@ -277,7 +265,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
             title={t('workspaceSettings.dangerTitle')}
             description={t('workspaceSettings.dangerBody')}
             tone="danger"
-            action={(
+            action={
               <Button
                 onClick={() => {
                   if (!canDeleteWorkspace) return;
@@ -293,7 +281,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                 <ICONS.Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 {t('app.deleteWorkspace')}
               </Button>
-            )}
+            }
           />
         </DangerZone>
       </div>

@@ -20,8 +20,8 @@ import {
   fonts,
   indexHtml,
   lightTheme,
-  loginAuthPanel,
   loginPage,
+  loginAuthPanel,
   loginPreview,
   markdownComponents,
   mcpServerCard,
@@ -31,7 +31,6 @@ import {
   mcpServersView,
   mcpServersViewHeader,
   membersPage,
-  mobileNavigation,
   nginxConfig,
   overviewPage,
   pageComposition,
@@ -41,6 +40,8 @@ import {
   rgbVariableValue,
   styles,
   tailwindConfig,
+  targetSkillsView,
+  targetToolsView,
   themeInit,
   traceFooter,
   typographyDoc,
@@ -55,50 +56,50 @@ describe('theme color contract', () => {
   it('exposes the v2 neutral surfaces with a restrained orange accent', () => {
     expect(styles).toContain('color-scheme: light');
     expect(styles).toContain('color-scheme: dark');
-    expect(lightTheme).toContain('--brand-orange: oklch(0.712 0.187 39.7)');
-    expect(lightTheme).toContain('--brand-orange-rgb: 255 112 59');
-    expect(lightTheme).toContain('--brand-orange-strong-rgb: 230 95 47');
-    expect(lightTheme).toContain('--brand-orange-soft-rgb: 255 236 221');
-    expect(lightTheme).toContain('--bg: oklch(0.985 0.006 85)');
-    expect(lightTheme).toContain('--surface: oklch(0.996 0.004 85)');
-    expect(lightTheme).toContain('--surface-strong: oklch(0.962 0.012 74)');
-    expect(lightTheme).toContain('--border: oklch(0.925 0.012 74)');
-    expect(lightTheme).toContain('--text: oklch(0.3 0.008 72)');
-    expect(lightTheme).toContain('--text-muted: oklch(0.54 0.025 54)');
-    expect(lightTheme).toContain('--bg-rgb: 252 250 246');
-    expect(lightTheme).toContain('--surface-rgb: 255 254 251');
-    expect(lightTheme).toContain('--surface-strong-rgb: 247 241 234');
-    expect(lightTheme).toContain('--border-rgb: 235 229 222');
-    expect(lightTheme).toContain('--text-rgb: 48 45 41');
-    expect(lightTheme).toContain('--text-muted-rgb: 123 107 97');
-    expect(lightTheme).toContain('--code-text: oklch(0.94 0.008 80)');
-    expect(lightTheme).toContain('--code-text-rgb: 238 235 229');
+    expect(lightTheme).toContain('--ao-brand-orange: oklch(0.712 0.187 39.7)');
+    expect(lightTheme).toContain('--ao-brand-orange-rgb: 255 112 59');
+    expect(lightTheme).toContain('--ao-brand-orange-strong-rgb: 230 95 47');
+    expect(lightTheme).toContain('--ao-brand-orange-soft-rgb: 255 236 221');
+    expect(lightTheme).toContain('--ao-bg: oklch(0.985 0.006 85)');
+    expect(lightTheme).toContain('--ao-surface: oklch(0.996 0.004 85)');
+    expect(lightTheme).toContain('--ao-surface-strong: oklch(0.962 0.012 74)');
+    expect(lightTheme).toContain('--ao-border: oklch(0.925 0.012 74)');
+    expect(lightTheme).toContain('--ao-text: oklch(0.3 0.008 72)');
+    expect(lightTheme).toContain('--ao-text-muted: oklch(0.54 0.025 54)');
+    expect(lightTheme).toContain('--ao-bg-rgb: 252 250 246');
+    expect(lightTheme).toContain('--ao-surface-rgb: 255 254 251');
+    expect(lightTheme).toContain('--ao-surface-strong-rgb: 247 241 234');
+    expect(lightTheme).toContain('--ao-border-rgb: 235 229 222');
+    expect(lightTheme).toContain('--ao-text-rgb: 48 45 41');
+    expect(lightTheme).toContain('--ao-text-muted-rgb: 123 107 97');
+    expect(lightTheme).toContain('--ao-code-text: oklch(0.94 0.008 80)');
+    expect(lightTheme).toContain('--ao-code-text-rgb: 238 235 229');
 
-    expect(darkTheme).toContain('--bg: oklch(0.178407 0.002613 67.659)');
-    expect(darkTheme).toContain('--surface: oklch(0.221666 0.007407 48.368)');
-    expect(darkTheme).toContain('--surface-strong: oklch(0.281925 0.00766 31.115)');
-    expect(darkTheme).toContain('--border: oklch(0.379934 0.00707 31.086)');
-    expect(darkTheme).toContain('--text: oklch(0.960674 0.00508 48.686)');
-    expect(darkTheme).toContain('--text-muted: oklch(0.712881 0.005998 31.059)');
-    expect(darkTheme).toContain('--bg-rgb: 18 17 16');
-    expect(darkTheme).toContain('--surface-rgb: 30 26 24');
-    expect(darkTheme).toContain('--surface-strong-rgb: 45 40 39');
-    expect(darkTheme).toContain('--border-rgb: 70 65 64');
-    expect(darkTheme).toContain('--text-rgb: 245 241 239');
-    expect(darkTheme).toContain('--text-muted-rgb: 166 161 160');
-    expect(darkTheme).toContain('--code-text: oklch(0.94 0.008 80)');
-    expect(darkTheme).toContain('--code-text-rgb: 238 235 229');
+    expect(darkTheme).toContain('--ao-bg: oklch(0.178407 0.002613 67.659)');
+    expect(darkTheme).toContain('--ao-surface: oklch(0.221666 0.007407 48.368)');
+    expect(darkTheme).toContain('--ao-surface-strong: oklch(0.281925 0.00766 31.115)');
+    expect(darkTheme).toContain('--ao-border: oklch(0.379934 0.00707 31.086)');
+    expect(darkTheme).toContain('--ao-text: oklch(0.960674 0.00508 48.686)');
+    expect(darkTheme).toContain('--ao-text-muted: oklch(0.712881 0.005998 31.059)');
+    expect(darkTheme).toContain('--ao-bg-rgb: 18 17 16');
+    expect(darkTheme).toContain('--ao-surface-rgb: 30 26 24');
+    expect(darkTheme).toContain('--ao-surface-strong-rgb: 45 40 39');
+    expect(darkTheme).toContain('--ao-border-rgb: 70 65 64');
+    expect(darkTheme).toContain('--ao-text-rgb: 245 241 239');
+    expect(darkTheme).toContain('--ao-text-muted-rgb: 166 161 160');
+    expect(darkTheme).toContain('--ao-code-text: oklch(0.94 0.008 80)');
+    expect(darkTheme).toContain('--ao-code-text-rgb: 238 235 229');
 
-    expect(styles).not.toContain('--bg-rgb: 246 248 251');
-    expect(styles).not.toContain('--surface-rgb: 252 253 255');
-    expect(styles).not.toContain('--border-rgb: 216 225 235');
-    expect(styles).not.toContain('--surface: #FFFFFF');
+    expect(styles).not.toContain('--ao-bg-rgb: 246 248 251');
+    expect(styles).not.toContain('--ao-surface-rgb: 252 253 255');
+    expect(styles).not.toContain('--ao-border-rgb: 216 225 235');
+    expect(styles).not.toContain('--ao-surface: #FFFFFF');
 
-    expect(styles).toContain('--status-success-text-rgb:');
-    expect(styles).toContain('--status-warning-text-rgb:');
-    expect(styles).toContain('--status-danger-text-rgb:');
-    expect(styles).toContain('--status-warning-soft: oklch(0.955 0.035 108)');
-    expect(styles).toContain('--metric-blue: oklch(0.52 0.085 244)');
+    expect(styles).toContain('--ao-status-success-text-rgb:');
+    expect(styles).toContain('--ao-status-warning-text-rgb:');
+    expect(styles).toContain('--ao-status-danger-text-rgb:');
+    expect(styles).toContain('--ao-status-warning-soft: oklch(0.955 0.035 108)');
+    expect(styles).toContain('--ao-metric-blue: oklch(0.52 0.085 244)');
 
     expect(tailwindConfig).toContain("'accent-strong'");
     expect(tailwindConfig).toContain("'status-success-text'");
@@ -108,45 +109,53 @@ describe('theme color contract', () => {
     expect(tailwindConfig).toContain("'control-activation-fg'");
     expect(tailwindConfig).toContain("'control-danger-fg'");
     expect(tailwindConfig).toContain("'control-boundary'");
-    expect(tailwindConfig).toContain("'code-text': 'rgb(var(--code-text-rgb) / <alpha-value>)'");
+    expect(tailwindConfig).toContain("'code-text': 'rgb(var(--ao-code-text-rgb) / <alpha-value>)'");
   });
 
   it('keeps muted and status-soft text contrast readable', () => {
-    expect(contrastRatio(rgbVariableValue(lightTheme, '--text-muted-rgb'), rgbVariableValue(lightTheme, '--bg-rgb')))
-      .toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(rgbVariableValue(lightTheme, '--text-muted-rgb'), rgbVariableValue(lightTheme, '--surface-rgb')))
-      .toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(rgbVariableValue(lightTheme, '--ao-text-muted-rgb'), rgbVariableValue(lightTheme, '--ao-bg-rgb'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(rgbVariableValue(lightTheme, '--ao-text-muted-rgb'), rgbVariableValue(lightTheme, '--ao-surface-rgb'))).toBeGreaterThanOrEqual(4.5);
 
     [
-      ['--status-success-text-rgb', '--status-success-soft-rgb'],
-      ['--status-warning-text-rgb', '--status-warning-soft-rgb'],
-      ['--status-danger-text-rgb', '--status-danger-soft-rgb']
+      ['--ao-status-success-text-rgb', '--ao-status-success-soft-rgb'],
+      ['--ao-status-warning-text-rgb', '--ao-status-warning-soft-rgb'],
+      ['--ao-status-danger-text-rgb', '--ao-status-danger-soft-rgb']
     ].forEach(([textVariable, backgroundVariable]) => {
-      expect(contrastRatio(rgbVariableValue(lightTheme, textVariable), rgbVariableValue(lightTheme, backgroundVariable)))
-        .toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(rgbVariableValue(darkTheme, textVariable), rgbVariableValue(darkTheme, backgroundVariable)))
-        .toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(rgbVariableValue(lightTheme, textVariable), rgbVariableValue(lightTheme, backgroundVariable))).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(rgbVariableValue(darkTheme, textVariable), rgbVariableValue(darkTheme, backgroundVariable))).toBeGreaterThanOrEqual(4.5);
     });
+  });
+
+  it('keeps the readable orange text role accessible across route and selected surfaces', () => {
+    for (const theme of [lightTheme, darkTheme]) {
+      for (const background of ['--ao-bg-rgb', '--ao-surface-rgb', '--ao-brand-orange-soft-rgb']) {
+        expect(
+          contrastRatio(
+            rgbVariableValue(theme, '--ao-brand-orange-readable-rgb'),
+            rgbVariableValue(theme, background)
+          )
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 
   it('keeps code text readable against both code surfaces', () => {
     for (const theme of [lightTheme, darkTheme]) {
-      expect(contrastRatio(
-        rgbVariableValue(theme, '--code-text-rgb'),
-        rgbVariableValue(theme, '--code-bg-rgb')
-      )).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(rgbVariableValue(theme, '--ao-code-text-rgb'), rgbVariableValue(theme, '--ao-code-bg-rgb'))).toBeGreaterThanOrEqual(4.5);
     }
   });
 
-  it('enforces token palettes, no-glass surfaces, and tested raw-button targets', () => {
-    [
-      'slate', 'gray', 'zinc', 'neutral', 'stone', 'red', 'orange', 'amber', 'yellow',
-      'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet',
-      'purple', 'fuchsia', 'pink', 'rose'
-    ].forEach((palette) => expect(designSystemCheck).toContain(palette));
+  it('enforces tokens, semantic typography, action casing, and tested raw-button targets', () => {
+    ['slate', 'gray', 'zinc', 'neutral', 'stone', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].forEach((palette) => expect(designSystemCheck).toContain(palette));
     expect(designSystemCheck).toContain("report(path, 'named-tailwind-palette'");
     expect(designSystemCheck).toContain("report(path, 'no-glass'");
     expect(designSystemCheck).toContain("report(path, 'raw-button-target'");
+    expect(designSystemCheck).toContain("report(path, 'semantic-typography'");
+    expect(designSystemCheck).toContain("report(path, 'action-typography'");
+    expect(designSystemCheck).toContain("report(path, 'heading-typography'");
+    expect(designSystemCheck).toContain('prohibitedTypographyUtility');
+    expect(designSystemCheck).toContain('prohibitedActionTypography');
+    expect(designSystemCheck).toContain('canonicalHeadingRole');
     expect(designSystemCheck).toContain('approvedButtonSizingHelpers');
     expect(designSystemCheck).toContain('canonicalButtonTarget');
     expect(designSystemCheck).toContain("repoPath === 'src/app/AppDesktopSidebarParts.tsx'");
@@ -165,19 +174,7 @@ describe('theme color contract', () => {
   });
 
   it('exposes semantic typography roles on Outfit and Ubuntu Mono', () => {
-    const expectedRoles = [
-      'type-route-title',
-      'type-section-title',
-      'type-panel-title',
-      'type-row-title',
-      'type-body',
-      'type-ui',
-      'type-caption',
-      'type-label',
-      'type-micro-label',
-      'type-data',
-      'type-code'
-    ];
+    const expectedRoles = ['type-route-title', 'type-section-title', 'type-panel-title', 'type-row-title', 'type-body', 'type-ui', 'type-emphasis', 'type-wordmark', 'type-caption', 'type-label', 'type-micro-label', 'type-data', 'type-code'];
 
     for (const weight of [400, 500, 600, 700, 800]) {
       expect(fonts).toContain(`@fontsource/outfit/latin-${weight}.css`);
@@ -200,7 +197,7 @@ describe('theme color contract', () => {
     });
     expect(designDocsIndex).toContain('[Typography](/docs/design-docs/typography.md)');
     expect(buttonComponent).toContain("'type-ui inline-flex");
-    expect(resourceExplorerControls).toContain("'type-label flex h-11");
+    expect(resourceExplorerControls).toContain("'type-ui flex h-11");
     expect(resourceExplorerLayout).toContain('className="type-micro-label');
     expect(markdownComponents).toContain('type-code');
   });
@@ -219,45 +216,55 @@ describe('theme color contract', () => {
     // The right-sidebar illustration is the "Squirrel Chasing Acorns" chase: a
     // squirrel bounding after acorns past three ops triage step cards.
     [
-      'data-login-visual-variant="hunt-chase"', 'collecting ', 'for everything ops',
+      'data-login-visual-variant="hunt-chase"',
+      'collecting ',
+      'for everything ops',
       'Turn operational knowledge into AI-powered workflows.',
-      "order: '01'", "order: '02'", "order: '03'", 'OBSERVE', 'CORRELATE', 'RESOLVE',
-      'Pod events', 'CrashLoopBackOff spike', 'Deploy diff', 'Memory limit reduced',
-      'Endpoints', 'Service path clear', 'Restart surge', 'Limit change', 'Probe healthy',
-      '<svg', 'viewBox="0 0 920 700"', 'preserveAspectRatio', 'foreignObject',
-      'login-hunt-scene', 'login-hunt-squirrel', 'login-hunt-tail',
-      'login-hunt-leg-front', 'login-hunt-leg-hind', 'login-hunt-shadow', 'login-hunt-streak',
-      'login-hunt-trail', 'login-hunt-dust', 'login-hunt-acorn', 'login-hunt-card',
+      "order: '01'",
+      "order: '02'",
+      "order: '03'",
+      'OBSERVE',
+      'CORRELATE',
+      'RESOLVE',
+      'Pod events',
+      'CrashLoopBackOff spike',
+      'Deploy diff',
+      'Memory limit reduced',
+      'Endpoints',
+      'Service path clear',
+      'Restart surge',
+      'Limit change',
+      'Probe healthy',
+      '<svg',
+      'viewBox="0 0 920 700"',
+      'preserveAspectRatio',
+      'foreignObject',
+      'login-hunt-scene',
+      'login-hunt-squirrel',
+      'login-hunt-tail',
+      'login-hunt-leg-front',
+      'login-hunt-leg-hind',
+      'login-hunt-shadow',
+      'login-hunt-streak',
+      'login-hunt-trail',
+      'login-hunt-dust',
+      'login-hunt-acorn',
+      'login-hunt-card',
       'login-hunt-bloom'
     ].forEach((needle) => expect(loginPreview).toContain(needle));
     // Colours must resolve through theme tokens (works in light + dark), never hardcoded.
-    expect(loginPreview).toContain('rgb(var(--brand-orange');
+    expect(loginPreview).toContain('rgb(var(--ao-brand-orange');
     expect(loginPreview).toContain('status-warning');
     expect(loginPreview).toContain('status-success');
     // The earlier alert-debug / evidence-run treatments must stay gone.
-    [
-      'data-login-visual-variant="alert-debug"', 'An alert is only the beginning.', 'Live incident triage',
-      'DebugSquirrel', 'AcornEvidence', 'useAnimate', 'useReducedMotion', 'ResizeObserver',
-      'data-login-visual-variant="evidence-run"', 'SquirrelRunner', 'AcornToken',
-      'login-debug-squirrel', 'login-incident-panel', 'login-squirrel-tail', 'login-acorn-runner',
-      'Payments API', 'Payment restart loop', 'Triage focus'
-    ].forEach((needle) => expect(loginPreview).not.toContain(needle));
-    [
-      'login-hunt-panel', 'login-hunt-scene', 'login-hunt-squirrel', 'login-hunt-tail',
-      'login-hunt-leg-front', 'login-hunt-leg-hind', 'login-hunt-shadow', 'login-hunt-streak',
-      'login-hunt-trail', 'login-hunt-dust', 'login-hunt-acorn', 'login-hunt-card', 'login-hunt-dot',
-      'login-hunt-bloom', 'login-hunt-bound', 'login-hunt-tail-wave', 'login-hunt-front-reach',
-      'login-hunt-hind-kick', 'login-hunt-hop', 'login-hunt-card-float', 'login-hunt-puff'
-    ].forEach((needle) => expect(styles).toContain(needle));
-    [
-      'login-debug-glow', 'login-debug-glow-breathe', 'login-debug-scene', 'login-incident-panel',
-      'login-debug-squirrel', 'login-squirrel-tail', 'login-squirrel-body', 'login-squirrel-head',
-      'login-squirrel-paws', 'login-squirrel-mouth', 'login-squirrel-eye', 'login-squirrel-blink',
-      'login-debug-acorn', 'login-acorn-runner', 'login-evidence-node', 'login-signal-travel'
-    ].forEach((needle) => expect(styles).not.toContain(needle));
+    ['data-login-visual-variant="alert-debug"', 'An alert is only the beginning.', 'Live incident triage', 'DebugSquirrel', 'AcornEvidence', 'useAnimate', 'useReducedMotion', 'ResizeObserver', 'data-login-visual-variant="evidence-run"', 'SquirrelRunner', 'AcornToken', 'login-debug-squirrel', 'login-incident-panel', 'login-squirrel-tail', 'login-acorn-runner', 'Payments API', 'Payment restart loop', 'Triage focus'].forEach((needle) => expect(loginPreview).not.toContain(needle));
+    ['login-hunt-panel', 'login-hunt-scene', 'login-hunt-squirrel', 'login-hunt-tail', 'login-hunt-leg-front', 'login-hunt-leg-hind', 'login-hunt-shadow', 'login-hunt-streak', 'login-hunt-trail', 'login-hunt-dust', 'login-hunt-acorn', 'login-hunt-card', 'login-hunt-dot', 'login-hunt-bloom', 'login-hunt-bound', 'login-hunt-tail-wave', 'login-hunt-front-reach', 'login-hunt-hind-kick', 'login-hunt-hop', 'login-hunt-card-float', 'login-hunt-puff'].forEach((needle) =>
+      expect(styles).toContain(needle)
+    );
+    ['login-debug-glow', 'login-debug-glow-breathe', 'login-debug-scene', 'login-incident-panel', 'login-debug-squirrel', 'login-squirrel-tail', 'login-squirrel-body', 'login-squirrel-head', 'login-squirrel-paws', 'login-squirrel-mouth', 'login-squirrel-eye', 'login-squirrel-blink', 'login-debug-acorn', 'login-acorn-runner', 'login-evidence-node', 'login-signal-travel'].forEach((needle) => expect(styles).not.toContain(needle));
     expect(styles).not.toContain('steps(1, end)');
     expect(loginPreview.match(/#[0-9a-f]{3,8}\b/i)).toBeNull();
-    expect(styles).toContain('rgb(var(--surface-strong-rgb))');
+    expect(styles).toContain('rgb(var(--ao-surface-strong-rgb))');
     expect(styles).not.toContain('login-ambient-float');
     expect(styles).not.toContain('.login-visual-slide:not(:first-child)');
     expect(loginPage).toContain('min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto');
@@ -288,7 +295,7 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('handleAppLinkClick(event, path, navigate)');
     expect(overviewPage).toContain('readRecentInvestigation(workspace.id, currentUserId)');
     expect(traceFooter).toContain('Show run details');
-    expect(traceFooter).toMatch(/const activitySummary = trace\.status === 'connecting'[\s\S]*'Waiting for progress'/);
+    expect(traceFooter).toMatch(/const activitySummary =\s*trace\.status === 'connecting'[\s\S]*'Waiting for progress'/);
   });
 
   it('keeps the compact assistant rail independent from the primary navigation shell', () => {
@@ -311,7 +318,7 @@ describe('theme color contract', () => {
     expect(pageComposition).toContain('min-h-0 flex-1 overflow-x-hidden overflow-y-auto');
     expect(userSettingsPage).toContain('<PageShell');
     expect(workspaceSettingsPage).toContain('<PageShell');
-    expect(clusterSettingsView).toContain('min-h-0 flex-1 overflow-y-auto');
+    expect(clusterSettingsView).toContain('<PageShell>');
   });
   it('renders quota visibility only in settings surfaces', () => {
     ["t('settings.workspacesJoined')", 'user.quota?.workspaceMemberships', "t('settings.quotaUnavailable')"].forEach((needle) => expect(userSettingsPage).toContain(needle));
@@ -320,6 +327,13 @@ describe('theme color contract', () => {
     ["workspacesJoined: 'Workspaces joined'", "workspaceMembers: 'Workspace members'", "kubernetesClusters: 'Kubernetes clusters'", "virtualMachines: 'Virtual machines'"].forEach((needle) => expect(enLocale).toContain(needle));
     [dashboardPage, overviewPage].forEach((surface) => expect(surface).not.toContain('workspaceMemberships'));
     expect(addClusterModal).not.toContain('kubernetesClusters');
+  });
+
+  it('keeps same-level settings headings aligned and member actions in sentence case', () => {
+    expect(workspaceSettingsPage).toContain('<h2 className="mb-1 type-section-title">{title}</h2>');
+    expect(membersPage).toContain('<h2 className="type-section-title">{t(\'members.title\')}</h2>');
+    expect(membersPage).toContain('className="type-ui whitespace-nowrap"');
+    expect(membersPage).not.toContain('className="type-label whitespace-nowrap"');
   });
 
   it('keeps workspace settings copy action-oriented and specific', () => {
@@ -337,13 +351,7 @@ describe('theme color contract', () => {
       "dangerBody: 'Permanently removes this workspace, member access, saved settings, cluster registrations, VM registrations, diagnostics context, and chat history. Agents and in-cluster resources are not removed.'"
     ].forEach((needle) => expect(enLocale).toContain(needle));
 
-    [
-      "organizationTitle: '工作区详情'",
-      "accessTitle: '成员和角色'",
-      "rbac: '角色权限'",
-      "inherited: '由角色决定'",
-      "dangerTitle: '删除工作区'"
-    ].forEach((needle) => expect(zhLocale).toContain(needle));
+    ["organizationTitle: '工作区详情'", "accessTitle: '成员和角色'", "rbac: '角色权限'", "inherited: '由角色决定'", "dangerTitle: '删除工作区'"].forEach((needle) => expect(zhLocale).toContain(needle));
   });
 
   it('keeps workload filter controls compact and aligned', () => {
@@ -359,7 +367,7 @@ describe('theme color contract', () => {
     expect(resourceCategoryTabs).toContain('tabIndex={tab.isActive ? 0 : -1}');
     expect(resourceCategoryTabs).toContain("event.key === 'ArrowRight'");
     expect(workloadsExplorer).toContain('<ResourceCategoryTabs<ResourceFamily>');
-    expect(workloadsExplorer).toContain("labelPrefix=\"resources.families\"");
+    expect(workloadsExplorer).toContain('labelPrefix="resources.families"');
     expect(resourceCategoryTabs).not.toContain('min-w-[8.5rem]');
     expect(resourceCategoryTabs).toContain('whitespace-nowrap');
     expect(resourceCategoryTabs).toContain('border-b-2');
@@ -369,16 +377,16 @@ describe('theme color contract', () => {
     expect(workloadsExplorer).toContain("const [resourceSearchTerm, setResourceSearchTerm] = useState('');");
     expect(workloadsExplorer).toContain('matchesResourceSearch(resourceSearchTerm');
     expect(workloadsExplorer).toContain('q: resourceSearchTerm.trim() || undefined');
-    expect(resourceExplorerControls).toContain('aria-label={t(\'resources.filters.unhealthyPodsCount\'');
+    expect(resourceExplorerControls).toContain("aria-label={t('resources.filters.unhealthyPodsCount'");
     expect(workloadsExplorer).toContain('getDefaultExplorerSelection(unhealthyPodCount)');
-    expect(workloadsExplorer).toContain('flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden');
+    expect(workloadsExplorer).toContain('<PageShell>');
     expect(appPageContent).toContain('flex-1 min-w-0 w-full max-w-full');
-    expect(workloadsExplorerSurface).toContain('<ResourceMetaPair label={t(\'resources.row.kind\')}');
+    expect(workloadsExplorerSurface).toContain("<ResourceMetaPair label={t('resources.row.kind')}");
     expect(workloadsExplorerSurface).toContain('<ResourceStatusPill status={workload.status} healthy={isHealthy} />');
     expect(resourceExplorerControls).toContain("showUnhealthyPodsOnly ? 'bg-accent' : 'bg-ui-border'");
     expect(workloadsExplorerSurface).toContain('sortAttentionFirst');
     expect(workloadsExplorerSurface).toContain('(workload) => !isHealthyStatus(workload.status)');
-    expect(workloadsExplorerSurface).toContain("(ingress) => !hasReportedValue(ingress.address)");
+    expect(workloadsExplorerSurface).toContain('(ingress) => !hasReportedValue(ingress.address)');
     expect(workloadsExplorerSurface).toContain('(pvc) => !isHealthyStatus(pvc.status)');
     expect(workloadsExplorerSurface).toContain('(node) => !isHealthyStatus(node.status)');
     expect(workloadsExplorerSurface).toContain('healthy={isHealthyStatus(namespace.status)}');
@@ -395,7 +403,9 @@ describe('theme color contract', () => {
     expect(workloadsExplorer).not.toContain('grid grid-cols-1 gap-3');
     expect(workloadsExplorer).not.toContain('rounded-xl border border-ui-border bg-ui-surface p-3 shadow-sm');
     expect(workloadExplorerParts).toContain('export const resourceRowGridClass =');
-    expect(workloadExplorerParts).toContain('export const resourceRowHeaderClass =');
+    expect(workloadExplorerParts).not.toContain('resourceRowHeaderClass');
+    expect(resourceExplorerLayout).toContain('<DataTableGridHeader');
+    expect(resourceExplorerLayout).toContain('showAt="xl"');
     expect(workloadExplorerParts).toContain('xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)]');
     expect(workloadsExplorerSurface).toContain('resourceRowGridClass,');
     expect(resourceExplorerLayout).toContain('resourceRowGridClass,');
@@ -404,32 +414,21 @@ describe('theme color contract', () => {
     expect(resourceExplorerLayout).toContain("t('resources.table.metrics')");
     expect(resourceExplorerLayout).toContain("t('resources.table.status')");
     expect(workloadExplorerParts).toContain('export const resourceMetricGridClass =');
-    expect(workloadExplorerParts).toContain(
-      'xl:grid-cols-[minmax(0,1fr)_minmax(3.75rem,max-content)]'
-    );
+    expect(workloadExplorerParts).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(3.75rem,max-content)]');
     expect(workloadsExplorerSurface).toContain('resourceMetricGridClass,');
     expect(workloadsExplorerSurface).toContain('className={resourceMetricGridClass}');
     expect(resourceExplorerLayout).toContain('className={resourceMetricGridClass}');
     expect(workloadsExplorer).not.toContain('grid min-w-0 grid-cols-2 gap-x-5 gap-y-2');
     expect(workloadExplorerParts).not.toContain('grid min-w-0 grid-cols-2 gap-x-5 gap-y-2');
-    expect(workloadExplorerParts).not.toContain(
-      'xl:grid-cols-[minmax(16rem,1.15fr)_minmax(14rem,0.8fr)_max-content]'
-    );
-    expect(workloadsExplorer).not.toContain(
-      'xl:grid-cols-[minmax(16rem,1.15fr)_minmax(14rem,0.8fr)_max-content]'
-    );
+    expect(workloadExplorerParts).not.toContain('xl:grid-cols-[minmax(16rem,1.15fr)_minmax(14rem,0.8fr)_max-content]');
+    expect(workloadsExplorer).not.toContain('xl:grid-cols-[minmax(16rem,1.15fr)_minmax(14rem,0.8fr)_max-content]');
     expect(workloadExplorerParts).toContain('export const resourceRowActionClass =');
-    expect(workloadExplorerParts).toContain(
-      'flex min-w-0 flex-wrap items-center justify-start gap-3 xl:flex-nowrap xl:justify-end xl:justify-self-end'
-    );
+    expect(workloadExplorerParts).toContain('flex min-w-0 flex-wrap items-center justify-start gap-3 xl:flex-nowrap xl:justify-end xl:justify-self-end');
     expect(workloadsExplorerSurface).toContain('className={resourceRowActionClass}');
     expect(resourceExplorerLayout).toContain('className={resourceRowActionClass}');
-    expect(workloadExplorerParts).toContain(
-      'inline-flex min-w-0 max-w-full items-center gap-2 rounded-full'
-    );
+    expect(workloadExplorerParts).toContain('inline-flex min-w-0 max-w-full items-center gap-2 rounded-full');
     expect(workloadExplorerParts).toContain('[overflow-wrap:anywhere]');
     expect(resourceExplorerLayout).toContain('type-ui inline-flex shrink-0 items-center gap-1');
-    expect(resourceExplorerLayout).toContain('type-panel-title break-words [overflow-wrap:anywhere]');
     expect(resourceExplorerLayout).toContain('type-row-title break-words');
     expect(resourceExplorerLayout).not.toContain('sm:grid-cols-[repeat(3,minmax(0,7rem))_minmax(12rem,1fr)_minmax(10rem,max-content)]');
     expect(resourceExplorerLayout).not.toContain('truncate text-sm font-bold text-ui-text');
@@ -440,7 +439,8 @@ describe('theme color contract', () => {
     expect(resourceExplorerLayout).not.toContain('data-resource-inventory-strip="true"');
     expect(resourceExplorerLayout).not.toContain('data-resource-kind-chip="true"');
     expect(resourceExplorerLayout).toContain('data-resource-list="true"');
-    expect(resourceExplorerLayout).toContain('min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface divide-y divide-ui-border');
+    expect(resourceExplorerLayout).toContain('min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface');
+    expect(resourceExplorerLayout).not.toContain('divide-y divide-ui-border');
     expect(workloadExplorerParts).toContain('ResourceMetaPair');
     expect(workloadExplorerParts).not.toContain('ResourceMetadataChip');
     expect(resourceExplorerLayout).toContain('ResourceMetricInline');
@@ -451,7 +451,9 @@ describe('theme color contract', () => {
     expect(workloadExplorerParts).not.toContain('ResourceInventorySummary');
     expect(workloadExplorerParts).toContain('ResourceStatusPill');
     expect(resourceExplorerLayout).toContain('ChevronRight');
-    ["search: 'Search resources'", "label: 'Resource families'", "unhealthyPods: 'Unhealthy only'", "unhealthyPodsCount: 'Show unhealthy pods only. {{count}} unhealthy pods found.'", "kind: 'Kind'", "resource: 'Resource'", "metrics: 'Metrics'", "status: 'Status'", "logTime: 'Time'", "logSource: 'Source'", "logMessage: 'Message'", "emptyFiltered: 'No resources match the current search and filters.'", "noSearchResults: 'No VM resources match the current search.'"].forEach((snippet) => expect(enLocale).toContain(snippet));
+    ["search: 'Search resources'", "label: 'Resource families'", "unhealthyPods: 'Unhealthy only'", "unhealthyPodsCount: 'Show unhealthy pods only. {{count}} unhealthy pods found.'", "kind: 'Kind'", "resource: 'Resource'", "metrics: 'Metrics'", "status: 'Status'", "logTime: 'Time'", "logSource: 'Source'", "logMessage: 'Message'", "emptyFiltered: 'No resources match the current search and filters.'", "noSearchResults: 'No VM resources match the current search.'"].forEach((snippet) =>
+      expect(enLocale).toContain(snippet)
+    );
     ['filtersInventory', 'searchChip', 'resourceMix', 'categoryDescriptions', 'serviceCount'].forEach((snippet) => expect(enLocale).not.toContain(snippet));
     ["search: '搜索资源'", "label: '资源类别'", "unhealthyPods: '仅异常'", "unhealthyPodsCount: '仅显示异常 Pod。发现 {{count}} 个异常 Pod。'", "kind: '类型'", "resource: '资源'", "metrics: '指标'", "status: '状态'", "logTime: '时间'", "logSource: '来源'", "logMessage: '消息'", "emptyFiltered: '没有资源匹配当前搜索和筛选条件。'", "noSearchResults: '没有虚拟机资源匹配当前搜索。'"].forEach((snippet) => expect(zhLocale).toContain(snippet));
     ['filtersInventory', 'searchChip', 'resourceMix', 'categoryDescriptions', 'serviceCount'].forEach((snippet) => expect(zhLocale).not.toContain(snippet));
@@ -492,26 +494,21 @@ describe('theme color contract', () => {
 
   it('meets WCAG AA contrast for standard filled buttons and records the branded activation exception', () => {
     const textPairs = [
-      ['--control-primary-fg-rgb', '--control-primary-bg-rgb'],
-      ['--control-primary-fg-rgb', '--control-primary-hover-rgb'],
-      ['--control-secondary-fg-rgb', '--control-secondary-bg-rgb'],
-      ['--control-secondary-fg-rgb', '--control-secondary-hover-rgb'],
-      ['--control-danger-fg-rgb', '--control-danger-bg-rgb'],
-      ['--control-danger-fg-rgb', '--control-danger-hover-rgb']
+      ['--ao-control-primary-fg-rgb', '--ao-control-primary-bg-rgb'],
+      ['--ao-control-primary-fg-rgb', '--ao-control-primary-hover-rgb'],
+      ['--ao-control-secondary-fg-rgb', '--ao-control-secondary-bg-rgb'],
+      ['--ao-control-secondary-fg-rgb', '--ao-control-secondary-hover-rgb'],
+      ['--ao-control-danger-fg-rgb', '--ao-control-danger-bg-rgb'],
+      ['--ao-control-danger-fg-rgb', '--ao-control-danger-hover-rgb']
     ];
 
     for (const theme of [lightTheme, darkTheme]) {
       for (const [foreground, background] of textPairs) {
-        expect(contrastRatio(rgbVariableValue(theme, foreground), rgbVariableValue(theme, background)))
-          .toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(rgbVariableValue(theme, foreground), rgbVariableValue(theme, background))).toBeGreaterThanOrEqual(4.5);
       }
-      expect(rgbVariableValue(theme, '--control-activation-fg-rgb'))
-        .toEqual(rgbVariableValue(theme, '--logo-cream-rgb'));
-      for (const surrounding of ['--bg-rgb', '--surface-rgb']) {
-        expect(contrastRatio(
-          rgbVariableValue(theme, '--control-boundary-rgb'),
-          rgbVariableValue(theme, surrounding)
-        )).toBeGreaterThanOrEqual(3);
+      expect(rgbVariableValue(theme, '--ao-control-activation-fg-rgb')).toEqual(rgbVariableValue(theme, '--ao-logo-cream-rgb'));
+      for (const surrounding of ['--ao-bg-rgb', '--ao-surface-rgb']) {
+        expect(contrastRatio(rgbVariableValue(theme, '--ao-control-boundary-rgb'), rgbVariableValue(theme, surrounding))).toBeGreaterThanOrEqual(3);
       }
     }
 
@@ -520,15 +517,15 @@ describe('theme color contract', () => {
   });
 
   it('separates warning severity color from the orange workflow accent', () => {
-    expect(lightTheme).toContain('--brand-orange: oklch(0.712 0.187 39.7)');
-    expect(lightTheme).toContain('--status-warning: oklch(0.58 0.115 105)');
-    expect(lightTheme).toContain('--status-warning-soft: oklch(0.955 0.035 108)');
-    expect(lightTheme).toContain('--status-warning-text: oklch(0.37 0.095 105)');
-    expect(darkTheme).toContain('--status-warning: oklch(0.76 0.11 105)');
-    expect(darkTheme).toContain('--status-warning-soft: oklch(0.32 0.04 105)');
-    expect(darkTheme).toContain('--status-warning-text: oklch(0.83 0.095 105)');
-    expect(lightTheme).not.toContain('--status-warning: oklch(0.6 0.135 76)');
-    expect(darkTheme).not.toContain('--status-warning: oklch(0.76 0.13 78)');
+    expect(lightTheme).toContain('--ao-brand-orange: oklch(0.712 0.187 39.7)');
+    expect(lightTheme).toContain('--ao-status-warning: oklch(0.58 0.115 105)');
+    expect(lightTheme).toContain('--ao-status-warning-soft: oklch(0.955 0.035 108)');
+    expect(lightTheme).toContain('--ao-status-warning-text: oklch(0.37 0.095 105)');
+    expect(darkTheme).toContain('--ao-status-warning: oklch(0.76 0.11 105)');
+    expect(darkTheme).toContain('--ao-status-warning-soft: oklch(0.32 0.04 105)');
+    expect(darkTheme).toContain('--ao-status-warning-text: oklch(0.83 0.095 105)');
+    expect(lightTheme).not.toContain('--ao-status-warning: oklch(0.6 0.135 76)');
+    expect(darkTheme).not.toContain('--ao-status-warning: oklch(0.76 0.13 78)');
   });
 
   it('keeps app page-header action buttons at the medium size', () => {
@@ -589,7 +586,7 @@ describe('theme color contract', () => {
 
   it('keeps primary workspace pages on the shared full-width shell', () => {
     expect(styles).toContain('scrollbar-gutter: stable both-edges;');
-    expect(pageComposition).toContain('px-[var(--route-padding-x)] py-[var(--route-padding-y)] custom-scrollbar stable-scrollbar-gutter');
+    expect(pageComposition).toContain('px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)] custom-scrollbar stable-scrollbar-gutter');
     expect(overviewPage).toContain('<PageShell>');
     expect(dashboardPage).toContain('<PageShell>');
     expect(overviewPage).not.toContain('max-w-[90rem]');
@@ -597,9 +594,14 @@ describe('theme color contract', () => {
   });
   it('keeps cluster detail pages on the shared full-width shell', () => {
     expect(clusterOverviewView).toMatch(/<PageShell>[\s\S]*<PageHeader/);
-    expect(clusterSettingsView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
-    expect(workloadsExplorer).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
-    expect(mcpServersView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
+    [clusterSettingsView, workloadsExplorer, mcpServersView, targetSkillsView, targetToolsView]
+      .forEach((surface) => expect(surface).toContain('<PageShell>'));
+  });
+
+  it('enforces route-shell composition across authenticated route entrypoints and feature views', () => {
+    expect(designSystemCheck).toContain("repoPath.startsWith('src/')");
+    expect(designSystemCheck).toContain('authenticated-route-inventory');
+    expect(designSystemCheck).toContain('routedAuthenticatedPagePaths');
   });
 
   it('keeps the workspace homepage in normal responsive flow', () => {
@@ -615,9 +617,7 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('border-y border-ui-border py-3');
     expect(overviewPage).toContain('w-full justify-center sm:w-auto');
     expect(overviewPage).toContain('group flex w-full items-center justify-between gap-4 px-4 py-3');
-    expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(
-      overviewPage.indexOf('data-connected-targets="true"')
-    );
+    expect(overviewPage.indexOf('data-attention-board="true"')).toBeLessThan(overviewPage.indexOf('data-connected-targets="true"'));
     expect(overviewPage).not.toContain('{card.targetTypeLabel}');
     expect(overviewPage).not.toContain('{issue.summary &&');
     expect(overviewPage).not.toContain('data-primary-issue-card');
@@ -645,5 +645,4 @@ describe('theme color contract', () => {
     expect(membersPage).toContain('onCreateInvitation ? createInvitation : undefined');
     expect(membersPage).not.toContain('[loadInvitations, workspace.id, workspace.invitations]');
   });
-
 });

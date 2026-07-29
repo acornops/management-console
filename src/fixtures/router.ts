@@ -8,6 +8,8 @@ import { workflowCapabilityPreview } from './workflowCapabilityPreview';
 import { routeWebhookFixtureRequest } from './webhookRoutes';
 import { routeWorkflowEventTriggerFixtureRequest } from './workflowEventTriggerRoutes';
 import { routeWorkflowActivityFixtureRequest } from './workflowActivityRoutes';
+import { routeApprovalFixtureRequest } from './approvalRoutes';
+import { applyFixtureRole } from './roleProfiles';
 
 export interface FixtureResponse {
   status: number;
@@ -109,6 +111,10 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   const path = url.pathname.replace(/\/$/, '') || '/';
   const method = request.method.toUpperCase();
   const mcpParityMode = request.headers.get('x-acornops-fixture-mode') === 'mcp-parity';
+  const storedRole = globalThis.localStorage?.getItem?.('acornops-fixture-role') ?? null;
+  if (storedRole === 'owner' || storedRole === 'admin' || storedRole === 'viewer') {
+    applyFixtureRole(state, storedRole);
+  }
 
   if (!path.startsWith('/api/v1/')) {
     return fixtureError(`Fixture mode blocked an unexpected request to ${path}.`, 501, 'FIXTURE_ROUTE_UNMATCHED');
@@ -336,7 +342,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.sessions.filter((item) => item.targetId === targetId)) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const session = { id: id('fixture-session'), workspaceId: decode(match[1]), targetId, targetType: targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning' }, title: String(input.title || 'Fixture conversation'), status: 'open', createdAt: NOW, updatedAt: NOW, lastMessageAt: NOW, expiresAt: '2026-08-14T08:30:00.000Z' };
+      const session = { id: id('fixture-session'), workspaceId: decode(match[1]), targetId, targetType: targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' }, title: String(input.title || 'Fixture conversation'), status: 'open', createdAt: NOW, updatedAt: NOW, lastMessageAt: NOW, expiresAt: '2026-08-14T08:30:00.000Z' };
       state.sessions.push(session);
       state.messages[session.id] = [];
       return json(session, 201);
@@ -390,21 +396,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const event = eventStatus === 'waiting_for_approval' ? { schema_version: 1, run_id: runId, seq: 1, ts: NOW, type: 'tool_approval_requested', payload: { tool: 'restart_workload', arguments: { target: execution?.rootRun?.targetId } } } : { schema_version: 1, run_id: runId, seq: 1, ts: NOW, type: `run.${eventStatus}`, payload: { status: eventStatus } };
     return json([event]);
   }
-  match = path.match(/^\/api\/v1\/runs\/([^/]+)\/approvals$/);
-  if (match && method === 'GET') {
-    const runId = decode(match[1]);
-    const waiting = state.workflowExecutions.find((item) => item.rootRun?.id === runId)?.status === 'waiting_for_approval';
-    return json(waiting ? [{
-      id: 'fixture-run-approval',
-      runId,
-      workspaceId: FIXTURE_IDS.workspace,
-      toolName: 'restart_workload',
-      summary: 'Restart the affected workload after reviewing the current replica state.',
-      status: 'pending',
-      createdAt: NOW,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60_000).toISOString()
-    }] : []);
-  }
+  const approvalResponse = await routeApprovalFixtureRequest({ request, state, path, method, url, now: NOW });
+  if (approvalResponse) return approvalResponse;
   match = path.match(/^\/api\/v1\/runs\/([^/]+)\/cancel$/);
   if (match && method === 'POST') {
     const run = state.runs[decode(match[1])];
@@ -521,7 +514,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.workflowSchedules), summary: { total: state.workflowSchedules.length, active: state.workflowSchedules.filter((item) => item.status === 'enabled').length, paused: state.workflowSchedules.filter((item) => item.status === 'paused').length, approvalGated: 0 } });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', inputs: {}, approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW, ...input };
+      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', inputs: {}, approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW, ...input };
       state.workflowSchedules.push(schedule);
       return json({ schedule }, 201);
     }
@@ -543,8 +536,6 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     method
   });
   if (eventTriggerResponse) return eventTriggerResponse;
-  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/approvals$/);
-  if (match && method === 'GET') return json({ items: [], pendingCount: 0 });
   match = path.match(/^\/api\/v1\/workflows\/([^/]+)\/capabilities-preview$/);
   if (match && method === 'POST') {
     const workflowId = decode(match[1]);
@@ -638,7 +629,15 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
 
   if (path === '/api/v1/__fixtures/reset' && method === 'POST') {
     resetFixtureStore();
+    globalThis.localStorage?.removeItem?.('acornops-fixture-role');
     return json({ status: 'reset' });
+  }
+  if (path === '/api/v1/__fixtures/role' && method === 'POST') {
+    const input = await bodyOf(request);
+    const role = input.role === 'viewer' ? 'viewer' : input.role === 'admin' ? 'admin' : 'owner';
+    const permissions = applyFixtureRole(state, role);
+    globalThis.localStorage?.setItem?.('acornops-fixture-role', role);
+    return json({ role, permissions: clone(permissions) });
   }
 
   return fixtureError(

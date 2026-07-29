@@ -1,8 +1,7 @@
 import React from 'react';
 import { Check, Copy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { TextInput } from '@/components/common/ComponentVocabulary';
+import { Button, TextInput } from '@acornops/ui';
 import type { ProjectMember, WorkspaceInvitation } from '@/types';
 
 interface CreateWorkspaceMemberResultProps {

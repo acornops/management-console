@@ -1,8 +1,8 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Check, Loader2, Search, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CollectionState } from '@/components/common/CollectionState';
-import { TextInput } from '@/components/common/ComponentVocabulary';
+import { CollectionState } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { WorkspaceMemberCandidate, WorkspaceMemberDiscoveryMode } from '@/types';
 
@@ -44,24 +44,14 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
   const [activeIndex, setActiveIndex] = useState(-1);
   const blurTimerRef = useRef<number | undefined>(undefined);
   const normalizedValue = value.trim().toLowerCase();
-  const queryIsEligible = mode === 'directory'
-    ? normalizedValue.length >= 2
-    : mode === 'exact_email' && emailPattern.test(normalizedValue);
-  const exactCandidate = useMemo(
-    () => candidates.find((candidate) => candidate.email.toLowerCase() === normalizedValue) || null,
-    [candidates, normalizedValue]
-  );
-  const listIsOpen = Boolean(
-    isFocused &&
-    !disabled &&
-    mode === 'directory' &&
-    queryIsEligible &&
-    (phase === 'loading' || candidates.length > 0)
-  );
+  const queryIsEligible = mode === 'directory' ? normalizedValue.length >= 2 : mode === 'exact_email' && emailPattern.test(normalizedValue);
+  const exactCandidate = useMemo(() => candidates.find((candidate) => candidate.email.toLowerCase() === normalizedValue) || null, [candidates, normalizedValue]);
+  const listIsOpen = Boolean(isFocused && !disabled && mode === 'directory' && queryIsEligible && (phase === 'loading' || candidates.length > 0));
 
   useEffect(() => {
     const controller = new AbortController();
-    void controlPlaneApi.searchWorkspaceMemberCandidates(workspaceId, '', controller.signal)
+    void controlPlaneApi
+      .searchWorkspaceMemberCandidates(workspaceId, '', controller.signal)
       .then((response) => setMode(response.mode))
       .catch((error: unknown) => {
         if ((error as { name?: string })?.name !== 'AbortError') {
@@ -85,7 +75,8 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setPhase('loading');
-      void controlPlaneApi.searchWorkspaceMemberCandidates(workspaceId, normalizedValue, controller.signal)
+      void controlPlaneApi
+        .searchWorkspaceMemberCandidates(workspaceId, normalizedValue, controller.signal)
         .then((response) => {
           setMode(response.mode);
           setCandidates(response.items);
@@ -105,9 +96,12 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
     };
   }, [mode, normalizedValue, queryIsEligible, selectedCandidate, workspaceId]);
 
-  useEffect(() => () => {
-    if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (blurTimerRef.current) window.clearTimeout(blurTimerRef.current);
+    },
+    []
+  );
 
   const moveActive = (offset: number) => {
     if (!candidates.length) return;
@@ -129,20 +123,20 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
   const helper = selectedCandidate
     ? t('members.existingUserSelected', { name: selectedCandidate.name })
     : exactCandidate?.status === 'available'
-      ? t('members.existingUserSelected', { name: exactCandidate.name })
+    ? t('members.existingUserSelected', { name: exactCandidate.name })
     : exactCandidate?.status === 'member'
-      ? t('members.alreadyMember')
-      : exactCandidate?.status === 'invited'
-        ? t('members.invitationPending')
-        : phase === 'error'
-          ? t('members.directoryUnavailable')
-          : mode === 'directory' && queryIsEligible && phase === 'ready' && candidates.length === 0
-            ? t('members.noDirectoryMatches')
-          : mode === 'directory'
-            ? t('members.directoryHint')
-            : mode === 'exact_email'
-              ? t('members.exactEmailHint')
-              : t('members.inviteEmailHint');
+    ? t('members.alreadyMember')
+    : exactCandidate?.status === 'invited'
+    ? t('members.invitationPending')
+    : phase === 'error'
+    ? t('members.directoryUnavailable')
+    : mode === 'directory' && queryIsEligible && phase === 'ready' && candidates.length === 0
+    ? t('members.noDirectoryMatches')
+    : mode === 'directory'
+    ? t('members.directoryHint')
+    : mode === 'exact_email'
+    ? t('members.exactEmailHint')
+    : t('members.inviteEmailHint');
 
   return (
     <div className="relative">
@@ -187,9 +181,7 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
           placeholder={mode === 'directory' ? t('members.directoryPlaceholder') : t('members.emailPlaceholder')}
           className={`pl-11 pr-10 ${invalid ? 'border-status-danger bg-status-danger-soft focus:border-status-danger focus:ring-status-danger/15' : ''}`}
         />
-        {phase === 'loading' && (
-          <Loader2 className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-ui-text-muted" aria-hidden="true" />
-        )}
+        {phase === 'loading' && <Loader2 className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-ui-text-muted" aria-hidden="true" />}
         {selectedCandidate && phase !== 'loading' && (
           <Check className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-status-success-text" aria-hidden="true" />
         )}
@@ -216,38 +208,34 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
             className="contents"
           >
             {candidates.map((candidate, index) => {
-            const available = candidate.status === 'available';
-            return (
-              <button
-                key={candidate.userId}
-                id={`${listboxId}-${index}`}
-                type="button"
-                role="option"
-                aria-selected={index === activeIndex}
-                disabled={!available}
-                onMouseDown={(event) => event.preventDefault()}
-                onMouseEnter={() => available && setActiveIndex(index)}
-                onClick={() => available && onSelect(candidate)}
-                className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-md px-3 py-2.5 text-left transition-colors focus:outline-none sm:min-h-9 ${
-                  index === activeIndex ? 'bg-accent-soft text-ui-text' : 'text-ui-text hover:bg-ui-bg'
-                } disabled:cursor-not-allowed disabled:opacity-55`}
-              >
-                <span className="min-w-0">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-sm font-semibold">{candidate.name}</span>
-                    {candidate.authMethods.includes('oidc') && (
-                      <span className="shrink-0 rounded border border-ui-border px-1.5 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-ui-text-muted">
-                        {t('members.oidcUser')}
-                      </span>
-                    )}
+              const available = candidate.status === 'available';
+              return (
+                <button
+                  key={candidate.userId}
+                  id={`${listboxId}-${index}`}
+                  type="button"
+                  role="option"
+                  aria-selected={index === activeIndex}
+                  disabled={!available}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onMouseEnter={() => available && setActiveIndex(index)}
+                  onClick={() => available && onSelect(candidate)}
+                  className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-md px-3 py-2.5 text-left transition-colors focus:outline-none sm:min-h-9 ${
+                    index === activeIndex ? 'bg-accent-soft text-ui-text' : 'text-ui-text hover:bg-ui-bg'
+                  } disabled:cursor-not-allowed disabled:opacity-55`}
+                >
+                  <span className="min-w-0">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-sm font-semibold">{candidate.name}</span>
+                      {candidate.authMethods.includes('oidc') && (
+                        <span className="shrink-0 rounded border border-ui-border px-1.5 py-0.5 type-micro-label">{t('members.oidcUser')}</span>
+                      )}
+                    </span>
+                    <span className="block truncate text-xs font-medium text-ui-text-muted">{candidate.email}</span>
                   </span>
-                  <span className="block truncate text-xs font-medium text-ui-text-muted">{candidate.email}</span>
-                </span>
-                <span className="shrink-0 rounded-full border border-ui-border bg-ui-bg px-2 py-1 text-[0.6875rem] font-bold uppercase tracking-wide text-ui-text-muted">
-                  {candidateStatusLabel(candidate.status, t)}
-                </span>
-              </button>
-            );
+                  <span className="shrink-0 rounded-full border border-ui-border bg-ui-bg px-2 py-1 type-micro-label">{candidateStatusLabel(candidate.status, t)}</span>
+                </button>
+              );
             })}
           </CollectionState>
         </div>

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { DrawerFrame } from '@/components/common/OverlayFrames';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkflowCapabilityLedger } from '@/pages/WorkspaceWorkflowsPage.components';
 import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';
@@ -50,20 +50,17 @@ export const WorkflowRunDrawer: React.FC<{
       title="Run workflow"
       titleId="workflow-run-drawer-title"
       description={workflow ? `Provide the values for ${workflow.name}. These values apply only to this run.` : undefined}
-      footer={(
+      footer={
         <>
-          <Button variant="tertiary" onClick={onClose} disabled={launching}>Cancel</Button>
-          <Button
-            variant="activation"
-            onClick={onLaunch}
-            disabled={launching || previewing || Boolean(blocker) || acknowledgementMissing}
-            title={blocker || undefined}
-          >
+          <Button variant="tertiary" onClick={onClose} disabled={launching}>
+            Cancel
+          </Button>
+          <Button variant="activation" onClick={onLaunch} disabled={launching || previewing || Boolean(blocker) || acknowledgementMissing} title={blocker || undefined}>
             <ICONS.Send className="h-4 w-4" aria-hidden="true" />
             {launching ? 'Starting…' : 'Launch workflow'}
           </Button>
         </>
-      )}
+      }
     >
       {workflow && (
         <div className="grid gap-5">
@@ -72,20 +69,11 @@ export const WorkflowRunDrawer: React.FC<{
             <p className="mt-2 whitespace-pre-wrap break-words text-sm text-ui-text">{workflow.starterPrompt}</p>
           </section>
 
-          <WorkflowParameterFields
-            workflow={workflow}
-            values={values}
-            errors={errors}
-            onChange={onValuesChange}
-          />
+          <WorkflowParameterFields workflow={workflow} values={values} errors={errors} onChange={onValuesChange} />
 
           {writeCapable && (
             <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-3 text-sm text-ui-text">
-              <Checkbox
-                checked={acknowledged}
-                onChange={(event) => onAcknowledgementChange(event.target.checked)}
-                className="mt-0.5 shrink-0"
-              />
+              <Checkbox checked={acknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="mt-0.5 shrink-0" />
               <span>
                 <strong className="block">Live-system changes are allowed</strong>
                 <span className="type-caption mt-1 block text-ui-text-muted">I understand this workflow can modify live systems.</span>
@@ -93,15 +81,13 @@ export const WorkflowRunDrawer: React.FC<{
             </label>
           )}
 
-          <WorkflowCapabilityLedger
-            workspaceId={workflow.workspaceId}
-            preview={preview}
-            loading={previewing}
-            error={previewError}
-            onRetry={onRetryPreview}
-          />
+          <WorkflowCapabilityLedger workspaceId={workflow.workspaceId} preview={preview} loading={previewing} error={previewError} onRetry={onRetryPreview} />
 
-          {blocker && <p role="alert" className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-sm font-semibold text-status-warning-text">{blocker}</p>}
+          {blocker && (
+            <p role="alert" className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-sm font-semibold text-status-warning-text">
+              {blocker}
+            </p>
+          )}
         </div>
       )}
     </DrawerFrame>

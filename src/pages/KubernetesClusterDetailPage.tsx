@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
 import { ICONS, THEME_CLASSES } from '@/constants';
 import KubernetesClusterDetail from '@/features/kubernetes-cluster-detail/KubernetesClusterDetail';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
@@ -52,16 +52,14 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
 }) => {
   const { t } = useTranslation();
   const selectedCluster = kubernetesClusters.find((cluster) => cluster.id === clusterId) || null;
-  const selectedWorkspace = selectedCluster
-    ? workspaces.find((workspace) => workspace.id === selectedCluster.workspaceId)
-    : undefined;
-  const selectedClusterAgentState = selectedCluster?.agentConnectionState ||
-    ((selectedCluster && (
-      selectedCluster.workloads.length > 0 ||
+  const selectedWorkspace = selectedCluster ? workspaces.find((workspace) => workspace.id === selectedCluster.workspaceId) : undefined;
+  const selectedClusterAgentState =
+    selectedCluster?.agentConnectionState ||
+    (selectedCluster &&
+    (selectedCluster.workloads.length > 0 ||
       selectedCluster.nodes.length > 0 ||
       selectedCluster.services.length > 0 ||
-      Number(selectedCluster.resourceSummary?.resourceCount || 0) > 0
-    ))
+      Number(selectedCluster.resourceSummary?.resourceCount || 0) > 0)
       ? 'connected'
       : 'not_installed');
   const requiresClusterAgentInstall = selectedCluster && selectedClusterAgentState === 'not_installed';
@@ -78,19 +76,14 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               chatController={clusterChatController}
               issueSummary={issueSummary}
               requestedView={requestedClusterView}
-              currentUserRole={
-                selectedWorkspace
-                  ?.members.find((member) => member.email === currentUserEmail)?.role || 'viewer'
-              }
+              currentUserRole={selectedWorkspace?.members.find((member) => member.email === currentUserEmail)?.role || 'viewer'}
               currentWorkspacePermissions={selectedWorkspace?.permissions}
               workspaceName={selectedWorkspace?.name}
               isDark={isDark}
               onSyncTools={(tools) => onSyncClusterTools(selectedCluster.id, tools)}
               onUpdateName={(name) => onUpdateClusterName(selectedCluster.id, name)}
               onUpdateNamespaceScope={(scope) => onUpdateClusterNamespaceScope(selectedCluster.id, scope)}
-              onUpdateWriteConfirmationPolicy={(overrideRequired) =>
-                onUpdateClusterWriteConfirmationPolicy(selectedCluster.id, overrideRequired)
-              }
+              onUpdateWriteConfirmationPolicy={(overrideRequired) => onUpdateClusterWriteConfirmationPolicy(selectedCluster.id, overrideRequired)}
               onReinstallAgent={() => onOpenInstallModal(selectedCluster.id)}
               onDeleteCluster={() => onDeleteCluster(selectedCluster)}
               onOpenAiSettings={() => onOpenAiSettings(selectedCluster.workspaceId)}
@@ -102,19 +95,20 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
             <div className="flex-1 flex flex-col items-center justify-center bg-ui-bg p-8 text-center">
               <div className="mb-8 max-w-xl rounded-xl border border-ui-border bg-ui-surface p-10 shadow-sm">
                 <ICONS.Wrench className="mx-auto mb-5 h-14 w-14 text-status-warning-text" />
-                <h2 className="mb-3 text-2xl font-bold text-ui-text">{t('diagnostics.installAgentTitle')}</h2>
-                <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-ui-text-muted">
-                  {t('diagnostics.installAgentBody')}
-                </p>
-                <Button onClick={() => onOpenInstallModal(selectedCluster.id)} disabled={!canManageAgentKeys} title={!canManageAgentKeys ? t('clusterSetup.agentKeyPermissionRequired') : undefined} variant="primary" size="sm">
+                <h2 className="type-section-title mb-3 text-ui-text">{t('diagnostics.installAgentTitle')}</h2>
+                <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-ui-text-muted">{t('diagnostics.installAgentBody')}</p>
+                <Button
+                  onClick={() => onOpenInstallModal(selectedCluster.id)}
+                  disabled={!canManageAgentKeys}
+                  title={!canManageAgentKeys ? t('clusterSetup.agentKeyPermissionRequired') : undefined}
+                  variant="primary"
+                  size="sm"
+                >
                   <ICONS.Wrench className="w-4 h-4" />
                   {t('diagnostics.openInstallCommand')}
                 </Button>
               </div>
-              <button
-                onClick={onNavigateBackToClusters}
-                className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}
-              >
+              <button onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}>
                 {t('diagnostics.returnToClusters')} <ICONS.ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
               </button>
             </div>
@@ -122,15 +116,10 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
             <div className="flex-1 flex flex-col items-center justify-center bg-ui-bg p-8 text-center">
               <div className="mb-8 rounded-xl border border-ui-border bg-ui-surface p-10 shadow-sm">
                 <ICONS.Activity className="mx-auto mb-6 h-16 w-16 text-ui-text-muted" />
-                <h2 className="mb-3 text-2xl font-bold text-ui-text">{t('diagnostics.idleTitle')}</h2>
-                <p className="mx-auto max-w-xs text-sm leading-6 text-ui-text-muted">
-                  {t('diagnostics.idleBody')}
-                </p>
+                <h2 className="type-section-title mb-3 text-ui-text">{t('diagnostics.idleTitle')}</h2>
+                <p className="mx-auto max-w-xs text-sm leading-6 text-ui-text-muted">{t('diagnostics.idleBody')}</p>
               </div>
-              <button
-                onClick={onNavigateBackToClusters}
-                className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}
-              >
+              <button onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}>
                 {t('diagnostics.returnToDashboard')} <ICONS.ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
               </button>
             </div>

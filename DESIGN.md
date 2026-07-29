@@ -170,9 +170,14 @@ The palette is warm, inspectable, and intentionally quiet. The canonical source 
 
 ### Primary
 - **Controlled Signal Orange** (`signal-orange`): Used for focus rings, selected state, hover accents, and activation moments. Filled orange buttons are reserved for workflow launch or activation.
-- **Strong Signal Orange** (`signal-orange-strong`): Used for icons and text when an orange element needs readable contrast without filling the surface.
-- **Readable Signal Orange** (`signal-orange-readable`): Used only when orange text must meet contrast on light surfaces, such as the wordmark.
+- **Strong Signal Orange** (`signal-orange-strong`): The canonical stronger brand orange used for icons and non-body signal accents. Its color value is immutable brand identity, not an accessibility-adjustment token.
+- **Readable Signal Orange** (`signal-orange-readable`): Used when functional orange text must meet contrast on light surfaces.
 - **Soft Signal Wash** (`signal-orange-soft`): Used for selected, hover, and low-pressure accent backgrounds.
+
+The orange `ops` lettering in the AcornOps wordmark keeps the canonical bright
+brand color in every theme. It is an explicit contrast exception marked with
+`data-brand-wordmark`, excluded only from automated color-contrast evaluation,
+and must not be generalized to navigation labels, links, body copy, or controls.
 
 ### Secondary
 - **Metric Blue** (`metric-blue`): Used for chart contrast and comparative metrics only. It is not a second brand accent.
@@ -236,6 +241,8 @@ The shared theme menu appears on login and authenticated desktop and mobile navi
 - **Row Title** (600, `0.875rem`, `1.25rem`): List items, resource names, table-leading labels.
 - **Body** (400, `0.875rem`, `1.5rem`): Descriptions and explanatory copy, capped around 65 to 75 characters when prose is not tabular.
 - **UI Text** (500, `0.875rem`, `1.25rem`): Interactive control text: buttons, tabs, menu items, and inline actions.
+- **Inline Emphasis** (600, inherited size and line height): Strong text inside an existing semantic role. It does not replace a heading, row, label, data, or control role.
+- **Wordmark** (700, inherited size and line height): AcornOps wordmark lettering only.
 - **Caption** (450, `0.75rem`, `1.25rem`): Quiet secondary captions and helper text where the uppercase Label style would read too loud.
 - **Label** (600, `0.75rem`, `0.04em`, uppercase): Compact labels, metadata headings, and form field labels.
 - **Micro Label** (600, `0.6875rem`, `0.055em`, uppercase): Dense operational labels and small panel metadata.
@@ -294,6 +301,10 @@ The canonical rhythm is token-driven:
 
 Individual pages retain information architecture suited to the task. Split panes, resource explorers, chat transcripts, metric layouts, and tables may differ. Route chrome, title hierarchy, action semantics, control behavior, state treatment, spacing tokens, and overlay anatomy do not differ. Embedded surfaces must be documented in `scripts/design-system-exceptions.json` and still use shared controls and state patterns.
 
+Authenticated route shells always use the default full width. When prose, a
+ledger, or another task surface needs a narrower reading measure, constrain that
+surface inside the shell instead of changing the route shell width.
+
 Workflows and MCP Catalog use the shared catalog split. One bordered surface contains a divided library and detail pane with a `32rem` minimum height. At `lg` and wider, the library uses `minmax(18rem, 22rem)` and detail fills the remaining width. Below `lg`, only the route-selected pane is visible; detail provides a Back action that returns to the library and restores focus to its selected row. Desktop may preview the first visible item without writing selection state to the URL. Shared primitives also own list headers, row padding and selection, loading and empty states, detail headers, detail-body padding and tone, and the discovery-to-surface gap. Page-specific filters, metadata, actions, tabs, and detail fields remain feature-owned.
 
 ### Chips
@@ -321,6 +332,7 @@ Operator-facing collection tables use the Kubernetes MCP Servers table as the vi
 
 - **Standard header:** `16px / 24px / 32px` horizontal padding and `16px / 20px` vertical padding across compact, `sm`, and large layouts.
 - **Dense header:** The `dense` header-cell variant is reserved for operational tables with seven or more columns, such as Schedules and Approvals.
+- **Compact header:** The `compact` variant is reserved for a secondary table embedded inside a larger route surface, such as an overview issue list. Primary route ledgers, including Resources and Logs, use the standard header even when their rows are implemented as responsive grids.
 - **Row rhythm:** Standard collection rows align to the header padding and use `20px / 24px` vertical breathing room. A feature may retain denser rows when scan speed or decision density requires it, but it must keep the shared header anatomy.
 - **Responsive disclosure:** Do not reveal the desktop column layout until the content area can support it beside the workspace sidebar. Below that breakpoint, hide secondary columns only when their values remain available as labeled metadata inside the primary row, or use the feature's compact card composition. Compact ledger cards keep identity and actions together on the first row, then stack each labeled fact across the available width; they never preserve desktop minimum column widths without the desktop grid.
 - **Alignment contract:** Responsive grid ledgers define one reusable grid template for both header and rows so action columns cannot drift or clip independently.
@@ -369,7 +381,7 @@ Navigation is familiar product chrome driven by one route model. Workspace desti
 
 Tabs and filters share the canonical compact-control vocabulary rather than page-local pills.
 
-- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. A route-selected or keyboard-selected tab must be fully visible inside an overflowing strip on arrival and after selection. The active tab uses stronger orange text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
+- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. A route-selected or keyboard-selected tab must be fully visible inside an overflowing strip on arrival and after selection. The active tab uses readable orange signal text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
 - **Top-level discovery:** Collection pages use `DiscoveryFilterBar` with a labeled `PageSearchInput`, zero or more typed filter-group definitions created by `createDiscoveryFilterGroup`, and a polite result summary. `DiscoveryFilterBar` and nested resource search both compose `SearchFilterFrame`, the canonical bordered paper surface with `16px` padding, a restrained shadow, `12px` gaps, and stable `44px` controls. Search is the dominant flexible field while categorical controls stay approximately `11rem` to `14rem` wide.
 - **Visible discovery filters:** Typed categorical groups render as always-visible shared `Select` controls. Clusters, virtual machines, and agents expose Status; MCP Catalog exposes Source and Compatibility; Workflows uses the search-only composition. Stable option counts appear inside the select when supplied. Below `sm`, search, selects, trailing actions, and the result summary stack full-width. From `sm` to below `lg`, search owns the first row while multiple selects share equal columns. At `lg` and wider, the toolbar settles into one balanced row without overflow.
 - **Discovery clearing:** Search clear and Escape remove only the query and retain search focus. Choosing a default select option clears only that categorical condition. Clear all appears at two or more active conditions, counting the query and every non-default group; it clears the complete route-backed discovery state atomically and restores search focus. The bar is hidden for a genuinely empty, unfiltered collection and remains visible when active filters produce no matches.
@@ -383,6 +395,8 @@ Dialogs are reserved for confirmation, replacement invites, credential display, 
 - **Overlay:** Text-color scrim in light mode, darker bg scrim in dark mode.
 - **Motion:** Framer Motion state transitions only. No page-load choreography. Reduced-motion variants complete in `0.01s` or immediately.
 - **Focus:** Initial focus and focus wrap are required.
+- **Workspace creation:** After the workspace and optional invites are created, the AI-provider step is omitted when effective provider status reports at least one inherited platform default. The transition waits for that status and retains the setup step if it cannot be loaded.
+- **Workspace AI credentials:** Configured provider rows separate state from source: a semantic green Configured badge sits beside a neutral Platform default or Workspace key badge. Unconfigured providers show one neutral Not configured badge. Inherited-default guidance remains one line on desktop, and Rotate key uses the same compact intrinsic button size as Delete key.
 
 ### Status & Signal Motion
 
@@ -404,6 +418,16 @@ The desktop login surface may carry the themed “Squirrel Chasing Acorns” ope
 **The Motion Explains State Rule.** Every animation maps to a real state: working, pending, loading, resolving. If an animation would run while nothing is happening, it is decoration and is prohibited. All motion respects `prefers-reduced-motion`.
 
 **The Fresh Data Rule.** Shared-element motion is limited to stable application chrome such as theme controls and active tab indicators. Do not morph routes, list rows, charts, or list-to-detail content because operational data may have changed between states. See [Focused Application Motion](/docs/design-docs/motion.md).
+
+### Validation contract
+
+The development catalog at `/design-system.html` covers every public UI module
+through `scripts/design-system-catalog.json`; new exports must be demonstrated,
+identified as an existing composition, or documented as non-visual. Production
+route baselines cover wide desktop tables, compact mobile layouts, both themes,
+WCAG 2.1 AA automation, 200% text reflow, forced-colors focus visibility, and
+populated permission/state fixtures. Production JavaScript chunks must remain
+within the enforced 350 KiB raw-size budget.
 
 ## 6. Do's and Don'ts
 

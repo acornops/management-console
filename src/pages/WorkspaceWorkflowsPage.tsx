@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { PageHeader, PageShell } from '@/components/common/PageComposition';
-import { SegmentedTabs, TextInput } from '@/components/common/ComponentVocabulary';
-import { MasterDetailLayout, MasterDetailPaneBody, MasterDetailPaneHeader } from '@/components/common/MasterDetailLayout';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { Button } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
+import { SegmentedTabs, TextInput } from '@acornops/ui';
+import { MasterDetailLayout, MasterDetailPaneBody, MasterDetailPaneHeader } from '@acornops/ui';
+import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ProjectMember, Workspace } from '@/types';

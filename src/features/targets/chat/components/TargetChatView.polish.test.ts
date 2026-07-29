@@ -38,7 +38,7 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.hpaOverrideConfirmed')");
     expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.genericTarget'");
     expect(approvalCheckpoint).toContain('className="px-4 py-4"');
-    expect(approvalCheckpoint).toContain('<h3 className="text-sm font-semibold leading-6 text-ui-text">{t(\'chat.guardTitle\')}</h3>');
+    expect(approvalCheckpoint).toContain('<h3 className="type-row-title text-ui-text">{t(\'chat.guardTitle\')}</h3>');
     expect(approvalCheckpoint).toContain('<p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">');
     expect(approvalCheckpoint).toContain("t('chat.approvalAdvancedDetails')");
     expect(approvalCheckpoint).toContain('<details');
@@ -378,8 +378,8 @@ describe('target chat polish contracts', () => {
     expect(assistantTurn).toContain(': { duration: 0.24, ease: [0.16, 1, 0.3, 1] };');
     expect(assistantTurn).toContain('const shouldShowWorkingShimmer = Boolean(inlineWorkingText && isAssistantWorking && shouldReduceMotion !== true);');
     expect(assistantTurn).toContain('const workingShimmerDurationSeconds = activeReasoningSummary ? 5 : 3.8;');
-    expect(styles).toContain('color: color-mix(in oklab, var(--brand-orange-strong), var(--text-muted) 68%);');
-    expect(styles).toContain('rgb(var(--brand-orange-bright-rgb) / 0.52) 48%');
+    expect(styles).toContain('color: color-mix(in oklab, var(--ao-brand-orange-strong), var(--ao-text-muted) 68%);');
+    expect(styles).toContain('rgb(var(--ao-brand-orange-bright-rgb) / 0.52) 48%');
     expect(assistantTurn).toContain('previousWorkingTextRef.current = inlineWorkingText;');
     expect(assistantTurn).toContain(".replace(/\\*\\*(.*?)\\*\\*/g, '$1')");
     expect(assistantTurn).toContain('const workingLine = inlineWorkingText ? (');
@@ -461,7 +461,7 @@ describe('target chat polish contracts', () => {
     expect(messageActions).toContain("align === 'right' ? 'justify-end text-ui-text-muted' : 'justify-start'");
     expect(styles).toContain('.reasoning-summary-active {');
     expect(styles).toContain('animation: reasoning-summary-text-sheen var(--reasoning-summary-shimmer-duration, 3.8s) cubic-bezier(0.22, 1, 0.36, 1) infinite;');
-    expect(styles).toContain('rgb(var(--brand-orange-bright-rgb) / 0.52)');
+    expect(styles).toContain('rgb(var(--ao-brand-orange-bright-rgb) / 0.52)');
     expect(styles).toContain('-webkit-background-clip: text;');
     expect(styles).toContain('-webkit-text-fill-color: transparent;');
     expect(styles).toContain('@keyframes reasoning-summary-text-sheen');
@@ -505,7 +505,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain('const hasCompactReasoningSummary = Boolean(compactReasoningSummary);');
     expect(traceFooter).toContain('const shouldShowCompactStatusLabel = hasCompactReasoningSummary || !isInProgress || !suppressCompactReasoningSummary;');
     expect(traceFooter).toContain("const compactStatusLabel = hasCompactReasoningSummary ? 'Working through' : statusLabel;");
-    expect(traceFooter).toContain("const activitySummary = trace.status === 'connecting'");
+    expect(traceFooter).toMatch(/const activitySummary =\s*trace\.status === 'connecting'/);
     expect(traceFooter).toContain("? 'Waiting for progress'");
     expect(traceFooter).toContain('`${trace.steps.length} steps`');
     expect(traceFooter).toContain('`${completedToolCalls} of ${trace.toolCalls.length} function calls complete`');
@@ -525,7 +525,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain("shouldReduceMotion");
     expect(traceFooter).toContain('animate-pulse motion-reduce:animate-none');
     expect(traceFooter).toContain("'transition-transform duration-150 ease-out'");
-    expect(traceFooter).toContain("${isExpanded ? 'rotate-90' : 'rotate-0'}");
+    expect(traceFooter).toMatch(/\$\{\s*isExpanded \? 'rotate-90' : 'rotate-0'\s*\}/);
     expect(traceFooter).toMatch(/<ChevronRight className="h-4 w-4" \/>[\s\S]*?<span className=\{`h-2 w-2 shrink-0 rounded-full/);
     expect(traceFooter).not.toContain('{isExpanded ? <ChevronDown');
     expect(traceFooter).toContain('bg-ui-surface/45 text-ui-text-muted hover:bg-ui-surface/75 hover:text-ui-text');

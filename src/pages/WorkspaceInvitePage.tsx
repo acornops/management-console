@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
+import { Button } from '@acornops/ui';
+import { PageShell } from '@acornops/ui';
 import { ControlPlaneWorkspaceInvitation } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { formatRole } from '@/pages/workspace-members/memberUtils';
@@ -24,13 +25,7 @@ function formatInviteError(error: unknown, fallback: string): string {
   return formatControlPlaneError(error, fallback, { area: 'members' });
 }
 
-export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({
-  token,
-  currentUserEmail,
-  onLoadInvitation,
-  onAcceptInvitation,
-  onGoToWorkspaces
-}) => {
+export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token, currentUserEmail, onLoadInvitation, onAcceptInvitation, onGoToWorkspaces }) => {
   const { t } = useTranslation();
   const [invitation, setInvitation] = useState<ControlPlaneWorkspaceInvitation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +69,7 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({
   const canAccept = Boolean(invitation && invitation.status === 'pending' && isCurrentUserExpected);
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-2xl flex-col justify-center">
         <div className="rounded-xl border border-ui-border bg-ui-surface p-8 shadow-sm">
           {isLoading ? (
@@ -89,10 +84,13 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-ui-text-muted">{t('invite.title')}</p>
-                  <h1 className="mt-2 text-3xl font-bold tracking-tight text-ui-text">{invitation.workspaceName}</h1>
+                  <p className="type-label">{t('invite.title')}</p>
+                  <h1 className="mt-2 text-3xl type-panel-title">{invitation.workspaceName}</h1>
                   <p className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">
-                    {t('invite.invitedAs', { role: formatRole(invitation.role, invitation.roleTemplate), time: formatDate(invitation.expiresAt) })}
+                    {t('invite.invitedAs', {
+                      role: formatRole(invitation.role, invitation.roleTemplate),
+                      time: formatDate(invitation.expiresAt)
+                    })}
                   </p>
                 </div>
               </div>
@@ -100,18 +98,15 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({
               <div className="grid gap-3 rounded-lg border border-ui-border bg-ui-bg p-4 text-sm">
                 <div className="flex items-center justify-between gap-4">
                   <span className="font-semibold text-ui-text-muted">{t('invite.inviteEmail')}</span>
-                  <span className="text-right font-bold text-ui-text">{invitation.email}</span>
+                  <span className="text-right type-emphasis text-ui-text">{invitation.email}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="font-semibold text-ui-text-muted">{t('invite.signedInAs')}</span>
-                  <span className="text-right font-bold text-ui-text">{currentUserEmail}</span>
+                  <span className="text-right type-emphasis text-ui-text">{currentUserEmail}</span>
                 </div>
               </div>
 
-              <RoleTemplatePreview
-                roleTemplate={invitation.roleTemplate}
-                emptyMessage={t('members.rolePreviewUnavailable')}
-              />
+              <RoleTemplatePreview roleTemplate={invitation.roleTemplate} emptyMessage={t('members.rolePreviewUnavailable')} />
 
               {!isCurrentUserExpected && (
                 <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-sm font-semibold leading-6 text-status-warning-text">
@@ -131,22 +126,11 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({
               )}
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button
-                  onClick={() => void accept()}
-                  disabled={!canAccept || isAccepting}
-                  variant="primary"
-                  size="lg"
-                  className="flex-1 text-xs uppercase tracking-widest"
-                >
+                <Button onClick={() => void accept()} disabled={!canAccept || isAccepting} variant="primary" size="lg" className="flex-1 type-ui">
                   {isAccepting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   {t('invite.accept')}
                 </Button>
-                <Button
-                  onClick={onGoToWorkspaces}
-                  variant="secondary"
-                  size="lg"
-                  className="text-xs uppercase tracking-widest"
-                >
+                <Button onClick={onGoToWorkspaces} variant="secondary" size="lg" className="type-ui">
                   {t('invite.viewWorkspaces')}
                 </Button>
               </div>
@@ -157,18 +141,16 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({
                 <AlertTriangle className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-ui-text">{t('invite.unavailable')}</h1>
-                <p className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">
-                  {errorMessage || t('invite.invalid')}
-                </p>
+                <h1 className="text-2xl type-panel-title">{t('invite.unavailable')}</h1>
+                <p className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">{errorMessage || t('invite.invalid')}</p>
               </div>
-              <Button onClick={onGoToWorkspaces} variant="primary" size="lg" className="text-xs uppercase tracking-widest">
+              <Button onClick={onGoToWorkspaces} variant="primary" size="lg" className="type-ui">
                 {t('invite.viewWorkspaces')}
               </Button>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 };

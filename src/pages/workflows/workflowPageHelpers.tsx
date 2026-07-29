@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch } from '@/components/common/FormControls';
+import { Switch } from '@acornops/ui';
 import { motion } from 'framer-motion';
 import { buildTraceFromRunEvents } from '@/features/targets/chat/hooks/chatRunTrace';
 import type { LiveRunTrace } from '@/features/targets/chat/types';

@@ -1,8 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { Select } from '@/components/common/Select';
+import { Button, Select } from '@acornops/ui';
 import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';
 
 export interface ManualAgentMcpServerForm {

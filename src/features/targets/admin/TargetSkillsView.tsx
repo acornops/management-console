@@ -1,12 +1,13 @@
 import React from 'react';
 import { GitBranch, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { Checkbox } from '@/components/common/Checkbox';
-import { TextInput } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { Select } from '@/components/common/Select';
+import { Button } from '@acornops/ui';
+import { Checkbox } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { PageShell } from '@acornops/ui';
+import { Select } from '@acornops/ui';
 import { controlPlaneApi, ControlPlaneTargetSkillDetail, ControlPlaneTargetSkillsCatalog, GitTargetSkillImportInput } from '@/services/controlPlaneApi';
 import { GitSkillImportError, importTargetSkillFromGit } from '@/services/gitSkillImport';
 import {
@@ -25,12 +26,7 @@ import {
 import { TargetSkillEditorDialog } from '@/features/targets/admin/TargetSkillEditorDialog';
 import { TargetSkillsInventory } from '@/features/targets/admin/TargetSkillsInventory';
 
-export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
-  target,
-  canManageSkills = false,
-  initialCatalog = null,
-  onCatalogChange
-}) => {
+export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canManageSkills = false, initialCatalog = null, onCatalogChange }) => {
   const { t } = useTranslation();
 
   const [catalog, setCatalog] = React.useState<ControlPlaneTargetSkillsCatalog | null>(() => initialCatalog);
@@ -49,7 +45,13 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   const [createName, setCreateName] = React.useState('');
   const [toggleSkillId, setToggleSkillId] = React.useState<string | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
-  const [importDraft, setImportDraft] = React.useState<GitTargetSkillImportInput>({ provider: 'github', repoUrl: '', apiBaseUrl: '', ref: '', subpath: '' });
+  const [importDraft, setImportDraft] = React.useState<GitTargetSkillImportInput>({
+    provider: 'github',
+    repoUrl: '',
+    apiBaseUrl: '',
+    ref: '',
+    subpath: ''
+  });
   const [importError, setImportError] = React.useState<string | null>(null);
   const [confirmDeleteSkillId, setConfirmDeleteSkillId] = React.useState<string | null>(null);
   const [confirmReimportSkillId, setConfirmReimportSkillId] = React.useState<string | null>(null);
@@ -59,21 +61,21 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   const selectedSkill = selectedSkillId ? catalog?.items.find((item) => item.id === selectedSkillId) || null : null;
   const selectedDetail = selectedSkillId ? detailsById[selectedSkillId] || null : null;
   const draftSignature = React.useMemo(() => JSON.stringify(toRequestFiles(draftFiles)), [draftFiles]);
-  const detailSignature = React.useMemo(
-    () => JSON.stringify(selectedDetail ? toRequestFiles(toDraftFiles(selectedDetail.files)) : []),
-    [selectedDetail]
-  );
-  const editorDirty = editorMode === 'create'
-    ? editorStep === 'files' && draftFiles.length > 0
-    : Boolean(selectedDetail) && draftSignature !== detailSignature;
+  const detailSignature = React.useMemo(() => JSON.stringify(selectedDetail ? toRequestFiles(toDraftFiles(selectedDetail.files)) : []), [selectedDetail]);
+  const editorDirty = editorMode === 'create' ? editorStep === 'files' && draftFiles.length > 0 : Boolean(selectedDetail) && draftSignature !== detailSignature;
   const canEditSkills = Boolean(canManageSkills && catalog?.permissions?.canEdit);
   const showPermissionNotice = catalog ? !canEditSkills : !canManageSkills;
-  const formatTargetSkillError = React.useCallback((error: unknown, fallbackKey: string): string => {
-    if (error instanceof GitSkillImportError) {
-      return t(`targetSkills.gitImportErrors.${error.code}`, { defaultValue: error.message });
-    }
-    return formatError(error, t(fallbackKey));
-  }, [t]);
+  const formatTargetSkillError = React.useCallback(
+    (error: unknown, fallbackKey: string): string => {
+      if (error instanceof GitSkillImportError) {
+        return t(`targetSkills.gitImportErrors.${error.code}`, {
+          defaultValue: error.message
+        });
+      }
+      return formatError(error, t(fallbackKey));
+    },
+    [t]
+  );
 
   const openImportDialog = () => {
     setImportError(null);
@@ -91,9 +93,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
     try {
       const nextCatalog = await controlPlaneApi.listTargetSkills(target.workspaceId, target.id, { limit: 50 });
       setCatalog(nextCatalog);
-      setSelectedSkillId((current) => current && nextCatalog.items.some((item) => item.id === current)
-        ? current
-        : nextCatalog.items[0]?.id || null);
+      setSelectedSkillId((current) => (current && nextCatalog.items.some((item) => item.id === current) ? current : nextCatalog.items[0]?.id || null));
     } catch (error) {
       setCatalogError(formatTargetSkillError(error, 'targetSkills.loadFailed'));
     } finally {
@@ -101,20 +101,23 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
     }
   }, [target.id, target.workspaceId, formatTargetSkillError]);
 
-  const loadSkillDetail = React.useCallback(async (skillId: string) => {
-    setDetailLoading(true);
-    setEditorError(null);
-    try {
-      const detail = await controlPlaneApi.getTargetSkill(target.workspaceId, target.id, skillId);
-      setDetailsById((current) => ({ ...current, [skillId]: detail }));
-      setDraftFiles(toDraftFiles(detail.files));
-      setActiveFilePath('SKILL.md');
-    } catch (error) {
-      setEditorError(formatTargetSkillError(error, 'targetSkills.loadDetailFailed'));
-    } finally {
-      setDetailLoading(false);
-    }
-  }, [target.id, target.workspaceId, formatTargetSkillError]);
+  const loadSkillDetail = React.useCallback(
+    async (skillId: string) => {
+      setDetailLoading(true);
+      setEditorError(null);
+      try {
+        const detail = await controlPlaneApi.getTargetSkill(target.workspaceId, target.id, skillId);
+        setDetailsById((current) => ({ ...current, [skillId]: detail }));
+        setDraftFiles(toDraftFiles(detail.files));
+        setActiveFilePath('SKILL.md');
+      } catch (error) {
+        setEditorError(formatTargetSkillError(error, 'targetSkills.loadDetailFailed'));
+      } finally {
+        setDetailLoading(false);
+      }
+    },
+    [target.id, target.workspaceId, formatTargetSkillError]
+  );
 
   React.useEffect(() => {
     void loadCatalog();
@@ -129,7 +132,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
     if (detailsById[selectedSkillId]) {
       const detail = detailsById[selectedSkillId];
       setDraftFiles(toDraftFiles(detail.files));
-      setActiveFilePath((current) => detail.files.some((file) => file.path === current) ? current : 'SKILL.md');
+      setActiveFilePath((current) => (detail.files.some((file) => file.path === current) ? current : 'SKILL.md'));
       return;
     }
     void loadSkillDetail(selectedSkillId);
@@ -137,12 +140,16 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
 
   const syncSkill = (detail: ControlPlaneTargetSkillDetail) => {
     setDetailsById((current) => ({ ...current, [detail.id]: detail }));
-    setCatalog((current) => current ? {
-      ...current,
-      items: current.items.map((item) => item.id === detail.id ? detail : item)
-    } : current);
+    setCatalog((current) =>
+      current
+        ? {
+            ...current,
+            items: current.items.map((item) => (item.id === detail.id ? detail : item))
+          }
+        : current
+    );
     setDraftFiles(toDraftFiles(detail.files));
-    setActiveFilePath((current) => detail.files.some((file) => file.path === current) ? current : 'SKILL.md');
+    setActiveFilePath((current) => (detail.files.some((file) => file.path === current) ? current : 'SKILL.md'));
   };
 
   const closeEditor = () => {
@@ -183,19 +190,25 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
       delete next[skillId];
       return next;
     });
-    setCatalog((current) => current ? {
-      ...current,
-      items: current.items.filter((item) => item.id !== skillId)
-    } : current);
-    setSelectedSkillId((current) => current === skillId ? null : current);
+    setCatalog((current) =>
+      current
+        ? {
+            ...current,
+            items: current.items.filter((item) => item.id !== skillId)
+          }
+        : current
+    );
+    setSelectedSkillId((current) => (current === skillId ? null : current));
   };
 
   const handleCreateNameNext = () => {
     const normalizedName = normalizeSkillName(createName);
-    setDraftFiles([{
-      path: 'SKILL.md',
-      content: buildSkillTemplate(normalizedName, DEFAULT_SKILL_DESCRIPTION, DEFAULT_SKILL_BODY)
-    }]);
+    setDraftFiles([
+      {
+        path: 'SKILL.md',
+        content: buildSkillTemplate(normalizedName, DEFAULT_SKILL_DESCRIPTION, DEFAULT_SKILL_BODY)
+      }
+    ]);
     setActiveFilePath('SKILL.md');
     setEditorStep('files');
   };
@@ -205,10 +218,12 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
     setEditorResetVersion((current) => current + 1);
     if (editorMode === 'create') {
       const normalizedName = normalizeSkillName(createName);
-      setDraftFiles([{
-        path: 'SKILL.md',
-        content: buildSkillTemplate(normalizedName, DEFAULT_SKILL_DESCRIPTION, DEFAULT_SKILL_BODY)
-      }]);
+      setDraftFiles([
+        {
+          path: 'SKILL.md',
+          content: buildSkillTemplate(normalizedName, DEFAULT_SKILL_DESCRIPTION, DEFAULT_SKILL_BODY)
+        }
+      ]);
       setActiveFilePath('SKILL.md');
       return;
     }
@@ -233,7 +248,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   };
 
   const handleSave = async () => {
-    if (!selectedSkillId || !selectedDetail || !canEditSkills) return;
+    if (!selectedSkillId || !selectedDetail || !canEditSkills || selectedDetail.inherited) return;
     setEditorSaving(true);
     setEditorError(null);
     try {
@@ -283,7 +298,13 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
       });
       const detail = await controlPlaneApi.importTargetSkill(target.workspaceId, target.id, imported);
       setIsImportDialogOpen(false);
-      setImportDraft({ provider: 'github', repoUrl: '', apiBaseUrl: '', ref: '', subpath: '' });
+      setImportDraft({
+        provider: 'github',
+        repoUrl: '',
+        apiBaseUrl: '',
+        ref: '',
+        subpath: ''
+      });
       await loadCatalog();
       setSelectedSkillId(detail.id);
       syncSkill(detail);
@@ -340,13 +361,11 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <header className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <h1 className="type-route-title">{t('targetSkills.title')}</h1>
-          <p className="type-body mt-2">
-            {t('targetSkills.description', { name: target.name })}
-          </p>
+          <p className="type-body mt-2">{t('targetSkills.description', { name: target.name })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" size="md" onClick={openImportDialog} disabled={!canEditSkills}>
@@ -361,21 +380,17 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
         {showPermissionNotice && (
           <p className="type-caption lg:max-w-xs">
             {catalog?.permissions?.editableRoles?.length
-              ? t('targetSkills.manageNoAccessWithRoles', { roles: catalog.permissions.editableRoles.join(', ') })
+              ? t('targetSkills.manageNoAccessWithRoles', {
+                  roles: catalog.permissions.editableRoles.join(', ')
+                })
               : t('targetSkills.manageNoAccess')}
           </p>
         )}
       </header>
 
-      {catalogError && (
-        <div className="type-caption mb-5 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
-          {catalogError}
-        </div>
-      )}
+      {catalogError && <div className="type-caption mb-5 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{catalogError}</div>}
 
-      {catalogLoading && !catalog && (
-        <InlineLoadingIndicator label={t('targetSkills.loading')} className="mb-5" />
-      )}
+      {catalogLoading && !catalog && <InlineLoadingIndicator label={t('targetSkills.loading')} className="mb-5" />}
 
       {catalog ? (
         <TargetSkillsInventory
@@ -410,14 +425,16 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
           resetVersion={editorResetVersion}
           onReset={resetEditorDraft}
           onSubmit={() => void (editorMode === 'create' ? handleCreate() : handleSave())}
-          onReimport={selectedDetail ? () => setConfirmReimportSkillId(selectedDetail.id) : undefined}
+          onReimport={selectedDetail && !selectedDetail.inherited ? () => setConfirmReimportSkillId(selectedDetail.id) : undefined}
         />
       )}
 
       {isImportDialogOpen && (
         <Dialog titleId="import-target-skill-title" onClose={closeImportDialog} className="w-full max-w-xl rounded-lg border border-ui-border bg-ui-surface shadow-xl">
           <div className="border-b border-ui-border px-6 py-4">
-            <h3 id="import-target-skill-title" className="text-base font-semibold text-ui-text">{t('targetSkills.importTitle')}</h3>
+            <h3 id="import-target-skill-title" className="type-panel-title text-ui-text">
+              {t('targetSkills.importTitle')}
+            </h3>
             <p className="mt-1 text-sm text-ui-text-muted">{t('targetSkills.importDescription')}</p>
           </div>
           <div className="space-y-4 px-6 py-5">
@@ -435,21 +452,57 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.repositoryUrl')}</span>
-              <TextInput value={importDraft.repoUrl} onChange={(event) => setImportDraft((current) => ({ ...current, repoUrl: event.target.value }))} placeholder="https://github.com/openai/skills/tree/main/skills/.curated/cli-creator" />
+              <TextInput
+                value={importDraft.repoUrl}
+                onChange={(event) =>
+                  setImportDraft((current) => ({
+                    ...current,
+                    repoUrl: event.target.value
+                  }))
+                }
+                placeholder="https://github.com/openai/skills/tree/main/skills/.curated/cli-creator"
+              />
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.apiBaseUrl')}</span>
-              <TextInput value={importDraft.apiBaseUrl || ''} onChange={(event) => setImportDraft((current) => ({ ...current, apiBaseUrl: event.target.value }))} placeholder={importDraft.provider === 'gitlab' ? 'https://git.internal/gitlab/api/v4' : 'https://github.internal/api/v3'} />
+              <TextInput
+                value={importDraft.apiBaseUrl || ''}
+                onChange={(event) =>
+                  setImportDraft((current) => ({
+                    ...current,
+                    apiBaseUrl: event.target.value
+                  }))
+                }
+                placeholder={importDraft.provider === 'gitlab' ? 'https://git.internal/gitlab/api/v4' : 'https://github.internal/api/v3'}
+              />
               <span className="mt-1 block text-xs text-ui-text-muted">{t('targetSkills.apiBaseUrlHelp')}</span>
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.ref')}</span>
-                <TextInput value={importDraft.ref || ''} onChange={(event) => setImportDraft((current) => ({ ...current, ref: event.target.value }))} placeholder="main" />
+                <TextInput
+                  value={importDraft.ref || ''}
+                  onChange={(event) =>
+                    setImportDraft((current) => ({
+                      ...current,
+                      ref: event.target.value
+                    }))
+                  }
+                  placeholder="main"
+                />
               </label>
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.subpath')}</span>
-                <TextInput value={importDraft.subpath || ''} onChange={(event) => setImportDraft((current) => ({ ...current, subpath: event.target.value }))} placeholder="skills/troubleshooting-cnpg" />
+                <TextInput
+                  value={importDraft.subpath || ''}
+                  onChange={(event) =>
+                    setImportDraft((current) => ({
+                      ...current,
+                      subpath: event.target.value
+                    }))
+                  }
+                  placeholder="skills/troubleshooting-cnpg"
+                />
               </label>
             </div>
             <div className="rounded-lg border border-ui-border px-3 py-3">
@@ -459,22 +512,32 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
             {importError && <div className="rounded-lg border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm text-status-danger">{importError}</div>}
           </div>
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
-            <Button variant="secondary" size="sm" onClick={closeImportDialog}>{t('common.cancel')}</Button>
-            <Button variant="primary" size="sm" onClick={() => void handleImport()} disabled={!importDraft.repoUrl.trim() || editorSaving}>{editorSaving ? t('targetSkills.importing') : t('targetSkills.importSkill')}</Button>
+            <Button variant="secondary" size="sm" onClick={closeImportDialog}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => void handleImport()} disabled={!importDraft.repoUrl.trim() || editorSaving}>
+              {editorSaving ? t('targetSkills.importing') : t('targetSkills.importSkill')}
+            </Button>
           </div>
         </Dialog>
       )}
 
       {confirmDeleteSkillId && (
-        <Dialog titleId="delete-target-skill-title" onClose={() => setConfirmDeleteSkillId(null)} className="w-full max-w-lg rounded-lg border border-ui-border bg-ui-surface shadow-xl">
+        <Dialog
+          titleId="delete-target-skill-title"
+          onClose={() => setConfirmDeleteSkillId(null)}
+          className="w-full max-w-lg rounded-lg border border-ui-border bg-ui-surface shadow-xl"
+        >
           <div className="border-b border-ui-border px-6 py-4">
-            <h3 id="delete-target-skill-title" className="text-base font-semibold text-ui-text">{t('targetSkills.deleteTitle')}</h3>
+            <h3 id="delete-target-skill-title" className="type-panel-title text-ui-text">
+              {t('targetSkills.deleteTitle')}
+            </h3>
           </div>
-          <div className="px-6 py-5 text-sm text-ui-text-muted">
-            {t('targetSkills.deleteBody')}
-          </div>
+          <div className="px-6 py-5 text-sm text-ui-text-muted">{t('targetSkills.deleteBody')}</div>
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
-            <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteSkillId(null)}>{t('common.cancel')}</Button>
+            <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteSkillId(null)}>
+              {t('common.cancel')}
+            </Button>
             <Button variant="danger" size="sm" onClick={() => void handleDelete()} disabled={pendingDangerAction === confirmDeleteSkillId}>
               {pendingDangerAction === confirmDeleteSkillId ? t('targetSkills.deleting') : t('targetSkills.deleteSkill')}
             </Button>
@@ -483,9 +546,15 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
       )}
 
       {confirmReimportSkillId && (
-        <Dialog titleId="reimport-target-skill-title" onClose={() => setConfirmReimportSkillId(null)} className="w-full max-w-lg rounded-lg border border-ui-border bg-ui-surface shadow-xl">
+        <Dialog
+          titleId="reimport-target-skill-title"
+          onClose={() => setConfirmReimportSkillId(null)}
+          className="w-full max-w-lg rounded-lg border border-ui-border bg-ui-surface shadow-xl"
+        >
           <div className="border-b border-ui-border px-6 py-4">
-            <h3 id="reimport-target-skill-title" className="text-base font-semibold text-ui-text">{t('targetSkills.reimportTitle')}</h3>
+            <h3 id="reimport-target-skill-title" className="type-panel-title text-ui-text">
+              {t('targetSkills.reimportTitle')}
+            </h3>
           </div>
           <div className="space-y-4 px-6 py-5 text-sm text-ui-text-muted">
             <p>{t('targetSkills.reimportBody')}</p>
@@ -497,7 +566,9 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
             )}
           </div>
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
-            <Button variant="secondary" size="sm" onClick={() => setConfirmReimportSkillId(null)}>{t('common.cancel')}</Button>
+            <Button variant="secondary" size="sm" onClick={() => setConfirmReimportSkillId(null)}>
+              {t('common.cancel')}
+            </Button>
             <Button
               variant="primary"
               size="sm"
@@ -509,6 +580,6 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({
           </div>
         </Dialog>
       )}
-    </div>
+    </PageShell>
   );
 };

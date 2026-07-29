@@ -21,7 +21,7 @@ const HealthBadge: React.FC<Props> = ({ status, size = 'md' }) => {
   };
 
   return (
-    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors[status]} ${size === 'sm' ? 'scale-90' : ''}`}>
+    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border type-micro-label ${colors[status]} ${size === 'sm' ? 'scale-90' : ''}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${dotColors[status]}`}></span>
       {status}
     </div>

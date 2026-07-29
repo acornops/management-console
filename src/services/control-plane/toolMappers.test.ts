@@ -292,6 +292,7 @@ describe('tool mappers', () => {
         connection_status: 'degraded' as 'unknown',
         last_discovery_at: undefined,
         last_discovery_error: undefined,
+        inherited: true,
         tools: [
           {
             name: 'describe',
@@ -310,6 +311,7 @@ describe('tool mappers', () => {
         connectionStatus: 'unknown',
         lastDiscoveryAt: null,
         lastDiscoveryError: null,
+        inherited: true,
         tools: [expect.objectContaining({ toolId: 'describe' })]
       })
     );

@@ -112,6 +112,33 @@ describe('frontend fixture router', () => {
     expect(getFixtureState().workspaces).toHaveLength(1);
   });
 
+  it('serves a populated approval inbox and persists a decision', async () => {
+    const inbox = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/approvals?status=pending`));
+    expect(inbox.body).toMatchObject({
+      pendingCount: 1,
+      items: [expect.objectContaining({ approvalId: 'fixture-workspace-approval', status: 'pending' })]
+    });
+
+    const decision = await routeFixtureRequest(request(
+      '/api/v1/runs/fixture-execution-issue-review-run/approvals/fixture-workspace-approval/decision',
+      { method: 'POST', body: JSON.stringify({ decision: 'approved' }) }
+    ));
+    expect(decision.body).toMatchObject({ status: 'approved', decision: 'approved' });
+    expect(getFixtureState().approvals[0]).toMatchObject({ status: 'approved' });
+  });
+
+  it('switches fixture workspace roles without dropping readable capabilities', async () => {
+    const response = await routeFixtureRequest(request('/api/v1/__fixtures/role', {
+      method: 'POST',
+      body: JSON.stringify({ role: 'viewer' })
+    }));
+    expect(response.body).toMatchObject({
+      role: 'viewer',
+      permissions: { read_workspace_data: true, manage_agents: false, delete_workspace: false }
+    });
+    expect(getFixtureState().workspaces[0]).toMatchObject({ currentUserRole: 'viewer' });
+  });
+
   it('returns explicit fixture-mode failures for unsupported external operations', async () => {
     const operations = [
       request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/ai-provider-credentials/openai`, { method: 'PUT', body: '{}' }),

@@ -1,17 +1,17 @@
 import React from 'react';
-import { MenuItem, Switch } from '@/components/common/FormControls';
-import { EmptyState } from '@/components/common/EmptyState';
-import { DataTableHeader, DataTableHeaderCell } from '@/components/common/DataTable';
+import { MenuItem, Switch } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { createPortal } from 'react-dom';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuSurfaceClassName } from '@/components/common/menuStyles';
-import { Select } from '@/components/common/Select';
-import type { SelectOption } from '@/components/common/Select';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { menuSurfaceClassName } from '@acornops/ui';
+import { Select } from '@acornops/ui';
+import type { SelectOption } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import type { ControlPlaneTargetSkillsCatalog } from '@/services/controlPlaneApi';
 import { sourceLabel, summarizeBytes, syncLabel } from '@/features/targets/admin/targetSkillsViewModel';
-import { useFloatingActionMenu } from '@/hooks/useFloatingActionMenu';
+import { useFloatingActionMenu } from '@acornops/ui';
 
 type TargetSkillSummary = ControlPlaneTargetSkillsCatalog['items'][number];
 
@@ -35,14 +35,7 @@ interface TargetSkillRowProps {
   onToggleSkill: (skillId: string, enabled: boolean) => void;
 }
 
-const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
-  skill,
-  canEditSkills,
-  pendingToggleSkillId,
-  onEditSkill,
-  onDeleteSkill,
-  onToggleSkill
-}) => {
+const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, pendingToggleSkillId, onEditSkill, onDeleteSkill, onToggleSkill }) => {
   const { t } = useTranslation();
   const actionMenuId = React.useId();
   const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
@@ -51,58 +44,56 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
     menuRef: actionMenuRef,
     style: actionMenuStyle,
     close: closeActionMenu
-  } = useFloatingActionMenu({ open: actionMenuOpen, setOpen: setActionMenuOpen, estimatedHeight: 104 });
+  } = useFloatingActionMenu({
+    open: actionMenuOpen,
+    setOpen: setActionMenuOpen,
+    estimatedHeight: 104
+  });
   const isTogglingSkill = pendingToggleSkillId === skill.id;
   const isBlockedByOtherSkillToggle = Boolean(pendingToggleSkillId && !isTogglingSkill);
   const canToggleSkill = canEditSkills && !isBlockedByOtherSkillToggle && !isTogglingSkill;
-  const assistantState = !skill.enabled
-    ? 'disabled'
-    : skill.validationStatus === 'valid'
-      ? 'assistantVisible'
-      : 'needsFixes';
-  const assistantStateClass = assistantState === 'assistantVisible'
-    ? 'bg-status-success-soft text-status-success-text'
-    : assistantState === 'disabled'
+  const canEditSource = canEditSkills && !skill.inherited;
+  const canRemoveSource = canEditSkills && !skill.inherited;
+  const assistantState = !skill.enabled ? 'disabled' : skill.validationStatus === 'valid' ? 'assistantVisible' : 'needsFixes';
+  const assistantStateClass =
+    assistantState === 'assistantVisible'
+      ? 'bg-status-success-soft text-status-success-text'
+      : assistantState === 'disabled'
       ? 'bg-ui-bg text-ui-text-muted'
       : 'bg-status-warning-soft text-status-warning-text';
-  const actionMenu = actionMenuOpen && actionMenuStyle && typeof document !== 'undefined'
-    ? createPortal(
-        <div
-          ref={actionMenuRef}
-          id={actionMenuId}
-          role="menu"
-          className={menuSurfaceClassName('fixed z-[130] p-1')}
-          style={actionMenuStyle}
-        >
-          <MenuItem
-            onClick={() => {
-              closeActionMenu();
-              onEditSkill(skill.id);
-            }}
-          >
-            {canEditSkills ? (
-              <Edit3 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-            ) : (
-              <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-            )}
-            <span>{t(canEditSkills ? 'targetSkills.editSkill' : 'targetSkills.viewSkill')}</span>
-          </MenuItem>
-          {canEditSkills && (
+  const actionMenu =
+    actionMenuOpen && actionMenuStyle && typeof document !== 'undefined'
+      ? createPortal(
+          <div ref={actionMenuRef} id={actionMenuId} role="menu" className={menuSurfaceClassName('fixed z-[130] p-1')} style={actionMenuStyle}>
             <MenuItem
-              destructive
               onClick={() => {
                 closeActionMenu();
-                onDeleteSkill(skill.id);
+                onEditSkill(skill.id);
               }}
             >
-              <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{t('targetSkills.deleteSkill')}</span>
+              {canEditSource ? (
+                <Edit3 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+              ) : (
+                <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+              )}
+              <span>{t(canEditSource ? 'targetSkills.editSkill' : 'targetSkills.viewSkill')}</span>
             </MenuItem>
-          )}
-        </div>,
-        document.body
-      )
-    : null;
+            {canRemoveSource && (
+              <MenuItem
+                destructive
+                onClick={() => {
+                  closeActionMenu();
+                  onDeleteSkill(skill.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{t('targetSkills.deleteSkill')}</span>
+              </MenuItem>
+            )}
+          </div>,
+          document.body
+        )
+      : null;
 
   return (
     <tr data-target-skill-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
@@ -117,15 +108,18 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-ui-text">{skill.name}</span>
-            <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={skill.description}>{skill.description}</span>
+            <span className="type-row-title block truncate">{skill.name}</span>
+            {skill.inherited && (
+              <span className="type-micro-label mt-1 inline-flex rounded-full bg-ui-bg px-2 py-0.5 text-ui-text-muted">Platform default</span>
+            )}
+            <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={skill.description}>
+              {skill.description}
+            </span>
           </div>
         </div>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
-        <span className={`type-micro-label rounded-full px-2.5 py-1 ${assistantStateClass}`}>
-          {t(`targetSkills.state.${assistantState}`)}
-        </span>
+        <span className={`type-micro-label rounded-full px-2.5 py-1 ${assistantStateClass}`}>{t(`targetSkills.state.${assistantState}`)}</span>
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
         <Switch
@@ -162,14 +156,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({
   );
 };
 
-export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
-  skills,
-  canEditSkills,
-  pendingToggleSkillId,
-  onEditSkill,
-  onDeleteSkill,
-  onToggleSkill
-}) => {
+export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ skills, canEditSkills, pendingToggleSkillId, onEditSkill, onDeleteSkill, onToggleSkill }) => {
   const { t } = useTranslation();
   const [skillSearch, setSkillSearch] = React.useState('');
   const [skillFilter, setSkillFilter] = React.useState<'all' | 'enabled' | 'disabled' | 'valid' | 'invalid'>('all');
@@ -181,14 +168,17 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
     { value: 'invalid', label: 'Needs fixes' }
   ];
 
-  const summary = React.useMemo(() => ({
-    total: skills.length,
-    assistantVisible: skills.filter((skill) => skill.enabled && skill.validationStatus === 'valid').length,
-    enabled: skills.filter((skill) => skill.enabled).length,
-    valid: skills.filter((skill) => skill.validationStatus === 'valid').length,
-    needsFixes: skills.filter((skill) => skill.validationStatus !== 'valid').length,
-    files: skills.reduce((total, skill) => total + skill.bundleStats.fileCount, 0)
-  }), [skills]);
+  const summary = React.useMemo(
+    () => ({
+      total: skills.length,
+      assistantVisible: skills.filter((skill) => skill.enabled && skill.validationStatus === 'valid').length,
+      enabled: skills.filter((skill) => skill.enabled).length,
+      valid: skills.filter((skill) => skill.validationStatus === 'valid').length,
+      needsFixes: skills.filter((skill) => skill.validationStatus !== 'valid').length,
+      files: skills.reduce((total, skill) => total + skill.bundleStats.fileCount, 0)
+    }),
+    [skills]
+  );
 
   const filteredSkills = React.useMemo(() => {
     const normalizedSearch = skillSearch.trim().toLowerCase();
@@ -202,7 +192,9 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
         syncLabel(skill) || '',
         `${skill.bundleStats.fileCount} files`,
         summarizeBytes(skill.bundleStats.totalBytes)
-      ].join(' ').toLowerCase();
+      ]
+        .join(' ')
+        .toLowerCase();
       const matchesSearch = !normalizedSearch || searchableText.includes(normalizedSearch);
       const matchesFilter =
         skillFilter === 'all' ||
@@ -220,35 +212,33 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
           <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
             <h2 className="type-row-title">{t('targetSkills.inventoryTitle')}</h2>
-            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">
-              {t('targetSkills.inventoryBody')}
-            </p>
+            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('targetSkills.inventoryBody')}</p>
           </div>
           <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.skillsMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.total}</p>
+            <p className="type-data mt-0.5">{summary.total}</p>
           </div>
           <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.assistantVisibleSkills')}</p>
-            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {summary.assistantVisible}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
           </div>
           <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.enabledSkillsMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.enabled}</p>
+            <p className="type-data mt-0.5">{summary.enabled}</p>
           </div>
           <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.needsFixes')}</p>
-            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {summary.needsFixes}
               <span className="h-2 w-2 rounded-full bg-status-warning" />
             </p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.filesMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.files}</p>
+            <p className="type-data mt-0.5">{summary.files}</p>
           </div>
         </div>
       </section>
@@ -256,7 +246,9 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
       <section data-target-skill-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
           <div className="relative min-w-0">
-            <label htmlFor="target-skill-search" className="sr-only">{t('targetSkills.searchSkills')}</label>
+            <label htmlFor="target-skill-search" className="sr-only">
+              {t('targetSkills.searchSkills')}
+            </label>
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
             <input
               id="target-skill-search"
@@ -267,15 +259,12 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
               className={targetSkillSearchInputClassName}
             />
           </div>
-          <Select<typeof skillFilter>
-            value={skillFilter}
-            options={filterOptions}
-            onChange={setSkillFilter}
-            className="w-full"
-            ariaLabel={t('targetSkills.filterSkills')}
-          />
+          <Select<typeof skillFilter> value={skillFilter} options={filterOptions} onChange={setSkillFilter} className="w-full" ariaLabel={t('targetSkills.filterSkills')} />
           <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
-            {t('targetSkills.showingItems', { count: filteredSkills.length, total: skills.length })}
+            {t('targetSkills.showingItems', {
+              count: filteredSkills.length,
+              total: skills.length
+            })}
           </span>
         </div>
         <div className="min-w-0">
@@ -288,7 +277,12 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
               <col className="w-[21%]" />
               <col className="w-[11%]" />
             </colgroup>
-            <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredSkills.length }}>
+            <DataTableHeader
+              collectionState={{
+                phase: 'ready',
+                itemCount: filteredSkills.length
+              }}
+            >
               <tr>
                 <DataTableHeaderCell>{t('targetSkills.skillColumn')}</DataTableHeaderCell>
                 <DataTableHeaderCell>{t('targetSkills.assistantStateColumn')}</DataTableHeaderCell>
@@ -298,17 +292,19 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({
               </tr>
             </DataTableHeader>
             <tbody>
-              {filteredSkills.length > 0 ? filteredSkills.map((skill) => (
-                <TargetSkillRow
-                  key={skill.id}
-                  skill={skill}
-                  canEditSkills={canEditSkills}
-                  pendingToggleSkillId={pendingToggleSkillId}
-                  onEditSkill={onEditSkill}
-                  onDeleteSkill={onDeleteSkill}
-                  onToggleSkill={onToggleSkill}
-                />
-              )) : (
+              {filteredSkills.length > 0 ? (
+                filteredSkills.map((skill) => (
+                  <TargetSkillRow
+                    key={skill.id}
+                    skill={skill}
+                    canEditSkills={canEditSkills}
+                    pendingToggleSkillId={pendingToggleSkillId}
+                    onEditSkill={onEditSkill}
+                    onDeleteSkill={onDeleteSkill}
+                    onToggleSkill={onToggleSkill}
+                  />
+                ))
+              ) : (
                 <tr>
                   <td colSpan={5} className="p-0">
                     <EmptyState

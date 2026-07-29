@@ -37,6 +37,7 @@ export interface FixtureState {
   workflowSchedules: Array<Record<string, any>>;
   workflowEventTriggers: Array<Record<string, any>>;
   workflowExecutions: Array<Record<string, any>>;
+  approvals: Array<Record<string, any>>;
   catalogSources: Array<Record<string, any>>;
   catalogArtifacts: Array<Record<string, any>>;
   sessions: Array<Record<string, any>>;
@@ -233,7 +234,7 @@ export function createFixtureState(): FixtureState {
     id: FIXTURE_IDS.workflow, workspaceId: FIXTURE_IDS.workspace, version: 2,
     origin: { type: 'manual' }, source: 'user', name: 'Production health review',
     description: 'Review target health and summarize prioritized follow-up actions.', status: 'active',
-    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning', email: 'ning@fixture.acornops.dev' },
+    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' },
     createdAt: EARLIER, prompt: 'Review {{target:target}} and produce a concise operational summary.',
     starterPrompt: 'Review {{target:target}} and produce a concise operational summary.', agentIds: [FIXTURE_IDS.workflowAnalystAgent, FIXTURE_IDS.specialistAgent],
     executionMode: 'coordinated',
@@ -245,7 +246,7 @@ export function createFixtureState(): FixtureState {
     id: 'fixture-template-target-diagnostics', workspaceId: FIXTURE_IDS.workspace, version: 1,
     origin: { type: 'manual' }, source: 'user',
     name: 'Target diagnostics', description: 'Inspect one exact target using live diagnostic evidence.', status: 'active',
-    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning', email: 'ning@fixture.acornops.dev' }, createdAt: EARLIER,
+    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
     prompt: 'Inspect {{target:target}} using live diagnostic evidence and summarize safe next actions.',
     agentIds: [FIXTURE_IDS.targetDiagnosticsAgent], executionMode: 'direct',
     resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [FIXTURE_IDS.cluster] } }],
@@ -256,7 +257,7 @@ export function createFixtureState(): FixtureState {
     id: 'fixture-template-incident-report', workspaceId: FIXTURE_IDS.workspace, version: 1,
     origin: { type: 'manual' }, source: 'user',
     name: 'Incident report', description: 'Generate an incident report from explicitly granted evidence.', status: 'active',
-    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning', email: 'ning@fixture.acornops.dev' }, createdAt: EARLIER,
+    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
     prompt: 'Generate {{text:report_title}} with provenance from {{chat:incident_context}}.',
     agentIds: [FIXTURE_IDS.incidentReporterAgent], executionMode: 'direct',
     resourceRequirements: [{ type: 'chat', minimum: 1, maximum: 20, requiredOperations: ['read'] }], category: 'Reporting', tags: ['incident'], parameters: [{ key: 'report_title', type: 'text', required: true }, { key: 'incident_context', type: 'chat', required: true }],
@@ -291,7 +292,7 @@ export function createFixtureState(): FixtureState {
   ];
   const sessions = [{
     id: FIXTURE_IDS.session, workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', clusterId: FIXTURE_IDS.cluster,
-    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning' },
+    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' },
     title: 'Payments restart investigation', status: 'open', createdAt: EARLIER, updatedAt: NOW, lastMessageAt: NOW,
     expiresAt: fixtureTime(30 * 24 * 60 * 60_000)
   }];
@@ -466,10 +467,10 @@ export function createFixtureState(): FixtureState {
     }
   ];
   return {
-    user: { id: FIXTURE_IDS.user, email: 'ning@fixture.acornops.dev', displayName: 'Ning', quota: { workspaceMemberships: { used: 1, limit: 10 } } },
+    user: { id: FIXTURE_IDS.user, email: 'test-user@fixture.acornops.dev', displayName: 'Test User', quota: { workspaceMemberships: { used: 1, limit: 10 } } },
     workspaces: [workspace],
     members: [
-      { workspaceId: FIXTURE_IDS.workspace, userId: FIXTURE_IDS.user, email: 'ning@fixture.acornops.dev', displayName: 'Ning', role: 'owner', roleTemplate: workspace.currentUserRoleTemplate, source: 'internal' },
+      { workspaceId: FIXTURE_IDS.workspace, userId: FIXTURE_IDS.user, email: 'test-user@fixture.acornops.dev', displayName: 'Test User', role: 'owner', roleTemplate: workspace.currentUserRoleTemplate, source: 'internal' },
       { workspaceId: FIXTURE_IDS.workspace, userId: 'fixture-member-2', email: 'maya@fixture.acornops.dev', displayName: 'Maya Chen', role: 'admin', source: 'oidc' },
       { workspaceId: FIXTURE_IDS.workspace, userId: 'fixture-member-3', email: 'sam@fixture.acornops.dev', displayName: 'Sam Rivera', role: 'viewer', source: 'oidc' }
     ],
@@ -484,14 +485,14 @@ export function createFixtureState(): FixtureState {
       allowedProviders: ['openai', 'anthropic', 'gemini'],
       allowedProviderModels: { openai: ['gpt-5.5', 'gpt-5.4-mini'], anthropic: ['claude-sonnet-4-6'], gemini: ['gemini-3.5-flash'] },
       allowedModels: ['gpt-5.5', 'gpt-5.4-mini', 'claude-sonnet-4-6', 'gemini-3.5-flash'],
-      providers: [{ provider: 'openai', configured: true, enabled: true }, { provider: 'anthropic', configured: false, enabled: true }, { provider: 'gemini', configured: false, enabled: true }]
+      providers: [{ provider: 'openai', configured: true, enabled: true, source: 'workspace' }, { provider: 'anthropic', configured: false, enabled: true, source: 'none' }, { provider: 'gemini', configured: false, enabled: true, source: 'none' }]
     },
     agents,
     workflows,
     automationTemplates,
     workflowSchedules: [
-      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
-      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Ning' }, updatedAt: NOW }
+      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
+      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
     ],
     workflowEventTriggers: [
       {
@@ -509,6 +510,37 @@ export function createFixtureState(): FixtureState {
         principal: { type: 'user', id: FIXTURE_IDS.user },
         endpointUrl: '/api/v1/workflow-event-triggers/fixture-webhook-trigger/events',
         lastTriggeredAt: NOW, lastStatus: 'failed', lastError: 'Dispatch rejected because the configured principal no longer has permission. No execution was created.'
+      }
+    ],
+    approvals: [
+      {
+        approvalId: 'fixture-workspace-approval',
+        runId: 'fixture-execution-issue-review-run',
+        source: 'workflow_tool',
+        workflowId: FIXTURE_IDS.workflow,
+        targetId: FIXTURE_IDS.cluster,
+        targetType: 'kubernetes',
+        summary: 'Restart the payments worker after reviewing its current replica state',
+        toolName: 'restart_workload',
+        requestedBy: 'Workflow Analyst',
+        expiresAt: fixtureTime(24 * 60 * 60_000),
+        status: 'pending',
+        requestedAt: NOW
+      },
+      {
+        approvalId: 'fixture-decided-approval',
+        runId: 'fixture-execution-completed-run',
+        source: 'workflow_gate',
+        workflowId: FIXTURE_IDS.workflow,
+        summary: 'Apply the reviewed production health recommendation',
+        toolName: 'workflow_gate',
+        requestedBy: 'Workflow Analyst',
+        expiresAt: fixtureTime(24 * 60 * 60_000),
+        status: 'approved',
+        decision: 'approved',
+        decidedBy: 'Ning',
+        decidedAt: NOW,
+        requestedAt: EARLIER
       }
     ],
     workflowExecutions,

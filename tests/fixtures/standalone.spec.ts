@@ -10,7 +10,7 @@ const routes = [
   { path: '/workspaces/fixture-workspace/triggers', text: 'Weekday morning review' },
   { path: '/workspaces/fixture-workspace/triggers?type=acornops_event', text: 'Triage new issues' },
   { path: '/workspaces/fixture-workspace/triggers?type=webhook', text: 'External production review' },
-  { path: '/workspaces/fixture-workspace/approvals', text: 'No approvals waiting' },
+  { path: '/workspaces/fixture-workspace/approvals', text: 'Restart the payments worker' },
   { path: '/workspaces/fixture-workspace/catalog', text: 'GitHub Observer' },
   { path: '/workspaces/fixture-workspace/catalog?destination=agent%3Afixture-specialist', text: 'Destination: Kubernetes Specialist' },
   { path: '/workspaces/fixture-workspace/catalog?destination=target%3Afixture-cluster', text: 'Destination: Singapore Production' },

@@ -4,8 +4,8 @@ import { Trans, useTranslation } from 'react-i18next';
 import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModal';
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { CloseButton } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import type { AgentAccessMode } from '@/services/control-plane/types';
@@ -13,6 +13,7 @@ import {
   KubernetesCluster,
   ProjectMember,
   Workspace,
+  WorkspaceAiSettings,
   WorkspaceMemberAccessResult,
   WorkspaceRoleTemplate
 } from '@/types';
@@ -41,6 +42,7 @@ interface AppDialogsProps {
   onConfirmClusterInstalled: () => void;
   onConfirmDeleteWorkspace: (workspace: Workspace) => Promise<void>;
   onCreateWorkspace: (name: string) => Promise<Workspace>;
+  onLoadWorkspaceAiSettings: (workspaceId: string) => Promise<WorkspaceAiSettings>;
   onOpenWorkspaceAiSettings: (workspaceId: string) => void;
   onAddOrInviteWorkspaceMember: (
     workspaceId: string,
@@ -78,6 +80,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onConfirmClusterInstalled,
   onConfirmDeleteWorkspace,
   onCreateWorkspace,
+  onLoadWorkspaceAiSettings,
   onOpenWorkspaceAiSettings,
   onAddOrInviteWorkspaceMember,
   onExcludeNamespacesChange,
@@ -127,33 +130,30 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                     <ICONS.Trash2 className="h-4 w-4" />
                   </span>
                   <div>
-                    <h3 id="delete-workspace-title" className="text-sm font-extrabold tracking-tight text-ui-text">{t('app.deleteWorkspace')}</h3>
-                    <p className="mt-0.5 text-[11px] font-semibold text-ui-text-muted">{t('app.deleteWorkspaceSubtitle')}</p>
+                    <h3 id="delete-workspace-title" className="type-panel-title">
+                      {t('app.deleteWorkspace')}
+                    </h3>
+                    <p className="mt-0.5 type-caption">{t('app.deleteWorkspaceSubtitle')}</p>
                   </div>
                 </div>
-                <CloseButton
-                  onClick={handleCloseWorkspaceDelete}
-                  disabled={isDeletingWorkspace}
-                  aria-label={t('app.closeDeleteWorkspaceDialog')}
-                />
+                <CloseButton onClick={handleCloseWorkspaceDelete} disabled={isDeletingWorkspace} aria-label={t('app.closeDeleteWorkspaceDialog')} />
               </div>
 
               <div className="space-y-4 p-5">
                 <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-medium leading-6 text-status-danger-text">
-                  {t('app.deleteWorkspaceWarning', { name: deleteTargetWorkspace.name })}
+                  {t('app.deleteWorkspaceWarning', {
+                    name: deleteTargetWorkspace.name
+                  })}
                 </div>
-                <p className="text-xs leading-5 text-ui-text-muted">
-                  {t('app.deleteWorkspaceCleanup')}
-                </p>
+                <p className="text-xs leading-5 text-ui-text-muted">{t('app.deleteWorkspaceCleanup')}</p>
                 <div>
-                  <label
-                    htmlFor="delete-workspace-confirmation-input"
-                    className="mb-1.5 block px-1 text-xs font-bold text-ui-text-muted"
-                  >
+                  <label htmlFor="delete-workspace-confirmation-input" className="type-label mb-1.5 block px-1">
                     <Trans
                       i18nKey="app.deleteWorkspaceConfirmationLabel"
                       values={{ name: deleteTargetWorkspace.name }}
-                      components={{ name: <span className="font-extrabold text-status-danger-text" /> }}
+                      components={{
+                        name: <span className="type-emphasis text-status-danger-text" />
+                      }}
                     />
                   </label>
                   <input
@@ -171,7 +171,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                     type="button"
                     onClick={handleCloseWorkspaceDelete}
                     disabled={isDeletingWorkspace}
-                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-xs font-bold text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
+                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {t('app.cancel')}
                   </button>
@@ -184,13 +184,17 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                         handleCloseWorkspaceDelete();
                       } catch (err) {
                         console.error('Failed deleting workspace', err);
-                        showToast(t('app.failedDeleteWorkspace', { name: deleteTargetWorkspace.name }));
+                        showToast(
+                          t('app.failedDeleteWorkspace', {
+                            name: deleteTargetWorkspace.name
+                          })
+                        );
                       } finally {
                         onSetDeletingWorkspace(false);
                       }
                     }}
                     disabled={isDeletingWorkspace || workspaceDeleteConfirmation !== deleteTargetWorkspace.name}
-                    className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-xs font-extrabold text-control-danger-fg shadow-lg shadow-status-danger/20 transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-xs type-ui text-control-danger-fg shadow-lg shadow-status-danger/20 transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isDeletingWorkspace ? t('app.deleting') : t('app.deleteWorkspace')}
                   </button>
@@ -205,6 +209,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           currentUserEmail={currentUserEmail}
           onClose={onCloseWorkspaceCreate}
           onCreateWorkspace={onCreateWorkspace}
+          onLoadWorkspaceAiSettings={onLoadWorkspaceAiSettings}
           onOpenAiSettings={onOpenWorkspaceAiSettings}
           onLoadWorkspaceRoles={onLoadWorkspaceRoles}
           onAddOrInviteWorkspaceMember={onAddOrInviteWorkspaceMember}
@@ -231,11 +236,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
         />
 
         {installAgentCluster && installAgentWorkspace && (
-          <ClusterAgentInstallModal
-            cluster={installAgentCluster}
-            workspaceName={installAgentWorkspace.name}
-            onClose={onCloseInstallAgent}
-          />
+          <ClusterAgentInstallModal cluster={installAgentCluster} workspaceName={installAgentWorkspace.name} onClose={onCloseInstallAgent} />
         )}
       </AnimatePresence>
     </>

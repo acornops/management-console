@@ -2,11 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/common/Button';
-import { CollectionState } from '@/components/common/CollectionState';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { Switch } from '@/components/common/FormControls';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
+import { Button } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { Switch } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
 import type { TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { getToolLabel, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
@@ -194,22 +194,22 @@ export const McpServerToolsDialog: React.FC<{
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
-                    <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{server.toolCounts.total}</p>
+                    <p className="type-data mt-0.5">{server.toolCounts.total}</p>
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
-                    <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{server.toolCounts.enabledEffective}</p>
+                    <p className="type-data mt-0.5">{server.toolCounts.enabledEffective}</p>
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
-                    <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+                    <p className="type-data mt-0.5 inline-flex items-center gap-2">
                       {server.toolCounts.total - server.toolCounts.writeConfigured}
                       <span className="h-2 w-2 rounded-full bg-status-success" />
                     </p>
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
-                    <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+                    <p className="type-data mt-0.5 inline-flex items-center gap-2">
                       {server.toolCounts.writeConfigured}
                       <span className="h-2 w-2 rounded-full bg-status-warning" />
                     </p>
@@ -220,7 +220,7 @@ export const McpServerToolsDialog: React.FC<{
               {renderToolSection(t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
               <div ref={loadMoreSentinelRef}>
                 {hasMoreTools && (
-                  <button type="button" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-label w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
+                  <button type="button" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
                     {isLoadingMoreTools ? t('mcpServers.loadingTools') : t('common.loadMore')}
                   </button>
                 )}
@@ -233,7 +233,7 @@ export const McpServerToolsDialog: React.FC<{
           )}
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-          <button type="button" onClick={() => setConfiguredOverrides({})} disabled={isSavingTools || changedTools.length === 0} className="control-target type-label text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="button" onClick={() => setConfiguredOverrides({})} disabled={isSavingTools || changedTools.length === 0} className="control-target type-ui text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50">
             {t('mcpServers.resetChanges')}
           </button>
           <div className="flex items-center gap-3">

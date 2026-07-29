@@ -2,10 +2,10 @@ import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Trans } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
-import { CloseButton, TextInput } from '@/components/common/ComponentVocabulary';
-import { DangerZone, DangerZoneRow } from '@/components/common/DangerZone';
-import { Dialog } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { CloseButton, TextInput } from '@acornops/ui';
+import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { formatControlPlaneError, type ControlPlaneErrorArea } from '@/services/control-plane/errorFormatting';
 
@@ -86,18 +86,12 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
           title={title}
           description={description}
           tone="danger"
-          action={(
-            <Button
-              type="button"
-              variant="danger"
-              size="md"
-              className="w-full"
-              onClick={() => setIsOpen(true)}
-            >
+          action={
+            <Button type="button" variant="danger" size="md" className="w-full" onClick={() => setIsOpen(true)}>
               <ICONS.Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               {title}
             </Button>
-          )}
+          }
         />
       </DangerZone>
 
@@ -116,29 +110,26 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
                   <ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div>
-                  <h3 id={titleId} className="type-row-title text-ui-text">{title}</h3>
-                  <p className="mt-0.5 text-[11px] font-semibold text-ui-text-muted">{subtitle}</p>
+                  <h3 id={titleId} className="type-row-title text-ui-text">
+                    {title}
+                  </h3>
+                  <p className="mt-0.5 type-caption">{subtitle}</p>
                 </div>
               </div>
-              <CloseButton
-                type="button"
-                onClick={closeDialog}
-                disabled={isDeleting}
-                aria-label={closeLabel}
-              />
+              <CloseButton type="button" onClick={closeDialog} disabled={isDeleting} aria-label={closeLabel} />
             </div>
 
             <div className="space-y-4 px-7 py-6">
               <p className="text-sm leading-6 text-ui-text-muted">{description}</p>
-              <p className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
-                {agentWarning}
-              </p>
+              <p className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">{agentWarning}</p>
               <div>
-                <label htmlFor={inputId} className="mb-1.5 block px-1 text-xs font-bold text-ui-text-muted">
+                <label htmlFor={inputId} className="type-label mb-1.5 block px-1">
                   <Trans
                     i18nKey={confirmationI18nKey}
                     values={{ name: targetName }}
-                    components={{ name: <span className="font-extrabold text-status-danger-text" /> }}
+                    components={{
+                      name: <span className="type-emphasis text-status-danger-text" />
+                    }}
                   />
                 </label>
                 <TextInput
@@ -163,13 +154,7 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
               <Button type="button" variant="secondary" size="sm" onClick={closeDialog} disabled={isDeleting}>
                 {cancelLabel}
               </Button>
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                onClick={() => void confirmDelete()}
-                disabled={isDeleting || confirmation !== targetName}
-              >
+              <Button type="button" variant="danger" size="sm" onClick={() => void confirmDelete()} disabled={isDeleting || confirmation !== targetName}>
                 {isDeleting ? deletingLabel : deleteLabel}
               </Button>
             </div>

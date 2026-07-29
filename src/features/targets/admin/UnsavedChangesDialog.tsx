@@ -1,8 +1,8 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { Dialog } from '@/components/common/Dialog';
+import { Button } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
 
 interface UnsavedChangesDialogProps {
   title: string;

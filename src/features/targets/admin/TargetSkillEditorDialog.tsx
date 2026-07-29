@@ -1,11 +1,11 @@
 import React from 'react';
 import { AlertTriangle, GitBranch, RefreshCcw } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { CloseButton } from '@/components/common/ComponentVocabulary';
-import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { ModalStepIndicator } from '@/components/common/ModalStepIndicator';
-import { Dialog } from '@/components/common/Dialog';
-import { formInputClassName } from '@/components/common/formControlStyles';
+import { Button } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
+import { InlineLoadingIndicator } from '@acornops/ui';
+import { ModalStepIndicator } from '@acornops/ui';
+import { Dialog } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import type { ControlPlaneTargetSkillDetail } from '@/services/controlPlaneApi';
 import { TargetSkillFileTree } from '@/features/targets/admin/TargetSkillFileTree';
 import { UnsavedChangesDialog } from '@/features/targets/admin/UnsavedChangesDialog';
@@ -185,7 +185,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 <div className="min-w-0">
                   <p className="type-label truncate text-ui-text">{activeFile?.path || 'SKILL.md'}</p>
                   {detail && (
-                    <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
+                    <div className="mt-1 flex flex-wrap gap-2 type-caption">
                       {detail.source.type === 'git_import' && (
                         <span className="rounded-full border border-ui-border px-2 py-1 text-ui-text-muted">{sourceLabel(detail)}</span>
                       )}
