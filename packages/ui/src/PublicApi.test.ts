@@ -55,6 +55,12 @@ describe('@acornops/ui public API', () => {
     expect(segmentedTabButtonClassName({ isActive: true })).toContain(
       'border-transparent'
     );
+    expect(segmentedTabButtonClassName({ isActive: true })).toContain(
+      'text-ui-text'
+    );
+    expect(segmentedTabButtonClassName({ isActive: true })).not.toContain(
+      'text-accent-readable'
+    );
     expect(filterToggleButtonClassName({ isActive: true })).toContain(
       'bg-ui-surface'
     );

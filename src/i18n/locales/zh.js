@@ -121,6 +121,7 @@ export const zh = {
     vm: '虚拟机',
     activeCluster: '当前集群',
     activeVirtualMachine: '当前虚拟机',
+    activeAgent: '当前 Agent',
     backToWorkspace: '返回工作区',
     workloads: '工作负载',
     mcpServers: 'MCP 服务器',
@@ -133,7 +134,9 @@ export const zh = {
     network: '网络',
     logs: '日志',
     clusterAssistant: '集群助手',
+    resizeClusterAssistant: '调整集群助手宽度',
     vmAssistant: '虚拟机助手',
+    agentAssistant: 'Agent 助手',
     aiAssistantStatus: {
       working: 'AI 助手正在处理',
       review: 'AI 助手需要批准',
@@ -141,11 +144,13 @@ export const zh = {
     },
     clusterSettings: '集群设置',
     vmSettings: '虚拟机设置',
+    agentSettings: 'Agent 设置',
     navigation: '导航',
     navigationHint: '切换页面和工作区上下文。',
     primaryDestinations: '主要入口',
     clusterDestinations: '集群入口',
     virtualMachineDestinations: '虚拟机入口',
+    agentDestinations: 'Agent 入口',
     administration: '管理',
     workspaceContext: '工作区上下文',
     selectWorkspace: '选择工作区',
@@ -216,7 +221,8 @@ export const zh = {
     connectClusterHelm: '连接集群',
     clustersCount: '{{count}} 个集群',
     unknownCluster: '未知集群',
-    unknownVirtualMachine: '未知虚拟机'
+    unknownVirtualMachine: '未知虚拟机',
+    unknownAgent: '未知 Agent'
   },
   workflowActivity: {
     title: '运行',
@@ -1706,17 +1712,55 @@ export const zh = {
     title: 'Agent 对话',
     description: '在单 Agent 手动对话中直接与 {{name}} 协作。',
     promptTitle: '与 {{name}} 开始对话',
-    promptBody: '新对话默认为只读。只有任务需要写入工具时才明确启用更改。',
+    promptBodyApproval: '此 Agent 可立即检查，并会在每次更改前请求批准。',
+    promptBodyAutomatic: '此 Agent 可执行常规更改。高风险或破坏性操作仍需你的批准。',
+    promptBodyReadOnly: '此 Agent 可以检查并提供建议，但其策略不允许更改。',
+    promptBodyRoleReadOnly: '你可以使用此 Agent 检查并获取建议，但你的工作区角色不允许 Agent 更改。',
     inputPlaceholder: '向 {{name}} 发送消息...',
-    footer: '此对话默认为只读。更改需要明确授权，并遵循 Agent 审批策略。',
-    readOnlyNotice: '此对话为只读。需要时请明确启用更改。',
-    writeNotice: '此对话已启用更改。写入工具仍遵循审批策略。',
+    footerApproval: '每个具备写入能力的操作都需要你的批准。',
+    footerAutomatic: '常规更改可自动运行；高风险或破坏性操作仍需批准。',
+    footerReadOnly: '此 Agent 的策略已禁用更改。',
+    footerRoleReadOnly: '你的工作区角色仅允许只读 Agent 对话。',
+    approvalPolicyNotice: '更改遵循此 Agent 的策略。每次写入前都需要批准。',
+    autoPolicyNotice: '常规更改可自动运行。高风险或破坏性写入仍需批准。',
+    agentReadOnlyNotice: '此 Agent 的策略为只读。',
+    roleReadOnlyNotice: '你的工作区角色仅允许只读 Agent 对话。',
+    pausedNotice: '此对话已暂停更改。',
     readerNotice: '你可以阅读此对话，但只有创建者可以继续。',
-    enableChanges: '启用更改',
-    returnReadOnly: '恢复只读',
+    pauseChanges: '暂停更改',
+    resumePolicy: '恢复 Agent 策略',
     backToAgents: '返回 Agents',
+    quickChatLabel: '与 {{name}} 快速对话',
+    resizeQuickChat: '调整快速对话宽度',
     ready: '就绪',
     needsSetup: '需要配置',
+    workflowUsage: '工作流使用情况',
+    workflowUsageCount: '已分配给 {{count}} 个工作流。',
+    workflowUsageCount_one: '已分配给 {{count}} 个工作流。',
+    workflowUsageCount_other: '已分配给 {{count}} 个工作流。',
+    noWorkflowUsage: '当前没有工作流使用此 Agent。',
+    sections: {
+      chat: {
+        title: 'Agent 助手',
+        description: '通过受治理的手动对话直接与 {{name}} 协作。'
+      },
+      mcpServers: {
+        title: 'MCP 服务器',
+        description: '管理分配给 {{name}} 的 MCP 服务器。'
+      },
+      skills: {
+        title: '技能',
+        description: '管理 {{name}} 可用的指令包。'
+      },
+      tools: {
+        title: '工具',
+        description: '检查 {{name}} 的有效工具和访问策略。'
+      },
+      settings: {
+        title: 'Agent 设置',
+        description: '管理 {{name}} 的配置版本和生命周期操作。'
+      }
+    },
     tabs: {
       chat: '对话',
       mcpServers: 'MCP 服务器',
@@ -2989,6 +3033,10 @@ export const zh = {
       status: { active: '已启用', draft: '草稿', disabled: '已停用' }, tabs: { overview: '概览', capabilities: '能力', versions: '恢复点', settings: '设置' },
       fields: { identity: 'Agent', status: '状态', capabilities: '能力', assignment: '工作流分配' },
       openProfile: '打开 {{name}} Agent 资料',
+      quickChat: '快速对话',
+      viewDetails: '查看详情',
+      openDetailsLabel: '打开 {{name}} 的详情',
+      actionsLabel: '{{name}} 的操作',
       capabilityCounts: {
         mcpServer: '{{count}} 个 MCP 服务器', tool: '{{count}} 个工具', skill: '{{count}} 个技能',
         mcpServer_one: '{{count}} 个 MCP 服务器', mcpServer_other: '{{count}} 个 MCP 服务器',

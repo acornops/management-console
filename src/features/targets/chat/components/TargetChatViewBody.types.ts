@@ -54,6 +54,7 @@ export interface TargetChatViewBodyProps {
   handleCreateSessionClick: () => void;
   handleModelAndEffortChange: (value: ReasoningEffort) => void;
   handleModelChange: (option: ComposerModelOption) => void;
+  headerLeading?: React.ReactNode;
   historyButtonRef: React.RefObject<HTMLButtonElement | null>;
   historyControlLabel: string;
   historyPanelRef: React.RefObject<HTMLElement | null>;

@@ -26,5 +26,23 @@ describe('workspace Agent ownership mapping', () => {
 
     expect(mapped.owner).toBe('Ning Tan');
     expect(mapped.origin.type).toBe('template');
+    expect(mapped.avatarEmoji).toBe('🤖');
+  });
+
+  it('maps the persisted Agent emoji identity', () => {
+    const mapped = mapApiAgent({
+      id: 'agent-2',
+      workspaceId: 'workspace-1',
+      name: 'Kubernetes Specialist',
+      avatarEmoji: '☸️',
+      instructions: 'Inspect live evidence.',
+      status: 'active',
+      origin: { type: 'manual' },
+      reviewState: 'reviewed',
+      providerType: 'internal',
+      createdBy: 'user-1'
+    } as AgentDefinitionApi, 'Operations');
+
+    expect(mapped.avatarEmoji).toBe('☸️');
   });
 });

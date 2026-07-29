@@ -25,6 +25,18 @@ const auditedRoutes = [
     path: '/workspaces/fixture-workspace/agents/fixture-specialist/settings'
   },
   {
+    name: 'agent-mcp-servers',
+    path: '/workspaces/fixture-workspace/agents/fixture-specialist/mcp-servers'
+  },
+  {
+    name: 'agent-skills',
+    path: '/workspaces/fixture-workspace/agents/fixture-specialist/skills'
+  },
+  {
+    name: 'agent-tools',
+    path: '/workspaces/fixture-workspace/agents/fixture-specialist/tools'
+  },
+  {
     name: 'cluster-overview',
     path: '/kubernetes-clusters/fixture-cluster/overview'
   },

@@ -81,6 +81,22 @@ const prohibitedActionTypography = /(?:^|[\s'"`])(?:type-(?:label|micro-label|em
 const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|navigationItemClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
 const canonicalButtonTarget = /(?:^|[\s'"`])(?:control-target|min-h-11|h-11|min-h-12|h-12|min-h-control|h-control)(?=$|[\s'"`])/;
 const semanticTextRole = /(?:^|[\s'"`])type-(?:body|caption|ui|label|micro-label|emphasis|row-title)(?=$|[\s'"`}])/;
+const typographyRoleUse = /(?:^|[\s'"`])(?<role>type-[a-z0-9-]+)(?=$|[\s'"`}])/g;
+const canonicalTypographyRoles = new Set([
+  'type-route-title',
+  'type-section-title',
+  'type-panel-title',
+  'type-row-title',
+  'type-body',
+  'type-ui',
+  'type-emphasis',
+  'type-wordmark',
+  'type-caption',
+  'type-label',
+  'type-micro-label',
+  'type-data',
+  'type-code'
+]);
 const canonicalModules = new Set([
   'Button.tsx',
   'Checkbox.tsx',
@@ -193,6 +209,16 @@ for (const path of files) {
     if (!prohibitedActionTypography.test(opening.source)) continue;
     const line = source.slice(0, opening.start).split('\n').length;
     report(path, 'action-typography', `line ${line}: actions use type-ui sentence case; label, emphasis, uppercase, and wide-tracking roles are prohibited`);
+  }
+
+  for (const opening of jsxOpenings(source, /<[A-Za-z][A-Za-z0-9.]*(?=[\s>])/g)) {
+    if (!opening.source.includes('className')) continue;
+    for (const match of opening.source.matchAll(typographyRoleUse)) {
+      const role = match.groups?.role;
+      if (!role || canonicalTypographyRoles.has(role)) continue;
+      const line = source.slice(0, opening.start).split('\n').length;
+      report(path, 'unknown-typography-role', `line ${line}: ${role} is not a defined semantic typography role`);
+    }
   }
 
   for (const opening of jsxOpenings(source, /<h[1-6]\b/g)) {

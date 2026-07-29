@@ -10,6 +10,7 @@ import type {
 
 interface AssistantCapabilityPreviewControlProps {
   canChat: boolean;
+  isPanel: boolean;
   isLoading: boolean;
   error: string;
   preview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
@@ -62,7 +63,7 @@ function capabilityChipLabel(
   return toolLabel;
 }
 
-export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPreviewControlProps> = ({ canChat, isLoading, error, preview, requestedToolAccessMode }) => {
+export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPreviewControlProps> = ({ canChat, isPanel, isLoading, error, preview, requestedToolAccessMode }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -108,7 +109,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
   }, [canChat]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={isPanel ? 'static' : 'relative'}>
       <button
         type="button"
         id={buttonId}

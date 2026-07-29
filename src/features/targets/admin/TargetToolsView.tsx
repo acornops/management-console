@@ -12,7 +12,8 @@ import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
   ControlPlaneTargetToolItem,
-  ControlPlaneTargetToolsCatalog
+  ControlPlaneTargetToolsCatalog,
+  UpdateTargetToolInput
 } from '@/services/controlPlaneApi';
 import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 import { TargetInsightsActivityDialog } from '@/features/targets/admin/TargetInsightsActivityDialog';
@@ -27,7 +28,18 @@ interface TargetToolsViewProps {
   canManageTools?: boolean;
   initialCatalog?: ControlPlaneTargetToolsCatalog | null;
   onCatalogChange?: (catalog: ControlPlaneTargetToolsCatalog) => void;
+  dataSource?: TargetToolsDataSource;
 }
+
+export interface TargetToolsDataSource {
+  listTools: (workspaceId: string, subjectId: string) => Promise<ControlPlaneTargetToolsCatalog>;
+  updateTool: (workspaceId: string, subjectId: string, toolId: string, input: UpdateTargetToolInput) => Promise<ControlPlaneTargetToolItem>;
+}
+
+const targetToolsDataSource: TargetToolsDataSource = {
+  listTools: (workspaceId, subjectId) => controlPlaneApi.listTargetTools(workspaceId, subjectId),
+  updateTool: (workspaceId, subjectId, toolId, input) => controlPlaneApi.updateTargetTool(workspaceId, subjectId, toolId, input)
+};
 
 interface ToolDraft {
   enabled: boolean;
@@ -143,7 +155,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   target,
   canManageTools = false,
   initialCatalog = null,
-  onCatalogChange
+  onCatalogChange,
+  dataSource = targetToolsDataSource
 }) => {
   const { t } = useTranslation();
 
@@ -207,18 +220,19 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       return matchesSearch && matchesFilter;
     });
   }, [catalog, t, toolFilter, toolSearch]);
+  const hasActiveFilters = Boolean(toolSearch.trim()) || toolFilter !== 'all';
 
   const loadCatalog = React.useCallback(async () => {
     setCatalogLoading(true);
     setCatalogError(null);
     try {
-      setCatalog(await controlPlaneApi.listTargetTools(target.workspaceId, target.id));
+      setCatalog(await dataSource.listTools(target.workspaceId, target.id));
     } catch (error) {
       setCatalogError(formatError(error, t('tools.loadFailed'), 'targetTools'));
     } finally {
       setCatalogLoading(false);
     }
-  }, [target.id, target.workspaceId, t]);
+  }, [dataSource, target.id, target.workspaceId, t]);
 
   React.useEffect(() => {
     void loadCatalog();
@@ -311,7 +325,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     if (!draftRequest.request) return;
     setSaving(true);
     try {
-      const updated = await controlPlaneApi.updateTargetTool(
+      const updated = await dataSource.updateTool(
         target.workspaceId,
         target.id,
         editingTool.id,
@@ -335,7 +349,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     setPendingToolId(tool.id);
     setCatalogError(null);
     try {
-      const updated = await controlPlaneApi.updateTargetTool(
+      const updated = await dataSource.updateTool(
         target.workspaceId,
         target.id,
         tool.id,
@@ -433,30 +447,32 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
           </section>
 
           <section data-target-tools-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-            <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
-              <div className="relative min-w-0">
-                <label htmlFor="target-tool-search" className="sr-only">{t('tools.searchTools')}</label>
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-                <input
-                  id="target-tool-search"
-                  type="text"
-                  value={toolSearch}
-                  onChange={(event) => setToolSearch(event.target.value)}
-                  placeholder={t('tools.searchTools')}
-                  className={toolSearchInputClassName}
+            {(catalog.items.length > 0 || hasActiveFilters) && (
+              <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
+                <div className="relative min-w-0">
+                  <label htmlFor="target-tool-search" className="sr-only">{t('tools.searchTools')}</label>
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
+                  <input
+                    id="target-tool-search"
+                    type="text"
+                    value={toolSearch}
+                    onChange={(event) => setToolSearch(event.target.value)}
+                    placeholder={t('tools.searchTools')}
+                    className={toolSearchInputClassName}
+                  />
+                </div>
+                <Select<typeof toolFilter>
+                  value={toolFilter}
+                  options={toolFilterOptions}
+                  onChange={setToolFilter}
+                  className="w-full"
+                  ariaLabel={t('tools.filterTools')}
                 />
+                <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
+                  {t('tools.showingTools', { count: filteredTools.length, total: catalog.items.length })}
+                </span>
               </div>
-              <Select<typeof toolFilter>
-                value={toolFilter}
-                options={toolFilterOptions}
-                onChange={setToolFilter}
-                className="w-full"
-                ariaLabel={t('tools.filterTools')}
-              />
-              <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
-                {t('tools.showingTools', { count: filteredTools.length, total: catalog.items.length })}
-              </span>
-            </div>
+            )}
             <div className="min-w-0">
               <table className="w-full table-fixed text-left" aria-label={t('tools.title')}>
                 <caption className="sr-only">{t('tools.title')}</caption>

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   approvalCheckpoint,
   appTargetChatRuntime,
+  assistantCapabilityPreviewControl,
   assistantTurn,
   chatGateDialog,
   chatTranscriptStates,
@@ -190,7 +191,12 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('aria-labelledby={modelSelectorId}');
     expect(chatView).toContain('aria-controls={modelSubmenuPanelId}');
     expect(chatView).toContain('aria-labelledby={modelSubmenuButtonId}');
-    expect(chatView).toContain('className="absolute bottom-full right-0 z-50 mb-3 w-64');
+    expect(chatView).toContain('isPanel={isPanel}');
+    expect(assistantCapabilityPreviewControl).toContain('isPanel: boolean;');
+    expect(assistantCapabilityPreviewControl).toContain("className={isPanel ? 'static' : 'relative'}");
+    expect(chatView).toContain('className={`absolute bottom-full right-0 z-50 mb-3 rounded-2xl');
+    expect(chatView).toContain("'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'");
+    expect(chatView).toContain("'bottom-2 right-2 top-2 w-44'");
     expect(chatView).toContain('sm:left-[calc(100%+0.5rem)]');
     expect(chatView).toContain('sm:right-auto');
     expect(chatView).not.toContain('sm:right-[calc(100%+0.5rem)]');
@@ -308,7 +314,17 @@ describe('target chat polish contracts', () => {
     expect(userMessageTurn).toContain("{t('chat.cancelEdit')}");
     expect(chatView).not.toContain('<span>{t(\'chat.roleUser\')}</span>');
     expect(chatView).not.toContain('<span>{formatMessageTime(message.timestamp)}</span>');
+    expect(chatView).toContain('data-target-chat-surface="true"');
+    expect(chatView).toContain('relative flex min-h-0 min-w-0 flex-1 overflow-hidden');
+    expect(chatView).toContain("isPanel");
+    expect(chatView).toContain("'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'");
+    expect(chatView).toContain("? 'bottom-2 right-2 top-2 w-44'");
+    expect(chatView).toContain("'bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto'");
     expect(chatGateDialog).toContain('role="dialog"');
+    expect(chatGateDialog).toContain("createPortal(dialog, document.body)");
+    expect(chatGateDialog).toContain('fixed inset-0 z-[180]');
+    expect(chatGateDialog).toContain('w-full max-w-md');
+    expect(chatGateDialog).not.toContain("isPanel ? 'max-w-sm'");
     expect(chatGateDialog).toContain('const hasRecentActivityAction = Boolean(recentActivityWarning && (activeSessionId || actionSessionId));');
     expect(chatGateDialog).toContain('const recentActivityBody = recentActivityWarning?.message.trim();');
     expect(chatGateDialog).toContain('const recentActivityActionLabel = recentActivityWarning?.actionLabel?.trim();');
@@ -323,7 +339,7 @@ describe('target chat polish contracts', () => {
     expect(chatGateDialog).toContain('tabIndex={-1}');
     expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0 }}');
     expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}');
-    expect(chatGateDialog).toContain('bg-ui-bg/88 p-4 dark:bg-ui-bg/92');
+    expect(chatGateDialog).toContain('bg-ui-text/40 p-4 dark:bg-ui-bg/75');
     expect(chatGateDialog).toContain('rounded-lg border border-ui-border bg-ui-surface');
     expect(chatGateDialog).toContain("t('chat.recentActivityActionTitle')");
     expect(chatGateDialog).toContain("recentActivityBody || t('chat.chooseRecentActivityAction')");

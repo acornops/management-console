@@ -11,6 +11,8 @@ import { CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawe
 import { agentProfileTabs, type AgentProfileTab } from '@/pages/WorkspaceAgentDetailPanel';
 import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
 import { AgentChatPanel } from '@/pages/agents/AgentChatPanel';
+import { AgentQuickChatPanel } from '@/pages/agents/AgentQuickChatPanel';
+import { DEFAULT_AGENT_EMOJI } from '@/pages/agents/AgentAvatar';
 import { Notice, canManageWorkspaceAgents, createAgentEditDraft, filterVisibleAgents, getAgentEditChangeSummary, isWorkspaceCatalogAgent, mapApiAgent, shouldRefreshAgentEditDraft, splitInput, type AgentDraft, type AgentEditDraft, type AgentEditDraftSource, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createAgent as createWorkspaceAgent,
@@ -49,11 +51,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [ownerUsersReloadKey, setOwnerUsersReloadKey] = useState(0);
   const [createPanelOpen, setCreatePanelOpen] = useState(initialUrlSearch.get('panel') === 'create');
   const [editPanelOpen, setEditPanelOpen] = useState(initialUrlSearch.get('panel') === 'edit');
-  const [detailPanelOpen, setDetailPanelOpen] = useState(Boolean(routeState) || initialUrlSearch.get('panel') === 'profile');
   const initialAgentTab = initialUrlSearch.get('agentTab');
   const [agentTab, setAgentTab] = useState<AgentProfileTab>(routeState?.tab || (agentProfileTabs.includes(initialAgentTab as AgentProfileTab) ? initialAgentTab as AgentProfileTab : 'chat'));
   const [editingAgentId, setEditingAgentId] = useState('');
-  const [createDraft, setCreateDraft] = useState<AgentDraft>({ name: '', description: '', instructions: '', providerType: 'internal' });
+  const [createDraft, setCreateDraft] = useState<AgentDraft>({ name: '', avatarEmoji: DEFAULT_AGENT_EMOJI, description: '', instructions: '', providerType: 'internal' });
   const [editDraft, setEditDraft] = useState<AgentEditDraft | null>(null);
   const editDraftSourceRef = React.useRef<AgentEditDraftSource | null>(null);
   const [localNotice, setLocalNotice] = useState<LocalNotice | null>(null);
@@ -71,7 +72,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   React.useEffect(() => {
     if (routeState) {
       setSelectedAgentId(routeState.agentId);
-      setDetailPanelOpen(true);
     }
   }, [routeState]);
   React.useEffect(() => {
@@ -85,7 +85,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     });
     setCreatePanelOpen(panel === 'create');
     setEditPanelOpen(panel === 'edit');
-    setDetailPanelOpen(Boolean(routeState) || panel === 'profile');
     const routeTab = urlSearch.get('agentTab');
     if (!routeState) setAgentTab(agentProfileTabs.includes(routeTab as AgentProfileTab) ? routeTab as AgentProfileTab : 'chat');
     if (panel === 'profile' && routeTab && !agentProfileTabs.includes(routeTab as AgentProfileTab)) {
@@ -116,7 +115,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         setSelectedAgentId((current) => mapped.some((agent) => agent.id === current && isWorkspaceCatalogAgent(agent)) ? current : firstCatalogAgent?.id || '');
         const currentSearch = new URLSearchParams(window.location.search);
         const routeAgentId = currentSearch.get('agent');
-        if (routeAgentId && !mapped.some((agent) => agent.id === routeAgentId && isWorkspaceCatalogAgent(agent)) && ['profile', 'edit'].includes(currentSearch.get('panel') || '')) {
+        if (routeAgentId && !mapped.some((agent) => agent.id === routeAgentId && isWorkspaceCatalogAgent(agent)) && ['chat', 'profile', 'edit'].includes(currentSearch.get('panel') || '')) {
           updateUrlSearch({ panel: null, agent: null, agentTab: null }, { replace: true });
         }
         if (routeState && !mapped.some((agent) => agent.id === routeState.agentId && isWorkspaceCatalogAgent(agent))) {
@@ -174,9 +173,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const visibleAgents = useMemo(() => filterVisibleAgents(workspaceCatalogAgents, query, catalogFilters), [workspaceCatalogAgents, query, catalogFilters]);
   const selectedAgent = workspaceCatalogAgents.find((agent) => agent.id === selectedAgentId);
   const activeAgentTab = routeState?.tab || agentTab;
+  const quickChatOpen = !routeState && urlSearch.get('panel') === 'chat';
   const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
-  const createDirty = Boolean(createDraft.name || createDraft.description || createDraft.instructions);
+  const createDirty = Boolean(createDraft.name || createDraft.description || createDraft.instructions || createDraft.avatarEmoji !== DEFAULT_AGENT_EMOJI);
   const editDirty = editChangeSummary.length > 0;
   React.useEffect(() => {
     if (!createDirty && !editDirty) return;
@@ -224,7 +224,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     setAgents((current) => current.map((agent) => agent.id === agentId ? updater(agent) : agent));
   };
   const resetCreateAgentDraft = () => {
-    setCreateDraft({ name: '', description: '', instructions: '', providerType: 'internal' });
+    setCreateDraft({ name: '', avatarEmoji: DEFAULT_AGENT_EMOJI, description: '', instructions: '', providerType: 'internal' });
   };
   const confirmDiscard = (dirty: boolean) => !dirty || window.confirm('Discard unsaved changes?');
   const closeCreateAgentDrawer = () => {
@@ -260,6 +260,13 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     if (agent) setSelectedAgentId(agent.id);
     const agentId = agent?.id || selectedAgentId;
     if (agentId) navigate(AppPaths.workspaceAgentDetail(workspace.id, agentId, 'chat'));
+  };
+  const openQuickChat = (agent: AgentDefinition) => {
+    setSelectedAgentId(agent.id);
+    updateUrlSearch({ panel: 'chat', agent: agent.id, agentTab: null });
+  };
+  const closeQuickChat = () => {
+    updateUrlSearch({ panel: null, agent: null, agentTab: null });
   };
   const openEditAgentDrawerFromDetails = (agent: AgentDefinition) => {
     openEditAgentDrawer(agent);
@@ -378,6 +385,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     try {
       const created = await createWorkspaceAgent(workspace.id, {
         name: createDraft.name.trim(),
+        avatarEmoji: createDraft.avatarEmoji,
         description: createDraft.description.trim(),
         instructions: createDraft.instructions.trim() || createDraft.description.trim(),
         providerType: createDraft.providerType,
@@ -425,6 +433,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     try {
       const input = {
         name: editDraft.name.trim(),
+        avatarEmoji: editDraft.avatarEmoji,
         description: editDraft.description.trim(),
         instructions: editDraft.instructions.trim() || editDraft.description.trim(),
         providerType: editDraft.providerType,
@@ -448,15 +457,8 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setUpdatingAgentId('');
     }
   };
-  return (
-    <PageShell>
-      {!routeState && (
-        <WorkspaceAgentsRouteHeader
-          canManageAgents={canManageAgents}
-          onCreateAgent={() => updateUrlSearch({ panel: 'create', agent: null, agentTab: null })}
-        />
-      )}
-
+  const feedback = (
+    <>
       {(agentLoadError || ownerUserLoadError) && (
         <Notice title="Some live data is unavailable" actionLabel="Retry all" onAction={() => { setAgentCatalogReloadKey((value) => value + 1); setOwnerUsersReloadKey((value) => value + 1); }}>
           <details><summary className="cursor-pointer">Fallback data keeps the catalog available. Show details</summary><ul className="mt-2 list-disc pl-5">{agentLoadError && <li>Agent definitions may be stale.</li>}{ownerUserLoadError && <li>Owner choices are limited to cached members.</li>}</ul></details>
@@ -467,7 +469,11 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           {localNotice.message}
         </div>
       )}
+    </>
+  );
 
+  const drawers = (
+    <>
       {createPanelOpen && (
         <CreateAgentDrawer createDraft={createDraft} setCreateDraft={setCreateDraft} creatingAgent={creatingAgent} onClose={closeCreateAgentDrawer} onSave={() => void createControlPlaneAgent()} />
       )}
@@ -485,75 +491,107 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           onSave={() => void saveAgentEdits()}
         />
       )}
+    </>
+  );
 
-      {routeState ? (
-        selectedAgent ? (
-          <WorkspaceAgentDetailPanel
-            selectedAgent={selectedAgent}
-            activeTab={activeAgentTab}
-            onTabChange={(tab) => {
-              navigate(AppPaths.workspaceAgentDetail(workspace.id, selectedAgent.id, tab));
-            }}
-            onBack={() => navigate(AppPaths.workspaceAgents(workspace.id))}
-            titleId="agent-details-title"
-            chatContent={
-              <AgentChatPanel
-                agent={selectedAgent}
-                currentUserId={currentUserId}
-                isDark={isDark}
-                permissions={workspace.permissions}
-                onOpenAiSettings={() => navigate(AppPaths.workspaceAiSettings(workspace.id))}
-              />
-            }
-            canManageAgents={canManageAgents}
-            canManageMcp={canManageMcp}
-            canManageSkills={canManageSkills}
-            updatingAgentId={updatingAgentId}
-            duplicatingAgentId={duplicatingAgentId}
-            agentVersionAction={agentVersionAction}
-            disableConfirmAgentId={disableConfirmAgentId}
-            setDisableConfirmAgentId={setDisableConfirmAgentId}
-            deleteConfirmAgentId={deleteConfirmAgentId}
-            setDeleteConfirmAgentId={setDeleteConfirmAgentId}
-            agentVersionHistories={agentVersionHistories}
-            onOpenEditAgentDrawer={openEditAgentDrawerFromDetails}
-            onDuplicateSelectedAgent={() => void duplicateSelectedAgent()}
-            onSaveSelectedAgentVersion={() => void saveSelectedAgentVersion()}
-            onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
-            onDisableSelectedAgent={() => void disableSelectedAgent()}
-            onDeleteSelectedAgent={() => void deleteSelectedAgent()}
-            onRefreshSelectedAgentVersions={() => void refreshSelectedAgentVersions()}
-            onRestoreSelectedAgentVersion={(version) => void restoreSelectedAgentVersion(version)}
-          />
-        ) : (
-          <div role="status" className="rounded-lg border border-ui-border bg-ui-surface p-8 text-sm text-ui-text-muted">
-            {agentCatalogReady ? 'Agent not found.' : 'Loading Agent...'}
-          </div>
-        )
-      ) : (
-        <WorkspaceAgentsCatalog
-          agents={workspaceCatalogAgents}
-          visibleAgents={visibleAgents}
-          loading={!agentCatalogReady}
-          selectedAgent={selectedAgent}
-          drawerOpen={detailPanelOpen}
-          canManageAgents={canManageAgents}
-          query={query}
-          onQueryChange={(next) => { setQuery(next); updateUrlSearch({ q: next || null }, { replace: true }); }}
-          catalogFilters={catalogFilters}
-          onCatalogFiltersChange={(filters) => {
-            setCatalogFilters(filters);
-            updateUrlSearch({ focus: filters.focus === 'all' ? null : filters.focus }, { replace: true });
-          }}
-          onClearFilters={() => {
-            setQuery('');
-            setCatalogFilters(defaultAgentCatalogFilters);
-            updateUrlSearch({ q: null, focus: null }, { replace: true });
-          }}
-          onOpenManagement={openAgentManagement}
-          onOpenSettings={(agent) => navigate(AppPaths.workspaceAgentDetail(workspace.id, agent.id, 'settings'))}
+  const detail = selectedAgent ? (
+    <WorkspaceAgentDetailPanel
+      selectedAgent={selectedAgent}
+      activeTab={activeAgentTab}
+      titleId="agent-details-title"
+      chatContent={
+        <AgentChatPanel
+          agent={selectedAgent}
+          currentUserId={currentUserId}
+          isDark={isDark}
+          permissions={workspace.permissions}
+          onOpenAiSettings={() => navigate(AppPaths.workspaceAiSettings(workspace.id))}
         />
-      )}
+      }
+      canManageAgents={canManageAgents}
+      canManageMcp={canManageMcp}
+      canManageSkills={canManageSkills}
+      updatingAgentId={updatingAgentId}
+      duplicatingAgentId={duplicatingAgentId}
+      agentVersionAction={agentVersionAction}
+      disableConfirmAgentId={disableConfirmAgentId}
+      setDisableConfirmAgentId={setDisableConfirmAgentId}
+      deleteConfirmAgentId={deleteConfirmAgentId}
+      setDeleteConfirmAgentId={setDeleteConfirmAgentId}
+      agentVersionHistories={agentVersionHistories}
+      onOpenEditAgentDrawer={openEditAgentDrawerFromDetails}
+      onDuplicateSelectedAgent={() => void duplicateSelectedAgent()}
+      onSaveSelectedAgentVersion={() => void saveSelectedAgentVersion()}
+      onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
+      onDisableSelectedAgent={() => void disableSelectedAgent()}
+      onDeleteSelectedAgent={() => void deleteSelectedAgent()}
+      onRefreshSelectedAgentVersions={() => void refreshSelectedAgentVersions()}
+      onRestoreSelectedAgentVersion={(version) => void restoreSelectedAgentVersion(version)}
+    />
+  ) : (
+    <div role="status" className="flex h-full items-center justify-center bg-ui-bg text-sm font-semibold text-ui-text-muted">
+      {agentCatalogReady ? 'Agent not found.' : 'Loading Agent...'}
+    </div>
+  );
+
+  if (routeState) {
+    return (
+      <>
+        {drawers}
+        {activeAgentTab === 'settings' ? <PageShell>{feedback}{detail}</PageShell> : detail}
+      </>
+    );
+  }
+
+  return (
+    <PageShell>
+      <WorkspaceAgentsRouteHeader
+        canManageAgents={canManageAgents}
+        onCreateAgent={() => updateUrlSearch({ panel: 'create', agent: null, agentTab: null })}
+      />
+      {feedback}
+      {drawers}
+      <WorkspaceAgentsCatalog
+        agents={workspaceCatalogAgents}
+        visibleAgents={visibleAgents}
+        loading={!agentCatalogReady}
+        canManageAgents={canManageAgents}
+        query={query}
+        onQueryChange={(next) => { setQuery(next); updateUrlSearch({ q: next || null }, { replace: true }); }}
+        catalogFilters={catalogFilters}
+        onCatalogFiltersChange={(filters) => {
+          setCatalogFilters(filters);
+          updateUrlSearch({ focus: filters.focus === 'all' ? null : filters.focus }, { replace: true });
+        }}
+        onClearFilters={() => {
+          setQuery('');
+          setCatalogFilters(defaultAgentCatalogFilters);
+          updateUrlSearch({ q: null, focus: null }, { replace: true });
+        }}
+        onOpenManagement={openAgentManagement}
+        onQuickChat={openQuickChat}
+        onOpenSettings={(agent) => navigate(AppPaths.workspaceAgentDetail(workspace.id, agent.id, 'settings'))}
+      />
+      <AgentQuickChatPanel
+        agent={selectedAgent}
+        currentUserId={currentUserId}
+        isDark={isDark}
+        isOpen={quickChatOpen}
+        permissions={workspace.permissions}
+        onClose={closeQuickChat}
+        onMaximize={() => {
+          if (!selectedAgent) return;
+          navigate(AppPaths.workspaceAgentDetail(workspace.id, selectedAgent.id, 'chat'));
+        }}
+        onOpenAiSettings={() => {
+          if (!selectedAgent) return;
+          closeQuickChat();
+          navigate(AppPaths.workspaceAiSettings(
+            workspace.id,
+            AppPaths.workspaceAgentDetail(workspace.id, selectedAgent.id, 'chat')
+          ));
+        }}
+      />
     </PageShell>
   );
 };

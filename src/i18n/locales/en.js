@@ -121,6 +121,7 @@ export const en = {
     vm: 'VM',
     activeCluster: 'Active Cluster',
     activeVirtualMachine: 'Active VM',
+    activeAgent: 'Active Agent',
     backToWorkspace: 'Back to Workspace',
     workloads: 'Workloads',
     mcpServers: 'MCP Servers',
@@ -133,7 +134,9 @@ export const en = {
     network: 'Network',
     logs: 'Logs',
     clusterAssistant: 'Cluster Assistant',
+    resizeClusterAssistant: 'Resize cluster assistant',
     vmAssistant: 'VM Assistant',
+    agentAssistant: 'Agent Assistant',
     aiAssistantStatus: {
       working: 'Assistant is working',
       review: 'Assistant needs approval',
@@ -141,11 +144,13 @@ export const en = {
     },
     clusterSettings: 'Cluster Settings',
     vmSettings: 'VM Settings',
+    agentSettings: 'Agent Settings',
     navigation: 'Navigation',
     navigationHint: 'Switch pages and workspace context.',
     primaryDestinations: 'Primary Destinations',
     clusterDestinations: 'Cluster Destinations',
     virtualMachineDestinations: 'VM Destinations',
+    agentDestinations: 'Agent Destinations',
     administration: 'Administration',
     workspaceContext: 'Workspace Context',
     selectWorkspace: 'Select Workspace',
@@ -216,7 +221,8 @@ export const en = {
     connectClusterHelm: 'Connect Cluster',
     clustersCount: '{{count}} clusters',
     unknownCluster: 'Unknown Cluster',
-    unknownVirtualMachine: 'Unknown VM'
+    unknownVirtualMachine: 'Unknown VM',
+    unknownAgent: 'Unknown Agent'
   },
   workflowActivity: {
     title: 'Runs',
@@ -1706,17 +1712,55 @@ export const en = {
     title: 'Agent chat',
     description: 'Work directly with {{name}} in a single-Agent manual conversation.',
     promptTitle: 'Start a conversation with {{name}}',
-    promptBody: 'Conversations begin read-only. Enable changes explicitly when the task requires write tools.',
+    promptBodyApproval: 'This Agent can inspect immediately and will ask before every change.',
+    promptBodyAutomatic: 'This Agent can make routine changes. High-risk or destructive actions still require your approval.',
+    promptBodyReadOnly: 'This Agent can inspect and advise, but its policy does not allow changes.',
+    promptBodyRoleReadOnly: 'You can inspect and advise with this Agent, but your workspace role does not allow Agent changes.',
     inputPlaceholder: 'Message {{name}}...',
-    footer: 'This conversation starts read-only. Changes require explicit access and follow the Agent approval policy.',
-    readOnlyNotice: 'This conversation is read-only. Enable changes explicitly when needed.',
-    writeNotice: 'Changes are enabled for this conversation. Write tools still follow approval policy.',
+    footerApproval: 'Every write-capable action requires your approval.',
+    footerAutomatic: 'Routine changes may run automatically; high-risk or destructive actions require approval.',
+    footerReadOnly: 'Changes are disabled by this Agent’s policy.',
+    footerRoleReadOnly: 'Your workspace role permits read-only Agent conversations.',
+    approvalPolicyNotice: 'Changes follow this Agent’s policy. Approval is required before every write.',
+    autoPolicyNotice: 'Routine changes may run automatically. High-risk or destructive writes still require approval.',
+    agentReadOnlyNotice: 'This Agent is read-only by policy.',
+    roleReadOnlyNotice: 'Your workspace role permits read-only Agent conversations.',
+    pausedNotice: 'Changes are paused for this conversation.',
     readerNotice: 'You can read this conversation, but only its creator can continue it.',
-    enableChanges: 'Enable changes',
-    returnReadOnly: 'Return to read-only',
+    pauseChanges: 'Pause changes',
+    resumePolicy: 'Resume Agent policy',
     backToAgents: 'Back to Agents',
+    quickChatLabel: 'Quick chat with {{name}}',
+    resizeQuickChat: 'Resize quick chat',
     ready: 'Ready',
     needsSetup: 'Needs setup',
+    workflowUsage: 'Workflow usage',
+    workflowUsageCount: 'Assigned to {{count}} workflows.',
+    workflowUsageCount_one: 'Assigned to {{count}} workflow.',
+    workflowUsageCount_other: 'Assigned to {{count}} workflows.',
+    noWorkflowUsage: 'No workflows currently use this Agent.',
+    sections: {
+      chat: {
+        title: 'Agent Assistant',
+        description: 'Work directly with {{name}} using a governed manual conversation.'
+      },
+      mcpServers: {
+        title: 'MCP Servers',
+        description: 'Manage MCP servers assigned to {{name}}.'
+      },
+      skills: {
+        title: 'Skills',
+        description: 'Manage instruction bundles available to {{name}}.'
+      },
+      tools: {
+        title: 'Tools',
+        description: 'Review the effective tools and access policy for {{name}}.'
+      },
+      settings: {
+        title: 'Agent Settings',
+        description: 'Manage configuration versions and lifecycle actions for {{name}}.'
+      }
+    },
     tabs: {
       chat: 'Chat',
       mcpServers: 'MCP Servers',
@@ -2989,6 +3033,10 @@ export const en = {
       status: { active: 'Active', draft: 'Draft', disabled: 'Disabled' }, tabs: { overview: 'Overview', capabilities: 'Capabilities', versions: 'Restore points', settings: 'Settings' },
       fields: { identity: 'Agent', status: 'Status', capabilities: 'Capabilities', assignment: 'Assignment' },
       openProfile: 'Open {{name}} agent profile',
+      quickChat: 'Quick chat',
+      viewDetails: 'View details',
+      openDetailsLabel: 'Open details for {{name}}',
+      actionsLabel: 'Actions for {{name}}',
       capabilityCounts: {
         mcpServer: '{{count}} MCP servers', tool: '{{count}} tools', skill: '{{count}} skills',
         mcpServer_one: '{{count}} MCP server', mcpServer_other: '{{count}} MCP servers',

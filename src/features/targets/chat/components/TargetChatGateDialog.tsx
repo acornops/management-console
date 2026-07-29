@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { TFunction } from 'i18next';
 import { AlertTriangle } from 'lucide-react';
@@ -18,7 +19,6 @@ const focusableSelector = [
 
 interface TargetChatGateDialogProps {
   activeSessionId: string | null;
-  isPanel: boolean;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
   onDismissRecentActivityWarning: (sessionId: string) => void;
   onOpenRecentActivitySession: (sessionId: string) => void;
@@ -27,7 +27,6 @@ interface TargetChatGateDialogProps {
 
 export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
   activeSessionId,
-  isPanel,
   recentActivityWarning,
   onDismissRecentActivityWarning,
   onOpenRecentActivitySession,
@@ -84,9 +83,9 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
     }
   };
 
-  return (
+  const dialog = (
     <motion.div
-      className="absolute inset-0 z-[150] flex items-center justify-center bg-ui-bg/88 p-4 dark:bg-ui-bg/92"
+      className="fixed inset-0 z-[180] flex items-center justify-center bg-ui-text/40 p-4 dark:bg-ui-bg/75"
       initial={shouldReduceMotion ? false : { opacity: 0 }}
       animate={shouldReduceMotion ? undefined : { opacity: 1 }}
       exit={shouldReduceMotion ? undefined : { opacity: 0 }}
@@ -104,7 +103,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
         animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
         exit={shouldReduceMotion ? undefined : { opacity: 0, y: 10, scale: 0.98 }}
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-        className={`${isPanel ? 'max-w-sm' : 'max-w-md'} w-full rounded-lg border border-ui-border bg-ui-surface p-5 text-ui-text shadow-2xl shadow-ui-text/15 outline-none`}
+        className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-5 text-ui-text shadow-2xl shadow-ui-text/15 outline-none"
       >
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-ui-text-muted">
@@ -141,4 +140,6 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
       </motion.section>
     </motion.div>
   );
+
+  return typeof document === 'undefined' ? dialog : createPortal(dialog, document.body);
 };

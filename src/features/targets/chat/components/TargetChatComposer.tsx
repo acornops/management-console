@@ -260,6 +260,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 <>
                   <AssistantCapabilityPreviewControl
                     canChat={canChat}
+                    isPanel={isPanel}
                     isLoading={isAssistantCapabilitiesPreviewLoading}
                     error={assistantCapabilitiesPreviewError}
                     preview={assistantCapabilitiesPreview}
@@ -268,7 +269,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                   <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
                 </>
               ) : null}
-              <div ref={modelMenuRef} className="relative">
+              <div ref={modelMenuRef} className={isPanel ? 'static' : 'relative'}>
                 <button
                   type="button"
                   id={modelSelectorId}
@@ -294,7 +295,11 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                       exit={{ opacity: 0, y: 6, scale: 0.98 }}
                       transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
                       id={modelMenuPanelId}
-                      className="absolute bottom-full right-0 z-50 mb-3 w-64 rounded-2xl border border-ui-border bg-ui-surface-strong p-2 text-sm shadow-xl shadow-ui-text/10"
+                      className={`absolute bottom-full right-0 z-50 mb-3 rounded-2xl border border-ui-border bg-ui-surface-strong p-2 text-sm shadow-xl shadow-ui-text/10 ${
+                        isPanel && isModelSubmenuOpen
+                          ? 'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'
+                          : 'w-64'
+                      }`}
                       role="group"
                       aria-labelledby={modelSelectorId}
                     >
@@ -315,7 +320,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                         );
                       })}
                       <div className="my-2 border-t border-ui-border" />
-                      <div className="relative" onMouseEnter={() => setIsModelSubmenuOpen(true)}>
+                      <div className={isPanel ? 'contents' : 'relative'} onMouseEnter={() => setIsModelSubmenuOpen(true)}>
                         <button
                           type="button"
                           id={modelSubmenuButtonId}
@@ -338,7 +343,11 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                                 ease: [0.16, 1, 0.3, 1]
                               }}
                               id={modelSubmenuPanelId}
-                              className="absolute bottom-[calc(100%+0.5rem)] right-0 z-50 max-h-[min(24rem,calc(100vh-8rem))] w-56 overflow-y-auto rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 custom-scrollbar sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto"
+                              className={`absolute z-50 max-h-[min(24rem,calc(100vh-8rem))] overflow-y-auto rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 custom-scrollbar ${
+                                isPanel
+                                  ? 'bottom-2 right-2 top-2 w-44'
+                                  : 'bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto'
+                              }`}
                               role="group"
                               aria-labelledby={modelSubmenuButtonId}
                             >

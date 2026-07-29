@@ -405,10 +405,13 @@ const App: React.FC = () => {
   ]);
 
   const {
+    activeAgentSubview,
     activeClusterSubview,
     activeVmSubview,
+    isAgentSidebar,
     isClusterSidebar,
     isVirtualMachineSidebar,
+    selectedSidebarAgent,
     selectedSidebarCluster,
     selectedSidebarVm
   } = useSidebarRouteTargets({
@@ -494,6 +497,7 @@ const App: React.FC = () => {
   return (
     <AppShell
       acceptWorkspaceInvitation={acceptWorkspaceInvitation}
+      activeAgentSubview={activeAgentSubview}
       activeClusterSubview={activeClusterSubview}
       activeVmSubview={activeVmSubview}
       activePrimaryNav={activePrimaryNav}
@@ -531,6 +535,7 @@ const App: React.FC = () => {
       invitationTokenMissingMessage={t('app.invitationTokenMissing')}
       isAddingCluster={isAddingCluster}
       isClusterCopilotOpen={isClusterCopilotOpen}
+      isAgentSidebar={isAgentSidebar}
       isClusterSidebar={isClusterSidebar}
       isVirtualMachineSidebar={isVirtualMachineSidebar}
       isCreatingCluster={isCreatingCluster}
@@ -554,6 +559,7 @@ const App: React.FC = () => {
       refreshWorkspaceInvitations={refreshWorkspaceInvitations}
       refreshWorkspaceMembers={refreshWorkspaceMembers}
       route={route}
+      selectedSidebarAgent={selectedSidebarAgent}
       selectedSidebarCluster={selectedSidebarCluster}
       selectedSidebarVm={selectedSidebarVm}
       selectedWorkspace={selectedWorkspace}

@@ -234,7 +234,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
         )}
 
         {visibleItems.length > 0 ? (
-          <div data-vm-card-grid="true" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div data-vm-card-grid="true" data-resource-card-grid="true" className="resource-card-grid grid min-w-0 items-stretch gap-4">
             {visibleItems.map((vm) => {
               const requiresAgentInstall = vm.status === 'unknown';
               const canDeleteVm = canManageTargets;

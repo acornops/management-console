@@ -10,7 +10,7 @@ export function useClusterCopilotState(
 ) {
   const [isClusterCopilotOpen, setIsClusterCopilotOpen] = useState(false);
   const [clusterCopilotClusterId, setClusterCopilotClusterId] = useState<string | null>(null);
-  const [clusterCopilotWidth, setClusterCopilotWidth] = useState(640);
+  const [clusterCopilotWidth, setClusterCopilotWidth] = useState(420);
   const [clusterCopilotInitialPrompt, setClusterCopilotInitialPrompt] = useState<{ id: number; text: string } | null>(null);
   const clusterCopilotCluster = useMemo(
     () => (clusterCopilotClusterId ? kubernetesClusterById.get(clusterCopilotClusterId) || null : null),

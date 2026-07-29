@@ -90,7 +90,7 @@ function parseClusterSubview(value?: string): ClusterSubview | undefined {
 
 function parseAgentSubview(value?: string): AgentSubview {
   if (value === 'mcp-servers') return 'mcpServers';
-  if (value === 'skills' || value === 'tools' || value === 'settings') return value;
+  if (value === 'chat' || value === 'skills' || value === 'tools' || value === 'settings') return value;
   return 'chat';
 }
 

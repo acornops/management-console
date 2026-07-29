@@ -263,6 +263,27 @@ test('an authenticated Light profile stays light across restoration and returns 
   await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), ACTIVE_THEME_STORAGE_KEY)).toBe('light');
 
   await page.getByRole('button', { name: 'Account settings' }).click();
+  const accountMenu = page.locator('[data-account-menu-panel="true"]');
+  const accountSettings = accountMenu.getByRole('button', { name: 'Account Settings', exact: true });
+  const accountTheme = accountMenu.locator('[data-account-theme-control="true"]');
+  const accountLogout = accountMenu.getByRole('button', { name: 'Logout', exact: true });
+  const accountActionStyles = await Promise.all(
+    [accountSettings, accountTheme, accountLogout].map((control) =>
+      control.evaluate((element) => {
+        const style = window.getComputedStyle(element);
+        return {
+          color: style.color,
+          fontSize: style.fontSize,
+          fontWeight: style.fontWeight,
+          lineHeight: style.lineHeight
+        };
+      })
+    )
+  );
+  expect(new Set(accountActionStyles.map(({ color }) => color)).size).toBe(1);
+  expect(new Set(accountActionStyles.map(({ fontSize }) => fontSize)).size).toBe(1);
+  expect(new Set(accountActionStyles.map(({ fontWeight }) => fontWeight)).size).toBe(1);
+  expect(new Set(accountActionStyles.map(({ lineHeight }) => lineHeight)).size).toBe(1);
   await page.getByRole('button', { name: 'Logout' }).click();
 
   await expectResolvedTheme(page, 'dark');

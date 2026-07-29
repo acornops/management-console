@@ -35,6 +35,11 @@ the console displays a retryable unavailable state.
 - Chat visibility and run mode must come from the workspace `permissions` object when available.
 - Pod logs are read-only diagnostic data, but can still expose sensitive application output. The UI only enables log reads for users with `create_read_only_runs`; the control plane must remain the final enforcement point.
 - Guarded writes require `create_read_write_runs`. Operators can create read-only chat/log runs but should not see write approval affordances.
+- Agent conversations reflect the least-privileged intersection of the pinned
+  Agent permission mode and the current user's run capabilities. The console
+  may present or pause that state, but the control plane remains authoritative;
+  a read-only Agent cannot be elevated and write-capable conversations still
+  use the configured per-tool approval gates.
 
 ## MCP Credentials
 

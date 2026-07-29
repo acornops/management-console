@@ -7,6 +7,7 @@ import { ModalStepIndicator } from '@acornops/ui';
 import { RightSidePanel } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
+import { AgentEmojiPicker, suggestAgentEmoji } from '@/pages/agents/AgentAvatar';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowOption } from '@/services/control-plane/workflowApi';
 import {
@@ -40,6 +41,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
 }) => {
   const [createAgentStep, setCreateAgentStep] = React.useState<CreateAgentStep>(1);
   const [stepNavigationError, setStepNavigationError] = React.useState('');
+  const [emojiCustomized, setEmojiCustomized] = React.useState(false);
   const identityError = () => {
     if (!createDraft.name.trim() && !createDraft.description.trim()) return 'Step 1 is not done. Enter an agent name and assignment purpose before continuing.';
     if (!createDraft.name.trim()) return 'Step 1 is not done. Enter an agent name before continuing.';
@@ -50,6 +52,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
     onClose();
     setCreateAgentStep(1);
     setStepNavigationError('');
+    setEmojiCustomized(false);
   };
   const goToCreateAgentStep = (nextStep: CreateAgentStep) => {
     if (nextStep > 1) {
@@ -98,13 +101,24 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
         <div className="space-y-5">
           {createAgentStep === 1 && (
             <>
+              <AgentEmojiPicker
+                value={createDraft.avatarEmoji}
+                onChange={(avatarEmoji) => {
+                  setEmojiCustomized(true);
+                  setCreateDraft((draft) => ({ ...draft, avatarEmoji }));
+                }}
+              />
               <label className="block">
                 <span className="type-micro-label">Name</span>
                 <TextInput
                   value={createDraft.name}
                   onChange={(event) => {
                     const name = event.target.value;
-                    setCreateDraft((draft) => ({ ...draft, name }));
+                    setCreateDraft((draft) => ({
+                      ...draft,
+                      name,
+                      avatarEmoji: emojiCustomized ? draft.avatarEmoji : suggestAgentEmoji(name)
+                    }));
                     if (name.trim() && createDraft.description.trim()) setStepNavigationError('');
                   }}
                   className="mt-2"
@@ -146,6 +160,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
                 <p className="type-caption mt-1 text-ui-text-muted">This agent saves with restricted trust and asks before changes.</p>
               </div>
               <dl className="divide-y divide-ui-border rounded-md border border-ui-border bg-ui-bg">
+                <AgentCreateReviewRow label="Emoji" value={createDraft.avatarEmoji} />
                 <AgentCreateReviewRow label="Name" value={createDraft.name || 'Unnamed agent'} />
                 <AgentCreateReviewRow label="Assignment purpose" value={createDraft.description || 'Required before save'} />
                 {capabilitySummary.map((item) => <AgentCreateReviewRow key={item.label} label={item.label} value={item.value} />)}
@@ -239,6 +254,11 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
         <div className="space-y-5">
+          <AgentEmojiPicker
+            value={editDraft.avatarEmoji}
+            onChange={(avatarEmoji) => setEditDraft((draft) => draft && ({ ...draft, avatarEmoji }))}
+            description="This visual identity appears anywhere the Agent is presented."
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="type-micro-label">Name</span>

@@ -51,6 +51,11 @@ export async function routeAgentConversationFixtureRequest({
       return json({ items: clone(state.sessions.filter((item) => item.agentId === agentId)) });
     }
     if (method === 'POST') {
+      const workspace = state.workspaces.find((item) => item.id === workspaceId);
+      const accessMode = agent.permissionMode !== 'read_only'
+        && Boolean((workspace?.permissions as Record<string, boolean> | undefined)?.create_read_write_runs)
+        ? 'read_write'
+        : 'read_only';
       const conversation = {
         id: id('fixture-agent-conversation'),
         workspaceId,
@@ -58,7 +63,8 @@ export async function routeAgentConversationFixtureRequest({
         agentVersion: Number(agent.version || 1),
         title: agent.name,
         createdBy: FIXTURE_IDS.user,
-        accessMode: 'read_only',
+        accessMode,
+        permissionMode: agent.permissionMode || 'ask_before_changes',
         createdAt: now
       };
       state.sessions.push(conversation);
@@ -88,6 +94,15 @@ export async function routeAgentConversationFixtureRequest({
   }
   if (action === 'access' && method === 'PATCH') {
     const input = await bodyOf(request);
+    const agent = state.agents.find((item) => item.id === conversation.agentId);
+    if (input.accessMode === 'read_write' && agent?.permissionMode === 'read_only') {
+      return json({
+        error: {
+          code: 'AGENT_CONVERSATION_POLICY_READ_ONLY',
+          message: 'This Agent conversation is read-only by its pinned Agent policy.'
+        }
+      }, 409);
+    }
     conversation.accessMode = input.accessMode === 'read_write' ? 'read_write' : 'read_only';
     return json({ conversation: clone(conversation) });
   }

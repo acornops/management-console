@@ -4,6 +4,7 @@ export interface AgentDefinition {
   id: string;
   workspaceId: string;
   name: string;
+  avatarEmoji: string;
   description: string;
   instructions: string;
   status: AgentStatus;

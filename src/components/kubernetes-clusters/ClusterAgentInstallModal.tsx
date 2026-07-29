@@ -174,7 +174,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
         <button
           type="button"
           onClick={onClose}
-          className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title-muted transition-colors hover:bg-ui-bg"
+          className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:bg-ui-bg"
         >
           {t('app.close')}
         </button>

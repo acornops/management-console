@@ -60,6 +60,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     handleCreateSessionClick,
     handleModelAndEffortChange,
     handleModelChange,
+    headerLeading,
     historyButtonRef,
     historyControlLabel,
     historyPanelRef,
@@ -187,7 +188,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
 
   return (
     <div
-      className="relative flex flex-1 min-w-0 overflow-hidden bg-ui-bg"
+      data-target-chat-surface="true"
+      className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-ui-bg"
       onDragEnter={handleChatWindowDragEnter}
       onDragOver={handleChatWindowDragOver}
       onDragLeave={handleChatWindowDragLeave}
@@ -323,20 +325,24 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 } transition-colors`}
               >
                 {isPanel ? (
-                  <div>
-                    <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-3">
+                      {headerLeading}
                       <div className="min-w-0">
                         <h1 className="type-section-title truncate text-ui-text">{title}</h1>
                         <p className="mt-1 text-xs font-medium text-ui-text-muted">{t('chat.panelDescription', { name: target.name })}</p>
                       </div>
-                      <TargetChatPanelControls onClose={onClose} onMaximize={onMaximize} t={t} />
                     </div>
+                    <TargetChatPanelControls onClose={onClose} onMaximize={onMaximize} t={t} />
                   </div>
                 ) : (
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-                    <div className="min-w-0">
-                      <h1 className="type-route-title">{title}</h1>
-                      <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: target.name })}</p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      {headerLeading}
+                      <div className="min-w-0">
+                        <h1 className="type-route-title">{title}</h1>
+                        <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: target.name })}</p>
+                      </div>
                     </div>
                     <div className="flex w-full min-w-0 shrink-0 items-center gap-3 lg:w-auto lg:max-w-2xl lg:justify-end">
                       <Tooltip content={newChatUnavailableReason} disabled={!newChatUnavailableReason} className="min-w-0 flex-1 lg:flex-none">
@@ -614,7 +620,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
         {recentActivityWarning && (
           <TargetChatGateDialog
             activeSessionId={activeSessionId}
-            isPanel={isPanel}
             recentActivityWarning={recentActivityWarning}
             onDismissRecentActivityWarning={onDismissRecentActivityWarning}
             onOpenRecentActivitySession={onOpenRecentActivitySession}

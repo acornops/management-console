@@ -5,7 +5,7 @@ colors:
   signal-orange: "oklch(0.712 0.187 39.7)"
   signal-orange-strong: "oklch(0.651 0.179 38.9)"
   signal-orange-bright: "oklch(0.755 0.154 42.2)"
-  signal-orange-readable: "oklch(0.48 0.145 38.9)"
+  signal-orange-readable: "oklch(0.543 0.165 41.8)"
   signal-orange-soft: "oklch(0.96 0.035 52)"
   warm-canvas: "oklch(0.985 0.006 85)"
   paper-surface: "oklch(0.996 0.004 85)"
@@ -381,7 +381,7 @@ Navigation is familiar product chrome driven by one route model. Workspace desti
 
 Tabs and filters share the canonical compact-control vocabulary rather than page-local pills.
 
-- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. A route-selected or keyboard-selected tab must be fully visible inside an overflowing strip on arrival and after selection. The active tab uses readable orange signal text plus a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion.
+- **Tabs:** At least `44px` high, text-led, horizontally scrollable when needed without displaying a scrollbar, and keyboard navigable with arrow, Home, and End keys. A route-selected or keyboard-selected tab must be fully visible inside an overflowing strip on arrival and after selection. The active tab uses primary ink text, a strong-orange icon when present, and a shared `2px` orange indicator that slides in `200ms` with the standard ease-out-quint curve and snaps instantly under reduced motion. Keeping the label neutral prevents a darker accessibility text token from competing with the brighter indicator.
 - **Top-level discovery:** Collection pages use `DiscoveryFilterBar` with a labeled `PageSearchInput`, zero or more typed filter-group definitions created by `createDiscoveryFilterGroup`, and a polite result summary. `DiscoveryFilterBar` and nested resource search both compose `SearchFilterFrame`, the canonical bordered paper surface with `16px` padding, a restrained shadow, `12px` gaps, and stable `44px` controls. Search is the dominant flexible field while categorical controls stay approximately `11rem` to `14rem` wide.
 - **Visible discovery filters:** Typed categorical groups render as always-visible shared `Select` controls. Clusters, virtual machines, and agents expose Status; MCP Catalog exposes Source and Compatibility; Workflows uses the search-only composition. Stable option counts appear inside the select when supplied. Below `sm`, search, selects, trailing actions, and the result summary stack full-width. From `sm` to below `lg`, search owns the first row while multiple selects share equal columns. At `lg` and wider, the toolbar settles into one balanced row without overflow.
 - **Discovery clearing:** Search clear and Escape remove only the query and retain search focus. Choosing a default select option clears only that categorical condition. Clear all appears at two or more active conditions, counting the query and every non-default group; it clears the complete route-backed discovery state atomically and restores search focus. The bar is hidden for a genuinely empty, unfiltered collection and remains visible when active filters produce no matches.

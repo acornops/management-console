@@ -53,6 +53,14 @@ describe('ThemeMenu', () => {
     expect(themeMenu).not.toContain('rounded-md border border-control-boundary bg-ui-bg');
   });
 
+  it('keeps every desktop account action on the shared UI typography and inactive color', () => {
+    expect(themeMenu).toContain("'group/theme type-ui");
+    expect(themeMenu).not.toContain('type-row-title block');
+    expect(desktopSidebar).toContain('className={`type-ui flex min-h-11');
+    expect(desktopSidebar).toContain('className="control-target type-ui flex min-h-10');
+    expect(desktopSidebar).not.toContain('type-row-title-muted');
+  });
+
   it('is the shared implementation on login, desktop account, and mobile navigation surfaces', () => {
     expect(loginPage).toContain('<ThemeMenu');
     expect(loginPage).toContain('variant="login"');

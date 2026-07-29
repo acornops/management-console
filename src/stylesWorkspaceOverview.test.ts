@@ -9,6 +9,7 @@ import {
   membersPage,
   mobileNavigation,
   overviewPage,
+  styles,
   workspaceSettingsPage,
   enLocale
 } from './stylesTestSupport';
@@ -48,7 +49,16 @@ describe('workspace overview style contract', () => {
     expect(overviewPage).toContain("t('overview.connectedTargetCount'");
     expect(overviewPage).toContain('flex shrink-0 items-center gap-4 text-ui-text-muted');
     expect(overviewPage).toContain('w-full px-5 py-4 text-left');
+    expect(overviewPage).toContain('data-attention-issue-meta="true"');
+    expect(overviewPage).toContain('data-attention-issue-row="true"');
+    expect(overviewPage).toContain("issue.status !== 'active'");
+    expect(overviewPage).toContain('data-target-type-icon="true"');
+    expect(overviewPage).toContain("item.targetType === 'kubernetes' ? ICONS.Layers : ICONS.Server");
+    expect(overviewPage).toContain('<Clock3 className="h-3.5 w-3.5"');
     expect(overviewPage).toContain('data-target-group="true"');
+    expect(overviewPage).toContain('workspace-overview-targets');
+    expect(styles).toContain('@container workspace-overview (min-width: 52rem)');
+    expect(styles).toContain('@container workspace-overview (min-width: 58rem)');
     expect(overviewPage).toContain('divide-y divide-ui-border');
     expect(overviewPage).toContain('recentInvestigation && (');
     expect(overviewPage).not.toContain('bg-status-danger-soft/30');

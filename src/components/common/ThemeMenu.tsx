@@ -87,7 +87,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
     variant === 'login'
       ? 'flex h-11 w-11 items-center justify-center rounded-lg border border-control-boundary bg-ui-surface/95 text-ui-text-muted shadow-sm transition-colors duration-[160ms] hover:bg-ui-surface-strong hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg motion-reduce:duration-0'
       : variant === 'account'
-      ? 'group/theme flex min-h-12 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0'
+      ? 'group/theme type-ui flex min-h-12 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0'
       : 'type-ui flex min-h-11 w-full items-center justify-between rounded-md px-3 py-2 text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0';
 
   return (
@@ -124,7 +124,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
               <ThemeToggleIcon resolvedTheme={resolvedTheme} />
             </span>
             <span className="min-w-0">
-              <span className="type-row-title block">{t('app.theme')}</span>
+              <span className="block">{t('app.theme')}</span>
               <span className="block text-xs leading-4 text-ui-text-muted">{selectedLabel}</span>
             </span>
           </span>

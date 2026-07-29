@@ -14,6 +14,7 @@ interface AppClusterChatRuntimeProps {
   initialActiveSessionId?: string | null;
   isChatActive: boolean;
   onAssistantRuntimeStatusChange?: (status: AssistantNavStatus) => void;
+  onControllerChange?: (controller: TargetChatController | null) => void;
   onConversationDeleted?: (sessionName: string, targetName: string) => void;
   onUpdateSessions: (clusterId: string, sessions: ChatSession[]) => void;
   children: (controller: TargetChatController | null) => React.ReactNode;
@@ -31,6 +32,7 @@ const AppClusterChatRuntimeInner: React.FC<AppClusterChatRuntimeInnerProps> = ({
   initialActiveSessionId,
   isChatActive,
   onAssistantRuntimeStatusChange,
+  onControllerChange,
   onConversationDeleted,
   onUpdateSessions,
   children
@@ -66,6 +68,15 @@ const AppClusterChatRuntimeInner: React.FC<AppClusterChatRuntimeInnerProps> = ({
   React.useEffect(() => {
     onAssistantRuntimeStatusChange?.(assistantRuntimeStatus);
   }, [assistantRuntimeStatus, onAssistantRuntimeStatusChange]);
+
+  React.useLayoutEffect(() => {
+    onControllerChange?.(controllerWithAssistantStatuses);
+  }, [controllerWithAssistantStatuses, onControllerChange]);
+
+  React.useLayoutEffect(
+    () => () => onControllerChange?.(null),
+    [cluster.id, onControllerChange]
+  );
 
   return <>{children(controllerWithAssistantStatuses)}</>;
 };

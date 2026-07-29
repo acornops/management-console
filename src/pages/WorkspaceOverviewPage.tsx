@@ -195,7 +195,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     <div
       data-target-group="true"
       aria-busy={state?.isLoading || undefined}
-      className="min-w-0 first:border-0 max-xl:border-t max-xl:border-ui-border xl:border-l xl:border-ui-border"
+      className="workspace-overview-target-group min-w-0"
     >
       <div className="border-b border-ui-border px-4 py-3 sm:px-5">
         <div className="flex items-center justify-between gap-3">
@@ -248,9 +248,10 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   const renderAttentionIssueRow = (item: WorkspaceOverviewAttentionItem) => {
     const issue = item.issue;
     const path = targetPath(item);
+    const TargetTypeIcon = item.targetType === 'kubernetes' ? ICONS.Layers : ICONS.Server;
     return (
       <article key={`${issue.id}-${item.targetType}-${item.targetId}`} className="w-full px-5 py-4 text-left transition-colors hover:bg-ui-bg sm:px-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div data-attention-issue-row="true" className="flex flex-col gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span
@@ -264,18 +265,31 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
               >
                 {t(`issues.severity.${issue.severity}`)}
               </span>
-              <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+              {issue.status !== 'active' && (
+                <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
+                  {t(`issues.status.${issue.status}`)}
+                </span>
+              )}
             </div>
             <h3 className="mt-2 type-panel-title break-words">{issue.title}</h3>
-            <p className="type-caption mt-1 break-words text-ui-text-muted">
-              <span className="text-ui-text">{item.targetName}</span>
-              {' · '}
-              {item.targetTypeLabel}
-              {' · '}
-              {issue.detail}
-              {' · '}
-              {t('overview.lastSeenLabel')} {formatRelativeTime(issue.timestamp, t)}
-            </p>
+            <div data-attention-issue-meta="true" className="mt-2 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1.5">
+              <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="type-row-title break-words text-ui-text">{item.targetName}</span>
+                <span
+                  data-target-type-icon="true"
+                  className="inline-flex shrink-0 self-center text-ui-text-muted"
+                  title={item.targetTypeLabel}
+                >
+                  <TargetTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="sr-only">{item.targetTypeLabel}</span>
+                </span>
+              </span>
+              <span className="type-caption break-words text-ui-text-muted">{issue.detail}</span>
+              <span className="type-caption flex shrink-0 items-center gap-1.5 text-ui-text-muted">
+                <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('overview.lastSeenLabel')} {formatRelativeTime(issue.timestamp, t)}
+              </span>
+            </div>
             {issue.evidence && <p className="type-body mt-2 line-clamp-2 max-w-4xl text-ui-text-muted">{issue.evidence}</p>}
             <IssueWorkflowActivity workspaceId={workspace.id} issueId={issue.id} activity={issue.workflowActivity} navigate={navigate} />
           </div>
@@ -309,110 +323,112 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
 
   return (
     <PageShell>
-      <PageHeader title={t('overview.title')} description={t('overview.summaryFor')} />
+      <div className="workspace-overview-page">
+        <PageHeader title={t('overview.title')} description={t('overview.summaryFor')} />
 
-      {recentInvestigation && (
-        <section
-          data-overview-quick-actions="true"
-          aria-label={t('overview.quickActionsTitle')}
-          className="mb-6 flex flex-col gap-3 border-y border-ui-border py-3 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <p className="type-body flex min-w-0 items-center gap-2 text-ui-text-muted">
-            <Clock3 className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {recentInvestigationBody}
-          </p>
-          <a
-            href={appHref(recentInvestigation.path)}
-            onClick={(event) => handleAppLinkClick(event, recentInvestigation.path, navigate)}
-            className={buttonClassName({
-              variant: 'secondary',
-              size: 'sm',
-              className: 'w-full justify-center sm:w-auto'
-            })}
+        {recentInvestigation && (
+          <section
+            data-overview-quick-actions="true"
+            aria-label={t('overview.quickActionsTitle')}
+            className="mb-6 flex flex-col gap-3 border-y border-ui-border py-3 sm:flex-row sm:items-center sm:justify-between"
           >
-            {t('overview.resumeRecentInvestigation')}
-          </a>
-        </section>
-      )}
+            <p className="type-body flex min-w-0 items-center gap-2 text-ui-text-muted">
+              <Clock3 className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {recentInvestigationBody}
+            </p>
+            <a
+              href={appHref(recentInvestigation.path)}
+              onClick={(event) => handleAppLinkClick(event, recentInvestigation.path, navigate)}
+              className={buttonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                className: 'w-full justify-center sm:w-auto'
+              })}
+            >
+              {t('overview.resumeRecentInvestigation')}
+            </a>
+          </section>
+        )}
 
-      <section data-attention-board="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
-        <div className="border-b border-ui-border px-5 py-4 sm:px-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <ICONS.AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-accent-strong" aria-hidden="true" />
-              <div>
-                <h2 className="type-row-title">{t('overview.needsAttentionTitle')}</h2>
-                <p className="type-caption mt-1">{t('overview.needsAttentionBody')}</p>
+        <section data-attention-board="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
+          <div className="border-b border-ui-border px-5 py-4 sm:px-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <ICONS.AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-accent-strong" aria-hidden="true" />
+                <div>
+                  <h2 className="type-row-title">{t('overview.needsAttentionTitle')}</h2>
+                  <p className="type-caption mt-1">{t('overview.needsAttentionBody')}</p>
+                </div>
               </div>
+              <dl className="flex shrink-0 items-center gap-4 text-ui-text-muted">
+                <div className="flex items-baseline gap-1.5">
+                  <dt className="type-caption">{t(hasMoreIssues ? 'overview.criticalIssuesShown' : 'overview.criticalIssues')}</dt>
+                  <dd className={`type-row-title tabular-nums ${criticalIssueCount > 0 ? 'text-status-danger-text' : ''}`}>{criticalIssueCount}</dd>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <dt className="type-caption">{t(hasMoreIssues ? 'overview.warningIssuesShown' : 'overview.warningIssues')}</dt>
+                  <dd className={`type-row-title tabular-nums ${warningIssueCount > 0 ? 'text-status-warning-text' : ''}`}>{warningIssueCount}</dd>
+                </div>
+              </dl>
             </div>
-            <dl className="flex shrink-0 items-center gap-4 text-ui-text-muted">
-              <div className="flex items-baseline gap-1.5">
-                <dt className="type-caption">{t(hasMoreIssues ? 'overview.criticalIssuesShown' : 'overview.criticalIssues')}</dt>
-                <dd className={`type-row-title tabular-nums ${criticalIssueCount > 0 ? 'text-status-danger-text' : ''}`}>{criticalIssueCount}</dd>
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <dt className="type-caption">{t(hasMoreIssues ? 'overview.warningIssuesShown' : 'overview.warningIssues')}</dt>
-                <dd className={`type-row-title tabular-nums ${warningIssueCount > 0 ? 'text-status-warning-text' : ''}`}>{warningIssueCount}</dd>
-              </div>
-            </dl>
           </div>
-        </div>
 
-        <CollectionState
-          phase={issueCollection.phase}
-          itemCount={attentionItems.length}
-          loading={
-            <div className="px-5 py-5 sm:px-6">
-              <InlineLoadingIndicator label={t('overview.loadingBoard')} />
-            </div>
-          }
-          empty={
-            <EmptyState
-              embedded
-              headingLevel={3}
-              className="min-h-0 px-5 py-6 sm:px-6"
-              icon={<ICONS.CheckCircle2 />}
-              title={t('overview.noAttentionTargetsTitle')}
-              description={t('overview.noAttentionTargetsBody')}
-            />
-          }
-          error={issueLoadError ? <div className="px-5 py-5 sm:px-6">{renderCollectionRecovery(issueLoadError, issueCollection.retry)}</div> : null}
-          feedback={
-            issueLoadError ? (
-              <div className="px-5 py-4 sm:px-6">{renderCollectionRecovery(issueLoadError, issueCollection.retry, 'warning')}</div>
-            ) : isLoadingIssues ? (
-              <div className="px-5 py-4 sm:px-6">
+          <CollectionState
+            phase={issueCollection.phase}
+            itemCount={attentionItems.length}
+            loading={
+              <div className="px-5 py-5 sm:px-6">
                 <InlineLoadingIndicator label={t('overview.loadingBoard')} />
               </div>
-            ) : null
-          }
-        >
-          <div className="divide-y divide-ui-border">{attentionItems.map(renderAttentionIssueRow)}</div>
-        </CollectionState>
-      </section>
+            }
+            empty={
+              <EmptyState
+                embedded
+                headingLevel={3}
+                className="min-h-0 px-5 py-6 sm:px-6"
+                icon={<ICONS.CheckCircle2 />}
+                title={t('overview.noAttentionTargetsTitle')}
+                description={t('overview.noAttentionTargetsBody')}
+              />
+            }
+            error={issueLoadError ? <div className="px-5 py-5 sm:px-6">{renderCollectionRecovery(issueLoadError, issueCollection.retry)}</div> : null}
+            feedback={
+              issueLoadError ? (
+                <div className="px-5 py-4 sm:px-6">{renderCollectionRecovery(issueLoadError, issueCollection.retry, 'warning')}</div>
+              ) : isLoadingIssues ? (
+                <div className="px-5 py-4 sm:px-6">
+                  <InlineLoadingIndicator label={t('overview.loadingBoard')} />
+                </div>
+              ) : null
+            }
+          >
+            <div className="divide-y divide-ui-border">{attentionItems.map(renderAttentionIssueRow)}</div>
+          </CollectionState>
+        </section>
 
-      <section data-connected-targets="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface xl:grid xl:grid-cols-2">
-        {renderConnectedGroup(
-          t('overview.connectedClustersTitle'),
-          ICONS.Layers,
-          t('overview.noConnectedClustersTitle'),
-          t('overview.noConnectedClustersBody'),
-          connectedClusterCards
-        )}
-        {renderConnectedGroup(
-          t('overview.connectedVirtualMachinesTitle'),
-          ICONS.Server,
-          t('overview.noConnectedVirtualMachinesTitle'),
-          t('overview.noConnectedVirtualMachinesBody'),
-          connectedVirtualMachineCards,
-          {
-            error: virtualMachineLoadError && !hasPriorVirtualMachineData ? virtualMachineLoadError : null,
-            isLoading: isLoadingVirtualMachines,
-            retainedError: virtualMachineLoadError && hasPriorVirtualMachineData ? virtualMachineLoadError : null,
-            retry: virtualMachineCollection.retry
-          }
-        )}
-      </section>
+        <section data-connected-targets="true" className="workspace-overview-targets mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
+          {renderConnectedGroup(
+            t('overview.connectedClustersTitle'),
+            ICONS.Layers,
+            t('overview.noConnectedClustersTitle'),
+            t('overview.noConnectedClustersBody'),
+            connectedClusterCards
+          )}
+          {renderConnectedGroup(
+            t('overview.connectedVirtualMachinesTitle'),
+            ICONS.Server,
+            t('overview.noConnectedVirtualMachinesTitle'),
+            t('overview.noConnectedVirtualMachinesBody'),
+            connectedVirtualMachineCards,
+            {
+              error: virtualMachineLoadError && !hasPriorVirtualMachineData ? virtualMachineLoadError : null,
+              isLoading: isLoadingVirtualMachines,
+              retainedError: virtualMachineLoadError && hasPriorVirtualMachineData ? virtualMachineLoadError : null,
+              retry: virtualMachineCollection.retry
+            }
+          )}
+        </section>
+      </div>
     </PageShell>
   );
 };

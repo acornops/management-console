@@ -17,6 +17,7 @@ export interface WorkspaceAgentsPageProps {
 
 export type AgentDraft = {
   name: string;
+  avatarEmoji: string;
   description: string;
   instructions: string;
   providerType: AgentDefinition['providerType'];
@@ -121,6 +122,7 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
     id: item.id,
     workspaceId: item.workspaceId,
     name: item.name,
+    avatarEmoji: item.avatarEmoji || '🤖',
     description: item.description || '',
     instructions: item.instructions || '',
     status: item.status || 'draft',
@@ -190,6 +192,7 @@ export const statusOptions: Array<SelectOption<AgentDefinition['status']>> = [
 
 export const createAgentEditDraft = (agent: AgentDefinition): AgentEditDraft => ({
   name: agent.name,
+  avatarEmoji: agent.avatarEmoji,
   description: agent.description,
   instructions: agent.instructions,
   providerType: agent.providerType,
@@ -211,8 +214,8 @@ export const shouldRefreshAgentEditDraft = (agentId: string, currentDraft: Agent
 
 export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEditDraft): string[] => {
   const changes: string[] = [];
-  if (agent.name !== draft.name.trim() || agent.description !== draft.description.trim() || agent.instructions !== draft.instructions.trim()) {
-    changes.push('Name, purpose, or instructions changed');
+  if (agent.name !== draft.name.trim() || agent.avatarEmoji !== draft.avatarEmoji || agent.description !== draft.description.trim() || agent.instructions !== draft.instructions.trim()) {
+    changes.push('Identity, purpose, or instructions changed');
   }
   if (agent.status !== draft.status) changes.push(`Status will change to ${draft.status}`);
   if ((agent.ownerUserId || '') !== draft.ownerUserId.trim()) changes.push('Owner changed');

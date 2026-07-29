@@ -200,6 +200,8 @@ describe('theme color contract', () => {
     expect(resourceExplorerControls).toContain("'type-ui flex h-11");
     expect(resourceExplorerLayout).toContain('className="type-micro-label');
     expect(markdownComponents).toContain('type-code');
+    expect(designSystemCheck).toContain('canonicalTypographyRoles');
+    expect(designSystemCheck).toContain('unknown-typography-role');
   });
 
   it('keeps login anchored to triage instead of decorative SaaS motion', () => {
@@ -313,6 +315,7 @@ describe('theme color contract', () => {
   it('keeps the app shell viewport-bound while route pages own their scroll', () => {
     expect(styles).toContain('html,\nbody,\n#root');
     expect(appShell).toContain('h-[100dvh] min-h-0');
+    expect(appShell).toContain('<div id={appDockRootId} className="contents" />');
     expect(desktopSidebar).toContain('h-full min-h-0 w-64 shrink-0');
     expect(desktopSidebar).toContain('min-h-0 flex-1 overflow-y-auto');
     expect(pageComposition).toContain('min-h-0 flex-1 overflow-x-hidden overflow-y-auto');
@@ -320,6 +323,7 @@ describe('theme color contract', () => {
     expect(workspaceSettingsPage).toContain('<PageShell');
     expect(clusterSettingsView).toContain('<PageShell>');
   });
+
   it('renders quota visibility only in settings surfaces', () => {
     ["t('settings.workspacesJoined')", 'user.quota?.workspaceMemberships', "t('settings.quotaUnavailable')"].forEach((needle) => expect(userSettingsPage).toContain(needle));
     ["t('workspaceSettings.plan')", 'workspace.plan?.name', "t('workspaceSettings.planUnavailable')"].forEach((needle) => expect(workspaceSettingsPage).toContain(needle));
@@ -612,7 +616,7 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('sm:flex-row sm:items-center sm:justify-between');
     expect(overviewPage).toContain('flex shrink-0 items-center gap-4 text-ui-text-muted');
     expect(overviewPage).toContain('divide-y divide-ui-border');
-    expect(overviewPage).toContain('xl:grid-cols-2');
+    expect(overviewPage).toContain('workspace-overview-targets');
     expect(overviewPage).toContain('recentInvestigation && (');
     expect(overviewPage).toContain('border-y border-ui-border py-3');
     expect(overviewPage).toContain('w-full justify-center sm:w-auto');

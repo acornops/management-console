@@ -19,6 +19,7 @@ import {
   ResourceCatalogCard
 } from '@/features/targets/catalog/TargetCatalogPrimitives';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
+import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 import { statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
 
 export type AgentFocusFilter = 'all' | 'active' | 'draft' | 'disabled';
@@ -63,8 +64,6 @@ interface WorkspaceAgentsCatalogProps {
   agents: AgentDefinition[];
   visibleAgents: AgentDefinition[];
   loading?: boolean;
-  selectedAgent?: AgentDefinition;
-  drawerOpen: boolean;
   canManageAgents: boolean;
   query: string;
   onQueryChange: (query: string) => void;
@@ -72,6 +71,7 @@ interface WorkspaceAgentsCatalogProps {
   onCatalogFiltersChange: (filters: AgentCatalogFilters) => void;
   onClearFilters: () => void;
   onOpenManagement: (agent: AgentDefinition) => void;
+  onQuickChat: (agent: AgentDefinition) => void;
   onOpenSettings?: (agent: AgentDefinition) => void;
 }
 
@@ -86,6 +86,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   onCatalogFiltersChange,
   onClearFilters,
   onOpenManagement,
+  onQuickChat,
   onOpenSettings
 }) => {
   const { t } = useTranslation();
@@ -127,7 +128,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
         itemCount={visibleAgents.length}
         filtered={hasActiveFilters && agents.length > 0}
         loading={
-          <div className="grid gap-4 md:grid-cols-2" aria-hidden="true">
+          <div data-resource-card-grid="true" className="resource-card-grid grid gap-4" aria-hidden="true">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="h-44 rounded-lg border border-ui-border bg-ui-surface shadow-sm" />
             ))}
@@ -137,7 +138,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
         filteredEmpty={<EmptyState embedded icon={<ICONS.Search />} title={t('agentsWorkflows.agents.noResultsTitle')} description={t('agentsWorkflows.agents.noResultsBody')} />}
         error={null}
       >
-        <div data-agent-card-grid="true" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2">
+        <div data-agent-card-grid="true" data-resource-card-grid="true" className="resource-card-grid grid min-w-0 items-stretch gap-4">
           {visibleAgents.map((agent) => {
             const readinessBlocked = agent.status !== 'active' || agent.readiness.status !== 'ready';
             const readinessLabel = readinessBlocked
@@ -151,35 +152,48 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                 key={agent.id}
                 cardAttribute={{ 'data-agent-card': 'true', 'data-agent-id': agent.id }}
                 actionAttribute={{ 'data-agent-card-primary-action': 'true' }}
-                actionLabel={`Open chat with ${agent.name}`}
+                actionLabel={t('agentsWorkflows.agents.openDetailsLabel', { name: agent.name })}
                 onActivate={() => onOpenManagement(agent)}
               >
                 <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong">
-                    <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
-                  </span>
+                  <AgentAvatar emoji={agent.avatarEmoji} />
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <h3 className="type-panel-title min-w-0 truncate text-ui-text" title={agent.name}>{agent.name}</h3>
                       <StatusBadge tone={readinessBlocked ? 'warning' : statusTone(agent.status)}>{readinessLabel}</StatusBadge>
                     </div>
                     <span aria-hidden="true" className="mt-1 inline-flex items-center gap-1 type-caption font-semibold text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong">
-                      Open chat <ICONS.ChevronRight className="h-3.5 w-3.5" />
+                      {t('agentsWorkflows.agents.viewDetails')} <ICONS.ChevronRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
-                  {canManageAgents && onOpenSettings && (
-                    <ResourceCatalogActionMenu
-                      label={`Actions for ${agent.name}`}
-                      open={openMenuId === agent.id}
-                      onOpenChange={(open) => setOpenMenuId(open ? agent.id : null)}
-                      triggerAttribute={{ 'data-agent-overflow-action': 'toggle' }}
+                  <div className="pointer-events-auto relative z-20 flex shrink-0 items-center gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onQuickChat(agent);
+                      }}
+                      data-agent-quick-chat="true"
                     >
-                      <MenuItem onClick={() => { setOpenMenuId(null); onOpenSettings(agent); }}>
-                        <Settings className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
-                        Settings
-                      </MenuItem>
-                    </ResourceCatalogActionMenu>
-                  )}
+                      <ICONS.MessageSquare className="h-4 w-4" aria-hidden="true" />
+                      {t('agentsWorkflows.agents.quickChat')}
+                    </Button>
+                    {canManageAgents && onOpenSettings && (
+                      <ResourceCatalogActionMenu
+                        label={t('agentsWorkflows.agents.actionsLabel', { name: agent.name })}
+                        open={openMenuId === agent.id}
+                        onOpenChange={(open) => setOpenMenuId(open ? agent.id : null)}
+                        triggerAttribute={{ 'data-agent-overflow-action': 'toggle' }}
+                      >
+                        <MenuItem onClick={() => { setOpenMenuId(null); onOpenSettings(agent); }}>
+                          <Settings className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
+                          {t('agentChat.tabs.settings')}
+                        </MenuItem>
+                      </ResourceCatalogActionMenu>
+                    )}
+                  </div>
                 </div>
                 <div className="border-t border-ui-border px-4 py-4">
                   <p className="line-clamp-1 text-sm text-ui-text-muted" title={purpose}>{purpose}</p>

@@ -72,6 +72,9 @@ export const chatView = [
   readSource('src/features/targets/chat/components/TargetAssistantReadinessState.tsx'),
   readSource('src/features/targets/chat/components/targetChatViewHelpers.ts')
 ].join('\n');
+export const assistantCapabilityPreviewControl = readSource(
+  'src/features/targets/chat/components/AssistantCapabilityPreviewControl.tsx'
+);
 export const assistantTurn = readSource(
   'src/features/targets/chat/components/AssistantTurn.tsx'
 );

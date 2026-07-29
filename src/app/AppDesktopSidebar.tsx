@@ -6,8 +6,9 @@ import { Sidebar } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { KubernetesCluster, User, Workspace } from '@/types';
-import { AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
+import { AgentSubview, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ActiveResourceNav } from '@/app/appRouteState';
 import { navIconClass, SidebarNavButton, SidebarSection, TargetSettingsDivider, WorkspaceSidebarNavLink } from '@/app/AppDesktopSidebarParts';
@@ -20,8 +21,10 @@ interface AppDesktopSidebarProps {
   selectedWorkspace: Workspace | undefined;
   selectedWorkspaceId: string | null;
   selectedWorkspaceInitials: string;
+  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
+  isAgentSidebar: boolean;
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;
   activeResourceNav: ActiveResourceNav;
@@ -38,6 +41,7 @@ interface AppDesktopSidebarProps {
   sidebarWorkspaceMenuRef: React.RefObject<HTMLDivElement | null>;
   navigate: (path: string) => void;
   onBackToWorkspaceSidebar: () => void;
+  onNavigateAgentSubview: (tab: AgentSubview) => void;
   onNavigateClusterSubview: (tab: ClusterSubview) => void;
   onNavigateVmSubview: (tab: VmSubview) => void;
   onOpenCreateWorkspace: () => void;
@@ -61,8 +65,10 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   selectedWorkspace,
   selectedWorkspaceId,
   selectedWorkspaceInitials,
+  selectedSidebarAgent,
   selectedSidebarCluster,
   selectedSidebarVm,
+  isAgentSidebar,
   isClusterSidebar,
   isVirtualMachineSidebar,
   activeResourceNav,
@@ -79,6 +85,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   sidebarWorkspaceMenuRef,
   navigate,
   onBackToWorkspaceSidebar,
+  onNavigateAgentSubview,
   onNavigateClusterSubview,
   onNavigateVmSubview,
   onOpenCreateWorkspace,
@@ -98,6 +105,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   const accountMenuPopoverId = React.useId();
   const hasWorkspaces = workspaces.length > 0;
   const selectedWorkspaceName = selectedWorkspace?.name || t('app.noWorkspace');
+  const selectedAgentName = selectedSidebarAgent?.name || t('app.unknownAgent');
   const selectedClusterName = selectedSidebarCluster?.name || t('app.unknownCluster');
   const selectedVmName = selectedSidebarVm?.name || t('app.unknownVirtualMachine');
   const userInitials = getUserInitials(user);
@@ -169,7 +177,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
       <nav aria-label={t('app.workspaceNavigation')} className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-0.5">
-          {!isClusterSidebar && !isVirtualMachineSidebar && (
+          {!isAgentSidebar && !isClusterSidebar && !isVirtualMachineSidebar && (
             <>
               <div className="relative mb-5 mt-1 min-w-0 px-3" ref={sidebarWorkspaceMenuRef}>
                 {hasWorkspaces ? (
@@ -327,6 +335,70 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   </SidebarSection>
                 );
               })}
+            </>
+          )}
+
+          {isAgentSidebar && (
+            <>
+              <div className="mb-8 px-4 pt-2">
+                <motion.button
+                  type="button"
+                  onClick={onBackToWorkspaceSidebar}
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  aria-label={t('agentChat.backToAgents')}
+                >
+                  <ICONS.ChevronLeft className="h-3.5 w-3.5" />
+                  <span>{t('agentChat.backToAgents')}</span>
+                </motion.button>
+                <div className="border-y border-ui-border bg-ui-surface px-4 py-3" title={selectedAgentName}>
+                  <div className="type-micro-label mb-1">{t('app.activeAgent')}</div>
+                  <div data-desktop-sidebar-active-agent="true" className="type-row-title line-clamp-2 break-words" title={selectedAgentName}>
+                    {selectedAgentName}
+                  </div>
+                </div>
+              </div>
+
+              <SidebarSection title={t('app.operations')} compactAfter>
+                {([
+                  ['chat', 'agentChat', t('app.agentAssistant'), ICONS.BotMessageSquare]
+                ] as Array<[AgentSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
+                  <SidebarNavButton
+                    key={tab}
+                    active={activeResourceNav === nav}
+                    disabled={!selectedSidebarAgent}
+                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
+                    label={label}
+                    onClick={() => onNavigateAgentSubview(tab)}
+                  />
+                ))}
+              </SidebarSection>
+
+              <SidebarSection title={t('app.capabilities')} compactAfter>
+                {([
+                  ['mcpServers', 'agentMcpServers', t('app.mcpServers'), ICONS.Server],
+                  ['skills', 'agentSkills', t('app.skills'), ICONS.BookOpen],
+                  ['tools', 'agentTools', t('app.tools'), ICONS.Wrench]
+                ] as Array<[AgentSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
+                  <SidebarNavButton
+                    key={tab}
+                    active={activeResourceNav === nav}
+                    disabled={!selectedSidebarAgent}
+                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
+                    label={label}
+                    onClick={() => onNavigateAgentSubview(tab)}
+                  />
+                ))}
+              </SidebarSection>
+
+              <TargetSettingsDivider>
+                <SidebarNavButton
+                  active={activeResourceNav === 'agentSettings'}
+                  disabled={!selectedSidebarAgent}
+                  icon={<ICONS.Settings className={navIconClass(activeResourceNav === 'agentSettings')} />}
+                  label={t('app.agentSettings')}
+                  onClick={() => onNavigateAgentSubview('settings')}
+                />
+              </TargetSettingsDivider>
             </>
           )}
 
@@ -545,7 +617,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     navigate(AppPaths.accountSettings());
                   }}
                   aria-current={isAccountSettingsActive ? 'page' : undefined}
-                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition-colors duration-[160ms] motion-reduce:duration-0 ${
+                  className={`type-ui flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition-colors duration-[160ms] motion-reduce:duration-0 ${
                     isAccountSettingsActive ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                   }`}
                 >
@@ -557,7 +629,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     >
                       <ICONS.User className="h-4 w-4" />
                     </span>
-                    <span className="text-sm type-emphasis">{t('app.accountSettings')}</span>
+                    <span>{t('app.accountSettings')}</span>
                   </span>
                 </motion.button>
 
@@ -572,7 +644,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     closeAccountMenu();
                     onLogout();
                   }}
-                  className="control-target flex min-h-10 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left type-row-title-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text motion-reduce:duration-0"
+                  className="control-target type-ui flex min-h-10 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text motion-reduce:duration-0"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center">
                     <ICONS.LogOut className="h-4 w-4" />

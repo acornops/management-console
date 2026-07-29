@@ -8,6 +8,7 @@ const agent: AgentDefinition = {
   id: 'agent-cluster-triage',
   workspaceId: 'workspace-1',
   name: 'Kubernetes Diagnostics',
+  avatarEmoji: '🔎',
   description: '',
   instructions: '',
   status: 'active',

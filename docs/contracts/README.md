@@ -122,9 +122,13 @@ The management console is the browser client for the control-plane API. Keep thi
   stable routes. The base Agent route resolves to Chat; configuration versions
   and Workflow usage remain contextual sections in Settings.
 - Agent Chat uses the shared chat presentation but calls the Agent conversation
-  API. New conversations are read-only, the creator must explicitly enable
-  changes, and workspace readers who did not create a conversation can inspect
-  it without continuing or changing it.
+  API. New conversations follow the intersection of the pinned Agent permission
+  mode and creator capabilities. Write-capable Agents start with their configured
+  approval policy when the creator has write-run permission; otherwise the
+  conversation is read-only. Creators may pause changes, and workspace readers
+  who did not create a conversation can inspect it without continuing or
+  changing it. Policy copy uses the permission mode pinned in each conversation
+  summary, not the Agent's latest revision.
 - Agent cards show aggregate MCP server, Skill, and Tool counts only. A
   readiness blocker replaces those counts with an actionable warning; raw
   capability names remain inside the dedicated detail surfaces.

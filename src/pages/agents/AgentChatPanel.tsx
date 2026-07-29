@@ -18,6 +18,7 @@ import {
   type AgentConversationSummaryApi
 } from '@/services/control-plane/agentApi';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
+import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 
 const activeRunStatuses = new Set(['queued', 'dispatching', 'running', 'waiting_for_approval', 'cancelling']);
 
@@ -111,10 +112,22 @@ function toChatSession(
 export const AgentChatPanel: React.FC<{
   agent: AgentDefinition;
   currentUserId: string;
+  displayMode?: 'full' | 'panel';
   isDark: boolean;
   permissions?: Workspace['permissions'];
+  onClose?: () => void;
+  onMaximize?: () => void;
   onOpenAiSettings: () => void;
-}> = ({ agent, currentUserId, isDark, permissions, onOpenAiSettings }) => {
+}> = ({
+  agent,
+  currentUserId,
+  displayMode = 'full',
+  isDark,
+  permissions,
+  onClose,
+  onMaximize,
+  onOpenAiSettings
+}) => {
   const { t } = useTranslation();
   const [summaries, setSummaries] = React.useState<AgentConversationSummaryApi[]>([]);
   const [sessions, setSessions] = React.useState<ChatSession[]>([]);
@@ -133,11 +146,44 @@ export const AgentChatPanel: React.FC<{
   const userMarkdownComponents = React.useMemo(() => createMarkdownComponents('user'), []);
   const activeSummary = summaries.find((summary) => summary.id === activeSessionId);
   const activeSession = sessions.find((session) => session.id === activeSessionId) || null;
+  const effectivePermissionMode = activeSummary?.permissionMode || agent.permissionMode;
+  const agentAllowsWrites = effectivePermissionMode !== 'read_only';
+  const canCreateReadOnlyRuns = Boolean(permissions?.create_read_only_runs);
+  const canCreateWriteRuns = Boolean(permissions?.create_read_write_runs);
+  const canChangeAccess = agentAllowsWrites && (
+    activeSummary?.accessMode === 'read_write' ? canCreateReadOnlyRuns : canCreateWriteRuns
+  );
+  const accessNoticeKey = activeSummary?.accessMode === 'read_write'
+    ? effectivePermissionMode === 'auto_allowed_changes'
+      ? 'agentChat.autoPolicyNotice'
+      : 'agentChat.approvalPolicyNotice'
+    : !agentAllowsWrites
+      ? 'agentChat.agentReadOnlyNotice'
+      : !canCreateWriteRuns
+        ? 'agentChat.roleReadOnlyNotice'
+        : 'agentChat.pausedNotice';
+  const promptBodyKey = !agentAllowsWrites
+    ? 'agentChat.promptBodyReadOnly'
+    : !canCreateWriteRuns
+      ? 'agentChat.promptBodyRoleReadOnly'
+      : effectivePermissionMode === 'auto_allowed_changes'
+        ? 'agentChat.promptBodyAutomatic'
+        : 'agentChat.promptBodyApproval';
+  const footerKey = !agentAllowsWrites
+    ? 'agentChat.footerReadOnly'
+    : !canCreateWriteRuns
+      ? 'agentChat.footerRoleReadOnly'
+      : effectivePermissionMode === 'auto_allowed_changes'
+        ? 'agentChat.footerAutomatic'
+        : 'agentChat.footerApproval';
   const activeRunId = [...(activeSession?.messages || [])]
     .reverse()
     .find((message) => message.runId && ['connecting', 'running'].includes(runTracesByRunId[message.runId]?.status))
     ?.runId || null;
-  const canChat = Boolean(permissions?.create_sessions && permissions.create_read_only_runs) && agent.status === 'active' && agent.readiness.status === 'ready';
+  const canChat = Boolean(
+    permissions?.create_sessions
+    && (canCreateReadOnlyRuns || (agentAllowsWrites && canCreateWriteRuns))
+  ) && agent.status === 'active' && agent.readiness.status === 'ready';
   const isOwner = !activeSummary || activeSummary.createdBy === currentUserId;
   const reportError = React.useCallback((error: unknown, fallback: string) => {
     setOperationError(error instanceof Error ? error.message : fallback);
@@ -242,32 +288,33 @@ export const AgentChatPanel: React.FC<{
   };
 
   return (
-    <div className="flex min-h-[42rem] flex-1 flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
+    <div className={`flex flex-1 flex-col overflow-hidden ${
+      displayMode === 'panel' ? 'h-full min-h-0 bg-ui-surface' : 'h-full min-h-0'
+    }`}>
       {operationError && <InlineAlert tone="danger" className="m-4 mb-0">{operationError}</InlineAlert>}
       {activeSummary && isOwner && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ui-border bg-ui-bg px-4 py-3">
           <p className="type-caption text-ui-text-muted">
-            {activeSummary.accessMode === 'read_write'
-              ? t('agentChat.writeNotice')
-              : t('agentChat.readOnlyNotice')}
+            {t(accessNoticeKey)}
           </p>
-          {permissions?.create_read_write_runs && (
+          {canChangeAccess && (
             <Button type="button" size="sm" variant="secondary" disabled={accessBusy || Boolean(activeRunId)} onClick={() => void changeAccess(activeSummary.accessMode === 'read_write' ? 'read_only' : 'read_write')}>
-              {activeSummary.accessMode === 'read_write' ? t('agentChat.returnReadOnly') : t('agentChat.enableChanges')}
+              {activeSummary.accessMode === 'read_write' ? t('agentChat.pauseChanges') : t('agentChat.resumePolicy')}
             </Button>
           )}
         </div>
       )}
       <TargetChatView
         target={{ id: agent.id, workspaceId: agent.workspaceId, name: agent.name }}
+        headerLeading={<AgentAvatar emoji={agent.avatarEmoji} size={displayMode === 'panel' ? 'md' : 'lg'} />}
         capabilityPreviewEnabled={false}
         isDark={isDark}
         titleKey="agentChat.title"
         descriptionKey="agentChat.description"
         promptTitleKey="agentChat.promptTitle"
-        promptBodyKey="agentChat.promptBody"
+        promptBodyKey={promptBodyKey}
         inputPlaceholderKey="agentChat.inputPlaceholder"
-        footerKey="agentChat.footer"
+        footerKey={footerKey}
         suggestionKeys={[
           'agentChat.suggestions.inspect',
           'agentChat.suggestions.summarize',
@@ -279,7 +326,7 @@ export const AgentChatPanel: React.FC<{
         conversationNotice={!isOwner ? t('agentChat.readerNotice') : null}
         recentActivityWarning={null}
         canRequestWriteRuns={activeSummary?.accessMode === 'read_write'}
-        canApproveWriteActions={Boolean(permissions?.create_read_write_runs)}
+        canApproveWriteActions={canCreateWriteRuns}
         canCancelRuns={Boolean(permissions?.cancel_runs)}
         canDeleteSessions={Boolean(permissions?.delete_sessions)}
         canManageAiSettings={Boolean(permissions?.manage_ai_settings)}
@@ -349,6 +396,9 @@ export const AgentChatPanel: React.FC<{
             setIsCancellingRun(false);
           }
         }}
+        displayMode={displayMode}
+        onClose={onClose}
+        onMaximize={onMaximize}
         isInFlightAssistantPlaceholder={(message) => message.transientStatus === 'pending_assistant'}
       />
     </div>

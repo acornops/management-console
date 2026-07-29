@@ -22,15 +22,14 @@ test('default and custom Agents use the same compact resource treatment and sett
   await expect(defaultCard.getByText(/MCP server/)).toBeVisible();
   await expect(customCard.getByText(/skill/)).toBeVisible();
 
-  await page.getByRole('button', { name: 'Open chat with Workflow Analyst' }).click();
-  const defaultHeader = page.getByRole('heading', { level: 1, name: 'Workflow Analyst' }).locator('..');
+  await page.getByRole('button', { name: 'Open details for Workflow Analyst' }).click();
+  const defaultHeader = page.getByRole('heading', { level: 1, name: 'Agent chat' }).locator('..');
   await expect(defaultHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(page.getByRole('tab', { name: 'Chat' })).toHaveAttribute('aria-selected', 'true');
-  await page.getByRole('tab', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Agent Settings' }).click();
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
 
   await page.goto(`/workspaces/${workspaceId}/agents/fixture-specialist/settings`);
-  const customHeader = page.getByRole('heading', { name: 'Kubernetes Specialist' }).locator('..');
+  const customHeader = page.getByRole('heading', { name: 'Agent Settings' }).locator('..');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
 });

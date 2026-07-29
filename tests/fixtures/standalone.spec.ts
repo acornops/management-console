@@ -280,11 +280,11 @@ test('workspace run links focus the exact execution in workflow history', async 
 test('Agent detail scopes lifecycle and version actions to Settings', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/agents/fixture-specialist/chat', { waitUntil: 'domcontentloaded' });
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Kubernetes Specialist' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Edit agent' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
 
-  await page.getByRole('tab', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Agent Settings' }).click();
   await expect(page).toHaveURL('/workspaces/fixture-workspace/agents/fixture-specialist/settings');
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Disable', exact: true }).first()).toBeVisible();

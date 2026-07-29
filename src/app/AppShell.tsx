@@ -9,6 +9,11 @@ import { getClusterBackToWorkspacePath, getVirtualMachineBackToWorkspacePath } f
 import { getWorkspaceInitials } from '@/app/appWorkspaceSummaries';
 import { useCreateWorkspaceInviteSetup } from '@/app/useCreateWorkspaceInviteSetup';
 import { useTargetIssueSummary } from '@/app/useTargetIssueSummary';
+import {
+  createTargetChatControllerStore,
+  TargetChatControllerSubscriber
+} from '@/app/targetChatControllerStore';
+import { appDockRootId } from '@/app/dockedPanelLayout';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { useWorkspaceApprovalSummary } from '@/hooks/useWorkspaceApprovalSummary';
 import {
@@ -90,6 +95,7 @@ function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRo
 
 export const AppShell: React.FC<AppShellProps> = ({
   acceptWorkspaceInvitation,
+  activeAgentSubview,
   activeClusterSubview,
   activeVmSubview,
   activePrimaryNav,
@@ -127,6 +133,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   invitationTokenMissingMessage,
   isAddingCluster,
   isClusterCopilotOpen,
+  isAgentSidebar,
   isClusterSidebar,
   isVirtualMachineSidebar,
   isCreatingCluster,
@@ -148,6 +155,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   refreshWorkspaceInvitations,
   refreshWorkspaceMembers,
   route,
+  selectedSidebarAgent,
   selectedSidebarCluster,
   selectedSidebarVm,
   selectedWorkspace,
@@ -199,6 +207,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   }, [setWorkspaces]);
 
   const backToWorkspaceId = selectedSidebarCluster?.workspaceId || workspaceContextId || selectedWorkspaceId;
+  const agentBackToWorkspaceId = selectedSidebarAgent?.workspaceId || workspaceContextId || selectedWorkspaceId;
   const vmBackToWorkspaceId = selectedSidebarVm?.workspaceId || workspaceContextId || selectedWorkspaceId;
   const [targetReturnContext, setTargetReturnContext] = React.useState<TargetReturnContext | null>(null);
   const previousRouteRef = React.useRef<AppRoute | null>(null);
@@ -241,6 +250,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       || isDeletingWorkspace
   );
   const [clusterAssistantNavStatus, setClusterAssistantNavStatus] = React.useState<AssistantNavStatus>('idle');
+  const [targetChatControllerStore] = React.useState(createTargetChatControllerStore);
   const previousAssistantRuntimeStatusRef = React.useRef<AssistantNavStatus>('idle');
   const isClusterChatVisibleRef = React.useRef(isClusterChatVisible);
 
@@ -282,11 +292,19 @@ export const AppShell: React.FC<AppShellProps> = ({
       return AppPaths.workspaceVirtualMachines(route.workspaceId, route.catalogState);
     }
 
-    return isVirtualMachineSidebar
+    if (route.kind === 'workspaceAgentDetail') {
+      return AppPaths.workspaceAgents(route.workspaceId);
+    }
+
+    return isAgentSidebar && agentBackToWorkspaceId
+      ? AppPaths.workspaceAgents(agentBackToWorkspaceId)
+      : isVirtualMachineSidebar
       ? getVirtualMachineBackToWorkspacePath(vmBackToWorkspaceId)
       : getClusterBackToWorkspacePath(backToWorkspaceId);
   }, [
+    agentBackToWorkspaceId,
     backToWorkspaceId,
+    isAgentSidebar,
     isClusterSidebar,
     isVirtualMachineSidebar,
     route,
@@ -447,14 +465,16 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   return (
     <WorkspaceWorkflowActivityProvider value={workflowActivity}>
-    <div className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-ui-bg text-ui-text font-sans transition-colors duration-300 lg:flex-row">
+    <div data-app-shell="true" className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-ui-bg text-ui-text font-sans transition-colors duration-300 lg:flex-row">
       <AppMobileNavigation
+        activeAgentSubview={activeAgentSubview}
         activeClusterSubview={activeClusterSubview}
         activeVmSubview={activeVmSubview}
         activePrimaryNav={activePrimaryNav}
         activeResourceNav={activeResourceNav}
         pendingApprovalCount={approvalSummary.pendingCount}
         openWorkflowRunCount={workflowActivity.openCount}
+        isAgentSidebar={isAgentSidebar}
         isClusterSidebar={isClusterSidebar}
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         themePreference={themePreference}
@@ -463,6 +483,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedClusterIssueCount={selectedClusterIssueCount}
         clusterAssistantNavStatus={clusterAssistantNavStatus}
         selectedVmIssueCount={selectedVmIssueCount}
+        selectedSidebarAgent={selectedSidebarAgent}
         selectedSidebarCluster={selectedSidebarCluster}
         selectedSidebarVm={selectedSidebarVm}
         selectedWorkspace={selectedWorkspace}
@@ -476,6 +497,14 @@ export const AppShell: React.FC<AppShellProps> = ({
         onNavigateClusterSubview={(tab) => {
           if (!selectedSidebarCluster) return;
           navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab, route.kind === 'workspaceKubernetesClusterDiagnostics' ? route.catalogState : undefined));
+        }}
+        onNavigateAgentSubview={(tab) => {
+          if (!selectedSidebarAgent) return;
+          navigate(AppPaths.workspaceAgentDetail(
+            selectedSidebarAgent.workspaceId,
+            selectedSidebarAgent.id,
+            tab
+          ));
         }}
         onNavigateVmSubview={(tab) => {
           if (!selectedSidebarVm) return;
@@ -492,8 +521,10 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedWorkspace={selectedWorkspace}
         selectedWorkspaceId={selectedWorkspaceId}
         selectedWorkspaceInitials={selectedWorkspaceInitials}
+        selectedSidebarAgent={selectedSidebarAgent}
         selectedSidebarCluster={selectedSidebarCluster}
         selectedSidebarVm={selectedSidebarVm}
+        isAgentSidebar={isAgentSidebar}
         isClusterSidebar={isClusterSidebar}
         isVirtualMachineSidebar={isVirtualMachineSidebar}
         activeResourceNav={activeResourceNav}
@@ -514,6 +545,14 @@ export const AppShell: React.FC<AppShellProps> = ({
           if (!selectedSidebarCluster) return;
           navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab, route.kind === 'workspaceKubernetesClusterDiagnostics' ? route.catalogState : undefined));
         }}
+        onNavigateAgentSubview={(tab) => {
+          if (!selectedSidebarAgent) return;
+          navigate(AppPaths.workspaceAgentDetail(
+            selectedSidebarAgent.workspaceId,
+            selectedSidebarAgent.id,
+            tab
+          ));
+        }}
         onNavigateVmSubview={(tab) => {
           if (!selectedSidebarVm) return;
           navigate(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab, route.kind === 'workspaceVirtualMachineDetail' ? route.catalogState : undefined));
@@ -527,8 +566,14 @@ export const AppShell: React.FC<AppShellProps> = ({
         user={user}
       />
 
-      {chatRuntimeCluster ? (
-        <React.Suspense fallback={<PageLoadingFallback label={t('common.loading')} />}>
+      <TargetChatControllerSubscriber store={targetChatControllerStore}>
+        {renderAppContent}
+      </TargetChatControllerSubscriber>
+
+      <div id={appDockRootId} className="contents" />
+
+      {chatRuntimeCluster && (
+        <React.Suspense fallback={null}>
           <AppClusterChatRuntime
             cluster={chatRuntimeCluster}
             currentUserId={user.id}
@@ -537,13 +582,14 @@ export const AppShell: React.FC<AppShellProps> = ({
             initialActiveSessionId={chatRuntimeInitialSessionId}
             isChatActive={isClusterChatVisible}
             onAssistantRuntimeStatusChange={handleAssistantRuntimeStatusChange}
+            onControllerChange={targetChatControllerStore.set}
             onConversationDeleted={onConversationDeleted}
             onUpdateSessions={(clusterId, sessions) => updateKubernetesCluster(clusterId, { chatSessions: sessions })}
           >
-            {renderAppContent}
+            {() => null}
           </AppClusterChatRuntime>
         </React.Suspense>
-      ) : renderAppContent(null)}
+      )}
 
       {hasOpenDialog && (
         <React.Suspense fallback={null}>

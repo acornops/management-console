@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { targetMcpCredentialModeScheduleCount } from '@/features/catalog/mcpCredentialModeImpact';
 
-export function useTargetMcpCredentialModeImpact(workspaceId: string, targetId: string) {
+export function useTargetMcpCredentialModeImpact(
+  workspaceId: string,
+  targetId: string,
+  scheduleCount: (workspaceId: string, subjectId: string, serverId: string) => Promise<number> = targetMcpCredentialModeScheduleCount
+) {
   const [impact, setImpact] = useState<{ affectedScheduleCount: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const clear = () => setImpact(null);
@@ -9,7 +13,7 @@ export function useTargetMcpCredentialModeImpact(workspaceId: string, targetId: 
     setLoading(true);
     try {
       const affectedScheduleCount = credentialMode === 'individual'
-        ? await targetMcpCredentialModeScheduleCount(workspaceId, targetId, serverId)
+        ? await scheduleCount(workspaceId, targetId, serverId)
         : 0;
       setImpact({ affectedScheduleCount });
     } finally {

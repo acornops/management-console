@@ -1,13 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Plus, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { Button } from '@acornops/ui';
-import { CollectionState } from '@acornops/ui';
-import { EmptyState } from '@acornops/ui';
 import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
-import { TargetMcpServerTestConnectionResult, controlPlaneApi, CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
+import {
+  TargetMcpServer,
+  TargetMcpServerTestConnectionResult,
+  controlPlaneApi,
+  CreateTargetMcpServerInput,
+  UpdateTargetMcpServerInput
+} from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
@@ -38,7 +42,32 @@ interface McpServersViewProps {
   initialCatalog?: TargetToolCatalog | null;
   onCatalogChange?: (catalog: TargetToolCatalog) => void;
   onSyncTools?: (tools: TargetMcpToolSummary[]) => void;
+  dataSource?: McpServersDataSource;
+  connectionDestination?: { kind: 'target' | 'agent'; id: string };
+  catalogDestination?: string;
+  scheduleCount?: (workspaceId: string, subjectId: string, serverId: string) => Promise<number>;
 }
+
+export interface McpServersDataSource {
+  createServer: (workspaceId: string, subjectId: string, input: CreateTargetMcpServerInput) => Promise<TargetMcpServer>;
+  deleteServer: (workspaceId: string, subjectId: string, serverId: string) => Promise<void>;
+  getCatalog: (workspaceId: string, subjectId: string) => Promise<TargetToolCatalog>;
+  listServerTools: (workspaceId: string, subjectId: string, serverId: string, options: { limit: number; cursor?: string; signal: AbortSignal }) => Promise<{ items: TargetToolCatalogItem[]; nextCursor?: string }>;
+  testServer: (workspaceId: string, subjectId: string, serverId: string) => Promise<TargetMcpServerTestConnectionResult>;
+  updateServer: (workspaceId: string, subjectId: string, serverId: string, input: UpdateTargetMcpServerInput) => Promise<TargetMcpServer>;
+  updateServerTool: (workspaceId: string, subjectId: string, serverId: string, toolName: string, input: { enabled: boolean; capability?: 'read' | 'write' }) => Promise<TargetToolCatalogItem>;
+}
+
+const targetMcpServersDataSource: McpServersDataSource = {
+  createServer: (workspaceId, subjectId, input) => controlPlaneApi.createTargetMcpServer(workspaceId, subjectId, input),
+  deleteServer: (workspaceId, subjectId, serverId) => controlPlaneApi.deleteTargetMcpServer(workspaceId, subjectId, serverId),
+  getCatalog: (workspaceId, subjectId) => controlPlaneApi.getTargetMcpCatalog(workspaceId, subjectId),
+  listServerTools: (workspaceId, subjectId, serverId, options) => controlPlaneApi.listMcpServerTools(workspaceId, subjectId, serverId, options),
+  testServer: (workspaceId, subjectId, serverId) => controlPlaneApi.testTargetMcpServerConnection(workspaceId, subjectId, serverId),
+  updateServer: (workspaceId, subjectId, serverId, input) => controlPlaneApi.updateTargetMcpServer(workspaceId, subjectId, serverId, input),
+  updateServerTool: (workspaceId, subjectId, serverId, toolName, input) => controlPlaneApi.updateTargetMcpServerTool(workspaceId, subjectId, serverId, toolName, input)
+};
+
 export const McpServersView: React.FC<McpServersViewProps> = ({
   target,
   canManageMcp = false,
@@ -46,7 +75,11 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   canRequestWriteRuns = false,
   initialCatalog = null,
   onCatalogChange,
-  onSyncTools
+  onSyncTools,
+  dataSource = targetMcpServersDataSource,
+  connectionDestination = { kind: 'target', id: target.id },
+  catalogDestination,
+  scheduleCount
 }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
@@ -66,7 +99,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [editingServer, setEditingServer] = useState<TargetToolCatalogServer | null>(null);
   const [serverMutationError, setServerMutationError] = useState<string | null>(null);
   const [serverMutationNotice, setServerMutationNotice] = useState<string | null>(null);
-  const credentialModeImpact = useTargetMcpCredentialModeImpact(target.workspaceId, target.id);
+  const credentialModeImpact = useTargetMcpCredentialModeImpact(target.workspaceId, target.id, scheduleCount);
   const [toolRefreshError, setToolRefreshError] = useState<string | null>(null);
   const [toolRefreshServer, setToolRefreshServer] = useState<TargetToolCatalogServer | null>(null);
   const [credentialDialogServer, setCredentialDialogServer] = useState<TargetToolCatalogServer | null>(null);
@@ -87,13 +120,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   );
   const hasLocalFallbackServers = localCatalog.servers.length > 0;
   const showInitialCatalogLoading = !catalog && !catalogError && !hasLocalFallbackServers;
-  const catalogPhase = showInitialCatalogLoading
-    ? 'loading'
-    : catalogError
-      ? 'error'
-      : catalog
-        ? 'ready'
-        : 'refreshing';
   const activeServer = selectedServerId
     ? servers.find((server) => server.id === selectedServerId) || null
     : null;
@@ -107,7 +133,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   }) => {
     if (!filters.serverId) return { items: [], nextCursor: undefined };
     try {
-      return await controlPlaneApi.listMcpServerTools(target.workspaceId, target.id, filters.serverId, {
+      return await dataSource.listServerTools(target.workspaceId, target.id, filters.serverId, {
         limit,
         cursor,
         signal
@@ -115,7 +141,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     } catch (error) {
       throw new Error(formatMcpMutationError(error, t('mcpServers.loadToolsFailed')));
     }
-  }, [target.id, target.workspaceId, t]);
+  }, [dataSource, target.id, target.workspaceId, t]);
   const serverToolsCollection = useCursorCollection({
     filters: { serverId: toolsServerId },
     getKey: (tool: TargetToolCatalogItem) => tool.name,
@@ -149,7 +175,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const loadCatalog = useCallback(async (options?: { syncParent?: boolean }) => {
     setCatalogError(null);
     try {
-      const loadedCatalog = await controlPlaneApi.getTargetMcpCatalog(target.workspaceId, target.id);
+      const loadedCatalog = await dataSource.getCatalog(target.workspaceId, target.id);
       setCatalog(loadedCatalog);
       if (options?.syncParent) {
         onSyncToolsRef.current?.(flattenCatalogTools(loadedCatalog));
@@ -160,7 +186,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       setCatalogError(message);
       return null;
     }
-  }, [target.id, target.workspaceId]);
+  }, [dataSource, target.id, target.workspaceId]);
   const refreshConnectedServer = useCallback(async (server: TargetToolCatalogServer) => {
     setToolRefreshError(null);
     setToolRefreshServer(server);
@@ -185,7 +211,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   } = useMcpConnections({
     installations: servers,
     workspaceId: target.workspaceId,
-    destination: { kind: 'target', id: target.id },
+    destination: connectionDestination,
     onError: setServerMutationError,
     onConnectionReady: refreshConnectedServer,
     onRefreshError: (_server, message) => setToolRefreshError(message)
@@ -314,7 +340,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setServerMutationError(null);
     try {
       if (editingServer) {
-        const updatedServer = await controlPlaneApi.updateTargetMcpServer(target.workspaceId, target.id, editingServer.id, {
+        const updatedServer = await dataSource.updateServer(target.workspaceId, target.id, editingServer.id, {
           name: serverForm.name.trim(),
           enabled: serverForm.enabled,
           publicHeaders: buildPublicHeadersPayload(true),
@@ -333,7 +359,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           setCredentialDialogServer(loadedServer || pendingCatalogServer(updatedServer));
         }
       } else {
-        const createdServer = await controlPlaneApi.createTargetMcpServer(target.workspaceId, target.id, {
+        const createdServer = await dataSource.createServer(target.workspaceId, target.id, {
           name: serverForm.name.trim(),
           url: serverForm.url.trim(),
           enabled: serverForm.enabled,
@@ -370,7 +396,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setPendingServerMutation(true);
     setServerMutationError(null);
     try {
-      await controlPlaneApi.deleteTargetMcpServer(target.workspaceId, target.id, deleteTargetServer.id);
+      await dataSource.deleteServer(target.workspaceId, target.id, deleteTargetServer.id);
       if (selectedServerId === deleteTargetServer.id) {
         setSelectedServerId(null);
       }
@@ -389,7 +415,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setPendingTestServerId(server.id);
     setServerMutationError(null);
     try {
-      const result = await controlPlaneApi.testTargetMcpServerConnection(target.workspaceId, target.id, server.id);
+      const result = await dataSource.testServer(target.workspaceId, target.id, server.id);
       setTestResultsByServerId((current) => ({ ...current, [server.id]: result }));
       await loadCatalog({ syncParent: true });
     } catch (error) {
@@ -437,7 +463,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setServerMutationError(null);
     applyServerEnabledState(server.id, enabled);
     try {
-      await controlPlaneApi.updateTargetMcpServer(target.workspaceId, target.id, server.id, {
+      await dataSource.updateServer(target.workspaceId, target.id, server.id, {
         enabled
       });
       await loadCatalog({ syncParent: true });
@@ -456,7 +482,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setPendingToolName(tool.name);
     setToolMutationError(null);
     try {
-      await controlPlaneApi.updateTargetMcpServerTool(target.workspaceId, target.id, server.id, tool.name, {
+      await dataSource.updateServerTool(target.workspaceId, target.id, server.id, tool.name, {
         enabled: nextEnabled,
         capability: tool.capability
       });
@@ -498,6 +524,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         target={target}
         canEditServers={canEditServers}
         onConnectByUrl={openCreateServerModal}
+        catalogDestination={catalogDestination}
       />
 
       {toolRefreshError && (
@@ -529,52 +556,51 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
 
       <McpServerMutationNotice message={serverMutationNotice} />
 
-      <CollectionState
-        phase={catalogPhase}
-        itemCount={servers.length}
-        loading={<InlineLoadingIndicator label={t('mcpServers.loadingCatalog')} className="mb-5" />}
-        empty={<EmptyState icon={<Plus />} title={t('mcpServers.empty')} description={t('mcpServers.emptyHelp')} />}
-        error={(
-          <div className="type-caption mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
-            <span>{catalogError}</span>
-            <Button size="sm" variant="secondary" onClick={() => void loadCatalog({ syncParent: true })}>{t('common.retry')}</Button>
-          </div>
-        )}
-        feedback={catalogError ? (
-          <div className="type-caption mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
-            <span>{catalogError}</span>
-            <Button size="sm" variant="secondary" onClick={() => void loadCatalog({ syncParent: true })}>{t('common.retry')}</Button>
-          </div>
-        ) : <span className="sr-only">{t('mcpServers.loadingCatalog')}</span>}
-      >
-        <McpServersInventory
-          servers={servers}
-          canEditServers={canEditServers}
-          pendingTestServerId={pendingTestServerId}
-          pendingToggleServerId={pendingToggleServerId}
-          testResultsByServerId={testResultsByServerId}
-          connections={connections}
-          connectionErrors={connectionErrors}
-          pendingConnectionServerId={pendingConnectionServerId}
-          retryAfterSecondsFor={retryAfterSecondsFor}
-          recoveryServerId={recoveryServerId}
-          recoveryAction={recoveryAction}
-          onManageTools={setSelectedServerId}
-          onTestConnection={(targetServer) => void handleTestConnection(targetServer)}
-          onToggleServer={(targetServer, enabled) => void handleToggleServer(targetServer, enabled)}
-          onEdit={openEditServerModal}
-          onDelete={(targetServer) => {
-            setServerMutationError(null);
-            setDeleteTargetServer(targetServer);
-          }}
-          onConnect={setCredentialDialogServer}
-          onVerify={(targetServer) => void verify(targetServer).then((connection) => {
-            if (connection?.status === 'connected') clearSuccessfulRecovery(targetServer.id);
-          })}
-          onDisconnect={(targetServer) => void disconnect(targetServer)}
-          onRetry={(targetServer) => void retry(targetServer)}
-        />
-      </CollectionState>
+      {showInitialCatalogLoading ? (
+        <InlineLoadingIndicator label={t('mcpServers.loadingCatalog')} className="mb-5" />
+      ) : catalogError && servers.length === 0 ? (
+        <div className="type-caption mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
+          <span>{catalogError}</span>
+          <Button size="sm" variant="secondary" onClick={() => void loadCatalog({ syncParent: true })}>{t('common.retry')}</Button>
+        </div>
+      ) : (
+        <>
+          <McpServersInventory
+            servers={servers}
+            canEditServers={canEditServers}
+            pendingTestServerId={pendingTestServerId}
+            pendingToggleServerId={pendingToggleServerId}
+            testResultsByServerId={testResultsByServerId}
+            connections={connections}
+            connectionErrors={connectionErrors}
+            pendingConnectionServerId={pendingConnectionServerId}
+            retryAfterSecondsFor={retryAfterSecondsFor}
+            recoveryServerId={recoveryServerId}
+            recoveryAction={recoveryAction}
+            onManageTools={setSelectedServerId}
+            onTestConnection={(targetServer) => void handleTestConnection(targetServer)}
+            onToggleServer={(targetServer, enabled) => void handleToggleServer(targetServer, enabled)}
+            onEdit={openEditServerModal}
+            onDelete={(targetServer) => {
+              setServerMutationError(null);
+              setDeleteTargetServer(targetServer);
+            }}
+            onConnect={setCredentialDialogServer}
+            onVerify={(targetServer) => void verify(targetServer).then((connection) => {
+              if (connection?.status === 'connected') clearSuccessfulRecovery(targetServer.id);
+            })}
+            onDisconnect={(targetServer) => void disconnect(targetServer)}
+            onRetry={(targetServer) => void retry(targetServer)}
+          />
+          {catalogError && (
+            <div className="type-caption mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
+              <span>{catalogError}</span>
+              <Button size="sm" variant="secondary" onClick={() => void loadCatalog({ syncParent: true })}>{t('common.retry')}</Button>
+            </div>
+          )}
+          {!catalog && !catalogError && <span className="sr-only">{t('mcpServers.loadingCatalog')}</span>}
+        </>
+      )}
       <TargetMcpCredentialDialog server={credentialDialogServer} connection={credentialDialogServer ? connections[credentialDialogServer.id] : undefined} retryAfterSeconds={credentialDialogServer ? retryAfterSecondsFor(credentialDialogServer.id) : 0} onClose={() => setCredentialDialogServer(null)} onSubmit={async (credential) => { if (!credentialDialogServer) return; const connection = await connect(credentialDialogServer, credential); if (connection?.status === 'connected') clearSuccessfulRecovery(credentialDialogServer.id); setCredentialDialogServer(null); }} />
       <AnimatePresence>
         {activeServerWithPagedTools && (

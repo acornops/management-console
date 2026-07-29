@@ -4,16 +4,14 @@ import {
   Button,
   DangerZone,
   DangerZoneRow,
-  InlineConfirmation,
-  SegmentedTabs,
-  StatusBadge,
-  type CompactControlItem
+  InlineConfirmation
 } from '@acornops/ui';
 import { ICONS } from '@/constants';
+import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
-import { AgentCapabilitiesPanel } from '@/pages/agents/AgentCapabilitiesPanel';
+import { AgentCapabilityAdminView } from '@/pages/agents/AgentCapabilityAdminView';
 import type { AgentVersionSnapshotApi } from '@/services/control-plane/agentApi';
-import { formatAgentTimestamp, statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
+import { formatAgentTimestamp } from '@/pages/WorkspaceAgentsPage.helpers';
 import { AppPaths } from '@/utils/routes';
 
 export type AgentProfileTab = 'chat' | 'mcpServers' | 'skills' | 'tools' | 'settings';
@@ -22,10 +20,8 @@ export const agentProfileTabs: AgentProfileTab[] = ['chat', 'mcpServers', 'skill
 interface WorkspaceAgentDetailPanelProps {
   selectedAgent: AgentDefinition;
   activeTab: AgentProfileTab;
-  onTabChange: (tab: AgentProfileTab) => void;
   titleId?: string;
   chatContent?: React.ReactNode;
-  onBack?: () => void;
   canManageAgents: boolean;
   canManageMcp: boolean;
   canManageSkills: boolean;
@@ -58,109 +54,69 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
   const [restoreVersionId, setRestoreVersionId] = React.useState('');
   const disableButtonRef = React.useRef<HTMLButtonElement>(null);
   const deleteButtonRef = React.useRef<HTMLButtonElement>(null);
-  const tabItems = React.useMemo<Array<CompactControlItem<AgentProfileTab>>>(() => [
-    { value: 'chat', label: t('agentChat.tabs.chat') },
-    { value: 'mcpServers', label: t('agentChat.tabs.mcpServers') },
-    { value: 'skills', label: t('agentChat.tabs.skills') },
-    { value: 'tools', label: t('agentChat.tabs.tools') },
-    { value: 'settings', label: t('agentChat.tabs.settings') }
-  ], [t]);
+  const routeTitle = t(`agentChat.sections.${props.activeTab}.title`, { name: selectedAgent.name });
+  const routeDescription = t(`agentChat.sections.${props.activeTab}.description`, { name: selectedAgent.name });
 
   React.useEffect(() => setRestoreVersionId(''), [props.activeTab, selectedAgent.id]);
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col">
-      <a
-        href={AppPaths.workspaceAgents(selectedAgent.workspaceId)}
-        onClick={(event) => {
-          if (!props.onBack) return;
-          event.preventDefault();
-          props.onBack();
-        }}
-        className="mb-4 inline-flex min-h-11 w-fit items-center gap-2 rounded-md text-sm font-semibold text-ui-text-muted hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary"
-      >
-        <ICONS.ChevronLeft className="h-4 w-4" aria-hidden="true" />
-        {t('agentChat.backToAgents')}
-      </a>
-
-      <header className="rounded-t-lg border border-ui-border bg-ui-surface px-5 py-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge tone={statusTone(selectedAgent.status)}>{t(`agentsWorkflows.agents.status.${selectedAgent.status}`)}</StatusBadge>
-              <span className="type-caption font-semibold text-ui-text-muted">
-                {selectedAgent.readiness.status === 'ready' ? t('agentChat.ready') : selectedAgent.readiness.reasons[0] || t('agentChat.needsSetup')}
-              </span>
+    <section className="flex h-full min-h-0 flex-1 flex-col">
+      {props.activeTab === 'settings' && (
+        <header className="mb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-start gap-3">
+                <AgentAvatar emoji={selectedAgent.avatarEmoji} size="lg" />
+                <div className="min-w-0">
+                  <h1 id={props.titleId} className="type-route-title break-words [overflow-wrap:anywhere]">{routeTitle}</h1>
+                  <p className="mt-1 max-w-3xl text-sm text-ui-text-muted">{routeDescription}</p>
+                </div>
+              </div>
             </div>
-            <h1 id={props.titleId} className="mt-2 type-section-title break-words [overflow-wrap:anywhere]">{selectedAgent.name}</h1>
-            <p className="type-caption mt-1 max-w-3xl text-ui-text-muted">{selectedAgent.description}</p>
-          </div>
-          {props.activeTab === 'settings' && (
-            <div className="flex shrink-0 flex-wrap gap-2">
-              {selectedAgent.status === 'disabled' && (
-                <Button size="sm" variant="secondary" onClick={props.onReactivateSelectedAgent} disabled={!props.canManageAgents || props.updatingAgentId === selectedAgent.id}>
-                  {t('agentsWorkflows.agents.reactivate')}
+            {props.activeTab === 'settings' && (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {selectedAgent.status === 'disabled' && (
+                  <Button size="sm" variant="secondary" onClick={props.onReactivateSelectedAgent} disabled={!props.canManageAgents || props.updatingAgentId === selectedAgent.id}>
+                    {t('agentsWorkflows.agents.reactivate')}
+                  </Button>
+                )}
+                <Button size="sm" variant="secondary" onClick={props.onDuplicateSelectedAgent} disabled={!props.canManageAgents || props.duplicatingAgentId === selectedAgent.id}>
+                  {props.duplicatingAgentId === selectedAgent.id ? t('agentsWorkflows.duplicating') : t('agentsWorkflows.duplicate')}
                 </Button>
-              )}
-              <Button size="sm" variant="secondary" onClick={props.onDuplicateSelectedAgent} disabled={!props.canManageAgents || props.duplicatingAgentId === selectedAgent.id}>
-                {props.duplicatingAgentId === selectedAgent.id ? t('agentsWorkflows.duplicating') : t('agentsWorkflows.duplicate')}
-              </Button>
-              <Button size="sm" variant="primary" onClick={() => props.onOpenEditAgentDrawer(selectedAgent)} disabled={!props.canManageAgents}>
-                <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
-                {t('agentsWorkflows.agents.edit')}
-              </Button>
-            </div>
-          )}
-        </div>
-      </header>
+                <Button size="sm" variant="primary" onClick={() => props.onOpenEditAgentDrawer(selectedAgent)} disabled={!props.canManageAgents}>
+                  <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
+                  {t('agentsWorkflows.agents.edit')}
+                </Button>
+              </div>
+            )}
+          </div>
+        </header>
+      )}
 
-      <div className="border-x border-b border-ui-border bg-ui-surface">
-        <SegmentedTabs
-          activeValue={props.activeTab}
-          allPanelsMounted={false}
-          ariaLabel="Agent sections"
-          className="px-3"
-          idBase="agent-detail"
-          items={tabItems}
-          onValueChange={props.onTabChange}
-        />
-      </div>
-
-      <div
-        id={`agent-detail-${props.activeTab}-panel`}
-        role="tabpanel"
-        aria-labelledby={`agent-detail-${props.activeTab}-tab`}
-        className="min-h-0 flex-1 py-5"
-      >
+      <div className="flex min-h-0 flex-1 flex-col">
         {props.activeTab === 'chat' && props.chatContent}
         {props.activeTab === 'mcpServers' && (
-          <section className="rounded-lg border border-ui-border bg-ui-surface p-5">
-            <AgentCapabilitiesPanel agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="mcp" hideSectionNavigation />
-          </section>
+          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="mcp" />
         )}
         {props.activeTab === 'skills' && (
-          <section className="rounded-lg border border-ui-border bg-ui-surface p-5">
-            <AgentCapabilitiesPanel agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="skills" hideSectionNavigation />
-          </section>
+          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="skills" />
         )}
         {props.activeTab === 'tools' && (
-          <section className="rounded-lg border border-ui-border bg-ui-surface p-5">
-            <AgentCapabilitiesPanel agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="tools" hideSectionNavigation />
-          </section>
+          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="tools" />
         )}
         {props.activeTab === 'settings' && (
           <div className="space-y-5">
             <section className="rounded-lg border border-ui-border bg-ui-surface p-5">
-              <h2 className="type-panel-title">Workflow usage</h2>
+              <h2 className="type-panel-title">{t('agentChat.workflowUsage')}</h2>
               <p className="type-caption mt-1 text-ui-text-muted">
-                This Agent is assigned to {selectedAgent.workflowsUsingAgent.length} workflow{selectedAgent.workflowsUsingAgent.length === 1 ? '' : 's'}.
+                {t('agentChat.workflowUsageCount', { count: selectedAgent.workflowsUsingAgent.length })}
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 {selectedAgent.workflowsUsingAgent.length
                   ? selectedAgent.workflowsUsingAgent.map((workflow) => (
                     <a key={workflow} href={workflowHref(selectedAgent, workflow)} className="text-sm font-semibold text-accent-strong underline-offset-4 hover:underline">{workflow}</a>
                   ))
-                  : <span className="type-caption text-ui-text-muted">No workflows currently use this Agent.</span>}
+                  : <span className="type-caption text-ui-text-muted">{t('agentChat.noWorkflowUsage')}</span>}
               </div>
             </section>
 

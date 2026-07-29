@@ -88,6 +88,7 @@ export interface AgentConversationSummaryApi {
   title: string;
   createdBy: string;
   accessMode: AgentConversationAccessMode;
+  permissionMode?: RunPermissionMode;
   launchedAt?: string;
   createdAt: string;
 }
@@ -127,6 +128,7 @@ export interface AgentDefinitionApi {
   id: string;
   workspaceId: string;
   name: string;
+  avatarEmoji: string;
   description?: string;
   instructions?: string;
   status?: AgentStatus;

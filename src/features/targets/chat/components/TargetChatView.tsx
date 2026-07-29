@@ -30,6 +30,7 @@ import type { ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   target,
+  headerLeading,
   capabilityPreviewEnabled = true,
   titleKey,
   descriptionKey,
@@ -632,7 +633,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
         canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, target, composerActionLabel, composerAttachmentNotice: composerNotice,
         composerAttachments, composerReferences, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, deleteSessionError, deleteTargetSession,
         deletingSessionId, desktopHistoryPanelId, dismissReferenceMenu, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
-        handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerInputChange, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, historyButtonRef,
+        handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerInputChange, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, headerLeading, historyButtonRef,
         historyControlLabel, historyPanelRef, inputValue, isAssistantCapabilitiesPreviewLoading, isCancellingRun, isComposerRuntimeUnavailable, isFileDragActive, isHistoryOpen,
         isLoadingEarlierMessages, isModelMenuOpen, isModelSubmenuOpen, isPanel, isReferenceMenuOpen, isRunActive, isSessionsLoading, isSubmittingEdit, isWorkspaceAiSettingsLoading,
         lastUserMessageIndex, mobileHistoryPanelId, modelMenuPanelId, modelMenuRef, modelSelectorId, modelSubmenuButtonId, modelSubmenuPanelId, newChatUnavailableReason,
