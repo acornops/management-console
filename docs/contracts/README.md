@@ -84,14 +84,24 @@ The management console is the browser client for the control-plane API. Keep thi
   Each target or Agent installation has independent write-only connections, and
   workflows reuse the selected Agent installation. The console never persists
   credentials in browser storage.
+- Individual OAuth installations contain no provider, issuer, endpoint, client
+  ID, or client secret configuration. The console prepares OAuth through the
+  control plane, shows the safe authorization-server origin, CIMD or DCR method,
+  requested scopes, and any `offline_access` request, then requires explicit
+  consent before browser navigation. Multiple advertised issuers require an
+  explicit selection. Fixture mode rejects external OAuth before any request.
 - The console does not expose a built-in repository-review Agent, workflow, provider profile, or template setup branch. Workspace managers create a specialist Agent, attach and review any compatible MCP server from the Agent's generic MCP page, and then create a workflow selecting that Agent. Credential values remain write-only and never enter preview state or browser storage.
 - Manual workflow creation sends only operator-controlled fields. Mode, context grants, permissions, approvals, execution duration, and report retention are omitted so the control plane applies deployment-owned defaults. Creation fails closed until the authoritative workflow-options catalog has loaded; fallback catalogs contain no output, approval, runtime, or retention choices.
 - AI behavior drafts remain empty until workspace AI settings arrive, so the console does not invent a provider or model. An omitted production control-plane API base uses same-origin requests; local development retains the localhost fallback.
-- A blocked workflow capability preview opens the generic individual-credential dialog from `serverId`, `authType`, `owningAgent`, and `action`; it writes the credential to that owning Agent and retries the preview. The workflow UI never infers authentication from a provider name or profile identity.
+- A blocked workflow capability preview opens the matching individual
+  credential or OAuth authorization dialog from `serverId`, `authType`, owner,
+  and `action`. Static credentials remain write-only; OAuth uses prepare and
+  start operations and never infers configuration from a provider name.
 - Run-readiness recovery parses only the bounded `readinessFailures` contract at
   the API client boundary. Recovery
   links carry only `mcpServer` and `mcpAction`, focus the exact installation and
-  Connect or Verify control, and never invoke a mutation automatically. Target
+  Connect, Authorize, Reauthorize, or Verify control, and never invoke a
+  mutation automatically. Target
   failures describe the bounded, Markdown-escaped Kubernetes or VM tool name
   instead of implying that another MCP installation is required.
 - Successful Connect and Verify operations remain successful if the subsequent

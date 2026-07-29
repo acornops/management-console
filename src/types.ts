@@ -120,7 +120,7 @@ export interface ClusterToolCatalogServer {
   canDelete: boolean;
   canEditConnection: boolean;
   canToggle: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
+  authType: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credentialMode: 'none' | 'workspace' | 'individual';
   authHeaderName?: string;
   authHeaderPrefix?: string;

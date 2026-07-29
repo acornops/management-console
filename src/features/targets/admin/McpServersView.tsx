@@ -1,44 +1,36 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Plus, ShieldAlert } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { Button } from '@/components/common/Button';
 import { CollectionState } from '@/components/common/CollectionState';
 import { EmptyState } from '@/components/common/EmptyState';
 import { InlineLoadingIndicator } from '@/components/common/Loading';
-import { TargetMcpServerTestConnectionResult, controlPlaneApi, CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
+import { TargetMcpServerTestConnectionResult, controlPlaneApi } from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
-import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
 import { DeleteMcpServerDialog, McpServerFormDialog } from '@/features/targets/admin/McpServersDialogs';
 import { McpServerToolsDialog } from '@/features/targets/admin/McpServerToolsDialog';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
-import { TargetMcpCredentialDialog } from '@/features/targets/admin/TargetMcpCredentialDialog';
+import { McpInstallationConnectionDialog } from '@/features/catalog/McpInstallationConnectionDialog';
+import { useMcpOAuthReturnFeedback } from '@/features/catalog/useMcpOAuthReturnFeedback';
 import { McpServersViewHeader } from '@/features/targets/admin/McpServersViewHeader';
 import { applyToolCountsDelta, getOptimisticToolEffectiveState, pendingCatalogServer } from '@/features/targets/admin/McpServersView.helpers';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { useTargetMcpCredentialModeImpact } from '@/features/targets/admin/useTargetMcpCredentialModeImpact';
-import { McpServerMutationNotice } from '@/features/targets/admin/McpServerMutationNotice';
+import { McpServersNotices } from '@/features/targets/admin/McpServersNotices';
+import { parseMcpRecoveryAction } from '@/features/catalog/mcpConnectionActions';
+import type { McpServersViewProps } from '@/features/targets/admin/McpServersView.types';
 import {
   buildLocalCatalog,
   publicHeaderRowsFromRecord,
-  publicHeadersFromRows,
   DEFAULT_SERVER_FORM,
   flattenCatalogTools,
   formatMcpMutationError,
+  mcpServerFormSubmission,
   ServerFormState,
-  validatePublicHeaderRows
 } from '@/features/targets/admin/mcpServersCatalog';
-interface McpServersViewProps {
-  target: TargetDescriptor;
-  canManageMcp?: boolean;
-  canManageTools?: boolean;
-  canRequestWriteRuns?: boolean;
-  initialCatalog?: TargetToolCatalog | null;
-  onCatalogChange?: (catalog: TargetToolCatalog) => void;
-  onSyncTools?: (tools: TargetMcpToolSummary[]) => void;
-}
 export const McpServersView: React.FC<McpServersViewProps> = ({
   target,
   canManageMcp = false,
@@ -52,9 +44,8 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const urlSearch = useUrlSearchState();
   const recoveryServerId = urlSearch.get('mcpServer');
   const requestedMcpAction = urlSearch.get('mcpAction');
-  const recoveryAction = requestedMcpAction === 'connect_mcp_server' || requestedMcpAction === 'verify_mcp_server'
-    ? requestedMcpAction as 'connect_mcp_server' | 'verify_mcp_server'
-    : undefined;
+  const oauthResult = urlSearch.get('mcpOAuthResult');
+  const recoveryAction = parseMcpRecoveryAction(requestedMcpAction);
   const [catalog, setCatalog] = useState<TargetToolCatalog | null>(() => initialCatalog);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
@@ -175,9 +166,12 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   }, [loadCatalog, pendingAuthenticatedCreateServerId]);
   const {
     connect,
+    prepareOAuth,
+    startOAuth,
     disconnect,
     verify,
     retry,
+    reloadConnections,
     pendingServerId: pendingConnectionServerId,
     connections,
     connectionErrors,
@@ -193,6 +187,25 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   useEffect(() => {
     void loadCatalog();
   }, [loadCatalog]);
+  const oauthReturnPath = useMcpOAuthReturnFeedback({
+    result: oauthResult,
+    successMessage: t('mcpServers.oauthConnected'),
+    failureMessage: t('mcpServers.oauthAuthorizationFailed'),
+    verificationMessages: {
+      authenticationRejected: t('mcpServers.oauthAuthenticationRejected'),
+      discoveryResponseTooLarge: t('mcpServers.oauthDiscoveryResponseTooLarge'),
+      discoveryTimeout: t('mcpServers.oauthDiscoveryTimeout'),
+      egressBlocked: t('mcpServers.oauthEgressBlocked'),
+      endpointNotFound: t('mcpServers.oauthEndpointNotFound'),
+      endpointUnavailable: t('mcpServers.oauthEndpointUnavailable'),
+      protocolError: t('mcpServers.oauthProtocolError'),
+      toolDiscoveryFailed: t('mcpServers.oauthVerificationFailed')
+    },
+    setNotice: setServerMutationNotice,
+    setError: setServerMutationError,
+    onConnected: () => loadCatalog({ syncParent: true }).then(() => undefined),
+    onVerificationFailed: reloadConnections
+  });
   useEffect(() => {
     if (catalog) onCatalogChange?.(catalog);
   }, [catalog, onCatalogChange]);
@@ -257,44 +270,12 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setServerForm({ ...DEFAULT_SERVER_FORM, publicHeaders: [] });
   };
 
-  const authWasChanged = Boolean(editingServer && (
-    serverForm.authType !== editingServer.authType
-    || serverForm.credentialMode !== editingServer.credentialMode
-    || (serverForm.authType === 'custom_header' && serverForm.headerName.trim() !== (editingServer.authHeaderName || ''))
-  ));
-  const publicHeadersValidationError = useMemo(() => {
-    const validationKey = validatePublicHeaderRows(serverForm.publicHeaders);
-    return validationKey ? t(`mcpServers.${validationKey}`) : null;
-  }, [serverForm.publicHeaders, t]);
-  const serverFormIsValid =
-    Boolean(serverForm.name.trim()) &&
-    serverForm.url.trim().startsWith('https://') &&
-    !publicHeadersValidationError &&
-    (serverForm.authType !== 'custom_header' || Boolean(serverForm.headerName.trim()));
-
-  const buildAuthPayload = (): CreateTargetMcpServerInput['auth'] | undefined => {
-    if (
-      editingServer &&
-      !authWasChanged
-    ) {
-      return undefined;
-    }
-    if (serverForm.authType === 'none') return { type: 'none' };
-    const auth: CreateTargetMcpServerInput['auth'] = {
-      type: serverForm.authType
-    };
-    if (serverForm.authType === 'bearer_token') {
-      auth.headerName = 'Authorization';
-      auth.headerPrefix = 'Bearer ';
-    }
-    if (serverForm.authType === 'custom_header' && serverForm.headerName.trim()) {
-      auth.headerName = serverForm.headerName.trim();
-    }
-    return auth;
-  };
-  const buildPublicHeadersPayload = (
-    includeEmpty = false
-  ): CreateTargetMcpServerInput['publicHeaders'] | undefined => publicHeadersFromRows(serverForm.publicHeaders) || (includeEmpty ? {} : undefined);
+  const {
+    publicHeadersValidationError,
+    serverFormIsValid,
+    buildAuthPayload,
+    buildPublicHeadersPayload
+  } = mcpServerFormSubmission(serverForm, editingServer, t);
 
   const handleSubmitServer = async (credentialModeChangeConfirmed = false) => {
     if (!canEditServers || pendingServerMutation || credentialModeImpact.loading) return;
@@ -318,7 +299,9 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           name: serverForm.name.trim(),
           enabled: serverForm.enabled,
           publicHeaders: buildPublicHeadersPayload(true),
-          credentialMode: serverForm.authType === 'none' ? 'none' : serverForm.credentialMode,
+          credentialMode: serverForm.authType === 'none'
+            ? 'none'
+            : serverForm.authType === 'oauth' ? 'individual' : serverForm.credentialMode,
           auth: buildAuthPayload(),
           expectedRevision: editingServer.revision
         });
@@ -338,7 +321,9 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           url: serverForm.url.trim(),
           enabled: serverForm.enabled,
           publicHeaders: buildPublicHeadersPayload(),
-          credentialMode: serverForm.authType === 'none' ? 'none' : serverForm.credentialMode,
+          credentialMode: serverForm.authType === 'none'
+            ? 'none'
+            : serverForm.authType === 'oauth' ? 'individual' : serverForm.credentialMode,
           auth: buildAuthPayload()
         });
         const loadedCatalog = await loadCatalog({ syncParent: true });
@@ -510,34 +495,16 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         onConnectByUrl={openCreateServerModal}
       />
 
-      {toolRefreshError && (
-        <div className="type-caption mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
-          <span>{toolRefreshError}</span>
-          <Button size="sm" variant="secondary" onClick={() => toolRefreshServer ? void refreshConnectedServer(toolRefreshServer).catch(() => setToolRefreshError('The credential is connected, but tools may be stale. Refresh the MCP catalog to retry discovery.')) : void loadCatalog({ syncParent: true })}>{t('common.retry')}</Button>
-        </div>
-      )}
-
-      {hasAgentWriteBlockedTools && (
-        <section className="mb-5 rounded-lg border border-status-warning/30 bg-status-warning-soft px-4 py-3 text-status-warning-text">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex min-w-0 gap-3">
-              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
-              <div className="min-w-0">
-                <h2 className="type-row-title">{t('mcpServers.agentWriteModeNoticeTitle')}</h2>
-                <p className="type-caption mt-1">{t('mcpServers.agentWriteModeNoticeBody')}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {hasConfiguredWriteTools && !canRequestWriteRuns && (
-        <div className="type-caption mb-5 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
-          {t('mcpServers.roleWriteNotice')}
-        </div>
-      )}
-
-      <McpServerMutationNotice message={serverMutationNotice} />
+      <McpServersNotices
+        toolRefreshError={toolRefreshError}
+        hasAgentWriteBlockedTools={hasAgentWriteBlockedTools}
+        hasConfiguredWriteTools={hasConfiguredWriteTools}
+        canRequestWriteRuns={canRequestWriteRuns}
+        mutationNotice={serverMutationNotice}
+        onRetryToolRefresh={() => toolRefreshServer
+          ? void refreshConnectedServer(toolRefreshServer).catch(() => setToolRefreshError('The credential is connected, but tools may be stale. Refresh the MCP catalog to retry discovery.'))
+          : void loadCatalog({ syncParent: true })}
+      />
 
       <CollectionState
         phase={catalogPhase}
@@ -585,7 +552,16 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           onRetry={(targetServer) => void retry(targetServer)}
         />
       </CollectionState>
-      <TargetMcpCredentialDialog server={credentialDialogServer} connection={credentialDialogServer ? connections[credentialDialogServer.id] : undefined} retryAfterSeconds={credentialDialogServer ? retryAfterSecondsFor(credentialDialogServer.id) : 0} onClose={() => setCredentialDialogServer(null)} onSubmit={async (credential) => { if (!credentialDialogServer) return; const connection = await connect(credentialDialogServer, credential); if (connection?.status === 'connected') clearSuccessfulRecovery(credentialDialogServer.id); setCredentialDialogServer(null); }} />
+      <McpInstallationConnectionDialog
+        installation={credentialDialogServer}
+        connection={credentialDialogServer ? connections[credentialDialogServer.id] : undefined}
+        returnPath={oauthReturnPath}
+        retryAfterSeconds={credentialDialogServer ? retryAfterSecondsFor(credentialDialogServer.id) : 0}
+        onClose={() => setCredentialDialogServer(null)}
+        onCredentialSubmit={async (credential) => { if (!credentialDialogServer) return; const connection = await connect(credentialDialogServer, credential); if (connection?.status === 'connected') clearSuccessfulRecovery(credentialDialogServer.id); setCredentialDialogServer(null); }}
+        onPrepareOAuth={async (returnPath) => credentialDialogServer ? prepareOAuth(credentialDialogServer, returnPath) : undefined}
+        onStartOAuth={async (preparationHandle, issuer) => credentialDialogServer ? startOAuth(credentialDialogServer, preparationHandle, issuer) : undefined}
+      />
       <AnimatePresence>
         {activeServerWithPagedTools && (
           <McpServerToolsDialog

@@ -404,7 +404,7 @@ export interface ControlPlaneClusterToolCatalogServer {
   canDelete: boolean;
   canEditConnection: boolean;
   canToggle?: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
+  authType: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credentialMode: 'none' | 'workspace' | 'individual';
   authHeaderName?: string;
   authHeaderPrefix?: string;
@@ -443,7 +443,7 @@ export interface ControlPlaneMcpServer {
   server_name: string;
   server_url: string;
   enabled: boolean;
-  auth_type: 'none' | 'bearer_token' | 'custom_header';
+  auth_type: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credential_mode: 'none' | 'workspace' | 'individual';
   auth_header_name?: string;
   auth_header_prefix?: string;
@@ -479,7 +479,7 @@ export interface TargetMcpServerToolInput {
 }
 
 export interface TargetMcpServerAuthInput {
-  type?: 'none' | 'bearer_token' | 'custom_header';
+  type?: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   headerName?: string;
   headerPrefix?: string;
 }

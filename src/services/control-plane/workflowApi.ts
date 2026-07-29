@@ -104,7 +104,6 @@ export interface WorkflowSessionResponse {
     workflowVersion: number;
   } & Record<string, unknown>;
 }
-
 export type WorkflowCapabilityPreviewReasonCode =
   | 'TARGET_REQUIRED' | 'TARGET_NOT_FOUND' | 'TARGET_TYPE_MISMATCH' | 'TARGET_OFFLINE'
   | 'TARGET_STATUS_UNKNOWN' | 'TARGET_WRITE_UNSUPPORTED' | 'CAPABILITY_MAPPING_UNAVAILABLE'
@@ -133,14 +132,20 @@ export interface WorkflowCapabilityToolPreview {
 interface WorkflowMcpRequirementPreviewBase {
   serverId: string;
   serverName: string;
-  authType: 'bearer_token' | 'custom_header';
+  authType: 'bearer_token' | 'custom_header' | 'oauth';
   connectionState: 'connection_missing' | 'connection_error' | 'connected';
   authRequirement: {
     scope: 'workspace' | 'individual';
     credentialLabel: string;
     requiredInformation: Array<{ name: string; description: string }>;
   };
-  action: 'connect_mcp_server' | 'verify_mcp_server' | 'none';
+  action:
+    | 'connect_mcp_server'
+    | 'authorize_mcp_server'
+    | 'select_authorization_server'
+    | 'reauthorize_mcp_server'
+    | 'verify_mcp_server'
+    | 'none';
 }
 
 export type WorkflowMcpRequirementPreview = WorkflowMcpRequirementPreviewBase & (

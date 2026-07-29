@@ -31,6 +31,34 @@ describe('formatControlPlaneError', () => {
     expect(formatControlPlaneError(error, 'Fallback', { area: 'targetSkills' })).toBe('Repo Url: Required');
   });
 
+  it('turns MCP endpoint validation failures into actionable guidance', () => {
+    expect(
+      formatControlPlaneError(
+        controlPlaneError(
+          400,
+          'VALIDATION_ERROR',
+          'Remote MCP endpoint must be an absolute HTTPS URL'
+        ),
+        'Failed adding MCP server.',
+        { area: 'mcp' }
+      )
+    ).toBe('Enter the complete HTTPS URL for the remote MCP endpoint.');
+
+    expect(
+      formatControlPlaneError(
+        controlPlaneError(
+          400,
+          'VALIDATION_ERROR',
+          'MCP server URL resolves to a blocked private, local, or reserved address'
+        ),
+        'Failed adding MCP server.',
+        { area: 'mcp' }
+      )
+    ).toBe(
+      'This address is blocked by the MCP network policy. Ask a platform operator to allow the hostname or private network.'
+    );
+  });
+
   it('maps skill import errors to specific recovery copy', () => {
     const error = controlPlaneError(400, 'INVALID_SKILL_BUNDLE', 'Invalid bundle');
 

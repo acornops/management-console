@@ -32,7 +32,7 @@ test('authenticated target creation enters credential verification before pendin
   await page.getByLabel('Server Name').fill('Target credential server');
   await page.getByLabel('Server URL').fill('https://mcp.fixture.acornops.dev/target');
   await selectOption(page, 'Auth Type', 'Bearer Token');
-  await page.getByRole('button', { name: 'Review tools' }).click();
+  await page.getByRole('button', { name: 'Continue to credentials' }).click();
 
   await expect(page.getByRole('heading', { name: 'Connect your credential' })).toBeVisible();
   await expect(page.getByText('fixture_discovered_tool')).toHaveCount(0);

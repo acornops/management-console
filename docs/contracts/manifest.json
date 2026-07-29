@@ -132,7 +132,7 @@
       },
       "mcpRecoveryRouteState": {
         "query": ["mcpServer", "mcpAction"],
-        "actions": ["connect_mcp_server", "verify_mcp_server"],
+        "actions": ["connect_mcp_server", "authorize_mcp_server", "select_authorization_server", "reauthorize_mcp_server", "verify_mcp_server"],
         "automaticMutation": false,
         "clearAfterSuccessfulRepair": true
       },
@@ -231,8 +231,11 @@
       "catalogFields": [
         "catalogArtifact.{id,sourceId,artifactKind=mcp_server,name,title?,description,version,digest,compatible,incompatibilityReason?,remoteEndpoints,publishedAt?,upstreamUpdatedAt?}",
         "catalogInstallation.{scopeType,destinationId,revision,provenance.{sourceId,artifactName,version,digest,importedAt}}",
-        "credentialConnection.{serverId,credentialMode,status=missing|connected|error,managementScope,canManage,authType,action?}",
+        "credentialConnection.{serverId,credentialMode,status=missing|pending_authorization|connected|reauthorization_required|error,managementScope,canManage,authType,action?,issuerOrigin?,registrationMethod?,scopes?,tokenExpiresAt?,refreshCapable?,errorCode?}",
         "credentialConnectionMutation.{credential<=8192 UTF-8 bytes,consentGranted=true,workspace requires manage_mcp,individual requires current user + run capability}",
+        "oauthPreparation.{preparationHandle,resourceOrigin,issuerSelectionRequired,candidates[].{issuer,issuerOrigin,registrationMethod=cimd|dcr,scopes,offlineAccessRequested}}",
+        "oauthStart.{preparationHandle,issuer?,consentGranted=true}->{authorizationUrl}",
+        "oauthPublicRoutes.{GET|HEAD /api/v1/mcp/oauth/client-metadata,GET /api/v1/mcp/oauth/callback}",
         "permissions.canEdit",
         "permissions.editableRoles",
         "mcpCatalog.{workspaceId,targetId?,targetType?,clusterId?}",

@@ -20,6 +20,17 @@ import { formatDiscoveryTimestamp, isManagedMcpServer } from '@/features/targets
 import type { McpConnection } from '@/services/control-plane/catalogApi';
 import { useFloatingActionMenu } from '@/hooks/useFloatingActionMenu';
 import { formatUserDateTime } from '@/utils/dateTime';
+import {
+  mcpConnectAction,
+  showsMcpConnectionAction
+} from '@/features/catalog/mcpConnectionActions';
+import {
+  MCP_CONNECTION_STATUS_KEYS,
+  MCP_VERIFICATION_DETAIL_KEYS,
+  MCP_VERIFICATION_STATUS_KEYS,
+  mcpVerificationKind,
+  oauthAuthorizationCompletedDespiteVerificationFailure
+} from '@/features/catalog/mcpVerificationPresentation';
 
 interface McpServerCardProps {
   server: TargetToolCatalogServer;
@@ -31,7 +42,7 @@ interface McpServerCardProps {
   connectionLoadError?: string;
   pendingConnection: boolean;
   retryAfterSeconds: number;
-  recoveryAction?: 'connect_mcp_server' | 'verify_mcp_server';
+  recoveryAction?: 'connect_mcp_server' | 'authorize_mcp_server' | 'select_authorization_server' | 'reauthorize_mcp_server' | 'verify_mcp_server';
   onManageTools: (serverId: string) => void;
   onTestConnection: (server: TargetToolCatalogServer) => void;
   onToggleServer: (server: TargetToolCatalogServer, enabled: boolean) => void;
@@ -143,6 +154,27 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
       : 'text-ui-text-muted';
   const connectionDisabled = pendingConnection || !connection?.canManage || retryAfterSeconds > 0;
   const hasCredential = server.credentialMode !== 'none';
+  const isOAuth = server.authType === 'oauth';
+  const verificationKind = mcpVerificationKind(connection?.errorCode);
+  const connectionStatus = connection
+    ? t(connection.status === 'error'
+      ? MCP_VERIFICATION_STATUS_KEYS[verificationKind]
+      : MCP_CONNECTION_STATUS_KEYS[connection.status])
+    : t('mcpServers.connectionStatusLoading');
+  const connectionErrorDetail = connection?.status === 'error'
+    ? t(isOAuth
+      ? MCP_VERIFICATION_DETAIL_KEYS[verificationKind]
+      : 'mcpServers.credentialConnectionVerificationDetail')
+    : '';
+  const oauthAuthorizationComplete = isOAuth
+    && oauthAuthorizationCompletedDespiteVerificationFailure(connection?.status, connection?.errorCode);
+  const showsConnectionAction = showsMcpConnectionAction(server.authType, connection?.action);
+  const connectAction = mcpConnectAction(server.authType, connection?.action);
+  const highlightsOAuthAuthorization = isOAuth && (
+    recoveryAction === 'authorize_mcp_server'
+    || recoveryAction === 'select_authorization_server'
+    || recoveryAction === 'reauthorize_mcp_server'
+  );
   React.useEffect(() => {
     if (!recoveryAction) return;
     rowRef.current?.scrollIntoView({ block: 'center' });
@@ -228,13 +260,17 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               }}
             >
               {pendingConnection ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-ui-text-muted" aria-hidden="true" /> : <RefreshCcw className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />}
-              <span>{retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : t('mcpServers.verifyCredential')}</span>
+              <span>
+                {retryAfterSeconds > 0
+                  ? t('mcpServers.tryAgainIn', { seconds: retryAfterSeconds })
+                  : t(isOAuth ? 'mcpServers.verifyConnection' : 'mcpServers.verifyCredential')}
+              </span>
             </MenuItem>
           )}
-          {hasCredential && !connectionLoadError && connection?.canManage && (
+          {hasCredential && !connectionLoadError && connection?.canManage && showsConnectionAction && (
             <MenuItem
-              ref={recoveryAction === 'connect_mcp_server' ? recoveryActionRef : undefined}
-              data-mcp-action="connect_mcp_server"
+              ref={recoveryAction === connectAction || highlightsOAuthAuthorization ? recoveryActionRef : undefined}
+              data-mcp-action={connectAction}
               disabled={connectionDisabled}
               onClick={() => {
                 closeActionMenu();
@@ -242,10 +278,22 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               }}
             >
               <Link2 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-              <span>{retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : connection.status === 'missing' ? t(server.credentialMode === 'workspace' ? 'mcpServers.connectWorkspaceCredential' : 'mcpServers.connectIndividualCredential') : t('mcpServers.replaceCredential')}</span>
+              <span>
+                {retryAfterSeconds > 0
+                  ? t('mcpServers.tryAgainIn', { seconds: retryAfterSeconds })
+                  : isOAuth
+                    ? t(connection.status === 'reauthorization_required'
+                      ? 'mcpServers.oauthReauthorizationRequired'
+                      : 'mcpServers.oauthAuthorizationRequired')
+                    : connection.status === 'missing'
+                      ? t(server.credentialMode === 'workspace'
+                        ? 'mcpServers.connectWorkspaceCredential'
+                        : 'mcpServers.connectIndividualCredential')
+                      : t('mcpServers.replaceCredential')}
+              </span>
             </MenuItem>
           )}
-          {hasCredential && !connectionLoadError && connection?.canManage && (connection.status === 'connected' || connection.status === 'error') && (
+          {hasCredential && !connectionLoadError && connection?.canManage && connection.status !== 'missing' && (
             <MenuItem
               disabled={connectionDisabled}
               onClick={() => {
@@ -293,7 +341,19 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               connectionLoadError
                 ? <p role="alert" className="type-caption mt-1 text-status-danger-text">{t('mcpServers.connectionLoadFailed')}</p>
                 : <>
-                    <p className="type-caption mt-1 text-ui-text-muted">{t(server.credentialMode === 'workspace' ? 'mcpServers.workspaceConnectionStatus' : 'mcpServers.individualConnectionStatus', { status: connection?.status || 'loading' })}</p>
+                    {oauthAuthorizationComplete && (
+                      <p className="type-caption mt-1 text-status-success-text">
+                        {t('mcpServers.oauthAuthorizationStatus', {
+                          status: t('mcpServers.oauthAuthorizationComplete')
+                        })}
+                      </p>
+                    )}
+                    <p className="type-caption mt-1 text-ui-text-muted">{t(server.credentialMode === 'workspace' ? 'mcpServers.workspaceConnectionStatus' : 'mcpServers.individualConnectionStatus', { status: connectionStatus })}</p>
+                    {connectionErrorDetail && (
+                      <p role="alert" className="type-caption mt-1 max-w-[56ch] text-status-danger-text">
+                        {connectionErrorDetail}
+                      </p>
+                    )}
                     {connection?.verifiedAt && (
                       <p className="type-caption mt-1 text-ui-text-muted">{t('mcpServers.lastVerified', { date: formatUserDateTime(connection.verifiedAt) })}</p>
                     )}

@@ -277,7 +277,7 @@ const agentCapabilityBase = (workspaceId: string, agentId: string) => `/api/v1/w
 export function listAgentMcpServers(workspaceId: string, agentId: string): Promise<AgentMcpServerApi[]> {
   return requestJson<{ items: AgentMcpServerApi[] }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`).then((response) => response.items);
 }
-export function createAgentMcpServer(workspaceId: string, agentId: string, input: { name: string; url: string; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: 'none' | 'bearer_token' | 'custom_header'; authHeaderName?: string }): Promise<AgentMcpServerApi> {
+export function createAgentMcpServer(workspaceId: string, agentId: string, input: { name: string; url: string; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: 'none' | 'bearer_token' | 'custom_header' | 'oauth'; authHeaderName?: string }): Promise<AgentMcpServerApi> {
   return requestJson<{ server: AgentMcpServerApi }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.server);
 }
 export function updateAgentMcpServer(workspaceId: string, agentId: string, serverId: string, input: Record<string, unknown>): Promise<AgentMcpServerApi> {

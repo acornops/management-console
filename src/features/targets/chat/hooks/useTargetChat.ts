@@ -45,7 +45,6 @@ import {
 import { isInFlightAssistantMessage } from '@/features/targets/chat/hooks/chatMessageVisibility';
 import { useTargetChatSessionDeepLink } from '@/features/targets/chat/hooks/useTargetChatSessionDeepLink';
 export type { TargetChatController } from '@/features/targets/chat/hooks/targetChatControllerTypes';
-
 export function useTargetChat({
   target,
   currentUserId,
