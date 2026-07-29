@@ -8,6 +8,7 @@ import { TargetChatReferenceChips, TargetChatReferenceMenu } from '@/features/ta
 import { formatAttachmentSize, providerLabel } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
 import type { ReasoningEffort } from '@/types';
+import { FileInput, Textarea } from '@acornops/ui';
 
 type TargetChatComposerProps = Pick<
   TargetChatViewBodyProps,
@@ -184,7 +185,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                           isPanel ? 'h-20 w-20' : 'h-24 w-24'
                         } relative flex shrink-0 flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface text-left shadow-sm`}
                       >
-                        <button
+                        <Button
                           type="button"
                           onClick={() => removeComposerAttachment(attachment.id)}
                           className="control-target absolute right-1 top-1 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border border-ui-border bg-ui-bg text-ui-text shadow-sm transition-colors hover:bg-ui-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
@@ -193,7 +194,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                           })}
                         >
                           <X className="h-3.5 w-3.5" />
-                        </button>
+                        </Button>
                         <div className="flex min-h-0 flex-1 items-center justify-center bg-ui-bg">
                           {isImagePreview ? (
                             <img src={attachment.previewUrl} alt="" className="h-full w-full object-cover" />
@@ -220,7 +221,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             </div>
           )}
           <div className="px-4 pb-0 pt-0.5">
-            <textarea
+            <Textarea
               ref={composerTextareaRef}
               value={inputValue}
               onChange={(event) => handleComposerInputChange(event.target.value, event.target.selectionStart)}
@@ -240,7 +241,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
           </div>
           <div className="flex items-center gap-2 px-2 pb-0.5">
             <Tooltip content={t('chat.attachFiles')}>
-              <button
+              <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!canPost || isRunActive}
@@ -248,9 +249,9 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 aria-label={t('chat.attachFiles')}
               >
                 <Plus className="h-4 w-4" />
-              </button>
+              </Button>
             </Tooltip>
-            <input ref={fileInputRef} type="file" multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive} />
+            <FileInput ref={fileInputRef} multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive} />
             <span className="min-w-0 flex-1" aria-hidden="true" />
             <div className="inline-flex h-8 items-center rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60">
               <AssistantCapabilityPreviewControl
@@ -262,7 +263,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               />
               <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
               <div ref={modelMenuRef} className="relative">
-                <button
+                <Button
                   type="button"
                   id={modelSelectorId}
                   onClick={() => {
@@ -278,7 +279,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 >
                   <span className="truncate">{composerModelOptions.length > 0 ? `${selectedModelLabel} ${selectedEffortLabel}` : selectedModelLabel}</span>
                   <ChevronDown className="h-4 w-4 shrink-0" />
-                </button>
+                </Button>
                 <AnimatePresence>
                   {isModelMenuOpen && (
                     <motion.div
@@ -295,7 +296,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                       {allowedReasoningOptions.map((option) => {
                         const isSelected = option.value === selectedEffort;
                         return (
-                          <button
+                          <Button
                             key={option.value}
                             type="button"
                             onClick={() => handleModelAndEffortChange(option.value as ReasoningEffort)}
@@ -304,12 +305,12 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                           >
                             <span>{t(option.labelKey)}</span>
                             {isSelected && <Check className="h-4 w-4 text-accent-strong" />}
-                          </button>
+                          </Button>
                         );
                       })}
                       <div className="my-2 border-t border-ui-border" />
                       <div className="relative" onMouseEnter={() => setIsModelSubmenuOpen(true)}>
-                        <button
+                        <Button
                           type="button"
                           id={modelSubmenuButtonId}
                           onClick={() => setIsModelSubmenuOpen((current) => !current)}
@@ -319,7 +320,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                         >
                           <span>{selectedModelLabel}</span>
                           <ChevronRight className="h-4 w-4 text-ui-text-muted" />
-                        </button>
+                        </Button>
                         <AnimatePresence>
                           {isModelSubmenuOpen && (
                             <motion.div
@@ -342,7 +343,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                               {composerModelOptions.map((option) => {
                                 const isSelected = option.provider === selectedProvider && option.model === selectedModel;
                                 return (
-                                  <button
+                                  <Button
                                     key={`${option.provider}:${option.model}`}
                                     type="button"
                                     onClick={() => handleModelChange(option)}
@@ -354,7 +355,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                                       <span className="block truncate text-xs text-ui-text-muted">{providerLabel(option.provider)}</span>
                                     </span>
                                     {isSelected && <Check className="h-4 w-4 shrink-0 text-accent-strong" />}
-                                  </button>
+                                  </Button>
                                 );
                               })}
                             </motion.div>

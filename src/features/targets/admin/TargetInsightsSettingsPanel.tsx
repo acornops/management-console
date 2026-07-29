@@ -4,6 +4,7 @@ import type { WorkspaceAiSettings } from '@/types';
 import type { SettingsDraft } from '@/features/targets/admin/targetInsightsDialogViewModel';
 import { Checkbox } from '@acornops/ui';
 import { Select } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
 
 interface TargetInsightsSettingsPanelProps {
   settingsDraft: SettingsDraft;
@@ -65,7 +66,7 @@ export const TargetInsightsSettingsPanel: React.FC<TargetInsightsSettingsPanelPr
         {numericSettingsFields.map((field) => (
           <label key={field.key} className="block">
             <span className="type-label">{field.label}</span>
-            <input
+            <TextInput
               type="number"
               min={field.min}
               max={field.max}

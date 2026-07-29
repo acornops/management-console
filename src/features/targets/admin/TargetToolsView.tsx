@@ -21,6 +21,7 @@ import { TargetInsightsResetDialog } from '@/features/targets/admin/TargetInsigh
 import { TargetInsightsSettingsDialog } from '@/features/targets/admin/TargetInsightsSettingsDialog';
 import { TargetToolRow } from '@/features/targets/admin/TargetToolRow';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
+import { TextInput, Textarea } from '@acornops/ui';
 
 interface TargetToolsViewProps {
   target: TargetDescriptor;
@@ -437,7 +438,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               <div className="relative min-w-0">
                 <label htmlFor="target-tool-search" className="sr-only">{t('tools.searchTools')}</label>
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-                <input
+                <TextInput
                   id="target-tool-search"
                   type="text"
                   value={toolSearch}
@@ -588,7 +589,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 <div>
                   <label htmlFor="tool-allowed-domains" className="type-label">{t('tools.allowedDomains')}</label>
                   <p className="type-caption mt-1 text-ui-text-muted">{t('tools.allowedDomainsHelp')}</p>
-                  <textarea
+                  <Textarea
                     id="tool-allowed-domains"
                     rows={6}
                     className={toolDomainTextareaClassName}
@@ -607,7 +608,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 <div>
                   <label htmlFor="tool-blocked-domains" className="type-label">{t('tools.blockedDomains')}</label>
                   <p className="type-caption mt-1 text-ui-text-muted">{t('tools.blockedDomainsHelp')}</p>
-                  <textarea
+                  <Textarea
                     id="tool-blocked-domains"
                     rows={6}
                     className={toolDomainTextareaClassName}

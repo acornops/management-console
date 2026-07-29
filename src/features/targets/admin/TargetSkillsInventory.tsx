@@ -12,6 +12,7 @@ import { formInputClassName } from '@acornops/ui';
 import type { ControlPlaneTargetSkillsCatalog } from '@/services/controlPlaneApi';
 import { sourceLabel, summarizeBytes, syncLabel } from '@/features/targets/admin/targetSkillsViewModel';
 import { useFloatingActionMenu } from '@acornops/ui';
+import { Button, TextInput } from '@acornops/ui';
 
 type TargetSkillSummary = ControlPlaneTargetSkillsCatalog['items'][number];
 
@@ -137,7 +138,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
         {skill.bundleStats.fileCount} files, {summarizeBytes(skill.bundleStats.totalBytes)}
       </td>
       <td className="px-4 py-6 text-right sm:px-6 lg:px-8">
-        <button
+        <Button
           ref={actionMenuButtonRef}
           data-target-skill-primary-actions="true"
           type="button"
@@ -149,7 +150,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
           aria-label={t('targetSkills.actionsNamed', { name: skill.name })}
         >
           <MoreVertical className="h-4 w-4" aria-hidden="true" />
-        </button>
+        </Button>
         {actionMenu}
       </td>
     </tr>
@@ -250,7 +251,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
               {t('targetSkills.searchSkills')}
             </label>
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-            <input
+            <TextInput
               id="target-skill-search"
               type="text"
               value={skillSearch}

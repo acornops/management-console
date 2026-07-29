@@ -388,14 +388,14 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   <div className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} mx-auto space-y-5 pb-2`}>
                     {hasEarlierMessages && (
                       <div className="flex justify-center">
-                        <button
+                        <Button
                           type="button"
                           onClick={() => void onLoadEarlierMessages()}
                           disabled={isLoadingEarlierMessages}
                           className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isLoadingEarlierMessages ? t('chat.loadingEarlier') : t('chat.loadEarlier')}
-                        </button>
+                        </Button>
                       </div>
                     )}
                     {visibleMessages.map((message, messageIndex) => {

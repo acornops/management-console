@@ -6,6 +6,7 @@ import { BookOpen, Wrench } from 'lucide-react';
 import { MessageActions } from '@/features/targets/chat/components/MessageActions';
 import { markdownRemarkPlugins } from '@/features/targets/chat/lib/markdown';
 import type { ChatMessage } from '@/types';
+import { Textarea } from '@acornops/ui';
 
 interface UserMessageTurnProps {
   message: ChatMessage;
@@ -59,7 +60,7 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
                 onSubmitEdit();
               }}
             >
-              <textarea
+              <Textarea
                 ref={textareaRef}
                 value={editValue}
                 onChange={(event) => onEditValueChange(event.target.value)}

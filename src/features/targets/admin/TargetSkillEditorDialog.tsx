@@ -16,6 +16,7 @@ import {
   type SkillEditorMode,
   type SkillEditorStep
 } from '@/features/targets/admin/targetSkillsViewModel';
+import { TextInput, Textarea } from '@acornops/ui';
 
 const skillNameInputClassName = formInputClassName('px-4 font-medium');
 
@@ -149,7 +150,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
           <div className="rounded-lg border border-ui-border bg-ui-bg p-5">
             <label className="space-y-1">
               <span className="type-label px-1">Skill name</span>
-              <input
+              <TextInput
                 value={createName}
                 onChange={(event) => onCreateNameChange(event.target.value)}
                 placeholder="Troubleshooting CNPG"
@@ -221,7 +222,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 </div>
               )}
               <div className="min-h-0 flex-1 p-4">
-                <textarea
+                <Textarea
                   value={activeFile?.content || ''}
                   readOnly={!canEditSkills || !activeFile}
                   onChange={(event) => updateActiveFile(event.target.value)}

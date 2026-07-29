@@ -16,6 +16,7 @@ import {
 } from '@acornops/ui';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { TextInput } from '@acornops/ui';
 
 export type VmResourceCategory = 'all' | 'services' | 'processes' | 'network' | 'logs';
 
@@ -202,7 +203,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           <div className="relative min-w-0">
             <label htmlFor="vm-resource-search" className="sr-only">{t('virtualMachines.resources.search')}</label>
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-            <input
+            <TextInput
               id="vm-resource-search"
               type="search"
               value={resourceSearchTerm}

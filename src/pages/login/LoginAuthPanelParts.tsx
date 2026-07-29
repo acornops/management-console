@@ -2,6 +2,7 @@ import React from 'react';
 import { ICONS } from '@/constants';
 import { FieldValidationMessage, fieldInvalidClass } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
+import { Button, TextInput } from '@acornops/ui';
 
 export const fieldWrapClass = 'relative block';
 export const inputClass = formInputClassName('px-4');
@@ -55,7 +56,7 @@ export function EmailField({
       <span className="mb-2 block type-label">{label}</span>
       <span className={fieldWrapClass}>
         <ICONS.Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
-        <input
+        <TextInput
           id={id}
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -104,7 +105,7 @@ export function PasswordField({
       <span className="mb-2 block type-label">{label}</span>
       <span className={fieldWrapClass}>
         <ICONS.Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
-        <input
+        <TextInput
           id={id}
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -144,7 +145,7 @@ export function OidcLoginButton({
   label: string;
 }) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onLogin}
       disabled={isAuthLoading}
@@ -160,7 +161,7 @@ export function OidcLoginButton({
           <span>{label}</span>
         </>
       )}
-    </button>
+    </Button>
   );
 }
 
@@ -169,14 +170,14 @@ export function SignupSwitchFooter({ isAuthLoading, onSwitch, prompt, actionLabe
     <div className="border-t border-ui-border bg-ui-bg p-6 text-center">
       <p className="text-sm font-medium text-ui-text-muted">
         {prompt}{' '}
-        <button
+        <Button
           type="button"
           onClick={onSwitch}
           disabled={isAuthLoading}
           className="control-target rounded-sm type-ui text-accent-readable transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {actionLabel}
-        </button>
+        </Button>
       </p>
     </div>
   );

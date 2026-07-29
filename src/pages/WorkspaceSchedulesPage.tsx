@@ -48,6 +48,7 @@ import {
 import { WorkspaceScheduleDeleteDialog } from '@/pages/WorkspaceScheduleDeleteDialog';
 import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
+import { TextInput, Textarea } from '@acornops/ui';
 
 interface WorkspaceSchedulesPageProps {
   workspace: Workspace;
@@ -546,7 +547,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
               </label>
               <label className="block text-sm font-semibold text-ui-text">
                 {t('schedules.form.name')}
-                <input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className={scheduleFormInputClassName} />
+                <TextInput value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className={scheduleFormInputClassName} />
               </label>
               <div className="block text-sm font-semibold text-ui-text">
                 {t('schedules.form.runsAs')}
@@ -558,12 +559,12 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-ui-text">
                   {t('schedules.form.cron')}
-                  <input value={draft.cron} onChange={(event) => setDraft((current) => ({ ...current, cron: event.target.value }))} className={scheduleFormInputClassName} />
+                  <TextInput value={draft.cron} onChange={(event) => setDraft((current) => ({ ...current, cron: event.target.value }))} className={scheduleFormInputClassName} />
                   <span className="type-caption mt-1 block font-normal text-ui-text-muted">{t('schedules.form.cronHelp')}</span>
                 </label>
                 <label className="block text-sm font-semibold text-ui-text">
                   {t('schedules.form.timezone')}
-                  <input value={draft.timezone} onChange={(event) => setDraft((current) => ({ ...current, timezone: event.target.value }))} className={scheduleFormInputClassName} />
+                  <TextInput value={draft.timezone} onChange={(event) => setDraft((current) => ({ ...current, timezone: event.target.value }))} className={scheduleFormInputClassName} />
                 </label>
               </div>
               <label className="flex items-center gap-3 text-sm font-semibold text-ui-text">
@@ -572,7 +573,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
               </label>
               <label className="block text-sm font-semibold text-ui-text">
                 {t('schedules.form.approvedContextGrants')}
-                <textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className={scheduleFormTextareaClassName} />
+                <Textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className={scheduleFormTextareaClassName} />
                 <span className="type-caption mt-1 block font-normal text-ui-text-muted">{t('schedules.form.approvedContextGrantsHelp')}</span>
               </label>
               {workflows.find((workflow) => workflow.id === draft.workflowId) ? (

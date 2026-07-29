@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { AlertCircle, BotMessageSquare, MessageSquare } from 'lucide-react';
+import { Button } from '@acornops/ui';
 
 interface ChatEmptyPromptProps {
   isPanel: boolean;
@@ -32,7 +33,7 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
       </div>
       <div className={`mt-5 grid grid-cols-1 gap-2 ${isPanel ? '' : 'md:grid-cols-2'}`}>
         {suggestions.map((suggestion) => (
-          <button
+          <Button
             key={suggestion.key}
             type="button"
             onClick={() => void onSendSuggestion(suggestion.label)}
@@ -41,7 +42,7 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
           >
             <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" />
             <span className="min-w-0 break-words">{suggestion.label}</span>
-          </button>
+          </Button>
         ))}
       </div>
     </motion.div>

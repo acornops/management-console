@@ -17,6 +17,7 @@ import {
   WorkloadCategoryCounts,
   workloadCategories
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
+import { Button, TextInput } from '@acornops/ui';
 
 type ResourceCategoryValue = 'All' | Workload['type'] | NetworkResourceCategory | StorageResourceCategory | ClusterResourceCategory;
 
@@ -33,7 +34,7 @@ export const WorkloadTriageShortcut: React.FC<{
 
   return (
     <div className="flex min-w-0 w-full max-w-full lg:w-auto lg:shrink-0">
-      <button
+      <Button
         type="button"
         aria-label={t('resources.filters.unhealthyPodsCount', {
           count: unhealthyPodCount
@@ -64,7 +65,7 @@ export const WorkloadTriageShortcut: React.FC<{
             {unhealthyPodCount}
           </span>
         )}
-      </button>
+      </Button>
     </div>
   );
 };
@@ -176,7 +177,7 @@ export const ResourceSearchFilterBar: React.FC<{
               {t('resources.filters.search')}
             </label>
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-            <input
+            <TextInput
               id="resource-search"
               type="search"
               value={searchTerm}

@@ -15,6 +15,7 @@ import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlan
 import { User } from '@/types';
 import { formatUserDate } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
+import { TextInput } from '@acornops/ui';
 
 interface UserSettingsPageProps {
   user: User;
@@ -80,7 +81,7 @@ const PasswordField: React.FC<{
 }> = ({ id, label, value, autoComplete, onChange }) => (
   <label className="block">
     <span className="mb-2 block type-label">{label}</span>
-    <input id={id} type="password" value={value} autoComplete={autoComplete} onChange={(event) => onChange(event.target.value)} className={inputClassName} />
+    <TextInput id={id} type="password" value={value} autoComplete={autoComplete} onChange={(event) => onChange(event.target.value)} className={inputClassName} />
   </label>
 );
 

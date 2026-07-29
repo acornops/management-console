@@ -1,6 +1,7 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { Check, Copy, Pencil } from 'lucide-react';
+import { Button } from '@acornops/ui';
 
 interface MessageActionsProps {
   align: 'left' | 'right';
@@ -60,7 +61,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ align, copyText,
     >
       <time>{timestampLabel}</time>
       {onEdit && (
-        <button
+        <Button
           type="button"
           onClick={onEdit}
           className="control-target inline-flex h-6 w-6 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface/75 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
@@ -68,9 +69,9 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ align, copyText,
           title={t('chat.editMessage')}
         >
           <Pencil className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       )}
-      <button
+      <Button
         type="button"
         onClick={() => void handleCopy()}
         disabled={!canCopyToClipboard}
@@ -79,7 +80,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ align, copyText,
         title={hasCopied ? t('chat.copiedMessage') : t('chat.copyMessage')}
       >
         {hasCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-      </button>
+      </Button>
     </div>
   );
 };

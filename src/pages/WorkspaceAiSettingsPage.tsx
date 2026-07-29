@@ -29,6 +29,7 @@ import {
   type BehaviorDraft,
   type WorkspaceAiSettingsPageProps
 } from '@/pages/WorkspaceAiSettingsPage.helpers';
+import { TextInput } from '@acornops/ui';
 export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = ({
   workspace, canManageAiSettings, aiSettingsResource, showToast, returnTo, onReturnToAssistant,
   embedded = false
@@ -575,7 +576,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                 <span className="mb-1 block type-label">
                                   {isWorkspaceOverride ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addWorkspaceKey')}
                                 </span>
-                                <input
+                                <TextInput
                                   type="password"
                                   value={providerKeys[provider]}
                                   onChange={(event) =>

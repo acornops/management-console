@@ -31,6 +31,7 @@ import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import { getWorkflowExecution, type WorkflowCapabilitiesPreview, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { Textarea } from '@acornops/ui';
 type WorkflowActions = ReturnType<typeof useWorkspaceWorkflowActions>;
 type WorkflowAgentOption = WorkflowOptionsCatalog['agents'][number];
 
@@ -132,7 +133,7 @@ function WorkflowRunInstructionForm({
         sendInstruction();
       }}
     >
-      <textarea
+      <Textarea
         ref={instructionTextareaRef}
         aria-label="Send instruction"
         placeholder="Send instruction"

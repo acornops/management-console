@@ -10,6 +10,7 @@ import { formatDiscoveryTimestamp, isManagedMcpServer } from '@/features/targets
 import type { McpConnection } from '@/services/control-plane/catalogApi';
 import { useFloatingActionMenu } from '@acornops/ui';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { Button } from '@acornops/ui';
 
 interface McpServerCardProps {
   server: TargetToolCatalogServer;
@@ -379,7 +380,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             {t('mcpServers.healthCheckHelp')}
           </span>
         )}
-        <button
+        <Button
           ref={actionMenuButtonRef}
           data-mcp-server-primary-actions="true"
           type="button"
@@ -391,7 +392,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
           aria-label={t('mcpServers.serverActionsNamed', { name: server.name })}
         >
           <MoreVertical className="h-4 w-4" aria-hidden="true" />
-        </button>
+        </Button>
         {actionMenu}
       </td>
     </tr>

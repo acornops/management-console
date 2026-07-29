@@ -269,7 +269,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                   selected ? 'bg-accent-soft/45 ring-1 ring-inset ring-accent/30' : 'hover:bg-ui-bg/70'
                 }`}
               >
-                <button
+                <Button
                   type="button"
                   aria-label={t('agentsWorkflows.agents.openProfile', {
                     name: agent.name

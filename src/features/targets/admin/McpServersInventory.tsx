@@ -9,6 +9,7 @@ import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi'
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import type { McpConnection } from '@/services/control-plane/catalogApi';
 import { getMcpServerStatusDisplay, McpServerCard } from '@/features/targets/admin/McpServerCard';
+import { TextInput } from '@acornops/ui';
 
 interface McpServersInventoryProps {
   servers: TargetToolCatalogServer[];
@@ -145,7 +146,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
               {t('mcpServers.searchServers')}
             </label>
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-            <input
+            <TextInput
               id="mcp-server-search"
               type="text"
               value={serverSearch}

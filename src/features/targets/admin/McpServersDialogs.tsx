@@ -13,6 +13,7 @@ import { getToolLabel, ServerFormState } from '@/features/targets/admin/mcpServe
 import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';
 import { InlineConfirmation } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
 
 const mcpServerInputClassName = formInputClassName('px-4 font-medium');
 const mcpPublicHeaderInputClassName = formInputClassName('min-h-10 min-w-0 font-medium');
@@ -211,7 +212,7 @@ export const McpServerFormDialog: React.FC<{
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <label className="space-y-1">
                     <span className="type-label px-1">{t('mcpServers.serverName')}</span>
-                    <input
+                    <TextInput
                       value={form.name}
                       onChange={(event) =>
                         onFormChange((current) => ({
@@ -224,7 +225,7 @@ export const McpServerFormDialog: React.FC<{
                   </label>
                   <label className="space-y-1">
                     <span className="type-label px-1">{t('mcpServers.serverUrl')}</span>
-                    <input
+                    <TextInput
                       type="url"
                       pattern="https://.*"
                       value={form.url}
@@ -280,7 +281,7 @@ export const McpServerFormDialog: React.FC<{
                     {form.authType === 'custom_header' && (
                       <label className="space-y-1">
                         <span className="type-label px-1">{t('mcpServers.headerName')}</span>
-                        <input
+                        <TextInput
                           value={form.headerName}
                           onChange={(event) =>
                             onFormChange((current) => ({
@@ -308,7 +309,7 @@ export const McpServerFormDialog: React.FC<{
                         <p className="type-label px-1">{t('mcpServers.publicHeaders')}</p>
                         <p className="type-caption px-1 text-ui-text-muted">{t('mcpServers.publicHeadersHelp')}</p>
                       </div>
-                      <button
+                      <Button
                         type="button"
                         onClick={addPublicHeader}
                         className="control-target inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
@@ -316,7 +317,7 @@ export const McpServerFormDialog: React.FC<{
                         title={t('mcpServers.addHeader')}
                       >
                         <Plus className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     </div>
                     {publicHeadersValidationError && (
                       <p className="type-caption rounded-md border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">
@@ -327,7 +328,7 @@ export const McpServerFormDialog: React.FC<{
                       <div className="space-y-2">
                         {form.publicHeaders.map((header) => (
                           <div key={header.id} className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                            <input
+                            <TextInput
                               value={header.name}
                               onChange={(event) =>
                                 updatePublicHeader(header.id, {
@@ -337,7 +338,7 @@ export const McpServerFormDialog: React.FC<{
                               placeholder={t('mcpServers.publicHeaderNamePlaceholder')}
                               className={mcpPublicHeaderInputClassName}
                             />
-                            <input
+                            <TextInput
                               value={header.value}
                               onChange={(event) =>
                                 updatePublicHeader(header.id, {
@@ -347,14 +348,14 @@ export const McpServerFormDialog: React.FC<{
                               placeholder={t('mcpServers.publicHeaderValuePlaceholder')}
                               className={mcpPublicHeaderInputClassName}
                             />
-                            <button
+                            <Button
                               type="button"
                               onClick={() => removePublicHeader(header.id)}
                               className="control-target rounded-lg border border-ui-border p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text sm:self-center"
                               aria-label={t('mcpServers.removeHeader')}
                             >
                               <Trash2 className="h-4 w-4" />
-                            </button>
+                            </Button>
                           </div>
                         ))}
                       </div>
@@ -473,22 +474,22 @@ export const DeleteMcpServerDialog: React.FC<{
           {mutationError && <div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">{mutationError}</div>}
         </div>
         <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-          <button
+          <Button
             type="button"
             onClick={onClose}
             disabled={pending}
             className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:bg-ui-bg disabled:opacity-50"
           >
             {t('app.cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={onDelete}
             disabled={pending}
             className="control-target type-ui rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-control-danger-fg transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pending ? t('app.deleting') : t('mcpServers.deleteAction')}
-          </button>
+          </Button>
         </div>
     </DialogFrame>
   );

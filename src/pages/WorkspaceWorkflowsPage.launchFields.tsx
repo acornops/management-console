@@ -553,7 +553,7 @@ function ResourceParameterField({ workflow, parameter, value, onChange, error }:
             <span className="px-3 py-2 text-xs text-ui-text-muted">Loading…</span>
           ) : items.length > 0 ? (
             items.map((candidate, index) => (
-              <button
+              <Button
                 key={candidate.id}
                 id={optionId(index)}
                 type="button"
@@ -571,7 +571,7 @@ function ResourceParameterField({ workflow, parameter, value, onChange, error }:
                 <span className="block font-semibold">{candidate.label}</span>
                 <span className="type-caption block text-ui-text-muted">{candidate.description || candidate.provider}</span>
                 {candidate.unavailableReason && <span className="type-caption block text-status-warning-text">{candidate.unavailableReason}</span>}
-              </button>
+              </Button>
             ))
           ) : (
             <span className="px-3 py-2 text-xs text-ui-text-muted">No matching {parameter.type}s.</span>

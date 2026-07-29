@@ -19,6 +19,7 @@ import { MemberRoleCell } from '@/pages/workspace-members/MemberRoleCell';
 import { WorkspaceMemberDetailsPanel } from '@/pages/workspace-members/WorkspaceMemberDetailsPanel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
+import { TextInput } from '@acornops/ui';
 
 interface WorkspaceMembersPageProps {
   workspace: Workspace;
@@ -349,7 +350,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
               {t('members.searchPlaceholder')}
             </label>
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-text-muted" aria-hidden="true" />
-            <input
+            <TextInput
               id="workspace-member-search"
               type="text"
               value={searchTerm}
@@ -439,7 +440,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                           name: member.name
                         })}
                       >
-                        <button
+                        <Button
                           type="button"
                           onClick={() => openMember(member)}
                           className="control-target rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
@@ -448,7 +449,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                           })}
                         >
                           <MoreVertical className="w-4 h-4" aria-hidden="true" />
-                        </button>
+                        </Button>
                       </Tooltip>
                     </td>
                   </tr>

@@ -15,6 +15,7 @@ import {
   resourceRowActionClass,
   resourceRowGridClass
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
+import { Button } from '@acornops/ui';
 
 export const ResourceMetricInline: React.FC<{
   label: string;
@@ -110,9 +111,9 @@ export const InfrastructureRow: React.FC<{
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} aria-label={`${t('workloads.details')}: ${title}`} className={`control-target ${rowClassName}`}>
+      <Button type="button" onClick={onClick} aria-label={`${t('workloads.details')}: ${title}`} className={`control-target ${rowClassName}`}>
         {content}
-      </button>
+      </Button>
     );
   }
 

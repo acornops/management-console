@@ -8,6 +8,7 @@ import {
   validateSkillFilePath,
   validateSkillFolderPath
 } from '@/features/targets/admin/targetSkillsViewModel';
+import { Button, TextInput } from '@acornops/ui';
 
 type FileAction = 'file' | 'folder';
 type RenameTarget = { type: 'file' | 'folder'; path: string } | null;
@@ -323,7 +324,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
       >
         <div className="flex min-w-0 items-center gap-1.5">
           <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" />
-          <input
+          <TextInput
             ref={renameInputRef}
             value={renameValue}
             onChange={(event) => {
@@ -346,7 +347,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             className="min-w-0 flex-1 rounded border border-accent/30 bg-ui-surface px-2 py-1.5 text-xs text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
             aria-label={target.type === 'folder' ? 'Folder name' : 'File name'}
           />
-          <button
+          <Button
             type="button"
             onMouseDown={(event) => {
               event.preventDefault();
@@ -358,7 +359,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             aria-label="Cancel rename"
           >
             <X className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
         {renameError && <p className="type-caption mt-1 pl-5 text-status-danger-text">{renameError}</p>}
       </form>
@@ -369,7 +370,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
     renameTarget?.type === 'file' && renameTarget.path === file.path ? (
       renderRenameRow(renameTarget, depth)
     ) : (
-      <button
+      <Button
         key={file.path}
         type="button"
         onClick={() => {
@@ -385,7 +386,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
       >
         <FileText className="h-3.5 w-3.5 shrink-0" />
         <span className="truncate">{getFileLabel(file.path)}</span>
-      </button>
+      </Button>
     );
 
   const renderInlineCreateRow = (depth = 0) => {
@@ -401,7 +402,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
       >
         <div className="flex min-w-0 items-center gap-1.5">
           <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" />
-          <input
+          <TextInput
             ref={fileActionInputRef}
             value={fileActionValue}
             onChange={(event) => {
@@ -424,7 +425,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             className="min-w-0 flex-1 rounded border border-accent/30 bg-ui-surface px-2 py-1.5 text-xs text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
             aria-label={fileAction === 'folder' ? 'Folder path' : 'File path'}
           />
-          <button
+          <Button
             type="button"
             onMouseDown={(event) => {
               event.preventDefault();
@@ -436,7 +437,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             aria-label="Cancel"
           >
             <X className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
         {fileAction === 'folder' && fileActionValue.trim() && <p className="type-caption mt-1 pl-5 text-ui-text-muted">Creates folder {createPreviewPath}.</p>}
         {fileActionError && <p className="type-caption mt-1 pl-5 text-status-danger-text">{fileActionError}</p>}
@@ -458,7 +459,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             style={{ paddingLeft: `${0.375 + depth * 1.1}rem` }}
             title={folder.path}
           >
-            <button
+            <Button
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
@@ -468,8 +469,8 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               aria-label={collapsed ? `Expand ${folder.name}` : `Collapse ${folder.name}`}
             >
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => setSelectedFolderPath(folder.path)}
               onDoubleClick={() => startRename({ type: 'folder', path: folder.path })}
@@ -477,7 +478,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             >
               <Folder className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{folder.name}</span>
-            </button>
+            </Button>
           </div>
         )}
         {!collapsed && fileAction && selectedFolderPath === folder.path && renderInlineCreateRow(depth + 1)}
@@ -493,7 +494,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
         <div className="flex items-center justify-between gap-2">
           <h4 className="type-row-title">Files</h4>
           <div className="flex gap-1">
-            <button
+            <Button
               type="button"
               className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
               disabled={!canEditSkills}
@@ -502,8 +503,8 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               aria-label="Add file"
             >
               <FilePlus2 className="h-3.5 w-3.5" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
               disabled={!canEditSkills}
@@ -512,7 +513,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               aria-label="Add folder"
             >
               <FolderPlus className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>

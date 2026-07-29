@@ -2,6 +2,7 @@ import { Button, InlineConfirmation, StatusBadge } from '@acornops/ui';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { AgentCapabilitiesState } from '@/pages/agents/useAgentCapabilities';
 import { createAgentSkill, deleteAgentSkill, importAgentSkill, reimportAgentSkill, updateAgentSkill } from '@/services/control-plane/agentApi';
+import { TextInput, Textarea } from '@acornops/ui';
 
 interface AgentSkillsPanelProps {
   agent: AgentDefinition;
@@ -40,7 +41,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
             <details className="rounded-md border border-ui-border bg-ui-bg p-4">
               <summary className="cursor-pointer text-sm font-semibold">{t('agentsWorkflows.agents.details.capabilities.skills.createTitle')}</summary>
               <div className="mt-4 grid gap-3">
-                <input
+                <TextInput
                   aria-label={t('agentsWorkflows.agents.details.capabilities.skills.name')}
                   placeholder={t('agentsWorkflows.agents.details.capabilities.skills.name')}
                   value={manualSkill.name}
@@ -52,7 +53,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                   }
                   className={inputClass}
                 />
-                <input
+                <TextInput
                   aria-label={t('agentsWorkflows.agents.details.capabilities.skills.description')}
                   placeholder={t('agentsWorkflows.agents.details.capabilities.skills.description')}
                   value={manualSkill.description}
@@ -64,7 +65,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                   }
                   className={inputClass}
                 />
-                <textarea
+                <Textarea
                   aria-label="SKILL.md content"
                   placeholder="SKILL.md content"
                   value={manualSkill.content}
@@ -104,7 +105,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
             <details className="rounded-md border border-ui-border bg-ui-bg p-4">
               <summary className="cursor-pointer text-sm font-semibold">{t('agentsWorkflows.agents.details.capabilities.skills.importTitle')}</summary>
               <div className="mt-4 grid gap-3">
-                <input
+                <TextInput
                   aria-label="Git URL"
                   placeholder="https://github.com/org/repo"
                   value={gitSkill.url}
@@ -117,7 +118,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                   className={inputClass}
                 />
                 <div className="grid grid-cols-2 gap-2">
-                  <input
+                  <TextInput
                     aria-label="Git ref"
                     placeholder="Ref"
                     value={gitSkill.ref}
@@ -129,7 +130,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                     }
                     className={inputClass}
                   />
-                  <input
+                  <TextInput
                     aria-label="Pinned commit"
                     placeholder="Pinned commit"
                     value={gitSkill.commit}
@@ -142,7 +143,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                     className={inputClass}
                   />
                 </div>
-                <input
+                <TextInput
                   aria-label="Git path"
                   placeholder="Path (optional)"
                   value={gitSkill.path}
@@ -154,7 +155,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                   }
                   className={inputClass}
                 />
-                <textarea
+                <Textarea
                   aria-label="Imported SKILL.md content"
                   placeholder="Reviewed SKILL.md content"
                   value={gitSkill.content}
@@ -309,7 +310,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                         {t('agentsWorkflows.agents.details.capabilities.editSkill.title')}
                       </h4>
                       <div className="mt-3 grid gap-3">
-                        <input
+                        <TextInput
                           autoFocus
                           aria-label={t('agentsWorkflows.agents.details.capabilities.editSkill.name')}
                           value={skillEditor.name}
@@ -324,7 +325,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                           }
                           className={inputClass}
                         />
-                        <input
+                        <TextInput
                           aria-label={t('agentsWorkflows.agents.details.capabilities.editSkill.description')}
                           value={skillEditor.description}
                           onChange={(event) =>
@@ -338,7 +339,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                           }
                           className={inputClass}
                         />
-                        <textarea
+                        <Textarea
                           aria-label={t('agentsWorkflows.agents.details.capabilities.editSkill.content')}
                           value={skillEditor.content}
                           onChange={(event) =>

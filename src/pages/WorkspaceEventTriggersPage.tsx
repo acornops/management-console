@@ -44,6 +44,7 @@ import {
   type SecretDisclosure,
   type TriggerDraft
 } from '@/pages/WorkspaceEventTriggersPage.model';
+import { TextInput, Textarea } from '@acornops/ui';
 
 interface WorkspaceEventTriggersPageProps {
   workspace: Workspace;
@@ -549,7 +550,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         {mutationError && <InlineAlert tone="danger">{mutationError}</InlineAlert>}
         <label className="block text-sm font-semibold text-ui-text">
           {t('eventTriggers.form.name')}
-          <input
+          <TextInput
             value={draft.name}
             onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
             className={inputClassName}
@@ -629,7 +630,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         </div>
         <label className="block text-sm font-semibold text-ui-text">
           {t('eventTriggers.form.approvedContextGrants')}
-          <textarea
+          <Textarea
             value={draft.approvedContextGrants}
             onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))}
             className={textareaClassName}

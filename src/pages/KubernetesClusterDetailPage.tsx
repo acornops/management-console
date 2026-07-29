@@ -108,9 +108,9 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
                   {t('diagnostics.openInstallCommand')}
                 </Button>
               </div>
-              <button onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}>
+              <Button onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}>
                 {t('diagnostics.returnToClusters')} <ICONS.ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center bg-ui-bg p-8 text-center">
@@ -119,9 +119,9 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
                 <h2 className="type-section-title mb-3 text-ui-text">{t('diagnostics.idleTitle')}</h2>
                 <p className="mx-auto max-w-xs text-sm leading-6 text-ui-text-muted">{t('diagnostics.idleBody')}</p>
               </div>
-              <button onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}>
+              <Button onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}>
                 {t('diagnostics.returnToDashboard')} <ICONS.ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
-              </button>
+              </Button>
             </div>
           )}
         </div>

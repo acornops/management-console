@@ -131,7 +131,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           <div className="rounded-xl border border-ui-border bg-ui-bg shadow-sm">
             <div className="flex items-center justify-between gap-3 px-4 pt-4">
               <span className="type-micro-label">{t('clusterSetup.installCommand')}</span>
-              <button
+              <Button
                 type="button"
                 onClick={handleCopy}
                 disabled={isCopying}
@@ -139,7 +139,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
                 aria-label={isCopying ? t('clusterSetup.copied') : t('clusterSetup.copy')}
               >
                 {isCopying ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </button>
+              </Button>
             </div>
             <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text">
               <pre className="whitespace-pre">{command}</pre>
@@ -171,13 +171,13 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
       </div>
 
       <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-        <button
+        <Button
           type="button"
           onClick={onClose}
           className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title-muted transition-colors hover:bg-ui-bg"
         >
           {t('app.close')}
-        </button>
+        </Button>
         <Button
           ref={generateCommandButtonRef}
           onClick={handleGenerate}

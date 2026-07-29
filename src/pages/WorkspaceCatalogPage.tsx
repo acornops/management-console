@@ -30,6 +30,7 @@ import type { TargetMcpServer } from '@/services/control-plane/targetMcpTypes';
 import type { Workspace } from '@/types';
 import { AppPaths, type McpCatalogRouteState } from '@/utils/routes';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
+import { TextInput } from '@acornops/ui';
 
 type Navigate = (path: string, options?: { replace?: boolean }) => void;
 type Destination = {
@@ -543,7 +544,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
                     : undefined}
                 />
               )}
-              {configurationFields.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{configurationFields.map((field) => <label key={field.name} className="text-sm font-semibold text-ui-text">{field.name}{field.required ? ' *' : ''}<input value={endpointConfiguration[selectedArtifact.id]?.[field.name] ?? field.default ?? ''} placeholder={field.placeholder} onChange={(event) => setEndpointConfiguration((current) => ({ ...current, [selectedArtifact.id]: { ...current[selectedArtifact.id], [field.name]: event.target.value } }))} className="mt-2 min-h-11 w-full rounded-md border border-ui-border bg-ui-bg px-3 font-normal text-ui-text" />{field.description && <span className="type-caption mt-1 block font-normal text-ui-text-muted">{field.description}</span>}</label>)}</div>}
+              {configurationFields.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{configurationFields.map((field) => <label key={field.name} className="text-sm font-semibold text-ui-text">{field.name}{field.required ? ' *' : ''}<TextInput value={endpointConfiguration[selectedArtifact.id]?.[field.name] ?? field.default ?? ''} placeholder={field.placeholder} onChange={(event) => setEndpointConfiguration((current) => ({ ...current, [selectedArtifact.id]: { ...current[selectedArtifact.id], [field.name]: event.target.value } }))} className="mt-2 min-h-11 w-full rounded-md border border-ui-border bg-ui-bg px-3 font-normal text-ui-text" />{field.description && <span className="type-caption mt-1 block font-normal text-ui-text-muted">{field.description}</span>}</label>)}</div>}
             </div>
 
             <div className="border-t border-ui-border pt-5">

@@ -16,6 +16,7 @@ import { AppPaths } from '@/utils/routes';
 import { AgentSkillsPanel } from '@/pages/agents/AgentSkillsPanel';
 import { AgentToolsPanel } from '@/pages/agents/AgentToolsPanel';
 import { useAgentCapabilities } from '@/pages/agents/useAgentCapabilities';
+import { TextInput } from '@acornops/ui';
 interface AgentCapabilitiesPanelProps {
   agent: AgentDefinition;
   canManageAgents: boolean;
@@ -78,7 +79,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <label className="text-sm font-semibold">
                   Name
-                  <input
+                  <TextInput
                     value={manualServer.name}
                     onChange={(event) =>
                       setManualServer((value) => ({
@@ -91,7 +92,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                 </label>
                 <label className="text-sm font-semibold">
                   HTTPS endpoint
-                  <input
+                  <TextInput
                     type="url"
                     pattern="https://.*"
                     value={manualServer.url}
@@ -144,7 +145,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                 {manualServer.authType === 'custom_header' && (
                   <label className="text-sm font-semibold">
                     Header name
-                    <input
+                    <TextInput
                       value={manualServer.authHeaderName}
                       onChange={(event) =>
                         setManualServer((value) => ({
@@ -407,7 +408,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                         </h4>
                         <label className="type-label mt-3 block text-ui-text">
                           {t('agentsWorkflows.agents.details.capabilities.renameServer.name')}
-                          <input
+                          <TextInput
                             autoFocus
                             value={renameEditor.name}
                             onChange={(event) =>

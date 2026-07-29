@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { menuSurfaceClassName } from '@acornops/ui';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
 import { useFloatingActionMenu } from '@acornops/ui';
+import { Button } from '@acornops/ui';
 
 interface TargetToolRowProps {
   tool: ControlPlaneTargetToolItem;
@@ -172,7 +173,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
           <span className="type-caption text-ui-text-muted">{t('tools.noConfiguration')}</span>
         ) : (
           <>
-            <button
+            <Button
               ref={actionMenuButtonRef}
               data-target-tool-primary-actions="true"
               type="button"
@@ -184,7 +185,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
               aria-label={t('tools.actionsNamed', { tool: tool.label })}
             >
               <MoreVertical className="h-4 w-4" aria-hidden="true" />
-            </button>
+            </Button>
             {actionMenu}
           </>
         )}

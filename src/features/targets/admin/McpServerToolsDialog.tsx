@@ -222,9 +222,9 @@ export const McpServerToolsDialog: React.FC<{
               {renderToolSection(t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
               <div ref={loadMoreSentinelRef}>
                 {hasMoreTools && (
-                  <button type="button" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
+                  <Button type="button" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
                     {isLoadingMoreTools ? t('mcpServers.loadingTools') : t('common.loadMore')}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -235,9 +235,9 @@ export const McpServerToolsDialog: React.FC<{
           )}
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-          <button type="button" onClick={() => setConfiguredOverrides({})} disabled={isSavingTools || changedTools.length === 0} className="control-target type-ui text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50">
+          <Button type="button" onClick={() => setConfiguredOverrides({})} disabled={isSavingTools || changedTools.length === 0} className="control-target type-ui text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50">
             {t('mcpServers.resetChanges')}
-          </button>
+          </Button>
           <div className="flex items-center gap-3">
             <Button onClick={onClose} disabled={isSavingTools} variant="secondary" size="sm">{t('app.cancel')}</Button>
             <Button onClick={() => void handleSaveTools()} disabled={!canManageTools || isSavingTools || changedTools.length === 0} variant="primary" size="sm">

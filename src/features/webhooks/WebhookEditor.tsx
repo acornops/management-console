@@ -8,6 +8,7 @@ import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { CONTROL_PLANE_WEBHOOK_EVENT_TYPES, type ControlPlaneWebhookEventType } from '@/services/controlPlaneApi';
 import { isWebhookEventGroupSelected, sortedWebhookEvents, toggleWebhookEventGroup, webhookEventGroups, webhookEventLabel, type WebhookDraft } from './webhookModel';
+import { TextInput } from '@acornops/ui';
 
 interface WebhookEditorProps {
   draft: WebhookDraft;
@@ -88,7 +89,7 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isS
       <div className="space-y-5">
         <div>
           <FieldLabel htmlFor={`${idPrefix}-name`}>{t('workspaceWebhooks.name')}</FieldLabel>
-          <input
+          <TextInput
             id={`${idPrefix}-name`}
             value={draft.name}
             onChange={(event) => onChange({ ...draft, name: event.target.value })}
@@ -100,7 +101,7 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isS
         </div>
         <div>
           <FieldLabel htmlFor={`${idPrefix}-url`}>{t('workspaceWebhooks.deliveryUrl')}</FieldLabel>
-          <input
+          <TextInput
             id={`${idPrefix}-url`}
             type="url"
             inputMode="url"

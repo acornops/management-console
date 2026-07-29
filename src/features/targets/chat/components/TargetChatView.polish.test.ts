@@ -21,8 +21,8 @@ import {
 } from '@/stylesTestSupport';
 describe('target chat polish contracts', () => {
   it('keeps the programmatic attachment input out of the accessibility tree', () => {
-    expect(chatView).toMatch(/<input\s+ref=\{fileInputRef\}\s+type="file"\s+multiple\s+hidden/);
-    expect(chatView).not.toMatch(/type="file"[\s\S]{0,80}className="sr-only"/);
+    expect(chatView).toMatch(/<FileInput\s+ref=\{fileInputRef\}\s+multiple\s+hidden/);
+    expect(chatView).not.toMatch(/<FileInput[\s\S]{0,80}visuallyHidden/);
   });
 
   it('renders approvals as inline operational checkpoints', () => {
@@ -301,7 +301,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('<UserMessageTurn');
     expect(chatView).toContain('canEdit={canEditUserMessage}');
     expect(userMessageTurn).toContain('onEdit={canEdit ? onStartEdit : undefined}');
-    expect(userMessageTurn).toContain('<textarea');
+    expect(userMessageTurn).toContain('<Textarea');
     expect(userMessageTurn).toContain('const textareaRef = React.useRef<HTMLTextAreaElement>(null);');
     expect(userMessageTurn).toContain('textarea.setSelectionRange(selectionEnd, selectionEnd);');
     expect(userMessageTurn).toContain('}, [isEditing]);');

@@ -5,6 +5,7 @@ import { CollectionState } from '@acornops/ui';
 import { TextInput } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { WorkspaceMemberCandidate, WorkspaceMemberDiscoveryMode } from '@/types';
+import { Button } from '@acornops/ui';
 
 interface WorkspaceMemberIdentityFieldProps {
   workspaceId: string;
@@ -210,7 +211,7 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
             {candidates.map((candidate, index) => {
               const available = candidate.status === 'available';
               return (
-                <button
+                <Button
                   key={candidate.userId}
                   id={`${listboxId}-${index}`}
                   type="button"
@@ -234,7 +235,7 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
                     <span className="block truncate text-xs font-medium text-ui-text-muted">{candidate.email}</span>
                   </span>
                   <span className="shrink-0 rounded-full border border-ui-border bg-ui-bg px-2 py-1 type-micro-label">{candidateStatusLabel(candidate.status, t)}</span>
-                </button>
+                </Button>
               );
             })}
           </CollectionState>

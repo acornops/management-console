@@ -22,6 +22,7 @@ import {
   type InsightFile,
   type InsightFileStatus
 } from '@/features/targets/admin/targetInsightsDialogViewModel';
+import { TextInput, Textarea } from '@acornops/ui';
 
 interface TargetInsightsDialogProps {
   workspaceId: string;
@@ -205,7 +206,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
       <div className="border-b border-ui-border px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <h4 className="type-row-title">{t('tools.targetInsights.files')}</h4>
-          <button
+          <Button
             type="button"
             className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
             disabled={!canMutateFile}
@@ -214,7 +215,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
             aria-label={t('tools.targetInsights.newFile')}
           >
             <FilePlus2 className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
       <div className="border-b border-ui-border p-3">
@@ -223,7 +224,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
         </label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-          <input
+          <TextInput
             id="target-insights-file-search"
             type="text"
             value={fileSearch}
@@ -258,7 +259,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                     )}
                     {statusFiles.length > 0 ? (
                       statusFiles.map((file) => (
-                        <button
+                        <Button
                           key={file.entry.id}
                           type="button"
                           onClick={() => selectFile(file)}
@@ -271,7 +272,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                         >
                           <FileText className="h-3.5 w-3.5 shrink-0" />
                           <span className="truncate">{file.fileName}</span>
-                        </button>
+                        </Button>
                       ))
                     ) : status !== 'active' || !creatingNewFile ? (
                       <p className="type-caption py-1.5 pl-7 pr-2 text-ui-text-muted/75">{t('tools.targetInsights.emptyFolder')}</p>
@@ -358,7 +359,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                   <div className="min-h-0 flex-1 space-y-3 p-4">
                     <label className="block">
                       <span className="type-label">{t('tools.targetInsights.fields.title')}</span>
-                      <input
+                      <TextInput
                         ref={titleInputRef}
                         className="mt-2 w-full rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-70"
                         value={draft.title}
@@ -372,7 +373,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                         placeholder={t('tools.targetInsights.titlePlaceholder')}
                       />
                     </label>
-                    <textarea
+                    <Textarea
                       value={draft.bodyMarkdown}
                       readOnly={!canEdit}
                       onChange={(event) =>

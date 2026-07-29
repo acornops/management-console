@@ -108,7 +108,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
         <div className="grid gap-6 lg:grid-cols-[minmax(13rem,0.75fr)_minmax(0,1.6fr)]">
           <nav aria-label={t('workflowRecommendations.list')} className="space-y-2">
             {recommendations.map((recommendation) => (
-              <button
+              <Button
                 key={recommendation.id}
                 type="button"
                 aria-current={selected?.id === recommendation.id ? 'true' : undefined}
@@ -126,7 +126,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
                   <span aria-hidden="true">·</span>
                   <span>{recommendation.installMode === 'automatic' ? t('workflowRecommendations.automatic') : t('workflowRecommendations.optIn')}</span>
                 </span>
-              </button>
+              </Button>
             ))}
           </nav>
 

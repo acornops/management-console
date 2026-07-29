@@ -11,6 +11,7 @@ import { formInputClassName } from '@acornops/ui';
 import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
 import { parseNamespaceList } from '@/app/useAppSupport';
 import type { AgentAccessMode } from '@/services/control-plane/types';
+import { TextInput } from '@acornops/ui';
 
 interface AddClusterModalProps {
   isOpen: boolean;
@@ -147,7 +148,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
               <label htmlFor="add-cluster-name-input" className="block px-1 type-micro-label">
                 {t('clusterSetup.clusterName')}
               </label>
-              <input
+              <TextInput
                 id="add-cluster-name-input"
                 ref={clusterNameInputRef}
                 type="text"
@@ -167,7 +168,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                 <label htmlFor="add-cluster-include-namespaces" className="mb-1.5 block px-1 type-micro-label">
                   {t('clusterSetup.includeNamespaces')}
                 </label>
-                <input
+                <TextInput
                   id="add-cluster-include-namespaces"
                   type="text"
                   value={includeNamespaces}
@@ -180,7 +181,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                 <label htmlFor="add-cluster-exclude-namespaces" className="mb-1.5 block px-1 type-micro-label">
                   {t('clusterSetup.excludeNamespaces')}
                 </label>
-                <input
+                <TextInput
                   id="add-cluster-exclude-namespaces"
                   type="text"
                   value={excludeNamespaces}
@@ -225,14 +226,14 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
               <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
                 <div className="flex items-center justify-between gap-3 px-4 pt-4">
                   <span className="type-micro-label">{t('clusterSetup.installCommand')}</span>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => void copyInstallCommand()}
                     className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text"
                     aria-label={hasCopiedCommand ? t('clusterSetup.copied') : t('clusterSetup.copy')}
                   >
                     {hasCopiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </button>
+                  </Button>
                 </div>
                 <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
                   <pre className="whitespace-pre">{displayedInstallCommand}</pre>

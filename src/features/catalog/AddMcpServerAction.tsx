@@ -173,7 +173,7 @@ export const AddMcpServerAction: React.FC<AddMcpServerActionProps> = ({ browseHr
                 <span className="type-caption text-ui-text-muted">Install a pinned server from an approved source.</span>
               </span>
             </a>
-            <button
+            <Button
               role="menuitem"
               type="button"
               className="flex min-h-11 w-full items-start gap-3 rounded-md px-3 py-2 text-left hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary"
@@ -187,7 +187,7 @@ export const AddMcpServerAction: React.FC<AddMcpServerActionProps> = ({ browseHr
                 <span className="block text-sm font-semibold">Connect by URL</span>
                 <span className="type-caption text-ui-text-muted">Use an HTTPS Streamable HTTP endpoint.</span>
               </span>
-            </button>
+            </Button>
           </div>,
           portalHost
         )}

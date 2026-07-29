@@ -155,7 +155,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                 isActive ? (isPage ? 'bg-ui-surface' : 'bg-ui-bg') : isPage ? 'hover:bg-ui-surface' : 'hover:bg-ui-bg'
               }`}
             >
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   onSelectSession(session.id);
@@ -199,9 +199,9 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                     </div>
                   </>
                 )}
-              </button>
+              </Button>
               {canDeleteSessions && (
-                <button
+                <Button
                   type="button"
                   onClick={() => onDeleteSessionClick(session.id)}
                   className="control-target absolute right-3 top-3 rounded-md p-1 text-ui-text-muted opacity-0 transition-opacity hover:bg-ui-surface hover:text-status-danger-text group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
@@ -209,7 +209,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                   aria-label={t('chat.deleteConversation')}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               )}
             </div>
           );

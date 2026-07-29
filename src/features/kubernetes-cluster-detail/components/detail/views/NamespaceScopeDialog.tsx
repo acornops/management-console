@@ -17,6 +17,7 @@ import {
   normalizeNamespaceTokens,
   splitNamespaceTokenInput
 } from './namespaceScopeTokens';
+import { TextInput } from '@acornops/ui';
 
 interface NamespaceScopeDialogProps {
   cluster: KubernetesCluster;
@@ -257,7 +258,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                   className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-surface px-2 py-1 text-xs font-semibold text-ui-text"
                 >
                   <span className="truncate">{namespace}</span>
-                  <button
+                  <Button
                     type="button"
                     disabled={isSaving}
                     onClick={() => removeToken('include', namespace)}
@@ -267,10 +268,10 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     })}
                   >
                     <X className="h-3 w-3" />
-                  </button>
+                  </Button>
                 </span>
               ))}
-              <input
+              <TextInput
                 id="namespace-scope-include-input"
                 value={includeQuery}
                 disabled={isSaving}
@@ -296,7 +297,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
             <div id="namespace-scope-include-suggestions" role="listbox" className={menuSurfaceClassName('absolute z-20 mt-2 max-h-48 w-full p-1')}>
               {includeSuggestions.length > 0 ? (
                 includeSuggestions.map((namespace, index) => (
-                  <button
+                  <Button
                     key={namespace}
                     id={`namespace-scope-include-option-${index}`}
                     type="button"
@@ -310,7 +311,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     })}
                   >
                     {namespace}
-                  </button>
+                  </Button>
                 ))
               ) : (
                 <div className="px-3 py-2 text-xs font-semibold text-ui-text-muted" role="status">
@@ -333,7 +334,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                   className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-surface px-2 py-1 text-xs font-semibold text-ui-text"
                 >
                   <span className="truncate">{namespace}</span>
-                  <button
+                  <Button
                     type="button"
                     disabled={isSaving}
                     onClick={() => removeToken('exclude', namespace)}
@@ -343,10 +344,10 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     })}
                   >
                     <X className="h-3 w-3" />
-                  </button>
+                  </Button>
                 </span>
               ))}
-              <input
+              <TextInput
                 id="namespace-scope-exclude-input"
                 value={excludeQuery}
                 disabled={isSaving}
@@ -372,7 +373,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
             <div id="namespace-scope-exclude-suggestions" role="listbox" className={menuSurfaceClassName('absolute z-20 mt-2 max-h-48 w-full p-1')}>
               {excludeSuggestions.length > 0 ? (
                 excludeSuggestions.map((namespace, index) => (
-                  <button
+                  <Button
                     key={namespace}
                     id={`namespace-scope-exclude-option-${index}`}
                     type="button"
@@ -386,7 +387,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     })}
                   >
                     {namespace}
-                  </button>
+                  </Button>
                 ))
               ) : (
                 <div className="px-3 py-2 text-xs font-semibold text-ui-text-muted" role="status">

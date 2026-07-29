@@ -23,7 +23,7 @@ export const TargetCatalogCard: React.FC<TargetCatalogCardProps> = ({ targetKind
       {...cardAttribute}
       className="group relative flex min-w-0 flex-col overflow-visible rounded-lg border border-ui-border bg-ui-surface shadow-sm transition-colors hover:border-accent/25"
     >
-      <button
+      <Button
         {...actionAttribute}
         type="button"
         aria-label={actionLabel}

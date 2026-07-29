@@ -10,6 +10,7 @@ import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState } from '@/utils/telemetry';
+import { TextInput } from '@acornops/ui';
 
 interface ClusterSettingsViewProps {
   cluster: KubernetesCluster;
@@ -175,7 +176,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
             description={
               isEditingName ? (
                 <div className="grid max-w-md gap-3" data-cluster-settings-name-editor="true">
-                  <input
+                  <TextInput
                     ref={clusterNameInputRef}
                     value={draftName}
                     onChange={(event) => {

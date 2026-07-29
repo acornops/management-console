@@ -186,7 +186,24 @@ control-plane-mode validation suite all pass.
   - `npm run lint` passed.
   - `npm run test -- --reporter=dot --maxWorkers=4` passed 139 files and 719
     tests.
-- PENDING: Stages 3 and 4 validation.
+- PASS: Stage 3 controls and fields.
+  - All 189 native-control findings across 65 affected production files now
+    compose through `Button`, motion-wrapped `Button`, `TextInput`, `Textarea`,
+    `FileInput`, or the typed selection controls; the native-control adoption
+    category reports exactly zero detections and zero exceptions.
+  - `ThemeMenu` now composes its animated trigger from `MenuTrigger` and its
+    radio choices from `MenuItem`, preserving roving keyboard navigation,
+    selection state, persistence, and trigger-focus restoration.
+  - `npx playwright test tests/design-system/theme-behavior.spec.ts
+    --project=desktop --project=mobile` passed 11 checks with one intentional
+    mobile skip.
+- PASS: Stage 3 validation.
+  - `npm run lint` passed.
+  - `npm run test -- --reporter=dot --maxWorkers=4` passed 139 files and 719
+    tests.
+  - `npm run design:snapshots` passed 21 checks with one intentional mobile
+    skip and produced no snapshot differences.
+- PENDING: Stage 4 validation.
 - PENDING: Stage 5 and final validation.
 
 ## Publishing Log

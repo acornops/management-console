@@ -5,6 +5,7 @@ import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { Button } from '@acornops/ui';
 
 export interface WorkspaceAgentsPageProps {
   workspace: Workspace;
@@ -249,13 +250,13 @@ export const Notice: React.FC<
         <div className={title ? 'mt-1' : ''}>{children}</div>
       </div>
       {actionLabel && onAction && (
-        <button
+        <Button
           type="button"
           onClick={onAction}
           className="control-target min-h-8 shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 text-xs type-ui text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
         >
           {actionLabel}
-        </button>
+        </Button>
       )}
     </div>
   </section>

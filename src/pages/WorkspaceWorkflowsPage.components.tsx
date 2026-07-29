@@ -62,9 +62,9 @@ export const WorkflowTagsEditor: React.FC<{
         <span key={tag} className="inline-flex min-h-11 items-center gap-1 rounded-md border border-ui-border bg-ui-bg pl-2.5 pr-1 text-xs type-emphasis text-ui-text-muted sm:min-h-8">
           <span>{tag}</span>
           {!readOnly && (
-            <button type="button" aria-label={`Remove workflow tag ${tag}`} onClick={() => onRemove(tag)} disabled={pending} className="control-target rounded p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-50 sm:p-1">
+            <Button type="button" aria-label={`Remove workflow tag ${tag}`} onClick={() => onRemove(tag)} disabled={pending} className="control-target rounded p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-50 sm:p-1">
               <ICONS.X className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
+            </Button>
           )}
         </span>
       ))}
@@ -170,9 +170,9 @@ export const WorkflowSearchTagSuggestions: React.FC<{
   workflowSearchTags.length > 0 && query.trim() ? (
     <div className="flex flex-wrap gap-2 px-1" aria-label="Workflow tag suggestions">
       {workflowSearchTags.slice(0, 8).map((tag) => (
-        <button key={tag} type="button" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-2.5 py-1.5 text-xs type-ui text-ui-text-muted hover:text-ui-text sm:min-h-8">
+        <Button key={tag} type="button" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-2.5 py-1.5 text-xs type-ui text-ui-text-muted hover:text-ui-text sm:min-h-8">
           {tag}
-        </button>
+        </Button>
       ))}
     </div>
   ) : null;

@@ -15,6 +15,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { Workspace, WorkspaceAuditCategory, WorkspaceAuditEvent } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { TextInput } from '@acornops/ui';
 
 interface WorkspaceAuditLogPageProps {
   workspace: Workspace;
@@ -389,7 +390,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
             <div id="audit-custom-range-controls" className="mt-3 grid gap-3 rounded-lg border border-ui-border bg-ui-bg/70 p-3 sm:grid-cols-2 lg:w-[34rem] lg:max-w-full">
               <label className="grid gap-2" htmlFor="audit-filter-from">
                 <span className="type-caption">{t('auditLog.filterFrom')}</span>
-                <input
+                <TextInput
                   id="audit-filter-from"
                   type="datetime-local"
                   value={draftFilters.from}
@@ -406,7 +407,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
               </label>
               <label className="grid gap-2" htmlFor="audit-filter-to">
                 <span className="type-caption">{t('auditLog.filterTo')}</span>
-                <input
+                <TextInput
                   id="audit-filter-to"
                   type="datetime-local"
                   value={draftFilters.to}
@@ -476,14 +477,14 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   </td>
                   <td className="px-4 py-5 text-right align-top sm:px-6 lg:px-8 lg:py-6">
                     <Tooltip content={t('auditLog.viewDetails')}>
-                      <button
+                      <Button
                         type="button"
                         onClick={() => setSelectedEvent(event)}
                         className="control-target inline-flex h-9 w-9 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg hover:text-ui-text"
                         aria-label={t('auditLog.viewDetails')}
                       >
                         <ICONS.Eye className="h-4 w-4" />
-                      </button>
+                      </Button>
                     </Tooltip>
                   </td>
                 </tr>

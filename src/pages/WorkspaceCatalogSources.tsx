@@ -8,6 +8,7 @@ import { EmptyState } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { catalogApi, type CatalogSource, type CatalogSourceMutationInput } from '@/services/control-plane/catalogApi';
 import { resourcePhaseForRequest, type CursorCollectionPhase } from '@/hooks/resourceLifecycle';
+import { TextInput } from '@acornops/ui';
 
 interface WorkspaceCatalogSourcesProps {
   workspaceId: string;
@@ -172,7 +173,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
             </div>
             <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
               {t('catalogSources.name')}
-              <input
+              <TextInput
                 required
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
@@ -181,7 +182,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
             </label>
             <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
               {t('catalogSources.baseUrl')}
-              <input
+              <TextInput
                 required
                 type="url"
                 pattern="https://.*"
@@ -224,7 +225,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
             {authType !== 'none' && (
               <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
                 {t('catalogSources.credential')}
-                <input
+                <TextInput
                   required={credentialRequired}
                   type="password"
                   autoComplete="new-password"
@@ -238,7 +239,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
             {authType === 'custom_header' && (
               <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
                 {t('catalogSources.headerName')}
-                <input
+                <TextInput
                   required
                   value={headerName}
                   onChange={(event) => setHeaderName(event.target.value)}

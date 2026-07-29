@@ -7,6 +7,7 @@ import type {
   ControlPlaneTargetAssistantCapabilitySkillPreviewItem,
   ControlPlaneTargetAssistantCapabilityToolPreviewItem
 } from '@/services/control-plane/types';
+import { Button } from '@acornops/ui';
 
 interface AssistantCapabilityPreviewControlProps {
   canChat: boolean;
@@ -109,7 +110,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
 
   return (
     <div ref={rootRef} className="relative">
-      <button
+      <Button
         type="button"
         id={buttonId}
         onClick={() => setIsOpen((current) => !current)}
@@ -127,7 +128,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
           <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
         )}
         <span className="truncate">{chipLabel}</span>
-      </button>
+      </Button>
       <AnimatePresence>
         {isOpen && (
           <motion.div

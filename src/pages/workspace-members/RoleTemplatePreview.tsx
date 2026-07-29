@@ -4,6 +4,7 @@ import { clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { WorkspaceCapability, WorkspaceRoleCapabilityGroupKey, WorkspaceRoleTemplate } from '@/types';
 import { formatRole } from './memberUtils';
+import { Button } from '@acornops/ui';
 
 interface RoleTemplatePreviewProps {
   roleTemplate?: WorkspaceRoleTemplate;
@@ -80,7 +81,7 @@ export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({ roleTe
 
       {groupedCapabilities.length > 0 && (
         <div className="mt-4">
-          <button
+          <Button
             type="button"
             aria-expanded={isExpanded}
             aria-controls={expandedPanelId}
@@ -89,7 +90,7 @@ export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({ roleTe
           >
             {t('members.rolePreviewCapabilities')}
             <ChevronDown className={clsx('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} aria-hidden="true" />
-          </button>
+          </Button>
 
           {isExpanded && (
             <div id={expandedPanelId} className="mt-3 grid gap-4 border-t border-ui-border pt-4 sm:grid-cols-2">

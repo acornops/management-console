@@ -156,7 +156,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
         {selectedWorkload?.type === 'Pod' && (
           <div className="flex border-y border-ui-border bg-ui-bg/60 p-1">
             {(['details', 'logs'] as WorkloadDetailTab[]).map((tab) => (
-              <button
+              <Button
                 key={tab}
                 type="button"
                 onClick={() => setActiveDetailTab(tab)}
@@ -166,7 +166,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                 )}`}
               >
                 {tab === 'details' ? t('workloads.details') : t('workloads.logs')}
-              </button>
+              </Button>
             ))}
           </div>
         )}
@@ -313,7 +313,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                       {t('workloads.previousContainer')}
                     </label>
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
+                      <Button
                         type="button"
                         onClick={() => void loadPodLogs('manual')}
                         disabled={isPodLogsLoading}
@@ -321,8 +321,8 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                       >
                         {isPodLogsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
                         {t('workloads.refresh')}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         onClick={() => {
                           followFailuresRef.current = 0;
@@ -337,7 +337,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                       >
                         {isFollowingLogs ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         {isFollowingLogs ? t('workloads.following') : t('workloads.follow')}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
