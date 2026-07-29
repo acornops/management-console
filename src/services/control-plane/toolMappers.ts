@@ -133,6 +133,7 @@ export function mapMcpServer(server: ControlPlaneMcpServer): TargetMcpServer {
     lastDiscoveryAt: server.last_discovery_at || null,
     lastDiscoveryError: server.last_discovery_error || null,
     revision: server.revision,
+    inherited: server.inherited === true,
     provenance: server.catalog_source_id && server.catalog_artifact_name && server.catalog_version && server.catalog_digest
       ? {
           sourceId: server.catalog_source_id,

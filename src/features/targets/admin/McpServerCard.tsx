@@ -114,7 +114,11 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
   const isBlockedByOtherServerToggle = Boolean(pendingToggleServerId && !isTogglingServer);
   const canToggleServer = canEditServers && server.canToggle && !isBlockedByOtherServerToggle && !isTogglingServer;
   const isManagedServer = isManagedMcpServer(server);
-  const serverSubtitle = isManagedServer ? t('mcpServers.managedByAcornOps') : server.url;
+  const serverSubtitle = isManagedServer
+    ? t('mcpServers.managedByAcornOps')
+    : server.inherited
+    ? `Platform default · ${server.url}`
+    : server.url;
   const status = getMcpServerStatusDisplay(server, testResult);
   const statusTone = statusToneClasses[status.tone];
   const writeConfiguredTools = server.toolCounts.writeConfigured;

@@ -136,6 +136,7 @@ export interface ClusterToolCatalogServer {
   connectionStatus: 'unknown' | 'ok' | 'error';
   lastDiscoveryAt: string | null;
   lastDiscoveryError: string | null;
+  inherited?: boolean;
   toolCounts: {
     total: number;
     enabledConfigured: number;

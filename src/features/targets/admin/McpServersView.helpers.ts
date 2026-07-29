@@ -65,6 +65,7 @@ export function pendingCatalogServer(created: TargetMcpServer): TargetToolCatalo
     connectionStatus: created.connectionStatus,
     lastDiscoveryAt: created.lastDiscoveryAt || null,
     lastDiscoveryError: created.lastDiscoveryError || null,
+    inherited: created.inherited,
     toolCounts: {
       total: 0,
       enabledConfigured: 0,

@@ -18,6 +18,7 @@ export interface TargetMcpServer {
   revision?: number;
   provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt?: string };
   tools: KubernetesCluster['mcpTools'];
+  inherited?: boolean;
 }
 
 export interface TargetMcpServerTestConnectionResult {

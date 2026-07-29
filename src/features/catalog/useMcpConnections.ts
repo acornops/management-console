@@ -9,6 +9,7 @@ export interface McpConnectionInstallation {
   credentialMode: 'none' | 'workspace' | 'individual';
   authType?: string;
   isSystem?: boolean;
+  inherited?: boolean;
 }
 
 type McpDestination =
@@ -33,6 +34,14 @@ const connectionCopy = {
   stillUnusable: 'The stored credential is still unusable. Verify again, replace it, or disconnect.',
   refreshFailed: 'The credential is connected, but tools may be stale. Retry the installation refresh.'
 } as const;
+
+export function mcpConnectionsToLoad<TInstallation extends McpConnectionInstallation>(
+  installations: TInstallation[]
+): TInstallation[] {
+  return installations.filter(
+    (installation) => installation.credentialMode !== 'none' && !installation.isSystem && !installation.inherited
+  );
+}
 
 export function useMcpConnections<TInstallation extends McpConnectionInstallation>({
   workspaceId,
@@ -86,7 +95,7 @@ export function useMcpConnections<TInstallation extends McpConnectionInstallatio
   }, [getConnection]);
 
   useEffect(() => {
-    const authenticated = installations.filter((installation) => installation.credentialMode !== 'none' && !installation.isSystem);
+    const authenticated = mcpConnectionsToLoad(installations);
     if (authenticated.length === 0) {
       setConnections({});
       setConnectionErrors({});

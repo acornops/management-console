@@ -457,6 +457,7 @@ export interface ControlPlaneMcpServer {
   catalog_digest?: string | null;
   catalog_imported_at?: string | null;
   tools: ControlPlaneClusterTool[];
+  inherited?: boolean;
 }
 
 export interface ControlPlaneMcpServerTestConnectionResponse {

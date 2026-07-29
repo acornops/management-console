@@ -208,6 +208,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                     <div className="flex flex-wrap gap-2">
                       <strong className="text-sm">{skill.name}</strong>
                       <StatusBadge tone={skill.enabled ? 'success' : 'neutral'}>{skill.enabled ? t('agentsWorkflows.agents.details.capabilities.skills.enabled') : t('agentsWorkflows.agents.details.capabilities.skills.disabled')}</StatusBadge>
+                      {skill.inherited && <StatusBadge tone="neutral">Platform default</StatusBadge>}
                       <StatusBadge tone="neutral">{skill.source.type}</StatusBadge>
                     </div>
                     <p className="type-caption mt-1 text-ui-text-muted">
@@ -228,7 +229,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                       }}
                       size="sm"
                       variant="secondary"
-                      disabled={!skillsWritable || Boolean(busy)}
+                      disabled={!skillsWritable || skill.inherited || Boolean(busy)}
                       onClick={() =>
                         setSkillEditor({
                           skillId: skill.id,
@@ -258,7 +259,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                     >
                       {skill.enabled ? 'Disable' : 'Enable'}
                     </Button>
-                    {skill.source.type === 'git' && skill.source.url && skill.source.ref && skill.source.pinnedCommit && (
+                    {skill.source.type === 'git' && skill.source.url && skill.source.ref && skill.source.pinnedCommit && !skill.inherited && (
                       <Button
                         size="sm"
                         variant="secondary"
@@ -296,7 +297,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                       }}
                       size="sm"
                       variant="danger"
-                      disabled={!canManageAgents || Boolean(busy)}
+                      disabled={!canManageAgents || skill.inherited || Boolean(busy)}
                       onClick={() => setRemoveSkillId(skill.id)}
                     >
                       {t('agentsWorkflows.agents.details.capabilities.actions.remove')}

@@ -248,7 +248,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
   };
 
   const handleSave = async () => {
-    if (!selectedSkillId || !selectedDetail || !canEditSkills) return;
+    if (!selectedSkillId || !selectedDetail || !canEditSkills || selectedDetail.inherited) return;
     setEditorSaving(true);
     setEditorError(null);
     try {
@@ -425,7 +425,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
           resetVersion={editorResetVersion}
           onReset={resetEditorDraft}
           onSubmit={() => void (editorMode === 'create' ? handleCreate() : handleSave())}
-          onReimport={selectedDetail ? () => setConfirmReimportSkillId(selectedDetail.id) : undefined}
+          onReimport={selectedDetail && !selectedDetail.inherited ? () => setConfirmReimportSkillId(selectedDetail.id) : undefined}
         />
       )}
 

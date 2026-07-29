@@ -3,10 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Plus, ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
-import { Button } from '@acornops/ui';
-import { CollectionState } from '@acornops/ui';
-import { EmptyState } from '@acornops/ui';
-import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
+import { Button, CollectionState, EmptyState, InlineLoadingIndicator, PageShell } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult, controlPlaneApi, CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
@@ -437,9 +434,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setServerMutationError(null);
     applyServerEnabledState(server.id, enabled);
     try {
-      await controlPlaneApi.updateTargetMcpServer(target.workspaceId, target.id, server.id, {
-        enabled
-      });
+      await controlPlaneApi.updateTargetMcpServer(target.workspaceId, target.id, server.id, { enabled });
       await loadCatalog({ syncParent: true });
     } catch (error) {
       applyServerEnabledState(server.id, server.enabled);
