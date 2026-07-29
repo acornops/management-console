@@ -8,6 +8,7 @@ const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const srcRoot = join(root, 'src');
 const uiSourceRoot = join(root, 'packages/ui/src');
 const exceptions = JSON.parse(readFileSync(join(root, 'scripts/design-system-exceptions.json'), 'utf8'));
+const appPageContentPath = join(root, 'src/app/AppPageContent.tsx');
 const failures = [];
 
 function sourceFiles(directory) {
@@ -106,6 +107,9 @@ for (const path of productionSources) {
   for (const match of source.matchAll(prohibitedTypographyUtility)) {
     report(path, 'semantic-typography', `${match[0].trim()} must be replaced by a documented semantic typography role`);
   }
+  if (/text-xl[^\n"'`]*font-semibold[^\n"'`]*tracking-tight|text-xl[^\n"'`]*tracking-tight[^\n"'`]*font-semibold/.test(source)) {
+    report(path, 'data-typography', 'metric and count readouts must use the type-data semantic role');
+  }
 }
 
 for (const path of files) {
@@ -150,8 +154,8 @@ for (const path of files) {
     report(path, 'token-colors', 'component-local literal colors are prohibited');
   }
 
-  if (repoPath.startsWith('src/pages/') && /px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10/.test(source)) {
-    report(path, 'route-shell-copy', 'use PageShell instead of copying route margins and scrolling');
+  if (repoPath.startsWith('src/') && /px-4[^\n"'`]*sm:px-6[^\n"'`]*lg:px-10/.test(source)) {
+    report(path, 'route-shell-copy', 'use PageShell or route padding tokens instead of copying responsive route margins');
   }
 
   const hasHandRolledLoadingBranch = /\{[^\n]*(?:isLoading\w*|loading)[^\n]*(?:\?|&&)/i.test(source);
@@ -185,12 +189,42 @@ for (const path of files) {
     const line = source.slice(0, opening.start).split('\n').length;
     report(path, 'heading-typography', `line ${line}: headings require a canonical route, section, panel, row, or data typography role`);
   }
+
+  if (repoPath !== 'packages/ui/src/DataTable.tsx' && !exceptions.rawTableHeaderExceptions?.[repoPath]) {
+    for (const opening of jsxOpenings(source, /<th\b/g)) {
+      if (/\bscope\s*=\s*["']row["']/.test(opening.source)) continue;
+      const line = source.slice(0, opening.start).split('\n').length;
+      report(path, 'shared-table-header', `line ${line}: visible column headers must compose through DataTableHeaderCell`);
+    }
+  }
+}
+
+const appPageContentSource = readFileSync(appPageContentPath, 'utf8');
+const routedAuthenticatedPagePaths = new Set(
+  [...appPageContentSource.matchAll(/import\(["']@\/pages\/([^"']+)["']\)/g)]
+    .map((match) => `src/pages/${match[1]}.tsx`)
+);
+const authenticatedRoutePagePaths = new Set(exceptions.authenticatedRoutePages);
+
+for (const repoPath of routedAuthenticatedPagePaths) {
+  if (!authenticatedRoutePagePaths.has(repoPath)) {
+    report(appPageContentPath, 'authenticated-route-inventory', `${repoPath} must be listed in authenticatedRoutePages`);
+  }
+}
+
+for (const repoPath of authenticatedRoutePagePaths) {
+  if (!routedAuthenticatedPagePaths.has(repoPath)) {
+    report(appPageContentPath, 'authenticated-route-inventory', `${repoPath} is not loaded by AppPageContent`);
+  }
 }
 
 for (const repoPath of exceptions.authenticatedRoutePages) {
   const source = readFileSync(join(root, repoPath), 'utf8');
   if (!source.includes('PageShell') && !exceptions.embeddedRouteExceptions[repoPath]) {
     report(join(root, repoPath), 'authenticated-route-shell', 'route must compose through PageShell');
+  }
+  if (jsxOpenings(source, /<PageShell\b/g).some((opening) => /\bwidth\s*=/.test(opening.source))) {
+    report(join(root, repoPath), 'authenticated-route-width', 'authenticated routes use the default full-width PageShell');
   }
   if (!source.includes('PageHeader') && !exceptions.routeHeaderDelegates[repoPath] && !exceptions.embeddedRouteExceptions[repoPath]) {
     report(join(root, repoPath), 'authenticated-route-header', 'route must compose through PageHeader');
@@ -213,6 +247,12 @@ for (const [repoPath, reason] of Object.entries(exceptions.embeddedRouteExceptio
 for (const [repoPath, reason] of Object.entries(exceptions.asyncCollectionStateExceptions || {})) {
   if (typeof reason !== 'string' || reason.trim().length < 30) {
     report(join(root, repoPath), 'documented-exception', 'async collection exceptions require a durable contextual reason');
+  }
+}
+
+for (const [repoPath, reason] of Object.entries(exceptions.rawTableHeaderExceptions || {})) {
+  if (typeof reason !== 'string' || reason.trim().length < 30) {
+    report(join(root, repoPath), 'documented-exception', 'raw table-header exceptions require a durable contextual reason');
   }
 }
 

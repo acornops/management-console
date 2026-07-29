@@ -1,9 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, Bot, CircleCheck, Cpu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import {
+  Button,
+  DataTableHeader,
+  DataTableHeaderCell,
+  PageHeader,
+  PageShell
+} from '@acornops/ui';
 import { MetricChart } from '@/components/common/MetricChart';
-import { PageHeader, PageShell } from '@acornops/ui';
 import { issueStatusTone, issueTargetScopeLabel, kubernetesIssueNamespace } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
@@ -272,15 +277,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
           <>
             <div className="hidden overflow-x-auto 2xl:block">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-ui-border">
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.issue')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.severity')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('clusterOverview.namespace')}</th>
-                    <th className="type-label px-5 py-3 text-left">{t('overview.lastSeenLabel')}</th>
-                    {onOpenCopilot && <th className="type-label px-5 py-3 text-right">{t('clusterOverview.action')}</th>}
+                <DataTableHeader>
+                  <tr>
+                    <DataTableHeaderCell density="compact">{t('clusterOverview.issue')}</DataTableHeaderCell>
+                    <DataTableHeaderCell density="compact">{t('clusterOverview.severity')}</DataTableHeaderCell>
+                    <DataTableHeaderCell density="compact">{t('clusterOverview.namespace')}</DataTableHeaderCell>
+                    <DataTableHeaderCell density="compact">{t('overview.lastSeenLabel')}</DataTableHeaderCell>
+                    {onOpenCopilot && <DataTableHeaderCell density="compact" numeric>{t('clusterOverview.action')}</DataTableHeaderCell>}
                   </tr>
-                </thead>
+                </DataTableHeader>
                 <tbody>
                   {reportedIssues.map((issue) => (
                     <tr key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">

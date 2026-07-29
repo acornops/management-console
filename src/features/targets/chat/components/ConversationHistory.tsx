@@ -81,7 +81,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   }, [isSessionsLoading]);
 
   return (
-    <section id={id} aria-label={isPage ? t('chat.searchChats') : undefined} className={isPage ? 'flex h-full min-h-0 flex-col bg-ui-bg px-4 sm:px-6 lg:px-10' : 'contents'}>
+    <section id={id} aria-label={isPage ? t('chat.searchChats') : undefined} className={isPage ? 'flex h-full min-h-0 flex-col bg-ui-bg px-[var(--ao-route-padding-x)]' : 'contents'}>
       <div className={isPage ? 'mx-auto w-full max-w-3xl shrink-0 pb-5 pt-6 lg:pb-6 lg:pt-8' : 'border-b border-ui-border p-4'}>
         {isPage ? (
           <div className="flex items-center justify-between gap-4">

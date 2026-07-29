@@ -281,7 +281,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center">
-              <h3 className="type-panel-title truncate" title={server.name}>
+              <h3 className="type-row-title truncate" title={server.name}>
                 {server.name}
               </h3>
             </div>

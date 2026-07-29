@@ -51,7 +51,7 @@ export const TargetAssistantReadinessState: React.FC<TargetAssistantReadinessSta
   if (compact) {
     return (
       <section
-        className="border-t border-ui-border bg-ui-surface px-4 py-4 sm:px-6 lg:px-10"
+        className="border-t border-ui-border bg-ui-surface px-[var(--ao-route-padding-x)] py-4"
         role="status"
         aria-live="polite"
         aria-busy={isLoading || undefined}

@@ -407,7 +407,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                           {getInitials(member)}
                         </div>
                         <div className="min-w-0">
-                          <p className="type-panel-title truncate">{member.name}</p>
+                          <p className="type-row-title truncate">{member.name}</p>
                           <p className="type-body mt-1 inline-flex max-w-full min-w-0 items-center gap-2">
                             <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                             <span className="min-w-0 truncate">{member.email}</span>

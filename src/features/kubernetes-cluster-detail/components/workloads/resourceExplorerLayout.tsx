@@ -1,16 +1,19 @@
 import React from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { RightSidePanel } from '@acornops/ui';
-import { CloseButton } from '@acornops/ui';
+import {
+  CloseButton,
+  DataTableGridHeader,
+  DataTableGridHeaderCell,
+  RightSidePanel
+} from '@acornops/ui';
 import {
   classNames,
   ResourceMetaPair,
   ResourceStatusPill,
   resourceMetricGridClass,
   resourceRowActionClass,
-  resourceRowGridClass,
-  resourceRowHeaderClass
+  resourceRowGridClass
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 
 export const ResourceMetricInline: React.FC<{
@@ -38,12 +41,16 @@ export const ResourceList = <T,>({ items, emptyMessage, renderItem }: { items: T
   return items.length === 0 ? (
     <EmptyState message={emptyMessage} />
   ) : (
-    <div data-resource-list="true" className="min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface divide-y divide-ui-border">
-      <div data-resource-list-header="true" className={resourceRowHeaderClass}>
-        <span className="type-label">{t('resources.table.resource')}</span>
-        <span className="type-label">{t('resources.table.metrics')}</span>
-        <span className="type-label justify-self-end text-right">{t('resources.table.status')}</span>
-      </div>
+    <div data-resource-list="true" className="min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
+      <DataTableGridHeader
+        data-resource-list-header="true"
+        showAt="xl"
+        className="xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5"
+      >
+        <DataTableGridHeaderCell>{t('resources.table.resource')}</DataTableGridHeaderCell>
+        <DataTableGridHeaderCell>{t('resources.table.metrics')}</DataTableGridHeaderCell>
+        <DataTableGridHeaderCell numeric>{t('resources.table.status')}</DataTableGridHeaderCell>
+      </DataTableGridHeader>
       {items.map(renderItem)}
     </div>
   );
@@ -77,7 +84,7 @@ export const InfrastructureRow: React.FC<{
       <div data-resource-row-identity="true" className="flex min-w-0 max-w-full items-center gap-4 sm:gap-5 xl:gap-6">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-metric-blue/20 bg-metric-blue/10 text-metric-blue">{icon}</div>
         <div className="min-w-0">
-          <h3 className="type-panel-title break-words [overflow-wrap:anywhere]" title={title}>
+          <h3 className="type-row-title break-words [overflow-wrap:anywhere]" title={title}>
             {title}
           </h3>
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">

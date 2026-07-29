@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
+import { PageShell } from '@acornops/ui';
 import { ControlPlaneWorkspaceInvitation } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { formatRole } from '@/pages/workspace-members/memberUtils';
@@ -68,7 +69,7 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
   const canAccept = Boolean(invitation && invitation.status === 'pending' && isCurrentUserExpected);
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-2xl flex-col justify-center">
         <div className="rounded-xl border border-ui-border bg-ui-surface p-8 shadow-sm">
           {isLoading ? (
@@ -150,6 +151,6 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
           )}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 };

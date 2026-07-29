@@ -194,22 +194,22 @@ export const McpServerToolsDialog: React.FC<{
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
-                    <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{server.toolCounts.total}</p>
+                    <p className="type-data mt-0.5">{server.toolCounts.total}</p>
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
-                    <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{server.toolCounts.enabledEffective}</p>
+                    <p className="type-data mt-0.5">{server.toolCounts.enabledEffective}</p>
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
-                    <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+                    <p className="type-data mt-0.5 inline-flex items-center gap-2">
                       {server.toolCounts.total - server.toolCounts.writeConfigured}
                       <span className="h-2 w-2 rounded-full bg-status-success" />
                     </p>
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
-                    <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+                    <p className="type-data mt-0.5 inline-flex items-center gap-2">
                       {server.toolCounts.writeConfigured}
                       <span className="h-2 w-2 rounded-full bg-status-warning" />
                     </p>

@@ -16,9 +16,12 @@ import {
   membersPage,
   pageComposition,
   resourceCategoryTabs,
+  resourceExplorerLayout,
   resourcesView,
   targetSkillsInventory,
   targetToolsView,
+  virtualMachineIssuesPanel,
+  virtualMachineResourcesView,
   virtualMachinesListView,
   webhookList,
   workflowActivityUi,
@@ -60,7 +63,8 @@ describe('surface behavior contracts', () => {
   });
 
   it('keeps the populated workflow ledger compact and leaves field labels to compact layouts', () => {
-    expect(workspaceRunsPage).toContain('<PageShell width="content">');
+    expect(workspaceRunsPage).toContain('<PageShell>');
+    expect(workspaceRunsPage).not.toContain('<PageShell width=');
     expect(workspaceRunsPage).toContain('bg-ui-surface shadow-sm');
     expect(workspaceRunsPage).not.toContain('min-h-[24rem]');
     expect(pageComposition).toContain("content: 'mx-auto max-w-[88rem]'");
@@ -88,12 +92,17 @@ describe('surface behavior contracts', () => {
       workspaceSchedulesPage,
       workspaceApprovalsPage,
       auditLogPage,
-      membersPage
+      membersPage,
+      clusterOverviewView,
+      virtualMachineIssuesPanel,
+      virtualMachineResourcesView
     ].forEach((surface) => expect(surface).toContain('<DataTableHeader'));
     [
       workspaceRunsPage,
       workspaceEventTriggersPage,
-      webhookList
+      webhookList,
+      resourceExplorerLayout,
+      virtualMachineResourcesView
     ].forEach((surface) => expect(surface).toContain('<DataTableGridHeader'));
     [
       mcpServersInventory,
@@ -108,6 +117,9 @@ describe('surface behavior contracts', () => {
     ].forEach((surface) => expect(surface).toContain('collectionState={{'));
     expect(workspaceSchedulesPage).toContain('density="dense"');
     expect(workspaceApprovalsPage).toContain('density="dense"');
+    expect(clusterOverviewView).toContain('density="compact"');
+    expect(virtualMachineIssuesPanel).toContain('density="compact"');
+    expect(virtualMachineResourcesView).not.toContain('<th');
   });
 
   it('reveals the active resource category when compact tab strips overflow', () => {

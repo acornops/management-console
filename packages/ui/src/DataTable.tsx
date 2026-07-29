@@ -60,8 +60,44 @@ export const DataTableHeader: React.FC<DataTableHeaderProps> = ({
   );
 };
 
+export type DataTableDensity = 'standard' | 'dense' | 'compact';
+export type DataTableGridHeaderBreakpoint = 'md' | 'lg' | 'xl';
+
+const dataTableHeaderCellDensityClassNames: Record<DataTableDensity, string> = {
+  standard: 'px-4 py-4 sm:px-6 lg:px-8 lg:py-5',
+  dense: 'px-4 py-4',
+  compact: 'px-5 py-3'
+};
+
+const dataTableGridHeaderDensityClassNames: Record<DataTableDensity, string> = {
+  standard: 'px-4 py-4 sm:px-6',
+  dense: 'px-4 py-4',
+  compact: 'px-5 py-3'
+};
+
+const dataTableGridHeaderBreakpointClassNames: Record<
+  DataTableGridHeaderBreakpoint,
+  Record<DataTableDensity, string>
+> = {
+  md: {
+    standard: 'md:grid lg:px-8 lg:py-5',
+    dense: 'md:grid',
+    compact: 'md:grid'
+  },
+  lg: {
+    standard: 'lg:grid lg:px-8 lg:py-5',
+    dense: 'lg:grid',
+    compact: 'lg:grid'
+  },
+  xl: {
+    standard: 'xl:grid xl:px-8 xl:py-5',
+    dense: 'xl:grid',
+    compact: 'xl:grid'
+  }
+};
+
 export interface DataTableHeaderCellProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
-  density?: 'standard' | 'dense';
+  density?: DataTableDensity;
   numeric?: boolean;
   sortDirection?: 'ascending' | 'descending' | 'none';
   onSort?: () => void;
@@ -81,9 +117,7 @@ export const DataTableHeaderCell: React.FC<DataTableHeaderCellProps> = ({
     aria-sort={sortDirection}
     className={twMerge(clsx(
       'type-label bg-ui-bg text-ui-text-muted',
-      density === 'standard'
-        ? 'px-4 py-4 sm:px-6 lg:px-8 lg:py-5'
-        : 'px-4 py-4',
+      dataTableHeaderCellDensityClassNames[density],
       numeric && 'text-right tabular-nums',
       className
     ))}
@@ -95,13 +129,15 @@ export const DataTableHeaderCell: React.FC<DataTableHeaderCellProps> = ({
 
 export interface DataTableGridHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   collectionState?: DataTableHeaderCollectionState;
-  showAt?: 'lg' | 'xl';
+  density?: DataTableDensity;
+  showAt?: DataTableGridHeaderBreakpoint;
 }
 
 export const DataTableGridHeader: React.FC<DataTableGridHeaderProps> = ({
   children,
   className,
   collectionState,
+  density = 'standard',
   showAt = 'lg',
   ...props
 }) => {
@@ -109,10 +145,9 @@ export const DataTableGridHeader: React.FC<DataTableGridHeaderProps> = ({
   return (
     <div
       className={twMerge(clsx(
-        'hidden gap-4 border-b border-ui-border bg-ui-bg px-4 py-4 sm:px-6',
-        showAt === 'lg'
-          ? 'lg:grid lg:px-8 lg:py-5'
-          : 'xl:grid xl:px-8 xl:py-5',
+        'hidden gap-4 border-b border-ui-border bg-ui-bg',
+        dataTableGridHeaderDensityClassNames[density],
+        dataTableGridHeaderBreakpointClassNames[showAt][density],
         className
       ))}
       {...props}

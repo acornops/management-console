@@ -111,26 +111,26 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
           </div>
           <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.serversMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.serverCount}</p>
+            <p className="type-data mt-0.5">{toolAccessSummary.serverCount}</p>
           </div>
           <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.totalTools}</p>
+            <p className="type-data mt-0.5">{toolAccessSummary.totalTools}</p>
           </div>
           <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{toolAccessSummary.enabledTools}</p>
+            <p className="type-data mt-0.5">{toolAccessSummary.enabledTools}</p>
           </div>
           <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
-            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.readOnlyTools}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
-            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.writeCapableTools}
               <span className="h-2 w-2 rounded-full bg-status-warning" />
             </p>

@@ -6,7 +6,7 @@ import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer 
 import { Button } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
-import { InlineLoadingIndicator } from '@acornops/ui';
+import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult, controlPlaneApi, CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
@@ -493,7 +493,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <McpServersViewHeader
         target={target}
         canEditServers={canEditServers}
@@ -644,6 +644,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           />
         )}
       </AnimatePresence>
-    </div>
+    </PageShell>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { issueStatusTone } from '@/pages/issues/issueUi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
@@ -87,15 +87,15 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
         <>
           <div className="hidden overflow-x-auto 2xl:block">
             <table className="w-full">
-              <thead>
-                <tr className="border-b border-ui-border">
-                  <th className="type-label px-5 py-3 text-left">{t('virtualMachines.overview.issue')}</th>
-                  <th className="type-label px-5 py-3 text-left">{t('virtualMachines.overview.severity')}</th>
-                  <th className="type-label px-5 py-3 text-left">{t('virtualMachines.overview.source')}</th>
-                  <th className="type-label px-5 py-3 text-left">{t('overview.lastSeenLabel')}</th>
-                  <th className="type-label px-5 py-3 text-right">{t('virtualMachines.overview.action')}</th>
+              <DataTableHeader>
+                <tr>
+                  <DataTableHeaderCell density="compact">{t('virtualMachines.overview.issue')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="compact">{t('virtualMachines.overview.severity')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="compact">{t('virtualMachines.overview.source')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="compact">{t('overview.lastSeenLabel')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="compact" numeric>{t('virtualMachines.overview.action')}</DataTableHeaderCell>
                 </tr>
-              </thead>
+              </DataTableHeader>
               <tbody>
                 {reportedIssues.map((issue) => (
                   <tr key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">

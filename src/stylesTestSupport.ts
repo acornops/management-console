@@ -61,6 +61,9 @@ export const targetSkillsInventory = readSource(
 export const targetToolsView = readSource(
   'src/features/targets/admin/TargetToolsView.tsx'
 );
+export const targetSkillsView = readSource(
+  'src/features/targets/admin/TargetSkillsView.tsx'
+);
 export const chatView = [
   readSource('src/features/targets/chat/components/TargetChatView.tsx'),
   readSource('src/features/targets/chat/components/TargetChatViewBody.tsx'),
@@ -139,6 +142,8 @@ export const webhookList = readSource('src/features/webhooks/WebhookList.tsx');
 export const workspaceRunsPage = readSource('src/pages/WorkspaceRunsPage.tsx');
 export const workflowActivityUi = readSource('src/features/workflow-activity/WorkflowActivityUi.tsx');
 export const virtualMachinesListView = readSource('src/pages/virtual-machines/VirtualMachinesListView.tsx');
+export const virtualMachineIssuesPanel = readSource('src/pages/virtual-machines/VirtualMachineIssuesPanel.tsx');
+export const virtualMachineResourcesView = readSource('src/pages/virtual-machines/VirtualMachineResourcesView.tsx');
 export const workloadsExplorer = readSource(
   'src/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer.tsx'
 );

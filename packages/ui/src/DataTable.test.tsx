@@ -117,4 +117,29 @@ describe('DataTable primitives', () => {
     expect(markup).toContain('type-label bg-ui-bg text-ui-text-muted px-4 py-4');
     expect(markup).not.toContain('lg:px-8');
   });
+
+  it('offers compact anatomy only through an explicit shared density', () => {
+    const tableMarkup = renderToStaticMarkup(
+      <table><thead><tr><DataTableHeaderCell density="compact">Issue</DataTableHeaderCell></tr></thead></table>
+    );
+    const gridMarkup = renderToStaticMarkup(
+      <DataTableGridHeader density="compact" showAt="md">
+        <DataTableGridHeaderCell>Issue</DataTableGridHeaderCell>
+      </DataTableGridHeader>
+    );
+
+    expect(tableMarkup).toContain('type-label bg-ui-bg text-ui-text-muted px-5 py-3');
+    expect(gridMarkup).toContain('border-b border-ui-border bg-ui-bg px-5 py-3 md:grid');
+    expect(gridMarkup).not.toContain('lg:px-8');
+  });
+
+  it('supports page-level responsive ledgers that reveal at the medium breakpoint', () => {
+    const markup = renderToStaticMarkup(
+      <DataTableGridHeader showAt="md">
+        <DataTableGridHeaderCell>Time</DataTableGridHeaderCell>
+      </DataTableGridHeader>
+    );
+
+    expect(markup).toContain('md:grid lg:px-8 lg:py-5');
+  });
 });

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
 import { InlineLoadingIndicator } from '@acornops/ui';
+import { PageShell } from '@acornops/ui';
 import { SelectOption } from '@acornops/ui';
 import { Workload } from '@/types';
 import { InfrastructureResource } from '@/features/kubernetes-cluster-detail/components/workloads/ResourceDetailsDrawer';
@@ -376,7 +377,7 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   const markResourceSelectionChanged = () => setHasManualResourceSelection(true);
 
   return (
-    <div className="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <header className="mb-8 min-w-0 w-full max-w-full">
         <div className="min-w-0 w-full max-w-full">
           <h1 className="type-route-title">{title || t('resources.title')}</h1>
@@ -509,6 +510,6 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
         resource={selectedResource}
         workload={selectedWorkload}
       />
-    </div>
+    </PageShell>
   );
 };

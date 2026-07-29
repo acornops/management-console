@@ -25,7 +25,7 @@ export const PageLoadingFallback: React.FC<PageLoadingFallbackProps> = ({ label,
     role="status"
     aria-live="polite"
     className={twMerge(
-      clsx('flex h-full min-h-0 flex-1 items-center justify-center bg-ui-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8', className)
+      clsx('flex h-full min-h-0 flex-1 items-center justify-center bg-ui-bg px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)]', className)
     )}
   >
     <span className="sr-only">{label}</span>

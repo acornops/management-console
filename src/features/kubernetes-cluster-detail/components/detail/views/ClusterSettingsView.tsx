@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@acornops/ui';
+import { PageShell } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -160,7 +161,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   };
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-ui-bg px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8">
+    <PageShell>
       <header className="mb-8">
         <h1 className="type-route-title">{t('clusterSettings.title')}</h1>
         <p className="type-body mt-2">{t('clusterSettings.subtitle', { name: cluster.name })}</p>
@@ -310,6 +311,6 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
           />
         )}
       </div>
-    </div>
+    </PageShell>
   );
 };

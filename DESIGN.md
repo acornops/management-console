@@ -296,6 +296,10 @@ The canonical rhythm is token-driven:
 
 Individual pages retain information architecture suited to the task. Split panes, resource explorers, chat transcripts, metric layouts, and tables may differ. Route chrome, title hierarchy, action semantics, control behavior, state treatment, spacing tokens, and overlay anatomy do not differ. Embedded surfaces must be documented in `scripts/design-system-exceptions.json` and still use shared controls and state patterns.
 
+Authenticated route shells always use the default full width. When prose, a
+ledger, or another task surface needs a narrower reading measure, constrain that
+surface inside the shell instead of changing the route shell width.
+
 Workflows and MCP Catalog use the shared catalog split. One bordered surface contains a divided library and detail pane with a `32rem` minimum height. At `lg` and wider, the library uses `minmax(18rem, 22rem)` and detail fills the remaining width. Below `lg`, only the route-selected pane is visible; detail provides a Back action that returns to the library and restores focus to its selected row. Desktop may preview the first visible item without writing selection state to the URL. Shared primitives also own list headers, row padding and selection, loading and empty states, detail headers, detail-body padding and tone, and the discovery-to-surface gap. Page-specific filters, metadata, actions, tabs, and detail fields remain feature-owned.
 
 ### Chips
@@ -323,6 +327,7 @@ Operator-facing collection tables use the Kubernetes MCP Servers table as the vi
 
 - **Standard header:** `16px / 24px / 32px` horizontal padding and `16px / 20px` vertical padding across compact, `sm`, and large layouts.
 - **Dense header:** The `dense` header-cell variant is reserved for operational tables with seven or more columns, such as Schedules and Approvals.
+- **Compact header:** The `compact` variant is reserved for a secondary table embedded inside a larger route surface, such as an overview issue list. Primary route ledgers, including Resources and Logs, use the standard header even when their rows are implemented as responsive grids.
 - **Row rhythm:** Standard collection rows align to the header padding and use `20px / 24px` vertical breathing room. A feature may retain denser rows when scan speed or decision density requires it, but it must keep the shared header anatomy.
 - **Responsive disclosure:** Do not reveal the desktop column layout until the content area can support it beside the workspace sidebar. Below that breakpoint, hide secondary columns only when their values remain available as labeled metadata inside the primary row, or use the feature's compact card composition. Compact ledger cards keep identity and actions together on the first row, then stack each labeled fact across the available width; they never preserve desktop minimum column widths without the desktop grid.
 - **Alignment contract:** Responsive grid ledgers define one reusable grid template for both header and rows so action columns cannot drift or clip independently.

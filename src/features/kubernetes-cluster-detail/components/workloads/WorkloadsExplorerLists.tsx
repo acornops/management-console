@@ -71,7 +71,7 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage
                 {getIcon(workload.type)}
               </div>
               <div className="min-w-0">
-                <h3 className="type-panel-title break-words [overflow-wrap:anywhere]" title={workload.name}>
+                <h3 className="type-row-title break-words [overflow-wrap:anywhere]" title={workload.name}>
                   {workload.name}
                 </h3>
                 <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">

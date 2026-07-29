@@ -125,20 +125,20 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <span className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-ui-text">
+            <span className="type-row-title flex min-w-0 flex-wrap items-center gap-2">
               <span className="truncate">{tool.label}</span>
               <span className="type-micro-label shrink-0 rounded-full bg-accent-soft/45 px-2 py-0.5 text-accent-readable">{t('common.providedByAcornOps')}</span>
               {isUnavailable && (
                 <span className="type-micro-label shrink-0 rounded-full bg-status-warning-soft px-2 py-0.5 text-status-warning-text">{t('tools.unavailable')}</span>
               )}
             </span>
-            <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={tool.description}>
+            <span className="type-caption mt-1 block line-clamp-2 break-words" title={tool.description}>
               {tool.description}
             </span>
             {isUnavailable && tool.availability?.unavailableReason === 'openai_responses_api_required' && (
-              <span className="mt-1 block text-xs leading-5 text-status-warning-text">{t('tools.openAiResponsesRequired')}</span>
+              <span className="type-caption mt-1 block text-status-warning-text">{t('tools.openAiResponsesRequired')}</span>
             )}
-            <span className="mt-2 block text-xs text-ui-text-muted md:hidden">{runtimeLabel}</span>
+            <span className="type-caption mt-2 block md:hidden">{runtimeLabel}</span>
           </div>
         </div>
       </td>
@@ -147,7 +147,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
       </td>
       <td className="px-4 py-6 sm:px-6 lg:px-8">
         {!isToggleable ? (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-status-success-text">
+          <span className="type-caption inline-flex items-center gap-1.5 text-status-success-text">
             <Check className="h-4 w-4" aria-hidden="true" />
             {t('tools.alwaysAvailable')}
           </span>
@@ -164,7 +164,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
           />
         )}
       </td>
-      <td className="hidden px-4 py-6 text-xs text-ui-text-muted sm:px-6 md:table-cell lg:px-8">
+      <td className="type-caption hidden px-4 py-6 sm:px-6 md:table-cell lg:px-8">
         <span className="type-micro-label rounded-full bg-ui-bg px-2.5 py-1 text-ui-text-muted">{runtimeLabel}</span>
       </td>
       <td className="px-4 py-6 text-right sm:px-6 lg:px-8">

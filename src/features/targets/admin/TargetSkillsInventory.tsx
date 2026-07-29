@@ -106,7 +106,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-ui-text">{skill.name}</span>
+            <span className="type-row-title block truncate">{skill.name}</span>
             <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={skill.description}>
               {skill.description}
             </span>
@@ -211,29 +211,29 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
           </div>
           <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.skillsMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.total}</p>
+            <p className="type-data mt-0.5">{summary.total}</p>
           </div>
           <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.assistantVisibleSkills')}</p>
-            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {summary.assistantVisible}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
           </div>
           <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.enabledSkillsMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.enabled}</p>
+            <p className="type-data mt-0.5">{summary.enabled}</p>
           </div>
           <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.needsFixes')}</p>
-            <p className="mt-0.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-ui-text">
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {summary.needsFixes}
               <span className="h-2 w-2 rounded-full bg-status-warning" />
             </p>
           </div>
           <div className="px-5 py-3.5">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.filesMetric')}</p>
-            <p className="mt-0.5 text-xl font-semibold tracking-tight text-ui-text">{summary.files}</p>
+            <p className="type-data mt-0.5">{summary.files}</p>
           </div>
         </div>
       </section>

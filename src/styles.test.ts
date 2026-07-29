@@ -41,6 +41,8 @@ import {
   rgbVariableValue,
   styles,
   tailwindConfig,
+  targetSkillsView,
+  targetToolsView,
   themeInit,
   traceFooter,
   typographyDoc,
@@ -304,7 +306,7 @@ describe('theme color contract', () => {
     expect(pageComposition).toContain('min-h-0 flex-1 overflow-x-hidden overflow-y-auto');
     expect(userSettingsPage).toContain('<PageShell');
     expect(workspaceSettingsPage).toContain('<PageShell');
-    expect(clusterSettingsView).toContain('min-h-0 flex-1 overflow-y-auto');
+    expect(clusterSettingsView).toContain('<PageShell>');
   });
   it('renders quota visibility only in settings surfaces', () => {
     ["t('settings.workspacesJoined')", 'user.quota?.workspaceMemberships', "t('settings.quotaUnavailable')"].forEach((needle) => expect(userSettingsPage).toContain(needle));
@@ -365,7 +367,7 @@ describe('theme color contract', () => {
     expect(workloadsExplorer).toContain('q: resourceSearchTerm.trim() || undefined');
     expect(resourceExplorerControls).toContain("aria-label={t('resources.filters.unhealthyPodsCount'");
     expect(workloadsExplorer).toContain('getDefaultExplorerSelection(unhealthyPodCount)');
-    expect(workloadsExplorer).toContain('flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden');
+    expect(workloadsExplorer).toContain('<PageShell>');
     expect(appPageContent).toContain('flex-1 min-w-0 w-full max-w-full');
     expect(workloadsExplorerSurface).toContain("<ResourceMetaPair label={t('resources.row.kind')}");
     expect(workloadsExplorerSurface).toContain('<ResourceStatusPill status={workload.status} healthy={isHealthy} />');
@@ -389,7 +391,9 @@ describe('theme color contract', () => {
     expect(workloadsExplorer).not.toContain('grid grid-cols-1 gap-3');
     expect(workloadsExplorer).not.toContain('rounded-xl border border-ui-border bg-ui-surface p-3 shadow-sm');
     expect(workloadExplorerParts).toContain('export const resourceRowGridClass =');
-    expect(workloadExplorerParts).toContain('export const resourceRowHeaderClass =');
+    expect(workloadExplorerParts).not.toContain('resourceRowHeaderClass');
+    expect(resourceExplorerLayout).toContain('<DataTableGridHeader');
+    expect(resourceExplorerLayout).toContain('showAt="xl"');
     expect(workloadExplorerParts).toContain('xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)]');
     expect(workloadsExplorerSurface).toContain('resourceRowGridClass,');
     expect(resourceExplorerLayout).toContain('resourceRowGridClass,');
@@ -413,7 +417,6 @@ describe('theme color contract', () => {
     expect(workloadExplorerParts).toContain('inline-flex min-w-0 max-w-full items-center gap-2 rounded-full');
     expect(workloadExplorerParts).toContain('[overflow-wrap:anywhere]');
     expect(resourceExplorerLayout).toContain('type-ui inline-flex shrink-0 items-center gap-1');
-    expect(resourceExplorerLayout).toContain('type-panel-title break-words [overflow-wrap:anywhere]');
     expect(resourceExplorerLayout).toContain('type-row-title break-words');
     expect(resourceExplorerLayout).not.toContain('sm:grid-cols-[repeat(3,minmax(0,7rem))_minmax(12rem,1fr)_minmax(10rem,max-content)]');
     expect(resourceExplorerLayout).not.toContain('truncate text-sm font-bold text-ui-text');
@@ -424,7 +427,8 @@ describe('theme color contract', () => {
     expect(resourceExplorerLayout).not.toContain('data-resource-inventory-strip="true"');
     expect(resourceExplorerLayout).not.toContain('data-resource-kind-chip="true"');
     expect(resourceExplorerLayout).toContain('data-resource-list="true"');
-    expect(resourceExplorerLayout).toContain('min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface divide-y divide-ui-border');
+    expect(resourceExplorerLayout).toContain('min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface');
+    expect(resourceExplorerLayout).not.toContain('divide-y divide-ui-border');
     expect(workloadExplorerParts).toContain('ResourceMetaPair');
     expect(workloadExplorerParts).not.toContain('ResourceMetadataChip');
     expect(resourceExplorerLayout).toContain('ResourceMetricInline');
@@ -578,9 +582,14 @@ describe('theme color contract', () => {
   });
   it('keeps cluster detail pages on the shared full-width shell', () => {
     expect(clusterOverviewView).toMatch(/<PageShell>[\s\S]*<PageHeader/);
-    expect(clusterSettingsView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
-    expect(workloadsExplorer).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
-    expect(mcpServersView).toContain('px-4 py-6 custom-scrollbar stable-scrollbar-gutter sm:px-6 lg:px-10 lg:py-8');
+    [clusterSettingsView, workloadsExplorer, mcpServersView, targetSkillsView, targetToolsView]
+      .forEach((surface) => expect(surface).toContain('<PageShell>'));
+  });
+
+  it('enforces route-shell composition across authenticated route entrypoints and feature views', () => {
+    expect(designSystemCheck).toContain("repoPath.startsWith('src/')");
+    expect(designSystemCheck).toContain('authenticated-route-inventory');
+    expect(designSystemCheck).toContain('routedAuthenticatedPagePaths');
   });
 
   it('keeps the workspace homepage in normal responsive flow', () => {

@@ -318,7 +318,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             <>
               <header
                 className={`${
-                  isPanel ? 'sticky top-0 z-10 border-b border-ui-border bg-ui-surface px-5 py-4 sm:px-6' : 'bg-ui-bg px-4 py-6 sm:px-6 lg:px-10 lg:py-8'
+                  isPanel ? 'sticky top-0 z-10 border-b border-ui-border bg-ui-surface px-5 py-4 sm:px-6' : 'bg-ui-bg px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)]'
                 } transition-colors`}
               >
                 {isPanel ? (
@@ -362,7 +362,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 ref={transcriptRef}
                 onScroll={onChatScroll}
                 className={`flex-1 scroll-pb-10 overflow-y-auto bg-ui-bg custom-scrollbar ${
-                  isPanel ? 'px-5 py-5 sm:px-6 sm:py-6' : 'stable-scrollbar-gutter px-4 py-6 sm:px-6 lg:px-10 lg:py-8'
+                  isPanel ? 'px-5 py-5 sm:px-6 sm:py-6' : 'stable-scrollbar-gutter px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)]'
                 }`}
               >
                 {shouldShowTranscriptSkeleton ? (
