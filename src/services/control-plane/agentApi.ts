@@ -79,6 +79,50 @@ export interface AgentCapability {
   requiresApproval: boolean;
 }
 
+export type AgentConversationAccessMode = 'read_only' | 'read_write';
+export interface AgentConversationSummaryApi {
+  id: string;
+  workspaceId: string;
+  agentId: string;
+  agentVersion: number;
+  title: string;
+  createdBy: string;
+  accessMode: AgentConversationAccessMode;
+  launchedAt?: string;
+  createdAt: string;
+}
+export interface AgentConversationMessageApi {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  runId?: string;
+  createdAt: string;
+}
+export interface AgentConversationRunApi {
+  id: string;
+  executionId?: string;
+  status: string;
+  requestedAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  assistantMessage?: { content?: string };
+  events?: Array<{
+    schema_version: string;
+    run_id: string;
+    seq: number;
+    ts: string;
+    type: string;
+    payload: Record<string, unknown>;
+  }>;
+}
+export interface AgentConversationApiResponse {
+  conversation: AgentConversationSummaryApi;
+  messages: AgentConversationMessageApi[];
+  runs: AgentConversationRunApi[];
+}
+
 export interface AgentDefinitionApi {
   id: string;
   workspaceId: string;
@@ -113,6 +157,62 @@ export interface AgentDefinitionApi {
   workflowsUsingAgent?: string[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export function listAgentConversations(
+  workspaceId: string,
+  agentId: string
+): Promise<AgentConversationSummaryApi[]> {
+  return requestJson<{ items: AgentConversationSummaryApi[] }>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/conversations`
+  ).then((response) => response.items);
+}
+
+export function createAgentConversation(
+  workspaceId: string,
+  agentId: string
+): Promise<AgentConversationApiResponse> {
+  return requestJson<AgentConversationApiResponse>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/conversations`,
+    { method: 'POST' }
+  );
+}
+
+export function getAgentConversation(conversationId: string): Promise<AgentConversationApiResponse> {
+  return requestJson<AgentConversationApiResponse>(
+    `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}`
+  );
+}
+
+export function deleteAgentConversation(conversationId: string): Promise<void> {
+  return requestJson<void>(
+    `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}`,
+    { method: 'DELETE' }
+  );
+}
+
+export function changeAgentConversationAccess(
+  conversationId: string,
+  accessMode: AgentConversationAccessMode
+): Promise<AgentConversationSummaryApi> {
+  return requestJson<{ conversation: AgentConversationSummaryApi }>(
+    `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}/access`,
+    { method: 'PATCH', body: JSON.stringify({ accessMode }) }
+  ).then((response) => response.conversation);
+}
+
+export function postAgentConversationMessage(
+  conversationId: string,
+  content: string,
+  clientRequestId?: string
+): Promise<{ message_id: string; run_id: string; executionId: string; status: string }> {
+  return requestJson(
+    `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}/messages`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ content, ...(clientRequestId ? { clientRequestId } : {}) })
+    }
+  );
 }
 
 export type AgentCreateInput = Partial<Omit<AgentDefinitionApi, 'id' | 'workspaceId' | 'createdAt' | 'updatedAt'>> & {

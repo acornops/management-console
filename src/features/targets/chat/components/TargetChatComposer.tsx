@@ -14,6 +14,7 @@ type TargetChatComposerProps = Pick<
   | 'allowedReasoningOptions'
   | 'assistantCapabilitiesPreview'
   | 'assistantCapabilitiesPreviewError'
+  | 'capabilityPreviewEnabled'
   | 'canChat'
   | 'canCancelActiveRun'
   | 'canPost'
@@ -81,6 +82,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   allowedReasoningOptions,
   assistantCapabilitiesPreview,
   assistantCapabilitiesPreviewError,
+  capabilityPreviewEnabled,
   canChat,
   canCancelActiveRun,
   canPost,
@@ -229,6 +231,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               className={`${
                 isPanel ? 'min-h-9 text-sm' : 'min-h-10 text-sm'
               } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 font-medium text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60`}
+              role="combobox"
               aria-label={t('chat.composerInputLabel', { name: target.name })}
               aria-controls={isReferenceMenuOpen ? referenceMenuId : undefined}
               aria-expanded={isReferenceMenuOpen}
@@ -253,14 +256,18 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             <input ref={fileInputRef} type="file" multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive} />
             <span className="min-w-0 flex-1" aria-hidden="true" />
             <div className="inline-flex h-8 items-center rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60">
-              <AssistantCapabilityPreviewControl
-                canChat={canChat}
-                isLoading={isAssistantCapabilitiesPreviewLoading}
-                error={assistantCapabilitiesPreviewError}
-                preview={assistantCapabilitiesPreview}
-                requestedToolAccessMode={requestedToolAccessMode}
-              />
-              <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
+              {capabilityPreviewEnabled ? (
+                <>
+                  <AssistantCapabilityPreviewControl
+                    canChat={canChat}
+                    isLoading={isAssistantCapabilitiesPreviewLoading}
+                    error={assistantCapabilitiesPreviewError}
+                    preview={assistantCapabilitiesPreview}
+                    requestedToolAccessMode={requestedToolAccessMode}
+                  />
+                  <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
+                </>
+              ) : null}
               <div ref={modelMenuRef} className="relative">
                 <button
                   type="button"

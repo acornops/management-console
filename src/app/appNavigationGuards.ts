@@ -34,6 +34,7 @@ export function routeTargetsMissingWorkspace(
   return (
     isWorkspaceDataRoute(route)
     || route.kind === 'workspaceAgents'
+    || route.kind === 'workspaceAgentDetail'
     || route.kind === 'workspaceWorkflows'
     || route.kind === 'workspaceRuns'
     || route.kind === 'workspaceMembers'

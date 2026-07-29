@@ -19,10 +19,11 @@ test('owner, admin, and viewer fixtures expose the expected management boundarie
 
     await selectFixtureRole(page, 'viewer');
     await expect(newAgent).toBeDisabled();
-    await expect(page.getByText(/inspect agents.*manage_agents/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(0);
 
     await selectFixtureRole(page, 'admin');
     await expect(newAgent).toBeEnabled();
+    await expect(page.getByRole('button', { name: /^Actions for / }).first()).toBeVisible();
 
     await page.goto('/workspaces/fixture-workspace/settings', { waitUntil: 'domcontentloaded' });
     const deleteWorkspace = page.getByRole('button').filter({ hasText: 'Delete workspace' });

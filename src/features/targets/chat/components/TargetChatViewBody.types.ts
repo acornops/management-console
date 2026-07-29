@@ -7,7 +7,7 @@ import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { ComposerAttachment, ComposerModelOption } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { ChatAssistantReference, ChatMessage, ChatSession, ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
+import type { ChatPresentationSubject } from '@/features/targets/chat/components/TargetChatView.types';
 
 export interface TargetChatViewBodyProps {
   activeRunId: string | null;
@@ -18,13 +18,14 @@ export interface TargetChatViewBodyProps {
   assistantMarkdownComponents: Components;
   assistantCapabilitiesPreview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
   assistantCapabilitiesPreviewError: string;
+  capabilityPreviewEnabled: boolean;
   canApproveWriteActions: boolean;
   canCancelActiveRun: boolean;
   canChat: boolean;
   canDeleteSessions: boolean;
   canManageAiSettings: boolean;
   canPost: boolean;
-  target: TargetDescriptor;
+  target: ChatPresentationSubject;
   composerActionLabel: string;
   composerAttachmentNotice: string;
   composerAttachments: ComposerAttachment[];

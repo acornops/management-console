@@ -1697,6 +1697,35 @@ export const en = {
       not_installed: 'Setup Required'
     }
   },
+  agentChat: {
+    title: 'Agent chat',
+    description: 'Work directly with {{name}} in a single-Agent manual conversation.',
+    promptTitle: 'Start a conversation with {{name}}',
+    promptBody: 'Conversations begin read-only. Enable changes explicitly when the task requires write tools.',
+    inputPlaceholder: 'Message {{name}}...',
+    footer: 'This conversation starts read-only. Changes require explicit access and follow the Agent approval policy.',
+    readOnlyNotice: 'This conversation is read-only. Enable changes explicitly when needed.',
+    writeNotice: 'Changes are enabled for this conversation. Write tools still follow approval policy.',
+    readerNotice: 'You can read this conversation, but only its creator can continue it.',
+    enableChanges: 'Enable changes',
+    returnReadOnly: 'Return to read-only',
+    backToAgents: 'Back to Agents',
+    ready: 'Ready',
+    needsSetup: 'Needs setup',
+    tabs: {
+      chat: 'Chat',
+      mcpServers: 'MCP Servers',
+      skills: 'Skills',
+      tools: 'Tools',
+      settings: 'Settings'
+    },
+    suggestions: {
+      inspect: 'Inspect the available evidence',
+      summarize: 'Summarize the current situation',
+      nextSteps: 'Recommend safe next steps',
+      readiness: 'Review configuration readiness'
+    }
+  },
   chat: {
     history: 'History',
     assistantNavigation: 'Assistant navigation',

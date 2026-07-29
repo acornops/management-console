@@ -102,15 +102,12 @@ export function agentMcpConfigurationPath(input: {
   serverId?: string;
   action?: McpReadinessAction;
 }): string {
-  const params = new URLSearchParams({
-    agent: input.agentId,
-    panel: 'profile',
-    agentTab: 'capabilities',
-    capabilityTab: 'mcp'
-  });
+  const params = new URLSearchParams();
   if (input.serverId) params.set('mcpServer', input.serverId);
   if (input.action) params.set('mcpAction', input.action);
-  return `${AppPaths.workspaceAgents(input.workspaceId)}?${params.toString()}`;
+  const path = AppPaths.workspaceAgentDetail(input.workspaceId, input.agentId, 'mcpServers');
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
 }
 
 function recoveryPath(context: RecoveryContext, failure?: McpReadinessFailure): string {

@@ -3,10 +3,15 @@ import type { Components } from 'react-markdown';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ChatAssistantReference, ChatMessage, ChatRuntimeSelection, ChatSession, WorkspaceAiSettings } from '@/types';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
+export interface ChatPresentationSubject {
+  id: string;
+  workspaceId: string;
+  name: string;
+}
 
 export interface TargetChatViewProps {
-  target: TargetDescriptor;
+  target: ChatPresentationSubject;
+  capabilityPreviewEnabled?: boolean;
   isDark: boolean;
   titleKey?: string;
   descriptionKey?: string;

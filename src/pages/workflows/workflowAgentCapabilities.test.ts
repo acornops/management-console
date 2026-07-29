@@ -38,7 +38,8 @@ const agent: AgentDefinition = {
     requiresApproval: false
   }],
   workflowsUsingAgent: [],
-  workflowUsage: { workflowRunCount: 0 }
+  workflowUsage: { workflowRunCount: 0 },
+  readiness: { status: 'ready', reasons: [] }
 };
 
 const workflow: WorkflowDefinition = {

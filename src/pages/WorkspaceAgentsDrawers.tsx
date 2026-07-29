@@ -9,7 +9,6 @@ import { Select, SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowOption } from '@/services/control-plane/workflowApi';
-import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
 import {
   statusOptions,
   type AgentDraft,
@@ -352,32 +351,3 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
   </RightSidePanel>
   );
 };
-
-interface AgentWorkspaceDrawerProps extends React.ComponentProps<typeof WorkspaceAgentDetailPanel> {
-  closeButtonRef: React.RefObject<HTMLButtonElement | null>;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export const AgentWorkspaceDrawer: React.FC<AgentWorkspaceDrawerProps> = ({
-  closeButtonRef,
-  isOpen,
-  onClose,
-  ...detailProps
-}) => (
-  <RightSidePanel
-    isOpen={isOpen}
-    onClose={onClose}
-    titleId="agent-details-title"
-    initialFocusRef={closeButtonRef}
-    className="block w-full max-w-[min(100vw,64rem)] overflow-y-auto bg-ui-surface p-0"
-  >
-    <CloseButton
-      ref={closeButtonRef}
-      onClick={onClose}
-      label="Close agent details"
-      className="absolute right-4 top-4 z-10 shadow-sm"
-    />
-    <WorkspaceAgentDetailPanel {...detailProps} />
-  </RightSidePanel>
-);

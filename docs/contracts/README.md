@@ -118,6 +118,16 @@ The management console is the browser client for the control-plane API. Keep thi
   does not infer coordinator records or display hidden execution scope.
 - Default Agents and workflows are ordinary workspace-owned definitions that can be edited, versioned, restored, duplicated, disabled, or deleted directly. Legacy template-origin Agents follow the same mutation rules. AcornOps never overwrites, upgrades, or automatically restores these defaults. Agent deletion explains dependent workflows before it can proceed.
 - Authorized users may duplicate an effective definition into a manual draft without copying capability installations or operational history.
+- Agent detail exposes exactly Chat, MCP Servers, Skills, Tools, and Settings as
+  stable routes. The base Agent route resolves to Chat; configuration versions
+  and Workflow usage remain contextual sections in Settings.
+- Agent Chat uses the shared chat presentation but calls the Agent conversation
+  API. New conversations are read-only, the creator must explicitly enable
+  changes, and workspace readers who did not create a conversation can inspect
+  it without continuing or changing it.
+- Agent cards show aggregate MCP server, Skill, and Tool counts only. A
+  readiness blocker replaces those counts with an actionable warning; raw
+  capability names remain inside the dedicated detail surfaces.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
 - The target-chat `/` picker sends structured tool runtime aliases and target
   skill IDs separately from prompt text. It never repurposes `@` prompt

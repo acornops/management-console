@@ -1697,6 +1697,35 @@ export const zh = {
       not_installed: '需要配置'
     }
   },
+  agentChat: {
+    title: 'Agent 对话',
+    description: '在单 Agent 手动对话中直接与 {{name}} 协作。',
+    promptTitle: '与 {{name}} 开始对话',
+    promptBody: '新对话默认为只读。只有任务需要写入工具时才明确启用更改。',
+    inputPlaceholder: '向 {{name}} 发送消息...',
+    footer: '此对话默认为只读。更改需要明确授权，并遵循 Agent 审批策略。',
+    readOnlyNotice: '此对话为只读。需要时请明确启用更改。',
+    writeNotice: '此对话已启用更改。写入工具仍遵循审批策略。',
+    readerNotice: '你可以阅读此对话，但只有创建者可以继续。',
+    enableChanges: '启用更改',
+    returnReadOnly: '恢复只读',
+    backToAgents: '返回 Agents',
+    ready: '就绪',
+    needsSetup: '需要配置',
+    tabs: {
+      chat: '对话',
+      mcpServers: 'MCP 服务器',
+      skills: '技能',
+      tools: '工具',
+      settings: '设置'
+    },
+    suggestions: {
+      inspect: '检查可用证据',
+      summarize: '总结当前情况',
+      nextSteps: '建议安全的后续步骤',
+      readiness: '检查配置就绪状态'
+    }
+  },
   chat: {
     history: '历史',
     assistantNavigation: '助手导航',

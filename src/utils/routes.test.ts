@@ -391,7 +391,32 @@ describe('routes', () => {
       kind: 'workspaceAgents',
       workspaceId: 'team-alpha'
     });
-    expect(AppPaths.workspaceAgentMcp('team alpha', 'agent/a', 'connect_by_url')).toBe('/workspaces/team%20alpha/agents?agent=agent%2Fa&panel=profile&agentTab=capabilities&capabilityTab=mcp&mcpAction=connect_by_url');
+    expect(AppPaths.workspaceAgentDetail('team alpha', 'agent/a', 'chat')).toBe(
+      '/workspaces/team%20alpha/agents/agent%2Fa/chat'
+    );
+    expect(parseAppRoute('/workspaces/team-alpha/agents/agent-a')).toEqual({
+      kind: 'workspaceAgentDetail',
+      workspaceId: 'team-alpha',
+      agentId: 'agent-a',
+      tab: 'chat'
+    });
+    for (const [subview, segment] of [
+      ['chat', 'chat'],
+      ['mcpServers', 'mcp-servers'],
+      ['skills', 'skills'],
+      ['tools', 'tools'],
+      ['settings', 'settings']
+    ] as const) {
+      expect(parseAppRoute(`/workspaces/team-alpha/agents/agent-a/${segment}`)).toEqual({
+        kind: 'workspaceAgentDetail',
+        workspaceId: 'team-alpha',
+        agentId: 'agent-a',
+        tab: subview
+      });
+    }
+    expect(AppPaths.workspaceAgentMcp('team alpha', 'agent/a', 'connect_by_url')).toBe(
+      '/workspaces/team%20alpha/agents/agent%2Fa/mcp-servers?mcpAction=connect_by_url'
+    );
     expect(AppPaths.workspaceTargetMcp('team alpha', 'cluster/a', 'kubernetes')).toBe('/workspaces/team%20alpha/kubernetes-clusters/cluster%2Fa/mcp-servers');
     expect(AppPaths.workspaceTargetMcp('team alpha', 'vm/a', 'virtual_machine', 'connect_by_url')).toBe('/workspaces/team%20alpha/virtual-machines/vm%2Fa/mcp-servers?mcpAction=connect_by_url');
     const catalogPath = AppPaths.workspaceCatalog('team alpha', {

@@ -143,10 +143,8 @@ describe('target chat polish contracts', () => {
     expect(chatSessionSync).toContain('messagesLoadFailed: true');
     expect(chatView).toContain('<ChatEmptyPrompt');
     expect(chatTranscriptStates).toContain('export function ChatTranscriptSkeleton');
-    expect(chatTranscriptStates).toContain("import { motion, useReducedMotion } from 'framer-motion';");
-    expect(chatTranscriptStates).toContain('const shouldReduceMotion = useReducedMotion();');
-    expect(chatTranscriptStates).toContain('initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}');
-    expect(chatTranscriptStates).toContain('animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}');
+    expect(chatTranscriptStates).not.toContain("from 'framer-motion'");
+    expect(chatTranscriptStates).not.toContain('initial=');
     expect(chatTranscriptStates).toContain('aria-busy="true"');
     expect(chatTranscriptStates).toContain('motion-reduce:animate-none');
     expect(chatTranscriptStates).toContain('export function ChatTranscriptLoadError');

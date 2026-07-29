@@ -4,10 +4,15 @@ import { filterAgentDefinitions, type AgentDefinition } from '@/pages/agents/age
 import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
+import type { AgentSubview } from '@/utils/routes';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 export interface WorkspaceAgentsPageProps {
   workspace: Workspace;
+  currentUserId: string;
+  isDark: boolean;
+  routeState?: { kind: 'workspaceAgentDetail'; workspaceId: string; agentId: string; tab: AgentSubview };
+  navigate: (path: string, options?: { replace?: boolean }) => void;
 }
 
 export type AgentDraft = {
@@ -146,6 +151,10 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
       workflowRunCount: item.workflowUsage?.workflowRunCount ?? 0,
       lastRunAt: item.workflowUsage?.lastRunAt,
       lastStatus: item.workflowUsage?.lastStatus as AgentDefinition['workflowUsage']['lastStatus'] | undefined
+    },
+    readiness: item.readiness || {
+      status: item.status === 'active' ? 'ready' : 'needs_setup',
+      reasons: item.status === 'active' ? [] : ['Activate this Agent before starting a conversation.']
     }
   };
 };

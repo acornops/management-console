@@ -1,4 +1,3 @@
-import { motion, useReducedMotion } from 'framer-motion';
 import { AlertCircle, BotMessageSquare, MessageSquare } from 'lucide-react';
 
 interface ChatEmptyPromptProps {
@@ -11,14 +10,8 @@ interface ChatEmptyPromptProps {
 }
 
 export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSuggestion, onSendSuggestion }: ChatEmptyPromptProps) {
-  const shouldReduceMotion = useReducedMotion();
-
   return (
-    <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
-      animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-      className={`mx-auto ${isPanel ? 'max-w-3xl pt-2' : 'flex max-w-3xl flex-col justify-center pt-4 lg:min-h-[28rem] lg:pt-0'}`}
-    >
+    <div className={`mx-auto ${isPanel ? 'max-w-3xl pt-2' : 'flex max-w-3xl flex-col justify-center pt-4 lg:min-h-[28rem] lg:pt-0'}`}>
       <div className="border-y border-ui-border/70 py-5">
         <div className="flex items-start gap-4">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-ui-border bg-ui-bg text-ui-text-muted shadow-sm">
@@ -44,7 +37,7 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
           </button>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

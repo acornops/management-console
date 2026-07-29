@@ -42,7 +42,7 @@ test('authenticated target creation enters credential verification before pendin
 });
 
 test('Agent credential refresh, disconnect/reconnect, and rate limit countdown are safe', async ({ page }) => {
-  const agentPath = `/workspaces/${workspaceId}/agents?agent=${agentId}&panel=profile&agentTab=capabilities&capabilityTab=mcp`;
+  const agentPath = `/workspaces/${workspaceId}/agents/${agentId}/mcp-servers`;
   await page.goto(agentPath);
   await page.getByRole('button', { name: 'Add MCP server' }).click();
   await page.getByRole('menuitem', { name: /Connect by URL/ }).click();

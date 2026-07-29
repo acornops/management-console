@@ -1,5 +1,6 @@
 export type ClusterSubview = 'overview' | 'resources' | 'mcpServers' | 'skills' | 'tools' | 'health' | 'chat' | 'settings';
 export type VmSubview = 'overview' | 'resources' | 'services' | 'processes' | 'network' | 'logs' | 'mcpServers' | 'skills' | 'tools' | 'chat' | 'settings';
+export type AgentSubview = 'chat' | 'mcpServers' | 'skills' | 'tools' | 'settings';
 export type ClusterCatalogStatusFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 export type VmCatalogStatusFilter = ClusterCatalogStatusFilter;
 export type McpCatalogCompatibility = 'all' | 'compatible' | 'incompatible';
@@ -45,6 +46,7 @@ export type AppRoute =
   | { kind: 'externalIntegrationLink'; token?: string; status?: 'linked' | 'expired' | 'cancelled' }
   | { kind: 'workspaceOverview'; workspaceId: string }
   | { kind: 'workspaceAgents'; workspaceId: string }
+  | { kind: 'workspaceAgentDetail'; workspaceId: string; agentId: string; tab: AgentSubview }
   | ({ kind: 'workspaceCatalog'; workspaceId: string } & McpCatalogRouteState)
   | { kind: 'workspaceWorkflows'; workspaceId: string }
   | ({ kind: 'workspaceRuns'; workspaceId: string } & WorkflowRunsRouteState)
@@ -84,6 +86,16 @@ function parseClusterSubview(value?: string): ClusterSubview | undefined {
     return value;
   }
   return undefined;
+}
+
+function parseAgentSubview(value?: string): AgentSubview {
+  if (value === 'mcp-servers') return 'mcpServers';
+  if (value === 'skills' || value === 'tools' || value === 'settings') return value;
+  return 'chat';
+}
+
+function agentSubviewPathSegment(tab: AgentSubview): string {
+  return tab === 'mcpServers' ? 'mcp-servers' : tab;
 }
 
 function clusterSubviewPathSegment(tab: ClusterSubview): string {
@@ -364,6 +376,18 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceMembers', workspaceId };
   }
 
+  const workspaceAgentDetailMatch = pathname.match(
+    /^\/workspaces\/([^/]+)\/agents\/([^/]+)(?:\/(chat|mcp-servers|skills|tools|settings))?$/
+  );
+  if (workspaceAgentDetailMatch) {
+    return {
+      kind: 'workspaceAgentDetail',
+      workspaceId: decodeParam(workspaceAgentDetailMatch[1]),
+      agentId: decodeParam(workspaceAgentDetailMatch[2]),
+      tab: parseAgentSubview(workspaceAgentDetailMatch[3])
+    };
+  }
+
   const workspaceKubernetesClustersMatch = pathname.match(/^\/workspaces\/([^/]+)\/kubernetes-clusters$/);
   if (workspaceKubernetesClustersMatch) {
     return {
@@ -440,10 +464,12 @@ export const AppPaths = {
   workspaceOverview: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/overview`,
   workspaceAgents: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/agents`,
+  workspaceAgentDetail: (workspaceId: string, agentId: string, tab: AgentSubview = 'chat'): string =>
+    `/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/${agentSubviewPathSegment(tab)}`,
   workspaceAgentMcp: (workspaceId: string, agentId: string, action?: 'connect_by_url'): string => {
-    const params = new URLSearchParams({ agent: agentId, panel: 'profile', agentTab: 'capabilities', capabilityTab: 'mcp' });
+    const params = new URLSearchParams();
     if (action) params.set('mcpAction', action);
-    return appendQuery(`/workspaces/${encodeURIComponent(workspaceId)}/agents`, params);
+    return appendQuery(AppPaths.workspaceAgentDetail(workspaceId, agentId, 'mcpServers'), params);
   },
   workspaceCatalog: (workspaceId: string, state?: McpCatalogRouteState): string =>
     withMcpCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/catalog`, state),

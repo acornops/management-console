@@ -14,7 +14,7 @@ describe('MCP readiness recovery', () => {
       agentId: 'agent-1',
       serverId: 'server-1',
       action: 'connect_mcp_server'
-    })).toBe('/workspaces/workspace-1/agents?agent=agent-1&panel=profile&agentTab=capabilities&capabilityTab=mcp&mcpServer=server-1&mcpAction=connect_mcp_server');
+    })).toBe('/workspaces/workspace-1/agents/agent-1/mcp-servers?mcpServer=server-1&mcpAction=connect_mcp_server');
   });
 
   it('parses only bounded public readiness fields', () => {
@@ -60,7 +60,7 @@ describe('MCP readiness recovery', () => {
 
     expect(resolveMcpReadinessRecovery(error, {
       workspaceId: 'workspace-1', scopeType: 'agent', agentId: 'agent-1'
-    })?.href).toBe('/workspaces/workspace-1/agents?agent=agent-1&panel=profile&agentTab=capabilities&capabilityTab=mcp&mcpServer=server-1&mcpAction=verify_mcp_server');
+    })?.href).toBe('/workspaces/workspace-1/agents/agent-1/mcp-servers?mcpServer=server-1&mcpAction=verify_mcp_server');
   });
 
   it('explains how to repair service-identity and individual-credential incompatibility', () => {

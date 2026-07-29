@@ -13,6 +13,7 @@ export interface InlineConfirmationProps {
   onConfirm: () => void;
   cancelLabel: string;
   className?: string;
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 export const InlineConfirmation: React.FC<InlineConfirmationProps> = ({
@@ -26,13 +27,15 @@ export const InlineConfirmation: React.FC<InlineConfirmationProps> = ({
   onCancel,
   onConfirm,
   cancelLabel,
-  className = ''
+  className = '',
+  returnFocusRef
 }) => {
   const confirmationRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     confirmationRef.current?.focus({ preventScroll: true });
-  }, []);
+    return () => returnFocusRef?.current?.focus({ preventScroll: true });
+  }, [returnFocusRef]);
 
   const toneClassName = tone === 'danger'
     ? 'bg-status-danger-soft text-status-danger-text'

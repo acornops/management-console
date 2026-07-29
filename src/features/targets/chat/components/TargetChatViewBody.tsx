@@ -27,6 +27,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     assistantMarkdownComponents,
     assistantCapabilitiesPreview,
     assistantCapabilitiesPreviewError,
+    capabilityPreviewEnabled,
     canApproveWriteActions,
     canCancelActiveRun,
     canChat,
@@ -228,7 +229,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 data-chat-history-trigger="search"
                 className={isSearchRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
                 aria-label={t('chat.searchChats')}
-                aria-controls={historySearchPageId}
+                aria-controls={isSearchRailActive ? historySearchPageId : undefined}
                 aria-current={isSearchRailActive ? 'page' : undefined}
               >
                 <Search className="h-4 w-4" aria-hidden="true" />
@@ -243,7 +244,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 data-chat-history-trigger="chats"
                 className={isChatsRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
                 aria-label={isChatsRailActive ? historyControlLabel : t('chat.chats')}
-                aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
+                aria-controls={isHistoryOpen ? desktopHistoryPanelId : undefined}
                 aria-expanded={isChatsRailActive}
                 aria-current={isChatsRailActive ? 'page' : undefined}
               >
@@ -492,6 +493,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   allowedReasoningOptions={allowedReasoningOptions}
                   assistantCapabilitiesPreview={assistantCapabilitiesPreview}
                   assistantCapabilitiesPreviewError={assistantCapabilitiesPreviewError}
+                  capabilityPreviewEnabled={capabilityPreviewEnabled}
                   canChat={canChat}
                   canCancelActiveRun={canCancelActiveRun}
                   canPost={canPost}

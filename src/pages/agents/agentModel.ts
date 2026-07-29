@@ -35,6 +35,10 @@ export interface AgentDefinition {
     lastRunAt?: string;
     lastStatus?: string;
   };
+  readiness: {
+    status: 'ready' | 'needs_setup' | 'blocked';
+    reasons: string[];
+  };
 }
 
 const titleCase = (value: string): string =>

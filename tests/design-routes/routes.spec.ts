@@ -13,6 +13,18 @@ const auditedRoutes = [
     path: '/workspaces/fixture-workspace/approvals'
   },
   {
+    name: 'workspace-agents',
+    path: '/workspaces/fixture-workspace/agents'
+  },
+  {
+    name: 'agent-chat',
+    path: '/workspaces/fixture-workspace/agents/fixture-specialist/chat'
+  },
+  {
+    name: 'agent-settings',
+    path: '/workspaces/fixture-workspace/agents/fixture-specialist/settings'
+  },
+  {
     name: 'cluster-overview',
     path: '/kubernetes-clusters/fixture-cluster/overview'
   },

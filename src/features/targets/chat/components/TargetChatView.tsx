@@ -30,6 +30,7 @@ import type { ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   target,
+  capabilityPreviewEnabled = true,
   titleKey,
   descriptionKey,
   promptTitleKey,
@@ -494,9 +495,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     if (!hasReadyAiRuntime) return;
     await processComposerFiles(Array.from(event.dataTransfer.files || []));
   };
-
   React.useEffect(() => {
-    if (!canChat) {
+    if (!canChat || !capabilityPreviewEnabled) {
       setAssistantCapabilitiesPreview(null);
       setAssistantCapabilitiesPreviewError('');
       setIsAssistantCapabilitiesPreviewLoading(false);
@@ -525,7 +525,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [canChat, target.id, target.workspaceId, requestedToolAccessMode, t]);
+  }, [canChat, capabilityPreviewEnabled, target.id, target.workspaceId, requestedToolAccessMode, t]);
 
   React.useEffect(() => {
     setRuntimeFallbackNotice('');
@@ -628,7 +628,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   return (
     <TargetChatViewBody
       {...{
-        activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, canApproveWriteActions,
+        activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, capabilityPreviewEnabled, canApproveWriteActions,
         canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, target, composerActionLabel, composerAttachmentNotice: composerNotice,
         composerAttachments, composerReferences, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, deleteSessionError, deleteTargetSession,
         deletingSessionId, desktopHistoryPanelId, dismissReferenceMenu, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,

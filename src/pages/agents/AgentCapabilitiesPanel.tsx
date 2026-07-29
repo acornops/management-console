@@ -21,11 +21,14 @@ interface AgentCapabilitiesPanelProps {
   canManageAgents: boolean;
   canManageMcp: boolean;
   canManageSkills: boolean;
+  section?: 'mcp' | 'skills' | 'tools';
+  hideSectionNavigation?: boolean;
 }
 const inputClass = 'min-h-11 w-full rounded-md border border-ui-border bg-ui-surface px-3 text-sm text-ui-text focus-visible:ring-2 focus-visible:ring-accent';
-export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ agent, canManageAgents, canManageMcp, canManageSkills }) => {
+export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ agent, canManageAgents, canManageMcp, canManageSkills, section, hideSectionNavigation = false }) => {
   const capabilityState = useAgentCapabilities({ agent, canManageAgents, canManageMcp, canManageSkills });
-  const { t, activeTab, tabs, servers, toolRefreshErrors, nativeTools, assignedNativeToolIds, setAssignedNativeToolIds, nativeToolConfigs, setNativeToolConfigs, tools } = capabilityState;
+  const { t, tabs, servers, toolRefreshErrors, nativeTools, assignedNativeToolIds, setAssignedNativeToolIds, nativeToolConfigs, setNativeToolConfigs, tools } = capabilityState;
+  const activeTab = section || capabilityState.activeTab;
   const { credentialDialogServer, setCredentialDialogServer, busy, setBusy, notice, setNotice, error, setError } = capabilityState;
   const { manualServer, setManualServer, manualServerOpen, setManualServerOpen, targetOptions } = capabilityState;
   const { constraintEditor, setConstraintEditor, renameEditor, setRenameEditor, removeServerId, setRemoveServerId, credentialModeChange, setCredentialModeChange } = capabilityState;
@@ -36,7 +39,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SegmentedTabs activeValue={activeTab} allPanelsMounted={false} ariaLabel={t('agentsWorkflows.agents.details.capabilities.sectionsLabel')} idBase="agent-capability" items={tabs} onValueChange={(capabilityTab) => updateUrlSearch({ capabilityTab }, { replace: true })} />
+        {!hideSectionNavigation && <SegmentedTabs activeValue={activeTab} allPanelsMounted={false} ariaLabel={t('agentsWorkflows.agents.details.capabilities.sectionsLabel')} idBase="agent-capability" items={tabs} onValueChange={(capabilityTab) => updateUrlSearch({ capabilityTab }, { replace: true })} />}
         {activeTab === 'mcp' && (
           <AddMcpServerAction
             browseHref={AppPaths.workspaceCatalog(agent.workspaceId, {
@@ -593,7 +596,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
 
       {activeTab === 'tools' && <AgentToolsPanel agent={agent} nativeTools={nativeTools} assignedNativeToolIds={assignedNativeToolIds} nativeToolConfigs={nativeToolConfigs} tools={tools} busy={busy} canManageAgents={canManageAgents} mcpWritable={mcpWritable} setBusy={setBusy} setError={setError} setNotice={setNotice} setAssignedNativeToolIds={setAssignedNativeToolIds} setNativeToolConfigs={setNativeToolConfigs} run={run} />}
 
-      <AgentSkillsPanel agent={agent} canManageAgents={canManageAgents} state={capabilityState} />
+      <AgentSkillsPanel agent={agent} canManageAgents={canManageAgents} state={{ ...capabilityState, activeTab }} />
       {credentialDialogServer && (
         <McpCredentialDialog
           serverName={credentialDialogServer.name}

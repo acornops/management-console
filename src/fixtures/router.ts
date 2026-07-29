@@ -9,6 +9,7 @@ import { routeWebhookFixtureRequest } from './webhookRoutes';
 import { routeWorkflowEventTriggerFixtureRequest } from './workflowEventTriggerRoutes';
 import { routeWorkflowActivityFixtureRequest } from './workflowActivityRoutes';
 import { routeApprovalFixtureRequest } from './approvalRoutes';
+import { routeAgentConversationFixtureRequest } from './agentConversationRoutes';
 import { applyFixtureRole } from './roleProfiles';
 
 export interface FixtureResponse {
@@ -409,7 +410,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const run = state.runs[decode(match[1])];
     return run ? json(clone(run)) : notFound('Run');
   }
-
+  const agentConversationResponse = await routeAgentConversationFixtureRequest({ method, path, request, state, now: NOW });
+  if (agentConversationResponse) return agentConversationResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents$/);
   if (match) {
     if (method === 'GET') return json({ items: clone(state.agents) });
@@ -549,7 +551,6 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   }
   match = path.match(/^\/api\/v1\/workflow-sessions\/([^/]+)\/messages$/);
   if (match && method === 'POST') return json({ message_id: id('fixture-workflow-message'), run_id: FIXTURE_IDS.run, executionId: 'fixture-workflow-execution', status: 'completed' }, 202);
-
   const catalogResponse = await routeCatalogFixtureRequest({ request, state, path, method });
   if (catalogResponse) return catalogResponse;
 

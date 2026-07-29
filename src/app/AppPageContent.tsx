@@ -33,13 +33,10 @@ const loadSettingsPage = () => import('@/pages/SettingsPage').then((module) => (
 const loadUserSettingsPage = () => import('@/pages/UserSettingsPage').then((module) => ({ default: module.UserSettingsPage }));
 
 const loadHelpPage = () => import('@/pages/HelpPage').then((module) => ({ default: module.HelpPage }));
-
 const loadVirtualMachinesPage = () => import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
-
 const loadWorkspaceAgentsPage = () => import('@/pages/WorkspaceAgentsPage').then((module) => ({ default: module.WorkspaceAgentsPage }));
 const loadWorkspaceCatalogPage = () =>
   import('@/pages/WorkspaceCatalogPage').then((module) => ({ default: module.WorkspaceCatalogPage }));
-
 const loadWorkspaceWorkflowsPage = () =>
   import('@/pages/WorkspaceWorkflowsPage').then((module) => ({ default: module.WorkspaceWorkflowsPage }));
 
@@ -106,6 +103,7 @@ export function preloadAppRoutePage(route: AppRoute): void {
       void loadVirtualMachinesPage();
       break;
     case 'workspaceAgents':
+    case 'workspaceAgentDetail':
       void loadWorkspaceAgentsPage();
       break;
     case 'workspaceCatalog':
@@ -462,10 +460,14 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
-          {route.kind === 'workspaceAgents' && workspaceContext && (
+          {(route.kind === 'workspaceAgents' || route.kind === 'workspaceAgentDetail') && workspaceContext && (
             <WorkspaceAgentsPage
               key={workspaceContext.id}
               workspace={workspaceContext}
+              currentUserId={user.id}
+              isDark={isDark}
+              routeState={route.kind === 'workspaceAgentDetail' ? route : undefined}
+              navigate={navigate}
             />
           )}
 
