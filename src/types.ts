@@ -381,6 +381,10 @@ export interface ChatSession {
     issueId: string;
     lifecycleVersion: number;
     severity: 'critical' | 'warning' | 'info';
+    scopeKind?: string;
+    scopeName?: string;
+    objectKind?: string;
+    objectName?: string;
     writeMode: 'follow_target' | 'read_only' | 'approval_required' | 'full_write';
     effectiveToolMode: 'read_only' | 'read_write';
     confirmationRequiredForWrite: boolean;
@@ -395,6 +399,7 @@ export interface ChatSession {
   hydrated?: boolean;
   messagesLoadFailed?: boolean;
   messagesNextCursor?: string;
+  createdTimestamp?: number;
   lastRuntimeSelection?: ChatRuntimeSelection;
   composerRuntimeSelection?: ChatRuntimeSelection;
   messages: ChatMessage[];

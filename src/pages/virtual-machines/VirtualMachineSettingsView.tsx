@@ -128,6 +128,7 @@ export const VirtualMachineSettingsView: React.FC<{
         <TargetAutoTriageSettingsSection
           workspaceId={workspace.id}
           targetId={vm.id}
+          targetType="virtual_machine"
           canManageTargets={canManageTargets}
           canCreateReadWriteRuns={canCreateReadWriteRuns}
         />

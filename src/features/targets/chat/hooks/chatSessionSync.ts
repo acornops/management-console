@@ -31,6 +31,10 @@ export function sortSessionsByTimestamp(sessions: ChatSession[]): ChatSession[] 
   return [...sessions].sort((left, right) => right.timestamp - left.timestamp);
 }
 
+export function selectDefaultChatSessionId(sessions: ChatSession[]): string | null {
+  return sessions.find((session) => (session.origin || 'manual') === 'manual')?.id || null;
+}
+
 export function createConversationId(): string {
   const randomUuid = globalThis.crypto?.randomUUID?.();
   if (typeof randomUuid === 'string' && randomUuid.length > 0) {
@@ -96,6 +100,7 @@ export function mapControlPlaneSessionToChatSession(
     hydrated: existing?.hydrated ?? false,
     messagesLoadFailed: existing?.messagesLoadFailed,
     messagesNextCursor: existing?.messagesNextCursor,
+    createdTimestamp: toTimestamp(session.createdAt),
     lastRuntimeSelection: session.lastRuntimeSelection,
     composerRuntimeSelection: existingComposerIsUnsent
       ? existing?.composerRuntimeSelection

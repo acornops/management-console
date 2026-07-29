@@ -9,6 +9,10 @@ export interface AutomaticInvestigationSessionContext {
   issueId: string;
   lifecycleVersion: number;
   severity: 'critical' | 'warning' | 'info';
+  scopeKind?: string;
+  scopeName?: string;
+  objectKind?: string;
+  objectName?: string;
   writeMode: AutoTriageWriteMode;
   effectiveToolMode: 'read_only' | 'read_write';
   confirmationRequiredForWrite: boolean;
@@ -52,6 +56,11 @@ export interface TargetAutoTriageSettings {
   updatedAt?: string;
   canEdit: boolean;
   eligibleCurrentIssueCount: number;
+  queueSummary?: {
+    activeCount: number;
+    waitingCount: number;
+    oldestWaitingAt?: string;
+  };
   effectiveBehavior: {
     requestedWriteMode: AutoTriageWriteMode;
     effectiveToolMode: 'read_only' | 'read_write';

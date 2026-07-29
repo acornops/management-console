@@ -5,7 +5,7 @@ Status: Experimental
 The management console presents auto-triage as a compact capability inside the
 existing Kubernetes and virtual-machine Settings pages. It reuses established
 target chat, issue, approval, and activity surfaces. There is no target tab,
-top-level navigation item, Workflow coupling, or separate automatic-chat list.
+top-level navigation item, Workflow coupling, or new chat route.
 
 ## Settings
 
@@ -25,17 +25,33 @@ top-level navigation item, Workflow coupling, or separate automatic-chat list.
 - If the feature was disabled before a queued investigation started, re-enabling
   offers that still-active issue again. The explicit action resumes its existing
   durable lifecycle job; the save itself still starts nothing.
+- Show a compact control-plane-backed activity row with active and waiting
+  counts plus the oldest queued time when a backlog exists. Link to the target's
+  existing Overview issue surface; do not add queue position, queue controls, or
+  a separate queue page.
 - Non-editors see the complete effective configuration read-only. Automatic
   write mode requires the existing explicit acknowledgement before save.
 
-## Unified Chat
+## Chat and Investigation History
 
-Automatic sessions remain in the ordinary recency-sorted history. A compact
-icon and `Automatic` label communicate origin without prefixing titles or
-creating a second category. The existing target chat route accepts a validated
-session query parameter for links from issues and approvals. An unavailable or
-wrong-target session falls back to the ordinary chat screen, removes the stale
-query parameter with history replacement, and shows a nonblocking notice.
+The existing assistant rail has Search, Chats, and Investigations. Chats shows
+manual sessions only; Investigations shows automatic sessions only. Each list
+keeps its existing last-activity ordering, and Search continues to span both.
+Investigation rows use current status plus linked issue scope, object, and
+severity instead of a redundant `Automatic` label. Human replies do not move an
+automatic session into Chats.
+
+The Investigations rail action shows a capped unseen count for sessions created
+since the current user last viewed that target's Investigations. The cursor is
+stored per user and target in the current browser. Opening Investigations or
+directly opening an automatic-session deep link advances it; background refresh
+does not. With no existing browser marker, only investigations created in the
+last 24 hours are treated as unseen.
+
+The existing target chat route accepts a validated session query parameter for
+links from issues and approvals. An unavailable or wrong-target session falls
+back to the ordinary chat screen, removes the stale query parameter with
+history replacement, and shows a nonblocking notice.
 
 The open session shows a restrained context strip and a neutral investigation
 brief. It does not render the system kickoff as a human message bubble.

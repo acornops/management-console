@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { MessagesSquare, Plus, Search, Upload } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Tooltip } from '@/components/common/Tooltip';
 import { ConversationHistory } from '@/features/targets/chat/components/ConversationHistory';
@@ -19,6 +19,8 @@ import { formatMessageTime, isMessageOwnedByCurrentUser } from '@/features/targe
 import { useTargetChatHistoryWorkspace } from '@/features/targets/chat/components/useTargetChatHistoryWorkspace';
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
 import { getComposerReferenceProps } from '@/features/targets/chat/components/targetChatReferenceProps';
+import { TargetChatHistoryRail } from '@/features/targets/chat/components/TargetChatHistoryRail';
+import { useAutomaticInvestigationViewState } from '@/features/targets/chat/hooks/useAutomaticInvestigationViewState';
 export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => {
   const {
     activeRunId,
@@ -44,7 +46,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     composerSubmitUnavailableReason,
     composerTextareaRef,
     conversationNotice,
-    currentUserId,
+    currentUserId = '',
     sessionDeepLinkError,
     deleteSessionError,
     deleteTargetSession,
@@ -148,6 +150,15 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
   const hasBlockingGate = Boolean(recentActivityWarning);
   const hasReadyAiRuntime = aiRuntimeReadiness.status === 'ready';
   const {
+    unseenCount: unseenInvestigationCount,
+    markViewed: markInvestigationsViewed
+  } = useAutomaticInvestigationViewState({
+    currentUserId,
+    workspaceId: target.workspaceId,
+    targetId: target.id,
+    sessions
+  });
+  const {
     createSessionFromSearch,
     finishHistoryResize,
     handleHistoryResizeKeyDown,
@@ -155,7 +166,9 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     historyPanelWidth,
     historySearchPageId,
     historySearchValue,
+    historyView,
     isChatsRailActive,
+    isInvestigationsRailActive,
     isHistorySearchPageOpen,
     isSearchRailActive,
     moveHistoryResize,
@@ -164,15 +177,23 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     selectSessionFromSearch,
     setHistorySearchValue,
     startHistoryResize,
-    toggleHistoryChats
+    toggleHistoryChats,
+    toggleHistoryInvestigations
   } = useTargetChatHistoryWorkspace({
     desktopHistoryPanelId,
     handleCreateSessionClick,
     historyButtonRef,
     isHistoryOpen,
+    onInvestigationsViewed: markInvestigationsViewed,
     selectSession,
     setIsHistoryOpen
   });
+  React.useEffect(() => {
+    if (activeSession?.origin === 'auto_triage') void markInvestigationsViewed();
+  }, [activeSession?.id, activeSession?.origin, markInvestigationsViewed]);
+  React.useEffect(() => {
+    if (isInvestigationsRailActive && unseenInvestigationCount > 0) void markInvestigationsViewed();
+  }, [isInvestigationsRailActive, markInvestigationsViewed, unseenInvestigationCount]);
   React.useEffect(() => {
     const content = contentRef.current;
     if (!content) return;
@@ -219,47 +240,24 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           )}
         </AnimatePresence>
       {!isPanel && (
-        <nav
-          aria-label={t('chat.assistantNavigation')}
-          className="relative z-20 flex h-full w-12 shrink-0 flex-col items-center gap-1 border-r border-ui-border bg-ui-surface py-2"
-        >
-          <Tooltip content={t('chat.searchChats')} side="right">
-            <Button
-              type="button"
-              variant="tertiary"
-              size="icon"
-              onClick={openHistorySearch}
-              data-chat-history-trigger="search"
-              className={isSearchRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
-              aria-label={t('chat.searchChats')}
-              aria-controls={historySearchPageId}
-              aria-current={isSearchRailActive ? 'page' : undefined}
-            >
-              <Search className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </Tooltip>
-          <Tooltip content={isChatsRailActive ? historyControlLabel : t('chat.chats')} side="right">
-            <Button
-              type="button"
-              variant="tertiary"
-              size="icon"
-              onClick={toggleHistoryChats}
-              data-chat-history-trigger="chats"
-              className={isChatsRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
-              aria-label={isChatsRailActive ? historyControlLabel : t('chat.chats')}
-              aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
-              aria-expanded={isChatsRailActive}
-              aria-current={isChatsRailActive ? 'page' : undefined}
-            >
-              <MessagesSquare className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </Tooltip>
-        </nav>
+        <TargetChatHistoryRail
+          desktopHistoryPanelId={desktopHistoryPanelId}
+          historyControlLabel={historyControlLabel}
+          historySearchPageId={historySearchPageId}
+          isChatsActive={isChatsRailActive}
+          isInvestigationsActive={isInvestigationsRailActive}
+          isSearchActive={isSearchRailActive}
+          mobileHistoryPanelId={mobileHistoryPanelId}
+          onChatsClick={toggleHistoryChats}
+          onInvestigationsClick={toggleHistoryInvestigations}
+          onSearchClick={openHistorySearch}
+          unseenInvestigationCount={unseenInvestigationCount}
+        />
       )}
       {!isPanel && isHistoryOpen && (
         <aside
           id={desktopHistoryPanelId}
-          aria-label={t('chat.chats')}
+          aria-label={t(historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
           style={{ width: historyPanelWidth }}
           className="relative hidden h-full shrink-0 overflow-hidden border-r border-ui-border bg-ui-surface shadow-sm lg:flex"
         >
@@ -267,6 +265,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             <ConversationHistory
               appName={target.name}
               sessions={sessions}
+              sessionOrigin={historyView === 'investigations' ? 'auto_triage' : 'manual'}
               activeSessionId={activeSessionId}
               sessionAssistantStatuses={sessionAssistantStatuses}
               isSessionsLoading={isSessionsLoading}
@@ -592,7 +591,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
               id={mobileHistoryPanelId}
               role="dialog"
               aria-modal="true"
-              aria-label={t('chat.chats')}
+              aria-label={t(historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
               tabIndex={-1}
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -604,6 +603,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
               <ConversationHistory
                 appName={target.name}
                 sessions={sessions}
+                sessionOrigin={historyView === 'investigations' ? 'auto_triage' : 'manual'}
                 activeSessionId={activeSessionId}
                 sessionAssistantStatuses={sessionAssistantStatuses}
                 isSessionsLoading={isSessionsLoading}

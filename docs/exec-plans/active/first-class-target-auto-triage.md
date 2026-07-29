@@ -11,8 +11,10 @@ new UI and no new top-level navigation.
 - Place one shared Auto-triage section in existing target Settings pages.
 - Mark the settings section Experimental with the same shared badge treatment
   used by the Automation navigation category.
-- Keep one last-activity-sorted conversation history; identify automatic
-  sessions with an icon and text badge.
+- Keep one target chat route and session model. Split the assistant rail into
+  manual Chats and automatic Investigations, with global Search spanning both.
+- Use linked issue status/scope/object/severity in investigation rows instead
+  of a redundant origin badge.
 - Reuse the current target chat route, composer, approval cards, cancellation,
   deletion, retention, and recent-activity warning.
 - Present kickoff content as a neutral investigation brief, not a human bubble.
@@ -28,14 +30,23 @@ new UI and no new top-level navigation.
   versus effective safety, and allow enablement during transient readiness
   blocks.
 - Enabling never starts existing issues without the explicit follow-up action.
-- Automatic sessions remain discoverable without displacing manual chats into a
-  separate category.
+- Automatic sessions remain discoverable in Investigations without displacing
+  manual Chats, and a per-user unseen badge clears only when investigations are
+  actually viewed.
 - Deep links from issues and approvals select the existing target chat session.
 - Shared replies show the real user author; manual replies remain owner-only.
 - Issue-bearing views refresh without clearing current rows or flashing.
 
 ## Validation Log
 
+- 2026-07-29: the queue-visibility polish added a compact active/waiting ledger
+  row to the existing Kubernetes and VM Settings card, including oldest waiting
+  time and a link to the existing target Overview issue surface. Focused
+  settings and independence tests, lint, contracts, production build, route
+  smoke, 724 unit tests, 19 design snapshots, 171 fixture checks, and 21 MCP
+  parity checks passed. The repository-wide harness remains blocked only by the
+  pre-existing 670-line `McpServersView.tsx` against its 650-line budget; that
+  unrelated file was not changed.
 - 2026-07-29: `VITE_APP_DATA_MODE=control-plane npm run validate` passed,
   including design-system checks, type checking, 721 unit tests, desktop/mobile
   design snapshots, 171 repeated fixture smoke tests, 21 repeated MCP parity

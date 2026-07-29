@@ -294,6 +294,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
         <TargetAutoTriageSettingsSection
           workspaceId={cluster.workspaceId}
           targetId={cluster.id}
+          targetType="kubernetes"
           canManageTargets={canManageCluster}
           canCreateReadWriteRuns={canCreateReadWriteRuns}
         />

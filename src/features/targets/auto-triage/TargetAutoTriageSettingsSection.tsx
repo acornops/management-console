@@ -1,8 +1,18 @@
 import React from 'react';
-import { AlertTriangle, Bot, CheckCircle2, Clock3, Info, RotateCcw } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Bot,
+  CheckCircle2,
+  Clock3,
+  Info,
+  ListChecks,
+  RotateCcw
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/common/Button';
+import { appHref } from '@/app/workspaceNavigation';
+import { Button, buttonClassName } from '@/components/common/Button';
 import { ExperimentalBadge } from '@/components/common/ExperimentalBadge';
 import { Switch } from '@/components/common/FormControls';
 import { InlineAlert } from '@/components/common/InlineAlert';
@@ -13,10 +23,13 @@ import {
   type AutoTriageMinimumSeverity,
   type AutoTriageReadinessReason,
   type AutoTriageWriteMode,
-  type TargetAutoTriageSettings
+  type TargetAutoTriageSettings,
+  type TargetType
 } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
+import { formatRelativeTime } from '@/utils/dateTime';
+import { AppPaths } from '@/utils/routes';
 
 interface AutoTriageDraft {
   enabled: boolean;
@@ -52,9 +65,10 @@ export function shouldOfferExistingIssueStart(settings: TargetAutoTriageSettings
 export const TargetAutoTriageSettingsSection: React.FC<{
   workspaceId: string;
   targetId: string;
+  targetType: TargetType;
   canManageTargets: boolean;
   canCreateReadWriteRuns: boolean;
-}> = ({ workspaceId, targetId, canManageTargets, canCreateReadWriteRuns }) => {
+}> = ({ workspaceId, targetId, targetType, canManageTargets, canCreateReadWriteRuns }) => {
   const { t } = useTranslation();
   const [settings, setSettings] = React.useState<TargetAutoTriageSettings | null>(null);
   const [draft, setDraft] = React.useState<AutoTriageDraft | null>(null);
@@ -318,6 +332,14 @@ export const TargetAutoTriageSettingsSection: React.FC<{
               <Readiness settings={settings} t={t} />
             </div>
 
+            <QueueSummary
+              workspaceId={workspaceId}
+              targetId={targetId}
+              targetType={targetType}
+              settings={settings}
+              t={t}
+            />
+
             <div className="grid gap-4 p-6">
               {!canEdit && (
                 <InlineAlert tone="neutral">{t('autoTriage.readOnly')}</InlineAlert>
@@ -383,6 +405,65 @@ export const TargetAutoTriageSettingsSection: React.FC<{
     </section>
   );
 };
+
+export function QueueSummary({
+  workspaceId,
+  targetId,
+  targetType,
+  settings,
+  t
+}: {
+  workspaceId: string;
+  targetId: string;
+  targetType: TargetType;
+  settings: TargetAutoTriageSettings;
+  t: (key: string, values?: Record<string, unknown>) => string;
+}) {
+  const summary = settings.queueSummary ?? { activeCount: 0, waitingCount: 0 };
+  const hasActivity = summary.activeCount > 0 || summary.waitingCount > 0;
+  const issuesPath = targetType === 'kubernetes'
+    ? AppPaths.workspaceKubernetesClusterDiagnostics(workspaceId, targetId, 'overview')
+    : AppPaths.workspaceVirtualMachineDetail(workspaceId, targetId, 'overview');
+
+  return (
+    <div className="flex flex-col gap-4 border-b border-ui-border p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-start gap-3">
+        <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-ui-text">{t('autoTriage.activityTitle')}</p>
+          <p className="mt-1 text-xs leading-5 text-ui-text-muted" aria-live="polite">
+            {hasActivity
+              ? t('autoTriage.activityCounts', {
+                  active: summary.activeCount,
+                  waiting: summary.waitingCount
+                })
+              : t('autoTriage.activityEmpty')}
+          </p>
+          {summary.oldestWaitingAt && summary.waitingCount > 0 && (
+            <p className="mt-1 text-xs leading-5 text-ui-text-muted">
+              {t('autoTriage.activityOldest', {
+                time: formatRelativeTime(summary.oldestWaitingAt)
+              })}
+            </p>
+          )}
+        </div>
+      </div>
+      {hasActivity && (
+        <a
+          href={appHref(issuesPath)}
+          className={buttonClassName({
+            variant: 'secondary',
+            size: 'sm',
+            className: 'w-full shrink-0 sm:w-auto'
+          })}
+        >
+          {t('autoTriage.viewIssues')}
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </a>
+      )}
+    </div>
+  );
+}
 
 function severityLabel(
   severity: AutoTriageMinimumSeverity,

@@ -11,6 +11,7 @@ import {
 } from '@/features/targets/chat/lib/session-utils';
 import { submitChatMessage } from '@/features/targets/chat/hooks/chatSubmit';
 import {
+  selectDefaultChatSessionId,
   sortSessionsByTimestamp,
   useControlPlaneChatSessionSync
 } from '@/features/targets/chat/hooks/chatSessionSync';
@@ -58,9 +59,8 @@ export function useTargetChat({
 }: UseTargetChatArgs): TargetChatController {
   const { t } = useTranslation();
   const sessions = sortSessionsByTimestamp(target.chatSessions);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(
-    initialActiveSessionId || (sessions.length > 0 ? sessions[0].id : null)
-  );
+  const defaultSessionId = selectDefaultChatSessionId(sessions);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(initialActiveSessionId || defaultSessionId);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
@@ -152,14 +152,15 @@ export function useTargetChat({
   });
   useEffect(() => {
     const sortedSessions = sortSessionsByTimestamp(target.chatSessions);
+    const nextDefaultSessionId = selectDefaultChatSessionId(sortedSessions);
     if (!activeSessionId) {
-      setActiveSessionId(sortedSessions.length > 0 ? sortedSessions[0].id : null);
+      setActiveSessionId(nextDefaultSessionId);
       return;
     }
     if (sortedSessions.some((session) => session.id === activeSessionId)) {
       return;
     }
-    setActiveSessionId(sortedSessions.length > 0 ? sortedSessions[0].id : null);
+    setActiveSessionId(nextDefaultSessionId);
   }, [activeSessionId, target.chatSessions, target.id]);
   useEffect(() => {
     setRunTracesByRunId({});

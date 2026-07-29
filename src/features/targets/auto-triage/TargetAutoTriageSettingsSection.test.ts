@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isSameAutoTriageDraft,
+  QueueSummary,
   shouldOfferExistingIssueStart,
   TargetAutoTriageSettingsSection,
   toAutoTriageDraft
@@ -21,6 +22,10 @@ function settings(): TargetAutoTriageSettings {
     revision: 0,
     canEdit: true,
     eligibleCurrentIssueCount: 0,
+    queueSummary: {
+      activeCount: 0,
+      waitingCount: 0
+    },
     effectiveBehavior: {
       requestedWriteMode: 'follow_target',
       effectiveToolMode: 'read_write',
@@ -43,6 +48,7 @@ describe('target auto-triage settings draft', () => {
       React.createElement(TargetAutoTriageSettingsSection, {
         workspaceId: 'workspace-1',
         targetId: 'target-1',
+        targetType: 'kubernetes',
         canManageTargets: false,
         canCreateReadWriteRuns: false
       })
@@ -80,5 +86,31 @@ describe('target auto-triage settings draft', () => {
       enabled: true,
       eligibleCurrentIssueCount: 3
     })).toBe(true);
+  });
+
+  it('shows compact queue activity and links to the existing target issue surface', () => {
+    const markup = renderToStaticMarkup(
+      React.createElement(QueueSummary, {
+        workspaceId: 'workspace-1',
+        targetId: 'target-1',
+        targetType: 'kubernetes',
+        settings: {
+          ...settings(),
+          queueSummary: {
+            activeCount: 2,
+            waitingCount: 18,
+            oldestWaitingAt: '2026-07-29T00:00:00.000Z'
+          }
+        },
+        t: (key: string, values?: Record<string, unknown>) =>
+          `${key}:${values ? JSON.stringify(values) : ''}`
+      })
+    );
+
+    expect(markup).toContain('autoTriage.activityCounts');
+    expect(markup).toContain('&quot;active&quot;:2');
+    expect(markup).toContain('&quot;waiting&quot;:18');
+    expect(markup).toContain('/workspaces/workspace-1/kubernetes-clusters/target-1/overview');
+    expect(markup).toContain('autoTriage.viewIssues');
   });
 });
