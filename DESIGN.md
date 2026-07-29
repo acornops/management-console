@@ -395,6 +395,8 @@ Dialogs are reserved for confirmation, replacement invites, credential display, 
 - **Overlay:** Text-color scrim in light mode, darker bg scrim in dark mode.
 - **Motion:** Framer Motion state transitions only. No page-load choreography. Reduced-motion variants complete in `0.01s` or immediately.
 - **Focus:** Initial focus and focus wrap are required.
+- **Workspace creation:** After the workspace and optional invites are created, the AI-provider step is omitted when effective provider status reports at least one inherited platform default. The transition waits for that status and retains the setup step if it cannot be loaded.
+- **Workspace AI credentials:** Configured provider rows separate state from source: a semantic green Configured badge sits beside a neutral Platform default or Workspace key badge. Unconfigured providers show one neutral Not configured badge. Inherited-default guidance remains one line on desktop, and Rotate key uses the same compact intrinsic button size as Delete key.
 
 ### Status & Signal Motion
 

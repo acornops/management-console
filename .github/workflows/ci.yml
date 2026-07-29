@@ -92,7 +92,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Install Playwright browser
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
       - name: Run validation
         env:
           CHANGESET_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}

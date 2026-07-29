@@ -19,6 +19,7 @@ import { PageLoadingFallback } from '@acornops/ui';
 import { ToastViewport } from '@acornops/ui';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { KubernetesCluster, Workspace } from '@/types';
 import { AppPaths, type AppRoute } from '@/utils/routes';
 
@@ -570,6 +571,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             onConfirmClusterInstalled={() => void handleConfirmAddCluster()}
             onConfirmDeleteWorkspace={(workspace) => handleDeleteWorkspace(workspace.id)}
             onCreateWorkspace={handleCreateWorkspace}
+            onLoadWorkspaceAiSettings={(workspaceId) => controlPlaneApi.getWorkspaceAiSettings(workspaceId)}
             onOpenWorkspaceAiSettings={(workspaceId) => {
               setIsCreatingWorkspace(false);
               navigate(AppPaths.workspaceAiSettings(workspaceId));

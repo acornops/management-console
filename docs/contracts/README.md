@@ -43,7 +43,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - Audit-log detail preserves `operation`, `objectType`, and `object`.
 - Target mutation UI is gated by `permissions.manage_targets`.
 - Workspace AI settings UI is gated by `permissions.manage_ai_settings`.
-- AI provider credential flows must never expect or display API key values.
+- AI provider credential flows must never expect or display API key values. Provider status identifies whether the effective key is a workspace override, an inherited platform default, or absent; workspace overrides take precedence.
 - MCP registry role, policy, and editability data comes from the control plane; the console must not hard-code editable role keys or workspace-management availability.
 - Workspace MCP credentials are write-only; responses expose only whether a credential is configured. Workflows inherit MCP servers and tools from selected agents unless a narrower restriction is saved.
 - Workflow create always sends `restrictionMode`: `inherit` by default after

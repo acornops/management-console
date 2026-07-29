@@ -43,7 +43,7 @@ export function routeAutomationTemplateFixtureRequest({
       id: workflowId, workspaceId: decode(match[1]), version: 1,
       origin: { type: 'manual' }, source: 'user',
       name: template.name, description: template.description, status: 'paused', createdBy: FIXTURE_IDS.user,
-      createdByUser: { id: FIXTURE_IDS.user, displayName: 'Ning', email: 'ning@fixture.acornops.dev' }, createdAt: NOW,
+      createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: NOW,
       prompt: `Run ${template.name}.`, starterPrompt: `Run ${template.name}.`,
       agentIds: [FIXTURE_IDS.workflowAnalystAgent], executionMode: 'direct', targetConstraints: { targetTypes: [], targetIds: [] },
       tags: [], parameters: [], requiredPermissions: [],
