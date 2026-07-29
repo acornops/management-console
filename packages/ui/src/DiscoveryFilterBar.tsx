@@ -70,7 +70,7 @@ export interface DiscoveryFilterBarProps {
 const filterOptionLabel = (option: DiscoveryFilterOption<string>) => (
   <span className="flex w-full min-w-0 items-center justify-between gap-3">
     <span className="min-w-0 truncate">{option.label}</span>
-    {typeof option.count === 'number' && <span className="type-data shrink-0 text-xs text-ui-text-muted">{option.count}</span>}
+    {typeof option.count === 'number' && <span className="type-caption shrink-0 tabular-nums text-ui-text-muted">{option.count}</span>}
   </span>
 );
 

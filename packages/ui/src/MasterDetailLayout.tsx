@@ -67,7 +67,7 @@ export const MasterDetailRow: React.FC<MasterDetailRowProps> = ({ title, descrip
           {status}
         </span>
       </span>
-      <span id={metadataId} className="type-caption mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-ui-text-muted">
+      <span id={metadataId} className="type-caption type-emphasis mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-ui-text-muted">
         {metadata}
       </span>
     </button>

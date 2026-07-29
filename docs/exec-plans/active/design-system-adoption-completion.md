@@ -136,7 +136,33 @@ control-plane-mode validation suite all pass.
   - UI-package and application TypeScript checks passed.
 - PASS: `npm run test -- --reporter=dot`
   - 136 files and 711 tests passed.
-- PENDING: Stage 1 validation.
+- PASS: Stage 1 shared UI foundations.
+  - Dialogs and drawers now share focus containment and restoration, topmost
+    Escape handling, background inertness with nesting references, body scroll
+    locking, and reduced-motion behavior.
+  - `DialogFrame` and `DrawerFrame` associate rendered descriptions through
+    `aria-describedby`.
+  - Added public `DataTableBody`, `DataTableRow`, `DataTableCell`, and typed
+    `FileInput` primitives with catalog coverage and a minor Changeset.
+  - The UI package reports zero AST raw-typography findings.
+- PASS: `npm run ui:check`
+  - Changeset, typecheck, 40-module build, 19-symbol export check, and package
+    dry run passed.
+- PASS: `npm run test -- --reporter=dot --maxWorkers=4`
+  - 139 files and 719 tests passed.
+- PASS: reviewed design-catalog browser update.
+  - Initial `npm run design:snapshots` produced only the four expected catalog
+    diffs.
+  - Light desktop and dark mobile actuals were visually reviewed for field
+    alignment, table rhythm, theme behavior, and compact reflow.
+  - `npm run design:snapshots:update` regenerated exactly the four reviewed
+    baselines and passed 19 checks with one intentional mobile skip.
+  - Later no-update reruns encountered host interaction/font timeouts after the
+    assertions had passed in update mode; no new image mismatch was reported.
+- PASS: `npm run build`
+- PASS: `npm run bundle:check`
+  - 76 JavaScript chunks passed; largest was
+    `vendor-react-BaiCVyGu.js` at 312,686 bytes.
 - PENDING: Stages 2 through 4 validation.
 - PENDING: Stage 5 and final validation.
 

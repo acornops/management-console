@@ -28,18 +28,19 @@ export interface FrameContentProps {
   closeDisabled?: boolean;
   closeLabel?: string;
   description?: React.ReactNode;
+  descriptionId?: string;
   footer?: React.ReactNode;
   onClose: () => void;
   title: React.ReactNode;
   titleId: string;
 }
 
-const FrameContent: React.FC<FrameContentProps> = ({ bodyClassName, children, closeDisabled = false, closeLabel = 'Close', description, footer, onClose, title, titleId }) => (
+const FrameContent: React.FC<FrameContentProps> = ({ bodyClassName, children, closeDisabled = false, closeLabel = 'Close', description, descriptionId, footer, onClose, title, titleId }) => (
   <>
     <header className="flex min-w-0 items-start justify-between gap-4 border-b border-ui-border px-[var(--ao-overlay-padding-x)] py-[var(--ao-overlay-padding-y)]">
       <div className="min-w-0">
         <h2 id={titleId} className="type-section-title break-words text-ui-text">{title}</h2>
-        {description && <div className="type-caption mt-1 max-w-[65ch] text-ui-text-muted">{description}</div>}
+        {description && <div id={descriptionId} className="type-caption mt-1 max-w-[65ch] text-ui-text-muted">{description}</div>}
       </div>
       <CloseButton onClick={onClose} label={closeLabel} disabled={closeDisabled} />
     </header>
@@ -57,16 +58,18 @@ export interface DialogFrameProps extends FrameContentProps {
 
 export const DialogFrame: React.FC<DialogFrameProps> = ({ closeDisabled = false, initialFocusRef, open = true, width = 'md', ...content }) => {
   if (!open) return null;
+  const descriptionId = content.description ? content.descriptionId ?? `${content.titleId}-description` : undefined;
 
   return (
     <Dialog
       titleId={content.titleId}
+      descriptionId={descriptionId}
       closeDisabled={closeDisabled}
       initialFocusRef={initialFocusRef}
       onClose={content.onClose}
       className={twMerge('flex max-h-[min(90vh,52rem)] w-full flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl', dialogWidths[width])}
     >
-      <FrameContent {...content} closeDisabled={closeDisabled} />
+      <FrameContent {...content} descriptionId={descriptionId} closeDisabled={closeDisabled} />
     </Dialog>
   );
 };
@@ -78,18 +81,22 @@ export interface DrawerFrameProps extends FrameContentProps {
   width?: FrameWidth;
 }
 
-export const DrawerFrame: React.FC<DrawerFrameProps> = ({ closeDisabled = false, initialFocusRef, open, width = 'md', ...content }) => (
-  <RightSidePanel
-    isOpen={open}
-    onClose={content.onClose}
-    closeDisabled={closeDisabled}
-    initialFocusRef={initialFocusRef}
-    titleId={content.titleId}
-    className={drawerWidths[width]}
-  >
-    <FrameContent {...content} closeDisabled={closeDisabled} />
-  </RightSidePanel>
-);
+export const DrawerFrame: React.FC<DrawerFrameProps> = ({ closeDisabled = false, initialFocusRef, open, width = 'md', ...content }) => {
+  const descriptionId = content.description ? content.descriptionId ?? `${content.titleId}-description` : undefined;
+  return (
+    <RightSidePanel
+      isOpen={open}
+      onClose={content.onClose}
+      closeDisabled={closeDisabled}
+      initialFocusRef={initialFocusRef}
+      titleId={content.titleId}
+      descriptionId={descriptionId}
+      className={drawerWidths[width]}
+    >
+      <FrameContent {...content} descriptionId={descriptionId} closeDisabled={closeDisabled} />
+    </RightSidePanel>
+  );
+};
 
 export interface DestructiveConfirmationActionsProps {
   cancelLabel?: string;

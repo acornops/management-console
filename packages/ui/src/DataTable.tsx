@@ -69,6 +69,58 @@ const dataTableHeaderCellDensityClassNames: Record<DataTableDensity, string> = {
   compact: 'px-5 py-3'
 };
 
+const dataTableCellDensityClassNames: Record<DataTableDensity, string> = {
+  standard: 'px-4 py-5 sm:px-6 lg:px-8 lg:py-6',
+  dense: 'px-4 py-4',
+  compact: 'px-5 py-4'
+};
+
+export type DataTableBodyProps = React.HTMLAttributes<HTMLTableSectionElement>;
+
+export const DataTableBody: React.FC<DataTableBodyProps> = ({ children, className, ...props }) => (
+  <tbody className={twMerge('divide-y divide-ui-border', className)} {...props}>
+    {children}
+  </tbody>
+);
+
+export type DataTableRowProps = React.HTMLAttributes<HTMLTableRowElement>;
+
+export const DataTableRow: React.FC<DataTableRowProps> = ({ children, className, ...props }) => (
+  <tr className={twMerge('bg-ui-surface transition-colors hover:bg-ui-bg/70', className)} {...props}>
+    {children}
+  </tr>
+);
+
+export interface DataTableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
+  as?: 'td' | 'th';
+  density?: DataTableDensity;
+  numeric?: boolean;
+  scope?: React.ThHTMLAttributes<HTMLTableCellElement>['scope'];
+}
+
+export const DataTableCell: React.FC<DataTableCellProps> = ({
+  as: Element = 'td',
+  children,
+  className,
+  density = 'standard',
+  numeric = false,
+  scope,
+  ...props
+}) => (
+  <Element
+    scope={Element === 'th' ? scope ?? 'row' : undefined}
+    className={twMerge(clsx(
+      'type-body align-top text-ui-text',
+      dataTableCellDensityClassNames[density],
+      numeric && 'text-right tabular-nums',
+      className
+    ))}
+    {...props}
+  >
+    {children}
+  </Element>
+);
+
 const dataTableGridHeaderDensityClassNames: Record<DataTableDensity, string> = {
   standard: 'px-4 py-4 sm:px-6',
   dense: 'px-4 py-4',
@@ -209,5 +261,5 @@ export const DataTableStateRow: React.FC<DataTableStateRowProps> = ({
       : filtered && filteredEmpty
         ? filteredEmpty
         : empty;
-  return <tr {...props}><td colSpan={columns} className="p-0">{content}</td></tr>;
+  return <DataTableRow {...props}><DataTableCell colSpan={columns} className="p-0">{content}</DataTableCell></DataTableRow>;
 };

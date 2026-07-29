@@ -3,15 +3,35 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
   DataTable,
+  DataTableBody,
+  DataTableCell,
   DataTableFrame,
   DataTableGridHeader,
   DataTableGridHeaderCell,
   DataTableHeader,
   DataTableHeaderCell,
+  DataTableRow,
   DataTableStateRow
 } from '@acornops/ui';
 
 describe('DataTable primitives', () => {
+  it('renders shared body, row, data, and row-header anatomy', () => {
+    const markup = renderToStaticMarkup(
+      <DataTable caption="Targets">
+        <DataTableBody>
+          <DataTableRow>
+            <DataTableCell as="th">Cluster alpha</DataTableCell>
+            <DataTableCell numeric>12</DataTableCell>
+          </DataTableRow>
+        </DataTableBody>
+      </DataTable>
+    );
+
+    expect(markup).toContain('<tbody class="divide-y divide-ui-border">');
+    expect(markup).toContain('<th scope="row"');
+    expect(markup).toContain('text-right tabular-nums');
+  });
+
   it('keeps state rows inside the table frame and active column count', () => {
     const markup = renderToStaticMarkup(
       <DataTableFrame>
