@@ -15,6 +15,7 @@ type TargetChatComposerProps = Pick<
   | 'allowedReasoningOptions'
   | 'assistantCapabilitiesPreview'
   | 'assistantCapabilitiesPreviewError'
+  | 'capabilityPreviewEnabled'
   | 'canChat'
   | 'canCancelActiveRun'
   | 'canPost'
@@ -82,6 +83,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   allowedReasoningOptions,
   assistantCapabilitiesPreview,
   assistantCapabilitiesPreviewError,
+  capabilityPreviewEnabled,
   canChat,
   canCancelActiveRun,
   canPost,
@@ -187,6 +189,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                       >
                         <Button
                           type="button"
+                          variant="icon"
                           onClick={() => removeComposerAttachment(attachment.id)}
                           className="control-target absolute right-1 top-1 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full border border-ui-border bg-ui-bg text-ui-text shadow-sm transition-colors hover:bg-ui-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                           aria-label={t('chat.removeAttachment', {
@@ -206,7 +209,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                         </div>
                         <div className="min-w-0 border-t border-ui-border px-2 py-1">
                           <p className="truncate type-caption text-ui-text">{attachment.name}</p>
-                          <p className="mt-0.5 truncate type-micro-label type-ui text-ui-text-muted">{statusLabel}</p>
+                          <p className="mt-0.5 truncate type-micro-label text-ui-text-muted">{statusLabel}</p>
                         </div>
                       </div>
                     );
@@ -229,9 +232,11 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               rows={1}
               className={`${
                 isPanel ? 'min-h-9 type-body' : 'min-h-10 type-body'
-              } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 type-ui text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60`}
+              } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60`}
+              role="combobox"
               aria-label={t('chat.composerInputLabel', { name: target.name })}
-              aria-controls={isReferenceMenuOpen ? referenceMenuId : undefined}
+              aria-controls={referenceMenuId}
+              aria-expanded={isReferenceMenuOpen}
               aria-autocomplete="list"
               aria-activedescendant={isReferenceMenuOpen && referencePickerItems[referenceActiveIndex] ? `${referenceMenuId}-option-${referenceActiveIndex}` : undefined}
               placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: target.name }) : blockedComposerMessage}
@@ -242,6 +247,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             <Tooltip content={t('chat.attachFiles')}>
               <Button
                 type="button"
+                variant="tertiary"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!canPost || isRunActive}
                 className="control-target inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
@@ -253,17 +259,23 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             <FileInput ref={fileInputRef} multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive} />
             <span className="min-w-0 flex-1" aria-hidden="true" />
             <div className="inline-flex h-8 items-center rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60">
-              <AssistantCapabilityPreviewControl
-                canChat={canChat}
-                isLoading={isAssistantCapabilitiesPreviewLoading}
-                error={assistantCapabilitiesPreviewError}
-                preview={assistantCapabilitiesPreview}
-                requestedToolAccessMode={requestedToolAccessMode}
-              />
-              <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
-              <div ref={modelMenuRef} className="relative">
+              {capabilityPreviewEnabled ? (
+                <>
+                  <AssistantCapabilityPreviewControl
+                    canChat={canChat}
+                    isPanel={isPanel}
+                    isLoading={isAssistantCapabilitiesPreviewLoading}
+                    error={assistantCapabilitiesPreviewError}
+                    preview={assistantCapabilitiesPreview}
+                    requestedToolAccessMode={requestedToolAccessMode}
+                  />
+                  <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
+                </>
+              ) : null}
+              <div ref={modelMenuRef} className={isPanel ? 'static' : 'relative'}>
                 <Button
                   type="button"
+                  variant="tertiary"
                   id={modelSelectorId}
                   onClick={() => {
                     dismissReferenceMenu();
@@ -271,7 +283,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                     setIsModelSubmenuOpen(false);
                   }}
                   disabled={!canPost || isRunActive || isWorkspaceAiSettingsLoading || Boolean(workspaceAiSettingsError)}
-                  className="control-target inline-flex h-8 max-w-[15rem] items-center gap-1.5 rounded-full px-2.5 type-body type-emphasis leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="control-target inline-flex h-8 max-w-[15rem] items-center gap-1.5 rounded-full px-2.5 leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label={t('chat.modelAndEffortSelector')}
                   aria-controls={modelMenuPanelId}
                   aria-expanded={isModelMenuOpen}
@@ -287,7 +299,11 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                       exit={{ opacity: 0, y: 6, scale: 0.98 }}
                       transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
                       id={modelMenuPanelId}
-                      className="absolute bottom-full right-0 z-50 mb-3 w-64 rounded-2xl border border-ui-border bg-ui-surface-strong p-2 type-body shadow-xl shadow-ui-text/10"
+                      className={`absolute bottom-full right-0 z-50 mb-3 rounded-2xl border border-ui-border bg-ui-surface-strong p-2 type-body shadow-xl shadow-ui-text/10 ${
+                        isPanel && isModelSubmenuOpen
+                          ? 'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'
+                          : 'w-64'
+                      }`}
                       role="group"
                       aria-labelledby={modelSelectorId}
                     >
@@ -298,6 +314,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                           <Button
                             key={option.value}
                             type="button"
+                            variant="tertiary"
                             onClick={() => handleModelAndEffortChange(option.value as ReasoningEffort)}
                             className="control-target flex h-10 w-full items-center justify-between rounded-xl px-3 text-left type-ui text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                             aria-pressed={isSelected}
@@ -308,9 +325,10 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                         );
                       })}
                       <div className="my-2 border-t border-ui-border" />
-                      <div className="relative" onMouseEnter={() => setIsModelSubmenuOpen(true)}>
+                      <div className={isPanel ? 'contents' : 'relative'} onMouseEnter={() => setIsModelSubmenuOpen(true)}>
                         <Button
                           type="button"
+                          variant="tertiary"
                           id={modelSubmenuButtonId}
                           onClick={() => setIsModelSubmenuOpen((current) => !current)}
                           className="control-target flex h-10 w-full items-center justify-between rounded-xl px-3 text-left type-ui text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
@@ -331,7 +349,11 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                                 ease: [0.16, 1, 0.3, 1]
                               }}
                               id={modelSubmenuPanelId}
-                              className="absolute bottom-[calc(100%+0.5rem)] right-0 z-50 max-h-[min(24rem,calc(100vh-8rem))] w-56 overflow-y-auto rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 custom-scrollbar sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto"
+                              className={`absolute z-50 max-h-[min(24rem,calc(100vh-8rem))] overflow-y-auto rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 custom-scrollbar ${
+                                isPanel
+                                  ? 'bottom-2 right-2 top-2 w-44'
+                                  : 'bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto'
+                              }`}
                               role="group"
                               aria-labelledby={modelSubmenuButtonId}
                             >
@@ -345,6 +367,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                                   <Button
                                     key={`${option.provider}:${option.model}`}
                                     type="button"
+                                    variant="tertiary"
                                     onClick={() => handleModelChange(option)}
                                     className="control-target flex h-10 w-full items-center justify-between rounded-xl px-3 text-left type-ui text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                                     aria-pressed={isSelected}

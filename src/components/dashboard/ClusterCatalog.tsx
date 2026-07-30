@@ -277,7 +277,7 @@ const ClusterSetupTelemetry: React.FC<{
             </Button>
           </div>
         </div>
-        <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 type-ui text-ui-text-muted" aria-hidden="true">
+        <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 text-ui-text-muted" aria-hidden="true">
           <span className="truncate">
             <span className="xl:hidden min-[1440px]:inline">{t('dashboard.clusterRegistered')}</span>
             <span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.clusterRegisteredShort')}</span>
@@ -506,7 +506,7 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
         filteredEmpty={<ClusterCatalogEmptyState filtered isLoading={false} loadError={false} onRetry={onRetry} />}
         error={<ClusterCatalogEmptyState filtered={hasActiveFilter} isLoading={false} loadError onRetry={onRetry} />}
       >
-        <div data-cluster-card-grid="true" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div data-cluster-card-grid="true" data-resource-card-grid="true" className="resource-card-grid grid min-w-0 items-stretch gap-4">
           {sortedClusters.map((cluster) => (
             <ClusterCatalogCard key={cluster.id} {...itemProps(cluster)} />
           ))}

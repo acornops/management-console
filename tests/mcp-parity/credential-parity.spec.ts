@@ -21,6 +21,11 @@ async function submitAndVerifyCredential(page: Page, credential: string) {
   await dialog.getByRole('button', { name: 'Save and verify' }).click();
 }
 
+async function selectServerAction(page: Page, serverName: string, actionName: string) {
+  await page.getByRole('button', { name: `Actions for ${serverName}` }).click();
+  await page.getByRole('menuitem', { name: actionName }).click();
+}
+
 test.beforeEach(async ({ page }) => {
   await reset(page);
 });
@@ -32,7 +37,7 @@ test('authenticated target creation enters credential verification before pendin
   await page.getByLabel('Server Name').fill('Target credential server');
   await page.getByLabel('Server URL').fill('https://mcp.fixture.acornops.dev/target');
   await selectOption(page, 'Auth Type', 'Bearer Token');
-  await page.getByRole('button', { name: 'Review tools' }).click();
+  await page.getByRole('button', { name: 'Continue to credentials' }).click();
 
   await expect(page.getByRole('heading', { name: 'Connect your credential' })).toBeVisible();
   await expect(page.getByText('fixture_discovered_tool')).toHaveCount(0);
@@ -42,22 +47,25 @@ test('authenticated target creation enters credential verification before pendin
 });
 
 test('Agent credential refresh, disconnect/reconnect, and rate limit countdown are safe', async ({ page }) => {
-  const agentPath = `/workspaces/${workspaceId}/agents?agent=${agentId}&panel=profile&agentTab=capabilities&capabilityTab=mcp`;
+  const agentPath = `/workspaces/${workspaceId}/agents/${agentId}/mcp-servers`;
   await page.goto(agentPath);
   await page.getByRole('button', { name: 'Add MCP server' }).click();
   await page.getByRole('menuitem', { name: /Connect by URL/ }).click();
-  await page.getByLabel('Name').fill('Agent credential server');
-  await page.getByLabel('HTTPS endpoint').fill('https://mcp.fixture.acornops.dev/agent');
-  await selectOption(page, 'Authentication', 'Bearer token');
-  await page.getByRole('button', { name: 'Add server' }).click();
+  await page.getByLabel('Server Name').fill('Agent credential server');
+  await page.getByLabel('Server URL').fill('https://mcp.fixture.acornops.dev/agent');
+  await selectOption(page, 'Auth Type', 'Bearer Token');
+  await page.getByRole('button', { name: 'Continue to credentials' }).click();
 
   await expect(page.getByRole('heading', { name: 'Connect your credential' })).toBeVisible();
   await submitAndVerifyCredential(page, 'fixture-valid');
-  await expect(page.getByText(/1 discovered tools/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Review discovered tools' })).toBeVisible();
+  await expect(page.getByText('fixture_discovered_tool')).toBeVisible();
+  await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByText('fixture_discovered_tool')).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Disconnect' }).click();
-  const connectButton = page.getByRole('button', { name: 'Connect your credential' });
+  await selectServerAction(page, 'Agent credential server', 'Disconnect credential');
+  await page.getByRole('button', { name: 'Actions for Agent credential server' }).click();
+  const connectButton = page.getByRole('menuitem', { name: 'Connect your credential' });
   await expect(connectButton).toBeEnabled();
   await expect(page.getByRole('heading', { name: 'Connect your credential' })).toHaveCount(0);
 
@@ -66,12 +74,14 @@ test('Agent credential refresh, disconnect/reconnect, and rate limit countdown a
   const failedCredentialDialog = page.getByRole('dialog', { name: /^(Connect your credential|Replace your credential for Agent credential server)$/ });
   await expect(failedCredentialDialog).toContainText('verification failed');
   await failedCredentialDialog.getByRole('button', { name: 'Cancel' }).click();
-  await page.getByRole('button', { name: 'Verify credential' }).click();
-  await expect(page.getByRole('button', { name: 'Replace credential' })).toBeEnabled();
+  await selectServerAction(page, 'Agent credential server', 'Verify credential');
+  await page.getByRole('button', { name: 'Actions for Agent credential server' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Replace credential' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Actions for Agent credential server' }).click();
   await expect(page).not.toHaveURL(/mcpServer=/);
 
-  await page.getByRole('button', { name: 'Disconnect' }).click();
-  await page.getByRole('button', { name: 'Connect your credential' }).click();
+  await selectServerAction(page, 'Agent credential server', 'Disconnect credential');
+  await selectServerAction(page, 'Agent credential server', 'Connect your credential');
   await submitAndVerifyCredential(page, 'fixture-rate-limit');
   const credentialDialog = page.getByRole('dialog', { name: 'Connect your credential' });
   await expect(credentialDialog.getByRole('button', { name: /Try again in [12]s/ })).toBeDisabled();

@@ -55,6 +55,7 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage
           <Button
             key={`${workload.clusterName}-${workload.id}`}
             type="button"
+            variant="tertiary"
             onClick={() => onSelect(workload)}
             aria-label={`${t('workloads.details')}: ${workload.name}`}
             className={`control-target ${classNames(

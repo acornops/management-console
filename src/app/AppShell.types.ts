@@ -5,11 +5,13 @@ import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRou
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { controlPlaneApi as ControlPlaneApi, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { AgentAccessMode } from '@/services/control-plane/types';
+import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import type { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
-import type { AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
+import type { AgentSubview, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
 
 export interface AppShellProps {
   acceptWorkspaceInvitation: (token: string) => Promise<void>;
+  activeAgentSubview: AgentSubview;
   activeClusterSubview: ClusterSubview;
   activeVmSubview: VmSubview;
   activePrimaryNav: ActivePrimaryNav;
@@ -47,6 +49,7 @@ export interface AppShellProps {
   invitationTokenMissingMessage: string;
   isAddingCluster: boolean;
   isClusterCopilotOpen: boolean;
+  isAgentSidebar: boolean;
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;
   isCreatingCluster: boolean;
@@ -68,6 +71,7 @@ export interface AppShellProps {
   refreshWorkspaceInvitations: (workspaceId: string) => Promise<void>;
   refreshWorkspaceMembers: (workspaceId: string) => Promise<void>;
   route: AppRoute;
+  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
   selectedWorkspace: Workspace | undefined;

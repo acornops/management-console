@@ -79,10 +79,56 @@ export interface AgentCapability {
   requiresApproval: boolean;
 }
 
+export type AgentConversationAccessMode = 'read_only' | 'read_write';
+export interface AgentConversationSummaryApi {
+  id: string;
+  workspaceId: string;
+  agentId: string;
+  agentVersion: number;
+  title: string;
+  createdBy: string;
+  accessMode: AgentConversationAccessMode;
+  permissionMode?: RunPermissionMode;
+  launchedAt?: string;
+  createdAt: string;
+}
+export interface AgentConversationMessageApi {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  runId?: string;
+  createdAt: string;
+}
+export interface AgentConversationRunApi {
+  id: string;
+  executionId?: string;
+  status: string;
+  requestedAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  assistantMessage?: { content?: string };
+  events?: Array<{
+    schema_version: string;
+    run_id: string;
+    seq: number;
+    ts: string;
+    type: string;
+    payload: Record<string, unknown>;
+  }>;
+}
+export interface AgentConversationApiResponse {
+  conversation: AgentConversationSummaryApi;
+  messages: AgentConversationMessageApi[];
+  runs: AgentConversationRunApi[];
+}
+
 export interface AgentDefinitionApi {
   id: string;
   workspaceId: string;
   name: string;
+  avatarEmoji: string;
   description?: string;
   instructions?: string;
   status?: AgentStatus;
@@ -113,6 +159,62 @@ export interface AgentDefinitionApi {
   workflowsUsingAgent?: string[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export function listAgentConversations(
+  workspaceId: string,
+  agentId: string
+): Promise<AgentConversationSummaryApi[]> {
+  return requestJson<{ items: AgentConversationSummaryApi[] }>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/conversations`
+  ).then((response) => response.items);
+}
+
+export function createAgentConversation(
+  workspaceId: string,
+  agentId: string
+): Promise<AgentConversationApiResponse> {
+  return requestJson<AgentConversationApiResponse>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/conversations`,
+    { method: 'POST' }
+  );
+}
+
+export function getAgentConversation(conversationId: string): Promise<AgentConversationApiResponse> {
+  return requestJson<AgentConversationApiResponse>(
+    `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}`
+  );
+}
+
+export function deleteAgentConversation(conversationId: string): Promise<void> {
+  return requestJson<void>(
+    `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}`,
+    { method: 'DELETE' }
+  );
+}
+
+export function changeAgentConversationAccess(
+  conversationId: string,
+  accessMode: AgentConversationAccessMode
+): Promise<AgentConversationSummaryApi> {
+  return requestJson<{ conversation: AgentConversationSummaryApi }>(
+    `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}/access`,
+    { method: 'PATCH', body: JSON.stringify({ accessMode }) }
+  ).then((response) => response.conversation);
+}
+
+export function postAgentConversationMessage(
+  conversationId: string,
+  content: string,
+  clientRequestId?: string
+): Promise<{ message_id: string; run_id: string; executionId: string; status: string }> {
+  return requestJson(
+    `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}/messages`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ content, ...(clientRequestId ? { clientRequestId } : {}) })
+    }
+  );
 }
 
 export type AgentCreateInput = Partial<Omit<AgentDefinitionApi, 'id' | 'workspaceId' | 'createdAt' | 'updatedAt'>> & {
@@ -277,7 +379,7 @@ const agentCapabilityBase = (workspaceId: string, agentId: string) => `/api/v1/w
 export function listAgentMcpServers(workspaceId: string, agentId: string): Promise<AgentMcpServerApi[]> {
   return requestJson<{ items: AgentMcpServerApi[] }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`).then((response) => response.items);
 }
-export function createAgentMcpServer(workspaceId: string, agentId: string, input: { name: string; url: string; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: 'none' | 'bearer_token' | 'custom_header'; authHeaderName?: string }): Promise<AgentMcpServerApi> {
+export function createAgentMcpServer(workspaceId: string, agentId: string, input: { name: string; url: string; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: 'none' | 'bearer_token' | 'custom_header' | 'oauth'; authHeaderName?: string }): Promise<AgentMcpServerApi> {
   return requestJson<{ server: AgentMcpServerApi }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.server);
 }
 export function updateAgentMcpServer(workspaceId: string, agentId: string, serverId: string, input: Record<string, unknown>): Promise<AgentMcpServerApi> {

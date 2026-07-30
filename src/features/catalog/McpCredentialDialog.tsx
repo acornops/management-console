@@ -149,6 +149,8 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
               />
               <Button
                 type="button"
+                variant="tertiary"
+                size="icon"
                 disabled={pending}
                 onClick={() => setShowCredential((current) => !current)}
                 aria-label={t(showCredential ? 'mcpServers.hideCredential' : 'mcpServers.showCredential')}

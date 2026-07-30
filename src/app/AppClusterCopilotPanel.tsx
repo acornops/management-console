@@ -5,6 +5,13 @@ import { ClusterChatPanel } from '@/features/kubernetes-cluster-detail/component
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { KubernetesCluster, Workspace } from '@/types';
 import { AppPaths, withAssistantSession } from '@/utils/routes';
+import {
+  desktopSidebarWidth,
+  dockedPanelMinimumWidth,
+  getSidePanelMaximumWidth,
+  minimumMainContentWidth,
+  useDockedPanelLayout
+} from '@/app/dockedPanelLayout';
 
 interface AppClusterCopilotPanelProps {
   cluster: KubernetesCluster | null;
@@ -39,6 +46,7 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
   const isResizingRef = useRef(false);
   const resizeFrameRef = useRef<number | null>(null);
   const pendingWidthRef = useRef(width);
+  const isDocked = useDockedPanelLayout();
 
   useEffect(() => {
     pendingWidthRef.current = width;
@@ -52,8 +60,8 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
 
     const handleMouseMove = (event: MouseEvent) => {
       if (!isResizingRef.current) return;
-      const maxWidth = Math.floor(window.innerWidth * 0.82);
-      const nextWidth = Math.min(Math.max(window.innerWidth - event.clientX, 380), maxWidth);
+      const maxWidth = getSidePanelMaximumWidth(window.innerWidth, isDocked);
+      const nextWidth = Math.min(Math.max(window.innerWidth - event.clientX, dockedPanelMinimumWidth), maxWidth);
       pendingWidthRef.current = nextWidth;
       if (resizeFrameRef.current !== null) return;
       resizeFrameRef.current = window.requestAnimationFrame(commitPendingWidth);
@@ -76,53 +84,77 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
         resizeFrameRef.current = null;
       }
     };
-  }, [onResizeWidth]);
+  }, [isDocked, onResizeWidth]);
+
+  if (!isOpen || !cluster || !chatController) return null;
+
+  const panelContents = (
+    <>
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={t('app.resizeClusterAssistant')}
+        className="absolute left-0 top-0 z-[110] hidden h-full w-1.5 cursor-ew-resize transition-colors hover:bg-accent/30 xl:block"
+        onMouseDown={(event) => {
+          event.preventDefault();
+          isResizingRef.current = true;
+          document.body.style.cursor = 'ew-resize';
+          document.body.style.userSelect = 'none';
+        }}
+      />
+      <ClusterChatPanel
+        cluster={cluster}
+        chatController={chatController}
+        currentUserRole={currentUserRole}
+        currentWorkspacePermissions={currentWorkspacePermissions}
+        initialPrompt={initialPrompt}
+        isDark={isDark}
+        onClose={onClose}
+        onMaximize={() => {
+          onClose();
+          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'chat'));
+        }}
+        onOpenAiSettings={() => {
+          onClose();
+          const returnTo = withAssistantSession(
+            AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'chat'),
+            chatController.activeSessionId
+          );
+          navigate(AppPaths.workspaceAiSettings(cluster.workspaceId, returnTo));
+        }}
+        onInitialPromptHandled={onInitialPromptHandled}
+      />
+    </>
+  );
+
+  if (isDocked) {
+    return (
+      <aside
+        aria-label={t('app.clusterAssistant')}
+        data-docked-assistant="true"
+        className="relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-l border-ui-border bg-ui-surface"
+        style={{
+          width,
+          minWidth: dockedPanelMinimumWidth,
+          maxWidth: `calc(100vw - ${desktopSidebarWidth + minimumMainContentWidth}px)`
+        }}
+      >
+        {panelContents}
+        <div data-floating-layer="true" className="pointer-events-none absolute inset-0 z-[120]" />
+      </aside>
+    );
+  }
 
   return (
-    <DrawerFrame unframed
-      isOpen={isOpen && Boolean(cluster) && Boolean(chatController)}
+    <DrawerFrame
+      unframed
+      isOpen
       onClose={onClose}
       ariaLabel={t('app.clusterAssistant')}
       style={{ width }}
       className="max-w-[calc(100vw-1rem)]"
     >
-      {cluster && chatController && (
-        <>
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            className="absolute left-0 top-0 z-[110] h-full w-1.5 cursor-ew-resize transition-colors hover:bg-accent/30"
-            onMouseDown={(event) => {
-              event.preventDefault();
-              isResizingRef.current = true;
-              document.body.style.cursor = 'ew-resize';
-              document.body.style.userSelect = 'none';
-            }}
-          />
-          <ClusterChatPanel
-            cluster={cluster}
-            chatController={chatController}
-            currentUserRole={currentUserRole}
-            currentWorkspacePermissions={currentWorkspacePermissions}
-            initialPrompt={initialPrompt}
-            isDark={isDark}
-            onClose={onClose}
-            onMaximize={() => {
-              onClose();
-              navigate(AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'chat'));
-            }}
-            onOpenAiSettings={() => {
-              onClose();
-              const returnTo = withAssistantSession(
-                AppPaths.workspaceKubernetesClusterDiagnostics(cluster.workspaceId, cluster.id, 'chat'),
-                chatController.activeSessionId
-              );
-              navigate(AppPaths.workspaceAiSettings(cluster.workspaceId, returnTo));
-            }}
-            onInitialPromptHandled={onInitialPromptHandled}
-          />
-        </>
-      )}
+      {panelContents}
     </DrawerFrame>
   );
 };

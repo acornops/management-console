@@ -21,6 +21,8 @@ import { formatUserDateTime } from '@/utils/dateTime';
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
+import { AppPaths, withAssistantSession } from '@/utils/routes';
+import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceApprovalsPageProps {
@@ -28,6 +30,7 @@ interface WorkspaceApprovalsPageProps {
   onApprovalDecision?: () => Promise<void> | void;
   runId?: string;
   approvalId?: string;
+  navigate?: (path: string, options?: NavigateOptions) => void;
 }
 
 type ApprovalFilter = 'pending' | 'decided';
@@ -52,7 +55,9 @@ function approvalTone(status: WorkspaceApprovalInboxRow['status']): React.Compon
   return 'neutral';
 }
 
-function sourceLabel(source: WorkspaceApprovalInboxRow['source'], t: TFunction): string {
+function sourceLabel(approval: WorkspaceApprovalInboxRow, t: TFunction): string {
+  if (approval.sessionOrigin === 'auto_triage') return t('approvals.sources.automaticInvestigation');
+  const { source } = approval;
   return t(`approvals.sources.${source}`);
 }
 
@@ -60,7 +65,8 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
   workspace,
   onApprovalDecision,
   runId,
-  approvalId
+  approvalId,
+  navigate
 }) => {
   const { t } = useTranslation();
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
@@ -280,10 +286,10 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
               <DataTableHeader>
                 <DataTableRow>
                   <DataTableHeaderCell density="dense">{t('approvals.table.approval')}</DataTableHeaderCell>
-                  <DataTableHeaderCell density="dense">{t('approvals.table.workflowRun')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.activity')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.requestedBy')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.target')}</DataTableHeaderCell>
-                  <DataTableHeaderCell density="dense">{t('approvals.table.risk')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense">{t('approvals.table.source')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.expires')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.status')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.decision')}</DataTableHeaderCell>
@@ -297,17 +303,38 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                     (approvalId && approval.approvalId === approvalId) ||
                     (!approvalId && runId && approval.runId === runId)
                   );
+                  const investigationPath = approval.sessionOrigin === 'auto_triage'
+                    && approval.sessionId
+                    && approval.targetId
+                    && (approval.targetType === 'kubernetes' || approval.targetType === 'virtual_machine')
+                    ? withAssistantSession(
+                        approval.targetType === 'kubernetes'
+                          ? AppPaths.workspaceKubernetesClusterDiagnostics(workspace.id, approval.targetId, 'chat')
+                          : AppPaths.workspaceVirtualMachineDetail(workspace.id, approval.targetId, 'chat'),
+                        approval.sessionId
+                      )
+                    : null;
                   return (
                     <DataTableRow key={approval.approvalId} className={`type-body ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
                       <DataTableCell as="th" scope="row" className="px-4 py-4 type-emphasis text-ui-text">{approval.summary}</DataTableCell>
-                      <DataTableCell className="px-4 py-4 type-ui text-ui-text">{approval.workflowId || sourceLabel(approval.source, t)} · {approval.runId}</DataTableCell>
-                      <DataTableCell className="px-4 py-4 text-ui-text-muted">{approval.requestedBy || t('approvals.system')}</DataTableCell>
+                      <DataTableCell className="px-4 py-4 type-ui text-ui-text">
+                        <span className="block">{approval.sessionTitle || approval.workflowId || sourceLabel(approval, t)}</span>
+                        <span className="mt-1 block type-caption text-ui-text-muted">{approval.runId}</span>
+                      </DataTableCell>
+                      <DataTableCell className="px-4 py-4 text-ui-text-muted">
+                        {approval.sessionOrigin === 'auto_triage' ? t('approvals.acornOps') : approval.requestedBy || t('approvals.system')}
+                      </DataTableCell>
                       <DataTableCell className="px-4 py-4 text-ui-text-muted">{approval.targetId || t('approvals.targetWorkspace')}</DataTableCell>
-                      <DataTableCell className="px-4 py-4 type-emphasis text-ui-text">{sourceLabel(approval.source, t)}</DataTableCell>
+                      <DataTableCell className="px-4 py-4 type-emphasis text-ui-text">{sourceLabel(approval, t)}</DataTableCell>
                       <DataTableCell className="px-4 py-4 text-ui-text-muted">{formatDateTime(approval.expiresAt, t('approvals.none'))}</DataTableCell>
                       <DataTableCell className="px-4 py-4"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></DataTableCell>
                       <DataTableCell className="px-4 py-4">
                         <div className="flex gap-2">
+                          {investigationPath && navigate && (
+                            <Button size="sm" variant="tertiary" onClick={() => navigate(investigationPath)}>
+                              {t('approvals.actions.openInvestigation')}
+                            </Button>
+                          )}
                           <Button size="sm" variant="secondary" onClick={() => void decideApproval(approval, 'approved')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
                             {decision === 'loading' ? t('approvals.actions.deciding') : t('approvals.actions.approve')}
                           </Button>

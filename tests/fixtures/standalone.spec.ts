@@ -277,19 +277,19 @@ test('workspace run links focus the exact execution in workflow history', async 
   await expect(execution.getByText('Waiting for approval', { exact: true }).first()).toBeVisible();
 });
 
-test('agent profile scopes lifecycle actions to Settings and icons restore-point refresh', async ({ page }) => {
-  await page.goto('/workspaces/fixture-workspace/agents?panel=profile&agent=fixture-specialist&agentTab=overview', { waitUntil: 'domcontentloaded' });
+test('Agent detail scopes lifecycle and version actions to Settings', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/agents/fixture-specialist/chat', { waitUntil: 'domcontentloaded' });
 
-  await expect(page.getByRole('dialog', { name: 'Kubernetes Specialist' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit agent' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Agent Settings' }).click();
+  await expect(page).toHaveURL('/workspaces/fixture-workspace/agents/fixture-specialist/settings');
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Disable agent' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Delete agent' })).toHaveCount(0);
-
-  await page.getByRole('tab', { name: 'Settings' }).click();
-  await expect(page.getByRole('button', { name: 'Disable agent' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Delete agent' })).toBeVisible();
-
-  await page.getByRole('tab', { name: 'Restore points' }).click();
+  await expect(page.getByRole('button', { name: 'Disable', exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Configuration versions' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Refresh' }).locator('svg')).toBeVisible();
 });
 

@@ -85,7 +85,7 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
                 </div>
                 <div>
                   <p className="type-label">{t('invite.title')}</p>
-                  <h1 className="mt-2 type-route-title type-panel-title">{invitation.workspaceName}</h1>
+                  <h1 className="mt-2 type-panel-title">{invitation.workspaceName}</h1>
                   <p className="mt-2 type-ui leading-6 text-ui-text-muted">
                     {t('invite.invitedAs', {
                       role: formatRole(invitation.role, invitation.roleTemplate),
@@ -141,7 +141,7 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
                 <AlertTriangle className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="type-route-title type-panel-title">{t('invite.unavailable')}</h1>
+                <h1 className="type-panel-title">{t('invite.unavailable')}</h1>
                 <p className="mt-2 type-ui leading-6 text-ui-text-muted">{errorMessage || t('invite.invalid')}</p>
               </div>
               <Button onClick={onGoToWorkspaces} variant="primary" size="lg" className="type-ui">

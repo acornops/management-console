@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
+import { EmptyState } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
@@ -23,7 +24,7 @@ interface McpServersInventoryProps {
   pendingConnectionServerId: string | null;
   retryAfterSecondsFor: (serverId: string) => number;
   recoveryServerId: string | null;
-  recoveryAction?: 'connect_mcp_server' | 'verify_mcp_server';
+  recoveryAction?: 'connect_mcp_server' | 'authorize_mcp_server' | 'select_authorization_server' | 'reauthorize_mcp_server' | 'verify_mcp_server';
   onManageTools: (serverId: string) => void;
   onTestConnection: (server: TargetToolCatalogServer) => void;
   onToggleServer: (server: TargetToolCatalogServer, enabled: boolean) => void;
@@ -102,6 +103,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
       return matchesSearch && matchesFilter;
     });
   }, [serverFilter, serverSearch, servers]);
+  const hasActiveFilters = Boolean(serverSearch.trim()) || serverFilter !== 'all';
 
   return (
     <>
@@ -141,32 +143,34 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
       </section>
 
       <section data-mcp-server-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
-          <div className="relative min-w-0">
-            <label htmlFor="mcp-server-search" className="sr-only">
-              {t('mcpServers.searchServers')}
-            </label>
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-            <TextInput
-              id="mcp-server-search"
-              type="text"
-              value={serverSearch}
-              onChange={(event) => setServerSearch(event.target.value)}
-              placeholder={t('mcpServers.searchServers')}
-              className={mcpServerSearchInputClassName}
+        {(servers.length > 0 || hasActiveFilters) && (
+          <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
+            <div className="relative min-w-0">
+              <label htmlFor="mcp-server-search" className="sr-only">
+                {t('mcpServers.searchServers')}
+              </label>
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
+              <TextInput
+                id="mcp-server-search"
+                type="text"
+                value={serverSearch}
+                onChange={(event) => setServerSearch(event.target.value)}
+                placeholder={t('mcpServers.searchServers')}
+                className={mcpServerSearchInputClassName}
+              />
+            </div>
+            <Select<typeof serverFilter>
+              value={serverFilter}
+              options={serverFilterOptions}
+              onChange={setServerFilter}
+              className="w-full"
+              ariaLabel={t('mcpServers.filterServers')}
             />
+            <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
+              {t('mcpServers.showingServers', { count: filteredServers.length, total: servers.length })}
+            </span>
           </div>
-          <Select<typeof serverFilter>
-            value={serverFilter}
-            options={serverFilterOptions}
-            onChange={setServerFilter}
-            className="w-full"
-            ariaLabel={t('mcpServers.filterServers')}
-          />
-          <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
-            {t('mcpServers.showingServers', { count: filteredServers.length, total: servers.length })}
-          </span>
-        </div>
+        )}
         <div className="min-w-0">
           <DataTable caption={t('mcpServers.title')} className="w-full table-fixed text-left" aria-label={t('mcpServers.title')}>
             <colgroup>
@@ -186,39 +190,40 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
               </DataTableRow>
             </DataTableHeader>
             <DataTableBody>
-              {filteredServers.length > 0 ? (
-                filteredServers.map((server) => (
-                  <McpServerCard
-                    key={server.id}
-                    server={server}
-                    canEditServers={canEditServers}
-                    pendingTestServerId={pendingTestServerId}
-                    pendingToggleServerId={pendingToggleServerId}
-                    testResult={testResultsByServerId[server.id]}
-                    connection={connections[server.id]}
-                    connectionLoadError={connectionErrors[server.id]}
-                    pendingConnection={pendingConnectionServerId === server.id}
-                    retryAfterSeconds={retryAfterSecondsFor(server.id)}
-                    recoveryAction={recoveryServerId === server.id ? recoveryAction : undefined}
-                    onManageTools={onManageTools}
-                    onTestConnection={onTestConnection}
-                    onToggleServer={onToggleServer}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onConnect={onConnect}
-                    onVerify={onVerify}
-                    onDisconnect={onDisconnect}
-                    onRetry={onRetry}
-                  />
-                ))
-              ) : (
-                <DataTableRow>
-                  <DataTableCell colSpan={5} className="px-8 py-12 text-center">
-                    <p className="type-body">{t('mcpServers.noServerMatches')}</p>
-                    <p className="type-caption mt-1 text-ui-text-muted">{t('mcpServers.noServerMatchesHelp')}</p>
-                  </DataTableCell>
-                </DataTableRow>
-              )}
+              {filteredServers.map((server) => (
+                <McpServerCard
+                  key={server.id}
+                  server={server}
+                  canEditServers={canEditServers}
+                  pendingTestServerId={pendingTestServerId}
+                  pendingToggleServerId={pendingToggleServerId}
+                  testResult={testResultsByServerId[server.id]}
+                  connection={connections[server.id]}
+                  connectionLoadError={connectionErrors[server.id]}
+                  pendingConnection={pendingConnectionServerId === server.id}
+                  retryAfterSeconds={retryAfterSecondsFor(server.id)}
+                  recoveryAction={recoveryServerId === server.id ? recoveryAction : undefined}
+                  onManageTools={onManageTools}
+                  onTestConnection={onTestConnection}
+                  onToggleServer={onToggleServer}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onConnect={onConnect}
+                  onVerify={onVerify}
+                  onDisconnect={onDisconnect}
+                  onRetry={onRetry}
+                />
+              ))}
+              <DataTableStateRow
+                columns={5}
+                phase="ready"
+                itemCount={filteredServers.length}
+                filtered={servers.length > 0}
+                loading={null}
+                empty={<EmptyState embedded headingLevel={3} icon={<Plus />} title={t('mcpServers.empty')} description={t('mcpServers.emptyHelp')} />}
+                filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('mcpServers.noServerMatches')} description={t('mcpServers.noServerMatchesHelp')} />}
+                error={null}
+              />
             </DataTableBody>
           </DataTable>
         </div>

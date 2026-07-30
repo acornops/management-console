@@ -256,6 +256,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
     <div className={`${compactStatusOnly ? '' : 'mt-3'} w-full ${className || 'max-w-[72ch]'}`}>
       <Button
         type="button"
+        variant="tertiary"
         onClick={() => setExpanded(runId, !isExpanded)}
         className={`control-target group min-h-10 items-center gap-2 py-2 pl-0 pr-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 ${
           isExpanded
@@ -346,8 +347,10 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                           {toolCall.artifact && (
                             <Button
                               type="button"
+                              variant="secondary"
+                              size="sm"
                               onClick={() => void openArtifact(toolCall)}
-                              className="control-target type-caption inline-flex min-h-9 items-center rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                              className="control-target inline-flex min-h-9 items-center rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                               aria-expanded={artifactView?.callId === toolCall.callId}
                             >
                               {artifactView?.callId === toolCall.callId ? 'Hide full result' : 'View full result'}

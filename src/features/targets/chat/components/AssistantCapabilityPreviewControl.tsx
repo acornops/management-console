@@ -11,6 +11,7 @@ import { Button } from '@acornops/ui';
 
 interface AssistantCapabilityPreviewControlProps {
   canChat: boolean;
+  isPanel: boolean;
   isLoading: boolean;
   error: string;
   preview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
@@ -63,7 +64,7 @@ function capabilityChipLabel(
   return toolLabel;
 }
 
-export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPreviewControlProps> = ({ canChat, isLoading, error, preview, requestedToolAccessMode }) => {
+export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPreviewControlProps> = ({ canChat, isPanel, isLoading, error, preview, requestedToolAccessMode }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -78,9 +79,18 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
       : preview?.writeUnavailableReason === 'agent_write_disabled'
       ? t('chat.capabilityPreviewWriteUnavailableAgent')
       : '';
+  const unavailableMcpToolCount = preview?.unavailableMcpToolCount ?? 0;
   const toolItems = React.useMemo(() => [...(preview?.tools ?? [])].sort(compareCapabilityToolPreviewItems), [preview?.tools]);
   const skillItems = React.useMemo(() => [...(preview?.skills ?? [])].sort(compareSkillPreviewItems), [preview?.skills]);
-  const showToolPolicyNote = toolItems.length > 0 || Boolean(writeUnavailableLabel);
+  const showToolPolicyNote = toolItems.length > 0 || Boolean(writeUnavailableLabel) || unavailableMcpToolCount > 0;
+  const unavailableMcpLabel = unavailableMcpToolCount > 0
+    ? t(
+        unavailableMcpToolCount === 1
+          ? 'chat.capabilityPreviewMcpToolUnavailable'
+          : 'chat.capabilityPreviewMcpToolsUnavailable',
+        { count: unavailableMcpToolCount }
+      )
+    : '';
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -109,20 +119,25 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
   }, [canChat]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={isPanel ? 'static' : 'relative'}>
       <Button
         type="button"
+        variant="tertiary"
         id={buttonId}
+        data-assistant-capability-preview-trigger="true"
         onClick={() => setIsOpen((current) => !current)}
         disabled={!canChat}
-        className="control-target inline-flex h-8 max-w-[9.5rem] items-center gap-1.5 rounded-full px-2.5 type-body type-emphasis leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
-        aria-label={t('chat.capabilityPreviewAria')}
+        className="control-target inline-flex h-8 max-w-[9.5rem] items-center gap-1.5 rounded-full px-2.5 leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label={unavailableMcpLabel
+          ? `${t('chat.capabilityPreviewAria')}. ${unavailableMcpLabel}`
+          : t('chat.capabilityPreviewAria')}
+        title={unavailableMcpLabel || undefined}
         aria-controls={panelId}
         aria-expanded={isOpen}
       >
         {isLoading ? (
           <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-        ) : error ? (
+        ) : error || unavailableMcpToolCount > 0 ? (
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-status-warning-text" />
         ) : (
           <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
@@ -166,6 +181,11 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                       ? t('chat.capabilityPreviewApprovalRequired')
                       : t('chat.capabilityPreviewApprovalNotRequired')}
                     {writeUnavailableLabel && <span className="mt-1 block text-status-warning-text">{writeUnavailableLabel}</span>}
+                    {unavailableMcpToolCount > 0 && (
+                      <span className="mt-1 block text-status-warning-text">
+                        {unavailableMcpLabel}
+                      </span>
+                    )}
                   </div>
                 )}
                 <div className="mt-3 max-h-56 overflow-y-auto pr-1">

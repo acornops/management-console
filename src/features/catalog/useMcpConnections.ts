@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useMcpRateLimit } from '@/features/catalog/useMcpRateLimit';
-import { catalogApi, type McpConnection } from '@/services/control-plane/catalogApi';
+import {
+  catalogApi,
+  type McpConnection,
+  type McpOAuthPreparation
+} from '@/services/control-plane/catalogApi';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 
 export interface McpConnectionInstallation {
@@ -30,6 +34,8 @@ const connectionCopy = {
   connect: 'The credential could not be saved.',
   verify: 'The stored credential could not be verified.',
   disconnect: 'The credential could not be removed.',
+  oauthPrepare: 'OAuth configuration could not be discovered from this MCP server.',
+  oauthStart: 'Browser authorization could not be started.',
   verificationFailed: 'The credential was saved, but verification failed. Check its permissions, then verify again or replace it.',
   stillUnusable: 'The stored credential is still unusable. Verify again, replace it, or disconnect.',
   refreshFailed: 'The credential is connected, but tools may be stale. Retry the installation refresh.'
@@ -69,6 +75,24 @@ export function useMcpConnections<TInstallation extends McpConnectionInstallatio
   const deleteConnection = useCallback((serverId: string) => destination.kind === 'agent'
     ? catalogApi.disconnectAgentMcp(workspaceId, destination.id, serverId)
     : catalogApi.disconnectTargetMcp(workspaceId, destination.id, serverId), [destination.id, destination.kind, workspaceId]);
+  const prepareOAuthConnection = useCallback((serverId: string, returnPath: string) => destination.kind === 'agent'
+    ? catalogApi.prepareAgentMcpOAuth(workspaceId, destination.id, serverId, returnPath)
+    : catalogApi.prepareTargetMcpOAuth(workspaceId, destination.id, serverId, returnPath), [destination.id, destination.kind, workspaceId]);
+  const startOAuthConnection = useCallback((
+    serverId: string,
+    preparationHandle: string,
+    issuer?: string
+  ) => destination.kind === 'agent'
+    ? catalogApi.startAgentMcpOAuth(workspaceId, destination.id, serverId, {
+        preparationHandle,
+        ...(issuer ? { issuer } : {}),
+        consentGranted: true
+      })
+    : catalogApi.startTargetMcpOAuth(workspaceId, destination.id, serverId, {
+        preparationHandle,
+        ...(issuer ? { issuer } : {}),
+        consentGranted: true
+      }), [destination.id, destination.kind, workspaceId]);
 
   const load = useCallback(async (installation: TInstallation) => {
     setLoadingByServerId((current) => ({ ...current, [installation.id]: true }));
@@ -93,6 +117,13 @@ export function useMcpConnections<TInstallation extends McpConnectionInstallatio
       });
     }
   }, [getConnection]);
+
+  const reloadConnections = useCallback(async () => {
+    const authenticated = installations.filter(
+      (installation) => installation.credentialMode !== 'none' && !installation.isSystem
+    );
+    await Promise.all(authenticated.map((installation) => load(installation)));
+  }, [installations, load]);
 
   useEffect(() => {
     const authenticated = mcpConnectionsToLoad(installations);
@@ -175,6 +206,63 @@ export function useMcpConnections<TInstallation extends McpConnectionInstallatio
     }
   };
 
+  const prepareOAuth = async (
+    installation: TInstallation,
+    returnPath: string
+  ): Promise<McpOAuthPreparation | undefined> => {
+    if (pendingServerId || rateLimit.remainingSeconds(installation.id) > 0) return undefined;
+    setPendingServerId(installation.id);
+    onError?.(null);
+    try {
+      const preparation = await prepareOAuthConnection(installation.id, returnPath);
+      rateLimit.clear(installation.id);
+      return preparation;
+    } catch (cause) {
+      onError?.(rateLimit.captureError(installation.id, cause, connectionCopy.oauthPrepare).message);
+      throw cause;
+    } finally {
+      setPendingServerId(null);
+    }
+  };
+
+  const startOAuth = async (
+    installation: TInstallation,
+    preparationHandle: string,
+    issuer?: string
+  ): Promise<string | undefined> => {
+    if (pendingServerId || rateLimit.remainingSeconds(installation.id) > 0) return undefined;
+    setPendingServerId(installation.id);
+    onError?.(null);
+    try {
+      const started = await startOAuthConnection(
+        installation.id,
+        preparationHandle,
+        issuer
+      );
+      setConnections((current) => ({
+        ...current,
+        [installation.id]: {
+          ...(current[installation.id] || {
+            serverId: installation.id,
+            credentialMode: 'individual',
+            managementScope: 'individual',
+            canManage: true,
+            authType: 'oauth'
+          }),
+          status: 'pending_authorization',
+          action: 'authorize_mcp_server'
+        }
+      }));
+      rateLimit.clear(installation.id);
+      return started.authorizationUrl;
+    } catch (cause) {
+      onError?.(rateLimit.captureError(installation.id, cause, connectionCopy.oauthStart).message);
+      throw cause;
+    } finally {
+      setPendingServerId(null);
+    }
+  };
+
   const disconnect = async (installation: TInstallation) => {
     if (pendingServerId || rateLimit.remainingSeconds(installation.id) > 0) return false;
     setPendingServerId(installation.id);
@@ -187,8 +275,12 @@ export function useMcpConnections<TInstallation extends McpConnectionInstallatio
         managementScope: installation.credentialMode === 'workspace' ? 'workspace' : 'individual',
         canManage: true,
         status: 'missing',
-        authType: installation.authType === 'custom_header' ? 'custom_header' : 'bearer_token',
-        action: 'connect_mcp_server'
+        authType: installation.authType === 'oauth'
+          ? 'oauth'
+          : installation.authType === 'custom_header' ? 'custom_header' : 'bearer_token',
+        action: installation.authType === 'oauth'
+          ? 'authorize_mcp_server'
+          : 'connect_mcp_server'
       } }));
       rateLimit.clear(installation.id);
       return true;
@@ -206,9 +298,12 @@ export function useMcpConnections<TInstallation extends McpConnectionInstallatio
     loadingByServerId,
     pendingServerId,
     connect,
+    prepareOAuth,
+    startOAuth,
     verify,
     disconnect,
     retry: load,
+    reloadConnections,
     retryAfterSecondsFor: rateLimit.remainingSeconds
   };
 }

@@ -231,7 +231,7 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
               icon={<RefreshCw />}
               title={t('workflowActivity.loadErrorTitle')}
               description={error}
-              actions={<Button size="sm" onClick={() => void load()}>{t('common.retry')}</Button>}
+              actions={<Button variant="secondary" size="sm" onClick={() => void load()}>{t('common.retry')}</Button>}
             />
           ) : items.length === 0 ? (
             <EmptyState
@@ -239,7 +239,7 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
               icon={<Filter />}
               title={filterCount ? t('workflowActivity.emptyFilteredTitle') : t('workflowActivity.emptyOpenTitle')}
               description={filterCount ? t('workflowActivity.emptyFilteredDescription') : t('workflowActivity.emptyOpenDescription')}
-              actions={filterCount ? <Button size="sm" onClick={() => navigate(AppPaths.workspaceRuns(workspace.id))}>{t('common.clearFilters')}</Button> : undefined}
+              actions={filterCount ? <Button variant="secondary" size="sm" onClick={() => navigate(AppPaths.workspaceRuns(workspace.id))}>{t('common.clearFilters')}</Button> : undefined}
             />
           ) : (
             <div className="divide-y divide-ui-border">
@@ -252,7 +252,7 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
               ))}
               {page?.nextCursor && (
                 <div className="flex justify-center px-4 py-4">
-                  <Button size="sm" onClick={() => void load(page.nextCursor || undefined)} disabled={loadingMore}>
+                  <Button variant="secondary" size="sm" onClick={() => void load(page.nextCursor || undefined)} disabled={loadingMore}>
                     {loadingMore ? t('common.loading') : t('common.loadMore')}
                   </Button>
                 </div>

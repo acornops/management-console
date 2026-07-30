@@ -25,7 +25,8 @@ Use the shared CSS role classes from `src/styles.css` instead of repeating ad ho
 | `type-caption` | Secondary metadata and dense supporting copy |
 | `type-label` | Table headers, form labels, badges, and short status labels |
 | `type-micro-label` | Very compact labels in charts, chips, trace rows, and dense controls |
-| `type-data` | Counts, metric values, and comparable numeric data |
+| `type-data` | Standalone metric values and comparable numeric data |
+| `type-count` | Compact inline counts in tabs, filters, and badges |
 | `type-code` | Code, tool names, logs, trace identifiers, and command text |
 
 ## Operating Rules
@@ -34,7 +35,8 @@ Use the shared CSS role classes from `src/styles.css` instead of repeating ad ho
 - Use `type-emphasis` only for inline emphasis. Headings, rows, labels, data, and controls must use their complete semantic role instead.
 - Keep `type-wordmark` limited to the AcornOps wordmark; it is not a general bold-text utility.
 - Keep uppercase labels compact. Use `type-label` or `type-micro-label`; avoid `tracking-widest` and exaggerated letter spacing.
-- Use `type-data` for numbers that operators compare across rows or panels. It enables tabular numeric rendering.
+- Use `type-data` for prominent numbers that operators compare across rows or panels. Use `type-count` when the number sits inline with a tab, filter, or badge label. Both enable tabular numeric rendering.
+- Apply exactly one complete typography role to an element. `type-emphasis` and `type-wordmark` are narrow modifiers, not substitutes for a complete role.
 - Use `type-code` for monospace surfaces only. Do not use monospace for decorative emphasis.
 - Route headings should stay fixed-size. Do not use fluid or viewport-scaled typography in product UI.
 - Body copy should stay readable at 65-75 characters where it is prose; dense tables and diagnostics can run wider.

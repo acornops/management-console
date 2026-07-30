@@ -4,6 +4,7 @@ export interface AgentDefinition {
   id: string;
   workspaceId: string;
   name: string;
+  avatarEmoji: string;
   description: string;
   instructions: string;
   status: AgentStatus;
@@ -34,6 +35,10 @@ export interface AgentDefinition {
     workflowRunCount: number;
     lastRunAt?: string;
     lastStatus?: string;
+  };
+  readiness: {
+    status: 'ready' | 'needs_setup' | 'blocked';
+    reasons: string[];
   };
 }
 

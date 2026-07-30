@@ -143,6 +143,8 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
           ref={actionMenuButtonRef}
           data-target-skill-primary-actions="true"
           type="button"
+          variant="tertiary"
+          size="icon"
           onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
           className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
           aria-haspopup="menu"
@@ -207,6 +209,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
       return matchesSearch && matchesFilter;
     });
   }, [skillFilter, skillSearch, skills]);
+  const hasActiveFilters = Boolean(skillSearch.trim()) || skillFilter !== 'all';
 
   return (
     <>
@@ -246,29 +249,31 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
       </section>
 
       <section data-target-skill-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
-          <div className="relative min-w-0">
-            <label htmlFor="target-skill-search" className="sr-only">
-              {t('targetSkills.searchSkills')}
-            </label>
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-            <TextInput
-              id="target-skill-search"
-              type="text"
-              value={skillSearch}
-              onChange={(event) => setSkillSearch(event.target.value)}
-              placeholder={t('targetSkills.searchSkills')}
-              className={targetSkillSearchInputClassName}
-            />
+        {(skills.length > 0 || hasActiveFilters) && (
+          <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
+            <div className="relative min-w-0">
+              <label htmlFor="target-skill-search" className="sr-only">
+                {t('targetSkills.searchSkills')}
+              </label>
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
+              <TextInput
+                id="target-skill-search"
+                type="text"
+                value={skillSearch}
+                onChange={(event) => setSkillSearch(event.target.value)}
+                placeholder={t('targetSkills.searchSkills')}
+                className={targetSkillSearchInputClassName}
+              />
+            </div>
+            <Select<typeof skillFilter> value={skillFilter} options={filterOptions} onChange={setSkillFilter} className="w-full" ariaLabel={t('targetSkills.filterSkills')} />
+            <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
+              {t('targetSkills.showingItems', {
+                count: filteredSkills.length,
+                total: skills.length
+              })}
+            </span>
           </div>
-          <Select<typeof skillFilter> value={skillFilter} options={filterOptions} onChange={setSkillFilter} className="w-full" ariaLabel={t('targetSkills.filterSkills')} />
-          <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
-            {t('targetSkills.showingItems', {
-              count: filteredSkills.length,
-              total: skills.length
-            })}
-          </span>
-        </div>
+        )}
         <div className="min-w-0">
           <DataTable caption={t('targetSkills.tableLabel')} className="w-full table-fixed text-left" aria-label={t('targetSkills.tableLabel')}>
             <colgroup>

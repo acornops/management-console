@@ -185,6 +185,7 @@ export function createFixtureState(): FixtureState {
   const agents = [
     {
       id: FIXTURE_IDS.workflowAnalystAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Workflow Analyst',
+      avatarEmoji: '📊',
       description: 'Inspects repository state and prepares bounded operational changes.',
       instructions: 'Inspect repository evidence before proposing or applying a change.',
       status: 'active', origin: { type: 'template', templateId: 'repository-operator', templateVersion: 2 },
@@ -197,6 +198,7 @@ export function createFixtureState(): FixtureState {
     },
     {
       id: FIXTURE_IDS.specialistAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Kubernetes Specialist',
+      avatarEmoji: '☸️',
       description: 'Investigates Kubernetes health and workload failures.',
       instructions: 'Inspect live cluster evidence before recommending a change.',
       status: 'active', origin: { type: 'manual' }, reviewState: 'reviewed', providerType: 'internal',
@@ -209,6 +211,7 @@ export function createFixtureState(): FixtureState {
     },
     {
       id: FIXTURE_IDS.targetDiagnosticsAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Target Diagnostics',
+      avatarEmoji: '🔎',
       description: 'Collects diagnostic evidence from an explicitly selected target.',
       instructions: 'Inspect only the exact target scope compiled for this run.',
       status: 'active', origin: { type: 'template', templateId: 'acornops-starter', templateVersion: 3 },
@@ -220,6 +223,7 @@ export function createFixtureState(): FixtureState {
     },
     {
       id: FIXTURE_IDS.incidentReporterAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Incident Reporter',
+      avatarEmoji: '📝',
       description: 'Produces an incident report from explicitly granted evidence.',
       instructions: 'Use only evidence and context present in the compiled scope.',
       status: 'active', origin: { type: 'template', templateId: 'acornops-starter', templateVersion: 3 },

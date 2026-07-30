@@ -120,7 +120,7 @@ export interface ClusterToolCatalogServer {
   canDelete: boolean;
   canEditConnection: boolean;
   canToggle: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
+  authType: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credentialMode: 'none' | 'workspace' | 'individual';
   authHeaderName?: string;
   authHeaderPrefix?: string;
@@ -363,6 +363,10 @@ export interface WorkspaceInvitation {
   inviteLink?: string;
 }
 
+export type WorkspaceMemberAccessResult =
+  | { kind: 'member'; member: ProjectMember }
+  | { kind: 'invitation'; invitation: WorkspaceInvitation };
+
 export interface ChatSession {
   id: string;
   name: string;
@@ -372,6 +376,19 @@ export interface ChatSession {
   createdByUser?: {
     id: string;
     displayName: string;
+  };
+  origin?: 'manual' | 'auto_triage';
+  automaticInvestigation?: {
+    issueId: string;
+    lifecycleVersion: number;
+    severity: 'critical' | 'warning' | 'info';
+    scopeKind?: string;
+    scopeName?: string;
+    objectKind?: string;
+    objectName?: string;
+    writeMode: 'follow_target' | 'read_only' | 'approval_required' | 'full_write';
+    effectiveToolMode: 'read_only' | 'read_write';
+    confirmationRequiredForWrite: boolean;
   };
   hasActiveRun?: boolean;
   recentActivityWarning?: {
@@ -383,6 +400,7 @@ export interface ChatSession {
   hydrated?: boolean;
   messagesLoadFailed?: boolean;
   messagesNextCursor?: string;
+  createdTimestamp?: number;
   lastRuntimeSelection?: ChatRuntimeSelection;
   composerRuntimeSelection?: ChatRuntimeSelection;
   messages: ChatMessage[];
@@ -396,6 +414,12 @@ export interface ChatMessage {
   timestamp: number;
   runId?: string;
   clientMessageId?: string;
+  metadata?: Record<string, unknown>;
+  createdBy?: string;
+  createdByUser?: {
+    id: string;
+    displayName: string;
+  };
   transientStatus?: 'pending_assistant';
   approval?: PendingApproval;
   assistantReferences?: ChatAssistantReference[];

@@ -3,10 +3,18 @@ import type { Components } from 'react-markdown';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ChatAssistantReference, ChatMessage, ChatRuntimeSelection, ChatSession, WorkspaceAiSettings } from '@/types';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
+export interface ChatPresentationSubject {
+  id: string;
+  workspaceId: string;
+  name: string;
+}
 
 export interface TargetChatViewProps {
-  target: TargetDescriptor;
+  currentUserId?: string;
+  target: ChatPresentationSubject;
+  headerLeading?: React.ReactNode;
+  automaticInvestigationsEnabled?: boolean;
+  capabilityPreviewEnabled?: boolean;
   isDark: boolean;
   titleKey?: string;
   descriptionKey?: string;
@@ -20,6 +28,7 @@ export interface TargetChatViewProps {
   canChat: boolean;
   isConversationOwner: boolean;
   conversationNotice: string | null;
+  sessionDeepLinkError?: string | null;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
   canRequestWriteRuns: boolean;
   canApproveWriteActions: boolean;

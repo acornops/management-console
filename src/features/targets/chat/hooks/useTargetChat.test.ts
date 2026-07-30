@@ -216,6 +216,48 @@ describe('target chat ownership and recent activity warnings', () => {
     expect(isConversationOwner({ ...makeSession([]), backendSessionId: 'backend-1' }, 'user-2')).toBe(true);
     expect(isConversationOwner({ ...makeSession([]), backendSessionId: 'backend-1', createdBy: 'user-1' }, 'user-1')).toBe(true);
     expect(isConversationOwner({ ...makeSession([]), backendSessionId: 'backend-1', createdBy: 'user-1' }, 'user-2')).toBe(false);
+    expect(isConversationOwner({
+      ...makeSession([]),
+      backendSessionId: 'automatic-1',
+      createdBy: 'system-auto-triage',
+      origin: 'auto_triage'
+    }, 'user-2')).toBe(true);
+  });
+
+  it('allows authorized shared participation in automatic sessions without changing manual ownership', () => {
+    const state = buildTargetChatConversationAccessState({
+      canChat: true,
+      currentUserId: 'user-2',
+      session: {
+        ...makeSession([]),
+        backendSessionId: 'automatic-1',
+        createdBy: 'system-auto-triage',
+        origin: 'auto_triage'
+      }
+    });
+
+    expect(state.canPostInActiveSession).toBe(true);
+    expect(state.conversationNotice).toBe('Shared automatic investigation. Authorized workspace members can reply.');
+  });
+
+  it('identifies recent automatic write activity and links the investigation', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-06-01T05:05:00.000Z'));
+
+    const warning = buildRecentActivityWarning(makeActivity({
+      recentActivity: [{
+        sessionId: 'automatic-1',
+        title: 'CrashLoopBackOff in payments/api',
+        createdBy: 'system-auto-triage',
+        origin: 'auto_triage',
+        lastActivityAt: '2026-06-01T05:03:00.000Z',
+        hasActiveRun: true,
+        hasRecentWriteCapableRun: true
+      }]
+    }), 'user-1');
+
+    expect(warning?.message).toBe('An automatic write-capable investigation started 2 minutes ago. Review it before starting another chat.');
+    expect(warning?.actionSessionId).toBe('automatic-1');
+    expect(warning?.actionLabel).toBe('Open investigation');
   });
 
   it('localizes conversation ownership notices', () => {

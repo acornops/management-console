@@ -34,7 +34,7 @@ test('cluster overview exposes coherent headings and accessible metric data', as
   await expect(page.locator('svg[role="img"][aria-label="CPU Usage"]')).toHaveCount(0);
 
   await assistantButton.click();
-  await expect(page.getByRole('dialog', { name: 'Cluster Assistant' })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Cluster Assistant' })).toBeVisible();
 });
 
 test('cluster resources keep transient Pending visible without adding a durable issue', async ({ page }) => {

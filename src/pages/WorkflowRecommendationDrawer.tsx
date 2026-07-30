@@ -111,6 +111,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
               <Button
                 key={recommendation.id}
                 type="button"
+                variant="secondary"
                 aria-current={selected?.id === recommendation.id ? 'true' : undefined}
                 onClick={() => {
                   setSelectedId(recommendation.id);

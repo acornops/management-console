@@ -480,6 +480,8 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                     <Tooltip content={t('auditLog.viewDetails')}>
                       <Button
                         type="button"
+                        variant="icon"
+                        size="icon"
                         onClick={() => setSelectedEvent(event)}
                         className="control-target inline-flex h-9 w-9 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg hover:text-ui-text"
                         aria-label={t('auditLog.viewDetails')}

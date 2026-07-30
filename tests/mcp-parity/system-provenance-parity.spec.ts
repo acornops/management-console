@@ -12,26 +12,26 @@ test.beforeEach(async ({ page }) => {
   await reset(page);
 });
 
-test('default and custom Agents are presented as workspace-owned and editable', async ({ page }) => {
+test('default and custom Agents use the same compact resource treatment and settings actions', async ({ page }) => {
   await page.goto(`/workspaces/${workspaceId}/agents`);
 
-  const defaultRow = page.locator('[data-agent-catalog-row="fixture-workflow-analyst"]');
-  await expect(defaultRow.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(defaultRow.getByText('AcornOps Fixture Lab', { exact: true })).toBeVisible();
-  const customRow = page.locator('[data-agent-catalog-row="fixture-specialist"]');
-  await expect(customRow.getByText('Provided by AcornOps')).toHaveCount(0);
+  const defaultCard = page.locator('[data-agent-id="fixture-workflow-analyst"]');
+  const customCard = page.locator('[data-agent-id="fixture-specialist"]');
+  await expect(defaultCard.getByText('Provided by AcornOps')).toHaveCount(0);
+  await expect(customCard.getByText('Provided by AcornOps')).toHaveCount(0);
+  await expect(defaultCard.getByText(/MCP server/)).toBeVisible();
+  await expect(customCard.getByText(/skill/)).toBeVisible();
 
-  await page.getByRole('button', { name: /Open Workflow Analyst agent profile/ }).click();
-  const defaultHeader = page.getByRole('heading', { name: 'Workflow Analyst' }).locator('..');
+  await page.getByRole('button', { name: 'Open details for Workflow Analyst' }).click();
+  const defaultHeader = page.getByRole('heading', { level: 1, name: 'Agent chat' }).locator('..');
   await expect(defaultHeader.getByText('Provided by AcornOps')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Agent Settings' }).click();
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
-  const defaultOverview = page.getByRole('tabpanel', { name: 'Overview' });
-  await expect(defaultOverview.getByText('Workspace-owned', { exact: true })).toBeVisible();
 
-  await page.goto(`/workspaces/${workspaceId}/agents?agent=fixture-specialist&panel=profile`);
-  const customHeader = page.getByRole('heading', { name: 'Kubernetes Specialist' }).locator('..');
+  await page.goto(`/workspaces/${workspaceId}/agents/fixture-specialist/settings`);
+  const customHeader = page.getByRole('heading', { name: 'Agent Settings' }).locator('..');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(customHeader.getByText('Test User', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
 });
 
 test('recommendations retain attribution while added workflows become workspace-owned', async ({ page }) => {

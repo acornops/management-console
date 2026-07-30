@@ -557,11 +557,13 @@ function ResourceParameterField({ workflow, parameter, value, onChange, error }:
                 key={candidate.id}
                 id={optionId(index)}
                 type="button"
+                variant="tertiary"
+                size="sm"
                 role="option"
                 tabIndex={-1}
                 aria-selected={candidate.id === value}
                 disabled={candidate.availability === 'unavailable'}
-                className={`min-h-11 rounded px-3 py-2 text-left type-body hover:bg-ui-surface-subtle disabled:cursor-not-allowed disabled:opacity-60 ${activeIndex === index ? 'bg-accent-soft' : ''}`}
+                className={`min-h-11 rounded px-3 py-2 text-left hover:bg-ui-surface-subtle disabled:cursor-not-allowed disabled:opacity-60 ${activeIndex === index ? 'bg-accent-soft' : ''}`}
                 onMouseDown={(event) => event.preventDefault()}
                 onMouseEnter={() => {
                   if (candidate.availability !== 'unavailable') setActiveIndex(index);

@@ -16,6 +16,11 @@ export const routeCoverageManifest = [
   { name: 'workspace-virtual-machines', category: 'workspace', path: `${workspace}/virtual-machines`, ready: 'h1' },
   { name: 'workspace-catalog', category: 'workspace', path: `${workspace}/catalog`, ready: 'h1' },
   { name: 'workspace-agents', category: 'agent', path: `${workspace}/agents`, ready: 'h1' },
+  { name: 'agent-chat', category: 'agent', path: `${workspace}/agents/fixture-specialist/chat`, ready: 'h1' },
+  { name: 'agent-settings', category: 'agent', path: `${workspace}/agents/fixture-specialist/settings`, ready: 'h1' },
+  { name: 'agent-mcp-servers', category: 'agent', path: `${workspace}/agents/fixture-specialist/mcp-servers`, ready: 'h1' },
+  { name: 'agent-skills', category: 'agent', path: `${workspace}/agents/fixture-specialist/skills`, ready: 'h1' },
+  { name: 'agent-tools', category: 'agent', path: `${workspace}/agents/fixture-specialist/tools`, ready: 'h1' },
   {
     name: 'workspace-agent-capabilities',
     category: 'agent',

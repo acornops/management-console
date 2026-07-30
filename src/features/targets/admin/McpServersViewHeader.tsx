@@ -9,12 +9,14 @@ interface McpServersViewHeaderProps {
   target: TargetDescriptor;
   canEditServers: boolean;
   onConnectByUrl: () => void;
+  catalogDestination?: string;
 }
 
 export const McpServersViewHeader: React.FC<McpServersViewHeaderProps> = ({
   target,
   canEditServers,
-  onConnectByUrl
+  onConnectByUrl,
+  catalogDestination = `target:${target.id}`
 }) => {
   const { t } = useTranslation();
   return (
@@ -24,7 +26,7 @@ export const McpServersViewHeader: React.FC<McpServersViewHeaderProps> = ({
         <p className="type-body mt-2">{t('mcpServers.description', { name: target.name })}</p>
       </div>
       <AddMcpServerAction
-        browseHref={AppPaths.workspaceCatalog(target.workspaceId, { destination: `target:${target.id}` })}
+        browseHref={AppPaths.workspaceCatalog(target.workspaceId, { destination: catalogDestination })}
         onConnectByUrl={onConnectByUrl}
       />
       {!canEditServers && <p className="type-caption lg:max-w-xs">{t('mcpServers.manageNoAccess')}</p>}

@@ -7,9 +7,9 @@ import { ModalStepIndicator } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
+import { AgentEmojiPicker, suggestAgentEmoji } from '@/pages/agents/AgentAvatar';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowOption } from '@/services/control-plane/workflowApi';
-import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
 import {
   statusOptions,
   type AgentDraft,
@@ -41,6 +41,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
 }) => {
   const [createAgentStep, setCreateAgentStep] = React.useState<CreateAgentStep>(1);
   const [stepNavigationError, setStepNavigationError] = React.useState('');
+  const [emojiCustomized, setEmojiCustomized] = React.useState(false);
   const identityError = () => {
     if (!createDraft.name.trim() && !createDraft.description.trim()) return 'Step 1 is not done. Enter an agent name and assignment purpose before continuing.';
     if (!createDraft.name.trim()) return 'Step 1 is not done. Enter an agent name before continuing.';
@@ -51,6 +52,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
     onClose();
     setCreateAgentStep(1);
     setStepNavigationError('');
+    setEmojiCustomized(false);
   };
   const goToCreateAgentStep = (nextStep: CreateAgentStep) => {
     if (nextStep > 1) {
@@ -95,17 +97,28 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
-        {stepNavigationError && <div className="mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 type-caption type-emphasis text-status-warning-text" role="status" aria-live="polite">{stepNavigationError}</div>}
+        {stepNavigationError && <div className="type-caption type-emphasis mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 text-status-warning-text" role="status" aria-live="polite">{stepNavigationError}</div>}
         <div className="space-y-5">
           {createAgentStep === 1 && (
             <>
+              <AgentEmojiPicker
+                value={createDraft.avatarEmoji}
+                onChange={(avatarEmoji) => {
+                  setEmojiCustomized(true);
+                  setCreateDraft((draft) => ({ ...draft, avatarEmoji }));
+                }}
+              />
               <label className="block">
                 <span className="type-micro-label">Name</span>
                 <TextInput
                   value={createDraft.name}
                   onChange={(event) => {
                     const name = event.target.value;
-                    setCreateDraft((draft) => ({ ...draft, name }));
+                    setCreateDraft((draft) => ({
+                      ...draft,
+                      name,
+                      avatarEmoji: emojiCustomized ? draft.avatarEmoji : suggestAgentEmoji(name)
+                    }));
                     if (name.trim() && createDraft.description.trim()) setStepNavigationError('');
                   }}
                   className="mt-2"
@@ -147,6 +160,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
                 <p className="type-caption mt-1 text-ui-text-muted">This agent saves with restricted trust and asks before changes.</p>
               </div>
               <dl className="divide-y divide-ui-border rounded-md border border-ui-border bg-ui-bg">
+                <AgentCreateReviewRow label="Emoji" value={createDraft.avatarEmoji} />
                 <AgentCreateReviewRow label="Name" value={createDraft.name || 'Unnamed agent'} />
                 <AgentCreateReviewRow label="Assignment purpose" value={createDraft.description || 'Required before save'} />
                 {capabilitySummary.map((item) => <AgentCreateReviewRow key={item.label} label={item.label} value={item.value} />)}
@@ -179,7 +193,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
 const AgentCreateReviewRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="grid gap-1 px-3 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
     <dt className="type-micro-label text-ui-text-muted">{label}</dt>
-    <dd className="min-w-0 whitespace-pre-wrap break-words type-body type-emphasis text-ui-text [overflow-wrap:anywhere]">{value}</dd>
+    <dd className="type-body type-emphasis min-w-0 whitespace-pre-wrap break-words text-ui-text [overflow-wrap:anywhere]">{value}</dd>
   </div>
 );
 
@@ -240,6 +254,11 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
         <div className="space-y-5">
+          <AgentEmojiPicker
+            value={editDraft.avatarEmoji}
+            onChange={(avatarEmoji) => setEditDraft((draft) => draft && ({ ...draft, avatarEmoji }))}
+            description="This visual identity appears anywhere the Agent is presented."
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="type-micro-label">Name</span>
@@ -280,7 +299,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             <Textarea value={editDraft.instructions} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, instructions: event.target.value }))} />
           </label>
 
-          <p className="rounded-md border border-ui-border bg-ui-bg px-3 py-3 type-body text-ui-text-muted">This form edits the Agent definition only. Its workspace-owned capability ceiling is configured independently and remains visible in the Capabilities tab.</p>
+          <p className="type-body rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-ui-text-muted">This form edits the Agent definition only. Its workspace-owned capability ceiling is configured independently and remains visible in the Capabilities tab.</p>
 
           <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
             <h3 className="type-row-title ">Target scope</h3>
@@ -290,7 +309,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
                 ['kubernetes', 'Kubernetes'],
                 ['virtual_machine', 'Virtual machines']
               ] as const).map(([value, label]) => (
-                <label key={value} className="flex items-center gap-2 type-body type-emphasis text-ui-text">
+                <label key={value} className="type-body type-emphasis flex items-center gap-2 text-ui-text">
                   <Checkbox
                     checked={selectedTypes.has(value)}
                     onChange={(event) => {
@@ -305,7 +324,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             </div>
             <div className="mt-4 grid gap-2" aria-label="Exact target scope">
               {targetOptions.length ? targetOptions.map((target) => (
-                <label key={target.value} className="flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 type-body type-emphasis text-ui-text">
+                <label key={target.value} className="type-body type-emphasis flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 text-ui-text">
                   <Checkbox
                     className="mt-0.5"
                     checked={selectedIds.has(target.value)}
@@ -324,7 +343,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
 
           {editChangeSummary.length > 0 && <section className="border-y border-ui-border py-4">
             <h3 className="type-row-title ">Changes before save</h3>
-            <ul className="mt-3 grid gap-2 type-body type-emphasis">
+            <ul className="type-body type-emphasis mt-3 grid gap-2">
               {editChangeSummary.map((change) => <li key={change}>{change}</li>)}
             </ul>
           </section>}
@@ -352,32 +371,3 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
   </DrawerFrame>
   );
 };
-
-interface AgentWorkspaceDrawerProps extends React.ComponentProps<typeof WorkspaceAgentDetailPanel> {
-  closeButtonRef: React.RefObject<HTMLButtonElement | null>;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export const AgentWorkspaceDrawer: React.FC<AgentWorkspaceDrawerProps> = ({
-  closeButtonRef,
-  isOpen,
-  onClose,
-  ...detailProps
-}) => (
-  <DrawerFrame unframed
-    isOpen={isOpen}
-    onClose={onClose}
-    titleId="agent-details-title"
-    initialFocusRef={closeButtonRef}
-    className="block w-full max-w-[min(100vw,64rem)] overflow-y-auto bg-ui-surface p-0"
-  >
-    <CloseButton
-      ref={closeButtonRef}
-      onClick={onClose}
-      label="Close agent details"
-      className="absolute right-4 top-4 z-10 shadow-sm"
-    />
-    <WorkspaceAgentDetailPanel {...detailProps} />
-  </DrawerFrame>
-);

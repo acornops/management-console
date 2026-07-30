@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'danger' | 'activation';
-type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
+export type ButtonSize = 'inline' | 'sm' | 'md' | 'lg' | 'icon';
 
 const baseButtonClass =
   'type-ui inline-flex items-center justify-center gap-2 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg';
@@ -21,6 +21,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
+  inline: 'min-h-11 px-1 py-1 sm:min-h-8',
   sm: 'min-h-11 px-3 py-2 type-caption sm:min-h-9',
   md: 'min-h-11 px-4 py-2.5',
   lg: 'min-h-12 px-5 py-3',

@@ -1,4 +1,28 @@
-import type { ProjectMember, WorkspaceAiSettings, WorkspaceInvitation } from '@/types';
+import { formatMemberMutationError } from '@/pages/workspace-members/memberUtils';
+import type {
+  ProjectMember,
+  Workspace,
+  WorkspaceAiSettings,
+  WorkspaceInvitation,
+  WorkspaceMemberAccessResult,
+  WorkspaceRoleTemplate
+} from '@/types';
+
+export interface CreateWorkspaceModalProps {
+  isOpen: boolean;
+  currentUserEmail: string;
+  onClose: () => void;
+  onCreateWorkspace: (name: string) => Promise<Workspace>;
+  onLoadWorkspaceAiSettings: (workspaceId: string) => Promise<WorkspaceAiSettings>;
+  onOpenAiSettings: (workspaceId: string) => void;
+  onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
+  onAddOrInviteWorkspaceMember: (
+    workspaceId: string,
+    input: { email: string; role: ProjectMember['role'] }
+  ) => Promise<WorkspaceMemberAccessResult>;
+}
+
+export type CreateWorkspaceStep = 'details' | 'members' | 'ai';
 
 export interface CreateWorkspaceInviteRow {
   id: string;
@@ -6,10 +30,32 @@ export interface CreateWorkspaceInviteRow {
   role: ProjectMember['role'];
   status?: 'idle' | 'creating' | 'created' | 'failed';
   error?: string;
+  member?: ProjectMember;
   invitation?: WorkspaceInvitation;
 }
 
 export const MAX_CREATE_WORKSPACE_INVITE_ROWS = 5;
+
+function createRowId(): string {
+  return globalThis.crypto?.randomUUID?.() || `invite-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function createInviteRow(role: ProjectMember['role'] = ''): CreateWorkspaceInviteRow {
+  return {
+    id: createRowId(),
+    email: '',
+    role,
+    status: 'idle'
+  };
+}
+
+export function defaultInviteRole(roles: WorkspaceRoleTemplate[]): ProjectMember['role'] {
+  return roles.find((role) => !role.protected)?.key || roles[0]?.key || '';
+}
+
+export function formatWorkspaceCreationError(error: unknown, fallback: string): string {
+  return formatMemberMutationError(error, fallback);
+}
 
 export function hasInheritedPlatformLlmCredential(settings: WorkspaceAiSettings): boolean {
   return settings.providers.some(

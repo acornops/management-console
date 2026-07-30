@@ -214,17 +214,21 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-7 py-5">
               <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={closeDeleteClusterDialog}
                 disabled={isDeletingCluster}
-                className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title text-ui-text-muted transition-colors hover:bg-ui-bg disabled:opacity-50"
+                className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:bg-ui-bg disabled:opacity-50"
               >
                 {t('app.cancel')}
               </Button>
               <Button
                 type="button"
+                variant="danger"
+                size="sm"
                 onClick={() => void handleConfirmDeleteCluster()}
                 disabled={isDeletingCluster || deleteClusterConfirmation !== deleteTargetCluster.name}
-                className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 type-row-title text-control-danger-fg transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
+                className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-control-danger-fg transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeletingCluster ? t('dashboard.deleting') : t('dashboard.delete')}
               </Button>

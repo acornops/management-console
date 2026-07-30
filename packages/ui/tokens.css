@@ -5,7 +5,7 @@
   --ao-brand-orange: oklch(0.712 0.187 39.7);
   --ao-brand-orange-bright: oklch(0.755 0.154 42.2);
   --ao-brand-orange-strong: oklch(0.651 0.179 38.9);
-  --ao-brand-orange-readable: oklch(0.48 0.145 38.9);
+  --ao-brand-orange-readable: oklch(0.543 0.165 41.8);
   --ao-brand-orange-soft: oklch(0.96 0.035 52);
   --ao-bg: oklch(0.985 0.006 85);
   --ao-surface: oklch(0.996 0.004 85);
@@ -24,7 +24,7 @@
   --ao-brand-orange-rgb: 255 112 59;
   --ao-brand-orange-strong-rgb: 230 95 47;
   --ao-brand-orange-bright-rgb: 255 139 92;
-  --ao-brand-orange-readable-rgb: 172 65 24;
+  --ao-brand-orange-readable-rgb: 186 68 0;
   --ao-brand-orange-soft-rgb: 255 236 221;
   --ao-metric-blue: oklch(0.52 0.085 244);
   --ao-metric-blue-rgb: 58 110 150;
@@ -278,6 +278,15 @@
   font-weight: 600;
   letter-spacing: 0;
   line-height: 1.75rem;
+}
+
+.type-count {
+  color: var(--ao-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.25rem;
 }
 
 .type-code {

@@ -32,7 +32,7 @@ export function segmentedTabButtonClassName({ isActive, className }: { isActive:
   return twMerge(
     clsx(
       'type-ui relative -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25',
-      isActive ? 'border-transparent text-accent-readable' : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text',
+      isActive ? 'border-transparent text-ui-text' : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text',
       className
     )
   );
@@ -122,7 +122,11 @@ export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted 
               isActive: tab.isActive
             })}
           >
-            {tab.icon}
+            {tab.icon && (
+              <span className={clsx('inline-flex shrink-0', tab.isActive && 'text-accent-strong')}>
+                {tab.icon}
+              </span>
+            )}
             <span>{tab.label}</span>
             {typeof tab.count === 'number' && (
               <span className="rounded-full border border-ui-border bg-ui-bg px-1.5 py-0.5 type-caption leading-none text-ui-text-muted">{tab.count}</span>

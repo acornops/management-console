@@ -7,7 +7,7 @@ import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { ComposerAttachment, ComposerModelOption } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { ChatAssistantReference, ChatMessage, ChatSession, ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
+import type { ChatPresentationSubject } from '@/features/targets/chat/components/TargetChatView.types';
 
 export interface TargetChatViewBodyProps {
   activeRunId: string | null;
@@ -18,13 +18,16 @@ export interface TargetChatViewBodyProps {
   assistantMarkdownComponents: Components;
   assistantCapabilitiesPreview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
   assistantCapabilitiesPreviewError: string;
+  automaticInvestigationsEnabled: boolean;
+  capabilityPreviewEnabled: boolean;
   canApproveWriteActions: boolean;
   canCancelActiveRun: boolean;
   canChat: boolean;
   canDeleteSessions: boolean;
   canManageAiSettings: boolean;
   canPost: boolean;
-  target: TargetDescriptor;
+  currentUserId?: string;
+  target: ChatPresentationSubject;
   composerActionLabel: string;
   composerAttachmentNotice: string;
   composerAttachments: ComposerAttachment[];
@@ -34,6 +37,7 @@ export interface TargetChatViewBodyProps {
   composerSubmitUnavailableReason: string;
   composerTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
   conversationNotice: string | null;
+  sessionDeepLinkError?: string | null;
   deleteSessionError: string | null;
   deleteTargetSession: ChatSession | null;
   deletingSessionId: string | null;
@@ -53,6 +57,7 @@ export interface TargetChatViewBodyProps {
   handleCreateSessionClick: () => void;
   handleModelAndEffortChange: (value: ReasoningEffort) => void;
   handleModelChange: (option: ComposerModelOption) => void;
+  headerLeading?: React.ReactNode;
   historyButtonRef: React.RefObject<HTMLButtonElement | null>;
   historyControlLabel: string;
   historyPanelRef: React.RefObject<HTMLElement | null>;

@@ -68,7 +68,7 @@ export const WorkspaceMemberDetailsPanel: React.FC<WorkspaceMemberDetailsPanelPr
 
           <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
             <div className="flex items-center gap-5 border-b border-ui-border bg-ui-bg/60 px-8 py-6">
-              <div className="type-data flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-ui-text type-section-title text-ui-bg">{getInitials(selectedMember)}</div>
+              <div className="type-section-title flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-ui-text text-ui-bg">{getInitials(selectedMember)}</div>
               <div className="min-w-0">
                 <h3 className="type-section-title truncate">{selectedMember.name}</h3>
                 <p className="type-body mt-1 truncate">{selectedMember.email}</p>

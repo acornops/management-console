@@ -123,6 +123,8 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
         <div ref={loadMoreSentinelRef} className="mt-5 flex justify-center">
           <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={onLoadMoreInvitations}
             disabled={isLoadingMoreInvitations}
             className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
@@ -151,6 +153,8 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
             </span>
             <Button
               type="button"
+              variant="secondary"
+              size="sm"
               aria-expanded={shouldShowInvitations}
               onClick={() => setIsExpanded((expanded) => !expanded)}
               className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
@@ -187,6 +191,8 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                     {invitation.inviteLink && (
                       <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => void copyExistingInviteLink(invitation)}
                         className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
                       >
@@ -197,6 +203,8 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                     {!invitation.inviteLink && invitation.status === 'pending' && onCreateInvitation && (
                       <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => void recreateInvitation(invitation)}
                         disabled={recreatingInvitationId === invitation.id}
                         className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
@@ -207,6 +215,8 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                     )}
                     <Button
                       type="button"
+                      variant="danger"
+                      size="sm"
                       onClick={() => void revokeInvitation(invitation)}
                       disabled={!onRevokeInvitation || invitation.status !== 'pending' || revokingInvitationId === invitation.id}
                       className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text transition-colors hover:bg-status-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
@@ -221,6 +231,8 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                 <div ref={loadMoreSentinelRef} className="flex justify-center px-5 py-4">
                   <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={onLoadMoreInvitations}
                     disabled={isLoadingMoreInvitations}
                     className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
@@ -282,6 +294,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                   />
                   <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => void copyReplacementInviteLink()}
                     className="type-ui inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text transition-colors hover:bg-ui-bg"
                   >
@@ -307,6 +320,8 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
           <div className="flex shrink-0 justify-end border-t border-ui-border bg-ui-surface px-6 py-4 sm:px-8">
             <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={closeReplacementInviteDialog}
               className="control-target type-ui inline-flex items-center justify-center rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
             >

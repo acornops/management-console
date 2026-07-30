@@ -1,15 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  changeAgentConversationAccess,
   createAgent,
+  createAgentConversation,
   createAgentVersion,
   deleteAgent,
+  deleteAgentConversation,
   duplicateAgent,
   getAgent,
+  getAgentConversation,
+  listAgentConversations,
   listAutomationTemplates,
   listAgentVersions,
   listWorkspaceAgents,
   listWorkspaceNativeTools,
+  postAgentConversationMessage,
   grantAgentNativeTool,
   revokeAgentNativeTool,
   restoreAgentVersion,
@@ -33,6 +39,74 @@ describe('agent control-plane api', () => {
     ]);
 
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/agents?includeInactive=true');
+  });
+
+  it('uses the Agent conversation contract for history, access, and messages', async () => {
+    const conversation = {
+      id: 'conversation-1',
+      workspaceId: 'workspace/a',
+      agentId: 'agent/a',
+      agentVersion: 3,
+      title: 'Incident reporter',
+      createdBy: 'user-1',
+      accessMode: 'read_only',
+      createdAt: '2026-07-29T00:00:00.000Z'
+    };
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.endsWith('/api/v1/auth/csrf')) {
+        return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
+      }
+      if (init?.method === 'DELETE') return Promise.resolve(new Response(null, { status: 204 }));
+      if (url.endsWith('/conversations') && !init?.method) {
+        return Promise.resolve(new Response(JSON.stringify({ items: [conversation] }), { status: 200 }));
+      }
+      if (url.endsWith('/access')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          conversation: { ...conversation, accessMode: 'read_write' }
+        }), { status: 200 }));
+      }
+      if (url.endsWith('/messages')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          message_id: 'message-1',
+          run_id: 'run-1',
+          executionId: 'execution-1',
+          status: 'queued'
+        }), { status: 202 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        conversation,
+        messages: [],
+        runs: []
+      }), { status: init?.method === 'POST' ? 201 : 200 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listAgentConversations('workspace/a', 'agent/a')).resolves.toEqual([conversation]);
+    await expect(createAgentConversation('workspace/a', 'agent/a')).resolves.toMatchObject({ conversation });
+    await expect(getAgentConversation('conversation-1')).resolves.toMatchObject({ conversation });
+    await expect(changeAgentConversationAccess('conversation-1', 'read_write')).resolves.toMatchObject({
+      accessMode: 'read_write'
+    });
+    await expect(postAgentConversationMessage('conversation-1', 'Inspect the incident.', 'request-1')).resolves.toMatchObject({
+      run_id: 'run-1'
+    });
+    await expect(deleteAgentConversation('conversation-1')).resolves.toBeUndefined();
+
+    expect(fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => !url.endsWith('/auth/csrf'))).toEqual([
+      'http://localhost:8081/api/v1/workspaces/workspace%2Fa/agents/agent%2Fa/conversations',
+      'http://localhost:8081/api/v1/workspaces/workspace%2Fa/agents/agent%2Fa/conversations',
+      'http://localhost:8081/api/v1/agent-conversations/conversation-1',
+      'http://localhost:8081/api/v1/agent-conversations/conversation-1/access',
+      'http://localhost:8081/api/v1/agent-conversations/conversation-1/messages',
+      'http://localhost:8081/api/v1/agent-conversations/conversation-1'
+    ]);
+    const accessCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/access'));
+    const messageCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/messages'));
+    expect(JSON.parse(accessCall?.[1]?.body as string)).toEqual({ accessMode: 'read_write' });
+    expect(JSON.parse(messageCall?.[1]?.body as string)).toEqual({
+      content: 'Inspect the incident.',
+      clientRequestId: 'request-1'
+    });
   });
 
   it('validates workflow recommendation catalog responses at the control-plane boundary', async () => {

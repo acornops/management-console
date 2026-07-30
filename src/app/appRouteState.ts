@@ -1,9 +1,14 @@
-import { AppPaths, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
+import { AgentSubview, AppPaths, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
 
 export type ActivePrimaryNav = 'workspaces' | 'clusters';
 export type ActiveResourceNav =
   | 'overview'
   | 'agents'
+  | 'agentChat'
+  | 'agentMcpServers'
+  | 'agentSkills'
+  | 'agentTools'
+  | 'agentSettings'
   | 'catalog'
   | 'workflows'
   | 'runs'
@@ -37,7 +42,7 @@ export type ActiveResourceNav =
 export function getWorkspaceRouteId(route: AppRoute): string | null {
   if (
     route.kind === 'workspaceOverview' ||
-    route.kind === 'workspaceAgents' ||
+    route.kind === 'workspaceAgents' || route.kind === 'workspaceAgentDetail' ||
     route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceWorkflows' ||
     route.kind === 'workspaceRuns' ||
@@ -84,6 +89,14 @@ export function getActivePrimaryNav(route: AppRoute): ActivePrimaryNav {
 export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
   if (route.kind === 'workspaceOverview') return 'overview';
   if (route.kind === 'workspaceAgents') return 'agents';
+  if (route.kind === 'workspaceAgentDetail') {
+    if (route.tab === 'chat') return 'agentChat';
+    if (route.tab === 'mcpServers') return 'agentMcpServers';
+    if (route.tab === 'skills') return 'agentSkills';
+    if (route.tab === 'tools') return 'agentTools';
+    if (route.tab === 'settings') return 'agentSettings';
+    return 'agentChat';
+  }
   if (route.kind === 'workspaceCatalog') return 'catalog';
   if (route.kind === 'workspaceWorkflows') return 'workflows';
   if (route.kind === 'workspaceRuns') return 'runs';
@@ -133,6 +146,10 @@ export function getActiveVmSubview(route: AppRoute): VmSubview {
     return 'overview';
   }
   return route.tab || 'overview';
+}
+
+export function getActiveAgentSubview(route: AppRoute): AgentSubview {
+  return route.kind === 'workspaceAgentDetail' ? route.tab : 'chat';
 }
 
 export function getClusterBackToWorkspacePath(workspaceId: string | null | undefined): string {

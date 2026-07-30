@@ -26,8 +26,9 @@ describe('scrollbar styling contract', () => {
     expect(resourceCategoryTabs).toContain('no-scrollbar flex w-full max-w-full shrink-0 items-center overflow-x-auto');
     expect(desktopSidebar).toContain('no-scrollbar min-h-0 flex-1 overflow-y-auto');
     expect(mobileNavigation).toContain('no-scrollbar max-h-[calc(100vh-6.5rem)]');
-    expect(agentDetailPanel).toContain('no-scrollbar min-h-0 flex-1 overflow-y-auto');
-    expect(agentDetailPanel).not.toContain('overflow-y-auto px-5 py-5 custom-scrollbar');
+    expect(agentDetailPanel).toContain('className="flex h-full min-h-0 flex-1 flex-col"');
+    expect(agentDetailPanel).not.toContain('className="min-h-0 flex-1 py-5"');
+    expect(agentDetailPanel).not.toContain('overflow-y-auto');
     expect(design).toContain('horizontally scrollable when needed without displaying a scrollbar');
   });
 

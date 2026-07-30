@@ -8,6 +8,10 @@ import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/se
 import { issueSeverityTone } from '@/pages/virtual-machines/virtualMachineUi';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
+import {
+  AutomaticInvestigationActivity,
+  shouldShowManualAssistantFallback
+} from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface VirtualMachineIssuesPanelProps {
@@ -109,7 +113,18 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       </div>
                       <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
                       <p className="type-body mt-1 break-words">{issue.reason || issue.summary}</p>
-                      <IssueWorkflowActivity workspaceId={workspaceId} issueId={issue.id} activity={issue.workflowActivity} />
+                      <IssueWorkflowActivity
+                        workspaceId={workspaceId}
+                        issueId={issue.id}
+                        activity={issue.workflowActivity}
+                      />
+                      <AutomaticInvestigationActivity
+                        workspaceId={workspaceId}
+                        targetId={issue.targetId}
+                        targetType="virtual_machine"
+                        issueId={issue.id}
+                        activity={issue.automaticInvestigation}
+                      />
                     </DataTableCell>
                     <DataTableCell className="px-5 py-4 align-top">
                       <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
@@ -119,15 +134,17 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                     </DataTableCell>
                     <DataTableCell className="type-caption px-5 py-4 align-top">{formatUserDateTime(issueTimestamp(issue))}</DataTableCell>
                     <DataTableCell className="px-5 py-4 align-top text-right">
-                      <Button
-                        onClick={() => onOpenIssueTriage(issue)}
-                        variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
-                        size="md"
-                        className="whitespace-nowrap"
-                      >
-                        <Bot className="h-4 w-4" aria-hidden="true" />
-                        {t('virtualMachines.overview.openAssistant')}
-                      </Button>
+                      {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
+                        <Button
+                          onClick={() => onOpenIssueTriage(issue)}
+                          variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                          size="md"
+                          className="whitespace-nowrap"
+                        >
+                          <Bot className="h-4 w-4" aria-hidden="true" />
+                          {t('virtualMachines.overview.openAssistant')}
+                        </Button>
+                      )}
                     </DataTableCell>
                   </DataTableRow>
                 ))}
@@ -158,11 +175,29 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                     <dd className="type-caption mt-1">{formatUserDateTime(issueTimestamp(issue))}</dd>
                   </div>
                 </dl>
-                <IssueWorkflowActivity workspaceId={workspaceId} issueId={issue.id} activity={issue.workflowActivity} />
-                <Button onClick={() => onOpenIssueTriage(issue)} variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'} size="md" className="mt-4">
-                  <Bot className="h-4 w-4" aria-hidden="true" />
-                  {t('virtualMachines.overview.openAssistant')}
-                </Button>
+                <IssueWorkflowActivity
+                  workspaceId={workspaceId}
+                  issueId={issue.id}
+                  activity={issue.workflowActivity}
+                />
+                <AutomaticInvestigationActivity
+                  workspaceId={workspaceId}
+                  targetId={issue.targetId}
+                  targetType="virtual_machine"
+                  issueId={issue.id}
+                  activity={issue.automaticInvestigation}
+                />
+                {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
+                  <Button
+                    onClick={() => onOpenIssueTriage(issue)}
+                    variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                    size="md"
+                    className="mt-4"
+                  >
+                    <Bot className="h-4 w-4" aria-hidden="true" />
+                    {t('virtualMachines.overview.openAssistant')}
+                  </Button>
+                )}
               </article>
             ))}
           </div>

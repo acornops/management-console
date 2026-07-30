@@ -260,6 +260,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                   <span className="truncate">{namespace}</span>
                   <Button
                     type="button"
+                    variant="tertiary"
                     disabled={isSaving}
                     onClick={() => removeToken('include', namespace)}
                     className="control-target rounded-sm p-0.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
@@ -301,13 +302,14 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     key={namespace}
                     id={`namespace-scope-include-option-${index}`}
                     type="button"
+                    variant="tertiary"
                     role="option"
                     aria-selected={index === includeHighlightedIndex}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => addTokens('include', [namespace])}
                     className={menuOptionClassName({
                       active: index === includeHighlightedIndex,
-                      className: 'block rounded-sm type-body type-emphasis'
+                      className: 'block rounded-sm'
                     })}
                   >
                     {namespace}
@@ -336,6 +338,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                   <span className="truncate">{namespace}</span>
                   <Button
                     type="button"
+                    variant="tertiary"
                     disabled={isSaving}
                     onClick={() => removeToken('exclude', namespace)}
                     className="control-target rounded-sm p-0.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
@@ -377,13 +380,14 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     key={namespace}
                     id={`namespace-scope-exclude-option-${index}`}
                     type="button"
+                    variant="tertiary"
                     role="option"
                     aria-selected={index === excludeHighlightedIndex}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => addTokens('exclude', [namespace])}
                     className={menuOptionClassName({
                       active: index === excludeHighlightedIndex,
-                      className: 'block rounded-sm type-body type-emphasis'
+                      className: 'block rounded-sm'
                     })}
                   >
                     {namespace}

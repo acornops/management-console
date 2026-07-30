@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, buttonClassName } from '@acornops/ui';
+import { Button } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -159,6 +159,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
               <Button
                 key={tab}
                 type="button"
+                variant="tertiary"
                 onClick={() => setActiveDetailTab(tab)}
                 className={`control-target ${classNames(
                   'flex-1 rounded-lg px-4 py-2 type-ui transition-[background-color,color,box-shadow]',
@@ -315,6 +316,8 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => void loadPodLogs('manual')}
                         disabled={isPodLogsLoading}
                         className="control-target inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 type-ui text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-60"
@@ -324,16 +327,14 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                       </Button>
                       <Button
                         type="button"
+                        variant={isFollowingLogs ? 'primary' : 'secondary'}
+                        size="sm"
                         onClick={() => {
                           followFailuresRef.current = 0;
                           setIsFollowingLogs((value) => !value);
                           if (!isFollowingLogs) void loadPodLogs('follow');
                         }}
-                        className={buttonClassName({
-                          variant: isFollowingLogs ? 'primary' : 'secondary',
-                          size: 'sm',
-                          className: 'type-ui'
-                        })}
+                        className="type-ui"
                       >
                         {isFollowingLogs ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         {isFollowingLogs ? t('workloads.following') : t('workloads.follow')}

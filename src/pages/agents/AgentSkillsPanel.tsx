@@ -78,6 +78,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                   className={`${inputClass} min-h-32 p-3 font-mono type-caption`}
                 />
                 <Button
+                  variant="secondary"
                   disabled={!skillsWritable || !manualSkill.name.trim() || !manualSkill.content.trim() || Boolean(busy)}
                   onClick={() =>
                     void run(
@@ -168,6 +169,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                   className={`${inputClass} min-h-28 p-3 font-mono type-caption`}
                 />
                 <Button
+                  variant="secondary"
                   disabled={!skillsWritable || !gitSkill.url.trim() || !gitSkill.commit.trim() || !gitSkill.content.trim() || Boolean(busy)}
                   onClick={() =>
                     void run(
@@ -367,6 +369,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                         </Button>
                         <Button
                           size="sm"
+                          variant="secondary"
                           disabled={!skillEditor.name.trim() || !skillEditor.content.trim() || Boolean(busy)}
                           onClick={() =>
                             void run(

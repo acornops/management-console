@@ -178,6 +178,8 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
               ref={actionMenuButtonRef}
               data-target-tool-primary-actions="true"
               type="button"
+              variant="tertiary"
+              size="icon"
               onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
               className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
               aria-haspopup="menu"

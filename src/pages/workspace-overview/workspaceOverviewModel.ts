@@ -18,6 +18,7 @@ export interface WorkspaceOverviewIssue {
   detail: string;
   evidence: string;
   workflowActivity?: ControlPlaneIssueItem['workflowActivity'];
+  automaticInvestigation?: ControlPlaneIssueItem['automaticInvestigation'];
 }
 
 export interface WorkspaceOverviewTargetCard {
@@ -101,7 +102,8 @@ export function mapControlPlaneIssueToOverviewIssue(
     lastSeenAt: item.lastSeenAt,
     detail: issueDetail(item, t),
     evidence: compactText(item.reason) || compactText(item.summary),
-    ...(item.workflowActivity ? { workflowActivity: item.workflowActivity } : {})
+    ...(item.workflowActivity ? { workflowActivity: item.workflowActivity } : {}),
+    ...(item.automaticInvestigation ? { automaticInvestigation: item.automaticInvestigation } : {})
   };
 }
 

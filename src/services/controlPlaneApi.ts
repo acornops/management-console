@@ -43,8 +43,6 @@ import type {
   ControlPlaneRunEvent,
   ControlPlaneRunToolApproval,
   ControlPlaneRoleTemplate,
-  ControlPlaneSession,
-  ControlPlaneSessionListPage,
   ControlPlaneSessionMessageListPage,
   ControlPlaneUser,
   ControlPlaneWorkspace,
@@ -54,11 +52,9 @@ import type {
   ControlPlaneWorkspaceMember,
   PagedResult
 } from './control-plane/types';
-import type {
-  ControlPlaneTargetChatActivity,
-  ControlPlaneTargetChatActivityEvent
-} from './control-plane/sessionActivityTypes';
 import { webhookApi } from './control-plane/webhookApi';
+import { autoTriageApi } from './control-plane/autoTriageApi';
+import { targetSessionApi } from './control-plane/targetSessionApi';
 
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
@@ -128,11 +124,21 @@ export type {
   ControlPlaneTargetChatActivityEvent
 } from './control-plane/sessionActivityTypes';
 export type { ControlPlaneVirtualMachine, RegisterVirtualMachineResponse } from './control-plane/virtualMachineTypes';
+export type {
+  AutomaticInvestigationSummary,
+  AutoTriageMinimumSeverity,
+  AutoTriageReadinessReason,
+  AutoTriageWriteMode,
+  StartExistingAutoTriageInvestigationsResult,
+  TargetAutoTriageSettings
+} from './control-plane/autoTriageTypes';
 
 export const controlPlaneApi = {
   ...controlPlaneAuthApi,
   ...catalogApi,
   ...webhookApi,
+  ...autoTriageApi,
+  ...targetSessionApi,
 
   async getCurrentUser(options?: { initialSessionProbe?: boolean }): Promise<User> {
     return userFromControlPlane(await requestJson<ControlPlaneUser>('/api/v1/me', {
@@ -502,43 +508,6 @@ export const controlPlaneApi = {
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/logs${pageQuery({
         filters: { q: options?.q, source: options?.source }
       })}`
-    );
-  },
-
-  async createTargetSession(workspaceId: string, targetId: string, title: string): Promise<ControlPlaneSession> {
-    return requestJson<ControlPlaneSession>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/sessions`,
-      { method: 'POST', body: JSON.stringify({ title }) }
-    );
-  },
-
-  async listTargetSessions(workspaceId: string, targetId: string, options?: { limit?: number; cursor?: string; q?: string; status?: string }): Promise<ControlPlaneSessionListPage> {
-    return requestJson<ControlPlaneSessionListPage>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/sessions${pageQuery(options)}`
-    );
-  },
-
-  async getTargetChatActivity(workspaceId: string, targetId: string, options?: { windowSeconds?: number }): Promise<ControlPlaneTargetChatActivity> {
-    return requestJson<ControlPlaneTargetChatActivity>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/chat-activity${pageQuery({
-        filters: { windowSeconds: options?.windowSeconds ? String(options.windowSeconds) : undefined }
-      })}`
-    );
-  },
-
-  async streamTargetChatActivity(
-    workspaceId: string,
-    targetId: string,
-    options?: {
-      signal?: AbortSignal;
-      after?: string;
-      onEvent?: (event: ControlPlaneTargetChatActivityEvent) => void;
-    }
-  ): Promise<void> {
-    const afterQuery = options?.after ? `?after=${encodeURIComponent(options.after)}` : '';
-    await requestEventStream<ControlPlaneTargetChatActivityEvent>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/chat-activity/stream${afterQuery}`,
-      options
     );
   },
 

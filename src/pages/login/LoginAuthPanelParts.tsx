@@ -147,6 +147,7 @@ export function OidcLoginButton({
   return (
     <Button
       type="button"
+      variant={passwordAuthEnabled ? 'secondary' : 'primary'}
       onClick={onLogin}
       disabled={isAuthLoading}
       className={`control-target mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 type-ui transition-[background-color,border-color,color,box-shadow,transform] focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
@@ -172,6 +173,8 @@ export function SignupSwitchFooter({ isAuthLoading, onSwitch, prompt, actionLabe
         {prompt}{' '}
         <Button
           type="button"
+          variant="tertiary"
+          size="inline"
           onClick={onSwitch}
           disabled={isAuthLoading}
           className="control-target rounded-sm type-ui text-accent-readable transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"

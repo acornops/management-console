@@ -1,4 +1,3 @@
-import { motion, useReducedMotion } from 'framer-motion';
 import { AlertCircle, BotMessageSquare, MessageSquare } from 'lucide-react';
 import { Button } from '@acornops/ui';
 
@@ -12,14 +11,8 @@ interface ChatEmptyPromptProps {
 }
 
 export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSuggestion, onSendSuggestion }: ChatEmptyPromptProps) {
-  const shouldReduceMotion = useReducedMotion();
-
   return (
-    <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
-      animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-      className={`mx-auto ${isPanel ? 'max-w-3xl pt-2' : 'flex max-w-3xl flex-col justify-center pt-4 lg:min-h-[28rem] lg:pt-0'}`}
-    >
+    <div className={`mx-auto ${isPanel ? 'max-w-3xl pt-2' : 'flex max-w-3xl flex-col justify-center pt-4 lg:min-h-[28rem] lg:pt-0'}`}>
       <div className="border-y border-ui-border/70 py-5">
         <div className="flex items-start gap-4">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-ui-border bg-ui-bg text-ui-text-muted shadow-sm">
@@ -36,6 +29,7 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
           <Button
             key={suggestion.key}
             type="button"
+            variant="secondary"
             onClick={() => void onSendSuggestion(suggestion.label)}
             disabled={!canSendSuggestion}
             className="control-target group flex min-h-14 items-start gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-left type-ui text-ui-text transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
@@ -45,7 +39,7 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
           </Button>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

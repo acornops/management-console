@@ -133,6 +133,8 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
               <span className="type-micro-label">{t('clusterSetup.installCommand')}</span>
               <Button
                 type="button"
+                variant="icon"
+                size="icon"
                 onClick={handleCopy}
                 disabled={isCopying}
                 className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-wait disabled:opacity-70"
@@ -173,8 +175,10 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
       <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
         <Button
           type="button"
+          variant="secondary"
+          size="sm"
           onClick={onClose}
-          className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title-muted transition-colors hover:bg-ui-bg"
+          className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:bg-ui-bg"
         >
           {t('app.close')}
         </Button>

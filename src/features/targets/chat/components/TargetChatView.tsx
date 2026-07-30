@@ -29,7 +29,9 @@ import {
 import type { ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
+  currentUserId = '',
   target,
+  headerLeading, automaticInvestigationsEnabled = true, capabilityPreviewEnabled = true,
   titleKey,
   descriptionKey,
   promptTitleKey,
@@ -42,6 +44,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   canChat,
   isConversationOwner,
   conversationNotice,
+  sessionDeepLinkError,
   recentActivityWarning,
   canRequestWriteRuns,
   canApproveWriteActions,
@@ -467,14 +470,12 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     setIsModelMenuOpen(false);
     setIsModelSubmenuOpen(false);
   };
-
   const handleChatWindowDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
     if (!isFileDragEvent(event)) return;
     if (!hasReadyAiRuntime) return;
     event.preventDefault();
     setDragDepth((current) => current + 1);
   };
-
   const handleChatWindowDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     if (!isFileDragEvent(event)) return;
     event.preventDefault();
@@ -494,9 +495,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     if (!hasReadyAiRuntime) return;
     await processComposerFiles(Array.from(event.dataTransfer.files || []));
   };
-
   React.useEffect(() => {
-    if (!canChat) {
+    if (!canChat || !capabilityPreviewEnabled) {
       setAssistantCapabilitiesPreview(null);
       setAssistantCapabilitiesPreviewError('');
       setIsAssistantCapabilitiesPreviewLoading(false);
@@ -525,7 +525,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [canChat, target.id, target.workspaceId, requestedToolAccessMode, t]);
+  }, [canChat, capabilityPreviewEnabled, target.id, target.workspaceId, requestedToolAccessMode, t]);
 
   React.useEffect(() => {
     setRuntimeFallbackNotice('');
@@ -628,18 +628,18 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   return (
     <TargetChatViewBody
       {...{
-        activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, canApproveWriteActions,
+        activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, automaticInvestigationsEnabled, capabilityPreviewEnabled, canApproveWriteActions,
         canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, target, composerActionLabel, composerAttachmentNotice: composerNotice,
-        composerAttachments, composerReferences, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, deleteSessionError, deleteTargetSession,
+        composerAttachments, composerReferences, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, currentUserId, deleteSessionError, deleteTargetSession,
         deletingSessionId, desktopHistoryPanelId, dismissReferenceMenu, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
-        handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerInputChange, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, historyButtonRef,
+        handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerInputChange, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, headerLeading, historyButtonRef,
         historyControlLabel, historyPanelRef, inputValue, isAssistantCapabilitiesPreviewLoading, isCancellingRun, isComposerRuntimeUnavailable, isFileDragActive, isHistoryOpen,
         isLoadingEarlierMessages, isModelMenuOpen, isModelSubmenuOpen, isPanel, isReferenceMenuOpen, isRunActive, isSessionsLoading, isSubmittingEdit, isWorkspaceAiSettingsLoading,
         lastUserMessageIndex, mobileHistoryPanelId, modelMenuPanelId, modelMenuRef, modelSelectorId, modelSubmenuButtonId, modelSubmenuPanelId, newChatUnavailableReason,
         onApprove, onCancelRun, onChatScroll, onClose, onDismissRecentActivityWarning, onInputChange, onLoadEarlierMessages, onMaximize, onOpenAiSettings, onOpenRecentActivitySession, onReject,
         recentActivityWarning: effectiveRecentActivityWarning, referenceActiveIndex, referenceMenuId, referencePickerItems: availableComposerReferences, referenceQuery: slashReferenceQuery?.query || '', removeComposerAttachment, removeComposerReference, requestedToolAccessMode, resolvedDescriptionKey, resolvedFooterKey, resolvedFooterNoAccessKey, resolvedInputPlaceholderKey,
         resolvedNoChatAccessKey, resolvedPromptBodyKey, resolvedPromptTitleKey, resolvedSuggestionKeys, runTracesByRunId, selectSession, selectedEffort, selectedEffortLabel,
-        selectedModel, selectedModelLabel, selectedProvider, sendText, sessionAssistantStatuses, sessions, setEditingMessageValue, setIsHistoryOpen,
+        selectedModel, selectedModelLabel, selectedProvider, sendText, sessionAssistantStatuses, sessionDeepLinkError, sessions, setEditingMessageValue, setIsHistoryOpen,
         selectComposerReference, setIsModelMenuOpen, setIsModelSubmenuOpen, setReferenceActiveIndex, setTraceExpandedByRunId, shouldShowTranscriptSkeleton, submitComposerMessage, t, title, traceExpandedByRunId,
         transcriptRef, userMarkdownComponents, userTurnRunIdsByIndex, visibleMessages, workspaceAiSettingsError, startEditingMessage, cancelEditingMessage, closeDeleteSessionModal,
         confirmDeleteSession, editingMessageId, editingMessageValue, isInFlightAssistantPlaceholder, openDeleteSessionModal, submitEditedMessage

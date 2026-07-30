@@ -314,7 +314,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
               </code>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
-              <Button size="sm" onClick={() => void copySecret()}>
+              <Button variant="secondary" size="sm" onClick={() => void copySecret()}>
                 <ICONS.Braces className="h-4 w-4" aria-hidden="true" />
                 {t('workspaceWebhooks.copy')}
               </Button>

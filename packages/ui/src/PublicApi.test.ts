@@ -24,6 +24,9 @@ describe('@acornops/ui public API', () => {
     expect(closeButtonClassName()).toBe(
       buttonClassName({ variant: 'icon', size: 'icon' })
     );
+    expect(buttonClassName({ variant: 'tertiary', size: 'inline' })).toContain(
+      'sm:min-h-8'
+    );
     expect(textInputClassName()).toBe(formInputClassName());
     expect(textareaClassName()).toBe(formTextareaClassName());
     expect(textareaClassName('min-h-36')).toContain('min-h-36');
@@ -56,6 +59,12 @@ describe('@acornops/ui public API', () => {
     });
     expect(segmentedTabButtonClassName({ isActive: true })).toContain(
       'border-transparent'
+    );
+    expect(segmentedTabButtonClassName({ isActive: true })).toContain(
+      'text-ui-text'
+    );
+    expect(segmentedTabButtonClassName({ isActive: true })).not.toContain(
+      'text-accent-readable'
     );
     expect(filterToggleButtonClassName({ isActive: true })).toContain(
       'bg-ui-surface'

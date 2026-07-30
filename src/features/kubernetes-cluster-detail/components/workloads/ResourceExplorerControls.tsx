@@ -36,6 +36,7 @@ export const WorkloadTriageShortcut: React.FC<{
     <div className="flex min-w-0 w-full max-w-full lg:w-auto lg:shrink-0">
       <Button
         type="button"
+        variant="secondary"
         aria-label={t('resources.filters.unhealthyPodsCount', {
           count: unhealthyPodCount
         })}
@@ -61,7 +62,7 @@ export const WorkloadTriageShortcut: React.FC<{
         </span>
         <span className="min-w-0 truncate">{t('resources.filters.unhealthyPods')}</span>
         {unhealthyPodCount > 0 && (
-          <span className="type-data flex h-4 min-w-4 items-center justify-center rounded-full border border-accent/25 px-1 type-caption leading-none text-accent-readable">
+          <span className="type-count flex h-4 min-w-4 items-center justify-center rounded-full border border-accent/25 px-1 leading-none text-accent-readable">
             {unhealthyPodCount}
           </span>
         )}
@@ -151,7 +152,7 @@ export const ResourceSearchFilterBar: React.FC<{
       label: (
         <span className="flex min-w-0 items-center justify-between gap-3">
           <span className="min-w-0 truncate">{t(`${labelPrefix}.${category}`)}</span>
-          {typeof categoryCount === 'number' && <span className="type-data shrink-0 type-caption text-ui-text-muted">{categoryCount}</span>}
+          {typeof categoryCount === 'number' && <span className="type-count shrink-0">{categoryCount}</span>}
         </span>
       )
     };

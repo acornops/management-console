@@ -4,15 +4,21 @@ import { filterAgentDefinitions, type AgentDefinition } from '@/pages/agents/age
 import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
+import type { AgentSubview } from '@/utils/routes';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { Button } from '@acornops/ui';
 
 export interface WorkspaceAgentsPageProps {
   workspace: Workspace;
+  currentUserId: string;
+  isDark: boolean;
+  routeState?: { kind: 'workspaceAgentDetail'; workspaceId: string; agentId: string; tab: AgentSubview };
+  navigate: (path: string, options?: { replace?: boolean }) => void;
 }
 
 export type AgentDraft = {
   name: string;
+  avatarEmoji: string;
   description: string;
   instructions: string;
   providerType: AgentDefinition['providerType'];
@@ -117,6 +123,7 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
     id: item.id,
     workspaceId: item.workspaceId,
     name: item.name,
+    avatarEmoji: item.avatarEmoji || '🤖',
     description: item.description || '',
     instructions: item.instructions || '',
     status: item.status || 'draft',
@@ -147,6 +154,10 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
       workflowRunCount: item.workflowUsage?.workflowRunCount ?? 0,
       lastRunAt: item.workflowUsage?.lastRunAt,
       lastStatus: item.workflowUsage?.lastStatus as AgentDefinition['workflowUsage']['lastStatus'] | undefined
+    },
+    readiness: item.readiness || {
+      status: item.status === 'active' ? 'ready' : 'needs_setup',
+      reasons: item.status === 'active' ? [] : ['Activate this Agent before starting a conversation.']
     }
   };
 };
@@ -182,6 +193,7 @@ export const statusOptions: Array<SelectOption<AgentDefinition['status']>> = [
 
 export const createAgentEditDraft = (agent: AgentDefinition): AgentEditDraft => ({
   name: agent.name,
+  avatarEmoji: agent.avatarEmoji,
   description: agent.description,
   instructions: agent.instructions,
   providerType: agent.providerType,
@@ -203,8 +215,8 @@ export const shouldRefreshAgentEditDraft = (agentId: string, currentDraft: Agent
 
 export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEditDraft): string[] => {
   const changes: string[] = [];
-  if (agent.name !== draft.name.trim() || agent.description !== draft.description.trim() || agent.instructions !== draft.instructions.trim()) {
-    changes.push('Name, purpose, or instructions changed');
+  if (agent.name !== draft.name.trim() || agent.avatarEmoji !== draft.avatarEmoji || agent.description !== draft.description.trim() || agent.instructions !== draft.instructions.trim()) {
+    changes.push('Identity, purpose, or instructions changed');
   }
   if (agent.status !== draft.status) changes.push(`Status will change to ${draft.status}`);
   if ((agent.ownerUserId || '') !== draft.ownerUserId.trim()) changes.push('Owner changed');
@@ -222,7 +234,7 @@ export const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ 
     <div className="mt-2 grid gap-1">
       {values.length > 0 ? (
         values.map((value) => (
-          <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 type-caption text-ui-text-muted [overflow-wrap:anywhere]">
+          <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 text-ui-text-muted [overflow-wrap:anywhere]">
             {value}
           </span>
         ))
@@ -252,8 +264,10 @@ export const Notice: React.FC<
       {actionLabel && onAction && (
         <Button
           type="button"
+          variant="secondary"
+          size="sm"
           onClick={onAction}
-          className="control-target min-h-8 shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 type-caption text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          className="control-target shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
         >
           {actionLabel}
         </Button>

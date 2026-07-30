@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   approvalCheckpoint,
+  agentChatPanel,
   appTargetChatRuntime,
+  assistantCapabilityPreviewControl,
   assistantTurn,
   chatGateDialog,
   chatTranscriptStates,
@@ -110,6 +112,11 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('t(resolvedDescriptionKey, { name: target.name })');
     expect(chatView).toContain("const resolvedTitleKey = titleKey || 'chat.triageConsole';");
     expect(chatView).toContain('const title = activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey);');
+    expect(chatView).toContain('automaticInvestigationsEnabled = true');
+    expect(chatView).toContain('automaticInvestigationsEnabled={automaticInvestigationsEnabled}');
+    expect(chatView).toContain('<TargetChatHistoryRail');
+    expect(chatView).toContain("historyView === 'investigations' ? 'auto_triage' : 'manual'");
+    expect(agentChatPanel).toContain('automaticInvestigationsEnabled={false}');
     expect(chatView).toContain('const isHydratingExistingConversation = Boolean(activeSession?.backendSessionId && activeSession.hydrated === false && visibleMessages.length === 0);');
     expect(chatView).toContain('const hasConversationLoadError = Boolean(activeSession?.backendSessionId && activeSession.messagesLoadFailed && visibleMessages.length === 0);');
     expect(chatView).toContain('const isLoadingInitialConversation = !activeSession && isSessionsLoading;');
@@ -143,10 +150,8 @@ describe('target chat polish contracts', () => {
     expect(chatSessionSync).toContain('messagesLoadFailed: true');
     expect(chatView).toContain('<ChatEmptyPrompt');
     expect(chatTranscriptStates).toContain('export function ChatTranscriptSkeleton');
-    expect(chatTranscriptStates).toContain("import { motion, useReducedMotion } from 'framer-motion';");
-    expect(chatTranscriptStates).toContain('const shouldReduceMotion = useReducedMotion();');
-    expect(chatTranscriptStates).toContain('initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}');
-    expect(chatTranscriptStates).toContain('animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}');
+    expect(chatTranscriptStates).not.toContain("from 'framer-motion'");
+    expect(chatTranscriptStates).not.toContain('initial=');
     expect(chatTranscriptStates).toContain('aria-busy="true"');
     expect(chatTranscriptStates).toContain('motion-reduce:animate-none');
     expect(chatTranscriptStates).toContain('export function ChatTranscriptLoadError');
@@ -192,7 +197,12 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('aria-labelledby={modelSelectorId}');
     expect(chatView).toContain('aria-controls={modelSubmenuPanelId}');
     expect(chatView).toContain('aria-labelledby={modelSubmenuButtonId}');
-    expect(chatView).toContain('className="absolute bottom-full right-0 z-50 mb-3 w-64');
+    expect(chatView).toContain('isPanel={isPanel}');
+    expect(assistantCapabilityPreviewControl).toContain('isPanel: boolean;');
+    expect(assistantCapabilityPreviewControl).toContain("className={isPanel ? 'static' : 'relative'}");
+    expect(chatView).toContain('className={`absolute bottom-full right-0 z-50 mb-3 rounded-2xl');
+    expect(chatView).toContain("'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'");
+    expect(chatView).toContain("'bottom-2 right-2 top-2 w-44'");
     expect(chatView).toContain('sm:left-[calc(100%+0.5rem)]');
     expect(chatView).toContain('sm:right-auto');
     expect(chatView).not.toContain('sm:right-[calc(100%+0.5rem)]');
@@ -284,8 +294,8 @@ describe('target chat polish contracts', () => {
     expect(userMessageTurn).toContain('<span className="sr-only">{t(\'chat.roleUser\')}</span>');
     expect(userMessageTurn).toContain('align="right"');
     expect(userMessageTurn).toContain('copyText={message.content}');
-    expect(userMessageTurn).toContain('timestampLabel={timestampLabel}');
-    expect(userMessageTurn).toContain('!isEditing && <MessageActions');
+    expect(userMessageTurn).toContain('timestampLabel={showAuthor ? undefined : timestampLabel}');
+    expect(userMessageTurn).toContain('{!isEditing && (');
     expect(chatView).toContain('const lastUserMessageIndex = React.useMemo(() => {');
     expect(chatView).toContain('const userTurnRunIdsByIndex = React.useMemo(() => {');
     expect(chatView).toContain('runIdsByIndex.set(index, message.runId || currentTurnRunId);');
@@ -310,6 +320,12 @@ describe('target chat polish contracts', () => {
     expect(userMessageTurn).toContain("{t('chat.cancelEdit')}");
     expect(chatView).not.toContain('<span>{t(\'chat.roleUser\')}</span>');
     expect(chatView).not.toContain('<span>{formatMessageTime(message.timestamp)}</span>');
+    expect(chatView).toContain('data-target-chat-surface="true"');
+    expect(chatView).toContain('relative flex min-h-0 min-w-0 flex-1 overflow-hidden');
+    expect(chatView).toContain("isPanel");
+    expect(chatView).toContain("'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'");
+    expect(chatView).toContain("? 'bottom-2 right-2 top-2 w-44'");
+    expect(chatView).toContain("'bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto'");
     expect(chatGateDialog).toContain('<DialogFrame');
     expect(chatGateDialog).toContain('unframed');
     expect(chatGateDialog).toContain('titleId={dialogTitleId}');
@@ -330,8 +346,8 @@ describe('target chat polish contracts', () => {
     expect(chatGateDialog).toContain("recentActivityActionLabel || t('chat.openConversation')");
     expect(chatGateDialog).toContain('if (activeSessionId) onDismissRecentActivityWarning(activeSessionId);');
     expect(chatGateDialog).not.toContain('translate-y-[calc(100%+0.75rem)]');
-    expect(chatView).toContain("content.setAttribute('inert', '')");
-    expect(chatView).toContain('aria-hidden={hasBlockingGate ? true : undefined}');
+    expect(chatView).not.toContain("content.setAttribute('inert', '')");
+    expect(chatView).not.toContain('aria-hidden={hasBlockingGate ? true : undefined}');
     expect(chatView).toContain('recentActivityWarning: effectiveRecentActivityWarning');
     expect(chatView).toContain("const blockedComposerMessage = recentActivityWarning");
     expect(chatView).toContain("t('chat.chooseRecentActivityAction')");

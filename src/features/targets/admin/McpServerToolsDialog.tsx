@@ -222,7 +222,7 @@ export const McpServerToolsDialog: React.FC<{
               {renderToolSection(t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
               <div ref={loadMoreSentinelRef}>
                 {hasMoreTools && (
-                  <Button type="button" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
+                  <Button type="button" variant="secondary" size="sm" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
                     {isLoadingMoreTools ? t('mcpServers.loadingTools') : t('common.loadMore')}
                   </Button>
                 )}
@@ -235,7 +235,7 @@ export const McpServerToolsDialog: React.FC<{
           )}
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-          <Button type="button" onClick={() => setConfiguredOverrides({})} disabled={isSavingTools || changedTools.length === 0} className="control-target type-ui text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50">
+          <Button type="button" variant="tertiary" onClick={() => setConfiguredOverrides({})} disabled={isSavingTools || changedTools.length === 0} className="control-target type-ui text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50">
             {t('mcpServers.resetChanges')}
           </Button>
           <div className="flex items-center gap-3">

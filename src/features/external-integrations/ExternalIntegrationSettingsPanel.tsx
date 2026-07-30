@@ -80,7 +80,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button size="sm" disabled={mutationsDisabled} onClick={onSave}>
+          <Button variant="secondary" size="sm" disabled={mutationsDisabled} onClick={onSave}>
             {isSaving ? t('settings.externalIntegrationsSaving') : t('settings.externalIntegrationsSave')}
           </Button>
           <Button size="sm" variant="danger" disabled={mutationsDisabled} onClick={onRequestUnlink}>

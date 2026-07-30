@@ -561,7 +561,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                 <label className="block type-body type-emphasis text-ui-text">
                   {t('schedules.form.cron')}
                   <TextInput value={draft.cron} onChange={(event) => setDraft((current) => ({ ...current, cron: event.target.value }))} className={scheduleFormInputClassName} />
-                  <span className="type-caption mt-1 block type-body text-ui-text-muted">{t('schedules.form.cronHelp')}</span>
+                  <span className="type-caption mt-1 block text-ui-text-muted">{t('schedules.form.cronHelp')}</span>
                 </label>
                 <label className="block type-body type-emphasis text-ui-text">
                   {t('schedules.form.timezone')}
@@ -575,7 +575,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
               <label className="block type-body type-emphasis text-ui-text">
                 {t('schedules.form.approvedContextGrants')}
                 <Textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className={scheduleFormTextareaClassName} />
-                <span className="type-caption mt-1 block type-body text-ui-text-muted">{t('schedules.form.approvedContextGrantsHelp')}</span>
+                <span className="type-caption mt-1 block text-ui-text-muted">{t('schedules.form.approvedContextGrantsHelp')}</span>
               </label>
               {workflows.find((workflow) => workflow.id === draft.workflowId) ? (
                 <section className="grid gap-3">

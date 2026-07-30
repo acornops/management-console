@@ -6,7 +6,7 @@ import { Button } from '@acornops/ui';
 interface MessageActionsProps {
   align: 'left' | 'right';
   copyText: string;
-  timestampLabel: string;
+  timestampLabel?: string;
   onEdit?: () => void;
   t: TFunction;
 }
@@ -59,10 +59,11 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ align, copyText,
         align === 'right' ? 'justify-end text-ui-text-muted' : 'justify-start'
       }`}
     >
-      <time>{timestampLabel}</time>
+      {timestampLabel && <time>{timestampLabel}</time>}
       {onEdit && (
         <Button
           type="button"
+          variant="tertiary"
           onClick={onEdit}
           className="control-target inline-flex h-6 w-6 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface/75 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
           aria-label={t('chat.editMessage')}
@@ -73,6 +74,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ align, copyText,
       )}
       <Button
         type="button"
+        variant="tertiary"
         onClick={() => void handleCopy()}
         disabled={!canCopyToClipboard}
         className="control-target inline-flex h-6 w-6 items-center justify-center rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface/75 hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50"

@@ -191,7 +191,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
                 placeholder="https://registry.example.com"
                 className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
               />
-              <span className="type-caption type-body text-ui-text-muted">{t('catalogSources.baseUrlHelp')}</span>
+              <span className="type-caption text-ui-text-muted">{t('catalogSources.baseUrlHelp')}</span>
             </label>
             <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
               {t('catalogSources.route')}
@@ -233,7 +233,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
                   onChange={(event) => setCredential(event.target.value)}
                   className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
                 />
-                <span className="type-caption type-body text-ui-text-muted">{editingSourceId ? t('catalogSources.credentialEditHelp') : t('catalogSources.credentialHelp')}</span>
+                <span className="type-caption text-ui-text-muted">{editingSourceId ? t('catalogSources.credentialEditHelp') : t('catalogSources.credentialHelp')}</span>
               </label>
             )}
             {authType === 'custom_header' && (

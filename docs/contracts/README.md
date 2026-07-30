@@ -84,14 +84,24 @@ The management console is the browser client for the control-plane API. Keep thi
   Each target or Agent installation has independent write-only connections, and
   workflows reuse the selected Agent installation. The console never persists
   credentials in browser storage.
+- Individual OAuth installations contain no provider, issuer, endpoint, client
+  ID, or client secret configuration. The console prepares OAuth through the
+  control plane, shows the safe authorization-server origin, CIMD or DCR method,
+  requested scopes, and any `offline_access` request, then requires explicit
+  consent before browser navigation. Multiple advertised issuers require an
+  explicit selection. Fixture mode rejects external OAuth before any request.
 - The console does not expose a built-in repository-review Agent, workflow, provider profile, or template setup branch. Workspace managers create a specialist Agent, attach and review any compatible MCP server from the Agent's generic MCP page, and then create a workflow selecting that Agent. Credential values remain write-only and never enter preview state or browser storage.
 - Manual workflow creation sends only operator-controlled fields. Mode, context grants, permissions, approvals, execution duration, and report retention are omitted so the control plane applies deployment-owned defaults. Creation fails closed until the authoritative workflow-options catalog has loaded; fallback catalogs contain no output, approval, runtime, or retention choices.
 - AI behavior drafts remain empty until workspace AI settings arrive, so the console does not invent a provider or model. An omitted production control-plane API base uses same-origin requests; local development retains the localhost fallback.
-- A blocked workflow capability preview opens the generic individual-credential dialog from `serverId`, `authType`, `owningAgent`, and `action`; it writes the credential to that owning Agent and retries the preview. The workflow UI never infers authentication from a provider name or profile identity.
+- A blocked workflow capability preview opens the matching individual
+  credential or OAuth authorization dialog from `serverId`, `authType`, owner,
+  and `action`. Static credentials remain write-only; OAuth uses prepare and
+  start operations and never infers configuration from a provider name.
 - Run-readiness recovery parses only the bounded `readinessFailures` contract at
   the API client boundary. Recovery
   links carry only `mcpServer` and `mcpAction`, focus the exact installation and
-  Connect or Verify control, and never invoke a mutation automatically. Target
+  Connect, Authorize, Reauthorize, or Verify control, and never invoke a
+  mutation automatically. Target
   failures describe the bounded, Markdown-escaped Kubernetes or VM tool name
   instead of implying that another MCP installation is required.
 - Successful Connect and Verify operations remain successful if the subsequent
@@ -126,7 +136,30 @@ The management console is the browser client for the control-plane API. Keep thi
   does not infer coordinator records or display hidden execution scope.
 - Default Agents and workflows are ordinary workspace-owned definitions that can be edited, versioned, restored, duplicated, disabled, or deleted directly. Legacy template-origin Agents follow the same mutation rules. AcornOps never overwrites, upgrades, or automatically restores these defaults. Agent deletion explains dependent workflows before it can proceed.
 - Authorized users may duplicate an effective definition into a manual draft without copying capability installations or operational history.
+- Agent detail exposes exactly Chat, MCP Servers, Skills, Tools, and Settings as
+  stable routes. The base Agent route resolves to Chat; configuration versions
+  and Workflow usage remain contextual sections in Settings.
+- Agent Chat uses the shared chat presentation but calls the Agent conversation
+  API. New conversations follow the intersection of the pinned Agent permission
+  mode and creator capabilities. Write-capable Agents start with their configured
+  approval policy when the creator has write-run permission; otherwise the
+  conversation is read-only. Creators may pause changes, and workspace readers
+  who did not create a conversation can inspect it without continuing or
+  changing it. Policy copy uses the permission mode pinned in each conversation
+  summary, not the Agent's latest revision.
+- Agent cards show aggregate MCP server, Skill, and Tool counts only. A
+  readiness blocker replaces those counts with an actionable warning; raw
+  capability names remain inside the dedicated detail surfaces.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
+- Experimental target auto-triage is configured only from Kubernetes and VM
+  Settings and uses the same Experimental badge treatment as Automation. The
+  browser uses the control plane's revisioned settings, readiness, and
+  effective-policy preview; it never starts current issues as a side effect of
+  enabling the feature. Automatic chats remain in the normal target history,
+  preserve the existing approval and retention paths, and relax creator-only
+  reply ownership only when `origin=auto_triage`. Target auto-triage settings,
+  issue activity, and chat context do not depend on Automation navigation,
+  Workflow permissions, or Workflow UI modules.
 - The target-chat `/` picker sends structured tool runtime aliases and target
   skill IDs separately from prompt text. It never repurposes `@` prompt
   references, and stale references remain visible when the control plane

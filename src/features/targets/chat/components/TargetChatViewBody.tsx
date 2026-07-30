@@ -1,8 +1,7 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { MessagesSquare, Plus, Search, Upload } from 'lucide-react';
-import { Button } from '@acornops/ui';
-import { DrawerFrame } from '@acornops/ui';
+import { AnimatePresence } from 'framer-motion';
+import { Plus } from 'lucide-react';
+import { Button, DrawerFrame } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { ConversationHistory } from '@/features/targets/chat/components/ConversationHistory';
 import { LiveRunTrace } from '@/features/targets/chat/types';
@@ -14,10 +13,15 @@ import { TargetChatPanelControls } from '@/features/targets/chat/components/Targ
 import { ChatEmptyPrompt, ChatTranscriptLoadError, ChatTranscriptSkeleton } from '@/features/targets/chat/components/ChatTranscriptStates';
 import { DeleteConversationDialog } from '@/features/targets/chat/components/DeleteConversationDialog';
 import { UserMessageTurn } from '@/features/targets/chat/components/UserMessageTurn';
-import { formatMessageTime } from '@/features/targets/chat/components/targetChatViewHelpers';
+import { AutomaticInvestigationBrief } from '@/features/targets/chat/components/AutomaticInvestigationBrief';
+import { TargetChatContextNotices } from '@/features/targets/chat/components/TargetChatContextNotices';
+import { formatMessageTime, isMessageOwnedByCurrentUser } from '@/features/targets/chat/components/targetChatViewHelpers';
 import { useTargetChatHistoryWorkspace } from '@/features/targets/chat/components/useTargetChatHistoryWorkspace';
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
 import { getComposerReferenceProps } from '@/features/targets/chat/components/targetChatReferenceProps';
+import { TargetChatNavigationRail } from '@/features/targets/chat/components/TargetChatNavigationRail';
+import { TargetChatDropOverlay } from '@/features/targets/chat/components/TargetChatDropOverlay';
+import { useAutomaticInvestigationViewState } from '@/features/targets/chat/hooks/useAutomaticInvestigationViewState';
 export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => {
   const {
     activeRunId,
@@ -28,6 +32,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     assistantMarkdownComponents,
     assistantCapabilitiesPreview,
     assistantCapabilitiesPreviewError,
+    automaticInvestigationsEnabled,
+    capabilityPreviewEnabled,
     canApproveWriteActions,
     canCancelActiveRun,
     canChat,
@@ -43,6 +49,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     composerSubmitUnavailableReason,
     composerTextareaRef,
     conversationNotice,
+    currentUserId = '',
+    sessionDeepLinkError,
     deleteSessionError,
     deleteTargetSession,
     deletingSessionId,
@@ -60,6 +68,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     handleCreateSessionClick,
     handleModelAndEffortChange,
     handleModelChange,
+    headerLeading,
     historyButtonRef,
     historyControlLabel,
     historyPanelRef,
@@ -141,9 +150,16 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     openDeleteSessionModal,
     submitEditedMessage
   } = props;
-  const contentRef = React.useRef<HTMLDivElement>(null);
-  const hasBlockingGate = Boolean(recentActivityWarning);
   const hasReadyAiRuntime = aiRuntimeReadiness.status === 'ready';
+  const {
+    unseenCount: unseenInvestigationCount,
+    markViewed: markInvestigationsViewed
+  } = useAutomaticInvestigationViewState({
+    currentUserId: automaticInvestigationsEnabled ? currentUserId : '',
+    workspaceId: target.workspaceId,
+    targetId: target.id,
+    sessions
+  });
   const {
     createSessionFromSearch,
     finishHistoryResize,
@@ -152,7 +168,9 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     historyPanelWidth,
     historySearchPageId,
     historySearchValue,
+    historyView,
     isChatsRailActive,
+    isInvestigationsRailActive,
     isHistorySearchPageOpen,
     isSearchRailActive,
     moveHistoryResize,
@@ -161,102 +179,61 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     selectSessionFromSearch,
     setHistorySearchValue,
     startHistoryResize,
-    toggleHistoryChats
+    toggleHistoryChats,
+    toggleHistoryInvestigations
   } = useTargetChatHistoryWorkspace({
     desktopHistoryPanelId,
     handleCreateSessionClick,
     historyButtonRef,
     isHistoryOpen,
+    onInvestigationsViewed: automaticInvestigationsEnabled ? markInvestigationsViewed : undefined,
     selectSession,
     setIsHistoryOpen
   });
+  React.useEffect(() => {
+    if (automaticInvestigationsEnabled && activeSession?.origin === 'auto_triage') {
+      markInvestigationsViewed();
+    }
+  }, [activeSession?.id, activeSession?.origin, automaticInvestigationsEnabled, markInvestigationsViewed]);
 
   React.useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-
-    if (hasBlockingGate) {
-      content.setAttribute('inert', '');
-      return () => {
-        content.removeAttribute('inert');
-      };
+    if (automaticInvestigationsEnabled && isInvestigationsRailActive && unseenInvestigationCount > 0) {
+      markInvestigationsViewed();
     }
-
-    content.removeAttribute('inert');
-  }, [hasBlockingGate]);
+  }, [automaticInvestigationsEnabled, isInvestigationsRailActive, markInvestigationsViewed, unseenInvestigationCount]);
 
   return (
     <div
-      className="relative flex flex-1 min-w-0 overflow-hidden bg-ui-bg"
+      data-target-chat-surface="true"
+      className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-ui-bg"
       onDragEnter={handleChatWindowDragEnter}
       onDragOver={handleChatWindowDragOver}
       onDragLeave={handleChatWindowDragLeave}
       onDrop={(event) => void handleChatWindowDrop(event)}
     >
-      <div ref={contentRef} className="contents" aria-hidden={hasBlockingGate ? true : undefined}>
-        <AnimatePresence>
-          {isFileDragActive && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              className="pointer-events-none absolute inset-0 z-[140] flex items-center justify-center bg-ui-bg/88 p-6 dark:bg-ui-bg/92"
-            >
-              <div className="flex min-h-48 w-full max-w-2xl flex-col items-center justify-center rounded-2xl border border-dashed border-accent/50 bg-accent/10 px-8 py-10 text-center shadow-lg shadow-ui-text/5">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-ui-surface text-accent-strong">
-                  <Upload className="h-5 w-5" />
-                </div>
-                <p className="mt-4 type-panel-title text-ui-text">{canPost && !isRunActive ? t('chat.dropFilesTitle') : t('chat.dropFilesUnavailableTitle')}</p>
-                <p className="mt-2 max-w-md type-ui leading-6 text-ui-text-muted">
-                  {canPost && !isRunActive ? t('chat.dropFilesBody') : recentActivityWarning ? t('chat.chooseRecentActivityAction') : t(resolvedNoChatAccessKey)}
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="contents">
+        <TargetChatDropOverlay canPost={canPost} isFileDragActive={isFileDragActive} isRunActive={isRunActive} recentActivityWarning={recentActivityWarning} resolvedNoChatAccessKey={resolvedNoChatAccessKey} t={t} />
         {!isPanel && (
-          <nav
-            aria-label={t('chat.assistantNavigation')}
-            className="relative z-20 flex h-full w-12 shrink-0 flex-col items-center gap-1 border-r border-ui-border bg-ui-surface py-2"
-          >
-            <Tooltip content={t('chat.searchChats')} side="right">
-              <Button
-                type="button"
-                variant="tertiary"
-                size="icon"
-                onClick={openHistorySearch}
-                data-chat-history-trigger="search"
-                className={isSearchRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
-                aria-label={t('chat.searchChats')}
-                aria-controls={isSearchRailActive ? historySearchPageId : undefined}
-                aria-current={isSearchRailActive ? 'page' : undefined}
-              >
-                <Search className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </Tooltip>
-            <Tooltip content={isChatsRailActive ? historyControlLabel : t('chat.chats')} side="right">
-              <Button
-                type="button"
-                variant="tertiary"
-                size="icon"
-                onClick={toggleHistoryChats}
-                data-chat-history-trigger="chats"
-                className={isChatsRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
-                aria-label={isChatsRailActive ? historyControlLabel : t('chat.chats')}
-                aria-controls={`${desktopHistoryPanelId} ${mobileHistoryPanelId}`}
-                aria-expanded={isChatsRailActive}
-                aria-current={isChatsRailActive ? 'page' : undefined}
-              >
-                <MessagesSquare className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </Tooltip>
-          </nav>
+          <TargetChatNavigationRail
+            automaticInvestigationsEnabled={automaticInvestigationsEnabled}
+            desktopHistoryPanelId={desktopHistoryPanelId}
+            historyControlLabel={historyControlLabel}
+            historySearchPageId={historySearchPageId}
+            isChatsActive={isChatsRailActive}
+            isHistoryOpen={isHistoryOpen}
+            isInvestigationsActive={isInvestigationsRailActive}
+            isSearchActive={isSearchRailActive}
+            mobileHistoryPanelId={mobileHistoryPanelId}
+            onChatsClick={toggleHistoryChats}
+            onInvestigationsClick={toggleHistoryInvestigations}
+            onSearchClick={openHistorySearch}
+            unseenInvestigationCount={unseenInvestigationCount}
+          />
         )}
         {!isPanel && isHistoryOpen && (
           <aside
             id={desktopHistoryPanelId}
-            aria-label={t('chat.chats')}
+            aria-label={t(automaticInvestigationsEnabled && historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
             style={{ width: historyPanelWidth }}
             className="relative hidden h-full shrink-0 overflow-hidden border-r border-ui-border bg-ui-surface shadow-sm lg:flex"
           >
@@ -264,6 +241,9 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
               <ConversationHistory
                 appName={target.name}
                 sessions={sessions}
+                sessionOrigin={automaticInvestigationsEnabled
+                  ? historyView === 'investigations' ? 'auto_triage' : 'manual'
+                  : undefined}
                 activeSessionId={activeSessionId}
                 sessionAssistantStatuses={sessionAssistantStatuses}
                 isSessionsLoading={isSessionsLoading}
@@ -323,20 +303,24 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 } transition-colors`}
               >
                 {isPanel ? (
-                  <div>
-                    <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-3">
+                      {headerLeading}
                       <div className="min-w-0">
                         <h1 className="type-section-title truncate text-ui-text">{title}</h1>
                         <p className="mt-1 type-caption text-ui-text-muted">{t('chat.panelDescription', { name: target.name })}</p>
                       </div>
-                      <TargetChatPanelControls onClose={onClose} onMaximize={onMaximize} t={t} />
                     </div>
+                    <TargetChatPanelControls onClose={onClose} onMaximize={onMaximize} t={t} />
                   </div>
                 ) : (
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-                    <div className="min-w-0">
-                      <h1 className="type-route-title">{title}</h1>
-                      <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: target.name })}</p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      {headerLeading}
+                      <div className="min-w-0">
+                        <h1 className="type-route-title">{title}</h1>
+                        <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: target.name })}</p>
+                      </div>
                     </div>
                     <div className="flex w-full min-w-0 shrink-0 items-center gap-3 lg:w-auto lg:max-w-2xl lg:justify-end">
                       <Tooltip content={newChatUnavailableReason} disabled={!newChatUnavailableReason} className="min-w-0 flex-1 lg:flex-none">
@@ -358,6 +342,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   </div>
                 )}
               </header>
+
+              <TargetChatContextNotices activeSession={automaticInvestigationsEnabled ? activeSession : null} isPanel={isPanel} sessionDeepLinkError={sessionDeepLinkError} t={t} />
 
               <div
                 ref={transcriptRef}
@@ -392,7 +378,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                           type="button"
                           onClick={() => void onLoadEarlierMessages()}
                           disabled={isLoadingEarlierMessages}
-                          className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+                          variant="secondary"
+                          size="sm"
                         >
                           {isLoadingEarlierMessages ? t('chat.loadingEarlier') : t('chat.loadEarlier')}
                         </Button>
@@ -400,6 +387,11 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                     )}
                     {visibleMessages.map((message, messageIndex) => {
                       const isUser = message.role === 'user';
+                      const isAutomaticBrief =
+                        automaticInvestigationsEnabled &&
+                        isUser &&
+                        activeSession?.origin === 'auto_triage' &&
+                        message.metadata?.presentation === 'automatic_investigation_brief';
                       const isInFlightPlaceholder = !isUser && isInFlightAssistantPlaceholder(message);
                       const messageTrace = !isUser && message.runId ? runTracesByRunId[message.runId] : undefined;
                       const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;
@@ -427,6 +419,17 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                             }
                           : undefined);
                       const isStaleCancelledAssistantStatus = !isUser && hasLaterUserMessage && traceToRender?.status === 'cancelled';
+                      if (isAutomaticBrief && activeSession) {
+                        return (
+                          <AutomaticInvestigationBrief
+                            key={message.id}
+                            session={activeSession}
+                            message={message}
+                            timestampLabel={formatMessageTime(message.timestamp)}
+                            t={t}
+                          />
+                        );
+                      }
                       if (!isUser) {
                         return (
                           <div key={messageKey} className="flex w-full justify-start">
@@ -463,6 +466,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                         !isComposerRuntimeUnavailable &&
                         messageIndex === lastUserMessageIndex &&
                         Boolean(userTurnRunId) &&
+                        (!automaticInvestigationsEnabled || isMessageOwnedByCurrentUser(activeSession, message, currentUserId)) &&
                         (userTurnTrace?.status === 'cancelled' || userTurnTrace?.status === 'failed');
                       const isEditingMessage = editingMessageId === message.id;
 
@@ -472,6 +476,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                           message={message}
                           markdownComponents={userMarkdownComponents}
                           timestampLabel={formatMessageTime(message.timestamp)}
+                          showAuthor={automaticInvestigationsEnabled && activeSession?.origin === 'auto_triage'}
                           canEdit={canEditUserMessage}
                           isEditing={isEditingMessage}
                           editValue={editingMessageValue}
@@ -493,6 +498,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   allowedReasoningOptions={allowedReasoningOptions}
                   assistantCapabilitiesPreview={assistantCapabilitiesPreview}
                   assistantCapabilitiesPreviewError={assistantCapabilitiesPreviewError}
+                  capabilityPreviewEnabled={capabilityPreviewEnabled}
                   canChat={canChat}
                   canCancelActiveRun={canCancelActiveRun}
                   canPost={canPost}
@@ -556,7 +562,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           unframed
           isOpen={!isPanel && isHistoryOpen}
           onClose={() => setIsHistoryOpen(false)}
-          ariaLabel={t('chat.chats')}
+          ariaLabel={t(automaticInvestigationsEnabled && historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
           titleId={mobileHistoryPanelId}
           id={mobileHistoryPanelId}
           initialFocusRef={historyPanelRef}
@@ -565,20 +571,23 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           overlayClassName="bg-ui-text/20 dark:bg-ui-bg/65"
           className="ml-12 h-full w-[min(21rem,calc(100vw-5rem))] max-w-none border-l-0 bg-ui-surface shadow-xl outline-none"
         >
-                <ConversationHistory
-                  appName={target.name}
-                  sessions={sessions}
-                  activeSessionId={activeSessionId}
-                  sessionAssistantStatuses={sessionAssistantStatuses}
-                  isSessionsLoading={isSessionsLoading}
-                  onSelectSession={selectSession}
-                  onDeleteSessionClick={openDeleteSessionModal}
-                  onSearchValueChange={setHistorySearchValue}
-                  onClose={() => setIsHistoryOpen(false)}
-                  searchValue={historySearchValue}
-                  canDeleteSessions={canDeleteSessions}
-                  t={t}
-                />
+          <ConversationHistory
+            appName={target.name}
+            sessions={sessions}
+            sessionOrigin={automaticInvestigationsEnabled
+              ? historyView === 'investigations' ? 'auto_triage' : 'manual'
+              : undefined}
+            activeSessionId={activeSessionId}
+            sessionAssistantStatuses={sessionAssistantStatuses}
+            isSessionsLoading={isSessionsLoading}
+            onSelectSession={selectSession}
+            onDeleteSessionClick={openDeleteSessionModal}
+            onSearchValueChange={setHistorySearchValue}
+            onClose={() => setIsHistoryOpen(false)}
+            searchValue={historySearchValue}
+            canDeleteSessions={canDeleteSessions}
+            t={t}
+          />
         </DrawerFrame>
 
         {deleteTargetSession && (

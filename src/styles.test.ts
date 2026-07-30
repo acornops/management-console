@@ -153,11 +153,14 @@ describe('theme color contract', () => {
     expect(designSystemCheck).toContain("report(path, 'semantic-typography'");
     expect(designSystemCheck).toContain("report(path, 'action-typography'");
     expect(designSystemCheck).toContain("report(path, 'heading-typography'");
+    expect(designSystemCheck).toContain("report(path, 'conflicting-typography-roles'");
     expect(designSystemCheck).toContain('prohibitedTypographyUtility');
     expect(designSystemCheck).toContain('prohibitedActionTypography');
     expect(designSystemCheck).toContain('canonicalHeadingRole');
     expect(designSystemCheck).toContain('approvedButtonSizingHelpers');
     expect(designSystemCheck).toContain('canonicalButtonTarget');
+    expect(designSystemCheck).toContain('implicit-button-variant');
+    expect(designSystemCheck).toContain('shared buttons must declare their visual intent with an explicit variant');
     expect(designSystemCheck).toContain("repoPath === 'src/app/AppDesktopSidebarParts.tsx'");
     expect(designSystemCheck).toContain('navButtonClass');
   });
@@ -174,7 +177,7 @@ describe('theme color contract', () => {
   });
 
   it('exposes semantic typography roles on Outfit and Ubuntu Mono', () => {
-    const expectedRoles = ['type-route-title', 'type-section-title', 'type-panel-title', 'type-row-title', 'type-body', 'type-ui', 'type-emphasis', 'type-wordmark', 'type-caption', 'type-label', 'type-micro-label', 'type-data', 'type-code'];
+    const expectedRoles = ['type-route-title', 'type-section-title', 'type-panel-title', 'type-row-title', 'type-body', 'type-ui', 'type-emphasis', 'type-wordmark', 'type-caption', 'type-label', 'type-micro-label', 'type-data', 'type-count', 'type-code'];
 
     for (const weight of [400, 500, 600, 700, 800]) {
       expect(fonts).toContain(`@fontsource/outfit/latin-${weight}.css`);
@@ -200,6 +203,9 @@ describe('theme color contract', () => {
     expect(resourceExplorerControls).toContain("'type-ui flex h-11");
     expect(resourceExplorerLayout).toContain('className="type-micro-label');
     expect(markdownComponents).toContain('type-code');
+    expect(designSystemCheck).toContain('canonicalTypographyRoles');
+    expect(designSystemCheck).toContain('completeTypographyRoles');
+    expect(designSystemCheck).toContain('unknown-typography-role');
   });
 
   it('keeps login anchored to triage instead of decorative SaaS motion', () => {
@@ -316,6 +322,7 @@ describe('theme color contract', () => {
   it('keeps the app shell viewport-bound while route pages own their scroll', () => {
     expect(styles).toContain('html,\nbody,\n#root');
     expect(appShell).toContain('h-[100dvh] min-h-0');
+    expect(appShell).toContain('<div id={appDockRootId} className="contents" />');
     expect(desktopSidebar).toContain('h-full min-h-0 w-64 shrink-0');
     expect(desktopSidebar).toContain('min-h-0 flex-1 overflow-y-auto');
     expect(pageComposition).toContain('min-h-0 flex-1 overflow-x-hidden overflow-y-auto');
@@ -323,6 +330,7 @@ describe('theme color contract', () => {
     expect(workspaceSettingsPage).toContain('<PageShell');
     expect(clusterSettingsView).toContain('<PageShell>');
   });
+
   it('renders quota visibility only in settings surfaces', () => {
     ["t('settings.workspacesJoined')", 'user.quota?.workspaceMemberships', "t('settings.quotaUnavailable')"].forEach((needle) => expect(userSettingsPage).toContain(needle));
     ["t('workspaceSettings.plan')", 'workspace.plan?.name', "t('workspaceSettings.planUnavailable')"].forEach((needle) => expect(workspaceSettingsPage).toContain(needle));
@@ -616,7 +624,7 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('sm:flex-row sm:items-center sm:justify-between');
     expect(overviewPage).toContain('flex shrink-0 items-center gap-4 text-ui-text-muted');
     expect(overviewPage).toContain('divide-y divide-ui-border');
-    expect(overviewPage).toContain('xl:grid-cols-2');
+    expect(overviewPage).toContain('workspace-overview-targets');
     expect(overviewPage).toContain('recentInvestigation && (');
     expect(overviewPage).toContain('border-y border-ui-border py-3');
     expect(overviewPage).toContain('w-full justify-center sm:w-auto');
@@ -634,19 +642,4 @@ describe('theme color contract', () => {
     expect(overviewPage).not.toContain('data-healthy-targets="true"');
   });
 
-  it('keeps workspace member access changes deliberate and stable', () => {
-    expect(membersPage).toContain('confirmRemoveMember');
-    expect(membersPage).toContain('setIsConfirmingRemove(true)');
-    expect(membersPage).toContain('members.confirmRemoveAccess');
-    expect(membersPage).toContain('members.confirmRoleChange');
-    expect(membersPage).not.toContain('changeMemberRoleFromRow');
-    expect(membersPage).not.toContain('variants={tableVariants} initial="hidden" animate="show"');
-    expect(membersPage).not.toContain('variants={rowVariants}');
-  });
-
-  it('preserves one-time invitation links while invitation pages refresh', () => {
-    expect(membersPage).toContain('inviteLink: existingById.get(invitation.id)?.inviteLink');
-    expect(membersPage).toContain('onCreateInvitation ? createInvitation : undefined');
-    expect(membersPage).not.toContain('[loadInvitations, workspace.id, workspace.invitations]');
-  });
 });

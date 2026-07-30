@@ -55,7 +55,7 @@ export const PendingVirtualMachineSetup: React.FC<PendingVirtualMachineSetupProp
           </Button>
         </div>
       </div>
-      <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 type-ui text-ui-text-muted" aria-hidden="true">
+      <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 text-ui-text-muted" aria-hidden="true">
         <span className="truncate">{t('virtualMachines.list.vmRegistered')}</span>
         <span className="truncate text-center">{t('dashboard.telemetryPending')}</span>
         <span className="truncate text-right">{t('dashboard.agentRequired')}</span>

@@ -26,6 +26,7 @@ export const TargetChatReferenceChips: React.FC<TargetChatReferenceChipsProps> =
             <span className="truncate">{reference.label}</span>
             <Button
               type="button"
+              variant="tertiary"
               onClick={() => onRemove(reference)}
               className="control-target -mr-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
               aria-label={t('chat.removeReference', { name: reference.label })}
@@ -69,6 +70,7 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
             <Button
               key={`${reference.kind}:${reference.id}`}
               type="button"
+              variant="tertiary"
               id={`${id}-option-${index}`}
               role="option"
               aria-selected={isActive}

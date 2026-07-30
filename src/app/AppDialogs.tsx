@@ -4,13 +4,17 @@ import { Trans, useTranslation } from 'react-i18next';
 import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModal';
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
-import { CloseButton } from '@acornops/ui';
-import { DialogFrame } from '@acornops/ui';
-import { formInputClassName } from '@acornops/ui';
+import { Button, CloseButton, DialogFrame, formInputClassName, TextInput } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { AgentAccessMode } from '@/services/control-plane/types';
-import { KubernetesCluster, ProjectMember, Workspace, WorkspaceAiSettings, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
-import { Button, TextInput } from '@acornops/ui';
+import {
+  KubernetesCluster,
+  ProjectMember,
+  Workspace,
+  WorkspaceAiSettings,
+  WorkspaceMemberAccessResult,
+  WorkspaceRoleTemplate
+} from '@/types';
 
 interface AppDialogsProps {
   clusterCreationStep: 'details' | 'instructions';
@@ -38,7 +42,10 @@ interface AppDialogsProps {
   onCreateWorkspace: (name: string) => Promise<Workspace>;
   onLoadWorkspaceAiSettings: (workspaceId: string) => Promise<WorkspaceAiSettings>;
   onOpenWorkspaceAiSettings: (workspaceId: string) => void;
-  onCreateWorkspaceInvitation: (workspaceId: string, input: { email: string; role: ProjectMember['role'] }) => Promise<WorkspaceInvitation>;
+  onAddOrInviteWorkspaceMember: (
+    workspaceId: string,
+    input: { email: string; role: ProjectMember['role'] }
+  ) => Promise<WorkspaceMemberAccessResult>;
   onExcludeNamespacesChange: (value: string) => void;
   onIncludeNamespacesChange: (value: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
@@ -73,7 +80,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onCreateWorkspace,
   onLoadWorkspaceAiSettings,
   onOpenWorkspaceAiSettings,
-  onCreateWorkspaceInvitation,
+  onAddOrInviteWorkspaceMember,
   onExcludeNamespacesChange,
   onIncludeNamespacesChange,
   onLoadWorkspaceRoles,
@@ -151,14 +158,18 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                 <div className="flex items-center justify-end gap-2 pt-1">
                   <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={handleCloseWorkspaceDelete}
                     disabled={isDeletingWorkspace}
-                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-caption text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
+                    className="control-target rounded-lg"
                   >
                     {t('app.cancel')}
                   </Button>
                   <Button
                     type="button"
+                    variant="danger"
+                    size="sm"
                     onClick={async () => {
                       onSetDeletingWorkspace(true);
                       try {
@@ -176,7 +187,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                       }
                     }}
                     disabled={isDeletingWorkspace || workspaceDeleteConfirmation !== deleteTargetWorkspace.name}
-                    className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 type-caption text-control-danger-fg shadow-lg shadow-status-danger/20 transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="control-target rounded-lg"
                   >
                     {isDeletingWorkspace ? t('app.deleting') : t('app.deleteWorkspace')}
                   </Button>
@@ -193,7 +204,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           onLoadWorkspaceAiSettings={onLoadWorkspaceAiSettings}
           onOpenAiSettings={onOpenWorkspaceAiSettings}
           onLoadWorkspaceRoles={onLoadWorkspaceRoles}
-          onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}
+          onAddOrInviteWorkspaceMember={onAddOrInviteWorkspaceMember}
         />
       </AnimatePresence>
 

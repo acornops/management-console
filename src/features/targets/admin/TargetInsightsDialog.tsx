@@ -208,6 +208,8 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
           <h4 className="type-row-title">{t('tools.targetInsights.files')}</h4>
           <Button
             type="button"
+            variant="tertiary"
+            size="icon"
             className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
             disabled={!canMutateFile}
             onClick={startNewFile}
@@ -262,8 +264,10 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                         <Button
                           key={file.entry.id}
                           type="button"
+                          variant="tertiary"
+                          size="sm"
                           onClick={() => selectFile(file)}
-                          className={`control-target flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left type-caption transition-colors ${
+                          className={`control-target flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left transition-colors ${
                             file.entry.id === selectedEntryId && !creatingNewFile
                               ? 'bg-accent-soft/20 text-accent-strong'
                               : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'

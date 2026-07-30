@@ -208,8 +208,10 @@ export function LoginPasswordAuthForm({
           <div className="-mt-2 flex justify-end">
             <Button
               type="button"
+              variant="tertiary"
+              size="inline"
               onClick={onForgotPassword}
-              className="control-target rounded-sm type-caption text-accent-readable transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
+              className="control-target rounded-sm text-accent-readable transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               {t('login.forgotPassword')}
             </Button>
@@ -247,7 +249,7 @@ export function LoginPasswordAuthForm({
         )}
       </AnimatePresence>
 
-      <Button type="submit" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
+      <Button type="submit" variant="primary" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
         {isAuthLoading ? (
           <span className="h-4 w-4 rounded-full border-2 border-ui-bg border-t-transparent animate-spin" />
         ) : (

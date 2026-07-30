@@ -49,7 +49,7 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`/workspaces/${workspaceId}/kubernetes-clusters/${clusterId}/overview`);
   await page.getByRole('button', { name: 'Open assistant' }).first().click();
-  const dockedAssistant = page.getByRole('dialog', { name: 'Cluster Assistant' });
+  const dockedAssistant = page.getByRole('complementary', { name: 'Cluster Assistant' });
   await expect(dockedAssistant.getByText('Connect an AI model to continue')).toBeVisible();
   await expect(dockedAssistant.getByRole('textbox', { name: /Message .* assistant/ })).toHaveCount(0);
   await page.screenshot({ path: '/tmp/ai-readiness-docked-dark.png', fullPage: true });

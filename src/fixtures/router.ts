@@ -9,6 +9,7 @@ import { routeWebhookFixtureRequest } from './webhookRoutes';
 import { routeWorkflowEventTriggerFixtureRequest } from './workflowEventTriggerRoutes';
 import { routeWorkflowActivityFixtureRequest } from './workflowActivityRoutes';
 import { routeApprovalFixtureRequest } from './approvalRoutes';
+import { routeAgentConversationFixtureRequest } from './agentConversationRoutes';
 import { applyFixtureRole } from './roleProfiles';
 
 export interface FixtureResponse {
@@ -409,13 +410,14 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const run = state.runs[decode(match[1])];
     return run ? json(clone(run)) : notFound('Run');
   }
-
+  const agentConversationResponse = await routeAgentConversationFixtureRequest({ method, path, request, state, now: NOW });
+  if (agentConversationResponse) return agentConversationResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents$/);
   if (match) {
     if (method === 'GET') return json({ items: clone(state.agents) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const agent = { id: id('fixture-agent'), workspaceId: decode(match[1]), name: input.name, description: input.description || '', instructions: input.instructions || '', status: input.status || 'draft', origin: { type: 'manual' }, reviewState: input.reviewState || 'draft', providerType: 'internal', createdBy: FIXTURE_IDS.user, version: 1, permissionMode: input.permissionMode || 'read_only', semanticCapabilityIds: input.semanticCapabilityIds || [], targetScope: input.targetScope || { type: 'workspace', targetTypes: [], targetIds: [] }, contextScope: input.contextScope || [], contextGrants: input.contextGrants || [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] }, createdAt: NOW, updatedAt: NOW };
+      const agent = { id: id('fixture-agent'), workspaceId: decode(match[1]), name: input.name, avatarEmoji: input.avatarEmoji || '🤖', description: input.description || '', instructions: input.instructions || '', status: input.status || 'draft', origin: { type: 'manual' }, reviewState: input.reviewState || 'draft', providerType: 'internal', createdBy: FIXTURE_IDS.user, version: 1, permissionMode: input.permissionMode || 'read_only', semanticCapabilityIds: input.semanticCapabilityIds || [], targetScope: input.targetScope || { type: 'workspace', targetTypes: [], targetIds: [] }, contextScope: input.contextScope || [], contextGrants: input.contextGrants || [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] }, createdAt: NOW, updatedAt: NOW };
       state.agents.push(agent);
       return json({ agent }, 201);
     }
@@ -549,7 +551,6 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   }
   match = path.match(/^\/api\/v1\/workflow-sessions\/([^/]+)\/messages$/);
   if (match && method === 'POST') return json({ message_id: id('fixture-workflow-message'), run_id: FIXTURE_IDS.run, executionId: 'fixture-workflow-execution', status: 'completed' }, 202);
-
   const catalogResponse = await routeCatalogFixtureRequest({ request, state, path, method });
   if (catalogResponse) return catalogResponse;
 

@@ -7,6 +7,7 @@ type ActivityWarningTranslator = (key: string, options?: Record<string, unknown>
 
 export function isConversationOwner(session: ChatSession | null | undefined, currentUserId: string): boolean {
   if (!session?.backendSessionId) return true;
+  if (session.origin === 'auto_triage') return true;
   if (!session.createdBy) return true;
   return session.createdBy === currentUserId;
 }
@@ -24,9 +25,16 @@ export function buildTargetChatConversationAccessState(args: {
 } {
   const { canChat, currentUserId, session, t } = args;
   const isActiveSessionOwner = isConversationOwner(session, currentUserId);
+  const isAutomaticSession = session?.origin === 'auto_triage';
   const ownerName = session?.createdByUser?.displayName || 'Another user';
   const conversationNotice = session?.backendSessionId
-    ? isActiveSessionOwner
+    ? isAutomaticSession
+      ? translateActivityCopy(
+          t,
+          'chat.conversationNotice.automatic',
+          'Shared automatic investigation. Authorized workspace members can reply.'
+        )
+      : isActiveSessionOwner
       ? translateActivityCopy(t, 'chat.conversationNotice.owner', 'Your conversation. Others can watch live, but only you can reply here.')
       : translateActivityCopy(
           t,
@@ -113,15 +121,41 @@ export function buildRecentActivityWarning(
 ): ChatSession['recentActivityWarning'] | undefined {
   const entries = activity.recentActivity;
   if (entries.length === 0) return undefined;
-  const writeEntry = entries.find((entry) => entry.hasRecentWriteCapableRun);
+  const automaticWriteEntry = entries.find(
+    (entry) => entry.origin === 'auto_triage' && entry.hasRecentWriteCapableRun
+  );
+  const writeEntry = automaticWriteEntry || entries.find((entry) => entry.hasRecentWriteCapableRun);
   const primary = writeEntry || entries[0];
+  const automaticEntry = entries.find((entry) => entry.origin === 'auto_triage');
+  const isAutomaticPrimary = primary.origin === 'auto_triage';
   const userName = primary.createdBy === currentUserId
     ? 'You'
     : primary.createdByUser?.displayName || 'Another user';
   const relativeTime = formatRelativeActivityTime(primary.lastActivityAt, t);
   const multipleUsers = new Set(entries.map((entry) => entry.createdBy)).size > 1;
   let message: string;
-  if (writeEntry && multipleUsers) {
+  if (automaticEntry && entries.some((entry) => entry.origin !== 'auto_triage' && entry.hasRecentWriteCapableRun)) {
+    message = translateActivityCopy(
+      t,
+      'chat.recentAutomaticActivity.mixed',
+      'An automatic investigation and another write-capable chat are active on this target.',
+      { relativeTime }
+    );
+  } else if (writeEntry && isAutomaticPrimary) {
+    message = translateActivityCopy(
+      t,
+      'chat.recentAutomaticActivity.write',
+      `An automatic write-capable investigation started ${relativeTime}. Review it before starting another chat.`,
+      { relativeTime, title: primary.title }
+    );
+  } else if (isAutomaticPrimary) {
+    message = translateActivityCopy(
+      t,
+      'chat.recentAutomaticActivity.read',
+      `An automatic investigation for "${primary.title}" started ${relativeTime}.`,
+      { relativeTime, title: primary.title }
+    );
+  } else if (writeEntry && multipleUsers) {
     message = translateActivityCopy(
       t,
       'chat.recentWriteActivity.multipleUsers',
@@ -179,7 +213,10 @@ export function buildRecentActivityWarning(
   const actionSessionId = writeEntry || entries.length === 1 ? primary.sessionId : undefined;
   return {
     message,
-    actionSessionId
+    actionSessionId,
+    ...(isAutomaticPrimary ? {
+      actionLabel: translateActivityCopy(t, 'chat.openInvestigation', 'Open investigation')
+    } : {})
   };
 }
 

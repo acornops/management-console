@@ -387,8 +387,8 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
-              <Button size="sm" onClick={() => void copy(secretDisclosure.url, t('eventTriggers.secret.endpointCopied'))}>{t('eventTriggers.secret.copyEndpoint')}</Button>
-              <Button size="sm" onClick={() => void copy(secretDisclosure.secret, t('eventTriggers.secret.secretCopied'))}>{t('eventTriggers.secret.copySecret')}</Button>
+              <Button variant="secondary" size="sm" onClick={() => void copy(secretDisclosure.url, t('eventTriggers.secret.endpointCopied'))}>{t('eventTriggers.secret.copyEndpoint')}</Button>
+              <Button variant="secondary" size="sm" onClick={() => void copy(secretDisclosure.secret, t('eventTriggers.secret.secretCopied'))}>{t('eventTriggers.secret.copySecret')}</Button>
               <Button size="sm" variant="tertiary" onClick={() => setSecretDisclosure(null)}>{t('eventTriggers.secret.dismiss')}</Button>
             </div>
           </div>

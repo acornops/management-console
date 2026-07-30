@@ -8,7 +8,16 @@ import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
-import { controlPlaneApi, ControlPlaneTargetSkillDetail, ControlPlaneTargetSkillsCatalog, GitTargetSkillImportInput } from '@/services/controlPlaneApi';
+import {
+  controlPlaneApi,
+  ControlPlaneTargetSkillDetail,
+  ControlPlaneTargetSkillsCatalog,
+  CreateTargetSkillInput,
+  GitTargetSkillImportInput,
+  ImportTargetSkillInput,
+  ReimportTargetSkillInput,
+  UpdateTargetSkillInput
+} from '@/services/controlPlaneApi';
 import { GitSkillImportError, importTargetSkillFromGit } from '@/services/gitSkillImport';
 import {
   buildSkillTemplate,
@@ -26,7 +35,37 @@ import {
 import { TargetSkillEditorDialog } from '@/features/targets/admin/TargetSkillEditorDialog';
 import { TargetSkillsInventory } from '@/features/targets/admin/TargetSkillsInventory';
 
-export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canManageSkills = false, initialCatalog = null, onCatalogChange }) => {
+export interface TargetSkillsDataSource {
+  createSkill: (workspaceId: string, subjectId: string, input: CreateTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
+  deleteSkill: (workspaceId: string, subjectId: string, skillId: string) => Promise<void>;
+  getSkill: (workspaceId: string, subjectId: string, skillId: string) => Promise<ControlPlaneTargetSkillDetail>;
+  importSkill: (workspaceId: string, subjectId: string, input: ImportTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
+  listSkills: (workspaceId: string, subjectId: string) => Promise<ControlPlaneTargetSkillsCatalog>;
+  reimportSkill: (workspaceId: string, subjectId: string, skillId: string, input: ReimportTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
+  updateSkill: (workspaceId: string, subjectId: string, skillId: string, input: UpdateTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
+}
+
+const targetSkillsDataSource: TargetSkillsDataSource = {
+  createSkill: (workspaceId, subjectId, input) => controlPlaneApi.createTargetSkill(workspaceId, subjectId, input),
+  deleteSkill: (workspaceId, subjectId, skillId) => controlPlaneApi.deleteTargetSkill(workspaceId, subjectId, skillId),
+  getSkill: (workspaceId, subjectId, skillId) => controlPlaneApi.getTargetSkill(workspaceId, subjectId, skillId),
+  importSkill: (workspaceId, subjectId, input) => controlPlaneApi.importTargetSkill(workspaceId, subjectId, input),
+  listSkills: (workspaceId, subjectId) => controlPlaneApi.listTargetSkills(workspaceId, subjectId, { limit: 50 }),
+  reimportSkill: (workspaceId, subjectId, skillId, input) => controlPlaneApi.reimportTargetSkill(workspaceId, subjectId, skillId, input),
+  updateSkill: (workspaceId, subjectId, skillId, input) => controlPlaneApi.updateTargetSkill(workspaceId, subjectId, skillId, input)
+};
+
+interface TargetSkillsViewWithDataSourceProps extends TargetSkillsViewProps {
+  dataSource?: TargetSkillsDataSource;
+}
+
+export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = ({
+  target,
+  canManageSkills = false,
+  initialCatalog = null,
+  onCatalogChange,
+  dataSource = targetSkillsDataSource
+}) => {
   const { t } = useTranslation();
 
   const [catalog, setCatalog] = React.useState<ControlPlaneTargetSkillsCatalog | null>(() => initialCatalog);
@@ -91,7 +130,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
     setCatalogLoading(true);
     setCatalogError(null);
     try {
-      const nextCatalog = await controlPlaneApi.listTargetSkills(target.workspaceId, target.id, { limit: 50 });
+      const nextCatalog = await dataSource.listSkills(target.workspaceId, target.id);
       setCatalog(nextCatalog);
       setSelectedSkillId((current) => (current && nextCatalog.items.some((item) => item.id === current) ? current : nextCatalog.items[0]?.id || null));
     } catch (error) {
@@ -99,14 +138,14 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
     } finally {
       setCatalogLoading(false);
     }
-  }, [target.id, target.workspaceId, formatTargetSkillError]);
+  }, [dataSource, target.id, target.workspaceId, formatTargetSkillError]);
 
   const loadSkillDetail = React.useCallback(
     async (skillId: string) => {
       setDetailLoading(true);
       setEditorError(null);
       try {
-        const detail = await controlPlaneApi.getTargetSkill(target.workspaceId, target.id, skillId);
+        const detail = await dataSource.getSkill(target.workspaceId, target.id, skillId);
         setDetailsById((current) => ({ ...current, [skillId]: detail }));
         setDraftFiles(toDraftFiles(detail.files));
         setActiveFilePath('SKILL.md');
@@ -116,7 +155,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
         setDetailLoading(false);
       }
     },
-    [target.id, target.workspaceId, formatTargetSkillError]
+    [dataSource, target.id, target.workspaceId, formatTargetSkillError]
   );
 
   React.useEffect(() => {
@@ -238,7 +277,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
     setToggleSkillId(skillId);
     setCatalogError(null);
     try {
-      const detail = await controlPlaneApi.updateTargetSkill(target.workspaceId, target.id, skillId, { enabled });
+      const detail = await dataSource.updateSkill(target.workspaceId, target.id, skillId, { enabled });
       syncSkill(detail);
     } catch (error) {
       setCatalogError(formatTargetSkillError(error, 'targetSkills.updateFailed'));
@@ -252,7 +291,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
     setEditorSaving(true);
     setEditorError(null);
     try {
-      const detail = await controlPlaneApi.updateTargetSkill(target.workspaceId, target.id, selectedSkillId, {
+      const detail = await dataSource.updateSkill(target.workspaceId, target.id, selectedSkillId, {
         files: toRequestFiles(draftFiles)
       });
       syncSkill(detail);
@@ -270,7 +309,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
     setEditorError(null);
     setEditorSaving(true);
     try {
-      const detail = await controlPlaneApi.createTargetSkill(target.workspaceId, target.id, {
+      const detail = await dataSource.createSkill(target.workspaceId, target.id, {
         files: toRequestFiles(draftFiles)
       });
       await loadCatalog();
@@ -296,7 +335,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
         ref: importDraft.ref?.trim() || undefined,
         subpath: importDraft.subpath?.trim() || undefined
       });
-      const detail = await controlPlaneApi.importTargetSkill(target.workspaceId, target.id, imported);
+      const detail = await dataSource.importSkill(target.workspaceId, target.id, imported);
       setIsImportDialogOpen(false);
       setImportDraft({
         provider: 'github',
@@ -319,7 +358,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
     if (!confirmDeleteSkillId || !canEditSkills) return;
     setPendingDangerAction(confirmDeleteSkillId);
     try {
-      await controlPlaneApi.deleteTargetSkill(target.workspaceId, target.id, confirmDeleteSkillId);
+      await dataSource.deleteSkill(target.workspaceId, target.id, confirmDeleteSkillId);
       removeSkill(confirmDeleteSkillId);
       setConfirmDeleteSkillId(null);
       closeEditor();
@@ -345,7 +384,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
         ref: selectedSkill.source.ref,
         subpath: selectedSkill.source.subpath
       });
-      const detail = await controlPlaneApi.reimportTargetSkill(target.workspaceId, target.id, confirmReimportSkillId, {
+      const detail = await dataSource.reimportSkill(target.workspaceId, target.id, confirmReimportSkillId, {
         ...imported,
         force: confirmForceReimport
       });

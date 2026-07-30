@@ -215,6 +215,7 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
                   key={candidate.userId}
                   id={`${listboxId}-${index}`}
                   type="button"
+                  variant="tertiary"
                   role="option"
                   aria-selected={index === activeIndex}
                   disabled={!available}

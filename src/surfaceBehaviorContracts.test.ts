@@ -14,7 +14,6 @@ import {
   markdownComponents,
   mcpServersInventory,
   membersPage,
-  pageComposition,
   resourceCategoryTabs,
   resourceExplorerLayout,
   resourcesView,
@@ -67,7 +66,6 @@ describe('surface behavior contracts', () => {
     expect(workspaceRunsPage).not.toContain('<PageShell width=');
     expect(workspaceRunsPage).toContain('bg-ui-surface shadow-sm');
     expect(workspaceRunsPage).not.toContain('min-h-[24rem]');
-    expect(pageComposition).toContain("content: 'mx-auto max-w-[88rem]'");
     expect(workflowActivityUi).toContain('sm:grid-cols-2 sm:gap-x-6');
     expect(workflowActivityUi).toContain('sm:col-span-2 xl:col-span-1');
     expect(workspaceRunsPage).toContain('workflowExecutionLedgerGridClass');

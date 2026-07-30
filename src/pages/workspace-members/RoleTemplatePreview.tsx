@@ -83,6 +83,8 @@ export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({ roleTe
         <div className="mt-4">
           <Button
             type="button"
+            variant="tertiary"
+            size="inline"
             aria-expanded={isExpanded}
             aria-controls={expandedPanelId}
             onClick={() => setIsExpanded((expanded) => !expanded)}

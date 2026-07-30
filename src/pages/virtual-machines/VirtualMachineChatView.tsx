@@ -5,6 +5,7 @@ import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
 import { toVirtualMachineTargetDescriptor } from '@/features/targets/targetDescriptor';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { ChatSession, Workspace } from '@/types';
+import { assistantSessionFromLocation } from '@/utils/routes';
 
 interface VirtualMachineChatViewProps {
   vm: ControlPlaneVirtualMachine;
@@ -35,11 +36,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
   const [chatSessions, setChatSessions] = React.useState<ChatSession[]>([]);
   const assistantMarkdownComponents = React.useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = React.useMemo(() => createMarkdownComponents('user'), []);
-  const initialActiveSessionId = React.useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    const session = params.get('session');
-    return session && session.trim().length > 0 ? session : null;
-  }, [vm.id]);
+  const initialActiveSessionId = assistantSessionFromLocation(window.location);
   const target = React.useMemo(
     () => toVirtualMachineTargetDescriptor(vm, chatSessions),
     [chatSessions, vm]
@@ -74,6 +71,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
 
   return (
     <TargetChatView
+      currentUserId={currentUserId}
       target={target}
       isDark={isDark}
       titleKey="virtualMachines.chat.title"
@@ -88,6 +86,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       canChat={canChat}
       isConversationOwner={controller.isActiveSessionOwner}
       conversationNotice={controller.conversationNotice}
+      sessionDeepLinkError={controller.sessionDeepLinkError}
       recentActivityWarning={controller.recentActivityWarning}
       canRequestWriteRuns={false}
       canApproveWriteActions={false}

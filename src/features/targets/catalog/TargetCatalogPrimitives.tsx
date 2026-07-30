@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, type Transition } from 'framer-motion';
 import { ChevronRight, MoreHorizontal } from 'lucide-react';
 
 import { Button } from '@acornops/ui';
@@ -14,27 +15,53 @@ interface TargetCatalogCardProps {
   children: React.ReactNode;
 }
 
-export const TargetCatalogCard: React.FC<TargetCatalogCardProps> = ({ targetKind, actionLabel, disabled = false, onActivate, children }) => {
-  const cardAttribute = targetKind === 'cluster' ? { 'data-cluster-card': 'true' } : { 'data-vm-card': 'true' };
-  const actionAttribute = targetKind === 'cluster' ? { 'data-cluster-card-primary-action': 'true' } : { 'data-vm-card-primary-action': 'true' };
-
+export const ResourceCatalogCard: React.FC<{
+  actionLabel: string;
+  disabled?: boolean;
+  onActivate: () => void;
+  cardAttribute?: Record<string, string>;
+  actionAttribute?: Record<string, string>;
+  layoutMotion?: boolean;
+  layoutTransition?: Transition;
+  children: React.ReactNode;
+}> = ({
+  actionLabel,
+  disabled = false,
+  onActivate,
+  cardAttribute = {},
+  actionAttribute = {},
+  layoutMotion = false,
+  layoutTransition,
+  children
+}) => {
   return (
-    <article
+    <motion.article
       {...cardAttribute}
+      layout={layoutMotion ? 'position' : false}
+      transition={layoutTransition}
       className="group relative flex min-w-0 flex-col overflow-visible rounded-lg border border-ui-border bg-ui-surface shadow-sm transition-colors hover:border-accent/25"
     >
       <Button
         {...actionAttribute}
         type="button"
+        variant="tertiary"
         aria-label={actionLabel}
         disabled={disabled}
         onClick={onActivate}
         className="control-target absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-control-boundary disabled:cursor-not-allowed"
       />
       <div className="pointer-events-none relative z-10 flex min-w-0 flex-col">{children}</div>
-    </article>
+    </motion.article>
   );
 };
+
+export const TargetCatalogCard: React.FC<TargetCatalogCardProps> = ({ targetKind, ...props }) => (
+  <ResourceCatalogCard
+    {...props}
+    cardAttribute={targetKind === 'cluster' ? { 'data-cluster-card': 'true' } : { 'data-vm-card': 'true' }}
+    actionAttribute={targetKind === 'cluster' ? { 'data-cluster-card-primary-action': 'true' } : { 'data-vm-card-primary-action': 'true' }}
+  />
+);
 export const TargetCatalogStatusPill: React.FC<{
   label: string;
   reason: string;
@@ -65,14 +92,15 @@ interface TargetCatalogActionMenuProps {
 
 type MenuFocusTarget = 'first' | 'last';
 
-export const TargetCatalogActionMenu: React.FC<TargetCatalogActionMenuProps> = ({ targetKind, label, open, onOpenChange, children }) => {
+export const ResourceCatalogActionMenu: React.FC<Omit<TargetCatalogActionMenuProps, 'targetKind'> & {
+  triggerAttribute?: Record<string, string>;
+}> = ({ triggerAttribute = {}, label, open, onOpenChange, children }) => {
   const rootRef = React.useRef<HTMLDivElement>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const pendingFocusRef = React.useRef<MenuFocusTarget>('first');
   const onOpenChangeRef = React.useRef(onOpenChange);
   const menuId = React.useId();
-  const triggerAttribute = targetKind === 'cluster' ? { 'data-cluster-overflow-action': 'toggle' } : { 'data-vm-overflow-action': 'toggle' };
 
   const menuItems = React.useCallback(() => Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? []), []);
 
@@ -184,3 +212,10 @@ export const TargetCatalogActionMenu: React.FC<TargetCatalogActionMenuProps> = (
     </div>
   );
 };
+
+export const TargetCatalogActionMenu: React.FC<TargetCatalogActionMenuProps> = ({ targetKind, ...props }) => (
+  <ResourceCatalogActionMenu
+    {...props}
+    triggerAttribute={targetKind === 'cluster' ? { 'data-cluster-overflow-action': 'toggle' } : { 'data-vm-overflow-action': 'toggle' }}
+  />
+);

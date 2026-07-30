@@ -28,6 +28,7 @@ export const appShell = readSource('src/app/AppShell.tsx');
 export const appTargetChatRuntime = readSource('src/app/AppClusterChatRuntime.tsx');
 export const appPageContent = readSource('src/app/AppPageContent.tsx');
 export const appDialogs = readSource('src/app/AppDialogs.tsx');
+export const agentChatPanel = readSource('src/pages/agents/AgentChatPanel.tsx');
 export const workloadExplorerParts = readSource(
   'src/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts.tsx'
 );
@@ -67,11 +68,17 @@ export const targetSkillsView = readSource(
 export const chatView = [
   readSource('src/features/targets/chat/components/TargetChatView.tsx'),
   readSource('src/features/targets/chat/components/TargetChatViewBody.tsx'),
+  readSource('src/features/targets/chat/components/TargetChatDropOverlay.tsx'),
+  readSource('src/features/targets/chat/components/TargetChatNavigationRail.tsx'),
+  readSource('src/features/targets/chat/components/TargetChatHistoryRail.tsx'),
   readSource('src/features/targets/chat/components/useTargetChatHistoryWorkspace.ts'),
   readSource('src/features/targets/chat/components/TargetChatComposer.tsx'),
   readSource('src/features/targets/chat/components/TargetAssistantReadinessState.tsx'),
   readSource('src/features/targets/chat/components/targetChatViewHelpers.ts')
 ].join('\n');
+export const assistantCapabilityPreviewControl = readSource(
+  'src/features/targets/chat/components/AssistantCapabilityPreviewControl.tsx'
+);
 export const assistantTurn = readSource(
   'src/features/targets/chat/components/AssistantTurn.tsx'
 );

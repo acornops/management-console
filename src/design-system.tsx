@@ -155,8 +155,8 @@ const Catalog = () => {
             onValueChange={setCatalogFilter}
           />
           <div className="flex flex-wrap items-center gap-3" data-catalog-control-sizes="true">
-            <Button size="md" data-catalog-control="default">Default action</Button>
-            <Button size="sm" data-catalog-control="compact">Compact action</Button>
+            <Button variant="secondary" size="md" data-catalog-control="default">Default action</Button>
+            <Button variant="secondary" size="sm" data-catalog-control="compact">Compact action</Button>
             <Button variant="icon" size="icon" aria-label="Catalog icon action" data-catalog-control="icon"><MoreHorizontal className="h-4 w-4" /></Button>
             <CloseButton aria-label="Catalog close action" data-catalog-control="close" />
             <button type="button" className="control-target rounded-md border border-ui-border px-3 type-ui" data-catalog-control="raw">Local action</button>
@@ -285,7 +285,7 @@ const Catalog = () => {
 
       <PageSection title="Data surfaces">
         <div className="grid gap-4 xl:grid-cols-2">
-          <DataSurface heading="Ready" count="12 targets" toolbar={<Button size="sm">Filter</Button>}><div className="p-surface type-body">Page code supplies data and semantic intent.</div></DataSurface>
+          <DataSurface heading="Ready" count="12 targets" toolbar={<Button variant="secondary" size="sm">Filter</Button>}><div className="p-surface type-body">Page code supplies data and semantic intent.</div></DataSurface>
           <DataSurface heading="Loading" state="loading" loading={<div className="space-y-2 p-surface" aria-label="Loading"><div className="h-10 rounded-md bg-ui-bg" /><div className="h-10 rounded-md bg-ui-bg" /></div>} />
           <DataSurface heading="Empty" state="empty" empty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No schedules yet" description="Create one to automate a governed workflow." />} />
           <DataSurface heading="Filtered empty" state="filtered-empty" filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No matching schedules" description="Clear the active filters to return to all schedules." />} />
@@ -389,7 +389,7 @@ const Catalog = () => {
         </div>
       </PageSection>
 
-      <PageSection title="Overlays" actions={<><Button onClick={() => setDialogOpen(true)}>Open dialog</Button><Button onClick={() => setDrawerOpen(true)}>Open drawer</Button><Button variant="danger" onClick={() => setDestructiveDialogOpen(true)}>Open destructive dialog</Button></>}>
+      <PageSection title="Overlays" actions={<><Button variant="secondary" onClick={() => setDialogOpen(true)}>Open dialog</Button><Button variant="secondary" onClick={() => setDrawerOpen(true)}>Open drawer</Button><Button variant="danger" onClick={() => setDestructiveDialogOpen(true)}>Open destructive dialog</Button></>}>
         <p className="type-body text-ui-text-muted">Both frames share close controls, focus containment, restoration, padding, and footer anatomy.</p>
       </PageSection>
 

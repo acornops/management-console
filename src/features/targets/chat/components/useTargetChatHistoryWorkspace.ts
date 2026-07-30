@@ -15,7 +15,10 @@ interface UseTargetChatHistoryWorkspaceArgs {
   setIsHistoryOpen: React.Dispatch<React.SetStateAction<boolean>>;
   selectSession: (sessionId: string) => void;
   handleCreateSessionClick: () => void;
+  onInvestigationsViewed?: () => void | Promise<void>;
 }
+
+export type ChatHistoryView = 'chats' | 'investigations';
 
 export function useTargetChatHistoryWorkspace({
   desktopHistoryPanelId,
@@ -23,9 +26,11 @@ export function useTargetChatHistoryWorkspace({
   isHistoryOpen,
   setIsHistoryOpen,
   selectSession,
-  handleCreateSessionClick
+  handleCreateSessionClick,
+  onInvestigationsViewed = () => {}
 }: UseTargetChatHistoryWorkspaceArgs) {
   const [isHistorySearchPageOpen, setIsHistorySearchPageOpen] = React.useState(false);
+  const [historyView, setHistoryView] = React.useState<ChatHistoryView>('chats');
   const [historySearchValue, setHistorySearchValue] = React.useState('');
   const [historyPanelWidth, setHistoryPanelWidth] = React.useState(CHAT_HISTORY_DEFAULT_WIDTH);
   const [historyPanelMaxWidth, setHistoryPanelMaxWidth] = React.useState(CHAT_HISTORY_MAX_WIDTH);
@@ -52,18 +57,32 @@ export function useTargetChatHistoryWorkspace({
     focusHistorySearch();
   };
 
-  const toggleHistoryChats = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const toggleHistoryView = (
+    view: ChatHistoryView,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
     historyButtonRef.current = event.currentTarget;
     setIsHistorySearchPageOpen(false);
     setHistorySearchValue('');
-    if (!isHistoryOpen) {
+    if (view === 'investigations') {
+      void onInvestigationsViewed();
+    }
+    if (!isHistoryOpen || historyView !== view) {
       const restoredWidth = clampChatHistoryOpenWidth(lastOpenHistoryPanelWidthRef.current, window.innerWidth);
       historyPanelWidthRef.current = restoredWidth;
       pendingHistoryPanelWidthRef.current = restoredWidth;
       setHistoryPanelWidth(restoredWidth);
+      setHistoryView(view);
+      setIsHistoryOpen(true);
+      return;
     }
-    setIsHistoryOpen(!isHistoryOpen);
+    setIsHistoryOpen(false);
   };
+
+  const toggleHistoryChats = (event: React.MouseEvent<HTMLButtonElement>) =>
+    toggleHistoryView('chats', event);
+  const toggleHistoryInvestigations = (event: React.MouseEvent<HTMLButtonElement>) =>
+    toggleHistoryView('investigations', event);
 
   const selectSessionFromSearch = (sessionId: string) => {
     setIsHistorySearchPageOpen(false);
@@ -221,7 +240,9 @@ export function useTargetChatHistoryWorkspace({
     historyPanelWidth,
     historySearchPageId,
     historySearchValue,
-    isChatsRailActive: isHistoryOpen,
+    historyView,
+    isChatsRailActive: isHistoryOpen && historyView === 'chats',
+    isInvestigationsRailActive: isHistoryOpen && historyView === 'investigations',
     isHistorySearchPageOpen,
     isSearchRailActive: isHistorySearchPageOpen,
     moveHistoryResize,
@@ -230,6 +251,7 @@ export function useTargetChatHistoryWorkspace({
     selectSessionFromSearch,
     setHistorySearchValue,
     startHistoryResize,
-    toggleHistoryChats
+    toggleHistoryChats,
+    toggleHistoryInvestigations
   };
 }

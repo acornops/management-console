@@ -1,7 +1,12 @@
 import { ControlPlaneRequestError } from './http';
 import { AppPaths } from '@/utils/routes';
 
-export type McpReadinessAction = 'connect_mcp_server' | 'verify_mcp_server';
+export type McpReadinessAction =
+  | 'connect_mcp_server'
+  | 'authorize_mcp_server'
+  | 'select_authorization_server'
+  | 'reauthorize_mcp_server'
+  | 'verify_mcp_server';
 export type McpReadinessFailureCode =
   | 'MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED'
   | 'MCP_CONNECTION_MISSING'
@@ -47,8 +52,14 @@ function boundedIdentifier(value: unknown): string | undefined {
 }
 
 function parseAction(value: unknown): McpReadinessAction | undefined {
-  return value === 'connect_mcp_server' || value === 'verify_mcp_server'
-    ? value
+  return [
+    'connect_mcp_server',
+    'authorize_mcp_server',
+    'select_authorization_server',
+    'reauthorize_mcp_server',
+    'verify_mcp_server'
+  ].includes(String(value))
+    ? value as McpReadinessAction
     : undefined;
 }
 
@@ -102,15 +113,12 @@ export function agentMcpConfigurationPath(input: {
   serverId?: string;
   action?: McpReadinessAction;
 }): string {
-  const params = new URLSearchParams({
-    agent: input.agentId,
-    panel: 'profile',
-    agentTab: 'capabilities',
-    capabilityTab: 'mcp'
-  });
+  const params = new URLSearchParams();
   if (input.serverId) params.set('mcpServer', input.serverId);
   if (input.action) params.set('mcpAction', input.action);
-  return `${AppPaths.workspaceAgents(input.workspaceId)}?${params.toString()}`;
+  const path = AppPaths.workspaceAgentDetail(input.workspaceId, input.agentId, 'mcpServers');
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
 }
 
 function recoveryPath(context: RecoveryContext, failure?: McpReadinessFailure): string {
@@ -166,6 +174,10 @@ function recoveryLabel(
 ): string {
   if (failure?.code === 'MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED') return 'Review credential ownership';
   if (failure?.action === 'connect_mcp_server') return 'Connect the required MCP server';
+  if (failure?.action === 'authorize_mcp_server' || failure?.action === 'select_authorization_server') {
+    return 'Authorize the required MCP server';
+  }
+  if (failure?.action === 'reauthorize_mcp_server') return 'Reauthorize the required MCP server';
   if (failure?.action === 'verify_mcp_server') return 'Verify the required MCP server';
   if (context.scopeType === 'target' && failure?.code === 'MCP_INSTALLATION_UNAVAILABLE') {
     return 'Review target MCP tools';

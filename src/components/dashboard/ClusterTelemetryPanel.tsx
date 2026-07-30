@@ -267,7 +267,7 @@ export const ClusterTelemetryPanel: React.FC<{
           )}
         </div>
         {trendSummary}
-        <div className="type-caption mt-1.5 flex min-w-0 items-center justify-between gap-3 type-ui text-ui-text-muted" aria-hidden="true">
+        <div className="type-caption mt-1.5 flex min-w-0 items-center justify-between gap-3 text-ui-text-muted" aria-hidden="true">
           <span>{axisStartLabel}</span>
           <span className="min-w-0 truncate text-center">{t('dashboard.telemetryAxisLabel')}</span>
           <span>{axisEndLabel}</span>

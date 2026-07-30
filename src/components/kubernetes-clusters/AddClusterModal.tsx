@@ -228,6 +228,8 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                   <span className="type-micro-label">{t('clusterSetup.installCommand')}</span>
                   <Button
                     type="button"
+                    variant="icon"
+                    size="icon"
                     onClick={() => void copyInstallCommand()}
                     className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text"
                     aria-label={hasCopiedCommand ? t('clusterSetup.copied') : t('clusterSetup.copy')}

@@ -257,7 +257,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             }
             action={
               authMethods?.capabilities.canChangePassword ? (
-                <Button size="sm" onClick={() => setActiveDialog('password')}>
+                <Button variant="secondary" size="sm" onClick={() => setActiveDialog('password')}>
                   {t('settings.changePassword')}
                 </Button>
               ) : undefined
@@ -275,7 +275,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             }
             action={
               authMethods?.capabilities.canLinkOidc ? (
-                <Button size="sm" onClick={() => setActiveDialog('sso')}>
+                <Button variant="secondary" size="sm" onClick={() => setActiveDialog('sso')}>
                   {t('settings.connectSso')}
                 </Button>
               ) : undefined

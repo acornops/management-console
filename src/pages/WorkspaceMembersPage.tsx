@@ -442,6 +442,8 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                       >
                         <Button
                           type="button"
+                          variant="tertiary"
+                          size="icon"
                           onClick={() => openMember(member)}
                           className="control-target rounded-lg p-2 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                           aria-label={t('members.manageNamed', {

@@ -349,6 +349,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
           />
           <Button
             type="button"
+            variant="tertiary"
             onMouseDown={(event) => {
               event.preventDefault();
               suppressRenameBlurRef.current = true;
@@ -373,12 +374,14 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
       <Button
         key={file.path}
         type="button"
+        variant="tertiary"
+        size="sm"
         onClick={() => {
           setSelectedFolderPath('');
           onActiveFilePathChange(file.path);
         }}
         onDoubleClick={() => startRename({ type: 'file', path: file.path })}
-        className={`control-target relative flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left type-caption transition-colors ${
+        className={`control-target relative flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left transition-colors ${
           activeFilePath === file.path ? 'bg-accent-soft/20 text-accent-strong' : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
         } ${className}`}
         style={{ paddingLeft: `${0.625 + depth * 1.1}rem` }}
@@ -427,6 +430,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
           />
           <Button
             type="button"
+            variant="tertiary"
             onMouseDown={(event) => {
               event.preventDefault();
               suppressFileActionBlurRef.current = true;
@@ -461,6 +465,8 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
           >
             <Button
               type="button"
+              variant="tertiary"
+              size="icon"
               onClick={(event) => {
                 event.stopPropagation();
                 toggleFolderCollapsed(folder.path);
@@ -472,6 +478,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             </Button>
             <Button
               type="button"
+              variant="tertiary"
               onClick={() => setSelectedFolderPath(folder.path)}
               onDoubleClick={() => startRename({ type: 'folder', path: folder.path })}
               className="control-target flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-left"
@@ -496,6 +503,8 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
           <div className="flex gap-1">
             <Button
               type="button"
+              variant="tertiary"
+              size="icon"
               className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
               disabled={!canEditSkills}
               onClick={() => openFileAction('file')}
@@ -506,6 +515,8 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             </Button>
             <Button
               type="button"
+              variant="tertiary"
+              size="icon"
               className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
               disabled={!canEditSkills}
               onClick={() => openFileAction('folder')}

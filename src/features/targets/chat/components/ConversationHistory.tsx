@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { History, MessageSquare, Plus, Search, Trash2 } from 'lucide-react';
+import { Bot, History, MessageSquare, Plus, Search, Trash2 } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
@@ -22,6 +22,7 @@ interface ConversationHistoryProps {
   canCreateSession?: boolean;
   id?: string;
   mode?: 'page' | 'panel';
+  sessionOrigin?: 'all' | 'manual' | 'auto_triage';
   newChatUnavailableReason?: string;
   onCreateSession?: () => void;
   onSelectSession: (sessionId: string) => void;
@@ -57,6 +58,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   canCreateSession = true,
   id,
   mode = 'panel',
+  sessionOrigin = 'all',
   newChatUnavailableReason = '',
   onCreateSession,
   onSelectSession,
@@ -67,10 +69,16 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   t
 }) => {
   const isPage = mode === 'page';
+  const isInvestigations = sessionOrigin === 'auto_triage';
   const [showLoadingNotice, setShowLoadingNotice] = useState(false);
   const isInitialLoading = isSessionsLoading && sessions.length === 0;
   const normalizedSearchValue = searchValue.trim().toLocaleLowerCase();
-  const visibleSessions = normalizedSearchValue ? sessions.filter((session) => session.name.toLocaleLowerCase().includes(normalizedSearchValue)) : sessions;
+  const scopedSessions = sessionOrigin === 'all'
+    ? sessions
+    : sessions.filter((session) => (session.origin || 'manual') === sessionOrigin);
+  const visibleSessions = normalizedSearchValue
+    ? scopedSessions.filter((session) => session.name.toLocaleLowerCase().includes(normalizedSearchValue))
+    : scopedSessions;
 
   useEffect(() => {
     if (!isSessionsLoading) {
@@ -99,10 +107,16 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <History className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                <h2 className="type-panel-title text-ui-text">{t('chat.chats')}</h2>
+                {isInvestigations
+                  ? <Bot className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                  : <History className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />}
+                <h2 className="type-panel-title text-ui-text">
+                  {isInvestigations ? t('chat.investigations') : t('chat.chats')}
+                </h2>
               </div>
-              <p className="type-caption mt-1 truncate text-ui-text-muted">{t('chat.historyContext', { name: appName })}</p>
+              <p className="type-caption mt-1 truncate text-ui-text-muted">
+                {t(isInvestigations ? 'chat.investigationsContext' : 'chat.historyContext', { name: appName })}
+              </p>
             </div>
             {onClose && <CloseButton onClick={onClose} label={t('chat.closeHistory')} />}
           </div>
@@ -137,8 +151,12 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         }
         empty={
           <div className="px-4 py-10 text-center">
-            <MessageSquare className="mx-auto mb-3 h-8 w-8 text-ui-border" />
-            <p className="type-caption type-emphasis text-ui-text-muted">{t('chat.noConversations')}</p>
+            {isInvestigations
+              ? <Bot className="mx-auto mb-3 h-8 w-8 text-ui-border" />
+              : <MessageSquare className="mx-auto mb-3 h-8 w-8 text-ui-border" />}
+            <p className="type-caption type-emphasis text-ui-text-muted">
+              {t(isInvestigations ? 'chat.noInvestigations' : 'chat.noConversations')}
+            </p>
           </div>
         }
         error={null}
@@ -157,6 +175,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
             >
               <Button
                 type="button"
+                variant="tertiary"
                 onClick={() => {
                   onSelectSession(session.id);
                   onClose?.();
@@ -172,21 +191,52 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                   <>
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="truncate type-body type-emphasis text-ui-text">{session.name}</span>
+                      {session.origin === 'auto_triage' && (
+                        <span
+                          className="inline-flex shrink-0 text-ui-text-muted"
+                          aria-label={t('chat.automaticInvestigation')}
+                          title={t('chat.automaticInvestigation')}
+                        >
+                          <Bot className="h-3 w-3" aria-hidden="true" />
+                        </span>
+                      )}
                       <AssistantNavStatusIndicator status={assistantStatus} label={assistantStatusLabel} withTooltip={false} />
                     </span>
                     <span className="type-caption whitespace-nowrap text-ui-text-muted">{formatSessionTime(session.timestamp)}</span>
                   </>
                 ) : (
                   <>
-                    <History className={`mt-0.5 h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />
+                    {isInvestigations
+                      ? <Bot className={`mt-0.5 h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />
+                      : <History className={`mt-0.5 h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />}
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
                         <p className="min-w-0 flex-1 truncate type-body type-emphasis text-ui-text">{session.name}</p>
                         <AssistantNavStatusIndicator status={assistantStatus} label={assistantStatusLabel} withTooltip={false} />
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 type-caption">
+                        {isInvestigations && assistantStatusLabel && <span>{assistantStatusLabel}</span>}
+                        {isInvestigations && (session.automaticInvestigation?.scopeKind || session.automaticInvestigation?.scopeName) && (
+                          <span className="type-micro-label max-w-full truncate font-mono">
+                            {[
+                              session.automaticInvestigation.scopeKind,
+                              session.automaticInvestigation.scopeName
+                            ].filter(Boolean).join(':')}
+                          </span>
+                        )}
+                        {isInvestigations && (session.automaticInvestigation?.objectName || session.automaticInvestigation?.objectKind) && (
+                          <span className="type-micro-label max-w-full truncate font-mono">
+                            {[
+                              session.automaticInvestigation.objectKind,
+                              session.automaticInvestigation.objectName
+                            ].filter(Boolean).join('/')}
+                          </span>
+                        )}
+                        {isInvestigations && session.automaticInvestigation?.severity && (
+                          <span>{t(`chat.issueSeverity.${session.automaticInvestigation.severity}`)}</span>
+                        )}
                         <span>{formatSessionTime(session.timestamp)}</span>
-                        {session.createdByUser?.displayName && (
+                        {!isInvestigations && session.createdByUser?.displayName && (
                           <>
                             <span aria-hidden="true" className="text-ui-text-muted/70">
                               ·
@@ -194,7 +244,11 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                             <span>{session.createdByUser.displayName}</span>
                           </>
                         )}
-                        {isRecentSession(session.timestamp) && <span className="rounded border border-ui-border bg-ui-surface px-1.5 py-0.5 text-ui-text-muted">Recent</span>}
+                        {isRecentSession(session.timestamp) && (
+                          <span className="rounded border border-ui-border bg-ui-surface px-1.5 py-0.5 text-ui-text-muted">
+                            {t('chat.recent')}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </>
@@ -203,6 +257,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
               {canDeleteSessions && (
                 <Button
                   type="button"
+                  variant="tertiary"
                   onClick={() => onDeleteSessionClick(session.id)}
                   className="control-target absolute right-3 top-3 rounded-md p-1 text-ui-text-muted opacity-0 transition-opacity hover:bg-ui-surface hover:text-status-danger-text group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   title={t('chat.deleteConversation')}

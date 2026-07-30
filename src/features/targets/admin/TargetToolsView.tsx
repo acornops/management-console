@@ -8,13 +8,11 @@ import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acorno
 import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
-import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
   ControlPlaneTargetToolItem,
   ControlPlaneTargetToolsCatalog
 } from '@/services/controlPlaneApi';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 import { TargetInsightsActivityDialog } from '@/features/targets/admin/TargetInsightsActivityDialog';
 import { TargetInsightsDialog } from '@/features/targets/admin/TargetInsightsDialog';
 import { TargetInsightsResetDialog } from '@/features/targets/admin/TargetInsightsResetDialog';
@@ -23,129 +21,32 @@ import { TargetToolRow } from '@/features/targets/admin/TargetToolRow';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
 import { TextInput, Textarea } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
+import {
+  draftFromTool,
+  parseDomainList,
+  summarizeDomainFilters,
+  summarizeToolConfig,
+  targetToolsDataSource,
+  toolCapability,
+  toolCapabilityLabel,
+  toolDomainTextareaClassName,
+  toolRuntimeKind,
+  toolRuntimeLabel,
+  toolSearchInputClassName,
+  type TargetInsightsAction,
+  type TargetToolsDataSource,
+  type TargetToolsViewProps,
+  type ToolDraft
+} from '@/features/targets/admin/TargetToolsView.helpers';
 
-interface TargetToolsViewProps {
-  target: TargetDescriptor;
-  canManageTools?: boolean;
-  initialCatalog?: ControlPlaneTargetToolsCatalog | null;
-  onCatalogChange?: (catalog: ControlPlaneTargetToolsCatalog) => void;
-}
-
-interface ToolDraft {
-  enabled: boolean;
-  allowedDomainsText: string;
-  blockedDomainsText: string;
-}
-
-type TargetInsightsAction = 'files' | 'settings' | 'activity' | 'reset';
-
-const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 type-body');
-const toolDomainTextareaClassName = formTextareaClassName('mt-2');
-
-function splitDomainInput(value: string): string[] {
-  return value
-    .split(/\n+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function normalizeDomain(value: string): string {
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) throw new Error('empty');
-  if (
-    normalized.includes('://') ||
-    normalized.includes('/') ||
-    normalized.includes('\\') ||
-    normalized.includes(':') ||
-    normalized.includes('*') ||
-    normalized.includes('?') ||
-    normalized.includes('#')
-  ) {
-    throw new Error('invalid');
-  }
-  if (normalized.length > 253) throw new Error('invalid');
-  const labels = normalized.split('.');
-  if (labels.length < 2 || labels.some((label) => !label)) throw new Error('invalid');
-  for (const label of labels) {
-    if (label.length > 63 || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)) {
-      throw new Error('invalid');
-    }
-  }
-  return normalized;
-}
-
-function parseDomainList(value: string, label: string, t: (key: string, options?: Record<string, unknown>) => string): string[] {
-  const seen = new Set<string>();
-  return splitDomainInput(value).map((entry) => {
-    let normalized: string;
-    try {
-      normalized = normalizeDomain(entry);
-    } catch {
-      throw new Error(t('tools.validation.invalidDomain', { label, domain: entry }));
-    }
-    if (seen.has(normalized)) {
-      throw new Error(t('tools.validation.duplicateDomain', { label, domain: normalized }));
-    }
-    seen.add(normalized);
-    return normalized;
-  });
-}
-
-function getDomainFilters(tool: ControlPlaneTargetToolItem) {
-  return {
-    allowedDomains: tool.config?.domainFilters?.allowedDomains || [],
-    blockedDomains: tool.config?.domainFilters?.blockedDomains || []
-  };
-}
-
-function draftFromTool(tool: ControlPlaneTargetToolItem): ToolDraft {
-  const domainFilters = getDomainFilters(tool);
-  return {
-    enabled: tool.enabled,
-    allowedDomainsText: domainFilters.allowedDomains.join('\n'),
-    blockedDomainsText: domainFilters.blockedDomains.join('\n')
-  };
-}
-
-function summarizeDomainFilters(tool: ControlPlaneTargetToolItem, t: (key: string, options?: Record<string, unknown>) => string): string {
-  const domainFilters = getDomainFilters(tool);
-  const allowed = domainFilters.allowedDomains.length;
-  const blocked = domainFilters.blockedDomains.length;
-  if (allowed === 0 && blocked === 0) return t('tools.domainSummaryAllDomains');
-  if (allowed > 0 && blocked > 0) return t('tools.domainSummaryAllowedBlocked', { allowed, blocked });
-  if (allowed > 0) return t('tools.domainSummaryAllowedOnly', { count: allowed });
-  return t('tools.domainSummaryBlockedOnly', { count: blocked });
-}
-
-function summarizeToolConfig(tool: ControlPlaneTargetToolItem, t: (key: string, options?: Record<string, unknown>) => string): string {
-  if (tool.origin === 'platform_native') return t('tools.platformNativeSummary');
-  if (tool.id !== 'target_insights') return summarizeDomainFilters(tool, t);
-  if (tool.readiness && !tool.readiness.learningAvailable) return 'Learning paused';
-  const maxSnippets = tool.config.retrieval?.maxSnippetsPerRetrieval || 4;
-  return `Retrieves up to ${maxSnippets} snippets`;
-}
-
-function toolRuntimeKind(tool: ControlPlaneTargetToolItem): 'provider_native' | 'function' {
-  return tool.runtimeKind || 'function';
-}
-
-function toolRuntimeLabel(tool: ControlPlaneTargetToolItem, t: (key: string) => string): string {
-  return t(toolRuntimeKind(tool) === 'provider_native' ? 'tools.runtimeProviderNative' : 'tools.runtimeFunction');
-}
-
-function toolCapability(tool: ControlPlaneTargetToolItem): 'read' | 'write' {
-  return tool.capability === 'write' ? 'write' : 'read';
-}
-
-function toolCapabilityLabel(tool: ControlPlaneTargetToolItem, t: (key: string) => string): string {
-  return t(toolCapability(tool) === 'write' ? 'tools.capabilityWrite' : 'tools.capabilityRead');
-}
+export type { TargetToolsDataSource } from '@/features/targets/admin/TargetToolsView.helpers';
 
 export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   target,
   canManageTools = false,
   initialCatalog = null,
-  onCatalogChange
+  onCatalogChange,
+  dataSource = targetToolsDataSource
 }) => {
   const { t } = useTranslation();
 
@@ -209,18 +110,19 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       return matchesSearch && matchesFilter;
     });
   }, [catalog, t, toolFilter, toolSearch]);
+  const hasActiveFilters = Boolean(toolSearch.trim()) || toolFilter !== 'all';
 
   const loadCatalog = React.useCallback(async () => {
     setCatalogLoading(true);
     setCatalogError(null);
     try {
-      setCatalog(await controlPlaneApi.listTargetTools(target.workspaceId, target.id));
+      setCatalog(await dataSource.listTools(target.workspaceId, target.id));
     } catch (error) {
       setCatalogError(formatError(error, t('tools.loadFailed'), 'targetTools'));
     } finally {
       setCatalogLoading(false);
     }
-  }, [target.id, target.workspaceId, t]);
+  }, [dataSource, target.id, target.workspaceId, t]);
 
   React.useEffect(() => {
     void loadCatalog();
@@ -313,7 +215,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     if (!draftRequest.request) return;
     setSaving(true);
     try {
-      const updated = await controlPlaneApi.updateTargetTool(
+      const updated = await dataSource.updateTool(
         target.workspaceId,
         target.id,
         editingTool.id,
@@ -337,7 +239,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     setPendingToolId(tool.id);
     setCatalogError(null);
     try {
-      const updated = await controlPlaneApi.updateTargetTool(
+      const updated = await dataSource.updateTool(
         target.workspaceId,
         target.id,
         tool.id,
@@ -435,30 +337,32 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
           </section>
 
           <section data-target-tools-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-            <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
-              <div className="relative min-w-0">
-                <label htmlFor="target-tool-search" className="sr-only">{t('tools.searchTools')}</label>
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-                <TextInput
-                  id="target-tool-search"
-                  type="text"
-                  value={toolSearch}
-                  onChange={(event) => setToolSearch(event.target.value)}
-                  placeholder={t('tools.searchTools')}
-                  className={toolSearchInputClassName}
+            {(catalog.items.length > 0 || hasActiveFilters) && (
+              <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
+                <div className="relative min-w-0">
+                  <label htmlFor="target-tool-search" className="sr-only">{t('tools.searchTools')}</label>
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
+                  <TextInput
+                    id="target-tool-search"
+                    type="text"
+                    value={toolSearch}
+                    onChange={(event) => setToolSearch(event.target.value)}
+                    placeholder={t('tools.searchTools')}
+                    className={toolSearchInputClassName}
+                  />
+                </div>
+                <Select<typeof toolFilter>
+                  value={toolFilter}
+                  options={toolFilterOptions}
+                  onChange={setToolFilter}
+                  className="w-full"
+                  ariaLabel={t('tools.filterTools')}
                 />
+                <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
+                  {t('tools.showingTools', { count: filteredTools.length, total: catalog.items.length })}
+                </span>
               </div>
-              <Select<typeof toolFilter>
-                value={toolFilter}
-                options={toolFilterOptions}
-                onChange={setToolFilter}
-                className="w-full"
-                ariaLabel={t('tools.filterTools')}
-              />
-              <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
-                {t('tools.showingTools', { count: filteredTools.length, total: catalog.items.length })}
-              </span>
-            </div>
+            )}
             <div className="min-w-0">
               <DataTable caption={t('tools.title')} className="w-full table-fixed text-left" aria-label={t('tools.title')}>
                 <colgroup>

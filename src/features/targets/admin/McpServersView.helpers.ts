@@ -14,12 +14,12 @@ export interface ServerToolsPageState {
 
 export function getOptimisticToolEffectiveState(
   server: Pick<TargetToolCatalogServer, 'enabled'>,
-  tool: Pick<TargetToolCatalogItem, 'effectiveDisabledReason'>,
+  tool: Pick<TargetToolCatalogItem, 'capability' | 'effectiveDisabledReason'>,
   enabledConfigured: boolean
 ): Pick<TargetToolCatalogItem, 'enabledEffective' | 'effectiveDisabledReason'> {
   if (!enabledConfigured) return { enabledEffective: false, effectiveDisabledReason: null };
   if (!server.enabled) return { enabledEffective: false, effectiveDisabledReason: 'server_disabled' };
-  if (tool.effectiveDisabledReason === 'agent_write_disabled') {
+  if (tool.capability === 'write' && tool.effectiveDisabledReason === 'agent_write_disabled') {
     return { enabledEffective: false, effectiveDisabledReason: 'agent_write_disabled' };
   }
   return { enabledEffective: true, effectiveDisabledReason: null };
@@ -31,17 +31,16 @@ export function applyToolCountsDelta(
   nextTool: TargetToolCatalogItem
 ): TargetToolCatalogServer['toolCounts'] {
   const delta = (nextValue: boolean, previousValue: boolean) => Number(nextValue) - Number(previousValue);
-  const isWrite = previousTool.capability === 'write';
+  const wasConfiguredWrite = previousTool.capability === 'write' && previousTool.enabledConfigured;
+  const isConfiguredWrite = nextTool.capability === 'write' && nextTool.enabledConfigured;
+  const wasEffectiveWrite = previousTool.capability === 'write' && previousTool.enabledEffective;
+  const isEffectiveWrite = nextTool.capability === 'write' && nextTool.enabledEffective;
   return {
     ...counts,
     enabledConfigured: counts.enabledConfigured + delta(nextTool.enabledConfigured, previousTool.enabledConfigured),
     enabledEffective: counts.enabledEffective + delta(nextTool.enabledEffective, previousTool.enabledEffective),
-    writeConfigured: isWrite
-      ? counts.writeConfigured + delta(nextTool.enabledConfigured, previousTool.enabledConfigured)
-      : counts.writeConfigured,
-    writeEffective: isWrite
-      ? counts.writeEffective + delta(nextTool.enabledEffective, previousTool.enabledEffective)
-      : counts.writeEffective
+    writeConfigured: counts.writeConfigured + delta(isConfiguredWrite, wasConfiguredWrite),
+    writeEffective: counts.writeEffective + delta(isEffectiveWrite, wasEffectiveWrite)
   };
 }
 

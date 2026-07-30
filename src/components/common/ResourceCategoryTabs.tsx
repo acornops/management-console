@@ -124,6 +124,7 @@ export const ResourceCategoryTabs = <T extends string>({
               tabRefs.current[index] = element;
             }}
             type="button"
+            variant="tertiary"
             role="tab"
             id={`${idBase}-${tab.value}-tab`}
             aria-controls={controlsId}
@@ -134,12 +135,12 @@ export const ResourceCategoryTabs = <T extends string>({
             className={twMerge(
               clsx(
                 'relative inline-flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-4 type-ui text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25',
-                tab.isActive ? 'border-transparent text-accent-readable' : 'border-transparent hover:text-ui-text'
+                tab.isActive ? 'border-transparent text-ui-text' : 'border-transparent hover:text-ui-text'
               )
             )}
           >
             <span>{tab.label}</span>
-            {typeof tab.count === 'number' && <span className="type-data type-caption text-ui-text-muted">{tab.count}</span>}
+            {typeof tab.count === 'number' && <span className="type-count">{tab.count}</span>}
             {tab.isActive && <ActiveTabIndicator />}
           </Button>
         ))}

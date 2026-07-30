@@ -108,7 +108,7 @@ export const InfrastructureRow: React.FC<{
 
   if (onClick) {
     return (
-      <Button type="button" onClick={onClick} aria-label={`${t('workloads.details')}: ${title}`} className={`control-target ${rowClassName}`}>
+      <Button variant="tertiary" type="button" onClick={onClick} aria-label={`${t('workloads.details')}: ${title}`} className={`control-target ${rowClassName}`}>
         {content}
       </Button>
     );

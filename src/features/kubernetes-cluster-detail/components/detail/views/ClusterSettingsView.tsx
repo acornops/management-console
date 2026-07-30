@@ -7,6 +7,7 @@ import { Select, SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
+import { TargetAutoTriageSettingsSection } from '@/features/targets/auto-triage/TargetAutoTriageSettingsSection';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState } from '@/utils/telemetry';
@@ -17,6 +18,7 @@ interface ClusterSettingsViewProps {
   workspaceName?: string;
   canManageCluster?: boolean;
   canManageAgentKeys?: boolean;
+  canCreateReadWriteRuns?: boolean;
   onUpdateName?: (name: string) => void | Promise<void>;
   onEditNamespaceScope?: () => void;
   onUpdateWriteConfirmationPolicy?: (overrideRequired: boolean | null) => void | Promise<void>;
@@ -93,6 +95,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   workspaceName,
   canManageCluster = false,
   canManageAgentKeys = false,
+  canCreateReadWriteRuns = false,
   onUpdateName,
   onEditNamespaceScope,
   onUpdateWriteConfirmationPolicy,
@@ -265,7 +268,18 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
           />
         </SettingSection>
 
-        <SettingSection title={t('clusterSettings.writeSafetyTitle')} description={t('clusterSettings.writeSafetyBody')}>
+        <TargetAutoTriageSettingsSection
+          workspaceId={cluster.workspaceId}
+          targetId={cluster.id}
+          targetType="kubernetes"
+          canManageTargets={canManageCluster}
+          canCreateReadWriteRuns={canCreateReadWriteRuns}
+        />
+
+        <SettingSection
+          title={t('clusterSettings.writeSafetyTitle')}
+          description={t('clusterSettings.writeSafetyBody')}
+        >
           <SettingRow
             icon={ICONS.Shield}
             label={t('clusterSetup.writeConfirmations')}

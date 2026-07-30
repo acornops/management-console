@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
-import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
@@ -10,11 +9,14 @@ import { MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, Ma
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
+import { McpOAuthDialog } from '@/features/catalog/McpOAuthDialog';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
-import { appendWorkflowSearchTag, type WorkflowAgentReference, type WorkflowDefinition, type WorkflowPrimaryAction, type WorkflowTab } from '@/pages/workflows/workflowModel';
+import { appendWorkflowSearchTag, type WorkflowAgentReference, type WorkflowDefinition, type WorkflowTab } from '@/pages/workflows/workflowModel';
 import { titleFromInputName, workflowStatusTone } from '@/pages/workflows/workflowPageHelpers';
 import { formatUserDateTime } from '@/utils/dateTime';
 import type { WorkflowCapabilitiesPreview, WorkflowCapabilityToolPreview, WorkflowMcpRequirementPreview } from '@/services/control-plane/workflowApi';
+
+export { WorkflowLaunchActions } from '@/pages/workflows/WorkflowLaunchActions';
 function workflowProvenanceLabel(workflow: WorkflowDefinition): string {
   return workflow.owner;
 }
@@ -62,7 +64,7 @@ export const WorkflowTagsEditor: React.FC<{
         <span key={tag} className="inline-flex min-h-11 items-center gap-1 rounded-md border border-ui-border bg-ui-bg pl-2.5 pr-1 type-caption type-emphasis text-ui-text-muted sm:min-h-8">
           <span>{tag}</span>
           {!readOnly && (
-            <Button type="button" aria-label={`Remove workflow tag ${tag}`} onClick={() => onRemove(tag)} disabled={pending} className="control-target rounded p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-50 sm:p-1">
+            <Button type="button" variant="tertiary" size="inline" aria-label={`Remove workflow tag ${tag}`} onClick={() => onRemove(tag)} disabled={pending} className="control-target rounded text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-50">
               <ICONS.X className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
           )}
@@ -79,89 +81,6 @@ export const WorkflowTagsEditor: React.FC<{
     )}
   </>
 );
-export const WorkflowLaunchActions: React.FC<{
-  activating: boolean;
-  canManageWorkflowScope: boolean;
-  isWriteCapable: boolean;
-  launchAcknowledged: boolean;
-  launchBlocker: string | null;
-  launchFields?: React.ReactNode;
-  launching: boolean;
-  needsLaunchAcknowledgement: boolean;
-  onAcknowledgementChange: (checked: boolean) => void;
-  onActivate: () => void;
-  onEdit: () => void;
-  onLaunch: () => void;
-  onSchedule: () => void;
-  primaryAction: WorkflowPrimaryAction;
-  tags: string[];
-}> = ({ activating, canManageWorkflowScope, isWriteCapable, launchAcknowledged, launchBlocker, launchFields, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onActivate, onEdit, onLaunch, onSchedule, primaryAction, tags }) => {
-  const { t } = useTranslation();
-  const visibleLaunchBlocker = primaryAction === 'launch' ? launchBlocker : null;
-  return (
-    <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-      <div className="min-w-0">
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2" aria-label="Selected workflow tags">
-            {tags.map((tag) => (
-              <span key={tag} className="inline-flex min-h-7 items-center rounded-md border border-ui-border bg-ui-surface px-2.5 type-caption type-emphasis text-ui-text-muted">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-        {launchFields && <div className={`${tags.length > 0 ? 'mt-3' : ''}`}>{launchFields}</div>}
-        {isWriteCapable && primaryAction === 'launch' && !visibleLaunchBlocker && (
-          <label id="workflow-launch-acknowledgement" className={`${tags.length > 0 ? 'mt-2' : ''} flex min-h-11 cursor-pointer items-center gap-2 text-ui-text-muted transition-colors hover:text-ui-text focus-within:text-ui-text`}>
-            <Checkbox checked={launchAcknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="shrink-0" />
-            <span className="type-caption type-emphasis">I understand this workflow can modify live systems.</span>
-          </label>
-        )}
-        {visibleLaunchBlocker && (
-          <span id="workflow-launch-blocker" className={`${tags.length > 0 ? 'mt-2' : ''} block type-caption type-emphasis text-ui-text-muted`}>
-            Resolve this before launch: {visibleLaunchBlocker}
-          </span>
-        )}
-      </div>
-      <div className="grid gap-1 sm:justify-items-end">
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-          <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onEdit} disabled={!canManageWorkflowScope}>
-            <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
-            {t('agentsWorkflows.workflowActions.edit')}
-          </Button>
-          {primaryAction === 'launch' && (
-            <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onSchedule} disabled={!canManageWorkflowScope} aria-describedby={!canManageWorkflowScope ? 'workflow-schedule-blocker' : undefined}>
-              <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
-              {t('agentsWorkflows.workflowActions.schedule')}
-            </Button>
-          )}
-          {primaryAction === 'activate' && (
-            <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onActivate} disabled={!canManageWorkflowScope || activating} aria-describedby={!canManageWorkflowScope ? 'workflow-activate-blocker' : undefined}>
-              <ICONS.Zap className="h-4 w-4" aria-hidden="true" />
-              {activating ? t('agentsWorkflows.workflowActions.activating') : t('agentsWorkflows.workflowActions.activate')}
-            </Button>
-          )}
-          {primaryAction === 'launch' && (
-            <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onLaunch} disabled={launching || Boolean(visibleLaunchBlocker) || needsLaunchAcknowledgement} title={visibleLaunchBlocker || undefined} aria-describedby={visibleLaunchBlocker ? 'workflow-launch-blocker' : needsLaunchAcknowledgement ? 'workflow-launch-acknowledgement' : undefined}>
-              <ICONS.Send className="h-4 w-4" aria-hidden="true" />
-              {launching ? t('agentsWorkflows.workflowActions.starting') : t('agentsWorkflows.workflowActions.launch')}
-            </Button>
-          )}
-        </div>
-        {primaryAction === 'launch' && !canManageWorkflowScope && (
-          <p id="workflow-schedule-blocker" className="type-caption type-emphasis text-ui-text-muted sm:text-right">
-            You need manage_workflows to schedule workflows.
-          </p>
-        )}
-        {primaryAction === 'activate' && !canManageWorkflowScope && (
-          <p id="workflow-activate-blocker" className="type-caption type-emphasis text-ui-text-muted sm:text-right">
-            {t('agentsWorkflows.workflowActions.activatePermission')}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-};
 export const WorkflowSearchTagSuggestions: React.FC<{
   query: string;
   workflowSearchTags: string[];
@@ -170,7 +89,7 @@ export const WorkflowSearchTagSuggestions: React.FC<{
   workflowSearchTags.length > 0 && query.trim() ? (
     <div className="flex flex-wrap gap-2 px-1" aria-label="Workflow tag suggestions">
       {workflowSearchTags.slice(0, 8).map((tag) => (
-        <Button key={tag} type="button" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-2.5 py-1.5 type-caption text-ui-text-muted hover:text-ui-text sm:min-h-8">
+        <Button key={tag} type="button" variant="secondary" size="sm" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="rounded-md border border-ui-border bg-ui-surface px-2.5 py-1.5 text-ui-text-muted hover:text-ui-text sm:min-h-8">
           {tag}
         </Button>
       ))}
@@ -451,7 +370,14 @@ function mcpConnectionLabel(state: WorkflowMcpRequirementPreview['connectionStat
 }
 
 export function canConnectWorkflowMcpRequirement(requirement: WorkflowMcpRequirementPreview): boolean {
-  return Boolean(requirement.serverId) && ((requirement.connectionState === 'connection_missing' && requirement.action === 'connect_mcp_server') || (requirement.connectionState === 'connection_error' && requirement.action === 'verify_mcp_server'));
+  return Boolean(requirement.serverId)
+    && (
+      (requirement.connectionState === 'connection_missing' && requirement.action === 'connect_mcp_server')
+      || (requirement.connectionState === 'connection_error' && requirement.action === 'verify_mcp_server')
+      || requirement.action === 'authorize_mcp_server'
+      || requirement.action === 'select_authorization_server'
+      || requirement.action === 'reauthorize_mcp_server'
+    );
 }
 
 export function workflowMcpCredentialMode(requirement: WorkflowMcpRequirementPreview): 'connect' | 'replace' {
@@ -486,7 +412,13 @@ export const WorkflowPreviewAuthRow: React.FC<{
                     <StatusBadge tone={mcpConnectionTone(requirement.connectionState)}>{mcpConnectionLabel(requirement.connectionState, t)}</StatusBadge>
                     {canConnectCredential && (
                       <Button type="button" variant="secondary" size="sm" onClick={() => onConnectCredential(requirement)}>
-                        {t(requirement.connectionState === 'connection_error' ? 'mcpServers.replaceCredential' : 'mcpServers.connectCredential')}
+                        {t(requirement.authType === 'oauth'
+                          ? requirement.action === 'reauthorize_mcp_server'
+                            ? 'mcpServers.oauthReauthorizationRequired'
+                            : 'mcpServers.oauthAuthorizationRequired'
+                          : requirement.connectionState === 'connection_error'
+                            ? 'mcpServers.replaceCredential'
+                            : 'mcpServers.connectCredential')}
                       </Button>
                     )}
                   </span>
@@ -533,7 +465,14 @@ export const WorkflowMcpCredentialDialog: React.FC<{
   );
   const installations = React.useMemo(() => [installation], [installation]);
   const titleId = React.useId();
-  const { connections, loadingByServerId, connect, retryAfterSecondsFor } = useMcpConnections({
+  const {
+    connections,
+    loadingByServerId,
+    connect,
+    prepareOAuth,
+    startOAuth,
+    retryAfterSecondsFor
+  } = useMcpConnections({
     workspaceId,
     destination: requirement.owningTarget ? { kind: 'target', id: requirement.owningTarget.id } : { kind: 'agent', id: requirement.owningAgent.id },
     installations
@@ -563,24 +502,35 @@ export const WorkflowMcpCredentialDialog: React.FC<{
       </DialogFrame>
     );
   }
-  return (
-    <McpCredentialDialog
+  if (requirement.authType === 'oauth') {
+    const returnUrl = new URL(window.location.href);
+    returnUrl.searchParams.delete('mcpOAuthResult');
+    return <McpOAuthDialog
       serverName={requirement.serverName}
-      authType={requirement.authType}
-      credentialLabel={requirement.authRequirement.credentialLabel}
-      credentialMode={requirement.authRequirement.scope}
-      mode={workflowMcpCredentialMode(requirement)}
+      returnPath={`${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`}
+      mode={connection.status === 'reauthorization_required' ? 'reauthorize' : 'authorize'}
       retryAfterSeconds={retryAfterSecondsFor(requirement.serverId)}
       onClose={onClose}
-      onSubmit={async (credential) => {
-        const next = await connect(installation, credential);
-        if (next?.status === 'connected') {
-          onClose();
-          onConnected();
-        }
-      }}
-    />
-  );
+      onPrepare={(returnPath) => prepareOAuth(installation, returnPath)}
+      onStart={(preparationHandle, issuer) => startOAuth(installation, preparationHandle, issuer)}
+    />;
+  }
+  return <McpCredentialDialog
+    serverName={requirement.serverName}
+    authType={requirement.authType}
+    credentialLabel={requirement.authRequirement.credentialLabel}
+    credentialMode={requirement.authRequirement.scope}
+    mode={workflowMcpCredentialMode(requirement)}
+    retryAfterSeconds={retryAfterSecondsFor(requirement.serverId)}
+    onClose={onClose}
+    onSubmit={async (credential) => {
+      const next = await connect(installation, credential);
+      if (next?.status === 'connected') {
+        onClose();
+        onConnected();
+      }
+    }}
+  />;
 };
 
 export const WorkflowCapabilityLedger: React.FC<{

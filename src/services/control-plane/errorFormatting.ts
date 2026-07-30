@@ -92,6 +92,40 @@ function validationMessage(area?: ControlPlaneErrorArea): string {
   }
 }
 
+function mcpValidationMessage(rawMessage: string): string {
+  if (/invalid host or port|absolute HTTPS URL/i.test(rawMessage)) {
+    return tr(
+      'controlPlaneErrors.mcp.endpointUrl',
+      'Enter the complete HTTPS URL for the remote MCP endpoint.'
+    );
+  }
+  if (/must not include credentials|credentials must use the authentication fields/i.test(rawMessage)) {
+    return tr(
+      'controlPlaneErrors.mcp.urlCredentials',
+      'Remove credentials from the server URL. Configure them under Auth Type instead.'
+    );
+  }
+  if (/must not include a fragment/i.test(rawMessage)) {
+    return tr(
+      'controlPlaneErrors.mcp.urlFragment',
+      'Remove the URL fragment (#…) from the MCP server URL.'
+    );
+  }
+  if (/blocked private, local, or reserved address/i.test(rawMessage)) {
+    return tr(
+      'controlPlaneErrors.mcp.egressBlocked',
+      'This address is blocked by the MCP network policy. Ask a platform operator to allow the hostname or private network.'
+    );
+  }
+  if (/could not be resolved|did not resolve to any IPs/i.test(rawMessage)) {
+    return tr(
+      'controlPlaneErrors.mcp.hostUnresolved',
+      'The MCP server hostname could not be resolved. Check the URL and DNS, then try again.'
+    );
+  }
+  return validationMessage('mcp');
+}
+
 function upstreamMessage(area?: ControlPlaneErrorArea): string {
   switch (area) {
     case 'aiSettings':
@@ -125,7 +159,7 @@ function mapControlPlaneCode(
   switch (code) {
     case 'VALIDATION_ERROR':
     case 'INVALID_REQUEST':
-      return detail || validationMessage(area);
+      return detail || (area === 'mcp' ? mcpValidationMessage(rawMessage) : validationMessage(area));
     case 'FORBIDDEN':
     case 'PASSWORD_AUTH_DISABLED':
     case 'PASSWORD_AUTH_NOT_CONFIGURED':

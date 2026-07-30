@@ -18,9 +18,17 @@ Application tablists use a shared underline indicator scoped to that tablist. Th
 
 Tab content does not animate. The indicator connects the old and new selection while the newly selected operational content remains immediately readable.
 
+### Docked assistant continuity
+
+At desktop dock widths, an assistant panel remains a flex sibling of the route content. It enters from the right in 200 ms with the standard side-panel ease-out curve and keeps its layout space until the exit motion completes. The panel must never become an overlay while it is docked.
+
+Repeated catalog cards may use position-only FLIP motion when the dock changes the available column count. Opening the dock reserves the narrower catalog layout before the panel enters. Closing keeps that layout reserved until the panel has left, then repositions the stable cards in 300 ms. Card content does not crossfade, resize, or imply that its underlying data changed.
+
+Reduced-motion users receive the final dock and catalog layouts immediately.
+
 ## Boundaries
 
-Keep existing drawer, dialog, loading, and sidebar selection motion unchanged unless a separate interaction review identifies a state-communication problem.
+Keep existing modal drawer, dialog, loading, and sidebar selection motion unchanged unless a separate interaction review identifies a state-communication problem.
 
 Do not add page-level route transitions, list-to-detail morphs, row morphs, chart morphs, or decorative shared-element transitions to operational data views. Those transitions can imply stale continuity where the underlying control-plane data may have changed, compete with diagnostics, and add snapshot cost to dense surfaces.
 

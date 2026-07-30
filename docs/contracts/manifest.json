@@ -87,12 +87,43 @@
         "context": "Issue rows expose a compact workflowActivity summary without per-issue queries. Schedule and event-trigger rows keep configuration, last dispatch outcome, and latest successful execution pointer separate.",
         "statusAuthority": "The aggregate execution status is authoritative; dispatch failure does not imply a running execution and terminal execution status never renders as in progress."
       },
+      "targetAutoTriage": {
+        "status": "experimental",
+        "settingsPaths": [
+          "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage",
+          "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage"
+        ],
+        "startPaths": [
+          "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage/investigations",
+          "POST /api/v1/workspaces/{workspaceId}/issues/{issueId}/automatic-investigation"
+        ],
+        "defaults": "Missing settings resolve to disabled, warning minimum severity, follow_target write mode, empty additional instructions, and revision zero.",
+        "idempotency": "One durable job and one automatic session are allowed for each issue ID and lifecycle version. Enabling or lowering the threshold never queues existing issues without the explicit bulk-start endpoint.",
+        "safety": "The target and agent are hard ceilings. read_only exposes no write tools; approval_required forces write confirmation; full_write skips confirmation only when the target permits it. The pinned run confirmation override is honored by target bootstrap.",
+        "runtime": "The control-plane worker uses a dedicated non-overlapping one-second timer and error boundary, leases due jobs, limits nonterminal automatic runs to two per target, reuses linked session and run IDs after recovery, guards linked run changes by expected status, reconciles terminal races, omits unavailable individual-credential MCP tools for system-auto-triage, and stops automatic runs when issues resolve. Explicit current-issue queueing is atomic at the saved settings revision, and session creation locks that enabled revision so stale workers cannot start after disablement or a policy edit.",
+        "queueVisibility": "Target settings responses may include queueSummary.{activeCount,waitingCount,oldestWaitingAt?}. Counts follow worker admission semantics, remain independent of Workflow activity, and support a compact link to the existing target issue surface rather than a separate queue page.",
+        "historyUi": "The console filters the existing target session history into manual Chats and auto_triage Investigations while global search spans both. Investigation rows use linked issue scope, object, severity, and assistant status. A per-user, per-target browser marker derives the supplementary unseen badge from existing session creation timestamps; it is not control-plane state.",
+        "sharedChat": "Browser members with create_sessions and the relevant run capability may reply to auto_triage sessions with actual message authorship. Manual sessions and all external-integration access remain creator-owned.",
+        "workflowIndependence": "Automatic investigation enqueueing is evaluated independently during issue lifecycle persistence and does not alter generic workflow issue events or webhook behavior. The worker does not consult Automation runtime mode or share a Workflow scheduler tick."
+      },
       "systemAutomationDefinitions": {
         "provisioning": "The greenfield baseline creates only the final schema. Current-version workspace provisioning atomically commits the two automatic specialist Agents, two active workspace-owned default workflows, and a completed starter installation. Optional recommended workflows are added explicitly; coordinated workflows use a versioned code-owned coordinator profile and create no hidden Agent.",
         "attribution": "Default Agents and workflows are workspace-owned, use manual origin, and display their workspace creator. Legacy template-origin definitions are treated as workspace-owned.",
         "visibility": "Every public Agent is a specialist capability profile. Public workflow, compiled-scope, audit, search, and trace DTOs omit internal coordinator profile instructions and identity.",
         "mutation": "Every workspace Agent and workflow, including legacy template-origin rows, is directly editable with the corresponding manage permission and is never overwritten, upgraded, or automatically restored by AcornOps. Agent deletion returns structured dependent workflows until those dependencies are removed.",
         "duplication": "manage_agents or manage_workflows may copy the effective definition into a manual draft without capability installations, history, executions, schedules, sessions, or activity."
+      },
+      "agentConversationContract": {
+        "paths": [
+          "GET|POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/conversations",
+          "GET|DELETE /api/v1/agent-conversations/{conversationId}",
+          "PATCH /api/v1/agent-conversations/{conversationId}/access",
+          "POST /api/v1/agent-conversations/{conversationId}/messages"
+        ],
+        "runtime": "Console-only single-Agent manual conversations dispatch through a protected system-managed Workflow carrier with origin.type=agent_chat. Carriers are draft-only, hidden from workflow catalogs, and unavailable to direct workflow reads, edits, duplication, schedules, triggers, and capability preview.",
+        "access": "Conversations are workspace-readable. Only the creator may continue, change access, or delete them. New conversation access is the intersection of the pinned Agent permission mode and creator capabilities: read_write requires a write-capable Agent plus create_read_write_runs; otherwise access is read_only. A creator may pause a write-capable conversation by changing it to read_only, while a pinned read_only Agent cannot be elevated. Existing approval and audit paths remain authoritative.",
+        "pinning": "Creation pins the Agent revision, permissionMode, specialist snapshot, read scope, and maximum capability ceiling. Conversation summaries project the pinned permissionMode so clients do not infer policy from a newer Agent revision. Newly added capabilities are excluded. Removed pinned capabilities fail closed and require a new conversation.",
+        "automationBoundary": "Agent chat cannot schedule, accept triggers, coordinate or delegate to other Agents. Workflows remain the only repeatable, multi-Agent, scheduled, or externally triggered automation model."
       },
       "catalogAuthorization": {
         "manageSources": "manage_catalog_sources",
@@ -119,7 +150,7 @@
       },
       "mcpRecoveryRouteState": {
         "query": ["mcpServer", "mcpAction"],
-        "actions": ["connect_mcp_server", "verify_mcp_server"],
+        "actions": ["connect_mcp_server", "authorize_mcp_server", "select_authorization_server", "reauthorize_mcp_server", "verify_mcp_server"],
         "automaticMutation": false,
         "clearAfterSuccessfulRepair": true
       },
@@ -206,16 +237,23 @@
         "virtualMachine.summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}",
         "GET /api/v1/workspaces/{workspaceId}/issues",
         "GET /api/v1/workspaces/{workspaceId}/issues/{issueId}",
+        "POST /api/v1/workspaces/{workspaceId}/issues/{issueId}/automatic-investigation",
         "GET /api/v1/workspaces/{workspaceId}/issues/{issueId}/observations",
         "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/issues",
         "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/issues/summary",
+        "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage",
+        "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage",
+        "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage/investigations",
         "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources"
       ],
       "catalogFields": [
         "catalogArtifact.{id,sourceId,artifactKind=mcp_server,name,title?,description,version,digest,compatible,incompatibilityReason?,remoteEndpoints,publishedAt?,upstreamUpdatedAt?}",
         "catalogInstallation.{scopeType,destinationId,revision,provenance.{sourceId,artifactName,version,digest,importedAt}}",
-        "credentialConnection.{serverId,credentialMode,status=missing|connected|error,managementScope,canManage,authType,action?}",
+        "credentialConnection.{serverId,credentialMode,status=missing|pending_authorization|connected|reauthorization_required|error,managementScope,canManage,authType,action?,issuerOrigin?,registrationMethod?,scopes?,tokenExpiresAt?,refreshCapable?,errorCode?}",
         "credentialConnectionMutation.{credential<=8192 UTF-8 bytes,consentGranted=true,workspace requires manage_mcp,individual requires current user + run capability}",
+        "oauthPreparation.{preparationHandle,resourceOrigin,issuerSelectionRequired,candidates[].{issuer,issuerOrigin,registrationMethod=cimd|dcr,scopes,offlineAccessRequested}}",
+        "oauthStart.{preparationHandle,issuer?,consentGranted=true}->{authorizationUrl}",
+        "oauthPublicRoutes.{GET|HEAD /api/v1/mcp/oauth/client-metadata,GET /api/v1/mcp/oauth/callback}",
         "permissions.canEdit",
         "permissions.editableRoles",
         "mcpCatalog.{workspaceId,targetId?,targetType?,clusterId?}",
@@ -274,15 +312,15 @@
         "rotateAgentKey": ["clusterId", "agentKey", "keyVersion"],
         "virtualMachineRegistration": ["virtualMachine", "agentKey", "installInstructions"],
         "rotateVirtualMachineAgentKey": ["vmId", "agentKey", "keyVersion", "installInstructions"],
-        "sessionList": ["items", "items[].targetId", "items[].targetType", "items[].clusterId?", "items[].createdBy", "items[].createdByUser.{id,displayName}?", "items[].lastRuntimeSelection.{provider,model,reasoningEffort}?", "nextCursor?"],
-        "targetChatActivity": ["targetId", "targetType", "targetName", "windowSeconds", "generatedAt", "recentActivity[].{sessionId,title,createdBy,createdByUser?,lastActivityAt,lastRunId?,lastRunStatus?,activeRun?,hasActiveRun,hasRecentWriteCapableRun,latestToolAccessMode?}"],
+        "sessionList": ["items", "items[].targetId", "items[].targetType", "items[].clusterId?", "items[].createdBy", "items[].createdByUser.{id,displayName}?", "items[].origin=manual|auto_triage", "items[].automaticInvestigation.{issueId,lifecycleVersion,severity,scopeKind?,scopeName?,objectKind?,objectName?,writeMode,effectiveToolMode,confirmationRequiredForWrite}?", "items[].lastRuntimeSelection.{provider,model,reasoningEffort}?", "nextCursor?"],
+        "targetChatActivity": ["targetId", "targetType", "targetName", "windowSeconds", "generatedAt", "recentActivity[].{sessionId,title,createdBy,createdByUser?,origin,linkedIssueId?,linkedIssueLifecycleVersion?,lastActivityAt,lastRunId?,lastRunStatus?,activeRun?,hasActiveRun,hasRecentWriteCapableRun,latestToolAccessMode?}"],
         "conversationOwnerRequired": ["error.code=CONVERSATION_OWNER_REQUIRED", "error.retryable=false"],
         "runDetails": ["targetId", "targetType", "clusterId?"],
-        "runApprovals": ["[].targetId", "[].targetType", "[].clusterId?", "[].summary?"],
+        "runApprovals": ["[].targetId", "[].targetType", "[].clusterId?", "[].summary?", "[].sessionId?", "[].sessionOrigin?", "[].sessionTitle?"],
         "runApprovalDecision": ["targetId", "targetType", "clusterId?", "summary?", "conflict.approval.{targetId,targetType,clusterId?,summary?}"],
         "postMessageAccepted": ["message_id", "run_id", "runtimeSelection.{provider,model,reasoningEffort}"],
         "runEventFrame": ["schema_version", "run_id", "seq", "ts", "type", "payload"],
-        "agent": ["id", "workspaceId", "name", "description?", "instructions", "status", "origin", "reviewState", "providerType", "version", "ownerUserId", "mcpServers[]", "tools[]", "nativeToolConfigs", "skills[]", "contextGrants[]", "targetScope", "approvalPolicy", "trustPolicy", "workflowUsage.{workflowRunCount,lastRunAt?,lastStatus?}", "readiness.{status,reasons[]}"],
+        "agent": ["id", "workspaceId", "name", "avatarEmoji", "description?", "instructions", "status", "origin", "reviewState", "providerType", "version", "ownerUserId", "mcpServers[]", "tools[]", "nativeToolConfigs", "skills[]", "contextGrants[]", "targetScope", "approvalPolicy", "trustPolicy", "workflowUsage.{workflowRunCount,lastRunAt?,lastStatus?}", "readiness.{status,reasons[]}"],
         "automationDiagnostics": ["status", "runtime.{mode,workspaceEnabled,workerIntervalMs}", "dispatch.{byStatus,oldestPendingAgeSeconds}", "runs.{workflowByStatus,byExecutorRole,byGraphPosition,active}", "schedules.schedulerLagSeconds", "approvals.{pending,oldestPendingAgeSeconds}", "templates.{byReadiness,items[]}", "reports.retainedSources", "checkedAt"],
         "workflowExecutionAccepted": ["executionId", "run_id", "status"],
         "workflowDefinition": ["parameters[].{key,type=text|target|chat,required=true}"],
