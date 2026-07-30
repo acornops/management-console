@@ -13,6 +13,7 @@ export interface TargetChatViewProps {
   currentUserId?: string;
   target: ChatPresentationSubject;
   headerLeading?: React.ReactNode;
+  automaticInvestigationsEnabled?: boolean;
   capabilityPreviewEnabled?: boolean;
   isDark: boolean;
   titleKey?: string;

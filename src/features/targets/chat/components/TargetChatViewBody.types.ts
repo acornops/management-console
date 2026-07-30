@@ -18,6 +18,7 @@ export interface TargetChatViewBodyProps {
   assistantMarkdownComponents: Components;
   assistantCapabilitiesPreview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
   assistantCapabilitiesPreviewError: string;
+  automaticInvestigationsEnabled: boolean;
   capabilityPreviewEnabled: boolean;
   canApproveWriteActions: boolean;
   canCancelActiveRun: boolean;

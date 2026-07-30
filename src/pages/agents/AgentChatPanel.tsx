@@ -307,6 +307,7 @@ export const AgentChatPanel: React.FC<{
       <TargetChatView
         target={{ id: agent.id, workspaceId: agent.workspaceId, name: agent.name }}
         headerLeading={<AgentAvatar emoji={agent.avatarEmoji} size={displayMode === 'panel' ? 'md' : 'lg'} />}
+        automaticInvestigationsEnabled={false}
         capabilityPreviewEnabled={false}
         isDark={isDark}
         titleKey="agentChat.title"

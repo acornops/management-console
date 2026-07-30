@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   approvalCheckpoint,
+  agentChatPanel,
   appTargetChatRuntime,
   assistantCapabilityPreviewControl,
   assistantTurn,
@@ -111,6 +112,11 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('t(resolvedDescriptionKey, { name: target.name })');
     expect(chatView).toContain("const resolvedTitleKey = titleKey || 'chat.triageConsole';");
     expect(chatView).toContain('const title = activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey);');
+    expect(chatView).toContain('automaticInvestigationsEnabled = true');
+    expect(chatView).toContain('automaticInvestigationsEnabled={automaticInvestigationsEnabled}');
+    expect(chatView).toContain('<TargetChatHistoryRail');
+    expect(chatView).toContain("historyView === 'investigations' ? 'auto_triage' : 'manual'");
+    expect(agentChatPanel).toContain('automaticInvestigationsEnabled={false}');
     expect(chatView).toContain('const isHydratingExistingConversation = Boolean(activeSession?.backendSessionId && activeSession.hydrated === false && visibleMessages.length === 0);');
     expect(chatView).toContain('const hasConversationLoadError = Boolean(activeSession?.backendSessionId && activeSession.messagesLoadFailed && visibleMessages.length === 0);');
     expect(chatView).toContain('const isLoadingInitialConversation = !activeSession && isSessionsLoading;');

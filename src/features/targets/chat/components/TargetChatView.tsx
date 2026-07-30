@@ -31,8 +31,7 @@ import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   currentUserId = '',
   target,
-  headerLeading,
-  capabilityPreviewEnabled = true,
+  headerLeading, automaticInvestigationsEnabled = true, capabilityPreviewEnabled = true,
   titleKey,
   descriptionKey,
   promptTitleKey,
@@ -629,7 +628,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   return (
     <TargetChatViewBody
       {...{
-        activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, capabilityPreviewEnabled, canApproveWriteActions,
+        activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, automaticInvestigationsEnabled, capabilityPreviewEnabled, canApproveWriteActions,
         canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, target, composerActionLabel, composerAttachmentNotice: composerNotice,
         composerAttachments, composerReferences, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, currentUserId, deleteSessionError, deleteTargetSession,
         deletingSessionId, desktopHistoryPanelId, dismissReferenceMenu, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,

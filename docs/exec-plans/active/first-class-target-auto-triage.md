@@ -13,6 +13,9 @@ new UI and no new top-level navigation.
   used by the Automation navigation category.
 - Keep one target chat route and session model. Split the assistant rail into
   manual Chats and automatic Investigations, with global Search spanning both.
+- Keep automatic Investigations exclusive to Kubernetes and VM target
+  assistants. Agent chat shares the presentation shell but exposes manual Chats
+  only.
 - Use linked issue status/scope/object/severity in investigation rows instead
   of a redundant origin badge.
 - Reuse the current target chat route, composer, approval cards, cancellation,
@@ -39,6 +42,14 @@ new UI and no new top-level navigation.
 
 ## Validation Log
 
+- 2026-07-30: the agent-chat workspace integration restored the target-only
+  Investigations rail, origin-filtered history, unseen state, investigation
+  briefs, attribution, ownership checks, and deep-link notices while keeping
+  Agent chat manual-only. Empty drafts retain the Cluster Assistant or VM
+  Assistant heading; established conversations retain their session title.
+  Lint, 767 unit tests, contracts, production build, bundle budget, and route
+  smoke passed. Full validation remains blocked by 24 pre-existing design-system
+  findings and nine unrelated pre-existing harness file-size findings.
 - 2026-07-29: the queue-visibility polish added a compact active/waiting ledger
   row to the existing Kubernetes and VM Settings card, including oldest waiting
   time and a link to the existing target Overview issue surface. Focused
