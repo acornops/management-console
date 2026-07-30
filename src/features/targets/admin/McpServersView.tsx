@@ -3,14 +3,9 @@ import { AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
-import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
 import { Button, CollectionState, EmptyState, InlineLoadingIndicator, PageShell } from '@acornops/ui';
 import {
-  TargetMcpServer,
   TargetMcpServerTestConnectionResult,
-  controlPlaneApi,
-  CreateTargetMcpServerInput,
-  UpdateTargetMcpServerInput
 } from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
@@ -34,39 +29,13 @@ import {
   mcpServerFormSubmission,
   ServerFormState,
 } from '@/features/targets/admin/mcpServersCatalog';
-interface McpServersViewProps {
-  target: TargetDescriptor;
-  canManageMcp?: boolean;
-  canManageTools?: boolean;
-  canRequestWriteRuns?: boolean;
-  initialCatalog?: TargetToolCatalog | null;
-  onCatalogChange?: (catalog: TargetToolCatalog) => void;
-  onSyncTools?: (tools: TargetMcpToolSummary[]) => void;
-  dataSource?: McpServersDataSource;
-  connectionDestination?: { kind: 'target' | 'agent'; id: string };
-  catalogDestination?: string;
-  scheduleCount?: (workspaceId: string, subjectId: string, serverId: string) => Promise<number>;
-}
+import {
+  resolveMcpCatalogPhase,
+  targetMcpServersDataSource,
+  type McpServersViewProps
+} from '@/features/targets/admin/McpServersView.data';
 
-export interface McpServersDataSource {
-  createServer: (workspaceId: string, subjectId: string, input: CreateTargetMcpServerInput) => Promise<TargetMcpServer>;
-  deleteServer: (workspaceId: string, subjectId: string, serverId: string) => Promise<void>;
-  getCatalog: (workspaceId: string, subjectId: string) => Promise<TargetToolCatalog>;
-  listServerTools: (workspaceId: string, subjectId: string, serverId: string, options: { limit: number; cursor?: string; signal: AbortSignal }) => Promise<{ items: TargetToolCatalogItem[]; nextCursor?: string }>;
-  testServer: (workspaceId: string, subjectId: string, serverId: string) => Promise<TargetMcpServerTestConnectionResult>;
-  updateServer: (workspaceId: string, subjectId: string, serverId: string, input: UpdateTargetMcpServerInput) => Promise<TargetMcpServer>;
-  updateServerTool: (workspaceId: string, subjectId: string, serverId: string, toolName: string, input: { enabled: boolean; capability?: 'read' | 'write' }) => Promise<TargetToolCatalogItem>;
-}
-
-const targetMcpServersDataSource: McpServersDataSource = {
-  createServer: (workspaceId, subjectId, input) => controlPlaneApi.createTargetMcpServer(workspaceId, subjectId, input),
-  deleteServer: (workspaceId, subjectId, serverId) => controlPlaneApi.deleteTargetMcpServer(workspaceId, subjectId, serverId),
-  getCatalog: (workspaceId, subjectId) => controlPlaneApi.getTargetMcpCatalog(workspaceId, subjectId),
-  listServerTools: (workspaceId, subjectId, serverId, options) => controlPlaneApi.listMcpServerTools(workspaceId, subjectId, serverId, options),
-  testServer: (workspaceId, subjectId, serverId) => controlPlaneApi.testTargetMcpServerConnection(workspaceId, subjectId, serverId),
-  updateServer: (workspaceId, subjectId, serverId, input) => controlPlaneApi.updateTargetMcpServer(workspaceId, subjectId, serverId, input),
-  updateServerTool: (workspaceId, subjectId, serverId, toolName, input) => controlPlaneApi.updateTargetMcpServerTool(workspaceId, subjectId, serverId, toolName, input)
-};
+export type { McpServersDataSource } from '@/features/targets/admin/McpServersView.data';
 
 export const McpServersView: React.FC<McpServersViewProps> = ({
   target,
@@ -118,14 +87,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     (server) => server.enabled && server.toolCounts.writeConfigured > server.toolCounts.writeEffective
   );
   const hasLocalFallbackServers = localCatalog.servers.length > 0;
-  const showInitialCatalogLoading = !catalog && !catalogError && !hasLocalFallbackServers;
-  const catalogPhase = showInitialCatalogLoading
-    ? 'loading'
-    : catalogError
-      ? 'error'
-      : catalog
-        ? 'ready'
-        : 'refreshing';
+  const catalogPhase = resolveMcpCatalogPhase(catalog, catalogError, hasLocalFallbackServers);
   const activeServer = selectedServerId
     ? servers.find((server) => server.id === selectedServerId) || null
     : null;

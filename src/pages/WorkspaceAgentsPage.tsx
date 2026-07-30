@@ -174,10 +174,14 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const selectedAgent = workspaceCatalogAgents.find((agent) => agent.id === selectedAgentId);
   const activeAgentTab = routeState?.tab || agentTab;
   const quickChatOpen = !routeState && urlSearch.get('panel') === 'chat';
+  const [quickChatLayoutReserved, setQuickChatLayoutReserved] = useState(quickChatOpen);
   const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
   const createDirty = Boolean(createDraft.name || createDraft.description || createDraft.instructions || createDraft.avatarEmoji !== DEFAULT_AGENT_EMOJI);
   const editDirty = editChangeSummary.length > 0;
+  React.useEffect(() => {
+    if (quickChatOpen) setQuickChatLayoutReserved(true);
+  }, [quickChatOpen]);
   React.useEffect(() => {
     if (!createDirty && !editDirty) return;
     const warnBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
@@ -262,6 +266,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     if (agentId) navigate(AppPaths.workspaceAgentDetail(workspace.id, agentId, 'chat'));
   };
   const openQuickChat = (agent: AgentDefinition) => {
+    setQuickChatLayoutReserved(true);
     setSelectedAgentId(agent.id);
     updateUrlSearch({ panel: 'chat', agent: agent.id, agentTab: null });
   };
@@ -569,6 +574,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         query={query}
         onQueryChange={(next) => { setQuery(next); updateUrlSearch({ q: next || null }, { replace: true }); }}
         catalogFilters={catalogFilters}
+        dockedQuickChatOpen={quickChatLayoutReserved}
         onCatalogFiltersChange={(filters) => {
           setCatalogFilters(filters);
           updateUrlSearch({ focus: filters.focus === 'all' ? null : filters.focus }, { replace: true });
@@ -589,6 +595,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         isOpen={quickChatOpen}
         permissions={workspace.permissions}
         onClose={closeQuickChat}
+        onExitComplete={() => setQuickChatLayoutReserved(false)}
         onMaximize={() => {
           if (!selectedAgent) return;
           navigate(AppPaths.workspaceAgentDetail(workspace.id, selectedAgent.id, 'chat'));

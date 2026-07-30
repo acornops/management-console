@@ -1,11 +1,13 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { DrawerFrame } from '@acornops/ui';
 import {
   appDockRootId,
   desktopSidebarWidth,
   dockedPanelMinimumWidth,
+  dockedPanelMotion,
   getSidePanelMaximumWidth,
   minimumMainContentWidth,
   useDockedPanelLayout
@@ -21,6 +23,7 @@ interface AgentQuickChatPanelProps {
   isOpen: boolean;
   permissions?: Workspace['permissions'];
   onClose: () => void;
+  onExitComplete?: () => void;
   onMaximize: () => void;
   onOpenAiSettings: () => void;
 }
@@ -32,6 +35,7 @@ export const AgentQuickChatPanel: React.FC<AgentQuickChatPanelProps> = ({
   isOpen,
   permissions,
   onClose,
+  onExitComplete,
   onMaximize,
   onOpenAiSettings
 }) => {
@@ -41,6 +45,7 @@ export const AgentQuickChatPanel: React.FC<AgentQuickChatPanelProps> = ({
   const resizeFrameRef = React.useRef<number | null>(null);
   const pendingWidthRef = React.useRef(width);
   const isDocked = useDockedPanelLayout();
+  const shouldReduceMotion = useReducedMotion();
 
   React.useEffect(() => {
     pendingWidthRef.current = width;
@@ -76,7 +81,11 @@ export const AgentQuickChatPanel: React.FC<AgentQuickChatPanelProps> = ({
     };
   }, [isDocked]);
 
-  if (!isOpen || !agent) return null;
+  React.useEffect(() => {
+    if (!isDocked && !isOpen) onExitComplete?.();
+  }, [isDocked, isOpen, onExitComplete]);
+
+  if (!agent) return null;
 
   const maximumWidth = getSidePanelMaximumWidth(window.innerWidth, isDocked);
   const panelContents = (
@@ -125,27 +134,35 @@ export const AgentQuickChatPanel: React.FC<AgentQuickChatPanelProps> = ({
     if (!dockHost) return null;
 
     return createPortal(
-      <aside
-        aria-label={t('agentChat.quickChatLabel', { name: agent.name })}
-        data-docked-assistant="true"
-        data-docked-agent-chat="true"
-        className="relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-l border-ui-border bg-ui-surface"
-        style={{
-          width,
-          minWidth: dockedPanelMinimumWidth,
-          maxWidth: `calc(100vw - ${desktopSidebarWidth + minimumMainContentWidth}px)`
-        }}
-      >
-        {panelContents}
-        <div data-floating-layer="true" className="pointer-events-none absolute inset-0 z-[120]" />
-      </aside>,
+      <AnimatePresence initial={false} onExitComplete={onExitComplete}>
+        {isOpen && (
+          <motion.aside
+            aria-label={t('agentChat.quickChatLabel', { name: agent.name })}
+            data-docked-assistant="true"
+            data-docked-agent-chat="true"
+            className="relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-l border-ui-border bg-ui-surface"
+            style={{
+              width,
+              minWidth: dockedPanelMinimumWidth,
+              maxWidth: `calc(100vw - ${desktopSidebarWidth + minimumMainContentWidth}px)`
+            }}
+            initial={shouldReduceMotion ? false : dockedPanelMotion.initial}
+            animate={dockedPanelMotion.animate}
+            exit={shouldReduceMotion ? { x: 0 } : dockedPanelMotion.exit}
+            transition={shouldReduceMotion ? { duration: 0 } : dockedPanelMotion.transition}
+          >
+            {panelContents}
+            <div data-floating-layer="true" className="pointer-events-none absolute inset-0 z-[120]" />
+          </motion.aside>
+        )}
+      </AnimatePresence>,
       dockHost
     );
   }
 
   return (
     <DrawerFrame unframed
-      isOpen
+      isOpen={isOpen}
       onClose={onClose}
       ariaLabel={t('agentChat.quickChatLabel', { name: agent.name })}
       style={{ width }}

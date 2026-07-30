@@ -4,17 +4,20 @@ import { useTranslation } from 'react-i18next';
 import { Button, CloseButton, DialogFrame, FieldValidationMessage, fieldInvalidClass, ModalStepIndicator, Select, TextInput } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
 import { CreateWorkspaceMemberResult } from '@/components/workspaces/CreateWorkspaceMemberResult';
-import { formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
+import { formatRole } from '@/pages/workspace-members/memberUtils';
 import {
   ProjectMember,
   Workspace,
-  WorkspaceAiSettings,
-  WorkspaceInvitation,
   WorkspaceMemberAccessResult,
   WorkspaceRoleTemplate
 } from '@/types';
 import {
+  type CreateWorkspaceModalProps,
+  type CreateWorkspaceStep,
   type CreateWorkspaceInviteRow,
+  createInviteRow,
+  defaultInviteRole,
+  formatWorkspaceCreationError,
   getDuplicateInviteEmailKeys,
   getSubmittableInviteRows,
   hasInheritedPlatformLlmCredential,
@@ -23,42 +26,6 @@ import {
   MAX_CREATE_WORKSPACE_INVITE_ROWS,
   normalizeInviteEmail
 } from '@/components/workspaces/CreateWorkspaceModal.helpers';
-
-interface CreateWorkspaceModalProps {
-  isOpen: boolean;
-  currentUserEmail: string;
-  onClose: () => void;
-  onCreateWorkspace: (name: string) => Promise<Workspace>;
-  onLoadWorkspaceAiSettings: (workspaceId: string) => Promise<WorkspaceAiSettings>;
-  onOpenAiSettings: (workspaceId: string) => void;
-  onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
-  onAddOrInviteWorkspaceMember: (
-    workspaceId: string,
-    input: { email: string; role: ProjectMember['role'] }
-  ) => Promise<WorkspaceMemberAccessResult>;
-}
-
-type CreateWorkspaceStep = 'details' | 'members' | 'ai';
-function createRowId(): string {
-  return globalThis.crypto?.randomUUID?.() || `invite-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function createInviteRow(role: ProjectMember['role'] = ''): CreateWorkspaceInviteRow {
-  return {
-    id: createRowId(),
-    email: '',
-    role,
-    status: 'idle'
-  };
-}
-
-function defaultInviteRole(roles: WorkspaceRoleTemplate[]): ProjectMember['role'] {
-  return roles.find((role) => !role.protected)?.key || roles[0]?.key || '';
-}
-
-function formatWorkspaceCreationError(error: unknown, fallback: string): string {
-  return formatMemberMutationError(error, fallback);
-}
 
 export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   isOpen,

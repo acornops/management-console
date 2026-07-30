@@ -4,15 +4,11 @@ import { Button } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { PageLoadingFallback } from '@acornops/ui';
 import { ICONS } from '@/constants';
-import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
-import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
-import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
 import { addWorkspaceMemberAndRefresh, formatMemberMutationError } from '@/pages/workspace-members/memberUtils';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
-import type { NavigateOptions } from '@/hooks/useAppRouter';
 import type { SettingsTab } from '@/pages/SettingsPage';
+import type { AppPageContentProps } from '@/app/AppPageContent.types';
 import { routeTargetsMissingWorkspace, workspaceLandingPath } from '@/app/appNavigationGuards';
 import {
   hasAnotherWorkspaceOwner,
@@ -144,55 +140,6 @@ export function preloadAppRoutePage(route: AppRoute): void {
     case 'workspaces':
       break;
   }
-}
-
-interface AppPageContentProps {
-  activeClusterSubview: ClusterSubview;
-  activeVmSubview: VmSubview;
-  kubernetesClusters: KubernetesCluster[];
-  kubernetesClustersInWorkspaceContext: KubernetesCluster[];
-  virtualMachinesInWorkspaceContext: ControlPlaneVirtualMachine[];
-  hasLoadedWorkspaceVirtualMachines: boolean;
-  clusterContextId?: string;
-  clusterChatController: TargetChatController | null;
-  isDark: boolean;
-  language: AppLanguageCode;
-  languageOptions: AppLanguageOption[];
-  route: AppRoute;
-  selectedTargetIssueSummary: ControlPlaneTargetIssueSummary | null;
-  user: User;
-  workspaceContext: Workspace | undefined;
-  workspaceContextId: string | null;
-  workspaces: Workspace[];
-  getCurrentUserRoleForWorkspace: (workspaceId: string) => Workspace['members'][number]['role'];
-  getWorkspacePermission: (workspaceId: string, permission: keyof NonNullable<Workspace['permissions']>) => boolean;
-  loadWorkspaceInvitation: (token: string) => ReturnType<typeof controlPlaneApi.getWorkspaceInvitation>;
-  acceptWorkspaceInvitation: (token: string) => Promise<void>;
-  navigate: (path: string, options?: NavigateOptions) => void;
-  navigateToKubernetesCluster: (cluster: KubernetesCluster) => void;
-  onCreateWorkspaceClick: () => void;
-  onInitiateAddCluster: (workspaceId: string) => void;
-  onInstallAgent: (clusterId: string) => void;
-  onUpdateKubernetesCluster: (clusterId: string, updates: Partial<KubernetesCluster>) => void;
-  onAppendWorkspaceKubernetesClusters: (workspaceId: string, nextClusters: KubernetesCluster[]) => void;
-  onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
-  onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
-  onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
-  onUpdateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
-  onOpenClusterChatPanel: (cluster: KubernetesCluster, prompt?: string) => void;
-  onRunTargetPrompt: (request: TargetPromptRequest) => void;
-  pendingVmTargetPrompt: PendingVmTargetPrompt | null;
-  onPendingVmTargetPromptConsumed: () => void;
-  onRefreshWorkspaceInvitations: (workspaceId: string) => Promise<void>;
-  onRefreshWorkspaceMembers: (workspaceId: string) => Promise<void>;
-  onRefreshApprovalSummary: () => Promise<void>;
-  onDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
-  onOpenDeleteWorkspace: (workspaceId: string) => void;
-  onLeaveWorkspaceSuccess: (workspaceId: string) => void;
-  onLogout: () => void;
-  onSetLanguage: (language: AppLanguageCode) => void;
-  showToast: (message: string) => void;
-  toWorkspaceInvitation: (invitation: Awaited<ReturnType<typeof controlPlaneApi.createWorkspaceInvitation>>) => WorkspaceInvitation;
 }
 
 export const AppPageContent: React.FC<AppPageContentProps> = ({

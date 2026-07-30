@@ -10,7 +10,6 @@ import { AddMcpServerAction } from '@/features/catalog/AddMcpServerAction';
 import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';
 import { mcpConnectAction, showsMcpConnectionAction } from '@/features/catalog/mcpConnectionActions';
 import { updateUrlSearch } from '@/hooks/useUrlSearchState';
-import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { deleteAgentMcpServer, testAgentMcpServer, updateAgentMcpServer } from '@/services/control-plane/agentApi';
 import { catalogApi } from '@/services/control-plane/catalogApi';
 import { AppPaths } from '@/utils/routes';
@@ -18,15 +17,11 @@ import { AgentSkillsPanel } from '@/pages/agents/AgentSkillsPanel';
 import { AgentToolsPanel } from '@/pages/agents/AgentToolsPanel';
 import { useAgentCapabilities } from '@/pages/agents/useAgentCapabilities';
 import { TextInput } from '@acornops/ui';
-interface AgentCapabilitiesPanelProps {
-  agent: AgentDefinition;
-  canManageAgents: boolean;
-  canManageMcp: boolean;
-  canManageSkills: boolean;
-  section?: 'mcp' | 'skills' | 'tools';
-  hideSectionNavigation?: boolean;
-}
-const inputClass = 'min-h-11 w-full rounded-md border border-ui-border bg-ui-surface px-3 type-body text-ui-text focus-visible:ring-2 focus-visible:ring-accent';
+import {
+  agentCapabilityInputClassName,
+  type AgentCapabilitiesPanelProps
+} from '@/pages/agents/AgentCapabilitiesPanel.shared';
+
 export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ agent, canManageAgents, canManageMcp, canManageSkills, section, hideSectionNavigation = false }) => {
   const capabilityState = useAgentCapabilities({ agent, canManageAgents, canManageMcp, canManageSkills });
   const { t, tabs, servers, toolRefreshErrors, nativeTools, assignedNativeToolIds, setAssignedNativeToolIds, nativeToolConfigs, setNativeToolConfigs, tools } = capabilityState;
@@ -91,7 +86,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                         name: event.target.value
                       }))
                     }
-                    className={`mt-2 ${inputClass}`}
+                    className={`mt-2 ${agentCapabilityInputClassName}`}
                   />
                 </label>
                 <label className="type-body type-emphasis">
@@ -106,7 +101,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                         url: event.target.value
                       }))
                     }
-                    className={`mt-2 ${inputClass}`}
+                    className={`mt-2 ${agentCapabilityInputClassName}`}
                   />
                 </label>
                 <label className="type-body type-emphasis">
@@ -162,7 +157,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                           authHeaderName: event.target.value
                         }))
                       }
-                      className={`mt-2 ${inputClass}`}
+                      className={`mt-2 ${agentCapabilityInputClassName}`}
                     />
                   </label>
                 )}
@@ -452,7 +447,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                                   }
                               )
                             }
-                            className={`mt-2 ${inputClass}`}
+                            className={`mt-2 ${agentCapabilityInputClassName}`}
                           />
                         </label>
                         <div className="mt-3 flex justify-end gap-2">

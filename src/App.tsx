@@ -16,18 +16,17 @@ import { useWorkspaceClusterActions } from '@/app/useWorkspaceClusterActions';
 import { useWorkspaceVirtualMachineCache } from '@/app/useWorkspaceVirtualMachineCache';
 import { useRecentInvestigationSync } from '@/app/useRecentInvestigationSync';
 import { useAuthenticatedSessionLifecycle } from '@/app/useAuthenticatedSessionLifecycle';
+import { logoutAppSession } from '@/app/logoutAppSession';
 import { useThemeTransition } from '@/hooks/useThemeTransition';
 import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from '@/app/appWorkspaceSummaries';
 import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
 import { readInitialThemePreference, readLanguagePreference } from '@/app/preferences';
-import { clearChatComposerRuntimesForUser } from '@/features/targets/chat/lib/chatComposerRuntimeStorage';
 import { getSystemTheme, resolveThemePreference, type ResolvedTheme, type ThemePreference } from '@/app/theme';
 import { getSupportedLanguages } from '@/i18n/languageConfig';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import { getControlPlaneUrl } from '@/services/control-plane/http';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { AppPaths } from '@/utils/routes';
 const App: React.FC = () => {
@@ -444,25 +443,12 @@ const App: React.FC = () => {
   const getWorkspacePermission = useCallback((workspaceId: string, permission: keyof NonNullable<Workspace['permissions']>): boolean => {
     return getWorkspacePermissionValue(workspaceById, user?.email, workspaceId, permission);
   }, [user?.email, workspaceById]);
-  const handleLogout = async () => {
-    let redirectUrl: string | undefined;
-    try {
-      const result = await controlPlaneApi.logout();
-      redirectUrl = result.redirectPath.startsWith('/api/')
-        ? getControlPlaneUrl(result.redirectPath).toString()
-        : new URL(result.redirectPath, window.location.origin).toString();
-    } catch {
-      console.error('Logout request failed');
-    }
-    setIsAccountMenuOpen(false);
-    if (user) clearChatComposerRuntimesForUser(user.id);
-    clearSessionForLogout();
-    if (redirectUrl) {
-      window.location.assign(redirectUrl);
-      return;
-    }
-    navigate(AppPaths.workspaces(), { replace: true });
-  };
+  const handleLogout = () => logoutAppSession({
+    userId: user?.id,
+    clearSessionForLogout,
+    closeAccountMenu: () => setIsAccountMenuOpen(false),
+    navigate
+  });
   if (!user && sessionBootstrapState === 'restoring') {
     return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
   }

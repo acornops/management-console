@@ -18,6 +18,11 @@ workspace-owned automation definitions.
 - Quick chat opens as a full-height dock beside the catalog on desktop and as
   an accessible modal drawer on narrower viewports. Its open Agent is
   represented by `panel=chat&agent=<id>` in the URL.
+- The desktop dock slides in from the right and exits in the same direction
+  while remaining a layout sibling. Agent cards animate into the available
+  columns instead of being covered by the dock.
+- Reduced-motion users receive the same layout change without transitional
+  movement.
 - The panel uses the existing Agent conversation APIs and can maximize to the
   full Agent Chat route.
 - Closing Quick chat removes only its panel-specific route parameters.
@@ -47,17 +52,30 @@ workspace-owned automation definitions.
 
 ## Validation
 
-- `npm run lint` — passed.
-- `npm test` — passed: 136 files, 707 tests.
-- `npm run build` — passed.
-- `npm run design:check` — passed across 389 source files.
-- Focused route/navigation tests — passed: 21 tests.
-- Focused Agent Quick chat desktop interaction — passed.
-- Focused Agent Quick chat narrow-viewport drawer interaction — passed.
-- Targeted Agent Chat, Settings, MCP Servers, Skills, and Tools visual snapshots
-  passed in desktop/mobile and light/dark projects.
+- `npm run lint` — passed, including `@acornops/ui` and application typechecks.
+- `npm run test` — passed: 163 files, 786 tests.
+- `npm run harness:check` — passed after focused extraction of navigation and
+  page contracts, target administration helpers, workflow launch actions, and
+  style-contract coverage. No line budget was raised or excepted.
+- `npm run design:check` — passed across 426 source files.
+- `npm run design:adoption` — passed with zero violations and zero temporary
+  exceptions.
+- `npm run contracts:check` and `npm run membership:check` — passed.
+- `npm run build` — passed: 2,790 modules transformed.
+- `npm run bundle:check` — passed across 72 JavaScript chunks; the largest was
+  `vendor-react` at 312,686 bytes.
+- `npm run smoke:routes` — passed.
+- Focused Agent Quick chat desktop and narrow-viewport browser tests — passed:
+  2 tests.
+- `npm run smoke:fixtures` — 191 of 195 repeated tests passed in the long
+  aggregate; two third-repetition server timeouts both passed immediately in
+  isolation. The two unrun cases were a consequence of the timed-out worker.
+- `npm run smoke:mcp-parity` — passed: 21 tests across three repetitions after
+  aligning the Agent parity test with the shared MCP server form, review step,
+  and overflow actions.
+- The local aggregate visual stages remain platform-baseline limited:
+  upstream refreshed the Linux design-catalog baselines, while the macOS
+  catalog baselines are stale and the route suite has no macOS baselines.
+  Behavioral design-system coverage passed; no snapshot was accepted blindly
+  or added to this feature.
 - `git diff --check` — passed.
-
-The full `VITE_APP_DATA_MODE=control-plane npm run validate` aggregate was not
-rerun; its constituent typecheck, unit, build, design-system, focused browser,
-and targeted visual checks above cover this UI change.

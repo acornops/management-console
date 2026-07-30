@@ -415,6 +415,7 @@ Motion is a state channel, never decoration. A small vocabulary of functional in
 - **Pending Step Pulse** (`pending-agent-step-pulse`): A soft warning-tinted ring pulse marking a pending step in a run trace.
 - **Theme Reveal** (`theme-reveal`): A `320ms` non-occluding radial ripple originating at the selected theme option. The live page recolors in place, so operational and illustration motion is never snapshotted. Preference changes with the same resolved appearance and operating-system changes under `System` do not add a ripple. Reduced-motion users switch instantly.
 - **Active Tab Indicator** (`active-tab-indicator`): A shared `2px` underline that moves between related tabs in `200ms`; reduced motion removes the travel.
+- **Docked Assistant Continuity**: At desktop dock widths, the assistant remains a flex sibling and slides from the right in `200ms`; it retains its layout space until exit completes so route content is never covered. Stable catalog cards may use position-only FLIP motion over `300ms` when the dock changes the available column count. Reduced motion applies the final layouts immediately.
 
 ### Login Brand Illustration
 

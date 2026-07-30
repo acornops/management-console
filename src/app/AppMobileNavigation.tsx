@@ -12,54 +12,12 @@ import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
 import { ExperimentalBadge } from '@/components/common/ExperimentalBadge';
-import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
-import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
-import { KubernetesCluster, User, Workspace } from '@/types';
 import { AgentSubview, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
-import type { AssistantNavStatus } from '@/app/assistantNavStatus';
-import type { ActivePrimaryNav, ActiveResourceNav } from '@/app/appRouteState';
+import type { AppMobileNavigationProps } from '@/app/AppNavigation.types';
 import { ThemeMenu } from '@/components/common/ThemeMenu';
-import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import { Button } from '@acornops/ui';
 
 const MotionButton = motion.create(Button);
-
-interface AppMobileNavigationProps {
-  activeAgentSubview: AgentSubview;
-  activeClusterSubview: ClusterSubview;
-  activeVmSubview: VmSubview;
-  activePrimaryNav: ActivePrimaryNav;
-  activeResourceNav: ActiveResourceNav;
-  pendingApprovalCount?: number;
-  openWorkflowRunCount?: number;
-  isAgentSidebar: boolean;
-  isClusterSidebar: boolean;
-  isVirtualMachineSidebar: boolean;
-  themePreference: ThemePreference;
-  resolvedTheme: ResolvedTheme;
-  isMobileNavOpen: boolean;
-  selectedClusterIssueCount: number;
-  clusterAssistantNavStatus: AssistantNavStatus;
-  selectedVmIssueCount: number;
-  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
-  selectedSidebarCluster: KubernetesCluster | null;
-  selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
-  selectedWorkspace: Workspace | undefined;
-  selectedWorkspaceId: string | null;
-  user: User;
-  workspaceClusterCounts: Map<string, number>;
-  workspaces: Workspace[];
-  navigate: (path: string) => void;
-  onBackToWorkspaceSidebar: () => void;
-  onLogout: () => void;
-  onNavigateAgentSubview: (tab: AgentSubview) => void;
-  onNavigateClusterSubview: (tab: ClusterSubview) => void;
-  onNavigateVmSubview: (tab: VmSubview) => void;
-  onSelectWorkspaceContext: (workspaceId: string) => void;
-  onSetAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onSetMobileNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onSelectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
-}
 
 export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   activeAgentSubview,

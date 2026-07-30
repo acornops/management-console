@@ -1,0 +1,83 @@
+import type React from 'react';
+
+import type { ActivePrimaryNav, ActiveResourceNav } from '@/app/appRouteState';
+import type { AssistantNavStatus } from '@/app/assistantNavStatus';
+import type { ResolvedTheme, ThemePreference } from '@/app/theme';
+import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
+import type { KubernetesCluster, User, Workspace } from '@/types';
+import type { AgentSubview, ClusterSubview, VmSubview } from '@/utils/routes';
+
+export interface AppDesktopSidebarProps {
+  workspaces: Workspace[];
+  selectedWorkspace: Workspace | undefined;
+  selectedWorkspaceId: string | null;
+  selectedWorkspaceInitials: string;
+  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
+  selectedSidebarCluster: KubernetesCluster | null;
+  selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
+  isAgentSidebar: boolean;
+  isClusterSidebar: boolean;
+  isVirtualMachineSidebar: boolean;
+  activeResourceNav: ActiveResourceNav;
+  pendingApprovalCount?: number;
+  openWorkflowRunCount?: number;
+  selectedClusterIssueCount: number;
+  clusterAssistantNavStatus: AssistantNavStatus;
+  selectedVmIssueCount: number;
+  themePreference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
+  isAccountMenuOpen: boolean;
+  isSidebarWorkspaceMenuOpen: boolean;
+  sidebarAccountMenuRef: React.RefObject<HTMLDivElement | null>;
+  sidebarWorkspaceMenuRef: React.RefObject<HTMLDivElement | null>;
+  navigate: (path: string) => void;
+  onBackToWorkspaceSidebar: () => void;
+  onNavigateAgentSubview: (tab: AgentSubview) => void;
+  onNavigateClusterSubview: (tab: ClusterSubview) => void;
+  onNavigateVmSubview: (tab: VmSubview) => void;
+  onOpenCreateWorkspace: () => void;
+  onSelectWorkspaceContext: (workspaceId: string) => void;
+  onSetAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onSetSidebarWorkspaceMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onSelectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
+  onLogout: () => void;
+  user: User;
+}
+
+export interface AppMobileNavigationProps {
+  activeAgentSubview: AgentSubview;
+  activeClusterSubview: ClusterSubview;
+  activeVmSubview: VmSubview;
+  activePrimaryNav: ActivePrimaryNav;
+  activeResourceNav: ActiveResourceNav;
+  pendingApprovalCount?: number;
+  openWorkflowRunCount?: number;
+  isAgentSidebar: boolean;
+  isClusterSidebar: boolean;
+  isVirtualMachineSidebar: boolean;
+  themePreference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
+  isMobileNavOpen: boolean;
+  selectedClusterIssueCount: number;
+  clusterAssistantNavStatus: AssistantNavStatus;
+  selectedVmIssueCount: number;
+  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
+  selectedSidebarCluster: KubernetesCluster | null;
+  selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
+  selectedWorkspace: Workspace | undefined;
+  selectedWorkspaceId: string | null;
+  user: User;
+  workspaceClusterCounts: Map<string, number>;
+  workspaces: Workspace[];
+  navigate: (path: string) => void;
+  onBackToWorkspaceSidebar: () => void;
+  onLogout: () => void;
+  onNavigateAgentSubview: (tab: AgentSubview) => void;
+  onNavigateClusterSubview: (tab: ClusterSubview) => void;
+  onNavigateVmSubview: (tab: VmSubview) => void;
+  onSelectWorkspaceContext: (workspaceId: string) => void;
+  onSetAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onSetMobileNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onSelectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
+}

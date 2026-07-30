@@ -76,6 +76,14 @@ test('Agent cards open route-backed Quick chat and can maximize to full Chat', a
   expect(modelSubmenuBox.x + modelSubmenuBox.width).toBeLessThanOrEqual(panelBox.x + panelBox.width);
   await page.keyboard.press('Escape');
 
+  await panel.getByRole('button', { name: 'Close' }).click();
+  await expect(panel).toHaveCount(0);
+  await expect.poll(() => cardGrid.evaluate((element) =>
+    getComputedStyle(element).gridTemplateColumns.split(' ').length
+  )).toBe(3);
+
+  await card.getByRole('button', { name: 'Quick chat' }).click();
+  await expect(panel).toBeVisible();
   await panel.getByRole('button', { name: 'Open full chat' }).click();
   await expect(page).toHaveURL(agentDetailPath('chat'));
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, type Transition } from 'framer-motion';
 import { ChevronRight, MoreHorizontal } from 'lucide-react';
 
 import { Button } from '@acornops/ui';
@@ -20,11 +21,24 @@ export const ResourceCatalogCard: React.FC<{
   onActivate: () => void;
   cardAttribute?: Record<string, string>;
   actionAttribute?: Record<string, string>;
+  layoutMotion?: boolean;
+  layoutTransition?: Transition;
   children: React.ReactNode;
-}> = ({ actionLabel, disabled = false, onActivate, cardAttribute = {}, actionAttribute = {}, children }) => {
+}> = ({
+  actionLabel,
+  disabled = false,
+  onActivate,
+  cardAttribute = {},
+  actionAttribute = {},
+  layoutMotion = false,
+  layoutTransition,
+  children
+}) => {
   return (
-    <article
+    <motion.article
       {...cardAttribute}
+      layout={layoutMotion ? 'position' : false}
+      transition={layoutTransition}
       className="group relative flex min-w-0 flex-col overflow-visible rounded-lg border border-ui-border bg-ui-surface shadow-sm transition-colors hover:border-accent/25"
     >
       <Button
@@ -37,7 +51,7 @@ export const ResourceCatalogCard: React.FC<{
         className="control-target absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-control-boundary disabled:cursor-not-allowed"
       />
       <div className="pointer-events-none relative z-10 flex min-w-0 flex-col">{children}</div>
-    </article>
+    </motion.article>
   );
 };
 

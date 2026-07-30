@@ -1,4 +1,5 @@
 import React from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import {
@@ -13,6 +14,7 @@ import {
   type DiscoveryFilterOption
 } from '@acornops/ui';
 import { Settings } from 'lucide-react';
+import { dockedResourceCardLayoutTransition } from '@/app/dockedPanelLayout';
 import { ICONS } from '@/constants';
 import {
   ResourceCatalogActionMenu,
@@ -68,6 +70,7 @@ interface WorkspaceAgentsCatalogProps {
   query: string;
   onQueryChange: (query: string) => void;
   catalogFilters: AgentCatalogFilters;
+  dockedQuickChatOpen: boolean;
   onCatalogFiltersChange: (filters: AgentCatalogFilters) => void;
   onClearFilters: () => void;
   onOpenManagement: (agent: AgentDefinition) => void;
@@ -83,6 +86,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   query,
   onQueryChange,
   catalogFilters,
+  dockedQuickChatOpen,
   onCatalogFiltersChange,
   onClearFilters,
   onOpenManagement,
@@ -90,6 +94,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   onOpenSettings
 }) => {
   const { t } = useTranslation();
+  const shouldReduceMotion = useReducedMotion();
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
   const filterOptions = React.useMemo<Array<DiscoveryFilterOption<AgentFocusFilter>>>(() => [
     { value: 'all', label: t('agentsWorkflows.agents.filters.all'), count: agents.length },
@@ -100,7 +105,11 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   const hasActiveFilters = Boolean(query.trim()) || hasActiveAgentCatalogFilters(catalogFilters);
 
   return (
-    <section aria-label={t('agentsWorkflows.agents.catalogLabel')} className="min-w-0">
+    <section
+      aria-label={t('agentsWorkflows.agents.catalogLabel')}
+      data-agent-catalog-layout={dockedQuickChatOpen ? 'docked' : 'full'}
+      className="min-w-0"
+    >
       {(loading || agents.length > 0 || hasActiveFilters) && (
         <DiscoveryFilterBar
           idPrefix="agent-catalog"
@@ -154,6 +163,8 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                 actionAttribute={{ 'data-agent-card-primary-action': 'true' }}
                 actionLabel={t('agentsWorkflows.agents.openDetailsLabel', { name: agent.name })}
                 onActivate={() => onOpenManagement(agent)}
+                layoutMotion={!shouldReduceMotion}
+                layoutTransition={dockedResourceCardLayoutTransition}
               >
                 <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
                   <AgentAvatar emoji={agent.avatarEmoji} />

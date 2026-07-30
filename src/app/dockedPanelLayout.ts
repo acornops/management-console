@@ -5,6 +5,16 @@ export const dockedPanelMediaQuery = '(min-width: 1280px)';
 export const dockedPanelMinimumWidth = 380;
 export const desktopSidebarWidth = 256;
 export const minimumMainContentWidth = 560;
+export const dockedPanelMotion = {
+  initial: { x: '100%' },
+  animate: { x: 0 },
+  exit: { x: '100%' },
+  transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] }
+} as const;
+export const dockedResourceCardLayoutTransition = {
+  duration: 0.3,
+  ease: [0.16, 1, 0.3, 1]
+} as const;
 
 export function getDockedPanelMaximumWidth(viewportWidth: number): number {
   return Math.max(

@@ -8,14 +8,11 @@ import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acorno
 import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
-import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type {
   ControlPlaneTargetToolItem,
-  ControlPlaneTargetToolsCatalog,
-  UpdateTargetToolInput
+  ControlPlaneTargetToolsCatalog
 } from '@/services/controlPlaneApi';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 import { TargetInsightsActivityDialog } from '@/features/targets/admin/TargetInsightsActivityDialog';
 import { TargetInsightsDialog } from '@/features/targets/admin/TargetInsightsDialog';
 import { TargetInsightsResetDialog } from '@/features/targets/admin/TargetInsightsResetDialog';
@@ -24,134 +21,25 @@ import { TargetToolRow } from '@/features/targets/admin/TargetToolRow';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
 import { TextInput, Textarea } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
+import {
+  draftFromTool,
+  parseDomainList,
+  summarizeDomainFilters,
+  summarizeToolConfig,
+  targetToolsDataSource,
+  toolCapability,
+  toolCapabilityLabel,
+  toolDomainTextareaClassName,
+  toolRuntimeKind,
+  toolRuntimeLabel,
+  toolSearchInputClassName,
+  type TargetInsightsAction,
+  type TargetToolsDataSource,
+  type TargetToolsViewProps,
+  type ToolDraft
+} from '@/features/targets/admin/TargetToolsView.helpers';
 
-interface TargetToolsViewProps {
-  target: TargetDescriptor;
-  canManageTools?: boolean;
-  initialCatalog?: ControlPlaneTargetToolsCatalog | null;
-  onCatalogChange?: (catalog: ControlPlaneTargetToolsCatalog) => void;
-  dataSource?: TargetToolsDataSource;
-}
-
-export interface TargetToolsDataSource {
-  listTools: (workspaceId: string, subjectId: string) => Promise<ControlPlaneTargetToolsCatalog>;
-  updateTool: (workspaceId: string, subjectId: string, toolId: string, input: UpdateTargetToolInput) => Promise<ControlPlaneTargetToolItem>;
-}
-
-const targetToolsDataSource: TargetToolsDataSource = {
-  listTools: (workspaceId, subjectId) => controlPlaneApi.listTargetTools(workspaceId, subjectId),
-  updateTool: (workspaceId, subjectId, toolId, input) => controlPlaneApi.updateTargetTool(workspaceId, subjectId, toolId, input)
-};
-
-interface ToolDraft {
-  enabled: boolean;
-  allowedDomainsText: string;
-  blockedDomainsText: string;
-}
-
-type TargetInsightsAction = 'files' | 'settings' | 'activity' | 'reset';
-
-const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 type-body');
-const toolDomainTextareaClassName = formTextareaClassName('mt-2');
-
-function splitDomainInput(value: string): string[] {
-  return value
-    .split(/\n+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function normalizeDomain(value: string): string {
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) throw new Error('empty');
-  if (
-    normalized.includes('://') ||
-    normalized.includes('/') ||
-    normalized.includes('\\') ||
-    normalized.includes(':') ||
-    normalized.includes('*') ||
-    normalized.includes('?') ||
-    normalized.includes('#')
-  ) {
-    throw new Error('invalid');
-  }
-  if (normalized.length > 253) throw new Error('invalid');
-  const labels = normalized.split('.');
-  if (labels.length < 2 || labels.some((label) => !label)) throw new Error('invalid');
-  for (const label of labels) {
-    if (label.length > 63 || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)) {
-      throw new Error('invalid');
-    }
-  }
-  return normalized;
-}
-
-function parseDomainList(value: string, label: string, t: (key: string, options?: Record<string, unknown>) => string): string[] {
-  const seen = new Set<string>();
-  return splitDomainInput(value).map((entry) => {
-    let normalized: string;
-    try {
-      normalized = normalizeDomain(entry);
-    } catch {
-      throw new Error(t('tools.validation.invalidDomain', { label, domain: entry }));
-    }
-    if (seen.has(normalized)) {
-      throw new Error(t('tools.validation.duplicateDomain', { label, domain: normalized }));
-    }
-    seen.add(normalized);
-    return normalized;
-  });
-}
-
-function getDomainFilters(tool: ControlPlaneTargetToolItem) {
-  return {
-    allowedDomains: tool.config?.domainFilters?.allowedDomains || [],
-    blockedDomains: tool.config?.domainFilters?.blockedDomains || []
-  };
-}
-
-function draftFromTool(tool: ControlPlaneTargetToolItem): ToolDraft {
-  const domainFilters = getDomainFilters(tool);
-  return {
-    enabled: tool.enabled,
-    allowedDomainsText: domainFilters.allowedDomains.join('\n'),
-    blockedDomainsText: domainFilters.blockedDomains.join('\n')
-  };
-}
-
-function summarizeDomainFilters(tool: ControlPlaneTargetToolItem, t: (key: string, options?: Record<string, unknown>) => string): string {
-  const domainFilters = getDomainFilters(tool);
-  const allowed = domainFilters.allowedDomains.length;
-  const blocked = domainFilters.blockedDomains.length;
-  if (allowed === 0 && blocked === 0) return t('tools.domainSummaryAllDomains');
-  if (allowed > 0 && blocked > 0) return t('tools.domainSummaryAllowedBlocked', { allowed, blocked });
-  if (allowed > 0) return t('tools.domainSummaryAllowedOnly', { count: allowed });
-  return t('tools.domainSummaryBlockedOnly', { count: blocked });
-}
-
-function summarizeToolConfig(tool: ControlPlaneTargetToolItem, t: (key: string, options?: Record<string, unknown>) => string): string {
-  if (tool.origin === 'platform_native') return t('tools.platformNativeSummary');
-  if (tool.id !== 'target_insights') return summarizeDomainFilters(tool, t);
-  if (tool.readiness && !tool.readiness.learningAvailable) return 'Learning paused';
-  const maxSnippets = tool.config.retrieval?.maxSnippetsPerRetrieval || 4;
-  return `Retrieves up to ${maxSnippets} snippets`;
-}
-
-function toolRuntimeKind(tool: ControlPlaneTargetToolItem): 'provider_native' | 'function' {
-  return tool.runtimeKind || 'function';
-}
-
-function toolRuntimeLabel(tool: ControlPlaneTargetToolItem, t: (key: string) => string): string {
-  return t(toolRuntimeKind(tool) === 'provider_native' ? 'tools.runtimeProviderNative' : 'tools.runtimeFunction');
-}
-
-function toolCapability(tool: ControlPlaneTargetToolItem): 'read' | 'write' {
-  return tool.capability === 'write' ? 'write' : 'read';
-}
-
-function toolCapabilityLabel(tool: ControlPlaneTargetToolItem, t: (key: string) => string): string {
-  return t(toolCapability(tool) === 'write' ? 'tools.capabilityWrite' : 'tools.capabilityRead');
-}
+export type { TargetToolsDataSource } from '@/features/targets/admin/TargetToolsView.helpers';
 
 export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   target,

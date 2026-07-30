@@ -5,56 +5,16 @@ import { Sidebar } from '@acornops/ui';
 
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
-import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
-import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
-import { KubernetesCluster, User, Workspace } from '@/types';
+import type { User } from '@/types';
 import { AgentSubview, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
-import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ActiveResourceNav } from '@/app/appRouteState';
 import { navIconClass, SidebarNavButton, SidebarSection, TargetSettingsDivider, WorkspaceSidebarNavLink } from '@/app/AppDesktopSidebarParts';
+import type { AppDesktopSidebarProps } from '@/app/AppNavigation.types';
 import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
 import { ThemeMenu } from '@/components/common/ThemeMenu';
-import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import { Button } from '@acornops/ui';
 
 const MotionButton = motion.create(Button);
-
-interface AppDesktopSidebarProps {
-  workspaces: Workspace[];
-  selectedWorkspace: Workspace | undefined;
-  selectedWorkspaceId: string | null;
-  selectedWorkspaceInitials: string;
-  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
-  selectedSidebarCluster: KubernetesCluster | null;
-  selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
-  isAgentSidebar: boolean;
-  isClusterSidebar: boolean;
-  isVirtualMachineSidebar: boolean;
-  activeResourceNav: ActiveResourceNav;
-  pendingApprovalCount?: number;
-  openWorkflowRunCount?: number;
-  selectedClusterIssueCount: number;
-  clusterAssistantNavStatus: AssistantNavStatus;
-  selectedVmIssueCount: number;
-  themePreference: ThemePreference;
-  resolvedTheme: ResolvedTheme;
-  isAccountMenuOpen: boolean;
-  isSidebarWorkspaceMenuOpen: boolean;
-  sidebarAccountMenuRef: React.RefObject<HTMLDivElement | null>;
-  sidebarWorkspaceMenuRef: React.RefObject<HTMLDivElement | null>;
-  navigate: (path: string) => void;
-  onBackToWorkspaceSidebar: () => void;
-  onNavigateAgentSubview: (tab: AgentSubview) => void;
-  onNavigateClusterSubview: (tab: ClusterSubview) => void;
-  onNavigateVmSubview: (tab: VmSubview) => void;
-  onOpenCreateWorkspace: () => void;
-  onSelectWorkspaceContext: (workspaceId: string) => void;
-  onSetAccountMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onSetSidebarWorkspaceMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onSelectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
-  onLogout: () => void;
-  user: User;
-}
 
 function getUserInitials(user: User): string {
   const source = user.name || user.email || 'User';
