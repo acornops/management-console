@@ -2,6 +2,7 @@ import React from 'react';
 import { BookOpen, Wrench, X } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import type { ChatAssistantReference } from '@/types';
+import { Button } from '@acornops/ui';
 
 interface TargetChatReferenceChipsProps {
   references: ChatAssistantReference[];
@@ -19,18 +20,18 @@ export const TargetChatReferenceChips: React.FC<TargetChatReferenceChipsProps> =
           <span
             key={`${reference.kind}:${reference.id}`}
             role="listitem"
-            className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border border-ui-border bg-ui-bg px-2 py-1 text-xs font-semibold text-ui-text"
+            className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border border-ui-border bg-ui-bg px-2 py-1 type-caption type-emphasis text-ui-text"
           >
             <Icon className="h-3.5 w-3.5 shrink-0 text-ui-text-muted" aria-hidden="true" />
             <span className="truncate">{reference.label}</span>
-            <button
+            <Button
               type="button"
               onClick={() => onRemove(reference)}
               className="control-target -mr-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
               aria-label={t('chat.removeReference', { name: reference.label })}
             >
               <X className="h-3 w-3" aria-hidden="true" />
-            </button>
+            </Button>
           </span>
         );
       })}
@@ -65,7 +66,7 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
               ? t('chat.referenceImportedSkill')
               : t('chat.referenceSkill');
           return (
-            <button
+            <Button
               key={`${reference.kind}:${reference.id}`}
               type="button"
               id={`${id}-option-${index}`}
@@ -80,11 +81,11 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
             >
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold">{reference.label}</span>
-                <span className="mt-0.5 block truncate text-xs font-medium text-ui-text-muted">{reference.description || metadata}</span>
+                <span className="block truncate type-body type-emphasis">{reference.label}</span>
+                <span className="mt-0.5 block truncate type-caption text-ui-text-muted">{reference.description || metadata}</span>
               </span>
               <span className="shrink-0 pt-0.5 type-micro-label">{metadata}</span>
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -99,7 +100,7 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
       className="absolute bottom-full left-2 right-2 z-50 mb-2 max-h-72 overflow-y-auto rounded-xl border border-ui-border bg-ui-surface-strong p-1.5 shadow-xl shadow-ui-text/10 custom-scrollbar"
     >
       {references.length === 0 ? (
-        <p className="px-3 py-3 text-sm font-medium text-ui-text-muted">{query ? t('chat.referenceNoMatches') : t('chat.referenceNoneAvailable')}</p>
+        <p className="px-3 py-3 type-ui text-ui-text-muted">{query ? t('chat.referenceNoMatches') : t('chat.referenceNoneAvailable')}</p>
       ) : (
         <>
           {renderGroup('tool', t('chat.capabilityPreviewTools'))}

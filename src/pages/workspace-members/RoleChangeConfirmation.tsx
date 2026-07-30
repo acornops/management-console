@@ -55,7 +55,7 @@ export const RoleChangeConfirmation: React.FC<RoleChangeConfirmationProps> = ({
         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="type-row-title">{t('members.reviewRoleChange')}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-semibold">
+          <div className="mt-3 flex flex-wrap items-center gap-2 type-body type-emphasis">
             <span className="rounded-md bg-ui-surface px-2 py-1 text-ui-text">{formatRole(currentRoleTemplate.key, currentRoleTemplate)}</span>
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
             <span className="rounded-md bg-ui-surface px-2 py-1 text-ui-text">{formatRole(pendingRoleTemplate.key, pendingRoleTemplate)}</span>

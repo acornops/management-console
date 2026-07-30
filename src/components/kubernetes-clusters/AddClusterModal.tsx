@@ -5,12 +5,13 @@ import { ICONS } from '@/constants';
 import { Button } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
 import { parseNamespaceList } from '@/app/useAppSupport';
 import type { AgentAccessMode } from '@/services/control-plane/types';
+import { TextInput } from '@acornops/ui';
 
 interface AddClusterModalProps {
   isOpen: boolean;
@@ -38,8 +39,8 @@ function helmSetJson(path: string, value: string[]): string {
   return `  --set-json ${path}=${shellSingleQuote(JSON.stringify(value))}`;
 }
 
-const clusterNameInputClassName = formInputClassName('px-4 font-medium');
-const namespaceInputClassName = formInputClassName('text-xs font-medium');
+const clusterNameInputClassName = formInputClassName('px-4 type-ui');
+const namespaceInputClassName = formInputClassName('type-caption');
 
 export function updateInstallCommandNamespaceScope(command: string, includeValue: string, excludeValue: string): string {
   const include = parseNamespaceList(includeValue);
@@ -123,7 +124,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="add-cluster-title"
       initialFocusRef={clusterNameInputRef}
       closeDisabled={isCreatingCluster}
@@ -147,7 +148,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
               <label htmlFor="add-cluster-name-input" className="block px-1 type-micro-label">
                 {t('clusterSetup.clusterName')}
               </label>
-              <input
+              <TextInput
                 id="add-cluster-name-input"
                 ref={clusterNameInputRef}
                 type="text"
@@ -161,13 +162,13 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
             <section className="space-y-3 rounded-lg border border-ui-border bg-ui-bg p-4">
               <div>
                 <div className="type-micro-label">{t('clusterSetup.namespaceScope')}</div>
-                <p className="mt-1 type-caption font-medium leading-5 text-ui-text-muted">{t('clusterSetup.includeNamespacesHelp')}</p>
+                <p className="mt-1 type-caption leading-5 text-ui-text-muted">{t('clusterSetup.includeNamespacesHelp')}</p>
               </div>
               <div>
                 <label htmlFor="add-cluster-include-namespaces" className="mb-1.5 block px-1 type-micro-label">
                   {t('clusterSetup.includeNamespaces')}
                 </label>
-                <input
+                <TextInput
                   id="add-cluster-include-namespaces"
                   type="text"
                   value={includeNamespaces}
@@ -180,7 +181,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                 <label htmlFor="add-cluster-exclude-namespaces" className="mb-1.5 block px-1 type-micro-label">
                   {t('clusterSetup.excludeNamespaces')}
                 </label>
-                <input
+                <TextInput
                   id="add-cluster-exclude-namespaces"
                   type="text"
                   value={excludeNamespaces}
@@ -212,7 +213,7 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
       ) : (
         <>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
-            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
+            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 type-ui leading-6 text-ui-text-muted">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
                   <ICONS.Terminal className="h-4 w-4" />
@@ -225,26 +226,26 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
               <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
                 <div className="flex items-center justify-between gap-3 px-4 pt-4">
                   <span className="type-micro-label">{t('clusterSetup.installCommand')}</span>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => void copyInstallCommand()}
                     className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text"
                     aria-label={hasCopiedCommand ? t('clusterSetup.copied') : t('clusterSetup.copy')}
                   >
                     {hasCopiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </button>
+                  </Button>
                 </div>
-                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
+                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono type-caption leading-6 text-ui-text custom-scrollbar">
                   <pre className="whitespace-pre">{displayedInstallCommand}</pre>
                 </div>
               </div>
             ) : (
-              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
+              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 type-body type-emphasis text-status-warning-text">
                 {t('clusterSetup.missingInstallCommand')}
               </div>
             )}
             {clusterInstallWarnings.length > 0 && (
-              <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
+              <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 type-caption text-status-warning-text">
                 {clusterInstallWarnings.map((warning) => (
                   <p key={warning}>{warning}</p>
                 ))}
@@ -272,6 +273,6 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
           </div>
         </>
       )}
-    </Dialog>
+    </DialogFrame>
   );
 };

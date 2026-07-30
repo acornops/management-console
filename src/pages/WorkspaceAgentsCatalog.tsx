@@ -105,7 +105,7 @@ const WorkflowAssignment: React.FC<{ agent: AgentDefinition }> = ({ agent }) => 
   const summary = getAgentWorkflowAssignmentSummary(agent, t);
   return (
     <div className="min-w-0">
-      <span className="type-caption block font-semibold text-ui-text">{summary.countLabel}</span>
+      <span className="type-caption block type-emphasis text-ui-text">{summary.countLabel}</span>
       {summary.firstWorkflow ? (
         <div className="mt-0.5 flex min-w-0 items-center gap-2">
           <a
@@ -113,11 +113,11 @@ const WorkflowAssignment: React.FC<{ agent: AgentDefinition }> = ({ agent }) => 
             aria-label={t('agentsWorkflows.agents.workflowAssignment.open', {
               name: summary.firstWorkflow
             })}
-            className="pointer-events-auto relative z-20 inline-flex min-h-11 min-w-0 items-center rounded-sm text-sm font-medium text-ui-text-muted underline-offset-4 transition-colors hover:text-accent-strong hover:underline focus:outline-none focus-visible:text-accent-strong focus-visible:ring-2 focus-visible:ring-accent/35"
+            className="pointer-events-auto relative z-20 inline-flex min-h-11 min-w-0 items-center rounded-sm type-ui text-ui-text-muted underline-offset-4 transition-colors hover:text-accent-strong hover:underline focus:outline-none focus-visible:text-accent-strong focus-visible:ring-2 focus-visible:ring-accent/35"
           >
             <span className="min-w-0 break-words [overflow-wrap:anywhere]">{summary.firstWorkflow}</span>
           </a>
-          {summary.overflowLabel && <span className="type-caption shrink-0 font-semibold text-ui-text-muted">{summary.overflowLabel}</span>}
+          {summary.overflowLabel && <span className="type-caption shrink-0 type-emphasis text-ui-text-muted">{summary.overflowLabel}</span>}
         </div>
       ) : (
         <span className="type-caption mt-1 block text-ui-text-muted">{summary.emptyLabel}</span>
@@ -269,7 +269,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                   selected ? 'bg-accent-soft/45 ring-1 ring-inset ring-accent/30' : 'hover:bg-ui-bg/70'
                 }`}
               >
-                <button
+                <Button
                   type="button"
                   aria-label={t('agentsWorkflows.agents.openProfile', {
                     name: agent.name
@@ -287,14 +287,14 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                         </span>
                       </span>
                       <span className="type-caption mt-1 block break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.description}</span>
-                      <span className="type-caption mt-1.5 block break-words font-semibold text-ui-text-muted [overflow-wrap:anywhere]">{agent.owner}</span>
+                      <span className="type-caption mt-1.5 block break-words type-emphasis text-ui-text-muted [overflow-wrap:anywhere]">{agent.owner}</span>
                     </span>
                   </CatalogCell>
                   <CatalogCell label={t('agentsWorkflows.agents.fields.status')}>
                     <StatusBadge tone={statusTone(agent.status)}>{t(`agentsWorkflows.agents.status.${agent.status}`)}</StatusBadge>
                   </CatalogCell>
                   <CatalogCell label={t('agentsWorkflows.agents.fields.capabilities')}>
-                    <span className="type-caption break-words font-semibold text-ui-text [overflow-wrap:anywhere]">{getAgentCapabilitySummary(agent, t)}</span>
+                    <span className="type-caption break-words type-emphasis text-ui-text [overflow-wrap:anywhere]">{getAgentCapabilitySummary(agent, t)}</span>
                   </CatalogCell>
                   <CatalogCell label={t('agentsWorkflows.agents.fields.assignment')} className="col-span-2 lg:col-span-1">
                     <WorkflowAssignment agent={agent} />

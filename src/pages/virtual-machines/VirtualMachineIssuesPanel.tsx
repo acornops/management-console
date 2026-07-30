@@ -12,6 +12,7 @@ import {
   AutomaticInvestigationActivity,
   shouldShowManualAssistantFallback
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface VirtualMachineIssuesPanelProps {
   workspaceId: string;
@@ -61,7 +62,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
             <h2 id={issueSectionTitleId} className="type-row-title">
               {t('virtualMachines.overview.activeIssues')}
             </h2>
-            <p className="mt-1 text-sm leading-6 text-ui-text-muted">{t('virtualMachines.overview.activeIssuesBody')}</p>
+            <p className="mt-1 type-body leading-6 text-ui-text-muted">{t('virtualMachines.overview.activeIssuesBody')}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -90,20 +91,20 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
       ) : reportedIssues.length > 0 ? (
         <>
           <div className="hidden overflow-x-auto 2xl:block">
-            <table className="w-full">
+            <DataTable caption={t('virtualMachines.overview.activeIssues')} className="w-full">
               <DataTableHeader>
-                <tr>
+                <DataTableRow>
                   <DataTableHeaderCell density="compact">{t('virtualMachines.overview.issue')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="compact">{t('virtualMachines.overview.severity')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="compact">{t('virtualMachines.overview.source')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="compact">{t('overview.lastSeenLabel')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="compact" numeric>{t('virtualMachines.overview.action')}</DataTableHeaderCell>
-                </tr>
+                </DataTableRow>
               </DataTableHeader>
-              <tbody>
+              <DataTableBody>
                 {reportedIssues.map((issue) => (
-                  <tr key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                    <td className="max-w-[34rem] px-5 py-4">
+                  <DataTableRow key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
+                    <DataTableCell className="max-w-[34rem] px-5 py-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
                         <span className="type-caption text-ui-text-muted">
@@ -124,15 +125,15 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                         issueId={issue.id}
                         activity={issue.automaticInvestigation}
                       />
-                    </td>
-                    <td className="px-5 py-4 align-top">
+                    </DataTableCell>
+                    <DataTableCell className="px-5 py-4 align-top">
                       <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
-                    </td>
-                    <td className="type-caption break-words px-5 py-4 align-top">
+                    </DataTableCell>
+                    <DataTableCell className="type-caption break-words px-5 py-4 align-top">
                       {issue.objectName || issue.objectKind || issue.reason || t('virtualMachines.overview.hostSource')}
-                    </td>
-                    <td className="type-caption px-5 py-4 align-top">{formatUserDateTime(issueTimestamp(issue))}</td>
-                    <td className="px-5 py-4 align-top text-right">
+                    </DataTableCell>
+                    <DataTableCell className="type-caption px-5 py-4 align-top">{formatUserDateTime(issueTimestamp(issue))}</DataTableCell>
+                    <DataTableCell className="px-5 py-4 align-top text-right">
                       {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
                         <Button
                           onClick={() => onOpenIssueTriage(issue)}
@@ -144,11 +145,11 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                           {t('virtualMachines.overview.openAssistant')}
                         </Button>
                       )}
-                    </td>
-                  </tr>
+                    </DataTableCell>
+                  </DataTableRow>
                 ))}
-              </tbody>
-            </table>
+              </DataTableBody>
+            </DataTable>
           </div>
 
           <div className="divide-y divide-ui-border 2xl:hidden">

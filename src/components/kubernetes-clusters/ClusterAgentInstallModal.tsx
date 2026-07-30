@@ -3,7 +3,7 @@ import { Check, Copy, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
 import { ICONS } from '@/constants';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -94,7 +94,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="install-agent-title"
       initialFocusRef={generateCommandButtonRef}
       className="relative flex max-h-[min(92vh,56rem)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
@@ -105,7 +105,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           <h3 id="install-agent-title" className="type-panel-title">
             {t(isReinstall ? 'clusterSetup.reinstallAgent' : 'clusterSetup.installAgent')}
           </h3>
-          <p className="mt-1 text-xs font-medium text-ui-text-muted">
+          <p className="mt-1 type-caption text-ui-text-muted">
             {workspaceName} / {cluster.name}
           </p>
         </div>
@@ -114,16 +114,16 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
 
       <div className="space-y-4 overflow-y-auto p-6">
         <div className="rounded-xl border border-accent/20 bg-accent-soft/60 p-4">
-          <p className="text-sm font-medium text-ui-text">{t(isReinstall ? 'clusterSetup.reinstallAgentHelp' : 'clusterSetup.installAgentFirst')}</p>
+          <p className="type-ui text-ui-text">{t(isReinstall ? 'clusterSetup.reinstallAgentHelp' : 'clusterSetup.installAgentFirst')}</p>
         </div>
 
         {isReinstall && (
-          <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
+          <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 type-caption text-status-warning-text">
             {t('clusterSetup.rotateAgentKeyWarning')}
           </div>
         )}
 
-        {errorMessage && <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-3 text-xs font-medium text-status-danger-text">{errorMessage}</div>}
+        {errorMessage && <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-3 type-caption text-status-danger-text">{errorMessage}</div>}
 
         <ClusterAgentAccessModeSelector idPrefix="install-cluster" value={agentAccessMode} onChange={handleAccessModeChange} disabled={isGenerating} />
 
@@ -131,7 +131,7 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           <div className="rounded-xl border border-ui-border bg-ui-bg shadow-sm">
             <div className="flex items-center justify-between gap-3 px-4 pt-4">
               <span className="type-micro-label">{t('clusterSetup.installCommand')}</span>
-              <button
+              <Button
                 type="button"
                 onClick={handleCopy}
                 disabled={isCopying}
@@ -139,29 +139,29 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
                 aria-label={isCopying ? t('clusterSetup.copied') : t('clusterSetup.copy')}
               >
                 {isCopying ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </button>
+              </Button>
             </div>
-            <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text">
+            <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono type-caption leading-6 text-ui-text">
               <pre className="whitespace-pre">{command}</pre>
             </div>
           </div>
         )}
 
         {agentKey && !command && (
-          <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
+          <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 type-body type-emphasis text-status-warning-text">
             {t('clusterSetup.missingInstallCommand')}
           </div>
         )}
 
         {installWarnings.length > 0 && (
-          <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 text-xs font-medium text-status-warning-text">
+          <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 type-caption text-status-warning-text">
             {installWarnings.map((warning) => (
               <p key={warning}>{warning}</p>
             ))}
           </div>
         )}
 
-        {!agentKey && !command && <p className="text-xs font-medium text-ui-text-muted">{t('clusterSetup.generateCommandHelp')}</p>}
+        {!agentKey && !command && <p className="type-caption text-ui-text-muted">{t('clusterSetup.generateCommandHelp')}</p>}
 
         {command && (
           <p className="type-caption">
@@ -171,13 +171,13 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
       </div>
 
       <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-        <button
+        <Button
           type="button"
           onClick={onClose}
           className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title-muted transition-colors hover:bg-ui-bg"
         >
           {t('app.close')}
-        </button>
+        </Button>
         <Button
           ref={generateCommandButtonRef}
           onClick={handleGenerate}
@@ -192,6 +192,6 @@ export const ClusterAgentInstallModal: React.FC<ClusterAgentInstallModalProps> =
           {generateCommandLabel}
         </Button>
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

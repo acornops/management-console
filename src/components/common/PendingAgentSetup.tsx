@@ -55,7 +55,7 @@ export const PendingAgentSetup: React.FC<PendingAgentSetupProps> = ({
       {showFooter && (
         <div className={`pointer-events-auto min-h-[4.25rem] border-t border-ui-border ${compactFooter ? 'flex items-center justify-center py-4' : 'py-5'}`}>
           <div className={compactFooter ? 'flex justify-center' : 'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'}>
-            {!compactFooter && <p className="max-w-md text-sm font-semibold leading-5 text-ui-text-muted">{message}</p>}
+            {!compactFooter && <p className="max-w-md type-body type-emphasis leading-5 text-ui-text-muted">{message}</p>}
             {showAction && (
               <Button
                 {...actionDataProps}

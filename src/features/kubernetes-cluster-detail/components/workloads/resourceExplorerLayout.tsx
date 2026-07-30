@@ -1,11 +1,12 @@
 import React from 'react';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight, PackageOpen, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   CloseButton,
   DataTableGridHeader,
   DataTableGridHeaderCell,
-  RightSidePanel
+  DrawerFrame,
+  EmptyState
 } from '@acornops/ui';
 import {
   classNames,
@@ -15,6 +16,7 @@ import {
   resourceRowActionClass,
   resourceRowGridClass
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
+import { Button } from '@acornops/ui';
 
 export const ResourceMetricInline: React.FC<{
   label: string;
@@ -31,15 +33,11 @@ export const ResourceMetricInline: React.FC<{
   );
 };
 
-export const EmptyState: React.FC<{ message: string }> = ({ message }) => (
-  <div className="type-body rounded-lg border border-dashed border-ui-border bg-ui-surface p-10 text-center">{message}</div>
-);
-
 export const ResourceList = <T,>({ items, emptyMessage, renderItem }: { items: T[]; emptyMessage: string; renderItem: (item: T) => React.ReactNode }) => {
   const { t } = useTranslation();
 
   return items.length === 0 ? (
-    <EmptyState message={emptyMessage} />
+    <EmptyState embedded icon={<PackageOpen />} title={emptyMessage} description={null} />
   ) : (
     <div data-resource-list="true" className="min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
       <DataTableGridHeader
@@ -110,9 +108,9 @@ export const InfrastructureRow: React.FC<{
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} aria-label={`${t('workloads.details')}: ${title}`} className={`control-target ${rowClassName}`}>
+      <Button type="button" onClick={onClick} aria-label={`${t('workloads.details')}: ${title}`} className={`control-target ${rowClassName}`}>
         {content}
-      </button>
+      </Button>
     );
   }
 
@@ -136,12 +134,12 @@ export const SidePanel: React.FC<{
 }> = ({ isOpen, onClose, title, children }) => {
   const { t } = useTranslation();
   return (
-    <RightSidePanel isOpen={isOpen} onClose={onClose} ariaLabel={title}>
+    <DrawerFrame unframed isOpen={isOpen} onClose={onClose} ariaLabel={title}>
       <div className="flex items-center justify-between border-b border-ui-border px-4 py-5 sm:px-8 sm:py-6">
         <h3 className="type-section-title">{title}</h3>
         <CloseButton onClick={onClose} aria-label={t('workloads.closeDetails')} />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">{children}</div>
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

@@ -21,6 +21,8 @@ import {
   mcpVerificationKind,
   oauthAuthorizationCompletedDespiteVerificationFailure
 } from '@/features/catalog/mcpVerificationPresentation';
+import { Button } from '@acornops/ui';
+import { DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface McpServerCardProps {
   server: TargetToolCatalogServer;
@@ -310,13 +312,13 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
         : null;
 
   return (
-    <tr
+    <DataTableRow
       ref={rowRef}
       data-mcp-server-row="true"
       data-mcp-server-id={server.id}
       className={`group border-b border-ui-bg transition-colors hover:bg-accent-soft/45 ${recoveryAction ? 'bg-accent-soft ring-2 ring-inset ring-accent/45' : ''}`}
     >
-      <td className="px-4 py-6 sm:px-6 lg:px-8">
+      <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
             <Server className="h-5 w-5 text-accent-strong" />
@@ -383,9 +385,9 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             )}
           </div>
         </div>
-      </td>
+      </DataTableCell>
 
-      <td data-mcp-server-secondary-context="true" className="px-4 py-6 sm:px-6 lg:px-8">
+      <DataTableCell data-mcp-server-secondary-context="true" className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-2">
           <span className={`h-2 w-2 shrink-0 rounded-full ${statusTone.dot}`} />
           <span className={`type-label truncate ${statusTone.text}`}>{t(status.labelKey)}</span>
@@ -393,9 +395,9 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
         <p className={`type-caption mt-0.5 truncate ${statusDetailClassName}`} title={statusDetail}>
           {statusDetail}
         </p>
-      </td>
+      </DataTableCell>
 
-      <td className="px-4 py-6 sm:px-6 lg:px-8">
+      <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <Switch
           checked={server.enabled}
           aria-disabled={!canToggleServer}
@@ -407,9 +409,9 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             onToggleServer(server, enabled);
           }}
         />
-      </td>
+      </DataTableCell>
 
-      <td className="hidden px-4 py-6 sm:px-6 md:table-cell lg:px-8">
+      <DataTableCell className="hidden px-4 py-6 sm:px-6 md:table-cell lg:px-8">
         <div className="min-w-0">
           <p className="type-label text-ui-text">
             {t('mcpServers.enabledOfTotalShort', {
@@ -421,15 +423,15 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             {readConfiguredTools} {t('mcpServers.capabilityRead')} · {writeConfiguredTools} {t('mcpServers.capabilityWrite')}
           </p>
         </div>
-      </td>
+      </DataTableCell>
 
-      <td className="px-4 py-6 text-right sm:px-6 lg:px-8">
+      <DataTableCell className="px-4 py-6 text-right sm:px-6 lg:px-8">
         {canTestServer && (
           <span id={healthCheckHelpId} className="sr-only">
             {t('mcpServers.healthCheckHelp')}
           </span>
         )}
-        <button
+        <Button
           ref={actionMenuButtonRef}
           data-mcp-server-primary-actions="true"
           type="button"
@@ -441,9 +443,9 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
           aria-label={t('mcpServers.serverActionsNamed', { name: server.name })}
         >
           <MoreVertical className="h-4 w-4" aria-hidden="true" />
-        </button>
+        </Button>
         {actionMenu}
-      </td>
-    </tr>
+      </DataTableCell>
+    </DataTableRow>
   );
 };

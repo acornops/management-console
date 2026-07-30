@@ -3,7 +3,7 @@ import { RotateCcw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
@@ -42,7 +42,7 @@ export const TargetInsightsResetDialog: React.FC<TargetInsightsResetDialogProps>
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="target-insights-reset-dialog-title"
       closeDisabled={saving}
       onClose={onClose}
@@ -63,7 +63,7 @@ export const TargetInsightsResetDialog: React.FC<TargetInsightsResetDialogProps>
         <div className="flex gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
           <RotateCcw className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <p className="text-sm font-semibold">{t('tools.targetInsights.resetWarningTitle')}</p>
+            <p className="type-body type-emphasis">{t('tools.targetInsights.resetWarningTitle')}</p>
             <p className="type-caption mt-1">{t('tools.targetInsights.resetConfirm')}</p>
           </div>
         </div>
@@ -85,6 +85,6 @@ export const TargetInsightsResetDialog: React.FC<TargetInsightsResetDialogProps>
           </>
         )}
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

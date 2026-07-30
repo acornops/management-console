@@ -15,7 +15,7 @@ export const InlineAlert: React.FC<{
         : 'border-ui-border bg-ui-bg text-ui-text-muted';
 
   return (
-    <div role={tone === 'danger' ? 'alert' : 'status'} className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-xs font-semibold leading-5 ${toneClass} ${className}`}>
+    <div role={tone === 'danger' ? 'alert' : 'status'} className={`type-caption flex items-start gap-3 rounded-lg border px-4 py-3 ${toneClass} ${className}`}>
       <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
       <span>{children}</span>
     </div>

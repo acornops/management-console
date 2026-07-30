@@ -306,7 +306,10 @@ describe('theme color contract', () => {
     expect(chatView).toContain('data-chat-history-resize-handle="true"');
     expect(chatView).toContain('setIsHistoryOpen(false)');
     expect(chatView).toContain('lg:flex');
-    expect(chatView).toContain('absolute inset-0 z-[110] bg-ui-text/20 dark:bg-ui-bg/65 lg:hidden');
+    expect(chatView).toContain('<DrawerFrame');
+    expect(chatView).toContain('containerClassName="absolute z-[110] lg:hidden"');
+    expect(chatView).toContain('overlayClassName="bg-ui-text/20 dark:bg-ui-bg/65"');
+    expect(chatView).toContain('side="left"');
     expect(chatView).not.toContain('xl:w-80');
   });
 
@@ -478,6 +481,7 @@ describe('theme color contract', () => {
     expect(buttonComponent).toContain('border border-control-boundary bg-control-primary text-control-primary-fg');
     expect(buttonComponent).toContain("activation: 'border border-transparent bg-control-activation text-control-activation-fg");
     expect(buttonComponent).toContain('hover:bg-control-activation-hover');
+    expect(buttonComponent).toContain("data-design-contrast-exception={variant === 'activation' ? 'activation' : undefined}");
     expect(buttonComponent).not.toContain('shadow-accent/20');
     expect(buttonComponent).toContain("secondary: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm");
     expect(buttonComponent).toContain("danger: 'border border-control-boundary bg-control-danger text-control-danger-fg");

@@ -80,7 +80,7 @@ export const OverflowActionMenu = React.forwardRef<HTMLButtonElement, OverflowAc
   const menu =
     open && style && typeof document !== 'undefined'
       ? createPortal(
-          <div ref={menuRef} id={menuId} role="menu" aria-label={label} onKeyDown={handleMenuKeyDown} className={menuSurfaceClassName('fixed z-[130] p-1 text-sm')} style={style}>
+          <div ref={menuRef} id={menuId} role="menu" aria-label={label} onKeyDown={handleMenuKeyDown} className={menuSurfaceClassName('type-ui fixed z-[130] p-1')} style={style}>
             {children(close)}
           </div>,
           document.body

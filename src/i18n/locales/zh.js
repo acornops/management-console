@@ -347,6 +347,7 @@ export const zh = {
     retryFailedMembers: '重试失败项',
     memberAdded: '成员已添加',
     inviteCreated: '邀请链接已创建',
+    skipMembers: '跳过成员设置',
     continue: '继续',
     checkingAiDefaults: '正在检查 AI 设置...',
     aiSetupKicker: '工作区已创建',

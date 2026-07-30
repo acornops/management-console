@@ -6,7 +6,7 @@ import { EmptyState } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
 import { PageSearchInput, pageSearchInputClassName } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -15,6 +15,8 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { Workspace, WorkspaceAuditCategory, WorkspaceAuditEvent } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { TextInput } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceAuditLogPageProps {
   workspace: Workspace;
@@ -273,7 +275,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
       />
 
       {errorMessage && (
-        <div className="mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-semibold text-status-danger-text">{errorMessage}</div>
+        <div className="mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-body type-emphasis text-status-danger-text">{errorMessage}</div>
       )}
 
       <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">
@@ -389,7 +391,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
             <div id="audit-custom-range-controls" className="mt-3 grid gap-3 rounded-lg border border-ui-border bg-ui-bg/70 p-3 sm:grid-cols-2 lg:w-[34rem] lg:max-w-full">
               <label className="grid gap-2" htmlFor="audit-filter-from">
                 <span className="type-caption">{t('auditLog.filterFrom')}</span>
-                <input
+                <TextInput
                   id="audit-filter-from"
                   type="datetime-local"
                   value={draftFilters.from}
@@ -406,7 +408,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
               </label>
               <label className="grid gap-2" htmlFor="audit-filter-to">
                 <span className="type-caption">{t('auditLog.filterTo')}</span>
-                <input
+                <TextInput
                   id="audit-filter-to"
                   type="datetime-local"
                   value={draftFilters.to}
@@ -428,28 +430,28 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
           <p className="type-caption text-ui-text-muted">{t('auditLog.loadedCount', { count: visibleCount })}</p>
         </div>
         <div className="min-w-0">
-          <table className="w-full table-fixed text-left" aria-label={t('auditLog.title')}>
+          <DataTable caption={t('auditLog.title')} className="w-full table-fixed text-left" aria-label={t('auditLog.title')}>
             <DataTableHeader
               collectionState={{
                 phase: isLoading ? 'loading' : errorMessage ? 'error' : 'ready',
                 itemCount: events.length
               }}
             >
-              <tr>
+              <DataTableRow>
                 <DataTableHeaderCell>{t('auditLog.time')}</DataTableHeaderCell>
                 <DataTableHeaderCell>{t('auditLog.event')}</DataTableHeaderCell>
                 <DataTableHeaderCell className="hidden xl:table-cell">{t('auditLog.actor')}</DataTableHeaderCell>
                 <DataTableHeaderCell className="hidden xl:table-cell">{t('auditLog.object')}</DataTableHeaderCell>
                 <DataTableHeaderCell numeric>{t('auditLog.details')}</DataTableHeaderCell>
-              </tr>
+              </DataTableRow>
             </DataTableHeader>
-            <tbody>
+            <DataTableBody>
               {events.map((event) => (
-                <tr key={event.id} className="border-b border-ui-bg transition-colors hover:bg-accent-soft/35">
-                  <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
+                <DataTableRow key={event.id} className="border-b border-ui-bg transition-colors hover:bg-accent-soft/35">
+                  <DataTableCell className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
                     <span className="type-caption break-words text-ui-text">{formatUserDateTime(event.occurredAt)}</span>
-                  </td>
-                  <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
+                  </DataTableCell>
+                  <DataTableCell className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
                     <p className="type-row-title break-words">{event.summary}</p>
                     <p className="type-caption mt-1 break-words">
                       {event.eventType} · {formatOperation(event, t)}
@@ -466,27 +468,27 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                         </dd>
                       </div>
                     </dl>
-                  </td>
-                  <td className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
+                  </DataTableCell>
+                  <DataTableCell className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
                     <p className="type-ui break-words text-ui-text">{formatActor(event)}</p>
-                  </td>
-                  <td className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
+                  </DataTableCell>
+                  <DataTableCell className="hidden px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
                     <p className="type-ui break-words text-ui-text">{formatObject(event)}</p>
                     <p className="type-caption mt-1 break-words">{event.object.type}</p>
-                  </td>
-                  <td className="px-4 py-5 text-right align-top sm:px-6 lg:px-8 lg:py-6">
+                  </DataTableCell>
+                  <DataTableCell className="px-4 py-5 text-right align-top sm:px-6 lg:px-8 lg:py-6">
                     <Tooltip content={t('auditLog.viewDetails')}>
-                      <button
+                      <Button
                         type="button"
                         onClick={() => setSelectedEvent(event)}
                         className="control-target inline-flex h-9 w-9 items-center justify-center rounded-md border border-ui-border text-ui-text-muted transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg hover:text-ui-text"
                         aria-label={t('auditLog.viewDetails')}
                       >
                         <ICONS.Eye className="h-4 w-4" />
-                      </button>
+                      </Button>
                     </Tooltip>
-                  </td>
-                </tr>
+                  </DataTableCell>
+                </DataTableRow>
               ))}
               <DataTableStateRow
                 columns={5}
@@ -494,7 +496,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                 itemCount={events.length}
                 filtered={Object.values(appliedFilters).some(Boolean)}
                 loading={
-                  <div role="status" className="p-5 text-sm text-ui-text-muted">
+                  <div role="status" className="p-5 type-body text-ui-text-muted">
                     {t('auditLog.loading')}
                   </div>
                 }
@@ -502,8 +504,8 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                 filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
                 error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={t('auditLog.loadFailed')} description={errorMessage} />}
               />
-            </tbody>
-          </table>
+            </DataTableBody>
+          </DataTable>
         </div>
         {nextCursor && (
           <div ref={auditCollection.sentinelRef} className="border-t border-ui-border px-4 py-4 text-center">
@@ -513,7 +515,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
           </div>
         )}
       </div>
-      <RightSidePanel
+      <DrawerFrame unframed
         isOpen={Boolean(selectedEvent)}
         onClose={() => setSelectedEvent(null)}
         titleId="audit-event-title"
@@ -548,7 +550,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
             {selectedMetadata && <pre className="type-code mt-5 whitespace-pre-wrap break-words border border-ui-border bg-ui-surface p-4 text-ui-text">{selectedMetadata}</pre>}
           </>
         )}
-      </RightSidePanel>
+      </DrawerFrame>
     </PageShell>
   );
 };

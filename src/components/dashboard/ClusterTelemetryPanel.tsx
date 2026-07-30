@@ -142,7 +142,7 @@ export const ClusterTelemetryPanel: React.FC<{
                 <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />
                 {label}
               </dt>
-              <dd className="type-caption mt-1 truncate font-semibold text-ui-text" title={String(value)}>
+              <dd className="type-caption mt-1 truncate type-emphasis text-ui-text" title={String(value)}>
                 {value}
               </dd>
             </div>
@@ -176,7 +176,7 @@ export const ClusterTelemetryPanel: React.FC<{
                 role={loadState === 'error' ? 'alert' : 'status'}
                 aria-live="polite"
               >
-                <p className={`type-caption font-semibold ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`}>
+                <p className={`type-caption type-emphasis ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`}>
                   {loadState === 'loading'
                     ? t('dashboard.loadingTelemetry')
                     : loadState === 'error'
@@ -216,7 +216,7 @@ export const ClusterTelemetryPanel: React.FC<{
               {markerClassName && <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />}
               <span>{label}</span>
             </dt>
-            <dd className="type-caption mt-0.5 min-w-0 break-words font-semibold text-ui-text" title={String(value)}>
+            <dd className="type-caption mt-0.5 min-w-0 break-words type-emphasis text-ui-text" title={String(value)}>
               {value}
             </dd>
           </div>
@@ -251,7 +251,7 @@ export const ClusterTelemetryPanel: React.FC<{
                 className={`type-caption max-w-[18rem] ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`}
                 title={loadState === 'error' ? t('dashboard.telemetryLoadFailed') : t('dashboard.collectingHistoryBody')}
               >
-                <span className="font-semibold text-ui-text">
+                <span className="type-emphasis text-ui-text">
                   {loadState === 'loading'
                     ? t('dashboard.loadingTelemetry')
                     : loadState === 'error'
@@ -267,7 +267,7 @@ export const ClusterTelemetryPanel: React.FC<{
           )}
         </div>
         {trendSummary}
-        <div className="type-caption mt-1.5 flex min-w-0 items-center justify-between gap-3 font-medium text-ui-text-muted" aria-hidden="true">
+        <div className="type-caption mt-1.5 flex min-w-0 items-center justify-between gap-3 type-ui text-ui-text-muted" aria-hidden="true">
           <span>{axisStartLabel}</span>
           <span className="min-w-0 truncate text-center">{t('dashboard.telemetryAxisLabel')}</span>
           <span>{axisEndLabel}</span>

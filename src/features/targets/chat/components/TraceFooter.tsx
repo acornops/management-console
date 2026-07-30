@@ -5,6 +5,7 @@ import { formatRunUsageDetail, getTraceActivityLabel } from '@/features/targets/
 import { LiveRunTrace, RunTraceTimelineEvent } from '@/features/targets/chat/types';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { Button } from '@acornops/ui';
 
 interface TraceFooterProps {
   runId: string;
@@ -253,7 +254,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
 
   return (
     <div className={`${compactStatusOnly ? '' : 'mt-3'} w-full ${className || 'max-w-[72ch]'}`}>
-      <button
+      <Button
         type="button"
         onClick={() => setExpanded(runId, !isExpanded)}
         className={`control-target group min-h-10 items-center gap-2 py-2 pl-0 pr-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 ${
@@ -281,7 +282,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
             {disclosureSummary}
           </span>
         </span>
-      </button>
+      </Button>
       <div id={contentId} hidden={!isExpanded}>
         {isExpanded && (
           <motion.div
@@ -343,14 +344,14 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                             {!toolCall.artifact && <p className="type-caption text-ui-text-muted">Full result unavailable</p>}
                           </div>
                           {toolCall.artifact && (
-                            <button
+                            <Button
                               type="button"
                               onClick={() => void openArtifact(toolCall)}
                               className="control-target type-caption inline-flex min-h-9 items-center rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                               aria-expanded={artifactView?.callId === toolCall.callId}
                             >
                               {artifactView?.callId === toolCall.callId ? 'Hide full result' : 'View full result'}
-                            </button>
+                            </Button>
                           )}
                         </div>
                         {artifactView?.callId === toolCall.callId && (
@@ -360,7 +361,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                             ) : artifactView.error ? (
                               <p className="type-caption text-status-danger-text">{artifactView.error}</p>
                             ) : (
-                              <pre className="whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono text-xs text-ui-on-strong">{artifactView.content}</pre>
+                              <pre className="whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono type-caption text-ui-on-strong">{artifactView.content}</pre>
                             )}
                           </div>
                         )}

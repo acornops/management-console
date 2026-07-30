@@ -21,7 +21,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'min-h-11 px-3 py-2 text-xs sm:min-h-9',
+  sm: 'min-h-11 px-3 py-2 type-caption sm:min-h-9',
   md: 'min-h-11 px-4 py-2.5',
   lg: 'min-h-12 px-5 py-3',
   icon: 'h-11 w-11 p-0 sm:h-9 sm:w-9'
@@ -44,7 +44,13 @@ export const buttonClassName = ({
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = 'secondary', size = 'md', className, type = 'button', ...props }, ref) => (
-    <button ref={ref} type={type} className={buttonClassName({ variant, size, className })} {...props} />
+    <button
+      ref={ref}
+      type={type}
+      className={buttonClassName({ variant, size, className })}
+      {...props}
+      data-design-contrast-exception={variant === 'activation' ? 'activation' : undefined}
+    />
   )
 );
 

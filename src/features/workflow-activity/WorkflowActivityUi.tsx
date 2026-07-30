@@ -73,7 +73,7 @@ export function WorkflowExecutionLink({
     <>
       <ExecutionStatusBadge status={execution.status} />
       <a
-        className="type-caption font-semibold text-ui-text underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary"
+        className="type-caption type-emphasis text-ui-text underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary"
         href={appHref(path)}
       >
         {t(`workflowActivity.actions.${workflowExecutionActionKey(execution.status)}`)}
@@ -198,7 +198,7 @@ export function WorkflowExecutionRow({
           })}
         </span>
       </span>
-      <span className="type-caption inline-flex items-center gap-1.5 font-semibold text-ui-text sm:self-end sm:justify-self-end xl:self-auto">
+      <span className="type-caption inline-flex items-center gap-1.5 type-emphasis text-ui-text sm:self-end sm:justify-self-end xl:self-auto">
         {actionLabel}
         <ArrowRight className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
       </span>
@@ -257,7 +257,7 @@ export function IssueWorkflowActivity({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <ExecutionStatusBadge status={execution.status} />
-            <span className="type-caption font-semibold text-ui-text">{execution.workflow.name}</span>
+            <span className="type-caption type-emphasis text-ui-text">{execution.workflow.name}</span>
             {(activity?.totalCount || 0) > 1 && (
               <span className="type-caption text-ui-text-muted">
                 {(activity?.openCount || 0) > 1

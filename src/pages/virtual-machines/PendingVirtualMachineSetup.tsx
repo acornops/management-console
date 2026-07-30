@@ -25,7 +25,7 @@ export const PendingVirtualMachineSetup: React.FC<PendingVirtualMachineSetupProp
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{label}</span>
             </dt>
-            <dd className="type-caption mt-1 font-semibold text-ui-text-muted">{t('dashboard.unavailable')}</dd>
+            <dd className="type-caption mt-1 type-emphasis text-ui-text-muted">{t('dashboard.unavailable')}</dd>
           </div>
         ))}
       </dl>
@@ -55,7 +55,7 @@ export const PendingVirtualMachineSetup: React.FC<PendingVirtualMachineSetupProp
           </Button>
         </div>
       </div>
-      <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 font-medium text-ui-text-muted" aria-hidden="true">
+      <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 type-ui text-ui-text-muted" aria-hidden="true">
         <span className="truncate">{t('virtualMachines.list.vmRegistered')}</span>
         <span className="truncate text-center">{t('dashboard.telemetryPending')}</span>
         <span className="truncate text-right">{t('dashboard.agentRequired')}</span>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Search, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
 import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
@@ -21,6 +21,8 @@ import { TargetInsightsResetDialog } from '@/features/targets/admin/TargetInsigh
 import { TargetInsightsSettingsDialog } from '@/features/targets/admin/TargetInsightsSettingsDialog';
 import { TargetToolRow } from '@/features/targets/admin/TargetToolRow';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
+import { TextInput, Textarea } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
 
 interface TargetToolsViewProps {
   target: TargetDescriptor;
@@ -37,7 +39,7 @@ interface ToolDraft {
 
 type TargetInsightsAction = 'files' | 'settings' | 'activity' | 'reset';
 
-const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
+const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 type-body');
 const toolDomainTextareaClassName = formTextareaClassName('mt-2');
 
 function splitDomainInput(value: string): string[] {
@@ -437,7 +439,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               <div className="relative min-w-0">
                 <label htmlFor="target-tool-search" className="sr-only">{t('tools.searchTools')}</label>
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-                <input
+                <TextInput
                   id="target-tool-search"
                   type="text"
                   value={toolSearch}
@@ -458,8 +460,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               </span>
             </div>
             <div className="min-w-0">
-              <table className="w-full table-fixed text-left" aria-label={t('tools.title')}>
-                <caption className="sr-only">{t('tools.title')}</caption>
+              <DataTable caption={t('tools.title')} className="w-full table-fixed text-left" aria-label={t('tools.title')}>
                 <colgroup>
                   <col className="w-[34%]" />
                   <col className="w-[23%]" />
@@ -468,15 +469,15 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   <col className="w-[11%]" />
                 </colgroup>
                 <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredTools.length }}>
-                  <tr>
+                  <DataTableRow>
                     <DataTableHeaderCell>{t('tools.toolColumn')}</DataTableHeaderCell>
                     <DataTableHeaderCell>{t('tools.capabilityColumn')}</DataTableHeaderCell>
                     <DataTableHeaderCell>{t('tools.enabledColumn')}</DataTableHeaderCell>
                     <DataTableHeaderCell className="hidden md:table-cell">{t('tools.runtimeColumn')}</DataTableHeaderCell>
                     <DataTableHeaderCell numeric>{t('tools.actionsColumn')}</DataTableHeaderCell>
-                  </tr>
+                  </DataTableRow>
                 </DataTableHeader>
-                <tbody>
+                <DataTableBody>
                   {filteredTools.map((tool) => (
                     <TargetToolRow
                       key={tool.id}
@@ -501,8 +502,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                     filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('tools.noToolMatches')} description={t('tools.noToolMatchesHelp')} />}
                     error={null}
                   />
-                </tbody>
-              </table>
+                </DataTableBody>
+              </DataTable>
             </div>
           </section>
         </>
@@ -545,7 +546,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       )}
 
       {editingTool && editingTool.id !== 'target_insights' && draft && (
-        <Dialog
+        <DialogFrame unframed
           className="w-full max-w-2xl rounded-2xl border border-ui-border bg-ui-surface p-0 shadow-2xl"
           titleId="target-tool-config-title"
           closeDisabled={saving}
@@ -588,7 +589,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 <div>
                   <label htmlFor="tool-allowed-domains" className="type-label">{t('tools.allowedDomains')}</label>
                   <p className="type-caption mt-1 text-ui-text-muted">{t('tools.allowedDomainsHelp')}</p>
-                  <textarea
+                  <Textarea
                     id="tool-allowed-domains"
                     rows={6}
                     className={toolDomainTextareaClassName}
@@ -607,7 +608,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 <div>
                   <label htmlFor="tool-blocked-domains" className="type-label">{t('tools.blockedDomains')}</label>
                   <p className="type-caption mt-1 text-ui-text-muted">{t('tools.blockedDomainsHelp')}</p>
-                  <textarea
+                  <Textarea
                     id="tool-blocked-domains"
                     rows={6}
                     className={toolDomainTextareaClassName}
@@ -642,7 +643,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               </Button>
             )}
           </div>
-        </Dialog>
+        </DialogFrame>
       )}
     </PageShell>
   );

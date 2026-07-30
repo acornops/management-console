@@ -280,7 +280,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
       />
 
       {workspaceStateCurrent && mutationError && !deleteTargetWebhook && (
-        <div role="alert" className="mb-5 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-sm font-semibold text-status-danger-text">
+        <div role="alert" className="mb-5 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-body type-emphasis text-status-danger-text">
           {mutationError}
         </div>
       )}
@@ -293,7 +293,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
             </div>
             <div>
               <h2 className="type-row-title">{t('workspaceWebhooks.readOnlyTitle')}</h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-ui-text-muted">{t('workspaceWebhooks.readOnlyDescription')}</p>
+              <p className="mt-1 max-w-2xl type-body leading-6 text-ui-text-muted">{t('workspaceWebhooks.readOnlyDescription')}</p>
             </div>
           </div>
         </section>
@@ -309,7 +309,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
                 })}
               </h2>
               <p className="mt-1 type-caption text-status-success-text">{t('workspaceWebhooks.secretDescription')}</p>
-              <code className="mt-2 block break-all rounded-md border border-status-success/25 bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text">
+              <code className="mt-2 block break-all rounded-md border border-status-success/25 bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text">
                 {visibleCreatedSecret.secret}
               </code>
             </div>

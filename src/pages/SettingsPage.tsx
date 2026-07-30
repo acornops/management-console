@@ -11,6 +11,7 @@ import { WorkspaceMembersPage } from '@/pages/WorkspaceMembersPage';
 import { WorkspaceSettingsPage } from '@/pages/WorkspaceSettingsPage';
 import { ActiveTabIndicator } from '@acornops/ui';
 import { PageBackLink, PageHeader, PageShell } from '@acornops/ui';
+import { Button } from '@acornops/ui';
 
 export type SettingsTab = 'workspace' | 'members' | 'ai';
 
@@ -150,14 +151,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             });
             return (
               <Tooltip key={id} content={unavailableReason || label} disabled={!unavailableReason}>
-                <button
+                <Button
                   type="button"
                   onClick={() => handleSelectTab(id)}
                   aria-disabled={Boolean(unavailableReason)}
                   aria-pressed={isActive}
-                  className={`relative -mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 text-sm type-ui transition-colors ${
+                  className={`relative -mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 type-ui transition-colors ${
                     isActive
-                      ? 'border-transparent text-accent-strong'
+                      ? 'border-transparent text-accent-readable'
                       : unavailableReason
                       ? 'border-transparent text-ui-text-muted/60'
                       : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text'
@@ -166,7 +167,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   <Icon className="h-4 w-4" aria-hidden="true" />
                   {label}
                   {isActive && <ActiveTabIndicator />}
-                </button>
+                </Button>
               </Tooltip>
             );
           })}

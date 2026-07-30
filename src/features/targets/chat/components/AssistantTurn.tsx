@@ -136,7 +136,7 @@ export const AssistantTurn: React.FC<AssistantTurnProps> = ({
   return (
     <article
       data-chat-assistant-turn="true"
-      className="group w-full min-w-0 text-sm font-medium text-ui-text"
+      className="group w-full min-w-0 type-ui text-ui-text"
       aria-label={t('chat.roleAssistant')}
     >
       <span className="sr-only">{t('chat.roleAssistant')}</span>

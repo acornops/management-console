@@ -12,6 +12,7 @@ export * from './Dialog';
 export * from './DiscoveryFilterBar';
 export * from './EmptyState';
 export * from './FieldValidationMessage';
+export * from './FileInput';
 export * from './FormControls';
 export * from './InlineAlert';
 export * from './InlineConfirmation';

@@ -6,13 +6,14 @@ import { Trans, useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { ClusterCatalog } from '@/components/dashboard/ClusterCatalog';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
+import { TextInput } from '@acornops/ui';
 
 interface DashboardProps {
   kubernetesClusters: KubernetesCluster[];
@@ -157,7 +158,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <AnimatePresence>
         {deleteTargetCluster && (
-          <Dialog
+          <DialogFrame unframed
             titleId="delete-cluster-title"
             closeDisabled={isDeletingCluster}
             className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
@@ -178,7 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <CloseButton onClick={closeDeleteClusterDialog} disabled={isDeletingCluster} aria-label={t('dashboard.closeDeleteCluster')} />
             </div>
             <div className="space-y-4 px-7 py-6">
-              <p className="text-sm leading-6 text-ui-text-muted">
+              <p className="type-body leading-6 text-ui-text-muted">
                 {t('dashboard.deleteClusterBody', {
                   name: deleteTargetCluster.name
                 })}
@@ -196,7 +197,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     }}
                   />
                 </label>
-                <input
+                <TextInput
                   id="delete-cluster-confirmation-input"
                   value={deleteClusterConfirmation}
                   onChange={(event) => setDeleteClusterConfirmation(event.target.value)}
@@ -211,24 +212,24 @@ const Dashboard: React.FC<DashboardProps> = ({
               )}
             </div>
             <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-7 py-5">
-              <button
+              <Button
                 type="button"
                 onClick={closeDeleteClusterDialog}
                 disabled={isDeletingCluster}
                 className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-row-title text-ui-text-muted transition-colors hover:bg-ui-bg disabled:opacity-50"
               >
                 {t('app.cancel')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => void handleConfirmDeleteCluster()}
                 disabled={isDeletingCluster || deleteClusterConfirmation !== deleteTargetCluster.name}
                 className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 type-row-title text-control-danger-fg transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeletingCluster ? t('dashboard.deleting') : t('dashboard.delete')}
-              </button>
+              </Button>
             </div>
-          </Dialog>
+          </DialogFrame>
         )}
       </AnimatePresence>
     </PageShell>

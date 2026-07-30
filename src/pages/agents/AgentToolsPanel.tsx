@@ -130,7 +130,7 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
                 <div key={tool.id} className="flex flex-wrap items-start justify-between gap-3 py-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <strong className="text-sm">{tool.title}</strong>
+                      <strong className="type-body">{tool.title}</strong>
                       <StatusBadge tone={assigned ? 'success' : 'neutral'}>
                         {assigned ? t('agentsWorkflows.agents.details.capabilities.nativeTools.granted') : t('agentsWorkflows.agents.details.capabilities.nativeTools.notGranted')}
                       </StatusBadge>
@@ -161,7 +161,7 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
               );
             })
           ) : (
-            <p className="py-5 text-sm text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.nativeTools.empty')}</p>
+            <p className="py-5 type-body text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.nativeTools.empty')}</p>
           )}
         </div>
       </section>
@@ -182,7 +182,7 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
             tools.map(({ server, tool }) => (
               <div key={`${server.id}:${tool.name}`} className="grid gap-3 py-4 lg:grid-cols-[minmax(14rem,1fr)_8rem_9rem_9rem_auto]">
                 <div className="min-w-0">
-                  <strong className="text-sm">{tool.alias || tool.name}</strong>
+                  <strong className="type-body">{tool.alias || tool.name}</strong>
                   <p className="type-caption text-ui-text-muted">
                     {server.name} · {tool.name}
                   </p>
@@ -234,7 +234,7 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
                   }
                 />
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 type-body">
                     <Checkbox
                       checked={tool.enabled}
                       disabled={!mcpWritable || Boolean(busy)}
@@ -252,7 +252,7 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
                     />
                     {t('agentsWorkflows.agents.details.capabilities.discoveredTools.enabled')}
                   </label>
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 type-body">
                     <Checkbox
                       checked={tool.autoAllowed}
                       disabled={!mcpWritable || tool.riskLevel !== 'non_destructive_write' || Boolean(busy)}
@@ -270,7 +270,7 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
               </div>
             ))
           ) : (
-            <p className="py-5 text-sm text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.discoveredTools.empty')}</p>
+            <p className="py-5 type-body text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.discoveredTools.empty')}</p>
           )}
         </div>
       </section>

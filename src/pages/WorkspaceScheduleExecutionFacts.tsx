@@ -61,9 +61,9 @@ export function WorkspaceScheduleExecutionFacts({
           <p className="type-caption">
             {schedule.lastError?.trim().slice(0, 240) || t('workflowActivity.scheduleMcpUnavailable')}
           </p>
-          <p className="type-caption mt-1 font-semibold">{t('workflowActivity.scheduleRepairHint')}</p>
+          <p className="type-caption mt-1 type-emphasis">{t('workflowActivity.scheduleRepairHint')}</p>
           <a
-            className="type-caption mt-1 inline-flex font-semibold underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary"
+            className="type-caption mt-1 inline-flex type-emphasis underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary"
             href={recoveryPath}
           >
             {t('workflowCoordination.reviewWorkflowAccess')}

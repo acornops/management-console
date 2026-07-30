@@ -18,7 +18,7 @@ const SettingSection: React.FC<{
   <section className="mb-10 last:mb-0">
     <div className="mb-6 px-1">
       <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="max-w-3xl text-sm leading-6 text-ui-text-muted">{description}</p>
+      <p className="max-w-3xl type-body leading-6 text-ui-text-muted">{description}</p>
     </div>
     <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
   </section>
@@ -37,7 +37,7 @@ const SettingRow: React.FC<{
       </div>
       <div className="min-w-0">
         <p className="mb-0.5 type-row-title">{label}</p>
-        <div className="break-words text-xs leading-5 text-ui-text-muted">{description}</div>
+        <div className="break-words type-caption leading-5 text-ui-text-muted">{description}</div>
       </div>
     </div>
     {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
@@ -148,11 +148,11 @@ export const VirtualMachineSettingsView: React.FC<{
               </Button>
             )}
           />
-          {rotationError && <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft p-4 text-sm font-semibold text-status-danger-text">{rotationError}</div>}
+          {rotationError && <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft p-4 type-body type-emphasis text-status-danger-text">{rotationError}</div>}
           {installInstructions && (
             <div className="border-t border-ui-border bg-ui-bg/60 p-6">
               <p className="mb-2 type-row-title">{t('virtualMachines.settings.installInstructions')}</p>
-              <pre className="max-h-80 overflow-auto rounded-md border border-ui-border bg-ui-surface p-4 text-xs leading-5 text-ui-text">
+              <pre className="max-h-80 overflow-auto rounded-md border border-ui-border bg-ui-surface p-4 type-caption leading-5 text-ui-text">
                 {installInstructions}
               </pre>
             </div>

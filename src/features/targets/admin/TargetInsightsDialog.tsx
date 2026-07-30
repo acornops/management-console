@@ -3,7 +3,7 @@ import { Archive, CheckCircle2, ChevronDown, FilePlus2, FileText, Folder, Search
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -22,6 +22,7 @@ import {
   type InsightFile,
   type InsightFileStatus
 } from '@/features/targets/admin/targetInsightsDialogViewModel';
+import { TextInput, Textarea } from '@acornops/ui';
 
 interface TargetInsightsDialogProps {
   workspaceId: string;
@@ -205,7 +206,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
       <div className="border-b border-ui-border px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <h4 className="type-row-title">{t('tools.targetInsights.files')}</h4>
-          <button
+          <Button
             type="button"
             className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
             disabled={!canMutateFile}
@@ -214,7 +215,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
             aria-label={t('tools.targetInsights.newFile')}
           >
             <FilePlus2 className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
       <div className="border-b border-ui-border p-3">
@@ -223,13 +224,13 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
         </label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-          <input
+          <TextInput
             id="target-insights-file-search"
             type="text"
             value={fileSearch}
             onChange={(event) => setFileSearch(event.target.value)}
             placeholder={t('tools.targetInsights.searchFiles')}
-            className="w-full rounded-md border border-ui-border bg-ui-surface py-2 pl-9 pr-3 text-sm text-ui-text outline-none transition-colors placeholder:text-ui-text-muted/60 focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
+            className="w-full rounded-md border border-ui-border bg-ui-surface py-2 pl-9 pr-3 type-body text-ui-text outline-none transition-colors placeholder:text-ui-text-muted/60 focus:border-accent/50 focus:ring-2 focus:ring-accent/15"
           />
         </div>
       </div>
@@ -243,7 +244,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
               return (
                 <div key={status} data-target-insights-folder={`insights/${status}`}>
                   <Tooltip content={t(`tools.targetInsights.folderHelp.${status}`)} side="right" className="mb-1">
-                    <div className="flex items-center gap-1.5 px-1 text-xs font-semibold text-ui-text">
+                    <div className="flex items-center gap-1.5 px-1 type-caption type-emphasis text-ui-text">
                       <ChevronDown className="h-3.5 w-3.5" />
                       <Folder className="h-3.5 w-3.5" />
                       <span>{t(`tools.targetInsights.folder.${status}`)}</span>
@@ -251,18 +252,18 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                   </Tooltip>
                   <div className="space-y-1">
                     {status === 'active' && creatingNewFile && (
-                      <div className="flex w-full min-w-0 items-center gap-2 rounded-md bg-accent-soft/20 py-1.5 pl-7 pr-2 text-left text-xs text-accent-strong">
+                      <div className="flex w-full min-w-0 items-center gap-2 rounded-md bg-accent-soft/20 py-1.5 pl-7 pr-2 text-left type-caption text-accent-strong">
                         <FileText className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate">{selectedFileName}</span>
                       </div>
                     )}
                     {statusFiles.length > 0 ? (
                       statusFiles.map((file) => (
-                        <button
+                        <Button
                           key={file.entry.id}
                           type="button"
                           onClick={() => selectFile(file)}
-                          className={`control-target flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left text-xs transition-colors ${
+                          className={`control-target flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pl-7 pr-2 text-left type-caption transition-colors ${
                             file.entry.id === selectedEntryId && !creatingNewFile
                               ? 'bg-accent-soft/20 text-accent-strong'
                               : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
@@ -271,7 +272,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                         >
                           <FileText className="h-3.5 w-3.5 shrink-0" />
                           <span className="truncate">{file.fileName}</span>
-                        </button>
+                        </Button>
                       ))
                     ) : status !== 'active' || !creatingNewFile ? (
                       <p className="type-caption py-1.5 pl-7 pr-2 text-ui-text-muted/75">{t('tools.targetInsights.emptyFolder')}</p>
@@ -320,7 +321,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
 
   return (
     <>
-      <Dialog
+      <DialogFrame unframed
         titleId="target-insights-dialog-title"
         closeDisabled={fileSaving || savingTool || showDiscardDialog}
         onClose={guardedClose}
@@ -358,9 +359,9 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                   <div className="min-h-0 flex-1 space-y-3 p-4">
                     <label className="block">
                       <span className="type-label">{t('tools.targetInsights.fields.title')}</span>
-                      <input
+                      <TextInput
                         ref={titleInputRef}
-                        className="mt-2 w-full rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="mt-2 w-full rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-body outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-70"
                         value={draft.title}
                         readOnly={!canEdit}
                         onChange={(event) =>
@@ -372,7 +373,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                         placeholder={t('tools.targetInsights.titlePlaceholder')}
                       />
                     </label>
-                    <textarea
+                    <Textarea
                       value={draft.bodyMarkdown}
                       readOnly={!canEdit}
                       onChange={(event) =>
@@ -381,7 +382,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                           bodyMarkdown: event.target.value
                         }))
                       }
-                      className="min-h-[22rem] w-full flex-1 resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono text-sm leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
+                      className="min-h-[22rem] w-full flex-1 resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono type-body leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
                       spellCheck={false}
                       placeholder={t('tools.targetInsights.bodyPlaceholder')}
                     />
@@ -431,7 +432,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
             </>
           )}
         </div>
-      </Dialog>
+      </DialogFrame>
       {showDiscardDialog && (
         <UnsavedChangesDialog
           title={t('tools.targetInsights.discardTitle')}

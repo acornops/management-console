@@ -193,7 +193,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         ref={tooltipRef}
         id={tooltipId}
         role="tooltip"
-        className="pointer-events-none z-[180] max-w-[min(20rem,calc(100vw-1rem))] whitespace-normal break-words rounded-md border border-ui-border bg-ui-surface px-2 py-1 text-xs font-semibold text-ui-text opacity-100 shadow-lg shadow-ui-text/10 transition-opacity delay-150 duration-150 [overflow-wrap:anywhere]"
+        className="type-caption type-emphasis pointer-events-none z-[180] max-w-[min(20rem,calc(100vw-1rem))] whitespace-normal break-words rounded-md border border-ui-border bg-ui-surface px-2 py-1 text-ui-text opacity-100 shadow-lg shadow-ui-text/10 transition-opacity delay-150 duration-150 [overflow-wrap:anywhere]"
         style={{
           position: 'fixed',
           top: coordinates?.top ?? 0,

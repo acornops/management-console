@@ -32,6 +32,7 @@ import {
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { InfrastructureRow, ResourceDetailsAction, ResourceList, ResourceMetricInline } from '@/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout';
 import type { ControlPlanePodLogs, ControlPlanePodLogsOptions } from '@/services/controlPlaneApi';
+import { Button } from '@acornops/ui';
 
 interface WorkloadsSectionProps {
   emptyMessage?: string;
@@ -51,7 +52,7 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage
         const isHealthy = isHealthyStatus(workload.status);
         const metrics = getWorkloadMetrics(workload);
         return (
-          <button
+          <Button
             key={`${workload.clusterName}-${workload.id}`}
             type="button"
             onClick={() => onSelect(workload)}
@@ -92,7 +93,7 @@ export const WorkloadsSection: React.FC<WorkloadsSectionProps> = ({ emptyMessage
               <ResourceStatusPill status={workload.status} healthy={isHealthy} />
               <ResourceDetailsAction />
             </div>
-          </button>
+          </Button>
         );
       }}
     />

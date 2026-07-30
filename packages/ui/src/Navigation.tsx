@@ -47,8 +47,8 @@ export interface NavigationItemProps extends React.ButtonHTMLAttributes<HTMLButt
 export function navigationItemClassName({ active = false, className, disabled = false }: Pick<NavigationItemProps, 'active' | 'className' | 'disabled'> = {}): string {
   return twMerge(
     clsx(
-      'group relative flex h-10 w-full items-center justify-between overflow-hidden rounded-md px-3 text-sm transition-colors duration-[160ms] outline-none motion-reduce:duration-0 focus-visible:ring-2 focus-visible:ring-accent/25',
-      active ? 'bg-ui-bg font-semibold text-ui-text' : 'font-medium text-ui-text-muted hover:bg-ui-bg hover:text-ui-text',
+      'type-ui group relative flex h-10 w-full items-center justify-between overflow-hidden rounded-md px-3 transition-colors duration-[160ms] outline-none motion-reduce:duration-0 focus-visible:ring-2 focus-visible:ring-accent/25',
+      active ? 'type-emphasis bg-ui-bg text-ui-text' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text',
       disabled && 'cursor-not-allowed opacity-50',
       className
     )

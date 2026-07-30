@@ -10,6 +10,7 @@ import { agentMcpConfigurationPath } from '@/services/control-plane/mcpReadiness
 import type { WorkflowApiDefinition, WorkflowSchedule } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
+import { DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceScheduleRowProps {
   schedule: WorkflowSchedule;
@@ -128,7 +129,7 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
   return (
     <article className="p-[var(--ao-surface-padding)]">
       <h2 className="type-row-title text-ui-text">{schedule.name}</h2>
-      <p className="type-caption mt-1 font-semibold text-ui-text-muted">
+      <p className="type-caption mt-1 type-emphasis text-ui-text-muted">
         {scheduleWorkflowName(workflows, schedule.workflowId)}
       </p>
       <dl className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -138,7 +139,7 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
         </div>
         <div>
           <dt className="type-micro-label text-ui-text-muted">{t('schedules.table.nextRun')}</dt>
-          <dd className="type-caption mt-1 font-semibold text-ui-text">{nextRun}</dd>
+          <dd className="type-caption mt-1 type-emphasis text-ui-text">{nextRun}</dd>
         </div>
         <div>
           <dt className="type-micro-label text-ui-text-muted">{t('schedules.table.scope')}</dt>
@@ -179,16 +180,16 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
   });
 
   return (
-    <tr className="bg-ui-surface text-sm">
-      <th scope="row" className="px-4 py-4 font-semibold text-ui-text">{schedule.name}</th>
-      <td className="px-4 py-4 font-medium text-ui-text">{scheduleWorkflowName(workflows, schedule.workflowId)}</td>
-      <td className="px-4 py-4 text-ui-text-muted"><code>{schedule.cron}</code> · {schedule.timezone}</td>
-      <td className="px-4 py-4 font-semibold text-ui-text">{nextRun}</td>
-      <td className="px-4 py-4 text-ui-text-muted">
+    <DataTableRow className="bg-ui-surface type-body">
+      <DataTableCell as="th" scope="row" className="px-4 py-4 type-emphasis text-ui-text">{schedule.name}</DataTableCell>
+      <DataTableCell className="px-4 py-4 type-ui text-ui-text">{scheduleWorkflowName(workflows, schedule.workflowId)}</DataTableCell>
+      <DataTableCell className="px-4 py-4 text-ui-text-muted"><code>{schedule.cron}</code> · {schedule.timezone}</DataTableCell>
+      <DataTableCell className="px-4 py-4 type-emphasis text-ui-text">{nextRun}</DataTableCell>
+      <DataTableCell className="px-4 py-4 text-ui-text-muted">
         <span className="block">{t('schedules.runtimeValueCount', { count: Object.keys(schedule.inputs).length })}</span>
         <span className="mt-1 block">{t('schedules.contextGrantCount', { count: schedule.approvedContextGrants.length })}</span>
-      </td>
-      <td className="px-4 py-4">
+      </DataTableCell>
+      <DataTableCell className="px-4 py-4">
         <div className="min-w-[15rem]">
           <WorkspaceScheduleExecutionFacts
             schedule={schedule}
@@ -196,8 +197,8 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
             recoveryPath={scheduleMcpRecoveryPath(workspaceId, workflows, schedule.workflowId, schedule.lastError)}
           />
         </div>
-      </td>
-      <td className="px-4 py-4">
+      </DataTableCell>
+      <DataTableCell className="px-4 py-4">
         <div className="flex items-center justify-end gap-2">
           {mcpAutoPaused && (
             <Button size="sm" variant="primary" onClick={props.onRepair} disabled={!props.canManage || props.updating}>
@@ -206,7 +207,7 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
           )}
           <ScheduleActionMenu {...props} mcpAutoPaused={mcpAutoPaused} />
         </div>
-      </td>
-    </tr>
+      </DataTableCell>
+    </DataTableRow>
   );
 };

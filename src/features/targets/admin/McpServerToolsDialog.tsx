@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
@@ -7,9 +6,9 @@ import { CollectionState } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { Switch } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import type { TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { getToolLabel, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
-import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 
 export const McpServerToolsDialog: React.FC<{
   server: TargetToolCatalogServer;
@@ -142,10 +141,13 @@ export const McpServerToolsDialog: React.FC<{
   };
 
   return (
-    <motion.div {...modalOverlayMotion} className="fixed inset-0 z-50 flex items-center justify-center bg-ui-text/45 p-4 dark:bg-ui-bg/75" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) onClose();
-    }}>
-      <motion.div {...modalPanelMotion} role="dialog" aria-modal="true" aria-labelledby="mcp-server-tools-title" className="relative flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+    <DialogFrame
+      unframed
+      titleId="mcp-server-tools-title"
+      onClose={onClose}
+      overlayClassName="bg-ui-text/45 dark:bg-ui-bg/75"
+      className="relative flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl"
+    >
         <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-5">
           <div className="min-w-0">
             <div className="type-micro-label mb-2 flex items-center gap-2 text-ui-text-muted">
@@ -173,7 +175,7 @@ export const McpServerToolsDialog: React.FC<{
           <CollectionState
             phase={toolsPhase}
             itemCount={server.tools.length}
-            loading={<InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="bg-ui-bg text-xs" />}
+            loading={<InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="bg-ui-bg type-caption" />}
             empty={<div className="type-caption rounded-lg border border-ui-border bg-ui-bg px-4 py-3">{t('mcpServers.noToolsDiscovered')}</div>}
             error={<div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{toolsError}</div>}
             feedback={toolsError ? (
@@ -220,9 +222,9 @@ export const McpServerToolsDialog: React.FC<{
               {renderToolSection(t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
               <div ref={loadMoreSentinelRef}>
                 {hasMoreTools && (
-                  <button type="button" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
+                  <Button type="button" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
                     {isLoadingMoreTools ? t('mcpServers.loadingTools') : t('common.loadMore')}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -233,9 +235,9 @@ export const McpServerToolsDialog: React.FC<{
           )}
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-          <button type="button" onClick={() => setConfiguredOverrides({})} disabled={isSavingTools || changedTools.length === 0} className="control-target type-ui text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50">
+          <Button type="button" onClick={() => setConfiguredOverrides({})} disabled={isSavingTools || changedTools.length === 0} className="control-target type-ui text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-50">
             {t('mcpServers.resetChanges')}
-          </button>
+          </Button>
           <div className="flex items-center gap-3">
             <Button onClick={onClose} disabled={isSavingTools} variant="secondary" size="sm">{t('app.cancel')}</Button>
             <Button onClick={() => void handleSaveTools()} disabled={!canManageTools || isSavingTools || changedTools.length === 0} variant="primary" size="sm">
@@ -243,7 +245,6 @@ export const McpServerToolsDialog: React.FC<{
             </Button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+    </DialogFrame>
   );
 };

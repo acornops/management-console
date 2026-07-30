@@ -5,6 +5,7 @@ import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { Button } from '@acornops/ui';
 
 export interface WorkspaceAgentsPageProps {
   workspace: Workspace;
@@ -221,7 +222,7 @@ export const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ 
     <div className="mt-2 grid gap-1">
       {values.length > 0 ? (
         values.map((value) => (
-          <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 text-xs text-ui-text-muted [overflow-wrap:anywhere]">
+          <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 type-caption text-ui-text-muted [overflow-wrap:anywhere]">
             {value}
           </span>
         ))
@@ -241,7 +242,7 @@ export const Notice: React.FC<
 > = ({ actionLabel, children, onAction, title }) => (
   <section
     role="status"
-    className="mb-4 whitespace-normal break-words rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-xs font-semibold text-ui-text-muted shadow-sm [overflow-wrap:anywhere]"
+    className="mb-4 whitespace-normal break-words rounded-md border border-ui-border bg-ui-surface px-3 py-2 type-caption type-emphasis text-ui-text-muted shadow-sm [overflow-wrap:anywhere]"
   >
     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
@@ -249,13 +250,13 @@ export const Notice: React.FC<
         <div className={title ? 'mt-1' : ''}>{children}</div>
       </div>
       {actionLabel && onAction && (
-        <button
+        <Button
           type="button"
           onClick={onAction}
-          className="control-target min-h-8 shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 text-xs type-ui text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          className="control-target min-h-8 shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 type-caption text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
         >
           {actionLabel}
-        </button>
+        </Button>
       )}
     </div>
   </section>

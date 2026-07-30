@@ -5,6 +5,9 @@ import { useTranslation } from 'react-i18next';
 
 import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import { ThemeToggleIcon } from '@/components/common/ThemeToggleIcon';
+import { MenuItem, MenuTrigger } from '@acornops/ui';
+
+const MotionMenuTrigger = motion.create(MenuTrigger);
 
 export type ThemeMenuVariant = 'login' | 'account' | 'mobile';
 
@@ -92,7 +95,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
 
   return (
     <div ref={wrapperRef} className={wrapperClass} data-theme-menu={variant}>
-      <motion.button
+      <MotionMenuTrigger
         ref={triggerRef}
         type="button"
         whileTap={{ scale: 0.98 }}
@@ -125,7 +128,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
             </span>
             <span className="min-w-0">
               <span className="type-row-title block">{t('app.theme')}</span>
-              <span className="block text-xs leading-4 text-ui-text-muted">{selectedLabel}</span>
+              <span className="block type-caption leading-4 text-ui-text-muted">{selectedLabel}</span>
             </span>
           </span>
         ) : (
@@ -137,7 +140,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
             <span className="text-ui-text-muted">{selectedLabel}</span>
           </>
         )}
-      </motion.button>
+      </MotionMenuTrigger>
 
       <AnimatePresence>
         {isOpen && (
@@ -163,7 +166,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
               const label = t(`app.theme${option[0].toUpperCase()}${option.slice(1)}`);
               const isSelected = option === preference;
               return (
-                <button
+                <MenuItem
                   key={option}
                   ref={(element) => {
                     itemRefs.current[index] = element;
@@ -176,7 +179,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
                     onSelect(option, event.currentTarget);
                     close(true);
                   }}
-                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm font-medium transition-colors duration-[160ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:min-h-9 ${
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left type-ui transition-colors duration-[160ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:min-h-9 ${
                     isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                   }`}
                 >
@@ -185,7 +188,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
                   <span className="flex h-4 w-4 items-center justify-center" aria-hidden="true">
                     {isSelected && <Check className="h-3.5 w-3.5" />}
                   </span>
-                </button>
+                </MenuItem>
               );
             })}
           </motion.div>

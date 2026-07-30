@@ -3,7 +3,7 @@ import type { TFunction } from 'i18next';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 
 interface DeleteConversationDialogProps {
   sessionName: string;
@@ -22,7 +22,7 @@ export const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> =
   onConfirm,
   t
 }) => (
-  <Dialog
+  <DialogFrame unframed
     className="w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
     closeDisabled={isDeleting}
     overlayClassName="z-[120] bg-ui-text/35 dark:bg-ui-bg/70"
@@ -65,5 +65,5 @@ export const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> =
         {isDeleting ? t('app.deleting') : t('chat.deleteConversation')}
       </Button>
     </div>
-  </Dialog>
+  </DialogFrame>
 );

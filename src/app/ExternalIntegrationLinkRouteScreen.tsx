@@ -126,7 +126,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
       <div role="status" aria-live="polite" className="flex min-h-screen justify-center bg-ui-bg px-6 pt-28 text-ui-text sm:pt-32">
         <div className="flex max-w-md flex-col items-center gap-4 text-center">
           <img src={logoSrc} className="h-12 w-12" alt="AcornOps" />
-          <p className="whitespace-pre-line text-lg font-semibold leading-7 text-ui-text">
+          <p className="whitespace-pre-line type-section-title leading-7 text-ui-text">
             {t(`externalIntegrationLink.status.${route.status || 'unavailable'}`)}
           </p>
         </div>
@@ -147,32 +147,32 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
               ? t('externalIntegrationLink.approvalTitleNamed', { name: preview.clientDisplayName })
               : t('externalIntegrationLink.approvalTitle')}
           </h1>
-          <p className="text-sm leading-6 text-ui-text-muted">{t('externalIntegrationLink.approvalMessage')}</p>
+          <p className="type-body leading-6 text-ui-text-muted">{t('externalIntegrationLink.approvalMessage')}</p>
         </div>
         {isLoadingPreview && (
           <div role="status" aria-live="polite" className="flex flex-col items-center gap-2">
-            <span className="text-sm font-medium text-ui-text-muted">{t('externalIntegrationLink.checking')}</span>
+            <span className="type-ui text-ui-text-muted">{t('externalIntegrationLink.checking')}</span>
             <MiniProgressBar className="w-32" />
           </div>
         )}
         {preview && (
           <>
-            <dl className="grid w-full gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm">
+            <dl className="grid w-full gap-3 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left type-body">
               <div>
                 <dt className="type-label">{t('externalIntegrationLink.integration')}</dt>
-                <dd className="mt-1 break-words font-medium text-ui-text">{preview.clientDisplayName}</dd>
+                <dd className="mt-1 break-words type-ui text-ui-text">{preview.clientDisplayName}</dd>
               </div>
               <div>
                 <dt className="type-label">{t('externalIntegrationLink.provider')}</dt>
-                <dd className="mt-1 break-all font-medium text-ui-text">{preview.provider}</dd>
+                <dd className="mt-1 break-all type-ui text-ui-text">{preview.provider}</dd>
               </div>
               <div>
                 <dt className="type-label">{t('externalIntegrationLink.externalAccount')}</dt>
-                <dd className="mt-1 break-all font-medium text-ui-text">{preview.externalDisplayName || preview.externalUserId}</dd>
+                <dd className="mt-1 break-all type-ui text-ui-text">{preview.externalDisplayName || preview.externalUserId}</dd>
               </div>
               <div>
                 <dt className="type-label">{t('externalIntegrationLink.signedInAs')}</dt>
-                <dd className="mt-1 break-all font-medium text-ui-text">{preview.signedInUser.email}</dd>
+                <dd className="mt-1 break-all type-ui text-ui-text">{preview.signedInUser.email}</dd>
               </div>
             </dl>
             <div className="w-full rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-left">
@@ -191,14 +191,14 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
                           className="mt-1"
                         />
                         <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-ui-text">{workspace.workspaceName}</span>
-                          <span className="block text-xs text-ui-text-muted">{workspace.role}</span>
+                          <span className="block type-body type-emphasis text-ui-text">{workspace.workspaceName}</span>
+                          <span className="block type-caption text-ui-text-muted">{workspace.role}</span>
                         </span>
                       </label>
                       {workspaceEnabled && (
                         <div className="mt-3 grid gap-2 pl-6">
                           {workspace.grantableCapabilities.map((capability) => (
-                            <label key={capability} className="flex items-center gap-2 text-xs font-medium text-ui-text-muted">
+                            <label key={capability} className="flex items-center gap-2 type-caption text-ui-text-muted">
                               <Checkbox
                                 checked={selectedCapabilities.includes(capability)}
                                 disabled={isApproving}
@@ -215,7 +215,7 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
                   );
                 })}
                 {!preview.grantableWorkspaces?.length && (
-                  <p className="text-sm text-ui-text-muted">{t('externalIntegrationLink.noWorkspaces')}</p>
+                  <p className="type-body text-ui-text-muted">{t('externalIntegrationLink.noWorkspaces')}</p>
                 )}
               </div>
             </div>
@@ -234,14 +234,14 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
           </div>
         )}
         {previewError && (
-          <div role="alert" className="flex w-full flex-col items-center gap-3 text-sm font-medium text-status-danger-text">
+          <div role="alert" className="flex w-full flex-col items-center gap-3 type-ui text-status-danger-text">
             <p>{previewError}</p>
             <Button variant="secondary" size="sm" onClick={() => setPreviewAttempt((attempt) => attempt + 1)}>
               {t('externalIntegrationLink.retry')}
             </Button>
           </div>
         )}
-        {approvalError && <p role="alert" className="text-sm font-medium text-status-danger-text">{approvalError}</p>}
+        {approvalError && <p role="alert" className="type-ui text-status-danger-text">{approvalError}</p>}
       </section>
     </main>
   );

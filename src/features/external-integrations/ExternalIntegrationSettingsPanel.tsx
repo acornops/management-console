@@ -75,7 +75,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="type-row-title">{link.clientDisplayName}</p>
-          <p className="mt-1 break-words text-xs text-ui-text-muted">
+          <p className="mt-1 break-words type-caption text-ui-text-muted">
             {link.provider} · {link.externalDisplayName || link.externalUserId}
           </p>
         </div>
@@ -117,14 +117,14 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
                   className="mt-1"
                 />
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-ui-text">{workspace.workspaceName}</span>
-                  <span className="block text-xs text-ui-text-muted">{workspace.role}</span>
+                  <span className="block type-body type-emphasis text-ui-text">{workspace.workspaceName}</span>
+                  <span className="block type-caption text-ui-text-muted">{workspace.role}</span>
                 </span>
               </label>
               {workspaceEnabled && (
                 <div className="mt-3 grid gap-2 pl-6">
                   {workspace.grantableCapabilities.map((capability) => (
-                    <label key={capability} className="flex items-center gap-2 text-xs font-medium text-ui-text-muted">
+                    <label key={capability} className="flex items-center gap-2 type-caption text-ui-text-muted">
                       <Checkbox
                         checked={selectedCapabilities.includes(capability)}
                         disabled={mutationsDisabled}
@@ -139,7 +139,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
           );
         })}
         {!link.grantableWorkspaces?.length && (
-          <p className="text-sm text-ui-text-muted">{t('settings.externalIntegrationsNoWorkspaces')}</p>
+          <p className="type-body text-ui-text-muted">{t('settings.externalIntegrationsNoWorkspaces')}</p>
         )}
       </div>
     </div>
@@ -242,20 +242,20 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
   };
 
   if (links === null && !error) {
-    return <div className="p-6 text-sm text-ui-text-muted" role="status">{t('settings.externalIntegrationsLoading')}</div>;
+    return <div className="p-6 type-body text-ui-text-muted" role="status">{t('settings.externalIntegrationsLoading')}</div>;
   }
   const mutationInFlight = Boolean(savingLinkId || unlinkingLinkId);
 
   return (
     <>
       {error && (
-        <div className="flex flex-col gap-3 border-b border-ui-border bg-status-danger-soft px-6 py-3 text-sm text-status-danger-text sm:flex-row sm:items-center sm:justify-between" role="alert">
+        <div className="flex flex-col gap-3 border-b border-ui-border bg-status-danger-soft px-6 py-3 type-body text-status-danger-text sm:flex-row sm:items-center sm:justify-between" role="alert">
           <span>{error}</span>
           <Button size="sm" variant="tertiary" disabled={mutationInFlight} onClick={() => void refresh()}>{t('settings.externalIntegrationsRetry')}</Button>
         </div>
       )}
       {notice && (
-        <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 text-sm text-status-success-text" role="status">
+        <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 type-body text-status-success-text" role="status">
           {notice}
         </div>
       )}
@@ -285,7 +285,7 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
           onConfirmUnlink={() => void unlink(link)}
         />
       )) : (
-        <div className="p-6 text-sm text-ui-text-muted">{t('settings.externalIntegrationsEmpty')}</div>
+        <div className="p-6 type-body text-ui-text-muted">{t('settings.externalIntegrationsEmpty')}</div>
       )}
     </>
   );

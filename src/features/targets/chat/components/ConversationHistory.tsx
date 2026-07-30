@@ -141,7 +141,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         phase={isInitialLoading ? 'loading' : isSessionsLoading ? 'refreshing' : 'ready'}
         itemCount={visibleSessions.length}
         filtered={Boolean(normalizedSearchValue)}
-        loading={showLoadingNotice ? <InlineLoadingIndicator label={t('chat.loadingHistory')} className="mx-1 border-transparent bg-transparent px-2 py-3 text-xs" /> : null}
+        loading={showLoadingNotice ? <InlineLoadingIndicator label={t('chat.loadingHistory')} className="mx-1 border-transparent bg-transparent px-2 py-3 type-caption" /> : null}
         filteredEmpty={
           <div className="px-5 py-10 text-center">
             <Search className="mx-auto mb-3 h-7 w-7 text-ui-border" aria-hidden="true" />
@@ -154,7 +154,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
             {isInvestigations
               ? <Bot className="mx-auto mb-3 h-8 w-8 text-ui-border" />
               : <MessageSquare className="mx-auto mb-3 h-8 w-8 text-ui-border" />}
-            <p className="text-xs font-semibold text-ui-text-muted">
+            <p className="type-caption type-emphasis text-ui-text-muted">
               {t(isInvestigations ? 'chat.noInvestigations' : 'chat.noConversations')}
             </p>
           </div>
@@ -173,7 +173,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                 isActive ? (isPage ? 'bg-ui-surface' : 'bg-ui-bg') : isPage ? 'hover:bg-ui-surface' : 'hover:bg-ui-bg'
               }`}
             >
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   onSelectSession(session.id);
@@ -189,7 +189,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                 {isPage ? (
                   <>
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-ui-text">{session.name}</span>
+                      <span className="truncate type-body type-emphasis text-ui-text">{session.name}</span>
                       {session.origin === 'auto_triage' && (
                         <span
                           className="inline-flex shrink-0 text-ui-text-muted"
@@ -210,7 +210,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                       : <History className={`mt-0.5 h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />}
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
-                        <p className="min-w-0 flex-1 truncate text-sm font-semibold text-ui-text">{session.name}</p>
+                        <p className="min-w-0 flex-1 truncate type-body type-emphasis text-ui-text">{session.name}</p>
                         <AssistantNavStatusIndicator status={assistantStatus} label={assistantStatusLabel} withTooltip={false} />
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 type-caption">
@@ -252,9 +252,9 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                     </div>
                   </>
                 )}
-              </button>
+              </Button>
               {canDeleteSessions && (
-                <button
+                <Button
                   type="button"
                   onClick={() => onDeleteSessionClick(session.id)}
                   className="control-target absolute right-3 top-3 rounded-md p-1 text-ui-text-muted opacity-0 transition-opacity hover:bg-ui-surface hover:text-status-danger-text group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
@@ -262,7 +262,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                   aria-label={t('chat.deleteConversation')}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               )}
             </div>
           );

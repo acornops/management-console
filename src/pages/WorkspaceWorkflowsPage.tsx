@@ -399,11 +399,11 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
               <ICONS.Plus className="h-4 w-4" aria-hidden="true" /> Create workflow
             </Button>
           </div>
-          {!canManageWorkflowScope && <span className="type-caption max-w-64 font-semibold text-ui-text-muted lg:text-right">Ask a workspace manager for manage_workflows to create or edit workflow definitions.</span>}
+          {!canManageWorkflowScope && <span className="type-caption max-w-64 type-emphasis text-ui-text-muted lg:text-right">Ask a workspace manager for manage_workflows to create or edit workflow definitions.</span>}
         </div>}
       />
       {workflowLoadError && <WorkflowLoadErrorNotice onRetry={() => setWorkflowCatalogReloadKey((value) => value + 1)} />}
-      {workflowOptionsError && <div role="alert" className="mb-4 flex flex-col gap-3 rounded-md border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
+      {workflowOptionsError && <div role="alert" className="mb-4 flex flex-col gap-3 rounded-md border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-body text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
         <div><strong>Workflow options could not be loaded.</strong> {workflowOptionsError}</div><Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>Retry</Button>
       </div>}
       {createPanelOpen && <WorkflowCreateDrawer
@@ -427,7 +427,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
         detail={selectedWorkflow ? (
           <section className="min-w-0 overflow-hidden">
             <MasterDetailPaneHeader
-              badges={<><StatusBadge tone={workflowStatusTone(selectedWorkflow.status)}>{selectedWorkflow.status}</StatusBadge><WorkflowModeBadge mode={selectedWorkflow.policy.mode} /><span className="type-caption font-semibold text-ui-text-muted">{selectedWorkflow.owner}</span></>}
+              badges={<><StatusBadge tone={workflowStatusTone(selectedWorkflow.status)}>{selectedWorkflow.status}</StatusBadge><WorkflowModeBadge mode={selectedWorkflow.policy.mode} /><span className="type-caption type-emphasis text-ui-text-muted">{selectedWorkflow.owner}</span></>}
               title={selectedWorkflow.name}
               description={selectedWorkflow.description}
               actions={<WorkflowLaunchActions
@@ -525,7 +525,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
                   title="Settings"
                   description="Edit saved defaults, pause new runs, manage tags, or delete this workspace workflow with confirmation."
                 >
-                  {(workflowUpdateError || workflowUpdateResult || deleteWorkflowError) && <div role={workflowUpdateError || deleteWorkflowError ? 'alert' : 'status'} aria-live={workflowUpdateError || deleteWorkflowError ? 'assertive' : 'polite'} aria-atomic="true" className={`rounded-md border px-3 py-2 text-xs font-semibold ${workflowUpdateError || deleteWorkflowError ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}>{workflowUpdateError || deleteWorkflowError || workflowUpdateResult}</div>}
+                  {(workflowUpdateError || workflowUpdateResult || deleteWorkflowError) && <div role={workflowUpdateError || deleteWorkflowError ? 'alert' : 'status'} aria-live={workflowUpdateError || deleteWorkflowError ? 'assertive' : 'polite'} aria-atomic="true" className={`rounded-md border px-3 py-2 type-caption type-emphasis ${workflowUpdateError || deleteWorkflowError ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}>{workflowUpdateError || deleteWorkflowError || workflowUpdateResult}</div>}
                   <WorkflowSection title="Availability">
                     <div className="mt-3 flex items-center justify-between gap-4 rounded-md border border-ui-border bg-ui-bg px-4 py-3">
                       <div>
@@ -572,7 +572,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
                       ) : (
                         <div className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">
                           <div className="type-micro-label text-ui-text-muted">Message</div>
-                          <p className="mt-2 text-sm font-semibold leading-6 text-ui-text">{selectedWorkflow.starterPrompt}</p>
+                          <p className="mt-2 type-body type-emphasis leading-6 text-ui-text">{selectedWorkflow.starterPrompt}</p>
                           <p className="type-caption mt-2 text-ui-text-muted">Used to start new workflow sessions.</p>
                         </div>
                       )}
@@ -590,7 +590,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
                       <div className="min-w-0">
                         <h4 className="type-row-title">Delete workflow</h4>
                         <p className="type-caption mt-1 max-w-2xl">Permanently removes this workspace workflow definition. Past runs remain in audit history.</p>
-                        {workflowDeleteBlocker && <p id="workflow-delete-blocker" className="type-caption mt-2 max-w-2xl font-semibold">{workflowDeleteBlocker}</p>}
+                        {workflowDeleteBlocker && <p id="workflow-delete-blocker" className="type-caption mt-2 max-w-2xl type-emphasis">{workflowDeleteBlocker}</p>}
                       </div>
                       <Button variant="danger" size="sm" onClick={() => { setDeleteWorkflowId(selectedWorkflow.id); setDeleteWorkflowConfirmation(''); }} disabled={Boolean(workflowDeleteBlocker)} title={workflowDeleteBlocker || undefined} aria-describedby={workflowDeleteBlocker ? 'workflow-delete-blocker' : undefined}>Delete workflow</Button>
                     </div>

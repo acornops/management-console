@@ -46,6 +46,6 @@ describe('DangerZone', () => {
     );
 
     expect(html).toContain('<h3 id="delete-title" class="type-row-title mb-1 text-status-danger-text">');
-    expect(html).toContain('text-xs leading-5 text-ui-text-muted');
+    expect(html).toContain('type-caption max-w-2xl text-ui-text-muted');
   });
 });

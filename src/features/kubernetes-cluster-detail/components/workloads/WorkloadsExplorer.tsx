@@ -33,6 +33,7 @@ import {
   WorkloadsExplorerProps
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { safeStorage } from '@/utils/safeStorage';
+import { Button } from '@acornops/ui';
 
 const SHOW_UNHEALTHY_ONLY_STORAGE_KEY = 'acornops_resources_show_unhealthy_only';
 const resourceFamilyCategories: ReadonlyArray<ResourceFamily> = ['workloads', 'network', 'storage', 'cluster'];
@@ -491,14 +492,14 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
         {resourceListError && <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{resourceListError}</p>}
         {isLoadingInitial && <InlineLoadingIndicator label={t('resources.loading')} />}
         {hasMoreResources && (
-          <button
+          <Button
             type="button"
             onClick={onLoadMoreResources}
             disabled={isLoadingInitial || isLoadingMore}
             className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isLoadingMore ? t('resources.loadingMore') : t('resources.loadMore')}
-          </button>
+          </Button>
         )}
       </div>
       <WorkloadsExplorerDrawers

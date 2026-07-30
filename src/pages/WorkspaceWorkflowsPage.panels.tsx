@@ -31,6 +31,7 @@ import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import { getWorkflowExecution, type WorkflowCapabilitiesPreview, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { Textarea } from '@acornops/ui';
 type WorkflowActions = ReturnType<typeof useWorkspaceWorkflowActions>;
 type WorkflowAgentOption = WorkflowOptionsCatalog['agents'][number];
 
@@ -73,19 +74,19 @@ export const WorkflowOverviewPanel: React.FC<{
       </WorkflowSection>
       <WorkflowSection title="Prompt" description="The saved workflow prompt is compiled by the control plane when a run starts.">
         <div className="mt-3 rounded-md border border-ui-border bg-ui-bg px-4 py-3">
-          <p className="whitespace-pre-wrap break-words text-sm text-ui-text">{workflow.starterPrompt}</p>
+          <p className="whitespace-pre-wrap break-words type-body text-ui-text">{workflow.starterPrompt}</p>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {workflow.parameters.length > 0 ? workflow.parameters.map((parameter) => (
-            <span key={parameter.key} className="rounded-md border border-ui-border bg-ui-surface-subtle px-2.5 py-1.5 text-xs font-semibold text-ui-text-muted">
+            <span key={parameter.key} className="rounded-md border border-ui-border bg-ui-surface-subtle px-2.5 py-1.5 type-caption type-emphasis text-ui-text-muted">
               {humanizeWorkflowParameterKey(parameter.key)} · {parameter.type}
             </span>
           )) : <span className="type-caption text-ui-text-muted">No runtime input required.</span>}
         </div>
         <WorkflowCapabilityLedger workspaceId={workspaceId} preview={preview} loading={previewLoading} error={previewError} onRetry={onRetryPreview} />
       </WorkflowSection>
-      {launchError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{launchError}{launchRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={launchRecovery.href}>{launchRecovery.label}</a>}</div>}
-      {launchResult?.workflowId === workflow.id && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">Run dispatched with {launchResult.toolCount} tools. Run ID: {launchResult.runId}.</div>}
+      {launchError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{launchError}{launchRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={launchRecovery.href}>{launchRecovery.label}</a>}</div>}
+      {launchResult?.workflowId === workflow.id && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 type-caption type-emphasis text-status-success-text">Run dispatched with {launchResult.toolCount} tools. Run ID: {launchResult.runId}.</div>}
     </WorkflowTabPanel>
   );
 };
@@ -132,7 +133,7 @@ function WorkflowRunInstructionForm({
         sendInstruction();
       }}
     >
-      <textarea
+      <Textarea
         ref={instructionTextareaRef}
         aria-label="Send instruction"
         placeholder="Send instruction"
@@ -145,7 +146,7 @@ function WorkflowRunInstructionForm({
             sendInstruction();
           }
         }}
-        className="max-h-36 min-h-10 w-full resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 text-sm font-medium leading-6 text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60"
+        className="max-h-36 min-h-10 w-full resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 type-ui leading-6 text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!canMessageRun || runMessageSending}
       />
       <div className="flex items-center justify-end border-t border-ui-border/70 pt-2">
@@ -209,10 +210,10 @@ export const WorkflowAgentsPanel: React.FC<{
       </Button>
     )}
   >
-    {agentSelectionError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{agentSelectionError}</div>}
-    {agentSelectionResult && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 text-xs font-semibold text-status-success-text">{agentSelectionResult}</div>}
-    {!canManageWorkflowScope && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-xs font-semibold text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
-    {selectionFeedback && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-semibold text-ui-text">{selectionFeedback}</div>}
+    {agentSelectionError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{agentSelectionError}</div>}
+    {agentSelectionResult && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 type-caption type-emphasis text-status-success-text">{agentSelectionResult}</div>}
+    {!canManageWorkflowScope && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
+    {selectionFeedback && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-body type-emphasis text-ui-text">{selectionFeedback}</div>}
     {isEditingAgentSelection && selectedAgentSelectionDraft ? (
       <WorkflowSection title={t('workflowCoordination.agentsTitle')} description={t('workflowCoordination.agentsDescription')}>
         <div className="mt-4 grid gap-4">
@@ -220,7 +221,7 @@ export const WorkflowAgentsPanel: React.FC<{
             <legend className="sr-only">Workflow agents</legend>
             <div className="flex flex-col gap-1 border-b border-ui-border pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span className="type-micro-label text-ui-text-muted">{t('workflowCoordination.selectedAgents')}</span>
-              <span className="type-caption font-semibold text-ui-text-muted">
+              <span className="type-caption type-emphasis text-ui-text-muted">
                 {t('workflowCoordination.selectedCount', { count: selectedAgentSelectionDraft.agentIds.length })}
               </span>
             </div>
@@ -230,7 +231,7 @@ export const WorkflowAgentsPanel: React.FC<{
                 return (
                   <label
                     key={agent.value}
-                    className={`grid min-h-12 cursor-pointer grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 py-3 text-sm transition-colors ${agent.disabled ? 'cursor-not-allowed opacity-55' : 'hover:bg-ui-bg/60'}`}
+                    className={`grid min-h-12 cursor-pointer grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 py-3 type-body transition-colors ${agent.disabled ? 'cursor-not-allowed opacity-55' : 'hover:bg-ui-bg/60'}`}
                   >
                     <Checkbox
                       checked={checked}
@@ -242,7 +243,7 @@ export const WorkflowAgentsPanel: React.FC<{
                       })}
                     />
                     <span className="min-w-0">
-                      <span className="block min-w-0 break-words font-semibold [overflow-wrap:anywhere]">{agent.label}</span>
+                      <span className="block min-w-0 break-words type-emphasis [overflow-wrap:anywhere]">{agent.label}</span>
                       {agent.description && <span className="type-caption mt-0.5 block break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.description}</span>}
                       {agent.disabledReason && <span className="type-caption mt-0.5 block break-words text-status-warning-text [overflow-wrap:anywhere]">{agent.disabledReason}</span>}
                     </span>
@@ -356,7 +357,7 @@ export const WorkflowRunsPanel: React.FC<{
 
   return (
   <WorkflowTabPanel tab="runs" title="Runs" description="Inspect dispatched runs, approval pauses, trace events, and active run instructions.">
-    {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <div key={message} role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{message}</div>)}
+    {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <div key={message} role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{message}</div>)}
     {workflow.runs.length > 0 ? workflow.runs.map((run) => {
       const effectiveRunId = run.runId || run.id;
       const isServerBackedRun = isServerWorkflowRunId(run.runId);
@@ -409,7 +410,7 @@ export const WorkflowRunsPanel: React.FC<{
               {approvals.map((approval) => (
                 <div key={approval.id} className="rounded-md bg-ui-bg p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-ui-text">{approval.summary || approval.toolName}</span>
+                    <span className="type-body type-emphasis text-ui-text">{approval.summary || approval.toolName}</span>
                     <StatusBadge tone={approval.status === 'approved' ? 'success' : approval.status === 'pending' ? 'warning' : 'neutral'}>{approval.status}</StatusBadge>
                   </div>
                   {approval.status === 'pending' && (
@@ -440,7 +441,7 @@ export const WorkflowRunsPanel: React.FC<{
                 {coordinationLoadingId === run.id ? (
                   <div role="status" aria-live="polite" className="type-caption mt-3 text-ui-text-muted">{t('workflowCoordination.traceLoading')}</div>
                 ) : coordinationErrorByExecutionId[run.id] ? (
-                  <div role="alert" className="mt-3 rounded-md border border-status-danger/30 bg-status-danger-soft px-3 py-2 text-xs font-semibold text-status-danger-text">{coordinationErrorByExecutionId[run.id]}</div>
+                  <div role="alert" className="mt-3 rounded-md border border-status-danger/30 bg-status-danger-soft px-3 py-2 type-caption type-emphasis text-status-danger-text">{coordinationErrorByExecutionId[run.id]}</div>
                 ) : (coordinationByExecutionId[run.id]?.children.length || 0) === 0 ? (
                   <div className="type-caption mt-3 text-ui-text-muted">{t('workflowCoordination.traceEmpty')}</div>
                 ) : (
@@ -448,7 +449,7 @@ export const WorkflowRunsPanel: React.FC<{
                     {coordinationByExecutionId[run.id].children.map((child) => (
                       <div key={child.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
                         <div className="min-w-0">
-                          <div className="break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{child.capabilityId}</div>
+                          <div className="break-words type-body type-emphasis text-ui-text [overflow-wrap:anywhere]">{child.capabilityId}</div>
                           <dl className="type-caption mt-1 grid gap-x-3 gap-y-1 text-ui-text-muted sm:grid-cols-[4rem_minmax(0,1fr)]">
                             <dt>{t('workflowCoordination.targetLabel')}</dt><dd className="break-words [overflow-wrap:anywhere]">{child.target.targetType}: {child.target.id}</dd>
                             <dt>{t('workflowCoordination.agentLabel')}</dt><dd className="break-words [overflow-wrap:anywhere]">{child.agent.name}</dd>
@@ -465,29 +466,29 @@ export const WorkflowRunsPanel: React.FC<{
             <section className="mt-4 border-t border-ui-border pt-4" aria-label="Run discussion">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <h4 className="type-row-title">Run discussion</h4>
-                {discussionState === 'active' && <span className="type-caption font-semibold text-ui-text-muted">Instruction channel ready</span>}
-                {discussionState === 'waiting_session' && <span className="type-caption font-semibold text-ui-text-muted">Session starting</span>}
+                {discussionState === 'active' && <span className="type-caption type-emphasis text-ui-text-muted">Instruction channel ready</span>}
+                {discussionState === 'waiting_session' && <span className="type-caption type-emphasis text-ui-text-muted">Session starting</span>}
               </div>
               {(runMessages.length > 0 || discussionState !== 'terminal') && (
                 <div className="mt-3 grid gap-2">
                   {runMessages.length > 0 ? runMessages.map((message) => (
                     <div key={message.id} className="rounded-md bg-ui-bg px-3 py-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-ui-text">{message.role === 'operator' ? 'Instructions' : message.author || 'Workflow response'}</span>
+                        <span className="type-body type-emphasis text-ui-text">{message.role === 'operator' ? 'Instructions' : message.author || 'Workflow response'}</span>
                         <span className="type-caption text-ui-text-muted">{message.author} · {formatWorkflowTimestamp(message.createdAt)} · {message.status}</span>
                       </div>
                       <WorkflowRunResponse content={message.content} className="mt-1" />
                     </div>
                   )) : (
-                    <div className="rounded-md border border-dashed border-ui-border bg-ui-bg px-3 py-3 text-sm font-semibold text-ui-text-muted">No instructions or responses yet.</div>
+                    <div className="rounded-md border border-dashed border-ui-border bg-ui-bg px-3 py-3 type-body type-emphasis text-ui-text-muted">No instructions or responses yet.</div>
                   )}
                 </div>
               )}
               {discussionState === 'waiting_session' && (
-                <div className="mt-3 rounded-md bg-ui-bg px-3 py-3 text-sm font-semibold text-ui-text-muted">Instructions can be sent once the run session is ready.</div>
+                <div className="mt-3 rounded-md bg-ui-bg px-3 py-3 type-body type-emphasis text-ui-text-muted">Instructions can be sent once the run session is ready.</div>
               )}
               {discussionState === 'terminal' && run.status === 'failed' && (
-                <div className="mt-3 rounded-md bg-ui-bg px-3 py-3 text-sm font-semibold text-ui-text-muted">This run cannot accept more instructions. Start a follow-up run or retry from the workflow action.</div>
+                <div className="mt-3 rounded-md bg-ui-bg px-3 py-3 type-body type-emphasis text-ui-text-muted">This run cannot accept more instructions. Start a follow-up run or retry from the workflow action.</div>
               )}
               {discussionState === 'active' && (
                 <WorkflowRunInstructionForm
@@ -499,7 +500,7 @@ export const WorkflowRunsPanel: React.FC<{
                   workflowSessionId={workflowSessionId}
                 />
               )}
-              {runMessageError && <div role="alert" aria-live="assertive" className="mt-2 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 text-xs font-semibold text-status-danger-text">{runMessageError}{runMessageRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={runMessageRecovery.href}>{runMessageRecovery.label}</a>}</div>}
+              {runMessageError && <div role="alert" aria-live="assertive" className="mt-2 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{runMessageError}{runMessageRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={runMessageRecovery.href}>{runMessageRecovery.label}</a>}</div>}
             </section>
             </>
           )}
@@ -507,7 +508,7 @@ export const WorkflowRunsPanel: React.FC<{
       );
     }) : (
       <div className="rounded-lg border border-ui-border bg-ui-surface p-6">
-        <div className="text-sm font-semibold text-ui-text">No runs yet</div>
+        <div className="type-body type-emphasis text-ui-text">No runs yet</div>
         <p className="type-caption mt-1 text-ui-text-muted">Launch this workflow from the overview after readiness checks pass.</p>
       </div>
     )}
@@ -531,14 +532,14 @@ const AgentCapabilityGroup: React.FC<{
         <ul className="grid min-w-0 gap-2">
           {values.map((value) => (
             <li key={value} className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className={technical ? 'min-w-0 break-words font-mono text-sm leading-6 text-ui-text [overflow-wrap:anywhere]' : 'min-w-0 break-words text-sm font-medium leading-6 text-ui-text [overflow-wrap:anywhere]'}>
+              <span className={technical ? 'min-w-0 break-words font-mono type-body leading-6 text-ui-text [overflow-wrap:anywhere]' : 'min-w-0 break-words type-ui leading-6 text-ui-text [overflow-wrap:anywhere]'}>
                 {value}
               </span>
             </li>
           ))}
         </ul>
       ) : (
-        <span className="text-sm font-medium text-ui-text-muted">{emptyLabel}</span>
+        <span className="type-ui text-ui-text-muted">{emptyLabel}</span>
       )}
     </dd>
   </div>
@@ -577,7 +578,7 @@ const AgentCapabilityReviewList: React.FC<{
   agentReviews: WorkflowAgentCapabilityReview[];
 }> = ({ agentReviews }) => {
   if (agentReviews.length === 0) {
-    return <div className="mt-2 border-y border-ui-border py-4 text-sm font-medium text-ui-text-muted">No assigned agents to review.</div>;
+    return <div className="mt-2 border-y border-ui-border py-4 type-ui text-ui-text-muted">No assigned agents to review.</div>;
   }
   return (
     <div className="mt-4">
@@ -594,7 +595,7 @@ const AgentCapabilityReviewList: React.FC<{
             <p className="type-caption mt-1 break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.role}</p>
           </div>
           {agent.missingAgentData ? (
-            <div className="text-sm font-medium text-ui-text-muted">Agent capability data is not available in the current catalog.</div>
+            <div className="type-ui text-ui-text-muted">Agent capability data is not available in the current catalog.</div>
           ) : (
             <dl className="min-w-0 divide-y divide-ui-border">
               <AgentCapabilityGroup label="Direct MCP servers" values={agent.mcpServers} emptyLabel="No directly attached MCP servers." technical />
@@ -625,7 +626,7 @@ export const WorkflowCapabilitiesPanel: React.FC<{
       description="Review the tools and integrations available to selected Agents, plus approval gates that pause runs for a decision."
     >
       {catalogFailures.length > 0 && (
-        <div role="alert" className="flex flex-col gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 text-sm text-status-warning-text sm:flex-row sm:items-center sm:justify-between">
+        <div role="alert" className="flex flex-col gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 type-body text-status-warning-text sm:flex-row sm:items-center sm:justify-between">
           <span>{t('workflowCatalog.inlineFailure')} {catalogFailures.join(' ')}</span>
           <Button type="button" variant="secondary" size="sm" onClick={onRetryCatalog}>{t('common.retry')}</Button>
         </div>

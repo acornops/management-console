@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { DiscoveryFilterBar } from '@acornops/ui';
 import { MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, MasterDetailRow, masterDetailDiscoverySpacingClass } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
@@ -30,7 +30,7 @@ export const workflowTabIcons: Record<WorkflowTab, React.ElementType> = {
   settings: ICONS.Settings
 };
 export const WorkflowLoadErrorNotice: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
-  <div className="mb-4 flex flex-col gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-xs font-semibold text-status-warning-text sm:flex-row sm:items-center sm:justify-between">
+  <div className="mb-4 flex flex-col gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-caption type-emphasis text-status-warning-text sm:flex-row sm:items-center sm:justify-between">
     <span className="min-w-0 break-words [overflow-wrap:anywhere]">Workflows could not be loaded from the control plane.</span>
     <Button type="button" variant="secondary" size="sm" onClick={onRetry} className="self-start border-status-warning/30 bg-ui-surface text-status-warning-text hover:bg-ui-bg sm:self-auto">
       Retry
@@ -60,12 +60,12 @@ export const WorkflowTagsEditor: React.FC<{
   <>
     <div className="mt-3 flex flex-wrap gap-2">
       {tags.map((tag) => (
-        <span key={tag} className="inline-flex min-h-11 items-center gap-1 rounded-md border border-ui-border bg-ui-bg pl-2.5 pr-1 text-xs type-emphasis text-ui-text-muted sm:min-h-8">
+        <span key={tag} className="inline-flex min-h-11 items-center gap-1 rounded-md border border-ui-border bg-ui-bg pl-2.5 pr-1 type-caption type-emphasis text-ui-text-muted sm:min-h-8">
           <span>{tag}</span>
           {!readOnly && (
-            <button type="button" aria-label={`Remove workflow tag ${tag}`} onClick={() => onRemove(tag)} disabled={pending} className="control-target rounded p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-50 sm:p-1">
+            <Button type="button" aria-label={`Remove workflow tag ${tag}`} onClick={() => onRemove(tag)} disabled={pending} className="control-target rounded p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 disabled:cursor-not-allowed disabled:opacity-50 sm:p-1">
               <ICONS.X className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
+            </Button>
           )}
         </span>
       ))}
@@ -105,7 +105,7 @@ export const WorkflowLaunchActions: React.FC<{
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-2" aria-label="Selected workflow tags">
             {tags.map((tag) => (
-              <span key={tag} className="inline-flex min-h-7 items-center rounded-md border border-ui-border bg-ui-surface px-2.5 text-xs type-emphasis text-ui-text-muted">
+              <span key={tag} className="inline-flex min-h-7 items-center rounded-md border border-ui-border bg-ui-surface px-2.5 type-caption type-emphasis text-ui-text-muted">
                 {tag}
               </span>
             ))}
@@ -115,11 +115,11 @@ export const WorkflowLaunchActions: React.FC<{
         {isWriteCapable && primaryAction === 'launch' && !visibleLaunchBlocker && (
           <label id="workflow-launch-acknowledgement" className={`${tags.length > 0 ? 'mt-2' : ''} flex min-h-11 cursor-pointer items-center gap-2 text-ui-text-muted transition-colors hover:text-ui-text focus-within:text-ui-text`}>
             <Checkbox checked={launchAcknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="shrink-0" />
-            <span className="type-caption font-semibold">I understand this workflow can modify live systems.</span>
+            <span className="type-caption type-emphasis">I understand this workflow can modify live systems.</span>
           </label>
         )}
         {visibleLaunchBlocker && (
-          <span id="workflow-launch-blocker" className={`${tags.length > 0 ? 'mt-2' : ''} block text-xs font-semibold text-ui-text-muted`}>
+          <span id="workflow-launch-blocker" className={`${tags.length > 0 ? 'mt-2' : ''} block type-caption type-emphasis text-ui-text-muted`}>
             Resolve this before launch: {visibleLaunchBlocker}
           </span>
         )}
@@ -150,12 +150,12 @@ export const WorkflowLaunchActions: React.FC<{
           )}
         </div>
         {primaryAction === 'launch' && !canManageWorkflowScope && (
-          <p id="workflow-schedule-blocker" className="text-xs font-semibold text-ui-text-muted sm:text-right">
+          <p id="workflow-schedule-blocker" className="type-caption type-emphasis text-ui-text-muted sm:text-right">
             You need manage_workflows to schedule workflows.
           </p>
         )}
         {primaryAction === 'activate' && !canManageWorkflowScope && (
-          <p id="workflow-activate-blocker" className="text-xs font-semibold text-ui-text-muted sm:text-right">
+          <p id="workflow-activate-blocker" className="type-caption type-emphasis text-ui-text-muted sm:text-right">
             {t('agentsWorkflows.workflowActions.activatePermission')}
           </p>
         )}
@@ -171,9 +171,9 @@ export const WorkflowSearchTagSuggestions: React.FC<{
   workflowSearchTags.length > 0 && query.trim() ? (
     <div className="flex flex-wrap gap-2 px-1" aria-label="Workflow tag suggestions">
       {workflowSearchTags.slice(0, 8).map((tag) => (
-        <button key={tag} type="button" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-2.5 py-1.5 text-xs type-ui text-ui-text-muted hover:text-ui-text sm:min-h-8">
+        <Button key={tag} type="button" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-2.5 py-1.5 type-caption text-ui-text-muted hover:text-ui-text sm:min-h-8">
           {tag}
-        </button>
+        </Button>
       ))}
     </div>
   ) : null;
@@ -248,7 +248,7 @@ export const WorkflowDeleteDialog: React.FC<{
   if (!deleteTargetWorkflow) return null;
 
   return (
-    <Dialog titleId="delete-workflow-title" closeDisabled={deletingWorkflowId === deleteTargetWorkflow.id} className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl" onClose={onClose}>
+    <DialogFrame unframed titleId="delete-workflow-title" closeDisabled={deletingWorkflowId === deleteTargetWorkflow.id} className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl" onClose={onClose}>
       <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
@@ -258,13 +258,13 @@ export const WorkflowDeleteDialog: React.FC<{
             <h3 id="delete-workflow-title" className="type-row-title text-ui-text">
               Delete workflow
             </h3>
-            <p className="type-caption mt-0.5 font-semibold text-ui-text-muted">This action cannot be undone.</p>
+            <p className="type-caption mt-0.5 type-emphasis text-ui-text-muted">This action cannot be undone.</p>
           </div>
         </div>
         <CloseButton onClick={onClose} disabled={deletingWorkflowId === deleteTargetWorkflow.id} label="Close delete workflow dialog" />
       </div>
       <div className="space-y-4 px-5 py-5">
-        <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-medium leading-6 text-status-danger-text">Deleting {deleteTargetWorkflow.name} removes the workflow definition for future runs. Existing run records and audit events are retained.</div>
+        <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-ui leading-6 text-status-danger-text">Deleting {deleteTargetWorkflow.name} removes the workflow definition for future runs. Existing run records and audit events are retained.</div>
         <div>
           <label htmlFor="delete-workflow-confirmation-input" className="type-label mb-1.5 block px-1">
             Type the workflow name to confirm deletion.
@@ -285,7 +285,7 @@ export const WorkflowDeleteDialog: React.FC<{
           {deletingWorkflowId === deleteTargetWorkflow.id ? 'Deleting...' : 'Delete workflow'}
         </Button>
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };
 
@@ -343,7 +343,7 @@ export const AgentAssignmentList: React.FC<{
     label: typeof labelForAgent === 'function' ? labelForAgent(agent) : labelForAgent
   }));
   if (rows.length === 0) {
-    return <div className={`${className} py-3 text-sm font-medium text-ui-text-muted`}>No workflow agents selected.</div>;
+    return <div className={`${className} py-3 type-ui text-ui-text-muted`}>No workflow agents selected.</div>;
   }
   return (
     <div className={`${className} divide-y divide-ui-border`}>
@@ -362,11 +362,11 @@ const AgentAssignmentRow: React.FC<{
       <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
     </div>
     <div className="min-w-0">
-      <div className="break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{agent.name}</div>
+      <div className="break-words type-body type-emphasis text-ui-text [overflow-wrap:anywhere]">{agent.name}</div>
       <div className="type-caption mt-1 break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.role}</div>
     </div>
     <div className="flex items-start justify-start sm:justify-end">
-      <span className="rounded-md border border-ui-border bg-ui-surface px-2.5 py-1 text-xs type-emphasis text-ui-text-muted">{label}</span>
+      <span className="rounded-md border border-ui-border bg-ui-surface px-2.5 py-1 type-caption type-emphasis text-ui-text-muted">{label}</span>
     </div>
   </div>
 );
@@ -391,13 +391,13 @@ export const CapabilityReviewRow: React.FC<{
       {values.length > 0 ? (
         <ul className="grid gap-1.5">
           {values.map((value) => (
-            <li key={value} className={technical ? 'break-words font-mono text-sm leading-6 text-ui-text [overflow-wrap:anywhere]' : 'break-words text-sm font-medium leading-6 text-ui-text [overflow-wrap:anywhere]'}>
+            <li key={value} className={technical ? 'break-words font-mono type-body leading-6 text-ui-text [overflow-wrap:anywhere]' : 'break-words type-ui leading-6 text-ui-text [overflow-wrap:anywhere]'}>
               {technical ? value : formatWorkflowScopeValue(value)}
             </li>
           ))}
         </ul>
       ) : (
-        <span className="text-sm font-medium text-ui-text-muted">{emptyLabel}</span>
+        <span className="type-ui text-ui-text-muted">{emptyLabel}</span>
       )}
     </dd>
   </div>
@@ -421,7 +421,7 @@ const WorkflowPreviewToolRows: React.FC<{
           {tools.map((tool) => (
             <li key={`${tool.source}:${tool.id}`} className="flex flex-col gap-2 py-2 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
               <span className="min-w-0">
-                <span className="block break-words font-mono text-sm text-ui-text [overflow-wrap:anywhere]">{tool.label}</span>
+                <span className="block break-words font-mono type-body text-ui-text [overflow-wrap:anywhere]">{tool.label}</span>
                 {tool.description && <span className="type-caption mt-0.5 block text-ui-text-muted">{tool.description}</span>}
               </span>
               <span className="flex shrink-0 flex-wrap gap-1.5">
@@ -489,7 +489,7 @@ export const WorkflowPreviewAuthRow: React.FC<{
             return (
               <li key={`${owner.id}:${requirement.serverId}`} className="py-3 first:pt-0 last:pb-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold text-ui-text">{requirement.serverName}</span>
+                  <span className="type-emphasis text-ui-text">{requirement.serverName}</span>
                   <span className="flex flex-wrap items-center gap-2">
                     <StatusBadge tone={mcpConnectionTone(requirement.connectionState)}>{mcpConnectionLabel(requirement.connectionState, t)}</StatusBadge>
                     {canConnectCredential && (
@@ -513,8 +513,8 @@ export const WorkflowPreviewAuthRow: React.FC<{
                     <div className="type-micro-label text-ui-text-muted">{t('mcpServers.requiredInformation')}</div>
                     <ul className="mt-1.5 grid gap-1.5">
                       {auth.requiredInformation.map((item) => (
-                        <li key={item.name} className="text-sm text-ui-text">
-                          <span className="font-semibold">{item.name}</span>
+                        <li key={item.name} className="type-body text-ui-text">
+                          <span className="type-emphasis">{item.name}</span>
                           <span className="text-ui-text-muted">: {item.description}</span>
                         </li>
                       ))}
@@ -562,16 +562,16 @@ export const WorkflowMcpCredentialDialog: React.FC<{
   const connection = connections[requirement.serverId];
   if (loadingByServerId[requirement.serverId] || !connection) {
     return (
-      <Dialog titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
+      <DialogFrame unframed titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
         <h2 id={titleId} className="type-section-title">
           {t('mcpServers.loadingCredentialStatus')}
         </h2>
-      </Dialog>
+      </DialogFrame>
     );
   }
   if (!connection.canManage) {
     return (
-      <Dialog titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
+      <DialogFrame unframed titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
         <h2 id={titleId} className="type-section-title">
           {t('mcpServers.workspaceCredentialRequired')}
         </h2>
@@ -581,7 +581,7 @@ export const WorkflowMcpCredentialDialog: React.FC<{
             {t('common.close')}
           </Button>
         </div>
-      </Dialog>
+      </DialogFrame>
     );
   }
   if (requirement.authType === 'oauth') {
@@ -642,7 +642,7 @@ export const WorkflowCapabilityLedger: React.FC<{
             </div>
           }
           error={
-            <div role="alert" className="mt-4 flex flex-col gap-3 border-y border-status-danger/25 bg-status-danger-soft px-3 py-3 text-sm text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
+            <div role="alert" className="mt-4 flex flex-col gap-3 border-y border-status-danger/25 bg-status-danger-soft px-3 py-3 type-body text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
               <span>{error}</span>
               <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
                 Retry preview
@@ -656,8 +656,8 @@ export const WorkflowCapabilityLedger: React.FC<{
               {preview.selectedTarget && (
                 <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
                   <dt className="type-row-title">Target</dt>
-                  <dd className="flex flex-col gap-1 text-sm">
-                    <span className="font-semibold text-ui-text">{preview.selectedTarget.name}</span>
+                  <dd className="flex flex-col gap-1 type-body">
+                    <span className="type-emphasis text-ui-text">{preview.selectedTarget.name}</span>
                     <span className={preview.selectedTarget.status === 'ready' ? 'text-status-success-text' : 'text-status-warning-text'}>
                       {preview.selectedTarget.status}
                       {preview.selectedTarget.reason ? `: ${preview.selectedTarget.reason}` : ''}

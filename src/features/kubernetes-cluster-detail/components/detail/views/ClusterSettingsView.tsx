@@ -11,6 +11,7 @@ import { TargetAutoTriageSettingsSection } from '@/features/targets/auto-triage/
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState } from '@/utils/telemetry';
+import { TextInput } from '@acornops/ui';
 
 interface ClusterSettingsViewProps {
   cluster: KubernetesCluster;
@@ -37,7 +38,7 @@ const SettingSection: React.FC<{
   <section className="mb-10 last:mb-0">
     <div className="mb-6 px-1">
       <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="max-w-3xl text-sm leading-6 text-ui-text-muted">{description}</p>
+      <p className="max-w-3xl type-body leading-6 text-ui-text-muted">{description}</p>
     </div>
     <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
   </section>
@@ -56,7 +57,7 @@ const SettingRow: React.FC<{
       </div>
       <div className="min-w-0">
         <p className="mb-0.5 type-row-title">{label}</p>
-        <div className="break-words text-xs leading-5 text-ui-text-muted">{description}</div>
+        <div className="break-words type-caption leading-5 text-ui-text-muted">{description}</div>
       </div>
     </div>
     {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
@@ -178,7 +179,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
             description={
               isEditingName ? (
                 <div className="grid max-w-md gap-3" data-cluster-settings-name-editor="true">
-                  <input
+                  <TextInput
                     ref={clusterNameInputRef}
                     value={draftName}
                     onChange={(event) => {
@@ -209,7 +210,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
                     </Button>
                   </div>
                   {(clusterNameValidationError || nameError) && (
-                    <p id="cluster-name-edit-error" className="text-xs font-semibold text-status-danger-text">
+                    <p id="cluster-name-edit-error" className="type-caption type-emphasis text-status-danger-text">
                       {clusterNameValidationError || nameError}
                     </p>
                   )}
