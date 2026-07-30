@@ -18,7 +18,7 @@ import {
 } from '@/features/targets/admin/targetSkillsViewModel';
 import { TextInput, Textarea } from '@acornops/ui';
 
-const skillNameInputClassName = formInputClassName('px-4 font-medium');
+const skillNameInputClassName = formInputClassName('px-4 type-ui');
 
 interface TargetSkillEditorDialogProps {
   mode: SkillEditorMode;
@@ -209,8 +209,8 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 </div>
               )}
               {detail && detail.validationStatus !== 'valid' && (
-                <div className="m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-sm text-status-warning-text">
-                  <div className="flex items-center gap-2 font-semibold">
+                <div className="m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 type-body text-status-warning-text">
+                  <div className="flex items-center gap-2 type-emphasis">
                     <AlertTriangle className="h-4 w-4" />
                     Validation issues
                   </div>
@@ -226,7 +226,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                   value={activeFile?.content || ''}
                   readOnly={!canEditSkills || !activeFile}
                   onChange={(event) => updateActiveFile(event.target.value)}
-                  className="h-full min-h-[28rem] w-full resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono text-sm leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="h-full min-h-[28rem] w-full resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono type-body leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
                   spellCheck={false}
                 />
               </div>

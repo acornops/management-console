@@ -207,8 +207,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 <div className="flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-ui-surface text-accent-strong">
                   <Upload className="h-5 w-5" />
                 </div>
-                <p className="mt-4 text-base font-semibold text-ui-text">{canPost && !isRunActive ? t('chat.dropFilesTitle') : t('chat.dropFilesUnavailableTitle')}</p>
-                <p className="mt-2 max-w-md text-sm font-medium leading-6 text-ui-text-muted">
+                <p className="mt-4 type-panel-title text-ui-text">{canPost && !isRunActive ? t('chat.dropFilesTitle') : t('chat.dropFilesUnavailableTitle')}</p>
+                <p className="mt-2 max-w-md type-ui leading-6 text-ui-text-muted">
                   {canPost && !isRunActive ? t('chat.dropFilesBody') : recentActivityWarning ? t('chat.chooseRecentActivityAction') : t(resolvedNoChatAccessKey)}
                 </p>
               </div>
@@ -229,7 +229,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 data-chat-history-trigger="search"
                 className={isSearchRailActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
                 aria-label={t('chat.searchChats')}
-                aria-controls={historySearchPageId}
+                aria-controls={isSearchRailActive ? historySearchPageId : undefined}
                 aria-current={isSearchRailActive ? 'page' : undefined}
               >
                 <Search className="h-4 w-4" aria-hidden="true" />
@@ -327,7 +327,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <h1 className="type-section-title truncate text-ui-text">{title}</h1>
-                        <p className="mt-1 text-xs font-medium text-ui-text-muted">{t('chat.panelDescription', { name: target.name })}</p>
+                        <p className="mt-1 type-caption text-ui-text-muted">{t('chat.panelDescription', { name: target.name })}</p>
                       </div>
                       <TargetChatPanelControls onClose={onClose} onMaximize={onMaximize} t={t} />
                     </div>

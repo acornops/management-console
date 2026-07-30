@@ -128,7 +128,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
             </span>
             <span className="min-w-0">
               <span className="type-row-title block">{t('app.theme')}</span>
-              <span className="block text-xs leading-4 text-ui-text-muted">{selectedLabel}</span>
+              <span className="block type-caption leading-4 text-ui-text-muted">{selectedLabel}</span>
             </span>
           </span>
         ) : (
@@ -179,7 +179,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
                     onSelect(option, event.currentTarget);
                     close(true);
                   }}
-                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm font-medium transition-colors duration-[160ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:min-h-9 ${
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left type-ui transition-colors duration-[160ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:min-h-9 ${
                     isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                   }`}
                 >

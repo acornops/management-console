@@ -500,12 +500,12 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
     <div className="relative overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
       <div className="p-5 sm:p-8">
         {sessionNotice && (
-          <div role="status" className="mb-5 rounded-md border border-status-warning/30 bg-status-warning-soft px-4 py-3 text-sm font-semibold text-status-warning-text">
+          <div role="status" className="mb-5 rounded-md border border-status-warning/30 bg-status-warning-soft px-4 py-3 type-body type-emphasis text-status-warning-text">
             {sessionNotice}
           </div>
         )}
         <h1 className="type-route-title mb-2 text-center text-ui-text">{mode === 'signup' && canSignup ? t('login.createAccount') : mode === 'forgot' ? t('login.forgotPasswordTitle') : mode === 'reset' ? t('login.resetPasswordTitle') : t('login.welcomeBack')}</h1>
-        {loginSubtitle && <p className="mb-8 text-center text-sm font-medium leading-6 text-ui-text-muted">{loginSubtitle}</p>}
+        {loginSubtitle && <p className="mb-8 text-center type-ui leading-6 text-ui-text-muted">{loginSubtitle}</p>}
 
         {verifyLinkContent || pendingVerification ? (
           <>
@@ -555,7 +555,7 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-ui-border" />
             </div>
-            <div className="relative flex justify-center text-xs">
+            <div className="relative flex justify-center type-caption">
               <span className="bg-ui-surface px-2 type-label">{t('login.orContinueWith')}</span>
             </div>
           </div>

@@ -15,8 +15,8 @@ import { InlineConfirmation } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { TextInput } from '@acornops/ui';
 
-const mcpServerInputClassName = formInputClassName('px-4 font-medium');
-const mcpPublicHeaderInputClassName = formInputClassName('min-h-10 min-w-0 font-medium');
+const mcpServerInputClassName = formInputClassName('px-4 type-ui');
+const mcpPublicHeaderInputClassName = formInputClassName('min-h-10 min-w-0 type-ui');
 
 export const McpServerFormDialog: React.FC<{
   mode: 'create' | 'edit';
@@ -168,7 +168,7 @@ export const McpServerFormDialog: React.FC<{
                   <div className="type-caption m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">{mutationError}</div>
                 )}
                 {reviewToolsLoading ? (
-                  <InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="m-4 bg-ui-surface text-xs" />
+                  <InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="m-4 bg-ui-surface type-caption" />
                 ) : reviewTools.length === 0 ? (
                   <div className="type-caption m-4 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">{t('mcpServers.noToolsDiscovered')}</div>
                 ) : (
@@ -189,15 +189,15 @@ export const McpServerFormDialog: React.FC<{
                   <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-3">
                     <div className="flex items-center justify-between gap-4 border-b border-ui-border py-2 first:pt-0">
                       <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
-                      <p className="text-base font-semibold tracking-tight text-ui-text">{reviewTools.length}</p>
+                      <p className="type-panel-title tracking-tight text-ui-text">{reviewTools.length}</p>
                     </div>
                     <div className="flex items-center justify-between gap-4 border-b border-ui-border py-2">
                       <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
-                      <p className="text-base font-semibold tracking-tight text-status-success-text">{reviewEnabledCount}</p>
+                      <p className="type-panel-title tracking-tight text-status-success-text">{reviewEnabledCount}</p>
                     </div>
                     <div className="flex items-center justify-between gap-4 py-2 last:pb-0">
                       <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
-                      <p className="text-base font-semibold tracking-tight text-status-warning-text">{reviewWriteCount}</p>
+                      <p className="type-panel-title tracking-tight text-status-warning-text">{reviewWriteCount}</p>
                     </div>
                   </div>
                   {!canManageTools && (

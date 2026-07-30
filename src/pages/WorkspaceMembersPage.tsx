@@ -20,6 +20,7 @@ import { WorkspaceMemberDetailsPanel } from '@/pages/workspace-members/Workspace
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { TextInput } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceMembersPageProps {
   workspace: Workspace;
@@ -33,7 +34,7 @@ interface WorkspaceMembersPageProps {
   onRemoveMember?: (member: ProjectMember) => Promise<void> | void;
 }
 
-const memberSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
+const memberSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 type-body');
 
 export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   workspace,
@@ -372,8 +373,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
         {roleLoadError && <div className="type-caption border-b border-status-warning/20 bg-status-warning-soft px-5 py-3 text-status-warning-text sm:px-6">{roleLoadError}</div>}
 
         <div className="min-w-0">
-          <table className="w-full table-fixed text-left" aria-label={t('members.title')}>
-            <caption className="sr-only">{t('members.description')}</caption>
+          <DataTable caption={t('members.description')} className="w-full table-fixed text-left" aria-label={t('members.title')}>
             <colgroup>
               <col className="w-[52%] xl:w-[42%]" />
               <col className="w-[33%] xl:w-[22%]" />
@@ -387,7 +387,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                 itemCount: members.length
               }}
             >
-              <tr>
+              <DataTableRow>
                 <DataTableHeaderCell>{t('members.user')}</DataTableHeaderCell>
                 <DataTableHeaderCell>{t('members.role')}</DataTableHeaderCell>
                 <DataTableHeaderCell className="hidden xl:table-cell">{t('members.source')}</DataTableHeaderCell>
@@ -395,16 +395,16 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                 <DataTableHeaderCell numeric className="px-2 sm:px-3 lg:px-3">
                   <span className="sr-only">{t('members.manage')}</span>
                 </DataTableHeaderCell>
-              </tr>
+              </DataTableRow>
             </DataTableHeader>
-            <tbody>
+            <DataTableBody>
               {members.map((member) => {
                 const roleTemplate = member.roleTemplate || fallbackRoleTemplate(member.role);
                 return (
-                  <tr key={member.email} className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
-                    <td className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                  <DataTableRow key={member.email} className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
+                    <DataTableCell className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
                       <div className="flex min-w-0 items-center gap-3 lg:gap-4">
-                        <div className="type-ui flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong ring-4 ring-ui-surface shadow-sm transition-colors group-hover:bg-control-activation group-hover:text-control-activation-fg">
+                        <div className="type-ui flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-readable ring-4 ring-ui-surface shadow-sm transition-colors group-hover:bg-control-activation group-hover:text-control-activation-fg">
                           {getInitials(member)}
                         </div>
                         <div className="min-w-0">
@@ -423,18 +423,18 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                           </p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                    </DataTableCell>
+                    <DataTableCell className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
                       <MemberRoleCell member={member} roleTemplate={roleTemplate} />
-                    </td>
-                    <td className="type-label hidden break-words px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">{member.source}</td>
-                    <td className="hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
+                    </DataTableCell>
+                    <DataTableCell className="type-label hidden break-words px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">{member.source}</DataTableCell>
+                    <DataTableCell className="hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="h-2 w-2 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
                         <span className="type-row-title min-w-0 break-words">{t('members.active')}</span>
                       </div>
-                    </td>
-                    <td className="px-2 py-4 text-right sm:px-3 lg:px-3">
+                    </DataTableCell>
+                    <DataTableCell className="px-2 py-4 text-right sm:px-3 lg:px-3">
                       <Tooltip
                         content={t('members.manageNamed', {
                           name: member.name
@@ -451,8 +451,8 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                           <MoreVertical className="w-4 h-4" aria-hidden="true" />
                         </Button>
                       </Tooltip>
-                    </td>
-                  </tr>
+                    </DataTableCell>
+                  </DataTableRow>
                 );
               })}
               <DataTableStateRow
@@ -461,7 +461,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                 itemCount={members.length}
                 filtered={hasMemberFilters}
                 loading={
-                  <div role="status" className="p-6 text-sm text-ui-text-muted">
+                  <div role="status" className="p-6 type-body text-ui-text-muted">
                     {t('members.loadingMembers')}
                   </div>
                 }
@@ -469,8 +469,8 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                 filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={memberEmptyTitle} description={memberEmptyDescription} />}
                 error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={memberEmptyTitle} description={memberEmptyDescription} />}
               />
-            </tbody>
-          </table>
+            </DataTableBody>
+          </DataTable>
           {nextCursor && (
             <div ref={memberCollection.sentinelRef} className="flex justify-center px-6 py-4">
               <Button type="button" variant="secondary" onClick={() => void memberCollection.loadMore()} disabled={isLoadingMore}>

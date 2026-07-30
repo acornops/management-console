@@ -118,7 +118,7 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isS
         </div>
         <label className="flex min-h-11 items-center gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
           <Checkbox checked={draft.enabled} onChange={(event) => onChange({ ...draft, enabled: event.target.checked })} />
-          <span className="text-sm font-semibold text-ui-text">{t('workspaceWebhooks.enabled')}</span>
+          <span className="type-body type-emphasis text-ui-text">{t('workspaceWebhooks.enabled')}</span>
         </label>
       </div>
 
@@ -162,7 +162,7 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isS
                     className="flex min-h-11 items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-3 py-2"
                   >
                     <Checkbox checked={selectedEvents.has(eventType)} onChange={() => toggleEvent(eventType)} />
-                    <span className="text-xs font-semibold capitalize text-ui-text">{webhookEventLabel(eventType)}</span>
+                    <span className="type-caption type-emphasis capitalize text-ui-text">{webhookEventLabel(eventType)}</span>
                   </label>
                 ))}
               </div>

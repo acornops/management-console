@@ -17,6 +17,7 @@ import {
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { TextInput } from '@acornops/ui';
+import { DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 export type VmResourceCategory = 'all' | 'services' | 'processes' | 'network' | 'logs';
 
@@ -34,7 +35,7 @@ interface VirtualMachineResourcesViewProps {
 }
 
 const resourceCategories: ReadonlyArray<VmResourceCategory> = ['all', 'services', 'processes', 'network', 'logs'];
-const vmResourceSearchInputClassName = formInputClassName('h-11 py-3 pl-11 pr-4 font-normal');
+const vmResourceSearchInputClassName = formInputClassName('h-11 py-3 pl-11 pr-4 type-body');
 
 function getInventoryCategory(item: Record<string, unknown>): VmResourceCategory | null {
   const category = String(item.category || '').toLowerCase();
@@ -286,37 +287,37 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                 <div className="hidden overflow-x-auto md:block">
                   <DataTable caption={t('virtualMachines.resources.pageDescription', { name: vmName })}>
                     <DataTableHeader>
-                      <tr>
+                      <DataTableRow>
                         <DataTableHeaderCell>{t('virtualMachines.resources.name')}</DataTableHeaderCell>
                         <DataTableHeaderCell>{t('virtualMachines.resources.category')}</DataTableHeaderCell>
                         <DataTableHeaderCell>{t('virtualMachines.resources.status')}</DataTableHeaderCell>
                         <DataTableHeaderCell>{t('virtualMachines.resources.detail')}</DataTableHeaderCell>
-                      </tr>
+                      </DataTableRow>
                     </DataTableHeader>
-                    <tbody>
+                    <DataTableBody>
                       {filteredInventory.map((item, index) => {
                         const category = getInventoryCategory(item) || t('virtualMachines.resources.inventory');
                         return (
-                          <tr key={String(item.itemId || index)} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                            <td className="max-w-[24rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                          <DataTableRow key={String(item.itemId || index)} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
+                            <DataTableCell className="max-w-[24rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
                               <p className="truncate type-row-title">{String(item.name || t('virtualMachines.resources.item'))}</p>
                               <p className="type-caption mt-1 truncate">{String(item.kind || '')}</p>
-                            </td>
-                            <td className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
+                            </DataTableCell>
+                            <DataTableCell className="px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
                               <span className="type-micro-label rounded-full bg-ui-bg px-2.5 py-1">
                                 {category}
                               </span>
-                            </td>
-                            <td className="type-ui px-4 py-5 align-top text-ui-text-muted sm:px-6 lg:px-8 lg:py-6">
+                            </DataTableCell>
+                            <DataTableCell className="type-ui px-4 py-5 align-top text-ui-text-muted sm:px-6 lg:px-8 lg:py-6">
                               {getInventoryStatus(item)}
-                            </td>
-                            <td className="type-body max-w-[28rem] px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
+                            </DataTableCell>
+                            <DataTableCell className="type-body max-w-[28rem] px-4 py-5 align-top sm:px-6 lg:px-8 lg:py-6">
                               <span className="line-clamp-2">{getInventoryDetail(item) || t('virtualMachines.resources.noAdditionalDetail')}</span>
-                            </td>
-                          </tr>
+                            </DataTableCell>
+                          </DataTableRow>
                         );
                       })}
-                    </tbody>
+                    </DataTableBody>
                   </DataTable>
                 </div>
 

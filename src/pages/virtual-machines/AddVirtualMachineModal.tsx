@@ -88,12 +88,12 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                 value={vmName}
                 onChange={(event) => onVmNameChange(event.target.value)}
                 placeholder={t('virtualMachines.list.vmNamePlaceholder')}
-                className="px-4 font-medium"
+                className="px-4 type-ui"
               />
             </section>
 
             {errorMessage && (
-              <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-4 text-sm font-semibold text-status-danger-text">{errorMessage}</div>
+              <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-4 type-body type-emphasis text-status-danger-text">{errorMessage}</div>
             )}
           </div>
           <div className="flex shrink-0 items-center justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
@@ -109,7 +109,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
       ) : (
         <>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
-            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
+            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 type-ui leading-6 text-ui-text-muted">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
                   <ICONS.Terminal className="h-4 w-4" />
@@ -132,12 +132,12 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                     {hasCopiedInstructions ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
-                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono text-xs leading-6 text-ui-text custom-scrollbar">
+                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono type-caption leading-6 text-ui-text custom-scrollbar">
                   <pre className="whitespace-pre">{installInstructions}</pre>
                 </div>
               </div>
             ) : (
-              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold text-status-warning-text">
+              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 type-body type-emphasis text-status-warning-text">
                 {t('virtualMachines.list.missingInstallInstructions')}
               </div>
             )}

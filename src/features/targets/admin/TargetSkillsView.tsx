@@ -435,11 +435,11 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
             <h3 id="import-target-skill-title" className="type-panel-title text-ui-text">
               {t('targetSkills.importTitle')}
             </h3>
-            <p className="mt-1 text-sm text-ui-text-muted">{t('targetSkills.importDescription')}</p>
+            <p className="mt-1 type-body text-ui-text-muted">{t('targetSkills.importDescription')}</p>
           </div>
           <div className="space-y-4 px-6 py-5">
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.provider')}</span>
+              <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.provider')}</span>
               <Select
                 value={importDraft.provider}
                 options={[
@@ -451,7 +451,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.repositoryUrl')}</span>
+              <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.repositoryUrl')}</span>
               <TextInput
                 value={importDraft.repoUrl}
                 onChange={(event) =>
@@ -464,7 +464,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.apiBaseUrl')}</span>
+              <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.apiBaseUrl')}</span>
               <TextInput
                 value={importDraft.apiBaseUrl || ''}
                 onChange={(event) =>
@@ -475,11 +475,11 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
                 }
                 placeholder={importDraft.provider === 'gitlab' ? 'https://git.internal/gitlab/api/v4' : 'https://github.internal/api/v3'}
               />
-              <span className="mt-1 block text-xs text-ui-text-muted">{t('targetSkills.apiBaseUrlHelp')}</span>
+              <span className="mt-1 block type-caption text-ui-text-muted">{t('targetSkills.apiBaseUrlHelp')}</span>
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.ref')}</span>
+                <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.ref')}</span>
                 <TextInput
                   value={importDraft.ref || ''}
                   onChange={(event) =>
@@ -492,7 +492,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-ui-text">{t('targetSkills.subpath')}</span>
+                <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.subpath')}</span>
                 <TextInput
                   value={importDraft.subpath || ''}
                   onChange={(event) =>
@@ -506,10 +506,10 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
               </label>
             </div>
             <div className="rounded-lg border border-ui-border px-3 py-3">
-              <div className="text-sm font-medium text-ui-text">{t('targetSkills.importedSnapshot')}</div>
-              <div className="text-xs text-ui-text-muted">{t('targetSkills.importedSnapshotHelp')}</div>
+              <div className="type-ui text-ui-text">{t('targetSkills.importedSnapshot')}</div>
+              <div className="type-caption text-ui-text-muted">{t('targetSkills.importedSnapshotHelp')}</div>
             </div>
-            {importError && <div className="rounded-lg border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm text-status-danger">{importError}</div>}
+            {importError && <div className="rounded-lg border border-status-danger/30 bg-status-danger/10 px-3 py-2 type-body text-status-danger">{importError}</div>}
           </div>
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
             <Button variant="secondary" size="sm" onClick={closeImportDialog}>
@@ -533,7 +533,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
               {t('targetSkills.deleteTitle')}
             </h3>
           </div>
-          <div className="px-6 py-5 text-sm text-ui-text-muted">{t('targetSkills.deleteBody')}</div>
+          <div className="px-6 py-5 type-body text-ui-text-muted">{t('targetSkills.deleteBody')}</div>
           <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
             <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteSkillId(null)}>
               {t('common.cancel')}
@@ -556,7 +556,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewProps> = ({ target, canM
               {t('targetSkills.reimportTitle')}
             </h3>
           </div>
-          <div className="space-y-4 px-6 py-5 text-sm text-ui-text-muted">
+          <div className="space-y-4 px-6 py-5 type-body text-ui-text-muted">
             <p>{t('targetSkills.reimportBody')}</p>
             {selectedSkill?.source.syncStatus === 'modified' && (
               <label className="flex items-start gap-3 rounded-lg border border-ui-border px-3 py-3">

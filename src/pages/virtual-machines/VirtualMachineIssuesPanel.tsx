@@ -8,6 +8,7 @@ import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/se
 import { issueSeverityTone } from '@/pages/virtual-machines/virtualMachineUi';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface VirtualMachineIssuesPanelProps {
   workspaceId: string;
@@ -57,7 +58,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
             <h2 id={issueSectionTitleId} className="type-row-title">
               {t('virtualMachines.overview.activeIssues')}
             </h2>
-            <p className="mt-1 text-sm leading-6 text-ui-text-muted">{t('virtualMachines.overview.activeIssuesBody')}</p>
+            <p className="mt-1 type-body leading-6 text-ui-text-muted">{t('virtualMachines.overview.activeIssuesBody')}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -86,20 +87,20 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
       ) : reportedIssues.length > 0 ? (
         <>
           <div className="hidden overflow-x-auto 2xl:block">
-            <table className="w-full">
+            <DataTable caption={t('virtualMachines.overview.activeIssues')} className="w-full">
               <DataTableHeader>
-                <tr>
+                <DataTableRow>
                   <DataTableHeaderCell density="compact">{t('virtualMachines.overview.issue')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="compact">{t('virtualMachines.overview.severity')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="compact">{t('virtualMachines.overview.source')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="compact">{t('overview.lastSeenLabel')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="compact" numeric>{t('virtualMachines.overview.action')}</DataTableHeaderCell>
-                </tr>
+                </DataTableRow>
               </DataTableHeader>
-              <tbody>
+              <DataTableBody>
                 {reportedIssues.map((issue) => (
-                  <tr key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                    <td className="max-w-[34rem] px-5 py-4">
+                  <DataTableRow key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
+                    <DataTableCell className="max-w-[34rem] px-5 py-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
                         <span className="type-caption text-ui-text-muted">
@@ -109,15 +110,15 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
                       <p className="type-body mt-1 break-words">{issue.reason || issue.summary}</p>
                       <IssueWorkflowActivity workspaceId={workspaceId} issueId={issue.id} activity={issue.workflowActivity} />
-                    </td>
-                    <td className="px-5 py-4 align-top">
+                    </DataTableCell>
+                    <DataTableCell className="px-5 py-4 align-top">
                       <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
-                    </td>
-                    <td className="type-caption break-words px-5 py-4 align-top">
+                    </DataTableCell>
+                    <DataTableCell className="type-caption break-words px-5 py-4 align-top">
                       {issue.objectName || issue.objectKind || issue.reason || t('virtualMachines.overview.hostSource')}
-                    </td>
-                    <td className="type-caption px-5 py-4 align-top">{formatUserDateTime(issueTimestamp(issue))}</td>
-                    <td className="px-5 py-4 align-top text-right">
+                    </DataTableCell>
+                    <DataTableCell className="type-caption px-5 py-4 align-top">{formatUserDateTime(issueTimestamp(issue))}</DataTableCell>
+                    <DataTableCell className="px-5 py-4 align-top text-right">
                       <Button
                         onClick={() => onOpenIssueTriage(issue)}
                         variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
@@ -127,11 +128,11 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                         <Bot className="h-4 w-4" aria-hidden="true" />
                         {t('virtualMachines.overview.openAssistant')}
                       </Button>
-                    </td>
-                  </tr>
+                    </DataTableCell>
+                  </DataTableRow>
                 ))}
-              </tbody>
-            </table>
+              </DataTableBody>
+            </DataTable>
           </div>
 
           <div className="divide-y divide-ui-border 2xl:hidden">

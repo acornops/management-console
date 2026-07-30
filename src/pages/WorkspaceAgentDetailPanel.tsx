@@ -50,7 +50,7 @@ const workflowHref = (agent: AgentDefinition, workflow: string) =>
 const Fact: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div className="min-w-0 py-3">
     <dt className="type-micro-label text-ui-text-muted">{label}</dt>
-    <dd className="mt-1 min-w-0 break-words text-sm font-semibold text-ui-text">{value}</dd>
+    <dd className="mt-1 min-w-0 break-words type-body type-emphasis text-ui-text">{value}</dd>
   </div>
 );
 
@@ -100,13 +100,13 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge tone={statusTone(selectedAgent.status)}>{t(`agentsWorkflows.agents.status.${selectedAgent.status}`)}</StatusBadge>
-              <span className="type-caption font-semibold text-ui-text-muted">{selectedAgent.owner}</span>
+              <span className="type-caption type-emphasis text-ui-text-muted">{selectedAgent.owner}</span>
             </div>
             <h2 id={props.titleId} className="mt-2 type-section-title">
               {selectedAgent.name}
             </h2>
             <p className="type-caption mt-1 max-w-3xl text-ui-text-muted">{selectedAgent.description}</p>
-            {selectedAgent.status === 'disabled' && <p className="type-caption mt-2 font-semibold text-status-danger-text">{t('agentsWorkflows.agents.details.disabledStatus')}</p>}
+            {selectedAgent.status === 'disabled' && <p className="type-caption mt-2 type-emphasis text-status-danger-text">{t('agentsWorkflows.agents.details.disabledStatus')}</p>}
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             {selectedAgent.status === 'disabled' && (
@@ -175,7 +175,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
                 {selectedAgent.workflowsUsingAgent.length ? (
                   selectedAgent.workflowsUsingAgent.map((workflow) => (
-                    <a key={workflow} href={workflowHref(selectedAgent, workflow)} className="text-sm font-semibold text-accent-strong underline-offset-4 hover:underline">
+                    <a key={workflow} href={workflowHref(selectedAgent, workflow)} className="type-body type-emphasis text-accent-strong underline-offset-4 hover:underline">
                       {workflow}
                     </a>
                   ))
@@ -245,7 +245,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                   <div key={version.id}>
                     <div className="flex flex-wrap items-center justify-between gap-3 py-3">
                       <span>
-                        <strong className="text-sm text-ui-text">
+                        <strong className="type-body text-ui-text">
                           {t('agentsWorkflows.agents.details.revisionLabel', {
                             version: version.version
                           })}
@@ -290,7 +290,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                   </div>
                 ))
               ) : (
-                <p className="py-5 text-sm text-ui-text-muted">{t('agentsWorkflows.agents.details.noRestorePoints')}</p>
+                <p className="py-5 type-body text-ui-text-muted">{t('agentsWorkflows.agents.details.noRestorePoints')}</p>
               )}
             </div>
           </section>
@@ -347,7 +347,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                 actionClassName="sm:w-44"
                 detail={
                   selectedAgent.workflowsUsingAgent.length > 0 ? (
-                    <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-status-danger-text">
+                    <p className="mt-2 max-w-2xl type-caption type-emphasis leading-5 text-status-danger-text">
                       {t('agentsWorkflows.agents.details.deleteBlocked', {
                         count: selectedAgent.workflowsUsingAgent.length
                       })}

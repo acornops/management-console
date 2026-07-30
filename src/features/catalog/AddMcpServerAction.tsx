@@ -169,7 +169,7 @@ export const AddMcpServerAction: React.FC<AddMcpServerActionProps> = ({ browseHr
             >
               <Search className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               <span>
-                <span className="block text-sm font-semibold">Browse registries</span>
+                <span className="block type-body type-emphasis">Browse registries</span>
                 <span className="type-caption text-ui-text-muted">Install a pinned server from an approved source.</span>
               </span>
             </a>
@@ -184,7 +184,7 @@ export const AddMcpServerAction: React.FC<AddMcpServerActionProps> = ({ browseHr
             >
               <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               <span>
-                <span className="block text-sm font-semibold">Connect by URL</span>
+                <span className="block type-body type-emphasis">Connect by URL</span>
                 <span className="type-caption text-ui-text-muted">Use an HTTPS Streamable HTTP endpoint.</span>
               </span>
             </Button>

@@ -85,11 +85,13 @@ export const DataTableBody: React.FC<DataTableBodyProps> = ({ children, classNam
 
 export type DataTableRowProps = React.HTMLAttributes<HTMLTableRowElement>;
 
-export const DataTableRow: React.FC<DataTableRowProps> = ({ children, className, ...props }) => (
-  <tr className={twMerge('bg-ui-surface transition-colors hover:bg-ui-bg/70', className)} {...props}>
+export const DataTableRow = React.forwardRef<HTMLTableRowElement, DataTableRowProps>(({ children, className, ...props }, ref) => (
+  <tr ref={ref} className={twMerge('bg-ui-surface transition-colors hover:bg-ui-bg/70', className)} {...props}>
     {children}
   </tr>
-);
+));
+
+DataTableRow.displayName = 'DataTableRow';
 
 export interface DataTableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
   as?: 'td' | 'th';

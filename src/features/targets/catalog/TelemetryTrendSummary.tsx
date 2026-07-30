@@ -1,4 +1,5 @@
 import React from 'react';
+import { DataTable, DataTableBody, DataTableCell, DataTableHeader, DataTableHeaderCell, DataTableRow } from '@acornops/ui';
 
 export interface TelemetryTrendSeries {
   label: string;
@@ -13,23 +14,22 @@ export const TelemetryTrendSummary: React.FC<{
   endLabel: string;
   series: ReadonlyArray<TelemetryTrendSeries>;
 }> = ({ title, metricColumnLabel, startLabel, endLabel, series }) => (
-  <table className="sr-only">
-    <caption>{title}</caption>
-    <thead>
-      <tr>
-        <th scope="col">{metricColumnLabel}</th>
-        <th scope="col">{startLabel}</th>
-        <th scope="col">{endLabel}</th>
-      </tr>
-    </thead>
-    <tbody>
+  <DataTable caption={title} className="sr-only">
+    <DataTableHeader>
+      <DataTableRow>
+        <DataTableHeaderCell scope="col">{metricColumnLabel}</DataTableHeaderCell>
+        <DataTableHeaderCell scope="col">{startLabel}</DataTableHeaderCell>
+        <DataTableHeaderCell scope="col">{endLabel}</DataTableHeaderCell>
+      </DataTableRow>
+    </DataTableHeader>
+    <DataTableBody>
       {series.map((item) => (
-        <tr key={item.label}>
-          <th scope="row">{item.label}</th>
-          <td>{item.startValue}</td>
-          <td>{item.endValue}</td>
-        </tr>
+        <DataTableRow key={item.label}>
+          <DataTableCell as="th" scope="row">{item.label}</DataTableCell>
+          <DataTableCell>{item.startValue}</DataTableCell>
+          <DataTableCell>{item.endValue}</DataTableCell>
+        </DataTableRow>
       ))}
-    </tbody>
-  </table>
+    </DataTableBody>
+  </DataTable>
 );

@@ -369,7 +369,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                       mode: isReasoningPolicyDisabled ? t('workspaceAiSettings.reasoningSummaryUnavailable') : t(reasoningModeLabel(currentAiSettings.reasoningSummaryMode))
                     })}
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-ui-text-muted">
+                  <p className="mt-1 type-caption type-emphasis text-ui-text-muted">
                     {t('workspaceAiSettings.reasoningEffortStatus', {
                       effort: t(reasoningEffortLabel(currentAiSettings.reasoningEffort))
                     })}
@@ -400,7 +400,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                   </div>
                   <div className="min-w-0">
                     <p className="mb-0.5 type-row-title">{t('workspaceAiSettings.behavior')}</p>
-                    <p className="text-xs leading-5 text-ui-text-muted">{t('workspaceAiSettings.behaviorDescription')}</p>
+                    <p className="type-caption leading-5 text-ui-text-muted">{t('workspaceAiSettings.behaviorDescription')}</p>
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -439,7 +439,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                       disabled={!canManageAiSettings || !currentAiSettings || isReasoningPolicyDisabled || isSaving}
                       ariaLabel={t('workspaceAiSettings.reasoningSummaryMode')}
                     />
-                    <p className="mt-2 text-xs font-medium leading-5 text-ui-text-muted">{isReasoningPolicyDisabled ? t('workspaceAiSettings.reasoningPolicyDisabled') : t('workspaceAiSettings.reasoningDescription')}</p>
+                    <p className="mt-2 type-caption leading-5 text-ui-text-muted">{isReasoningPolicyDisabled ? t('workspaceAiSettings.reasoningPolicyDisabled') : t('workspaceAiSettings.reasoningDescription')}</p>
                   </label>
                   <label className="block">
                     <span className="mb-1 block type-label">{t('workspaceAiSettings.reasoningEffortLabel')}</span>
@@ -456,7 +456,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                       disabled={!canManageAiSettings || !currentAiSettings || isSaving}
                       ariaLabel={t('workspaceAiSettings.reasoningEffortLabel')}
                     />
-                    <p className="mt-2 min-h-10 text-xs font-medium leading-5 text-ui-text-muted">{behaviorDraft.reasoningSummaryMode === 'off' ? t('workspaceAiSettings.reasoningEffortOffHelp') : t('workspaceAiSettings.reasoningEffortHelp')}</p>
+                    <p className="mt-2 min-h-10 type-caption leading-5 text-ui-text-muted">{behaviorDraft.reasoningSummaryMode === 'off' ? t('workspaceAiSettings.reasoningEffortOffHelp') : t('workspaceAiSettings.reasoningEffortHelp')}</p>
                   </label>
                 </div>
                 {behaviorError && (
@@ -466,7 +466,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                 )}
               </div>
               <div className="flex flex-col gap-3 border-t border-ui-border bg-ui-bg/35 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs font-medium leading-5 text-ui-text-muted">{hasBehaviorChanges ? t('workspaceAiSettings.behaviorUnsavedFooter') : t('workspaceAiSettings.behaviorSavedFooter')}</p>
+                <p className="type-caption leading-5 text-ui-text-muted">{hasBehaviorChanges ? t('workspaceAiSettings.behaviorUnsavedFooter') : t('workspaceAiSettings.behaviorSavedFooter')}</p>
                 <Button type="button" variant="primary" size="sm" onClick={handleSaveBehavior} disabled={!canSaveBehavior || isSaving} className="w-full sm:w-36">
                   {savingAction === 'behavior' ? <ICONS.RefreshCw className="h-4 w-4 animate-spin" /> : <ICONS.CheckCircle2 className="h-4 w-4" />}
                   {savingAction === 'behavior' ? t('workspaceAiSettings.saving') : t('workspaceAiSettings.saveBehavior')}
@@ -507,7 +507,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                               <StatusBadge tone="warning">{t('workspaceAiSettings.providerDisabled')}</StatusBadge>
                             )}
                           </div>
-                          <p className={`text-xs leading-5 text-ui-text-muted ${isPlatformDefault ? 'lg:whitespace-nowrap' : ''}`}>
+                          <p className={`type-caption leading-5 text-ui-text-muted ${isPlatformDefault ? 'lg:whitespace-nowrap' : ''}`}>
                             {!providerStatus.enabled
                               ? t('workspaceAiSettings.credentialDisabledDescription')
                               : isWorkspaceOverride
@@ -597,7 +597,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                   autoComplete="off"
                                 />
                               </label>
-                              <p className="mt-2 text-xs font-medium leading-5 text-ui-text-muted">{t('workspaceAiSettings.credentialEditorHelp')}</p>
+                              <p className="mt-2 type-caption leading-5 text-ui-text-muted">{t('workspaceAiSettings.credentialEditorHelp')}</p>
                               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
                                 <Button
                                   type="button"

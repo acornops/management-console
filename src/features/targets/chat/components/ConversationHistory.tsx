@@ -127,7 +127,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         phase={isInitialLoading ? 'loading' : isSessionsLoading ? 'refreshing' : 'ready'}
         itemCount={visibleSessions.length}
         filtered={Boolean(normalizedSearchValue)}
-        loading={showLoadingNotice ? <InlineLoadingIndicator label={t('chat.loadingHistory')} className="mx-1 border-transparent bg-transparent px-2 py-3 text-xs" /> : null}
+        loading={showLoadingNotice ? <InlineLoadingIndicator label={t('chat.loadingHistory')} className="mx-1 border-transparent bg-transparent px-2 py-3 type-caption" /> : null}
         filteredEmpty={
           <div className="px-5 py-10 text-center">
             <Search className="mx-auto mb-3 h-7 w-7 text-ui-border" aria-hidden="true" />
@@ -138,7 +138,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         empty={
           <div className="px-4 py-10 text-center">
             <MessageSquare className="mx-auto mb-3 h-8 w-8 text-ui-border" />
-            <p className="text-xs font-semibold text-ui-text-muted">{t('chat.noConversations')}</p>
+            <p className="type-caption type-emphasis text-ui-text-muted">{t('chat.noConversations')}</p>
           </div>
         }
         error={null}
@@ -171,7 +171,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                 {isPage ? (
                   <>
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-ui-text">{session.name}</span>
+                      <span className="truncate type-body type-emphasis text-ui-text">{session.name}</span>
                       <AssistantNavStatusIndicator status={assistantStatus} label={assistantStatusLabel} withTooltip={false} />
                     </span>
                     <span className="type-caption whitespace-nowrap text-ui-text-muted">{formatSessionTime(session.timestamp)}</span>
@@ -181,7 +181,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                     <History className={`mt-0.5 h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
-                        <p className="min-w-0 flex-1 truncate text-sm font-semibold text-ui-text">{session.name}</p>
+                        <p className="min-w-0 flex-1 truncate type-body type-emphasis text-ui-text">{session.name}</p>
                         <AssistantNavStatusIndicator status={assistantStatus} label={assistantStatusLabel} withTooltip={false} />
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 type-caption">

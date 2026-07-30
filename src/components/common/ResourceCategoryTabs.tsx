@@ -139,7 +139,7 @@ export const ResourceCategoryTabs = <T extends string>({
             )}
           >
             <span>{tab.label}</span>
-            {typeof tab.count === 'number' && <span className="type-data text-xs text-ui-text-muted">{tab.count}</span>}
+            {typeof tab.count === 'number' && <span className="type-data type-caption text-ui-text-muted">{tab.count}</span>}
             {tab.isActive && <ActiveTabIndicator />}
           </Button>
         ))}

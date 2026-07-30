@@ -146,7 +146,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
           <h2 id="mcp-registries-title" className="mb-1 type-section-title">
             {t('catalogSources.title')}
           </h2>
-          <p className="max-w-3xl text-sm leading-6 text-ui-text-muted">{t('catalogSources.description')}</p>
+          <p className="max-w-3xl type-body leading-6 text-ui-text-muted">{t('catalogSources.description')}</p>
         </div>
         {canAddWorkspaceSource && (
           <Button variant="secondary" size="sm" className="shrink-0 whitespace-nowrap" onClick={showForm ? resetForm : openCreate}>
@@ -158,12 +158,12 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
 
       <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">
         {error && phase !== 'error' && (
-          <div role="alert" className="border-b border-status-danger/25 bg-status-danger-soft px-5 py-3 text-sm text-status-danger-text">
+          <div role="alert" className="border-b border-status-danger/25 bg-status-danger-soft px-5 py-3 type-body text-status-danger-text">
             {error}
           </div>
         )}
         {canManage && !capabilities.workspaceManagedSourcesEnabled && (
-          <p className="border-b border-ui-border p-4 text-sm text-ui-text-muted">{t('catalogSources.policyDisabled')}</p>
+          <p className="border-b border-ui-border p-4 type-body text-ui-text-muted">{t('catalogSources.policyDisabled')}</p>
         )}
         {showForm && canAddWorkspaceSource && (
           <form onSubmit={(event) => void save(event)} className="grid gap-4 border-b border-ui-border bg-ui-bg/40 p-5 sm:grid-cols-2">
@@ -171,7 +171,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
               <h3 className="type-panel-title">{editingSourceId ? t('catalogSources.editTitle') : t('catalogSources.addTitle')}</h3>
               <p className="type-caption mt-1 text-ui-text-muted">{t('catalogSources.probeHelp')}</p>
             </div>
-            <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
+            <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
               {t('catalogSources.name')}
               <TextInput
                 required
@@ -180,7 +180,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
                 className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
               />
             </label>
-            <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
+            <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
               {t('catalogSources.baseUrl')}
               <TextInput
                 required
@@ -191,9 +191,9 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
                 placeholder="https://registry.example.com"
                 className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
               />
-              <span className="type-caption font-normal text-ui-text-muted">{t('catalogSources.baseUrlHelp')}</span>
+              <span className="type-caption type-body text-ui-text-muted">{t('catalogSources.baseUrlHelp')}</span>
             </label>
-            <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
+            <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
               {t('catalogSources.route')}
               <Select<'direct'>
                 value="direct"
@@ -203,7 +203,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
                 ariaLabel={t('catalogSources.route')}
               />
             </label>
-            <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
+            <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
               {t('catalogSources.auth')}
               <Select<'none' | 'bearer_token' | 'custom_header'>
                 value={authType}
@@ -223,7 +223,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
               />
             </label>
             {authType !== 'none' && (
-              <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
+              <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
                 {t('catalogSources.credential')}
                 <TextInput
                   required={credentialRequired}
@@ -233,11 +233,11 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
                   onChange={(event) => setCredential(event.target.value)}
                   className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
                 />
-                <span className="text-xs font-normal text-ui-text-muted">{editingSourceId ? t('catalogSources.credentialEditHelp') : t('catalogSources.credentialHelp')}</span>
+                <span className="type-caption type-body text-ui-text-muted">{editingSourceId ? t('catalogSources.credentialEditHelp') : t('catalogSources.credentialHelp')}</span>
               </label>
             )}
             {authType === 'custom_header' && (
-              <label className="grid gap-1.5 text-sm font-semibold text-ui-text">
+              <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
                 {t('catalogSources.headerName')}
                 <TextInput
                   required
@@ -255,12 +255,12 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
           </form>
         )}
 
-        {!canManage && <p className="border-b border-ui-border p-4 text-sm text-ui-text-muted">{t('catalogSources.readOnly')}</p>}
+        {!canManage && <p className="border-b border-ui-border p-4 type-body text-ui-text-muted">{t('catalogSources.readOnly')}</p>}
         <CollectionState
           phase={phase}
           itemCount={sources.length}
           loading={
-            <p role="status" className="p-5 text-sm text-ui-text-muted">
+            <p role="status" className="p-5 type-body text-ui-text-muted">
               {t('catalogSources.loading')}
             </p>
           }
@@ -274,13 +274,13 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
             />
           }
           error={
-            <div role="alert" className="border-b border-status-danger/25 bg-status-danger-soft px-5 py-3 text-sm text-status-danger-text">
+            <div role="alert" className="border-b border-status-danger/25 bg-status-danger-soft px-5 py-3 type-body text-status-danger-text">
               {error}
             </div>
           }
           feedback={
             error ? (
-              <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft px-5 py-3 text-sm text-status-danger-text">
+              <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft px-5 py-3 type-body text-status-danger-text">
                 {error}
               </div>
             ) : (
@@ -300,18 +300,18 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
                       <span className="rounded-full border border-ui-border bg-ui-bg px-2 py-0.5 type-caption">
                         {workspaceManaged ? t('catalogSources.workspaceManaged') : t('catalogSources.deploymentManaged')}
                       </span>
-                      <span className={`text-xs font-semibold ${source.enabled ? 'text-status-success-text' : 'text-ui-text-muted'}`}>
+                      <span className={`type-caption type-emphasis ${source.enabled ? 'text-status-success-text' : 'text-ui-text-muted'}`}>
                         {source.enabled ? t('catalogSources.enabled') : t('catalogSources.disabled')}
                       </span>
                     </div>
                     <p className="type-code mt-1 break-all text-ui-text-muted">{source.baseUrl}</p>
-                    <p className="mt-2 text-xs text-ui-text-muted">
+                    <p className="mt-2 type-caption text-ui-text-muted">
                       {t('catalogSources.status', {
                         status: binding?.syncStatus || 'pending'
                       })}{' '}
                       · {t('catalogSources.direct')} · {source.credentialConfigured ? t('catalogSources.credentialSet') : t('catalogSources.noCredential')}
                     </p>
-                    {binding?.lastSyncError && <p className="mt-2 text-xs text-status-danger-text">{binding.lastSyncError}</p>}
+                    {binding?.lastSyncError && <p className="mt-2 type-caption text-status-danger-text">{binding.lastSyncError}</p>}
                   </div>
                   {canManage && (
                     <div className="flex flex-wrap gap-2">

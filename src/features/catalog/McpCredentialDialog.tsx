@@ -165,7 +165,7 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
             )}
           </div>
 
-          <label className="flex items-start gap-3 rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text">
+          <label className="flex items-start gap-3 rounded-lg border border-ui-border bg-ui-bg px-4 py-3 type-body text-ui-text">
             <Checkbox checked={consentGranted} disabled={pending} onChange={(event) => setConsentGranted(event.target.checked)} className="mt-0.5 shrink-0" />
             <span>{t(credentialMode === 'workspace' ? 'mcpServers.workspaceCredentialConsent' : 'mcpServers.individualCredentialConsent')}</span>
           </label>

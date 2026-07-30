@@ -148,7 +148,7 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
                 return (
                   <div key={event.id} className="px-5 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-ui-text">{event.summary}</p>
+                      <p className="type-body type-emphasis text-ui-text">{event.summary}</p>
                       {outcome && tone ? (
                         <StatusBadge tone={tone}>{t(`tools.targetInsights.checkpoint.outcomes.${outcome}`)}</StatusBadge>
                       ) : null}
@@ -169,7 +169,7 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
                           <span>{t('tools.targetInsights.checkpoint.rejectedCount', { count: rejectedPatchCount })}</span>
                         ) : null}
                         {sourcePath ? (
-                          <a className="font-semibold text-ui-link hover:underline" href={appHref(sourcePath)}>
+                          <a className="type-emphasis text-ui-link hover:underline" href={appHref(sourcePath)}>
                             {t('tools.targetInsights.checkpoint.openSession')}
                           </a>
                         ) : null}

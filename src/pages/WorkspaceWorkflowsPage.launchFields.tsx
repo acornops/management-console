@@ -373,18 +373,18 @@ export function WorkflowPromptEditor({ workflow, message, onChange }: { workflow
           Insert reference
         </Button>
         {parsed.parameters.map((parameter) => (
-          <code key={`${parameter.type}:${parameter.key}`} className="rounded bg-ui-surface-subtle px-2 py-1 text-xs">
+          <code key={`${parameter.type}:${parameter.key}`} className="rounded bg-ui-surface-subtle px-2 py-1 type-caption">
             {`{{${parameter.type}:${parameter.key}}}`}
           </code>
         ))}
         {parsed.tokens.map((token, index) => (
-          <code key={`${token.start}-${index}`} className="rounded bg-ui-surface-subtle px-2 py-1 text-xs">
+          <code key={`${token.start}-${index}`} className="rounded bg-ui-surface-subtle px-2 py-1 type-caption">
             @{token.type}[{token.label}]
           </code>
         ))}
       </div>
       {promptError && (
-        <p id={promptErrorId} role="alert" className="mt-2 text-xs text-status-danger-text">
+        <p id={promptErrorId} role="alert" className="mt-2 type-caption text-status-danger-text">
           {promptError}
         </p>
       )}
@@ -394,7 +394,7 @@ export function WorkflowPromptEditor({ workflow, message, onChange }: { workflow
             <Button id={parameterOptionId(index)} key={option.type} role="option" aria-selected={index === parameterOptionIndex} tabIndex={-1} type="button" variant="tertiary" size="sm" className={`h-auto justify-start text-left ${index === parameterOptionIndex ? 'bg-accent-soft' : ''}`} onMouseEnter={() => setParameterOptionIndex(index)} onClick={() => chooseParameterType(option.type)}>
               <span>
                 <span className="block">{option.label}</span>
-                <span className="block text-xs text-ui-text-muted">{option.description}</span>
+                <span className="block type-caption text-ui-text-muted">{option.description}</span>
               </span>
             </Button>
           ))}
@@ -407,30 +407,30 @@ export function WorkflowPromptEditor({ workflow, message, onChange }: { workflow
               <Button key={descriptor.type} role="option" type="button" variant="tertiary" size="sm" className="h-auto justify-start text-left" disabled={descriptor.availability === 'unavailable'} title={descriptor.unavailableReason} onClick={() => chooseReferenceType(descriptor)}>
                 <span>
                   <span className="block">{descriptor.displayName}</span>
-                  <span className="block text-xs text-ui-text-muted">
+                  <span className="block type-caption text-ui-text-muted">
                     @{descriptor.type} · {descriptor.description}
                   </span>
-                  {descriptor.unavailableReason && <span className="block text-xs text-status-warning-text">{descriptor.unavailableReason}</span>}
+                  {descriptor.unavailableReason && <span className="block type-caption text-status-warning-text">{descriptor.unavailableReason}</span>}
                 </span>
               </Button>
             ))
           ) : loadingCandidates ? (
-            <p className="px-3 py-2 text-xs text-ui-text-muted">Loading references…</p>
+            <p className="px-3 py-2 type-caption text-ui-text-muted">Loading references…</p>
           ) : candidates.length > 0 ? (
             candidates.map((candidate) => (
               <Button key={`${candidate.provider}:${candidate.id}`} role="option" type="button" variant="tertiary" size="sm" className="h-auto justify-start text-left" disabled={candidate.availability === 'unavailable'} title={candidate.unavailableReason} onClick={() => insertCandidate(candidate)}>
                 <span>
                   <span className="block">{candidate.label}</span>
-                  <span className="block text-xs text-ui-text-muted">
+                  <span className="block type-caption text-ui-text-muted">
                     {candidate.type} · {candidate.provider}
                     {candidate.description ? ` · ${candidate.description}` : ''}
                   </span>
-                  {candidate.unavailableReason && <span className="block text-xs text-status-warning-text">{candidate.unavailableReason}</span>}
+                  {candidate.unavailableReason && <span className="block type-caption text-status-warning-text">{candidate.unavailableReason}</span>}
                 </span>
               </Button>
             ))
           ) : (
-            <p className="px-3 py-2 text-xs text-ui-text-muted">No matching references.</p>
+            <p className="px-3 py-2 type-caption text-ui-text-muted">No matching references.</p>
           )}
         </div>
       )}
@@ -499,7 +499,7 @@ function ResourceParameterField({ workflow, parameter, value, onChange, error }:
   }, [value]);
 
   return (
-    <div className="block text-sm font-semibold text-ui-text">
+    <div className="block type-body type-emphasis text-ui-text">
       <label htmlFor={inputId}>{humanizeWorkflowParameterKey(parameter.key)}</label>
       <TextInput
         id={inputId}
@@ -550,7 +550,7 @@ function ResourceParameterField({ workflow, parameter, value, onChange, error }:
       {open && (
         <div id={listboxId} role="listbox" className="mt-1 grid max-h-56 gap-1 overflow-y-auto rounded-md border border-ui-border bg-ui-surface p-1.5 shadow-lg">
           {loading ? (
-            <span className="px-3 py-2 text-xs text-ui-text-muted">Loading…</span>
+            <span className="px-3 py-2 type-caption text-ui-text-muted">Loading…</span>
           ) : items.length > 0 ? (
             items.map((candidate, index) => (
               <Button
@@ -561,20 +561,20 @@ function ResourceParameterField({ workflow, parameter, value, onChange, error }:
                 tabIndex={-1}
                 aria-selected={candidate.id === value}
                 disabled={candidate.availability === 'unavailable'}
-                className={`min-h-11 rounded px-3 py-2 text-left text-sm hover:bg-ui-surface-subtle disabled:cursor-not-allowed disabled:opacity-60 ${activeIndex === index ? 'bg-accent-soft' : ''}`}
+                className={`min-h-11 rounded px-3 py-2 text-left type-body hover:bg-ui-surface-subtle disabled:cursor-not-allowed disabled:opacity-60 ${activeIndex === index ? 'bg-accent-soft' : ''}`}
                 onMouseDown={(event) => event.preventDefault()}
                 onMouseEnter={() => {
                   if (candidate.availability !== 'unavailable') setActiveIndex(index);
                 }}
                 onClick={() => selectCandidate(candidate)}
               >
-                <span className="block font-semibold">{candidate.label}</span>
+                <span className="block type-emphasis">{candidate.label}</span>
                 <span className="type-caption block text-ui-text-muted">{candidate.description || candidate.provider}</span>
                 {candidate.unavailableReason && <span className="type-caption block text-status-warning-text">{candidate.unavailableReason}</span>}
               </Button>
             ))
           ) : (
-            <span className="px-3 py-2 text-xs text-ui-text-muted">No matching {parameter.type}s.</span>
+            <span className="px-3 py-2 type-caption text-ui-text-muted">No matching {parameter.type}s.</span>
           )}
         </div>
       )}
@@ -599,7 +599,7 @@ export function WorkflowParameterFields({ workflow, values, onChange, errors = {
         const errorId = `workflow-parameter-${workflow.id}-${parameter.key}-error`;
         const error = errors[parameter.key];
         return (
-          <div key={parameter.key} className="block text-sm font-semibold text-ui-text">
+          <div key={parameter.key} className="block type-body type-emphasis text-ui-text">
             <label htmlFor={inputId}>{humanizeWorkflowParameterKey(parameter.key)}</label>
             <Textarea id={inputId} className="mt-2 min-h-24 w-full" value={values[parameter.key] || ''} aria-invalid={Boolean(error)} aria-describedby={error ? errorId : undefined} onChange={(event) => setValue(parameter.key, event.target.value)} />
             {error && (

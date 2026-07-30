@@ -115,7 +115,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
         id={buttonId}
         onClick={() => setIsOpen((current) => !current)}
         disabled={!canChat}
-        className="control-target inline-flex h-8 max-w-[9.5rem] items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+        className="control-target inline-flex h-8 max-w-[9.5rem] items-center gap-1.5 rounded-full px-2.5 type-body type-emphasis leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={t('chat.capabilityPreviewAria')}
         aria-controls={panelId}
         aria-expanded={isOpen}
@@ -137,7 +137,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
             id={panelId}
-            className="absolute bottom-full right-0 z-50 mb-3 w-72 rounded-2xl border border-ui-border bg-ui-surface-strong p-3 text-sm shadow-xl shadow-ui-text/10"
+            className="absolute bottom-full right-0 z-50 mb-3 w-72 rounded-2xl border border-ui-border bg-ui-surface-strong p-3 type-body shadow-xl shadow-ui-text/10"
             role="region"
             aria-labelledby={buttonId}
           >
@@ -152,8 +152,8 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-ui-text">{t('chat.capabilityPreviewTitle')}</p>
-                <p className="mt-1 text-xs font-medium leading-5 text-ui-text-muted">
+                <p className="type-body type-emphasis text-ui-text">{t('chat.capabilityPreviewTitle')}</p>
+                <p className="mt-1 type-caption leading-5 text-ui-text-muted">
                   {error ? t('chat.capabilityPreviewUnavailableBody') : isLoading ? t('chat.capabilityPreviewLoading') : modeLabel}
                 </p>
               </div>
@@ -161,7 +161,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
             {preview && !error && !isLoading && (
               <>
                 {showToolPolicyNote && (
-                  <div className="mt-3 rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium leading-5 text-ui-text-muted">
+                  <div className="mt-3 rounded-xl border border-ui-border bg-ui-bg px-3 py-2 type-caption leading-5 text-ui-text-muted">
                     {preview.confirmationRequiredForWrite && preview.toolSummary.writeAllowed > 0
                       ? t('chat.capabilityPreviewApprovalRequired')
                       : t('chat.capabilityPreviewApprovalNotRequired')}
@@ -170,7 +170,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                 )}
                 <div className="mt-3 max-h-56 overflow-y-auto pr-1">
                   {toolItems.length === 0 && skillItems.length === 0 ? (
-                    <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">{t('chat.capabilityPreviewEmpty')}</p>
+                    <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 type-caption text-ui-text-muted">{t('chat.capabilityPreviewEmpty')}</p>
                   ) : (
                     <div className="space-y-3">
                       <div>
@@ -183,7 +183,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                           </span>
                         </div>
                         {toolItems.length === 0 ? (
-                          <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">{t('chat.capabilityPreviewNoTools')}</p>
+                          <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 type-caption text-ui-text-muted">{t('chat.capabilityPreviewNoTools')}</p>
                         ) : (
                           <div className="space-y-1.5">
                             {toolItems.map((tool) => (
@@ -191,7 +191,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                                 <div className="flex min-w-0 items-center justify-between gap-2">
                                   <span className="inline-flex min-w-0 items-center gap-2">
                                     <Wrench className="h-3.5 w-3.5 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                                    <span className="truncate text-xs font-semibold text-ui-text">{tool.label || tool.name}</span>
+                                    <span className="truncate type-caption type-emphasis text-ui-text">{tool.label || tool.name}</span>
                                   </span>
                                   <span className={`shrink-0 rounded-full px-2 py-0.5 type-micro-label ${capabilityBadgeClassName(tool.capability)}`}>{tool.capability}</span>
                                 </div>
@@ -210,13 +210,13 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                           </span>
                         </div>
                         {skillItems.length === 0 ? (
-                          <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 text-xs font-medium text-ui-text-muted">{t('chat.capabilityPreviewNoSkills')}</p>
+                          <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 type-caption text-ui-text-muted">{t('chat.capabilityPreviewNoSkills')}</p>
                         ) : (
                           <div className="space-y-1.5">
                             {skillItems.map((skill) => (
                               <div key={skill.id} className="flex min-w-0 items-center gap-2 rounded-xl border border-ui-border bg-ui-bg px-3 py-2">
                                 <BookOpen className="h-3.5 w-3.5 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                                <span className="truncate text-xs font-semibold text-ui-text">{skill.name}</span>
+                                <span className="truncate type-caption type-emphasis text-ui-text">{skill.name}</span>
                               </div>
                             ))}
                           </div>

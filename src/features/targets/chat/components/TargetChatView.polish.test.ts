@@ -39,7 +39,7 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.genericTarget'");
     expect(approvalCheckpoint).toContain('className="px-4 py-4"');
     expect(approvalCheckpoint).toContain('<h3 className="type-row-title text-ui-text">{t(\'chat.guardTitle\')}</h3>');
-    expect(approvalCheckpoint).toContain('<p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">');
+    expect(approvalCheckpoint).toContain('<p className="mt-1 break-words type-panel-title leading-6 text-ui-text">');
     expect(approvalCheckpoint).toContain("t('chat.approvalAdvancedDetails')");
     expect(approvalCheckpoint).toContain('<details');
     expect(approvalCheckpoint).toContain('type-code mt-1 max-h-36');
@@ -65,7 +65,7 @@ describe('target chat polish contracts', () => {
   });
   it('keeps polish shared across transcript, composer, and trace surfaces', () => {
     expect(assistantTurn).toContain('data-chat-assistant-turn="true"');
-    expect(assistantTurn).toContain('className="group w-full min-w-0 text-sm font-medium text-ui-text"');
+    expect(assistantTurn).toContain('className="group w-full min-w-0 type-ui text-ui-text"');
     expect(assistantTurn).toContain("import { MessageActions }");
     expect(assistantTurn).toContain("aria-label={t('chat.roleAssistant')}");
     expect(assistantTurn).toContain('<span className="sr-only">{t(\'chat.roleAssistant\')}</span>');
@@ -79,7 +79,7 @@ describe('target chat polish contracts', () => {
     expect(assistantTurn).not.toContain("t('chat.startingAssistant')");
     expect(userMessageTurn).toContain("isEditing ? 'w-[min(42rem,88%)]' : 'max-w-[min(42rem,88%)]'");
     expect(userMessageTurn).toContain(
-      'className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4"'
+      'className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 type-ui text-ui-bg shadow-sm sm:px-5 sm:py-4"'
     );
     expect(chatView).not.toContain("max-w-[min(48rem,94%)] border border-ui-border bg-ui-surface text-ui-text");
     expect(chatView).not.toContain('AnimatePresence mode="popLayout"');
@@ -170,7 +170,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('focus-visible:ring-status-danger/20');
     expect(chatView).toContain('rounded-[1.375rem]');
     expect(chatView).toContain('rows={1}');
-    expect(chatView).toContain('min-h-10 text-sm');
+    expect(chatView).toContain('min-h-10 type-body');
     expect(chatView).toContain('composerRootRef');
     expect(chatView).toContain('composerTextareaRef');
     expect(chatView).toContain('previousIsRunActiveRef');

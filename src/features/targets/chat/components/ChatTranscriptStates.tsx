@@ -27,7 +27,7 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
           </div>
           <div className="min-w-0">
             <h2 className={`type-section-title ${isPanel ? '' : ''} text-ui-text`}>{title}</h2>
-            <p className={`${isPanel ? 'mt-2 text-sm' : 'mt-2 max-w-2xl text-sm'} leading-6 text-ui-text-muted`}>{body}</p>
+            <p className={`${isPanel ? 'mt-2 type-body' : 'mt-2 max-w-2xl type-body'} leading-6 text-ui-text-muted`}>{body}</p>
           </div>
         </div>
       </div>
@@ -38,7 +38,7 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
             type="button"
             onClick={() => void onSendSuggestion(suggestion.label)}
             disabled={!canSendSuggestion}
-            className="control-target group flex min-h-14 items-start gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-left text-sm font-medium text-ui-text transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="control-target group flex min-h-14 items-start gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-left type-ui text-ui-text transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" />
             <span className="min-w-0 break-words">{suggestion.label}</span>
@@ -73,10 +73,10 @@ export function ChatTranscriptSkeleton({ isPanel, label }: { isPanel: boolean; l
 export function ChatTranscriptLoadError({ isPanel, title, body }: { isPanel: boolean; title: string; body: string }) {
   return (
     <div className={`mx-auto ${isPanel ? 'max-w-3xl pt-2' : 'max-w-4xl pt-6 lg:pt-10'}`} role="status">
-      <div className="flex max-w-[72ch] items-start gap-3 border-t border-ui-border pt-4 text-sm">
+      <div className="flex max-w-[72ch] items-start gap-3 border-t border-ui-border pt-4 type-body">
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-status-warning-text" />
         <div className="min-w-0">
-          <p className="font-semibold text-ui-text">{title}</p>
+          <p className="type-emphasis text-ui-text">{title}</p>
           <p className="mt-1 leading-6 text-ui-text-muted">{body}</p>
         </div>
       </div>

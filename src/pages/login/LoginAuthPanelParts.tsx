@@ -21,11 +21,11 @@ export function NoticeCard({ icon, title, body, status, danger }: { icon: React.
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">{icon}</span>
         <div>
           <h2 className="type-panel-title text-ui-text">{title}</h2>
-          <p className="text-sm leading-5 text-ui-text-muted">{body}</p>
+          <p className="type-body leading-5 text-ui-text-muted">{body}</p>
         </div>
       </div>
       {status && (
-        <p role="status" className={`text-sm font-semibold ${danger ? 'text-status-warning-text' : 'text-status-success-text'}`}>
+        <p role="status" className={`type-body type-emphasis ${danger ? 'text-status-warning-text' : 'text-status-success-text'}`}>
           {status}
         </p>
       )}
@@ -127,7 +127,7 @@ export function PasswordField({
 
 export function ErrorMessage({ message }: { message: string }) {
   return (
-    <p role="alert" className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-xs font-semibold text-status-danger-text">
+    <p role="alert" className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 type-caption type-emphasis text-status-danger-text">
       {message}
     </p>
   );
@@ -149,7 +149,7 @@ export function OidcLoginButton({
       type="button"
       onClick={onLogin}
       disabled={isAuthLoading}
-      className={`control-target mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 text-sm type-ui transition-[background-color,border-color,color,box-shadow,transform] focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`control-target mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-ui-border px-4 py-2.5 type-ui transition-[background-color,border-color,color,box-shadow,transform] focus:outline-none focus:ring-2 focus:ring-accent/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 ${
         passwordAuthEnabled ? 'bg-ui-bg text-ui-text hover:bg-ui-surface' : 'border-control-boundary bg-control-primary text-control-primary-fg hover:bg-control-primary-hover'
       }`}
     >
@@ -168,7 +168,7 @@ export function OidcLoginButton({
 export function SignupSwitchFooter({ isAuthLoading, onSwitch, prompt, actionLabel }: { isAuthLoading: boolean; onSwitch: () => void; prompt: string; actionLabel: string }) {
   return (
     <div className="border-t border-ui-border bg-ui-bg p-6 text-center">
-      <p className="text-sm font-medium text-ui-text-muted">
+      <p className="type-ui text-ui-text-muted">
         {prompt}{' '}
         <Button
           type="button"

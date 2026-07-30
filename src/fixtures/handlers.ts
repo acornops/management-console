@@ -4,6 +4,12 @@ import { routeFixtureRequest } from './router';
 export const fixtureHandlers = [
   http.all(/\/api\/v1\/.*/, async ({ request }) => {
     const fixtureParams = new URLSearchParams(window.location.search);
+    if (fixtureParams.get('fixtureAnonymous') === '1' && new URL(request.url).pathname === '/api/v1/me') {
+      return Response.json(
+        { error: { code: 'UNAUTHENTICATED', message: 'No fixture session is active.' } },
+        { status: 401 }
+      );
+    }
     const delayMs = Number(fixtureParams.get('fixtureDelayMs') || 0);
     const delayPath = fixtureParams.get('fixtureDelayPath') || '';
     const failurePaths = (fixtureParams.get('fixtureFailurePath') || '').split(',').filter(Boolean);

@@ -81,7 +81,7 @@ export const WorkspaceEventTriggerCard: React.FC<WorkspaceEventTriggerCardProps>
 
           <div className="col-span-2 min-w-0 xl:col-span-1">
             <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('eventTriggers.columns.workflow')}</p>
-            <p className="text-sm font-semibold text-ui-text">{workflowName}</p>
+            <p className="type-body type-emphasis text-ui-text">{workflowName}</p>
           </div>
 
           <div className="col-span-2 min-w-0 xl:col-span-1">
@@ -96,7 +96,7 @@ export const WorkspaceEventTriggerCard: React.FC<WorkspaceEventTriggerCardProps>
             </div>
             {trigger.sourceType === 'webhook' && trigger.endpointUrl && (
               <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
-                <code className="max-w-full break-all text-xs text-ui-text-muted">{trigger.endpointUrl}</code>
+                <code className="max-w-full break-all type-caption text-ui-text-muted">{trigger.endpointUrl}</code>
                 <Button size="sm" variant="tertiary" onClick={() => onCopyEndpoint(trigger.endpointUrl!)}>
                   {t('eventTriggers.copyEndpoint')}
                 </Button>

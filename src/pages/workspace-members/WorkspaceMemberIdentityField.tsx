@@ -188,7 +188,7 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
         )}
       </div>
 
-      <p className="mt-2 flex min-h-5 items-start gap-2 text-xs font-medium leading-5 text-ui-text-muted">
+      <p className="mt-2 flex min-h-5 items-start gap-2 type-caption leading-5 text-ui-text-muted">
         {selectedCandidate && <UserRound className="mt-0.5 h-3.5 w-3.5 shrink-0 text-status-success-text" aria-hidden="true" />}
         <span>{helper}</span>
       </p>
@@ -203,7 +203,7 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
           <CollectionState
             phase={phase === 'idle' ? 'ready' : phase}
             itemCount={candidates.length}
-            loading={<div className="px-3 py-2.5 text-xs font-medium text-ui-text-muted">{t('members.searchingDirectory')}</div>}
+            loading={<div className="px-3 py-2.5 type-caption text-ui-text-muted">{t('members.searchingDirectory')}</div>}
             empty={null}
             error={null}
             className="contents"
@@ -227,12 +227,12 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
                 >
                   <span className="min-w-0">
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className="truncate text-sm font-semibold">{candidate.name}</span>
+                      <span className="truncate type-body type-emphasis">{candidate.name}</span>
                       {candidate.authMethods.includes('oidc') && (
                         <span className="shrink-0 rounded border border-ui-border px-1.5 py-0.5 type-micro-label">{t('members.oidcUser')}</span>
                       )}
                     </span>
-                    <span className="block truncate text-xs font-medium text-ui-text-muted">{candidate.email}</span>
+                    <span className="block truncate type-caption text-ui-text-muted">{candidate.email}</span>
                   </span>
                   <span className="shrink-0 rounded-full border border-ui-border bg-ui-bg px-2 py-1 type-micro-label">{candidateStatusLabel(candidate.status, t)}</span>
                 </Button>

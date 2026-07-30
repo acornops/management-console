@@ -344,7 +344,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               }
               submitRename();
             }}
-            className="min-w-0 flex-1 rounded border border-accent/30 bg-ui-surface px-2 py-1.5 text-xs text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="min-w-0 flex-1 rounded border border-accent/30 bg-ui-surface px-2 py-1.5 type-caption text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
             aria-label={target.type === 'folder' ? 'Folder name' : 'File name'}
           />
           <Button
@@ -378,7 +378,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
           onActiveFilePathChange(file.path);
         }}
         onDoubleClick={() => startRename({ type: 'file', path: file.path })}
-        className={`control-target relative flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left text-xs transition-colors ${
+        className={`control-target relative flex w-full min-w-0 items-center gap-2 rounded-md py-1.5 pr-2 text-left type-caption transition-colors ${
           activeFilePath === file.path ? 'bg-accent-soft/20 text-accent-strong' : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
         } ${className}`}
         style={{ paddingLeft: `${0.625 + depth * 1.1}rem` }}
@@ -422,7 +422,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               }
               submitFileAction();
             }}
-            className="min-w-0 flex-1 rounded border border-accent/30 bg-ui-surface px-2 py-1.5 text-xs text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="min-w-0 flex-1 rounded border border-accent/30 bg-ui-surface px-2 py-1.5 type-caption text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
             aria-label={fileAction === 'folder' ? 'Folder path' : 'File path'}
           />
           <Button
@@ -453,7 +453,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
           renderRenameRow(renameTarget, depth)
         ) : (
           <div
-            className={`flex w-full min-w-0 items-center rounded-md pr-2 text-left text-xs font-semibold transition-colors ${
+            className={`flex w-full min-w-0 items-center rounded-md pr-2 text-left type-caption type-emphasis transition-colors ${
               selectedFolderPath === folder.path ? 'bg-accent-soft/20 text-accent-strong' : 'text-ui-text-muted hover:bg-ui-surface hover:text-ui-text'
             }`}
             style={{ paddingLeft: `${0.375 + depth * 1.1}rem` }}

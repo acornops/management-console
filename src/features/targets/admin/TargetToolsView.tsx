@@ -22,6 +22,7 @@ import { TargetInsightsSettingsDialog } from '@/features/targets/admin/TargetIns
 import { TargetToolRow } from '@/features/targets/admin/TargetToolRow';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
 import { TextInput, Textarea } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
 
 interface TargetToolsViewProps {
   target: TargetDescriptor;
@@ -38,7 +39,7 @@ interface ToolDraft {
 
 type TargetInsightsAction = 'files' | 'settings' | 'activity' | 'reset';
 
-const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
+const toolSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 type-body');
 const toolDomainTextareaClassName = formTextareaClassName('mt-2');
 
 function splitDomainInput(value: string): string[] {
@@ -459,8 +460,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               </span>
             </div>
             <div className="min-w-0">
-              <table className="w-full table-fixed text-left" aria-label={t('tools.title')}>
-                <caption className="sr-only">{t('tools.title')}</caption>
+              <DataTable caption={t('tools.title')} className="w-full table-fixed text-left" aria-label={t('tools.title')}>
                 <colgroup>
                   <col className="w-[34%]" />
                   <col className="w-[23%]" />
@@ -469,15 +469,15 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   <col className="w-[11%]" />
                 </colgroup>
                 <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredTools.length }}>
-                  <tr>
+                  <DataTableRow>
                     <DataTableHeaderCell>{t('tools.toolColumn')}</DataTableHeaderCell>
                     <DataTableHeaderCell>{t('tools.capabilityColumn')}</DataTableHeaderCell>
                     <DataTableHeaderCell>{t('tools.enabledColumn')}</DataTableHeaderCell>
                     <DataTableHeaderCell className="hidden md:table-cell">{t('tools.runtimeColumn')}</DataTableHeaderCell>
                     <DataTableHeaderCell numeric>{t('tools.actionsColumn')}</DataTableHeaderCell>
-                  </tr>
+                  </DataTableRow>
                 </DataTableHeader>
-                <tbody>
+                <DataTableBody>
                   {filteredTools.map((tool) => (
                     <TargetToolRow
                       key={tool.id}
@@ -502,8 +502,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                     filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('tools.noToolMatches')} description={t('tools.noToolMatchesHelp')} />}
                     error={null}
                   />
-                </tbody>
-              </table>
+                </DataTableBody>
+              </DataTable>
             </div>
           </section>
         </>

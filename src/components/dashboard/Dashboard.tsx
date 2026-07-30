@@ -179,7 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <CloseButton onClick={closeDeleteClusterDialog} disabled={isDeletingCluster} aria-label={t('dashboard.closeDeleteCluster')} />
             </div>
             <div className="space-y-4 px-7 py-6">
-              <p className="text-sm leading-6 text-ui-text-muted">
+              <p className="type-body leading-6 text-ui-text-muted">
                 {t('dashboard.deleteClusterBody', {
                   name: deleteTargetCluster.name
                 })}

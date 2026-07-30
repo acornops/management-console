@@ -122,12 +122,12 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
               </div>
 
               <div className="space-y-4 p-5">
-                <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-medium leading-6 text-status-danger-text">
+                <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-ui leading-6 text-status-danger-text">
                   {t('app.deleteWorkspaceWarning', {
                     name: deleteTargetWorkspace.name
                   })}
                 </div>
-                <p className="text-xs leading-5 text-ui-text-muted">{t('app.deleteWorkspaceCleanup')}</p>
+                <p className="type-caption leading-5 text-ui-text-muted">{t('app.deleteWorkspaceCleanup')}</p>
                 <div>
                   <label htmlFor="delete-workspace-confirmation-input" className="type-label mb-1.5 block px-1">
                     <Trans
@@ -153,7 +153,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                     type="button"
                     onClick={handleCloseWorkspaceDelete}
                     disabled={isDeletingWorkspace}
-                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
+                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 type-caption text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {t('app.cancel')}
                   </Button>
@@ -176,7 +176,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                       }
                     }}
                     disabled={isDeletingWorkspace || workspaceDeleteConfirmation !== deleteTargetWorkspace.name}
-                    className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-xs type-ui text-control-danger-fg shadow-lg shadow-status-danger/20 transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 type-caption text-control-danger-fg shadow-lg shadow-status-danger/20 transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isDeletingWorkspace ? t('app.deleting') : t('app.deleteWorkspace')}
                   </Button>

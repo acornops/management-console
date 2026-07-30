@@ -248,7 +248,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                           <p className="truncate type-row-title" title={container.name}>
                             {container.name}
                           </p>
-                          <p className="mt-1 text-xs font-medium capitalize text-ui-text-muted">{getContainerStatusLabel(container)}</p>
+                          <p className="mt-1 type-caption capitalize text-ui-text-muted">{getContainerStatusLabel(container)}</p>
                         </div>
                         <span
                           className={classNames(
@@ -274,7 +274,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
         {activeDetailTab === 'logs' && selectedWorkload?.type === 'Pod' && (
           <div className="space-y-5">
             {!canShowLogs && (
-              <div className="rounded-xl border border-status-warning/25 bg-status-warning-soft p-4 text-sm font-semibold leading-6 text-status-warning-text">
+              <div className="rounded-xl border border-status-warning/25 bg-status-warning-soft p-4 type-body type-emphasis leading-6 text-status-warning-text">
                 {canReadPodLogs ? t('workloads.logsUnavailable') : t('workloads.logsNoAccess')}
               </div>
             )}
@@ -343,7 +343,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                 </div>
 
                 {podLogsError && (
-                  <div className="flex gap-3 border-y border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-semibold leading-6 text-status-danger-text">
+                  <div className="flex gap-3 border-y border-status-danger/25 bg-status-danger-soft px-4 py-3 type-body type-emphasis leading-6 text-status-danger-text">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                     <span>{podLogsError}</span>
                   </div>
@@ -355,7 +355,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                       <FileText className="h-4 w-4 text-accent-strong" />
                       <span className="truncate">{selectedWorkload.name}</span>
                     </div>
-                    <div className="inline-flex items-center gap-2 type-caption font-semibold text-code-text/70">
+                    <div className="inline-flex items-center gap-2 type-caption type-emphasis text-code-text/70">
                       {isFollowingLogs && <CheckCircle2 className="h-3.5 w-3.5 text-status-success-text" />}
                       {podLogs?.fetchedAt
                         ? t('workloads.fetchedAt', {
@@ -368,7 +368,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                   </div>
                   <pre
                     ref={logViewportRef}
-                    className="max-h-[420px] min-h-[220px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono text-xs leading-5 text-code-text custom-scrollbar"
+                    className="max-h-[420px] min-h-[220px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono type-caption leading-5 text-code-text custom-scrollbar"
                   >
                     {isPodLogsLoading && !podLogs ? t('workloads.loadingLogs') : podLogs?.logs?.trim() ? podLogs.logs : t('workloads.noLogs')}
                   </pre>

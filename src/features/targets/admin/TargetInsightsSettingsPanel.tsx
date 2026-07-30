@@ -71,7 +71,7 @@ export const TargetInsightsSettingsPanel: React.FC<TargetInsightsSettingsPanelPr
               min={field.min}
               max={field.max}
               step={field.step}
-              className="mt-2 h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 text-sm outline-none"
+              className="mt-2 h-10 w-full rounded-md border border-ui-border bg-ui-bg px-3 type-body outline-none"
               value={settingsDraft[field.key]}
               readOnly={!canEdit}
               disabled={settingsSaving}

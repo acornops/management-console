@@ -143,7 +143,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
           <h2 id="invite-member-title" className="type-section-title">
             {t('members.inviteMember')}
           </h2>
-          <p className="mt-1 text-xs font-medium text-ui-text-muted">{t('members.inviteBody')}</p>
+          <p className="mt-1 type-caption text-ui-text-muted">{t('members.inviteBody')}</p>
         </div>
         <CloseButton onClick={onClose} className="shrink-0" aria-label={t('members.closeInvite')} />
       </div>
@@ -202,11 +202,11 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
                   </Button>
                 </div>
               ) : (
-                <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 text-xs font-semibold leading-5 text-status-warning-text">
+                <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 type-caption type-emphasis leading-5 text-status-warning-text">
                   {t('members.linkReturnedOnce')}
                 </div>
               )}
-              <p className="text-xs font-medium leading-5 text-ui-text-muted">
+              <p className="type-caption leading-5 text-ui-text-muted">
                 {t('members.recipientMustUseEmail', {
                   email: createdInvite.email,
                   time: formatUserDateTime(createdInvite.expiresAt)
@@ -219,8 +219,8 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
             <div className="flex items-start gap-3 rounded-lg border border-status-success/25 bg-status-success-soft p-4 text-status-success-text">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
               <div>
-                <p className="text-sm type-emphasis">{t('members.accessAdded')}</p>
-                <p className="mt-1 text-xs font-medium leading-5">
+                <p className="type-body type-emphasis">{t('members.accessAdded')}</p>
+                <p className="mt-1 type-caption leading-5">
                   {t('members.accessAddedBody', {
                     name: addedMember.name,
                     role: formatRole(addedMember.role, addedMember.roleTemplate || selectedInviteRoleTemplate)
@@ -231,7 +231,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
           )}
 
           {inviteErrorMessage && (
-            <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">
+            <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-caption type-emphasis leading-5 text-status-danger-text">
               {inviteErrorMessage}
             </div>
           )}

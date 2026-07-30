@@ -119,16 +119,16 @@ function StepCardFrame({ card }: { card: StepCard }) {
         }}
       >
         <div className="flex items-baseline" style={{ gap: px(8) }}>
-          <span className="type-emphasis text-accent-strong" style={{ fontSize: px(13) }}>{card.order}</span>
+          <span className="type-emphasis text-accent-readable" style={{ fontSize: px(13) }}>{card.order}</span>
           <span className="type-micro-label" style={{ fontSize: px(9.5) }}>
             {card.phase}
           </span>
         </div>
-        <div className="font-semibold text-ui-text" style={{ fontSize: px(15.5) }}>{card.title}</div>
+        <div className="type-emphasis text-ui-text" style={{ fontSize: px(15.5) }}>{card.title}</div>
         <div className="text-ui-text-muted" style={{ fontSize: px(12) }}>{card.detail}</div>
         <div className="flex items-center" style={{ gap: px(7), marginTop: px(3) }}>
           <span className={`rounded-full ${toneDot[card.tone]}`} style={{ width: px(7), height: px(7) }} />
-          <span className={`font-semibold ${toneText[card.tone]}`} style={{ fontSize: px(11.5) }}>{card.signal}</span>
+          <span className={`type-emphasis ${toneText[card.tone]}`} style={{ fontSize: px(11.5) }}>{card.signal}</span>
         </div>
       </div>
     </foreignObject>
@@ -322,7 +322,7 @@ export function LoginPreview({ showCards = true, showTagline = true }: LoginPrev
           <h2 className="type-route-title text-ui-text">
             collecting <span className="text-accent-strong">acorns</span> for everything ops
           </h2>
-          <p className="mt-3 max-w-[31rem] text-base leading-relaxed text-ui-text-muted">
+          <p className="mt-3 max-w-[31rem] type-panel-title leading-relaxed text-ui-text-muted">
             Turn operational knowledge into AI-powered workflows.
           </p>
         </div>

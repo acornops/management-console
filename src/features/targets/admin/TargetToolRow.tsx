@@ -7,6 +7,7 @@ import { menuSurfaceClassName } from '@acornops/ui';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
 import { useFloatingActionMenu } from '@acornops/ui';
 import { Button } from '@acornops/ui';
+import { DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface TargetToolRowProps {
   tool: ControlPlaneTargetToolItem;
@@ -113,8 +114,8 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
       : null;
 
   return (
-    <tr data-target-tool-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
-      <td className="px-4 py-6 sm:px-6 lg:px-8">
+    <DataTableRow data-target-tool-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
+      <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
             {tool.id === 'target_insights' ? (
@@ -142,11 +143,11 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
             <span className="type-caption mt-2 block md:hidden">{runtimeLabel}</span>
           </div>
         </div>
-      </td>
-      <td className="px-4 py-6 sm:px-6 lg:px-8">
+      </DataTableCell>
+      <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <span className={`type-micro-label rounded-full px-2.5 py-1 ${capabilityBadgeClassName}`}>{capabilityLabel}</span>
-      </td>
-      <td className="px-4 py-6 sm:px-6 lg:px-8">
+      </DataTableCell>
+      <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         {!isToggleable ? (
           <span className="type-caption inline-flex items-center gap-1.5 text-status-success-text">
             <Check className="h-4 w-4" aria-hidden="true" />
@@ -164,11 +165,11 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
             }}
           />
         )}
-      </td>
-      <td className="type-caption hidden px-4 py-6 sm:px-6 md:table-cell lg:px-8">
+      </DataTableCell>
+      <DataTableCell className="type-caption hidden px-4 py-6 sm:px-6 md:table-cell lg:px-8">
         <span className="type-micro-label rounded-full bg-ui-bg px-2.5 py-1 text-ui-text-muted">{runtimeLabel}</span>
-      </td>
-      <td className="px-4 py-6 text-right sm:px-6 lg:px-8">
+      </DataTableCell>
+      <DataTableCell className="px-4 py-6 text-right sm:px-6 lg:px-8">
         {isPlatformNative ? (
           <span className="type-caption text-ui-text-muted">{t('tools.noConfiguration')}</span>
         ) : (
@@ -189,7 +190,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
             {actionMenu}
           </>
         )}
-      </td>
-    </tr>
+      </DataTableCell>
+    </DataTableRow>
   );
 };

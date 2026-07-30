@@ -44,7 +44,13 @@ export const buttonClassName = ({
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = 'secondary', size = 'md', className, type = 'button', ...props }, ref) => (
-    <button ref={ref} type={type} className={buttonClassName({ variant, size, className })} {...props} />
+    <button
+      ref={ref}
+      type={type}
+      className={buttonClassName({ variant, size, className })}
+      {...props}
+      data-design-contrast-exception={variant === 'activation' ? 'activation' : undefined}
+    />
   )
 );
 

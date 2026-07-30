@@ -10,7 +10,7 @@ interface AgentSkillsPanelProps {
   state: AgentCapabilitiesState;
 }
 
-const inputClass = 'min-h-11 w-full rounded-md border border-ui-border bg-ui-surface px-3 text-sm text-ui-text focus-visible:ring-2 focus-visible:ring-accent';
+const inputClass = 'min-h-11 w-full rounded-md border border-ui-border bg-ui-surface px-3 type-body text-ui-text focus-visible:ring-2 focus-visible:ring-accent';
 
 export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsPanelProps) {
   const {
@@ -39,7 +39,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
           {!skillsWritable && <p className="type-caption text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.permissions.skills')}</p>}
           <div className="grid gap-4 lg:grid-cols-2">
             <details className="rounded-md border border-ui-border bg-ui-bg p-4">
-              <summary className="cursor-pointer text-sm font-semibold">{t('agentsWorkflows.agents.details.capabilities.skills.createTitle')}</summary>
+              <summary className="cursor-pointer type-body type-emphasis">{t('agentsWorkflows.agents.details.capabilities.skills.createTitle')}</summary>
               <div className="mt-4 grid gap-3">
                 <TextInput
                   aria-label={t('agentsWorkflows.agents.details.capabilities.skills.name')}
@@ -75,7 +75,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                       content: event.target.value
                     }))
                   }
-                  className={`${inputClass} min-h-32 p-3 font-mono text-xs`}
+                  className={`${inputClass} min-h-32 p-3 font-mono type-caption`}
                 />
                 <Button
                   disabled={!skillsWritable || !manualSkill.name.trim() || !manualSkill.content.trim() || Boolean(busy)}
@@ -103,7 +103,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
               </div>
             </details>
             <details className="rounded-md border border-ui-border bg-ui-bg p-4">
-              <summary className="cursor-pointer text-sm font-semibold">{t('agentsWorkflows.agents.details.capabilities.skills.importTitle')}</summary>
+              <summary className="cursor-pointer type-body type-emphasis">{t('agentsWorkflows.agents.details.capabilities.skills.importTitle')}</summary>
               <div className="mt-4 grid gap-3">
                 <TextInput
                   aria-label="Git URL"
@@ -165,7 +165,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                       content: event.target.value
                     }))
                   }
-                  className={`${inputClass} min-h-28 p-3 font-mono text-xs`}
+                  className={`${inputClass} min-h-28 p-3 font-mono type-caption`}
                 />
                 <Button
                   disabled={!skillsWritable || !gitSkill.url.trim() || !gitSkill.commit.trim() || !gitSkill.content.trim() || Boolean(busy)}
@@ -207,7 +207,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                 <article key={skill.id} className="flex flex-wrap items-start justify-between gap-3 py-4">
                   <div>
                     <div className="flex flex-wrap gap-2">
-                      <strong className="text-sm">{skill.name}</strong>
+                      <strong className="type-body">{skill.name}</strong>
                       <StatusBadge tone={skill.enabled ? 'success' : 'neutral'}>{skill.enabled ? t('agentsWorkflows.agents.details.capabilities.skills.enabled') : t('agentsWorkflows.agents.details.capabilities.skills.disabled')}</StatusBadge>
                       {skill.inherited && <StatusBadge tone="neutral">Platform default</StatusBadge>}
                       <StatusBadge tone="neutral">{skill.source.type}</StatusBadge>
@@ -351,7 +351,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                                 }
                             )
                           }
-                          className={`${inputClass} min-h-32 p-3 font-mono text-xs`}
+                          className={`${inputClass} min-h-32 p-3 font-mono type-caption`}
                         />
                       </div>
                       <div className="mt-3 flex justify-end gap-2">
@@ -413,7 +413,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                 </article>
               ))
             ) : (
-              <p className="py-5 text-sm text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.skills.empty')}</p>
+              <p className="py-5 type-body text-ui-text-muted">{t('agentsWorkflows.agents.details.capabilities.skills.empty')}</p>
             )}
           </div>
         </div>

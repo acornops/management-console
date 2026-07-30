@@ -21,9 +21,9 @@ import { Button, TextInput } from '@acornops/ui';
 
 type ResourceCategoryValue = 'All' | Workload['type'] | NetworkResourceCategory | StorageResourceCategory | ClusterResourceCategory;
 
-const resourceSearchInputClassName = formInputClassName('h-11 py-3 pl-11 pr-4 font-normal');
+const resourceSearchInputClassName = formInputClassName('h-11 py-3 pl-11 pr-4 type-body');
 const resourceScopeDisplayClassName =
-  'flex h-11 min-h-11 w-full items-center rounded-lg border border-ui-border bg-ui-bg/60 px-4 py-3 text-sm font-semibold text-ui-text-muted shadow-[inset_0_1px_0_rgb(var(--ao-surface-rgb)/0.75)]';
+  'flex h-11 min-h-11 w-full items-center rounded-lg border border-ui-border bg-ui-bg/60 px-4 py-3 type-body type-emphasis text-ui-text-muted shadow-[inset_0_1px_0_rgb(var(--ao-surface-rgb)/0.75)]';
 
 export const WorkloadTriageShortcut: React.FC<{
   unhealthyPodCount: number;
@@ -61,7 +61,7 @@ export const WorkloadTriageShortcut: React.FC<{
         </span>
         <span className="min-w-0 truncate">{t('resources.filters.unhealthyPods')}</span>
         {unhealthyPodCount > 0 && (
-          <span className="type-data flex h-4 min-w-4 items-center justify-center rounded-full border border-accent/25 px-1 text-xs leading-none text-accent-readable">
+          <span className="type-data flex h-4 min-w-4 items-center justify-center rounded-full border border-accent/25 px-1 type-caption leading-none text-accent-readable">
             {unhealthyPodCount}
           </span>
         )}
@@ -151,7 +151,7 @@ export const ResourceSearchFilterBar: React.FC<{
       label: (
         <span className="flex min-w-0 items-center justify-between gap-3">
           <span className="min-w-0 truncate">{t(`${labelPrefix}.${category}`)}</span>
-          {typeof categoryCount === 'number' && <span className="type-data shrink-0 text-xs text-ui-text-muted">{categoryCount}</span>}
+          {typeof categoryCount === 'number' && <span className="type-data shrink-0 type-caption text-ui-text-muted">{categoryCount}</span>}
         </span>
       )
     };

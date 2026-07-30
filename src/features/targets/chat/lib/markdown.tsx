@@ -57,7 +57,7 @@ export function createMarkdownComponents(tone: MarkdownTone = 'assistant'): Comp
     ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 space-y-1">{children}</ol>,
     li: ({ children }) => <li className={textClass}>{children}</li>,
     strong: ({ children }) => (
-      <strong className={`font-semibold ${headingClass}`}>{children}</strong>
+      <strong className={`type-emphasis ${headingClass}`}>{children}</strong>
     ),
     code: ({ children, className, node: _node, ...props }: CodeProps) => {
       const {
@@ -103,7 +103,7 @@ export function createMarkdownComponents(tone: MarkdownTone = 'assistant'): Comp
       </div>
     ),
     th: ({ children }) => (
-      <th className={`border px-2 py-1 text-left font-semibold ${tableBorderClass}`}>
+      <th className={`border px-2 py-1 text-left type-emphasis ${tableBorderClass}`}>
         {children}
       </th>
     ),

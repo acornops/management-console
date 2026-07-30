@@ -246,7 +246,7 @@ const ClusterSetupTelemetry: React.FC<{
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{label}</span>
             </dt>
-            <dd className="type-caption mt-1 font-semibold text-ui-text-muted">{t('dashboard.unavailable')}</dd>
+            <dd className="type-caption mt-1 type-emphasis text-ui-text-muted">{t('dashboard.unavailable')}</dd>
           </div>
         ))}
       </dl>
@@ -277,7 +277,7 @@ const ClusterSetupTelemetry: React.FC<{
             </Button>
           </div>
         </div>
-        <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 font-medium text-ui-text-muted" aria-hidden="true">
+        <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 type-ui text-ui-text-muted" aria-hidden="true">
           <span className="truncate">
             <span className="xl:hidden min-[1440px]:inline">{t('dashboard.clusterRegistered')}</span>
             <span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.clusterRegisteredShort')}</span>
@@ -328,7 +328,7 @@ const ClusterOperationalDetails: React.FC<{ cluster: KubernetesCluster }> = ({ c
             <span className="hidden truncate 2xl:inline">{label}</span>
             <span className="truncate 2xl:hidden">{compactLabel}</span>
           </dt>
-          <dd className="type-caption mt-1 break-words font-semibold leading-4 text-ui-text [overflow-wrap:anywhere]" title={value}>
+          <dd className="type-caption mt-1 break-words type-emphasis leading-4 text-ui-text [overflow-wrap:anywhere]" title={value}>
             {value}
           </dd>
         </div>

@@ -21,6 +21,7 @@ import { formatUserDateTime } from '@/utils/dateTime';
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
@@ -198,7 +199,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
       } />
 
       {!canDecideApprovals && (
-        <div className="mb-5 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-sm font-medium text-ui-text-muted">
+        <div className="mb-5 rounded-md border border-ui-border bg-ui-surface px-4 py-3 type-ui text-ui-text-muted">
           {t('approvals.permissionNotice')}
         </div>
       )}
@@ -275,9 +276,9 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-[72rem] w-full border-collapse text-left">
+            <DataTable caption={t('approvals.queueTitle')} className="min-w-[72rem] w-full border-collapse text-left">
               <DataTableHeader>
-                <tr>
+                <DataTableRow>
                   <DataTableHeaderCell density="dense">{t('approvals.table.approval')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.workflowRun')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.requestedBy')}</DataTableHeaderCell>
@@ -286,9 +287,9 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                   <DataTableHeaderCell density="dense">{t('approvals.table.expires')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.status')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.decision')}</DataTableHeaderCell>
-                </tr>
+                </DataTableRow>
               </DataTableHeader>
-              <tbody className="divide-y divide-ui-border">
+              <DataTableBody className="divide-y divide-ui-border">
                 {approvals.map((approval) => {
                   const decision = decisionState[approval.approvalId];
                   const pending = approval.status === 'pending';
@@ -297,15 +298,15 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                     (!approvalId && runId && approval.runId === runId)
                   );
                   return (
-                    <tr key={approval.approvalId} className={`text-sm ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
-                      <th scope="row" className="px-4 py-4 font-semibold text-ui-text">{approval.summary}</th>
-                      <td className="px-4 py-4 font-medium text-ui-text">{approval.workflowId || sourceLabel(approval.source, t)} · {approval.runId}</td>
-                      <td className="px-4 py-4 text-ui-text-muted">{approval.requestedBy || t('approvals.system')}</td>
-                      <td className="px-4 py-4 text-ui-text-muted">{approval.targetId || t('approvals.targetWorkspace')}</td>
-                      <td className="px-4 py-4 font-semibold text-ui-text">{sourceLabel(approval.source, t)}</td>
-                      <td className="px-4 py-4 text-ui-text-muted">{formatDateTime(approval.expiresAt, t('approvals.none'))}</td>
-                      <td className="px-4 py-4"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></td>
-                      <td className="px-4 py-4">
+                    <DataTableRow key={approval.approvalId} className={`type-body ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
+                      <DataTableCell as="th" scope="row" className="px-4 py-4 type-emphasis text-ui-text">{approval.summary}</DataTableCell>
+                      <DataTableCell className="px-4 py-4 type-ui text-ui-text">{approval.workflowId || sourceLabel(approval.source, t)} · {approval.runId}</DataTableCell>
+                      <DataTableCell className="px-4 py-4 text-ui-text-muted">{approval.requestedBy || t('approvals.system')}</DataTableCell>
+                      <DataTableCell className="px-4 py-4 text-ui-text-muted">{approval.targetId || t('approvals.targetWorkspace')}</DataTableCell>
+                      <DataTableCell className="px-4 py-4 type-emphasis text-ui-text">{sourceLabel(approval.source, t)}</DataTableCell>
+                      <DataTableCell className="px-4 py-4 text-ui-text-muted">{formatDateTime(approval.expiresAt, t('approvals.none'))}</DataTableCell>
+                      <DataTableCell className="px-4 py-4"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></DataTableCell>
+                      <DataTableCell className="px-4 py-4">
                         <div className="flex gap-2">
                           <Button size="sm" variant="secondary" onClick={() => void decideApproval(approval, 'approved')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
                             {decision === 'loading' ? t('approvals.actions.deciding') : t('approvals.actions.approve')}
@@ -314,12 +315,12 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                             {t('approvals.actions.reject')}
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </DataTableCell>
+                    </DataTableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </DataTableBody>
+            </DataTable>
           </div>
         )}
         </section>

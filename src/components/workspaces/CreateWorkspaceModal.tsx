@@ -400,11 +400,11 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                   }}
                   disabled={isCreatingWorkspace}
                   placeholder={t('app.workspaceNamePlaceholder')}
-                  className="px-4 font-medium"
+                  className="px-4 type-ui"
                 />
               </section>
               {createError && (
-                <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">
+                <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-caption type-emphasis leading-5 text-status-danger-text">
                   {createError}
                 </div>
               )}
@@ -434,7 +434,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
       ) : step === 'members' ? (
         <>
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6 custom-scrollbar">
-            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 text-sm font-medium leading-6 text-ui-text-muted">
+            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 type-ui leading-6 text-ui-text-muted">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
                   <MailPlus className="h-4 w-4" aria-hidden="true" />
@@ -444,13 +444,13 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             </div>
 
             {isLoadingRoles && (
-              <div className="rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-xs font-semibold leading-5 text-ui-text-muted">
+              <div className="rounded-lg border border-ui-border bg-ui-surface px-4 py-3 type-caption type-emphasis leading-5 text-ui-text-muted">
                 {t('workspaceCreate.loadingRoles')}
               </div>
             )}
 
             {roleLoadError && (
-              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-xs font-semibold leading-5 text-status-warning-text">
+              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 type-caption type-emphasis leading-5 text-status-warning-text">
                 {roleLoadError}
               </div>
             )}
@@ -545,7 +545,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 {t('workspaceCreate.addInviteRow')}
               </Button>
-              <span className="text-xs font-semibold text-ui-text-muted">
+              <span className="type-caption type-emphasis text-ui-text-muted">
                 {t('workspaceCreate.inviteRowLimit', {
                   count: inviteRows.length,
                   max: MAX_CREATE_WORKSPACE_INVITE_ROWS
@@ -554,7 +554,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             </div>
 
             {inviteSummaryError && (
-              <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">
+              <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-caption type-emphasis leading-5 text-status-danger-text">
                 {inviteSummaryError}
               </div>
             )}
@@ -619,7 +619,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
               </div>
 
               <p className="type-caption mt-5 text-ui-text-muted">{t('workspaceCreate.aiSetupOptionalNote')}</p>
-              <p className="type-caption mt-3 font-semibold text-ui-text-muted">{t('workspaceCreate.aiSettingsTransition')}</p>
+              <p className="type-caption mt-3 type-emphasis text-ui-text-muted">{t('workspaceCreate.aiSettingsTransition')}</p>
             </div>
           </div>
           <div className="flex flex-col-reverse gap-3 border-t border-ui-border bg-ui-bg px-6 py-4 sm:flex-row sm:justify-end">

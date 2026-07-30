@@ -5,7 +5,9 @@ const snapshotDirectory = process.platform === 'linux' ? '__snapshots__/linux' :
 
 export default defineConfig({
   testDir: './tests/design-routes',
-  outputDir: './test-results/design-routes',
+  outputDir: process.env.DESIGN_ROUTE_RUN_KEY
+    ? `./test-results/design-routes/${process.env.DESIGN_ROUTE_RUN_KEY}`
+    : './test-results/design-routes',
   snapshotPathTemplate: `{testDir}/${snapshotDirectory}/{projectName}/{arg}{ext}`,
   fullyParallel: false,
   workers: 1,
@@ -49,12 +51,16 @@ export default defineConfig({
         isMobile: true,
         hasTouch: true
       }
+    },
+    {
+      name: 'sidebar-constrained',
+      use: { viewport: { width: 1024, height: 900 }, colorScheme: 'light' }
     }
   ],
   webServer: {
     command: 'VITE_APP_DATA_MODE=mock VITE_CONTROL_PLANE_API_BASE_URL=http://127.0.0.1:59999 npm run dev -- --host 127.0.0.1 --port 4188 --strictPort',
     url: 'http://127.0.0.1:4188',
-    reuseExistingServer: false,
+    reuseExistingServer: process.env.DESIGN_ROUTES_REUSE_SERVER === '1' || !process.env.CI,
     timeout: 120_000
   }
 });

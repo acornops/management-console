@@ -163,7 +163,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
       <div className="flex items-center gap-3 px-6 py-5">
         <Button className="control-target flex items-center gap-3 cursor-pointer" onClick={() => navigate(workspaceHomePath)} aria-label={t('app.goHome')}>
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
-          <div className="font-sans text-xl leading-none tracking-tighter antialiased">
+          <div className="font-sans type-section-title leading-none tracking-tighter antialiased">
             <span className="type-wordmark text-brand-brown dark:text-brand-cream">acorn</span>
             <span data-brand-wordmark className="type-wordmark text-accent-bright">ops</span>
           </div>
@@ -189,10 +189,10 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   >
                     <span className="flex min-w-0 items-center gap-3">
                       <span className="w-8 h-8 rounded bg-accent-soft flex items-center justify-center shrink-0">
-                        <span className="text-accent-readable type-emphasis font-mono text-xs">{selectedWorkspaceInitials}</span>
+                        <span className="text-accent-readable type-emphasis font-mono type-caption">{selectedWorkspaceInitials}</span>
                       </span>
                       <span className="min-w-0 flex flex-col items-start">
-                        <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm type-emphasis leading-tight text-ui-text" title={selectedWorkspaceName}>
+                        <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal type-body type-emphasis leading-tight text-ui-text" title={selectedWorkspaceName}>
                           {selectedWorkspaceName}
                         </span>
                       </span>
@@ -205,11 +205,11 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   <div className="w-full flex items-center justify-between p-3 rounded-lg border border-transparent text-left" title={t('app.noWorkspacesAvailable')}>
                     <span className="flex min-w-0 items-center gap-3">
                       <span className="w-8 h-8 rounded bg-ui-bg flex items-center justify-center shrink-0">
-                        <span className="text-ui-text-muted type-emphasis font-mono text-xs">{selectedWorkspaceInitials}</span>
+                        <span className="text-ui-text-muted type-emphasis font-mono type-caption">{selectedWorkspaceInitials}</span>
                       </span>
                       <span className="min-w-0 flex flex-col items-start">
                         <span
-                          className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm type-emphasis leading-tight text-ui-text-muted"
+                          className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal type-body type-emphasis leading-tight text-ui-text-muted"
                           title={selectedWorkspaceName}
                         >
                           {selectedWorkspaceName}
@@ -257,7 +257,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                                   });
                                 }}
                                 aria-current={isSelected ? 'true' : undefined}
-                                className={`control-target flex w-full items-start gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                                className={`control-target flex w-full items-start gap-3 rounded-lg px-3 py-2 type-body transition-colors ${
                                   isSelected ? 'border border-accent/20 bg-accent-soft type-ui text-accent-strong' : 'text-ui-text hover:bg-ui-bg'
                                 }`}
                               >
@@ -275,7 +275,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                             closeWorkspaceSwitcher({ restoreFocus: true });
                             onOpenCreateWorkspace();
                           }}
-                          className="control-target w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs type-ui text-ui-text-muted hover:text-accent-strong hover:bg-accent-soft transition-colors"
+                          className="control-target w-full flex items-center gap-2 px-3 py-2 rounded-lg type-caption text-ui-text-muted hover:text-accent-strong hover:bg-accent-soft transition-colors"
                         >
                           <ICONS.Plus className="h-3.5 w-3.5" />
                           <span>{t('app.newWorkspace')}</span>
@@ -339,7 +339,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 <MotionButton
                   type="button"
                   onClick={onBackToWorkspaceSidebar}
-                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 type-caption text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('app.backToWorkspace')}
                 >
                   <ICONS.ChevronLeft className="w-3.5 h-3.5" />
@@ -412,7 +412,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 <MotionButton
                   type="button"
                   onClick={onBackToWorkspaceSidebar}
-                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 type-caption text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('app.backToWorkspace')}
                 >
                   <ICONS.ChevronLeft className="w-3.5 h-3.5" />
@@ -496,15 +496,15 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
         >
           <span className="flex min-w-0 items-center gap-3">
             <span
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border font-mono text-xs type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${
-                isAccountSettingsActive ? 'border-accent/25 bg-accent-soft text-accent-strong' : 'border-ui-border bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border font-mono type-caption type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${
+                isAccountSettingsActive ? 'border-accent/25 bg-accent-soft text-accent-readable' : 'border-ui-border bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
               }`}
             >
               {userInitials}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm type-emphasis leading-5 text-ui-text">{user.name}</span>
-              <span className="block truncate text-xs leading-4 text-ui-text-muted">{user.email}</span>
+              <span className="block truncate type-body type-emphasis leading-5 text-ui-text">{user.name}</span>
+              <span className={`block truncate type-caption leading-4 ${isAccountSettingsActive ? 'text-ui-text' : 'text-ui-text-muted'}`}>{user.email}</span>
             </span>
           </span>
           <motion.span
@@ -530,12 +530,12 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
               className="absolute bottom-full left-3 right-3 mb-2 rounded-lg border border-ui-border bg-ui-surface shadow-xl"
             >
               <div className="flex items-center gap-3 px-4 py-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/20 bg-accent-soft font-mono text-sm type-emphasis text-accent-strong">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/20 bg-accent-soft font-mono type-body type-emphasis text-accent-strong">
                   {userInitials}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm type-emphasis leading-5 text-ui-text">{user.name}</p>
-                  <p className="truncate font-mono text-xs leading-4 text-ui-text-muted">{user.email}</p>
+                  <p className="truncate type-body type-emphasis leading-5 text-ui-text">{user.name}</p>
+                  <p className="truncate font-mono type-caption leading-4 text-ui-text-muted">{user.email}</p>
                 </div>
               </div>
 
@@ -560,7 +560,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     >
                       <ICONS.User className="h-4 w-4" />
                     </span>
-                    <span className="text-sm type-emphasis">{t('app.accountSettings')}</span>
+                    <span className="type-body type-emphasis">{t('app.accountSettings')}</span>
                   </span>
                 </MotionButton>
 

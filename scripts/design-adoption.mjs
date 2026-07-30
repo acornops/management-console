@@ -66,13 +66,14 @@ function attributeStringValue(attribute) {
 
 function isMarkdownTableRenderer(node, repoPath) {
   if (repoPath !== 'src/features/targets/chat/lib/markdown.tsx') return false;
+  const rendererKeys = new Set(['table', 'th', 'tr', 'td']);
   let current = node;
   while (current) {
     if (
       ts.isPropertyAssignment(current)
       && (
-        (ts.isIdentifier(current.name) && current.name.text === 'table')
-        || (ts.isStringLiteral(current.name) && current.name.text === 'table')
+        (ts.isIdentifier(current.name) && rendererKeys.has(current.name.text))
+        || (ts.isStringLiteral(current.name) && rendererKeys.has(current.name.text))
       )
     ) {
       return true;

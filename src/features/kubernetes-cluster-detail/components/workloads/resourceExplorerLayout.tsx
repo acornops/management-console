@@ -1,11 +1,12 @@
 import React from 'react';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight, PackageOpen, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   CloseButton,
   DataTableGridHeader,
   DataTableGridHeaderCell,
-  DrawerFrame
+  DrawerFrame,
+  EmptyState
 } from '@acornops/ui';
 import {
   classNames,
@@ -32,15 +33,11 @@ export const ResourceMetricInline: React.FC<{
   );
 };
 
-export const EmptyState: React.FC<{ message: string }> = ({ message }) => (
-  <div className="type-body rounded-lg border border-dashed border-ui-border bg-ui-surface p-10 text-center">{message}</div>
-);
-
 export const ResourceList = <T,>({ items, emptyMessage, renderItem }: { items: T[]; emptyMessage: string; renderItem: (item: T) => React.ReactNode }) => {
   const { t } = useTranslation();
 
   return items.length === 0 ? (
-    <EmptyState message={emptyMessage} />
+    <EmptyState embedded icon={<PackageOpen />} title={emptyMessage} description={null} />
   ) : (
     <div data-resource-list="true" className="min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
       <DataTableGridHeader

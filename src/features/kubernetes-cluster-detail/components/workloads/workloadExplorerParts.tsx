@@ -354,7 +354,7 @@ export const ResourceStatusPill: React.FC<{ status: string; healthy: boolean }> 
     title={status}
     aria-label={`Status: ${status}`}
     className={classNames(
-      'inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold leading-4',
+      'inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border px-3 py-1.5 type-caption type-emphasis leading-4',
       healthy
         ? 'border-status-success/20 bg-status-success-soft text-status-success-text'
         : 'border-status-warning/20 bg-status-warning-soft text-status-warning-text'

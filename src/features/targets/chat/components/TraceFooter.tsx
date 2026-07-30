@@ -361,7 +361,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                             ) : artifactView.error ? (
                               <p className="type-caption text-status-danger-text">{artifactView.error}</p>
                             ) : (
-                              <pre className="whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono text-xs text-ui-on-strong">{artifactView.content}</pre>
+                              <pre className="whitespace-pre-wrap break-words rounded-md bg-code-bg p-3 font-mono type-caption text-ui-on-strong">{artifactView.content}</pre>
                             )}
                           </div>
                         )}

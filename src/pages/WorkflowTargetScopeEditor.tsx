@@ -51,7 +51,7 @@ export const WorkflowTargetScopeEditor: React.FC<{
       <p className="type-caption mt-1 text-ui-text-muted">Optional. Leave empty for any target allowed by the selected Agents.</p>
       <div className="mt-3 flex flex-wrap gap-4">
         {TARGET_TYPES.map(([value, label]) => (
-          <label key={value} className="flex items-center gap-2 text-sm font-semibold">
+          <label key={value} className="flex items-center gap-2 type-body type-emphasis">
             <Checkbox checked={targetTypes.includes(value)} onChange={(event) => {
               const nextTargetTypes = event.target.checked
                 ? [...new Set([...targetTypes, value])]
@@ -68,7 +68,7 @@ export const WorkflowTargetScopeEditor: React.FC<{
       {visibleTargets.length > 0 ? (
         <div className="mt-3 grid gap-2 sm:grid-cols-2" role="group" aria-label="Exact targets">
           {visibleTargets.map((target) => (
-            <label key={target.value} className="flex items-start gap-2 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-sm font-semibold">
+            <label key={target.value} className="flex items-start gap-2 rounded-md border border-ui-border bg-ui-surface px-3 py-2 type-body type-emphasis">
               <Checkbox checked={targetIds.includes(target.value)} disabled={target.disabled} onChange={(event) => onChange({
                 targetIds: event.target.checked ? [...new Set([...targetIds, target.value])] : targetIds.filter((id) => id !== target.value)
               })} />

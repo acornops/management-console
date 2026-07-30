@@ -400,7 +400,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
               <CloseButton type="button" onClick={closeDeleteVmDialog} disabled={isDeletingVm} aria-label={t('virtualMachines.list.closeDeleteVm')} />
             </div>
             <div className="space-y-4 px-7 py-6">
-              <p className="text-sm leading-6 text-ui-text-muted">
+              <p className="type-body leading-6 text-ui-text-muted">
                 {t('virtualMachines.list.deleteVmBody', {
                   name: deleteTargetVm.name
                 })}

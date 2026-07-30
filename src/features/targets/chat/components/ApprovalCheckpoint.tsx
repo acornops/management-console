@@ -180,18 +180,18 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({ approval
             </div>
             <div className="min-w-0">
               <h3 className="type-row-title text-ui-text">{t('chat.guardTitle')}</h3>
-              <p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">{approvalSummary}</p>
+              <p className="mt-1 break-words type-panel-title leading-6 text-ui-text">{approvalSummary}</p>
             </div>
           </div>
           <p className={`type-micro-label shrink-0 rounded-full border px-2.5 py-1 ${statusToneClass}`} aria-live="polite">
             {t(`chat.approvalStatusLabel.${approvalStatus}`)}
           </p>
         </div>
-        {!isPending && <p className="mt-2 text-xs leading-5 text-ui-text-muted">{t(`chat.approvalStatus.${approvalStatus}`)}</p>}
-        {isPending && !canApproveWriteActions && <p className="mt-2 text-xs leading-5 text-status-warning-text">{t('chat.approvalNoPermission')}</p>}
+        {!isPending && <p className="mt-2 type-caption leading-5 text-ui-text-muted">{t(`chat.approvalStatus.${approvalStatus}`)}</p>}
+        {isPending && !canApproveWriteActions && <p className="mt-2 type-caption leading-5 text-status-warning-text">{t('chat.approvalNoPermission')}</p>}
         {approval.arguments && Object.keys(approval.arguments).length > 0 && (
           <details className="mt-3 rounded-md border border-ui-border bg-ui-surface/40 px-3 py-2">
-            <summary className="cursor-pointer select-none text-xs font-semibold leading-5 text-ui-text-muted">{t('chat.approvalAdvancedDetails')}</summary>
+            <summary className="cursor-pointer select-none type-caption type-emphasis leading-5 text-ui-text-muted">{t('chat.approvalAdvancedDetails')}</summary>
             <pre className="type-code mt-1 max-h-36 overflow-auto rounded-md border border-ui-border bg-code-bg px-3 py-2 text-code-text">
               {formatApprovalArguments(approval.arguments)}
             </pre>

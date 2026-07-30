@@ -120,7 +120,7 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
             </div>
 
             <div className="space-y-4 px-7 py-6">
-              <p className="text-sm leading-6 text-ui-text-muted">{description}</p>
+              <p className="type-body leading-6 text-ui-text-muted">{description}</p>
               <p className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">{agentWarning}</p>
               <div>
                 <label htmlFor={inputId} className="type-label mb-1.5 block px-1">

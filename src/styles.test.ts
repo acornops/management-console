@@ -481,6 +481,7 @@ describe('theme color contract', () => {
     expect(buttonComponent).toContain('border border-control-boundary bg-control-primary text-control-primary-fg');
     expect(buttonComponent).toContain("activation: 'border border-transparent bg-control-activation text-control-activation-fg");
     expect(buttonComponent).toContain('hover:bg-control-activation-hover');
+    expect(buttonComponent).toContain("data-design-contrast-exception={variant === 'activation' ? 'activation' : undefined}");
     expect(buttonComponent).not.toContain('shadow-accent/20');
     expect(buttonComponent).toContain("secondary: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm");
     expect(buttonComponent).toContain("danger: 'border border-control-boundary bg-control-danger text-control-danger-fg");

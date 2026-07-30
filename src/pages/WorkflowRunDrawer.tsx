@@ -66,13 +66,13 @@ export const WorkflowRunDrawer: React.FC<{
         <div className="grid gap-5">
           <section className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">
             <div className="type-micro-label text-ui-text-muted">Saved prompt</div>
-            <p className="mt-2 whitespace-pre-wrap break-words text-sm text-ui-text">{workflow.starterPrompt}</p>
+            <p className="mt-2 whitespace-pre-wrap break-words type-body text-ui-text">{workflow.starterPrompt}</p>
           </section>
 
           <WorkflowParameterFields workflow={workflow} values={values} errors={errors} onChange={onValuesChange} />
 
           {writeCapable && (
-            <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-3 text-sm text-ui-text">
+            <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-3 type-body text-ui-text">
               <Checkbox checked={acknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="mt-0.5 shrink-0" />
               <span>
                 <strong className="block">Live-system changes are allowed</strong>
@@ -84,7 +84,7 @@ export const WorkflowRunDrawer: React.FC<{
           <WorkflowCapabilityLedger workspaceId={workflow.workspaceId} preview={preview} loading={previewing} error={previewError} onRetry={onRetryPreview} />
 
           {blocker && (
-            <p role="alert" className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-sm font-semibold text-status-warning-text">
+            <p role="alert" className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-body type-emphasis text-status-warning-text">
               {blocker}
             </p>
           )}

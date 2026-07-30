@@ -54,7 +54,7 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
             <h2 id={dialogTitleId} className="type-panel-title text-ui-text">
               {title}
             </h2>
-            <p id={dialogBodyId} className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">
+            <p id={dialogBodyId} className="mt-2 type-ui leading-6 text-ui-text-muted">
               {body}
             </p>
           </div>

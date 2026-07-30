@@ -75,7 +75,7 @@ export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({ roleTe
             ))}
           </div>
           <p className="type-caption mt-2 text-ui-text-muted">{roleTemplate.description}</p>
-          <p className="type-caption mt-3 font-semibold text-ui-text">{roleSummary}</p>
+          <p className="type-caption mt-3 type-emphasis text-ui-text">{roleSummary}</p>
         </div>
       </div>
 

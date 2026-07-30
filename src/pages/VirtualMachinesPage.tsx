@@ -473,7 +473,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   }
 
   if (isLoading && !selected) {
-    return <div className="flex h-full items-center justify-center bg-ui-bg text-sm font-semibold text-ui-text-muted">{t('virtualMachines.loadingDetail')}</div>;
+    return <div className="flex h-full items-center justify-center bg-ui-bg type-body type-emphasis text-ui-text-muted">{t('virtualMachines.loadingDetail')}</div>;
   }
 
   if (!selected) {
@@ -482,7 +482,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         <div className="max-w-xl text-center">
           <ICONS.Server className="mx-auto h-10 w-10 text-ui-text-muted" />
           <h2 className="mt-4 type-data">{t('virtualMachines.notFoundTitle')}</h2>
-          <p className="mt-2 text-sm text-ui-text-muted">{t('virtualMachines.notFoundBody')}</p>
+          <p className="mt-2 type-body text-ui-text-muted">{t('virtualMachines.notFoundBody')}</p>
           <Button onClick={() => navigate(AppPaths.workspaceVirtualMachines(workspace.id, catalogReturnState))} className="mt-5">
             <ICONS.ChevronLeft className="h-4 w-4" />
             {t('virtualMachines.backToList')}
