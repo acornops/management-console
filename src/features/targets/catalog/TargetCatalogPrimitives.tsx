@@ -27,9 +27,10 @@ export const ResourceCatalogCard: React.FC<{
       {...cardAttribute}
       className="group relative flex min-w-0 flex-col overflow-visible rounded-lg border border-ui-border bg-ui-surface shadow-sm transition-colors hover:border-accent/25"
     >
-      <button
+      <Button
         {...actionAttribute}
         type="button"
+        variant="tertiary"
         aria-label={actionLabel}
         disabled={disabled}
         onClick={onActivate}
@@ -60,7 +61,7 @@ export const TargetCatalogStatusPill: React.FC<{
 export const TargetCatalogActionHint: React.FC<{ label: string }> = ({ label }) => (
   <span
     aria-hidden="true"
-    className="mt-1 inline-flex items-center gap-1 type-caption font-semibold text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong"
+    className="mt-1 inline-flex items-center gap-1 type-caption type-emphasis text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong"
   >
     {label}
     <ChevronRight className="h-3.5 w-3.5" />
@@ -189,7 +190,7 @@ export const ResourceCatalogActionMenu: React.FC<Omit<TargetCatalogActionMenuPro
           aria-label={label}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={handleMenuKeyDown}
-          className={menuSurfaceClassName('absolute right-0 top-11 w-52 p-1 text-sm sm:top-9')}
+          className={menuSurfaceClassName('absolute right-0 top-11 w-52 p-1 type-body sm:top-9')}
         >
           {children}
         </div>

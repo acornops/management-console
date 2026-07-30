@@ -23,8 +23,8 @@ import {
 } from '@/stylesTestSupport';
 describe('target chat polish contracts', () => {
   it('keeps the programmatic attachment input out of the accessibility tree', () => {
-    expect(chatView).toMatch(/<input\s+ref=\{fileInputRef\}\s+type="file"\s+multiple\s+hidden/);
-    expect(chatView).not.toMatch(/type="file"[\s\S]{0,80}className="sr-only"/);
+    expect(chatView).toMatch(/<FileInput\s+ref=\{fileInputRef\}\s+multiple\s+hidden/);
+    expect(chatView).not.toMatch(/<FileInput[\s\S]{0,80}visuallyHidden/);
   });
 
   it('renders approvals as inline operational checkpoints', () => {
@@ -41,7 +41,7 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain("t('chat.approvalFallbackSummary.genericTarget'");
     expect(approvalCheckpoint).toContain('className="px-4 py-4"');
     expect(approvalCheckpoint).toContain('<h3 className="type-row-title text-ui-text">{t(\'chat.guardTitle\')}</h3>');
-    expect(approvalCheckpoint).toContain('<p className="mt-1 break-words text-base font-semibold leading-6 text-ui-text">');
+    expect(approvalCheckpoint).toContain('<p className="mt-1 break-words type-panel-title leading-6 text-ui-text">');
     expect(approvalCheckpoint).toContain("t('chat.approvalAdvancedDetails')");
     expect(approvalCheckpoint).toContain('<details');
     expect(approvalCheckpoint).toContain('type-code mt-1 max-h-36');
@@ -67,7 +67,7 @@ describe('target chat polish contracts', () => {
   });
   it('keeps polish shared across transcript, composer, and trace surfaces', () => {
     expect(assistantTurn).toContain('data-chat-assistant-turn="true"');
-    expect(assistantTurn).toContain('className="group w-full min-w-0 text-sm font-medium text-ui-text"');
+    expect(assistantTurn).toContain('className="group w-full min-w-0 type-ui text-ui-text"');
     expect(assistantTurn).toContain("import { MessageActions }");
     expect(assistantTurn).toContain("aria-label={t('chat.roleAssistant')}");
     expect(assistantTurn).toContain('<span className="sr-only">{t(\'chat.roleAssistant\')}</span>');
@@ -81,7 +81,7 @@ describe('target chat polish contracts', () => {
     expect(assistantTurn).not.toContain("t('chat.startingAssistant')");
     expect(userMessageTurn).toContain("isEditing ? 'w-[min(42rem,88%)]' : 'max-w-[min(42rem,88%)]'");
     expect(userMessageTurn).toContain(
-      'className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4"'
+      'className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 type-ui text-ui-bg shadow-sm sm:px-5 sm:py-4"'
     );
     expect(chatView).not.toContain("max-w-[min(48rem,94%)] border border-ui-border bg-ui-surface text-ui-text");
     expect(chatView).not.toContain('AnimatePresence mode="popLayout"');
@@ -175,7 +175,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('focus-visible:ring-status-danger/20');
     expect(chatView).toContain('rounded-[1.375rem]');
     expect(chatView).toContain('rows={1}');
-    expect(chatView).toContain('min-h-10 text-sm');
+    expect(chatView).toContain('min-h-10 type-body');
     expect(chatView).toContain('composerRootRef');
     expect(chatView).toContain('composerTextareaRef');
     expect(chatView).toContain('previousIsRunActiveRef');
@@ -311,7 +311,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('<UserMessageTurn');
     expect(chatView).toContain('canEdit={canEditUserMessage}');
     expect(userMessageTurn).toContain('onEdit={canEdit ? onStartEdit : undefined}');
-    expect(userMessageTurn).toContain('<textarea');
+    expect(userMessageTurn).toContain('<Textarea');
     expect(userMessageTurn).toContain('const textareaRef = React.useRef<HTMLTextAreaElement>(null);');
     expect(userMessageTurn).toContain('textarea.setSelectionRange(selectionEnd, selectionEnd);');
     expect(userMessageTurn).toContain('}, [isEditing]);');
@@ -326,42 +326,28 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain("'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'");
     expect(chatView).toContain("? 'bottom-2 right-2 top-2 w-44'");
     expect(chatView).toContain("'bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto'");
-    expect(chatGateDialog).toContain('role="dialog"');
-    expect(chatGateDialog).toContain("createPortal(dialog, document.body)");
-    expect(chatGateDialog).toContain('fixed inset-0 z-[180]');
-    expect(chatGateDialog).toContain('w-full max-w-md');
-    expect(chatGateDialog).not.toContain("isPanel ? 'max-w-sm'");
-    expect(chatGateDialog).toContain('const hasRecentActivityAction = Boolean(recentActivityWarning && (activeSessionId || actionSessionId));');
+    expect(chatGateDialog).toContain('<DialogFrame');
+    expect(chatGateDialog).toContain('unframed');
+    expect(chatGateDialog).toContain('titleId={dialogTitleId}');
+    expect(chatGateDialog).toContain('descriptionId={dialogBodyId}');
+    expect(chatGateDialog).toContain('initialFocusRef={primaryActionRef}');
+    expect(chatGateDialog).toContain('closeDisabled={!activeSessionId}');
     expect(chatGateDialog).toContain('const recentActivityBody = recentActivityWarning?.message.trim();');
     expect(chatGateDialog).toContain('const recentActivityActionLabel = recentActivityWarning?.actionLabel?.trim();');
     expect(chatGateDialog).toContain('const primaryActionRef = React.useRef<HTMLButtonElement>(null);');
-    expect(chatGateDialog).toContain('const shouldReduceMotion = useReducedMotion();');
-    expect(chatGateDialog).toContain('const restoreTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;');
-    expect(chatGateDialog).toContain('const primaryAction = primaryActionRef.current;');
-    expect(chatGateDialog).toContain('if (primaryAction && !primaryAction.disabled)');
-    expect(chatGateDialog).toContain('primaryAction.focus({ preventScroll: true });');
-    expect(chatGateDialog).toContain('dialogRef.current?.focus({ preventScroll: true });');
-    expect(chatGateDialog).toContain('restoreTarget.focus({ preventScroll: true });');
-    expect(chatGateDialog).toContain('tabIndex={-1}');
-    expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0 }}');
-    expect(chatGateDialog).toContain('initial={shouldReduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}');
-    expect(chatGateDialog).toContain('bg-ui-text/40 p-4 dark:bg-ui-bg/75');
+    expect(chatGateDialog).toContain('overlayClassName="absolute z-[150] bg-ui-bg/88 dark:bg-ui-bg/92"');
     expect(chatGateDialog).toContain('rounded-lg border border-ui-border bg-ui-surface');
     expect(chatGateDialog).toContain("t('chat.recentActivityActionTitle')");
     expect(chatGateDialog).toContain("recentActivityBody || t('chat.chooseRecentActivityAction')");
-    expect(chatGateDialog).toContain('const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {');
-    expect(chatGateDialog).toContain('dialog.querySelectorAll<HTMLElement>(focusableSelector)');
-    expect(chatGateDialog).toContain("element.getAttribute('aria-hidden') === 'true'");
-    expect(chatGateDialog).toContain('window.getComputedStyle(element)');
-    expect(chatGateDialog).toContain('getDialogFocusWrapIndex({');
-    expect(chatGateDialog).toContain('focusableElements.findIndex((element) => element === document.activeElement)');
-    expect(chatGateDialog).toContain('(focusableElements[targetIndex] || dialog).focus({ preventScroll: true });');
+    expect(chatGateDialog).not.toContain('role="dialog"');
+    expect(chatGateDialog).not.toContain('focusableSelector');
+    expect(chatGateDialog).not.toContain('useReducedMotion');
     expect(chatGateDialog).toContain('onOpenRecentActivitySession(actionSessionId)');
     expect(chatGateDialog).toContain("recentActivityActionLabel || t('chat.openConversation')");
     expect(chatGateDialog).toContain('if (activeSessionId) onDismissRecentActivityWarning(activeSessionId);');
     expect(chatGateDialog).not.toContain('translate-y-[calc(100%+0.75rem)]');
-    expect(chatView).toContain("content.setAttribute('inert', '')");
-    expect(chatView).toContain('aria-hidden={hasBlockingGate ? true : undefined}');
+    expect(chatView).not.toContain("content.setAttribute('inert', '')");
+    expect(chatView).not.toContain('aria-hidden={hasBlockingGate ? true : undefined}');
     expect(chatView).toContain('recentActivityWarning: effectiveRecentActivityWarning');
     expect(chatView).toContain("const blockedComposerMessage = recentActivityWarning");
     expect(chatView).toContain("t('chat.chooseRecentActivityAction')");

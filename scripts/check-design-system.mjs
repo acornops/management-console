@@ -68,6 +68,82 @@ function jsxOpenings(source, startPattern) {
   return openings;
 }
 
+function topLevelClassNameValues(openingSource) {
+  const values = [];
+  let braceDepth = 0;
+  let quote = '';
+  let escaped = false;
+
+  for (let index = 0; index < openingSource.length; index += 1) {
+    const character = openingSource[index];
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+      } else if (character === '\\') {
+        escaped = true;
+      } else if (character === quote) {
+        quote = '';
+      }
+      continue;
+    }
+    if (character === '"' || character === "'" || character === '`') {
+      quote = character;
+      continue;
+    }
+    if (character === '{') {
+      braceDepth += 1;
+      continue;
+    }
+    if (character === '}') {
+      braceDepth = Math.max(0, braceDepth - 1);
+      continue;
+    }
+    if (braceDepth !== 0 || !openingSource.startsWith('className', index)) continue;
+
+    const before = openingSource[index - 1];
+    const after = openingSource[index + 'className'.length];
+    if ((before && /[\w$]/.test(before)) || (after && /[\w$]/.test(after))) continue;
+
+    let valueStart = index + 'className'.length;
+    while (/\s/.test(openingSource[valueStart] ?? '')) valueStart += 1;
+    if (openingSource[valueStart] !== '=') continue;
+    valueStart += 1;
+    while (/\s/.test(openingSource[valueStart] ?? '')) valueStart += 1;
+
+    const delimiter = openingSource[valueStart];
+    if (delimiter === '"' || delimiter === "'" || delimiter === '`') {
+      const valueEnd = openingSource.indexOf(delimiter, valueStart + 1);
+      if (valueEnd !== -1) values.push({ kind: 'literal', value: openingSource.slice(valueStart + 1, valueEnd) });
+    } else if (delimiter === '{') {
+      let valueDepth = 1;
+      let valueQuote = '';
+      let valueEscaped = false;
+      let valueEnd = valueStart + 1;
+      for (; valueEnd < openingSource.length && valueDepth > 0; valueEnd += 1) {
+        const valueCharacter = openingSource[valueEnd];
+        if (valueQuote) {
+          if (valueEscaped) {
+            valueEscaped = false;
+          } else if (valueCharacter === '\\') {
+            valueEscaped = true;
+          } else if (valueCharacter === valueQuote) {
+            valueQuote = '';
+          }
+        } else if (valueCharacter === '"' || valueCharacter === "'" || valueCharacter === '`') {
+          valueQuote = valueCharacter;
+        } else if (valueCharacter === '{') {
+          valueDepth += 1;
+        } else if (valueCharacter === '}') {
+          valueDepth -= 1;
+        }
+      }
+      values.push({ kind: 'expression', value: openingSource.slice(valueStart + 1, valueEnd - 1) });
+    }
+  }
+
+  return values;
+}
+
 function report(path, rule, detail) {
   failures.push(`${relative(root, path)}: ${rule}: ${detail}`);
 }
@@ -77,7 +153,7 @@ const productionSources = [srcRoot, uiSourceRoot].flatMap(productionFiles);
 const namedTailwindPalette = /(?:^|[\s'"`])(?:[a-z-]+:)*(?:bg|text|border|divide|ring|outline|shadow|fill|stroke|from|via|to|decoration|caret|accent)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950)(?:\/[^\s'"`}]+)?/g;
 const prohibitedTypographyUtility = /(?:^|[\s'"`])(?:font-(?:bold|extrabold)|uppercase|tracking-(?:wider|widest)|tracking-\[[^\]]+\]|text-\[(?:9|10|11)px\]|text-\[(?:0\.5625|0\.625|0\.68|0\.6875)rem\])(?=$|[\s'"`}])/g;
 const canonicalHeadingRole = /(?:^|[\s'"`])type-(?:route-title|section-title|panel-title|row-title|data)(?=$|[\s'"`}])/;
-const prohibitedActionTypography = /(?:^|[\s'"`])(?:type-(?:label|micro-label|emphasis)|font-(?:bold|extrabold)|uppercase|tracking-(?:wide|wider|widest))(?=$|[\s'"`}])/;
+const prohibitedActionTypography = /(?:^|[\s'"`])(?:type-(?:body|caption|label|micro-label|emphasis)|font-(?:bold|extrabold)|uppercase|tracking-(?:wide|wider|widest))(?=$|[\s'"`}])/;
 const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|navigationItemClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
 const canonicalButtonTarget = /(?:^|[\s'"`])(?:control-target|min-h-11|h-11|min-h-12|h-12|min-h-control|h-control)(?=$|[\s'"`])/;
 const semanticTextRole = /(?:^|[\s'"`])type-(?:body|caption|ui|label|micro-label|emphasis|row-title)(?=$|[\s'"`}])/;
@@ -95,6 +171,21 @@ const canonicalTypographyRoles = new Set([
   'type-label',
   'type-micro-label',
   'type-data',
+  'type-count',
+  'type-code'
+]);
+const completeTypographyRoles = new Set([
+  'type-route-title',
+  'type-section-title',
+  'type-panel-title',
+  'type-row-title',
+  'type-body',
+  'type-ui',
+  'type-caption',
+  'type-label',
+  'type-micro-label',
+  'type-data',
+  'type-count',
   'type-code'
 ]);
 const canonicalModules = new Set([
@@ -135,7 +226,7 @@ for (const path of productionSources) {
     report(path, 'semantic-typography', `${match[0].trim()} must be replaced by a documented semantic typography role`);
   }
   if (/text-xl[^\n"'`]*font-semibold[^\n"'`]*tracking-tight|text-xl[^\n"'`]*tracking-tight[^\n"'`]*font-semibold/.test(source)) {
-    report(path, 'data-typography', 'metric and count readouts must use the type-data semantic role');
+    report(path, 'data-typography', 'prominent metric readouts must use the type-data semantic role');
   }
 }
 
@@ -205,19 +296,38 @@ for (const path of files) {
     }
   }
 
-  for (const opening of jsxOpenings(source, /<(?:Button|(?:motion\.)?button)\b/g)) {
+  for (const opening of jsxOpenings(source, /<(?:Button|MotionButton|(?:motion\.)?button)\b/g)) {
     if (!prohibitedActionTypography.test(opening.source)) continue;
     const line = source.slice(0, opening.start).split('\n').length;
     report(path, 'action-typography', `line ${line}: actions use type-ui sentence case; label, emphasis, uppercase, and wide-tracking roles are prohibited`);
   }
 
+  for (const opening of jsxOpenings(source, /<(?:Button|MotionButton)\b/g)) {
+    if (/\bvariant\s*=/.test(opening.source)) continue;
+    const line = source.slice(0, opening.start).split('\n').length;
+    report(path, 'implicit-button-variant', `line ${line}: shared buttons must declare their visual intent with an explicit variant`);
+  }
+
   for (const opening of jsxOpenings(source, /<[A-Za-z][A-Za-z0-9.]*(?=[\s>])/g)) {
-    if (!opening.source.includes('className')) continue;
-    for (const match of opening.source.matchAll(typographyRoleUse)) {
+    const classNameValues = topLevelClassNameValues(opening.source);
+    const classNameSource = classNameValues.map(({ value }) => value).join(' ');
+    if (!classNameSource) continue;
+    for (const match of classNameSource.matchAll(typographyRoleUse)) {
       const role = match.groups?.role;
-      if (!role || canonicalTypographyRoles.has(role)) continue;
+      if (!role) continue;
+      if (canonicalTypographyRoles.has(role)) continue;
       const line = source.slice(0, opening.start).split('\n').length;
       report(path, 'unknown-typography-role', `line ${line}: ${role} is not a defined semantic typography role`);
+    }
+    for (const { kind, value } of classNameValues) {
+      if (kind !== 'literal') continue;
+      const completeRoles = new Set([...value.matchAll(typographyRoleUse)]
+        .map((match) => match.groups?.role)
+        .filter((role) => role && completeTypographyRoles.has(role)));
+      if (completeRoles.size > 1) {
+        const line = source.slice(0, opening.start).split('\n').length;
+        report(path, 'conflicting-typography-roles', `line ${line}: use one complete semantic typography role per element (${[...completeRoles].join(', ')})`);
+      }
     }
   }
 

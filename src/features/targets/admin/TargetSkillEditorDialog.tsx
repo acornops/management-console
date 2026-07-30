@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import type { ControlPlaneTargetSkillDetail } from '@/services/controlPlaneApi';
 import { TargetSkillFileTree } from '@/features/targets/admin/TargetSkillFileTree';
@@ -16,8 +16,9 @@ import {
   type SkillEditorMode,
   type SkillEditorStep
 } from '@/features/targets/admin/targetSkillsViewModel';
+import { TextInput, Textarea } from '@acornops/ui';
 
-const skillNameInputClassName = formInputClassName('px-4 font-medium');
+const skillNameInputClassName = formInputClassName('px-4 type-ui');
 
 interface TargetSkillEditorDialogProps {
   mode: SkillEditorMode;
@@ -108,7 +109,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
 
   return (
     <>
-      <Dialog
+      <DialogFrame unframed
         titleId="target-skill-editor-title"
         closeDisabled={saving || showDiscardDialog}
         onClose={guardedClose}
@@ -149,7 +150,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
           <div className="rounded-lg border border-ui-border bg-ui-bg p-5">
             <label className="space-y-1">
               <span className="type-label px-1">Skill name</span>
-              <input
+              <TextInput
                 value={createName}
                 onChange={(event) => onCreateNameChange(event.target.value)}
                 placeholder="Troubleshooting CNPG"
@@ -208,8 +209,8 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 </div>
               )}
               {detail && detail.validationStatus !== 'valid' && (
-                <div className="m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-sm text-status-warning-text">
-                  <div className="flex items-center gap-2 font-semibold">
+                <div className="m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 type-body text-status-warning-text">
+                  <div className="flex items-center gap-2 type-emphasis">
                     <AlertTriangle className="h-4 w-4" />
                     Validation issues
                   </div>
@@ -221,11 +222,11 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 </div>
               )}
               <div className="min-h-0 flex-1 p-4">
-                <textarea
+                <Textarea
                   value={activeFile?.content || ''}
                   readOnly={!canEditSkills || !activeFile}
                   onChange={(event) => updateActiveFile(event.target.value)}
-                  className="h-full min-h-[28rem] w-full resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono text-sm leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="h-full min-h-[28rem] w-full resize-none rounded-lg border border-ui-border bg-ui-bg px-4 py-3 font-mono type-body leading-6 text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
                   spellCheck={false}
                 />
               </div>
@@ -272,7 +273,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
           </>
         )}
       </div>
-      </Dialog>
+      </DialogFrame>
       {showDiscardDialog && (
         <UnsavedChangesDialog
           title="Discard unsaved changes?"

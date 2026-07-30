@@ -1,32 +1,10 @@
 import { spawn } from 'node:child_process';
+import { routeCoverageManifest } from './route-coverage-manifest.mjs';
 
 const host = '127.0.0.1';
 const port = Number(process.env.MANAGEMENT_CONSOLE_SMOKE_PORT || 4179);
 const origin = `http://${host}:${port}`;
-const routes = [
-  '/',
-  '/workspaces',
-  '/workspaces/smoke-workspace/overview',
-  '/workspaces/smoke-workspace/workflows',
-  '/workspaces/smoke-workspace/runs',
-  '/workspaces/smoke-workspace/triggers',
-  '/workspaces/smoke-workspace/triggers?type=acornops_event',
-  '/workspaces/smoke-workspace/triggers?type=webhook',
-  '/workspaces/smoke-workspace/triggers?create=schedule&workflowId=smoke-workflow',
-  '/workspaces/smoke-workspace/approvals',
-  '/settings',
-  '/workspaces/smoke-workspace/virtual-machines',
-  '/workspaces/smoke-workspace/virtual-machines/smoke-vm/mcp-servers',
-  '/workspaces/smoke-workspace/virtual-machines/smoke-vm/skills',
-  '/workspaces/smoke-workspace/virtual-machines/smoke-vm/tools',
-  '/workspaces/smoke-workspace/virtual-machines/smoke-vm/settings',
-  '/invites/smoke-token',
-  '/integrations/external/link?status=linked',
-  '/kubernetes-clusters/smoke-cluster/overview',
-  '/kubernetes-clusters/smoke-cluster/skills',
-  '/kubernetes-clusters/smoke-cluster/tools',
-  '/workspaces/smoke-workspace/kubernetes-clusters/smoke-cluster/resources'
-];
+const routes = routeCoverageManifest.map((route) => route.path);
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

@@ -6,6 +6,7 @@ import { BookOpen, Wrench } from 'lucide-react';
 import { MessageActions } from '@/features/targets/chat/components/MessageActions';
 import { markdownRemarkPlugins } from '@/features/targets/chat/lib/markdown';
 import type { ChatMessage } from '@/types';
+import { Textarea } from '@acornops/ui';
 
 interface UserMessageTurnProps {
   message: ChatMessage;
@@ -52,12 +53,12 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
     <div className="group flex w-full justify-end">
       <div className={`min-w-0 ${isEditing ? 'w-[min(42rem,88%)]' : 'max-w-[min(42rem,88%)]'}`}>
         {showAuthor && (
-          <p className="mb-1 text-right text-[11px] font-semibold text-ui-text-muted">
+          <p className="type-caption type-emphasis mb-1 text-right text-ui-text-muted">
             {message.createdByUser?.displayName || t('chat.workspaceMember')} · {timestampLabel}
           </p>
         )}
         <div
-          className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4"
+          className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 type-ui text-ui-bg shadow-sm sm:px-5 sm:py-4"
           aria-label={t('chat.roleUser')}
         >
           <span className="sr-only">{t('chat.roleUser')}</span>
@@ -69,11 +70,11 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
                 onSubmitEdit();
               }}
             >
-              <textarea
+              <Textarea
                 ref={textareaRef}
                 value={editValue}
                 onChange={(event) => onEditValueChange(event.target.value)}
-                className="min-h-24 w-full resize-y rounded-md border border-ui-bg/20 bg-ui-bg/10 px-3 py-2 text-sm text-ui-bg outline-none transition-colors placeholder:text-ui-bg/50 focus:border-ui-bg/45 focus:ring-2 focus:ring-ui-bg/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-24 w-full resize-y rounded-md border border-ui-bg/20 bg-ui-bg/10 px-3 py-2 type-body text-ui-bg outline-none transition-colors placeholder:text-ui-bg/50 focus:border-ui-bg/45 focus:ring-2 focus:ring-ui-bg/20 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSubmittingEdit}
                 aria-label={t('chat.editMessage')}
               />
@@ -109,7 +110,7 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
                       <span
                         key={`${reference.kind}:${reference.id}`}
                         role="listitem"
-                        className="inline-flex items-center gap-1 rounded bg-ui-bg/15 px-1.5 py-0.5 type-caption font-semibold"
+                        className="inline-flex items-center gap-1 rounded bg-ui-bg/15 px-1.5 py-0.5 type-caption type-emphasis"
                       >
                         <Icon className="h-3 w-3" aria-hidden="true" />
                         {reference.label}

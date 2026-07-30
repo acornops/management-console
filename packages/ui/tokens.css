@@ -280,6 +280,15 @@
   line-height: 1.75rem;
 }
 
+.type-count {
+  color: var(--ao-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.25rem;
+}
+
 .type-code {
   font-family: 'Ubuntu Mono', ui-monospace, SFMono-Regular, Consolas,
     'Liberation Mono', monospace;

@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 
 interface UnsavedChangesDialogProps {
   title: string;
@@ -21,7 +21,7 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
   onCancel,
   onDiscard
 }) => (
-  <Dialog
+  <DialogFrame unframed
     className="w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
     overlayClassName="z-[120] bg-ui-text/35 dark:bg-ui-bg/70"
     titleId="unsaved-changes-dialog-title"
@@ -48,5 +48,5 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
       <Button variant="secondary" size="sm" onClick={onCancel}>{cancelLabel}</Button>
       <Button variant="danger" size="sm" onClick={onDiscard}>{discardLabel}</Button>
     </div>
-  </Dialog>
+  </DialogFrame>
 );

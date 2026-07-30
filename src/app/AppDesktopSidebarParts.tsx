@@ -85,7 +85,7 @@ export const WorkspaceSidebarNavLink: React.FC<{
     onClick={onClick}
     active={!nested && active}
     className={nested && active
-      ? 'bg-ui-surface font-semibold text-ui-text shadow-sm before:absolute before:left-3 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full before:bg-accent-strong hover:bg-ui-surface [&>span:first-child]:pl-4'
+      ? 'bg-ui-surface type-emphasis text-ui-text shadow-sm before:absolute before:left-3 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full before:bg-accent-strong hover:bg-ui-surface [&>span:first-child]:pl-4'
       : nested
         ? '[&>span:first-child]:pl-4'
         : undefined}

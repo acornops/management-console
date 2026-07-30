@@ -464,8 +464,18 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           <details><summary className="cursor-pointer">Fallback data keeps the catalog available. Show details</summary><ul className="mt-2 list-disc pl-5">{agentLoadError && <li>Agent definitions may be stale.</li>}{ownerUserLoadError && <li>Owner choices are limited to cached members.</li>}</ul></details>
         </Notice>
       )}
+      {!canManageAgents && (
+        <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 type-caption type-emphasis text-ui-text-muted">
+          You can inspect agents. Ask a workspace manager for manage_agents permission to create or change them.
+        </div>
+      )}
       {localNotice && (
-        <div role={localNotice.tone === 'danger' ? 'alert' : 'status'} className={`mb-4 rounded-md border px-3 py-2 text-xs font-semibold ${localNotice.tone === 'danger' ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}>
+        <div
+          role={localNotice.tone === 'danger' ? 'alert' : 'status'}
+          aria-live={localNotice.tone === 'danger' ? 'assertive' : 'polite'}
+          aria-atomic="true"
+          className={`mb-4 rounded-md border px-3 py-2 type-caption type-emphasis ${localNotice.tone === 'danger' ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}
+        >
           {localNotice.message}
         </div>
       )}
@@ -529,7 +539,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       onRestoreSelectedAgentVersion={(version) => void restoreSelectedAgentVersion(version)}
     />
   ) : (
-    <div role="status" className="flex h-full items-center justify-center bg-ui-bg text-sm font-semibold text-ui-text-muted">
+    <div role="status" className="type-body type-emphasis flex h-full items-center justify-center bg-ui-bg text-ui-text-muted">
       {agentCatalogReady ? 'Agent not found.' : 'Loading Agent...'}
     </div>
   );

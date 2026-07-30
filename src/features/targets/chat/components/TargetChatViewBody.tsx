@@ -1,7 +1,7 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { Button } from '@acornops/ui';
+import { Button, DrawerFrame } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { ConversationHistory } from '@/features/targets/chat/components/ConversationHistory';
 import { LiveRunTrace } from '@/features/targets/chat/types';
@@ -150,8 +150,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     openDeleteSessionModal,
     submitEditedMessage
   } = props;
-  const contentRef = React.useRef<HTMLDivElement>(null);
-  const hasBlockingGate = Boolean(recentActivityWarning);
   const hasReadyAiRuntime = aiRuntimeReadiness.status === 'ready';
   const {
     unseenCount: unseenInvestigationCount,
@@ -204,20 +202,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     }
   }, [automaticInvestigationsEnabled, isInvestigationsRailActive, markInvestigationsViewed, unseenInvestigationCount]);
 
-  React.useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-
-    if (hasBlockingGate) {
-      content.setAttribute('inert', '');
-      return () => {
-        content.removeAttribute('inert');
-      };
-    }
-
-    content.removeAttribute('inert');
-  }, [hasBlockingGate]);
-
   return (
     <div
       data-target-chat-surface="true"
@@ -227,7 +211,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
       onDragLeave={handleChatWindowDragLeave}
       onDrop={(event) => void handleChatWindowDrop(event)}
     >
-      <div ref={contentRef} className="contents" aria-hidden={hasBlockingGate ? true : undefined}>
+      <div className="contents">
         <TargetChatDropOverlay canPost={canPost} isFileDragActive={isFileDragActive} isRunActive={isRunActive} recentActivityWarning={recentActivityWarning} resolvedNoChatAccessKey={resolvedNoChatAccessKey} t={t} />
         {!isPanel && (
           <TargetChatNavigationRail
@@ -324,7 +308,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                       {headerLeading}
                       <div className="min-w-0">
                         <h1 className="type-section-title truncate text-ui-text">{title}</h1>
-                        <p className="mt-1 text-xs font-medium text-ui-text-muted">{t('chat.panelDescription', { name: target.name })}</p>
+                        <p className="mt-1 type-caption text-ui-text-muted">{t('chat.panelDescription', { name: target.name })}</p>
                       </div>
                     </div>
                     <TargetChatPanelControls onClose={onClose} onMaximize={onMaximize} t={t} />
@@ -390,14 +374,15 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   <div className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} mx-auto space-y-5 pb-2`}>
                     {hasEarlierMessages && (
                       <div className="flex justify-center">
-                        <button
+                        <Button
                           type="button"
                           onClick={() => void onLoadEarlierMessages()}
                           disabled={isLoadingEarlierMessages}
-                          className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+                          variant="secondary"
+                          size="sm"
                         >
                           {isLoadingEarlierMessages ? t('chat.loadingEarlier') : t('chat.loadEarlier')}
-                        </button>
+                        </Button>
                       </div>
                     )}
                     {visibleMessages.map((message, messageIndex) => {
@@ -573,53 +558,37 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           )}
         </div>
 
-        <AnimatePresence>
-          {!isPanel && isHistoryOpen && (
-            <motion.div
-              className="absolute inset-0 z-[110] bg-ui-text/20 dark:bg-ui-bg/65 lg:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget) setIsHistoryOpen(false);
-              }}
-            >
-              <motion.aside
-                ref={historyPanelRef}
-                id={mobileHistoryPanelId}
-                role="dialog"
-                aria-modal="true"
-                aria-label={t(automaticInvestigationsEnabled && historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
-                tabIndex={-1}
-                initial={{ x: -24, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -24, opacity: 0 }}
-                transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute left-12 top-0 flex h-full w-[min(21rem,calc(100vw-5rem))] flex-col overflow-hidden border-r border-ui-border bg-ui-surface shadow-xl outline-none"
-                onMouseDown={(event) => event.stopPropagation()}
-              >
-                <ConversationHistory
-                  appName={target.name}
-                  sessions={sessions}
-                  sessionOrigin={automaticInvestigationsEnabled
-                    ? historyView === 'investigations' ? 'auto_triage' : 'manual'
-                    : undefined}
-                  activeSessionId={activeSessionId}
-                  sessionAssistantStatuses={sessionAssistantStatuses}
-                  isSessionsLoading={isSessionsLoading}
-                  onSelectSession={selectSession}
-                  onDeleteSessionClick={openDeleteSessionModal}
-                  onSearchValueChange={setHistorySearchValue}
-                  onClose={() => setIsHistoryOpen(false)}
-                  searchValue={historySearchValue}
-                  canDeleteSessions={canDeleteSessions}
-                  t={t}
-                />
-              </motion.aside>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <DrawerFrame
+          unframed
+          isOpen={!isPanel && isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+          ariaLabel={t(automaticInvestigationsEnabled && historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
+          titleId={mobileHistoryPanelId}
+          id={mobileHistoryPanelId}
+          initialFocusRef={historyPanelRef}
+          side="left"
+          containerClassName="absolute z-[110] lg:hidden"
+          overlayClassName="bg-ui-text/20 dark:bg-ui-bg/65"
+          className="ml-12 h-full w-[min(21rem,calc(100vw-5rem))] max-w-none border-l-0 bg-ui-surface shadow-xl outline-none"
+        >
+          <ConversationHistory
+            appName={target.name}
+            sessions={sessions}
+            sessionOrigin={automaticInvestigationsEnabled
+              ? historyView === 'investigations' ? 'auto_triage' : 'manual'
+              : undefined}
+            activeSessionId={activeSessionId}
+            sessionAssistantStatuses={sessionAssistantStatuses}
+            isSessionsLoading={isSessionsLoading}
+            onSelectSession={selectSession}
+            onDeleteSessionClick={openDeleteSessionModal}
+            onSearchValueChange={setHistorySearchValue}
+            onClose={() => setIsHistoryOpen(false)}
+            searchValue={historySearchValue}
+            canDeleteSessions={canDeleteSessions}
+            t={t}
+          />
+        </DrawerFrame>
 
         {deleteTargetSession && (
           <DeleteConversationDialog
@@ -637,6 +606,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
         {recentActivityWarning && (
           <TargetChatGateDialog
             activeSessionId={activeSessionId}
+            isPanel={isPanel}
             recentActivityWarning={recentActivityWarning}
             onDismissRecentActivityWarning={onDismissRecentActivityWarning}
             onOpenRecentActivitySession={onOpenRecentActivitySession}

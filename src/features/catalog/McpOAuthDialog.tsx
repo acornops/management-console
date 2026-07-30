@@ -2,7 +2,7 @@ import React from 'react';
 import { ExternalLink, KeyRound, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Checkbox, CloseButton, Dialog, InlineLoadingIndicator, Select } from '@acornops/ui';
+import { Button, Checkbox, CloseButton, DialogFrame, InlineLoadingIndicator, Select } from '@acornops/ui';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 import type {
   McpOAuthIssuerCandidate,
@@ -92,7 +92,7 @@ export const McpOAuthConsentReview: React.FC<{
         )}
       </div>
 
-      <label className="flex items-start gap-3 rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text">
+      <label className="type-body flex items-start gap-3 rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-ui-text">
         <Checkbox
           checked={consentGranted}
           disabled={disabled}
@@ -213,7 +213,7 @@ export const McpOAuthDialog: React.FC<McpOAuthDialogProps> = ({
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId={titleId}
       closeDisabled={starting}
       onClose={onClose}
@@ -334,6 +334,6 @@ export const McpOAuthDialog: React.FC<McpOAuthDialogProps> = ({
           </div>
         </div>
       </form>
-    </Dialog>
+    </DialogFrame>
   );
 };

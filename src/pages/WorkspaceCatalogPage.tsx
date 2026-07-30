@@ -30,6 +30,7 @@ import type { TargetMcpServer } from '@/services/control-plane/targetMcpTypes';
 import type { Workspace } from '@/types';
 import { AppPaths, type McpCatalogRouteState } from '@/utils/routes';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
+import { TextInput } from '@acornops/ui';
 
 type Navigate = (path: string, options?: { replace?: boolean }) => void;
 type Destination = {
@@ -391,12 +392,12 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
         </>}
       />
 
-      {error && <div role="alert" className="mb-4 rounded-md border border-status-danger/30 bg-status-danger-soft px-4 py-3 text-sm text-status-danger-text">{error}</div>}
+      {error && <div role="alert" className="mb-4 rounded-md border border-status-danger/30 bg-status-danger-soft px-4 py-3 type-body text-status-danger-text">{error}</div>}
 
       {noEnabledRegistries && (
         <div className="space-y-4">
           {!selectedDestination && (
-            <div className="mx-auto max-w-md text-sm font-semibold text-ui-text">
+            <div className="mx-auto max-w-md type-body type-emphasis text-ui-text">
               <span>Install destination</span>
               <Select
                 ariaLabel="Install destination"
@@ -481,9 +482,9 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
             loading={<MasterDetailLoading>Loading catalog…</MasterDetailLoading>}
             empty={<MasterDetailEmptyState title="No MCP servers are available" description="Synchronize an enabled registry to discover installable servers." />}
             filteredEmpty={<MasterDetailEmptyState title="No MCP servers found" description="Adjust the search, source, or compatibility filter." />}
-            error={<div role="alert" className="space-y-3 p-5 text-sm text-status-danger-text"><p>{catalogError || 'The MCP catalog could not be loaded.'}</p><Button variant="secondary" size="sm" onClick={() => void retryArtifacts()}>Retry</Button></div>}
+            error={<div role="alert" className="space-y-3 p-5 type-body text-status-danger-text"><p>{catalogError || 'The MCP catalog could not be loaded.'}</p><Button variant="secondary" size="sm" onClick={() => void retryArtifacts()}>Retry</Button></div>}
             feedback={catalogError
-              ? <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft p-3 text-sm text-status-danger-text">{catalogError}</div>
+              ? <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft p-3 type-body text-status-danger-text">{catalogError}</div>
               : <span className="sr-only">{loadingMore ? 'Loading more servers' : 'Refreshing catalog'}</span>}
             announcement={catalogPhase === 'ready' ? `${artifacts.length} servers loaded` : undefined}
           >
@@ -518,7 +519,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
             </dl>
 
             <div className="space-y-4 border-t border-ui-border pt-5">
-              <div className="text-sm font-semibold text-ui-text">
+              <div className="type-body type-emphasis text-ui-text">
                 <span>Endpoint</span>
                 <Select
                   ariaLabel="Endpoint"
@@ -543,16 +544,16 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
                     : undefined}
                 />
               )}
-              {configurationFields.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{configurationFields.map((field) => <label key={field.name} className="text-sm font-semibold text-ui-text">{field.name}{field.required ? ' *' : ''}<input value={endpointConfiguration[selectedArtifact.id]?.[field.name] ?? field.default ?? ''} placeholder={field.placeholder} onChange={(event) => setEndpointConfiguration((current) => ({ ...current, [selectedArtifact.id]: { ...current[selectedArtifact.id], [field.name]: event.target.value } }))} className="mt-2 min-h-11 w-full rounded-md border border-ui-border bg-ui-bg px-3 font-normal text-ui-text" />{field.description && <span className="type-caption mt-1 block font-normal text-ui-text-muted">{field.description}</span>}</label>)}</div>}
+              {configurationFields.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{configurationFields.map((field) => <label key={field.name} className="type-body type-emphasis text-ui-text">{field.name}{field.required ? ' *' : ''}<TextInput value={endpointConfiguration[selectedArtifact.id]?.[field.name] ?? field.default ?? ''} placeholder={field.placeholder} onChange={(event) => setEndpointConfiguration((current) => ({ ...current, [selectedArtifact.id]: { ...current[selectedArtifact.id], [field.name]: event.target.value } }))} className="mt-2 min-h-11 w-full rounded-md border border-ui-border bg-ui-bg px-3 type-body text-ui-text" />{field.description && <span className="type-caption mt-1 block type-body text-ui-text-muted">{field.description}</span>}</label>)}</div>}
             </div>
 
             <div className="border-t border-ui-border pt-5">
-              <div className="text-sm font-semibold text-ui-text">
+              <div className="type-body type-emphasis text-ui-text">
                 <span>Install destination</span>
                 {selectedDestination ? (
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-                    <span><span className="block text-sm font-semibold">{selectedDestination.name}</span><span className="type-caption text-ui-text-muted">{selectedDestination.kind} · {selectedDestination.status}</span></span>
-                    <a href={destinationHref(workspace.id, selectedDestination)} className="text-sm font-semibold text-accent-strong underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-control-boundary">Back to destination</a>
+                    <span><span className="block type-body type-emphasis">{selectedDestination.name}</span><span className="type-caption text-ui-text-muted">{selectedDestination.kind} · {selectedDestination.status}</span></span>
+                    <a href={destinationHref(workspace.id, selectedDestination)} className="type-body type-emphasis text-accent-strong underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-control-boundary">Back to destination</a>
                   </div>
                 ) : (
                   <Select
@@ -570,8 +571,8 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
                   />
                 )}
               </div>
-              {selectedDestination?.inactive && <p role="status" className="mt-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 text-sm text-status-warning-text">{selectedDestination.name} is {selectedDestination.status}. You can configure it now, but the capability will not be usable until the destination becomes active.</p>}
-              {!selectedArtifact.compatible && <p role="status" className="mt-3 text-sm text-status-warning-text">{selectedArtifact.incompatibilityReason || 'This artifact has no supported endpoint.'}</p>}
+              {selectedDestination?.inactive && <p role="status" className="mt-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-body text-status-warning-text">{selectedDestination.name} is {selectedDestination.status}. You can configure it now, but the capability will not be usable until the destination becomes active.</p>}
+              {!selectedArtifact.compatible && <p role="status" className="mt-3 type-body text-status-warning-text">{selectedArtifact.incompatibilityReason || 'This artifact has no supported endpoint.'}</p>}
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" disabled={!canManageMcp || !selectedDestination || !selectedArtifact.compatible || !endpoint || endpoint.supported === false || missingConfiguration || installedCurrent || loadingDestination || pending} onClick={() => void install()}>{pending ? 'Saving…' : installedCurrent ? 'Installed' : matchingInstallation ? 'Update' : 'Install'}</Button>
                 {matchingInstallation?.credentialMode !== 'none' && connectionLoadError && <Button variant="secondary" disabled={pending} onClick={() => void retryCredential(matchingInstallation)}>Retry connection status</Button>}

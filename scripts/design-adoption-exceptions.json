@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "exceptions": [
+    {
+      "id": "markdown-renderer-user-table",
+      "rule": "native-visible-table",
+      "path": "src/features/targets/chat/lib/markdown.tsx",
+      "scope": "renderer:table",
+      "classification": "permanent",
+      "rationale": "The React Markdown renderer owns user-authored table structure and cannot replace those intrinsic elements without changing renderer semantics.",
+      "owner": "management-console-design-system",
+      "reviewedOn": "2026-07-29"
+    }
+  ]
+}

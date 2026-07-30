@@ -16,17 +16,17 @@ export const AutomaticInvestigationBrief: React.FC<{
           <Bot className="h-4 w-4" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-ui-text">{t('chat.automaticInvestigationStarted')}</p>
-          <p className="mt-1 text-xs leading-5 text-ui-text-muted">
+          <p className="type-body type-emphasis text-ui-text">{t('chat.automaticInvestigationStarted')}</p>
+          <p className="type-caption mt-1 leading-5 text-ui-text-muted">
             {session.name} · {t(`chat.issueSeverity.${session.automaticInvestigation?.severity || 'warning'}`)} · {timestampLabel}
           </p>
         </div>
       </div>
       <details className="mt-4 border-t border-ui-border pt-3">
-        <summary className="control-target w-fit cursor-pointer text-xs font-semibold text-ui-text-muted hover:text-ui-text">
+        <summary className="control-target type-caption type-emphasis w-fit cursor-pointer text-ui-text-muted hover:text-ui-text">
           {t('chat.viewInvestigationBrief')}
         </summary>
-        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-ui-bg p-3 text-xs leading-5 text-ui-text-muted">
+        <pre className="type-code mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-ui-bg p-3 leading-5 text-ui-text-muted">
           {message.content}
         </pre>
       </details>

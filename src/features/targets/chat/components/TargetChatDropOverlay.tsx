@@ -34,8 +34,8 @@ export function TargetChatDropOverlay({
             <div className="flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-ui-surface text-accent-strong">
               <Upload className="h-5 w-5" />
             </div>
-            <p className="mt-4 text-base font-semibold text-ui-text">{canPost && !isRunActive ? t('chat.dropFilesTitle') : t('chat.dropFilesUnavailableTitle')}</p>
-            <p className="mt-2 max-w-md text-sm font-medium leading-6 text-ui-text-muted">
+            <p className="type-panel-title mt-4 text-ui-text">{canPost && !isRunActive ? t('chat.dropFilesTitle') : t('chat.dropFilesUnavailableTitle')}</p>
+            <p className="type-body mt-2 max-w-md leading-6 text-ui-text-muted">
               {canPost && !isRunActive ? t('chat.dropFilesBody') : recentActivityWarning ? t('chat.chooseRecentActivityAction') : t(resolvedNoChatAccessKey)}
             </p>
           </div>

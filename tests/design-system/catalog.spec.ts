@@ -41,6 +41,75 @@ test('catalog controls meet responsive target minimums', async ({ page }, testIn
   }
 });
 
+test('overlay frames isolate, contain, nest, restore, and reflow accessibly', async ({ browser, page: projectPage }, testInfo) => {
+  test.setTimeout(60_000);
+  const dark = testInfo.project.name === 'mobile';
+  const page = dark
+    ? await browser.newPage({
+      colorScheme: 'dark',
+      reducedMotion: 'reduce',
+      viewport: { width: 390, height: 844 }
+    })
+    : projectPage;
+  await page.emulateMedia({
+    colorScheme: dark ? 'dark' : 'light',
+    reducedMotion: 'reduce'
+  });
+  await page.goto('/design-system.html');
+  await page.evaluate(() => document.fonts.ready);
+  if (dark) {
+    await page.getByRole('button', { name: 'Dark theme' }).click();
+    await expect(page.locator('html')).toHaveClass(/dark/);
+  }
+  const trigger = page.getByRole('button', { name: 'Open dialog' });
+  const initialBodyOverflow = await page.locator('body').evaluate((element) => element.style.overflow);
+  await trigger.focus();
+  await trigger.evaluate((element: HTMLButtonElement) => element.click());
+  const dialog = page.getByRole('dialog', { name: 'Confirm change' });
+  const dialogElement = page.locator('[aria-labelledby="catalog-dialog-title"]');
+  await expect(dialog).toBeFocused();
+  await expect(page.locator('#design-system-root [inert]').first()).toBeAttached();
+  await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+  await expect(dialog).toHaveAttribute('aria-describedby', 'catalog-dialog-title-description');
+  if (!dark) {
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '200%';
+    });
+  }
+
+  const save = dialog.getByRole('button', { name: 'Save' });
+  await save.focus();
+  await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
+
+  const nestedTrigger = dialog.getByRole('button', { name: 'Open nested confirmation' });
+  await nestedTrigger.focus();
+  await nestedTrigger.evaluate((element: HTMLButtonElement) => element.click());
+  const confirmation = page.getByRole('dialog', { name: 'Delete workspace' });
+  await expect(confirmation).toBeFocused();
+  expect(await dialogElement.evaluate((element) => Boolean(element.closest('[inert]')))).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(confirmation).toHaveCount(0);
+  await expect(dialog).toBeVisible();
+  await expect(nestedTrigger).toBeFocused();
+  await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+
+  const box = await dialog.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box).not.toBeNull();
+  expect(box?.x ?? -1).toBeGreaterThanOrEqual(0);
+  expect(box?.width ?? 0).toBeLessThanOrEqual(viewport?.width ?? 0);
+  expect(box?.height ?? 0).toBeLessThanOrEqual(viewport?.height ?? 0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await page.keyboard.press('Escape');
+  await expect(dialogElement).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await expect(page.locator('#design-system-root [inert]')).toHaveCount(0);
+  await expect.poll(() => page.locator('body').evaluate((element) => element.style.overflow)).toBe(initialBodyOverflow);
+  if (dark) await page.close();
+});
+
 test('collection discovery supports responsive layouts, keyboard filters, and no-match recovery', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
   await page.goto('/design-system.html');

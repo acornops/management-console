@@ -12,6 +12,7 @@
     "DiscoveryFilterBar": "DiscoveryFilterBar",
     "EmptyState": "EmptyState",
     "FieldValidationMessage": "FieldValidationMessage",
+    "FileInput": "FileInput",
     "FormControls": "FieldLabel",
     "InlineAlert": "InlineAlert",
     "InlineConfirmation": "InlineConfirmation",

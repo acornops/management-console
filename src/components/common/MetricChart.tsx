@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { DataTable, DataTableBody, DataTableCell, DataTableHeader, DataTableHeaderCell, DataTableRow } from '@acornops/ui';
 
 export const MetricChart: React.FC<{
   title: string;
@@ -26,23 +27,22 @@ export const MetricChart: React.FC<{
   const numberFormatter = new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 });
   const formatMetricValue = (value: number | string) => `${value}${unit === '%' ? unit : unit ? ` ${unit}` : ''}`;
   const accessibleDataTable = points.length > 0 ? (
-    <table className="sr-only">
-      <caption>{t('common.chartData', { title })}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{t('common.time')}</th>
-          <th scope="col">{t('common.value')}</th>
-        </tr>
-      </thead>
-      <tbody>
+    <DataTable caption={t('common.chartData', { title })} className="sr-only">
+      <DataTableHeader>
+        <DataTableRow>
+          <DataTableHeaderCell scope="col">{t('common.time')}</DataTableHeaderCell>
+          <DataTableHeaderCell scope="col">{t('common.value')}</DataTableHeaderCell>
+        </DataTableRow>
+      </DataTableHeader>
+      <DataTableBody>
         {points.map((point, index) => (
-          <tr key={`${point.label}-${index}-accessible`}>
-            <th scope="row">{point.label}</th>
-            <td>{formatMetricValue(numberFormatter.format(point.value))}</td>
-          </tr>
+          <DataTableRow key={`${point.label}-${index}-accessible`}>
+            <DataTableCell as="th" scope="row">{point.label}</DataTableCell>
+            <DataTableCell>{formatMetricValue(numberFormatter.format(point.value))}</DataTableCell>
+          </DataTableRow>
         ))}
-      </tbody>
-    </table>
+      </DataTableBody>
+    </DataTable>
   ) : null;
 
   if (points.length < 2) {

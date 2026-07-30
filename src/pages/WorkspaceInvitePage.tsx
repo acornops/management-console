@@ -73,7 +73,7 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
       <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-2xl flex-col justify-center">
         <div className="rounded-xl border border-ui-border bg-ui-surface p-8 shadow-sm">
           {isLoading ? (
-            <div className="flex items-center gap-3 text-sm font-semibold text-ui-text-muted">
+            <div className="flex items-center gap-3 type-body type-emphasis text-ui-text-muted">
               <Loader2 className="h-5 w-5 animate-spin text-accent-strong" />
               {t('invite.loading')}
             </div>
@@ -85,8 +85,8 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
                 </div>
                 <div>
                   <p className="type-label">{t('invite.title')}</p>
-                  <h1 className="mt-2 text-3xl type-panel-title">{invitation.workspaceName}</h1>
-                  <p className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">
+                  <h1 className="mt-2 type-panel-title">{invitation.workspaceName}</h1>
+                  <p className="mt-2 type-ui leading-6 text-ui-text-muted">
                     {t('invite.invitedAs', {
                       role: formatRole(invitation.role, invitation.roleTemplate),
                       time: formatDate(invitation.expiresAt)
@@ -95,13 +95,13 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
                 </div>
               </div>
 
-              <div className="grid gap-3 rounded-lg border border-ui-border bg-ui-bg p-4 text-sm">
+              <div className="grid gap-3 rounded-lg border border-ui-border bg-ui-bg p-4 type-body">
                 <div className="flex items-center justify-between gap-4">
-                  <span className="font-semibold text-ui-text-muted">{t('invite.inviteEmail')}</span>
+                  <span className="type-emphasis text-ui-text-muted">{t('invite.inviteEmail')}</span>
                   <span className="text-right type-emphasis text-ui-text">{invitation.email}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                  <span className="font-semibold text-ui-text-muted">{t('invite.signedInAs')}</span>
+                  <span className="type-emphasis text-ui-text-muted">{t('invite.signedInAs')}</span>
                   <span className="text-right type-emphasis text-ui-text">{currentUserEmail}</span>
                 </div>
               </div>
@@ -109,17 +109,17 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
               <RoleTemplatePreview roleTemplate={invitation.roleTemplate} emptyMessage={t('members.rolePreviewUnavailable')} />
 
               {!isCurrentUserExpected && (
-                <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-sm font-semibold leading-6 text-status-warning-text">
+                <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 type-body type-emphasis leading-6 text-status-warning-text">
                   {t('invite.emailMismatch', { email: invitation.email })}
                 </div>
               )}
               {invitation.status !== 'pending' && (
-                <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm font-semibold leading-6 text-ui-text-muted">
+                <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-3 type-body type-emphasis leading-6 text-ui-text-muted">
                   {t('invite.notPending', { status: invitation.status })}
                 </div>
               )}
               {errorMessage && (
-                <div className="flex gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-semibold leading-6 text-status-danger-text">
+                <div className="flex gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-body type-emphasis leading-6 text-status-danger-text">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
@@ -141,8 +141,8 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
                 <AlertTriangle className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-2xl type-panel-title">{t('invite.unavailable')}</h1>
-                <p className="mt-2 text-sm font-medium leading-6 text-ui-text-muted">{errorMessage || t('invite.invalid')}</p>
+                <h1 className="type-panel-title">{t('invite.unavailable')}</h1>
+                <p className="mt-2 type-ui leading-6 text-ui-text-muted">{errorMessage || t('invite.invalid')}</p>
               </div>
               <Button onClick={onGoToWorkspaces} variant="primary" size="lg" className="type-ui">
                 {t('invite.viewWorkspaces')}

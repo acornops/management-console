@@ -6,6 +6,7 @@ import { EmailField, ErrorMessage, NoticeCard, OidcLoginButton, PasswordField, S
 import { LoginPasswordAuthForm } from '@/pages/login/LoginPasswordAuthForm';
 import { isPlausibleAuthEmailToken, isValidEmailAddress, routeToken } from '@/pages/login/loginAuthPanelState';
 import type { AuthMode, LoginAuthPanelProps, PasswordResetRequestState, PendingVerificationState, ResetLinkState, VerifyLinkState } from '@/pages/login/loginAuthPanelState';
+import { Button } from '@acornops/ui';
 
 export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled, passwordSignupEnabled, passwordResetEnabled, sessionNotice, onLogin, onPasswordLogin, onPasswordSignup, onVerifyEmail, onResendVerification, onRequestPasswordReset, onResetPassword }: LoginAuthPanelProps) {
   const { t } = useTranslation();
@@ -280,9 +281,17 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
   };
 
   const renderPasswordToggle = () => (
-    <button type="button" onClick={() => setShowPassword((current) => !current)} className="control-target absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus:ring-2 focus:ring-accent/20" aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')} aria-pressed={showPassword}>
+    <Button
+      type="button"
+      variant="tertiary"
+      size="icon"
+      onClick={() => setShowPassword((current) => !current)}
+      className="control-target absolute right-2 top-1/2 -translate-y-1/2 rounded-md text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus:ring-2 focus:ring-accent/20"
+      aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
+      aria-pressed={showPassword}
+    >
       {showPassword ? <ICONS.EyeOff className="h-4 w-4" /> : <ICONS.Eye className="h-4 w-4" />}
-    </button>
+    </Button>
   );
 
   const renderPendingVerification = () => (
@@ -309,12 +318,13 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
         }
         danger={Boolean(pendingVerification?.resendAfterSeconds)}
       />
-      <button type="button" onClick={() => void resendVerification()} disabled={isAuthLoading || Boolean(pendingVerification?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
+      <Button type="button" variant="primary" onClick={() => void resendVerification()} disabled={isAuthLoading || Boolean(pendingVerification?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
         <ICONS.Send className="h-4 w-4" />
         <span>{t('login.resendEmail')}</span>
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="secondary"
         onClick={() => {
           setPendingVerification(null);
           setError(null);
@@ -324,7 +334,7 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
         className={`control-target ${secondaryButtonClass}`}
       >
         {t('login.useDifferentEmail')}
-      </button>
+      </Button>
     </div>
   );
 
@@ -354,10 +364,10 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
               error={resendEmailError}
               inputId="verification-resend-email"
             />
-            <button type="submit" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
+            <Button type="submit" variant="primary" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
               <ICONS.Send className="h-4 w-4" />
               <span>{t('login.resendEmail')}</span>
-            </button>
+            </Button>
           </form>
         )}
         {error && <ErrorMessage message={error} />}
@@ -404,7 +414,7 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
           inputId="forgot-password-email"
         />
         {error && <ErrorMessage message={error} />}
-        <button type="submit" disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
+        <Button type="submit" variant="primary" disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
           {isAuthLoading ? (
             <span className="h-4 w-4 rounded-full border-2 border-ui-bg border-t-transparent animate-spin" />
           ) : (
@@ -413,10 +423,10 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
               <span>{t('login.sendResetEmail')}</span>
             </>
           )}
-        </button>
-        <button type="button" onClick={() => changeMode('login')} className={`control-target ${secondaryButtonClass}`}>
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => changeMode('login')} className={`control-target ${secondaryButtonClass}`}>
           {t('login.backToSignIn')}
-        </button>
+        </Button>
       </form>
     );
   };
@@ -437,10 +447,10 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
           inputId="reset-request-email"
         />
         {activeResetRequest && renderPasswordResetNotice(activeResetRequest)}
-        <button type="submit" disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
+        <Button type="submit" variant="primary" disabled={isAuthLoading || Boolean(activeResetRequest?.resendAfterSeconds)} className={`control-target ${primaryButtonClass}`}>
           <ICONS.Send className="h-4 w-4" />
           <span>{t('login.sendResetEmail')}</span>
-        </button>
+        </Button>
       </form>
     );
   };
@@ -450,10 +460,10 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
       return (
         <div className="space-y-5">
           <NoticeCard icon={<ICONS.CheckCircle2 className="h-4 w-4" />} title={t('login.passwordUpdated')} body={t('login.passwordUpdatedBody')} />
-          <button type="button" onClick={() => changeMode('login')} className={`control-target ${primaryButtonClass}`}>
+          <Button type="button" variant="primary" onClick={() => changeMode('login')} className={`control-target ${primaryButtonClass}`}>
             <span>{t('login.signInTab')}</span>
             <ICONS.ArrowRight className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       );
     }
@@ -468,9 +478,9 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
           <NoticeCard icon={<ICONS.AlertCircle className="h-4 w-4" />} title={copy[0]} body={copy[1]} />
           {renderResetRequestForm()}
           {error && <ErrorMessage message={error} />}
-          <button type="button" onClick={() => changeMode('login')} className={`control-target ${secondaryButtonClass}`}>
+          <Button type="button" variant="secondary" onClick={() => changeMode('login')} className={`control-target ${secondaryButtonClass}`}>
             {t('login.backToSignIn')}
-          </button>
+          </Button>
         </div>
       );
     }
@@ -479,7 +489,7 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
         <PasswordField value={resetPasswordValue} onChange={setResetPasswordValue} disabled={isAuthLoading} showPassword={showPassword} autoComplete="new-password" label={t('login.newPassword')} minLength={15} renderPasswordToggle={renderPasswordToggle} />
         <PasswordField value={resetConfirmPassword} onChange={setResetConfirmPassword} disabled={isAuthLoading} showPassword={showPassword} autoComplete="new-password" label={t('login.confirmPassword')} minLength={15} renderPasswordToggle={renderPasswordToggle} />
         {error && <ErrorMessage message={error} />}
-        <button type="submit" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
+        <Button type="submit" variant="primary" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
           {isAuthLoading ? (
             <span className="h-4 w-4 rounded-full border-2 border-ui-bg border-t-transparent animate-spin" />
           ) : (
@@ -488,7 +498,7 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
               <ICONS.ArrowRight className="h-4 w-4" />
             </>
           )}
-        </button>
+        </Button>
       </form>
     );
   };
@@ -499,12 +509,12 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
     <div className="relative overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
       <div className="p-5 sm:p-8">
         {sessionNotice && (
-          <div role="status" className="mb-5 rounded-md border border-status-warning/30 bg-status-warning-soft px-4 py-3 text-sm font-semibold text-status-warning-text">
+          <div role="status" className="mb-5 rounded-md border border-status-warning/30 bg-status-warning-soft px-4 py-3 type-body type-emphasis text-status-warning-text">
             {sessionNotice}
           </div>
         )}
         <h1 className="type-route-title mb-2 text-center text-ui-text">{mode === 'signup' && canSignup ? t('login.createAccount') : mode === 'forgot' ? t('login.forgotPasswordTitle') : mode === 'reset' ? t('login.resetPasswordTitle') : t('login.welcomeBack')}</h1>
-        {loginSubtitle && <p className="mb-8 text-center text-sm font-medium leading-6 text-ui-text-muted">{loginSubtitle}</p>}
+        {loginSubtitle && <p className="mb-8 text-center type-ui leading-6 text-ui-text-muted">{loginSubtitle}</p>}
 
         {verifyLinkContent || pendingVerification ? (
           <>
@@ -554,7 +564,7 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-ui-border" />
             </div>
-            <div className="relative flex justify-center text-xs">
+            <div className="relative flex justify-center type-caption">
               <span className="bg-ui-surface px-2 type-label">{t('login.orContinueWith')}</span>
             </div>
           </div>

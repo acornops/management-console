@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -102,7 +102,7 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
   }, [targetId, t, workspaceId]);
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="target-insights-activity-dialog-title"
       onClose={onClose}
       className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-2xl"
@@ -148,7 +148,7 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
                 return (
                   <div key={event.id} className="px-5 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-ui-text">{event.summary}</p>
+                      <p className="type-body type-emphasis text-ui-text">{event.summary}</p>
                       {outcome && tone ? (
                         <StatusBadge tone={tone}>{t(`tools.targetInsights.checkpoint.outcomes.${outcome}`)}</StatusBadge>
                       ) : null}
@@ -169,7 +169,7 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
                           <span>{t('tools.targetInsights.checkpoint.rejectedCount', { count: rejectedPatchCount })}</span>
                         ) : null}
                         {sourcePath ? (
-                          <a className="font-semibold text-ui-link hover:underline" href={appHref(sourcePath)}>
+                          <a className="type-emphasis text-ui-link hover:underline" href={appHref(sourcePath)}>
                             {t('tools.targetInsights.checkpoint.openSession')}
                           </a>
                         ) : null}
@@ -189,6 +189,6 @@ export const TargetInsightsActivityDialog: React.FC<TargetInsightsActivityDialog
       <div className="flex items-center justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
         <Button variant="secondary" size="sm" onClick={onClose}>{t('common.close')}</Button>
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

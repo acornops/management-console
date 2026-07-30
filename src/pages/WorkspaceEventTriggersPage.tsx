@@ -44,6 +44,7 @@ import {
   type SecretDisclosure,
   type TriggerDraft
 } from '@/pages/WorkspaceEventTriggersPage.model';
+import { TextInput, Textarea } from '@acornops/ui';
 
 interface WorkspaceEventTriggersPageProps {
   workspace: Workspace;
@@ -55,7 +56,7 @@ interface WorkspaceEventTriggersPageProps {
 type TriggerStatusFilter = 'all' | 'enabled' | 'paused';
 
 const inputClassName = formInputClassName('mt-2');
-const textareaClassName = formTextareaClassName('mt-2');
+const eventTriggerTextareaClassName = formTextareaClassName('mt-2');
 
 export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProps> = ({
   workspace,
@@ -374,11 +375,11 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
               <dl className="mt-3 grid gap-3">
                 <div>
                   <dt className="type-micro-label text-status-success-text">{t('eventTriggers.secret.endpoint')}</dt>
-                  <dd className="mt-1 break-all font-mono text-xs text-ui-text">{secretDisclosure.url}</dd>
+                  <dd className="mt-1 break-all font-mono type-caption text-ui-text">{secretDisclosure.url}</dd>
                 </div>
                 <div>
                   <dt className="type-micro-label text-status-success-text">{t('eventTriggers.secret.signingSecret')}</dt>
-                  <dd className="mt-1 break-all font-mono text-xs text-ui-text">{secretDisclosure.secret}</dd>
+                  <dd className="mt-1 break-all font-mono type-caption text-ui-text">{secretDisclosure.secret}</dd>
                 </div>
               </dl>
               <p className="mt-3 max-w-3xl type-caption text-status-success-text">
@@ -386,8 +387,8 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
-              <Button size="sm" onClick={() => void copy(secretDisclosure.url, t('eventTriggers.secret.endpointCopied'))}>{t('eventTriggers.secret.copyEndpoint')}</Button>
-              <Button size="sm" onClick={() => void copy(secretDisclosure.secret, t('eventTriggers.secret.secretCopied'))}>{t('eventTriggers.secret.copySecret')}</Button>
+              <Button variant="secondary" size="sm" onClick={() => void copy(secretDisclosure.url, t('eventTriggers.secret.endpointCopied'))}>{t('eventTriggers.secret.copyEndpoint')}</Button>
+              <Button variant="secondary" size="sm" onClick={() => void copy(secretDisclosure.secret, t('eventTriggers.secret.secretCopied'))}>{t('eventTriggers.secret.copySecret')}</Button>
               <Button size="sm" variant="tertiary" onClick={() => setSecretDisclosure(null)}>{t('eventTriggers.secret.dismiss')}</Button>
             </div>
           </div>
@@ -547,16 +548,16 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         </>}
       >
         {mutationError && <InlineAlert tone="danger">{mutationError}</InlineAlert>}
-        <label className="block text-sm font-semibold text-ui-text">
+        <label className="block type-body type-emphasis text-ui-text">
           {t('eventTriggers.form.name')}
-          <input
+          <TextInput
             value={draft.name}
             onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
             className={inputClassName}
             maxLength={120}
           />
         </label>
-        <label className="block text-sm font-semibold text-ui-text">
+        <label className="block type-body type-emphasis text-ui-text">
           {t('eventTriggers.form.workflow')}
           <Select<string>
             value={draft.workflowId}
@@ -568,9 +569,9 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
           />
           <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.workflowHelp')}</span>
         </label>
-        <div className="block text-sm font-semibold text-ui-text">
+        <div className="block type-body type-emphasis text-ui-text">
           {t('eventTriggers.form.source')}
-          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 font-normal text-ui-text">
+          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 type-body text-ui-text">
             {t(draft.sourceType === 'webhook'
               ? 'triggers.types.webhook'
               : 'triggers.types.acornopsEvent')}
@@ -591,7 +592,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
                 {selectedWorkflow.parameters.map((parameter) => {
                   const bindings = parameter.type === 'target' ? ['target.id' as const] : issueTextBindings;
                   return (
-                    <label key={parameter.key} className="block text-sm font-semibold text-ui-text">
+                    <label key={parameter.key} className="block type-body type-emphasis text-ui-text">
                       {humanizeWorkflowParameterKey(parameter.key)}
                       <Select<WorkflowEventInputBinding | ''>
                         value={draft.inputBindings[parameter.key] || ''}
@@ -620,24 +621,24 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
           <InlineAlert tone="neutral">{t('eventTriggers.form.webhookHelp')}</InlineAlert>
         )}
 
-        <div className="block text-sm font-semibold text-ui-text">
+        <div className="block type-body type-emphasis text-ui-text">
           {t('eventTriggers.form.runsAs')}
-          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 font-normal text-ui-text">
+          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 type-body text-ui-text">
             {draft.principalId || t('eventTriggers.form.currentUser')}
           </div>
           <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.runsAsHelp')}</span>
         </div>
-        <label className="block text-sm font-semibold text-ui-text">
+        <label className="block type-body type-emphasis text-ui-text">
           {t('eventTriggers.form.approvedContextGrants')}
-          <textarea
+          <Textarea
             value={draft.approvedContextGrants}
             onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))}
-            className={textareaClassName}
+            className={eventTriggerTextareaClassName}
             rows={3}
           />
           <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.approvedContextGrantsHelp')}</span>
         </label>
-        <label className="flex items-center gap-3 text-sm font-semibold text-ui-text">
+        <label className="flex items-center gap-3 type-body type-emphasis text-ui-text">
           <Checkbox checked={draft.enabled} onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))} />
           {t('eventTriggers.form.enabled')}
         </label>

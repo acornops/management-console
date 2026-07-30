@@ -119,8 +119,8 @@ export const WorkflowTriggerCreateMenu: React.FC<WorkflowTriggerCreateMenuProps>
             >
               {triggerIcon(triggerType)}
               <span>
-                <span className="block text-sm font-semibold">{t(`triggers.types.${triggerType === 'acornops_event' ? 'acornopsEvent' : triggerType}`)}</span>
-                <span className="type-caption mt-0.5 block font-normal text-ui-text-muted">
+                <span className="block type-body type-emphasis">{t(`triggers.types.${triggerType === 'acornops_event' ? 'acornopsEvent' : triggerType}`)}</span>
+                <span className="type-caption mt-0.5 block text-ui-text-muted">
                   {t(`triggers.createDescriptions.${triggerType === 'acornops_event' ? 'acornopsEvent' : triggerType}`)}
                 </span>
               </span>

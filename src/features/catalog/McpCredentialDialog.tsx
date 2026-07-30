@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 
 interface McpCredentialDialogProps {
@@ -76,7 +76,7 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId={titleId}
       initialFocusRef={credentialRef}
       closeDisabled={pending}
@@ -147,15 +147,17 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
                 onChange={(event) => setCredential(event.target.value)}
                 className="pr-12 font-mono"
               />
-              <button
+              <Button
                 type="button"
+                variant="tertiary"
+                size="icon"
                 disabled={pending}
                 onClick={() => setShowCredential((current) => !current)}
                 aria-label={t(showCredential ? 'mcpServers.hideCredential' : 'mcpServers.showCredential')}
                 className="absolute right-0 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-ui-text-muted hover:text-ui-text focus-visible:ring-2 focus-visible:ring-control-boundary disabled:opacity-50"
               >
                 {showCredential ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
-              </button>
+              </Button>
             </div>
             <p className="type-caption mt-2 text-ui-text-muted">{t(authType === 'custom_header' ? 'mcpServers.customHeaderCredentialHelp' : 'mcpServers.bearerCredentialHelp')}</p>
             {credentialValidationError && (
@@ -165,7 +167,7 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
             )}
           </div>
 
-          <label className="flex items-start gap-3 rounded-lg border border-ui-border bg-ui-bg px-4 py-3 text-sm text-ui-text">
+          <label className="flex items-start gap-3 rounded-lg border border-ui-border bg-ui-bg px-4 py-3 type-body text-ui-text">
             <Checkbox checked={consentGranted} disabled={pending} onChange={(event) => setConsentGranted(event.target.checked)} className="mt-0.5 shrink-0" />
             <span>{t(credentialMode === 'workspace' ? 'mcpServers.workspaceCredentialConsent' : 'mcpServers.individualCredentialConsent')}</span>
           </label>
@@ -190,6 +192,6 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
           </Button>
         </div>
       </form>
-    </Dialog>
+    </DialogFrame>
   );
 };

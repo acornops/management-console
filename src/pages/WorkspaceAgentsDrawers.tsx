@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, Textarea, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { AgentEmojiPicker, suggestAgentEmoji } from '@/pages/agents/AgentAvatar';
@@ -71,7 +71,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
     { label: 'Instructions', value: createDraft.instructions.trim() || createDraft.description.trim() || 'Assignment purpose will be used.' }
   ];
   return (
-    <RightSidePanel
+    <DrawerFrame unframed
       isOpen
       onClose={close}
       titleId="create-agent-title"
@@ -97,7 +97,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
-        {stepNavigationError && <div className="mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 text-xs font-semibold text-status-warning-text" role="status" aria-live="polite">{stepNavigationError}</div>}
+        {stepNavigationError && <div className="type-caption type-emphasis mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 text-status-warning-text" role="status" aria-live="polite">{stepNavigationError}</div>}
         <div className="space-y-5">
           {createAgentStep === 1 && (
             <>
@@ -186,14 +186,14 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
           )}
         </div>
       </div>
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };
 
 const AgentCreateReviewRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="grid gap-1 px-3 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
     <dt className="type-micro-label text-ui-text-muted">{label}</dt>
-    <dd className="min-w-0 whitespace-pre-wrap break-words text-sm font-semibold text-ui-text [overflow-wrap:anywhere]">{value}</dd>
+    <dd className="type-body type-emphasis min-w-0 whitespace-pre-wrap break-words text-ui-text [overflow-wrap:anywhere]">{value}</dd>
   </div>
 );
 
@@ -234,7 +234,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
     ].join('\n')
   }));
   return (
-  <RightSidePanel
+  <DrawerFrame unframed
     isOpen
     onClose={onClose}
     titleId="edit-agent-title"
@@ -299,7 +299,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             <Textarea value={editDraft.instructions} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, instructions: event.target.value }))} />
           </label>
 
-          <p className="rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-sm text-ui-text-muted">This form edits the Agent definition only. Its workspace-owned capability ceiling is configured independently and remains visible in the Capabilities tab.</p>
+          <p className="type-body rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-ui-text-muted">This form edits the Agent definition only. Its workspace-owned capability ceiling is configured independently and remains visible in the Capabilities tab.</p>
 
           <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
             <h3 className="type-row-title ">Target scope</h3>
@@ -309,7 +309,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
                 ['kubernetes', 'Kubernetes'],
                 ['virtual_machine', 'Virtual machines']
               ] as const).map(([value, label]) => (
-                <label key={value} className="flex items-center gap-2 text-sm font-semibold text-ui-text">
+                <label key={value} className="type-body type-emphasis flex items-center gap-2 text-ui-text">
                   <Checkbox
                     checked={selectedTypes.has(value)}
                     onChange={(event) => {
@@ -324,7 +324,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             </div>
             <div className="mt-4 grid gap-2" aria-label="Exact target scope">
               {targetOptions.length ? targetOptions.map((target) => (
-                <label key={target.value} className="flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 text-sm font-semibold text-ui-text">
+                <label key={target.value} className="type-body type-emphasis flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 text-ui-text">
                   <Checkbox
                     className="mt-0.5"
                     checked={selectedIds.has(target.value)}
@@ -343,7 +343,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
 
           {editChangeSummary.length > 0 && <section className="border-y border-ui-border py-4">
             <h3 className="type-row-title ">Changes before save</h3>
-            <ul className="mt-3 grid gap-2 text-sm font-semibold">
+            <ul className="type-body type-emphasis mt-3 grid gap-2">
               {editChangeSummary.map((change) => <li key={change}>{change}</li>)}
             </ul>
           </section>}
@@ -353,7 +353,7 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             <div className="mt-3 grid gap-2">
               {editingAgent.workflowsUsingAgent.length > 0
                 ? editingAgent.workflowsUsingAgent.map((workflow) => (
-                  <a key={workflow} href={`/workspaces/${editingAgent.workspaceId}/workflows?${new URLSearchParams({ q: workflow }).toString()}`} className="text-sm font-semibold text-accent-strong underline-offset-4 hover:underline">{workflow}</a>
+                  <a key={workflow} href={`/workspaces/${editingAgent.workspaceId}/workflows?${new URLSearchParams({ q: workflow }).toString()}`} className="type-body type-emphasis text-accent-strong underline-offset-4 hover:underline">{workflow}</a>
                 ))
                 : <span className="type-caption text-ui-text-muted">No workflows currently assign this agent.</span>}
             </div>
@@ -368,6 +368,6 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
           {updatingAgentId === editingAgent.id ? 'Saving...' : 'Save changes'}
         </Button>
       </div>
-  </RightSidePanel>
+  </DrawerFrame>
   );
 };

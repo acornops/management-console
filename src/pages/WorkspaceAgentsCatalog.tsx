@@ -162,7 +162,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                       <h3 className="type-panel-title min-w-0 truncate text-ui-text" title={agent.name}>{agent.name}</h3>
                       <StatusBadge tone={readinessBlocked ? 'warning' : statusTone(agent.status)}>{readinessLabel}</StatusBadge>
                     </div>
-                    <span aria-hidden="true" className="mt-1 inline-flex items-center gap-1 type-caption font-semibold text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong">
+                    <span aria-hidden="true" className="type-caption type-emphasis mt-1 inline-flex items-center gap-1 text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong">
                       {t('agentsWorkflows.agents.viewDetails')} <ICONS.ChevronRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
@@ -196,9 +196,9 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                   </div>
                 </div>
                 <div className="border-t border-ui-border px-4 py-4">
-                  <p className="line-clamp-1 text-sm text-ui-text-muted" title={purpose}>{purpose}</p>
+                  <p className="type-body line-clamp-1 text-ui-text-muted" title={purpose}>{purpose}</p>
                   <p
-                    className={`type-caption mt-3 font-semibold ${readinessBlocked ? 'line-clamp-2 text-status-warning-text' : 'truncate text-ui-text'}`}
+                    className={`type-caption type-emphasis mt-3 ${readinessBlocked ? 'line-clamp-2 text-status-warning-text' : 'truncate text-ui-text'}`}
                     title={readinessBlocked ? readinessWarning : capabilitySummary}
                   >
                     {readinessBlocked ? readinessWarning : capabilitySummary}

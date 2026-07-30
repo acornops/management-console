@@ -69,7 +69,7 @@ export const ClusterAgentAccessModeSelector: React.FC<ClusterAgentAccessModeSele
               />
               <span className="min-w-0">
                 <span className="block type-row-title">{t(mode.labelKey)}</span>
-                <span className="mt-0.5 block text-xs font-medium leading-5 text-ui-text-muted">{t(mode.descriptionKey)}</span>
+                <span className="mt-0.5 block type-caption leading-5 text-ui-text-muted">{t(mode.descriptionKey)}</span>
               </span>
             </label>
           );

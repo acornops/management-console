@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'danger' | 'activation';
-type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
+export type ButtonSize = 'inline' | 'sm' | 'md' | 'lg' | 'icon';
 
 const baseButtonClass =
   'type-ui inline-flex items-center justify-center gap-2 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg';
@@ -21,7 +21,8 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'min-h-11 px-3 py-2 text-xs sm:min-h-9',
+  inline: 'min-h-11 px-1 py-1 sm:min-h-8',
+  sm: 'min-h-11 px-3 py-2 type-caption sm:min-h-9',
   md: 'min-h-11 px-4 py-2.5',
   lg: 'min-h-12 px-5 py-3',
   icon: 'h-11 w-11 p-0 sm:h-9 sm:w-9'
@@ -44,7 +45,13 @@ export const buttonClassName = ({
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = 'secondary', size = 'md', className, type = 'button', ...props }, ref) => (
-    <button ref={ref} type={type} className={buttonClassName({ variant, size, className })} {...props} />
+    <button
+      ref={ref}
+      type={type}
+      className={buttonClassName({ variant, size, className })}
+      {...props}
+      data-design-contrast-exception={variant === 'activation' ? 'activation' : undefined}
+    />
   )
 );
 

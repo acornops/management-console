@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import {
   appDockRootId,
   desktopSidebarWidth,
@@ -144,7 +144,7 @@ export const AgentQuickChatPanel: React.FC<AgentQuickChatPanelProps> = ({
   }
 
   return (
-    <RightSidePanel
+    <DrawerFrame unframed
       isOpen
       onClose={onClose}
       ariaLabel={t('agentChat.quickChatLabel', { name: agent.name })}
@@ -152,6 +152,6 @@ export const AgentQuickChatPanel: React.FC<AgentQuickChatPanelProps> = ({
       className="max-w-[calc(100vw-1rem)]"
     >
       {panelContents}
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

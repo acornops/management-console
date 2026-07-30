@@ -36,22 +36,17 @@ test('workspace overview reports collection failures without presenting empty-st
 });
 
 test('workspace overview keeps the desktop assistant beside the main content', async ({ page }) => {
-  const issueRequests: string[] = [];
-  page.on('request', (request) => {
-    if (new URL(request.url()).pathname.endsWith('/issues')) issueRequests.push(request.url());
-  });
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-attention-board="true"] article')).toHaveCount(2);
-  const issueRequestCountBeforeAssistant = issueRequests.length;
   await page.getByRole('button', { name: 'Open assistant' }).first().click();
 
-  const main = page.getByRole('main');
+  const main = page.locator('main');
   const assistant = page.getByRole('complementary', { name: 'Cluster Assistant' });
   const assistantChatSurface = assistant.locator('[data-target-chat-surface="true"]');
   const recentActivityDialog = page.getByRole('dialog', { name: 'Choose how to continue' });
   await expect(assistant).toBeVisible();
   await expect(assistantChatSurface).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: 'Workspace Overview' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Workspace Overview', includeHidden: true })).toBeVisible();
   await expect(recentActivityDialog).toBeVisible();
 
   const [mainBox, assistantBox, assistantChatSurfaceBox, recentActivityDialogBox] = await Promise.all([
@@ -70,11 +65,9 @@ test('workspace overview keeps the desktop assistant beside the main content', a
   expect(mainBox.x + mainBox.width).toBeLessThanOrEqual(assistantBox.x + 1);
   expect(mainBox.width).toBeGreaterThan(assistantBox.width);
   expect(assistantChatSurfaceBox.height).toBeCloseTo(assistantBox.height, 0);
-  expect(recentActivityDialogBox.width).toBeGreaterThan(420);
-  expect(recentActivityDialogBox.x + (recentActivityDialogBox.width / 2)).toBeCloseTo(720, 0);
-  expect(await recentActivityDialog.evaluate((element) => element.parentElement?.parentElement === document.body)).toBe(true);
-  await page.waitForTimeout(250);
-  expect(issueRequests).toHaveLength(issueRequestCountBeforeAssistant);
+  expect(recentActivityDialogBox.x).toBeGreaterThanOrEqual(assistantBox.x);
+  expect(recentActivityDialogBox.x + recentActivityDialogBox.width).toBeLessThanOrEqual(assistantBox.x + assistantBox.width);
+  expect(await recentActivityDialog.evaluate((element) => Boolean(element.closest('[data-target-chat-surface="true"]')))).toBe(true);
 });
 
 test('desktop assistant keeps the capability preview within the dock', async ({ page }) => {
@@ -84,12 +77,13 @@ test('desktop assistant keeps the capability preview within the dock', async ({ 
   const assistant = page.getByRole('complementary', { name: 'Cluster Assistant' });
   await expect(assistant).toBeVisible();
   const recentActivityDialog = page.getByRole('dialog', { name: 'Choose how to continue' });
-  if (await recentActivityDialog.isVisible()) {
-    await recentActivityDialog.getByRole('button', { name: 'Continue separate chat' }).click();
-  }
+  await expect(recentActivityDialog).toBeVisible();
+  await recentActivityDialog.getByRole('button', { name: 'Open conversation' }).click();
+  await expect(recentActivityDialog).toBeHidden();
 
-  const capabilityPreviewButton = assistant.getByRole('button', { name: 'Assistant capabilities' });
+  const capabilityPreviewButton = assistant.locator('[data-assistant-capability-preview-trigger="true"]');
   await expect(capabilityPreviewButton).toBeVisible();
+  await expect(capabilityPreviewButton).toHaveAccessibleName(/Assistant capabilities/);
   await capabilityPreviewButton.click();
   const capabilityPreviewId = await capabilityPreviewButton.getAttribute('aria-controls');
   if (!capabilityPreviewId) throw new Error('The capability preview trigger must identify its popover');

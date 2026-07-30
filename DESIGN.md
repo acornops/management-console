@@ -53,6 +53,12 @@ typography:
     fontWeight: 600
     lineHeight: "1.75rem"
     letterSpacing: "0"
+  count:
+    fontFamily: "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 600
+    lineHeight: "1.25rem"
+    letterSpacing: "0"
   body:
     fontFamily: "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
     fontSize: "0.875rem"
@@ -282,7 +288,8 @@ Buttons are compact, predictable, and text-led. They use lucide icons when an ic
 - **Secondary:** Paper surface, interactive boundary, ink text, small shadow. Dark mode uses a warm dark surface with light text.
 - **Danger:** Semantic destructive fill. Dark mode uses `#A92C3C` with light text.
 - **Tertiary / Ghost:** Text-muted default, soft orange wash on hover.
-- **Sizing:** Default controls are at least `44px` high; compact controls may reduce to `36px` from the `sm` breakpoint upward.
+- **Sizing:** Default controls are at least `44px` high; compact controls may reduce to `36px` from the `sm` breakpoint upward. Inline text actions use the shared `inline` size instead of locally removing padding or minimum heights.
+- **Variant ownership:** Every shared `Button` call site declares its semantic variant explicitly, even when it currently matches the component fallback. This makes intent reviewable and prevents a secondary boundary from leaking into brand, navigation, inline text, menu, or icon actions during migrations.
 - **Hover / Focus / Disabled:** Enabled foreground and fill pairs meet WCAG 2.1 AA normal-text contrast. Interactive and focus boundaries use the semantic boundary token where 3:1 non-text contrast is required. Disabled controls keep their dimensions, reduce to `50%` opacity, and use a not-allowed cursor.
 
 ### Route composition and spacing

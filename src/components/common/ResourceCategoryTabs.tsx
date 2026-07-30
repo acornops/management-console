@@ -4,6 +4,7 @@ import { LayoutGroup } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { twMerge } from 'tailwind-merge';
 import { ActiveTabIndicator } from '@acornops/ui';
+import { Button } from '@acornops/ui';
 
 export interface ResourceCategoryTabModel<T extends string> {
   value: T;
@@ -117,12 +118,13 @@ export const ResourceCategoryTabs = <T extends string>({
         className={twMerge(clsx('no-scrollbar flex w-full max-w-full shrink-0 items-center overflow-x-auto border-b border-ui-border', className))}
       >
         {tabs.map((tab, index) => (
-          <button
+          <Button
             key={tab.value}
             ref={(element) => {
               tabRefs.current[index] = element;
             }}
             type="button"
+            variant="tertiary"
             role="tab"
             id={`${idBase}-${tab.value}-tab`}
             aria-controls={controlsId}
@@ -138,9 +140,9 @@ export const ResourceCategoryTabs = <T extends string>({
             )}
           >
             <span>{tab.label}</span>
-            {typeof tab.count === 'number' && <span className="type-data text-xs text-ui-text-muted">{tab.count}</span>}
+            {typeof tab.count === 'number' && <span className="type-count">{tab.count}</span>}
             {tab.isActive && <ActiveTabIndicator />}
-          </button>
+          </Button>
         ))}
       </div>
     </LayoutGroup>

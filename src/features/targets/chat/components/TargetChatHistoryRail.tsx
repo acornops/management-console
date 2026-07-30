@@ -52,7 +52,7 @@ export function TargetChatHistoryRail({
           data-chat-history-trigger="search"
           className={isSearchActive ? 'bg-ui-bg text-ui-text shadow-inner' : ''}
           aria-label={t('chat.searchChats')}
-          aria-controls={historySearchPageId}
+          aria-controls={isSearchActive ? historySearchPageId : undefined}
           aria-current={isSearchActive ? 'page' : undefined}
         >
           <Search className="h-4 w-4" aria-hidden="true" />
@@ -90,7 +90,7 @@ export function TargetChatHistoryRail({
           <Bot className="h-4 w-4" aria-hidden="true" />
           {unseenInvestigationCount > 0 && (
             <span
-              className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full border border-ui-surface bg-ui-text px-1 text-[9px] font-bold leading-none text-ui-bg"
+              className="type-micro-label absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full border border-ui-surface bg-ui-text px-1 leading-none text-ui-bg"
               aria-hidden="true"
             >
               {unseenInvestigationCount > 9 ? '9+' : unseenInvestigationCount}

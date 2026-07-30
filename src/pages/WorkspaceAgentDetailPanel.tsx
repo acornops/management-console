@@ -69,7 +69,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                 <AgentAvatar emoji={selectedAgent.avatarEmoji} size="lg" />
                 <div className="min-w-0">
                   <h1 id={props.titleId} className="type-route-title break-words [overflow-wrap:anywhere]">{routeTitle}</h1>
-                  <p className="mt-1 max-w-3xl text-sm text-ui-text-muted">{routeDescription}</p>
+                  <p className="type-body mt-1 max-w-3xl text-ui-text-muted">{routeDescription}</p>
                 </div>
               </div>
             </div>
@@ -114,7 +114,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               <div className="mt-3 flex flex-wrap gap-3">
                 {selectedAgent.workflowsUsingAgent.length
                   ? selectedAgent.workflowsUsingAgent.map((workflow) => (
-                    <a key={workflow} href={workflowHref(selectedAgent, workflow)} className="text-sm font-semibold text-accent-strong underline-offset-4 hover:underline">{workflow}</a>
+                    <a key={workflow} href={workflowHref(selectedAgent, workflow)} className="type-body type-emphasis text-accent-strong underline-offset-4 hover:underline">{workflow}</a>
                   ))
                   : <span className="type-caption text-ui-text-muted">{t('agentChat.noWorkflowUsage')}</span>}
               </div>
@@ -139,9 +139,9 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                 {versions.length ? versions.map((version) => (
                   <div key={version.id}>
                     <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 py-2">
-                      <span className="text-sm font-semibold text-ui-text">
+                      <span className="type-body type-emphasis text-ui-text">
                         Revision {version.version}
-                        <span className="type-caption ml-3 font-normal text-ui-text-muted">{formatAgentTimestamp(version.createdAt, version.createdAt, locale)}</span>
+                        <span className="type-caption ml-3 text-ui-text-muted">{formatAgentTimestamp(version.createdAt, version.createdAt, locale)}</span>
                       </span>
                       <Button size="sm" variant="tertiary" onClick={() => setRestoreVersionId(version.id)} disabled={!props.canManageAgents}>Restore</Button>
                     </div>
@@ -158,7 +158,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                       />
                     )}
                   </div>
-                )) : <p className="py-4 text-sm text-ui-text-muted">No saved versions.</p>}
+                )) : <p className="type-body py-4 text-ui-text-muted">No saved versions.</p>}
               </div>
             </section>
 

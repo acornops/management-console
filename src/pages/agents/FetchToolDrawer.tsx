@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { MAX_FETCH_PATTERN_LENGTH, MAX_FETCH_PATTERNS, validateFetchPatterns, type FetchToolConfig } from '@/pages/agents/fetchToolConfig';
 
 interface FetchToolDrawerProps {
@@ -48,7 +48,7 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({ initialConfig,
   };
 
   return (
-    <RightSidePanel
+    <DrawerFrame unframed
       isOpen={isOpen}
       onClose={close}
       closeDisabled={saving}
@@ -73,7 +73,7 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({ initialConfig,
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
         <div className="space-y-5">
           {saveError && (
-            <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm text-status-danger-text">
+            <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 type-body text-status-danger-text">
               {saveError}
             </div>
           )}
@@ -164,7 +164,7 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({ initialConfig,
           </fieldset>
 
           <div className="rounded-md border border-status-warning/30 bg-status-warning-soft px-4 py-3">
-            <p className="text-sm font-semibold text-status-warning-text">External data notice</p>
+            <p className="type-body type-emphasis text-status-warning-text">External data notice</p>
             <p className="type-caption mt-1 text-status-warning-text">URL paths and query values are sent to the configured external service. Do not include secrets.</p>
           </div>
         </div>
@@ -178,6 +178,6 @@ export const FetchToolDrawer: React.FC<FetchToolDrawerProps> = ({ initialConfig,
           {saving ? 'Saving…' : 'Save Fetch tool'}
         </Button>
       </div>
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

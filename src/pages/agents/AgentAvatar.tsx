@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput } from '@acornops/ui';
+import { Button, TextInput } from '@acornops/ui';
 
 export const DEFAULT_AGENT_EMOJI = '🤖';
 
@@ -52,10 +52,10 @@ export const AgentAvatar: React.FC<{
   size?: 'sm' | 'md' | 'lg';
 }> = ({ emoji = DEFAULT_AGENT_EMOJI, className = '', size = 'md' }) => {
   const sizeClass = size === 'sm'
-    ? 'h-8 w-8 text-base'
+    ? 'type-body h-8 w-8'
     : size === 'lg'
-      ? 'h-11 w-11 text-2xl'
-      : 'h-9 w-9 text-lg';
+      ? 'type-route-title h-11 w-11'
+      : 'type-panel-title h-9 w-9';
   return (
     <span
       data-agent-avatar="true"
@@ -99,25 +99,27 @@ export const AgentEmojiPicker: React.FC<{
         <AgentAvatar emoji={value} size="lg" />
         <div className="grid flex-1 grid-cols-4 gap-2 sm:grid-cols-8" aria-label="Suggested Agent emojis">
           {AGENT_EMOJI_OPTIONS.map((emoji) => (
-            <button
+            <Button
               key={emoji}
               type="button"
               aria-label={`Use ${emoji} for this Agent`}
               aria-pressed={value === emoji}
               onClick={() => onChange(emoji)}
-              className={`control-target flex min-h-11 items-center justify-center rounded-md border text-lg leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary ${
+              variant="secondary"
+              size="icon"
+              className={`control-target type-panel-title flex min-h-11 w-full items-center justify-center rounded-md border leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary ${
                 value === emoji
                   ? 'border-accent/45 bg-accent-soft text-ui-text'
                   : 'border-ui-border bg-ui-surface hover:border-accent/30 hover:bg-ui-bg'
               }`}
             >
               {emoji}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
       <label className="mt-3 block max-w-xs">
-        <span className="type-caption font-semibold text-ui-text">Use another emoji</span>
+        <span className="type-caption type-emphasis text-ui-text">Use another emoji</span>
         <TextInput
           value={customValue}
           maxLength={64}

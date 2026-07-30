@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { ClusterChatPanel } from '@/features/kubernetes-cluster-detail/components/detail/ClusterChatPanel';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { KubernetesCluster, Workspace } from '@/types';
@@ -146,7 +146,8 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
   }
 
   return (
-    <RightSidePanel
+    <DrawerFrame
+      unframed
       isOpen
       onClose={onClose}
       ariaLabel={t('app.clusterAssistant')}
@@ -154,6 +155,6 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
       className="max-w-[calc(100vw-1rem)]"
     >
       {panelContents}
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

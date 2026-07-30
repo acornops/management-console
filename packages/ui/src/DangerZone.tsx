@@ -47,7 +47,7 @@ export const DangerZoneRow: React.FC<{
         <Heading id={id} className={`type-row-title mb-1 ${tone === 'danger' ? 'text-status-danger-text' : 'text-ui-text'}`}>
           {title}
         </Heading>
-        <p className="max-w-2xl text-xs leading-5 text-ui-text-muted">{description}</p>
+        <p className="type-caption max-w-2xl text-ui-text-muted">{description}</p>
         {detail}
       </div>
       <div className={twMerge('w-full shrink-0 sm:w-64', actionClassName)}>{action}</div>

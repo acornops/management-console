@@ -92,7 +92,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
       <CollectionState
         phase={phase}
         itemCount={webhooks.length}
-        loading={<p className="p-5 text-sm font-semibold text-ui-text-muted">{t('workspaceWebhooks.loading')}</p>}
+        loading={<p className="p-5 type-body type-emphasis text-ui-text-muted">{t('workspaceWebhooks.loading')}</p>}
         empty={(
           <EmptyState
             embedded
@@ -106,11 +106,11 @@ export const WebhookList: React.FC<WebhookListProps> = ({
         )}
         error={(
           <div role="alert" className="p-5">
-            <p className="text-sm font-semibold text-status-danger-text">{loadError}</p>
+            <p className="type-body type-emphasis text-status-danger-text">{loadError}</p>
             <Button className="mt-3" size="sm" variant="secondary" onClick={onRefresh}>{t('common.retry')}</Button>
           </div>
         )}
-        feedback={loadError ? <p role="alert" className="border-t border-ui-border p-4 text-sm text-status-danger-text">{loadError}</p> : null}
+        feedback={loadError ? <p role="alert" className="border-t border-ui-border p-4 type-body text-status-danger-text">{loadError}</p> : null}
         announcement={isRefreshing ? t('workspaceWebhooks.refreshing') : undefined}
       >
         <div className="divide-y divide-ui-border">
@@ -138,11 +138,11 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                   </div>
                   <div className="col-span-2 min-w-0 xl:col-span-1">
                     <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('workspaceWebhooks.columns.destination')}</p>
-                    <p className="break-all text-xs font-semibold text-ui-text-muted">{webhook.url}</p>
+                    <p className="break-all type-caption type-emphasis text-ui-text-muted">{webhook.url}</p>
                   </div>
                   <div className="col-span-2 min-w-0 xl:col-span-1">
                     <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('workspaceWebhooks.columns.events')}</p>
-                    <p className="type-caption mb-2 font-semibold text-ui-text">{t('workspaceWebhooks.eventCount', { count: webhook.eventTypes.length })}</p>
+                    <p className="type-caption mb-2 type-emphasis text-ui-text">{t('workspaceWebhooks.eventCount', { count: webhook.eventTypes.length })}</p>
                     <div className="flex flex-wrap content-start gap-1.5">
                       {webhook.eventTypes.slice(0, 3).map((eventType) => (
                         <span key={eventType} className="rounded-md border border-ui-border bg-ui-bg px-2 py-1 type-caption">
@@ -158,7 +158,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                   </div>
                   <div className="col-span-2 min-w-0 xl:col-span-1">
                     <p className="type-micro-label mb-1 text-ui-text-muted xl:hidden">{t('workspaceWebhooks.columns.modified')}</p>
-                    <time className="type-caption font-semibold text-ui-text-muted" dateTime={modifiedAt}>
+                    <time className="type-caption type-emphasis text-ui-text-muted" dateTime={modifiedAt}>
                       {modifiedAt
                         ? formatUserDateTime(modifiedAt, { fallback: modifiedAt })
                         : t('workspaceWebhooks.modifiedUnavailable')}
@@ -214,7 +214,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                   {!isHistoryLoading && !historyError && history.length > 0 && (
                     <div className="mt-3 divide-y divide-ui-border overflow-hidden rounded-md border border-ui-border bg-ui-surface">
                       {history.map((entry) => (
-                        <div key={entry.id} className="grid gap-3 p-3 text-xs font-semibold text-ui-text-muted md:grid-cols-[minmax(0,1fr)_140px_minmax(160px,auto)]">
+                        <div key={entry.id} className="grid gap-3 p-3 type-caption type-emphasis text-ui-text-muted md:grid-cols-[minmax(0,1fr)_140px_minmax(160px,auto)]">
                           <div className="min-w-0">
                             <span className="block truncate text-ui-text">{entry.eventType}</span>
                             <span className="mt-1 block">

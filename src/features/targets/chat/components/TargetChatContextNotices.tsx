@@ -13,13 +13,13 @@ export const TargetChatContextNotices: React.FC<{
 }> = ({ activeSession, isPanel, sessionDeepLinkError, t }) => (
   <>
     {sessionDeepLinkError && (
-      <div className={`${isPanel ? 'px-5 sm:px-6' : 'px-4 sm:px-6 lg:px-10'} bg-ui-bg`}>
+      <div className={`${isPanel ? 'px-5 sm:px-6' : 'px-[var(--ao-route-padding-x)]'} bg-ui-bg`}>
         <InlineAlert tone="warning">{sessionDeepLinkError}</InlineAlert>
       </div>
     )}
     {activeSession?.origin === 'auto_triage' && activeSession.automaticInvestigation && (
-      <div className={`${isPanel ? 'px-5 sm:px-6' : 'px-4 sm:px-6 lg:px-10'} bg-ui-bg`}>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-y border-ui-border py-2 text-xs font-semibold text-ui-text-muted">
+      <div className={`${isPanel ? 'px-5 sm:px-6' : 'px-[var(--ao-route-padding-x)]'} bg-ui-bg`}>
+        <div className="type-caption type-emphasis flex flex-wrap items-center gap-x-2 gap-y-1 border-y border-ui-border py-2 text-ui-text-muted">
           <Bot className="h-4 w-4 text-accent-strong" aria-hidden="true" />
           <span>{t('chat.automaticInvestigation')}</span>
           <span aria-hidden="true">·</span>

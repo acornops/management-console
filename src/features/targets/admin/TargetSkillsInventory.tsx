@@ -12,10 +12,12 @@ import { formInputClassName } from '@acornops/ui';
 import type { ControlPlaneTargetSkillsCatalog } from '@/services/controlPlaneApi';
 import { sourceLabel, summarizeBytes, syncLabel } from '@/features/targets/admin/targetSkillsViewModel';
 import { useFloatingActionMenu } from '@acornops/ui';
+import { Button, TextInput } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 type TargetSkillSummary = ControlPlaneTargetSkillsCatalog['items'][number];
 
-const targetSkillSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
+const targetSkillSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 type-body');
 
 interface TargetSkillsInventoryProps {
   skills: TargetSkillSummary[];
@@ -96,8 +98,8 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
       : null;
 
   return (
-    <tr data-target-skill-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
-      <td className="px-4 py-6 sm:px-6 lg:px-8">
+    <DataTableRow data-target-skill-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
+      <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
             <BookOpen className="h-5 w-5 text-accent-strong" aria-hidden="true" />
@@ -112,16 +114,16 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
             {skill.inherited && (
               <span className="type-micro-label mt-1 inline-flex rounded-full bg-ui-bg px-2 py-0.5 text-ui-text-muted">Platform default</span>
             )}
-            <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={skill.description}>
+            <span className="mt-1 block line-clamp-2 break-words type-caption leading-5 text-ui-text-muted" title={skill.description}>
               {skill.description}
             </span>
           </div>
         </div>
-      </td>
-      <td className="px-4 py-6 sm:px-6 lg:px-8">
+      </DataTableCell>
+      <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <span className={`type-micro-label rounded-full px-2.5 py-1 ${assistantStateClass}`}>{t(`targetSkills.state.${assistantState}`)}</span>
-      </td>
-      <td className="px-4 py-6 sm:px-6 lg:px-8">
+      </DataTableCell>
+      <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <Switch
           checked={skill.enabled}
           aria-disabled={!canToggleSkill}
@@ -132,15 +134,17 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
             onToggleSkill(skill.id, enabled);
           }}
         />
-      </td>
-      <td className="hidden px-4 py-6 text-xs text-ui-text-muted sm:px-6 md:table-cell lg:px-8">
+      </DataTableCell>
+      <DataTableCell className="hidden px-4 py-6 type-caption text-ui-text-muted sm:px-6 md:table-cell lg:px-8">
         {skill.bundleStats.fileCount} files, {summarizeBytes(skill.bundleStats.totalBytes)}
-      </td>
-      <td className="px-4 py-6 text-right sm:px-6 lg:px-8">
-        <button
+      </DataTableCell>
+      <DataTableCell className="px-4 py-6 text-right sm:px-6 lg:px-8">
+        <Button
           ref={actionMenuButtonRef}
           data-target-skill-primary-actions="true"
           type="button"
+          variant="tertiary"
+          size="icon"
           onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
           className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
           aria-haspopup="menu"
@@ -149,10 +153,10 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
           aria-label={t('targetSkills.actionsNamed', { name: skill.name })}
         >
           <MoreVertical className="h-4 w-4" aria-hidden="true" />
-        </button>
+        </Button>
         {actionMenu}
-      </td>
-    </tr>
+      </DataTableCell>
+    </DataTableRow>
   );
 };
 
@@ -252,7 +256,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
                 {t('targetSkills.searchSkills')}
               </label>
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-              <input
+              <TextInput
                 id="target-skill-search"
                 type="text"
                 value={skillSearch}
@@ -271,8 +275,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
           </div>
         )}
         <div className="min-w-0">
-          <table className="w-full table-fixed text-left" aria-label={t('targetSkills.tableLabel')}>
-            <caption className="sr-only">{t('targetSkills.tableLabel')}</caption>
+          <DataTable caption={t('targetSkills.tableLabel')} className="w-full table-fixed text-left" aria-label={t('targetSkills.tableLabel')}>
             <colgroup>
               <col className="w-[34%]" />
               <col className="w-[23%]" />
@@ -286,15 +289,15 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
                 itemCount: filteredSkills.length
               }}
             >
-              <tr>
+              <DataTableRow>
                 <DataTableHeaderCell>{t('targetSkills.skillColumn')}</DataTableHeaderCell>
                 <DataTableHeaderCell>{t('targetSkills.assistantStateColumn')}</DataTableHeaderCell>
                 <DataTableHeaderCell>{t('targetSkills.enabledColumn')}</DataTableHeaderCell>
                 <DataTableHeaderCell className="hidden md:table-cell">{t('targetSkills.filesColumn')}</DataTableHeaderCell>
                 <DataTableHeaderCell numeric>{t('targetSkills.actionsColumn')}</DataTableHeaderCell>
-              </tr>
+              </DataTableRow>
             </DataTableHeader>
-            <tbody>
+            <DataTableBody>
               {filteredSkills.length > 0 ? (
                 filteredSkills.map((skill) => (
                   <TargetSkillRow
@@ -308,8 +311,8 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
                   />
                 ))
               ) : (
-                <tr>
-                  <td colSpan={5} className="p-0">
+                <DataTableRow>
+                  <DataTableCell colSpan={5} className="p-0">
                     <EmptyState
                       embedded
                       headingLevel={3}
@@ -317,11 +320,11 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
                       title={skills.length === 0 ? t('targetSkills.empty') : t('targetSkills.noSkillMatches')}
                       description={skills.length === 0 ? t('targetSkills.emptyHelp') : t('targetSkills.noSkillMatchesHelp')}
                     />
-                  </td>
-                </tr>
+                  </DataTableCell>
+                </DataTableRow>
               )}
-            </tbody>
-          </table>
+            </DataTableBody>
+          </DataTable>
         </div>
       </section>
     </>

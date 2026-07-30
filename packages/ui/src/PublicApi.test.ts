@@ -7,6 +7,7 @@ import {
   buttonClassName,
   closeButtonClassName,
   filterToggleButtonClassName,
+  FileInput,
   formInputClassName,
   formTextareaClassName,
   getFilterToggleModel,
@@ -23,9 +24,13 @@ describe('@acornops/ui public API', () => {
     expect(closeButtonClassName()).toBe(
       buttonClassName({ variant: 'icon', size: 'icon' })
     );
+    expect(buttonClassName({ variant: 'tertiary', size: 'inline' })).toContain(
+      'sm:min-h-8'
+    );
     expect(textInputClassName()).toBe(formInputClassName());
     expect(textareaClassName()).toBe(formTextareaClassName());
     expect(textareaClassName('min-h-36')).toContain('min-h-36');
+    expect(FileInput.displayName).toBe('FileInput');
   });
 
   it('builds accessible tab and filter state models', () => {
@@ -78,6 +83,7 @@ describe('@acornops/ui public API', () => {
     expect(index).toContain("export * from './CloseButton';");
     expect(index).toContain("export * from './CompactControls';");
     expect(index).toContain("export * from './TextInput';");
+    expect(index).toContain("export * from './FileInput';");
     expect(index).not.toContain('ComponentVocabulary');
     expect(packageJson.exports).toHaveProperty('.');
     expect(packageJson.exports).toHaveProperty('./tokens.css');

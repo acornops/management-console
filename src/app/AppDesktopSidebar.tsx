@@ -15,6 +15,9 @@ import { navIconClass, SidebarNavButton, SidebarSection, TargetSettingsDivider, 
 import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
 import { ThemeMenu } from '@/components/common/ThemeMenu';
 import type { ResolvedTheme, ThemePreference } from '@/app/theme';
+import { Button } from '@acornops/ui';
+
+const MotionButton = motion.create(Button);
 
 interface AppDesktopSidebarProps {
   workspaces: Workspace[];
@@ -166,13 +169,13 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   return (
     <Sidebar className="management-console-desktop-sidebar relative z-40 h-full min-h-0 w-64 shrink-0 overflow-visible lg:self-stretch">
       <div className="flex items-center gap-3 px-6 py-5">
-        <button className="control-target flex items-center gap-3 cursor-pointer" onClick={() => navigate(workspaceHomePath)} aria-label={t('app.goHome')}>
+        <Button variant="tertiary" size="inline" className="control-target flex items-center gap-3 cursor-pointer" onClick={() => navigate(workspaceHomePath)} aria-label={t('app.goHome')}>
           <img src={logoSrc} alt="" className="h-9 w-9 shrink-0" />
-          <div className="font-sans text-xl leading-none tracking-tighter antialiased">
+          <div className="font-sans type-section-title leading-none tracking-tighter antialiased">
             <span className="type-wordmark text-brand-brown dark:text-brand-cream">acorn</span>
             <span data-brand-wordmark className="type-wordmark text-accent-bright">ops</span>
           </div>
-        </button>
+        </Button>
       </div>
 
       <nav aria-label={t('app.workspaceNavigation')} className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
@@ -181,9 +184,10 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
             <>
               <div className="relative mb-5 mt-1 min-w-0 px-3" ref={sidebarWorkspaceMenuRef}>
                 {hasWorkspaces ? (
-                  <motion.button
+                  <MotionButton
                     ref={workspaceSwitcherButtonRef}
                     type="button"
+                    variant="tertiary"
                     onClick={() => onSetSidebarWorkspaceMenuOpen((current) => !current)}
                     onKeyDown={handleWorkspaceSwitcherKeyDown}
                     className="group flex min-h-11 w-full items-center justify-between rounded-lg border border-transparent px-3 py-2 text-left outline-none transition-colors duration-[160ms] hover:border-ui-border hover:bg-ui-bg focus-visible:ring-2 focus-visible:ring-accent/20 motion-reduce:duration-0"
@@ -194,10 +198,10 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   >
                     <span className="flex min-w-0 items-center gap-3">
                       <span className="w-8 h-8 rounded bg-accent-soft flex items-center justify-center shrink-0">
-                        <span className="text-accent-readable type-emphasis font-mono text-xs">{selectedWorkspaceInitials}</span>
+                        <span className="text-accent-readable type-emphasis font-mono type-caption">{selectedWorkspaceInitials}</span>
                       </span>
                       <span className="min-w-0 flex flex-col items-start">
-                        <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm type-emphasis leading-tight text-ui-text" title={selectedWorkspaceName}>
+                        <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal type-body type-emphasis leading-tight text-ui-text" title={selectedWorkspaceName}>
                           {selectedWorkspaceName}
                         </span>
                       </span>
@@ -205,16 +209,16 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     <span className={`shrink-0 transition-transform duration-[160ms] motion-reduce:duration-0 ${isSidebarWorkspaceMenuOpen ? 'rotate-180' : ''}`}>
                       <ICONS.ChevronDown className="w-4 h-4 text-ui-text-muted transition-colors group-hover:text-ui-text" />
                     </span>
-                  </motion.button>
+                  </MotionButton>
                 ) : (
                   <div className="w-full flex items-center justify-between p-3 rounded-lg border border-transparent text-left" title={t('app.noWorkspacesAvailable')}>
                     <span className="flex min-w-0 items-center gap-3">
                       <span className="w-8 h-8 rounded bg-ui-bg flex items-center justify-center shrink-0">
-                        <span className="text-ui-text-muted type-emphasis font-mono text-xs">{selectedWorkspaceInitials}</span>
+                        <span className="text-ui-text-muted type-emphasis font-mono type-caption">{selectedWorkspaceInitials}</span>
                       </span>
                       <span className="min-w-0 flex flex-col items-start">
                         <span
-                          className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal text-sm type-emphasis leading-tight text-ui-text-muted"
+                          className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal type-body type-emphasis leading-tight text-ui-text-muted"
                           title={selectedWorkspaceName}
                         >
                           {selectedWorkspaceName}
@@ -252,9 +256,10 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                             .toUpperCase();
                           return (
                             <div key={workspace.id} role="listitem">
-                              <motion.button
+                              <MotionButton
                                 whileTap={{ scale: 0.98 }}
                                 type="button"
+                                variant="tertiary"
                                 onClick={() => {
                                   onSelectWorkspaceContext(workspace.id);
                                   closeWorkspaceSwitcher({
@@ -262,29 +267,30 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                                   });
                                 }}
                                 aria-current={isSelected ? 'true' : undefined}
-                                className={`control-target flex w-full items-start gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                                className={`control-target flex w-full items-start gap-3 rounded-lg px-3 py-2 transition-colors ${
                                   isSelected ? 'border border-accent/20 bg-accent-soft type-ui text-accent-strong' : 'text-ui-text hover:bg-ui-bg'
                                 }`}
                               >
                                 <ICONS.LayoutGrid className={`w-4 h-4 shrink-0 ${isSelected ? 'text-accent-strong' : 'opacity-50'}`} />
                                 <span className="min-w-0 flex-1 whitespace-normal break-words text-left leading-snug">{workspace.name || initials}</span>
-                              </motion.button>
+                              </MotionButton>
                             </div>
                           );
                         })}
                       </div>
                       <div className="p-2 border-t border-ui-border bg-ui-bg">
-                        <motion.button
+                        <MotionButton
                           type="button"
+                          variant="tertiary"
                           onClick={() => {
                             closeWorkspaceSwitcher({ restoreFocus: true });
                             onOpenCreateWorkspace();
                           }}
-                          className="control-target w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs type-ui text-ui-text-muted hover:text-accent-strong hover:bg-accent-soft transition-colors"
+                          className="control-target w-full flex items-center gap-2 px-3 py-2 rounded-lg text-ui-text-muted hover:text-accent-strong hover:bg-accent-soft transition-colors"
                         >
                           <ICONS.Plus className="h-3.5 w-3.5" />
                           <span>{t('app.newWorkspace')}</span>
-                        </motion.button>
+                        </MotionButton>
                       </div>
                     </motion.div>
                   )}
@@ -341,15 +347,17 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
           {isAgentSidebar && (
             <>
               <div className="mb-8 px-4 pt-2">
-                <motion.button
+                <MotionButton
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={onBackToWorkspaceSidebar}
-                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('agentChat.backToAgents')}
                 >
                   <ICONS.ChevronLeft className="h-3.5 w-3.5" />
                   <span>{t('agentChat.backToAgents')}</span>
-                </motion.button>
+                </MotionButton>
                 <div className="border-y border-ui-border bg-ui-surface px-4 py-3" title={selectedAgentName}>
                   <div className="type-micro-label mb-1">{t('app.activeAgent')}</div>
                   <div data-desktop-sidebar-active-agent="true" className="type-row-title line-clamp-2 break-words" title={selectedAgentName}>
@@ -405,15 +413,17 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
           {isClusterSidebar && (
             <>
               <div className="px-4 mb-8 pt-2">
-                <motion.button
+                <MotionButton
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={onBackToWorkspaceSidebar}
-                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('app.backToWorkspace')}
                 >
                   <ICONS.ChevronLeft className="w-3.5 h-3.5" />
                   <span>{t('app.backToWorkspace')}</span>
-                </motion.button>
+                </MotionButton>
                 <div className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedClusterName}>
                   <div className="type-micro-label mb-1">{t('app.activeCluster')}</div>
                   <div data-desktop-sidebar-active-cluster="true" className="type-row-title line-clamp-2 break-words" title={selectedClusterName}>
@@ -478,15 +488,17 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
           {isVirtualMachineSidebar && (
             <>
               <div className="px-4 mb-8 pt-2">
-                <motion.button
+                <MotionButton
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={onBackToWorkspaceSidebar}
-                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+                  className="control-target mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
                   aria-label={t('app.backToWorkspace')}
                 >
                   <ICONS.ChevronLeft className="w-3.5 h-3.5" />
                   <span>{t('app.backToWorkspace')}</span>
-                </motion.button>
+                </MotionButton>
                 <div className="px-4 py-3 bg-ui-surface border-y border-ui-border" title={selectedVmName}>
                   <div className="type-micro-label mb-1">{t('app.activeVirtualMachine')}</div>
                   <div data-desktop-sidebar-active-vm="true" className="type-row-title line-clamp-2 break-words" title={selectedVmName}>
@@ -549,9 +561,10 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
       </nav>
 
       <div className="relative z-50 border-t border-ui-border bg-ui-surface px-3 pb-5 pt-3" ref={sidebarAccountMenuRef}>
-        <motion.button
+        <MotionButton
           ref={accountMenuButtonRef}
           type="button"
+          variant="tertiary"
           onClick={() => onSetAccountMenuOpen((current) => !current)}
           onKeyDown={handleAccountMenuKeyDown}
           data-account-settings-active={isAccountSettingsActive ? 'true' : undefined}
@@ -565,15 +578,15 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
         >
           <span className="flex min-w-0 items-center gap-3">
             <span
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border font-mono text-xs type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${
-                isAccountSettingsActive ? 'border-accent/25 bg-accent-soft text-accent-strong' : 'border-ui-border bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border font-mono type-caption type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${
+                isAccountSettingsActive ? 'border-accent/25 bg-accent-soft text-accent-readable' : 'border-ui-border bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
               }`}
             >
               {userInitials}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm type-emphasis leading-5 text-ui-text">{user.name}</span>
-              <span className="block truncate text-xs leading-4 text-ui-text-muted">{user.email}</span>
+              <span className="block truncate type-body type-emphasis leading-5 text-ui-text">{user.name}</span>
+              <span className={`block truncate type-caption leading-4 ${isAccountSettingsActive ? 'text-ui-text' : 'text-ui-text-muted'}`}>{user.email}</span>
             </span>
           </span>
           <motion.span
@@ -583,7 +596,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
           >
             <ICONS.ChevronDown className="h-3.5 w-3.5 text-ui-text-muted" />
           </motion.span>
-        </motion.button>
+        </MotionButton>
 
         <AnimatePresence>
           {isAccountMenuOpen && (
@@ -599,18 +612,19 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
               className="absolute bottom-full left-3 right-3 mb-2 rounded-lg border border-ui-border bg-ui-surface shadow-xl"
             >
               <div className="flex items-center gap-3 px-4 py-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/20 bg-accent-soft font-mono text-sm type-emphasis text-accent-strong">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/20 bg-accent-soft font-mono type-body type-emphasis text-accent-strong">
                   {userInitials}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm type-emphasis leading-5 text-ui-text">{user.name}</p>
-                  <p className="truncate font-mono text-xs leading-4 text-ui-text-muted">{user.email}</p>
+                  <p className="truncate type-body type-emphasis leading-5 text-ui-text">{user.name}</p>
+                  <p className="truncate font-mono type-caption leading-4 text-ui-text-muted">{user.email}</p>
                 </div>
               </div>
 
               <div className="border-t border-ui-border px-2 py-2">
-                <motion.button
+                <MotionButton
                   type="button"
+                  variant="tertiary"
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     closeAccountMenu();
@@ -629,16 +643,17 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     >
                       <ICONS.User className="h-4 w-4" />
                     </span>
-                    <span>{t('app.accountSettings')}</span>
+                    <span className="type-body type-emphasis">{t('app.accountSettings')}</span>
                   </span>
-                </motion.button>
+                </MotionButton>
 
                 <ThemeMenu preference={themePreference} resolvedTheme={resolvedTheme} variant="account" onSelect={onSelectTheme} />
               </div>
 
               <div className="border-t border-ui-border px-2 py-2">
-                <motion.button
+                <MotionButton
                   type="button"
+                  variant="tertiary"
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     closeAccountMenu();
@@ -650,7 +665,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     <ICONS.LogOut className="h-4 w-4" />
                   </span>
                   <span>{t('app.logout')}</span>
-                </motion.button>
+                </MotionButton>
               </div>
             </motion.div>
           )}

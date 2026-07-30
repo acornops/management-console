@@ -56,7 +56,7 @@ export const GeneratedReportCard: React.FC<GeneratedReportCardProps> = ({ trace,
             </div>
           </div>
           <a
-            className="control-target inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-ui-border bg-ui-surface px-3 text-xs font-semibold text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+            className="control-target inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-ui-border bg-ui-surface px-3 type-caption type-emphasis text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
             href={getControlPlaneUrl(report.downloadUrl).toString()}
             download
           >
@@ -66,8 +66,8 @@ export const GeneratedReportCard: React.FC<GeneratedReportCardProps> = ({ trace,
         </section>
       ))}
       {generationFailed && (
-        <div className="rounded-lg border border-status-danger/30 bg-status-danger-soft px-4 py-3 text-sm text-status-danger-text" role="alert">
-          <p className="font-semibold">{t('chat.incidentReportGenerationFailed')}</p>
+        <div className="rounded-lg border border-status-danger/30 bg-status-danger-soft px-4 py-3 type-body text-status-danger-text" role="alert">
+          <p className="type-emphasis">{t('chat.incidentReportGenerationFailed')}</p>
           <p className="type-caption mt-1">{t('chat.incidentReportGenerationFailedBody')}</p>
         </div>
       )}

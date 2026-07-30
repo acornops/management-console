@@ -10,6 +10,8 @@ import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi'
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import type { McpConnection } from '@/services/control-plane/catalogApi';
 import { getMcpServerStatusDisplay, McpServerCard } from '@/features/targets/admin/McpServerCard';
+import { TextInput } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface McpServersInventoryProps {
   servers: TargetToolCatalogServer[];
@@ -34,7 +36,7 @@ interface McpServersInventoryProps {
   onRetry: (server: TargetToolCatalogServer) => void;
 }
 
-const mcpServerSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 font-normal');
+const mcpServerSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 type-body');
 
 export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   servers,
@@ -148,7 +150,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                 {t('mcpServers.searchServers')}
               </label>
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
-              <input
+              <TextInput
                 id="mcp-server-search"
                 type="text"
                 value={serverSearch}
@@ -170,8 +172,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
           </div>
         )}
         <div className="min-w-0">
-          <table className="w-full table-fixed text-left" aria-label={t('mcpServers.title')}>
-            <caption className="sr-only">{t('mcpServers.title')}</caption>
+          <DataTable caption={t('mcpServers.title')} className="w-full table-fixed text-left" aria-label={t('mcpServers.title')}>
             <colgroup>
               <col className="w-[34%]" />
               <col className="w-[23%]" />
@@ -180,15 +181,15 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
               <col className="w-[11%]" />
             </colgroup>
             <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredServers.length }}>
-              <tr>
+              <DataTableRow>
                 <DataTableHeaderCell>{t('mcpServers.server')}</DataTableHeaderCell>
                 <DataTableHeaderCell>{t('mcpServers.status')}</DataTableHeaderCell>
                 <DataTableHeaderCell>{t('mcpServers.enabled')}</DataTableHeaderCell>
                 <DataTableHeaderCell className="hidden md:table-cell">{t('mcpServers.tools')}</DataTableHeaderCell>
                 <DataTableHeaderCell numeric>{t('mcpServers.actions')}</DataTableHeaderCell>
-              </tr>
+              </DataTableRow>
             </DataTableHeader>
-            <tbody>
+            <DataTableBody>
               {filteredServers.map((server) => (
                 <McpServerCard
                   key={server.id}
@@ -223,8 +224,8 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                 filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('mcpServers.noServerMatches')} description={t('mcpServers.noServerMatchesHelp')} />}
                 error={null}
               />
-            </tbody>
-          </table>
+            </DataTableBody>
+          </DataTable>
         </div>
       </section>
     </>

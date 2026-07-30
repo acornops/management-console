@@ -96,7 +96,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               <div className="mb-8 max-w-xl rounded-xl border border-ui-border bg-ui-surface p-10 shadow-sm">
                 <ICONS.Wrench className="mx-auto mb-5 h-14 w-14 text-status-warning-text" />
                 <h2 className="type-section-title mb-3 text-ui-text">{t('diagnostics.installAgentTitle')}</h2>
-                <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-ui-text-muted">{t('diagnostics.installAgentBody')}</p>
+                <p className="mx-auto mb-6 max-w-md type-body leading-6 text-ui-text-muted">{t('diagnostics.installAgentBody')}</p>
                 <Button
                   onClick={() => onOpenInstallModal(selectedCluster.id)}
                   disabled={!canManageAgentKeys}
@@ -108,20 +108,20 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
                   {t('diagnostics.openInstallCommand')}
                 </Button>
               </div>
-              <button onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}>
+              <Button variant="secondary" onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2`}>
                 {t('diagnostics.returnToClusters')} <ICONS.ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center bg-ui-bg p-8 text-center">
               <div className="mb-8 rounded-xl border border-ui-border bg-ui-surface p-10 shadow-sm">
                 <ICONS.Activity className="mx-auto mb-6 h-16 w-16 text-ui-text-muted" />
                 <h2 className="type-section-title mb-3 text-ui-text">{t('diagnostics.idleTitle')}</h2>
-                <p className="mx-auto max-w-xs text-sm leading-6 text-ui-text-muted">{t('diagnostics.idleBody')}</p>
+                <p className="mx-auto max-w-xs type-body leading-6 text-ui-text-muted">{t('diagnostics.idleBody')}</p>
               </div>
-              <button onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2 font-semibold`}>
+              <Button variant="secondary" onClick={onNavigateBackToClusters} className={`group control-target ${THEME_CLASSES.primary.text} flex items-center gap-2`}>
                 {t('diagnostics.returnToDashboard')} <ICONS.ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" />
-              </button>
+              </Button>
             </div>
           )}
         </div>

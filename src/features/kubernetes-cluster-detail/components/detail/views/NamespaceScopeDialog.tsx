@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { menuOptionClassName, menuSurfaceClassName } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
@@ -17,6 +17,7 @@ import {
   normalizeNamespaceTokens,
   splitNamespaceTokenInput
 } from './namespaceScopeTokens';
+import { TextInput } from '@acornops/ui';
 
 interface NamespaceScopeDialogProps {
   cluster: KubernetesCluster;
@@ -220,7 +221,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
   const excludeListOpen = activeScope === 'exclude';
 
   return (
-    <Dialog
+    <DialogFrame unframed
       className="relative flex max-h-[86vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
       closeDisabled={isSaving}
       overlayClassName="z-[120]"
@@ -232,17 +233,17 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
           <h3 id="namespace-scope-title" className="type-panel-title">
             {t('clusterSetup.editNamespaceScope')}
           </h3>
-          <p className="mt-1 text-xs font-medium text-ui-text-muted">{cluster.name}</p>
+          <p className="mt-1 type-caption text-ui-text-muted">{cluster.name}</p>
         </div>
         <CloseButton onClick={onClose} disabled={isSaving} aria-label={t('clusterSetup.closeNamespaceScopeDialog')} />
       </div>
 
       <div className="space-y-4 overflow-y-auto p-6 custom-scrollbar">
-        <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-xs font-semibold leading-5 text-status-warning-text">
+        <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 type-caption type-emphasis leading-5 text-status-warning-text">
           {t('clusterSetup.namespaceScopeApplyHelp')}
         </div>
         {errorMessage && (
-          <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-xs font-semibold leading-5 text-status-danger-text">{errorMessage}</div>
+          <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-caption type-emphasis leading-5 text-status-danger-text">{errorMessage}</div>
         )}
 
         <div className="relative space-y-1.5" onBlur={(event) => handleFieldBlur(event, 'include')}>
@@ -254,11 +255,12 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
               {includeNamespaces.map((namespace) => (
                 <span
                   key={namespace}
-                  className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-surface px-2 py-1 text-xs font-semibold text-ui-text"
+                  className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-surface px-2 py-1 type-caption type-emphasis text-ui-text"
                 >
                   <span className="truncate">{namespace}</span>
-                  <button
+                  <Button
                     type="button"
+                    variant="tertiary"
                     disabled={isSaving}
                     onClick={() => removeToken('include', namespace)}
                     className="control-target rounded-sm p-0.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
@@ -267,10 +269,10 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     })}
                   >
                     <X className="h-3 w-3" />
-                  </button>
+                  </Button>
                 </span>
               ))}
-              <input
+              <TextInput
                 id="namespace-scope-include-input"
                 value={includeQuery}
                 disabled={isSaving}
@@ -285,7 +287,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                 onKeyDown={(event) => handleInputKeyDown(event, 'include', includeQuery, includeSuggestions)}
                 onPaste={(event) => handleInputPaste(event, 'include', includeQuery)}
                 placeholder={includeNamespaces.length === 0 ? t('clusterSetup.namespaceScopeIncludePlaceholder') : ''}
-                className="min-w-[12rem] flex-1 bg-transparent px-1 py-1.5 text-sm text-ui-text outline-none placeholder:text-ui-text-muted disabled:opacity-50"
+                className="min-w-[12rem] flex-1 bg-transparent px-1 py-1.5 type-body text-ui-text outline-none placeholder:text-ui-text-muted disabled:opacity-50"
               />
             </div>
           </div>
@@ -296,24 +298,25 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
             <div id="namespace-scope-include-suggestions" role="listbox" className={menuSurfaceClassName('absolute z-20 mt-2 max-h-48 w-full p-1')}>
               {includeSuggestions.length > 0 ? (
                 includeSuggestions.map((namespace, index) => (
-                  <button
+                  <Button
                     key={namespace}
                     id={`namespace-scope-include-option-${index}`}
                     type="button"
+                    variant="tertiary"
                     role="option"
                     aria-selected={index === includeHighlightedIndex}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => addTokens('include', [namespace])}
                     className={menuOptionClassName({
                       active: index === includeHighlightedIndex,
-                      className: 'block rounded-sm text-sm font-semibold'
+                      className: 'block rounded-sm'
                     })}
                   >
                     {namespace}
-                  </button>
+                  </Button>
                 ))
               ) : (
-                <div className="px-3 py-2 text-xs font-semibold text-ui-text-muted" role="status">
+                <div className="px-3 py-2 type-caption type-emphasis text-ui-text-muted" role="status">
                   {t('clusterSetup.namespaceScopeAutocompleteEmpty')}
                 </div>
               )}
@@ -330,11 +333,12 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
               {excludeNamespaces.map((namespace) => (
                 <span
                   key={namespace}
-                  className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-surface px-2 py-1 text-xs font-semibold text-ui-text"
+                  className="inline-flex max-w-full items-center gap-1 rounded-md border border-ui-border bg-ui-surface px-2 py-1 type-caption type-emphasis text-ui-text"
                 >
                   <span className="truncate">{namespace}</span>
-                  <button
+                  <Button
                     type="button"
+                    variant="tertiary"
                     disabled={isSaving}
                     onClick={() => removeToken('exclude', namespace)}
                     className="control-target rounded-sm p-0.5 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-accent-strong disabled:opacity-50"
@@ -343,10 +347,10 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                     })}
                   >
                     <X className="h-3 w-3" />
-                  </button>
+                  </Button>
                 </span>
               ))}
-              <input
+              <TextInput
                 id="namespace-scope-exclude-input"
                 value={excludeQuery}
                 disabled={isSaving}
@@ -361,7 +365,7 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
                 onKeyDown={(event) => handleInputKeyDown(event, 'exclude', excludeQuery, excludeSuggestions)}
                 onPaste={(event) => handleInputPaste(event, 'exclude', excludeQuery)}
                 placeholder={excludeNamespaces.length === 0 ? t('clusterSetup.namespaceScopeExcludePlaceholder') : ''}
-                className="min-w-[12rem] flex-1 bg-transparent px-1 py-1.5 text-sm text-ui-text outline-none placeholder:text-ui-text-muted disabled:opacity-50"
+                className="min-w-[12rem] flex-1 bg-transparent px-1 py-1.5 type-body text-ui-text outline-none placeholder:text-ui-text-muted disabled:opacity-50"
               />
             </div>
           </div>
@@ -372,24 +376,25 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
             <div id="namespace-scope-exclude-suggestions" role="listbox" className={menuSurfaceClassName('absolute z-20 mt-2 max-h-48 w-full p-1')}>
               {excludeSuggestions.length > 0 ? (
                 excludeSuggestions.map((namespace, index) => (
-                  <button
+                  <Button
                     key={namespace}
                     id={`namespace-scope-exclude-option-${index}`}
                     type="button"
+                    variant="tertiary"
                     role="option"
                     aria-selected={index === excludeHighlightedIndex}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => addTokens('exclude', [namespace])}
                     className={menuOptionClassName({
                       active: index === excludeHighlightedIndex,
-                      className: 'block rounded-sm text-sm font-semibold'
+                      className: 'block rounded-sm'
                     })}
                   >
                     {namespace}
-                  </button>
+                  </Button>
                 ))
               ) : (
-                <div className="px-3 py-2 text-xs font-semibold text-ui-text-muted" role="status">
+                <div className="px-3 py-2 type-caption type-emphasis text-ui-text-muted" role="status">
                   {t('clusterSetup.namespaceScopeAutocompleteEmpty')}
                 </div>
               )}
@@ -407,6 +412,6 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
           {t('clusterSetup.saveNamespaceScope')}
         </Button>
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

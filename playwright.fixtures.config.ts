@@ -25,7 +25,7 @@ export default defineConfig({
   webServer: {
     command: 'VITE_APP_DATA_MODE=mock VITE_CONTROL_PLANE_API_BASE_URL=http://127.0.0.1:59999 npm run dev -- --host 127.0.0.1 --port 4186 --strictPort',
     url: 'http://127.0.0.1:4186',
-    reuseExistingServer: false,
+    reuseExistingServer: process.env.FIXTURE_REUSE_SERVER === '1',
     timeout: 120_000
   }
 });

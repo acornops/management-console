@@ -89,12 +89,12 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
   return (
     <DrawerFrame open={open} width="xl" titleId={titleId} title={t('workflowRecommendations.title')} description={t('workflowRecommendations.description')} onClose={onClose}>
       {loading ? (
-        <p role="status" aria-live="polite" className="text-sm text-ui-text-muted">
+        <p role="status" aria-live="polite" className="type-body text-ui-text-muted">
           {t('workflowRecommendations.loading')}
         </p>
       ) : loadError ? (
         <div className="space-y-4">
-          <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 text-sm text-status-danger-text">
+          <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 type-body text-status-danger-text">
             <strong>{t('workflowRecommendations.loadFailed')}</strong>
             <span className="mt-1 block">{loadError}</span>
           </div>
@@ -103,14 +103,15 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
           </Button>
         </div>
       ) : recommendations.length === 0 ? (
-        <p className="text-sm text-ui-text-muted">{t('workflowRecommendations.empty')}</p>
+        <p className="type-body text-ui-text-muted">{t('workflowRecommendations.empty')}</p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(13rem,0.75fr)_minmax(0,1.6fr)]">
           <nav aria-label={t('workflowRecommendations.list')} className="space-y-2">
             {recommendations.map((recommendation) => (
-              <button
+              <Button
                 key={recommendation.id}
                 type="button"
+                variant="secondary"
                 aria-current={selected?.id === recommendation.id ? 'true' : undefined}
                 onClick={() => {
                   setSelectedId(recommendation.id);
@@ -126,7 +127,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
                   <span aria-hidden="true">·</span>
                   <span>{recommendation.installMode === 'automatic' ? t('workflowRecommendations.automatic') : t('workflowRecommendations.optIn')}</span>
                 </span>
-              </button>
+              </Button>
             ))}
           </nav>
 
@@ -152,7 +153,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
               {selected.setupSteps.length > 0 && (
                 <ol className="space-y-2 rounded-lg border border-ui-border bg-ui-bg p-4">
                   {selected.setupSteps.map((step, index) => (
-                    <li key={step} className="flex gap-3 text-sm text-ui-text">
+                    <li key={step} className="flex gap-3 type-body text-ui-text">
                       <span className="type-micro-label mt-0.5 text-ui-text-muted">{index + 1}</span>
                       <span>{step}</span>
                     </li>
@@ -161,7 +162,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
               )}
 
               {!canInstall && selected.installationStatus !== 'active' && (
-                <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm text-ui-text-muted">{t('workflowRecommendations.installPermission')}</div>
+                <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-body text-ui-text-muted">{t('workflowRecommendations.installPermission')}</div>
               )}
 
               {selected.installationStatus === 'not_installed' && (
@@ -181,7 +182,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
                 </Button>
               )}
               {actionError && (
-                <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 text-sm text-status-danger-text">
+                <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 type-body text-status-danger-text">
                   {actionError}
                 </div>
               )}

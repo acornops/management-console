@@ -17,6 +17,7 @@ import { AppPaths } from '@/utils/routes';
 import { AgentSkillsPanel } from '@/pages/agents/AgentSkillsPanel';
 import { AgentToolsPanel } from '@/pages/agents/AgentToolsPanel';
 import { useAgentCapabilities } from '@/pages/agents/useAgentCapabilities';
+import { TextInput } from '@acornops/ui';
 interface AgentCapabilitiesPanelProps {
   agent: AgentDefinition;
   canManageAgents: boolean;
@@ -25,7 +26,7 @@ interface AgentCapabilitiesPanelProps {
   section?: 'mcp' | 'skills' | 'tools';
   hideSectionNavigation?: boolean;
 }
-const inputClass = 'min-h-11 w-full rounded-md border border-ui-border bg-ui-surface px-3 text-sm text-ui-text focus-visible:ring-2 focus-visible:ring-accent';
+const inputClass = 'min-h-11 w-full rounded-md border border-ui-border bg-ui-surface px-3 type-body text-ui-text focus-visible:ring-2 focus-visible:ring-accent';
 export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ agent, canManageAgents, canManageMcp, canManageSkills, section, hideSectionNavigation = false }) => {
   const capabilityState = useAgentCapabilities({ agent, canManageAgents, canManageMcp, canManageSkills });
   const { t, tabs, servers, toolRefreshErrors, nativeTools, assignedNativeToolIds, setAssignedNativeToolIds, nativeToolConfigs, setNativeToolConfigs, tools } = capabilityState;
@@ -53,12 +54,12 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
       </div>
 
       {error && (
-        <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger-soft px-3 py-2 text-sm text-status-danger-text">
+        <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger-soft px-3 py-2 type-body text-status-danger-text">
           {error}
         </div>
       )}
       {notice && (
-        <div role="status" className="rounded-md border border-status-success/30 bg-status-success-soft px-3 py-2 text-sm text-status-success-text">
+        <div role="status" className="rounded-md border border-status-success/30 bg-status-success-soft px-3 py-2 type-body text-status-success-text">
           {notice}
         </div>
       )}
@@ -80,9 +81,9 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                 </Button>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className="text-sm font-semibold">
+                <label className="type-body type-emphasis">
                   Name
-                  <input
+                  <TextInput
                     value={manualServer.name}
                     onChange={(event) =>
                       setManualServer((value) => ({
@@ -93,9 +94,9 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                     className={`mt-2 ${inputClass}`}
                   />
                 </label>
-                <label className="text-sm font-semibold">
+                <label className="type-body type-emphasis">
                   HTTPS endpoint
-                  <input
+                  <TextInput
                     type="url"
                     pattern="https://.*"
                     value={manualServer.url}
@@ -108,7 +109,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                     className={`mt-2 ${inputClass}`}
                   />
                 </label>
-                <label className="text-sm font-semibold">
+                <label className="type-body type-emphasis">
                   Authentication
                   <Select
                     ariaLabel="Authentication"
@@ -151,9 +152,9 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                   </div>
                 )}
                 {manualServer.authType === 'custom_header' && (
-                  <label className="text-sm font-semibold">
+                  <label className="type-body type-emphasis">
                     Header name
-                    <input
+                    <TextInput
                       value={manualServer.authHeaderName}
                       onChange={(event) =>
                         setManualServer((value) => ({
@@ -165,7 +166,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                     />
                   </label>
                 )}
-                <Button disabled={!mcpWritable || !manualServer.name.trim() || !manualServer.url.trim().startsWith('https://') || (manualServer.authType === 'custom_header' && !manualServer.authHeaderName.trim()) || Boolean(busy)} onClick={() => void addManualServer()}>
+                <Button variant="secondary" disabled={!mcpWritable || !manualServer.name.trim() || !manualServer.url.trim().startsWith('https://') || (manualServer.authType === 'custom_header' && !manualServer.authHeaderName.trim()) || Boolean(busy)} onClick={() => void addManualServer()}>
                   Add server
                 </Button>
               </div>
@@ -196,7 +197,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <strong className="text-sm">{server.name}</strong>
+                          <strong className="type-body">{server.name}</strong>
                           <StatusBadge tone={server.enabled ? 'success' : 'neutral'}>{server.enabled ? 'Enabled' : 'Disabled'}</StatusBadge>
                           {server.inherited && <StatusBadge tone="neutral">Platform default</StatusBadge>}
                           {server.provenance && <StatusBadge tone="neutral">Catalog v{server.provenance.version}</StatusBadge>}
@@ -439,7 +440,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                         </h4>
                         <label className="type-label mt-3 block text-ui-text">
                           {t('agentsWorkflows.agents.details.capabilities.renameServer.name')}
-                          <input
+                          <TextInput
                             autoFocus
                             value={renameEditor.name}
                             onChange={(event) =>
@@ -467,6 +468,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                           </Button>
                           <Button
                             size="sm"
+                            variant="secondary"
                             disabled={!renameEditor.name.trim() || renameEditor.name.trim() === server.name || Boolean(busy)}
                             onClick={() =>
                               void run(
@@ -541,7 +543,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                               ['virtual_machine', 'Virtual machines']
                             ] as const
                           ).map(([value, label]) => (
-                            <label key={value} className="flex items-center gap-2 text-sm font-semibold">
+                            <label key={value} className="flex items-center gap-2 type-body type-emphasis">
                               <Checkbox
                                 checked={constraintEditor.targetTypes.includes(value)}
                                 onChange={(event) =>
@@ -561,7 +563,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                         <div className="mt-3 grid gap-2 sm:grid-cols-2">
                           {targetOptions.length ? (
                             targetOptions.map((target) => (
-                              <label key={target.value} className="flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 text-sm font-semibold">
+                              <label key={target.value} className="flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 type-body type-emphasis">
                                 <Checkbox
                                   className="mt-0.5"
                                   checked={constraintEditor.targetIds.includes(target.value)}
@@ -592,6 +594,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                           </Button>
                           <Button
                             size="sm"
+                            variant="secondary"
                             disabled={Boolean(busy)}
                             onClick={() =>
                               void run(
@@ -617,7 +620,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                 );
               })
             ) : (
-              <p className="py-5 text-sm text-ui-text-muted">No MCP servers installed.</p>
+              <p className="py-5 type-body text-ui-text-muted">No MCP servers installed.</p>
             )}
           </div>
         </div>

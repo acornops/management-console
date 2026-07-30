@@ -2,7 +2,13 @@
 
 Assessment date: July 29, 2026.
 
-## Design system score: 20/20
+## Design system score: incomplete (adoption verification in progress)
+
+The previously reported 20/20 score is suspended while the executable adoption
+audit in
+[Design-System Adoption Completion](exec-plans/active/design-system-adoption-completion.md)
+is completed. Restore the numeric score only after the AST adoption check and
+the full control-plane-mode validation suite pass with no temporary exceptions.
 
 | Area | Score | Evidence |
 | --- | --- | --- |

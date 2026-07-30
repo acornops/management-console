@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import { ICONS } from '@/constants';
 import { FieldValidationMessage } from '@acornops/ui';
 import { EmailField, ErrorMessage, PasswordField, fieldWrapClass, invalidInputClass, iconInputClass, primaryButtonClass } from '@/pages/login/LoginAuthPanelParts';
+import { Button, TextInput } from '@acornops/ui';
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 
@@ -136,7 +137,7 @@ export function LoginPasswordAuthForm({
                 <span className="mb-2 block type-label">{t('login.username')}</span>
                 <span className={fieldWrapClass}>
                   <ICONS.User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
-                  <input
+                  <TextInput
                     id="auth-username"
                     value={username}
                     onChange={(event) => {
@@ -167,7 +168,7 @@ export function LoginPasswordAuthForm({
               <span className="mb-2 block type-label">{t('login.usernameOrEmail')}</span>
               <span className={fieldWrapClass}>
                 <ICONS.Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
-                <input
+                <TextInput
                   id="auth-identifier"
                   value={identifier}
                   onChange={(event) => {
@@ -205,13 +206,15 @@ export function LoginPasswordAuthForm({
 
         {mode === 'login' && canResetPassword && (
           <div className="-mt-2 flex justify-end">
-            <button
+            <Button
               type="button"
+              variant="tertiary"
+              size="inline"
               onClick={onForgotPassword}
-              className="control-target rounded-sm text-xs type-ui text-accent-readable transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
+              className="control-target rounded-sm text-accent-readable transition-colors hover:text-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               {t('login.forgotPassword')}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -246,7 +249,7 @@ export function LoginPasswordAuthForm({
         )}
       </AnimatePresence>
 
-      <button type="submit" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
+      <Button type="submit" variant="primary" disabled={isAuthLoading} className={`control-target ${primaryButtonClass}`}>
         {isAuthLoading ? (
           <span className="h-4 w-4 rounded-full border-2 border-ui-bg border-t-transparent animate-spin" />
         ) : (
@@ -255,7 +258,7 @@ export function LoginPasswordAuthForm({
             <ICONS.ArrowRight className="h-4 w-4" />
           </>
         )}
-      </button>
+      </Button>
     </form>
   );
 }

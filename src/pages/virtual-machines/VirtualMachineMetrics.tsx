@@ -119,7 +119,7 @@ export const VmOperationalDetails: React.FC<{ vm: ControlPlaneVirtualMachine; is
             <span className="hidden truncate 2xl:inline">{label}</span>
             <span className="truncate 2xl:hidden">{compactLabel}</span>
           </dt>
-          <dd className="type-caption mt-1 break-words font-semibold leading-4 text-ui-text [overflow-wrap:anywhere]" title={String(value)}>{value}</dd>
+          <dd className="type-caption mt-1 break-words type-emphasis leading-4 text-ui-text [overflow-wrap:anywhere]" title={String(value)}>{value}</dd>
         </div>
       ))}
     </dl>
@@ -247,7 +247,7 @@ export const VmCardResourceChart: React.FC<{
               <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />
               <span className="truncate">{label}</span>
             </dt>
-            <dd className="type-caption mt-1 truncate font-semibold text-ui-text" title={value}>{value}</dd>
+            <dd className="type-caption mt-1 truncate type-emphasis text-ui-text" title={value}>{value}</dd>
           </div>
         ))}
       </dl>
@@ -262,7 +262,7 @@ export const VmCardResourceChart: React.FC<{
           </svg>
           {!hasTrend && (
             <div className="absolute inset-0 flex items-center justify-center px-3 text-center">
-              <p className={`type-caption font-semibold ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`}>{chartMessage}</p>
+              <p className={`type-caption type-emphasis ${loadState === 'error' ? 'text-status-danger-text' : 'text-ui-text-muted'}`}>{chartMessage}</p>
             </div>
           )}
         </div>

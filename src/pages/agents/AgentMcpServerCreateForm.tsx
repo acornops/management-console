@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Select } from '@acornops/ui';
+import { Button, Select, TextInput } from '@acornops/ui';
 import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';
 
 export interface ManualAgentMcpServerForm {
@@ -20,8 +20,6 @@ interface AgentMcpServerCreateFormProps {
   writable: boolean;
   busy: boolean;
 }
-
-const inputClass = 'min-h-11 w-full rounded-md border border-ui-border bg-ui-surface px-3 text-sm text-ui-text focus-visible:ring-2 focus-visible:ring-accent';
 
 export function AgentMcpServerCreateForm({
   value,
@@ -42,7 +40,7 @@ export function AgentMcpServerCreateForm({
     <section aria-labelledby="connect-agent-mcp-title" className="rounded-md border border-ui-border bg-ui-bg p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 id="connect-agent-mcp-title" className="text-sm font-semibold">Connect by URL</h3>
+          <h3 id="connect-agent-mcp-title" className="type-row-title">Connect by URL</h3>
           <p className="type-caption mt-1 text-ui-text-muted">
             Enter the actual remote Streamable HTTP endpoint. Registry, package, container, and stdio locations are not supported.
           </p>
@@ -50,15 +48,15 @@ export function AgentMcpServerCreateForm({
         <Button size="sm" variant="tertiary" onClick={onClose}>Close</Button>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-semibold">
+        <label className="type-body type-emphasis">
           Name
-          <input value={value.name} onChange={(event) => onChange((current) => ({ ...current, name: event.target.value }))} className={`mt-2 ${inputClass}`} />
+          <TextInput value={value.name} onChange={(event) => onChange((current) => ({ ...current, name: event.target.value }))} className="mt-2" />
         </label>
-        <label className="text-sm font-semibold">
+        <label className="type-body type-emphasis">
           HTTPS endpoint
-          <input type="url" pattern="https://.*" value={value.url} onChange={(event) => onChange((current) => ({ ...current, url: event.target.value }))} className={`mt-2 ${inputClass}`} />
+          <TextInput type="url" pattern="https://.*" value={value.url} onChange={(event) => onChange((current) => ({ ...current, url: event.target.value }))} className="mt-2" />
         </label>
-        <label className="text-sm font-semibold">
+        <label className="type-body type-emphasis">
           Authentication
           <Select
             ariaLabel="Authentication"
@@ -91,9 +89,9 @@ export function AgentMcpServerCreateForm({
           </div>
         )}
         {value.authType === 'custom_header' && (
-          <label className="text-sm font-semibold">
+          <label className="type-body type-emphasis">
             Header name
-            <input value={value.authHeaderName} onChange={(event) => onChange((current) => ({ ...current, authHeaderName: event.target.value }))} className={`mt-2 ${inputClass}`} />
+            <TextInput value={value.authHeaderName} onChange={(event) => onChange((current) => ({ ...current, authHeaderName: event.target.value }))} className="mt-2" />
           </label>
         )}
         {value.authType === 'oauth' && (
@@ -101,7 +99,7 @@ export function AgentMcpServerCreateForm({
             {t('mcpServers.oauthCredentialSetupHelp')}
           </p>
         )}
-        <Button disabled={!canSubmit} onClick={onSubmit}>Add server</Button>
+        <Button variant="secondary" disabled={!canSubmit} onClick={onSubmit}>Add server</Button>
       </div>
     </section>
   );

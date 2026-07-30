@@ -1,13 +1,11 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
 import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModal';
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
-import { CloseButton } from '@acornops/ui';
-import { formInputClassName } from '@acornops/ui';
+import { Button, CloseButton, DialogFrame, formInputClassName, TextInput } from '@acornops/ui';
 import { ICONS } from '@/constants';
-import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import type { AgentAccessMode } from '@/services/control-plane/types';
 import {
   KubernetesCluster,
@@ -107,23 +105,14 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
     <>
       <AnimatePresence>
         {deleteTargetWorkspace && (
-          <motion.div
-            {...modalOverlayMotion}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-ui-text/45 p-4 dark:bg-ui-bg/75"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget && !isDeletingWorkspace) {
-                handleCloseWorkspaceDelete();
-              }
-            }}
+          <DialogFrame
+            unframed
+            titleId="delete-workspace-title"
+            closeDisabled={isDeletingWorkspace}
+            onClose={handleCloseWorkspaceDelete}
+            overlayClassName="bg-ui-text/45 dark:bg-ui-bg/75"
+            className="relative w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
           >
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="delete-workspace-title"
-              {...modalPanelMotion}
-              className="relative w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
-              onMouseDown={(event) => event.stopPropagation()}
-            >
               <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-5 py-4">
                 <div className="flex items-center gap-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
@@ -140,12 +129,12 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
               </div>
 
               <div className="space-y-4 p-5">
-                <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-sm font-medium leading-6 text-status-danger-text">
+                <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-ui leading-6 text-status-danger-text">
                   {t('app.deleteWorkspaceWarning', {
                     name: deleteTargetWorkspace.name
                   })}
                 </div>
-                <p className="text-xs leading-5 text-ui-text-muted">{t('app.deleteWorkspaceCleanup')}</p>
+                <p className="type-caption leading-5 text-ui-text-muted">{t('app.deleteWorkspaceCleanup')}</p>
                 <div>
                   <label htmlFor="delete-workspace-confirmation-input" className="type-label mb-1.5 block px-1">
                     <Trans
@@ -156,7 +145,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                       }}
                     />
                   </label>
-                  <input
+                  <TextInput
                     id="delete-workspace-confirmation-input"
                     value={workspaceDeleteConfirmation}
                     onChange={(event) => setWorkspaceDeleteConfirmation(event.target.value)}
@@ -167,16 +156,20 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                   />
                 </div>
                 <div className="flex items-center justify-end gap-2 pt-1">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={handleCloseWorkspaceDelete}
                     disabled={isDeletingWorkspace}
-                    className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-xs type-ui text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text disabled:cursor-not-allowed disabled:opacity-50"
+                    className="control-target rounded-lg"
                   >
                     {t('app.cancel')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="danger"
+                    size="sm"
                     onClick={async () => {
                       onSetDeletingWorkspace(true);
                       try {
@@ -194,14 +187,13 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                       }
                     }}
                     disabled={isDeletingWorkspace || workspaceDeleteConfirmation !== deleteTargetWorkspace.name}
-                    className="control-target rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-xs type-ui text-control-danger-fg shadow-lg shadow-status-danger/20 transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="control-target rounded-lg"
                   >
                     {isDeletingWorkspace ? t('app.deleting') : t('app.deleteWorkspace')}
-                  </button>
+                  </Button>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+          </DialogFrame>
         )}
 
         <CreateWorkspaceModal

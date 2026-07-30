@@ -154,7 +154,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     >
       <div className="flex min-w-0 items-start gap-3">
         <ICONS.AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-        <p className="type-caption break-words font-semibold">{message}</p>
+        <p className="type-caption break-words type-emphasis">{message}</p>
       </div>
       <Button onClick={() => void retry()} variant="secondary" size="sm" className="w-full shrink-0 sm:w-auto">
         {t('common.retry')}

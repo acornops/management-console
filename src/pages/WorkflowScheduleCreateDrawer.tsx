@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { Radio } from '@acornops/ui';
-import { RightSidePanel } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
@@ -196,7 +196,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
   const readinessError = fieldError('mcpReadiness') || fieldError('readiness');
 
   return (
-    <RightSidePanel isOpen={Boolean(scheduleWorkflow)} onClose={onClose} closeDisabled={saving} titleId="workflow-schedule-create-title" descriptionId="workflow-schedule-create-description" className="w-full max-w-2xl">
+    <DrawerFrame unframed isOpen={Boolean(scheduleWorkflow)} onClose={onClose} closeDisabled={saving} titleId="workflow-schedule-create-title" descriptionId="workflow-schedule-create-description" className="w-full max-w-2xl">
       <div className="flex min-w-0 items-start justify-between gap-3 border-b border-ui-border px-4 py-4 sm:px-5">
         <div className="min-w-0">
           <h2 id="workflow-schedule-create-title" className="type-section-title">{t('agentsWorkflows.schedule.title')}</h2>
@@ -205,21 +205,21 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         <CloseButton onClick={onClose} disabled={saving} label={t('agentsWorkflows.schedule.close')} />
       </div>
       <div className="min-h-0 min-w-0 flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-4 py-5 sm:px-5">
-        {error && <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm font-semibold text-status-danger-text">{error}</div>}
+        {error && <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 type-body type-emphasis text-status-danger-text">{error}</div>}
         <div className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">
           <div className="type-micro-label text-ui-text-muted">{t('agentsWorkflows.schedule.workflow')}</div>
-          <div className="mt-1 break-words text-sm font-semibold text-ui-text">{scheduleWorkflow?.name || t('agentsWorkflows.schedule.noWorkflow')}</div>
+          <div className="mt-1 break-words type-body type-emphasis text-ui-text">{scheduleWorkflow?.name || t('agentsWorkflows.schedule.noWorkflow')}</div>
           <p className="type-caption mt-1 text-ui-text-muted">{t('agentsWorkflows.schedule.latestDefinitionHelp')}</p>
         </div>
 
-        <label className="block text-sm font-semibold text-ui-text">
+        <label className="block type-body type-emphasis text-ui-text">
           {t('agentsWorkflows.schedule.name')}
           <TextInput value={name} onChange={(event) => setName(event.target.value)} className="mt-2 w-full" aria-invalid={!name.trim()} />
         </label>
 
-        <div className="block text-sm font-semibold text-ui-text">
+        <div className="block type-body type-emphasis text-ui-text">
           {t('agentsWorkflows.schedule.runAs')}
-          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 font-normal text-ui-text" aria-live="polite">
+          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 type-body text-ui-text" aria-live="polite">
             {runAsUser?.label || t('common.loading')}
           </div>
           <span className="type-caption mt-1 block text-ui-text-muted">{t('agentsWorkflows.schedule.creatorIdentityHelp')}</span>
@@ -227,12 +227,12 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         </div>
 
         <fieldset className="min-w-0 space-y-3">
-          <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.frequency')}</legend>
+          <legend className="type-body type-emphasis text-ui-text">{t('agentsWorkflows.schedule.frequency')}</legend>
           <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
             {(['daily', 'weekdays', 'weekly', 'custom'] as Frequency[]).map((value) => (
               <label
                 key={value}
-                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${frequency === value ? 'border-accent/35 bg-accent-soft text-accent-strong' : 'border-control-boundary bg-control-secondary text-control-secondary-fg hover:bg-control-secondary-hover'}`}
+                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 type-body type-emphasis transition-colors ${frequency === value ? 'border-accent/35 bg-accent-soft text-accent-strong' : 'border-control-boundary bg-control-secondary text-control-secondary-fg hover:bg-control-secondary-hover'}`}
               >
                 <Radio
                   name="workflow-schedule-frequency"
@@ -248,11 +248,11 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
 
         {frequency !== 'custom' && (
           <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-            <label className="block min-w-0 text-sm font-semibold text-ui-text">
+            <label className="block min-w-0 type-body type-emphasis text-ui-text">
               {t('agentsWorkflows.schedule.time')}
               <TextInput type="time" value={time} onChange={(event) => setTime(event.target.value)} className="mt-2 w-full" />
             </label>
-            <label className="block min-w-0 text-sm font-semibold text-ui-text">
+            <label className="block min-w-0 type-body type-emphasis text-ui-text">
               {t('agentsWorkflows.schedule.timezone')}
               <Select<string> value={timezone} options={timezoneOptions} onChange={setTimezone} className="mt-2 w-full" ariaLabel={t('agentsWorkflows.schedule.timezone')} />
             </label>
@@ -261,10 +261,10 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
 
         {frequency === 'weekly' && (
           <fieldset className="min-w-0">
-            <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.weekdays')}</legend>
+            <legend className="type-body type-emphasis text-ui-text">{t('agentsWorkflows.schedule.weekdays')}</legend>
             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {weekdayOptions.map((day) => (
-                <label key={day.value} className="flex min-w-0 items-center gap-2 rounded-md border border-ui-border bg-ui-bg px-3 py-2 text-sm font-semibold text-ui-text">
+                <label key={day.value} className="flex min-w-0 items-center gap-2 rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-body type-emphasis text-ui-text">
                   <Checkbox checked={weekdays.includes(day.value)} onChange={(event) => setWeekdays((current) => event.target.checked ? [...new Set([...current, day.value])].sort() : current.filter((value) => value !== day.value))} />
                   <span className="truncate">{t(`agentsWorkflows.schedule.${day.key}`)}</span>
                 </label>
@@ -294,10 +294,10 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
 
         {scheduleWorkflow?.contextGrants.length ? (
           <fieldset className="min-w-0 space-y-2">
-            <legend className="text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.context')}</legend>
+            <legend className="type-body type-emphasis text-ui-text">{t('agentsWorkflows.schedule.context')}</legend>
             <p className="type-caption text-ui-text-muted">{t('agentsWorkflows.schedule.contextHelp')}</p>
             {scheduleWorkflow.contextGrants.map((grant) => (
-              <label key={grant} className="flex min-w-0 items-start gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-sm text-ui-text">
+              <label key={grant} className="flex min-w-0 items-start gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-3 type-body text-ui-text">
                 <Checkbox className="mt-0.5" checked={approvedContextGrants.includes(grant)} onChange={(event) => toggleContextGrant(grant, event.target.checked)} />
                 <span className="min-w-0"><strong className="break-words">{grant.replaceAll('_', ' ')}</strong><span className="type-caption mt-1 block text-ui-text-muted">{t('agentsWorkflows.schedule.contextGrantHelp')}</span></span>
               </label>
@@ -306,7 +306,7 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         ) : null}
 
         <div role="status" aria-live="polite" className={`rounded-md border px-4 py-3 ${scheduleReady ? 'border-status-success/30 bg-status-success-soft' : 'border-ui-border bg-ui-bg'}`}>
-          <div className="flex items-center gap-2 text-sm font-semibold text-ui-text">
+          <div className="flex items-center gap-2 type-body type-emphasis text-ui-text">
             <ICONS.Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
             {previewing ? t('agentsWorkflows.schedule.previewing') : preview?.summary || t('agentsWorkflows.schedule.previewPending')}
           </div>
@@ -340,21 +340,21 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
         ) : null}
 
         <details className="group min-w-0 rounded-md border border-ui-border bg-ui-surface px-4 py-3">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-ui-text [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 type-body type-emphasis text-ui-text [&::-webkit-details-marker]:hidden">
             {t('agentsWorkflows.schedule.advanced')}
             <ICONS.ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
           </summary>
           <div className="mt-4 grid min-w-0 gap-4">
-            <label className="block min-w-0 text-sm font-semibold text-ui-text">
+            <label className="block min-w-0 type-body type-emphasis text-ui-text">
               {t('agentsWorkflows.schedule.cron')}
               <TextInput value={cron} onChange={(event) => { setFrequency('custom'); setCron(event.target.value); }} className="mt-2 w-full font-mono" aria-invalid={Boolean(fieldError('cron'))} />
               {fieldError('cron') && <span className="type-caption mt-1 block text-status-danger-text">{fieldError('cron')}</span>}
             </label>
-            {frequency === 'custom' && <label className="block min-w-0 text-sm font-semibold text-ui-text">{t('agentsWorkflows.schedule.timezone')}<Select<string> value={timezone} options={timezoneOptions} onChange={setTimezone} className="mt-2 w-full" ariaLabel={t('agentsWorkflows.schedule.timezone')} /></label>}
+            {frequency === 'custom' && <label className="block min-w-0 type-body type-emphasis text-ui-text">{t('agentsWorkflows.schedule.timezone')}<Select<string> value={timezone} options={timezoneOptions} onChange={setTimezone} className="mt-2 w-full" ariaLabel={t('agentsWorkflows.schedule.timezone')} /></label>}
           </div>
         </details>
 
-        <label className="flex items-center gap-3 text-sm font-semibold text-ui-text"><Checkbox checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />{t('agentsWorkflows.schedule.enabled')}</label>
+        <label className="flex items-center gap-3 type-body type-emphasis text-ui-text"><Checkbox checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />{t('agentsWorkflows.schedule.enabled')}</label>
       </div>
       <div className="grid grid-cols-1 gap-2 border-t border-ui-border px-4 py-4 sm:flex sm:justify-end sm:px-5">
         <Button size="sm" variant="tertiary" className="w-full justify-center sm:w-auto" onClick={onClose} disabled={saving}>{t('agentsWorkflows.schedule.cancel')}</Button>
@@ -371,6 +371,6 @@ export const WorkflowScheduleCreateDrawer: React.FC<WorkflowScheduleCreateDrawer
           onConnected={() => setPreviewRevision((value) => value + 1)}
         />
       )}
-    </RightSidePanel>
+    </DrawerFrame>
   );
 };

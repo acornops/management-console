@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { TargetInsightsSettingsPanel } from '@/features/targets/admin/TargetInsightsSettingsPanel';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -136,7 +136,7 @@ export const TargetInsightsSettingsDialog: React.FC<TargetInsightsSettingsDialog
   };
 
   return (
-    <Dialog
+    <DialogFrame unframed
       titleId="target-insights-settings-dialog-title"
       closeDisabled={settingsSaving || savingTool}
       onClose={onClose}
@@ -147,7 +147,7 @@ export const TargetInsightsSettingsDialog: React.FC<TargetInsightsSettingsDialog
           <h3 id="target-insights-settings-dialog-title" className="type-panel-title">{t('tools.targetInsights.settingsTitle')}</h3>
           <p className="type-caption mt-1 text-ui-text-muted">{t('tools.targetInsights.settingsBody')}</p>
           {learningReadiness && !learningReadiness.learningAvailable && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 text-sm text-status-warning-text">
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 type-body text-status-warning-text">
               <AlertTriangle className="h-4 w-4" />
               {t(pauseReasonKey(learningReadiness.learningPausedReason))}
             </div>
@@ -193,6 +193,6 @@ export const TargetInsightsSettingsDialog: React.FC<TargetInsightsSettingsDialog
           </>
         )}
       </div>
-    </Dialog>
+    </DialogFrame>
   );
 };

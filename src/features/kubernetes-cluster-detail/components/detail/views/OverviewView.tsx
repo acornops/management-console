@@ -22,6 +22,7 @@ import {
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
 import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface OverviewViewProps {
   cluster: KubernetesCluster;
@@ -282,20 +283,20 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
         ) : reportedIssues.length > 0 ? (
           <>
             <div className="hidden overflow-x-auto 2xl:block">
-              <table className="w-full">
+              <DataTable caption={t('clusterOverview.activeIssues')} className="w-full">
                 <DataTableHeader>
-                  <tr>
+                  <DataTableRow>
                     <DataTableHeaderCell density="compact">{t('clusterOverview.issue')}</DataTableHeaderCell>
                     <DataTableHeaderCell density="compact">{t('clusterOverview.severity')}</DataTableHeaderCell>
                     <DataTableHeaderCell density="compact">{t('clusterOverview.namespace')}</DataTableHeaderCell>
                     <DataTableHeaderCell density="compact">{t('overview.lastSeenLabel')}</DataTableHeaderCell>
                     {onOpenCopilot && <DataTableHeaderCell density="compact" numeric>{t('clusterOverview.action')}</DataTableHeaderCell>}
-                  </tr>
+                  </DataTableRow>
                 </DataTableHeader>
-                <tbody>
+                <DataTableBody>
                   {reportedIssues.map((issue) => (
-                    <tr key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                      <td className="max-w-[34rem] px-5 py-4">
+                    <DataTableRow key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
+                      <DataTableCell className="max-w-[34rem] px-5 py-4">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
                           <span className="type-caption text-ui-text-muted">
@@ -316,14 +317,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                           issueId={issue.id}
                           activity={issue.automaticInvestigation}
                         />
-                      </td>
-                      <td className="px-5 py-4 align-top">
+                      </DataTableCell>
+                      <DataTableCell className="px-5 py-4 align-top">
                         <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
-                      </td>
-                      <td className="type-caption break-words px-5 py-4 align-top">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</td>
-                      <td className="type-caption px-5 py-4 align-top">{formatRelativeTime(issueTimestamp(issue))}</td>
+                      </DataTableCell>
+                      <DataTableCell className="type-caption break-words px-5 py-4 align-top">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</DataTableCell>
+                      <DataTableCell className="type-caption px-5 py-4 align-top">{formatRelativeTime(issueTimestamp(issue))}</DataTableCell>
                       {onOpenCopilot && (
-                        <td className="px-5 py-4 align-top text-right">
+                        <DataTableCell className="px-5 py-4 align-top text-right">
                           {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
                             <Button
                               onClick={() => openIssueTriage(issue)}
@@ -335,12 +336,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                               {t('clusterOverview.openAssistant')}
                             </Button>
                           )}
-                        </td>
+                        </DataTableCell>
                       )}
-                    </tr>
+                    </DataTableRow>
                   ))}
-                </tbody>
-              </table>
+                </DataTableBody>
+              </DataTable>
             </div>
 
             <div className="divide-y divide-ui-border 2xl:hidden">

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { handleAppLinkClick } from '@/app/workspaceNavigation';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
-import { Dialog } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { PageBackLink, PageHeader, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
@@ -15,6 +15,7 @@ import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlan
 import { User } from '@/types';
 import { formatUserDate } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
+import { TextInput } from '@acornops/ui';
 
 interface UserSettingsPageProps {
   user: User;
@@ -34,7 +35,7 @@ const SettingSection: React.FC<{
   <div className="mb-12">
     <div className="mb-6 px-1">
       <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="text-sm text-ui-text-muted">{description}</p>
+      <p className="type-body text-ui-text-muted">{description}</p>
     </div>
     <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
   </div>
@@ -53,7 +54,7 @@ const SettingRow: React.FC<{
       </div>
       <div className="min-w-0">
         <p className="mb-0.5 type-row-title">{label}</p>
-        <p className="break-words text-xs text-ui-text-muted">{description}</p>
+        <p className="break-words type-caption text-ui-text-muted">{description}</p>
       </div>
     </div>
     {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
@@ -80,7 +81,7 @@ const PasswordField: React.FC<{
 }> = ({ id, label, value, autoComplete, onChange }) => (
   <label className="block">
     <span className="mb-2 block type-label">{label}</span>
-    <input id={id} type="password" value={value} autoComplete={autoComplete} onChange={(event) => onChange(event.target.value)} className={inputClassName} />
+    <TextInput id={id} type="password" value={value} autoComplete={autoComplete} onChange={(event) => onChange(event.target.value)} className={inputClassName} />
   </label>
 );
 
@@ -96,7 +97,7 @@ const SecurityDialog: React.FC<{
   onClose: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }> = ({ title, submitLabel, cancelLabel, savingLabel, closeLabel, isSubmitting, error, children, onClose, onSubmit }) => (
-  <Dialog
+  <DialogFrame unframed
     titleId="account-security-dialog-title"
     className="w-full max-w-md rounded-xl border border-ui-border bg-ui-surface p-6 shadow-xl"
     closeDisabled={isSubmitting}
@@ -110,7 +111,7 @@ const SecurityDialog: React.FC<{
     </div>
     <form className="space-y-4" onSubmit={onSubmit}>
       {children}
-      {error && <div className="rounded-lg border border-status-danger/20 bg-status-danger-soft px-3 py-2 text-sm text-status-danger-text">{error}</div>}
+      {error && <div className="rounded-lg border border-status-danger/20 bg-status-danger-soft px-3 py-2 type-body text-status-danger-text">{error}</div>}
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
           {cancelLabel}
@@ -120,7 +121,7 @@ const SecurityDialog: React.FC<{
         </Button>
       </div>
     </form>
-  </Dialog>
+  </DialogFrame>
 );
 
 export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, language, languageOptions, onGoToWorkspaces, onLogout, onSetLanguage, embedded = false }) => {
@@ -230,7 +231,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             action={
               <div className="flex items-center gap-2 rounded-lg bg-status-success-soft px-3 py-1.5 text-status-success-text">
                 <ICONS.CheckCircle2 className="h-4 w-4" />
-                <span className="text-xs type-emphasis">{t('settings.verified')}</span>
+                <span className="type-caption type-emphasis">{t('settings.verified')}</span>
               </div>
             }
           />
@@ -238,8 +239,8 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
         </SettingSection>
 
         <SettingSection title={t('settings.securityTitle')} description={t('settings.securityBody')}>
-          {securityError && <div className="border-b border-ui-border bg-status-danger-soft px-6 py-3 text-sm text-status-danger-text">{securityError}</div>}
-          {securityNotice && <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 text-sm text-status-success-text">{securityNotice}</div>}
+          {securityError && <div className="border-b border-ui-border bg-status-danger-soft px-6 py-3 type-body text-status-danger-text">{securityError}</div>}
+          {securityNotice && <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 type-body text-status-success-text">{securityNotice}</div>}
           <SettingRow
             icon={ICONS.Lock}
             label={t('settings.password')}
@@ -256,7 +257,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             }
             action={
               authMethods?.capabilities.canChangePassword ? (
-                <Button size="sm" onClick={() => setActiveDialog('password')}>
+                <Button variant="secondary" size="sm" onClick={() => setActiveDialog('password')}>
                   {t('settings.changePassword')}
                 </Button>
               ) : undefined
@@ -274,7 +275,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             }
             action={
               authMethods?.capabilities.canLinkOidc ? (
-                <Button size="sm" onClick={() => setActiveDialog('sso')}>
+                <Button variant="secondary" size="sm" onClick={() => setActiveDialog('sso')}>
                   {t('settings.connectSso')}
                 </Button>
               ) : undefined

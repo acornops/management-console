@@ -101,7 +101,7 @@ export const AutomaticInvestigationActivity: React.FC<{
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Bot className="h-4 w-4 text-accent-strong" aria-hidden="true" />
-            <span className="type-caption font-semibold text-ui-text">{t('automaticInvestigation.label')}</span>
+            <span className="type-caption type-emphasis text-ui-text">{t('automaticInvestigation.label')}</span>
             <StatusBadge tone={stateTone(localActivity.state)}>
               {t(isDelayed
                 ? 'automaticInvestigation.state.delayed'
@@ -113,7 +113,7 @@ export const AutomaticInvestigationActivity: React.FC<{
               ? delayedCopyKey(localActivity.errorCode)
               : `automaticInvestigation.copy.${localActivity.state}`)}
           </p>
-          {retryError && <p className="type-caption mt-1 font-semibold text-status-danger-text" role="alert">{retryError}</p>}
+          {retryError && <p className="type-caption type-emphasis mt-1 text-status-danger-text" role="alert">{retryError}</p>}
         </div>
 
         {canRetry ? (

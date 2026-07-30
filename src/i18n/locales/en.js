@@ -354,6 +354,7 @@ export const en = {
     retryFailedMembers: 'Retry failed entries',
     memberAdded: 'Member added',
     inviteCreated: 'Invite link created',
+    skipMembers: 'Skip members',
     continue: 'Continue',
     checkingAiDefaults: 'Checking AI setup...',
     aiSetupKicker: 'Workspace created',

@@ -28,7 +28,7 @@ type Boundary = 'first' | 'last';
 const menuOffsetPx = 6;
 
 const sizeClasses: Record<NonNullable<SelectProps<string>['size']>, string> = {
-  sm: 'h-11 px-3 text-xs sm:h-9',
+  sm: 'type-caption h-11 px-3 sm:h-9',
   md: 'h-11 px-4'
 };
 

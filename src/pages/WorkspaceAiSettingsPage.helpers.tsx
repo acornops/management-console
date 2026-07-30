@@ -12,7 +12,7 @@ export interface WorkspaceAiSettingsPageProps {
   embedded?: boolean;
 }
 
-export const credentialInputClassName = formInputClassName('h-10 min-h-10 font-medium');
+export const credentialInputClassName = formInputClassName('h-10 min-h-10 type-ui');
 
 export const SettingSection: React.FC<{
   title: string;
@@ -24,7 +24,7 @@ export const SettingSection: React.FC<{
   <section ref={sectionRef} className={`mb-10 ${className} last:mb-0`}>
     <div className="mb-6 px-1">
       <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="max-w-3xl text-sm leading-6 text-ui-text-muted">{description}</p>
+      <p className="max-w-3xl type-body leading-6 text-ui-text-muted">{description}</p>
     </div>
     <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
   </section>

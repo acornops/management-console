@@ -159,8 +159,7 @@ test('Agent tools follow the selected Chinese application locale', async ({ page
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
   await expect(page.getByRole('heading', { level: 1, name: '工具' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'AcornOps 原生工具' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'MCP 发现的工具' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: '工具清单' })).toBeVisible();
 });
 
 test('Agent tools use the dedicated stable route without nested capability navigation', async ({ page }) => {
@@ -168,8 +167,8 @@ test('Agent tools use the dedicated stable route without nested capability navig
 
   await expect(page.getByRole('heading', { level: 1, name: 'Tools' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Agent capability sections' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'AcornOps native tools' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'MCP-discovered tools' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Tool inventory' })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Tools' })).toBeVisible();
 });
 
 test('Agent detail stays within a narrow viewport in light and dark themes', async ({ browser }) => {

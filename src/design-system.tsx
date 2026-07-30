@@ -10,11 +10,12 @@ import { DangerZone, DangerZoneRow } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { FieldValidationMessage } from '@acornops/ui';
+import { FileInput } from '@acornops/ui';
 import { FieldLabel, HelpText, MenuItem, MenuTrigger, Radio, Switch } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { DialogFrame, DrawerFrame } from '@acornops/ui';
 import { DataSurface, PageBackLink, PageHeader, PageSection, PageShell, TableToolbar } from '@acornops/ui';
-import { DataTable, DataTableFrame, DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableCell, DataTableFrame, DataTableHeader, DataTableHeaderCell, DataTableRow, DataTableStateRow } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import '@acornops/ui/fonts';
@@ -154,8 +155,8 @@ const Catalog = () => {
             onValueChange={setCatalogFilter}
           />
           <div className="flex flex-wrap items-center gap-3" data-catalog-control-sizes="true">
-            <Button size="md" data-catalog-control="default">Default action</Button>
-            <Button size="sm" data-catalog-control="compact">Compact action</Button>
+            <Button variant="secondary" size="md" data-catalog-control="default">Default action</Button>
+            <Button variant="secondary" size="sm" data-catalog-control="compact">Compact action</Button>
             <Button variant="icon" size="icon" aria-label="Catalog icon action" data-catalog-control="icon"><MoreHorizontal className="h-4 w-4" /></Button>
             <CloseButton aria-label="Catalog close action" data-catalog-control="close" />
             <button type="button" className="control-target rounded-md border border-ui-border px-3 type-ui" data-catalog-control="raw">Local action</button>
@@ -258,6 +259,11 @@ const Catalog = () => {
             <FieldValidationMessage id="catalog-invalid-message" message="Use a unique workspace name." />
           </div>
           <div>
+            <FieldLabel htmlFor="catalog-file">File input</FieldLabel>
+            <FileInput id="catalog-file" className="mt-2" accept=".json,.yaml,.yml" />
+            <HelpText>File selection uses the same field boundary and focus treatment.</HelpText>
+          </div>
+          <div>
             <FieldLabel>Shared select</FieldLabel>
             <Select<string> className="mt-2" value={selected} onChange={setSelected} ariaLabel="Inventory filter" options={[{ value: 'all', label: 'All targets' }, { value: 'healthy', label: 'Healthy' }, { value: 'attention', label: 'Needs attention' }]} />
           </div>
@@ -279,7 +285,7 @@ const Catalog = () => {
 
       <PageSection title="Data surfaces">
         <div className="grid gap-4 xl:grid-cols-2">
-          <DataSurface heading="Ready" count="12 targets" toolbar={<Button size="sm">Filter</Button>}><div className="p-surface type-body">Page code supplies data and semantic intent.</div></DataSurface>
+          <DataSurface heading="Ready" count="12 targets" toolbar={<Button variant="secondary" size="sm">Filter</Button>}><div className="p-surface type-body">Page code supplies data and semantic intent.</div></DataSurface>
           <DataSurface heading="Loading" state="loading" loading={<div className="space-y-2 p-surface" aria-label="Loading"><div className="h-10 rounded-md bg-ui-bg" /><div className="h-10 rounded-md bg-ui-bg" /></div>} />
           <DataSurface heading="Empty" state="empty" empty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No schedules yet" description="Create one to automate a governed workflow." />} />
           <DataSurface heading="Filtered empty" state="filtered-empty" filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No matching schedules" description="Clear the active filters to return to all schedules." />} />
@@ -289,8 +295,11 @@ const Catalog = () => {
         <CollectionState phase="ready" itemCount={0} filtered loading={null} empty={null} filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No matching targets" description="Clear filters to restore the inventory." />} error={null} />
         <DataTableFrame className="mt-4">
           <DataTable caption="Collection table state example">
-            <DataTableHeader collectionState={{ phase: 'loading', itemCount: 0 }}><tr><DataTableHeaderCell>Name</DataTableHeaderCell><DataTableHeaderCell numeric>Status</DataTableHeaderCell></tr></DataTableHeader>
-            <tbody><DataTableStateRow columns={2} phase="loading" itemCount={0} loading={<div className="p-surface type-body" role="status">Loading rows…</div>} empty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No rows" description="Rows will appear here when available." />} error={<InlineAlert tone="danger">Rows could not be loaded.</InlineAlert>} /></tbody>
+            <DataTableHeader collectionState={{ phase: 'ready', itemCount: 1 }}><DataTableRow><DataTableHeaderCell>Name</DataTableHeaderCell><DataTableHeaderCell numeric>Status</DataTableHeaderCell></DataTableRow></DataTableHeader>
+            <DataTableBody>
+              <DataTableRow><DataTableCell as="th">Production cluster</DataTableCell><DataTableCell numeric>Healthy</DataTableCell></DataTableRow>
+              <DataTableStateRow columns={2} phase="ready" itemCount={1} loading={<div className="p-surface type-body" role="status">Loading rows…</div>} empty={<EmptyState embedded headingLevel={3} icon={<Clock />} title="No rows" description="Rows will appear here when available." />} error={<InlineAlert tone="danger">Rows could not be loaded.</InlineAlert>} />
+            </DataTableBody>
           </DataTable>
         </DataTableFrame>
         <div className="mt-4 overflow-hidden rounded-lg border border-ui-border bg-ui-surface"><TableToolbar><span className="type-row-title">Table toolbar</span><span className="type-caption text-ui-text-muted">Dense rows use the canonical rhythm</span></TableToolbar><div className="divide-y divide-ui-border"><div className="px-surface py-row-y type-body">Cluster alpha</div><div className="px-surface py-row-y type-body">Cluster beta</div></div></div>
@@ -380,11 +389,28 @@ const Catalog = () => {
         </div>
       </PageSection>
 
-      <PageSection title="Overlays" actions={<><Button onClick={() => setDialogOpen(true)}>Open dialog</Button><Button onClick={() => setDrawerOpen(true)}>Open drawer</Button><Button variant="danger" onClick={() => setDestructiveDialogOpen(true)}>Open destructive dialog</Button></>}>
+      <PageSection title="Overlays" actions={<><Button variant="secondary" onClick={() => setDialogOpen(true)}>Open dialog</Button><Button variant="secondary" onClick={() => setDrawerOpen(true)}>Open drawer</Button><Button variant="danger" onClick={() => setDestructiveDialogOpen(true)}>Open destructive dialog</Button></>}>
         <p className="type-body text-ui-text-muted">Both frames share close controls, focus containment, restoration, padding, and footer anatomy.</p>
       </PageSection>
 
-      <DialogFrame open={dialogOpen} onClose={() => setDialogOpen(false)} titleId="catalog-dialog-title" title="Confirm change" description="Review the consequence before applying it." footer={<><Button variant="tertiary" onClick={() => setDialogOpen(false)}>Cancel</Button><Button variant="primary" onClick={() => setDialogOpen(false)}>Save</Button></>}><InlineAlert tone="warning">This change affects future workflow runs.</InlineAlert></DialogFrame>
+      <DialogFrame
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        titleId="catalog-dialog-title"
+        title="Confirm change"
+        description="Review the consequence before applying it."
+        footer={(
+          <>
+            <Button variant="tertiary" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="primary" onClick={() => setDialogOpen(false)}>Save</Button>
+          </>
+        )}
+      >
+        <div className="space-y-4">
+          <InlineAlert tone="warning">This change affects future workflow runs.</InlineAlert>
+          <Button variant="danger" onClick={() => setDestructiveDialogOpen(true)}>Open nested confirmation</Button>
+        </div>
+      </DialogFrame>
       <DrawerFrame open={drawerOpen} onClose={() => setDrawerOpen(false)} titleId="catalog-drawer-title" title="Create schedule" description="Drawer anatomy remains stable at every width." footer={<><Button variant="tertiary" onClick={() => setDrawerOpen(false)}>Cancel</Button><Button variant="primary" onClick={() => setDrawerOpen(false)}>Create</Button></>}><FieldLabel htmlFor="catalog-schedule">Schedule name</FieldLabel><TextInput id="catalog-schedule" className="mt-2" /></DrawerFrame>
       <DestructiveConfirmationDialog
         open={destructiveDialogOpen}

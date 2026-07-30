@@ -45,7 +45,7 @@ export const PageBackLink = React.forwardRef<HTMLAnchorElement, PageBackLinkProp
     <a
       ref={ref}
       className={twMerge(
-        'page-back-link mb-4 inline-flex min-h-11 items-center gap-2 rounded-md px-1 text-sm font-semibold text-ui-text underline-offset-4 hover:text-accent-strong hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary',
+        'page-back-link type-ui type-emphasis mb-4 inline-flex min-h-11 items-center gap-2 rounded-md px-1 text-ui-text underline-offset-4 hover:text-accent-strong hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary',
         className
       )}
       {...props}
@@ -177,7 +177,7 @@ export const DataSurface: React.FC<DataSurfaceProps> = ({
               {description && <div className="type-caption mt-1 text-ui-text-muted">{description}</div>}
             </div>
           </div>
-          {(count || toolbar) && <div className="flex shrink-0 flex-wrap items-center gap-3">{count && <span className="type-caption font-semibold text-ui-text-muted">{count}</span>}{toolbar}</div>}
+          {(count || toolbar) && <div className="flex shrink-0 flex-wrap items-center gap-3">{count && <span className="type-caption type-emphasis text-ui-text-muted">{count}</span>}{toolbar}</div>}
         </TableToolbar>
       )}
       <div aria-busy={isBusy || undefined}>

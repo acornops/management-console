@@ -11,7 +11,7 @@ export const AppUnavailableScreen: React.FC<{
     <section className="w-full max-w-md rounded-xl border border-ui-border bg-ui-surface p-8 text-center shadow-sm">
       <img src={logoSrc} className="mx-auto h-12 w-12" alt="AcornOps" />
       <h1 className="type-route-title mt-5 ">{title}</h1>
-      <p className="mt-2 text-sm text-ui-text-muted">{description}</p>
+      <p className="mt-2 type-body text-ui-text-muted">{description}</p>
       <Button className="mt-6" variant="primary" onClick={onRetry}>Try again</Button>
     </section>
   </main>

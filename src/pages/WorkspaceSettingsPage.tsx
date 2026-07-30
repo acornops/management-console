@@ -30,7 +30,7 @@ const SettingSection: React.FC<{
   <section className="mb-10 last:mb-0">
     <div className="mb-6 px-1">
       <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="max-w-3xl text-sm leading-6 text-ui-text-muted">{description}</p>
+      <p className="max-w-3xl type-body leading-6 text-ui-text-muted">{description}</p>
     </div>
     <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
   </section>
@@ -49,7 +49,7 @@ const SettingRow: React.FC<{
       </div>
       <div className="min-w-0">
         <p className="mb-0.5 type-row-title">{label}</p>
-        <p className="text-xs leading-5 text-ui-text-muted">{description}</p>
+        <p className="type-caption leading-5 text-ui-text-muted">{description}</p>
       </div>
     </div>
     {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
@@ -178,7 +178,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
               </div>
               <div className="min-w-0">
                 <h2 className="mb-1 type-row-title">{t('workspaceSettings.limitedAccessTitle')}</h2>
-                <p className="max-w-2xl text-sm leading-6 text-ui-text-muted">{t('workspaceSettings.limitedAccessBody')}</p>
+                <p className="max-w-2xl type-body leading-6 text-ui-text-muted">{t('workspaceSettings.limitedAccessBody')}</p>
               </div>
             </div>
           </section>
@@ -192,10 +192,10 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
             detail={
               <>
                 {leaveBlockedByKnownOnlyOwner && (
-                  <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-status-warning-text">{t('workspaceSettings.leaveOnlyOwnerWarning')}</p>
+                  <p className="mt-2 max-w-2xl type-caption type-emphasis leading-5 text-status-warning-text">{t('workspaceSettings.leaveOnlyOwnerWarning')}</p>
                 )}
                 {leaveError && (
-                  <p className="mt-2 max-w-2xl text-xs font-semibold leading-5 text-status-danger-text" role="alert">
+                  <p className="mt-2 max-w-2xl type-caption type-emphasis leading-5 text-status-danger-text" role="alert">
                     {leaveError}
                   </p>
                 )}

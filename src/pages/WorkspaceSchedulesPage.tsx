@@ -48,6 +48,8 @@ import {
 import { WorkspaceScheduleDeleteDialog } from '@/pages/WorkspaceScheduleDeleteDialog';
 import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
+import { TextInput, Textarea } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceSchedulesPageProps {
   workspace: Workspace;
@@ -364,7 +366,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         aria-labelledby="workflow-trigger-type-schedule-tab"
       >
       {!canManageSchedules && (
-        <div className="mb-5 rounded-md border border-ui-border bg-ui-surface px-4 py-3 text-sm font-medium text-ui-text-muted">
+        <div className="mb-5 rounded-md border border-ui-border bg-ui-surface px-4 py-3 type-ui text-ui-text-muted">
           {t('schedules.permissionNotice')}
         </div>
       )}
@@ -444,9 +446,9 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
           </CollectionState>
         </div>
         <div className="hidden overflow-x-auto 2xl:block">
-          <table className="min-w-[58rem] w-full border-collapse text-left">
+          <DataTable caption={t('schedules.tableLabel')} className="min-w-[58rem] w-full border-collapse text-left">
             <DataTableHeader collectionState={{ phase: schedulePhase, itemCount: visibleSchedules.length }}>
-              <tr>
+              <DataTableRow>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.schedule')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.workflow')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.cadence')}</DataTableHeaderCell>
@@ -454,9 +456,9 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.inputsAndAccess')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('workflowActivity.activity')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" numeric className="whitespace-nowrap">{t('schedules.table.actions')}</DataTableHeaderCell>
-              </tr>
+              </DataTableRow>
             </DataTableHeader>
-            <tbody className="divide-y divide-ui-border">
+            <DataTableBody className="divide-y divide-ui-border">
               {visibleSchedules.length > 0 ? visibleSchedules.map((schedule) => (
                 <WorkspaceScheduleTableRow
                   key={schedule.id}
@@ -473,18 +475,18 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                   onDelete={() => openDeleteDialog(schedule)}
                 />
               )) : (
-                <tr>
-                  <td colSpan={7} className="p-0">
+                <DataTableRow>
+                  <DataTableCell colSpan={7} className="p-0">
                     {schedulePhase === 'loading'
                       ? scheduleLoadingState
                       : schedulePhase === 'error'
                         ? scheduleErrorState
                         : scheduleEmptyState}
-                  </td>
-                </tr>
+                  </DataTableCell>
+                </DataTableRow>
               )}
-            </tbody>
-          </table>
+            </DataTableBody>
+          </DataTable>
           {visibleSchedules.length > 0
             && (schedulePhase === 'refreshing' || schedulePhase === 'loadingMore' || schedulePhase === 'error')
             && <div className="border-t border-ui-border p-4">{scheduleFeedback}</div>}
@@ -533,8 +535,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
           </Button>
         </>}
       >
-              {draftError && <div className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 text-sm font-semibold text-status-danger-text">{draftError}</div>}
-              <label className="block text-sm font-semibold text-ui-text">
+              {draftError && <div className="rounded-md border border-status-danger/30 bg-status-danger/10 px-3 py-2 type-body type-emphasis text-status-danger-text">{draftError}</div>}
+              <label className="block type-body type-emphasis text-ui-text">
                 {t('schedules.form.workflow')}
                 <Select<string>
                   value={draft.workflowId}
@@ -544,36 +546,36 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                   ariaLabel={t('schedules.form.workflow')}
                 />
               </label>
-              <label className="block text-sm font-semibold text-ui-text">
+              <label className="block type-body type-emphasis text-ui-text">
                 {t('schedules.form.name')}
-                <input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className={scheduleFormInputClassName} />
+                <TextInput value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className={scheduleFormInputClassName} />
               </label>
-              <div className="block text-sm font-semibold text-ui-text">
+              <div className="block type-body type-emphasis text-ui-text">
                 {t('schedules.form.runsAs')}
-                <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 font-normal text-ui-text">
+                <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 type-body text-ui-text">
                   {currentUser?.id === draft.runsAsUserId ? currentUser.label : draft.runsAsUserId}
                 </div>
                 <span className="type-caption mt-1 block text-ui-text-muted">{t('schedules.form.runsAsHelp')}</span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block text-sm font-semibold text-ui-text">
+                <label className="block type-body type-emphasis text-ui-text">
                   {t('schedules.form.cron')}
-                  <input value={draft.cron} onChange={(event) => setDraft((current) => ({ ...current, cron: event.target.value }))} className={scheduleFormInputClassName} />
-                  <span className="type-caption mt-1 block font-normal text-ui-text-muted">{t('schedules.form.cronHelp')}</span>
+                  <TextInput value={draft.cron} onChange={(event) => setDraft((current) => ({ ...current, cron: event.target.value }))} className={scheduleFormInputClassName} />
+                  <span className="type-caption mt-1 block text-ui-text-muted">{t('schedules.form.cronHelp')}</span>
                 </label>
-                <label className="block text-sm font-semibold text-ui-text">
+                <label className="block type-body type-emphasis text-ui-text">
                   {t('schedules.form.timezone')}
-                  <input value={draft.timezone} onChange={(event) => setDraft((current) => ({ ...current, timezone: event.target.value }))} className={scheduleFormInputClassName} />
+                  <TextInput value={draft.timezone} onChange={(event) => setDraft((current) => ({ ...current, timezone: event.target.value }))} className={scheduleFormInputClassName} />
                 </label>
               </div>
-              <label className="flex items-center gap-3 text-sm font-semibold text-ui-text">
+              <label className="flex items-center gap-3 type-body type-emphasis text-ui-text">
                 <Checkbox checked={draft.enabled} onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))} />
                 {t('schedules.form.enabled')}
               </label>
-              <label className="block text-sm font-semibold text-ui-text">
+              <label className="block type-body type-emphasis text-ui-text">
                 {t('schedules.form.approvedContextGrants')}
-                <textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className={scheduleFormTextareaClassName} />
-                <span className="type-caption mt-1 block font-normal text-ui-text-muted">{t('schedules.form.approvedContextGrantsHelp')}</span>
+                <Textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className={scheduleFormTextareaClassName} />
+                <span className="type-caption mt-1 block text-ui-text-muted">{t('schedules.form.approvedContextGrantsHelp')}</span>
               </label>
               {workflows.find((workflow) => workflow.id === draft.workflowId) ? (
                 <section className="grid gap-3">
@@ -608,7 +610,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                       <WorkflowPreviewAuthRow requirements={capabilityPreview.mcpRequirements} onConnectCredential={setCredentialRequirement} />
                     </dl>
                   ) : capabilityPreview?.status === 'ready' ? (
-                    <p role="status" className="type-caption mt-3 font-semibold text-status-success-text">{t('schedules.form.credentialsReady')}</p>
+                    <p role="status" className="type-caption mt-3 type-emphasis text-status-success-text">{t('schedules.form.credentialsReady')}</p>
                   ) : capabilityPreview ? (
                     <p role="alert" className="type-caption mt-3 text-status-warning-text">{workflowCapabilityBlockerMessage(capabilityPreview, t('agentsWorkflows.schedule.capabilityBlocked'))}</p>
                   ) : null}
