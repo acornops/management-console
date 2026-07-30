@@ -34,6 +34,9 @@ export function mapControlPlaneMessage(message: ControlPlaneSessionMessage): Cha
     runId: message.runId,
     clientMessageId: message.clientMessageId,
     timestamp: toTimestamp(message.createdAt),
+    ...(message.metadata ? { metadata: message.metadata } : {}),
+    ...(message.createdBy ? { createdBy: message.createdBy } : {}),
+    ...(message.createdByUser ? { createdByUser: message.createdByUser } : {}),
     ...(assistantReferences.length > 0 ? { assistantReferences } : {})
   };
 }

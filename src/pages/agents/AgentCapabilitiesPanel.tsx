@@ -5,9 +5,10 @@ import { SegmentedTabs } from '@acornops/ui';
 import { InlineConfirmation } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
-import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
+import { McpInstallationConnectionDialog } from '@/features/catalog/McpInstallationConnectionDialog';
 import { AddMcpServerAction } from '@/features/catalog/AddMcpServerAction';
 import { McpCredentialOwnershipSelector } from '@/features/catalog/McpCredentialOwnershipSelector';
+import { mcpConnectAction, showsMcpConnectionAction } from '@/features/catalog/mcpConnectionActions';
 import { updateUrlSearch } from '@/hooks/useUrlSearchState';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { deleteAgentMcpServer, testAgentMcpServer, updateAgentMcpServer } from '@/services/control-plane/agentApi';
@@ -33,8 +34,8 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
   const { manualServer, setManualServer, manualServerOpen, setManualServerOpen, targetOptions } = capabilityState;
   const { constraintEditor, setConstraintEditor, renameEditor, setRenameEditor, removeServerId, setRemoveServerId, credentialModeChange, setCredentialModeChange } = capabilityState;
   const { recoveryServerId, recoveryAction, serverRows, recoveryControls, managedConnectionMessages, renameTriggers, credentialModeTriggers, removeServerTriggers } = capabilityState;
-  const { connections, connectionLoadErrors, connectionLoadingByServerId, pendingConnectionServerId, connect, verify, disconnect, retry, retryAfterSecondsFor } = capabilityState;
-  const { clearSuccessfulRecovery, refreshAfterCredentialConnection, run, addManualServer, prepareCredentialModeChange, confirmCredentialModeChange, mcpWritable } = capabilityState;
+  const { connections, connectionLoadErrors, connectionLoadingByServerId, pendingConnectionServerId, connect, prepareOAuth, startOAuth, verify, disconnect, retry, retryAfterSecondsFor } = capabilityState;
+  const { clearSuccessfulRecovery, refreshAfterCredentialConnection, run, addManualServer, prepareCredentialModeChange, confirmCredentialModeChange, mcpWritable, oauthReturnPath } = capabilityState;
 
   return (
     <div className="space-y-5">
@@ -119,18 +120,23 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                       {
                         value: 'custom_header' as const,
                         label: 'Custom header'
-                      }
+                      },
+                      { value: 'oauth' as const, label: 'OAuth' }
                     ]}
                     onChange={(authType) =>
                       setManualServer((value) => ({
                         ...value,
                         authType,
-                        credentialMode: authType === 'none' ? 'none' : value.credentialMode === 'none' ? 'individual' : value.credentialMode
+                        credentialMode: authType === 'none'
+                          ? 'none'
+                          : authType === 'oauth'
+                            ? 'individual'
+                            : value.credentialMode === 'none' ? 'individual' : value.credentialMode
                       }))
                     }
                   />
                 </label>
-                {manualServer.authType !== 'none' && (
+                {manualServer.authType !== 'none' && manualServer.authType !== 'oauth' && (
                   <div className="sm:col-span-2">
                     <McpCredentialOwnershipSelector
                       name="agent-mcp-credential-mode"
@@ -174,6 +180,9 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                 const connectionLoading = Boolean(connectionLoadingByServerId[server.id]);
                 const retryAfterSeconds = retryAfterSecondsFor(server.id);
                 const recoveryHighlighted = recoveryServerId === server.id;
+                const isOAuth = server.authType === 'oauth';
+                const showsConnectionAction = showsMcpConnectionAction(server.authType, connection?.action);
+                const connectAction = mcpConnectAction(server.authType, connection?.action);
                 return (
                   <article
                     key={server.id}
@@ -189,6 +198,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                         <div className="flex flex-wrap items-center gap-2">
                           <strong className="text-sm">{server.name}</strong>
                           <StatusBadge tone={server.enabled ? 'success' : 'neutral'}>{server.enabled ? 'Enabled' : 'Disabled'}</StatusBadge>
+                          {server.inherited && <StatusBadge tone="neutral">Platform default</StatusBadge>}
                           {server.provenance && <StatusBadge tone="neutral">Catalog v{server.provenance.version}</StatusBadge>}
                         </div>
                         <p className="type-code mt-1 break-all text-ui-text-muted">{server.url}</p>
@@ -233,7 +243,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                           }}
                           size="sm"
                           variant="secondary"
-                          disabled={!mcpWritable || Boolean(busy)}
+                          disabled={!mcpWritable || server.inherited || Boolean(busy)}
                           onClick={() =>
                             setRenameEditor({
                               serverId: server.id,
@@ -246,7 +256,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                         <Button
                           size="sm"
                           variant="secondary"
-                          disabled={!mcpWritable || Boolean(busy)}
+                          disabled={!mcpWritable || server.inherited || Boolean(busy)}
                           onClick={() => {
                             setConstraintEditor({
                               serverId: server.id,
@@ -264,18 +274,17 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                           onClick={() =>
                             void run(
                               `toggle:${server.id}`,
-                              () =>
-                                updateAgentMcpServer(agent.workspaceId, agent.id, server.id, {
-                                  enabled: !server.enabled,
-                                  expectedRevision: server.revision
-                                }),
+                              () => updateAgentMcpServer(agent.workspaceId, agent.id, server.id, {
+                                enabled: !server.enabled,
+                                expectedRevision: server.revision
+                              }),
                               `MCP server ${server.enabled ? 'disabled' : 'enabled'}.`
                             )
                           }
                         >
                           {server.enabled ? 'Disable' : 'Enable'}
                         </Button>
-                        {server.credentialMode !== 'none' && (
+                        {server.credentialMode !== 'none' && !server.inherited && !isOAuth && (
                           <Button
                             ref={(node) => {
                               if (node) credentialModeTriggers.current.set(server.id, node);
@@ -289,12 +298,12 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                             {server.credentialMode === 'workspace' ? 'Use individual credentials' : 'Use workspace credential'}
                           </Button>
                         )}
-                        {server.authType === 'none' && (
+                        {server.authType === 'none' && !server.inherited && (
                           <Button size="sm" variant="secondary" disabled={!mcpWritable || Boolean(busy)} onClick={() => void run(`test:${server.id}`, () => testAgentMcpServer(agent.workspaceId, agent.id, server.id), 'Connection tested and tools rediscovered.')}>
                             Test / discover
                           </Button>
                         )}
-                        {server.provenance && (
+                        {server.provenance && !server.inherited && (
                           <Button
                             size="sm"
                             variant="secondary"
@@ -321,17 +330,17 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                             Re-import
                           </Button>
                         )}
-                        {server.credentialMode !== 'none' && connectionLoading && (
+                        {server.credentialMode !== 'none' && !server.inherited && connectionLoading && (
                           <Button size="sm" variant="secondary" disabled>
                             Loading credential status…
                           </Button>
                         )}
-                        {server.credentialMode !== 'none' && connectionLoadError && (
+                        {server.credentialMode !== 'none' && !server.inherited && connectionLoadError && (
                           <Button size="sm" variant="secondary" disabled={Boolean(busy)} onClick={() => void retry(server)}>
                             Retry connection status
                           </Button>
                         )}
-                        {server.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && connection.status === 'error' && (
+                        {server.credentialMode !== 'none' && !server.inherited && !connectionLoading && !connectionLoadError && connection?.canManage && connection.status === 'error' && (
                           <Button
                             ref={(node) => {
                               if (recoveryAction !== 'verify_mcp_server') return;
@@ -351,33 +360,53 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                               })
                             }
                           >
-                            {retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : 'Verify credential'}
+                            {retryAfterSeconds > 0
+                              ? t('mcpServers.tryAgainIn', { seconds: retryAfterSeconds })
+                              : t(isOAuth ? 'mcpServers.verifyConnection' : 'mcpServers.verifyCredential')}
                           </Button>
                         )}
-                        {server.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && (
+                        {server.credentialMode !== 'none' && !server.inherited && !connectionLoading && !connectionLoadError && connection?.canManage && showsConnectionAction && (
                           <Button
                             ref={(node) => {
-                              if (recoveryAction !== 'connect_mcp_server') return;
+                              const highlightsOAuthAuthorization = isOAuth
+                                && (
+                                  recoveryAction === 'authorize_mcp_server'
+                                  || recoveryAction === 'select_authorization_server'
+                                  || recoveryAction === 'reauthorize_mcp_server'
+                                );
+                              if (recoveryAction !== connectAction && !highlightsOAuthAuthorization) return;
                               if (node) recoveryControls.current.set(server.id, node);
                               else recoveryControls.current.delete(server.id);
                             }}
-                            data-mcp-action="connect_mcp_server"
+                            data-mcp-action={connectAction}
                             size="sm"
                             variant="secondary"
                             disabled={pendingConnectionServerId === server.id || retryAfterSeconds > 0}
                             onClick={() => setCredentialDialogServer(server)}
                           >
-                            {retryAfterSeconds > 0 ? `Try again in ${retryAfterSeconds}s` : connection.status === 'missing' ? (server.credentialMode === 'workspace' ? 'Connect workspace credential' : 'Connect your credential') : 'Replace credential'}
+                            {retryAfterSeconds > 0
+                              ? t('mcpServers.tryAgainIn', { seconds: retryAfterSeconds })
+                              : isOAuth
+                                ? t(connection.status === 'reauthorization_required'
+                                  ? 'mcpServers.oauthReauthorizationRequired'
+                                  : 'mcpServers.oauthAuthorizationRequired')
+                                : connection.status === 'missing'
+                                  ? (server.credentialMode === 'workspace' ? 'Connect workspace credential' : 'Connect your credential')
+                                  : 'Replace credential'}
                           </Button>
                         )}
-                        {server.credentialMode !== 'none' && !connectionLoading && !connectionLoadError && connection?.canManage && (connection.status === 'connected' || connection.status === 'error') && (
+                        {server.credentialMode !== 'none' && !server.inherited && !connectionLoading && !connectionLoadError && connection?.canManage && connection.status !== 'missing' && (
                           <Button
                             size="sm"
                             variant="secondary"
                             disabled={pendingConnectionServerId === server.id || retryAfterSeconds > 0}
                             onClick={() =>
                               void disconnect(server).then((removed) => {
-                                if (removed) setNotice('Credential disconnected. You can reconnect immediately.');
+                                if (removed) {
+                                  setNotice(isOAuth
+                                    ? 'OAuth connection disconnected. You can authorize again immediately.'
+                                    : 'Credential disconnected. You can reconnect immediately.');
+                                }
                               })
                             }
                           >
@@ -396,7 +425,7 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                           }}
                           size="sm"
                           variant="danger"
-                          disabled={!canManageAgents || Boolean(busy)}
+                          disabled={!canManageAgents || server.inherited || Boolean(busy)}
                           onClick={() => setRemoveServerId(server.id)}
                         >
                           {t('agentsWorkflows.agents.details.capabilities.actions.remove')}
@@ -598,16 +627,13 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
 
       <AgentSkillsPanel agent={agent} canManageAgents={canManageAgents} state={{ ...capabilityState, activeTab }} />
       {credentialDialogServer && (
-        <McpCredentialDialog
-          serverName={credentialDialogServer.name}
-          serverUrl={credentialDialogServer.url}
-          authType={connections[credentialDialogServer.id]?.authType || credentialDialogServer.authType}
-          authHeaderName={credentialDialogServer.authHeaderName}
-          credentialMode={credentialDialogServer.credentialMode === 'workspace' ? 'workspace' : 'individual'}
-          mode={connections[credentialDialogServer.id]?.status === 'missing' ? 'connect' : 'replace'}
+        <McpInstallationConnectionDialog
+          installation={credentialDialogServer}
+          connection={connections[credentialDialogServer.id]}
+          returnPath={oauthReturnPath}
           retryAfterSeconds={retryAfterSecondsFor(credentialDialogServer.id)}
           onClose={() => setCredentialDialogServer(null)}
-          onSubmit={async (credential) => {
+          onCredentialSubmit={async (credential) => {
             const connection = await connect(credentialDialogServer, credential);
             if (connection?.status === 'connected') {
               setNotice('Credential verified and tools discovered.');
@@ -615,6 +641,8 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
               setCredentialDialogServer(null);
             }
           }}
+          onPrepareOAuth={(returnPath) => prepareOAuth(credentialDialogServer, returnPath)}
+          onStartOAuth={(preparationHandle, issuer) => startOAuth(credentialDialogServer, preparationHandle, issuer)}
         />
       )}
     </div>

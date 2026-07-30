@@ -84,6 +84,7 @@ export interface ControlPlaneTargetAssistantCapabilitiesPreview {
   toolAccessMode: 'read_only' | 'read_write';
   confirmationRequiredForWrite: boolean;
   writeUnavailableReason: 'run_read_only' | 'agent_write_disabled' | null;
+  unavailableMcpToolCount: number;
   toolSummary: {
     totalAllowed: number;
     nativeAllowed: number;

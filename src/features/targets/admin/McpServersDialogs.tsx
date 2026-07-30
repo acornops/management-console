@@ -18,6 +18,31 @@ import { InlineConfirmation } from '@acornops/ui';
 const mcpServerInputClassName = formInputClassName('px-4 font-medium');
 const mcpPublicHeaderInputClassName = formInputClassName('min-h-10 min-w-0 font-medium');
 
+export function getMcpCreateFlowCopyKeys(authType: ServerFormState['authType']) {
+  if (authType === 'oauth') {
+    return {
+      nextStep: 'mcpServers.stepAuthorize',
+      help: 'mcpServers.oauthCreateHelp',
+      pending: 'mcpServers.addingServer',
+      action: 'mcpServers.continueToAuthorization'
+    };
+  }
+  if (authType !== 'none') {
+    return {
+      nextStep: 'mcpServers.stepConnect',
+      help: 'mcpServers.credentialCreateHelp',
+      pending: 'mcpServers.addingServer',
+      action: 'mcpServers.continueToCredentials'
+    };
+  }
+  return {
+    nextStep: 'mcpServers.stepReviewTools',
+    help: 'mcpServers.createHelp',
+    pending: 'mcpServers.discoveringTools',
+    action: 'mcpServers.reviewToolsAction'
+  };
+}
+
 export const McpServerFormDialog: React.FC<{
   mode: 'create' | 'edit';
   createStep?: 'configure' | 'review';
@@ -36,6 +61,7 @@ export const McpServerFormDialog: React.FC<{
   onFormChange: React.Dispatch<React.SetStateAction<ServerFormState>>;
   onSubmit: () => void;
   onToggleReviewTool?: (tool: TargetToolCatalogItem, enabled: boolean) => void | Promise<void>;
+  onChangeReviewToolCapability?: (tool: TargetToolCatalogItem, capability: 'read' | 'write') => void | Promise<void>;
   onFinishReview?: () => void;
   credentialModeConfirmation?: {
     serverName: string;
@@ -62,6 +88,7 @@ export const McpServerFormDialog: React.FC<{
   onFormChange,
   onSubmit,
   onToggleReviewTool,
+  onChangeReviewToolCapability,
   onFinishReview,
   credentialModeConfirmation
 }) => {
@@ -70,7 +97,12 @@ export const McpServerFormDialog: React.FC<{
   const authTypeOptions: Array<SelectOption<ServerFormState['authType']>> = [
     { value: 'none', label: t('mcpServers.authNone') },
     { value: 'bearer_token', label: t('mcpServers.authBearer') },
-    { value: 'custom_header', label: t('mcpServers.authCustomHeader') }
+    { value: 'custom_header', label: t('mcpServers.authCustomHeader') },
+    { value: 'oauth', label: 'OAuth' }
+  ];
+  const capabilityOptions: Array<SelectOption<'read' | 'write'>> = [
+    { value: 'read', label: t('mcpServers.capabilityRead') },
+    { value: 'write', label: t('mcpServers.capabilityWrite') }
   ];
   const addPublicHeader = () => {
     onFormChange((current) => ({
@@ -100,9 +132,10 @@ export const McpServerFormDialog: React.FC<{
   const reviewTools = reviewServer?.tools || [];
   const reviewEnabledCount = reviewTools.filter((tool) => tool.enabledConfigured).length;
   const reviewWriteCount = reviewTools.filter((tool) => tool.capability === 'write').length;
+  const createFlowCopy = getMcpCreateFlowCopyKeys(form.authType);
   const createSteps = [
     { id: 'configure', label: t('mcpServers.stepConfigure') },
-    { id: 'review', label: t('mcpServers.stepReviewTools') }
+    { id: 'review', label: t(createFlowCopy.nextStep) }
   ];
   const renderReviewTool = (tool: TargetToolCatalogItem) => {
     const pendingTool = pendingToolName === tool.name;
@@ -118,13 +151,14 @@ export const McpServerFormDialog: React.FC<{
             {tool.name}
           </p>
         </div>
-        <span
-          className={`type-micro-label w-fit rounded-full px-2 py-1 ${
-            tool.capability === 'write' ? 'bg-status-warning-soft text-status-warning-text' : 'bg-status-success-soft text-status-success-text'
-          }`}
-        >
-          {tool.capability === 'write' ? t('mcpServers.capabilityWrite') : t('mcpServers.capabilityRead')}
-        </span>
+        <Select<'read' | 'write'>
+          value={tool.capability}
+          options={capabilityOptions}
+          size="sm"
+          disabled={!canManageTools || pendingTool || pending}
+          ariaLabel={t('mcpServers.capabilityForTool', { name: getToolLabel(tool) })}
+          onChange={(capability) => onChangeReviewToolCapability?.(tool, capability)}
+        />
         <Switch
           checked={tool.enabledConfigured}
           disabled={!canManageTools || pendingTool || pending}
@@ -259,7 +293,11 @@ export const McpServerFormDialog: React.FC<{
                         onFormChange((current) => ({
                           ...current,
                           authType,
-                          credentialMode: authType === 'none' ? 'none' : current.credentialMode === 'none' ? 'individual' : current.credentialMode
+                          credentialMode: authType === 'none'
+                            ? 'none'
+                            : authType === 'oauth'
+                              ? 'individual'
+                              : current.credentialMode === 'none' ? 'individual' : current.credentialMode
                         }))
                       }
                       ariaLabel={t('mcpServers.authType')}
@@ -275,16 +313,18 @@ export const McpServerFormDialog: React.FC<{
 
                 {form.authType !== 'none' && (
                   <div className="space-y-3">
-                    <McpCredentialOwnershipSelector
-                      name="mcp-credential-ownership"
-                      value={form.credentialMode === 'workspace' ? 'workspace' : 'individual'}
-                      onChange={(credentialMode) =>
-                        onFormChange((current) => ({
-                          ...current,
-                          credentialMode
-                        }))
-                      }
-                    />
+                    {form.authType !== 'oauth' && (
+                      <McpCredentialOwnershipSelector
+                        name="mcp-credential-ownership"
+                        value={form.credentialMode === 'workspace' ? 'workspace' : 'individual'}
+                        onChange={(credentialMode) =>
+                          onFormChange((current) => ({
+                            ...current,
+                            credentialMode
+                          }))
+                        }
+                      />
+                    )}
                     {form.authType === 'custom_header' && (
                       <label className="space-y-1">
                         <span className="type-label px-1">{t('mcpServers.headerName')}</span>
@@ -301,7 +341,9 @@ export const McpServerFormDialog: React.FC<{
                         />
                       </label>
                     )}
-                    <p className="type-caption rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">{t('mcpServers.credentialSetupHelp')}</p>
+                    <p className="type-caption rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
+                      {t(form.authType === 'oauth' ? 'mcpServers.oauthCredentialSetupHelp' : 'mcpServers.credentialSetupHelp')}
+                    </p>
                   </div>
                 )}
 
@@ -370,7 +412,9 @@ export const McpServerFormDialog: React.FC<{
                   </div>
                 </details>
 
-                <div className="type-caption rounded-lg border border-ui-border bg-ui-bg p-3">{urlReadOnly ? t('mcpServers.editHelp') : t('mcpServers.createHelp')}</div>
+                <div className="type-caption rounded-lg border border-ui-border bg-ui-bg p-3">
+                  {urlReadOnly ? t('mcpServers.editHelp') : t(createFlowCopy.help)}
+                </div>
 
                 {mutationError && (
                   <div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{mutationError}</div>
@@ -433,7 +477,9 @@ export const McpServerFormDialog: React.FC<{
                 {t('app.cancel')}
               </Button>
               <Button onClick={onSubmit} disabled={pending || !isValid || Boolean(credentialModeConfirmation)} variant="primary" size="sm">
-                {pending ? t(mode === 'edit' ? 'mcpServers.saving' : 'mcpServers.discoveringTools') : t(mode === 'edit' ? 'mcpServers.save' : 'mcpServers.reviewToolsAction')}
+                {pending
+                  ? t(mode === 'edit' ? 'mcpServers.saving' : createFlowCopy.pending)
+                  : t(mode === 'edit' ? 'mcpServers.save' : createFlowCopy.action)}
               </Button>
             </>
           )}

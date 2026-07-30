@@ -5,7 +5,7 @@ import { Check, Copy, Pencil } from 'lucide-react';
 interface MessageActionsProps {
   align: 'left' | 'right';
   copyText: string;
-  timestampLabel: string;
+  timestampLabel?: string;
   onEdit?: () => void;
   t: TFunction;
 }
@@ -58,7 +58,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({ align, copyText,
         align === 'right' ? 'justify-end text-ui-text-muted' : 'justify-start'
       }`}
     >
-      <time>{timestampLabel}</time>
+      {timestampLabel && <time>{timestampLabel}</time>}
       {onEdit && (
         <button
           type="button"

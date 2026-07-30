@@ -138,6 +138,69 @@ describe('ConversationHistory', () => {
     expect(markup).toContain('px-4 py-3 pr-16');
   });
 
+  it('keeps manual chats and automatic investigations in separate panel views', () => {
+    const sessions = [
+      session({ id: 'manual', name: 'Human diagnosis', origin: 'manual' }),
+      session({
+        id: 'automatic',
+        name: 'CrashLoopBackOff in payments',
+        origin: 'auto_triage',
+        automaticInvestigation: {
+          issueId: 'issue-1',
+          lifecycleVersion: 1,
+          severity: 'warning',
+          scopeKind: 'namespace',
+          scopeName: 'payments',
+          objectKind: 'Deployment',
+          objectName: 'api',
+          writeMode: 'approval_required',
+          effectiveToolMode: 'read_write',
+          confirmationRequiredForWrite: true
+        }
+      })
+    ];
+
+    const chatsMarkup = renderToStaticMarkup(
+      <ConversationHistory
+        appName="demo-target"
+        sessions={sessions}
+        sessionOrigin="manual"
+        activeSessionId={null}
+        isSessionsLoading={false}
+        canDeleteSessions={false}
+        onSelectSession={() => undefined}
+        onDeleteSessionClick={() => undefined}
+        onSearchValueChange={() => undefined}
+        searchValue=""
+        t={t}
+      />
+    );
+    const investigationsMarkup = renderToStaticMarkup(
+      <ConversationHistory
+        appName="demo-target"
+        sessions={sessions}
+        sessionOrigin="auto_triage"
+        activeSessionId={null}
+        isSessionsLoading={false}
+        canDeleteSessions={false}
+        onSelectSession={() => undefined}
+        onDeleteSessionClick={() => undefined}
+        onSearchValueChange={() => undefined}
+        searchValue=""
+        t={t}
+      />
+    );
+
+    expect(chatsMarkup).toContain('Human diagnosis');
+    expect(chatsMarkup).not.toContain('CrashLoopBackOff');
+    expect(investigationsMarkup).toContain('CrashLoopBackOff');
+    expect(investigationsMarkup).not.toContain('Human diagnosis');
+    expect(investigationsMarkup).toContain('namespace:payments');
+    expect(investigationsMarkup).toContain('Deployment/api');
+    expect(investigationsMarkup).toContain('chat.issueSeverity.warning');
+    expect(investigationsMarkup).not.toContain('chat.automatic<');
+  });
+
   it('renders the Chats search as a full-page destination with New chat', () => {
     const markup = renderToStaticMarkup(
       <ConversationHistory

@@ -11,7 +11,7 @@ import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
-import { WorkspaceNavigationGroupBadge } from '@/app/WorkspaceNavigationGroupBadge';
+import { ExperimentalBadge } from '@/components/common/ExperimentalBadge';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { KubernetesCluster, User, Workspace } from '@/types';
@@ -505,7 +505,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             {group.label && (
                               <div className="mb-1 flex items-center justify-between gap-2 px-3">
                                 <p className="type-label tracking-normal">{group.label}</p>
-                                {group.badge && <WorkspaceNavigationGroupBadge>{group.badge}</WorkspaceNavigationGroupBadge>}
+                                {group.badge && <ExperimentalBadge>{group.badge}</ExperimentalBadge>}
                               </div>
                             )}
                             <div className="grid grid-cols-1 gap-1">

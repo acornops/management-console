@@ -22,7 +22,7 @@ interface McpServersInventoryProps {
   pendingConnectionServerId: string | null;
   retryAfterSecondsFor: (serverId: string) => number;
   recoveryServerId: string | null;
-  recoveryAction?: 'connect_mcp_server' | 'verify_mcp_server';
+  recoveryAction?: 'connect_mcp_server' | 'authorize_mcp_server' | 'select_authorization_server' | 'reauthorize_mcp_server' | 'verify_mcp_server';
   onManageTools: (serverId: string) => void;
   onTestConnection: (server: TargetToolCatalogServer) => void;
   onToggleServer: (server: TargetToolCatalogServer, enabled: boolean) => void;

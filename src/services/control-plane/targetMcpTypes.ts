@@ -7,7 +7,7 @@ export interface TargetMcpServer {
   serverName: string;
   serverUrl: string;
   enabled: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
+  authType: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credentialMode: 'none' | 'workspace' | 'individual';
   authHeaderName?: string;
   authHeaderPrefix?: string;
@@ -18,6 +18,7 @@ export interface TargetMcpServer {
   revision?: number;
   provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt?: string };
   tools: KubernetesCluster['mcpTools'];
+  inherited?: boolean;
 }
 
 export interface TargetMcpServerTestConnectionResult {

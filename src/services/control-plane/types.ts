@@ -1,4 +1,5 @@
 import { ChatRuntimeSelection, ClusterMetricHistoryPoint, ClusterToolCatalogServer, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
+import type { AutomaticInvestigationSessionContext } from './autoTriageTypes';
 export type { TargetMcpServer, TargetMcpServerTestConnectionResult } from './targetMcpTypes';
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
@@ -403,7 +404,7 @@ export interface ControlPlaneClusterToolCatalogServer {
   canDelete: boolean;
   canEditConnection: boolean;
   canToggle?: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
+  authType: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credentialMode: 'none' | 'workspace' | 'individual';
   authHeaderName?: string;
   authHeaderPrefix?: string;
@@ -442,7 +443,7 @@ export interface ControlPlaneMcpServer {
   server_name: string;
   server_url: string;
   enabled: boolean;
-  auth_type: 'none' | 'bearer_token' | 'custom_header';
+  auth_type: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credential_mode: 'none' | 'workspace' | 'individual';
   auth_header_name?: string;
   auth_header_prefix?: string;
@@ -457,6 +458,7 @@ export interface ControlPlaneMcpServer {
   catalog_digest?: string | null;
   catalog_imported_at?: string | null;
   tools: ControlPlaneClusterTool[];
+  inherited?: boolean;
 }
 
 export interface ControlPlaneMcpServerTestConnectionResponse {
@@ -478,7 +480,7 @@ export interface TargetMcpServerToolInput {
 }
 
 export interface TargetMcpServerAuthInput {
-  type?: 'none' | 'bearer_token' | 'custom_header';
+  type?: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   headerName?: string;
   headerPrefix?: string;
 }
@@ -551,6 +553,8 @@ export interface ControlPlaneSession extends ControlPlaneTargetScope {
   workspaceId: string;
   createdBy: string;
   createdByUser?: { id: string; displayName: string };
+  origin?: 'manual' | 'auto_triage';
+  automaticInvestigation?: AutomaticInvestigationSessionContext;
   title: string;
   status: 'open' | 'archived' | 'deleted';
   createdAt: string;
@@ -572,6 +576,8 @@ export interface ControlPlaneSessionMessage {
   kind: 'user' | 'assistant_final';
   content: string;
   metadata?: Record<string, unknown>;
+  createdBy?: string;
+  createdByUser?: { id: string; displayName: string };
   clientMessageId?: string;
   createdAt: string;
 }
@@ -631,6 +637,9 @@ export interface ControlPlaneRunToolApproval extends ControlPlaneTargetScope {
   status: 'pending' | 'approved' | 'rejected' | 'expired';
   executionStatus?: 'not_started' | 'executing' | 'succeeded' | 'failed' | 'unknown';
   expiresAt: string;
+  sessionId?: string;
+  sessionOrigin?: 'manual' | 'auto_triage';
+  sessionTitle?: string;
 }
 
 export interface ControlPlaneAcceptedMessage {

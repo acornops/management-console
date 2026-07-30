@@ -6,6 +6,7 @@ export interface CreateWorkspaceInviteRow {
   role: ProjectMember['role'];
   status?: 'idle' | 'creating' | 'created' | 'failed';
   error?: string;
+  member?: ProjectMember;
   invitation?: WorkspaceInvitation;
 }
 

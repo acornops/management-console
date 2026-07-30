@@ -18,4 +18,28 @@ describe('formatMcpError', () => {
       retryAfterSeconds: 8
     });
   });
+
+  it('shows bounded sanitized OAuth protocol errors returned by the control plane', () => {
+    const error = new ControlPlaneRequestError(
+      'Control plane request failed (400): The MCP server did not publish valid protected resource metadata.',
+      400,
+      'MCP_OAUTH_PROTECTED_RESOURCE_METADATA_MISSING'
+    );
+
+    expect(formatMcpError(error, 'OAuth configuration could not be prepared.')).toEqual({
+      message: 'The MCP server did not publish valid protected resource metadata.'
+    });
+  });
+
+  it('does not show malformed OAuth protocol error text', () => {
+    const error = new ControlPlaneRequestError(
+      'Control plane request failed (400): unsafe\nsecond line',
+      400,
+      'MCP_OAUTH_METADATA_INVALID'
+    );
+
+    expect(formatMcpError(error, 'OAuth configuration could not be prepared.')).toEqual({
+      message: 'Check the MCP server URL, headers, and auth settings.'
+    });
+  });
 });

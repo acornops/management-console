@@ -43,6 +43,7 @@ export interface ControlPlaneTargetSkillSummary extends ControlPlaneTargetScope 
   source: ControlPlaneTargetSkillSource;
   createdAt: string;
   updatedAt: string;
+  inherited?: boolean;
 }
 
 export interface ControlPlaneTargetSkillDetail extends ControlPlaneTargetSkillSummary {

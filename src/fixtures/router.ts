@@ -112,7 +112,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   const path = url.pathname.replace(/\/$/, '') || '/';
   const method = request.method.toUpperCase();
   const mcpParityMode = request.headers.get('x-acornops-fixture-mode') === 'mcp-parity';
-  const storedRole = typeof localStorage === 'undefined' ? null : localStorage.getItem('acornops-fixture-role');
+  const storedRole = globalThis.localStorage?.getItem?.('acornops-fixture-role') ?? null;
   if (storedRole === 'owner' || storedRole === 'admin' || storedRole === 'viewer') {
     applyFixtureRole(state, storedRole);
   }
@@ -630,14 +630,14 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
 
   if (path === '/api/v1/__fixtures/reset' && method === 'POST') {
     resetFixtureStore();
-    if (typeof localStorage !== 'undefined') localStorage.removeItem('acornops-fixture-role');
+    globalThis.localStorage?.removeItem?.('acornops-fixture-role');
     return json({ status: 'reset' });
   }
   if (path === '/api/v1/__fixtures/role' && method === 'POST') {
     const input = await bodyOf(request);
     const role = input.role === 'viewer' ? 'viewer' : input.role === 'admin' ? 'admin' : 'owner';
     const permissions = applyFixtureRole(state, role);
-    if (typeof localStorage !== 'undefined') localStorage.setItem('acornops-fixture-role', role);
+    globalThis.localStorage?.setItem?.('acornops-fixture-role', role);
     return json({ role, permissions: clone(permissions) });
   }
 

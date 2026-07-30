@@ -11,6 +11,7 @@ interface UserMessageTurnProps {
   message: ChatMessage;
   markdownComponents: Components;
   timestampLabel: string;
+  showAuthor?: boolean;
   canEdit: boolean;
   isEditing: boolean;
   editValue: string;
@@ -26,6 +27,7 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
   message,
   markdownComponents,
   timestampLabel,
+  showAuthor = false,
   canEdit,
   isEditing,
   editValue,
@@ -49,7 +51,15 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
   return (
     <div className="group flex w-full justify-end">
       <div className={`min-w-0 ${isEditing ? 'w-[min(42rem,88%)]' : 'max-w-[min(42rem,88%)]'}`}>
-        <div className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4" aria-label={t('chat.roleUser')}>
+        {showAuthor && (
+          <p className="mb-1 text-right text-[11px] font-semibold text-ui-text-muted">
+            {message.createdByUser?.displayName || t('chat.workspaceMember')} · {timestampLabel}
+          </p>
+        )}
+        <div
+          className="rounded-lg border border-ui-text-muted/20 bg-ui-text px-4 py-3 text-sm font-medium text-ui-bg shadow-sm sm:px-5 sm:py-4"
+          aria-label={t('chat.roleUser')}
+        >
           <span className="sr-only">{t('chat.roleUser')}</span>
           {isEditing ? (
             <form
@@ -114,7 +124,15 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
             </>
           )}
         </div>
-        {!isEditing && <MessageActions align="right" copyText={message.content} timestampLabel={timestampLabel} onEdit={canEdit ? onStartEdit : undefined} t={t} />}
+        {!isEditing && (
+          <MessageActions
+            align="right"
+            copyText={message.content}
+            timestampLabel={showAuthor ? undefined : timestampLabel}
+            onEdit={canEdit ? onStartEdit : undefined}
+            t={t}
+          />
+        )}
       </div>
     </div>
   );

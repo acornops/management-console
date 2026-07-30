@@ -5,6 +5,7 @@ import { enabledScheduleImpactForAgent } from '@/features/catalog/mcpCredentialM
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
+import { useAgentMcpOAuthFeedback } from '@/pages/agents/useAgentMcpOAuthFeedback';
 import {
   createAgentMcpServer,
   listAgentMcpServers,
@@ -45,7 +46,7 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
   const [manualServer, setManualServer] = React.useState<{
     name: string;
     url: string;
-    authType: 'none' | 'bearer_token' | 'custom_header';
+    authType: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
     credentialMode: 'none' | 'workspace' | 'individual';
     authHeaderName: string;
   }>({
@@ -93,6 +94,7 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
   });
   const recoveryServerId = search.get('mcpServer');
   const recoveryAction = search.get('mcpAction');
+  const oauthResult = search.get('mcpOAuthResult');
   const serverRows = React.useRef(new Map<string, HTMLElement>());
   const recoveryControls = React.useRef(new Map<string, HTMLButtonElement>());
   const managedConnectionMessages = React.useRef(new Map<string, HTMLParagraphElement>());
@@ -190,9 +192,12 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
     loadingByServerId: connectionLoadingByServerId,
     pendingServerId: pendingConnectionServerId,
     connect,
+    prepareOAuth,
+    startOAuth,
     verify,
     disconnect,
     retry,
+    reloadConnections,
     retryAfterSecondsFor
   } = useMcpConnections({
     workspaceId: agent.workspaceId,
@@ -201,6 +206,13 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
     onConnectionReady: refreshAfterCredentialConnection,
     onRefreshError: (_server, message) => setError(message),
     onError: (message) => setError(message || '')
+  });
+  const oauthReturnPath = useAgentMcpOAuthFeedback({
+    result: oauthResult,
+    reload,
+    reloadConnections,
+    setNotice,
+    setError
   });
 
   React.useEffect(() => {
@@ -246,7 +258,11 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
         name: manualServer.name.trim(),
         url: manualServer.url.trim(),
         authType: manualServer.authType,
-        credentialMode: manualServer.authType === 'none' ? 'none' : manualServer.credentialMode,
+        credentialMode: manualServer.authType === 'none'
+          ? 'none'
+          : manualServer.authType === 'oauth'
+            ? 'individual'
+            : manualServer.credentialMode,
         authHeaderName: manualServer.authType === 'custom_header' ? manualServer.authHeaderName.trim() : undefined
       });
       setManualServer({
@@ -260,7 +276,11 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
       if (created.credentialMode !== 'none') {
         setServers((current) => [...current.filter((server) => server.id !== created.id), created]);
         setCredentialDialogServer(created);
-        setNotice(created.credentialMode === 'workspace' ? 'Installation created. Connect a workspace credential to discover tools.' : 'Installation created. Connect your credential to discover tools.');
+        setNotice(created.authType === 'oauth'
+          ? 'Installation created. Authorize your account to discover tools.'
+          : created.credentialMode === 'workspace'
+            ? 'Installation created. Connect a workspace credential to discover tools.'
+            : 'Installation created. Connect your credential to discover tools.');
       } else {
         await reload();
         setNotice('MCP server added. Discovered tools are pending review.');
@@ -379,10 +399,13 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
     connectionLoadingByServerId,
     pendingConnectionServerId,
     connect,
+    prepareOAuth,
+    startOAuth,
     verify,
     disconnect,
     retry,
     retryAfterSecondsFor,
+    oauthReturnPath,
     clearSuccessfulRecovery,
     refreshAfterCredentialConnection,
     run,

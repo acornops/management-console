@@ -57,6 +57,74 @@ describe('catalog control-plane api', () => {
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/oauth/'))).toBe(false);
   });
 
+  it('prepares and starts provider-neutral OAuth for Agent and target installations', async () => {
+    const preparation = {
+      preparationHandle: 'p'.repeat(43),
+      resourceOrigin: 'https://mcp.example',
+      issuerSelectionRequired: true,
+      candidates: [{
+        issuer: 'https://identity.example/realms/engineering',
+        issuerOrigin: 'https://identity.example',
+        registrationMethod: 'dcr',
+        scopes: ['mcp:read', 'offline_access'],
+        offlineAccessRequested: true
+      }]
+    };
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('/api/v1/auth/csrf')) {
+        return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-1' }), { status: 200 }));
+      }
+      if (url.endsWith('/oauth/prepare')) {
+        return Promise.resolve(new Response(JSON.stringify(preparation), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        authorizationUrl: 'https://identity.example/authorize?opaque=1'
+      }), { status: 200 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const prepared = await catalogApi.prepareAgentMcpOAuth(
+      'workspace-1',
+      'agent-1',
+      'server-1',
+      '/workspaces/workspace-1/agents?capabilityTab=mcp'
+    );
+    const started = await catalogApi.startAgentMcpOAuth(
+      'workspace-1',
+      'agent-1',
+      'server-1',
+      {
+        preparationHandle: preparation.preparationHandle,
+        issuer: preparation.candidates[0].issuer,
+        consentGranted: true
+      }
+    );
+    await catalogApi.prepareTargetMcpOAuth(
+      'workspace-1',
+      'target-1',
+      'server-1',
+      '/workspaces/workspace-1/kubernetes-clusters/target-1/mcp-servers'
+    );
+
+    expect(prepared).toEqual(preparation);
+    expect(started.authorizationUrl).toMatch(/^https:\/\/identity\.example\//);
+    const oauthCalls = fetchMock.mock.calls.filter((call) => String(call[0]).includes('/connection/oauth/'));
+    expect(oauthCalls.map((call) => String(call[0]))).toEqual([
+      'http://localhost:8081/api/v1/workspaces/workspace-1/agents/agent-1/mcp/servers/server-1/connection/oauth/prepare',
+      'http://localhost:8081/api/v1/workspaces/workspace-1/agents/agent-1/mcp/servers/server-1/connection/oauth/start',
+      'http://localhost:8081/api/v1/workspaces/workspace-1/targets/target-1/mcp/servers/server-1/connection/oauth/prepare'
+    ]);
+    expect(JSON.parse(oauthCalls[0][1].body)).toEqual({
+      returnPath: '/workspaces/workspace-1/agents?capabilityTab=mcp'
+    });
+    expect(JSON.parse(oauthCalls[1][1].body)).toEqual({
+      preparationHandle: preparation.preparationHandle,
+      issuer: preparation.candidates[0].issuer,
+      consentGranted: true
+    });
+    expect(JSON.stringify(oauthCalls)).not.toMatch(/clientSecret|accessToken|refreshToken/i);
+  });
+
   it('covers MCP registry capabilities and lifecycle routes without returning credentials', async () => {
     const source = {
       id: 'source-1', workspaceId: 'workspace-1', displayName: 'Internal',

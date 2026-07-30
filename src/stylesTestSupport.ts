@@ -67,6 +67,7 @@ export const targetSkillsView = readSource(
 export const chatView = [
   readSource('src/features/targets/chat/components/TargetChatView.tsx'),
   readSource('src/features/targets/chat/components/TargetChatViewBody.tsx'),
+  readSource('src/features/targets/chat/components/TargetChatHistoryRail.tsx'),
   readSource('src/features/targets/chat/components/useTargetChatHistoryWorkspace.ts'),
   readSource('src/features/targets/chat/components/TargetChatComposer.tsx'),
   readSource('src/features/targets/chat/components/TargetAssistantReadinessState.tsx'),

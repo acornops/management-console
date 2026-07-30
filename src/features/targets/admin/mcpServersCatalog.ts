@@ -5,6 +5,7 @@ import type {
 } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
+import type { CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 type McpTool = TargetMcpToolSummary;
@@ -13,7 +14,7 @@ export interface ServerFormState {
   name: string;
   url: string;
   enabled: boolean;
-  authType: 'none' | 'bearer_token' | 'custom_header';
+  authType: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credentialMode: 'none' | 'workspace' | 'individual';
   headerName: string;
   publicHeaders: Array<{ id: string; name: string; value: string }>;
@@ -28,6 +29,50 @@ export const DEFAULT_SERVER_FORM: ServerFormState = {
   headerName: '',
   publicHeaders: []
 };
+
+export function mcpServerFormSubmission(
+  form: ServerFormState,
+  editingServer: TargetToolCatalogServer | null,
+  translate: (key: string) => string
+) {
+  const authWasChanged = Boolean(editingServer && (
+    form.authType !== editingServer.authType
+    || form.credentialMode !== editingServer.credentialMode
+    || (form.authType === 'custom_header' && form.headerName.trim() !== (editingServer.authHeaderName || ''))
+  ));
+  const validationKey = validatePublicHeaderRows(form.publicHeaders);
+  const publicHeadersValidationError = validationKey
+    ? translate(`mcpServers.${validationKey}`)
+    : null;
+  const serverFormIsValid = Boolean(form.name.trim())
+    && form.url.trim().startsWith('https://')
+    && !publicHeadersValidationError
+    && (form.authType !== 'custom_header' || Boolean(form.headerName.trim()));
+  const buildAuthPayload = (): CreateTargetMcpServerInput['auth'] | undefined => {
+    if (editingServer && !authWasChanged) return undefined;
+    if (form.authType === 'none') return { type: 'none' };
+    const auth: NonNullable<CreateTargetMcpServerInput['auth']> = { type: form.authType };
+    if (form.authType === 'bearer_token') {
+      auth.headerName = 'Authorization';
+      auth.headerPrefix = 'Bearer ';
+    } else if (form.authType === 'custom_header' && form.headerName.trim()) {
+      auth.headerName = form.headerName.trim();
+    }
+    return auth;
+  };
+  const buildPublicHeadersPayload = (
+    includeEmpty = false
+  ): CreateTargetMcpServerInput['publicHeaders'] | undefined => (
+    publicHeadersFromRows(form.publicHeaders) || (includeEmpty ? {} : undefined)
+  );
+  return {
+    authWasChanged,
+    publicHeadersValidationError,
+    serverFormIsValid,
+    buildAuthPayload,
+    buildPublicHeadersPayload
+  };
+}
 
 export function createPublicHeaderRow(name = '', value = ''): ServerFormState['publicHeaders'][number] {
   return {

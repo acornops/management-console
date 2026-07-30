@@ -1,4 +1,5 @@
 import type { TargetType } from './types';
+import type { AutomaticInvestigationSummary } from './autoTriageTypes';
 import type { WorkflowActivitySummary } from './workflowApi';
 
 export interface ControlPlaneIssueItem {
@@ -26,10 +27,12 @@ export interface ControlPlaneIssueItem {
   occurrenceCount: number;
   reopenedCount: number;
   cleanSnapshotCount: number;
+  lifecycleVersion?: number;
   latestEvidence?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
   workflowActivity?: WorkflowActivitySummary;
+  automaticInvestigation?: AutomaticInvestigationSummary;
 }
 
 export interface ControlPlaneIssueObservationItem {

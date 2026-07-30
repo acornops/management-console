@@ -84,14 +84,24 @@ The management console is the browser client for the control-plane API. Keep thi
   Each target or Agent installation has independent write-only connections, and
   workflows reuse the selected Agent installation. The console never persists
   credentials in browser storage.
+- Individual OAuth installations contain no provider, issuer, endpoint, client
+  ID, or client secret configuration. The console prepares OAuth through the
+  control plane, shows the safe authorization-server origin, CIMD or DCR method,
+  requested scopes, and any `offline_access` request, then requires explicit
+  consent before browser navigation. Multiple advertised issuers require an
+  explicit selection. Fixture mode rejects external OAuth before any request.
 - The console does not expose a built-in repository-review Agent, workflow, provider profile, or template setup branch. Workspace managers create a specialist Agent, attach and review any compatible MCP server from the Agent's generic MCP page, and then create a workflow selecting that Agent. Credential values remain write-only and never enter preview state or browser storage.
 - Manual workflow creation sends only operator-controlled fields. Mode, context grants, permissions, approvals, execution duration, and report retention are omitted so the control plane applies deployment-owned defaults. Creation fails closed until the authoritative workflow-options catalog has loaded; fallback catalogs contain no output, approval, runtime, or retention choices.
 - AI behavior drafts remain empty until workspace AI settings arrive, so the console does not invent a provider or model. An omitted production control-plane API base uses same-origin requests; local development retains the localhost fallback.
-- A blocked workflow capability preview opens the generic individual-credential dialog from `serverId`, `authType`, `owningAgent`, and `action`; it writes the credential to that owning Agent and retries the preview. The workflow UI never infers authentication from a provider name or profile identity.
+- A blocked workflow capability preview opens the matching individual
+  credential or OAuth authorization dialog from `serverId`, `authType`, owner,
+  and `action`. Static credentials remain write-only; OAuth uses prepare and
+  start operations and never infers configuration from a provider name.
 - Run-readiness recovery parses only the bounded `readinessFailures` contract at
   the API client boundary. Recovery
   links carry only `mcpServer` and `mcpAction`, focus the exact installation and
-  Connect or Verify control, and never invoke a mutation automatically. Target
+  Connect, Authorize, Reauthorize, or Verify control, and never invoke a
+  mutation automatically. Target
   failures describe the bounded, Markdown-escaped Kubernetes or VM tool name
   instead of implying that another MCP installation is required.
 - Successful Connect and Verify operations remain successful if the subsequent
@@ -100,6 +110,14 @@ The management console is the browser client for the control-plane API. Keep thi
   enter credential connection before pending-tool review; unauthenticated installations
   retain direct discovery and review.
 - Kubernetes clusters and VMs retain target-scoped MCP servers, skills, and tools for their generic target agents. These target capabilities are administered on the target and are not reassigned to workspace agents.
+- Platform MCP and skill defaults copied when the workspace was created appear
+  as disabled rows in the existing Agent, Kubernetes, and VM inventories with a
+  `Platform default` label. Their source cannot be edited or removed while they
+  remain untouched initialization entries. Explicit enablement creates a normal
+  workspace-owned installation used by the existing credential or skill flow.
+  Later Platform Admin changes do not modify that workspace snapshot or any
+  enabled workspace-managed copy. Local additions remain fully
+  manageable, and built-in Tools are unchanged.
 - Workflow schedule create and update requests contain only the current user principal. Service identities remain available for non-schedule platform uses but are not presented in schedule UI.
 - Workspace workflow activity uses the cursor-paginated execution endpoint for
   open and attention counts, URL-backed filtering, and safe immutable
@@ -133,6 +151,15 @@ The management console is the browser client for the control-plane API. Keep thi
   readiness blocker replaces those counts with an actionable warning; raw
   capability names remain inside the dedicated detail surfaces.
 - Write-capable chat runs must request read-write tool access only when the current user and target both allow it.
+- Experimental target auto-triage is configured only from Kubernetes and VM
+  Settings and uses the same Experimental badge treatment as Automation. The
+  browser uses the control plane's revisioned settings, readiness, and
+  effective-policy preview; it never starts current issues as a side effect of
+  enabling the feature. Automatic chats remain in the normal target history,
+  preserve the existing approval and retention paths, and relax creator-only
+  reply ownership only when `origin=auto_triage`. Target auto-triage settings,
+  issue activity, and chat context do not depend on Automation navigation,
+  Workflow permissions, or Workflow UI modules.
 - The target-chat `/` picker sends structured tool runtime aliases and target
   skill IDs separately from prompt text. It never repurposes `@` prompt
   references, and stale references remain visible when the control plane

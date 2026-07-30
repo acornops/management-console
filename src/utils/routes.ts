@@ -283,6 +283,16 @@ export function withAssistantSession(path: string, sessionId?: string | null): s
   return `${path}${separator}session=${encodeURIComponent(sessionId.trim())}`;
 }
 
+export function assistantSessionFromLocation(
+  location: Pick<Location, 'hash' | 'search'>
+): string | null {
+  const params = location.hash.startsWith('#/')
+    ? new URL(location.hash.slice(1), 'https://console.acornops.invalid').searchParams
+    : new URLSearchParams(location.search);
+  const sessionId = params.get('session')?.trim();
+  return sessionId || null;
+}
+
 export function getCurrentAppPath(): string {
   if (typeof window === 'undefined') return '/';
   if (window.location.hash.startsWith('#/')) return window.location.hash.slice(1) || '/';

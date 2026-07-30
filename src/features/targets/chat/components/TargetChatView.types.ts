@@ -10,6 +10,7 @@ export interface ChatPresentationSubject {
 }
 
 export interface TargetChatViewProps {
+  currentUserId?: string;
   target: ChatPresentationSubject;
   headerLeading?: React.ReactNode;
   capabilityPreviewEnabled?: boolean;
@@ -26,6 +27,7 @@ export interface TargetChatViewProps {
   canChat: boolean;
   isConversationOwner: boolean;
   conversationNotice: string | null;
+  sessionDeepLinkError?: string | null;
   recentActivityWarning: ChatSession['recentActivityWarning'] | null;
   canRequestWriteRuns: boolean;
   canApproveWriteActions: boolean;

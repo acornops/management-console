@@ -26,7 +26,7 @@ import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { KubernetesCluster, Workspace } from '@/types';
-import { AppPaths, type AppRoute } from '@/utils/routes';
+import { AppPaths, assistantSessionFromLocation, type AppRoute } from '@/utils/routes';
 
 const AppClusterChatRuntime = React.lazy(() =>
   import('@/app/AppClusterChatRuntime').then((module) => ({ default: module.AppClusterChatRuntime }))
@@ -197,7 +197,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   workspaces
 }) => {
   const { t } = useTranslation();
-  const { loadWorkspaceRoles, createWorkspaceInvitation } = useCreateWorkspaceInviteSetup({
+  const { loadWorkspaceRoles, addOrInviteWorkspaceMember } = useCreateWorkspaceInviteSetup({
     invitationTokenMissingMessage,
     setWorkspaces,
     toWorkspaceInvitation
@@ -238,7 +238,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const routeChatCluster = clusterContextId ? kubernetesClusters.find((app) => app.id === clusterContextId) || null : null;
   const chatRuntimeCluster = isClusterCopilotOpen && clusterCopilotCluster ? clusterCopilotCluster : routeChatCluster;
   const chatRuntimeWorkspace = chatRuntimeCluster ? workspaces.find((workspace) => workspace.id === chatRuntimeCluster.workspaceId) : undefined;
-  const chatRuntimeInitialSessionId = routeChatCluster ? new URLSearchParams(window.location.search).get('session') : null;
+  const chatRuntimeInitialSessionId = routeChatCluster ? assistantSessionFromLocation(window.location) : null;
   const [pendingVmTargetPrompt, setPendingVmTargetPrompt] = React.useState<PendingVmTargetPrompt | null>(null);
   const isClusterChatVisible = activeClusterSubview === 'chat' || Boolean(isClusterCopilotOpen && clusterCopilotCluster);
   const hasOpenDialog = Boolean(
@@ -622,7 +622,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               setIsCreatingWorkspace(false);
               navigate(AppPaths.workspaceAiSettings(workspaceId));
             }}
-            onCreateWorkspaceInvitation={createWorkspaceInvitation}
+            onAddOrInviteWorkspaceMember={addOrInviteWorkspaceMember}
             onExcludeNamespacesChange={setExcludeNamespaces}
             onIncludeNamespacesChange={setIncludeNamespaces}
             onLoadWorkspaceRoles={loadWorkspaceRoles}

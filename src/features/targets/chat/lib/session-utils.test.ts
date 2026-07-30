@@ -60,6 +60,24 @@ describe('session-utils', () => {
     ]);
   });
 
+  it('preserves automatic kickoff metadata and human author attribution', () => {
+    const mapped = mapControlPlaneMessage({
+      id: 'msg-auto',
+      sessionId: 'session-auto',
+      role: 'user',
+      kind: 'user',
+      content: 'Automatic investigation brief',
+      metadata: { presentation: 'automatic_investigation_brief', systemAuthored: true },
+      createdBy: 'user-2',
+      createdByUser: { id: 'user-2', displayName: 'Platform Lead' },
+      createdAt: '2026-01-02T03:04:05.000Z'
+    });
+
+    expect(mapped.metadata?.presentation).toBe('automatic_investigation_brief');
+    expect(mapped.createdBy).toBe('user-2');
+    expect(mapped.createdByUser?.displayName).toBe('Platform Lead');
+  });
+
   it('appends new sessions and replaces existing ones by id', () => {
     const original: ChatSession[] = [{ id: 'session-1', name: 'One', messages: [], timestamp: 1 }];
     const appended = upsertSession(original, { id: 'session-2', name: 'Two', messages: [], timestamp: 2 });

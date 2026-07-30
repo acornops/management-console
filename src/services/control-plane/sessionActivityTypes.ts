@@ -14,6 +14,9 @@ export interface ControlPlaneTargetChatActivity {
       id: string;
       displayName: string;
     };
+    origin?: 'manual' | 'auto_triage';
+    linkedIssueId?: string;
+    linkedIssueLifecycleVersion?: number;
     lastActivityAt: string;
     lastRunId?: string;
     lastRunStatus?: ControlPlaneRunStatus;

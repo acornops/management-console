@@ -9,7 +9,14 @@ import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { modalOverlayMotion, modalPanelMotion } from '@/lib/motion';
 import type { AgentAccessMode } from '@/services/control-plane/types';
-import { KubernetesCluster, ProjectMember, Workspace, WorkspaceAiSettings, WorkspaceInvitation, WorkspaceRoleTemplate } from '@/types';
+import {
+  KubernetesCluster,
+  ProjectMember,
+  Workspace,
+  WorkspaceAiSettings,
+  WorkspaceMemberAccessResult,
+  WorkspaceRoleTemplate
+} from '@/types';
 
 interface AppDialogsProps {
   clusterCreationStep: 'details' | 'instructions';
@@ -37,7 +44,10 @@ interface AppDialogsProps {
   onCreateWorkspace: (name: string) => Promise<Workspace>;
   onLoadWorkspaceAiSettings: (workspaceId: string) => Promise<WorkspaceAiSettings>;
   onOpenWorkspaceAiSettings: (workspaceId: string) => void;
-  onCreateWorkspaceInvitation: (workspaceId: string, input: { email: string; role: ProjectMember['role'] }) => Promise<WorkspaceInvitation>;
+  onAddOrInviteWorkspaceMember: (
+    workspaceId: string,
+    input: { email: string; role: ProjectMember['role'] }
+  ) => Promise<WorkspaceMemberAccessResult>;
   onExcludeNamespacesChange: (value: string) => void;
   onIncludeNamespacesChange: (value: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
@@ -72,7 +82,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onCreateWorkspace,
   onLoadWorkspaceAiSettings,
   onOpenWorkspaceAiSettings,
-  onCreateWorkspaceInvitation,
+  onAddOrInviteWorkspaceMember,
   onExcludeNamespacesChange,
   onIncludeNamespacesChange,
   onLoadWorkspaceRoles,
@@ -202,7 +212,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           onLoadWorkspaceAiSettings={onLoadWorkspaceAiSettings}
           onOpenAiSettings={onOpenWorkspaceAiSettings}
           onLoadWorkspaceRoles={onLoadWorkspaceRoles}
-          onCreateWorkspaceInvitation={onCreateWorkspaceInvitation}
+          onAddOrInviteWorkspaceMember={onAddOrInviteWorkspaceMember}
         />
       </AnimatePresence>
 

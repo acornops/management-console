@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ChatRuntimeSelection, LlmProvider, ReasoningEffort, WorkspaceAiProviderStatus, WorkspaceAiSettings } from '@/types';
+import type { ChatMessage, ChatRuntimeSelection, ChatSession, LlmProvider, ReasoningEffort, WorkspaceAiProviderStatus, WorkspaceAiSettings } from '@/types';
 import { getReadyAiRuntimeModels } from '@/features/ai/aiRuntimeReadiness';
 import { formatUserTime } from '@/utils/dateTime';
 
@@ -67,6 +67,16 @@ const historyFocusableSelector = [
 
 export function formatMessageTime(timestamp: number): string {
   return formatUserTime(timestamp, { fallback: '-' });
+}
+
+export function isMessageOwnedByCurrentUser(
+  session: ChatSession | null,
+  message: ChatMessage,
+  currentUserId: string
+): boolean {
+  return session?.origin === 'auto_triage'
+    ? message.createdBy === currentUserId
+    : session?.createdBy === currentUserId;
 }
 
 export function getFocusableHistoryElements(panel: HTMLElement): HTMLElement[] {

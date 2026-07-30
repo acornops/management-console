@@ -16,6 +16,11 @@ import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
 import { formatRelativeTime as formatReadableRelativeTime, formatUserTime } from '@/utils/dateTime';
 import { formatLastUpdated, getAgentConnectionState, getTelemetryFreshness, getTelemetryFreshnessLabel } from '@/utils/telemetry';
 import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
+import {
+  AutomaticInvestigationActivity,
+  shouldShowManualAssistantFallback
+} from '@/features/auto-triage/AutomaticInvestigationActivity';
+import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
 import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 
 interface OverviewViewProps {
@@ -115,6 +120,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const workflowActivity = useWorkspaceWorkflowActivity();
   const workflowActivityRevisionRef = React.useRef(workflowActivity.revision);
   const issueSectionTitleId = React.useId();
+  useVisibilityAwareRefresh(() => {
+    setIssueRequestVersion((value) => value + 1);
+  });
   useEffect(() => {
     if (workflowActivityRevisionRef.current === workflowActivity.revision) return;
     workflowActivityRevisionRef.current = workflowActivity.revision;
@@ -158,7 +166,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
 
   useEffect(() => {
     let isCurrent = true;
-    setClusterIssues(null);
     setIssueLoadStatus('loading');
 
     void controlPlaneApi
@@ -171,7 +178,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       .catch((error) => {
         console.error('Failed loading cluster issues', error);
         if (!isCurrent) return;
-        setClusterIssues(null);
         setIssueLoadStatus('error');
       });
 
@@ -298,7 +304,18 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                         </div>
                         <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
                         <p className="type-body mt-1 break-words">{issue.reason || issue.summary}</p>
-                        <IssueWorkflowActivity workspaceId={cluster.workspaceId} issueId={issue.id} activity={issue.workflowActivity} />
+                        <IssueWorkflowActivity
+                          workspaceId={cluster.workspaceId}
+                          issueId={issue.id}
+                          activity={issue.workflowActivity}
+                        />
+                        <AutomaticInvestigationActivity
+                          workspaceId={cluster.workspaceId}
+                          targetId={cluster.id}
+                          targetType="kubernetes"
+                          issueId={issue.id}
+                          activity={issue.automaticInvestigation}
+                        />
                       </td>
                       <td className="px-5 py-4 align-top">
                         <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
@@ -307,15 +324,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                       <td className="type-caption px-5 py-4 align-top">{formatRelativeTime(issueTimestamp(issue))}</td>
                       {onOpenCopilot && (
                         <td className="px-5 py-4 align-top text-right">
-                          <Button
-                            onClick={() => openIssueTriage(issue)}
-                            variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
-                            size="md"
-                            className="whitespace-nowrap"
-                          >
-                            <Bot className="h-4 w-4" aria-hidden="true" />
-                            {t('clusterOverview.openAssistant')}
-                          </Button>
+                          {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
+                            <Button
+                              onClick={() => openIssueTriage(issue)}
+                              variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                              size="md"
+                              className="whitespace-nowrap"
+                            >
+                              <Bot className="h-4 w-4" aria-hidden="true" />
+                              {t('clusterOverview.openAssistant')}
+                            </Button>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -347,9 +366,25 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                       <dd className="type-caption mt-1">{formatRelativeTime(issueTimestamp(issue))}</dd>
                     </div>
                   </dl>
-                  <IssueWorkflowActivity workspaceId={cluster.workspaceId} issueId={issue.id} activity={issue.workflowActivity} />
-                  {onOpenCopilot && (
-                    <Button onClick={() => openIssueTriage(issue)} variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'} size="md" className="mt-4">
+                  <IssueWorkflowActivity
+                    workspaceId={cluster.workspaceId}
+                    issueId={issue.id}
+                    activity={issue.workflowActivity}
+                  />
+                  <AutomaticInvestigationActivity
+                    workspaceId={cluster.workspaceId}
+                    targetId={cluster.id}
+                    targetType="kubernetes"
+                    issueId={issue.id}
+                    activity={issue.automaticInvestigation}
+                  />
+                  {onOpenCopilot && shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
+                    <Button
+                      onClick={() => openIssueTriage(issue)}
+                      variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                      size="md"
+                      className="mt-4"
+                    >
                       <Bot className="h-4 w-4" aria-hidden="true" />
                       {t('clusterOverview.openAssistant')}
                     </Button>

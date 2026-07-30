@@ -489,7 +489,8 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           )}
 
           {route.kind === 'workspaceApprovals' && workspaceContext && (
-            <WorkspaceApprovalsPage workspace={workspaceContext} runId={route.runId} approvalId={route.approvalId} onApprovalDecision={onRefreshApprovalSummary} />
+            <WorkspaceApprovalsPage workspace={workspaceContext} runId={route.runId} approvalId={route.approvalId}
+              navigate={navigate} onApprovalDecision={onRefreshApprovalSummary} />
           )}
 
           {(route.kind === 'kubernetesClusters' || route.kind === 'workspaceKubernetesClusters') && (
@@ -525,6 +526,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               isDark={isDark}
               canManageTargets={getWorkspacePermission(workspaceContext.id, 'manage_targets')}
+              canCreateReadWriteRuns={getWorkspacePermission(workspaceContext.id, 'create_read_write_runs')}
               canManageAgentKeys={getWorkspacePermission(workspaceContext.id, 'manage_agent_keys')}
               navigate={navigate}
               onUpdateWorkspace={onUpdateWorkspace}

@@ -10,6 +10,7 @@ import { MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, Ma
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
+import { McpOAuthDialog } from '@/features/catalog/McpOAuthDialog';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
 import { appendWorkflowSearchTag, type WorkflowAgentReference, type WorkflowDefinition, type WorkflowPrimaryAction, type WorkflowTab } from '@/pages/workflows/workflowModel';
 import { titleFromInputName, workflowStatusTone } from '@/pages/workflows/workflowPageHelpers';
@@ -451,7 +452,14 @@ function mcpConnectionLabel(state: WorkflowMcpRequirementPreview['connectionStat
 }
 
 export function canConnectWorkflowMcpRequirement(requirement: WorkflowMcpRequirementPreview): boolean {
-  return Boolean(requirement.serverId) && ((requirement.connectionState === 'connection_missing' && requirement.action === 'connect_mcp_server') || (requirement.connectionState === 'connection_error' && requirement.action === 'verify_mcp_server'));
+  return Boolean(requirement.serverId)
+    && (
+      (requirement.connectionState === 'connection_missing' && requirement.action === 'connect_mcp_server')
+      || (requirement.connectionState === 'connection_error' && requirement.action === 'verify_mcp_server')
+      || requirement.action === 'authorize_mcp_server'
+      || requirement.action === 'select_authorization_server'
+      || requirement.action === 'reauthorize_mcp_server'
+    );
 }
 
 export function workflowMcpCredentialMode(requirement: WorkflowMcpRequirementPreview): 'connect' | 'replace' {
@@ -486,7 +494,13 @@ export const WorkflowPreviewAuthRow: React.FC<{
                     <StatusBadge tone={mcpConnectionTone(requirement.connectionState)}>{mcpConnectionLabel(requirement.connectionState, t)}</StatusBadge>
                     {canConnectCredential && (
                       <Button type="button" variant="secondary" size="sm" onClick={() => onConnectCredential(requirement)}>
-                        {t(requirement.connectionState === 'connection_error' ? 'mcpServers.replaceCredential' : 'mcpServers.connectCredential')}
+                        {t(requirement.authType === 'oauth'
+                          ? requirement.action === 'reauthorize_mcp_server'
+                            ? 'mcpServers.oauthReauthorizationRequired'
+                            : 'mcpServers.oauthAuthorizationRequired'
+                          : requirement.connectionState === 'connection_error'
+                            ? 'mcpServers.replaceCredential'
+                            : 'mcpServers.connectCredential')}
                       </Button>
                     )}
                   </span>
@@ -533,7 +547,14 @@ export const WorkflowMcpCredentialDialog: React.FC<{
   );
   const installations = React.useMemo(() => [installation], [installation]);
   const titleId = React.useId();
-  const { connections, loadingByServerId, connect, retryAfterSecondsFor } = useMcpConnections({
+  const {
+    connections,
+    loadingByServerId,
+    connect,
+    prepareOAuth,
+    startOAuth,
+    retryAfterSecondsFor
+  } = useMcpConnections({
     workspaceId,
     destination: requirement.owningTarget ? { kind: 'target', id: requirement.owningTarget.id } : { kind: 'agent', id: requirement.owningAgent.id },
     installations
@@ -563,24 +584,35 @@ export const WorkflowMcpCredentialDialog: React.FC<{
       </Dialog>
     );
   }
-  return (
-    <McpCredentialDialog
+  if (requirement.authType === 'oauth') {
+    const returnUrl = new URL(window.location.href);
+    returnUrl.searchParams.delete('mcpOAuthResult');
+    return <McpOAuthDialog
       serverName={requirement.serverName}
-      authType={requirement.authType}
-      credentialLabel={requirement.authRequirement.credentialLabel}
-      credentialMode={requirement.authRequirement.scope}
-      mode={workflowMcpCredentialMode(requirement)}
+      returnPath={`${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`}
+      mode={connection.status === 'reauthorization_required' ? 'reauthorize' : 'authorize'}
       retryAfterSeconds={retryAfterSecondsFor(requirement.serverId)}
       onClose={onClose}
-      onSubmit={async (credential) => {
-        const next = await connect(installation, credential);
-        if (next?.status === 'connected') {
-          onClose();
-          onConnected();
-        }
-      }}
-    />
-  );
+      onPrepare={(returnPath) => prepareOAuth(installation, returnPath)}
+      onStart={(preparationHandle, issuer) => startOAuth(installation, preparationHandle, issuer)}
+    />;
+  }
+  return <McpCredentialDialog
+    serverName={requirement.serverName}
+    authType={requirement.authType}
+    credentialLabel={requirement.authRequirement.credentialLabel}
+    credentialMode={requirement.authRequirement.scope}
+    mode={workflowMcpCredentialMode(requirement)}
+    retryAfterSeconds={retryAfterSecondsFor(requirement.serverId)}
+    onClose={onClose}
+    onSubmit={async (credential) => {
+      const next = await connect(installation, credential);
+      if (next?.status === 'connected') {
+        onClose();
+        onConnected();
+      }
+    }}
+  />;
 };
 
 export const WorkflowCapabilityLedger: React.FC<{

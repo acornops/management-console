@@ -9,6 +9,7 @@ import {
   mergeHydratedChatMessages,
   mergeFetchedChatSessions,
   replaceCancelledRunMessagesForHydration,
+  selectDefaultChatSessionId,
   sortSessionsByTimestamp
 } from '@/features/targets/chat/hooks/chatSessionSync';
 import type { ControlPlaneRunToolApproval, ControlPlaneSession } from '@/services/controlPlaneApi';
@@ -66,6 +67,17 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
       ]);
     });
 
+    it('opens the newest manual chat by default without surfacing investigations implicitly', () => {
+      const sessions: ChatSession[] = [
+        { id: 'automatic-new', name: 'Automatic', origin: 'auto_triage', messages: [], timestamp: 3 },
+        { id: 'manual', name: 'Manual', origin: 'manual', messages: [], timestamp: 2 }
+      ];
+
+      expect(selectDefaultChatSessionId(sessions)).toBe('manual');
+      expect(selectDefaultChatSessionId([sessions[0]])).toBeNull();
+      expect(selectDefaultChatSessionId([])).toBeNull();
+    });
+
     it('preserves draft-backed sessions when fetched backend rows are mapped', () => {
       const draftBackedSession: ChatSession = {
         id: 'draft-session',
@@ -98,6 +110,7 @@ describe('mapControlPlaneApprovalToPendingApproval', () => {
       expect(fetched.id).toBe('draft-session');
       expect(fetched.backendSessionId).toBe('backend-session');
       expect(fetched.messages).toEqual(draftBackedSession.messages);
+      expect(fetched.createdTimestamp).toBe(Date.parse(backendSession.createdAt));
       expect(fetched.lastRuntimeSelection).toEqual({ provider: 'openai', model: 'gpt-5.5', reasoningEffort: 'high' });
       expect(fetched.composerRuntimeSelection).toEqual({ provider: 'openai', model: 'gpt-5.5', reasoningEffort: 'high' });
       expect(merged).toHaveLength(1);

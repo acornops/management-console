@@ -9,7 +9,7 @@ import {
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import { NavCountBadge } from '@/app/NavCountBadge';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
-import { WorkspaceNavigationGroupBadge } from '@/app/WorkspaceNavigationGroupBadge';
+import { ExperimentalBadge } from '@/components/common/ExperimentalBadge';
 
 const MotionNavigationItem = motion.create(NavigationItem);
 
@@ -24,7 +24,7 @@ export const SidebarSection: React.FC<{
 }> = ({ title, badge, children, compactAfter = false }) => (
   <NavigationSection
     title={title}
-    badge={badge ? <WorkspaceNavigationGroupBadge>{badge}</WorkspaceNavigationGroupBadge> : undefined}
+    badge={badge ? <ExperimentalBadge>{badge}</ExperimentalBadge> : undefined}
     compactAfter={compactAfter}
   >
     {children}

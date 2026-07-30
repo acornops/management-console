@@ -52,6 +52,8 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
   const isTogglingSkill = pendingToggleSkillId === skill.id;
   const isBlockedByOtherSkillToggle = Boolean(pendingToggleSkillId && !isTogglingSkill);
   const canToggleSkill = canEditSkills && !isBlockedByOtherSkillToggle && !isTogglingSkill;
+  const canEditSource = canEditSkills && !skill.inherited;
+  const canRemoveSource = canEditSkills && !skill.inherited;
   const assistantState = !skill.enabled ? 'disabled' : skill.validationStatus === 'valid' ? 'assistantVisible' : 'needsFixes';
   const assistantStateClass =
     assistantState === 'assistantVisible'
@@ -69,14 +71,14 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
                 onEditSkill(skill.id);
               }}
             >
-              {canEditSkills ? (
+              {canEditSource ? (
                 <Edit3 className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               ) : (
                 <Eye className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               )}
-              <span>{t(canEditSkills ? 'targetSkills.editSkill' : 'targetSkills.viewSkill')}</span>
+              <span>{t(canEditSource ? 'targetSkills.editSkill' : 'targetSkills.viewSkill')}</span>
             </MenuItem>
-            {canEditSkills && (
+            {canRemoveSource && (
               <MenuItem
                 destructive
                 onClick={() => {
@@ -107,6 +109,9 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
           </div>
           <div className="min-w-0 flex-1">
             <span className="type-row-title block truncate">{skill.name}</span>
+            {skill.inherited && (
+              <span className="type-micro-label mt-1 inline-flex rounded-full bg-ui-bg px-2 py-0.5 text-ui-text-muted">Platform default</span>
+            )}
             <span className="mt-1 block line-clamp-2 break-words text-xs leading-5 text-ui-text-muted" title={skill.description}>
               {skill.description}
             </span>

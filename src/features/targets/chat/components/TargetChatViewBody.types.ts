@@ -25,6 +25,7 @@ export interface TargetChatViewBodyProps {
   canDeleteSessions: boolean;
   canManageAiSettings: boolean;
   canPost: boolean;
+  currentUserId?: string;
   target: ChatPresentationSubject;
   composerActionLabel: string;
   composerAttachmentNotice: string;
@@ -35,6 +36,7 @@ export interface TargetChatViewBodyProps {
   composerSubmitUnavailableReason: string;
   composerTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
   conversationNotice: string | null;
+  sessionDeepLinkError?: string | null;
   deleteSessionError: string | null;
   deleteTargetSession: ChatSession | null;
   deletingSessionId: string | null;
