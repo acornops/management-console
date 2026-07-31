@@ -233,7 +233,6 @@ const App: React.FC = () => {
     }
     navigate(workspaceLandingPath(routeWorkspace), { replace: true });
   }, [route, routeWorkspaceId, workspaceById, navigate]);
-
   useEffect(() => {
     setSelectedWorkspaceId((current) => {
       if (workspaces.length === 0) return current ? null : current;
@@ -241,7 +240,6 @@ const App: React.FC = () => {
       return workspaces[0]?.id || null;
     });
   }, [workspaces, workspaceById]);
-
   useEffect(() => {
     if (!routeWorkspaceId) return;
     setSelectedWorkspaceId((current) => (current === routeWorkspaceId ? current : routeWorkspaceId));
