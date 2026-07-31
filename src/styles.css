@@ -479,6 +479,17 @@ select {
   display: none;
 }
 
+.resource-catalog-rack {
+  margin-inline: auto;
+  max-width: 92rem;
+  width: 100%;
+}
+
+.resource-card-catalog {
+  container-name: resource-card-catalog;
+  container-type: inline-size;
+}
+
 .resource-card-grid {
   display: flex;
   flex-wrap: wrap;
@@ -487,16 +498,19 @@ select {
 
 .resource-card-grid > * {
   flex: 1 1 min(100%, 30rem);
-  max-width: 40rem;
+  max-width: none;
   min-width: 0;
 }
 
-[data-agent-card-grid='true'] > * {
-  max-width: none;
+.resource-card-grid > :only-child {
+  max-width: 40rem;
 }
 
-[data-agent-card-grid='true'] > :only-child {
-  max-width: 40rem;
+@container resource-card-catalog (min-width: 92rem) {
+  .resource-card-grid > * {
+    flex: 0 0 30rem;
+    max-width: 30rem;
+  }
 }
 
 [data-agent-catalog-layout='docked'] .resource-card-grid > * {

@@ -3,7 +3,8 @@
 ## Goal
 
 Make the Kubernetes Clusters and Virtual Machines catalog routes use the same
-route-header and tab-strip composition as the Kubernetes Resources explorer.
+route-header and tab-strip composition as the Kubernetes Resources explorer,
+and keep resource-card catalog pages on a stable three-card desktop rack.
 
 ## Constraints
 
@@ -11,6 +12,9 @@ route-header and tab-strip composition as the Kubernetes Resources explorer.
 - Preserve catalog counts, loading, error, empty, and destructive-action behavior.
 - Use the existing `PageShell`, `PageHeader`, and `ResourceCategoryTabs`
   vocabulary without introducing page-local spacing values.
+- Preserve the shared 30rem resource-card track and 1rem catalog gap.
+- Apply the same catalog-width contract to Kubernetes Clusters, Virtual
+  Machines, and Agents.
 
 ## UX Acceptance Criteria
 
@@ -20,10 +24,22 @@ route-header and tab-strip composition as the Kubernetes Resources explorer.
 - Both tab strips have the canonical 24px separation from their catalog
   controls and content.
 - Desktop and compact layouts remain free of horizontal route overflow.
+- Wide catalog pages stop growing at three card tracks (92rem including gaps).
+- In a full-width three-track rack, one- and two-item final rows keep the same
+  card width as a full three-item row.
+- Below the three-track threshold, two-card rows divide the available rack
+  width equally; single-card and docked-assistant layouts remain bounded.
 
 ## Validation Log
 
 - Focused catalog regression tests passed.
+- 2026-07-31 three-card-rack follow-up:
+  - `npm run test -- src/styles.test.ts src/resourceCardGrid.test.ts packages/ui/src/PageComposition.test.tsx` passed (34 tests).
+  - `npx playwright test --config=playwright.fixtures.config.ts tests/fixtures/resource-card-grid.spec.ts --workers=1` passed, covering equal page-filling columns at 1800px, the 1472px three-track rack at 1850px, and ultrawide card caps.
+  - A fixture-backed 1850px visual capture was reviewed. The route shell and grid measured 1472px, and the incomplete row retained a 480px card track.
+  - The Kubernetes Clusters, Virtual Machines, and Agents route-design groups passed in light, dark, mobile, and sidebar-constrained variants.
+  - `npm run ui:check`, `npm run membership:check`, `npm run build`, and `npm run smoke:routes` passed.
+  - `npm run validate` remains blocked by unrelated repository state: undocumented typography in `NavCountBadge`, missing workflow symbols and a translation, a missing contract-check source file, the `src/App.tsx` line budget, stale Agent-capabilities snapshots, and the pre-existing main-bundle budget overage.
 - `npm run validate` completed all code and route checks, but its visual snapshot
   stage could not launch because `/usr/bin/google-chrome` is unavailable in the
   execution environment.

@@ -44,11 +44,52 @@ async function expectResourceCardsCapped(page: Page, route: string) {
   expect(Math.max(...widths)).toBeLessThanOrEqual(640);
 }
 
+async function expectThreeTrackCatalogRack(page: Page, route: string) {
+  await page.goto(route, { waitUntil: 'domcontentloaded' });
+  const shellContent = page.locator('.page-shell > div').first();
+  const grid = page.locator('[data-resource-card-grid="true"]').last();
+  await expect(grid).toBeVisible();
+
+  const shellBox = await shellContent.boundingBox();
+  const widths = await grid.locator(':scope > *').evaluateAll((items) =>
+    items.map((item) => item.getBoundingClientRect().width)
+  );
+
+  expect(shellBox).not.toBeNull();
+  expect(shellBox!.width).toBeCloseTo(1472, 0);
+  expect(widths.length).toBeGreaterThan(0);
+  for (const width of widths) expect(width).toBeCloseTo(480, 0);
+}
+
+async function expectTwoTrackCatalogRack(page: Page, route: string) {
+  await page.goto(route, { waitUntil: 'domcontentloaded' });
+  const grid = page.locator('[data-resource-card-grid="true"]').last();
+  await expect(grid).toBeVisible();
+
+  const geometry = await grid.evaluate((element) => {
+    const firstItem = element.firstElementChild;
+    if (!firstItem) throw new Error('Resource-card grid requires at least one fixture item');
+    while (element.childElementCount < 2) element.append(firstItem.cloneNode(true));
+    while (element.childElementCount > 2) element.lastElementChild?.remove();
+    const gridBox = element.getBoundingClientRect();
+    const cards = Array.from(element.children).map((card) => card.getBoundingClientRect());
+    return {
+      gridWidth: gridBox.width,
+      cardWidths: cards.map((card) => card.width),
+      gap: cards[1].left - cards[0].right
+    };
+  });
+
+  expect(geometry.cardWidths[0]).toBeCloseTo(geometry.cardWidths[1], 0);
+  expect(geometry.cardWidths[0] + geometry.cardWidths[1] + geometry.gap).toBeCloseTo(geometry.gridWidth, 0);
+}
+
 test('resource catalogs respond to usable width across browser zoom levels', async ({ page }) => {
   await page.setViewportSize({ width: 1800, height: 1000 });
 
   for (const route of resourceCatalogRoutes) {
     await expectResourceGridColumns(page, route, 2);
+    await expectTwoTrackCatalogRack(page, route);
   }
 
   const sidebar = page.locator('.management-console-desktop-sidebar');
@@ -57,6 +98,7 @@ test('resource catalogs respond to usable width across browser zoom levels', asy
 
   for (const route of resourceCatalogRoutes) {
     await expectResourceGridColumns(page, route, 3);
+    await expectThreeTrackCatalogRack(page, route);
   }
   await expect(sidebar).toHaveAttribute('data-desktop-sidebar-mode', 'expanded');
 

@@ -312,6 +312,14 @@ Authenticated route shells always use the default full width. When prose, a
 ledger, or another task surface needs a narrower reading measure, constrain that
 surface inside the shell instead of changing the route shell width.
 
+Resource-card catalog routes use the shared `resource-catalog-rack` inner
+constraint. It caps the route content at `92rem`, exactly three `30rem` card
+tracks plus two `1rem` gaps. At that width, one- and two-item final rows retain
+the same card width as a complete three-item row. Below it, the existing
+container-aware wrapping takes over: a two-column row divides the available
+rack width equally, while a single card remains capped at `40rem`. Docked
+assistant layouts continue to collapse the card grid to one flexible column.
+
 Workflows and MCP Catalog use the shared catalog split. One bordered surface contains a divided library and detail pane with a `32rem` minimum height. At `lg` and wider, the default library uses `minmax(18rem, 22rem)` and detail fills the remaining width; dense definition libraries such as Workflows may explicitly opt into the compact `minmax(15rem, 18rem)` width. A task-heavy route may opt into the bounded desktop variant: the route canvas stays fixed, the library and active detail body scroll independently, and the detail header remains visible. Below `lg`, document scrolling resumes to avoid nested touch-scroll regions; only the route-selected pane is visible, and detail provides a Back action that returns to the library and restores focus to its selected row. Desktop may preview the first visible item without writing selection state to the URL. Shared primitives also own list headers, row padding and selection, loading and empty states, detail headers, detail-body padding and tone, and the discovery-to-surface gap. Page-specific filters, metadata, actions, and detail fields remain feature-owned.
 
 The Workflows route family begins with four route-backed tabs in a stable order: **All Workflows**, **Schedules**, **Incoming Webhooks**, and **Activity**. Activity renders the workspace execution ledger without replacing the other first-class workflow-management routes. Inside a selected workflow, **Overview**, **Agents**, **Capabilities**, **Runs**, and **Settings** are visible route-backed tabs. Their existing `tab=agents`, `tab=capabilities`, `tab=settings`, and `tab=runs` links select inline detail panels rather than opening compatibility drawers. The workflow header places text-labelled **Edit**, **Schedules**, **Webhooks**, and **Launch** or **Activate** buttons in a distinct row below the description; it does not compress them into icon-only controls beside the description. Schedules and Incoming webhooks open their workflow-filtered drawer tables; creation begins only from each drawer's Create action.
