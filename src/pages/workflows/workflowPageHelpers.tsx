@@ -1,12 +1,11 @@
 import React from 'react';
 import { Switch } from '@acornops/ui';
-import { motion } from 'framer-motion';
 import { buildTraceFromRunEvents } from '@/features/targets/chat/hooks/chatRunTrace';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 import {
   type WorkflowDefinition,
   type WorkflowStatus,
-  type WorkflowTab
+  type WorkflowView
 } from '@/pages/workflows/workflowModel';
 import type {
   WorkflowApiDefinition,
@@ -18,20 +17,13 @@ import type {
 } from '@/services/control-plane/workflowApi';
 import { formatElapsedDuration } from '@/utils/dateTime';
 
-export const tabs: WorkflowTab[] = ['overview', 'agents', 'capabilities', 'runs', 'settings'];
-
-export type ScopeDraft = {
-  restrictionMode: 'inherit' | 'restrict';
-  semanticCapabilityIds: string;
-};
+export const workflowViews: WorkflowView[] = ['overview', 'agents', 'capabilities', 'runs', 'settings'];
 
 export type CreateWorkflowDraft = {
   name: string;
   description: string;
   starterPrompt: string;
   agentIds: string[];
-  semanticCapabilityIds: string;
-  restrictionMode: 'inherit' | 'restrict';
 };
 
 export type WorkflowEditDraft = {
@@ -56,7 +48,7 @@ export function runStatusTone(status: WorkflowDefinition['runs'][number]['status
   return 'neutral';
 }
 
-export const ScopeSwitch: React.FC<{
+export const WorkflowAvailabilitySwitch: React.FC<{
   checked: boolean;
   disabled?: boolean;
   label: string;
@@ -79,51 +71,6 @@ export function titleFromInputName(name: string): string {
 
 export function uniqueValues(values: string[]): string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
-}
-
-export function joinLines(values: string[]): string {
-  return values.join('\n');
-}
-
-export function splitLines(value: string): string[] {
-  return uniqueValues(value.split(/[\n,]+/).map((entry) => entry.trim()).filter(Boolean));
-}
-
-export function setLineValue(current: string, value: string, enabled: boolean): string {
-  const values = splitLines(current);
-  const nextValues = enabled
-    ? uniqueValues([...values, value])
-    : values.filter((entry) => entry !== value);
-  return joinLines(nextValues);
-}
-
-export function getToolServerHint(toolName: string): string {
-  const prefix = toolName.split('.')[0] || toolName;
-  const hints: Record<string, string> = {
-    audit: 'audit-log',
-    chat: 'workspace-chat',
-    credentials: 'identity-provider',
-    github: 'github',
-    gitlab: 'gitlab',
-    mcp: 'workspace-registry',
-    members: 'identity-provider',
-    registry: 'workspace-registry',
-    repo: 'repository-files',
-    roles: 'workspace-registry',
-    tasks: 'task-tracker',
-    workspace: 'workspace-status'
-  };
-  return hints[prefix] || prefix;
-}
-
-export function getScopeTokenLabel(value: string): string {
-  return value.replaceAll('_', ' ').replaceAll('-', ' ');
-}
-
-export function summarizeValues(values: string[], empty = 'None configured'): string {
-  if (values.length === 0) return empty;
-  if (values.length <= 2) return values.join(', ');
-  return `${values.slice(0, 2).join(', ')} +${values.length - 2}`;
 }
 
 export function isRunActive(status: WorkflowDefinition['runs'][number]['status']): boolean {
@@ -176,21 +123,12 @@ export function workflowRunToTrace(run: WorkflowDefinition['runs'][number], even
   };
 }
 
-export function createScopeDraft(workflow: WorkflowDefinition): ScopeDraft {
-  return {
-    restrictionMode: workflow.capabilityRestrictionMode === 'inherit' ? 'inherit' : 'restrict',
-    semanticCapabilityIds: joinLines(workflow.semanticCapabilityIds)
-  };
-}
-
 export function createWorkflowDraft(): CreateWorkflowDraft {
   return {
     name: '',
     description: '',
     starterPrompt: '',
-    agentIds: [],
-    semanticCapabilityIds: '',
-    restrictionMode: 'inherit'
+    agentIds: []
   };
 }
 
@@ -205,7 +143,6 @@ function uniqueInOrder(values: string[]): string[] {
 
 export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCreateInput {
   const name = draft.name.trim();
-  const semanticCapabilityIds = draft.restrictionMode === 'restrict' ? splitLines(draft.semanticCapabilityIds) : [];
   const agentIds = uniqueInOrder(draft.agentIds.map((agentId) => agentId.trim())).sort((left, right) => left.localeCompare(right));
 
   return {
@@ -214,10 +151,9 @@ export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCr
     tags: [],
     prompt: draft.starterPrompt.trim() || `Start ${name}.`,
     agentIds,
-    resourceRequirements: [],
     capabilityPolicy: {
-      restrictionMode: draft.restrictionMode,
-      semanticCapabilityIds
+      restrictionMode: 'inherit',
+      semanticCapabilityIds: []
     }
   };
 }
@@ -402,7 +338,6 @@ export function mapApiWorkflowToDefinition(
     executionMode,
     semanticCapabilityIds,
     capabilityRestrictionMode,
-    resourceRequirements: workflow.resourceRequirements || [],
     readiness: workflow.readiness,
     owner: workflowOwnerLabel(workflow, fallback, ownerLabelsByUserId),
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
@@ -410,7 +345,6 @@ export function mapApiWorkflowToDefinition(
     agents: apiAssignments.length > 0 ? apiAssignments : fallback?.agents || [],
     requiredPermissions: Array.isArray(workflow.requiredPermissions) ? workflow.requiredPermissions : fallback?.requiredPermissions || [],
     contextGrants,
-    parameters: Array.isArray(workflow.parameters) ? workflow.parameters : fallback?.parameters || [],
     policy: {
       mode: workflowPolicy.mode,
       approvals: uniqueValues(workflowPolicy.approvalRequirements)

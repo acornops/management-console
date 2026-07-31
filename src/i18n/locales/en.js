@@ -26,6 +26,11 @@ export const en = {
     removeFilter: 'Remove {{filter}} filter: {{value}}',
     dismissNotification: 'Dismiss notification'
   },
+  workflowWorkspaceViews: {
+    label: 'Workflow views',
+    showWorkflows: 'Library',
+    showActivity: 'Activity'
+  },
   controlPlaneErrors: {
     validation: {
       default: 'Check the request and try again.',
@@ -126,7 +131,7 @@ export const en = {
     inventory: 'Inventory',
     automation: 'Automation',
     experimental: 'Experimental',
-    outboundWebhooks: 'Outbound Webhook',
+    outboundWebhooks: 'Webhooks',
     governance: 'Governance',
     utilities: 'Utilities',
     cluster: 'Cluster',
@@ -240,7 +245,7 @@ export const en = {
     unknownAgent: 'Unknown Agent'
   },
   workflowActivity: {
-    title: 'Activity',
+    title: 'Workflow activity',
     subtitle: 'Background, scheduled, webhook, and manual workflow activity across {{workspace}}.',
     ledgerLabel: 'Workflow execution ledger',
     loading: 'Loading workflow activity...',
@@ -386,14 +391,6 @@ export const en = {
     supportTitle: 'Contact Support',
     supportBody: 'Send the AcornOps team workspace or run context when something needs attention.'
   },
-  workflows: {
-    sections: {
-      label: 'Workflow sections',
-      all: 'All Workflows',
-      schedules: 'Schedules',
-      incomingWebhooks: 'Incoming Webhooks'
-    }
-  },
   schedules: {
     title: 'Schedules',
     subtitle: 'Recurring workflow dispatches for {{workspace}}.',
@@ -403,9 +400,6 @@ export const en = {
     emptyBody: 'Create a schedule to dispatch an active workflow on a cron cadence.',
     loadError: 'Failed loading workflow schedules.',
     nextRunUnavailable: 'No upcoming run',
-    runtimeValueCount: '{{count}} runtime values',
-    runtimeValueCount_one: '{{count}} runtime value',
-    runtimeValueCount_other: '{{count}} runtime values',
     contextGrantCount: '{{count}} context grants',
     contextGrantCount_one: '{{count}} context grant',
     contextGrantCount_other: '{{count}} context grants',
@@ -414,9 +408,8 @@ export const en = {
       workflow: 'Workflow',
       cadence: 'Cadence',
       nextRun: 'Next run',
-      scope: 'Scope',
       approvalGate: 'Approval gate',
-      inputsAndAccess: 'Inputs & access',
+      inputsAndAccess: 'Access',
       actions: 'Actions'
     },
     status: {
@@ -452,7 +445,7 @@ export const en = {
     form: {
       createTitle: 'Create schedule',
       editTitle: 'Edit schedule',
-      body: 'Choose when this workflow runs and provide the values it needs. AcornOps checks access before saving.',
+      body: 'Choose when this workflow runs. AcornOps checks access before saving.',
       close: 'Close schedule drawer',
       workflow: 'Workflow',
       name: 'Name',
@@ -464,8 +457,6 @@ export const en = {
       enabled: 'Enabled',
       approvedContextGrants: 'Approved context grants',
       approvedContextGrantsHelp: 'Enter one grant per line. Only approved context is available to scheduled runs.',
-      workflowInputs: 'Workflow inputs',
-      workflowInputsHelp: 'These values are validated and reauthorized for every occurrence.',
       required: 'Choose a workflow and provide name, cron, and timezone.',
       save: 'Save schedule',
       saving: 'Saving...',
@@ -569,7 +560,7 @@ export const en = {
       name: 'Name',
       workflow: 'Workflow',
       workflowHelp: 'The workflow cannot be changed after this webhook is created.',
-      webhookHelp: 'After creation, AcornOps shows a one-time signing secret. Requests supply the workflow inputs directly.',
+      webhookHelp: 'After creation, AcornOps shows a one-time signing secret. Each valid request starts the saved workflow.',
       runsAs: 'Runs as',
       currentUser: 'Your current account',
       runsAsHelp: 'Workspace membership and permissions are checked again for every request.',
@@ -1570,9 +1561,6 @@ export const en = {
   workflowCatalog: {
     inlineFailure: 'Some agent or MCP capabilities could not be loaded.',
     openMcpSettings: 'Open MCP settings'
-  },
-  workflowPrompt: {
-    authoringGuidance: 'Insert reusable @type[] slots or pin concrete references. The available type palette comes from the platform registry.'
   },
   workspaceAiSettings: {
     title: 'AI Settings',
@@ -3174,7 +3162,7 @@ export const en = {
     peerDescription: 'Every selected Agent is a peer. Their reviewed capability ceilings combine to bound this workflow.',
     selectionRequired: 'Select at least one workflow Agent before review.',
     completeAccessStep: 'Step 2 is not done. Select at least one Agent and one semantic capability before review.',
-    createDescription: 'Define the run prompt, selected Agents, and semantic capability allowlist.',
+    createDescription: 'Describe the workflow and choose the Agents that will run it.',
     noAgents: 'No workflow Agents selected.',
     agentUnavailable: 'Agent unavailable',
     traceTitle: 'AcornOps coordination',
@@ -3273,7 +3261,7 @@ export const en = {
     }
   },
   workflowRecommendations: {
-    open: 'Add workflows',
+    open: 'Browse templates',
     title: 'Add recommended workflows',
     description: 'Use an AcornOps recommendation as a starting point. Once added, the workflow belongs to this workspace and AcornOps will not overwrite it.',
     list: 'Recommended workflows',

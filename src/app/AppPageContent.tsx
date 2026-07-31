@@ -107,7 +107,8 @@ export function preloadAppRoutePage(route: AppRoute): void {
       void loadWorkspaceCatalogPage();
       break;
     case 'workspaceWorkflows':
-      if (route.section === 'schedules') void loadWorkspaceSchedulesPage();
+      if (route.section === 'all' && route.view === 'activity') void loadWorkspaceActivityPage();
+      else if (route.section === 'schedules') void loadWorkspaceSchedulesPage();
       else if (route.section === 'incomingWebhooks') void loadWorkspaceIncomingWebhooksPage();
       else void loadWorkspaceWorkflowsPage();
       break;
@@ -391,10 +392,19 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
-          {route.kind === 'workspaceWorkflows' && route.section === 'all' && workspaceContext && (
+          {route.kind === 'workspaceWorkflows' && route.section === 'all' && route.view !== 'activity' && workspaceContext && (
             <WorkspaceWorkflowsPage
               key={workspaceContext.id}
               workspace={workspaceContext}
+              navigate={navigate}
+            />
+          )}
+
+          {route.kind === 'workspaceWorkflows' && route.section === 'all' && route.view === 'activity' && workspaceContext && (
+            <WorkspaceActivityPage
+              key={`${workspaceContext.id}:activity`}
+              workspace={workspaceContext}
+              routeState={route}
               navigate={navigate}
             />
           )}
@@ -405,7 +415,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               workspace={workspaceContext}
               create={route.create}
               createWorkflowId={route.createWorkflowId}
-              navigate={navigate}
             />
           )}
 
@@ -415,7 +424,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               workspace={workspaceContext}
               create={route.create}
               createWorkflowId={route.createWorkflowId}
-              navigate={navigate}
             />
           )}
 

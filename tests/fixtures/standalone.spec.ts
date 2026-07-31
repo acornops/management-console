@@ -300,7 +300,7 @@ test('Agent detail scopes lifecycle and version actions to Settings', async ({ p
 
 test('recommended workflows can be added and activated without entering the library first', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Add workflows' }).click();
+  await page.getByRole('button', { name: 'Browse templates' }).click();
   await expect(page).toHaveURL(/panel=recommendations/);
 
   const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
@@ -339,7 +339,7 @@ test('recommended workflow catalog failure is retryable without leaving the page
   });
 
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Add workflows' }).click();
+  await page.getByRole('button', { name: 'Browse templates' }).click();
   const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
   await expect(drawer.getByRole('alert')).toContainText('Recommendation catalog is temporarily unavailable.');
   await page.evaluate(() => (window as typeof window & { __allowFixtureTemplateRequests: () => void }).__allowFixtureTemplateRequests());

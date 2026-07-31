@@ -1,8 +1,9 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import type { AgentDefinition } from './agents/agentModel';
 import type { WorkflowDefinition } from './workflows/workflowModel';
-import { WorkflowRunsPanel } from './WorkspaceWorkflowsPage.panels';
+import { WorkflowCapabilitiesPanel, WorkflowRunsPanel } from './WorkspaceWorkflowsPage.panels';
 import { mapWorkflowRunSummary } from './workflows/workflowPageHelpers';
 
 function workflowWithRun(run: WorkflowDefinition['runs'][number]): WorkflowDefinition {
@@ -16,16 +17,14 @@ function workflowWithRun(run: WorkflowDefinition['runs'][number]): WorkflowDefin
     executionMode: 'direct',
     semanticCapabilityIds: ['target.diagnostics.read'],
     capabilityRestrictionMode: 'restrict',
-    resourceRequirements: [],
     owner: 'AcornOps',
     tags: [],
     lastRun: 'Just now',
     agents: [],
     requiredPermissions: [],
     contextGrants: [],
-    parameters: [],
     policy: { mode: 'read_only', approvals: [] },
-    starterPrompt: 'Inspect {{target:target}}.',
+    starterPrompt: 'Inspect production health.',
     runs: [run]
   };
 }
@@ -117,5 +116,43 @@ describe('WorkflowRunsPanel run identity boundary', () => {
     expect(waitingHtml).not.toContain('Workflow running');
     expect(reviewHtml).toContain('workflowActivity.status.needs_review');
     expect(reviewHtml).not.toContain('Working');
+  });
+});
+
+describe('WorkflowCapabilitiesPanel', () => {
+  it('groups tools by Agent and labels write tools that require approval', () => {
+    const workflow = workflowWithRun({
+      id: 'workflow-run-1',
+      runId: 'run-1',
+      status: 'running',
+      actor: 'You',
+      duration: 'In progress',
+      approvals: 0,
+      output: 'Workflow run is in progress.',
+      startedAt: 'Just now'
+    });
+    workflow.agents = [{ agentId: 'agent-1', name: 'Kubernetes Operator', role: 'Direct', required: true }];
+    const agent: AgentDefinition = {
+      id: 'agent-1', workspaceId: 'workspace-1', name: 'Kubernetes Operator', avatarEmoji: 'K',
+      description: '', instructions: '', status: 'active', origin: { type: 'manual' }, reviewState: 'reviewed',
+      providerType: 'internal', createdBy: 'user-1', owner: 'Operator', version: 1,
+      mcpServers: [], tools: ['patch_resource'], nativeToolConfigs: {}, skills: [], semanticCapabilityIds: [],
+      targetScope: ['workspace'], contextScope: [], permissionMode: 'ask_before_changes',
+      trustPolicy: { boundary: 'Workspace', dataEgress: 'Blocked' },
+      capabilities: [{ source: 'builtin_tool', resourceType: 'kubernetes', resourceScope: 'target', toolId: 'patch_resource', operation: 'write', requiresApproval: true }],
+      workflowsUsingAgent: [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] }
+    };
+
+    const html = renderToStaticMarkup(
+      <WorkflowCapabilitiesPanel workflow={workflow} agents={[agent]} catalogFailures={[]} onRetryCatalog={vi.fn()} />
+    );
+
+    expect(html).toContain('Capabilities');
+    expect(html).toContain('Kubernetes Operator');
+    expect(html).toContain('patch_resource');
+    expect(html).toContain('Write');
+    expect(html).toContain('Approval required');
+    expect(html).toContain('Approval required before every write-capable tool');
+    expect(html).not.toContain('Workflow approval gates');
   });
 });

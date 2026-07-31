@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, Textarea } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
@@ -8,24 +8,15 @@ import { DrawerFrame } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { createWorkflowDraft, type CreateWorkflowDraft } from '@/pages/workflows/workflowPageHelpers';
-import { WorkflowPromptEditor } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 
-export type CreateWorkflowStep = 1 | 2 | 3;
+export type CreateWorkflowStep = 1 | 2;
 
 const createWorkflowSteps: Array<{ id: `${CreateWorkflowStep}`; label: string }> = [
   { id: '1', label: 'Describe' },
-  { id: '2', label: 'Access' },
-  { id: '3', label: 'Review' }
+  { id: '2', label: 'Agents' }
 ];
 
 const RequiredFieldMarker: React.FC = () => <span className="text-status-danger-text" aria-hidden="true">*</span>;
-
-const WorkflowCreateReviewRow: React.FC<{ label: string; value: string; technical?: boolean }> = ({ label, value, technical = false }) => (
-  <div className="grid gap-1 px-3 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
-    <dt className="type-micro-label text-ui-text-muted">{label}</dt>
-    <dd className={`min-w-0 whitespace-pre-wrap break-words type-body text-ui-text [overflow-wrap:anywhere] ${technical ? 'font-mono' : 'type-emphasis'}`}>{value}</dd>
-  </div>
-);
 
 export const WorkflowCreateDrawer: React.FC<{
   createWorkflowStep: CreateWorkflowStep;
@@ -34,10 +25,9 @@ export const WorkflowCreateDrawer: React.FC<{
   setCreateDraft: React.Dispatch<React.SetStateAction<CreateWorkflowDraft>>;
   createError: string;
   creatingWorkflow: boolean;
-  canManageWorkflowScope: boolean;
+  canManageWorkflows: boolean;
   workflowOptionsReady: boolean;
   workflowOptions: WorkflowOptionsCatalog;
-  workspaceId: string;
   onClose: () => void;
   onCreate: () => void;
 }> = ({
@@ -47,10 +37,9 @@ export const WorkflowCreateDrawer: React.FC<{
   setCreateDraft,
   createError,
   creatingWorkflow,
-  canManageWorkflowScope,
+  canManageWorkflows,
   workflowOptionsReady,
   workflowOptions,
-  workspaceId,
   onClose,
   onCreate
 }) => {
@@ -59,6 +48,7 @@ export const WorkflowCreateDrawer: React.FC<{
   const close = () => { onClose(); setCreateWorkflowStep(1); setStepNavigationError(''); };
   const describeStepComplete = Boolean(createDraft.name.trim());
   const accessStepComplete = workflowOptionsReady && createDraft.agentIds.length > 0;
+  const draftPristine = !createDraft.name && !createDraft.description && !createDraft.starterPrompt && createDraft.agentIds.length === 0;
   const selectedAgentLabels = workflowOptions.agents
     .filter((agent) => createDraft.agentIds.includes(agent.value))
     .map((agent) => agent.label);
@@ -84,11 +74,6 @@ export const WorkflowCreateDrawer: React.FC<{
       setStepNavigationError('Step 1 is not done. Enter a workflow name before continuing.');
       return;
     }
-    if (nextStep > 2 && !accessStepComplete) {
-      setCreateWorkflowStep(2);
-      setStepNavigationError(t('workflowCoordination.completeAccessStep'));
-      return;
-    }
     setStepNavigationError('');
     setCreateWorkflowStep(nextStep);
   };
@@ -108,7 +93,7 @@ export const WorkflowCreateDrawer: React.FC<{
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
-        {!canManageWorkflowScope && <div className="mb-4 rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You need manage_workflows to create workflows.</div>}
+        {!canManageWorkflows && <div className="mb-4 rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You need manage_workflows to create workflows.</div>}
         {!workflowOptionsReady && <div className="mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-caption type-emphasis text-status-warning-text">Workflow options must load before you can create a workflow.</div>}
         {createError && <div role="alert" aria-live="assertive" className="mb-4 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{createError}</div>}
         {stepNavigationError && <div className="mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 type-caption type-emphasis text-status-warning-text" role="status" aria-live="polite">{stepNavigationError}</div>}
@@ -131,21 +116,21 @@ export const WorkflowCreateDrawer: React.FC<{
               <TextInput id="create-workflow-description-input" value={createDraft.description} onChange={(event) => setCreateDraft((draft) => ({ ...draft, description: event.target.value }))} placeholder="Example: Prepare an incident report from selected sessions" className="mt-2" />
             </label>
             <div className="block">
-              <span className="type-micro-label">Workflow prompt</span>
-              <WorkflowPromptEditor
-                workflow={{ id: 'new-workflow', workspaceId }}
-                message={createDraft.starterPrompt}
-                onChange={(starterPrompt) => setCreateDraft((draft) => ({ ...draft, starterPrompt }))}
-                mode="authoring"
+              <label htmlFor="create-workflow-prompt" className="type-micro-label">Workflow prompt</label>
+              <Textarea
+                id="create-workflow-prompt"
+                aria-label="Workflow prompt"
+                value={createDraft.starterPrompt}
+                onChange={(event) => setCreateDraft((draft) => ({ ...draft, starterPrompt: event.target.value }))}
+                className="mt-2 min-h-32"
               />
-              <span className="type-caption mt-2 block text-ui-text-muted">{t('workflowPrompt.authoringGuidance')}</span>
             </div>
           </div>
         )}
         {createWorkflowStep === 2 && (
           <div className="space-y-5">
             <div>
-              <h3 className="type-panel-title">Access</h3>
+              <h3 className="type-panel-title">Agents</h3>
               <p className="type-caption mt-1 text-ui-text-muted">{t('workflowCoordination.agentsDescription')}</p>
             </div>
             {selectionFeedback && <div role="status" aria-live="polite" aria-atomic="true" className={`rounded-md border px-3 py-2 type-caption type-emphasis ${createDraft.agentIds.length === 0 ? 'border-status-warning/30 bg-status-warning-soft text-status-warning-text' : 'border-ui-border bg-ui-bg text-ui-text'}`}>{selectionFeedback}</div>}
@@ -168,31 +153,15 @@ export const WorkflowCreateDrawer: React.FC<{
             </fieldset>
           </div>
         )}
-        {createWorkflowStep === 3 && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="type-panel-title">Review</h3>
-              <p className="type-caption mt-1 text-ui-text-muted">Confirm the workflow definition before it becomes available for governed runs.</p>
-            </div>
-            <dl className="divide-y divide-ui-border rounded-md border border-ui-border bg-ui-bg">
-              <WorkflowCreateReviewRow label="Name" value={createDraft.name || 'Unnamed workflow'} />
-              <WorkflowCreateReviewRow label="Description" value={createDraft.description || 'Workspace automation configured from the console.'} />
-              <WorkflowCreateReviewRow label={t('workflowCoordination.agentsTitle')} value={selectedAgentLabels.join('\n') || t('workflowCoordination.noAgents')} />
-              <WorkflowCreateReviewRow label={t('workflowCoordination.executionLabel')} value={selectedAgentLabels.length > 1 ? t('workflowCoordination.coordinatedLabel') : t('workflowCoordination.directLabel')} />
-              <WorkflowCreateReviewRow label="Mode" value="Read only" />
-              <WorkflowCreateReviewRow label="Prompt resources" value="Resolved from the control message at launch" />
-            </dl>
-          </div>
-        )}
       </div>
       <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
-        <Button type="button" variant="tertiary" size="sm" onClick={() => { setCreateDraft(createWorkflowDraft()); setCreateWorkflowStep(1); setStepNavigationError(''); }}>Reset</Button>
+        <Button type="button" variant="tertiary" size="sm" disabled={draftPristine} onClick={() => { setCreateDraft(createWorkflowDraft()); setCreateWorkflowStep(1); setStepNavigationError(''); }}>Reset</Button>
         <div className="flex items-center gap-2">
-          <Button type="button" variant="secondary" size="sm" onClick={() => goToCreateWorkflowStep(createWorkflowStep === 3 ? 2 : 1)} disabled={createWorkflowStep === 1}>Back</Button>
-          {createWorkflowStep < 3 ? (
-            <Button type="button" variant="primary" size="sm" onClick={() => goToCreateWorkflowStep(createWorkflowStep === 1 ? 2 : 3)} disabled={!canManageWorkflowScope || (createWorkflowStep === 1 && !describeStepComplete) || (createWorkflowStep === 2 && !accessStepComplete)}>Next</Button>
+          <Button type="button" variant="secondary" size="sm" onClick={() => goToCreateWorkflowStep(1)} disabled={createWorkflowStep === 1}>Back</Button>
+          {createWorkflowStep === 1 ? (
+            <Button type="button" variant="primary" size="sm" onClick={() => goToCreateWorkflowStep(2)} disabled={!canManageWorkflows || !describeStepComplete}>Next</Button>
           ) : (
-            <Button type="button" variant="primary" size="sm" onClick={onCreate} disabled={!canManageWorkflowScope || creatingWorkflow || !describeStepComplete || !accessStepComplete}>
+            <Button type="button" variant="primary" size="sm" onClick={onCreate} disabled={!canManageWorkflows || creatingWorkflow || !describeStepComplete || !accessStepComplete}>
               <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
               {creatingWorkflow ? 'Creating...' : 'Create workflow'}
             </Button>

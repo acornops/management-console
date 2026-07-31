@@ -26,6 +26,57 @@ interface WorkspaceWebhookCardProps {
   onRequestDelete: () => void;
 }
 
+export const WorkspaceWebhookActionMenu: React.FC<WorkspaceWebhookCardProps> = ({
+  trigger,
+  canManage,
+  busy,
+  actionButtonRefs,
+  onEdit,
+  onToggle,
+  onRequestRotate,
+  onRequestDelete
+}) => {
+  const { t } = useTranslation();
+  if (!canManage) return <span aria-hidden="true" className="type-caption text-ui-text-muted">—</span>;
+
+  const runAction = (close: () => void, action: () => void) => {
+    close();
+    actionButtonRefs.current.get(trigger.id)?.focus({ preventScroll: true });
+    action();
+  };
+
+  return (
+    <OverflowActionMenu
+      ref={(node) => {
+        if (node) actionButtonRefs.current.set(trigger.id, node);
+        else actionButtonRefs.current.delete(trigger.id);
+      }}
+      label={t('eventTriggers.actionsFor', { name: trigger.name })}
+      disabled={busy}
+      estimatedHeight={188}
+    >
+      {(close) => <>
+        <MenuItem onClick={() => runAction(close, onEdit)}>
+          <ICONS.Pencil className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+          {t('eventTriggers.actions.edit')}
+        </MenuItem>
+        <MenuItem onClick={() => runAction(close, onToggle)}>
+          <ICONS.Zap className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+          {trigger.status === 'enabled' ? t('eventTriggers.actions.pause') : t('eventTriggers.actions.resume')}
+        </MenuItem>
+        <MenuItem onClick={() => runAction(close, onRequestRotate)}>
+          <ICONS.RefreshCw className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+          {t('eventTriggers.actions.rotateSecret')}
+        </MenuItem>
+        <MenuItem destructive onClick={() => runAction(close, onRequestDelete)}>
+          <ICONS.Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+          {t('eventTriggers.actions.delete')}
+        </MenuItem>
+      </>}
+    </OverflowActionMenu>
+  );
+};
+
 export const workspaceWebhookLedgerGridClass =
   'grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-[minmax(11rem,0.9fr)_minmax(9rem,0.75fr)_minmax(0,1fr)_minmax(11rem,0.9fr)_4.5rem]';
 
@@ -56,12 +107,6 @@ export const WorkspaceWebhookCard: React.FC<WorkspaceWebhookCardProps> = ({
   const needsFailureReview = trigger.lastStatus === 'failed'
     || trigger.lastStatus === 'rejected'
     || trigger.lastStatus === 'auto_paused';
-  const runAction = (close: () => void, action: () => void) => {
-    close();
-    actionButtonRefs.current.get(trigger.id)?.focus({ preventScroll: true });
-    action();
-  };
-
   return (
     <article>
       <div className="p-[var(--ao-surface-padding)] xl:px-8 xl:py-6">
@@ -114,34 +159,21 @@ export const WorkspaceWebhookCard: React.FC<WorkspaceWebhookCardProps> = ({
                   {t('eventTriggers.actions.reviewFailure')}
                 </Button>
               )}
-              <OverflowActionMenu
-                ref={(node) => {
-                  if (node) actionButtonRefs.current.set(trigger.id, node);
-                  else actionButtonRefs.current.delete(trigger.id);
-                }}
-                label={t('eventTriggers.actionsFor', { name: trigger.name })}
-                disabled={busy}
-                estimatedHeight={188}
-              >
-                {(close) => <>
-                  <MenuItem onClick={() => runAction(close, onEdit)}>
-                    <ICONS.Pencil className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                    {t('eventTriggers.actions.edit')}
-                  </MenuItem>
-                  <MenuItem onClick={() => runAction(close, onToggle)}>
-                    <ICONS.Zap className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                    {trigger.status === 'enabled' ? t('eventTriggers.actions.pause') : t('eventTriggers.actions.resume')}
-                  </MenuItem>
-                  <MenuItem onClick={() => runAction(close, onRequestRotate)}>
-                    <ICONS.RefreshCw className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-                    {t('eventTriggers.actions.rotateSecret')}
-                  </MenuItem>
-                  <MenuItem destructive onClick={() => runAction(close, onRequestDelete)}>
-                    <ICONS.Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    {t('eventTriggers.actions.delete')}
-                  </MenuItem>
-                </>}
-              </OverflowActionMenu>
+              <WorkspaceWebhookActionMenu
+                trigger={trigger}
+                workflowName={workflowName}
+                canManage={canManage}
+                busy={busy}
+                pendingRotate={pendingRotate}
+                actionButtonRefs={actionButtonRefs}
+                onCopyEndpoint={onCopyEndpoint}
+                onEdit={onEdit}
+                onToggle={onToggle}
+                onRequestRotate={onRequestRotate}
+                onCancelRotate={onCancelRotate}
+                onConfirmRotate={onConfirmRotate}
+                onRequestDelete={onRequestDelete}
+              />
             </div>
           ) : (
             <div

@@ -239,11 +239,10 @@ export function createFixtureState(): FixtureState {
     origin: { type: 'manual' }, source: 'user', name: 'Production health review',
     description: 'Review target health and summarize prioritized follow-up actions.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' },
-    createdAt: EARLIER, prompt: 'Review {{target:target}} and produce a concise operational summary.',
-    starterPrompt: 'Review {{target:target}} and produce a concise operational summary.', agentIds: [FIXTURE_IDS.workflowAnalystAgent, FIXTURE_IDS.specialistAgent],
+    createdAt: EARLIER, prompt: 'Review production health and produce a concise operational summary.',
+    starterPrompt: 'Review production health and produce a concise operational summary.', agentIds: [FIXTURE_IDS.workflowAnalystAgent, FIXTURE_IDS.specialistAgent],
     executionMode: 'coordinated',
-    resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [FIXTURE_IDS.cluster, FIXTURE_IDS.virtualMachine] } }],
-    category: 'Operations', tags: ['production', 'health'], parameters: [{ key: 'target', type: 'target', required: true }],
+    category: 'Operations', tags: ['production', 'health'],
     capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['target.read', 'issue.read'], contextGrants: ['workspace.summary'], maxRuntimeSeconds: 600, retentionDays: 30, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
@@ -251,10 +250,9 @@ export function createFixtureState(): FixtureState {
     origin: { type: 'manual' }, source: 'user',
     name: 'Target diagnostics', description: 'Inspect one exact target using live diagnostic evidence.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
-    prompt: 'Inspect {{target:target}} using live diagnostic evidence and summarize safe next actions.',
+    prompt: 'Inspect target diagnostics using live evidence and summarize safe next actions.',
     agentIds: [FIXTURE_IDS.targetDiagnosticsAgent], executionMode: 'direct',
-    resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [FIXTURE_IDS.cluster] } }],
-    category: 'Operations', tags: ['diagnostics'], parameters: [{ key: 'target', type: 'target', required: true }],
+    category: 'Operations', tags: ['diagnostics'],
     capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['target.kubernetes.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
@@ -262,9 +260,9 @@ export function createFixtureState(): FixtureState {
     origin: { type: 'manual' }, source: 'user',
     name: 'Incident report', description: 'Generate an incident report from explicitly granted evidence.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
-    prompt: 'Generate {{text:report_title}} with provenance from {{chat:incident_context}}.',
+    prompt: 'Generate an incident report with provenance from the available incident context.',
     agentIds: [FIXTURE_IDS.incidentReporterAgent], executionMode: 'direct',
-    resourceRequirements: [{ type: 'chat', minimum: 1, maximum: 20, requiredOperations: ['read'] }], category: 'Reporting', tags: ['incident'], parameters: [{ key: 'report_title', type: 'text', required: true }, { key: 'incident_context', type: 'chat', required: true }],
+    category: 'Reporting', tags: ['incident'],
     capabilityPolicy: { mode: 'read_only', restrictionMode: 'inherit', semanticCapabilityIds: [], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 180, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }];
@@ -489,8 +487,8 @@ export function createFixtureState(): FixtureState {
     workflows,
     automationTemplates,
     workflowSchedules: [
-      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
-      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
+      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
+      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
     ],
     workflowWebhooks: [
       {

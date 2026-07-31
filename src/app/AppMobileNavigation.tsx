@@ -26,7 +26,6 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
   activePrimaryNav,
   activeResourceNav,
   pendingApprovalCount,
-  openWorkflowRunCount,
   isAgentSidebar,
   isClusterSidebar,
   isVirtualMachineSidebar,
@@ -67,7 +66,6 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
     workspace: selectedWorkspace,
     activeResourceNav,
     pendingApprovalCount,
-    openWorkflowRunCount,
     t
   });
 
@@ -501,7 +499,10 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                     >
                                       <span className="flex min-w-0 items-center gap-3">
                                         <Icon className={`h-[18px] w-[18px] shrink-0 ${item.active ? 'text-accent-strong' : 'text-ui-text-muted'}`} />
-                                        <span className="truncate">{item.label}</span>
+                                        <span className="flex min-w-0 items-center gap-2">
+                                          <span className="truncate">{item.label}</span>
+                                          {item.experimentalBadge && <ExperimentalBadge>{item.experimentalBadge}</ExperimentalBadge>}
+                                        </span>
                                       </span>
                                       {(item.id === 'approvals' || item.id === 'workflows') && (
                                         <span

@@ -14,6 +14,7 @@ export interface WorkspaceNavigationItem {
   active: boolean;
   current?: boolean;
   badge?: number;
+  experimentalBadge?: string;
   children?: WorkspaceNavigationChildItem[];
 }
 
@@ -36,7 +37,6 @@ interface WorkspaceNavigationOptions {
   workspace: Workspace | undefined;
   activeResourceNav: ActiveResourceNav;
   pendingApprovalCount?: number;
-  openWorkflowRunCount?: number;
   t: TFunction;
 }
 
@@ -44,7 +44,6 @@ export function getWorkspaceNavigationGroups({
   workspace,
   activeResourceNav,
   pendingApprovalCount,
-  openWorkflowRunCount,
   t
 }: WorkspaceNavigationOptions): WorkspaceNavigationGroup[] {
   if (!workspace) return [];
@@ -67,7 +66,6 @@ export function getWorkspaceNavigationGroups({
     groups.push({
       id: 'automation',
       label: t('app.automation'),
-      badge: t('app.experimental'),
       items: [
         { id: 'agents', label: t('app.agents'), path: AppPaths.workspaceAgents(workspace.id), icon: ICONS.Bot, active: activeResourceNav === 'agents' },
         {
@@ -75,15 +73,8 @@ export function getWorkspaceNavigationGroups({
           label: t('app.workflows'),
           path: AppPaths.workspaceWorkflows(workspace.id),
           icon: ICONS.GitBranch,
-          active: activeResourceNav === 'workflows'
-        },
-        {
-          id: 'activity',
-          label: t('app.activity'),
-          path: AppPaths.workspaceActivity(workspace.id),
-          icon: ICONS.Activity,
-          active: activeResourceNav === 'activity',
-          badge: openWorkflowRunCount
+          active: activeResourceNav === 'workflows' || activeResourceNav === 'activity',
+          experimentalBadge: t('app.experimental')
         },
         {
           id: 'outboundWebhooks',

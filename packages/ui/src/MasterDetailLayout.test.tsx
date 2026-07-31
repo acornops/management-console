@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { MasterDetailEmptyState, MasterDetailLayout, MasterDetailListHeader, MasterDetailLoading, MasterDetailPaneBody, MasterDetailPaneHeader, MasterDetailRow, masterDetailGridClass } from './MasterDetailLayout';
+import { compactMasterDetailGridClass, MasterDetailEmptyState, MasterDetailLayout, MasterDetailListHeader, MasterDetailLoading, MasterDetailPaneBody, MasterDetailPaneHeader, MasterDetailRow, masterDetailGridClass } from './MasterDetailLayout';
 
 describe('MasterDetailLayout', () => {
   it('uses the fixed desktop library template and one divided surface', () => {
@@ -25,6 +25,22 @@ describe('MasterDetailLayout', () => {
     expect(markup).not.toContain('Back to library');
   });
 
+  it('supports an explicitly compact library without changing the shared default', () => {
+    expect(compactMasterDetailGridClass).toContain('lg:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)]');
+    const markup = renderToStaticMarkup(
+      <MasterDetailLayout
+        listWidth="compact"
+        list={<div>Library</div>}
+        detail={<div>Detail</div>}
+        showDetailOnCompact={false}
+        compactBackLabel="Back to library"
+        onCompactBack={() => undefined}
+      />
+    );
+    expect(markup).toContain('data-list-width="compact"');
+    expect(markup).toContain('lg:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)]');
+  });
+
   it('drills into detail on compact screens and exposes Back', () => {
     const markup = renderToStaticMarkup(
       <MasterDetailLayout
@@ -41,6 +57,26 @@ describe('MasterDetailLayout', () => {
     expect(markup).toContain('Back to library');
   });
 
+  it('bounds desktop panes and keeps compact behavior page-scrolled', () => {
+    const markup = renderToStaticMarkup(
+      <MasterDetailLayout
+        boundedOnDesktop
+        list={<div>Library</div>}
+        detail={<div>Detail</div>}
+        showDetailOnCompact
+        compactBackLabel="Back to library"
+        onCompactBack={() => undefined}
+      />
+    );
+
+    expect(markup).toContain('data-bounded-on-desktop="true"');
+    expect(markup).toContain('lg:h-full lg:min-h-0');
+    expect(markup).toContain('lg:overflow-y-auto');
+    expect(markup).toContain('lg:overscroll-contain');
+    expect(markup).toContain('lg:overflow-hidden');
+    expect(markup).not.toContain('min-w-0 overflow-y-auto');
+  });
+
   it('standardizes library and detail-pane anatomy', () => {
     const markup = renderToStaticMarkup(<>
       <MasterDetailListHeader>Library</MasterDetailListHeader>
@@ -55,8 +91,8 @@ describe('MasterDetailLayout', () => {
         onClick={() => undefined}
       />
       <MasterDetailEmptyState title="Nothing found" description="Adjust the filters." />
-      <MasterDetailPaneHeader badges="Active" title="Resource" description="Resource description" />
-      <MasterDetailPaneBody><div>Details</div></MasterDetailPaneBody>
+      <MasterDetailPaneHeader density="compact" badges="Active" title="Resource" description="Resource description" actions={<button>Act</button>} />
+      <MasterDetailPaneBody className="lg:flex-1 lg:overflow-y-auto"><div>Details</div></MasterDetailPaneBody>
     </>);
 
     expect(markup).toContain('min-h-24 w-full px-4 py-3');
@@ -64,7 +100,13 @@ describe('MasterDetailLayout', () => {
     expect(markup).toContain('aria-label="Select Resource"');
     expect(markup).toMatch(/aria-describedby="[^"]+ [^"]+ [^"]+"/);
     expect(markup).toContain('border-b border-ui-border bg-ui-bg');
+    expect(markup).toContain('data-density="compact"');
+    expect(markup).toContain('px-4 py-3 sm:px-5');
+    expect(markup).toContain('xl:grid-cols-[minmax(0,1fr)_auto]');
+    expect(markup).toContain('line-clamp-2');
+    expect(markup).toContain('xl:line-clamp-1');
     expect(markup).toContain('grid gap-5 bg-ui-bg/45 p-4 sm:p-5');
+    expect(markup).toContain('lg:flex-1 lg:overflow-y-auto');
     expect(markup).toContain('Nothing found');
   });
 });

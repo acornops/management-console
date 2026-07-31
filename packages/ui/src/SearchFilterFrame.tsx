@@ -6,6 +6,9 @@ export interface SearchFilterFrameProps {
   filterControls?: ReadonlyArray<React.ReactNode>;
   trailingActions?: React.ReactNode;
   resultSummary?: React.ReactNode;
+  embedded?: boolean;
+  searchWidth?: 'fluid' | 'fixed';
+  filterWidth?: 'default' | 'compact';
   className?: string;
 }
 
@@ -14,6 +17,9 @@ export const SearchFilterFrame: React.FC<SearchFilterFrameProps> = ({
   filterControls = [],
   trailingActions,
   resultSummary,
+  embedded = false,
+  searchWidth = 'fluid',
+  filterWidth = 'default',
   className
 }) => {
   const dense = filterControls.length >= 3;
@@ -22,7 +28,8 @@ export const SearchFilterFrame: React.FC<SearchFilterFrameProps> = ({
     <div
       data-search-filter-frame="true"
       className={twMerge(
-        'flex w-full min-w-0 max-w-full flex-wrap items-center gap-3 rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm [contain:inline-size]',
+        'flex w-full min-w-0 max-w-full flex-wrap items-center gap-3 [contain:inline-size]',
+        embedded ? 'p-0' : 'rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm',
         dense ? '2xl:flex-nowrap' : 'lg:flex-nowrap',
         className
       )}
@@ -31,7 +38,9 @@ export const SearchFilterFrame: React.FC<SearchFilterFrameProps> = ({
         data-search-filter-frame-search="true"
         className={twMerge(
           'w-full min-w-0 flex-none',
-          dense ? '2xl:flex-[1_1_12rem]' : 'lg:flex-[1_1_12rem]'
+          searchWidth === 'fixed'
+            ? 'sm:w-80'
+            : dense ? '2xl:flex-[1_1_12rem]' : 'lg:flex-[1_1_12rem]'
         )}
       >
         {search}
@@ -51,7 +60,9 @@ export const SearchFilterFrame: React.FC<SearchFilterFrameProps> = ({
               className={twMerge(
                 'w-full min-w-0',
                 dense
-                  ? '2xl:w-[clamp(10.5rem,14vw,14rem)] 2xl:flex-none'
+                  ? filterWidth === 'compact'
+                    ? '2xl:w-44 2xl:flex-none'
+                    : '2xl:w-[clamp(10.5rem,14vw,14rem)] 2xl:flex-none'
                   : 'lg:w-[clamp(10.5rem,14vw,14rem)] lg:flex-none'
               )}
             >
@@ -80,7 +91,8 @@ export const SearchFilterFrame: React.FC<SearchFilterFrameProps> = ({
           data-search-filter-frame-summary="true"
           className={twMerge(
             'flex min-h-0 w-full min-w-0 items-center justify-end pt-1 text-right sm:min-h-11 sm:pt-0',
-            dense ? '2xl:w-auto 2xl:flex-none' : 'lg:w-auto lg:flex-none'
+            dense ? '2xl:w-auto 2xl:flex-none' : 'lg:w-auto lg:flex-none',
+            searchWidth === 'fixed' && (dense ? '2xl:ml-auto' : 'lg:ml-auto')
           )}
         >
           {resultSummary}

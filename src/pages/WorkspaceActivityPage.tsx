@@ -27,6 +27,7 @@ import {
   type WorkflowActivityRouteState,
   type WorkflowActivityStateFilter
 } from '@/utils/routes';
+import { WorkflowWorkspaceViewTabs } from '@/pages/workflows/WorkflowWorkspaceViewTabs';
 
 interface WorkspaceActivityPageProps {
   workspace: Workspace;
@@ -132,11 +133,15 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
     routeState.workflowId,
     routeState.issueId
   ].filter(Boolean).length;
+  const activityLedgerFillsAvailableSpace = phase === 'loading' || items.length > 0;
 
   return (
-    <PageShell>
+    <PageShell
+      className="lg:overflow-y-hidden"
+      contentClassName="lg:flex lg:h-full lg:min-h-0 lg:flex-col"
+    >
       <PageHeader
-        title={t('workflowActivity.title')}
+        title={t('app.workflows')}
         description={t('workflowActivity.subtitle', { workspace: workspace.name })}
         actions={(
           <Button size="md" variant="secondary" onClick={() => void load()} disabled={phase === 'loading'}>
@@ -145,15 +150,20 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
           </Button>
         )}
       />
-
-      <DiscoveryFilterBar
-        idPrefix="workflow-runs"
-        query={routeState.q || ''}
-        queryLabel={t('workflowActivity.filters.search')}
-        queryPlaceholder={t('workflowActivity.filters.search')}
-        queryClearLabel={t('common.clearSearch')}
-        resultSummary={`${t('workflowActivity.openCount', { count: page?.summary.openCount ?? workspaceActivity.openCount })} · ${t('workflowActivity.attentionCount', { count: page?.summary.attentionCount ?? workspaceActivity.attentionCount })}`}
-        filters={[
+      <div
+        className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
+      >
+        <WorkflowWorkspaceViewTabs activeView="activity" navigate={navigate} workspaceId={workspace.id}>
+          <DiscoveryFilterBar
+            searchWidth="fluid"
+            filterWidth="compact"
+            idPrefix="workflow-runs"
+            query={routeState.q || ''}
+            queryLabel={t('workflowActivity.filters.search')}
+            queryPlaceholder={t('workflowActivity.filters.search')}
+            queryClearLabel={t('common.clearSearch')}
+            resultSummary={`${t('workflowActivity.openCount', { count: page?.summary.openCount ?? workspaceActivity.openCount })} · ${t('workflowActivity.attentionCount', { count: page?.summary.attentionCount ?? workspaceActivity.attentionCount })}`}
+            filters={[
           createDiscoveryFilterGroup<WorkflowActivityStateFilter>({
             id: 'state',
             label: t('workflowActivity.filters.state'),
@@ -181,33 +191,33 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
             ],
             onChange: (workflowId) => replaceState({ workflowId: workflowId === 'all' ? undefined : workflowId })
           })
-        ]}
-        clearAllLabel={t('common.clearAll')}
-        onQueryChange={(q) => replaceState({ q: q || undefined }, { replace: true })}
-        onClearAll={() => replaceState({
-          q: undefined,
-          state: undefined,
-          origin: undefined,
-          workflowId: undefined,
-          issueId: undefined
-        })}
-        className="mb-4"
-      />
-      {routeState.issueId && (
-        <p className="type-caption mb-4 text-ui-text-muted">
-          {t('workflowActivity.filters.issueApplied', { issue: routeState.issueId })}
-        </p>
-      )}
+            ]}
+            clearAllLabel={t('common.clearAll')}
+            onQueryChange={(q) => replaceState({ q: q || undefined }, { replace: true })}
+            onClearAll={() => replaceState({
+              q: undefined,
+              state: undefined,
+              origin: undefined,
+              workflowId: undefined,
+              issueId: undefined
+            })}
+          />
+        </WorkflowWorkspaceViewTabs>
+        {routeState.issueId && (
+          <p className="type-caption mb-4 shrink-0 text-ui-text-muted">
+            {t('workflowActivity.filters.issueApplied', { issue: routeState.issueId })}
+          </p>
+        )}
 
-      {workspaceActivity.error && (
-        <InlineAlert tone="warning" className="mb-4">{t('workflowActivity.refreshError')}</InlineAlert>
-      )}
-      {error && phase === 'ready' && <InlineAlert tone="warning" className="mb-4">{error}</InlineAlert>}
+        {workspaceActivity.error && (
+          <InlineAlert tone="warning" className="mb-4 shrink-0">{t('workflowActivity.refreshError')}</InlineAlert>
+        )}
+        {error && phase === 'ready' && <InlineAlert tone="warning" className="mb-4 shrink-0">{error}</InlineAlert>}
 
-      <section
-        aria-label={t('workflowActivity.ledgerLabel')}
-        className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm"
-      >
+        <section
+          aria-label={t('workflowActivity.ledgerLabel')}
+          className={`overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm ${activityLedgerFillsAvailableSpace ? 'lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:custom-scrollbar lg:stable-scrollbar-gutter' : ''}`}
+        >
         <div className="min-w-0">
           <DataTableGridHeader
             showAt="xl"
@@ -260,7 +270,8 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
             </div>
           )}
         </div>
-      </section>
+        </section>
+      </div>
     </PageShell>
   );
 };

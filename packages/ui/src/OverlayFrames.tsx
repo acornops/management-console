@@ -15,6 +15,13 @@ const dialogWidths: Record<FrameWidth, string> = {
   xl: 'max-w-4xl'
 };
 
+const dialogMaxWidths: Record<FrameWidth, string> = {
+  sm: '28rem',
+  md: '36rem',
+  lg: '42rem',
+  xl: '56rem'
+};
+
 const drawerWidths: Record<FrameWidth, string> = {
   sm: 'max-w-md',
   md: 'max-w-xl',
@@ -84,7 +91,7 @@ export const DialogFrame: React.FC<DialogFrameProps> = ({
       overlayClassName={overlayClassName}
       onClose={content.onClose}
       style={unframed ? undefined : {
-        maxWidth: 'calc(100vw - 2rem)',
+        maxWidth: `min(calc(100vw - 2rem), ${dialogMaxWidths[width]})`,
         minWidth: 0,
         width: 'calc(100vw - 2rem)'
       }}

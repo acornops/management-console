@@ -27,31 +27,31 @@ describe('workspace navigation model', () => {
     expect(experimental).toContain('bg-status-warning-soft');
   });
 
-  it('groups all permitted destinations and marks Activity as current', () => {
+  it('groups all permitted destinations and folds Activity into Workflows', () => {
     const groups = getWorkspaceNavigationGroups({
       workspace: workspace({ read_workspace_data: true, read_audit_log: true }),
       activeResourceNav: 'activity',
       pendingApprovalCount: 100,
-      openWorkflowRunCount: 3,
       t
     });
 
     expect(groups.map((group) => group.id)).toEqual(['primary', 'inventory', 'automation', 'governance', 'utilities']);
     expect(groups.flatMap((group) => group.items).map((item) => item.id)).toEqual([
-      'overview', 'clusters', 'virtualMachines', 'agents', 'workflows', 'activity', 'outboundWebhooks', 'approvals', 'workspaceAuditLog', 'workspaceSettings', 'help'
+      'overview', 'clusters', 'virtualMachines', 'agents', 'workflows', 'outboundWebhooks', 'approvals', 'workspaceAuditLog', 'workspaceSettings', 'help'
     ]);
     expect(groups.flatMap((group) => group.items).some((item) => item.path.includes('/catalog'))).toBe(false);
-    expect(groups.find((group) => group.id === 'automation')?.badge).toBe('app.experimental');
-    const activity = groups.flatMap((group) => group.items).find((item) => item.id === 'activity');
-    expect(activity).toMatchObject({
+    expect(groups.find((group) => group.id === 'automation')?.badge).toBeUndefined();
+    const workflows = groups.flatMap((group) => group.items).find((item) => item.id === 'workflows');
+    expect(workflows).toMatchObject({
       active: true,
-      path: AppPaths.workspaceActivity('workspace-1'),
-      badge: 3
+      path: AppPaths.workspaceWorkflows('workspace-1'),
+      experimentalBadge: 'app.experimental'
     });
+    expect(groups.flatMap((group) => group.items).some((item) => item.id === 'activity')).toBe(false);
     expect(groups.flatMap((group) => group.items).find((item) => item.id === 'approvals')?.badge).toBe(100);
   });
 
-  it('marks Outbound webhooks as a first-class Automation destination', () => {
+  it('marks Webhooks as a first-class Automation destination', () => {
     const groups = getWorkspaceNavigationGroups({
       workspace: workspace({ read_workspace_data: true }),
       activeResourceNav: 'workspaceWebhooks',
@@ -78,7 +78,8 @@ describe('workspace navigation model', () => {
     const workflows = workflowGroups.flatMap((group) => group.items).find((item) => item.id === 'workflows');
     expect(workflows).toMatchObject({
       active: true,
-      path: AppPaths.workspaceWorkflows('workspace-1')
+      path: AppPaths.workspaceWorkflows('workspace-1'),
+      experimentalBadge: 'app.experimental'
     });
 
     const overviewGroups = getWorkspaceNavigationGroups({

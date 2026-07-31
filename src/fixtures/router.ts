@@ -3,7 +3,6 @@ import { routeAutomationTemplateFixtureRequest } from './automationTemplateRoute
 import { routeCatalogFixtureRequest } from './catalogRoutes';
 import { mcpConnection, routeMcpParityConnection } from './mcpParity';
 import { targetSummary, targetToolCatalog, workflowOptions } from './presenters';
-import { routePromptReferenceFixtureRequest } from './promptReferenceRoutes';
 import { workflowCapabilityPreview } from './workflowCapabilityPreview';
 import { routeWebhookFixtureRequest } from './webhookRoutes';
 import { routeWorkflowWebhookFixtureRequest } from './workflowWebhookRoutes';
@@ -474,8 +473,6 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/workflow-options$/);
   if (match && method === 'GET') return json(workflowOptions(state));
-  const promptReferenceResponse = await routePromptReferenceFixtureRequest({ request, state, path, method, url });
-  if (promptReferenceResponse) return promptReferenceResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/workflows$/);
   if (match) {
     if (method === 'GET') return json({ items: clone(state.workflows) });
@@ -516,7 +513,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.workflowSchedules), summary: { total: state.workflowSchedules.length, active: state.workflowSchedules.filter((item) => item.status === 'enabled').length, paused: state.workflowSchedules.filter((item) => item.status === 'paused').length, approvalGated: 0 } });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', inputs: {}, approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW, ...input };
+      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW, ...input };
       state.workflowSchedules.push(schedule);
       return json({ schedule }, 201);
     }
@@ -541,7 +538,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   match = path.match(/^\/api\/v1\/workflows\/([^/]+)\/capabilities-preview$/);
   if (match && method === 'POST') {
     const workflowId = decode(match[1]);
-    const preview = workflowCapabilityPreview(state, workflowId, await bodyOf(request));
+    const preview = workflowCapabilityPreview(state, workflowId);
     return preview ? json(preview) : notFound('Workflow');
   }
   match = path.match(/^\/api\/v1\/workflows\/([^/]+)\/sessions$/);

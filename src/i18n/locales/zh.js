@@ -26,6 +26,11 @@ export const zh = {
     removeFilter: '移除{{filter}}筛选：{{value}}',
     dismissNotification: '关闭通知'
   },
+  workflowWorkspaceViews: {
+    label: '工作流视图',
+    showWorkflows: '工作流库',
+    showActivity: '活动'
+  },
   controlPlaneErrors: {
     validation: {
       default: '请检查请求后重试。',
@@ -126,7 +131,7 @@ export const zh = {
     inventory: '资源清单',
     automation: '自动化',
     experimental: '实验性',
-    outboundWebhooks: '出站 Webhook',
+    outboundWebhooks: 'Webhook',
     governance: '治理',
     utilities: '实用工具',
     cluster: '集群',
@@ -240,7 +245,7 @@ export const zh = {
     unknownAgent: '未知 Agent'
   },
   workflowActivity: {
-    title: '活动',
+    title: '工作流活动',
     subtitle: '{{workspace}} 中的后台、计划、Webhook 和手动工作流活动。',
     ledgerLabel: '工作流执行台账',
     loading: '正在加载工作流活动...',
@@ -386,14 +391,6 @@ export const zh = {
     supportTitle: '联系支持',
     supportBody: '需要协助时，请向 AcornOps 团队发送工作区或运行上下文。'
   },
-  workflows: {
-    sections: {
-      label: '工作流分区',
-      all: '所有工作流',
-      schedules: '计划',
-      incomingWebhooks: '传入 Webhook'
-    }
-  },
   schedules: {
     title: '计划',
     subtitle: '{{workspace}} 的周期性工作流调度。',
@@ -403,9 +400,6 @@ export const zh = {
     emptyBody: '创建计划后，可按 cron 频率调度活跃工作流。',
     loadError: '加载工作流计划失败。',
     nextRunUnavailable: '暂无后续运行',
-    runtimeValueCount: '{{count}} 个运行时值',
-    runtimeValueCount_one: '{{count}} 个运行时值',
-    runtimeValueCount_other: '{{count}} 个运行时值',
     contextGrantCount: '{{count}} 个上下文授权',
     contextGrantCount_one: '{{count}} 个上下文授权',
     contextGrantCount_other: '{{count}} 个上下文授权',
@@ -414,9 +408,8 @@ export const zh = {
       workflow: '工作流',
       cadence: '频率',
       nextRun: '下次运行',
-      scope: '范围',
       approvalGate: '审批门控',
-      inputsAndAccess: '输入和权限',
+      inputsAndAccess: '权限',
       actions: '操作'
     },
     status: {
@@ -452,7 +445,7 @@ export const zh = {
     form: {
       createTitle: '创建计划',
       editTitle: '编辑计划',
-      body: '选择此工作流的运行时间并提供所需值。保存前，AcornOps 会检查访问权限。',
+      body: '选择此工作流的运行时间。保存前，AcornOps 会检查访问权限。',
       close: '关闭计划抽屉',
       workflow: '工作流',
       name: '名称',
@@ -464,8 +457,6 @@ export const zh = {
       enabled: '启用',
       approvedContextGrants: '已批准上下文授权',
       approvedContextGrantsHelp: '每行输入一项授权。计划运行只能使用已批准的上下文。',
-      workflowInputs: '工作流输入',
-      workflowInputsHelp: '每次发生计划任务时，都会重新验证并授权这些值。',
       required: '请选择工作流并填写名称、cron 和时区。',
       save: '保存计划',
       saving: '正在保存...',
@@ -569,7 +560,7 @@ export const zh = {
       name: '名称',
       workflow: '工作流',
       workflowHelp: 'Webhook 创建后无法更改工作流。',
-      webhookHelp: '创建后，AcornOps 会显示一次性签名密钥。请求直接提供工作流输入。',
+      webhookHelp: '创建后，AcornOps 会显示一次性签名密钥。每个有效请求都会启动已保存的工作流。',
       runsAs: '运行身份',
       currentUser: '您当前的账户',
       runsAsHelp: '每次请求都会重新检查工作区成员身份和权限。',
@@ -1570,9 +1561,6 @@ export const zh = {
   workflowCatalog: {
     inlineFailure: '部分 Agent 或 MCP 能力无法加载。',
     openMcpSettings: '打开 MCP 设置'
-  },
-  workflowPrompt: {
-    authoringGuidance: '插入可复用的 @type[] 槽位，或固定具体引用。可用类型来自平台注册表。'
   },
   workspaceAiSettings: {
     title: 'AI 设置',
@@ -3174,7 +3162,7 @@ export const zh = {
     peerDescription: '所有已选 Agent 都是对等成员，其已审核能力上限共同限定此工作流。',
     selectionRequired: '请至少选择一个工作流 Agent 后再审核。',
     completeAccessStep: '第 2 步尚未完成。请至少选择一个 Agent 和一个语义能力后再审核。',
-    createDescription: '定义运行提示、已选 Agents 和语义能力允许列表。',
+    createDescription: '描述工作流，并选择负责运行该工作流的 Agents。',
     noAgents: '尚未选择工作流 Agent。',
     agentUnavailable: 'Agent 暂不可用',
     traceTitle: 'AcornOps 协调',
@@ -3273,7 +3261,7 @@ export const zh = {
     }
   },
   workflowRecommendations: {
-    open: '添加工作流',
+    open: '浏览模板',
     title: '添加推荐工作流',
     description: '使用 AcornOps 推荐内容作为起点。添加后，工作流归此工作区所有，AcornOps 不会覆盖它。',
     list: '推荐工作流',

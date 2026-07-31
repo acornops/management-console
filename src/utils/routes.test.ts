@@ -326,7 +326,7 @@ describe('routes', () => {
       origin: 'webhook',
       workflowId: 'workflow/a',
       issueId: 'issue/c'
-    })).toBe('/workspaces/team-alpha/activity?q=production+review&state=attention&origin=webhook&workflow=workflow%2Fa&issue=issue%2Fc');
+    })).toBe('/workspaces/team-alpha/workflows?view=activity&q=production+review&state=attention&origin=webhook&workflow=workflow%2Fa&issue=issue%2Fc');
     expect(parseAppRoute(AppPaths.workspaceActivity('team-alpha', {
       q: 'production review',
       state: 'attention',
@@ -334,13 +334,20 @@ describe('routes', () => {
       workflowId: 'workflow/a',
       issueId: 'issue/c'
     }))).toEqual({
-      kind: 'workspaceActivity',
+      kind: 'workspaceWorkflows',
       workspaceId: 'team-alpha',
+      section: 'all',
+      view: 'activity',
       q: 'production review',
       state: 'attention',
       origin: 'webhook',
       workflowId: 'workflow/a',
       issueId: 'issue/c'
+    });
+    expect(parseAppRoute('/workspaces/team-alpha/activity?issue=issue%2Fc')).toEqual({
+      kind: 'workspaceRedirect',
+      workspaceId: 'team-alpha',
+      target: '/workspaces/team-alpha/workflows?view=activity&issue=issue%2Fc'
     });
     expect(AppPaths.workspaceWorkflowRun('team-alpha', 'workflow/a', 'execution/b')).toBe(
       '/workspaces/team-alpha/workflows?workflow=workflow%2Fa&tab=runs&execution=execution%2Fb'
@@ -372,7 +379,7 @@ describe('routes', () => {
     expect(parseAppRoute('/workspaces/team-alpha/runs')).toEqual({
       kind: 'workspaceRedirect',
       workspaceId: 'team-alpha',
-      target: '/workspaces/team-alpha/activity'
+      target: '/workspaces/team-alpha/workflows?view=activity'
     });
     expect(parseAppRoute('/workspaces/team-alpha/triggers?type=webhook')).toEqual({
       kind: 'workspaceRedirect',

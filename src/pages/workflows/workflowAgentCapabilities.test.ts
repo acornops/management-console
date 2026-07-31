@@ -64,8 +64,6 @@ const workflow: WorkflowDefinition = {
   }],
   requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
   contextGrants: ['workspace_metadata'],
-  resourceRequirements: [],
-  parameters: [],
   policy: {
     mode: 'read_only',
     approvals: []
@@ -83,12 +81,13 @@ describe('workflowAgentCapabilities', () => {
     expect(review[0].mcpServers).toEqual(['Acornops Target Agent']);
     expect(review[0].semanticCapabilityIds).toEqual(['target.diagnostics.read']);
     expect(review[0].skills).toEqual(['Acornops Observability', 'Acornops Target Boundary Design']);
-    expect(review[0].tools).toEqual(['get_resource', 'get_resource_logs', 'list_resources']);
-    expect(review[0].tools).not.toContain('target.diagnostics.read');
-    expect(review[0].actionPolicy).toEqual([
-      'Permission mode: Read only',
-      'Approval gate: Writes are disabled'
+    expect(review[0].tools).toEqual([
+      { id: 'get_resource', label: 'get_resource', access: 'unknown', requiresApproval: false },
+      { id: 'get_resource_logs', label: 'get_resource_logs', access: 'unknown', requiresApproval: false },
+      { id: 'list_resources', label: 'list_resources', access: 'read', requiresApproval: false }
     ]);
+    expect(review[0].tools.map((tool) => tool.id)).not.toContain('target.diagnostics.read');
+    expect(review[0].writeAccess).toBe('Writes are disabled');
     expect(review[0].capabilityRules).toContain('read kubernetes target_inventory via list_resources');
   });
 
@@ -119,7 +118,7 @@ describe('workflowAgentCapabilities', () => {
 
     expect(review.map((item) => item.agentId)).toEqual([agent.id, repositoryAgent.id]);
     expect(review.every((item) => item.role === 'AcornOps-coordinated' && item.required)).toBe(true);
-    expect(new Set(review.flatMap((item) => item.tools))).toEqual(new Set([
+    expect(new Set(review.flatMap((item) => item.tools.map((tool) => tool.id)))).toEqual(new Set([
       'get_resource', 'get_resource_logs', 'list_resources', 'repository.read'
     ]));
   });
@@ -134,13 +133,30 @@ describe('workflowAgentCapabilities', () => {
       permissionMode: 'auto_allowed_changes'
     }]);
 
-    expect(askBeforeChanges[0].actionPolicy).toEqual([
-      'Permission mode: Ask before changes',
-      'Approval gate: Before every write-capable tool'
-    ]);
-    expect(automaticRoutineChanges[0].actionPolicy).toEqual([
-      'Permission mode: Automatic routine changes',
-      'Approval gate: Before high-risk or destructive writes'
-    ]);
+    expect(askBeforeChanges[0].writeAccess).toBe('Approval required before every write-capable tool');
+    expect(automaticRoutineChanges[0].writeAccess).toBe('Routine writes run automatically; approval is required for high-risk or destructive writes');
+  });
+
+  it('labels write tools with their runtime approval behavior', () => {
+    const [review] = getWorkflowAgentCapabilityReview(workflow, [{
+      ...agent,
+      tools: ['patch_resource'],
+      permissionMode: 'ask_before_changes',
+      capabilities: [{
+        source: 'builtin_tool',
+        resourceType: 'kubernetes',
+        resourceScope: 'target_inventory',
+        toolId: 'patch_resource',
+        operation: 'write',
+        requiresApproval: true
+      }]
+    }]);
+
+    expect(review.tools).toEqual([{
+      id: 'patch_resource',
+      label: 'patch_resource',
+      access: 'write',
+      requiresApproval: true
+    }]);
   });
 });

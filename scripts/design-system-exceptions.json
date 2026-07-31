@@ -31,7 +31,8 @@
     "src/pages/NotFoundPage.tsx"
   ],
   "routeHeaderDelegates": {
-    "src/pages/WorkspaceAgentsPage.tsx": "src/pages/WorkspaceAgentsCatalog.tsx"
+    "src/pages/WorkspaceAgentsPage.tsx": "src/pages/WorkspaceAgentsCatalog.tsx",
+    "src/pages/WorkspaceSchedulesPage.tsx": "src/pages/WorkspaceSchedulesPageChrome.tsx"
   },
   "embeddedRouteExceptions": {
     "src/pages/KubernetesClustersPage.tsx": "Delegates canonical route composition to the Dashboard inventory surface.",

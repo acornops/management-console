@@ -1,14 +1,8 @@
 export type WorkflowStatus = 'active' | 'draft' | 'paused';
 export type WorkflowCapabilityMode = 'read_only' | 'read_write';
 export type WorkflowCapabilityRestrictionMode = 'inherit' | 'restrict';
-export type WorkflowTab = 'overview' | 'agents' | 'capabilities' | 'runs' | 'settings';
+export type WorkflowView = 'overview' | 'agents' | 'capabilities' | 'runs' | 'settings';
 export type WorkflowPrimaryAction = 'launch' | 'activate';
-
-export interface WorkflowParameter {
-  key: string;
-  type: 'text' | 'target' | 'chat';
-  required: true;
-}
 
 export interface WorkflowRunRecord {
   id: string;
@@ -53,13 +47,6 @@ export interface WorkflowDefinition {
   executionMode: 'direct' | 'coordinated';
   semanticCapabilityIds: string[];
   capabilityRestrictionMode: WorkflowCapabilityRestrictionMode;
-  resourceRequirements: Array<{
-    type: string;
-    minimum: number;
-    maximum: number;
-    requiredOperations: string[];
-    constraints?: Record<string, unknown>;
-  }>;
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
   owner: string;
   tags: string[];
@@ -67,7 +54,6 @@ export interface WorkflowDefinition {
   agents: WorkflowAgentReference[];
   requiredPermissions: string[];
   contextGrants: string[];
-  parameters: WorkflowParameter[];
   policy: {
     mode: WorkflowCapabilityMode;
     approvals: string[];
@@ -120,6 +106,8 @@ export function filterWorkflowDefinitions(workflows: WorkflowDefinition[], query
       workflow.name,
       workflow.description,
       workflow.tags.join(' '),
+      workflow.agents.flatMap((agent) => [agent.name, agent.role]).join(' '),
+      workflow.semanticCapabilityIds.join(' '),
       workflow.status,
       workflow.policy.mode,
       workflow.policy.approvals.join(' '),
@@ -128,10 +116,6 @@ export function filterWorkflowDefinitions(workflows: WorkflowDefinition[], query
     ].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ');
     return queryTokens.every((token) => searchable.includes(token));
   });
-}
-
-export function getWorkflowById(workflows: WorkflowDefinition[], workflowId: string): WorkflowDefinition | undefined {
-  return workflows.find((workflow) => workflow.id === workflowId);
 }
 
 export function findWorkflowByRouteTarget(workflows: WorkflowDefinition[], target: string): WorkflowDefinition | undefined {
@@ -169,12 +153,4 @@ export function getWorkflowLaunchBlocker(
     return 'You need create_read_only_runs to launch this workflow.';
   }
   return null;
-}
-
-export function getWorkflowTabLabel(tab: WorkflowTab): string {
-  if (tab === 'overview') return 'Overview';
-  if (tab === 'agents') return 'Agents';
-  if (tab === 'capabilities') return 'Capability review';
-  if (tab === 'runs') return 'Runs';
-  return 'Settings';
 }

@@ -64,6 +64,9 @@ export interface DiscoveryFilterBarProps {
   clearAllLabel: string;
   onQueryChange: (value: string) => void;
   onClearAll: () => void;
+  embedded?: boolean;
+  searchWidth?: 'fluid' | 'fixed';
+  filterWidth?: 'default' | 'compact';
   className?: string;
 }
 
@@ -85,6 +88,9 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
   clearAllLabel,
   onQueryChange,
   onClearAll,
+  embedded = false,
+  searchWidth = 'fluid',
+  filterWidth = 'default',
   className
 }) => {
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -164,7 +170,7 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
 
   return (
     <div data-discovery-filter-bar="true" className={className}>
-      <SearchFilterFrame search={search} filterControls={filterControls} trailingActions={clearAllAction} resultSummary={liveResultSummary} />
+      <SearchFilterFrame embedded={embedded} searchWidth={searchWidth} filterWidth={filterWidth} search={search} filterControls={filterControls} trailingActions={clearAllAction} resultSummary={liveResultSummary} />
     </div>
   );
 };

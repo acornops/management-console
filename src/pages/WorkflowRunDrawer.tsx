@@ -4,37 +4,35 @@ import { Checkbox } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkflowCapabilityLedger } from '@/pages/WorkspaceWorkflowsPage.components';
-import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
+import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 import type { WorkflowCapabilitiesPreview } from '@/services/control-plane/workflowApi';
 
 export const WorkflowRunDrawer: React.FC<{
   workflow?: WorkflowDefinition;
-  values: Record<string, string>;
-  errors: Record<string, string>;
   preview: WorkflowCapabilitiesPreview | null;
   previewing: boolean;
   previewError: string;
   blocker: string | null;
+  launchError: string;
+  launchRecovery: McpReadinessRecovery | null;
   launching: boolean;
   acknowledged: boolean;
   onAcknowledgementChange: (value: boolean) => void;
-  onValuesChange: (values: Record<string, string>) => void;
   onRetryPreview: () => void;
   onClose: () => void;
   onLaunch: () => void;
 }> = ({
   workflow,
-  values,
-  errors,
   preview,
   previewing,
   previewError,
   blocker,
+  launchError,
+  launchRecovery,
   launching,
   acknowledged,
   onAcknowledgementChange,
-  onValuesChange,
   onRetryPreview,
   onClose,
   onLaunch
@@ -49,7 +47,7 @@ export const WorkflowRunDrawer: React.FC<{
       onClose={onClose}
       title="Run workflow"
       titleId="workflow-run-drawer-title"
-      description={workflow ? `Provide the values for ${workflow.name}. These values apply only to this run.` : undefined}
+      description={workflow ? `Review the saved prompt and run capabilities for ${workflow.name}.` : undefined}
       footer={
         <>
           <Button variant="tertiary" onClick={onClose} disabled={launching}>
@@ -69,8 +67,6 @@ export const WorkflowRunDrawer: React.FC<{
             <p className="mt-2 whitespace-pre-wrap break-words type-body text-ui-text">{workflow.starterPrompt}</p>
           </section>
 
-          <WorkflowParameterFields workflow={workflow} values={values} errors={errors} onChange={onValuesChange} />
-
           {writeCapable && (
             <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-3 type-body text-ui-text">
               <Checkbox checked={acknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="mt-0.5 shrink-0" />
@@ -86,6 +82,12 @@ export const WorkflowRunDrawer: React.FC<{
           {blocker && (
             <p role="alert" className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-body type-emphasis text-status-warning-text">
               {blocker}
+            </p>
+          )}
+          {launchError && (
+            <p role="alert" className="rounded-md border border-status-danger/30 bg-status-danger-soft px-3 py-2 type-body type-emphasis text-status-danger-text">
+              {launchError}
+              {launchRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={launchRecovery.href}>{launchRecovery.label}</a>}
             </p>
           )}
         </div>

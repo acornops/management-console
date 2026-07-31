@@ -81,6 +81,27 @@ describe('DiscoveryFilterBar', () => {
     expect(markup).not.toContain('Clear all');
   });
 
+  it('supports an embedded composition for a shared parent toolbar', () => {
+    const markup = renderToStaticMarkup(
+      <DiscoveryFilterBar
+        embedded
+        idPrefix="embedded-catalog"
+        query=""
+        queryLabel="Search catalog"
+        queryPlaceholder="Search catalog"
+        queryClearLabel="Clear search"
+        resultSummary="8 results"
+        filters={[]}
+        clearAllLabel="Clear all"
+        onQueryChange={() => undefined}
+        onClearAll={() => undefined}
+      />
+    );
+
+    expect(markup).toContain('gap-3 [contain:inline-size] p-0');
+    expect(markup).toContain('data-search-filter-frame="true" class="flex w-full min-w-0 max-w-full flex-wrap items-center gap-3 [contain:inline-size] p-0');
+  });
+
   it('shows contextual Clear all only for at least two active conditions', () => {
     expect(renderBar({ query: '', filters: [statusFilter('active')] })).not.toContain('Clear all');
     expect(renderBar({ query: 'agent', filters: [statusFilter('all')] })).not.toContain('Clear all');

@@ -7,6 +7,7 @@ export type McpCatalogCompatibility = 'all' | 'compatible' | 'incompatible';
 export type WorkflowActivityStateFilter = 'all' | 'open' | 'attention' | 'completed' | 'failed' | 'cancelled';
 export type WorkflowActivityOriginFilter = 'manual' | 'external_integration' | 'schedule' | 'webhook';
 export type WorkflowSection = 'all' | 'schedules' | 'incomingWebhooks';
+export type WorkflowWorkspaceView = 'workflows' | 'activity';
 
 export interface WorkflowActivityRouteState {
   q?: string;
@@ -48,13 +49,14 @@ export type AppRoute =
   | { kind: 'workspaceAgents'; workspaceId: string }
   | { kind: 'workspaceAgentDetail'; workspaceId: string; agentId: string; tab: AgentSubview }
   | ({ kind: 'workspaceCatalog'; workspaceId: string } & McpCatalogRouteState)
-  | {
+  | ({
       kind: 'workspaceWorkflows';
       workspaceId: string;
       section: WorkflowSection;
+      view?: 'activity';
       create?: boolean;
       createWorkflowId?: string;
-    }
+    } & WorkflowActivityRouteState)
   | ({ kind: 'workspaceActivity'; workspaceId: string } & WorkflowActivityRouteState)
   | { kind: 'workspaceRedirect'; workspaceId: string; target: string }
   | { kind: 'workspaceApprovals'; workspaceId: string; runId?: string; approvalId?: string }
@@ -191,13 +193,14 @@ function parseWorkflowActivityRouteState(params: URLSearchParams): WorkflowActiv
 }
 
 function withWorkflowActivityRouteState(path: string, state?: WorkflowActivityRouteState): string {
-  const params = new URLSearchParams();
+  const [pathname, query = ''] = path.split('?');
+  const params = new URLSearchParams(query);
   if (state?.q?.trim()) params.set('q', state.q.trim());
   if (state?.state && state.state !== 'all') params.set('state', state.state);
   if (state?.origin) params.set('origin', state.origin);
   if (state?.workflowId) params.set('workflow', state.workflowId);
   if (state?.issueId) params.set('issue', state.issueId);
-  return appendQuery(path, params);
+  return appendQuery(pathname, params);
 }
 
 function parseMcpCatalogRouteState(params: URLSearchParams): McpCatalogRouteState {
@@ -363,6 +366,9 @@ export function parseAppRoute(path: string): AppRoute {
       kind: 'workspaceWorkflows',
       workspaceId,
       section,
+      ...(section === 'all' && params.get('view') === 'activity'
+        ? { view: 'activity' as const, ...parseWorkflowActivityRouteState(params) }
+        : {}),
       ...(create ? { create: true } : {}),
       ...(createWorkflowId ? { createWorkflowId } : {})
     };
@@ -408,7 +414,13 @@ export function parseAppRoute(path: string): AppRoute {
     if (section === 'overview') return { kind: 'workspaceOverview', workspaceId };
     if (section === 'agents') return { kind: 'workspaceAgents', workspaceId };
     if (section === 'catalog') return { kind: 'workspaceCatalog', workspaceId, ...parseMcpCatalogRouteState(params) };
-    if (section === 'activity') return { kind: 'workspaceActivity', workspaceId, ...parseWorkflowActivityRouteState(params) };
+    if (section === 'activity') {
+      return {
+        kind: 'workspaceRedirect',
+        workspaceId,
+        target: AppPaths.workspaceActivity(workspaceId, parseWorkflowActivityRouteState(params))
+      };
+    }
     if (section === 'approvals') {
       const runId = params.get('runId') || undefined;
       const approvalId = params.get('approvalId') || undefined;
@@ -553,7 +565,7 @@ export const AppPaths = {
     return appendQuery(`/workspaces/${encodeURIComponent(workspaceId)}/workflows`, params);
   },
   workspaceActivity: (workspaceId: string, state?: WorkflowActivityRouteState): string =>
-    withWorkflowActivityRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/activity`, state),
+    withWorkflowActivityRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/workflows?view=activity`, state),
   workspaceScheduleCreate: (workspaceId: string, workflowId: string): string =>
     AppPaths.workspaceWorkflows(workspaceId, 'schedules', { create: true, workflowId }),
   workspaceWebhookCreate: (workspaceId: string, workflowId?: string): string =>

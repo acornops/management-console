@@ -9,21 +9,25 @@ able to answer three questions without opening each workflow:
 
 ## Information Architecture
 
-Workflows has three route-level sections:
+Workflows is one definition workspace. The selected workflow's Overview remains
+visible as the stable canvas; Run activity, Schedules, Incoming webhooks, Edit,
+and Launch open focused task drawers from its compact action group. Operational
+views are visually grouped separately from definition and launch actions.
 
-- **All Workflows** owns workflow definitions and manual launch.
-- **Schedules** owns recurring workflow dispatch.
-- **Incoming Webhooks** owns signed endpoints that dispatch workflows.
-
-**Activity** is a top-level Automation destination and owns the workspace
-execution ledger. Workflow details retain their scoped Activity view.
+**Activity** is the second view inside the Workflows destination and owns the
+workspace execution ledger. A compact, route-backed view switch changes between
+**Show workflows** and **Show activity** without adding another global navigation
+destination. On desktop the switch occupies an `18rem` rail aligned beside the
+active view's search and filters; compact layouts stack the controls. A workflow's
+**Run activity** action opens the same run detail in a
+workflow-scoped drawer without replacing Overview.
 
 Outbound webhooks remain a separate Automation destination because they deliver
-AcornOps events to another system; they do not start workflows. The Workflows
-page uses route-backed tabs, keeping the active collection visible as stable
-navigation rather than a filter that replaces the table. Schedule and incoming
-webhook creation intents are route-backed so workflow-prefilled destinations
-open directly and remain resumable.
+AcornOps events to another system; they do not start workflows. Schedules and
+incoming webhooks are managed from workflow-filtered drawer tables. Create
+actions open modal forms above those drawers. Existing schedule, incoming
+webhook, and `tab=` deep links remain compatibility contracts, but they do not
+render navigation tabs.
 
 ## Execution Model
 
@@ -48,11 +52,13 @@ webhook payloads or raw occurrence keys as provenance.
 
 ## Operator Surfaces
 
-The Activity navigation badge shows open executions. The Activity ledger
-defaults to open work and supports URL-backed search, state, origin,
+The in-page Activity view tab shows open executions; the Workflows navigation
+item carries the Experimental badge. The Activity ledger defaults to open work
+and supports URL-backed search, state, origin,
 workflow, and issue filters. Rows show workflow and origin, target, lifecycle
 time, honest duration, and one exact-run action. Exact links open the existing
-workflow Runs panel and focus the matching execution.
+workflow-scoped Run activity drawer and focus the matching execution. The
+`tab=runs` URL value remains the compatibility contract for those links.
 
 Workspace, Kubernetes, and virtual-machine issue rows show the most relevant
 execution with its origin and current state. Their primary action follows this
@@ -69,9 +75,11 @@ a direct next step; it does not replace operator judgment.
 
 ## Collection Behavior
 
-Activity, Schedules, Incoming Webhooks, and Outbound webhooks use the shared page header and discovery
-bar. Search and filters appear directly above the collection, and no inner card
-repeats the page title.
+The workspace Activity ledger and compatibility Schedules, Incoming Webhooks,
+and Outbound Webhooks routes use the shared page header and discovery
+bar. Workflow-scoped schedule and webhook drawers omit redundant discovery
+controls and lead with a compact table already filtered to the selected
+workflow.
 
 Desktop ledgers retain concise, single-line column headings during loading,
 error, empty, filtered-empty, and populated states. Compact layouts replace
@@ -85,12 +93,22 @@ Outbound-webhook discovery stays visible while loading, when items exist, or
 when URL filters are active. It is omitted for a confirmed empty, unfiltered
 collection because there is nothing to search.
 
+Workflow creation uses two steps: describe the workflow, then select its agents.
+There is no read-only review step; the final button summarizes the real commit
+point. The edit drawer also opens directly in editable form, and authorized
+operators enter agent selection directly from Overview. These surfaces retain
+Cancel or Back actions without nesting a second edit mode inside a task drawer.
+Workflow prompts are plain text: workflow authoring and launch do not provide
+runtime template parameters or prompt-reference insertion. Schedule and incoming
+webhook creation use compact, medium-width modal forms above their parent drawer
+so operators retain the selected workflow as context.
+
 ## Refresh and Accessibility
 
 One workspace activity store fetches navigation counts on workspace entry,
 polls every two seconds while the document is visible, and refreshes on window
 focus or visibility restoration. A failed refresh preserves the last successful
-counts and exposes a persistent warning on Runs.
+counts and exposes a persistent warning on Activity.
 
 The polite live region announces newly discovered runs and increases in
 attention-required work. Routine refreshes are silent. Status always combines

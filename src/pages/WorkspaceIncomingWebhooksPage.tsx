@@ -10,7 +10,7 @@ import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
-import { DrawerFrame } from '@acornops/ui';
+import { DialogFrame } from '@acornops/ui';
 import { DataSurface, PageHeader, PageShell } from '@acornops/ui';
 import { Select, type SelectOption } from '@acornops/ui';
 import { formInputClassName, formTextareaClassName } from '@acornops/ui';
@@ -28,8 +28,8 @@ import {
 } from '@/services/control-plane/workflowWebhookApi';
 import type { Workspace } from '@/types';
 import { WorkspaceWebhookCard, workspaceWebhookLedgerGridClass } from '@/pages/WorkspaceWebhookCard';
+import { WorkspaceWebhookDrawerTable } from '@/pages/WorkspaceWebhookDrawerTable';
 import { WorkspaceWebhookDeleteDialog } from '@/pages/WorkspaceWebhookDeleteDialog';
-import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import {
   draftFromWebhook,
@@ -44,7 +44,8 @@ interface WorkspaceIncomingWebhooksPageProps {
   workspace: Workspace;
   create?: boolean;
   createWorkflowId?: string;
-  navigate: (path: string) => void;
+  constrainedWorkflowId?: string;
+  embedded?: boolean;
 }
 
 type TriggerStatusFilter = 'all' | 'enabled' | 'paused';
@@ -56,7 +57,8 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
   workspace,
   create,
   createWorkflowId,
-  navigate
+  constrainedWorkflowId,
+  embedded = false
 }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
@@ -123,11 +125,11 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
 
   const workspaceStateCurrent = stateWorkspaceId === workspace.id;
   const triggers = workspaceStateCurrent ? triggerPage?.items || [] : [];
-  const query = urlSearch.get('q') || '';
-  const status = urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'paused'
+  const query = embedded ? '' : urlSearch.get('q') || '';
+  const status = !embedded && (urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'paused')
     ? urlSearch.get('status') as Exclude<TriggerStatusFilter, 'all'>
     : 'all';
-  const workflowFilter = urlSearch.get('workflow') || 'all';
+  const workflowFilter = constrainedWorkflowId || urlSearch.get('workflow') || 'all';
   const normalizedQuery = query.trim().toLowerCase();
   const activeWorkflows = useMemo(
     () => workspaceStateCurrent ? workflows.filter((workflow) => workflow.status === 'active') : [],
@@ -316,8 +318,8 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
   };
 
   return (
-    <PageShell>
-      <PageHeader
+    <PageShell embedded={embedded} className={embedded ? 'p-4 sm:p-5' : undefined}>
+      {!embedded && <PageHeader
         title={t('eventTriggers.title')}
         description={t('eventTriggers.subtitle', { workspace: workspace.name })}
         actions={<>
@@ -330,14 +332,25 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
             {t('eventTriggers.actions.create')}
           </Button>
         </>}
-      />
-      <WorkflowSections activeSection="incomingWebhooks" workspaceId={workspace.id} navigate={navigate} />
+      />}
+      {embedded && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="type-caption text-ui-text-muted">
+            {t('eventTriggers.count', { count: visibleTriggers.length })}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={() => void refresh()} disabled={phase === 'loading' || phase === 'refreshing'}>
+              <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
+              {t('common.refresh')}
+            </Button>
+            <Button size="sm" variant="primary" onClick={() => openCreate(constrainedWorkflowId)} disabled={!canManage || !activeWorkflows.length}>
+              <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+              {t('eventTriggers.actions.create')}
+            </Button>
+          </div>
+        </div>
+      )}
 
-      <div
-        id="workflow-section-incomingWebhooks-panel"
-        role="tabpanel"
-        aria-labelledby="workflow-section-incomingWebhooks-tab"
-      >
       {!canManage && <InlineAlert tone="neutral" className="mb-5">{t('eventTriggers.permissionNotice')}</InlineAlert>}
       {!activeWorkflows.length && phase === 'ready' && <InlineAlert tone="warning" className="mb-5">{t('eventTriggers.noActiveWorkflows')}</InlineAlert>}
       {workspaceStateCurrent && mutationError && !deleteTargetTrigger && <InlineAlert tone="danger" className="mb-5">{mutationError}</InlineAlert>}
@@ -374,7 +387,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         </section>
       )}
 
-      <DiscoveryFilterBar
+      {!embedded && <DiscoveryFilterBar
         idPrefix="workflow-triggers"
         query={query}
         queryLabel={searchLabel}
@@ -412,7 +425,33 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         onQueryChange={(value) => updateUrlSearch({ q: value || null }, { replace: true })}
         onClearAll={clearFilters}
         className="mb-4"
-      />
+      />}
+      {embedded ? (
+        <WorkspaceWebhookDrawerTable
+          actionButtonRefs={actionButtonRefs}
+          canManage={canManage}
+          loadError={loadError}
+          mutatingId={mutatingId}
+          onCopyEndpoint={(endpoint) => void copy(endpoint, t('eventTriggers.secret.endpointCopied'))}
+          onEdit={openEdit}
+          onRequestDelete={(trigger) => {
+            setPendingRotateId('');
+            setMutationError('');
+            setPendingDeleteId(trigger.id);
+          }}
+          onRequestRotate={(trigger) => {
+            setPendingDeleteId('');
+            setPendingRotateId(trigger.id);
+          }}
+          onRetry={() => void refresh()}
+          onRotate={(trigger) => void rotateSecret(trigger)}
+          onToggle={(trigger) => void toggle(trigger)}
+          pendingRotateId={pendingRotateId}
+          phase={workspaceStateCurrent ? phase : 'loading'}
+          setPendingRotateId={setPendingRotateId}
+          triggers={visibleTriggers}
+        />
+      ) : (
       <DataSurface aria-label={t('eventTriggers.listTitle')}>
         <DataTableGridHeader showAt="xl" className={workspaceWebhookLedgerGridClass} collectionState={{ phase: workspaceStateCurrent ? phase : 'loading', itemCount: visibleTriggers.length }}>
           <DataTableGridHeaderCell>{t('eventTriggers.columns.trigger')}</DataTableGridHeaderCell>
@@ -489,7 +528,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           </div>
         </CollectionState>
       </DataSurface>
-      </div>
+      )}
       <WorkspaceWebhookDeleteDialog
         webhook={deleteTargetTrigger}
         error={mutationError}
@@ -505,7 +544,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           if (deleteTargetTrigger) void remove(deleteTargetTrigger);
         }}
       />
-      <DrawerFrame
+      <DialogFrame
         open={workspaceStateCurrent && drawerOpen}
         onClose={closeDrawer}
         closeDisabled={saving}
@@ -515,8 +554,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           : t('eventTriggers.form.createTitle')}
         description={t('eventTriggers.form.description')}
         closeLabel={t('common.close')}
-        width="lg"
-        bodyClassName="space-y-5"
+        width="md"
+        className="max-h-[min(80vh,36rem)]"
+        bodyClassName="space-y-4"
         footer={<>
           <Button size="sm" variant="tertiary" onClick={closeDrawer} disabled={saving}>{t('common.cancel')}</Button>
           <Button size="sm" variant="primary" onClick={() => void save()} disabled={!canSave || saving}>
@@ -569,7 +609,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           <Checkbox checked={draft.enabled} onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))} />
           {t('eventTriggers.form.enabled')}
         </label>
-      </DrawerFrame>
+      </DialogFrame>
     </PageShell>
   );
 };

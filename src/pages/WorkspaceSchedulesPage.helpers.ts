@@ -9,7 +9,6 @@ export interface ScheduleDraft {
   timezone: string;
   enabled: boolean;
   approvedContextGrants: string;
-  inputs: Record<string, string>;
   runsAsUserId: string;
 }
 
@@ -20,7 +19,6 @@ export const createEmptyDraft = (): ScheduleDraft => ({
   timezone: getUserTimeZone(),
   enabled: true,
   approvedContextGrants: 'workspace_metadata',
-  inputs: {},
   runsAsUserId: ''
 });
 
@@ -37,7 +35,6 @@ export function scheduleToDraft(schedule: WorkflowSchedule): ScheduleDraft {
     timezone: schedule.timezone,
     enabled: schedule.status === 'enabled',
     approvedContextGrants: schedule.approvedContextGrants.join('\n'),
-    inputs: schedule.inputs,
     runsAsUserId: schedule.principal.id
   };
 }

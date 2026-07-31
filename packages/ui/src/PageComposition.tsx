@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 export interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
+  contentClassName?: string;
   embedded?: boolean;
   width?: 'full' | 'content' | 'narrow';
 }
@@ -16,7 +17,7 @@ const pageWidthClasses: Record<NonNullable<PageShellProps['width']>, string> = {
 
 /** Canonical scrolling and responsive route margins for authenticated pages. */
 export const PageShell = React.forwardRef<HTMLDivElement, PageShellProps>(
-  ({ children, className, embedded = false, width = 'full', ...props }, ref) => (
+  ({ children, className, contentClassName, embedded = false, width = 'full', ...props }, ref) => (
     <div
       ref={ref}
       className={twMerge(clsx(
@@ -28,7 +29,7 @@ export const PageShell = React.forwardRef<HTMLDivElement, PageShellProps>(
       ))}
       {...props}
     >
-      <div className={pageWidthClasses[width]}>{children}</div>
+      <div className={twMerge(pageWidthClasses[width], contentClassName)}>{children}</div>
     </div>
   )
 );
