@@ -33,3 +33,5 @@ control-plane-first rolling deployment.
   overflow or console warnings.
 - Focused tests, lint, build, contract checks, route smoke tests, and the
   cross-repository contract mirror check pass.
+- The broader design validation remains blocked by unrelated semantic-typography
+  findings in `NavCountBadge.tsx`; the harness validation passes.
