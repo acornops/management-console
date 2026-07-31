@@ -28,6 +28,7 @@ import { useWorkflowExecutionDeepLink } from '@/pages/workflows/useWorkflowExecu
 import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 import { WorkflowRecommendationActions } from '@/pages/WorkflowRecommendationActions';
 import { WorkflowRunDrawer } from '@/pages/WorkflowRunDrawer';
+import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 const WorkflowScheduleCreateDrawer = React.lazy(() => import('@/pages/WorkflowScheduleCreateDrawer').then((module) => ({ default: module.WorkflowScheduleCreateDrawer })));
 export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: (path: string) => void }> = ({ workspace, navigate }) => {
   const { t } = useTranslation();
@@ -402,6 +403,8 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
           {!canManageWorkflowScope && <span className="type-caption max-w-64 type-emphasis text-ui-text-muted lg:text-right">Ask a workspace manager for manage_workflows to create or edit workflow definitions.</span>}
         </div>}
       />
+      <WorkflowSections activeSection="all" workspaceId={workspace.id} navigate={navigate} />
+      <div id="workflow-section-all-panel" role="tabpanel" aria-labelledby="workflow-section-all-tab">
       {workflowLoadError && <WorkflowLoadErrorNotice onRetry={() => setWorkflowCatalogReloadKey((value) => value + 1)} />}
       {workflowOptionsError && <div role="alert" className="mb-4 flex flex-col gap-3 rounded-md border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-body text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
         <div><strong>Workflow options could not be loaded.</strong> {workflowOptionsError}</div><Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>Retry</Button>
@@ -601,6 +604,7 @@ export const WorkspaceWorkflowsPage: React.FC<{ workspace: Workspace; navigate: 
           </section>
         ) : null}
         />
+      </div>
       <WorkflowDeleteDialog
         deleteTargetWorkflow={deleteTargetWorkflow}
         deleteWorkflowConfirmation={deleteWorkflowConfirmation}

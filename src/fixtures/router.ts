@@ -6,7 +6,7 @@ import { targetSummary, targetToolCatalog, workflowOptions } from './presenters'
 import { routePromptReferenceFixtureRequest } from './promptReferenceRoutes';
 import { workflowCapabilityPreview } from './workflowCapabilityPreview';
 import { routeWebhookFixtureRequest } from './webhookRoutes';
-import { routeWorkflowEventTriggerFixtureRequest } from './workflowEventTriggerRoutes';
+import { routeWorkflowWebhookFixtureRequest } from './workflowWebhookRoutes';
 import { routeWorkflowActivityFixtureRequest } from './workflowActivityRoutes';
 import { routeApprovalFixtureRequest } from './approvalRoutes';
 import { routeAgentConversationFixtureRequest } from './agentConversationRoutes';
@@ -531,7 +531,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'PATCH') { Object.assign(schedule, await bodyOf(request), { updatedAt: NOW }); return json({ schedule: clone(schedule) }); }
     if (method === 'DELETE') { state.workflowSchedules = state.workflowSchedules.filter((item) => item.id !== scheduleId); return noContent(); }
   }
-  const eventTriggerResponse = await routeWorkflowEventTriggerFixtureRequest({
+  const eventTriggerResponse = await routeWorkflowWebhookFixtureRequest({
     request,
     state,
     path,

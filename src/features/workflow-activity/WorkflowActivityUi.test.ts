@@ -77,6 +77,6 @@ describe('workflow activity timing', () => {
       openCount: 2,
       attentionCount: 1,
       latestExecution: summary('running')
-    })).toBe('/workspaces/workspace-1/runs?issue=issue-1');
+    })).toBe('/workspaces/workspace-1/activity?issue=issue-1');
   });
 });

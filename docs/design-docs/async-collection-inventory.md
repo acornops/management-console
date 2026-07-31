@@ -7,9 +7,9 @@ limited to bounded overview aggregates and selectors.
 | Surface or endpoint | Consumer | Strategy | Status or exception |
 | --- | --- | --- | --- |
 | Catalog artifacts | `WorkspaceCatalogPage` | manual | Migrated to `useCursorCollection` and `CollectionState`. |
-| Workflow execution ledger | `WorkspaceRunsPage`, `WorkspaceWorkflowActivityContext` | manual cursor plus bounded polling | Runs owns cursor pagination; the shell fetches one bounded summary page every two seconds while visible and on focus. |
+| Workflow execution ledger | `WorkspaceActivityPage`, `WorkspaceWorkflowActivityContext` | manual cursor plus bounded polling | Activity owns cursor pagination; the shell fetches one bounded summary page every two seconds while visible and on focus. |
 | Workflow schedules | `WorkspaceSchedulesPage` | not paginated | `ResourcePhase` owns loading and retained refresh state; compact cards use `CollectionState` while the desktop table keeps its headings mounted through every state. |
-| Workflow event triggers | `WorkspaceEventTriggersPage` | not paginated | One retained collection is filtered by route-backed type, status, workflow, and search controls; desktop headings remain mounted through every state. |
+| Incoming workflow webhooks | `WorkspaceIncomingWebhooksPage` | not paginated | The Workflows section retains the collection through refresh and supports status, workflow, and search controls; desktop headings remain mounted through every state. |
 | Outbound webhooks | `WorkspaceWebhooksPage` | not paginated | Workspace-fenced state retains items during refresh. Discovery is omitted only for a confirmed empty, unfiltered collection. |
 | Approval inbox | `WorkspaceApprovalsPage` | bounded dual page | Migrated visible lifecycle to `CollectionState`; the API currently returns the two bounded status pages together. |
 | Agent catalog | `WorkspaceAgentsCatalog` | not paginated | Migrated to one mounted `CollectionState` frame. |

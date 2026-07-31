@@ -97,16 +97,10 @@ function ProvenanceChain({
       <GitBranch className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <span className="min-w-0 truncate">
         {t(`workflowActivity.origin.${origin.kind}`)}
-        {(origin.kind === 'schedule' || origin.kind === 'event_trigger') && (
+        {(origin.kind === 'schedule' || origin.kind === 'webhook' || origin.kind === 'historical_event') && (
           <>
             <span aria-hidden="true"> · </span>
             <span className="text-ui-text">{origin.label}</span>
-          </>
-        )}
-        {origin.kind === 'event_trigger' && (
-          <>
-            <span aria-hidden="true"> · </span>
-            {origin.source.label}
           </>
         )}
       </span>
@@ -215,7 +209,7 @@ export function issueWorkflowActivityPath(
   const directExecution = activity.openCount === 0 ? activity.latestExecution : openExecution;
   return directExecution
     ? AppPaths.workspaceWorkflowRun(workspaceId, directExecution.workflow.id, directExecution.id)
-    : AppPaths.workspaceRuns(workspaceId, { issueId });
+    : AppPaths.workspaceActivity(workspaceId, { issueId });
 }
 
 export function IssueWorkflowActivity({

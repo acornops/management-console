@@ -10,7 +10,7 @@ import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
-import { PageShell } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -28,7 +28,6 @@ import {
   type WorkflowSchedule,
   type WorkflowScheduleListResponse
 } from '@/services/control-plane/workflowApi';
-import type { WorkflowTriggerType } from '@/utils/routes';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { WorkflowParameterFields } from '@/pages/WorkspaceWorkflowsPage.launchFields';
@@ -46,14 +45,14 @@ import {
   WorkspaceScheduleTableRow
 } from '@/pages/WorkspaceScheduleRows';
 import { WorkspaceScheduleDeleteDialog } from '@/pages/WorkspaceScheduleDeleteDialog';
-import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
+import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { TextInput, Textarea } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceSchedulesPageProps {
   workspace: Workspace;
-  createTriggerType?: WorkflowTriggerType;
+  create?: boolean;
   createWorkflowId?: string;
   navigate: (path: string) => void;
 }
@@ -65,7 +64,7 @@ const scheduleFormTextareaClassName = formTextareaClassName('mt-2');
 
 export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   workspace,
-  createTriggerType,
+  create,
   createWorkflowId,
   navigate
 }) => {
@@ -175,7 +174,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   useEffect(() => {
     const createIntent = createWorkflowId
       ? `workflow:${createWorkflowId}`
-      : createTriggerType === 'schedule'
+      : create
         ? 'schedule'
         : '';
     if (
@@ -186,7 +185,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     ) return;
     consumedCreateIntentRef.current = createIntent;
     openCreateDrawer(createWorkflowId);
-  }, [createTriggerType, createWorkflowId, currentUser?.id, schedulePhase]);
+  }, [create, createWorkflowId, currentUser?.id, schedulePhase]);
 
   const openEditDrawer = (schedule: WorkflowSchedule) => {
     setDraft(scheduleToDraft(schedule));
@@ -350,20 +349,26 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
 
   return (
     <PageShell>
-      <WorkflowTriggersPageHeader
-        workspace={workspace}
-        currentType="schedule"
-        createDisabled={!canManageSchedules || !activeWorkflows.length}
-        refreshDisabled={schedulesBusy}
-        navigate={navigate}
-        onCreateCurrent={() => openCreateDrawer()}
-        onRefresh={() => void refreshSchedules()}
+      <PageHeader
+        title={t('schedules.title')}
+        description={t('schedules.subtitle', { workspace: workspace.name })}
+        actions={<>
+          <Button size="md" variant="secondary" onClick={() => void refreshSchedules()} disabled={schedulesBusy}>
+            <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
+            {t('common.refresh')}
+          </Button>
+          <Button size="md" variant="primary" onClick={() => openCreateDrawer()} disabled={!canManageSchedules || !activeWorkflows.length}>
+            <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+            {t('schedules.actions.create')}
+          </Button>
+        </>}
       />
+      <WorkflowSections activeSection="schedules" workspaceId={workspace.id} navigate={navigate} />
 
       <div
-        id="workflow-trigger-type-schedule-panel"
+        id="workflow-section-schedules-panel"
         role="tabpanel"
-        aria-labelledby="workflow-trigger-type-schedule-tab"
+        aria-labelledby="workflow-section-schedules-tab"
       >
       {!canManageSchedules && (
         <div className="mb-5 rounded-md border border-ui-border bg-ui-surface px-4 py-3 type-ui text-ui-text-muted">

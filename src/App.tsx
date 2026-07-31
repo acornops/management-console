@@ -33,6 +33,11 @@ const App: React.FC = () => {
   const { t, i18n } = useTranslation();
   const logoSrc = `${import.meta.env.BASE_URL}logo.svg`;
   const { route, navigate } = useAppRouter();
+  useEffect(() => {
+    if (route.kind === 'workspaceRedirect') {
+      navigate(route.target, { replace: true });
+    }
+  }, [navigate, route]);
   const [user, setUser] = useState<User | null>(null);
   const [kubernetesClusters, setKubernetesClusters] = useState<KubernetesCluster[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);

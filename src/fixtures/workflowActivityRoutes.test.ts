@@ -16,7 +16,7 @@ function route(path: string, method = 'GET') {
 describe('workflow activity fixture routes', () => {
   beforeEach(resetFixtureStore);
 
-  it('provides deterministic scheduled, issue, approval, review, terminal, and deleted-trigger states', () => {
+  it('provides deterministic scheduled, issue, approval, review, terminal, and deleted-webhook states', () => {
     const response = route('/api/v1/workspaces/fixture-workspace/workflow-executions');
     expect(response?.status).toBe(200);
     const body = response?.body as {
@@ -30,7 +30,7 @@ describe('workflow activity fixture routes', () => {
     expect(body.items.some((item) => item.status === 'needs_review')).toBe(true);
     expect(body.items.some((item) => item.status === 'completed')).toBe(true);
     expect(body.items.some((item) => item.status === 'failed')).toBe(true);
-    expect(body.items.some((item) => item.origin.label === 'Deleted trigger')).toBe(true);
+    expect(body.items.some((item) => item.origin.label === 'Deleted workflow webhook')).toBe(true);
     expect(body.summary.openCount).toBeGreaterThan(0);
     expect(body.summary.attentionCount).toBeGreaterThan(0);
   });

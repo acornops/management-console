@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 
 import { StatusBadge } from '@acornops/ui';
 import { WorkflowExecutionLink } from '@/features/workflow-activity/WorkflowActivityUi';
-import type { WorkflowEventTrigger } from '@/services/control-plane/workflowEventTriggerApi';
+import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
 import { formatUserDateTime } from '@/utils/dateTime';
 
 function dispatchTone(
-  status?: WorkflowEventTrigger['lastStatus']
+  status?: WorkflowWebhook['lastStatus']
 ): React.ComponentProps<typeof StatusBadge>['tone'] {
   if (status === 'dispatched') return 'success';
   if (status === 'failed' || status === 'rejected') return 'danger';
@@ -15,7 +15,7 @@ function dispatchTone(
   return 'neutral';
 }
 
-function configurationLabel(trigger: WorkflowEventTrigger, t: ReturnType<typeof useTranslation>['t']) {
+function configurationLabel(trigger: WorkflowWebhook, t: ReturnType<typeof useTranslation>['t']) {
   if (trigger.status === 'paused' && trigger.lastStatus === 'auto_paused') {
     return t('eventTriggers.status.autoPaused');
   }
@@ -24,11 +24,11 @@ function configurationLabel(trigger: WorkflowEventTrigger, t: ReturnType<typeof 
     : t('eventTriggers.status.paused');
 }
 
-export function WorkspaceEventTriggerExecutionFacts({
+export function WorkspaceWebhookExecutionFacts({
   trigger,
   ledger = false
 }: {
-  trigger: WorkflowEventTrigger;
+  trigger: WorkflowWebhook;
   ledger?: boolean;
 }) {
   const { t } = useTranslation();
@@ -56,8 +56,8 @@ export function WorkspaceEventTriggerExecutionFacts({
               ? <StatusBadge tone={dispatchTone(trigger.lastStatus)}>{t(`eventTriggers.lastStatus.${trigger.lastStatus}`)}</StatusBadge>
               : t('workflowActivity.neverDispatched')}
             <span>
-              {trigger.lastTriggeredAt
-                ? formatUserDateTime(trigger.lastTriggeredAt, { fallback: trigger.lastTriggeredAt })
+              {trigger.lastReceivedAt
+                ? formatUserDateTime(trigger.lastReceivedAt, { fallback: trigger.lastReceivedAt })
                 : t('eventTriggers.neverTriggered')}
             </span>
           </dd>

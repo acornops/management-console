@@ -23,18 +23,18 @@ import {
 import type { Workspace } from '@/types';
 import {
   AppPaths,
-  type WorkflowRunsOriginFilter,
-  type WorkflowRunsRouteState,
-  type WorkflowRunsStateFilter
+  type WorkflowActivityOriginFilter,
+  type WorkflowActivityRouteState,
+  type WorkflowActivityStateFilter
 } from '@/utils/routes';
 
-interface WorkspaceRunsPageProps {
+interface WorkspaceActivityPageProps {
   workspace: Workspace;
-  routeState: WorkflowRunsRouteState;
+  routeState: WorkflowActivityRouteState;
   navigate: (path: string, options?: { replace?: boolean }) => void;
 }
 
-const stateOptions: Array<{ value: WorkflowRunsStateFilter; labelKey: string }> = [
+const stateOptions: Array<{ value: WorkflowActivityStateFilter; labelKey: string }> = [
   { value: 'all', labelKey: 'workflowActivity.filters.allStates' },
   { value: 'open', labelKey: 'workflowActivity.filters.open' },
   { value: 'attention', labelKey: 'workflowActivity.filters.attention' },
@@ -43,15 +43,15 @@ const stateOptions: Array<{ value: WorkflowRunsStateFilter; labelKey: string }> 
   { value: 'cancelled', labelKey: 'workflowActivity.filters.cancelled' }
 ];
 
-const originOptions: Array<{ value: 'all' | WorkflowRunsOriginFilter; labelKey: string }> = [
+const originOptions: Array<{ value: 'all' | WorkflowActivityOriginFilter; labelKey: string }> = [
   { value: 'all', labelKey: 'workflowActivity.filters.allOrigins' },
   { value: 'manual', labelKey: 'workflowActivity.origin.manual' },
   { value: 'external_integration', labelKey: 'workflowActivity.origin.external_integration' },
   { value: 'schedule', labelKey: 'workflowActivity.origin.schedule' },
-  { value: 'event_trigger', labelKey: 'workflowActivity.origin.event_trigger' }
+  { value: 'webhook', labelKey: 'workflowActivity.origin.webhook' }
 ];
 
-export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
+export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
   workspace,
   routeState,
   navigate
@@ -67,8 +67,8 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
   const loadRequestRef = React.useRef(0);
   const deferredQuery = React.useDeferredValue(routeState.q || '');
 
-  const replaceState = React.useCallback((patch: Partial<WorkflowRunsRouteState>, options?: { replace?: boolean }) => {
-    navigate(AppPaths.workspaceRuns(workspace.id, { ...routeState, ...patch }), options);
+  const replaceState = React.useCallback((patch: Partial<WorkflowActivityRouteState>, options?: { replace?: boolean }) => {
+    navigate(AppPaths.workspaceActivity(workspace.id, { ...routeState, ...patch }), options);
   }, [navigate, routeState, workspace.id]);
 
   const load = React.useCallback(async (cursor?: string) => {
@@ -154,7 +154,7 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
         queryClearLabel={t('common.clearSearch')}
         resultSummary={`${t('workflowActivity.openCount', { count: page?.summary.openCount ?? workspaceActivity.openCount })} · ${t('workflowActivity.attentionCount', { count: page?.summary.attentionCount ?? workspaceActivity.attentionCount })}`}
         filters={[
-          createDiscoveryFilterGroup<WorkflowRunsStateFilter>({
+          createDiscoveryFilterGroup<WorkflowActivityStateFilter>({
             id: 'state',
             label: t('workflowActivity.filters.state'),
             value: routeState.state || 'open',
@@ -162,7 +162,7 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
             options: stateOptions.map((option) => ({ value: option.value, label: t(option.labelKey) })),
             onChange: (state) => replaceState({ state: state === 'open' ? undefined : state })
           }),
-          createDiscoveryFilterGroup<'all' | WorkflowRunsOriginFilter>({
+          createDiscoveryFilterGroup<'all' | WorkflowActivityOriginFilter>({
             id: 'origin',
             label: t('workflowActivity.filters.origin'),
             value: routeState.origin || 'all',
@@ -239,7 +239,7 @@ export const WorkspaceRunsPage: React.FC<WorkspaceRunsPageProps> = ({
               icon={<Filter />}
               title={filterCount ? t('workflowActivity.emptyFilteredTitle') : t('workflowActivity.emptyOpenTitle')}
               description={filterCount ? t('workflowActivity.emptyFilteredDescription') : t('workflowActivity.emptyOpenDescription')}
-              actions={filterCount ? <Button variant="secondary" size="sm" onClick={() => navigate(AppPaths.workspaceRuns(workspace.id))}>{t('common.clearFilters')}</Button> : undefined}
+              actions={filterCount ? <Button variant="secondary" size="sm" onClick={() => navigate(AppPaths.workspaceActivity(workspace.id))}>{t('common.clearFilters')}</Button> : undefined}
             />
           ) : (
             <div className="divide-y divide-ui-border">

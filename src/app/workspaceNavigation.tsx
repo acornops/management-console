@@ -7,7 +7,7 @@ import type { Workspace } from '@/types';
 import { AppPaths } from '@/utils/routes';
 
 export interface WorkspaceNavigationItem {
-  id: 'overview' | 'clusters' | 'virtualMachines' | 'agents' | 'workflows' | 'outboundWebhooks' | 'approvals' | 'workspaceAuditLog' | 'workspaceSettings' | 'help';
+  id: 'overview' | 'clusters' | 'virtualMachines' | 'agents' | 'workflows' | 'activity' | 'outboundWebhooks' | 'approvals' | 'workspaceAuditLog' | 'workspaceSettings' | 'help';
   label: string;
   path: string;
   icon: React.ElementType;
@@ -18,7 +18,7 @@ export interface WorkspaceNavigationItem {
 }
 
 export interface WorkspaceNavigationChildItem {
-  id: 'workflowLibrary' | 'workflowRuns' | 'workflowTriggers';
+  id: string;
   label: string;
   path: string;
   current: boolean;
@@ -50,9 +50,6 @@ export function getWorkspaceNavigationGroups({
   if (!workspace) return [];
   const canReadData = canReadWorkspaceData(workspace);
   const canReadAudit = canReadWorkspaceAuditLog(workspace);
-  const isWorkflowRoute = activeResourceNav === 'workflows'
-    || activeResourceNav === 'runs'
-    || activeResourceNav === 'triggers';
   const groups: WorkspaceNavigationGroup[] = [];
   if (canReadData) {
     groups.push({
@@ -78,16 +75,15 @@ export function getWorkspaceNavigationGroups({
           label: t('app.workflows'),
           path: AppPaths.workspaceWorkflows(workspace.id),
           icon: ICONS.GitBranch,
-          active: isWorkflowRoute,
-          current: false,
-          badge: openWorkflowRunCount,
-          children: isWorkflowRoute
-              ? [
-                { id: 'workflowLibrary', label: t('app.library'), path: AppPaths.workspaceWorkflows(workspace.id), current: activeResourceNav === 'workflows' },
-                { id: 'workflowTriggers', label: t('app.triggers'), path: AppPaths.workspaceTriggers(workspace.id), current: activeResourceNav === 'triggers' },
-                { id: 'workflowRuns', label: t('app.runs'), path: AppPaths.workspaceRuns(workspace.id), current: activeResourceNav === 'runs', badge: openWorkflowRunCount }
-              ]
-            : undefined
+          active: activeResourceNav === 'workflows'
+        },
+        {
+          id: 'activity',
+          label: t('app.activity'),
+          path: AppPaths.workspaceActivity(workspace.id),
+          icon: ICONS.Activity,
+          active: activeResourceNav === 'activity',
+          badge: openWorkflowRunCount
         },
         {
           id: 'outboundWebhooks',

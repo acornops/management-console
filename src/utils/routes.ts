@@ -4,14 +4,14 @@ export type AgentSubview = 'chat' | 'mcpServers' | 'skills' | 'tools' | 'setting
 export type ClusterCatalogStatusFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 export type VmCatalogStatusFilter = ClusterCatalogStatusFilter;
 export type McpCatalogCompatibility = 'all' | 'compatible' | 'incompatible';
-export type WorkflowRunsStateFilter = 'all' | 'open' | 'attention' | 'completed' | 'failed' | 'cancelled';
-export type WorkflowRunsOriginFilter = 'manual' | 'external_integration' | 'schedule' | 'event_trigger';
-export type WorkflowTriggerType = 'schedule' | 'acornops_event' | 'webhook';
+export type WorkflowActivityStateFilter = 'all' | 'open' | 'attention' | 'completed' | 'failed' | 'cancelled';
+export type WorkflowActivityOriginFilter = 'manual' | 'external_integration' | 'schedule' | 'webhook';
+export type WorkflowSection = 'all' | 'schedules' | 'incomingWebhooks';
 
-export interface WorkflowRunsRouteState {
+export interface WorkflowActivityRouteState {
   q?: string;
-  state?: WorkflowRunsStateFilter;
-  origin?: WorkflowRunsOriginFilter;
+  state?: WorkflowActivityStateFilter;
+  origin?: WorkflowActivityOriginFilter;
   workflowId?: string;
   issueId?: string;
 }
@@ -48,15 +48,15 @@ export type AppRoute =
   | { kind: 'workspaceAgents'; workspaceId: string }
   | { kind: 'workspaceAgentDetail'; workspaceId: string; agentId: string; tab: AgentSubview }
   | ({ kind: 'workspaceCatalog'; workspaceId: string } & McpCatalogRouteState)
-  | { kind: 'workspaceWorkflows'; workspaceId: string }
-  | ({ kind: 'workspaceRuns'; workspaceId: string } & WorkflowRunsRouteState)
   | {
-      kind: 'workspaceTriggers';
+      kind: 'workspaceWorkflows';
       workspaceId: string;
-      triggerType: WorkflowTriggerType;
-      createTriggerType?: WorkflowTriggerType;
+      section: WorkflowSection;
+      create?: boolean;
       createWorkflowId?: string;
     }
+  | ({ kind: 'workspaceActivity'; workspaceId: string } & WorkflowActivityRouteState)
+  | { kind: 'workspaceRedirect'; workspaceId: string; target: string }
   | { kind: 'workspaceApprovals'; workspaceId: string; runId?: string; approvalId?: string }
   | { kind: 'workspaceMembers'; workspaceId: string }
   | { kind: 'workspaceAiSettings'; workspaceId: string; returnTo?: string }
@@ -170,7 +170,7 @@ function cleanQueryParam(value: string | null): string | undefined {
   return trimmed || undefined;
 }
 
-function parseWorkflowRunsRouteState(params: URLSearchParams): WorkflowRunsRouteState {
+function parseWorkflowActivityRouteState(params: URLSearchParams): WorkflowActivityRouteState {
   const stateValue = params.get('state');
   const state = stateValue === 'open' || stateValue === 'attention' || stateValue === 'completed'
     || stateValue === 'failed' || stateValue === 'cancelled' || stateValue === 'all'
@@ -178,7 +178,7 @@ function parseWorkflowRunsRouteState(params: URLSearchParams): WorkflowRunsRoute
     : undefined;
   const originValue = params.get('origin');
   const origin = originValue === 'manual' || originValue === 'external_integration'
-    || originValue === 'schedule' || originValue === 'event_trigger'
+    || originValue === 'schedule' || originValue === 'webhook'
     ? originValue
     : undefined;
   return {
@@ -190,7 +190,7 @@ function parseWorkflowRunsRouteState(params: URLSearchParams): WorkflowRunsRoute
   };
 }
 
-function withWorkflowRunsRouteState(path: string, state?: WorkflowRunsRouteState): string {
+function withWorkflowActivityRouteState(path: string, state?: WorkflowActivityRouteState): string {
   const params = new URLSearchParams();
   if (state?.q?.trim()) params.set('q', state.q.trim());
   if (state?.state && state.state !== 'all') params.set('state', state.state);
@@ -342,30 +342,73 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceInvitation', token: decodeParam(inviteMatch[1]) };
   }
 
-  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|catalog|workflows|runs|triggers|approvals|members|ai-settings|webhooks|settings|audit-log)$/);
+  const workspaceWorkflowMatch = pathname.match(
+    /^\/workspaces\/([^/]+)\/workflows(?:\/(schedules|incoming-webhooks))?$/
+  );
+  if (workspaceWorkflowMatch) {
+    const workspaceId = decodeParam(workspaceWorkflowMatch[1]);
+    const section: WorkflowSection = workspaceWorkflowMatch[2] === 'schedules'
+      ? 'schedules'
+      : workspaceWorkflowMatch[2] === 'incoming-webhooks'
+        ? 'incomingWebhooks'
+        : 'all';
+    const createValue = params.get('create');
+    const create = section === 'schedules'
+      ? createValue === 'schedule'
+      : section === 'incomingWebhooks' && createValue === 'webhook';
+    const createWorkflowId = create
+      ? cleanQueryParam(params.get('workflowId'))
+      : undefined;
+    return {
+      kind: 'workspaceWorkflows',
+      workspaceId,
+      section,
+      ...(create ? { create: true } : {}),
+      ...(createWorkflowId ? { createWorkflowId } : {})
+    };
+  }
+
+  const legacyAutomationMatch = pathname.match(
+    /^\/workspaces\/([^/]+)\/(runs|triggers|schedules|event-triggers)$/
+  );
+  if (legacyAutomationMatch) {
+    const workspaceId = decodeParam(legacyAutomationMatch[1]);
+    const legacySection = legacyAutomationMatch[2];
+    if (legacySection === 'runs') {
+      return {
+        kind: 'workspaceRedirect',
+        workspaceId,
+        target: AppPaths.workspaceActivity(workspaceId, parseWorkflowActivityRouteState(params))
+      };
+    }
+    const incomingWebhook = legacySection === 'event-triggers'
+      || (legacySection === 'triggers' && (
+        params.get('type') === 'webhook'
+        || params.get('type') === 'acornops_event'
+        || params.get('create') === 'webhook'
+        || params.get('create') === 'acornops_event'
+      ));
+    const section: WorkflowSection = incomingWebhook ? 'incomingWebhooks' : 'schedules';
+    const create = incomingWebhook
+      ? params.get('create') === 'webhook'
+      : params.get('create') === 'schedule';
+    const target = AppPaths.workspaceWorkflows(workspaceId, section, {
+      ...(create ? { create: true } : {}),
+      ...(cleanQueryParam(params.get('workflowId'))
+        ? { workflowId: cleanQueryParam(params.get('workflowId')) }
+        : {})
+    });
+    return { kind: 'workspaceRedirect', workspaceId, target };
+  }
+
+  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|catalog|activity|approvals|members|ai-settings|webhooks|settings|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
     if (section === 'overview') return { kind: 'workspaceOverview', workspaceId };
     if (section === 'agents') return { kind: 'workspaceAgents', workspaceId };
     if (section === 'catalog') return { kind: 'workspaceCatalog', workspaceId, ...parseMcpCatalogRouteState(params) };
-    if (section === 'workflows') return { kind: 'workspaceWorkflows', workspaceId };
-    if (section === 'runs') return { kind: 'workspaceRuns', workspaceId, ...parseWorkflowRunsRouteState(params) };
-    if (section === 'triggers') {
-      const typeParam = params.get('type');
-      const triggerType: WorkflowTriggerType = typeParam === 'acornops_event' || typeParam === 'webhook'
-        ? typeParam
-        : 'schedule';
-      const createWorkflowId = triggerType === 'schedule' && params.get('create') === 'schedule'
-        ? params.get('workflowId') || undefined
-        : undefined;
-      const createTriggerType = !createWorkflowId && params.get('create') === triggerType
-        ? triggerType
-        : undefined;
-      return createWorkflowId
-        ? { kind: 'workspaceTriggers', workspaceId, triggerType, createWorkflowId }
-        : { kind: 'workspaceTriggers', workspaceId, triggerType, ...(createTriggerType ? { createTriggerType } : {}) };
-    }
+    if (section === 'activity') return { kind: 'workspaceActivity', workspaceId, ...parseWorkflowActivityRouteState(params) };
     if (section === 'approvals') {
       const runId = params.get('runId') || undefined;
       const approvalId = params.get('approvalId') || undefined;
@@ -483,8 +526,24 @@ export const AppPaths = {
   },
   workspaceCatalog: (workspaceId: string, state?: McpCatalogRouteState): string =>
     withMcpCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/catalog`, state),
-  workspaceWorkflows: (workspaceId: string): string =>
-    `/workspaces/${encodeURIComponent(workspaceId)}/workflows`,
+  workspaceWorkflows: (
+    workspaceId: string,
+    section: WorkflowSection = 'all',
+    create?: { create?: boolean; workflowId?: string }
+  ): string => {
+    const base = `/workspaces/${encodeURIComponent(workspaceId)}/workflows`;
+    const path = section === 'schedules'
+      ? `${base}/schedules`
+      : section === 'incomingWebhooks'
+        ? `${base}/incoming-webhooks`
+        : base;
+    if (!create?.create || section === 'all') return path;
+    const params = new URLSearchParams({
+      create: section === 'schedules' ? 'schedule' : 'webhook'
+    });
+    if (create.workflowId) params.set('workflowId', create.workflowId);
+    return appendQuery(path, params);
+  },
   workspaceWorkflowRun: (workspaceId: string, workflowId: string, executionId: string): string => {
     const params = new URLSearchParams({
       workflow: workflowId,
@@ -493,21 +552,12 @@ export const AppPaths = {
     });
     return appendQuery(`/workspaces/${encodeURIComponent(workspaceId)}/workflows`, params);
   },
-  workspaceRuns: (workspaceId: string, state?: WorkflowRunsRouteState): string =>
-    withWorkflowRunsRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/runs`, state),
-  workspaceTriggers: (workspaceId: string, triggerType: WorkflowTriggerType = 'schedule'): string => {
-    const path = `/workspaces/${encodeURIComponent(workspaceId)}/triggers`;
-    return triggerType === 'schedule'
-      ? path
-      : appendQuery(path, new URLSearchParams({ type: triggerType }));
-  },
-  workspaceTriggerCreate: (workspaceId: string, triggerType: WorkflowTriggerType): string => {
-    const params = new URLSearchParams({ create: triggerType });
-    if (triggerType !== 'schedule') params.set('type', triggerType);
-    return appendQuery(`/workspaces/${encodeURIComponent(workspaceId)}/triggers`, params);
-  },
+  workspaceActivity: (workspaceId: string, state?: WorkflowActivityRouteState): string =>
+    withWorkflowActivityRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/activity`, state),
   workspaceScheduleCreate: (workspaceId: string, workflowId: string): string =>
-    `/workspaces/${encodeURIComponent(workspaceId)}/triggers?create=schedule&workflowId=${encodeURIComponent(workflowId)}`,
+    AppPaths.workspaceWorkflows(workspaceId, 'schedules', { create: true, workflowId }),
+  workspaceWebhookCreate: (workspaceId: string, workflowId?: string): string =>
+    AppPaths.workspaceWorkflows(workspaceId, 'incomingWebhooks', { create: true, workflowId }),
   workspaceApprovals: (workspaceId: string, focus?: { runId?: string; approvalId?: string }): string => {
     const params = new URLSearchParams();
     if (focus?.runId) params.set('runId', focus.runId);

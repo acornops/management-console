@@ -122,7 +122,7 @@ The management console is the browser client for the control-plane API. Keep thi
 - Workspace workflow activity uses the cursor-paginated execution endpoint for
   open and attention counts, URL-backed filtering, and safe immutable
   provenance. Issue payloads carry compact activity summaries. Schedule and
-  event-trigger responses expose the latest successful execution pointer
+  workflow-webhook responses expose the latest successful execution pointer
   separately from configuration and last-dispatch state; a rejected dispatch
   never implies that an execution is running.
 - The console consumes versioned automation-template metadata and exposes explicit idempotent install and activation actions. The Workflow Library lists only definitions installed in the workspace. Automatic templates are provisioned active; opt-in Target remediation and Incident investigation remain in the template catalog until installation, then stay paused until setup is complete and the user activates them.

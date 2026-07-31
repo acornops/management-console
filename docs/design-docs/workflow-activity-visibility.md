@@ -9,27 +9,27 @@ able to answer three questions without opening each workflow:
 
 ## Information Architecture
 
-Workflows has three route-level views:
+Workflows has three route-level sections:
 
-- **Library** owns workflow definitions and manual launch.
-- **Runs** owns the workspace execution ledger.
-- **Triggers** owns schedule, AcornOps event, and incoming webhook
-  configuration.
+- **All Workflows** owns workflow definitions and manual launch.
+- **Schedules** owns recurring workflow dispatch.
+- **Incoming Webhooks** owns signed endpoints that dispatch workflows.
+
+**Activity** is a top-level Automation destination and owns the workspace
+execution ledger. Workflow details retain their scoped Activity view.
 
 Outbound webhooks remain a separate Automation destination because they deliver
-AcornOps events to another system; they do not start workflows. The Triggers
-page uses route-backed sub-tabs for the three trigger sources, keeping the
-active collection visible as stable navigation rather than a filter that
-replaces the table. The persistent **Create trigger** menu can open any of the
-three creators without first changing tabs. The selected creation intent is
-route-backed so the destination opens directly and remains resumable. A
-workflow's **Schedule** action opens the schedule creator on that route.
+AcornOps events to another system; they do not start workflows. The Workflows
+page uses route-backed tabs, keeping the active collection visible as stable
+navigation rather than a filter that replaces the table. Schedule and incoming
+webhook creation intents are route-backed so workflow-prefilled destinations
+open directly and remain resumable.
 
 ## Execution Model
 
 The UI keeps these facts separate:
 
-- **Configuration** says whether a schedule or trigger is enabled, paused, or
+- **Configuration** says whether a schedule or workflow webhook is enabled, paused, or
   auto-paused.
 - **Last dispatch** says whether the latest attempt was dispatched, skipped,
   rejected, failed, or auto-paused.
@@ -38,18 +38,18 @@ The UI keeps these facts separate:
 
 A dispatch failure never renders as a running execution. A failed dispatch also
 does not erase the last successful execution pointer. The aggregate execution
-status is authoritative across the ledger, issue rows, trigger rows, and
+status is authoritative across the ledger, issue rows, webhook rows, and
 workflow run detail.
 
 Every execution displays a safe, immutable origin snapshot. Manual, external
-integration, schedule, and event-trigger origins remain identifiable after a
-trigger is deleted. The console never displays webhook payloads or raw
-occurrence keys as provenance.
+integration, schedule, webhook, and retained historical-event origins remain
+identifiable after a configuration is deleted. The console never displays
+webhook payloads or raw occurrence keys as provenance.
 
 ## Operator Surfaces
 
-The Workflows navigation badge and Runs child badge show open executions. The
-Runs ledger defaults to open work and supports URL-backed search, state, origin,
+The Activity navigation badge shows open executions. The Activity ledger
+defaults to open work and supports URL-backed search, state, origin,
 workflow, and issue filters. Rows show workflow and origin, target, lifecycle
 time, honest duration, and one exact-run action. Exact links open the existing
 workflow Runs panel and focus the matching execution.
@@ -69,7 +69,7 @@ a direct next step; it does not replace operator judgment.
 
 ## Collection Behavior
 
-Runs, Triggers, and Outbound webhooks use the shared page header and discovery
+Activity, Schedules, Incoming Webhooks, and Outbound webhooks use the shared page header and discovery
 bar. Search and filters appear directly above the collection, and no inner card
 repeats the page title.
 

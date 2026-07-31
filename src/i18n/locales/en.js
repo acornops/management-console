@@ -109,9 +109,8 @@ export const en = {
     agents: 'Agents',
     workflows: 'Workflows',
     library: 'Library',
-    runs: 'Runs',
+    activity: 'Activity',
     workspaceNavigation: 'Workspace navigation',
-    triggers: 'Triggers',
     approvals: 'Approvals',
     clusters: 'Kubernetes Clusters',
     virtualMachines: 'Virtual Machines',
@@ -234,17 +233,17 @@ export const en = {
     unknownAgent: 'Unknown Agent'
   },
   workflowActivity: {
-    title: 'Runs',
-    subtitle: 'Background, scheduled, event-triggered, and manual activity across {{workspace}}.',
+    title: 'Activity',
+    subtitle: 'Background, scheduled, webhook, and manual workflow activity across {{workspace}}.',
     ledgerLabel: 'Workflow execution ledger',
-    loading: 'Loading workflow runs...',
+    loading: 'Loading workflow activity...',
     loadError: 'Workflow activity could not be loaded.',
-    loadErrorTitle: 'Workflow runs are unavailable',
-    emptyOpenTitle: 'No active workflow runs',
-    emptyOpenDescription: 'Completed runs remain available from the status filter.',
-    emptyFilteredTitle: 'No runs match these filters',
+    loadErrorTitle: 'Workflow activity is unavailable',
+    emptyOpenTitle: 'No active workflow activity',
+    emptyOpenDescription: 'Completed activity remains available from the status filter.',
+    emptyFilteredTitle: 'No activity matches these filters',
     emptyFilteredDescription: 'Clear or adjust the filters to see other workflow activity.',
-    refreshError: 'Automatic run refresh is temporarily unavailable. Refresh manually or refocus this window to try again.',
+    refreshError: 'Automatic Activity refresh is temporarily unavailable. Refresh manually or refocus this window to try again.',
     openCount: '{{count}} open',
     attentionCount: '{{count}} need attention',
     target: 'Target',
@@ -280,8 +279,10 @@ export const en = {
     origin: {
       manual: 'Manual',
       external_integration: 'External integration',
+      agent_chat: 'Agent chat',
       schedule: 'Schedule',
-      event_trigger: 'Event trigger'
+      webhook: 'Webhook',
+      historical_event: 'Historical event'
     },
     status: {
       queued: 'Queued',
@@ -307,7 +308,7 @@ export const en = {
       action: 'Action'
     },
     filters: {
-      search: 'Search runs',
+      search: 'Search Activity',
       state: 'Filter by state',
       origin: 'Filter by origin',
       workflow: 'Filter by workflow',
@@ -363,7 +364,7 @@ export const en = {
     aiSetupAssistantTitle: 'Start assistant conversations',
     aiSetupAssistantBody: 'Use an enabled provider and model for investigation and troubleshooting.',
     aiSetupAutomationTitle: 'Run automations',
-    aiSetupAutomationBody: 'Start manual, scheduled, and event-triggered workflow runs.',
+    aiSetupAutomationBody: 'Start manual, scheduled, and webhook-triggered workflow runs.',
     aiSetupOptionalNote: 'Targets and integrations are optional. Add only the ones your workflows and investigations need.',
     aiSettingsTransition: 'This finishes workspace setup and opens Workspace Settings → AI.',
     openAiSettings: 'Finish and open AI Settings',
@@ -378,43 +379,17 @@ export const en = {
     supportTitle: 'Contact Support',
     supportBody: 'Send the AcornOps team workspace or run context when something needs attention.'
   },
-  triggers: {
-    title: 'Triggers',
-    subtitle: 'Choose when and why workflows start in {{workspace}}.',
-    tabsLabel: 'Trigger types',
-    types: {
-      schedule: 'Schedule',
-      acornopsEvent: 'AcornOps event',
-      webhook: 'Incoming webhook'
-    },
-    typesCompact: {
-      schedule: 'Schedule',
-      acornopsEvent: 'Events',
-      webhook: 'Webhooks'
-    },
-    actions: {
-      create: 'Create trigger',
-      createMenuLabel: 'Choose a trigger type to create',
-      createAcornOpsEvent: 'Create AcornOps event',
-      createWebhook: 'Create incoming webhook'
-    },
-    createDescriptions: {
-      schedule: 'Run a workflow on a recurring cadence.',
-      acornopsEvent: 'Start when AcornOps creates an issue.',
-      webhook: 'Start from a signed external request.'
-    },
-    empty: {
-      acornopsEventTitle: 'No AcornOps event triggers',
-      acornopsEventDescription: 'Create a trigger that starts a workflow when AcornOps creates an issue.',
-      webhookTitle: 'No incoming webhook triggers',
-      webhookDescription: 'Create a signed endpoint that starts a workflow from an external system.'
-    },
-    form: {
-      createAcornOpsEventTitle: 'Create AcornOps event',
-      createWebhookTitle: 'Create incoming webhook'
+  workflows: {
+    sections: {
+      label: 'Workflow sections',
+      all: 'All Workflows',
+      schedules: 'Schedules',
+      incomingWebhooks: 'Incoming Webhooks'
     }
   },
   schedules: {
+    title: 'Schedules',
+    subtitle: 'Recurring workflow dispatches for {{workspace}}.',
     tableLabel: 'Workflow schedules',
     permissionNotice: 'You need manage_workflows to create or edit schedules.',
     emptyTitle: 'No workflow schedules',
@@ -494,23 +469,27 @@ export const en = {
     }
   },
   eventTriggers: {
-    permissionNotice: 'You need manage_workflows to create or edit event triggers.',
-    noActiveWorkflows: 'Activate a workflow before creating an event trigger.',
-    listTitle: 'Workflow event triggers',
-    count: '{{count}} triggers',
-    count_one: '{{count}} trigger',
-    count_other: '{{count}} triggers',
+    title: 'Incoming Webhooks',
+    subtitle: 'Signed endpoints that dispatch workflows in {{workspace}}.',
+    permissionNotice: 'You need manage_workflows to create or edit workflow webhooks.',
+    noActiveWorkflows: 'Activate a workflow before creating a webhook.',
+    listTitle: 'Incoming workflow webhooks',
+    emptyTitle: 'No incoming webhooks',
+    emptyDescription: 'Create a signed endpoint that starts a workflow from an external system.',
+    count: '{{count}} webhooks',
+    count_one: '{{count}} webhook',
+    count_other: '{{count}} webhooks',
     columns: {
-      trigger: 'Trigger',
+      trigger: 'Webhook',
       workflow: 'Workflow',
       configuration: 'Configuration',
       actions: 'Actions'
     },
-    loadError: 'Failed loading event triggers.',
-    refreshing: 'Refreshing event triggers.',
-    saveError: 'Failed saving event trigger.',
-    updateError: 'Failed updating event trigger.',
-    deleteError: 'Failed deleting event trigger.',
+    loadError: 'Failed loading workflow webhooks.',
+    refreshing: 'Refreshing workflow webhooks.',
+    saveError: 'Failed saving workflow webhook.',
+    updateError: 'Failed updating workflow webhook.',
+    deleteError: 'Failed deleting workflow webhook.',
     rotateError: 'Failed rotating the signing secret.',
     copyError: 'Could not copy to the clipboard.',
     copyEndpoint: 'Copy endpoint',
@@ -521,10 +500,9 @@ export const en = {
     contextGrantCount_one: '{{count}} context grant',
     contextGrantCount_other: '{{count}} context grants',
     lastTriggered: 'Last triggered {{time}}',
-    neverTriggered: 'Not triggered yet',
+    neverTriggered: 'No request received yet',
     source: {
-      webhook: 'Webhook request',
-      acornopsEvent: 'AcornOps event'
+      webhook: 'Webhook request'
     },
     status: {
       enabled: 'Enabled',
@@ -532,14 +510,13 @@ export const en = {
       autoPaused: 'Auto-paused'
     },
     filters: {
-      searchAcornOpsEvents: 'Search AcornOps event triggers',
       searchIncomingWebhooks: 'Search incoming webhooks',
       status: 'Filter by status',
       workflow: 'Filter by workflow',
       allStatuses: 'All statuses',
       allWorkflows: 'All workflows',
-      showing: 'Showing {{count}} of {{total}} triggers',
-      emptyTitle: 'No event triggers match these filters',
+      showing: 'Showing {{count}} of {{total}} webhooks',
+      emptyTitle: 'No webhooks match these filters',
       emptyDescription: 'Adjust the search, status, or workflow filter.'
     },
     lastStatus: {
@@ -549,6 +526,7 @@ export const en = {
       rejected: 'Rejected'
     },
     actions: {
+      create: 'Create webhook',
       edit: 'Edit',
       reviewFailure: 'Review failure',
       pause: 'Pause',
@@ -556,10 +534,10 @@ export const en = {
       rotateSecret: 'Rotate secret',
       delete: 'Delete'
     },
-    actionsFor: 'Trigger actions for {{name}}',
+    actionsFor: 'Webhook actions for {{name}}',
     delete: {
       title: 'Delete {{name}}?',
-      description: 'New requests and events will stop immediately. Dispatches already in progress and existing workflow runs are unaffected.'
+      description: 'New requests will stop immediately. Dispatches already in progress and existing workflow activity are unaffected.'
     },
     rotate: {
       title: 'Rotate the signing secret for {{name}}?',
@@ -578,39 +556,21 @@ export const en = {
       dismiss: 'Dismiss'
     },
     form: {
-      createTitle: 'Create event trigger',
-      editTitle: 'Edit event trigger',
-      description: 'Choose one event source and the existing workflow it starts.',
+      createTitle: 'Create incoming webhook',
+      editTitle: 'Edit workflow webhook',
+      description: 'Choose the existing workflow this signed endpoint starts.',
       name: 'Name',
       workflow: 'Workflow',
-      workflowHelp: 'The workflow cannot be changed after this trigger is created.',
-      source: 'Event source',
-      sourceHelp: 'The event source cannot be changed after this trigger is created.',
-      issueCreated: 'Issue created',
-      issueCreatedHelp: 'Map each workflow input from the issue and target that caused the event.',
-      selectBinding: 'Select an event field',
-      chatUnsupported: 'Issue events cannot supply the chat input “{{parameter}}”. Choose a workflow without chat inputs.',
-      noInputs: 'This workflow has no runtime inputs to map.',
-      bindingLabel: 'Event field for {{parameter}}',
+      workflowHelp: 'The workflow cannot be changed after this webhook is created.',
       webhookHelp: 'After creation, AcornOps shows a one-time signing secret. Requests supply the workflow inputs directly.',
       runsAs: 'Runs as',
       currentUser: 'Your current account',
-      runsAsHelp: 'Workspace membership and permissions are checked again for every event.',
+      runsAsHelp: 'Workspace membership and permissions are checked again for every request.',
       approvedContextGrants: 'Approved context grants',
       approvedContextGrantsHelp: 'Optional grants, separated by commas or new lines.',
       enabled: 'Enabled',
-      save: 'Save event trigger',
+      save: 'Save webhook',
       saving: 'Saving...'
-    },
-    bindings: {
-      issue_id: 'Issue ID',
-      issue_title: 'Issue title',
-      issue_summary: 'Issue summary',
-      issue_severity: 'Issue severity',
-      issue_scope: 'Issue scope',
-      issue_object: 'Issue object',
-      target_id: 'Target ID',
-      target_type: 'Target type'
     }
   },
   approvals: {

@@ -28,18 +28,12 @@ export const routeCoverageManifest = [
     ready: 'h1'
   },
   { name: 'workspace-workflows', category: 'automation', path: `${workspace}/workflows`, ready: 'h1' },
-  { name: 'workspace-runs', category: 'automation', path: `${workspace}/runs`, ready: 'h1' },
-  { name: 'workspace-schedules', category: 'automation', path: `${workspace}/triggers`, ready: 'h1' },
+  { name: 'workspace-activity', category: 'automation', path: `${workspace}/activity`, ready: 'h1' },
+  { name: 'workspace-schedules', category: 'automation', path: `${workspace}/workflows/schedules`, ready: 'h1' },
   {
-    name: 'workspace-event-triggers',
+    name: 'workspace-incoming-webhooks',
     category: 'automation',
-    path: `${workspace}/triggers?type=acornops_event`,
-    ready: 'h1'
-  },
-  {
-    name: 'workspace-webhook-triggers',
-    category: 'automation',
-    path: `${workspace}/triggers?type=webhook`,
+    path: `${workspace}/workflows/incoming-webhooks`,
     ready: 'h1'
   },
   { name: 'workspace-webhooks', category: 'automation', path: `${workspace}/webhooks`, ready: 'h1' },

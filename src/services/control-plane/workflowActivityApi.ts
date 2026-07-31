@@ -12,22 +12,9 @@ export type WorkflowExecutionStatus =
   | 'cancelled';
 
 export type WorkflowExecutionOrigin =
-  | { schemaVersion: 1; kind: 'manual' | 'external_integration'; label: string }
-  | { schemaVersion: 1; kind: 'schedule'; label: string; triggerId: string }
-  | {
-      schemaVersion: 1;
-      kind: 'event_trigger';
-      label: string;
-      triggerId: string;
-      source: {
-        kind: 'issue' | 'webhook';
-        label: string;
-        id?: string;
-        eventType?: string;
-        targetId?: string;
-        targetType?: 'kubernetes' | 'virtual_machine';
-      };
-    };
+  | { schemaVersion: 1; kind: 'manual' | 'external_integration' | 'agent_chat' | 'historical_event'; label: string }
+  | { schemaVersion: 1; kind: 'schedule'; label: string; scheduleId: string }
+  | { schemaVersion: 1; kind: 'webhook'; label: string; webhookId: string };
 
 export interface WorkflowExecutionSummary {
   id: string;
@@ -90,8 +77,10 @@ const executionStatuses = new Set<WorkflowExecutionStatus>([
 const originKinds = new Set<WorkflowExecutionOrigin['kind']>([
   'manual',
   'external_integration',
+  'agent_chat',
   'schedule',
-  'event_trigger'
+  'webhook',
+  'historical_event'
 ]);
 
 const record = (value: unknown): Record<string, unknown> | null =>
@@ -114,37 +103,15 @@ function parseOrigin(value: unknown): WorkflowExecutionOrigin | null {
   if (!input || input.schemaVersion !== 1 || !label || !originKinds.has(kind as WorkflowExecutionOrigin['kind'])) {
     return null;
   }
-  if (kind === 'manual' || kind === 'external_integration') {
+  if (kind === 'manual' || kind === 'external_integration' || kind === 'agent_chat' || kind === 'historical_event') {
     return { schemaVersion: 1, kind, label };
   }
-  const triggerId = text(input.triggerId);
-  if (!triggerId) return null;
-  if (kind === 'schedule') return { schemaVersion: 1, kind, label, triggerId };
-  const source = record(input.source);
-  const sourceKind = source?.kind;
-  const sourceLabel = text(source?.label);
-  if (!source || (sourceKind !== 'issue' && sourceKind !== 'webhook') || !sourceLabel) return null;
-  const targetType = source.targetType;
-  if (
-    targetType !== undefined
-    && targetType !== 'kubernetes'
-    && targetType !== 'virtual_machine'
-  ) return null;
-  const parsedTargetType = targetType as 'kubernetes' | 'virtual_machine' | undefined;
-  return {
-    schemaVersion: 1,
-    kind: 'event_trigger',
-    label,
-    triggerId,
-    source: {
-      kind: sourceKind,
-      label: sourceLabel,
-      ...(text(source.id) ? { id: text(source.id) } : {}),
-      ...(text(source.eventType) ? { eventType: text(source.eventType) } : {}),
-      ...(text(source.targetId) ? { targetId: text(source.targetId) } : {}),
-      ...(parsedTargetType ? { targetType: parsedTargetType } : {})
-    }
-  };
+  if (kind === 'schedule') {
+    const scheduleId = text(input.scheduleId);
+    return scheduleId ? { schemaVersion: 1, kind, label, scheduleId } : null;
+  }
+  const webhookId = text(input.webhookId);
+  return webhookId ? { schemaVersion: 1, kind: 'webhook', label, webhookId } : null;
 }
 
 function parseExecution(value: unknown): WorkflowExecutionSummary | null {

@@ -11,45 +11,39 @@ import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
-import { DataSurface, PageShell } from '@acornops/ui';
+import { DataSurface, PageHeader, PageShell } from '@acornops/ui';
 import { Select, type SelectOption } from '@acornops/ui';
 import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { listWorkspaceWorkflows, type WorkflowApiDefinition } from '@/services/control-plane/workflowApi';
 import {
-  createWorkflowEventTrigger,
-  deleteWorkflowEventTrigger,
-  listWorkspaceWorkflowEventTriggers,
-  rotateWorkflowEventTriggerSecret,
-  updateWorkflowEventTrigger,
-  type WorkflowEventInputBinding,
-  type WorkflowEventTrigger,
-  type WorkflowEventTriggerListResponse,
-  type WorkflowEventTriggerSourceType
-} from '@/services/control-plane/workflowEventTriggerApi';
+  createWorkflowWebhook,
+  deleteWorkflowWebhook,
+  listWorkspaceWorkflowWebhooks,
+  rotateWorkflowWebhookSecret,
+  updateWorkflowWebhook,
+  type WorkflowWebhook,
+  type WorkflowWebhookListResponse
+} from '@/services/control-plane/workflowWebhookApi';
 import type { Workspace } from '@/types';
-import type { WorkflowTriggerType } from '@/utils/routes';
-import { humanizeWorkflowParameterKey } from '@/pages/WorkspaceWorkflowsPage.launchFields';
-import { WorkspaceEventTriggerCard, workspaceEventTriggerLedgerGridClass } from '@/pages/WorkspaceEventTriggerCard';
-import { WorkspaceEventTriggerDeleteDialog } from '@/pages/WorkspaceEventTriggerDeleteDialog';
-import { WorkflowTriggersPageHeader } from '@/pages/WorkflowTriggersPageHeader';
-import { useWorkflowTriggerCreateIntent } from '@/pages/useWorkflowTriggerCreateIntent';
+import { WorkspaceWebhookCard, workspaceWebhookLedgerGridClass } from '@/pages/WorkspaceWebhookCard';
+import { WorkspaceWebhookDeleteDialog } from '@/pages/WorkspaceWebhookDeleteDialog';
+import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import {
-  draftFromTrigger,
-  emptyTriggerDraft,
-  issueTextBindings,
+  draftFromWebhook,
+  emptyWebhookDraft,
   parseContextGrants,
   type SecretDisclosure,
-  type TriggerDraft
-} from '@/pages/WorkspaceEventTriggersPage.model';
+  type WebhookDraft
+} from '@/pages/WorkspaceIncomingWebhooksPage.model';
 import { TextInput, Textarea } from '@acornops/ui';
 
-interface WorkspaceEventTriggersPageProps {
+interface WorkspaceIncomingWebhooksPageProps {
   workspace: Workspace;
-  sourceType: WorkflowEventTriggerSourceType;
-  createTriggerType?: WorkflowTriggerType;
+  create?: boolean;
+  createWorkflowId?: string;
   navigate: (path: string) => void;
 }
 
@@ -58,22 +52,23 @@ type TriggerStatusFilter = 'all' | 'enabled' | 'paused';
 const inputClassName = formInputClassName('mt-2');
 const eventTriggerTextareaClassName = formTextareaClassName('mt-2');
 
-export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProps> = ({
+export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPageProps> = ({
   workspace,
-  sourceType,
-  createTriggerType,
+  create,
+  createWorkflowId,
   navigate
 }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
-  const [triggerPage, setTriggerPage] = useState<WorkflowEventTriggerListResponse | null>(null);
+  const [triggerPage, setTriggerPage] = useState<WorkflowWebhookListResponse | null>(null);
   const [workflows, setWorkflows] = useState<WorkflowApiDefinition[]>([]);
   const [stateWorkspaceId, setStateWorkspaceId] = useState(workspace.id);
   const [phase, setPhase] = useState<CursorCollectionPhase>('loading');
   const [loadError, setLoadError] = useState('');
   const [mutationError, setMutationError] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [draft, setDraft] = useState<TriggerDraft>(() => emptyTriggerDraft());
+  const [draft, setDraft] = useState<WebhookDraft>(() => emptyWebhookDraft());
+  const consumedCreateIntentRef = useRef('');
   const [saving, setSaving] = useState(false);
   const [mutatingId, setMutatingId] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState('');
@@ -96,7 +91,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setLoadError('');
     try {
       const [loadedTriggers, loadedWorkflows] = await Promise.all([
-        listWorkspaceWorkflowEventTriggers(requestedWorkspaceId),
+        listWorkspaceWorkflowWebhooks(requestedWorkspaceId),
         listWorkspaceWorkflows(requestedWorkspaceId)
       ]);
       if (!isCurrentRequest()) return;
@@ -117,7 +112,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setTriggerPage(null);
     setSecretDisclosure(null);
     setDrawerOpen(false);
-    setDraft(emptyTriggerDraft());
+    setDraft(emptyWebhookDraft());
     setSaving(false);
     setMutatingId('');
     setPendingDeleteId('');
@@ -146,13 +141,8 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     })) : [],
     [workflows, workspaceStateCurrent]
   );
-  const sourceTriggers = useMemo(() => triggers.filter(
-    (trigger) => trigger.sourceType === sourceType
-  ), [sourceType, triggers]);
-  const searchLabel = t(sourceType === 'webhook'
-    ? 'eventTriggers.filters.searchIncomingWebhooks'
-    : 'eventTriggers.filters.searchAcornOpsEvents');
-  const visibleTriggers = useMemo(() => sourceTriggers.filter((trigger) => {
+  const searchLabel = t('eventTriggers.filters.searchIncomingWebhooks');
+  const visibleTriggers = useMemo(() => triggers.filter((trigger) => {
     if (status !== 'all' && trigger.status !== status) return false;
     if (workflowFilter !== 'all' && trigger.workflowId !== workflowFilter) return false;
     if (!normalizedQuery) return true;
@@ -160,13 +150,9 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     return [
       trigger.name,
       workflow?.name,
-      trigger.endpointUrl,
-      trigger.eventType,
-      trigger.sourceType === 'webhook'
-        ? t('eventTriggers.source.webhook')
-        : t('eventTriggers.source.acornopsEvent')
+      trigger.endpointUrl
     ].some((value) => value?.toLowerCase().includes(normalizedQuery));
-  }), [normalizedQuery, sourceTriggers, status, t, workflowFilter, workflows]);
+  }), [normalizedQuery, status, workflowFilter, workflows, triggers]);
   const hasActiveFilters = Boolean(normalizedQuery || status !== 'all' || workflowFilter !== 'all');
   const clearFilters = () => {
     updateUrlSearch(
@@ -175,26 +161,16 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     );
     window.requestAnimationFrame(() => document.getElementById('workflow-triggers-search')?.focus());
   };
-  const selectedWorkflow = workspaceStateCurrent
-    ? workflows.find((workflow) => workflow.id === draft.workflowId)
-    : undefined;
-  const unsupportedIssueParameter = draft.sourceType === 'acornops_event'
-    ? selectedWorkflow?.parameters.find((parameter) => parameter.type === 'chat')
-    : undefined;
-  const missingIssueBinding = draft.sourceType === 'acornops_event'
-    ? selectedWorkflow?.parameters.find((parameter) => !draft.inputBindings[parameter.key])
-    : undefined;
-  const canSave = Boolean(draft.name.trim() && draft.workflowId
-    && !unsupportedIssueParameter && !missingIssueBinding);
+  const canSave = Boolean(draft.name.trim() && draft.workflowId);
   const deleteTargetTrigger = pendingDeleteId
     ? triggers.find((trigger) => trigger.id === pendingDeleteId)
     : undefined;
 
-  const openCreate = () => {
-    const workflow = activeWorkflows[0];
+  const openCreate = (workflowId?: string) => {
+    const workflow = activeWorkflows.find((candidate) => candidate.id === workflowId)
+      || activeWorkflows[0];
     setDraft({
-      ...emptyTriggerDraft(),
-      sourceType,
+      ...emptyWebhookDraft(),
       workflowId: workflow?.id || '',
       approvedContextGrants: workflow?.capabilityPolicy.contextGrants.join('\n') || ''
     });
@@ -202,14 +178,16 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setDrawerOpen(true);
   };
 
-  useWorkflowTriggerCreateIntent(createTriggerType, sourceType, phase === 'ready' && canManage && Boolean(activeWorkflows.length), openCreate);
+  useEffect(() => {
+    const intent = createWorkflowId ? `workflow:${createWorkflowId}` : create ? 'webhook' : '';
+    if (!intent || phase !== 'ready' || !canManage || !activeWorkflows.length
+      || consumedCreateIntentRef.current === intent) return;
+    consumedCreateIntentRef.current = intent;
+    openCreate(createWorkflowId);
+  }, [activeWorkflows.length, canManage, create, createWorkflowId, phase]);
 
-  const openEdit = (trigger: WorkflowEventTrigger) => {
-    const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
-    setDraft(draftFromTrigger(
-      trigger,
-      workflow?.parameters.map((parameter) => parameter.key)
-    ));
+  const openEdit = (trigger: WorkflowWebhook) => {
+    setDraft(draftFromWebhook(trigger));
     setMutationError('');
     setDrawerOpen(true);
   };
@@ -230,24 +208,20 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setMutationError('');
     try {
       if (draft.id) {
-        await updateWorkflowEventTrigger(requestedWorkspaceId, draft.id, {
+        await updateWorkflowWebhook(requestedWorkspaceId, draft.id, {
           name: draft.name.trim(),
           enabled: draft.enabled,
-          inputBindings: draft.sourceType === 'acornops_event' ? draft.inputBindings : {},
           approvedContextGrants: parseContextGrants(draft.approvedContextGrants)
         });
       } else {
-        const created = await createWorkflowEventTrigger(requestedWorkspaceId, {
+        const created = await createWorkflowWebhook(requestedWorkspaceId, {
           workflowId: draft.workflowId,
           name: draft.name.trim(),
           enabled: draft.enabled,
-          sourceType: draft.sourceType,
-          ...(draft.sourceType === 'acornops_event' ? { eventType: 'issue.created.v1' as const } : {}),
-          inputBindings: draft.sourceType === 'acornops_event' ? draft.inputBindings : {},
           approvedContextGrants: parseContextGrants(draft.approvedContextGrants)
         });
         if (!isCurrentRequest()) return;
-        if (created.webhook) setSecretDisclosure({ ...created.webhook, name: created.trigger.name });
+        setSecretDisclosure({ ...created.signingSecret, name: created.webhook.name });
       }
       if (!isCurrentRequest()) return;
       setDrawerOpen(false);
@@ -260,7 +234,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     }
   };
 
-  const toggle = async (trigger: WorkflowEventTrigger) => {
+  const toggle = async (trigger: WorkflowWebhook) => {
     if (!canManage || mutatingId) return;
     const requestedWorkspaceId = workspace.id;
     const requestSequence = ++mutationSequence.current;
@@ -269,7 +243,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setMutatingId(trigger.id);
     setMutationError('');
     try {
-      await updateWorkflowEventTrigger(requestedWorkspaceId, trigger.id, { enabled: trigger.status !== 'enabled' });
+      await updateWorkflowWebhook(requestedWorkspaceId, trigger.id, { enabled: trigger.status !== 'enabled' });
       if (!isCurrentRequest()) return;
       await refresh();
     } catch (error) {
@@ -280,7 +254,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     }
   };
 
-  const remove = async (trigger: WorkflowEventTrigger) => {
+  const remove = async (trigger: WorkflowWebhook) => {
     if (!canManage || mutatingId) return;
     const requestedWorkspaceId = workspace.id;
     const requestSequence = ++mutationSequence.current;
@@ -289,7 +263,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setMutatingId(trigger.id);
     setMutationError('');
     try {
-      await deleteWorkflowEventTrigger(requestedWorkspaceId, trigger.id);
+      await deleteWorkflowWebhook(requestedWorkspaceId, trigger.id);
       if (!isCurrentRequest()) return;
       setPendingDeleteId('');
       await refresh();
@@ -301,8 +275,8 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     }
   };
 
-  const rotateSecret = async (trigger: WorkflowEventTrigger) => {
-    if (!canManage || mutatingId || trigger.sourceType !== 'webhook') return;
+  const rotateSecret = async (trigger: WorkflowWebhook) => {
+    if (!canManage || mutatingId) return;
     const requestedWorkspaceId = workspace.id;
     const requestSequence = ++mutationSequence.current;
     const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId
@@ -310,9 +284,9 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setMutatingId(trigger.id);
     setMutationError('');
     try {
-      const rotated = await rotateWorkflowEventTriggerSecret(requestedWorkspaceId, trigger.id);
+      const rotated = await rotateWorkflowWebhookSecret(requestedWorkspaceId, trigger.id);
       if (!isCurrentRequest()) return;
-      if (rotated.webhook) setSecretDisclosure({ ...rotated.webhook, name: rotated.trigger.name });
+      setSecretDisclosure({ ...rotated.signingSecret, name: rotated.webhook.name });
       setPendingRotateId('');
       await refresh();
     } catch (error) {
@@ -337,27 +311,32 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
     setDraft((current) => ({
       ...current,
       workflowId,
-      inputBindings: {},
       approvedContextGrants: workflow?.capabilityPolicy.contextGrants.join('\n') || ''
     }));
   };
 
   return (
     <PageShell>
-      <WorkflowTriggersPageHeader
-        workspace={workspace}
-        currentType={sourceType}
-        createDisabled={!canManage || !activeWorkflows.length}
-        refreshDisabled={phase === 'loading' || phase === 'refreshing'}
-        navigate={navigate}
-        onCreateCurrent={openCreate}
-        onRefresh={() => void refresh()}
+      <PageHeader
+        title={t('eventTriggers.title')}
+        description={t('eventTriggers.subtitle', { workspace: workspace.name })}
+        actions={<>
+          <Button size="md" variant="secondary" onClick={() => void refresh()} disabled={phase === 'loading' || phase === 'refreshing'}>
+            <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
+            {t('common.refresh')}
+          </Button>
+          <Button size="md" variant="primary" onClick={() => openCreate()} disabled={!canManage || !activeWorkflows.length}>
+            <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+            {t('eventTriggers.actions.create')}
+          </Button>
+        </>}
       />
+      <WorkflowSections activeSection="incomingWebhooks" workspaceId={workspace.id} navigate={navigate} />
 
       <div
-        id={`workflow-trigger-type-${sourceType}-panel`}
+        id="workflow-section-incomingWebhooks-panel"
         role="tabpanel"
-        aria-labelledby={`workflow-trigger-type-${sourceType}-tab`}
+        aria-labelledby="workflow-section-incomingWebhooks-tab"
       >
       {!canManage && <InlineAlert tone="neutral" className="mb-5">{t('eventTriggers.permissionNotice')}</InlineAlert>}
       {!activeWorkflows.length && phase === 'ready' && <InlineAlert tone="warning" className="mb-5">{t('eventTriggers.noActiveWorkflows')}</InlineAlert>}
@@ -365,10 +344,10 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
       {copyFeedback && <p role="status" className="sr-only">{copyFeedback}</p>}
 
       {workspaceStateCurrent && secretDisclosure && (
-        <section className="mb-5 rounded-lg border border-status-success/30 bg-status-success-soft p-4" aria-labelledby="event-trigger-secret-title">
+        <section className="mb-5 rounded-lg border border-status-success/30 bg-status-success-soft p-4" aria-labelledby="workflow-webhook-secret-title">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
-              <h2 id="event-trigger-secret-title" className="type-row-title text-status-success-text">
+              <h2 id="workflow-webhook-secret-title" className="type-row-title text-status-success-text">
                 {t('eventTriggers.secret.title', { name: secretDisclosure.name })}
               </h2>
               <p className="mt-1 type-caption text-status-success-text">{t('eventTriggers.secret.description')}</p>
@@ -402,8 +381,8 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         queryPlaceholder={searchLabel}
         queryClearLabel={t('common.clearSearch')}
         resultSummary={hasActiveFilters
-          ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: sourceTriggers.length })
-          : t('eventTriggers.count', { count: sourceTriggers.length })}
+          ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: triggers.length })
+          : t('eventTriggers.count', { count: triggers.length })}
         filters={[
           createDiscoveryFilterGroup<TriggerStatusFilter>({
             id: 'status',
@@ -411,9 +390,9 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
             value: status,
             defaultValue: 'all',
             options: [
-              { value: 'all', label: t('eventTriggers.filters.allStatuses'), count: sourceTriggers.length },
-              { value: 'enabled', label: t('eventTriggers.status.enabled'), count: sourceTriggers.filter((trigger) => trigger.status === 'enabled').length },
-              { value: 'paused', label: t('eventTriggers.status.paused'), count: sourceTriggers.filter((trigger) => trigger.status === 'paused').length }
+              { value: 'all', label: t('eventTriggers.filters.allStatuses'), count: triggers.length },
+              { value: 'enabled', label: t('eventTriggers.status.enabled'), count: triggers.filter((trigger) => trigger.status === 'enabled').length },
+              { value: 'paused', label: t('eventTriggers.status.paused'), count: triggers.filter((trigger) => trigger.status === 'paused').length }
             ],
             onChange: (value) => updateUrlSearch({ status: value === 'all' ? null : value })
           }),
@@ -435,7 +414,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         className="mb-4"
       />
       <DataSurface aria-label={t('eventTriggers.listTitle')}>
-        <DataTableGridHeader showAt="xl" className={workspaceEventTriggerLedgerGridClass} collectionState={{ phase: workspaceStateCurrent ? phase : 'loading', itemCount: visibleTriggers.length }}>
+        <DataTableGridHeader showAt="xl" className={workspaceWebhookLedgerGridClass} collectionState={{ phase: workspaceStateCurrent ? phase : 'loading', itemCount: visibleTriggers.length }}>
           <DataTableGridHeaderCell>{t('eventTriggers.columns.trigger')}</DataTableGridHeaderCell>
           <DataTableGridHeaderCell>{t('eventTriggers.columns.workflow')}</DataTableGridHeaderCell>
           <DataTableGridHeaderCell>{t('eventTriggers.columns.configuration')}</DataTableGridHeaderCell>
@@ -451,10 +430,10 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
             icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Zap />}
             title={hasActiveFilters
               ? t('eventTriggers.filters.emptyTitle')
-              : t(sourceType === 'webhook' ? 'triggers.empty.webhookTitle' : 'triggers.empty.acornopsEventTitle')}
+              : t('eventTriggers.emptyTitle')}
             description={hasActiveFilters
               ? t('eventTriggers.filters.emptyDescription')
-              : t(sourceType === 'webhook' ? 'triggers.empty.webhookDescription' : 'triggers.empty.acornopsEventDescription')}
+              : t('eventTriggers.emptyDescription')}
             actions={hasActiveFilters
               ? <Button size="sm" variant="secondary" onClick={clearFilters}>{t('common.clearAll')}</Button>
               : undefined}
@@ -471,7 +450,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
           announcement={phase === 'refreshing'
             ? t('eventTriggers.refreshing')
             : phase === 'ready'
-              ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: sourceTriggers.length })
+              ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: triggers.length })
               : undefined}
         >
           <div className="divide-y divide-ui-border">
@@ -479,7 +458,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
               const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
               const busy = mutatingId === trigger.id;
               return (
-                <WorkspaceEventTriggerCard
+                <WorkspaceWebhookCard
                   key={trigger.id}
                   trigger={trigger}
                   workflowName={workflow?.name || trigger.workflowId}
@@ -511,8 +490,8 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         </CollectionState>
       </DataSurface>
       </div>
-      <WorkspaceEventTriggerDeleteDialog
-        trigger={deleteTargetTrigger}
+      <WorkspaceWebhookDeleteDialog
+        webhook={deleteTargetTrigger}
         error={mutationError}
         pending={Boolean(deleteTargetTrigger && mutatingId === deleteTargetTrigger.id)}
         onCancel={() => {
@@ -530,12 +509,10 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
         open={workspaceStateCurrent && drawerOpen}
         onClose={closeDrawer}
         closeDisabled={saving}
-        titleId="event-trigger-drawer-title"
+        titleId="workflow-webhook-drawer-title"
         title={draft.id
           ? t('eventTriggers.form.editTitle')
-          : t(sourceType === 'webhook'
-              ? 'triggers.form.createWebhookTitle'
-              : 'triggers.form.createAcornOpsEventTitle')}
+          : t('eventTriggers.form.createTitle')}
         description={t('eventTriggers.form.description')}
         closeLabel={t('common.close')}
         width="lg"
@@ -569,57 +546,7 @@ export const WorkspaceEventTriggersPage: React.FC<WorkspaceEventTriggersPageProp
           />
           <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.workflowHelp')}</span>
         </label>
-        <div className="block type-body type-emphasis text-ui-text">
-          {t('eventTriggers.form.source')}
-          <div className="mt-2 min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 py-2.5 type-body text-ui-text">
-            {t(draft.sourceType === 'webhook'
-              ? 'triggers.types.webhook'
-              : 'triggers.types.acornopsEvent')}
-          </div>
-          <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.sourceHelp')}</span>
-        </div>
-
-        {draft.sourceType === 'acornops_event' ? (
-          <section className="rounded-lg border border-ui-border bg-ui-bg p-4">
-            <h3 className="type-row-title text-ui-text">{t('eventTriggers.form.issueCreated')}</h3>
-            <p className="mt-1 type-caption text-ui-text-muted">{t('eventTriggers.form.issueCreatedHelp')}</p>
-            {unsupportedIssueParameter ? (
-              <InlineAlert tone="warning" className="mt-4">
-                {t('eventTriggers.form.chatUnsupported', { parameter: humanizeWorkflowParameterKey(unsupportedIssueParameter.key) })}
-              </InlineAlert>
-            ) : selectedWorkflow?.parameters.length ? (
-              <div className="mt-4 grid gap-4">
-                {selectedWorkflow.parameters.map((parameter) => {
-                  const bindings = parameter.type === 'target' ? ['target.id' as const] : issueTextBindings;
-                  return (
-                    <label key={parameter.key} className="block type-body type-emphasis text-ui-text">
-                      {humanizeWorkflowParameterKey(parameter.key)}
-                      <Select<WorkflowEventInputBinding | ''>
-                        value={draft.inputBindings[parameter.key] || ''}
-                        options={[
-                          { value: '', label: t('eventTriggers.form.selectBinding') },
-                          ...bindings.map((binding) => ({ value: binding, label: t(`eventTriggers.bindings.${binding.replace('.', '_')}`) }))
-                        ]}
-                        onChange={(binding) => setDraft((current) => ({
-                          ...current,
-                          inputBindings: binding
-                            ? { ...current.inputBindings, [parameter.key]: binding }
-                            : Object.fromEntries(Object.entries(current.inputBindings).filter(([name]) => name !== parameter.key))
-                        }))}
-                        className="mt-2"
-                        ariaLabel={t('eventTriggers.form.bindingLabel', { parameter: humanizeWorkflowParameterKey(parameter.key) })}
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="mt-4 type-caption text-ui-text-muted">{t('eventTriggers.form.noInputs')}</p>
-            )}
-          </section>
-        ) : (
-          <InlineAlert tone="neutral">{t('eventTriggers.form.webhookHelp')}</InlineAlert>
-        )}
+        <InlineAlert tone="neutral">{t('eventTriggers.form.webhookHelp')}</InlineAlert>
 
         <div className="block type-body type-emphasis text-ui-text">
           {t('eventTriggers.form.runsAs')}

@@ -36,12 +36,14 @@ const loadWorkspaceCatalogPage = () =>
 const loadWorkspaceWorkflowsPage = () =>
   import('@/pages/WorkspaceWorkflowsPage').then((module) => ({ default: module.WorkspaceWorkflowsPage }));
 
-const loadWorkspaceRunsPage = () => import('@/pages/WorkspaceRunsPage').then((module) => ({ default: module.WorkspaceRunsPage }));
+const loadWorkspaceActivityPage = () => import('@/pages/WorkspaceActivityPage').then((module) => ({ default: module.WorkspaceActivityPage }));
 const loadWorkspaceSchedulesPage = () =>
   import('@/pages/WorkspaceSchedulesPage').then((module) => ({ default: module.WorkspaceSchedulesPage }));
+const loadWorkspaceIncomingWebhooksPage = () =>
+  import('@/pages/WorkspaceIncomingWebhooksPage').then((module) => ({ default: module.WorkspaceIncomingWebhooksPage }));
 
-const loadWorkspaceEventTriggersPage = () =>
-  import('@/pages/WorkspaceEventTriggersPage').then((module) => ({ default: module.WorkspaceEventTriggersPage }));
+const loadWorkspaceWebhooksPage = () =>
+  import('@/pages/WorkspaceWebhooksPage').then((module) => ({ default: module.WorkspaceWebhooksPage }));
 
 const loadWorkspaceApprovalsPage = () =>
   import('@/pages/WorkspaceApprovalsPage').then((module) => ({ default: module.WorkspaceApprovalsPage }));
@@ -54,7 +56,6 @@ const loadWorkspaceOverviewPage = () =>
 
 const loadWorkspaceAuditLogPage = () =>
   import('@/pages/WorkspaceAuditLogPage').then((module) => ({ default: module.WorkspaceAuditLogPage }));
-const loadWorkspaceWebhooksPage = () => import('@/pages/WorkspaceWebhooksPage').then((module) => ({ default: module.WorkspaceWebhooksPage }));
 
 const KubernetesClustersPage = React.lazy(loadKubernetesClustersPage);
 const KubernetesClusterDetailPage = React.lazy(loadKubernetesClusterDetailPage);
@@ -66,14 +67,14 @@ const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
 const WorkspaceAgentsPage = React.lazy(loadWorkspaceAgentsPage);
 const WorkspaceCatalogPage = React.lazy(loadWorkspaceCatalogPage);
 const WorkspaceWorkflowsPage = React.lazy(loadWorkspaceWorkflowsPage);
-const WorkspaceRunsPage = React.lazy(loadWorkspaceRunsPage);
+const WorkspaceActivityPage = React.lazy(loadWorkspaceActivityPage);
 const WorkspaceSchedulesPage = React.lazy(loadWorkspaceSchedulesPage);
-const WorkspaceEventTriggersPage = React.lazy(loadWorkspaceEventTriggersPage);
+const WorkspaceIncomingWebhooksPage = React.lazy(loadWorkspaceIncomingWebhooksPage);
+const WorkspaceWebhooksPage = React.lazy(loadWorkspaceWebhooksPage);
 const WorkspaceApprovalsPage = React.lazy(loadWorkspaceApprovalsPage);
 const WorkspaceInvitePage = React.lazy(loadWorkspaceInvitePage);
 const WorkspaceOverviewPage = React.lazy(loadWorkspaceOverviewPage);
 const WorkspaceAuditLogPage = React.lazy(loadWorkspaceAuditLogPage);
-const WorkspaceWebhooksPage = React.lazy(loadWorkspaceWebhooksPage);
 
 export function preloadAppRoutePage(route: AppRoute): void {
   switch (route.kind) {
@@ -106,14 +107,14 @@ export function preloadAppRoutePage(route: AppRoute): void {
       void loadWorkspaceCatalogPage();
       break;
     case 'workspaceWorkflows':
-      void loadWorkspaceWorkflowsPage();
+      if (route.section === 'schedules') void loadWorkspaceSchedulesPage();
+      else if (route.section === 'incomingWebhooks') void loadWorkspaceIncomingWebhooksPage();
+      else void loadWorkspaceWorkflowsPage();
       break;
-    case 'workspaceRuns':
-      void loadWorkspaceRunsPage();
+    case 'workspaceActivity':
+      void loadWorkspaceActivityPage();
       break;
-    case 'workspaceTriggers':
-      if (route.triggerType === 'schedule') void loadWorkspaceSchedulesPage();
-      else void loadWorkspaceEventTriggersPage();
+    case 'workspaceRedirect':
       break;
     case 'workspaceApprovals':
       void loadWorkspaceApprovalsPage();
@@ -390,7 +391,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
-          {route.kind === 'workspaceWorkflows' && workspaceContext && (
+          {route.kind === 'workspaceWorkflows' && route.section === 'all' && workspaceContext && (
             <WorkspaceWorkflowsPage
               key={workspaceContext.id}
               workspace={workspaceContext}
@@ -398,8 +399,28 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
             />
           )}
 
-          {route.kind === 'workspaceRuns' && workspaceContext && (
-            <WorkspaceRunsPage
+          {route.kind === 'workspaceWorkflows' && route.section === 'schedules' && workspaceContext && (
+            <WorkspaceSchedulesPage
+              key={`${workspaceContext.id}:schedules`}
+              workspace={workspaceContext}
+              create={route.create}
+              createWorkflowId={route.createWorkflowId}
+              navigate={navigate}
+            />
+          )}
+
+          {route.kind === 'workspaceWorkflows' && route.section === 'incomingWebhooks' && workspaceContext && (
+            <WorkspaceIncomingWebhooksPage
+              key={`${workspaceContext.id}:incoming-webhooks`}
+              workspace={workspaceContext}
+              create={route.create}
+              createWorkflowId={route.createWorkflowId}
+              navigate={navigate}
+            />
+          )}
+
+          {route.kind === 'workspaceActivity' && workspaceContext && (
+            <WorkspaceActivityPage
               key={workspaceContext.id}
               workspace={workspaceContext}
               routeState={route}
@@ -425,14 +446,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               routeState={route}
               navigate={navigate}
             />
-          )}
-
-          {route.kind === 'workspaceTriggers' && workspaceContext && (
-            route.triggerType === 'schedule'
-              ? <WorkspaceSchedulesPage key={`${workspaceContext.id}:schedule`} workspace={workspaceContext}
-                  createTriggerType={route.createTriggerType} createWorkflowId={route.createWorkflowId} navigate={navigate} />
-              : <WorkspaceEventTriggersPage key={`${workspaceContext.id}:${route.triggerType}`} workspace={workspaceContext}
-                  sourceType={route.triggerType} createTriggerType={route.createTriggerType} navigate={navigate} />
           )}
 
           {route.kind === 'workspaceApprovals' && workspaceContext && (
