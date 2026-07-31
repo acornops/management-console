@@ -136,6 +136,67 @@ test('Agent creation persists the selected emoji identity', async ({ page }) => 
   await expect(card.locator('[data-agent-avatar="true"]')).toHaveText('🛡️');
 });
 
+test('Agent identity choices stay dense and dirty drawer closes use the product dialog', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'New agent' }).click();
+
+  const drawer = page.getByRole('dialog', { name: 'Create agent' });
+  const emojiGrid = drawer.locator('[data-agent-emoji-options="true"]');
+  const emojiButtons = emojiGrid.getByRole('button');
+  await expect(emojiButtons).toHaveCount(24);
+  const emojiLayout = await emojiButtons.evaluateAll((buttons) => {
+    const rows = new Map<number, DOMRect[]>();
+    for (const button of buttons) {
+      const rect = button.getBoundingClientRect();
+      const top = Math.round(rect.top);
+      rows.set(top, [...(rows.get(top) || []), rect]);
+    }
+    const gaps = [...rows.values()].flatMap((row) => row
+      .sort((left, right) => left.left - right.left)
+      .slice(1)
+      .map((rect, index) => rect.left - row[index].right));
+    return {
+      maxGap: Math.max(...gaps),
+      maxRowSize: Math.max(...[...rows.values()].map((row) => row.length)),
+      minTarget: Math.min(...buttons.map((button) => button.getBoundingClientRect().width))
+    };
+  });
+  expect(emojiLayout.maxGap).toBeLessThanOrEqual(9);
+  expect(emojiLayout.maxRowSize).toBeGreaterThanOrEqual(12);
+  expect(emojiLayout.minTarget).toBeGreaterThanOrEqual(43.9);
+
+  await drawer.getByLabel('Name').fill('Draft response agent');
+  await drawer.getByRole('button', { name: 'Close create agent drawer' }).click();
+
+  const discardDialog = page.getByRole('dialog', { name: 'Discard unsaved agent changes?' });
+  await expect(discardDialog).toBeVisible();
+  await discardDialog.getByRole('button', { name: 'Keep editing' }).click();
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByLabel('Name')).toHaveValue('Draft response agent');
+
+  await drawer.getByRole('button', { name: 'Close create agent drawer' }).click();
+  await discardDialog.getByRole('button', { name: 'Discard changes' }).click();
+  await expect(drawer).toHaveCount(0);
+  await expect(page).not.toHaveURL(/panel=create/);
+});
+
+test('browser Back uses the Agent discard dialog and keeps the draft when cancelled', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'New agent' }).click();
+
+  const drawer = page.getByRole('dialog', { name: 'Create agent' });
+  await drawer.getByLabel('Name').fill('Back guarded agent');
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  await page.goBack();
+
+  const discardDialog = page.getByRole('dialog', { name: 'Discard unsaved agent changes?' });
+  await expect(discardDialog).toBeVisible();
+  await discardDialog.getByRole('button', { name: 'Keep editing' }).click();
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByLabel('Name')).toHaveValue('Back guarded agent');
+  await expect(page).toHaveURL(/panel=create/);
+});
+
 test('Agent Quick chat remains a modal drawer in a narrow viewport', async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });

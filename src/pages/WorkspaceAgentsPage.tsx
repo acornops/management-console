@@ -30,6 +30,8 @@ import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import type { WorkflowOption } from '@/services/control-plane/workflowApi';
 import { AppPaths } from '@/utils/routes';
+import { UnsavedChangesDialog } from '@/features/targets/admin/UnsavedChangesDialog';
+import { useAgentDrawerDiscardGuard } from '@/pages/agents/useAgentDrawerDiscardGuard';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace, currentUserId, isDark, routeState, navigate }) => {
   const urlSearch = useUrlSearchState();
@@ -175,26 +177,51 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const activeAgentTab = routeState?.tab || agentTab;
   const quickChatOpen = !routeState && urlSearch.get('panel') === 'chat';
   const [quickChatLayoutReserved, setQuickChatLayoutReserved] = useState(quickChatOpen);
-  const editingAgent = editPanelOpen ? agents.find((agent) => agent.id === editingAgentId) : undefined;
+  const editingAgent = editingAgentId ? agents.find((agent) => agent.id === editingAgentId) : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
   const createDirty = Boolean(createDraft.name || createDraft.description || createDraft.instructions || createDraft.avatarEmoji !== DEFAULT_AGENT_EMOJI);
   const editDirty = editChangeSummary.length > 0;
+  const resetCreateAgentDraft = () => {
+    setCreateDraft({ name: '', avatarEmoji: DEFAULT_AGENT_EMOJI, description: '', instructions: '', providerType: 'internal' });
+  };
+  const clearEditAgentDraft = () => {
+    setEditingAgentId('');
+    setEditDraft(null);
+    editDraftSourceRef.current = null;
+  };
+  const closeCreateAgentDrawerImmediately = () => {
+    resetCreateAgentDraft();
+    updateUrlSearch({ panel: null });
+  };
+  const closeEditAgentDrawerImmediately = () => {
+    if (routeState) {
+      updateUrlSearch({ panel: null, agent: null, agentTab: null }, { replace: true });
+      navigate(AppPaths.workspaceAgentDetail(workspace.id, editingAgentId, 'settings'), { replace: true });
+    } else {
+      updateUrlSearch({ panel: 'profile', agent: editingAgentId, agentTab });
+    }
+    clearEditAgentDraft();
+  };
+  const {
+    cancelDiscard,
+    discardChanges,
+    discardRequest,
+    requestCloseCreate,
+    requestCloseEdit
+  } = useAgentDrawerDiscardGuard({
+    createDirty,
+    createPanelOpen,
+    editDirty,
+    editPanelOpen,
+    onCloseCreate: closeCreateAgentDrawerImmediately,
+    onCloseEdit: closeEditAgentDrawerImmediately,
+    onDiscardCreateHistory: resetCreateAgentDraft,
+    onDiscardEditHistory: clearEditAgentDraft
+  });
+  const editDrawerVisible = editPanelOpen || discardRequest?.target === 'edit';
   React.useEffect(() => {
     if (quickChatOpen) setQuickChatLayoutReserved(true);
   }, [quickChatOpen]);
-  React.useEffect(() => {
-    if (!createDirty && !editDirty) return;
-    const warnBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
-    const guardHistoryExit = () => {
-      if (!window.confirm('Discard unsaved changes?')) window.history.forward();
-    };
-    window.addEventListener('beforeunload', warnBeforeUnload);
-    window.addEventListener('popstate', guardHistoryExit);
-    return () => {
-      window.removeEventListener('beforeunload', warnBeforeUnload);
-      window.removeEventListener('popstate', guardHistoryExit);
-    };
-  }, [createDirty, editDirty]);
   React.useEffect(() => {
     if (!agentCatalogReady || !editPanelOpen || !editingAgent) return;
     const nextDraft = createAgentEditDraft(editingAgent);
@@ -226,27 +253,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   }, [selectedAgent?.id, workspace.id]);
   const updateSelectedAgent = (agentId: string, updater: (agent: AgentDefinition) => AgentDefinition) => {
     setAgents((current) => current.map((agent) => agent.id === agentId ? updater(agent) : agent));
-  };
-  const resetCreateAgentDraft = () => {
-    setCreateDraft({ name: '', avatarEmoji: DEFAULT_AGENT_EMOJI, description: '', instructions: '', providerType: 'internal' });
-  };
-  const confirmDiscard = (dirty: boolean) => !dirty || window.confirm('Discard unsaved changes?');
-  const closeCreateAgentDrawer = () => {
-    if (!confirmDiscard(createDirty)) return;
-    resetCreateAgentDraft();
-    updateUrlSearch({ panel: null });
-  };
-  const closeEditAgentDrawer = (saved = false) => {
-    if (!saved && !confirmDiscard(editDirty)) return;
-    if (routeState) {
-      updateUrlSearch({ panel: null, agent: null, agentTab: null }, { replace: true });
-      navigate(AppPaths.workspaceAgentDetail(workspace.id, editingAgentId, 'settings'), { replace: true });
-    } else {
-      updateUrlSearch({ panel: 'profile', agent: editingAgentId, agentTab });
-    }
-    setEditingAgentId('');
-    setEditDraft(null);
-    editDraftSourceRef.current = null;
   };
   const openEditAgentDrawer = (agent: AgentDefinition) => {
     setEditingAgentId(agent.id);
@@ -455,7 +461,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
       setSelectedAgentId(mapped.id);
       setLocalNotice({ tone: 'success', message: 'Agent updated. Review affected workflows before the next run.' });
-      closeEditAgentDrawer(true);
+      closeEditAgentDrawerImmediately();
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update this agent.' });
     } finally {
@@ -489,10 +495,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
 
   const drawers = (
     <>
-      {createPanelOpen && (
-        <CreateAgentDrawer createDraft={createDraft} setCreateDraft={setCreateDraft} creatingAgent={creatingAgent} onClose={closeCreateAgentDrawer} onSave={() => void createControlPlaneAgent()} />
+      {(createPanelOpen || discardRequest?.target === 'create') && (
+        <CreateAgentDrawer createDraft={createDraft} setCreateDraft={setCreateDraft} creatingAgent={creatingAgent} onClose={requestCloseCreate} onSave={() => void createControlPlaneAgent()} />
       )}
-      {editPanelOpen && editingAgent && editDraft && (
+      {editDrawerVisible && editingAgent && editDraft && (
         <EditAgentDrawer
           editingAgent={editingAgent}
           editDraft={editDraft}
@@ -502,8 +508,21 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           editChangeSummary={editChangeSummary}
           updatingAgentId={updatingAgentId}
           nameInputRef={editAgentNameInputRef}
-          onClose={closeEditAgentDrawer}
+          onClose={requestCloseEdit}
           onSave={() => void saveAgentEdits()}
+        />
+      )}
+      {discardRequest && (
+        <UnsavedChangesDialog
+          title="Discard unsaved agent changes?"
+          body={discardRequest.target === 'create'
+            ? 'The agent name, emoji, assignment purpose, and instructions will be lost.'
+            : `Your unsaved changes to ${editingAgent?.name || 'this agent'} will be lost.`}
+          cancelLabel="Keep editing"
+          discardLabel="Discard changes"
+          closeLabel="Close discard confirmation"
+          onCancel={cancelDiscard}
+          onDiscard={discardChanges}
         />
       )}
     </>
