@@ -25,6 +25,9 @@ describe('resource card grid', () => {
     expect(styles).toContain('flex-wrap: wrap');
     expect(styles).toContain('flex: 1 1 min(100%, 30rem)');
     expect(styles).toContain('max-width: 40rem');
+    expect(styles).toContain("[data-agent-catalog-layout='docked'] .resource-card-grid > *");
+    expect(styles).toContain('flex-basis: 100%');
+    expect(styles).toContain('max-width: none');
     expect(styles).not.toContain('container-name: cluster-catalog');
   });
 
