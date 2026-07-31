@@ -5,7 +5,7 @@ import type { DesktopSidebarMode } from '@/app/preferences';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { controlPlaneApi as ControlPlaneApi, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
-import type { AgentAccessMode } from '@/services/control-plane/types';
+import type { AgentAccessMode, KubernetesRbacAdditionSummary } from '@/services/control-plane/types';
 import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import type { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 import type { AgentSubview, AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
@@ -29,6 +29,9 @@ export interface AppShellProps {
   clusterCreationStep: 'details' | 'instructions';
   clusterInstallCommand: string;
   clusterInstallWarnings: string[];
+  availableRbacAdditions: KubernetesRbacAdditionSummary[];
+  selectedRbacAdditionKeys: string[];
+  isLoadingRbacAdditions: boolean;
   deleteTargetWorkspace: Workspace | undefined;
   dismissToast: (id: string) => void;
   excludeNamespaces: string;
@@ -98,6 +101,7 @@ export interface AppShellProps {
   setIsSidebarWorkspaceMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setLanguage: (language: AppLanguageCode) => void;
   setNewClusterName: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedRbacAdditionKeys: React.Dispatch<React.SetStateAction<string[]>>;
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>;
   showToast: (message: string) => void;
   sidebarAccountMenuRef: React.RefObject<HTMLDivElement | null>;

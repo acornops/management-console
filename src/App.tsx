@@ -170,7 +170,8 @@ const App: React.FC = () => {
     setExcludeNamespaces,
     setIncludeNamespaces,
     setIsCreatingWorkspace,
-    setNewClusterName
+    setNewClusterName,
+    rbacAdditionsProps
   } = useWorkspaceClusterActions({
     kubernetesClusters,
     navigate,
@@ -506,6 +507,7 @@ const App: React.FC = () => {
       clusterCreationStep={clusterCreationStep}
       clusterInstallCommand={clusterInstallCommand}
       clusterInstallWarnings={clusterInstallWarnings}
+      {...rbacAdditionsProps}
       deleteTargetWorkspace={deleteTargetWorkspace}
       dismissToast={dismissToast}
       excludeNamespaces={excludeNamespaces}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { TFunction } from 'i18next';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
@@ -7,7 +7,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { AppRoute, AppPaths } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { parseNamespaceList } from '@/app/useAppSupport';
-import type { AgentAccessMode } from '@/services/control-plane/types';
+import type { AgentAccessMode, KubernetesRbacAdditionSummary } from '@/services/control-plane/types';
 import { getAgentConnectionState } from '@/utils/telemetry';
 
 export function getPostWorkspaceDeleteNavigationPath({
@@ -79,6 +79,10 @@ export function useWorkspaceClusterActions(args: {
   const [isCreatingCluster, setIsCreatingCluster] = useState(false);
   const [includeNamespaces, setIncludeNamespaces] = useState('');
   const [excludeNamespaces, setExcludeNamespaces] = useState('');
+  const [availableRbacAdditions, setAvailableRbacAdditions] = useState<KubernetesRbacAdditionSummary[]>([]);
+  const [selectedRbacAdditionKeys, setSelectedRbacAdditionKeys] = useState<string[]>([]);
+  const [isLoadingRbacAdditions, setIsLoadingRbacAdditions] = useState(false);
+  const rbacAdditionsRequestId = useRef(0);
 
   const refreshWorkspaceSummary = async (workspaceId: string) => {
     if (!user) return;
@@ -136,6 +140,22 @@ export function useWorkspaceClusterActions(args: {
     setClusterInstallCommand('');
     setClusterInstallWarnings([]);
     setRegisteredClusterId(null);
+    setAvailableRbacAdditions([]);
+    setSelectedRbacAdditionKeys([]);
+    setIsLoadingRbacAdditions(true);
+    const requestId = ++rbacAdditionsRequestId.current;
+    void controlPlaneApi.listKubernetesRbacAdditions(workspaceId)
+      .then((result) => {
+        if (requestId === rbacAdditionsRequestId.current) setAvailableRbacAdditions(result.items);
+      })
+      .catch((error) => {
+        if (requestId === rbacAdditionsRequestId.current) {
+          showToast(formatControlPlaneError(error, t('clusterSetup.rbacAdditionsLoadFailed'), { area: 'cluster' }));
+        }
+      })
+      .finally(() => {
+        if (requestId === rbacAdditionsRequestId.current) setIsLoadingRbacAdditions(false);
+      });
   };
 
   const handleProceedToInstructions = async (selectedAgentAccessMode: AgentAccessMode = 'read_only') => {
@@ -149,7 +169,8 @@ export function useWorkspaceClusterActions(args: {
           name: newClusterName.trim(),
           agentAccessMode: selectedAgentAccessMode,
           namespaceInclude: parseNamespaceList(includeNamespaces),
-          namespaceExclude: parseNamespaceList(excludeNamespaces)
+          namespaceExclude: parseNamespaceList(excludeNamespaces),
+          rbacAdditionKeys: selectedRbacAdditionKeys
         }
       );
 
@@ -208,6 +229,7 @@ export function useWorkspaceClusterActions(args: {
   };
 
   const resetClusterCreationState = () => {
+    rbacAdditionsRequestId.current += 1;
     setIsAddingCluster(false);
     setNewClusterName('');
     setClusterCreationStep('details');
@@ -217,6 +239,9 @@ export function useWorkspaceClusterActions(args: {
     setTargetWorkspaceIdForClusterAdd(null);
     setIncludeNamespaces('');
     setExcludeNamespaces('');
+    setAvailableRbacAdditions([]);
+    setSelectedRbacAdditionKeys([]);
+    setIsLoadingRbacAdditions(false);
   };
 
   const handleDeleteWorkspace = async (workspaceId: string) => {
@@ -311,6 +336,12 @@ export function useWorkspaceClusterActions(args: {
     setExcludeNamespaces,
     setIncludeNamespaces,
     setIsCreatingWorkspace,
-    setNewClusterName
+    setNewClusterName,
+    rbacAdditionsProps: {
+      availableRbacAdditions,
+      selectedRbacAdditionKeys,
+      isLoadingRbacAdditions,
+      setSelectedRbacAdditionKeys
+    }
   };
 }

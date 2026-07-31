@@ -500,6 +500,17 @@ export interface RegisterClusterResponse {
   installInstructions?: ControlPlaneAgentInstallInstructions;
 }
 
+export interface KubernetesRbacAdditionSummary {
+  key: string;
+  name: string;
+  description?: string;
+}
+
+export interface KubernetesRbacAdditionsResponse {
+  version: number;
+  items: KubernetesRbacAdditionSummary[];
+}
+
 export interface RotateAgentKeyResponse {
   clusterId: string;
   agentKey: string;

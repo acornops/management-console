@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, Copy, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { Button } from '@acornops/ui';
+import { Button, Checkbox, CollectionState, Switch } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
@@ -10,7 +10,7 @@ import { ModalStepIndicator } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
 import { parseNamespaceList } from '@/app/useAppSupport';
-import type { AgentAccessMode } from '@/services/control-plane/types';
+import type { AgentAccessMode, KubernetesRbacAdditionSummary } from '@/services/control-plane/types';
 import { TextInput } from '@acornops/ui';
 
 interface AddClusterModalProps {
@@ -23,11 +23,15 @@ interface AddClusterModalProps {
   clusterInstallWarnings: string[];
   isAgentConnected: boolean;
   isCreatingCluster: boolean;
+  availableRbacAdditions: KubernetesRbacAdditionSummary[];
+  selectedRbacAdditionKeys: string[];
+  isLoadingRbacAdditions: boolean;
   onClose: () => void;
   onClusterNameChange: (value: string) => void;
   onIncludeNamespacesChange: (value: string) => void;
   onExcludeNamespacesChange: (value: string) => void;
   onProceedToInstructions: (agentAccessMode: AgentAccessMode) => void;
+  onSelectedRbacAdditionKeysChange: (keys: string[]) => void;
   onConfirmInstalled: () => void | Promise<void>;
 }
 
@@ -41,6 +45,48 @@ function helmSetJson(path: string, value: string[]): string {
 
 const clusterNameInputClassName = formInputClassName('px-4 type-ui');
 const namespaceInputClassName = formInputClassName('type-caption');
+
+interface ExpandableClusterOptionProps {
+  checked: boolean;
+  children: React.ReactNode;
+  disabled: boolean;
+  id: string;
+  label: string;
+  onCheckedChange: (checked: boolean) => void;
+}
+
+const ExpandableClusterOption: React.FC<ExpandableClusterOptionProps> = ({
+  checked,
+  children,
+  disabled,
+  id,
+  label,
+  onCheckedChange
+}) => {
+  const labelId = `${id}-label`;
+  const panelId = `${id}-panel`;
+
+  return (
+    <section className="rounded-lg border border-ui-border bg-ui-bg">
+      <div className="flex min-h-14 items-center justify-between gap-4 px-4 py-2">
+        <span id={labelId} className="type-ui type-emphasis text-ui-text">{label}</span>
+        <Switch
+          checked={checked}
+          disabled={disabled}
+          label={label}
+          aria-expanded={checked}
+          aria-controls={checked ? panelId : undefined}
+          onCheckedChange={onCheckedChange}
+        />
+      </div>
+      {checked && (
+        <div id={panelId} role="region" aria-labelledby={labelId} className="space-y-3 border-t border-ui-border p-4">
+          {children}
+        </div>
+      )}
+    </section>
+  );
+};
 
 export function updateInstallCommandNamespaceScope(command: string, includeValue: string, excludeValue: string): string {
   const include = parseNamespaceList(includeValue);
@@ -73,16 +119,26 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
   clusterInstallWarnings,
   isAgentConnected,
   isCreatingCluster,
+  availableRbacAdditions,
+  selectedRbacAdditionKeys,
+  isLoadingRbacAdditions,
   onClose,
   onClusterNameChange,
   onIncludeNamespacesChange,
   onExcludeNamespacesChange,
   onProceedToInstructions,
+  onSelectedRbacAdditionKeysChange,
   onConfirmInstalled
 }) => {
   const { t } = useTranslation();
   const [hasCopiedCommand, setHasCopiedCommand] = useState(false);
   const [agentAccessMode, setAgentAccessMode] = useState<AgentAccessMode>('read_only');
+  const [isNamespaceScopeRequired, setIsNamespaceScopeRequired] = useState(
+    () => parseNamespaceList(includeNamespaces).length > 0 || parseNamespaceList(excludeNamespaces).length > 0
+  );
+  const [areAdditionalResourcesRequired, setAreAdditionalResourcesRequired] = useState(
+    () => selectedRbacAdditionKeys.length > 0
+  );
   const clusterNameInputRef = React.useRef<HTMLInputElement>(null);
   const connectSteps = [
     { id: 'details', label: t('clusterSetup.stepConfigure') },
@@ -105,8 +161,17 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
   React.useEffect(() => {
     if (!isOpen) {
       setAgentAccessMode('read_only');
+      setIsNamespaceScopeRequired(false);
+      setAreAdditionalResourcesRequired(false);
+      return;
     }
-  }, [isOpen]);
+    if (parseNamespaceList(includeNamespaces).length > 0 || parseNamespaceList(excludeNamespaces).length > 0) {
+      setIsNamespaceScopeRequired(true);
+    }
+    if (selectedRbacAdditionKeys.length > 0) {
+      setAreAdditionalResourcesRequired(true);
+    }
+  }, [excludeNamespaces, includeNamespaces, isOpen, selectedRbacAdditionKeys]);
 
   if (!isOpen) {
     return null;
@@ -120,6 +185,21 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
       window.setTimeout(() => setHasCopiedCommand(false), 2200);
     } catch {
       setHasCopiedCommand(false);
+    }
+  };
+
+  const handleNamespaceScopeRequiredChange = (required: boolean) => {
+    setIsNamespaceScopeRequired(required);
+    if (!required) {
+      onIncludeNamespacesChange('');
+      onExcludeNamespacesChange('');
+    }
+  };
+
+  const handleAdditionalResourcesRequiredChange = (required: boolean) => {
+    setAreAdditionalResourcesRequired(required);
+    if (!required) {
+      onSelectedRbacAdditionKeysChange([]);
     }
   };
 
@@ -159,11 +239,14 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
               />
             </section>
 
-            <section className="space-y-3 rounded-lg border border-ui-border bg-ui-bg p-4">
-              <div>
-                <div className="type-micro-label">{t('clusterSetup.namespaceScope')}</div>
-                <p className="mt-1 type-caption leading-5 text-ui-text-muted">{t('clusterSetup.includeNamespacesHelp')}</p>
-              </div>
+            <ExpandableClusterOption
+              id="add-cluster-namespace-scope"
+              label={t('clusterSetup.requireNamespaceScope')}
+              checked={isNamespaceScopeRequired}
+              disabled={isCreatingCluster}
+              onCheckedChange={handleNamespaceScopeRequiredChange}
+            >
+              <p className="type-caption leading-5 text-ui-text-muted">{t('clusterSetup.includeNamespacesHelp')}</p>
               <div>
                 <label htmlFor="add-cluster-include-namespaces" className="mb-1.5 block px-1 type-micro-label">
                   {t('clusterSetup.includeNamespaces')}
@@ -190,7 +273,43 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
                   className={namespaceInputClassName}
                 />
               </div>
-            </section>
+            </ExpandableClusterOption>
+
+            <ExpandableClusterOption
+              id="add-cluster-additional-resources"
+              label={t('clusterSetup.requireRbacAdditions')}
+              checked={areAdditionalResourcesRequired}
+              disabled={isCreatingCluster}
+              onCheckedChange={handleAdditionalResourcesRequiredChange}
+            >
+              <p className="type-caption leading-5 text-ui-text-muted">{t('clusterSetup.rbacAdditionsHelp')}</p>
+              <CollectionState
+                phase={isLoadingRbacAdditions ? 'loading' : 'ready'}
+                itemCount={availableRbacAdditions.length}
+                loading={<p className="type-caption text-ui-text-muted">{t('clusterSetup.rbacAdditionsLoading')}</p>}
+                empty={<p className="type-caption text-ui-text-muted">{t('clusterSetup.rbacAdditionsEmpty')}</p>}
+                error={null}
+              >
+                <div className="space-y-3">
+                  {availableRbacAdditions.map((addition) => {
+                    const checked = selectedRbacAdditionKeys.includes(addition.key);
+                    return <label key={addition.key} className="flex items-start gap-3">
+                      <Checkbox
+                        checked={checked}
+                        disabled={isCreatingCluster}
+                        onChange={() => onSelectedRbacAdditionKeysChange(checked
+                          ? selectedRbacAdditionKeys.filter((key) => key !== addition.key)
+                          : [...selectedRbacAdditionKeys, addition.key])}
+                      />
+                      <span>
+                        <strong className="block type-ui text-ui-text">{addition.name}</strong>
+                        {addition.description && <small className="block type-caption leading-5 text-ui-text-muted">{addition.description}</small>}
+                      </span>
+                    </label>;
+                  })}
+                </div>
+              </CollectionState>
+            </ExpandableClusterOption>
 
             <ClusterAgentAccessModeSelector idPrefix="add-cluster" value={agentAccessMode} onChange={setAgentAccessMode} disabled={isCreatingCluster} />
           </div>

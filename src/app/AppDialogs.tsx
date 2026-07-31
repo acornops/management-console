@@ -6,7 +6,7 @@ import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/Clust
 import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
 import { Button, CloseButton, DialogFrame, formInputClassName, TextInput } from '@acornops/ui';
 import { ICONS } from '@/constants';
-import type { AgentAccessMode } from '@/services/control-plane/types';
+import type { AgentAccessMode, KubernetesRbacAdditionSummary } from '@/services/control-plane/types';
 import {
   KubernetesCluster,
   ProjectMember,
@@ -28,6 +28,9 @@ interface AppDialogsProps {
   currentUserEmail: string;
   isAddingCluster: boolean;
   isCreatingCluster: boolean;
+  availableRbacAdditions: KubernetesRbacAdditionSummary[];
+  selectedRbacAdditionKeys: string[];
+  isLoadingRbacAdditions: boolean;
   isCreatingWorkspace: boolean;
   isRegisteredClusterAgentConnected: boolean;
   isDeletingWorkspace: boolean;
@@ -50,6 +53,7 @@ interface AppDialogsProps {
   onIncludeNamespacesChange: (value: string) => void;
   onLoadWorkspaceRoles: (workspaceId: string) => Promise<WorkspaceRoleTemplate[]>;
   onProceedToClusterInstructions: (agentAccessMode: AgentAccessMode) => void;
+  onSelectedRbacAdditionKeysChange: (keys: string[]) => void;
   onSetDeletingWorkspace: (value: boolean) => void;
   showToast: (message: string) => void;
 }
@@ -66,6 +70,9 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   currentUserEmail,
   isAddingCluster,
   isCreatingCluster,
+  availableRbacAdditions,
+  selectedRbacAdditionKeys,
+  isLoadingRbacAdditions,
   isCreatingWorkspace,
   isRegisteredClusterAgentConnected,
   isDeletingWorkspace,
@@ -85,6 +92,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
   onIncludeNamespacesChange,
   onLoadWorkspaceRoles,
   onProceedToClusterInstructions,
+  onSelectedRbacAdditionKeysChange,
   onSetDeletingWorkspace,
   showToast
 }) => {
@@ -219,11 +227,15 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
           clusterInstallWarnings={clusterInstallWarnings}
           isAgentConnected={isRegisteredClusterAgentConnected}
           isCreatingCluster={isCreatingCluster}
+          availableRbacAdditions={availableRbacAdditions}
+          selectedRbacAdditionKeys={selectedRbacAdditionKeys}
+          isLoadingRbacAdditions={isLoadingRbacAdditions}
           onClose={onCloseAddCluster}
           onClusterNameChange={onClusterNameChange}
           onIncludeNamespacesChange={onIncludeNamespacesChange}
           onExcludeNamespacesChange={onExcludeNamespacesChange}
           onProceedToInstructions={onProceedToClusterInstructions}
+          onSelectedRbacAdditionKeysChange={onSelectedRbacAdditionKeysChange}
           onConfirmInstalled={onConfirmClusterInstalled}
         />
 

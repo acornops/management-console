@@ -38,6 +38,7 @@ import type {
   RegisterClusterResponse,
   RotateAgentKeyResponse,
   AgentAccessMode,
+  KubernetesRbacAdditionsResponse,
   TargetMcpServer,
   UpdateTargetSkillInput,
   TargetMcpServerTestConnectionResult,
@@ -78,6 +79,12 @@ function mapMetricHistoryPoint(point: ClusterMetricHistoryPoint): ClusterMetricH
 }
 
 export const kubernetesClusterApi = {
+  async listKubernetesRbacAdditions(workspaceId: string): Promise<KubernetesRbacAdditionsResponse> {
+    return requestJson<KubernetesRbacAdditionsResponse>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-rbac-additions`
+    );
+  },
+
   async getClustersForWorkspace(workspaceId: string): Promise<KubernetesCluster[]> {
     const page = await listWorkspaceKubernetesClusters(workspaceId, { limit: 50 });
     return page.items;
@@ -180,7 +187,7 @@ export const kubernetesClusterApi = {
 
   async registerCluster(
     workspaceId: string,
-    input: { name: string; namespaceInclude?: string[]; namespaceExclude?: string[]; agentAccessMode?: AgentAccessMode }
+    input: { name: string; namespaceInclude?: string[]; namespaceExclude?: string[]; agentAccessMode?: AgentAccessMode; rbacAdditionKeys?: string[] }
   ): Promise<{ cluster: KubernetesCluster; agentKey: string; installCommand: string; installWarnings: string[] }> {
     const result = await requestJson<RegisterClusterResponse>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`,
@@ -190,7 +197,8 @@ export const kubernetesClusterApi = {
           name: input.name,
           agentAccessMode: input.agentAccessMode || 'read_only',
           namespaceInclude: input.namespaceInclude || [],
-          namespaceExclude: input.namespaceExclude || []
+          namespaceExclude: input.namespaceExclude || [],
+          ...(input.rbacAdditionKeys?.length ? { rbacAdditionKeys: input.rbacAdditionKeys } : {})
         })
       }
     );

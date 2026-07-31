@@ -1,6 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { updateInstallCommandNamespaceScope } from './AddClusterModal';
+
+const repositoryRoot = resolve(__dirname, '../../..');
+const modalSource = readFileSync(resolve(repositoryRoot, 'src/components/kubernetes-clusters/AddClusterModal.tsx'), 'utf8');
+const englishLocale = readFileSync(resolve(repositoryRoot, 'src/i18n/locales/en.js'), 'utf8');
 
 const baseCommand = [
   "helm upgrade --install 'acornops-agent' 'oci://ghcr.io/acornops/charts/acornops-agentk'",
@@ -31,5 +37,20 @@ describe('updateInstallCommandNamespaceScope', () => {
     );
 
     expect(command).toContain('rbac.write.enabled=true');
+  });
+});
+
+describe('cluster onboarding hierarchy', () => {
+  it('uses progressive disclosure before choosing agent access', () => {
+    expect(englishLocale).toContain("requireNamespaceScope: 'Require namespace scope?'");
+    expect(englishLocale).toContain("requireRbacAdditions: 'Require additional Kubernetes resources?'");
+    expect(englishLocale).toContain("rbacAdditionsHelp: 'Optionally enable additional resources for this cluster.'");
+    expect(modalSource).toContain('aria-expanded={checked}');
+    expect(modalSource).toContain("onIncludeNamespacesChange('')");
+    expect(modalSource).toContain("onExcludeNamespacesChange('')");
+    expect(modalSource).toContain('onSelectedRbacAdditionKeysChange([])');
+    expect(modalSource.indexOf("t('clusterSetup.requireRbacAdditions')")).toBeLessThan(
+      modalSource.indexOf('<ClusterAgentAccessModeSelector')
+    );
   });
 });

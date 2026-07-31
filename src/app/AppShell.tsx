@@ -63,6 +63,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   clusterCreationStep,
   clusterInstallCommand,
   clusterInstallWarnings,
+  availableRbacAdditions,
+  selectedRbacAdditionKeys,
+  isLoadingRbacAdditions,
   deleteTargetWorkspace,
   dismissToast,
   excludeNamespaces,
@@ -132,6 +135,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   setIsSidebarWorkspaceMenuOpen,
   setLanguage,
   setNewClusterName,
+  setSelectedRbacAdditionKeys,
   setWorkspaces,
   showToast,
   sidebarAccountMenuRef,
@@ -569,6 +573,9 @@ export const AppShell: React.FC<AppShellProps> = ({
             clusterCreationStep={clusterCreationStep}
             clusterInstallCommand={clusterInstallCommand}
             clusterInstallWarnings={clusterInstallWarnings}
+            availableRbacAdditions={availableRbacAdditions}
+            selectedRbacAdditionKeys={selectedRbacAdditionKeys}
+            isLoadingRbacAdditions={isLoadingRbacAdditions}
             deleteTargetWorkspace={deleteTargetWorkspace}
             excludeNamespaces={excludeNamespaces}
             includeNamespaces={includeNamespaces}
@@ -599,6 +606,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             onIncludeNamespacesChange={setIncludeNamespaces}
             onLoadWorkspaceRoles={loadWorkspaceRoles}
             onProceedToClusterInstructions={(agentAccessMode) => void handleProceedToInstructions(agentAccessMode)}
+            onSelectedRbacAdditionKeysChange={setSelectedRbacAdditionKeys}
             onSetDeletingWorkspace={setIsDeletingWorkspace}
             showToast={showToast}
           />

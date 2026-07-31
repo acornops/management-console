@@ -250,7 +250,8 @@ describe('controlPlaneApi', () => {
         name: 'payments-prod',
         agentAccessMode: 'read_write',
         namespaceInclude: ['payments'],
-        namespaceExclude: ['sandbox']
+        namespaceExclude: ['sandbox'],
+        rbacAdditionKeys: ['cnpg']
       })
     ).resolves.toMatchObject({
       cluster: { id: 'cluster-1' },
@@ -263,9 +264,20 @@ describe('controlPlaneApi', () => {
         name: 'payments-prod',
         agentAccessMode: 'read_write',
         namespaceInclude: ['payments'],
-        namespaceExclude: ['sandbox']
+        namespaceExclude: ['sandbox'],
+        rbacAdditionKeys: ['cnpg']
       })
     });
+  });
+
+  it('lists the administrator-defined RBAC addition summaries for onboarding', async () => {
+    requestJson.mockResolvedValue({ version: 3, items: [{ key: 'cnpg', name: 'CNPG', description: 'Postgres' }] });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.listKubernetesRbacAdditions('workspace 1')).resolves.toEqual({
+      version: 3, items: [{ key: 'cnpg', name: 'CNPG', description: 'Postgres' }]
+    });
+    expect(requestJson).toHaveBeenCalledWith('/api/v1/workspaces/workspace%201/kubernetes-rbac-additions');
   });
 
   it('sends the selected agent access mode when rotating a cluster agent key', async () => {
