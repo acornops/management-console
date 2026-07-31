@@ -48,12 +48,6 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
     if (!createDraft.description.trim()) return 'Step 1 is not done. Enter an assignment purpose before continuing.';
     return '';
   };
-  const close = () => {
-    onClose();
-    setCreateAgentStep(1);
-    setStepNavigationError('');
-    setEmojiCustomized(false);
-  };
   const goToCreateAgentStep = (nextStep: CreateAgentStep) => {
     if (nextStep > 1) {
       const nextError = identityError();
@@ -73,7 +67,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
   return (
     <DrawerFrame unframed
       isOpen
-      onClose={close}
+      onClose={onClose}
       titleId="create-agent-title"
       descriptionId="create-agent-description"
       className="max-w-3xl"
@@ -84,7 +78,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
             <h2 id="create-agent-title" className="type-section-title">Create agent</h2>
             <p id="create-agent-description" className="type-caption mt-2 text-ui-text-muted">Name the agent and its assignment purpose. It saves with restricted trust and asks before changes.</p>
           </div>
-          <CloseButton onClick={close} label="Close create agent drawer" className="shrink-0" />
+          <CloseButton onClick={onClose} label="Close create agent drawer" className="shrink-0" />
         </div>
         <div aria-label="Create agent steps">
           <ModalStepIndicator
@@ -173,7 +167,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
-        <Button type="button" variant="tertiary" size="sm" onClick={close}>Cancel</Button>
+        <Button type="button" variant="tertiary" size="sm" onClick={onClose}>Cancel</Button>
         <div className="flex items-center gap-2">
           <Button type="button" variant="secondary" size="sm" onClick={() => goToCreateAgentStep(createAgentStep === 3 ? 2 : 1)} disabled={createAgentStep === 1}>Back</Button>
           {createAgentStep < 3 ? (

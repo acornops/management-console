@@ -9,6 +9,7 @@ interface UnsavedChangesDialogProps {
   body: string;
   cancelLabel: string;
   discardLabel: string;
+  closeLabel?: string;
   onCancel: () => void;
   onDiscard: () => void;
 }
@@ -18,6 +19,7 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
   body,
   cancelLabel,
   discardLabel,
+  closeLabel = cancelLabel,
   onCancel,
   onDiscard
 }) => (
@@ -36,7 +38,7 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
       </div>
       <CloseButton
         onClick={onCancel}
-        aria-label={cancelLabel}
+        aria-label={closeLabel}
       />
     </div>
 

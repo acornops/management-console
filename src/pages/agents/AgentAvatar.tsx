@@ -19,7 +19,15 @@ export const AGENT_EMOJI_OPTIONS = [
   '🔔',
   '🗂️',
   '⚙️',
-  '🧠'
+  '🧠',
+  '📡',
+  '🔐',
+  '🧰',
+  '🧹',
+  '🩺',
+  '🧾',
+  '🔬',
+  '🌐'
 ] as const;
 
 export function normalizeAgentEmoji(value: string): string | null {
@@ -95,55 +103,62 @@ export const AgentEmojiPicker: React.FC<{
     <fieldset>
       <legend className="type-micro-label">{label}</legend>
       <p className="type-caption mt-1 text-ui-text-muted">{description}</p>
-      <div className="mt-3 flex items-start gap-3">
-        <AgentAvatar emoji={value} size="lg" />
-        <div className="grid flex-1 grid-cols-4 gap-2 sm:grid-cols-8" aria-label="Suggested Agent emojis">
-          {AGENT_EMOJI_OPTIONS.map((emoji) => (
-            <Button
-              key={emoji}
-              type="button"
-              aria-label={`Use ${emoji} for this Agent`}
-              aria-pressed={value === emoji}
-              onClick={() => onChange(emoji)}
-              variant="secondary"
-              size="icon"
-              className={`control-target type-panel-title flex min-h-11 w-full items-center justify-center rounded-md border leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary ${
-                value === emoji
-                  ? 'border-accent/45 bg-accent-soft text-ui-text'
-                  : 'border-ui-border bg-ui-surface hover:border-accent/30 hover:bg-ui-bg'
-              }`}
-            >
-              {emoji}
-            </Button>
-          ))}
-        </div>
+      <div
+        data-agent-emoji-options="true"
+        className="mt-3 grid grid-cols-[repeat(auto-fit,2.75rem)] gap-2"
+        aria-label="Suggested Agent emojis"
+      >
+        {AGENT_EMOJI_OPTIONS.map((emoji) => (
+          <Button
+            key={emoji}
+            type="button"
+            aria-label={`Use ${emoji} for this Agent`}
+            aria-pressed={value === emoji}
+            onClick={() => onChange(emoji)}
+            variant="secondary"
+            size="icon"
+            className={`control-target type-panel-title flex h-11 w-11 items-center justify-center rounded-md border leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary sm:h-11 sm:w-11 ${
+              value === emoji
+                ? 'border-accent/45 bg-accent-soft text-ui-text'
+                : 'border-ui-border bg-ui-surface hover:border-accent/30 hover:bg-ui-bg'
+            }`}
+          >
+            {emoji}
+          </Button>
+        ))}
       </div>
-      <label className="mt-3 block max-w-xs">
-        <span className="type-caption type-emphasis text-ui-text">Use another emoji</span>
-        <TextInput
-          value={customValue}
-          maxLength={64}
-          aria-invalid={Boolean(customError)}
-          aria-describedby={customError ? 'agent-custom-emoji-error' : undefined}
-          placeholder="Enter or paste one emoji"
-          className="mt-1"
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            setCustomValue(nextValue);
-            if (!nextValue) {
+      <div className="mt-4 flex items-end gap-3">
+        <div className="shrink-0">
+          <span className="type-caption type-emphasis block text-ui-text">Current</span>
+          <AgentAvatar emoji={value} size="lg" className="mt-1" />
+        </div>
+        <label className="block min-w-0 flex-1 sm:max-w-sm">
+          <span className="type-caption type-emphasis text-ui-text">Use another emoji</span>
+          <TextInput
+            value={customValue}
+            maxLength={64}
+            aria-invalid={Boolean(customError)}
+            aria-describedby={customError ? 'agent-custom-emoji-error' : undefined}
+            placeholder="Enter or paste one emoji"
+            className="mt-1"
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setCustomValue(nextValue);
+              if (!nextValue) {
+                setCustomError('');
+                return;
+              }
+              const normalized = normalizeAgentEmoji(nextValue);
+              if (!normalized) {
+                setCustomError('Enter exactly one emoji.');
+                return;
+              }
               setCustomError('');
-              return;
-            }
-            const normalized = normalizeAgentEmoji(nextValue);
-            if (!normalized) {
-              setCustomError('Enter exactly one emoji.');
-              return;
-            }
-            setCustomError('');
-            onChange(normalized);
-          }}
-        />
-      </label>
+              onChange(normalized);
+            }}
+          />
+        </label>
+      </div>
       {customError && <p id="agent-custom-emoji-error" role="alert" className="type-caption mt-1 text-status-danger-text">{customError}</p>}
     </fieldset>
   );
