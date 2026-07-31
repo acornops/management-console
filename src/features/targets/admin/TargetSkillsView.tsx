@@ -7,18 +7,16 @@ import { TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { PageShell } from '@acornops/ui';
-import { Select } from '@acornops/ui';
 import {
   controlPlaneApi,
   ControlPlaneTargetSkillDetail,
   ControlPlaneTargetSkillsCatalog,
   CreateTargetSkillInput,
-  GitTargetSkillImportInput,
   ImportTargetSkillInput,
   ReimportTargetSkillInput,
+  ResolveGitTargetSkillInput,
   UpdateTargetSkillInput
 } from '@/services/controlPlaneApi';
-import { GitSkillImportError, importTargetSkillFromGit } from '@/services/gitSkillImport';
 import {
   buildSkillTemplate,
   DEFAULT_SKILL_BODY,
@@ -40,6 +38,7 @@ export interface TargetSkillsDataSource {
   deleteSkill: (workspaceId: string, subjectId: string, skillId: string) => Promise<void>;
   getSkill: (workspaceId: string, subjectId: string, skillId: string) => Promise<ControlPlaneTargetSkillDetail>;
   importSkill: (workspaceId: string, subjectId: string, input: ImportTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
+  resolveSkill: (workspaceId: string, subjectId: string, input: ResolveGitTargetSkillInput) => Promise<ImportTargetSkillInput>;
   listSkills: (workspaceId: string, subjectId: string) => Promise<ControlPlaneTargetSkillsCatalog>;
   reimportSkill: (workspaceId: string, subjectId: string, skillId: string, input: ReimportTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
   updateSkill: (workspaceId: string, subjectId: string, skillId: string, input: UpdateTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
@@ -50,6 +49,7 @@ const targetSkillsDataSource: TargetSkillsDataSource = {
   deleteSkill: (workspaceId, subjectId, skillId) => controlPlaneApi.deleteTargetSkill(workspaceId, subjectId, skillId),
   getSkill: (workspaceId, subjectId, skillId) => controlPlaneApi.getTargetSkill(workspaceId, subjectId, skillId),
   importSkill: (workspaceId, subjectId, input) => controlPlaneApi.importTargetSkill(workspaceId, subjectId, input),
+  resolveSkill: (workspaceId, subjectId, input) => controlPlaneApi.resolveTargetGitSkill(workspaceId, subjectId, input),
   listSkills: (workspaceId, subjectId) => controlPlaneApi.listTargetSkills(workspaceId, subjectId, { limit: 50 }),
   reimportSkill: (workspaceId, subjectId, skillId, input) => controlPlaneApi.reimportTargetSkill(workspaceId, subjectId, skillId, input),
   updateSkill: (workspaceId, subjectId, skillId, input) => controlPlaneApi.updateTargetSkill(workspaceId, subjectId, skillId, input)
@@ -84,13 +84,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
   const [createName, setCreateName] = React.useState('');
   const [toggleSkillId, setToggleSkillId] = React.useState<string | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
-  const [importDraft, setImportDraft] = React.useState<GitTargetSkillImportInput>({
-    provider: 'github',
-    repoUrl: '',
-    apiBaseUrl: '',
-    ref: '',
-    subpath: ''
-  });
+  const [importUrl, setImportUrl] = React.useState('');
   const [importError, setImportError] = React.useState<string | null>(null);
   const [confirmDeleteSkillId, setConfirmDeleteSkillId] = React.useState<string | null>(null);
   const [confirmReimportSkillId, setConfirmReimportSkillId] = React.useState<string | null>(null);
@@ -106,11 +100,6 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
   const showPermissionNotice = catalog ? !canEditSkills : !canManageSkills;
   const formatTargetSkillError = React.useCallback(
     (error: unknown, fallbackKey: string): string => {
-      if (error instanceof GitSkillImportError) {
-        return t(`targetSkills.gitImportErrors.${error.code}`, {
-          defaultValue: error.message
-        });
-      }
       return formatError(error, t(fallbackKey));
     },
     [t]
@@ -122,6 +111,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
   };
 
   const closeImportDialog = () => {
+    if (editorSaving) return;
     setImportError(null);
     setIsImportDialogOpen(false);
   };
@@ -324,26 +314,16 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
   };
 
   const handleImport = async () => {
-    if (!canEditSkills) return;
+    if (!canEditSkills || editorSaving || !importUrl.trim()) return;
     setImportError(null);
     setEditorSaving(true);
     try {
-      const imported = await importTargetSkillFromGit({
-        provider: importDraft.provider,
-        repoUrl: importDraft.repoUrl.trim(),
-        apiBaseUrl: importDraft.apiBaseUrl?.trim() || undefined,
-        ref: importDraft.ref?.trim() || undefined,
-        subpath: importDraft.subpath?.trim() || undefined
+      const imported = await dataSource.resolveSkill(target.workspaceId, target.id, {
+        repoUrl: importUrl.trim()
       });
       const detail = await dataSource.importSkill(target.workspaceId, target.id, imported);
       setIsImportDialogOpen(false);
-      setImportDraft({
-        provider: 'github',
-        repoUrl: '',
-        apiBaseUrl: '',
-        ref: '',
-        subpath: ''
-      });
+      setImportUrl('');
       await loadCatalog();
       setSelectedSkillId(detail.id);
       syncSkill(detail);
@@ -377,10 +357,8 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     }
     setPendingDangerAction(confirmReimportSkillId);
     try {
-      const imported = await importTargetSkillFromGit({
-        provider: selectedSkill.source.provider,
+      const imported = await dataSource.resolveSkill(target.workspaceId, target.id, {
         repoUrl: selectedSkill.source.repoUrl,
-        apiBaseUrl: selectedSkill.source.apiBaseUrl,
         ref: selectedSkill.source.ref,
         subpath: selectedSkill.source.subpath
       });
@@ -476,88 +454,52 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
             </h3>
             <p className="mt-1 type-body text-ui-text-muted">{t('targetSkills.importDescription')}</p>
           </div>
-          <div className="space-y-4 px-6 py-5">
-            <label className="block">
-              <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.provider')}</span>
-              <Select
-                value={importDraft.provider}
-                options={[
-                  { value: 'github', label: t('targetSkills.providerGithub') },
-                  { value: 'gitlab', label: t('targetSkills.providerGitlab') }
-                ]}
-                onChange={(provider) => setImportDraft((current) => ({ ...current, provider }))}
-                ariaLabel={t('targetSkills.provider')}
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.repositoryUrl')}</span>
-              <TextInput
-                value={importDraft.repoUrl}
-                onChange={(event) =>
-                  setImportDraft((current) => ({
-                    ...current,
-                    repoUrl: event.target.value
-                  }))
-                }
-                placeholder="https://github.com/openai/skills/tree/main/skills/.curated/cli-creator"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.apiBaseUrl')}</span>
-              <TextInput
-                value={importDraft.apiBaseUrl || ''}
-                onChange={(event) =>
-                  setImportDraft((current) => ({
-                    ...current,
-                    apiBaseUrl: event.target.value
-                  }))
-                }
-                placeholder={importDraft.provider === 'gitlab' ? 'https://git.internal/gitlab/api/v4' : 'https://github.internal/api/v3'}
-              />
-              <span className="mt-1 block type-caption text-ui-text-muted">{t('targetSkills.apiBaseUrlHelp')}</span>
-            </label>
-            <div className="grid gap-4 sm:grid-cols-2">
+          <form
+            aria-busy={editorSaving}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleImport();
+            }}
+          >
+            <div className="space-y-4 px-6 py-5">
               <label className="block">
-                <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.ref')}</span>
+                <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.repositoryUrl')}</span>
                 <TextInput
-                  value={importDraft.ref || ''}
-                  onChange={(event) =>
-                    setImportDraft((current) => ({
-                      ...current,
-                      ref: event.target.value
-                    }))
-                  }
-                  placeholder="main"
+                  type="url"
+                  inputMode="url"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  required
+                  maxLength={2048}
+                  pattern="https://[^?#]+"
+                  autoFocus
+                  value={importUrl}
+                  onChange={(event) => {
+                    setImportUrl(event.target.value);
+                    if (importError) setImportError(null);
+                  }}
+                  placeholder="https://github.com/openai/skills/tree/main/skills/.curated/cli-creator"
+                  aria-describedby={`target-skill-import-url-help${importError ? ' target-skill-import-error' : ''}`}
+                  aria-invalid={Boolean(importError)}
                 />
+                <span id="target-skill-import-url-help" className="mt-1 block type-caption text-ui-text-muted">{t('targetSkills.repositoryUrlHelp')}</span>
               </label>
-              <label className="block">
-                <span className="mb-1 block type-ui text-ui-text">{t('targetSkills.subpath')}</span>
-                <TextInput
-                  value={importDraft.subpath || ''}
-                  onChange={(event) =>
-                    setImportDraft((current) => ({
-                      ...current,
-                      subpath: event.target.value
-                    }))
-                  }
-                  placeholder="skills/troubleshooting-cnpg"
-                />
-              </label>
+              <div className="rounded-lg border border-ui-border px-3 py-3">
+                <div className="type-ui text-ui-text">{t('targetSkills.importedSnapshot')}</div>
+                <div className="type-caption text-ui-text-muted">{t('targetSkills.importedSnapshotHelp')}</div>
+              </div>
+              {importError && <div id="target-skill-import-error" role="alert" className="rounded-lg border border-status-danger/30 bg-status-danger/10 px-3 py-2 type-body text-status-danger">{importError}</div>}
             </div>
-            <div className="rounded-lg border border-ui-border px-3 py-3">
-              <div className="type-ui text-ui-text">{t('targetSkills.importedSnapshot')}</div>
-              <div className="type-caption text-ui-text-muted">{t('targetSkills.importedSnapshotHelp')}</div>
+            <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
+              <Button type="button" variant="secondary" size="sm" onClick={closeImportDialog} disabled={editorSaving}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" variant="primary" size="sm" disabled={!importUrl.trim() || editorSaving}>
+                {editorSaving ? t('targetSkills.importing') : t('targetSkills.importSkill')}
+              </Button>
             </div>
-            {importError && <div className="rounded-lg border border-status-danger/30 bg-status-danger/10 px-3 py-2 type-body text-status-danger">{importError}</div>}
-          </div>
-          <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
-            <Button variant="secondary" size="sm" onClick={closeImportDialog}>
-              {t('common.cancel')}
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => void handleImport()} disabled={!importDraft.repoUrl.trim() || editorSaving}>
-              {editorSaving ? t('targetSkills.importing') : t('targetSkills.importSkill')}
-            </Button>
-          </div>
+          </form>
         </DialogFrame>
       )}
 

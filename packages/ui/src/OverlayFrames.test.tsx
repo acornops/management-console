@@ -5,6 +5,21 @@ import { describe, expect, it } from 'vitest';
 import { DialogFrame, DrawerFrame } from './OverlayFrames';
 
 describe('overlay frame descriptions', () => {
+  it('applies a real bounded max width for each semantic dialog size', () => {
+    const markup = renderToStaticMarkup(
+      <DialogFrame
+        title="Create schedule"
+        onClose={() => undefined}
+        width="md"
+      >
+        Form
+      </DialogFrame>
+    );
+
+    expect(markup).toContain('max-width:min(calc(100vw - 2rem), 36rem)');
+    expect(markup).toContain('width:calc(100vw - 2rem)');
+  });
+
   it('associates generated descriptions with dialogs', () => {
     const markup = renderToStaticMarkup(
       <DialogFrame

@@ -297,10 +297,9 @@ describe('workflow control-plane api', () => {
     });
   });
 
-  it('previews an exact workflow target without creating a session or run', async () => {
+  it('previews workflow capabilities without creating a session or run', async () => {
     const payload = {
       workflowId: 'workflow-1', workflowVersion: 4, mode: 'read_write', semanticCapabilityIds: ['target.remediation.write'],
-      promptDigest: '0'.repeat(64), bindingDigest: '1'.repeat(64),
       checkedAt: '2026-07-17T00:00:00.000Z', status: 'ready', reasonCodes: [], targetCandidates: [],
       selectedTarget: { id: 'cluster-1', name: 'Development', targetType: 'kubernetes', status: 'ready' },
       tools: { read: [], write: [] }, directMcpServers: [], enabledSkills: [], approvalRequirements: [],
@@ -312,15 +311,13 @@ describe('workflow control-plane api', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(previewWorkflowCapabilities('workspace-1', 'workflow-1', {
-      approvedContextGrants: ['target_inventory'],
-      inputs: { target: 'cluster-1' }
+      approvedContextGrants: ['target_inventory']
     })).resolves.toEqual({ ...payload, mcpRequirements: [] });
 
     const previewCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workflows/workflow-1/capabilities-preview'))!;
     expect(previewCall[0]).toBe('http://localhost:8081/api/v1/workflows/workflow-1/capabilities-preview');
     expect(JSON.parse(previewCall[1]?.body as string)).toEqual({
-      workspaceId: 'workspace-1', approvedContextGrants: ['target_inventory'],
-      inputs: { target: 'cluster-1' }
+      workspaceId: 'workspace-1', approvedContextGrants: ['target_inventory']
     });
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/sessions'))).toBe(false);
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/messages'))).toBe(false);
@@ -355,15 +352,13 @@ describe('workflow control-plane api', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(postWorkflowSessionMessage('workflow-session-1', {
-      kind: 'launch',
-      inputs: { target: 'cluster-1' }
+      kind: 'launch'
     })).resolves.toEqual({ status: 'accepted' });
 
     const messageCall = fetchMock.mock.calls.at(-1);
     expect(messageCall?.[0]).toBe('http://localhost:8081/api/v1/workflow-sessions/workflow-session-1/messages');
     expect(JSON.parse(messageCall?.[1]?.body as string)).toEqual({
-      kind: 'launch',
-      inputs: { target: 'cluster-1' }
+      kind: 'launch'
     });
   });
 
@@ -521,7 +516,6 @@ describe('workflow control-plane api', () => {
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputs: { target: 'cluster-1' },
       approvedContextGrants: ['workspace_metadata']
     })).resolves.toMatchObject({ id: 'schedule-1' });
     await expect(previewWorkflowSchedule('workspace-1', {
@@ -530,7 +524,6 @@ describe('workflow control-plane api', () => {
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputs: { target: 'cluster-1' },
       approvedContextGrants: ['workspace_metadata']
     })).resolves.toMatchObject({ valid: true, summary: 'Weekdays at 09:00 (UTC)' });
     await expect(updateWorkflowSchedule('workspace-1', 'schedule-1', { enabled: false })).resolves.toMatchObject({
@@ -547,7 +540,6 @@ describe('workflow control-plane api', () => {
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
       timezone: 'UTC',
-      inputs: { target: 'cluster-1' },
       approvedContextGrants: ['workspace_metadata']
     });
     const patchCall = fetchMock.mock.calls.find((call) => call[1]?.method === 'PATCH');

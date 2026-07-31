@@ -33,7 +33,7 @@ export function scheduleWorkflowName(
   return workflows.find((workflow) => workflow.id === workflowId)?.name || workflowId;
 }
 
-function isMcpAutoPause(schedule: WorkflowSchedule): boolean {
+export function isMcpAutoPause(schedule: WorkflowSchedule): boolean {
   return schedule.status === 'paused'
     && schedule.lastStatus === 'auto_paused'
     && /\bMCP\b|credential connection|approved MCP tool|remote MCP|installation unavailable/i.test(schedule.lastError || '');
@@ -65,7 +65,7 @@ function scheduleMcpRecoveryPath(
   });
 }
 
-function ScheduleActionMenu(props: WorkspaceScheduleRowProps & { mcpAutoPaused: boolean }) {
+export function WorkspaceScheduleActionMenu(props: WorkspaceScheduleRowProps & { mcpAutoPaused: boolean }) {
   const { t } = useTranslation();
   const {
     schedule,
@@ -142,10 +142,6 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
           <dd className="type-caption mt-1 type-emphasis text-ui-text">{nextRun}</dd>
         </div>
         <div>
-          <dt className="type-micro-label text-ui-text-muted">{t('schedules.table.scope')}</dt>
-          <dd className="type-caption mt-1 text-ui-text">{t('schedules.runtimeValueCount', { count: Object.keys(schedule.inputs).length })}</dd>
-        </div>
-        <div>
           <dt className="type-micro-label text-ui-text-muted">{t('schedules.table.approvalGate')}</dt>
           <dd className="type-caption mt-1 text-ui-text">{t('schedules.contextGrantCount', { count: schedule.approvedContextGrants.length })}</dd>
         </div>
@@ -164,7 +160,7 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
               {t('schedules.actions.repairAndResume')}
             </Button>
           )}
-          <ScheduleActionMenu {...props} mcpAutoPaused={mcpAutoPaused} />
+          <WorkspaceScheduleActionMenu {...props} mcpAutoPaused={mcpAutoPaused} />
         </div>
       </div>
     </article>
@@ -186,8 +182,7 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
       <DataTableCell className="px-4 py-4 text-ui-text-muted"><code>{schedule.cron}</code> · {schedule.timezone}</DataTableCell>
       <DataTableCell className="px-4 py-4 type-emphasis text-ui-text">{nextRun}</DataTableCell>
       <DataTableCell className="px-4 py-4 text-ui-text-muted">
-        <span className="block">{t('schedules.runtimeValueCount', { count: Object.keys(schedule.inputs).length })}</span>
-        <span className="mt-1 block">{t('schedules.contextGrantCount', { count: schedule.approvedContextGrants.length })}</span>
+        <span className="block">{t('schedules.contextGrantCount', { count: schedule.approvedContextGrants.length })}</span>
       </DataTableCell>
       <DataTableCell className="px-4 py-4">
         <div className="min-w-[15rem]">
@@ -205,7 +200,7 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
               {t('schedules.actions.repairAndResume')}
             </Button>
           )}
-          <ScheduleActionMenu {...props} mcpAutoPaused={mcpAutoPaused} />
+          <WorkspaceScheduleActionMenu {...props} mcpAutoPaused={mcpAutoPaused} />
         </div>
       </DataTableCell>
     </DataTableRow>

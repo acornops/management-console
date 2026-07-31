@@ -52,7 +52,7 @@ test('recommendations retain attribution while added workflows become workspace-
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
   await expect(customHeader.getByText('Test User', { exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Add workflows' }).click();
+  await page.getByRole('button', { name: 'Browse templates' }).click();
   const recommendationDrawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
   await expect(recommendationDrawer.getByText('Recommended by AcornOps').first()).toBeVisible();
 });

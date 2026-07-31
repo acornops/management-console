@@ -8,7 +8,29 @@ catalog, pagination, and schedule-preview contracts.
 
 ## UX Acceptance Criteria
 
-- URL parameters restore selected resources, tabs, filters, and drawers.
+- URL parameters restore selected resources, filters, and drawers.
+- Workflow detail keeps Overview permanently visible. Run activity, Agents, access
+  review, and Edit use route-backed drawers, including compatibility with
+  existing `tab=` links.
+- The workflow header exposes five icon actions with accessible names and
+  tooltips: Run activity, Schedules, Incoming webhooks, Edit, and Launch or
+  Activate. Operational actions are visually separated from definition and
+  launch actions.
+- Workflow-filtered schedule and webhook drawers lead with compact tables.
+  Create actions open bounded, medium-width modal forms above the drawer.
+- Workflow prompts are plain text. Authoring, launch, schedules, and incoming
+  webhooks expose no runtime template parameters, values, or prompt-reference
+  insertion.
+- Workflow creation has two decision-bearing steps, Describe and Agents. Edit
+  and agent assignment drawers open directly in their actionable state for
+  authorized operators rather than nesting another edit mode.
+- Compact workflow detail hides collection-only section and discovery chrome
+  until Back returns to the workflow library.
+- Desktop Workflows keeps its route canvas fixed while the compact workflow
+  library, selected Overview body, and workspace Activity ledger scroll in
+  their relevant view. Compact viewports retain natural page scrolling.
+- Workflow status, ownership, title, description, and launch actions fit in a
+  shallow desktop header without reducing the shared action target sizes.
 - Closing a drawer removes only its panel-specific parameters.
 - Agent inspection uses one stable profile workspace with Overview,
   Capabilities, Restore points, and Settings tabs. Disable and delete actions
@@ -32,6 +54,9 @@ catalog, pagination, and schedule-preview contracts.
 - Agent deletion explains dependent workflows, and managed-response workflows
   label the hidden entry Agent as an AcornOps-managed coordinator without
   exposing its ID.
+- The disconnected workflow scope editor, its update action, and tab-era panel
+  abstractions are removed. The remaining `tab=` parser is intentionally limited
+  to backward-compatible drawer deep links.
 
 ## Validation Plan
 

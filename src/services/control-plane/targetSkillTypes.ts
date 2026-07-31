@@ -67,10 +67,8 @@ export interface CreateTargetSkillInput {
   }>;
 }
 
-export interface GitTargetSkillImportInput {
-  provider: TargetSkillImportProvider;
+export interface ResolveGitTargetSkillInput {
   repoUrl: string;
-  apiBaseUrl?: string;
   ref?: string;
   subpath?: string;
 }
@@ -78,7 +76,6 @@ export interface GitTargetSkillImportInput {
 export interface GitTargetSkillImportSource {
   provider: TargetSkillImportProvider;
   repoUrl: string;
-  apiBaseUrl?: string;
   ref: string;
   subpath?: string;
   commitSha?: string;

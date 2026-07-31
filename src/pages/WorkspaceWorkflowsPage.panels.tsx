@@ -11,12 +11,9 @@ import { ICONS } from '@/constants';
 import { TraceFooter } from '@/features/targets/chat/components/TraceFooter';
 import {
   AgentAssignmentList,
-  CapabilityReviewRow,
-  WorkflowCapabilityLedger,
-  WorkflowSection,
-  WorkflowTabPanel
+  WorkflowPanel,
+  WorkflowSection
 } from '@/pages/WorkspaceWorkflowsPage.components';
-import { humanizeWorkflowParameterKey } from '@/pages/WorkspaceWorkflowsPage.launchFields';
 import type { WorkflowDefinition, WorkflowRunMessage } from '@/pages/workflows/workflowModel';
 import { getWorkflowAgentCapabilityReview, type WorkflowAgentCapabilityReview } from '@/pages/workflows/workflowAgentCapabilities';
 import { WorkflowRunResponse } from '@/pages/workflows/WorkflowRunResponse';
@@ -29,67 +26,11 @@ import {
 } from '@/pages/workflows/workflowPageHelpers';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
-import { getWorkflowExecution, type WorkflowCapabilitiesPreview, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
+import { getWorkflowExecution, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { Textarea } from '@acornops/ui';
 type WorkflowActions = ReturnType<typeof useWorkspaceWorkflowActions>;
 type WorkflowAgentOption = WorkflowOptionsCatalog['agents'][number];
-
-export const WorkflowOverviewPanel: React.FC<{
-  workflow: WorkflowDefinition;
-  workspaceId: string;
-  preview: WorkflowCapabilitiesPreview | null;
-  previewLoading: boolean;
-  previewError: string;
-  onRetryPreview: () => void;
-  onReviewAgents: () => void;
-  launchError: string;
-  launchRecovery: McpReadinessRecovery | null;
-  launchResult: { workflowId: string; runId: string; toolCount: number } | null;
-}> = ({
-  workflow,
-  workspaceId,
-  preview,
-  previewLoading,
-  previewError,
-  onRetryPreview,
-  onReviewAgents,
-  launchError,
-  launchRecovery,
-  launchResult
-}) => {
-  const { t } = useTranslation();
-  return (
-    <WorkflowTabPanel tab="overview" title="Overview" description="Review assigned agents, the saved prompt, and runtime parameters.">
-      <WorkflowSection
-        title={t('workflowCoordination.agentsTitle')}
-        description={t('workflowCoordination.agentsDescription')}
-        action={<Button type="button" variant="secondary" size="sm" onClick={onReviewAgents}><ICONS.Bot className="h-4 w-4" aria-hidden="true" />Review agents</Button>}
-      >
-        <AgentAssignmentList
-          className="mt-4"
-          agents={workflow.agents}
-          labelForAgent={() => workflow.executionMode === 'direct' ? t('workflowCoordination.directLabel') : t('workflowCoordination.coordinatedLabel')}
-        />
-      </WorkflowSection>
-      <WorkflowSection title="Prompt" description="The saved workflow prompt is compiled by the control plane when a run starts.">
-        <div className="mt-3 rounded-md border border-ui-border bg-ui-bg px-4 py-3">
-          <p className="whitespace-pre-wrap break-words type-body text-ui-text">{workflow.starterPrompt}</p>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {workflow.parameters.length > 0 ? workflow.parameters.map((parameter) => (
-            <span key={parameter.key} className="rounded-md border border-ui-border bg-ui-surface-subtle px-2.5 py-1.5 type-caption type-emphasis text-ui-text-muted">
-              {humanizeWorkflowParameterKey(parameter.key)} · {parameter.type}
-            </span>
-          )) : <span className="type-caption text-ui-text-muted">No runtime input required.</span>}
-        </div>
-        <WorkflowCapabilityLedger workspaceId={workspaceId} preview={preview} loading={previewLoading} error={previewError} onRetry={onRetryPreview} />
-      </WorkflowSection>
-      {launchError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{launchError}{launchRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={launchRecovery.href}>{launchRecovery.label}</a>}</div>}
-      {launchResult?.workflowId === workflow.id && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 type-caption type-emphasis text-status-success-text">Run dispatched with {launchResult.toolCount} tools. Run ID: {launchResult.runId}.</div>}
-    </WorkflowTabPanel>
-  );
-};
 
 function formatWorkflowTimestamp(value: string): string {
   return formatUserDateTime(value, { fallback: value });
@@ -163,21 +104,23 @@ export const WorkflowAgentsPanel: React.FC<{
   selectedAgentSelectionDraft?: AgentSelectionDraft;
   activeAgentOptions: WorkflowAgentOption[];
   isEditingAgentSelection: boolean;
-  canManageWorkflowScope: boolean;
+  canManageWorkflows: boolean;
   savingAgentSelectionId: string;
   agentSelectionError: string;
   agentSelectionResult: string;
   workflowActions: Pick<WorkflowActions, 'startEditingAgentSelection' | 'updateAgentSelectionDraft' | 'cancelEditingAgentSelection' | 'saveAgentSelection'>;
+  showHeader?: boolean;
 }> = ({
   workflow,
   selectedAgentSelectionDraft,
   activeAgentOptions,
   isEditingAgentSelection,
-  canManageWorkflowScope,
+  canManageWorkflows,
   savingAgentSelectionId,
   agentSelectionError,
   agentSelectionResult,
-  workflowActions
+  workflowActions,
+  showHeader
 }) => {
   const { t } = useTranslation();
   const selectedCount = selectedAgentSelectionDraft
@@ -199,12 +142,12 @@ export const WorkflowAgentsPanel: React.FC<{
   }, [activeAgentOptions, isEditingAgentSelection, selectedAgentSelectionDraft, workflow.id, workflowActions]);
 
   return (
-  <WorkflowTabPanel
-    tab="agents"
+  <WorkflowPanel
     title={t('workflowCoordination.agentsTitle')}
     description={t('workflowCoordination.agentsDescription')}
+    showHeader={showHeader}
     actions={!isEditingAgentSelection && (
-      <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflowScope} title={!canManageWorkflowScope ? 'You need manage_workflows to edit workflow agents.' : undefined}>
+      <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflows} title={!canManageWorkflows ? 'You need manage_workflows to edit workflow agents.' : undefined}>
         <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
         Edit agents
       </Button>
@@ -212,7 +155,7 @@ export const WorkflowAgentsPanel: React.FC<{
   >
     {agentSelectionError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{agentSelectionError}</div>}
     {agentSelectionResult && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 type-caption type-emphasis text-status-success-text">{agentSelectionResult}</div>}
-    {!canManageWorkflowScope && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
+    {!canManageWorkflows && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
     {selectionFeedback && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-body type-emphasis text-ui-text">{selectionFeedback}</div>}
     {isEditingAgentSelection && selectedAgentSelectionDraft ? (
       <WorkflowSection title={t('workflowCoordination.agentsTitle')} description={t('workflowCoordination.agentsDescription')}>
@@ -254,7 +197,7 @@ export const WorkflowAgentsPanel: React.FC<{
           </fieldset>
           <div className="flex justify-end gap-2 border-t border-ui-border pt-4">
             <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.cancelEditingAgentSelection(workflow)} disabled={savingAgentSelectionId === workflow.id}>Cancel</Button>
-            <Button type="button" variant="primary" size="sm" onClick={() => void workflowActions.saveAgentSelection()} disabled={!canManageWorkflowScope || savingAgentSelectionId === workflow.id || selectedAgentSelectionDraft.agentIds.length === 0}>
+            <Button type="button" variant="primary" size="sm" onClick={() => void workflowActions.saveAgentSelection()} disabled={!canManageWorkflows || savingAgentSelectionId === workflow.id || selectedAgentSelectionDraft.agentIds.length === 0}>
               {savingAgentSelectionId === workflow.id ? 'Saving...' : 'Save agents'}
             </Button>
           </div>
@@ -265,7 +208,7 @@ export const WorkflowAgentsPanel: React.FC<{
         {workflow.agents.length > 0 ? <AgentAssignmentList className="mt-3" agents={workflow.agents} labelForAgent={() => workflow.executionMode === 'direct' ? t('workflowCoordination.directLabel') : t('workflowCoordination.coordinatedLabel')} /> : <p className="type-caption mt-3 text-ui-text-muted">{t('workflowCoordination.noAgents')}</p>}
       </WorkflowSection>
     )}
-  </WorkflowTabPanel>
+  </WorkflowPanel>
   );
 };
 
@@ -287,6 +230,7 @@ export const WorkflowRunsPanel: React.FC<{
   runMessageErrorByRunId: Record<string, string>;
   runMessageRecoveryByRunId: Record<string, McpReadinessRecovery>;
   setExpandedRunLogId: React.Dispatch<React.SetStateAction<string>>;
+  showHeader?: boolean;
 }> = ({
   workflow,
   approvalError,
@@ -304,7 +248,8 @@ export const WorkflowRunsPanel: React.FC<{
   runMessageSendingId,
   runMessageErrorByRunId,
   runMessageRecoveryByRunId,
-  setExpandedRunLogId
+  setExpandedRunLogId,
+  showHeader
 }) => {
   const { t } = useTranslation();
   const [stopArmedRunId, setStopArmedRunId] = React.useState('');
@@ -356,7 +301,7 @@ export const WorkflowRunsPanel: React.FC<{
   }, [expandedRunLogId, t, workflow.executionMode, workflow.runs]);
 
   return (
-  <WorkflowTabPanel tab="runs" title="Runs" description="Inspect dispatched runs, approval pauses, trace events, and active run instructions.">
+  <WorkflowPanel title="Activity" description="Inspect this workflow's runs, approval pauses, trace events, and active instructions." showHeader={showHeader}>
     {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <div key={message} role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{message}</div>)}
     {workflow.runs.length > 0 ? workflow.runs.map((run) => {
       const effectiveRunId = run.runId || run.id;
@@ -508,11 +453,11 @@ export const WorkflowRunsPanel: React.FC<{
       );
     }) : (
       <div className="rounded-lg border border-ui-border bg-ui-surface p-6">
-        <div className="type-body type-emphasis text-ui-text">No runs yet</div>
-        <p className="type-caption mt-1 text-ui-text-muted">Launch this workflow from the overview after readiness checks pass.</p>
+        <div className="type-body type-emphasis text-ui-text">No activity yet</div>
+        <p className="type-caption mt-1 text-ui-text-muted">Use Launch in the workflow header to start the first run after readiness checks pass.</p>
       </div>
     )}
-  </WorkflowTabPanel>
+  </WorkflowPanel>
   );
 };
 
@@ -521,14 +466,11 @@ const AgentCapabilityGroup: React.FC<{
   values: string[];
   emptyLabel: string;
   technical?: boolean;
-  variant?: 'approval' | 'text';
-}> = ({ label, values, emptyLabel, technical = false, variant = 'text' }) => (
+}> = ({ label, values, emptyLabel, technical = false }) => (
   <div className="grid min-w-0 gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
     <dt className="type-micro-label pt-1 text-ui-text-muted">{label}</dt>
     <dd className="min-w-0">
-      {values.length > 0 && variant === 'approval' ? (
-        <ApprovalPolicyBadges values={values} />
-      ) : values.length > 0 ? (
+      {values.length > 0 ? (
         <ul className="grid min-w-0 gap-2">
           {values.map((value) => (
             <li key={value} className="flex min-w-0 flex-wrap items-center gap-2">
@@ -545,32 +487,33 @@ const AgentCapabilityGroup: React.FC<{
   </div>
 );
 
-function approvalTone(value: string): 'success' | 'warning' | 'danger' | 'neutral' {
-  if (value.includes('approval required')) return 'warning';
-  if (value.includes('allowed')) return 'success';
-  if (value.includes('blocked')) return 'danger';
-  return 'neutral';
-}
-
-function parseApprovalValue(value: string): { label: string; value: string } {
-  const [label, ...rest] = value.split(': ');
-  return {
-    label: label.replace(' actions', ''),
-    value: rest.join(': ') || value
-  };
-}
-
-const ApprovalPolicyBadges: React.FC<{ values: string[] }> = ({ values }) => (
-  <div className="grid min-w-0 gap-2">
-    {values.map((value) => {
-      const parsed = parseApprovalValue(value);
-      return (
-        <span key={value} className="inline-flex min-w-0 items-center gap-1.5">
-          <span className="type-micro-label text-ui-text-muted">{parsed.label}</span>
-          <StatusBadge tone={approvalTone(value)}>{parsed.value}</StatusBadge>
-        </span>
-      );
-    })}
+const AgentToolCapabilityGroup: React.FC<{
+  tools: WorkflowAgentCapabilityReview['tools'];
+}> = ({ tools }) => (
+  <div className="grid min-w-0 gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
+    <dt className="type-micro-label pt-1 text-ui-text-muted">Tools</dt>
+    <dd className="min-w-0">
+      {tools.length > 0 ? (
+        <ul className="divide-y divide-ui-border">
+          {tools.map((tool) => (
+            <li key={tool.id} className="flex min-w-0 flex-col gap-2 py-2 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+              <span className="min-w-0">
+                <span className="block break-words font-mono type-body text-ui-text [overflow-wrap:anywhere]">{tool.label}</span>
+                {tool.description && <span className="type-caption mt-0.5 block max-w-[70ch] text-ui-text-muted">{tool.description}</span>}
+              </span>
+              <span className="flex shrink-0 flex-wrap gap-1.5">
+                <StatusBadge tone={tool.access === 'read' ? 'success' : tool.access === 'write' ? 'warning' : 'neutral'}>
+                  {tool.access === 'unknown' ? 'Unclassified' : tool.access === 'read' ? 'Read' : 'Write'}
+                </StatusBadge>
+                {tool.requiresApproval && <StatusBadge tone="warning">Approval required</StatusBadge>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <span className="type-ui text-ui-text-muted">No directly attached tools.</span>
+      )}
+    </dd>
   </div>
 );
 
@@ -583,7 +526,7 @@ const AgentCapabilityReviewList: React.FC<{
   return (
     <div className="mt-4">
       {agentReviews.map((agent) => (
-        <section key={agent.agentId} className="grid gap-4 border-t border-ui-border py-5 first:border-t-0 first:pt-0 last:pb-0 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-10">
+        <section key={agent.agentId} className="grid gap-4 border-t border-ui-border py-5 first:border-t-0 first:pt-0 last:pb-0">
           <div className="min-w-0">
             <h4 className="type-panel-title grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 text-ui-text">
               <span className="flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
@@ -600,8 +543,8 @@ const AgentCapabilityReviewList: React.FC<{
             <dl className="min-w-0 divide-y divide-ui-border">
               <AgentCapabilityGroup label="Direct MCP servers" values={agent.mcpServers} emptyLabel="No directly attached MCP servers." technical />
               <AgentCapabilityGroup label="Installed skills" values={agent.skills} emptyLabel="No installed skills." />
-              <AgentCapabilityGroup label="Directly attached tools" values={agent.tools} emptyLabel="No directly attached tools." technical />
-              <AgentCapabilityGroup label="Agent action policy" values={agent.actionPolicy} emptyLabel="No Agent action policy." variant="approval" />
+              <AgentToolCapabilityGroup tools={agent.tools} />
+              <AgentCapabilityGroup label="Write access" values={agent.writeAccess ? [agent.writeAccess] : []} emptyLabel="Write policy unavailable." />
             </dl>
           )}
         </section>
@@ -615,15 +558,16 @@ export const WorkflowCapabilitiesPanel: React.FC<{
   agents: AgentDefinition[];
   catalogFailures: string[];
   onRetryCatalog: () => void;
-}> = ({ workflow, agents, catalogFailures, onRetryCatalog }) => {
+  showHeader?: boolean;
+}> = ({ workflow, agents, catalogFailures, onRetryCatalog, showHeader }) => {
   const { t } = useTranslation();
   const agentReviews = getWorkflowAgentCapabilityReview(workflow, agents);
 
   return (
-    <WorkflowTabPanel
-      tab="capabilities"
-      title="Capability review"
-      description="Review the tools and integrations available to selected Agents, plus approval gates that pause runs for a decision."
+    <WorkflowPanel
+      title="Capabilities"
+      description="Review the tools, integrations, and write policy available to each selected Agent."
+      showHeader={showHeader}
     >
       {catalogFailures.length > 0 && (
         <div role="alert" className="flex flex-col gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 type-body text-status-warning-text sm:flex-row sm:items-center sm:justify-between">
@@ -632,17 +576,6 @@ export const WorkflowCapabilitiesPanel: React.FC<{
         </div>
       )}
       <AgentCapabilityReviewList agentReviews={agentReviews} />
-
-      <section className="border-t border-ui-border pt-5">
-        <dl className="min-w-0 divide-y divide-ui-border">
-          <CapabilityReviewRow
-            label="Workflow approval gates"
-            description="Runs pause at these gates until an operator approves or rejects them."
-            values={workflow.policy.approvals}
-            emptyLabel="No workflow approval gates."
-          />
-        </dl>
-      </section>
-    </WorkflowTabPanel>
+    </WorkflowPanel>
   );
 };

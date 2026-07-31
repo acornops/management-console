@@ -25,7 +25,7 @@ function notFound(): FixtureResponse {
   return json({
     error: {
       code: 'FIXTURE_NOT_FOUND',
-      message: 'Workflow event trigger was not found in the frontend fixture store.'
+      message: 'Workflow webhook was not found in the frontend fixture store.'
     }
   }, 404);
 }
@@ -42,85 +42,81 @@ async function bodyOf(request: Request): Promise<Record<string, any>> {
 }
 
 function id(): string {
-  return `fixture-event-trigger-${Math.random().toString(36).slice(2, 9)}`;
+  return `fixture-workflow-webhook-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export async function routeWorkflowEventTriggerFixtureRequest(
+export async function routeWorkflowWebhookFixtureRequest(
   input: RouteInput
 ): Promise<FixtureResponse | null> {
   const { request, state, path, method } = input;
-  let match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/workflow-event-triggers$/);
+  let match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/workflow-webhooks$/);
   if (match) {
     const workspaceId = decodeURIComponent(match[1]);
     if (method === 'GET') {
       return json({
         items: structuredClone(
-          state.workflowEventTriggers.filter((item) => item.workspaceId === workspaceId)
+          state.workflowWebhooks.filter((item) => item.workspaceId === workspaceId)
         )
       });
     }
     if (method === 'POST') {
       const requestBody = await bodyOf(request);
-      const triggerId = id();
-      const webhook = requestBody.sourceType === 'webhook'
-        ? {
-            url: `/api/v1/workflow-event-triggers/${triggerId}/events`,
-            secret: 'fixture-webhook-signing-secret',
-            secretDisclosure: 'one_time'
-          }
-        : undefined;
-      const trigger = {
-        id: triggerId,
+      const webhookId = id();
+      const signingSecret = {
+        url: `/api/v1/workflow-webhooks/${webhookId}/events`,
+        secret: 'fixture-webhook-signing-secret',
+        secretDisclosure: 'one_time'
+      };
+      const webhook = {
+        id: webhookId,
         workspaceId,
         status: requestBody.enabled === false ? 'paused' : 'enabled',
-        eventType: requestBody.sourceType === 'acornops_event' ? 'issue.created.v1' : null,
-        inputBindings: {},
         approvedContextGrants: [],
         principal: { type: 'user', id: FIXTURE_IDS.user },
-        endpointUrl: webhook?.url,
+        endpointUrl: signingSecret.url,
         ...requestBody
       };
-      state.workflowEventTriggers.push(trigger);
+      state.workflowWebhooks.push(webhook);
       return json({
-        trigger: structuredClone(trigger),
-        ...(webhook ? { webhook } : {})
+        webhook: structuredClone(webhook),
+        signingSecret
       }, 201);
     }
   }
 
-  match = path.match(/^\/api\/v1\/workflow-event-triggers\/([^/]+)\/rotate-secret$/);
+  match = path.match(/^\/api\/v1\/workflow-webhooks\/([^/]+)\/rotate-secret$/);
   if (match && method === 'POST') {
-    const trigger = state.workflowEventTriggers.find(
+    const webhook = state.workflowWebhooks.find(
       (item) => item.id === decodeURIComponent(match[1])
     );
-    if (!trigger || trigger.sourceType !== 'webhook') return notFound();
+    if (!webhook) return notFound();
     return json({
-      trigger: structuredClone(trigger),
-      webhook: {
-        url: trigger.endpointUrl,
+      webhook: structuredClone(webhook),
+      signingSecret: {
+        url: webhook.endpointUrl,
         secret: 'fixture-rotated-webhook-signing-secret',
         secretDisclosure: 'one_time'
       }
     });
   }
 
-  match = path.match(/^\/api\/v1\/workflow-event-triggers\/([^/]+)$/);
+  match = path.match(/^\/api\/v1\/workflow-webhooks\/([^/]+)$/);
   if (!match) return null;
-  const triggerId = decodeURIComponent(match[1]);
-  const trigger = state.workflowEventTriggers.find((item) => item.id === triggerId);
-  if (!trigger) return notFound();
+  const webhookId = decodeURIComponent(match[1]);
+  const webhook = state.workflowWebhooks.find((item) => item.id === webhookId);
+  if (!webhook) return notFound();
   if (method === 'PATCH') {
     const requestBody = await bodyOf(request);
-    Object.assign(trigger, requestBody, {
+    Object.assign(webhook, requestBody, {
       status: typeof requestBody.enabled === 'boolean'
         ? (requestBody.enabled ? 'enabled' : 'paused')
-        : trigger.status
+        : webhook.status
     });
-    return json({ trigger: structuredClone(trigger) });
+    return json({ webhook: structuredClone(webhook) });
   }
   if (method === 'DELETE') {
-    state.workflowEventTriggers = state.workflowEventTriggers.filter(
-      (item) => item.id !== triggerId
+    state.workflowWebhooks = state.workflowWebhooks.filter(
+      (item) => item.id !== webhookId
     );
     return noContent();
   }

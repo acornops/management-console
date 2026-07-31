@@ -46,7 +46,7 @@ export function routeAutomationTemplateFixtureRequest({
       createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: NOW,
       prompt: `Run ${template.name}.`, starterPrompt: `Run ${template.name}.`,
       agentIds: [FIXTURE_IDS.workflowAnalystAgent], executionMode: 'direct', targetConstraints: { targetTypes: [], targetIds: [] },
-      tags: [], parameters: [], requiredPermissions: [],
+      tags: [], requiredPermissions: [],
       capabilityPolicy: { mode: template.id === 'target-remediation' ? 'read_write' : 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: [], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
       readiness: { status: 'ready', reasons: [] }
     });

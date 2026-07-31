@@ -7,9 +7,8 @@ const routes = [
   { path: '/workspaces/fixture-workspace/virtual-machines', text: 'Payments VM' },
   { path: '/workspaces/fixture-workspace/agents', text: 'Workflow Analyst' },
   { path: '/workspaces/fixture-workspace/workflows', text: 'Production health review' },
-  { path: '/workspaces/fixture-workspace/triggers', text: 'Weekday morning review' },
-  { path: '/workspaces/fixture-workspace/triggers?type=acornops_event', text: 'Triage new issues' },
-  { path: '/workspaces/fixture-workspace/triggers?type=webhook', text: 'External production review' },
+  { path: '/workspaces/fixture-workspace/workflows/schedules', text: 'Weekday morning review' },
+  { path: '/workspaces/fixture-workspace/workflows/incoming-webhooks', text: 'External production review' },
   { path: '/workspaces/fixture-workspace/approvals', text: 'Restart the payments worker' },
   { path: '/workspaces/fixture-workspace/catalog', text: 'GitHub Observer' },
   { path: '/workspaces/fixture-workspace/catalog?destination=agent%3Afixture-specialist', text: 'Destination: Kubernetes Specialist' },
@@ -149,23 +148,25 @@ test('genuinely empty outbound webhooks omit inactive discovery controls', async
 test('automation collection search is clear and usable on compact layouts', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 
-  await page.goto('/workspaces/fixture-workspace/triggers?type=acornops_event', { waitUntil: 'domcontentloaded' });
-  const triggerArticle = page.getByRole('article').filter({ hasText: 'Triage new issues' });
-  const triggerAction = triggerArticle.getByRole('button', { name: 'Trigger actions for Triage new issues' });
-  await expect(triggerAction).toBeVisible();
-  const [triggerArticleBox, triggerActionBox] = await Promise.all([
-    triggerArticle.boundingBox(),
-    triggerAction.boundingBox()
+  await page.goto('/workspaces/fixture-workspace/workflows/incoming-webhooks', { waitUntil: 'domcontentloaded' });
+  const incomingWebhookArticle = page.getByRole('article').filter({ hasText: 'External production review' });
+  const incomingWebhookAction = incomingWebhookArticle.getByRole('button', {
+    name: 'Webhook actions for External production review'
+  });
+  await expect(incomingWebhookAction).toBeVisible();
+  const [incomingWebhookArticleBox, incomingWebhookActionBox] = await Promise.all([
+    incomingWebhookArticle.boundingBox(),
+    incomingWebhookAction.boundingBox()
   ]);
-  expect(triggerActionBox?.x).toBeGreaterThanOrEqual(triggerArticleBox?.x || 0);
-  expect((triggerActionBox?.x || 0) + (triggerActionBox?.width || 0))
-    .toBeLessThanOrEqual((triggerArticleBox?.x || 0) + (triggerArticleBox?.width || 0));
-  const eventSearch = page.getByRole('searchbox', { name: 'Search AcornOps event triggers' });
-  await expect(eventSearch).toBeVisible();
-  await eventSearch.fill('production health');
-  await expect(page.getByText('Triage new issues', { exact: true })).toBeVisible();
-  await eventSearch.fill('not configured');
-  await expect(page.getByText('No event triggers match these filters', { exact: true })).toBeVisible();
+  expect(incomingWebhookActionBox?.x).toBeGreaterThanOrEqual(incomingWebhookArticleBox?.x || 0);
+  expect((incomingWebhookActionBox?.x || 0) + (incomingWebhookActionBox?.width || 0))
+    .toBeLessThanOrEqual((incomingWebhookArticleBox?.x || 0) + (incomingWebhookArticleBox?.width || 0));
+  const incomingWebhookSearch = page.getByRole('searchbox', { name: 'Search incoming webhooks' });
+  await expect(incomingWebhookSearch).toBeVisible();
+  await incomingWebhookSearch.fill('production health');
+  await expect(page.getByText('External production review', { exact: true })).toBeVisible();
+  await incomingWebhookSearch.fill('not configured');
+  await expect(page.getByText('No webhooks match these filters', { exact: true })).toBeVisible();
 
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
   const webhookArticle = page.getByRole('article').filter({ hasText: 'Mattermost operations' });
@@ -210,7 +211,7 @@ test('mobile VM resource routes reveal the URL-selected category tab', async ({ 
 test('automation ledgers replace column headings with filtered-empty states', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
 
-  await page.goto('/workspaces/fixture-workspace/triggers', { waitUntil: 'domcontentloaded' });
+  await page.goto('/workspaces/fixture-workspace/workflows/schedules', { waitUntil: 'domcontentloaded' });
   const scheduleLedger = page.getByRole('region', { name: 'Workflow schedules' });
   await expect(scheduleLedger.getByRole('columnheader')).toHaveText([
     'Schedule',
@@ -234,24 +235,28 @@ test('automation ledgers replace column headings with filtered-empty states', as
   await expect(page.getByRole('heading', { name: 'No schedules match these filters' })).toBeVisible();
   await expect(scheduleLedger.getByRole('columnheader')).toHaveCount(0);
 
-  await page.goto('/workspaces/fixture-workspace/triggers?type=acornops_event', { waitUntil: 'domcontentloaded' });
-  const triggerLedger = page.getByRole('region', { name: 'Workflow event triggers' });
-  await expect(triggerLedger.locator('span').filter({ hasText: /^Trigger$/ })).toBeVisible();
-  await expect(triggerLedger.locator('span').filter({ hasText: /^Workflow$/ })).toBeVisible();
-  await expect(triggerLedger.locator('span').filter({ hasText: /^Configuration$/ })).toBeVisible();
-  await expect(triggerLedger.locator('span').filter({ hasText: /^Activity$/ })).toBeVisible();
-  await expect(triggerLedger.locator('span').filter({ hasText: /^Actions$/ })).toBeVisible();
-  const eventTriggerArticle = triggerLedger.getByRole('article').filter({ hasText: 'Triage new issues' });
-  const eventTriggerActions = eventTriggerArticle.getByRole('button', { name: 'Trigger actions for Triage new issues' });
-  await eventTriggerActions.click();
+  await page.goto('/workspaces/fixture-workspace/workflows/incoming-webhooks', { waitUntil: 'domcontentloaded' });
+  const incomingWebhookLedger = page.getByRole('region', { name: 'Incoming workflow webhooks' });
+  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toBeVisible();
+  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Workflow$/ })).toBeVisible();
+  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Configuration$/ })).toBeVisible();
+  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Activity$/ })).toBeVisible();
+  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Actions$/ })).toBeVisible();
+  const incomingWebhookArticle = incomingWebhookLedger.getByRole('article').filter({
+    hasText: 'External production review'
+  });
+  const incomingWebhookActions = incomingWebhookArticle.getByRole('button', {
+    name: 'Webhook actions for External production review'
+  });
+  await incomingWebhookActions.click();
   await expect(page.getByRole('menuitem', { name: 'Edit' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: 'Pause' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Resume' })).toBeVisible();
   await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(eventTriggerActions).toBeFocused();
-  await page.getByRole('searchbox', { name: 'Search AcornOps event triggers' }).fill('not configured');
-  await expect(page.getByText('No event triggers match these filters', { exact: true })).toBeVisible();
-  await expect(triggerLedger.locator('span').filter({ hasText: /^Trigger$/ })).toHaveCount(0);
+  await expect(incomingWebhookActions).toBeFocused();
+  await page.getByRole('searchbox', { name: 'Search incoming webhooks' }).fill('not configured');
+  await expect(page.getByText('No webhooks match these filters', { exact: true })).toBeVisible();
+  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toHaveCount(0);
 
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
   const webhookLedger = page.getByRole('region', { name: 'Configured webhooks' });
@@ -295,7 +300,7 @@ test('Agent detail scopes lifecycle and version actions to Settings', async ({ p
 
 test('recommended workflows can be added and activated without entering the library first', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Add workflows' }).click();
+  await page.getByRole('button', { name: 'Browse templates' }).click();
   await expect(page).toHaveURL(/panel=recommendations/);
 
   const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
@@ -334,7 +339,7 @@ test('recommended workflow catalog failure is retryable without leaving the page
   });
 
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Add workflows' }).click();
+  await page.getByRole('button', { name: 'Browse templates' }).click();
   const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
   await expect(drawer.getByRole('alert')).toContainText('Recommendation catalog is temporarily unavailable.');
   await page.evaluate(() => (window as typeof window & { __allowFixtureTemplateRequests: () => void }).__allowFixtureTemplateRequests());

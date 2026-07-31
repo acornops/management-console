@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 const cases = [
   {
     name: 'Schedules',
-    route: '/workspaces/fixture-workspace/triggers',
+    route: '/workspaces/fixture-workspace/workflows/schedules',
     delayPath: '/workflow-schedules',
     boundary: '[aria-label="Workflow schedules"]',
     pendingEmptyCopy: 'No workflow schedules',

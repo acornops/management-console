@@ -1,9 +1,9 @@
 import React from 'react';
 
-import type { WorkflowDefinition, WorkflowTab } from './workflowModel';
+import type { WorkflowDefinition, WorkflowView } from './workflowModel';
 
 export function useWorkflowExecutionDeepLink(
-  activeTab: WorkflowTab,
+  activeView: WorkflowView,
   workflow: WorkflowDefinition | undefined,
   setExpandedRunLogId: React.Dispatch<React.SetStateAction<string>>
 ) {
@@ -17,7 +17,7 @@ export function useWorkflowExecutionDeepLink(
     if (
       !executionId
       || focusedExecutionRef.current === executionId
-      || activeTab !== 'runs'
+      || activeView !== 'runs'
       || !workflow
     ) return;
     const run = workflow.runs.find((candidate) => candidate.executionId === executionId);
@@ -29,5 +29,5 @@ export function useWorkflowExecutionDeepLink(
         preventScroll: false
       });
     });
-  }, [activeTab, executionId, setExpandedRunLogId, workflow]);
+  }, [activeView, executionId, setExpandedRunLogId, workflow]);
 }

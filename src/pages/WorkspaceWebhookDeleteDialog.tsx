@@ -2,33 +2,33 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DestructiveConfirmationDialog } from '@acornops/ui';
-import type { WorkflowEventTrigger } from '@/services/control-plane/workflowEventTriggerApi';
+import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
 
-interface WorkspaceEventTriggerDeleteDialogProps {
+interface WorkspaceWebhookDeleteDialogProps {
   error: string;
   onCancel: () => void;
   onConfirm: () => void;
   pending: boolean;
-  trigger?: WorkflowEventTrigger;
+  webhook?: WorkflowWebhook;
 }
 
-export const WorkspaceEventTriggerDeleteDialog: React.FC<WorkspaceEventTriggerDeleteDialogProps> = ({
+export const WorkspaceWebhookDeleteDialog: React.FC<WorkspaceWebhookDeleteDialogProps> = ({
   error,
   onCancel,
   onConfirm,
   pending,
-  trigger
+  webhook
 }) => {
   const { t } = useTranslation();
 
   return (
     <DestructiveConfirmationDialog
-      open={Boolean(trigger)}
-      titleId="delete-event-trigger-title"
-      title={trigger ? t('eventTriggers.delete.title', { name: trigger.name }) : ''}
+      open={Boolean(webhook)}
+      titleId="delete-workflow-webhook-title"
+      title={webhook ? t('eventTriggers.delete.title', { name: webhook.name }) : ''}
       subtitle={t('common.irreversibleAction')}
       description={t('eventTriggers.delete.description')}
-      error={trigger ? error : null}
+      error={webhook ? error : null}
       confirmLabel={t('eventTriggers.actions.delete')}
       loadingLabel={t('app.deleting')}
       cancelLabel={t('common.cancel')}

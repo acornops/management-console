@@ -25,8 +25,8 @@ import {
   webhookList,
   workflowActivityUi,
   workspaceApprovalsPage,
-  workspaceEventTriggersPage,
-  workspaceRunsPage,
+  workspaceActivityPage,
+  workspaceIncomingWebhooksPage,
   workspaceSchedulesPage,
   workspaceInviteModal
 } from './stylesTestSupport';
@@ -62,13 +62,13 @@ describe('surface behavior contracts', () => {
   });
 
   it('keeps the populated workflow ledger compact and leaves field labels to compact layouts', () => {
-    expect(workspaceRunsPage).toContain('<PageShell>');
-    expect(workspaceRunsPage).not.toContain('<PageShell width=');
-    expect(workspaceRunsPage).toContain('bg-ui-surface shadow-sm');
-    expect(workspaceRunsPage).not.toContain('min-h-[24rem]');
+    expect(workspaceActivityPage).toContain('<PageShell>');
+    expect(workspaceActivityPage).not.toContain('<PageShell width=');
+    expect(workspaceActivityPage).toContain('bg-ui-surface shadow-sm');
+    expect(workspaceActivityPage).not.toContain('min-h-[24rem]');
     expect(workflowActivityUi).toContain('sm:grid-cols-2 sm:gap-x-6');
     expect(workflowActivityUi).toContain('sm:col-span-2 xl:col-span-1');
-    expect(workspaceRunsPage).toContain('workflowExecutionLedgerGridClass');
+    expect(workspaceActivityPage).toContain('workflowExecutionLedgerGridClass');
     expect(workflowActivityUi.match(/xl:grid-cols-\[minmax\(18rem,1fr\)/g)).toHaveLength(1);
     expect(workflowActivityUi.match(/text-ui-text-muted xl:hidden/g)).toHaveLength(3);
     expect(workflowActivityUi.match(/xl:mt-0/g)).toHaveLength(3);
@@ -96,8 +96,8 @@ describe('surface behavior contracts', () => {
       virtualMachineResourcesView
     ].forEach((surface) => expect(surface).toContain('<DataTableHeader'));
     [
-      workspaceRunsPage,
-      workspaceEventTriggersPage,
+      workspaceActivityPage,
+      workspaceIncomingWebhooksPage,
       webhookList,
       resourceExplorerLayout,
       virtualMachineResourcesView
@@ -109,8 +109,8 @@ describe('surface behavior contracts', () => {
       workspaceSchedulesPage,
       auditLogPage,
       membersPage,
-      workspaceRunsPage,
-      workspaceEventTriggersPage,
+      workspaceActivityPage,
+      workspaceIncomingWebhooksPage,
       webhookList
     ].forEach((surface) => expect(surface).toContain('collectionState={{'));
     expect(workspaceSchedulesPage).toContain('density="dense"');

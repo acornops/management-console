@@ -1,21 +1,7 @@
 import { requestJson } from './http';
 import type { ControlPlaneRunEvent, ControlPlaneRunToolApproval } from './types';
-import type { PromptResourceRequirement, WorkflowParameterDefinition } from './promptResourcesApi';
 import type { WorkflowExecutionSummary } from './workflowActivityApi';
 
-export {
-  listPromptReferenceTypes,
-  resolvePromptReferences,
-  suggestPromptReferences
-} from './promptResourcesApi';
-export type {
-  PromptReferenceResolution,
-  PromptReferenceToken,
-  PromptReferenceTypeDescriptor,
-  PromptResourceCandidate,
-  PromptResourceRequirement,
-  WorkflowParameterDefinition
-} from './promptResourcesApi';
 export {
   listWorkspaceWorkflowExecutions
 } from './workflowActivityApi';
@@ -45,9 +31,7 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   starterPrompt?: string;
   agentIds: string[];
   executionMode: 'direct' | 'coordinated';
-  resourceRequirements: PromptResourceRequirement[];
   tags?: string[];
-  parameters: WorkflowParameterDefinition[];
   requiredPermissions?: string[];
   capabilityPolicy: {
     mode: 'read_only' | 'read_write';
@@ -156,8 +140,6 @@ export type WorkflowMcpRequirementPreview = WorkflowMcpRequirementPreviewBase & 
 export interface WorkflowCapabilitiesPreview {
   workflowId: string;
   workflowVersion: number;
-  promptDigest: string;
-  bindingDigest: string;
   mode: 'read_only' | 'read_write';
   semanticCapabilityIds: string[];
   checkedAt: string;
@@ -195,8 +177,6 @@ export function normalizeWorkflowCapabilitiesPreview(
   return {
     workflowId: typeof value?.workflowId === 'string' ? value.workflowId : '',
     workflowVersion: typeof value?.workflowVersion === 'number' ? value.workflowVersion : 0,
-    promptDigest: typeof value?.promptDigest === 'string' ? value.promptDigest : '',
-    bindingDigest: typeof value?.bindingDigest === 'string' ? value.bindingDigest : '',
     mode: value?.mode === 'read_write' ? 'read_write' : 'read_only',
     semanticCapabilityIds: previewArray<string>(value?.semanticCapabilityIds),
     checkedAt: typeof value?.checkedAt === 'string' ? value.checkedAt : '',
@@ -258,7 +238,6 @@ export interface WorkflowSchedule {
   status: 'enabled' | 'paused';
   cron: string;
   timezone: string;
-  inputs: Record<string, string>;
   approvedContextGrants: string[];
   principal: { type: 'user'; id: string };
   createdBy?: { userId: string; displayName?: string };
@@ -293,7 +272,6 @@ export interface WorkflowScheduleInput {
   enabled?: boolean;
   cron: string;
   timezone: string;
-  inputs: Record<string, string>;
   approvedContextGrants?: string[];
   principal: { type: 'user'; id: string };
 }
@@ -352,24 +330,11 @@ export type WorkflowSessionSummary = WorkflowSessionResponse['session'] & {
   runs?: WorkflowRunSummary[];
 };
 
-export interface WorkflowScopeUpdateInput {
-  agentIds: string[];
-  resourceRequirements?: PromptResourceRequirement[];
-  capabilityPolicy?: {
-    mode?: 'read_only' | 'read_write';
-    restrictionMode?: 'inherit' | 'restrict';
-    semanticCapabilityIds?: string[];
-    contextGrants?: string[];
-    approvalRequirements?: string[];
-  };
-}
-
 export interface WorkflowCreateInput {
   name: string;
   description?: string;
   prompt: string;
   agentIds: string[];
-  resourceRequirements?: PromptResourceRequirement[];
   tags?: string[];
   requiredPermissions?: string[];
   capabilityPolicy?: {
@@ -574,8 +539,7 @@ export function previewWorkflowCapabilities(
   workflowId: string,
   input: {
     approvedContextGrants?: string[];
-    inputs: Record<string, string>;
-  } = { inputs: {} }
+  } = {}
 ): Promise<WorkflowCapabilitiesPreview> {
   return requestJson<Partial<WorkflowCapabilitiesPreview>>(
     `/api/v1/workflows/${encodeURIComponent(workflowId)}/capabilities-preview`,
@@ -583,34 +547,16 @@ export function previewWorkflowCapabilities(
       method: 'POST',
       body: JSON.stringify({
         workspaceId,
-        approvedContextGrants: input.approvedContextGrants || [],
-        inputs: input.inputs
+        approvedContextGrants: input.approvedContextGrants || []
       })
     }
   ).then(normalizeWorkflowCapabilitiesPreview);
 }
 
-export function updateWorkflowScope(
-  workspaceId: string,
-  workflowId: string,
-  input: WorkflowScopeUpdateInput
-): Promise<WorkflowApiDefinition> {
-  return requestJson<{ workflow: WorkflowApiDefinition }>(
-    `/api/v1/workflows/${encodeURIComponent(workflowId)}`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify({
-        workspaceId,
-        ...input
-      })
-    }
-  ).then((response) => response.workflow);
-}
-
 export function postWorkflowSessionMessage(
   sessionId: string,
   input:
-    | { kind: 'launch'; inputs: Record<string, string>; clientRequestId?: string }
+    | { kind: 'launch'; clientRequestId?: string }
     | { kind: 'follow_up'; content: string; clientRequestId?: string }
 ): Promise<WorkflowMessageAccepted> {
   return requestJson<WorkflowMessageAccepted>(

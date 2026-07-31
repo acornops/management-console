@@ -38,15 +38,18 @@ export function routeWorkflowActivityFixtureRequest(input: {
       if (!['all', 'open', 'attention'].includes(stateFilter) && item.status !== stateFilter) return false;
       if (originFilter && item.origin.kind !== originFilter) return false;
       if (workflowFilter && item.workflow.id !== workflowFilter) return false;
-      if (issueFilter && item.origin?.source?.id !== issueFilter) return false;
+      if (issueFilter) {
+        const issueTargetId = issueFilter === 'fixture-vm-issue'
+          ? 'fixture-vm'
+          : 'fixture-cluster';
+        if (item.origin.kind !== 'historical_event' || item.rootRun?.targetId !== issueTargetId) return false;
+      }
       if (searchFilter) {
         const searchable = [
           item.id,
           item.workflow.id,
           item.workflow.name,
           item.origin.label,
-          item.origin?.source?.label,
-          item.origin?.source?.id,
           item.rootRun?.targetId,
           item.rootRun?.targetName
         ].filter(Boolean).join(' ').toLowerCase();

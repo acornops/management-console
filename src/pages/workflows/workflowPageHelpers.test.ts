@@ -14,9 +14,7 @@ function workflow(overrides: Partial<WorkflowApiDefinition> = {}): WorkflowApiDe
     createdBy: 'user-1',
     agentIds: ['agent-target-diagnostics'],
     executionMode: 'direct',
-    resourceRequirements: [],
     tags: [],
-    parameters: [],
     capabilityPolicy: {
       mode: 'read_only',
       restrictionMode: 'restrict',

@@ -150,11 +150,12 @@ export const WorkspaceSidebarNavLink: React.FC<{
   icon?: React.ReactNode;
   label: string;
   badge?: number;
+  experimentalBadge?: string;
   nested?: boolean;
   reserveBadgeSpace?: boolean;
   onClick: (event: React.MouseEvent<HTMLAnchorElement>) => void;
   collapsed?: boolean;
-}> = ({ active, current = active, href, icon, label, badge, nested = false, reserveBadgeSpace = false, onClick, collapsed = false }) => {
+}> = ({ active, current = active, href, icon, label, badge, experimentalBadge, nested = false, reserveBadgeSpace = false, onClick, collapsed = false }) => {
   const link = <NavigationLink
     href={href}
     onClick={onClick}
@@ -169,12 +170,13 @@ export const WorkspaceSidebarNavLink: React.FC<{
     aria-current={current ? 'page' : undefined}
     leading={collapsed ? railIconSlot(icon) : icon}
     trailing={reserveBadgeSpace ? (
-      <span className="ml-2 inline-flex min-w-8 shrink-0 justify-end" aria-hidden={badge === undefined || badge <= 0 ? 'true' : undefined}>
+      <span className="ml-2 inline-flex min-w-8 shrink-0 justify-end" aria-hidden={!experimentalBadge && (badge === undefined || badge <= 0) ? 'true' : undefined}>
+        {experimentalBadge && !collapsed ? <ExperimentalBadge>{experimentalBadge}</ExperimentalBadge> : null}
         {typeof badge === 'number' ? <NavCountBadge count={badge} compact={collapsed} /> : null}
       </span>
     ) : undefined}
   >
     {label}
   </NavigationLink>;
-  return collapsed ? <Tooltip content={label} side="right" className="w-full">{link}</Tooltip> : link;
+  return collapsed ? <Tooltip content={experimentalBadge ? `${label} · ${experimentalBadge}` : label} side="right" className="w-full">{link}</Tooltip> : link;
 };

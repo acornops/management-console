@@ -20,7 +20,6 @@ import {
   uniqueValues,
   type WorkflowEditDraft
 } from './workflowPageHelpers';
-import { createWorkflowScopeActions } from './workflowScopeActions';
 import { resolveMcpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 import { isServerWorkflowRunId } from './workflowRunIdentity';
 
@@ -29,18 +28,18 @@ type WorkflowActionsContext = Record<string, any>;
 export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   const {
     workspace, workflows, setWorkflows,
-    selectedWorkflow, selectedWorkflowEditDraft, workflowRunInputs, workflowAgents, setWorkflowSessionIds,
-    setWorkflowRunInputs, setLaunchDrawerWorkflowId, setLaunchInputErrors,
-    capabilityPreview, setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setLaunchResult, setActiveTab, setApprovalRecords, setApprovalError,
+    selectedWorkflow, selectedWorkflowEditDraft, setWorkflowSessionIds,
+    setLaunchDrawerWorkflowId,
+    setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setActiveView, setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns, setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
-    setRunLogError, setRunLogLoadingId, setCancelRunError, setCancelRunAction,
+    setRunLogError, setCancelRunError, setCancelRunAction,
     workflowRunMessageDrafts, setWorkflowRunMessageDrafts, setWorkflowRunMessages,
     setWorkflowRunMessageSendingId, setWorkflowRunMessageErrorByRunId, setWorkflowRunMessageRecoveryByRunId,
     setNewWorkflowTag,
     newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
-    setDeleteWorkflowId, setEditingWorkflowId, setUpdatingWorkflowId, selectResultingWorkflow, setDeletingWorkflowId,
+    setDeleteWorkflowId, setUpdatingWorkflowId, selectResultingWorkflow, setDeletingWorkflowId,
     createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
-    canManageWorkflowScope, workflowOptionsReady, launchBlocker, workflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
+    canManageWorkflows, workflowOptionsReady, launchBlocker, workflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
     setEditingAgentSelectionId, setAgentSelectionError, setAgentSelectionResult, setSavingAgentSelectionId,
     ownerLabelsByUserId: providedOwnerLabelsByUserId
   } = ctx;
@@ -50,8 +49,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   const ownerLabelsByUserId = providedOwnerLabelsByUserId instanceof Map
     ? providedOwnerLabelsByUserId
     : new Map<string, string>(ownerLabelEntries);
-  const scopeActions = createWorkflowScopeActions({ ...ctx, ownerLabelsByUserId });
-
   function closeCreateWorkflowPanel(): void {
     setCreatePanelOpen(false);
     setCreateError('');
@@ -75,7 +72,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       output: 'Starting workflow run.',
       startedAt: 'Just now'
     };
-    setActiveTab('runs');
+    setActiveView('runs');
     setPendingWorkflowRuns((current: Record<string, WorkflowDefinition['runs']>) => ({
       ...current,
       [selectedWorkflow.id]: [
@@ -99,20 +96,14 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         approvedContextGrants: selectedWorkflow.contextGrants
       });
       const effectiveSessionId = sessionResponse.session.id;
-      const inputValues = Object.fromEntries(
-        Object.entries(workflowRunInputs || {}).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
-      );
       const result = await postWorkflowSessionMessage(effectiveSessionId, {
-        kind: 'launch',
-        inputs: inputValues
+        kind: 'launch'
       });
       if (!result.run_id) {
         throw new Error('The control plane accepted the workflow message without returning a run ID.');
       }
       const runId = result.run_id;
       setWorkflowSessionIds((current) => ({ ...current, [runId]: effectiveSessionId }));
-      setWorkflowRunInputs((current: Record<string, Record<string, unknown>>) => ({ ...current, [selectedWorkflow.id]: {} }));
-      setLaunchInputErrors({});
       setLaunchDrawerWorkflowId('');
       const confirmedRun: WorkflowDefinition['runs'][number] = {
         ...optimisticRun,
@@ -122,7 +113,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         duration: 'Queued',
         output: 'Workflow run dispatched to execution engine.'
       };
-      setLaunchResult({ workflowId: selectedWorkflow.id, runId, toolCount: capabilityPreview?.counts.tools || 0 });
       setPendingWorkflowRuns((current: Record<string, WorkflowDefinition['runs']>) => ({
         ...current,
         [selectedWorkflow.id]: [
@@ -164,14 +154,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         return next;
       });
     } catch (error) {
-      const details = error && typeof error === 'object' && 'details' in error
-        ? (error as { details?: { errors?: Array<{ key?: string; message?: string }> } }).details
-        : undefined;
-      if (Array.isArray(details?.errors)) {
-        setLaunchInputErrors(Object.fromEntries(details.errors
-          .filter((item) => item.key && item.message)
-          .map((item) => [item.key as string, item.message as string])));
-      }
       const recoveryAgentId = selectedWorkflow.agentIds[0];
       const recovery = recoveryAgentId
         ? resolveMcpReadinessRecovery(error, { workspaceId: workspace.id, scopeType: 'agent', agentId: recoveryAgentId })
@@ -309,14 +291,11 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setExpandedRunLogId(runId);
     setRunLogError('');
     if (runEventsByRunId[runId]) return;
-    setRunLogLoadingId(runId);
     try {
       const events = await listWorkflowRunEvents(runId);
       setRunEventsByRunId((current) => ({ ...current, [runId]: events }));
     } catch (error) {
       setRunLogError(error instanceof Error ? error.message : 'Unable to load workflow run logs');
-    } finally {
-      setRunLogLoadingId('');
     }
   }
 
@@ -399,13 +378,11 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setWorkflowUpdateResult('');
     setDeleteWorkflowError('');
     setDeleteWorkflowId('');
-    setEditingWorkflowId(workflow.id);
   }
 
   function cancelEditingWorkflow(workflow: WorkflowDefinition): void {
     setWorkflowEditDrafts((current) => ({ ...current, [workflow.id]: createWorkflowEditDraft(workflow) }));
     setWorkflowUpdateError('');
-    setEditingWorkflowId('');
   }
 
   function updateWorkflowEditDraft(workflowId: string, update: Partial<WorkflowEditDraft>): void {
@@ -479,8 +456,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         tags: selectedWorkflow.tags,
         name,
         description: selectedWorkflowEditDraft.description.trim(),
-        prompt: selectedWorkflowEditDraft.starterPrompt.trim() || `Start ${name}.`,
-        resourceRequirements: selectedWorkflow.resourceRequirements
+        prompt: selectedWorkflowEditDraft.starterPrompt.trim() || `Start ${name}.`
       });
       const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId);
       setWorkflows((current) => current.map((workflow) => workflow.id === selectedWorkflow.id
@@ -488,7 +464,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         : workflow));
       setWorkflowEditDrafts((current) => ({ ...current, [selectedWorkflow.id]: createWorkflowEditDraft(mapped) }));
       setWorkflowUpdateResult('Workflow updated.');
-      setEditingWorkflowId('');
     } catch (error) {
       setWorkflowUpdateError(error instanceof Error ? error.message : 'Unable to update workflow');
     } finally {
@@ -526,7 +501,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       setWorkflows(nextWorkflows);
       selectResultingWorkflow(nextWorkflows[0]?.id || '', { replace: true });
       setDeleteWorkflowId('');
-      setEditingWorkflowId('');
     } catch (error) {
       setDeleteWorkflowError(error instanceof Error ? error.message : 'Unable to delete workflow');
     } finally {
@@ -535,7 +509,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   async function createNewWorkflow(): Promise<void> {
-    if (!canManageWorkflowScope) {
+    if (!canManageWorkflows) {
       setCreateError('You need manage_workflows to create workflows.');
       return;
     }
@@ -562,7 +536,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   return {
-    ...scopeActions,
     addWorkflowTag,
     cancelEditingAgentSelection,
     cancelEditingWorkflow,

@@ -1,88 +1,119 @@
 import React from 'react';
+import { Activity, CalendarClock, Pencil, Send, Webhook, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, Checkbox } from '@acornops/ui';
 
-import { ICONS } from '@/constants';
+import { Button, Tooltip } from '@acornops/ui';
 import type { WorkflowPrimaryAction } from '@/pages/workflows/workflowModel';
+
+interface WorkflowIconActionProps {
+  disabled?: boolean;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  tooltip?: string;
+  variant?: React.ComponentProps<typeof Button>['variant'];
+}
+
+const WorkflowIconAction: React.FC<WorkflowIconActionProps> = ({
+  disabled,
+  icon,
+  label,
+  onClick,
+  tooltip,
+  variant = 'icon'
+}) => (
+  <Tooltip content={tooltip || label} side="bottom">
+    <Button
+      type="button"
+      variant={variant}
+      size="icon"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {icon}
+    </Button>
+  </Tooltip>
+);
 
 export const WorkflowLaunchActions: React.FC<{
   activating: boolean;
-  canManageWorkflowScope: boolean;
-  isWriteCapable: boolean;
-  launchAcknowledged: boolean;
+  canManageWorkflows: boolean;
   launchBlocker: string | null;
-  launchFields?: React.ReactNode;
   launching: boolean;
-  needsLaunchAcknowledgement: boolean;
-  onAcknowledgementChange: (checked: boolean) => void;
   onActivate: () => void;
+  onActivity: () => void;
   onEdit: () => void;
   onLaunch: () => void;
-  onSchedule: () => void;
+  onSchedules: () => void;
+  onWebhooks: () => void;
   primaryAction: WorkflowPrimaryAction;
-  tags: string[];
-}> = ({ activating, canManageWorkflowScope, isWriteCapable, launchAcknowledged, launchBlocker, launchFields, launching, needsLaunchAcknowledgement, onAcknowledgementChange, onActivate, onEdit, onLaunch, onSchedule, primaryAction, tags }) => {
+}> = ({
+  activating,
+  canManageWorkflows,
+  launchBlocker,
+  launching,
+  onActivate,
+  onActivity,
+  onEdit,
+  onLaunch,
+  onSchedules,
+  onWebhooks,
+  primaryAction
+}) => {
   const { t } = useTranslation();
-  const visibleLaunchBlocker = primaryAction === 'launch' ? launchBlocker : null;
+  const launchLabel = t('agentsWorkflows.workflowActions.launch');
+  const activateLabel = t('agentsWorkflows.workflowActions.activate');
+
   return (
-    <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-      <div className="min-w-0">
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2" aria-label="Selected workflow tags">
-            {tags.map((tag) => (
-              <span key={tag} className="inline-flex min-h-7 items-center rounded-md border border-ui-border bg-ui-surface px-2.5 type-caption type-emphasis text-ui-text-muted">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-        {launchFields && <div className={`${tags.length > 0 ? 'mt-3' : ''}`}>{launchFields}</div>}
-        {isWriteCapable && primaryAction === 'launch' && !visibleLaunchBlocker && (
-          <label id="workflow-launch-acknowledgement" className={`${tags.length > 0 ? 'mt-2' : ''} flex min-h-11 cursor-pointer items-center gap-2 text-ui-text-muted transition-colors hover:text-ui-text focus-within:text-ui-text`}>
-            <Checkbox checked={launchAcknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="shrink-0" />
-            <span className="type-caption type-emphasis">I understand this workflow can modify live systems.</span>
-          </label>
-        )}
-        {visibleLaunchBlocker && (
-          <span id="workflow-launch-blocker" className={`${tags.length > 0 ? 'mt-2' : ''} block type-caption type-emphasis text-ui-text-muted`}>
-            Resolve this before launch: {visibleLaunchBlocker}
-          </span>
-        )}
+    <div
+      className="flex flex-wrap items-center justify-end gap-2"
+      aria-label="Workflow actions"
+    >
+      <div className="flex items-center gap-2" aria-label="Workflow operations">
+        <WorkflowIconAction
+          label="Run activity"
+          icon={<Activity className="h-4 w-4" aria-hidden="true" />}
+          onClick={onActivity}
+        />
+        <WorkflowIconAction
+          label="Schedules"
+          icon={<CalendarClock className="h-4 w-4" aria-hidden="true" />}
+          onClick={onSchedules}
+        />
+        <WorkflowIconAction
+          label="Incoming webhooks"
+          icon={<Webhook className="h-4 w-4" aria-hidden="true" />}
+          onClick={onWebhooks}
+        />
       </div>
-      <div className="grid gap-1 sm:justify-items-end">
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-          <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onEdit} disabled={!canManageWorkflowScope}>
-            <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
-            {t('agentsWorkflows.workflowActions.edit')}
-          </Button>
-          {primaryAction === 'launch' && (
-            <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onSchedule} disabled={!canManageWorkflowScope} aria-describedby={!canManageWorkflowScope ? 'workflow-schedule-blocker' : undefined}>
-              <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
-              {t('agentsWorkflows.workflowActions.schedule')}
-            </Button>
-          )}
-          {primaryAction === 'activate' && (
-            <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onActivate} disabled={!canManageWorkflowScope || activating} aria-describedby={!canManageWorkflowScope ? 'workflow-activate-blocker' : undefined}>
-              <ICONS.Zap className="h-4 w-4" aria-hidden="true" />
-              {activating ? t('agentsWorkflows.workflowActions.activating') : t('agentsWorkflows.workflowActions.activate')}
-            </Button>
-          )}
-          {primaryAction === 'launch' && (
-            <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onLaunch} disabled={launching || Boolean(visibleLaunchBlocker) || needsLaunchAcknowledgement} title={visibleLaunchBlocker || undefined} aria-describedby={visibleLaunchBlocker ? 'workflow-launch-blocker' : needsLaunchAcknowledgement ? 'workflow-launch-acknowledgement' : undefined}>
-              <ICONS.Send className="h-4 w-4" aria-hidden="true" />
-              {launching ? t('agentsWorkflows.workflowActions.starting') : t('agentsWorkflows.workflowActions.launch')}
-            </Button>
-          )}
-        </div>
-        {primaryAction === 'launch' && !canManageWorkflowScope && (
-          <p id="workflow-schedule-blocker" className="type-caption type-emphasis text-ui-text-muted sm:text-right">
-            You need manage_workflows to schedule workflows.
-          </p>
-        )}
-        {primaryAction === 'activate' && !canManageWorkflowScope && (
-          <p id="workflow-activate-blocker" className="type-caption type-emphasis text-ui-text-muted sm:text-right">
-            {t('agentsWorkflows.workflowActions.activatePermission')}
-          </p>
+      <span className="mx-0.5 hidden h-6 w-px bg-ui-border sm:block" aria-hidden="true" />
+      <div className="flex items-center gap-2" aria-label="Workflow definition and launch">
+        <WorkflowIconAction
+          label={t('agentsWorkflows.workflowActions.edit')}
+          tooltip={!canManageWorkflows ? 'You need manage_workflows to edit this workflow.' : t('agentsWorkflows.workflowActions.edit')}
+          icon={<Pencil className="h-4 w-4" aria-hidden="true" />}
+          disabled={!canManageWorkflows}
+          onClick={onEdit}
+        />
+        {primaryAction === 'activate' ? (
+          <WorkflowIconAction
+            label={activateLabel}
+            tooltip={!canManageWorkflows ? t('agentsWorkflows.workflowActions.activatePermission') : activateLabel}
+            icon={<Zap className="h-4 w-4" aria-hidden="true" />}
+            variant="activation"
+            disabled={!canManageWorkflows || activating}
+            onClick={onActivate}
+          />
+        ) : (
+          <WorkflowIconAction
+            label={launchLabel}
+            tooltip={launchBlocker || launchLabel}
+            icon={<Send className="h-4 w-4" aria-hidden="true" />}
+            variant="activation"
+            disabled={launching}
+            onClick={onLaunch}
+          />
         )}
       </div>
     </div>

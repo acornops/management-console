@@ -30,7 +30,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   isVirtualMachineSidebar,
   activeResourceNav,
   pendingApprovalCount,
-  openWorkflowRunCount,
   selectedClusterIssueCount,
   clusterAssistantNavStatus,
   selectedVmIssueCount,
@@ -75,7 +74,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
     workspace: selectedWorkspace,
     activeResourceNav,
     pendingApprovalCount,
-    openWorkflowRunCount,
     t
   });
   const collapsed = mode === 'collapsed';
@@ -304,6 +302,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                         icon={<Icon className={navIconClass(item.active)} />}
                         label={item.label}
                         badge={item.badge}
+                        experimentalBadge={item.experimentalBadge}
                         reserveBadgeSpace={item.id === 'approvals' || item.id === 'workflows'}
                         collapsed={collapsed}
                         onClick={(event) => handleAppLinkClick(event, item.path, navigate)}

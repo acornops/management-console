@@ -33,6 +33,11 @@ const App: React.FC = () => {
   const { t, i18n } = useTranslation();
   const logoSrc = `${import.meta.env.BASE_URL}logo.svg`;
   const { route, navigate } = useAppRouter();
+  useEffect(() => {
+    if (route.kind === 'workspaceRedirect') {
+      navigate(route.target, { replace: true });
+    }
+  }, [navigate, route]);
   const [user, setUser] = useState<User | null>(null);
   const [kubernetesClusters, setKubernetesClusters] = useState<KubernetesCluster[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -228,7 +233,6 @@ const App: React.FC = () => {
     }
     navigate(workspaceLandingPath(routeWorkspace), { replace: true });
   }, [route, routeWorkspaceId, workspaceById, navigate]);
-
   useEffect(() => {
     setSelectedWorkspaceId((current) => {
       if (workspaces.length === 0) return current ? null : current;
@@ -236,7 +240,6 @@ const App: React.FC = () => {
       return workspaces[0]?.id || null;
     });
   }, [workspaces, workspaceById]);
-
   useEffect(() => {
     if (!routeWorkspaceId) return;
     setSelectedWorkspaceId((current) => (current === routeWorkspaceId ? current : routeWorkspaceId));

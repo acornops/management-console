@@ -23,7 +23,6 @@ export interface AppDesktopSidebarProps {
   isVirtualMachineSidebar: boolean;
   activeResourceNav: ActiveResourceNav;
   pendingApprovalCount?: number;
-  openWorkflowRunCount?: number;
   selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmIssueCount: number;
@@ -55,7 +54,6 @@ export interface AppMobileNavigationProps {
   activePrimaryNav: ActivePrimaryNav;
   activeResourceNav: ActiveResourceNav;
   pendingApprovalCount?: number;
-  openWorkflowRunCount?: number;
   isAgentSidebar: boolean;
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;

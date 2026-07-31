@@ -1,4 +1,5 @@
 import { requestJson } from './http';
+import type { ImportTargetSkillInput, ResolveGitTargetSkillInput } from './targetSkillTypes';
 
 export type AgentStatus = 'draft' | 'active' | 'disabled';
 export type AgentProviderType = 'internal' | 'external';
@@ -400,10 +401,13 @@ export function listAgentSkills(workspaceId: string, agentId: string): Promise<A
 export function createAgentSkill(workspaceId: string, agentId: string, input: { name: string; description?: string; files: Array<{ path: string; content: string }> }): Promise<AgentSkillApi> {
   return requestJson<{ skill: AgentSkillApi }>(`${agentCapabilityBase(workspaceId, agentId)}/skills`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.skill);
 }
-export function importAgentSkill(workspaceId: string, agentId: string, input: { files: Array<{ path: string; content: string }>; source: { type: 'git'; provider: 'github' | 'gitlab'; url: string; apiBaseUrl?: string; ref: string; path?: string; pinnedCommit: string } }): Promise<AgentSkillApi> {
+export function importAgentSkill(workspaceId: string, agentId: string, input: { files: Array<{ path: string; content: string }>; source: { type: 'git'; provider: 'github' | 'gitlab'; url: string; ref: string; path?: string; pinnedCommit: string } }): Promise<AgentSkillApi> {
   return requestJson<{ skill: AgentSkillApi }>(`${agentCapabilityBase(workspaceId, agentId)}/skills/import`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.skill);
 }
-export function reimportAgentSkill(workspaceId: string, agentId: string, skillId: string, input: { files: Array<{ path: string; content: string }>; source: { type: 'git'; provider: 'github' | 'gitlab'; url: string; apiBaseUrl?: string; ref: string; path?: string; pinnedCommit: string }; expectedRevision: number }): Promise<AgentSkillApi> {
+export function resolveAgentGitSkill(workspaceId: string, agentId: string, input: ResolveGitTargetSkillInput): Promise<ImportTargetSkillInput> {
+  return requestJson<ImportTargetSkillInput>(`${agentCapabilityBase(workspaceId, agentId)}/skills/resolve`, { method: 'POST', body: JSON.stringify(input) });
+}
+export function reimportAgentSkill(workspaceId: string, agentId: string, skillId: string, input: { files: Array<{ path: string; content: string }>; source: { type: 'git'; provider: 'github' | 'gitlab'; url: string; ref: string; path?: string; pinnedCommit: string }; expectedRevision: number }): Promise<AgentSkillApi> {
   return requestJson<{ skill: AgentSkillApi }>(`${agentCapabilityBase(workspaceId, agentId)}/skills/${encodeURIComponent(skillId)}/reimport`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.skill);
 }
 export function updateAgentSkill(workspaceId: string, agentId: string, skillId: string, input: { name?: string; description?: string; enabled?: boolean; files?: Array<{ path: string; content: string }>; expectedRevision?: number }): Promise<AgentSkillApi> {

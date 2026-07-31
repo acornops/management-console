@@ -35,7 +35,7 @@ export interface FixtureState {
   workflows: Array<Record<string, any>>;
   automationTemplates: Array<Record<string, any>>;
   workflowSchedules: Array<Record<string, any>>;
-  workflowEventTriggers: Array<Record<string, any>>;
+  workflowWebhooks: Array<Record<string, any>>;
   workflowExecutions: Array<Record<string, any>>;
   approvals: Array<Record<string, any>>;
   catalogSources: Array<Record<string, any>>;
@@ -240,11 +240,10 @@ export function createFixtureState(): FixtureState {
     origin: { type: 'manual' }, source: 'user', name: 'Production health review',
     description: 'Review target health and summarize prioritized follow-up actions.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' },
-    createdAt: EARLIER, prompt: 'Review {{target:target}} and produce a concise operational summary.',
-    starterPrompt: 'Review {{target:target}} and produce a concise operational summary.', agentIds: [FIXTURE_IDS.workflowAnalystAgent, FIXTURE_IDS.specialistAgent],
+    createdAt: EARLIER, prompt: 'Review production health and produce a concise operational summary.',
+    starterPrompt: 'Review production health and produce a concise operational summary.', agentIds: [FIXTURE_IDS.workflowAnalystAgent, FIXTURE_IDS.specialistAgent],
     executionMode: 'coordinated',
-    resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [FIXTURE_IDS.cluster, FIXTURE_IDS.virtualMachine] } }],
-    category: 'Operations', tags: ['production', 'health'], parameters: [{ key: 'target', type: 'target', required: true }],
+    category: 'Operations', tags: ['production', 'health'],
     capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['target.read', 'issue.read'], contextGrants: ['workspace.summary'], maxRuntimeSeconds: 600, retentionDays: 30, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
@@ -252,10 +251,9 @@ export function createFixtureState(): FixtureState {
     origin: { type: 'manual' }, source: 'user',
     name: 'Target diagnostics', description: 'Inspect one exact target using live diagnostic evidence.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
-    prompt: 'Inspect {{target:target}} using live diagnostic evidence and summarize safe next actions.',
+    prompt: 'Inspect target diagnostics using live evidence and summarize safe next actions.',
     agentIds: [FIXTURE_IDS.targetDiagnosticsAgent], executionMode: 'direct',
-    resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [FIXTURE_IDS.cluster] } }],
-    category: 'Operations', tags: ['diagnostics'], parameters: [{ key: 'target', type: 'target', required: true }],
+    category: 'Operations', tags: ['diagnostics'],
     capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['target.kubernetes.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
@@ -263,9 +261,9 @@ export function createFixtureState(): FixtureState {
     origin: { type: 'manual' }, source: 'user',
     name: 'Incident report', description: 'Generate an incident report from explicitly granted evidence.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
-    prompt: 'Generate {{text:report_title}} with provenance from {{chat:incident_context}}.',
+    prompt: 'Generate an incident report with provenance from the available incident context.',
     agentIds: [FIXTURE_IDS.incidentReporterAgent], executionMode: 'direct',
-    resourceRequirements: [{ type: 'chat', minimum: 1, maximum: 20, requiredOperations: ['read'] }], category: 'Reporting', tags: ['incident'], parameters: [{ key: 'report_title', type: 'text', required: true }, { key: 'incident_context', type: 'chat', required: true }],
+    category: 'Reporting', tags: ['incident'],
     capabilityPolicy: { mode: 'read_only', restrictionMode: 'inherit', semanticCapabilityIds: [], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 180, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }];
@@ -343,10 +341,8 @@ export function createFixtureState(): FixtureState {
       'waiting_for_approval',
       {
         schemaVersion: 1,
-        kind: 'event_trigger',
-        label: 'Triage new issues',
-        triggerId: 'fixture-issue-created-trigger',
-        source: { kind: 'issue', label: 'Payments worker is restarting', id: 'fixture-issue', eventType: 'issue.created.v1', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes' }
+        kind: 'historical_event',
+        label: 'Triage new issues'
       },
       FIXTURE_IDS.cluster,
       'kubernetes',
@@ -358,10 +354,8 @@ export function createFixtureState(): FixtureState {
       'running',
       {
         schemaVersion: 1,
-        kind: 'event_trigger',
-        label: 'Triage new issues',
-        triggerId: 'fixture-issue-created-trigger',
-        source: { kind: 'issue', label: 'Payments worker is restarting', id: 'fixture-issue', eventType: 'issue.created.v1', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes' }
+        kind: 'historical_event',
+        label: 'Triage new issues'
       },
       FIXTURE_IDS.cluster,
       'kubernetes',
@@ -373,10 +367,8 @@ export function createFixtureState(): FixtureState {
       'needs_review',
       {
         schemaVersion: 1,
-        kind: 'event_trigger',
-        label: 'Escalate recurring workload failures with an exceptionally long trigger name',
-        triggerId: 'fixture-recurring-issue-trigger',
-        source: { kind: 'issue', label: 'Payments worker is restarting', id: 'fixture-issue', eventType: 'issue.created.v1', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes' }
+        kind: 'historical_event',
+        label: 'Escalate recurring workload failures with an exceptionally long historical label'
       },
       FIXTURE_IDS.cluster,
       'kubernetes',
@@ -386,7 +378,7 @@ export function createFixtureState(): FixtureState {
     execution(
       'fixture-execution-scheduled-running',
       'running',
-      { schemaVersion: 1, kind: 'schedule', label: 'Weekday morning review', triggerId: 'fixture-schedule' },
+      { schemaVersion: 1, kind: 'schedule', label: 'Weekday morning review', scheduleId: 'fixture-schedule' },
       FIXTURE_IDS.cluster,
       'kubernetes',
       fixtureMinutesAgo(9),
@@ -397,10 +389,8 @@ export function createFixtureState(): FixtureState {
       'failed',
       {
         schemaVersion: 1,
-        kind: 'event_trigger',
-        label: 'Triage virtual machine service issues',
-        triggerId: 'fixture-vm-issue-trigger',
-        source: { kind: 'issue', label: 'Payment gateway service is degraded', id: 'fixture-vm-issue', eventType: 'issue.created.v1', targetId: FIXTURE_IDS.virtualMachine, targetType: 'virtual_machine' }
+        kind: 'historical_event',
+        label: 'Triage virtual machine service issues'
       },
       FIXTURE_IDS.virtualMachine,
       'virtual_machine',
@@ -425,14 +415,13 @@ export function createFixtureState(): FixtureState {
       }
     ),
     execution(
-      'fixture-execution-deleted-trigger',
+      'fixture-execution-deleted-webhook',
       'completed',
       {
         schemaVersion: 1,
-        kind: 'event_trigger',
-        label: 'Deleted trigger',
-        triggerId: 'fixture-deleted-trigger',
-        source: { kind: 'webhook', label: 'Webhook event', eventType: 'deployment.alert.v1', targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes' }
+        kind: 'webhook',
+        label: 'Deleted workflow webhook',
+        webhookId: 'fixture-deleted-workflow-webhook'
       },
       FIXTURE_IDS.cluster,
       'kubernetes',
@@ -441,7 +430,10 @@ export function createFixtureState(): FixtureState {
     )
   ];
   const issueActivity = (issueId: string) => {
-    const related = workflowExecutions.filter((item) => item.origin.kind === 'event_trigger' && item.origin.source.id === issueId);
+    const issueTargetId = issueId === 'fixture-vm-issue' ? FIXTURE_IDS.virtualMachine : FIXTURE_IDS.cluster;
+    const related = workflowExecutions.filter((item) => (
+      item.origin.kind === 'historical_event' && item.rootRun.targetId === issueTargetId
+    ));
     const open = related.filter((item) => !['completed', 'failed', 'cancelled'].includes(item.status));
     return {
       totalCount: related.length,
@@ -496,25 +488,16 @@ export function createFixtureState(): FixtureState {
     workflows,
     automationTemplates,
     workflowSchedules: [
-      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
-      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', inputs: { target: cluster.id }, approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
+      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
+      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
     ],
-    workflowEventTriggers: [
+    workflowWebhooks: [
       {
-        id: 'fixture-issue-created-trigger', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
-        name: 'Triage new issues', status: 'enabled', sourceType: 'acornops_event',
-        eventType: 'issue.created.v1', inputBindings: { target: 'target.id' }, approvedContextGrants: ['workspace.summary'],
-        principal: { type: 'user', id: FIXTURE_IDS.user }, lastTriggeredAt: NOW, lastStatus: 'dispatched',
-        lastExecutionId: 'fixture-execution-issue-running', lastRunId: 'fixture-execution-issue-running-run',
-        latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-issue-running')
-      },
-      {
-        id: 'fixture-webhook-trigger', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
-        name: 'External production review', status: 'paused', sourceType: 'webhook',
-        eventType: null, inputBindings: {}, approvedContextGrants: ['workspace.summary'],
+        id: 'fixture-workflow-webhook', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
+        name: 'External production review', status: 'paused', approvedContextGrants: ['workspace.summary'],
         principal: { type: 'user', id: FIXTURE_IDS.user },
-        endpointUrl: '/api/v1/workflow-event-triggers/fixture-webhook-trigger/events',
-        lastTriggeredAt: NOW, lastStatus: 'failed', lastError: 'Dispatch rejected because the configured principal no longer has permission. No execution was created.'
+        endpointUrl: '/api/v1/workflow-webhooks/fixture-workflow-webhook/events',
+        lastReceivedAt: NOW, lastStatus: 'failed', lastError: 'Dispatch rejected because the configured principal no longer has permission. No execution was created.'
       }
     ],
     approvals: [

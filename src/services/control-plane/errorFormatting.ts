@@ -234,12 +234,24 @@ function mapControlPlaneCode(
     case 'INVALID_REPO_URL':
     case 'UNSUPPORTED_REPO_HOST':
       return tr('controlPlaneErrors.skills.invalidRepoUrl', 'Enter a GitHub or GitLab repository URL.');
+    case 'UNSUPPORTED_GIT_HOST':
+      return tr('controlPlaneErrors.skills.unsupportedHost', 'This Git host is not enabled for this AcornOps deployment.');
     case 'REPOSITORY_NOT_FOUND':
+    case 'GIT_SOURCE_NOT_FOUND':
       return tr('controlPlaneErrors.skills.repositoryNotFound', 'Repository was not found or is not public.');
     case 'REF_NOT_FOUND':
+    case 'INVALID_GIT_REF':
       return tr('controlPlaneErrors.skills.refNotFound', 'Git ref was not found.');
     case 'SUBPATH_NOT_FOUND':
+    case 'INVALID_GIT_SUBPATH':
       return tr('controlPlaneErrors.skills.subpathNotFound', 'Git subpath was not found.');
+    case 'GIT_ACCESS_DENIED':
+      return tr('controlPlaneErrors.skills.accessDenied', 'The Git host denied anonymous access. Only public repositories can be imported.');
+    case 'GIT_RATE_LIMITED':
+      return tr('controlPlaneErrors.skills.rateLimited', 'The Git host rate limit was reached. Try again later.');
+    case 'GIT_PROVIDER_UNAVAILABLE':
+    case 'GIT_PROVIDER_FAILED':
+      return tr('controlPlaneErrors.skills.providerFailed', 'The Git host could not complete the import. Try again shortly.');
     case 'INVALID_SKILL_BUNDLE':
       return tr('controlPlaneErrors.skills.invalidBundle', 'That path does not contain a valid skill bundle. Choose a folder with SKILL.md.');
     case 'INVALID_SKILL_BUNDLE_LIMIT':

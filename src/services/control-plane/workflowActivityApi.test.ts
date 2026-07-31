@@ -28,7 +28,7 @@ describe('workflow activity control-plane api', () => {
     await expect(listWorkspaceWorkflowExecutions('workspace-1', {
       search: 'production review',
       state: 'attention',
-      origin: 'event_trigger',
+      origin: 'webhook',
       workflowId: 'workflow-1',
       sourceIssueId: 'issue-1',
       limit: 25,
@@ -41,7 +41,7 @@ describe('workflow activity control-plane api', () => {
       }
     });
     expect(String(fetchMock.mock.calls[0][0])).toContain(
-      '/api/v1/workspaces/workspace-1/workflow-executions?search=production+review&state=attention&origin=event_trigger&workflowId=workflow-1&sourceIssueId=issue-1&limit=25&cursor=cursor-1'
+      '/api/v1/workspaces/workspace-1/workflow-executions?search=production+review&state=attention&origin=webhook&workflowId=workflow-1&sourceIssueId=issue-1&limit=25&cursor=cursor-1'
     );
   });
 

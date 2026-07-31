@@ -26,6 +26,11 @@ export const zh = {
     removeFilter: '移除{{filter}}筛选：{{value}}',
     dismissNotification: '关闭通知'
   },
+  workflowWorkspaceViews: {
+    label: '工作流视图',
+    showWorkflows: '工作流库',
+    showActivity: '活动'
+  },
   controlPlaneErrors: {
     validation: {
       default: '请检查请求后重试。',
@@ -86,10 +91,14 @@ export const zh = {
     agentToolError: 'Agent 无法完成请求。请重试或检查 agent 日志。',
     invalidCursor: '无法加载此列表。请刷新后重试。',
     skills: {
-      invalidRepoUrl: '请输入 GitHub 或 GitLab 仓库 URL。',
+      invalidRepoUrl: '请输入有效的 HTTPS 仓库、文件夹或 SKILL.md URL。',
+      unsupportedHost: '此 AcornOps 部署尚未启用该 Git 主机。',
       repositoryNotFound: '找不到仓库，或仓库不是公开的。',
       refNotFound: '找不到 Git ref。',
       subpathNotFound: '找不到 Git 子路径。',
+      accessDenied: 'Git 主机拒绝匿名访问。只能导入公开仓库。',
+      rateLimited: '已达到 Git 主机速率限制，请稍后重试。',
+      providerFailed: 'Git 主机无法完成导入，请稍后重试。',
       invalidBundle: '该路径不包含有效的技能包。请选择包含 SKILL.md 的文件夹。',
       bundleTooLarge: '技能包超过存储限制。',
       invalidSkill: '只有有效技能可以启用。',
@@ -109,9 +118,8 @@ export const zh = {
     agents: 'Agent',
     workflows: '工作流',
     library: '工作流库',
-    runs: '运行',
+    activity: '活动',
     workspaceNavigation: '工作区导航',
-    triggers: '触发器',
     approvals: '审批',
     clusters: 'Kubernetes 集群',
     virtualMachines: '虚拟机',
@@ -123,7 +131,7 @@ export const zh = {
     inventory: '资源清单',
     automation: '自动化',
     experimental: '实验性',
-    outboundWebhooks: '出站 Webhook',
+    outboundWebhooks: 'Webhook',
     governance: '治理',
     utilities: '实用工具',
     cluster: '集群',
@@ -237,15 +245,15 @@ export const zh = {
     unknownAgent: '未知 Agent'
   },
   workflowActivity: {
-    title: '运行',
-    subtitle: '{{workspace}} 中的后台、计划、事件触发和手动活动。',
+    title: '工作流活动',
+    subtitle: '{{workspace}} 中的后台、计划、Webhook 和手动工作流活动。',
     ledgerLabel: '工作流执行台账',
-    loading: '正在加载工作流运行...',
+    loading: '正在加载工作流活动...',
     loadError: '无法加载工作流活动。',
-    loadErrorTitle: '工作流运行暂不可用',
-    emptyOpenTitle: '暂无进行中的工作流运行',
-    emptyOpenDescription: '可通过状态筛选查看已完成的运行。',
-    emptyFilteredTitle: '没有符合筛选条件的运行',
+    loadErrorTitle: '工作流活动暂不可用',
+    emptyOpenTitle: '暂无进行中的工作流活动',
+    emptyOpenDescription: '可通过状态筛选查看已完成的活动。',
+    emptyFilteredTitle: '没有符合筛选条件的活动',
     emptyFilteredDescription: '清除或调整筛选条件以查看其他工作流活动。',
     refreshError: '自动刷新运行暂不可用。请手动刷新，或重新聚焦此窗口后重试。',
     openCount: '{{count}} 个进行中',
@@ -283,8 +291,10 @@ export const zh = {
     origin: {
       manual: '手动',
       external_integration: '外部集成',
+      agent_chat: 'Agent 对话',
       schedule: '计划',
-      event_trigger: '事件触发器'
+      webhook: 'Webhook',
+      historical_event: '历史事件'
     },
     status: {
       queued: '已排队',
@@ -310,7 +320,7 @@ export const zh = {
       action: '操作'
     },
     filters: {
-      search: '搜索运行',
+      search: '搜索活动',
       state: '按状态筛选',
       origin: '按来源筛选',
       workflow: '按工作流筛选',
@@ -366,7 +376,7 @@ export const zh = {
     aiSetupAssistantTitle: '开始助手对话',
     aiSetupAssistantBody: '使用已启用的提供商和模型进行调查与故障排查。',
     aiSetupAutomationTitle: '运行自动化',
-    aiSetupAutomationBody: '启动手动、定时和事件触发的工作流运行。',
+    aiSetupAutomationBody: '启动手动、定时和 Webhook 触发的工作流运行。',
     aiSetupOptionalNote: '目标和集成均为可选项。只需添加工作流和调查所需的内容。',
     aiSettingsTransition: '这将完成工作区设置，并打开“工作区设置 → AI”。',
     openAiSettings: '完成并打开 AI 设置',
@@ -381,52 +391,15 @@ export const zh = {
     supportTitle: '联系支持',
     supportBody: '需要协助时，请向 AcornOps 团队发送工作区或运行上下文。'
   },
-  triggers: {
-    title: '触发器',
-    subtitle: '选择 {{workspace}} 中工作流启动的时间和原因。',
-    tabsLabel: '触发器类型',
-    types: {
-      schedule: '计划',
-      acornopsEvent: 'AcornOps 事件',
-      webhook: '传入 Webhook'
-    },
-    typesCompact: {
-      schedule: '计划',
-      acornopsEvent: '事件',
-      webhook: 'Webhook'
-    },
-    actions: {
-      create: '创建触发器',
-      createMenuLabel: '选择要创建的触发器类型',
-      createAcornOpsEvent: '创建 AcornOps 事件',
-      createWebhook: '创建传入 Webhook'
-    },
-    createDescriptions: {
-      schedule: '按周期运行工作流。',
-      acornopsEvent: '当 AcornOps 创建问题时启动。',
-      webhook: '通过签名的外部请求启动。'
-    },
-    empty: {
-      acornopsEventTitle: '暂无 AcornOps 事件触发器',
-      acornopsEventDescription: '创建一个在 AcornOps 生成问题时启动工作流的触发器。',
-      webhookTitle: '暂无传入 Webhook 触发器',
-      webhookDescription: '创建一个签名端点，让外部系统能够启动工作流。'
-    },
-    form: {
-      createAcornOpsEventTitle: '创建 AcornOps 事件',
-      createWebhookTitle: '创建传入 Webhook'
-    }
-  },
   schedules: {
+    title: '计划',
+    subtitle: '{{workspace}} 的周期性工作流调度。',
     tableLabel: '工作流计划',
     permissionNotice: '需要 manage_workflows 权限才能创建或编辑计划。',
     emptyTitle: '暂无工作流计划',
     emptyBody: '创建计划后，可按 cron 频率调度活跃工作流。',
     loadError: '加载工作流计划失败。',
     nextRunUnavailable: '暂无后续运行',
-    runtimeValueCount: '{{count}} 个运行时值',
-    runtimeValueCount_one: '{{count}} 个运行时值',
-    runtimeValueCount_other: '{{count}} 个运行时值',
     contextGrantCount: '{{count}} 个上下文授权',
     contextGrantCount_one: '{{count}} 个上下文授权',
     contextGrantCount_other: '{{count}} 个上下文授权',
@@ -435,9 +408,8 @@ export const zh = {
       workflow: '工作流',
       cadence: '频率',
       nextRun: '下次运行',
-      scope: '范围',
       approvalGate: '审批门控',
-      inputsAndAccess: '输入和权限',
+      inputsAndAccess: '权限',
       actions: '操作'
     },
     status: {
@@ -473,7 +445,7 @@ export const zh = {
     form: {
       createTitle: '创建计划',
       editTitle: '编辑计划',
-      body: '选择此工作流的运行时间并提供所需值。保存前，AcornOps 会检查访问权限。',
+      body: '选择此工作流的运行时间。保存前，AcornOps 会检查访问权限。',
       close: '关闭计划抽屉',
       workflow: '工作流',
       name: '名称',
@@ -485,8 +457,6 @@ export const zh = {
       enabled: '启用',
       approvedContextGrants: '已批准上下文授权',
       approvedContextGrantsHelp: '每行输入一项授权。计划运行只能使用已批准的上下文。',
-      workflowInputs: '工作流输入',
-      workflowInputsHelp: '每次发生计划任务时，都会重新验证并授权这些值。',
       required: '请选择工作流并填写名称、cron 和时区。',
       save: '保存计划',
       saving: '正在保存...',
@@ -497,23 +467,27 @@ export const zh = {
     }
   },
   eventTriggers: {
-    permissionNotice: '需要 manage_workflows 权限才能创建或编辑事件触发器。',
-    noActiveWorkflows: '请先激活工作流，再创建事件触发器。',
-    listTitle: '工作流事件触发器',
-    count: '{{count}} 个触发器',
-    count_one: '{{count}} 个触发器',
-    count_other: '{{count}} 个触发器',
+    title: '传入 Webhook',
+    subtitle: '用于调度 {{workspace}} 中工作流的签名端点。',
+    permissionNotice: '需要 manage_workflows 权限才能创建或编辑工作流 Webhook。',
+    noActiveWorkflows: '请先激活工作流，再创建 Webhook。',
+    listTitle: '传入工作流 Webhook',
+    emptyTitle: '暂无传入 Webhook',
+    emptyDescription: '创建一个签名端点，让外部系统能够启动工作流。',
+    count: '{{count}} 个 Webhook',
+    count_one: '{{count}} 个 Webhook',
+    count_other: '{{count}} 个 Webhook',
     columns: {
-      trigger: '触发器',
+      trigger: 'Webhook',
       workflow: '工作流',
       configuration: '配置',
       actions: '操作'
     },
-    loadError: '加载事件触发器失败。',
-    refreshing: '正在刷新事件触发器。',
-    saveError: '保存事件触发器失败。',
-    updateError: '更新事件触发器失败。',
-    deleteError: '删除事件触发器失败。',
+    loadError: '加载工作流 Webhook 失败。',
+    refreshing: '正在刷新工作流 Webhook。',
+    saveError: '保存工作流 Webhook 失败。',
+    updateError: '更新工作流 Webhook 失败。',
+    deleteError: '删除工作流 Webhook 失败。',
     rotateError: '轮换签名密钥失败。',
     copyError: '无法复制到剪贴板。',
     copyEndpoint: '复制端点',
@@ -524,10 +498,9 @@ export const zh = {
     contextGrantCount_one: '{{count}} 个上下文授权',
     contextGrantCount_other: '{{count}} 个上下文授权',
     lastTriggered: '上次触发：{{time}}',
-    neverTriggered: '尚未触发',
+    neverTriggered: '尚未收到请求',
     source: {
-      webhook: 'Webhook 请求',
-      acornopsEvent: 'AcornOps 事件'
+      webhook: 'Webhook 请求'
     },
     status: {
       enabled: '已启用',
@@ -535,14 +508,13 @@ export const zh = {
       autoPaused: '已自动暂停'
     },
     filters: {
-      searchAcornOpsEvents: '搜索 AcornOps 事件触发器',
       searchIncomingWebhooks: '搜索传入 Webhook',
       status: '按状态筛选',
       workflow: '按工作流筛选',
       allStatuses: '所有状态',
       allWorkflows: '所有工作流',
-      showing: '显示 {{total}} 个触发器中的 {{count}} 个',
-      emptyTitle: '没有符合筛选条件的事件触发器',
+      showing: '显示 {{total}} 个 Webhook 中的 {{count}} 个',
+      emptyTitle: '没有符合筛选条件的 Webhook',
       emptyDescription: '请调整搜索、状态或工作流筛选条件。'
     },
     lastStatus: {
@@ -552,6 +524,7 @@ export const zh = {
       rejected: '已拒绝'
     },
     actions: {
+      create: '创建 Webhook',
       edit: '编辑',
       reviewFailure: '审核失败',
       pause: '暂停',
@@ -559,10 +532,10 @@ export const zh = {
       rotateSecret: '轮换密钥',
       delete: '删除'
     },
-    actionsFor: '{{name}} 的触发器操作',
+    actionsFor: '{{name}} 的 Webhook 操作',
     delete: {
       title: '删除 {{name}}？',
-      description: '新的请求和事件将立即停止。正在进行的调度和现有工作流运行不受影响。'
+      description: '新的请求将立即停止。正在进行的调度和现有工作流活动不受影响。'
     },
     rotate: {
       title: '轮换 {{name}} 的签名密钥？',
@@ -581,39 +554,21 @@ export const zh = {
       dismiss: '关闭'
     },
     form: {
-      createTitle: '创建事件触发器',
-      editTitle: '编辑事件触发器',
-      description: '选择一个事件源及其要启动的现有工作流。',
+      createTitle: '创建传入 Webhook',
+      editTitle: '编辑工作流 Webhook',
+      description: '选择此签名端点要启动的现有工作流。',
       name: '名称',
       workflow: '工作流',
-      workflowHelp: '触发器创建后无法更改工作流。',
-      source: '事件源',
-      sourceHelp: '触发器创建后无法更改事件源。',
-      issueCreated: '问题已创建',
-      issueCreatedHelp: '将每个工作流输入映射到触发事件的问题和目标。',
-      selectBinding: '选择事件字段',
-      chatUnsupported: '问题事件无法提供聊天输入“{{parameter}}”。请选择不包含聊天输入的工作流。',
-      noInputs: '此工作流没有需要映射的运行时输入。',
-      bindingLabel: '{{parameter}} 的事件字段',
-      webhookHelp: '创建后，AcornOps 会显示一次性签名密钥。请求直接提供工作流输入。',
+      workflowHelp: 'Webhook 创建后无法更改工作流。',
+      webhookHelp: '创建后，AcornOps 会显示一次性签名密钥。每个有效请求都会启动已保存的工作流。',
       runsAs: '运行身份',
       currentUser: '您当前的账户',
-      runsAsHelp: '每次事件发生时都会重新检查工作区成员身份和权限。',
+      runsAsHelp: '每次请求都会重新检查工作区成员身份和权限。',
       approvedContextGrants: '已批准上下文授权',
       approvedContextGrantsHelp: '可选授权，使用逗号或换行分隔。',
       enabled: '启用',
-      save: '保存事件触发器',
+      save: '保存 Webhook',
       saving: '正在保存...'
-    },
-    bindings: {
-      issue_id: '问题 ID',
-      issue_title: '问题标题',
-      issue_summary: '问题摘要',
-      issue_severity: '问题严重程度',
-      issue_scope: '问题范围',
-      issue_object: '问题对象',
-      target_id: '目标 ID',
-      target_type: '目标类型'
     }
   },
   approvals: {
@@ -1609,9 +1564,6 @@ export const zh = {
   workflowCatalog: {
     inlineFailure: '部分 Agent 或 MCP 能力无法加载。',
     openMcpSettings: '打开 MCP 设置'
-  },
-  workflowPrompt: {
-    authoringGuidance: '插入可复用的 @type[] 槽位，或固定具体引用。可用类型来自平台注册表。'
   },
   workspaceAiSettings: {
     title: 'AI 设置',
@@ -2700,17 +2652,11 @@ export const zh = {
     manageNoAccess: '只读。你可以查看已配置的技能，但不能更改。',
     manageNoAccessWithRoles: '可编辑角色：{{roles}}',
     importTitle: '从 Git 导入技能',
-    importDescription: '从 GitHub 或 GitLab 仓库 URL 导入固定的本地快照，支持企业版和自托管部署。',
-    provider: '提供方',
-    providerGithub: 'GitHub / GitHub Enterprise',
-    providerGitlab: 'GitLab / 自托管 GitLab',
-    repositoryUrl: '仓库 URL',
-    apiBaseUrl: 'API 基础 URL',
-    apiBaseUrlHelp: '自定义部署使用非标准 API 路径时可填写。',
-    ref: 'Ref',
-    subpath: '子路径',
+    importDescription: '粘贴平台管理员已配置的 Git 主机完整 URL。',
+    repositoryUrl: '仓库或技能 URL',
+    repositoryUrlHelp: '可使用仓库、文件夹或 SKILL.md URL。系统会自动识别提供方、ref 和子路径。',
     importedSnapshot: '导入的快照',
-    importedSnapshotHelp: '可以直接粘贴文件夹 URL，或使用仓库 URL 搭配 Ref 和子路径。导入的文件会作为可编辑的本地快照保存。',
+    importedSnapshotHelp: '导入文件会固定到一个提交，并作为可编辑的本地快照保存。',
     importing: '正在导入...',
     importSkill: '导入技能',
     deleteTitle: '删除技能',
@@ -2723,16 +2669,6 @@ export const zh = {
     reimporting: '正在重新导入...',
     reimport: '重新导入',
     gitImportErrors: {
-      invalidRepoUrl: '请输入有效的 HTTPS GitHub 或 GitLab 仓库 URL。',
-      invalidApiBaseUrl: '请输入有效的 API 基础 URL，GitHub 需以 /api/v3 结尾，GitLab 需以 /api/v4 结尾。',
-      invalidRef: '请检查 Git ref 后重试。',
-      invalidSubpath: '请检查 Git 子路径后重试。',
-      invalidBundle: '该路径不包含有效的技能包。请选择包含 SKILL.md 的文件夹。',
-      accessDenied: 'Git 提供方拒绝访问。请检查仓库可见性以及浏览器是否可访问 Git 主机。',
-      notFound: '找不到仓库、ref 或子路径。请检查 Git URL、ref 和子路径。',
-      rateLimited: 'Git 提供方达到速率限制。请稍后重试。',
-      providerUnavailable: 'Git 提供方无法完成请求。请稍后重试。',
-      providerFailed: 'Git 提供方请求失败。请检查 Git URL、ref 和子路径。',
       invalidSource: '只有从 Git 导入的技能可以重新导入。'
     },
     state: {
@@ -3241,7 +3177,7 @@ export const zh = {
     peerDescription: '所有已选 Agent 都是对等成员，其已审核能力上限共同限定此工作流。',
     selectionRequired: '请至少选择一个工作流 Agent 后再审核。',
     completeAccessStep: '第 2 步尚未完成。请至少选择一个 Agent 和一个语义能力后再审核。',
-    createDescription: '定义运行提示、已选 Agents 和语义能力允许列表。',
+    createDescription: '描述工作流，并选择负责运行该工作流的 Agents。',
     noAgents: '尚未选择工作流 Agent。',
     agentUnavailable: 'Agent 暂不可用',
     traceTitle: 'AcornOps 协调',
@@ -3340,7 +3276,7 @@ export const zh = {
     }
   },
   workflowRecommendations: {
-    open: '添加工作流',
+    open: '浏览模板',
     title: '添加推荐工作流',
     description: '使用 AcornOps 推荐内容作为起点。添加后，工作流归此工作区所有，AcornOps 不会覆盖它。',
     list: '推荐工作流',

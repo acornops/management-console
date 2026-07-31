@@ -10,9 +10,15 @@ export type WorkflowAgentCapabilityReview = {
   required: boolean;
   mcpServers: string[];
   semanticCapabilityIds: string[];
-  tools: string[];
+  tools: Array<{
+    id: string;
+    label: string;
+    description?: string;
+    access: 'read' | 'write' | 'unknown';
+    requiresApproval: boolean;
+  }>;
   skills: string[];
-  actionPolicy: string[];
+  writeAccess: string;
   capabilityRules: string[];
   missingAgentData: boolean;
 };
@@ -47,6 +53,30 @@ function formatCapabilityRule(capability: WorkflowCapabilityAgentSource['capabil
   return `${capability.operation} ${capability.resourceType} ${resource}${tool}`;
 }
 
+function toolReviews(agent: WorkflowCapabilityAgentSource): WorkflowAgentCapabilityReview['tools'] {
+  const mcpTools = (agent.mcpInstallations || []).flatMap((server) => server.tools);
+  return uniqueInOrder(agent.tools).map((toolId) => {
+    const mcpTool = mcpTools.find((tool) => tool.alias === toolId || tool.name === toolId);
+    const capability = agent.capabilities.find((item) => (
+      item.toolId === toolId || (mcpTool && item.toolId === mcpTool.name)
+    ));
+    const access = mcpTool?.capability || capability?.operation || 'unknown';
+    const requiresApproval = access === 'write' && (
+      capability?.requiresApproval === true
+      || agent.permissionMode === 'ask_before_changes'
+      || (agent.permissionMode === 'auto_allowed_changes'
+        && (!mcpTool || mcpTool.riskLevel === 'high_risk' || mcpTool.riskLevel === 'destructive' || !mcpTool.autoAllowed))
+    );
+    return {
+      id: toolId,
+      label: mcpTool?.alias || toolId,
+      description: mcpTool?.description,
+      access,
+      requiresApproval
+    };
+  });
+}
+
 export function getWorkflowAgentCapabilityReview(
   workflow: WorkflowDefinition,
   agents: WorkflowCapabilityAgentSource[]
@@ -68,14 +98,16 @@ export function getWorkflowAgentCapabilityReview(
         agent?.mcpInstallations?.find((server) => server.id === serverId)?.name || capabilityDisplayName(serverId)
       )),
       semanticCapabilityIds: agent?.semanticCapabilityIds || [],
-      tools: agent?.tools || [],
+      tools: agent ? toolReviews(agent) : [],
       skills: (agent?.skills || []).map((skillId) => (
         agent?.skillInstallations?.find((skill) => skill.id === skillId)?.name || capabilityDisplayName(skillId)
       )),
-      actionPolicy: agent ? (() => {
+      writeAccess: agent ? (() => {
         const policy = getAgentEffectiveActionPolicy(agent.permissionMode);
-        return [`Permission mode: ${policy.permissionMode}`, `Approval gate: ${policy.approvalGate}`];
-      })() : [],
+        if (agent.permissionMode === 'read_only') return policy.approvalGate;
+        if (agent.permissionMode === 'ask_before_changes') return 'Approval required before every write-capable tool';
+        return 'Routine writes run automatically; approval is required for high-risk or destructive writes';
+      })() : '',
       capabilityRules: agent ? agent.capabilities.map(formatCapabilityRule) : [],
       missingAgentData: !agent
     };

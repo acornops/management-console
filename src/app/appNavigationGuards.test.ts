@@ -19,11 +19,11 @@ describe('app navigation guards', () => {
     expect(isWorkspaceDataRoute({ kind: 'workspaceAiSettings', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceSettings', workspaceId: 'workspace-1' })).toBe(false);
     expect(isWorkspaceDataRoute({
-      kind: 'workspaceTriggers',
+      kind: 'workspaceWorkflows',
       workspaceId: 'workspace-1',
-      triggerType: 'schedule'
+      section: 'schedules'
     })).toBe(true);
-    expect(isWorkspaceDataRoute({ kind: 'workspaceRuns', workspaceId: 'workspace-1' })).toBe(true);
+    expect(isWorkspaceDataRoute({ kind: 'workspaceActivity', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceApprovals', workspaceId: 'workspace-1' })).toBe(true);
     expect(isWorkspaceDataRoute({ kind: 'workspaceWebhooks', workspaceId: 'workspace-1' })).toBe(true);
   });

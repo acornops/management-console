@@ -23,6 +23,7 @@ import {
   listAgentMcpServers,
   listAgentSkills,
   listWorkspaceNativeTools,
+  resolveAgentGitSkill,
   reimportAgentSkill,
   reviewAgentMcpTool,
   revokeAgentNativeTool,
@@ -288,7 +289,6 @@ export function createAgentSkillsDataSource(agent: AgentDefinition, canManageSki
           type: 'git',
           provider: input.source.provider,
           url: input.source.repoUrl,
-          apiBaseUrl: input.source.apiBaseUrl,
           ref: input.source.ref,
           path: input.source.subpath,
           pinnedCommit: input.source.commitSha || ''
@@ -296,6 +296,7 @@ export function createAgentSkillsDataSource(agent: AgentDefinition, canManageSki
       });
       return mapAgentSkill(agent, skill);
     },
+    resolveSkill: (workspaceId, subjectId, input) => resolveAgentGitSkill(workspaceId, subjectId, input),
     deleteSkill: (workspaceId, subjectId, skillId) => deleteAgentSkill(workspaceId, subjectId, skillId),
     async reimportSkill(workspaceId, subjectId, skillId, input) {
       const current = await getAgentSkill(workspaceId, subjectId, skillId);
@@ -305,7 +306,6 @@ export function createAgentSkillsDataSource(agent: AgentDefinition, canManageSki
           type: 'git',
           provider: input.source.provider,
           url: input.source.repoUrl,
-          apiBaseUrl: input.source.apiBaseUrl,
           ref: input.source.ref,
           path: input.source.subpath,
           pinnedCommit: input.source.commitSha || ''

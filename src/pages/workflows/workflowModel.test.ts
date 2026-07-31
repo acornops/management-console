@@ -16,7 +16,6 @@ function workflow(
     executionMode: 'direct',
     semanticCapabilityIds: ['target.diagnostics.read'],
     capabilityRestrictionMode: 'restrict',
-    resourceRequirements: [],
     readiness,
     owner: 'Workspace owner',
     tags: [],
@@ -24,9 +23,8 @@ function workflow(
     agents: [],
     requiredPermissions: [],
     contextGrants: [],
-    parameters: [],
     policy: { mode: 'read_only', approvals: [] },
-    starterPrompt: 'Inspect {{target:target}}.',
+    starterPrompt: 'Inspect production health.',
     runs: []
   };
 }
