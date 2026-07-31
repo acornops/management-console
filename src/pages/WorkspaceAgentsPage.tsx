@@ -578,7 +578,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   }
 
   return (
-    <PageShell>
+    <PageShell contentClassName="resource-catalog-rack">
       <WorkspaceAgentsRouteHeader
         canManageAgents={canManageAgents}
         onCreateAgent={() => updateUrlSearch({ panel: 'create', agent: null, agentTab: null })}

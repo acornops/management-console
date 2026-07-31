@@ -102,7 +102,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <PageShell>
+    <PageShell contentClassName="resource-catalog-rack">
       <PageHeader
         title={t('dashboard.title')}
         description={workspaceName ? t('dashboard.descriptionWorkspace') : t('dashboard.descriptionGlobal')}

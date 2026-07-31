@@ -161,7 +161,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   };
 
   return (
-    <PageShell>
+    <PageShell contentClassName="resource-catalog-rack">
       <PageHeader
         title={t('virtualMachines.title')}
         description={t('virtualMachines.list.description')}

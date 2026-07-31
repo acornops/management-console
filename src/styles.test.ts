@@ -602,7 +602,8 @@ describe('theme color contract', () => {
     expect(styles).toContain('scrollbar-gutter: stable both-edges;');
     expect(pageComposition).toContain('px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)] custom-scrollbar stable-scrollbar-gutter');
     expect(overviewPage).toContain('<PageShell>');
-    expect(dashboardPage).toContain('<PageShell>');
+    expect(dashboardPage).toContain('<PageShell contentClassName="resource-catalog-rack">');
+    expect(dashboardPage).not.toContain('<PageShell width=');
     expect(overviewPage).not.toContain('max-w-[90rem]');
     expect(dashboardPage).not.toContain('max-w-[90rem]');
   });
