@@ -47,6 +47,7 @@ import { WorkspaceScheduleDrawerTable } from '@/pages/WorkspaceScheduleDrawerTab
 import { WorkspaceScheduleDrawerToolbar } from '@/pages/WorkspaceScheduleDrawerToolbar';
 import { WorkspaceSchedulesPageChrome } from '@/pages/WorkspaceSchedulesPageChrome';
 import { WorkspaceScheduleDeleteDialog } from '@/pages/WorkspaceScheduleDeleteDialog';
+import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { TextInput, Textarea } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
@@ -57,6 +58,7 @@ interface WorkspaceSchedulesPageProps {
   createWorkflowId?: string;
   constrainedWorkflowId?: string;
   embedded?: boolean;
+  navigate?: (path: string) => void;
 }
 type ScheduleStatusFilter = 'all' | 'enabled' | 'paused';
 const scheduleFormInputClassName = formInputClassName('mt-2');
@@ -66,7 +68,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   create,
   createWorkflowId,
   constrainedWorkflowId,
-  embedded = false
+  embedded = false,
+  navigate
 }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
@@ -362,6 +365,17 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         />}
       />
 
+      {!embedded && navigate && (
+        <WorkflowSections activeSection="schedules" navigate={navigate} workspaceId={workspace.id} />
+      )}
+
+      <div
+        id={!embedded ? 'workflow-section-schedules-panel' : undefined}
+        role={!embedded ? 'tabpanel' : undefined}
+        aria-labelledby={!embedded ? 'workflow-section-schedules-tab' : undefined}
+        className="contents"
+      >
+
       {!embedded && <DiscoveryFilterBar
         idPrefix="workflow-triggers"
         query={query}
@@ -626,6 +640,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
           onConnected={() => setCapabilityPreviewRevision((value) => value + 1)}
         />
       )}
+      </div>
     </PageShell>
   );
 };

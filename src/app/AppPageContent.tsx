@@ -426,6 +426,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               workspace={workspaceContext}
               create={route.create}
               createWorkflowId={route.createWorkflowId}
+              navigate={navigate}
             />
           )}
 
@@ -435,6 +436,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               workspace={workspaceContext}
               create={route.create}
               createWorkflowId={route.createWorkflowId}
+              navigate={navigate}
             />
           )}
 

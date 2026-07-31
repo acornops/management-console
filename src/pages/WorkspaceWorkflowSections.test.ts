@@ -17,22 +17,36 @@ const schedulesPage = readSource('src/pages/WorkspaceSchedulesPage.tsx');
 const webhooksPage = readSource('src/pages/WorkspaceIncomingWebhooksPage.tsx');
 const webhookApi = readSource('src/services/control-plane/workflowWebhookApi.ts');
 const navigation = readSource('src/app/workspaceNavigation.tsx');
-const workspaceViewTabs = readSource('src/pages/workflows/WorkflowWorkspaceViewTabs.tsx');
+const sections = readSource('src/pages/workflows/WorkflowSections.tsx');
 
 describe('workflow sections and Activity', () => {
-  it('uses a tabless workflow canvas with five icon-led task actions', () => {
-    expect(workflowsPage).not.toContain('<WorkflowSections');
-    expect(workflowsPage).not.toContain('<WorkflowPrimaryTabs');
-    expect(schedulesPage).not.toContain('<WorkflowSections');
-    expect(webhooksPage).not.toContain('<WorkflowSections');
+  it('mounts Workflows, Schedules, Incoming Webhooks, and Activity as route-backed tabs', () => {
+    expect(sections).toContain("value: 'all'");
+    expect(sections).toContain("value: 'schedules'");
+    expect(sections).toContain("value: 'incomingWebhooks'");
+    expect(sections).toContain("value: 'activity'");
+    expect(sections).toContain('AppPaths.workspaceActivity(workspaceId)');
+    expect(sections).toContain('activity.openCount > 0 ? activity.openCount : undefined');
+    expect(sections).toContain('AppPaths.workspaceWorkflows(workspaceId, section)');
+    expect(workflowsPage).toContain('<WorkflowSections activeSection="all"');
+    expect(schedulesPage).toContain('<WorkflowSections activeSection="schedules"');
+    expect(webhooksPage).toContain('<WorkflowSections activeSection="incomingWebhooks"');
+    expect(activityPage).toContain('<WorkflowSections activeSection="activity"');
+  });
+
+  it('restores text-labelled workflow actions below the description', () => {
     expect(workflowActions).toContain('aria-label="Workflow actions"');
-    expect(workflowActions).toContain('label="Run activity"');
-    expect(workflowActions).toContain('label="Schedules"');
-    expect(workflowActions).toContain('label="Incoming webhooks"');
-    expect(workflowActions).toContain('aria-label="Workflow operations"');
-    expect(workflowActions).toContain('aria-label="Workflow definition and launch"');
-    expect(workflowActions).toContain('size="icon"');
-    expect(workflowActions).toContain('<Tooltip');
+    expect(workflowActions).toContain('mt-3 flex w-full');
+    expect(workflowActions).toContain("t('workflows.actions.edit')");
+    expect(workflowActions).toContain("t('workflows.actions.schedules')");
+    expect(workflowActions).toContain("t('workflows.actions.webhooks')");
+    expect(workflowActions).toContain("t('workflows.actions.launch')");
+    expect(workflowActions).toContain('size="md"');
+    expect(workflowActions).not.toContain('size="icon"');
+    expect(workflowActions).not.toContain('<Tooltip');
+    expect(workflowsPage).not.toContain('density="compact"');
+    expect(workflowsPage).toContain("panel: 'schedules'");
+    expect(workflowsPage).toContain("panel: 'webhooks'");
   });
 
   it('routes schedules and incoming webhooks through the Workflows page family', () => {
@@ -42,39 +56,36 @@ describe('workflow sections and Activity', () => {
     expect(appPageContent).not.toContain("route.kind === 'workspaceTriggers'");
   });
 
-  it('keeps Activity inside Workflows and moves Experimental beside Workflows', () => {
+  it('keeps Activity content inside the Workflows route family', () => {
     expect(navigation).not.toContain("id: 'activity'");
     expect(navigation).toContain("experimentalBadge: t('app.experimental')");
     expect(navigation).not.toContain("badge: t('app.experimental')");
-    expect(workspaceViewTabs).toContain("value: 'workflows'");
-    expect(workspaceViewTabs).toContain("value: 'activity'");
-    expect(workspaceViewTabs).toContain('AppPaths.workspaceActivity(workspaceId)');
-    expect(workspaceViewTabs).toContain('mb-4 min-w-0 space-y-3');
-    expect(workspaceViewTabs).not.toContain('grid-cols-');
-    expect(workspaceViewTabs).not.toContain('lg:items-center');
-    expect(workspaceViewTabs).not.toContain('items-start');
     expect(activityPage).toContain('searchWidth="fluid"');
     expect(activityPage).toContain('filterWidth="compact"');
     expect(activityPage).not.toContain('<DiscoveryFilterBar\n            embedded');
     expect(activityPage).toContain("activityLedgerFillsAvailableSpace = phase === 'loading' || items.length > 0");
     expect(workflowPageComponents).toContain('<DiscoveryFilterBar searchWidth="fluid"');
     expect(workflowPageComponents).not.toContain('embedded={!withSpacing}');
-    expect(workspaceViewTabs).toContain('{children}');
-    expect(workflowsPage).toContain('listWidth="compact"');
+    expect(workflowsPage).not.toContain('listWidth="compact"');
   });
 
-  it('keeps Overview permanent while preserving contextual drawer route states', () => {
-    expect(workflowHelpers).not.toContain('primaryWorkflowTabs');
+  it('restores five route-backed detail tabs with current panel contents', () => {
     expect(workflowHelpers).toContain("workflowViews: WorkflowView[] = ['overview', 'agents', 'capabilities', 'runs', 'settings']");
-    expect(workflowsPage).toContain("selectWorkflowView('agents', selectedWorkflow.id)");
+    expect(workflowsPage).toContain('<SegmentedTabs<WorkflowView>');
+    expect(workflowsPage).toContain('workflowViewLabels');
+    expect(workflowsPage).toContain("activeView === 'overview'");
+    expect(workflowsPage).toContain("activeView === 'agents'");
+    expect(workflowsPage).toContain("activeView === 'capabilities'");
+    expect(workflowsPage).toContain("activeView === 'runs'");
+    expect(workflowsPage).toContain("activeView === 'settings'");
     expect(workflowsPage).toContain("onReviewCapabilities={() => selectWorkflowView('capabilities'");
-    expect(workflowsPage).toContain("open={activeView === 'runs'}");
-    expect(workflowsPage).toContain("open={activeView === 'settings'}");
+    expect(workflowsPage).not.toContain("open={activeView === 'runs'}");
+    expect(workflowsPage).not.toContain("open={activeView === 'settings'}");
     expect(workflowsPage).toContain("managementPanel === 'schedules'");
     expect(workflowsPage).toContain("managementPanel === 'webhooks'");
     expect(workflowsPage).toContain('<WorkflowOverviewPanel');
     expect(workflowPanels).toContain('title="Capabilities"');
-    expect(workflowsPage).toContain('title="Run activity"');
+    expect(workflowsPage).toContain('<WorkflowRunsPanel');
     expect(workflowPanels).toContain('Use Launch in the workflow header');
   });
 

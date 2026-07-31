@@ -26,11 +26,6 @@ export const en = {
     removeFilter: 'Remove {{filter}} filter: {{value}}',
     dismissNotification: 'Dismiss notification'
   },
-  workflowWorkspaceViews: {
-    label: 'Workflow views',
-    showWorkflows: 'Library',
-    showActivity: 'Activity'
-  },
   controlPlaneErrors: {
     validation: {
       default: 'Check the request and try again.',
@@ -390,6 +385,24 @@ export const en = {
     docsBody: 'Review setup, workspace, target, and workflow guidance.',
     supportTitle: 'Contact Support',
     supportBody: 'Send the AcornOps team workspace or run context when something needs attention.'
+  },
+  workflows: {
+    sections: {
+      label: 'Workflow sections',
+      all: 'All Workflows',
+      schedules: 'Schedules',
+      incomingWebhooks: 'Incoming Webhooks',
+      activity: 'Activity'
+    },
+    actions: {
+      edit: 'Edit',
+      schedules: 'Schedules',
+      webhooks: 'Webhooks',
+      launch: 'Launch',
+      starting: 'Starting…',
+      activate: 'Activate',
+      activating: 'Activating…'
+    }
   },
   schedules: {
     title: 'Schedules',
@@ -3196,15 +3209,6 @@ export const en = {
   agentsWorkflows: {
     definitionSource: { user: 'Workspace-owned' },
     configure: 'Configure', duplicate: 'Duplicate', duplicating: 'Duplicating...',
-    workflowActions: {
-      edit: 'Edit',
-      schedule: 'Schedule',
-      launch: 'Launch',
-      starting: 'Starting…',
-      activate: 'Activate',
-      activating: 'Activating…',
-      activatePermission: 'You need manage_workflows to activate workflows.'
-    },
     agents: {
       title: 'Agents', description: 'Browse workspace Agents and inspect the capabilities available to workflows.', catalogLabel: 'Agent catalog',
       toolbarLabel: 'Agent catalog search and filters', searchPlaceholder: 'Search agents', searchLabel: 'Search agents', statusFilterLabel: 'Filter agents by status',

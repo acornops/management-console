@@ -27,7 +27,7 @@ import {
   type WorkflowActivityRouteState,
   type WorkflowActivityStateFilter
 } from '@/utils/routes';
-import { WorkflowWorkspaceViewTabs } from '@/pages/workflows/WorkflowWorkspaceViewTabs';
+import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 
 interface WorkspaceActivityPageProps {
   workspace: Workspace;
@@ -150,11 +150,14 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
           </Button>
         )}
       />
+      <WorkflowSections activeSection="activity" navigate={navigate} workspaceId={workspace.id} />
       <div
+        id="workflow-section-activity-panel"
+        role="tabpanel"
+        aria-labelledby="workflow-section-activity-tab"
         className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
       >
-        <WorkflowWorkspaceViewTabs activeView="activity" navigate={navigate} workspaceId={workspace.id}>
-          <DiscoveryFilterBar
+        <DiscoveryFilterBar
             searchWidth="fluid"
             filterWidth="compact"
             idPrefix="workflow-runs"
@@ -201,8 +204,7 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
               workflowId: undefined,
               issueId: undefined
             })}
-          />
-        </WorkflowWorkspaceViewTabs>
+        />
         {routeState.issueId && (
           <p className="type-caption mb-4 shrink-0 text-ui-text-muted">
             {t('workflowActivity.filters.issueApplied', { issue: routeState.issueId })}

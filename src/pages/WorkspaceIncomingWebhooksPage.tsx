@@ -30,6 +30,7 @@ import type { Workspace } from '@/types';
 import { WorkspaceWebhookCard, workspaceWebhookLedgerGridClass } from '@/pages/WorkspaceWebhookCard';
 import { WorkspaceWebhookDrawerTable } from '@/pages/WorkspaceWebhookDrawerTable';
 import { WorkspaceWebhookDeleteDialog } from '@/pages/WorkspaceWebhookDeleteDialog';
+import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import {
   draftFromWebhook,
@@ -46,6 +47,7 @@ interface WorkspaceIncomingWebhooksPageProps {
   createWorkflowId?: string;
   constrainedWorkflowId?: string;
   embedded?: boolean;
+  navigate?: (path: string) => void;
 }
 
 type TriggerStatusFilter = 'all' | 'enabled' | 'paused';
@@ -58,7 +60,8 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
   create,
   createWorkflowId,
   constrainedWorkflowId,
-  embedded = false
+  embedded = false,
+  navigate
 }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
@@ -333,6 +336,15 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           </Button>
         </>}
       />}
+      {!embedded && navigate && (
+        <WorkflowSections activeSection="incomingWebhooks" navigate={navigate} workspaceId={workspace.id} />
+      )}
+      <div
+        id={!embedded ? 'workflow-section-incomingWebhooks-panel' : undefined}
+        role={!embedded ? 'tabpanel' : undefined}
+        aria-labelledby={!embedded ? 'workflow-section-incomingWebhooks-tab' : undefined}
+        className="contents"
+      >
       {embedded && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="type-caption text-ui-text-muted">
@@ -610,6 +622,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           {t('eventTriggers.form.enabled')}
         </label>
       </DialogFrame>
+      </div>
     </PageShell>
   );
 };

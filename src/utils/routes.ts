@@ -7,7 +7,6 @@ export type McpCatalogCompatibility = 'all' | 'compatible' | 'incompatible';
 export type WorkflowActivityStateFilter = 'all' | 'open' | 'attention' | 'completed' | 'failed' | 'cancelled';
 export type WorkflowActivityOriginFilter = 'manual' | 'external_integration' | 'schedule' | 'webhook';
 export type WorkflowSection = 'all' | 'schedules' | 'incomingWebhooks';
-export type WorkflowWorkspaceView = 'workflows' | 'activity';
 
 export interface WorkflowActivityRouteState {
   q?: string;

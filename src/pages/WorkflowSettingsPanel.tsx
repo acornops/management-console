@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, DrawerFrame, Textarea, TextInput } from '@acornops/ui';
+import { Button, Textarea, TextInput } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import {
   WorkflowPanel,
@@ -12,20 +12,18 @@ import type {
 } from '@/pages/workflows/workflowModel';
 import { WorkflowAvailabilitySwitch, type WorkflowEditDraft } from '@/pages/workflows/workflowPageHelpers';
 
-interface WorkflowSettingsDrawerProps {
+interface WorkflowSettingsPanelProps {
   canManage: boolean;
   deleteError: string;
   editDraft?: WorkflowEditDraft;
   onAddTag: () => void;
   onCancelEditing: () => void;
-  onClose: () => void;
   onRemoveTag: (tag: string) => void;
   onRequestDelete: () => void;
   onSave: () => void;
   onTagDraftChange: (value: string) => void;
   onToggleActive: (active: boolean) => void;
   onUpdateDraft: (update: Partial<WorkflowEditDraft>) => void;
-  open: boolean;
   tagDraft: string;
   updateError: string;
   updateResult: string;
@@ -34,20 +32,18 @@ interface WorkflowSettingsDrawerProps {
   workflowDeleteBlocker: string;
 }
 
-export const WorkflowSettingsDrawer: React.FC<WorkflowSettingsDrawerProps> = ({
+export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
   canManage,
   deleteError,
   editDraft,
   onAddTag,
   onCancelEditing,
-  onClose,
   onRemoveTag,
   onRequestDelete,
   onSave,
   onTagDraftChange,
   onToggleActive,
   onUpdateDraft,
-  open,
   tagDraft,
   updateError,
   updateResult,
@@ -58,15 +54,10 @@ export const WorkflowSettingsDrawer: React.FC<WorkflowSettingsDrawerProps> = ({
   const error = updateError || deleteError;
   const feedback = error || updateResult;
   return (
-    <DrawerFrame
-      open={open}
-      width="lg"
-      title="Edit workflow"
-      titleId="workflow-settings-drawer-title"
-      description={`Update availability, defaults, and tags for ${workflow.name}.`}
-      onClose={onClose}
+    <WorkflowPanel
+      title="Settings"
+      description="Edit saved defaults, pause new runs, manage tags, or delete this workspace workflow with confirmation."
     >
-      <WorkflowPanel title="Settings" showHeader={false}>
         {feedback && (
           <div
             role={error ? 'alert' : 'status'}
@@ -147,7 +138,6 @@ export const WorkflowSettingsDrawer: React.FC<WorkflowSettingsDrawerProps> = ({
             <Button variant="danger" size="sm" onClick={onRequestDelete} disabled={Boolean(workflowDeleteBlocker)} title={workflowDeleteBlocker || undefined} aria-describedby={workflowDeleteBlocker ? 'workflow-delete-blocker' : undefined}>Delete workflow</Button>
           </div>
         </details>
-      </WorkflowPanel>
-    </DrawerFrame>
+    </WorkflowPanel>
   );
 };

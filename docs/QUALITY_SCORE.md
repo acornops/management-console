@@ -24,7 +24,7 @@ for functional labels, body text, navigation text, or routine controls.
 | Area | Score | Evidence | Main Gap |
 | --- | --- | --- | --- |
 | Control-plane contract alignment | 4/5 | Mirrored operation inventory, workflow-activity response shapes, manifests, and repo checks | No browser-level consumer contract replay suite |
-| Route and navigation stability | 5/5 | Shared route utilities, route-backed Workflows/Activity view switch, legacy redirects, URL-backed filters, and exact-run deep links | Continue requiring route tests for new URL state |
+| Route and navigation stability | 5/5 | Shared route utilities, route-backed Workflows/Schedules/Incoming Webhooks/Activity tabs, five workflow-detail tabs, legacy redirects, URL-backed filters, and exact-run deep links | Continue requiring route tests for new URL state |
 | Workflow activity visibility | 4/5 | Workflows-integrated Activity ledger, open-run view count, provenance, issue context, webhook execution pointers, and deterministic fixtures | Uses bounded visible-window polling rather than a workspace event stream |
 | Collection cohesion | 4/5 | Shared page headers, discovery bars, retained desktop headings, compact cards, and filtered-empty behavior | A few older settings collections still use feature-owned layouts |
 | Run trace UX | 4/5 | Replay + SSE handling, trace rendering, tool-call display | No dedicated golden-state fixtures for complex traces |

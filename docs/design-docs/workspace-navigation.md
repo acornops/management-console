@@ -11,9 +11,9 @@ not drift.
 
 - Overview is the explicit workspace landing destination.
 - Inventory contains Kubernetes Clusters and Virtual Machines.
-- Automation keeps Agents, Workflows, Activity, and Outbound webhooks adjacent.
-  Workflows exposes All Workflows, Schedules, and Incoming Webhooks as
-  route-level tabs, while Activity is a first-class workspace destination.
+- Automation keeps Agents, Workflows, and Outbound webhooks adjacent. Workflows
+  exposes All Workflows, Schedules, Incoming Webhooks, and Activity as
+  route-level tabs.
 - Governance contains Approvals for workspace-data readers and Audit Log for
   audit-log readers. Omit the group when neither destination is permitted.
 - Utilities contains Workspace Settings and Help and is visually separated from

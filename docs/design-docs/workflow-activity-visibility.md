@@ -9,25 +9,23 @@ able to answer three questions without opening each workflow:
 
 ## Information Architecture
 
-Workflows is one definition workspace. The selected workflow's Overview remains
-visible as the stable canvas; Run activity, Schedules, Incoming webhooks, Edit,
-and Launch open focused task drawers from its compact action group. Operational
-views are visually grouped separately from definition and launch actions.
+Workflows is one route family with four first-class tabs: **All Workflows**,
+**Schedules**, **Incoming Webhooks**, and **Activity**. Each tab retains its own
+route, page header, discovery controls, and shareable state.
 
-**Activity** is the second view inside the Workflows destination and owns the
-workspace execution ledger. A compact, route-backed view switch changes between
-**Show workflows** and **Show activity** without adding another global navigation
-destination. On desktop the switch occupies an `18rem` rail aligned beside the
-active view's search and filters; compact layouts stack the controls. A workflow's
-**Run activity** action opens the same run detail in a
-workflow-scoped drawer without replacing Overview.
+Inside a selected workflow, **Overview**, **Agents**, **Capabilities**, **Runs**,
+and **Settings** are visible route-backed tabs. Exact-run links select the Runs
+tab and focus the matching execution in that panel. Text-labelled Edit,
+Schedules, Webhooks, and Launch or Activate actions sit below the workflow
+description without hiding the five-tab structure. Schedules and Webhooks open
+their filtered drawers; creation begins from each drawer's Create action.
 
 Outbound webhooks remain a separate Automation destination because they deliver
 AcornOps events to another system; they do not start workflows. Schedules and
-incoming webhooks are managed from workflow-filtered drawer tables. Create
-actions open modal forms above those drawers. Existing schedule, incoming
-webhook, and `tab=` deep links remain compatibility contracts, but they do not
-render navigation tabs.
+incoming webhooks have first-class top-level tabs and may also be managed from
+workflow-filtered drawer tables. Create actions open modal forms above those
+drawers. Existing schedule, incoming webhook, and `tab=` deep links remain
+navigation contracts.
 
 ## Execution Model
 
@@ -52,12 +50,12 @@ webhook payloads or raw occurrence keys as provenance.
 
 ## Operator Surfaces
 
-The in-page Activity view tab shows open executions; the Workflows navigation
-item carries the Experimental badge. The Activity ledger defaults to open work
+The Activity tab shows open executions; the Workflows navigation item carries
+the Experimental badge. The Activity ledger defaults to open work
 and supports URL-backed search, state, origin,
 workflow, and issue filters. Rows show workflow and origin, target, lifecycle
 time, honest duration, and one exact-run action. Exact links open the existing
-workflow-scoped Run activity drawer and focus the matching execution. The
+workflow-scoped Runs tab and focus the matching execution. The
 `tab=runs` URL value remains the compatibility contract for those links.
 
 Workspace, Kubernetes, and virtual-machine issue rows show the most relevant
@@ -75,8 +73,8 @@ a direct next step; it does not replace operator judgment.
 
 ## Collection Behavior
 
-The workspace Activity ledger and compatibility Schedules, Incoming Webhooks,
-and Outbound Webhooks routes use the shared page header and discovery
+The workspace Activity, Schedules, Incoming Webhooks, and Outbound Webhooks
+routes use the shared page header and discovery
 bar. Workflow-scoped schedule and webhook drawers omit redundant discovery
 controls and lead with a compact table already filtered to the selected
 workflow.
@@ -95,9 +93,9 @@ collection because there is nothing to search.
 
 Workflow creation uses two steps: describe the workflow, then select its agents.
 There is no read-only review step; the final button summarizes the real commit
-point. The edit drawer also opens directly in editable form, and authorized
-operators enter agent selection directly from Overview. These surfaces retain
-Cancel or Back actions without nesting a second edit mode inside a task drawer.
+point. The Settings and Agents tabs open directly in actionable form for
+authorized operators. These surfaces retain Cancel or Back actions without
+nesting a second edit mode inside a task drawer.
 Workflow prompts are plain text: workflow authoring and launch do not provide
 runtime template parameters or prompt-reference insertion. Schedule and incoming
 webhook creation use compact, medium-width modal forms above their parent drawer

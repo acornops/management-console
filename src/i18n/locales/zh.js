@@ -26,11 +26,6 @@ export const zh = {
     removeFilter: '移除{{filter}}筛选：{{value}}',
     dismissNotification: '关闭通知'
   },
-  workflowWorkspaceViews: {
-    label: '工作流视图',
-    showWorkflows: '工作流库',
-    showActivity: '活动'
-  },
   controlPlaneErrors: {
     validation: {
       default: '请检查请求后重试。',
@@ -390,6 +385,24 @@ export const zh = {
     docsBody: '查看设置、工作区、目标和工作流指南。',
     supportTitle: '联系支持',
     supportBody: '需要协助时，请向 AcornOps 团队发送工作区或运行上下文。'
+  },
+  workflows: {
+    sections: {
+      label: '工作流分区',
+      all: '所有工作流',
+      schedules: '计划',
+      incomingWebhooks: '传入 Webhook',
+      activity: '活动'
+    },
+    actions: {
+      edit: '编辑',
+      schedules: '计划',
+      webhooks: 'Webhook',
+      launch: '运行',
+      starting: '正在启动…',
+      activate: '启用',
+      activating: '正在启用…'
+    }
   },
   schedules: {
     title: '计划',
@@ -3196,15 +3209,6 @@ export const zh = {
   agentsWorkflows: {
     definitionSource: { user: '工作区所有' },
     configure: '配置', duplicate: '复制', duplicating: '正在复制…',
-    workflowActions: {
-      edit: '编辑',
-      schedule: '设置计划',
-      launch: '运行',
-      starting: '正在启动…',
-      activate: '启用',
-      activating: '正在启用…',
-      activatePermission: '需要 manage_workflows 权限才能启用工作流。'
-    },
     agents: {
       title: 'Agents', description: '浏览工作区 Agent，并检查工作流可用的能力。', catalogLabel: 'Agent 目录',
       toolbarLabel: 'Agent 目录搜索和筛选', searchPlaceholder: '搜索 Agent', searchLabel: '搜索 Agent', statusFilterLabel: '按状态筛选 Agent',

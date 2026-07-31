@@ -1,40 +1,10 @@
 import React from 'react';
-import { Activity, CalendarClock, Pencil, Send, Webhook, Zap } from 'lucide-react';
+import { Webhook } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Tooltip } from '@acornops/ui';
+import { Button } from '@acornops/ui';
+import { ICONS } from '@/constants';
 import type { WorkflowPrimaryAction } from '@/pages/workflows/workflowModel';
-
-interface WorkflowIconActionProps {
-  disabled?: boolean;
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  tooltip?: string;
-  variant?: React.ComponentProps<typeof Button>['variant'];
-}
-
-const WorkflowIconAction: React.FC<WorkflowIconActionProps> = ({
-  disabled,
-  icon,
-  label,
-  onClick,
-  tooltip,
-  variant = 'icon'
-}) => (
-  <Tooltip content={tooltip || label} side="bottom">
-    <Button
-      type="button"
-      variant={variant}
-      size="icon"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {icon}
-    </Button>
-  </Tooltip>
-);
 
 export const WorkflowLaunchActions: React.FC<{
   activating: boolean;
@@ -42,10 +12,9 @@ export const WorkflowLaunchActions: React.FC<{
   launchBlocker: string | null;
   launching: boolean;
   onActivate: () => void;
-  onActivity: () => void;
   onEdit: () => void;
   onLaunch: () => void;
-  onSchedules: () => void;
+  onSchedule: () => void;
   onWebhooks: () => void;
   primaryAction: WorkflowPrimaryAction;
 }> = ({
@@ -54,68 +23,43 @@ export const WorkflowLaunchActions: React.FC<{
   launchBlocker,
   launching,
   onActivate,
-  onActivity,
   onEdit,
   onLaunch,
-  onSchedules,
+  onSchedule,
   onWebhooks,
   primaryAction
 }) => {
   const { t } = useTranslation();
-  const launchLabel = t('agentsWorkflows.workflowActions.launch');
-  const activateLabel = t('agentsWorkflows.workflowActions.activate');
 
   return (
-    <div
-      className="flex flex-wrap items-center justify-end gap-2"
-      aria-label="Workflow actions"
-    >
-      <div className="flex items-center gap-2" aria-label="Workflow operations">
-        <WorkflowIconAction
-          label="Run activity"
-          icon={<Activity className="h-4 w-4" aria-hidden="true" />}
-          onClick={onActivity}
-        />
-        <WorkflowIconAction
-          label="Schedules"
-          icon={<CalendarClock className="h-4 w-4" aria-hidden="true" />}
-          onClick={onSchedules}
-        />
-        <WorkflowIconAction
-          label="Incoming webhooks"
-          icon={<Webhook className="h-4 w-4" aria-hidden="true" />}
-          onClick={onWebhooks}
-        />
-      </div>
-      <span className="mx-0.5 hidden h-6 w-px bg-ui-border sm:block" aria-hidden="true" />
-      <div className="flex items-center gap-2" aria-label="Workflow definition and launch">
-        <WorkflowIconAction
-          label={t('agentsWorkflows.workflowActions.edit')}
-          tooltip={!canManageWorkflows ? 'You need manage_workflows to edit this workflow.' : t('agentsWorkflows.workflowActions.edit')}
-          icon={<Pencil className="h-4 w-4" aria-hidden="true" />}
-          disabled={!canManageWorkflows}
-          onClick={onEdit}
-        />
-        {primaryAction === 'activate' ? (
-          <WorkflowIconAction
-            label={activateLabel}
-            tooltip={!canManageWorkflows ? t('agentsWorkflows.workflowActions.activatePermission') : activateLabel}
-            icon={<Zap className="h-4 w-4" aria-hidden="true" />}
-            variant="activation"
-            disabled={!canManageWorkflows || activating}
-            onClick={onActivate}
-          />
-        ) : (
-          <WorkflowIconAction
-            label={launchLabel}
-            tooltip={launchBlocker || launchLabel}
-            icon={<Send className="h-4 w-4" aria-hidden="true" />}
-            variant="activation"
-            disabled={launching}
-            onClick={onLaunch}
-          />
-        )}
-      </div>
+    <div className="mt-3 flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end" aria-label="Workflow actions">
+      <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onEdit} disabled={!canManageWorkflows}>
+        <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
+        {t('workflows.actions.edit')}
+      </Button>
+      {primaryAction === 'launch' && (
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onSchedule} disabled={!canManageWorkflows}>
+          <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
+          {t('workflows.actions.schedules')}
+        </Button>
+      )}
+      {primaryAction === 'launch' && (
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onWebhooks} disabled={!canManageWorkflows}>
+          <Webhook className="h-4 w-4" aria-hidden="true" />
+          {t('workflows.actions.webhooks')}
+        </Button>
+      )}
+      {primaryAction === 'activate' ? (
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onActivate} disabled={!canManageWorkflows || activating}>
+          <ICONS.Zap className="h-4 w-4" aria-hidden="true" />
+          {activating ? t('workflows.actions.activating') : t('workflows.actions.activate')}
+        </Button>
+      ) : (
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onLaunch} disabled={launching} title={launchBlocker || undefined}>
+          <ICONS.Send className="h-4 w-4" aria-hidden="true" />
+          {launching ? t('workflows.actions.starting') : t('workflows.actions.launch')}
+        </Button>
+      )}
     </div>
   );
 };
