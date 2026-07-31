@@ -50,6 +50,7 @@ test('desktop sidebar collapse persists and keeps rail navigation accessible', a
   await expect(sidebar).toHaveAttribute('data-desktop-sidebar-mode', 'collapsed');
   await expect(sidebar).toHaveCSS('width', '64px');
   await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeFocused();
+  await expect(page.getByRole('tooltip', { name: 'Expand sidebar' })).toBeVisible();
   const railIconCenters = await sidebar.locator(
     '[data-rail-align="true"], [data-rail-icon-slot="true"] svg'
   ).evaluateAll(
