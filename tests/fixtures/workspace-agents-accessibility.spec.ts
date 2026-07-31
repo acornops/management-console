@@ -40,6 +40,7 @@ test('the base Agent URL opens Chat and browser history restores it', async ({ p
 });
 
 test('Agent cards open route-backed Quick chat and can maximize to full Chat', async ({ page }) => {
+  await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
 
   const cardGrid = page.locator('[data-agent-card-grid="true"]');
@@ -57,12 +58,20 @@ test('Agent cards open route-backed Quick chat and can maximize to full Chat', a
   await expect(panel.locator('header [data-agent-avatar="true"]')).toHaveText('☸️');
   await expect(panel.getByRole('heading', { name: 'Agent chat' })).toBeVisible();
   await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(1);
-  const dockedLayoutCardBox = await page.locator('[data-agent-card="true"]').first().boundingBox();
+  const [dockedLayoutCardBox, dockedGridBox] = await Promise.all([
+    page.locator('[data-agent-card="true"]').first().boundingBox(),
+    cardGrid.boundingBox()
+  ]);
   expect(dockedLayoutCardBox).not.toBeNull();
-  if (!fullLayoutCardBox || !dockedLayoutCardBox) {
-    throw new Error('The Agent cards must have layout boxes before and after Quick chat opens');
+  expect(dockedGridBox).not.toBeNull();
+  if (!fullLayoutCardBox || !dockedLayoutCardBox || !dockedGridBox) {
+    throw new Error('The Agent grid and cards must have layout boxes before and after Quick chat opens');
   }
-  expect(Math.abs(dockedLayoutCardBox.width - fullLayoutCardBox.width)).toBeLessThanOrEqual(1);
+  expect(dockedLayoutCardBox.width).toBeGreaterThan(fullLayoutCardBox.width);
+  expect(Math.abs(
+    dockedLayoutCardBox.x + dockedLayoutCardBox.width
+      - (dockedGridBox.x + dockedGridBox.width)
+  )).toBeLessThanOrEqual(1);
 
   const [mainBox, panelBox] = await Promise.all([main.boundingBox(), panel.boundingBox()]);
   expect(mainBox).not.toBeNull();

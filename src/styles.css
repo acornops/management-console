@@ -491,6 +491,11 @@ select {
   min-width: 0;
 }
 
+[data-agent-catalog-layout='docked'] .resource-card-grid > * {
+  flex-basis: 100%;
+  max-width: none;
+}
+
 .workspace-overview-page {
   container-name: workspace-overview;
   container-type: inline-size;
