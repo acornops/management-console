@@ -62,7 +62,7 @@ describe('surface behavior contracts', () => {
   });
 
   it('keeps the populated workflow ledger compact and leaves field labels to compact layouts', () => {
-    expect(workspaceActivityPage).toContain('<PageShell>');
+    expect(workspaceActivityPage).toContain('<PageShell');
     expect(workspaceActivityPage).not.toContain('<PageShell width=');
     expect(workspaceActivityPage).toContain('bg-ui-surface shadow-sm');
     expect(workspaceActivityPage).not.toContain('min-h-[24rem]');

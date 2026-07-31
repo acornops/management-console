@@ -16,7 +16,7 @@ export function enabledScheduleImpactForAgent(
 export async function enabledScheduleImpactForTarget(
   workspaceId: string,
   schedules: WorkflowSchedule[],
-  targetId: string,
+  _targetId: string,
   serverId: string
 ): Promise<WorkflowSchedule[]> {
   const enabledSchedules = schedules.filter((schedule) => schedule.status === 'enabled');
@@ -27,9 +27,10 @@ export async function enabledScheduleImpactForTarget(
   ));
   return enabledSchedules.filter((schedule, index) => {
     const result = previews[index];
-    if (result.status !== 'fulfilled' || result.value.selectedTarget?.id !== targetId) return false;
+    if (result.status !== 'fulfilled') return false;
     return [...result.value.tools.read, ...result.value.tools.write]
-      .some((tool) => tool.source === 'target' && tool.serverId === serverId);
+      .some((tool) => tool.source === 'target'
+        && (tool.serverId === serverId || tool.serverIds?.includes(serverId)));
   });
 }
 

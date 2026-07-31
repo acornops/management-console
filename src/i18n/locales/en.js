@@ -494,6 +494,7 @@ export const en = {
     contextGrantCount: '{{count}} context grants',
     contextGrantCount_one: '{{count}} context grant',
     contextGrantCount_other: '{{count}} context grants',
+    lastDispatch: 'Last dispatch',
     lastTriggered: 'Last triggered {{time}}',
     neverTriggered: 'No request received yet',
     source: {

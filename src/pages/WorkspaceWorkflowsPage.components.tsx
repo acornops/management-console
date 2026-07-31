@@ -7,6 +7,7 @@ import { DialogFrame } from '@acornops/ui';
 import { DiscoveryFilterBar } from '@acornops/ui';
 import { MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, MasterDetailRow, masterDetailDiscoverySpacingClass } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
 import { McpOAuthDialog } from '@/features/catalog/McpOAuthDialog';
@@ -365,8 +366,8 @@ export function workflowMcpCredentialMode(requirement: WorkflowMcpRequirementPre
   return requirement.connectionState === 'connection_error' ? 'replace' : 'connect';
 }
 
-export function workflowCapabilityBlockerMessage(preview: WorkflowCapabilitiesPreview, fallback: string): string {
-  return preview.selectedTarget?.reason || preview.targetCandidates.find((candidate) => candidate.status !== 'ready' && candidate.reason)?.reason || fallback;
+export function workflowCapabilityBlockerMessage(fallback: string): string {
+  return fallback;
 }
 
 export const WorkflowPreviewAuthRow: React.FC<{
@@ -384,7 +385,7 @@ export const WorkflowPreviewAuthRow: React.FC<{
           {visibleRequirements.map((requirement) => {
             const auth = requirement.authRequirement;
             const canConnectCredential = canConnectWorkflowMcpRequirement(requirement);
-            const owner = requirement.owningTarget || requirement.owningAgent;
+            const owner = requirement.owningAgent;
             return (
               <li key={`${owner.id}:${requirement.serverId}`} className="py-3 first:pt-0 last:pb-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -405,7 +406,7 @@ export const WorkflowPreviewAuthRow: React.FC<{
                   </span>
                 </div>
                 <p className="type-caption mt-1 text-ui-text-muted">
-                  {t(auth.scope === 'individual' ? 'mcpServers.individualCredential' : 'mcpServers.workspaceManagedCredential')} · {auth.credentialLabel} · {t(requirement.owningTarget ? 'mcpServers.ownedByTarget' : 'mcpServers.ownedByAgent', { name: owner.name })}
+                  {t(auth.scope === 'individual' ? 'mcpServers.individualCredential' : 'mcpServers.workspaceManagedCredential')} · {auth.credentialLabel} · {t('mcpServers.ownedByAgent', { name: owner.name })}
                 </p>
                 {auth.requiredInformation.length > 0 && (
                   <div className="mt-3">
@@ -455,7 +456,7 @@ export const WorkflowMcpCredentialDialog: React.FC<{
     retryAfterSecondsFor
   } = useMcpConnections({
     workspaceId,
-    destination: requirement.owningTarget ? { kind: 'target', id: requirement.owningTarget.id } : { kind: 'agent', id: requirement.owningAgent.id },
+    destination: { kind: 'agent', id: requirement.owningAgent.id },
     installations
   });
   const connection = connections[requirement.serverId];
@@ -530,7 +531,7 @@ export const WorkflowCapabilityLedger: React.FC<{
             <h4 className="type-row-title">Run capabilities</h4>
             <p className="type-caption mt-1 text-ui-text-muted">Tools and integrations available to this run. Launch revalidates the scope.</p>
           </div>
-          {preview && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status === 'needs_target' ? 'Select target' : preview.status}</StatusBadge>}
+          {preview && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status}</StatusBadge>}
         </div>
         <CollectionState
           phase={loading ? 'loading' : error ? 'error' : 'ready'}
@@ -552,18 +553,6 @@ export const WorkflowCapabilityLedger: React.FC<{
         >
           {preview && !loading && !error && (
             <dl className="mt-4 divide-y divide-ui-border">
-              {preview.selectedTarget && (
-                <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
-                  <dt className="type-row-title">Target</dt>
-                  <dd className="flex flex-col gap-1 type-body">
-                    <span className="type-emphasis text-ui-text">{preview.selectedTarget.name}</span>
-                    <span className={preview.selectedTarget.status === 'ready' ? 'text-status-success-text' : 'text-status-warning-text'}>
-                      {preview.selectedTarget.status}
-                      {preview.selectedTarget.reason ? `: ${preview.selectedTarget.reason}` : ''}
-                    </span>
-                  </dd>
-                </div>
-              )}
               <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
                 <dt className="type-row-title">Write access</dt>
                 <dd><StatusBadge tone={workflowWriteAccess(preview).tone}>{workflowWriteAccess(preview).label}</StatusBadge></dd>
@@ -594,8 +583,8 @@ export const WorkflowCapabilitySummary: React.FC<{
     <>
       <section aria-label="Capability summary" className="mt-4 border-y border-ui-border py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <p className="type-caption max-w-[70ch] text-ui-text-muted">Current target and tool scope. Launch checks these capabilities again.</p>
-          {preview && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status === 'needs_target' ? 'Select target' : preview.status}</StatusBadge>}
+          <p className="type-caption max-w-[70ch] text-ui-text-muted">Tools inherited from the assigned Agents. Launch checks these capabilities again.</p>
+          {preview && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status}</StatusBadge>}
         </div>
         <CollectionState
           phase={loading ? 'loading' : error ? 'error' : 'ready'}
@@ -611,16 +600,6 @@ export const WorkflowCapabilitySummary: React.FC<{
         >
           {preview && !loading && !error && (
             <dl className="mt-4 divide-y divide-ui-border">
-              {preview.selectedTarget && (
-                <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
-                  <dt className="type-row-title">Target</dt>
-                  <dd className="flex flex-wrap items-center gap-2 type-body">
-                    <span className="type-emphasis text-ui-text">{preview.selectedTarget.name}</span>
-                    <StatusBadge tone={preview.selectedTarget.status === 'ready' ? 'success' : 'warning'}>{preview.selectedTarget.status}</StatusBadge>
-                    {preview.selectedTarget.reason && <span className="text-ui-text-muted">{preview.selectedTarget.reason}</span>}
-                  </dd>
-                </div>
-              )}
               <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
                 <dt className="type-row-title">Tools</dt>
                 <dd className="flex flex-wrap gap-2">

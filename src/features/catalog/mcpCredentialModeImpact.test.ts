@@ -38,17 +38,18 @@ describe('MCP credential mode schedule impact', () => {
         checkedAt: '2026-07-24T00:00:00.000Z',
         status: 'ready',
         reasonCodes: [],
-        targetCandidates: [],
-        selectedTarget: { id: 'target-1', name: 'Target', targetType: 'kubernetes', status: 'ready' },
         tools: {
-          read: [{ id: 'tool-1', name: 'inspect', label: 'Inspect', access: 'read', source: 'target', serverId: 'server-1' }],
+          read: [{
+            id: 'tool-1', name: 'inspect', label: 'Inspect', access: 'read', source: 'target',
+            serverIds: ['server-1', 'server-2']
+          }],
           write: []
         },
         directMcpServers: [],
         enabledSkills: [],
         mcpRequirements: [],
         approvalRequirements: [],
-        counts: { targets: 1, readyTargets: 1, tools: 1, readTools: 1, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
+        counts: { tools: 1, readTools: 1, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
       })
       .mockResolvedValueOnce({
         workflowId: 'workflow-other',
@@ -58,14 +59,12 @@ describe('MCP credential mode schedule impact', () => {
         checkedAt: '2026-07-24T00:00:00.000Z',
         status: 'ready',
         reasonCodes: [],
-        targetCandidates: [],
-        selectedTarget: { id: 'target-1', name: 'Target', targetType: 'kubernetes', status: 'ready' },
         tools: { read: [], write: [] },
         directMcpServers: [],
         enabledSkills: [],
         mcpRequirements: [],
         approvalRequirements: [],
-        counts: { targets: 1, readyTargets: 1, tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
+        counts: { tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
       });
     const schedules = [
       { id: 'schedule-match', workflowId: 'workflow-match', status: 'enabled', approvedContextGrants: [] },

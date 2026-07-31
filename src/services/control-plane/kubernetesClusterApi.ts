@@ -33,6 +33,7 @@ import type {
   CreateTargetMcpServerInput,
   TargetInsightsEntryInput,
   ImportTargetSkillInput,
+  ResolveGitTargetSkillInput,
   ReimportTargetSkillInput,
   PagedResult,
   RegisterClusterResponse,
@@ -534,6 +535,13 @@ export const kubernetesClusterApi = {
   async importTargetSkill(workspaceId: string, targetId: string, input: ImportTargetSkillInput): Promise<ControlPlaneTargetSkillDetail> {
     return requestJson<ControlPlaneTargetSkillDetail>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills/import`,
+      { method: 'POST', body: JSON.stringify(input) }
+    );
+  },
+
+  async resolveTargetGitSkill(workspaceId: string, targetId: string, input: ResolveGitTargetSkillInput): Promise<ImportTargetSkillInput> {
+    return requestJson<ImportTargetSkillInput>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/skills/resolve`,
       { method: 'POST', body: JSON.stringify(input) }
     );
   },

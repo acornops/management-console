@@ -611,7 +611,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                   ) : capabilityPreview?.status === 'ready' ? (
                     <p role="status" className="type-caption mt-3 type-emphasis text-status-success-text">{t('schedules.form.credentialsReady')}</p>
                   ) : capabilityPreview ? (
-                    <p role="alert" className="type-caption mt-3 text-status-warning-text">{workflowCapabilityBlockerMessage(capabilityPreview, t('agentsWorkflows.schedule.capabilityBlocked'))}</p>
+                    <p role="alert" className="type-caption mt-3 text-status-warning-text">{workflowCapabilityBlockerMessage(t('agentsWorkflows.schedule.capabilityBlocked'))}</p>
                   ) : null}
                 </section>
               ) : (

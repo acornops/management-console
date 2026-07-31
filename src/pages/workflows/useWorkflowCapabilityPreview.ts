@@ -18,7 +18,7 @@ export function useWorkflowCapabilityPreview(input: {
       : !preview
         ? 'Wait for the capability check to finish.'
         : preview.status === 'blocked'
-        ? preview.selectedTarget?.reason || 'The capability check is blocked.'
+        ? 'The capability check is blocked.'
         : null;
 
   React.useEffect(() => {

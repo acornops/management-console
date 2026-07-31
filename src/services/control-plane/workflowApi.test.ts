@@ -300,10 +300,9 @@ describe('workflow control-plane api', () => {
   it('previews workflow capabilities without creating a session or run', async () => {
     const payload = {
       workflowId: 'workflow-1', workflowVersion: 4, mode: 'read_write', semanticCapabilityIds: ['target.remediation.write'],
-      checkedAt: '2026-07-17T00:00:00.000Z', status: 'ready', reasonCodes: [], targetCandidates: [],
-      selectedTarget: { id: 'cluster-1', name: 'Development', targetType: 'kubernetes', status: 'ready' },
+      checkedAt: '2026-07-17T00:00:00.000Z', status: 'ready', reasonCodes: [],
       tools: { read: [], write: [] }, directMcpServers: [], enabledSkills: [], approvalRequirements: [],
-      counts: { targets: 1, readyTargets: 1, tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
+      counts: { tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
     };
     const fetchMock = vi.fn().mockImplementation((url: string) => Promise.resolve(
       new Response(JSON.stringify(url.endsWith('/api/v1/auth/csrf') ? { csrfToken: 'csrf-token-1' } : payload), { status: 200 })
@@ -327,14 +326,14 @@ describe('workflow control-plane api', () => {
     const preview = normalizeWorkflowCapabilitiesPreview({
       workflowId: 'workflow-1', workflowVersion: 4, mode: 'read_only', semanticCapabilityIds: [],
       checkedAt: '2026-07-19T00:00:00.000Z', status: 'blocked', reasonCodes: ['MCP_CONNECTION_UNAVAILABLE'],
-      targetCandidates: [], tools: { read: [], write: [] }, directMcpServers: [], enabledSkills: [], approvalRequirements: [],
+      tools: { read: [], write: [] }, directMcpServers: [], enabledSkills: [], approvalRequirements: [],
       mcpRequirements: [{
         serverId: 'server-1', serverName: 'User-selected MCP server', authType: 'custom_header',
         owningAgent: { id: 'agent-1', name: 'User-created Agent' }, connectionState: 'connection_missing',
         authRequirement: { scope: 'individual', credentialLabel: 'Custom header credential', requiredInformation: [] },
         action: 'connect_mcp_server'
       }],
-      counts: { targets: 0, readyTargets: 0, tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
+      counts: { tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
     });
 
     expect(preview.mcpRequirements).toEqual([{

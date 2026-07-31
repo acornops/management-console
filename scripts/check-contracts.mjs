@@ -286,7 +286,7 @@ for (const field of controlPlaneContract.responseFields.postMessageAccepted) {
 
 for (const guard of [
   {
-    path: 'src/pages/WorkspaceWorkflowsPage.launchFields.tsx',
+    path: 'src/pages/WorkspaceWorkflowsPage.tsx',
     forbidden: ['PromptReferenceKind', 'parseTargetReferences', 'parseRepositoryPromptReferences', 'referencedOptions', '@cluster[']
   },
   {

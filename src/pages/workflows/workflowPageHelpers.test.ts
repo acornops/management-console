@@ -9,7 +9,7 @@ function workflow(overrides: Partial<WorkflowApiDefinition> = {}): WorkflowApiDe
     workspaceId: 'workspace-1',
     version: 4,
     name: 'Target diagnostics',
-    description: 'Inspect one exact target.',
+    description: 'Inspect infrastructure health.',
     status: 'active',
     createdBy: 'user-1',
     agentIds: ['agent-target-diagnostics'],

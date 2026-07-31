@@ -10,7 +10,7 @@ function workflow(
     id: 'workflow-1',
     workspaceId: 'workspace-1',
     name: 'Target diagnostics',
-    description: 'Inspect one exact target.',
+    description: 'Inspect infrastructure health.',
     status,
     agentIds: ['agent-1'],
     executionMode: 'direct',

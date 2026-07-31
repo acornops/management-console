@@ -89,19 +89,8 @@ export interface WorkflowSessionResponse {
   } & Record<string, unknown>;
 }
 export type WorkflowCapabilityPreviewReasonCode =
-  | 'TARGET_REQUIRED' | 'TARGET_NOT_FOUND' | 'TARGET_TYPE_MISMATCH' | 'TARGET_OFFLINE'
-  | 'TARGET_STATUS_UNKNOWN' | 'TARGET_WRITE_UNSUPPORTED' | 'CAPABILITY_MAPPING_UNAVAILABLE'
-  | 'TARGET_TOOL_MAPPING_UNAVAILABLE' | 'TARGET_TOOL_CATALOG_UNAVAILABLE'
+  | 'CAPABILITY_MAPPING_UNAVAILABLE'
   | 'MCP_CONNECTION_UNAVAILABLE';
-
-export interface WorkflowTargetCapabilityCandidate {
-  id: string;
-  name: string;
-  targetType: 'kubernetes' | 'virtual_machine';
-  status: 'ready' | 'unavailable' | 'unsupported';
-  reasonCode?: WorkflowCapabilityPreviewReasonCode;
-  reason?: string;
-}
 
 export interface WorkflowCapabilityToolPreview {
   id: string;
@@ -111,6 +100,7 @@ export interface WorkflowCapabilityToolPreview {
   access: 'read' | 'write';
   source: 'target' | 'mcp' | 'builtin';
   serverId?: string;
+  serverIds?: string[];
 }
 
 interface WorkflowMcpRequirementPreviewBase {
@@ -132,10 +122,9 @@ interface WorkflowMcpRequirementPreviewBase {
     | 'none';
 }
 
-export type WorkflowMcpRequirementPreview = WorkflowMcpRequirementPreviewBase & (
-  | { owningAgent: { id: string; name: string }; owningTarget?: never }
-  | { owningTarget: { id: string; name: string; targetType: 'kubernetes' | 'virtual_machine' }; owningAgent?: never }
-);
+export type WorkflowMcpRequirementPreview = WorkflowMcpRequirementPreviewBase & {
+  owningAgent: { id: string; name: string };
+};
 
 export interface WorkflowCapabilitiesPreview {
   workflowId: string;
@@ -143,17 +132,15 @@ export interface WorkflowCapabilitiesPreview {
   mode: 'read_only' | 'read_write';
   semanticCapabilityIds: string[];
   checkedAt: string;
-  status: 'needs_target' | 'ready' | 'blocked';
+  status: 'ready' | 'blocked';
   reasonCodes: WorkflowCapabilityPreviewReasonCode[];
-  targetCandidates: WorkflowTargetCapabilityCandidate[];
-  selectedTarget?: WorkflowTargetCapabilityCandidate;
   tools: { read: WorkflowCapabilityToolPreview[]; write: WorkflowCapabilityToolPreview[] };
   directMcpServers: Array<{ id: string; name: string }>;
   enabledSkills: Array<{ id: string; name: string }>;
   mcpRequirements: WorkflowMcpRequirementPreview[];
   approvalRequirements: string[];
   counts: {
-    targets: number; readyTargets: number; tools: number; readTools: number; writeTools: number;
+    tools: number; readTools: number; writeTools: number;
     directMcpServers: number; enabledSkills: number; approvals: number;
   };
 }
@@ -168,7 +155,6 @@ export function normalizeWorkflowCapabilitiesPreview(
   const tools = value?.tools;
   const readTools = previewArray<WorkflowCapabilityToolPreview>(tools?.read);
   const writeTools = previewArray<WorkflowCapabilityToolPreview>(tools?.write);
-  const targetCandidates = previewArray<WorkflowTargetCapabilityCandidate>(value?.targetCandidates);
   const directMcpServers = previewArray<{ id: string; name: string }>(value?.directMcpServers);
   const enabledSkills = previewArray<{ id: string; name: string }>(value?.enabledSkills);
   const approvalRequirements = previewArray<string>(value?.approvalRequirements);
@@ -180,18 +166,14 @@ export function normalizeWorkflowCapabilitiesPreview(
     mode: value?.mode === 'read_write' ? 'read_write' : 'read_only',
     semanticCapabilityIds: previewArray<string>(value?.semanticCapabilityIds),
     checkedAt: typeof value?.checkedAt === 'string' ? value.checkedAt : '',
-    status: value?.status === 'ready' || value?.status === 'needs_target' ? value.status : 'blocked',
+    status: value?.status === 'ready' ? 'ready' : 'blocked',
     reasonCodes: previewArray<WorkflowCapabilityPreviewReasonCode>(value?.reasonCodes),
-    targetCandidates,
-    ...(value?.selectedTarget ? { selectedTarget: value.selectedTarget } : {}),
     tools: { read: readTools, write: writeTools },
     directMcpServers,
     enabledSkills,
     mcpRequirements: previewArray<WorkflowMcpRequirementPreview>(value?.mcpRequirements),
     approvalRequirements,
     counts: {
-      targets: typeof counts?.targets === 'number' ? counts.targets : targetCandidates.length,
-      readyTargets: typeof counts?.readyTargets === 'number' ? counts.readyTargets : targetCandidates.filter((candidate) => candidate.status === 'ready').length,
       tools: typeof counts?.tools === 'number' ? counts.tools : readTools.length + writeTools.length,
       readTools: typeof counts?.readTools === 'number' ? counts.readTools : readTools.length,
       writeTools: typeof counts?.writeTools === 'number' ? counts.writeTools : writeTools.length,

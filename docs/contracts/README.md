@@ -58,9 +58,9 @@ The management console is the browser client for the control-plane API. Keep thi
   be empty. Review surfaces distinguish the policy from effective capabilities.
 - Capability review renders semantic capabilities, direct MCP servers,
   installed skills, and direct tools as distinct sources. Launch uses the
-  workflow capability-preview endpoint to resolve exact target tools, remains
-  blocked while that preview is loading, stale, failed, or blocked, and keeps
-  unsupported targets visible with a keyboard-readable reason. Compiled scopes
+  workflow capability-preview endpoint to show tools inherited from assigned
+  Agents, remains blocked while that preview is loading, stale, failed, or
+  blocked, and never presents target selection as workflow setup. Compiled scopes
   remain internal; the console uses only the bounded capability preview and
   public run status after dispatch.
 - Agent **Capabilities → Tools** lists AcornOps native tools separately from

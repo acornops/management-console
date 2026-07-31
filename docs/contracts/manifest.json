@@ -48,9 +48,8 @@
       "workflowCapabilityPreview": {
         "path": "POST /api/v1/workflows/{workflowId}/capabilities-preview",
         "authorization": "Requires workspace-data read and the workflow mode's run-creation capability.",
-        "snapshot": "Target candidates, mappings, and Agent registrations are evaluated from one request snapshot. The selected target is reloaded and its stored target type is authoritative.",
-        "statuses": ["needs_target", "ready", "blocked"],
-        "targetStatuses": ["ready", "unavailable", "unsupported"],
+        "snapshot": "Assigned Agents, reviewed mappings, and available tool routes are evaluated from one request snapshot. Workflows never select or persist a target.",
+        "statuses": ["ready", "blocked"],
         "digests": "Responses include promptDigest and bindingDigest from the exact runtime-parameter compilation used for an accepted launch.",
         "mcpAuthRequirements": "Every credentialed MCP server in the compiled Agent scope emits mcpRequirements[].{serverId,serverName,authType,owningAgent.{id,name},connectionState,authRequirement.{scope,credentialLabel,requiredInformation[].{name,description}},action}; generic connection metadata and guidance only, never provider profiles, URLs, headers, or credential values",
         "privacy": "Responses expose bounded reason codes and explicit capability-preview metadata only; compiled scopes, credentials, URLs, headers, tool arguments, input schemas, private connection state, and internal coordinator identity are excluded.",

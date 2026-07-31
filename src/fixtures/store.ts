@@ -257,7 +257,6 @@ export function createFixtureState(): FixtureState {
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
     prompt: "Assess the selected Kubernetes target's current health without making changes. Inspect workload readiness and availability, pod restarts, warning events, resource pressure, and relevant recent logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
     agentIds: [FIXTURE_IDS.kubernetesAgent], executionMode: 'direct',
-    resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['kubernetes'], targetIds: [] } }],
     category: 'Operations', tags: ['diagnostics'],
     capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['target.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
@@ -268,7 +267,6 @@ export function createFixtureState(): FixtureState {
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
     prompt: "Assess the selected Linux virtual machine's current health without making changes. Inspect the host summary, filesystem pressure, top processes, network listeners, degraded systemd services, and relevant allowlisted journal logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
     agentIds: [FIXTURE_IDS.virtualMachineAgent], executionMode: 'direct',
-    resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['virtual_machine'], targetIds: [] } }],
     category: 'Operations', tags: ['diagnostics', 'virtual-machine'],
     capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['target.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 180, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
@@ -282,8 +280,8 @@ export function createFixtureState(): FixtureState {
     },
     {
       id: 'target-remediation', version: 7, name: 'Target remediation',
-      description: 'Diagnose and safely change one exact target with approval-gated writes.', installMode: 'opt_in',
-      installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Select an exact Kubernetes target', 'Preview approval-gated tools', 'Activate'],
+      description: 'Diagnose and safely change a Kubernetes target named in the request with approval-gated writes.', installMode: 'opt_in',
+      installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Preview approval-gated tools', 'Activate'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
     },
     {
@@ -294,8 +292,8 @@ export function createFixtureState(): FixtureState {
     },
     {
       id: 'incident-investigation', version: 7, name: 'Incident investigation',
-      description: 'Coordinate target diagnostics and incident reporting for an exact target and selected chats.', installMode: 'opt_in',
-      installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Select an exact target and incident chats', 'Preview coordinated access', 'Activate'],
+      description: 'Coordinate diagnostics and incident reporting from targets and context named in the request.', installMode: 'opt_in',
+      installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Preview coordinated access', 'Activate'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
     }
   ];

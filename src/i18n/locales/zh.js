@@ -494,6 +494,7 @@ export const zh = {
     contextGrantCount: '{{count}} 个上下文授权',
     contextGrantCount_one: '{{count}} 个上下文授权',
     contextGrantCount_other: '{{count}} 个上下文授权',
+    lastDispatch: '最近分派',
     lastTriggered: '上次触发：{{time}}',
     neverTriggered: '尚未收到请求',
     source: {
