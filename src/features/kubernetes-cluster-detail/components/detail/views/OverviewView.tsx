@@ -197,6 +197,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
     [clusterIssues]
   );
   const hasIssueRows = clusterIssues !== null;
+  const isInitialIssueLoad = issueLoadStatus === 'loading' && !hasIssueRows;
   const hasIssueCounts = issueSummary !== null || hasIssueRows;
   const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);
   const criticalIssues = issueSummary ? issueSummary.critical : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'critical').length : 0;
@@ -272,7 +273,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
           )}
         </div>
 
-        {issueLoadStatus === 'loading' ? (
+        {isInitialIssueLoad ? (
           <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center" role="status" aria-live="polite">
             <div className="rounded-md border border-ui-border bg-ui-bg p-3 text-accent-strong">
               <Activity className="h-5 w-5 animate-pulse" aria-hidden="true" />

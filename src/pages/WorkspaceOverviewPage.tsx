@@ -104,7 +104,6 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     if (workflowActivity.workspaceId === workspace.id) void issueCollection.refresh();
   }, [issueCollection.refresh, workflowActivity.revision, workflowActivity.workspaceId, workspace.id]);
   const workspaceIssues = issueCollection.items;
-  const isLoadingIssues = issueCollection.phase === 'loading' || issueCollection.phase === 'refreshing';
   const hasPriorVirtualMachineData = hasLoadedWorkspaceVirtualMachines || workspaceVirtualMachines.length > 0;
   const isLoadingVirtualMachines =
     !hasLoadedWorkspaceVirtualMachines && virtualMachines.length === 0 && (virtualMachineCollection.phase === 'loading' || virtualMachineCollection.phase === 'refreshing');
@@ -421,10 +420,6 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             feedback={
               issueLoadError ? (
                 <div className="px-5 py-4 sm:px-6">{renderCollectionRecovery(issueLoadError, issueCollection.retry, 'warning')}</div>
-              ) : isLoadingIssues ? (
-                <div className="px-5 py-4 sm:px-6">
-                  <InlineLoadingIndicator label={t('overview.loadingBoard')} />
-                </div>
               ) : null
             }
           >

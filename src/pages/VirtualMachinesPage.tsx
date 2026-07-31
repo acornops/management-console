@@ -125,17 +125,18 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
   const view = route.kind === 'workspaceVirtualMachineDetail' ? activeSubview : 'overview';
   const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
+  const selectedTargetId = selected?.id || null;
   const refreshVisibleVmIssues = React.useCallback(async () => {
-    if (!selected || view !== 'overview') return;
+    if (!selectedTargetId || view !== 'overview') return;
     try {
-      const page = await controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 });
+      const page = await controlPlaneApi.listTargetIssues(workspace.id, selectedTargetId, { limit: 50 });
       setIssues(page.items || []);
       setIssueLoadFailed(false);
     } catch (error) {
       console.error('Failed refreshing virtual machine issues', error);
     }
-  }, [selected, view, workspace.id]);
-  useVisibilityAwareRefresh(refreshVisibleVmIssues, { enabled: Boolean(selected && view === 'overview') });
+  }, [selectedTargetId, view, workspace.id]);
+  useVisibilityAwareRefresh(refreshVisibleVmIssues, { enabled: Boolean(selectedTargetId && view === 'overview') });
   const selectedTargetPrompt = getSelectedVmTargetPrompt(pendingTargetPrompt, workspace.id, selectedId);
   const activeResourceCategory = isVmResourceSubview(view)
     ? vmSubviewToResourceCategory(view)
@@ -235,11 +236,11 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     }
   }, [onPendingTargetPromptConsumed, pendingTargetPrompt, selectedId, view, workspace.id]);
 
-  const loadVmInventory = React.useCallback(async (vm: ControlPlaneVirtualMachine) => {
+  const loadVmInventory = React.useCallback(async (vmId: string) => {
     setResourceStatus('loading');
     setResourceError(null);
     try {
-      const page = await controlPlaneApi.listVirtualMachineInventory(workspace.id, vm.id);
+      const page = await controlPlaneApi.listVirtualMachineInventory(workspace.id, vmId);
       setInventory(page.items || []);
       setResourceStatus('ready');
     } catch (error) {
@@ -249,12 +250,11 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       setResourceStatus('error');
     }
   }, [t, workspace.id]);
-
-  const loadVmLogs = React.useCallback(async (vm: ControlPlaneVirtualMachine) => {
+  const loadVmLogs = React.useCallback(async (vmId: string) => {
     setLogsStatus('loading');
     setLogsError(null);
     try {
-      const payload = await controlPlaneApi.getVirtualMachineLogs(workspace.id, vm.id);
+      const payload = await controlPlaneApi.getVirtualMachineLogs(workspace.id, vmId);
       setLogs(payload.entries || []);
       setLogsStatus('ready');
     } catch (error) {
@@ -266,16 +266,16 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   }, [t, workspace.id]);
 
   React.useEffect(() => {
-    if (!selected) {
+    if (!selectedTargetId) {
       setIssues(null);
       setIsLoadingIssueEvidence(false);
       setIssueLoadFailed(false);
       return;
     }
     if (isVmResourceSubview(view)) {
-      void loadVmInventory(selected);
+      void loadVmInventory(selectedTargetId);
       if (view === 'logs') {
-        void loadVmLogs(selected);
+        void loadVmLogs(selectedTargetId);
       }
     }
     if (view === 'overview') {
@@ -283,7 +283,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       setIssues(null);
       setIssueLoadFailed(false);
       setIsLoadingIssueEvidence(true);
-      void controlPlaneApi.listTargetIssues(workspace.id, selected.id, { limit: 50 })
+      void controlPlaneApi.listTargetIssues(workspace.id, selectedTargetId, { limit: 50 })
         .then((page) => {
           if (!isCurrent) return;
           setIssues(page.items || []);
@@ -299,7 +299,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           setIsLoadingIssueEvidence(false);
         });
       setMetricHistoryStatus('loading');
-      void controlPlaneApi.getVirtualMachineMetricsHistory(workspace.id, selected.id)
+      void controlPlaneApi.getVirtualMachineMetricsHistory(workspace.id, selectedTargetId)
         .then((payload) => {
           if (!isCurrent) return;
           setMetricHistory(payload.points || []);
@@ -320,7 +320,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   }, [
     loadVmInventory,
     loadVmLogs,
-    selected,
+    selectedTargetId,
     view,
     workflowActivityRevision,
     workspace.id
@@ -622,8 +622,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         logsError={logsError}
         onCategoryChange={selectResourceCategory}
         onRetry={() => {
-          void loadVmInventory(selected);
-          if (activeResourceCategory === 'logs') void loadVmLogs(selected);
+          void loadVmInventory(selected.id);
+          if (activeResourceCategory === 'logs') void loadVmLogs(selected.id);
         }}
       />
     );
