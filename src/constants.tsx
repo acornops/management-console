@@ -53,7 +53,9 @@ import {
   RefreshCw,
   Save,
   Bot,
-  CircleHelp
+  CircleHelp,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 
 export const ICONS = {
@@ -111,7 +113,9 @@ export const ICONS = {
   RefreshCw,
   Save,
   Bot,
-  CircleHelp
+  CircleHelp,
+  PanelLeftClose,
+  PanelLeftOpen
 };
 
 export const THEME_CLASSES = {

@@ -1,7 +1,9 @@
 # Workspace Navigation
 
-Workspace navigation is one route-stable system rendered in the 256px desktop
-sidebar and the mobile drawer. Both surfaces consume the same permission-aware
+Workspace navigation is one route-stable system rendered in a `256px` expanded
+desktop sidebar, a `64px` collapsed desktop rail, and a left overlay drawer.
+Persistent navigation begins at `1200px`; below it, the `64px` top bar opens a
+drawer sized `min(80vw, 320px)`. All surfaces consume the same permission-aware
 model, so labels, grouping, ordering, active state, and governance visibility do
 not drift.
 
@@ -39,6 +41,20 @@ navigation regions have accessible labels. The workspace switcher keeps a
 descriptive accessible name, clamps long names to two lines, and restores focus
 after Escape closes its popover.
 
+The desktop collapse toggle remains mounted across modes, identifies the
+navigation with `aria-controls`, reports the expanded state with
+`aria-expanded`, uses translated expand/collapse labels, and retains keyboard
+focus. The mode is stored per authenticated profile as `sidebar_mode`;
+`expanded` is the default for missing, invalid, anonymous, or unavailable
+storage. Opening the temporary drawer never changes it.
+
+In the rail, labels and section headings remain accessible but are visually
+hidden. Right-side tooltips appear on hover and focus. Workspace and account
+panels open to the rail's right and stay within the viewport. Workflow child
+views remain available through route tabs. Resizing an open drawer to `1200px`
+closes it and releases focus isolation and scroll locking; returning below the
+breakpoint does not alter the persisted desktop mode.
+
 ## Density and State
 
 Desktop destination rows are 40px; mobile targets are at least 44px. Icons are
@@ -46,8 +62,12 @@ Desktop destination rows are 40px; mobile targets are at least 44px. Icons are
 ink-weight label, and orange icon. Hover is warm neutral; the orange ring is for
 keyboard focus.
 
-State changes are immediate with a 160ms color transition. Reduced-motion users
-receive zero-duration transitions. Do not add a sliding active marker.
+State changes use a 160ms color transition. Sidebar width and drawer transforms
+use 160–200ms with the ease-out-quint curve. Reduced-motion users receive
+zero-duration spatial transitions. Do not add a sliding active marker.
+
+Docked assistant limits use the active `256px` or `64px` desktop width so the
+main route retains its required `560px` allowance.
 
 ## Operational Signals
 
@@ -62,3 +82,10 @@ Activity may show the normalized open-execution count using the same badge
 rules. The shared workflow activity store refreshes the count on workspace
 entry, every two seconds while visible, and on focus. Attention-required detail
 belongs inside Activity and issue context rather than a second navigation badge.
+
+## Cross-Console Alignment
+
+Any AcornOps console claiming management-console shell alignment, including the
+platform admin console, must adopt this breakpoint, sizing, persistence, focus,
+motion, and link contract unless its own requirements explicitly document a
+divergence.

@@ -305,7 +305,8 @@ describe('theme color contract', () => {
   });
 
   it('keeps the compact assistant rail independent from the primary navigation shell', () => {
-    expect(desktopSidebar).toContain('w-64 shrink-0');
+    expect(desktopSidebar).toContain("collapsed ? 'w-16' : 'w-64'");
+    expect(desktopSidebar).toContain('transition-[width] duration-[180ms]');
     expect(chatView).toContain("aria-label={t('chat.assistantNavigation')}");
     expect(chatView).toContain('h-full w-12 shrink-0 flex-col');
     expect(chatView).toContain('style={{ width: historyPanelWidth }}');
@@ -323,7 +324,8 @@ describe('theme color contract', () => {
     expect(styles).toContain('html,\nbody,\n#root');
     expect(appShell).toContain('h-[100dvh] min-h-0');
     expect(appShell).toContain('<div id={appDockRootId} className="contents" />');
-    expect(desktopSidebar).toContain('h-full min-h-0 w-64 shrink-0');
+    expect(desktopSidebar).toContain('h-full min-h-0 shrink-0');
+    expect(desktopSidebar).toContain("collapsed ? 'w-16' : 'w-64'");
     expect(desktopSidebar).toContain('min-h-0 flex-1 overflow-y-auto');
     expect(pageComposition).toContain('min-h-0 flex-1 overflow-x-hidden overflow-y-auto');
     expect(userSettingsPage).toContain('<PageShell');

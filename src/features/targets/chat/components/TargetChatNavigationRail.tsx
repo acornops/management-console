@@ -1,4 +1,4 @@
-import { MessagesSquare, Search } from 'lucide-react';
+import { MessageSquarePlus, MessagesSquare, Search } from 'lucide-react';
 import type { MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Tooltip } from '@acornops/ui';
@@ -6,6 +6,7 @@ import { TargetChatHistoryRail } from '@/features/targets/chat/components/Target
 
 interface TargetChatNavigationRailProps {
   automaticInvestigationsEnabled: boolean;
+  canCreateSession: boolean;
   desktopHistoryPanelId: string;
   historyControlLabel: string;
   historySearchPageId: string;
@@ -16,12 +17,15 @@ interface TargetChatNavigationRailProps {
   mobileHistoryPanelId: string;
   onChatsClick: MouseEventHandler<HTMLButtonElement>;
   onInvestigationsClick: MouseEventHandler<HTMLButtonElement>;
+  onNewChatClick: () => void;
   onSearchClick: () => void;
+  newChatUnavailableReason: string;
   unseenInvestigationCount: number;
 }
 
 export function TargetChatNavigationRail({
   automaticInvestigationsEnabled,
+  canCreateSession,
   desktopHistoryPanelId,
   historyControlLabel,
   historySearchPageId,
@@ -32,7 +36,9 @@ export function TargetChatNavigationRail({
   mobileHistoryPanelId,
   onChatsClick,
   onInvestigationsClick,
+  onNewChatClick,
   onSearchClick,
+  newChatUnavailableReason,
   unseenInvestigationCount
 }: TargetChatNavigationRailProps) {
   const { t } = useTranslation();
@@ -40,6 +46,7 @@ export function TargetChatNavigationRail({
   if (automaticInvestigationsEnabled) {
     return (
       <TargetChatHistoryRail
+        canCreateSession={canCreateSession}
         desktopHistoryPanelId={desktopHistoryPanelId}
         historyControlLabel={historyControlLabel}
         historySearchPageId={historySearchPageId}
@@ -49,7 +56,9 @@ export function TargetChatNavigationRail({
         mobileHistoryPanelId={mobileHistoryPanelId}
         onChatsClick={onChatsClick}
         onInvestigationsClick={onInvestigationsClick}
+        onNewChatClick={onNewChatClick}
         onSearchClick={onSearchClick}
+        newChatUnavailableReason={newChatUnavailableReason}
         unseenInvestigationCount={unseenInvestigationCount}
       />
     );
@@ -60,6 +69,21 @@ export function TargetChatNavigationRail({
       aria-label={t('chat.assistantNavigation')}
       className="relative z-20 flex h-full w-12 shrink-0 flex-col items-center gap-1 border-r border-ui-border bg-ui-surface py-2"
     >
+      <Tooltip content={newChatUnavailableReason || t('chat.newChat')} side="right">
+        <span className="inline-flex">
+          <Button
+            type="button"
+            variant="tertiary"
+            size="icon"
+            onClick={onNewChatClick}
+            disabled={!canCreateSession}
+            data-chat-history-trigger="new-chat"
+            aria-label={t('chat.newChat')}
+          >
+            <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </span>
+      </Tooltip>
       <Tooltip content={t('chat.searchChats')} side="right">
         <Button
           type="button"

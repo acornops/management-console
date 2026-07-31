@@ -1,11 +1,11 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { MobileNavigation } from '@acornops/ui';
 
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import { NavCountBadge } from '@/app/NavCountBadge';
-import { DialogFrame } from '@acornops/ui';
+import { DrawerFrame } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
@@ -101,27 +101,28 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
         </MotionButton>
       </MobileNavigation>
 
-      <AnimatePresence>
-        {isMobileNavOpen && (
-          <DialogFrame unframed
-            className="max-h-[calc(100vh-6rem)] w-[calc(100%-1.5rem)] overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-xl"
-            id={mobileNavPanelId}
-            titleId={mobileNavTitleId}
-            initialFocusRef={mobileNavCloseButtonRef}
-            overlayClassName="z-40 items-start justify-center bg-ui-text/45 p-0 pt-20 dark:bg-ui-bg/75 lg:hidden"
-            onClose={() => onSetMobileNavOpen(false)}
-          >
-            <div className="flex items-center justify-between border-b border-ui-border px-4 py-3">
-              <div>
-                <h2 id={mobileNavTitleId} className="type-row-title text-ui-text">
-                  {t('app.navigation')}
-                </h2>
-                <p className="type-caption mt-0.5">{t('app.navigationHint')}</p>
-              </div>
-              <CloseButton ref={mobileNavCloseButtonRef} onClick={() => onSetMobileNavOpen(false)} aria-label={t('app.closeNavigation')} />
-            </div>
+      <DrawerFrame unframed
+        ariaLabel={t('app.navigation')}
+        side="left"
+        className="w-[min(80vw,320px)] max-w-none overflow-hidden bg-ui-surface shadow-2xl"
+        id={mobileNavPanelId}
+        initialFocusRef={mobileNavCloseButtonRef}
+        containerClassName="z-40 min-[1200px]:hidden"
+        overlayClassName="bg-ui-text/45 dark:bg-ui-bg/75"
+        isOpen={isMobileNavOpen}
+        onClose={() => onSetMobileNavOpen(false)}
+      >
+        <div className="flex items-center justify-between border-b border-ui-border px-4 py-3">
+          <div>
+            <h2 id={mobileNavTitleId} className="type-row-title text-ui-text">
+              {t('app.navigation')}
+            </h2>
+            <p className="type-caption mt-0.5">{t('app.navigationHint')}</p>
+          </div>
+          <CloseButton ref={mobileNavCloseButtonRef} onClick={() => onSetMobileNavOpen(false)} aria-label={t('app.closeNavigation')} />
+        </div>
 
-            <div className="no-scrollbar max-h-[calc(100vh-6.5rem)] divide-y divide-ui-border overflow-y-auto">
+        <div className="no-scrollbar min-h-0 flex-1 divide-y divide-ui-border overflow-y-auto">
               <section className="px-4 py-3">
                 <div className="grid grid-cols-2 gap-1.5">
                   <Button
@@ -611,9 +612,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                 </div>
               </section>
             </div>
-          </DialogFrame>
-        )}
-      </AnimatePresence>
+      </DrawerFrame>
     </>
   );
 };

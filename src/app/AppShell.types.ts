@@ -1,6 +1,7 @@
 import type React from 'react';
 import type { ActivePrimaryNav, ActiveResourceNav } from '@/app/appRouteState';
 import type { ResolvedTheme, ThemePreference } from '@/app/theme';
+import type { DesktopSidebarMode } from '@/app/preferences';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { controlPlaneApi as ControlPlaneApi, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
@@ -58,6 +59,7 @@ export interface AppShellProps {
   isDark: boolean;
   isDeletingWorkspace: boolean;
   isMobileNavOpen: boolean;
+  sidebarMode: DesktopSidebarMode;
   isAccountMenuOpen: boolean;
   isSidebarWorkspaceMenuOpen: boolean;
   language: AppLanguageCode;
@@ -92,6 +94,7 @@ export interface AppShellProps {
   setIsCreatingWorkspace: React.Dispatch<React.SetStateAction<boolean>>;
   setIsDeletingWorkspace: React.Dispatch<React.SetStateAction<boolean>>;
   setIsMobileNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setSidebarMode: React.Dispatch<React.SetStateAction<DesktopSidebarMode>>;
   setIsSidebarWorkspaceMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setLanguage: (language: AppLanguageCode) => void;
   setNewClusterName: React.Dispatch<React.SetStateAction<string>>;

@@ -1,9 +1,10 @@
-import { Bot, MessagesSquare, Search } from 'lucide-react';
+import { Bot, MessageSquarePlus, MessagesSquare, Search } from 'lucide-react';
 import type { MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Tooltip } from '@acornops/ui';
 
 interface TargetChatHistoryRailProps {
+  canCreateSession: boolean;
   desktopHistoryPanelId: string;
   historyControlLabel: string;
   historySearchPageId: string;
@@ -13,11 +14,14 @@ interface TargetChatHistoryRailProps {
   mobileHistoryPanelId: string;
   onChatsClick: MouseEventHandler<HTMLButtonElement>;
   onInvestigationsClick: MouseEventHandler<HTMLButtonElement>;
+  onNewChatClick: () => void;
   onSearchClick: () => void;
+  newChatUnavailableReason: string;
   unseenInvestigationCount: number;
 }
 
 export function TargetChatHistoryRail({
+  canCreateSession,
   desktopHistoryPanelId,
   historyControlLabel,
   historySearchPageId,
@@ -27,7 +31,9 @@ export function TargetChatHistoryRail({
   mobileHistoryPanelId,
   onChatsClick,
   onInvestigationsClick,
+  onNewChatClick,
   onSearchClick,
+  newChatUnavailableReason,
   unseenInvestigationCount
 }: TargetChatHistoryRailProps) {
   const { t } = useTranslation();
@@ -43,6 +49,21 @@ export function TargetChatHistoryRail({
       aria-label={t('chat.assistantNavigation')}
       className="relative z-20 flex h-full w-12 shrink-0 flex-col items-center gap-1 border-r border-ui-border bg-ui-surface py-2"
     >
+      <Tooltip content={newChatUnavailableReason || t('chat.newChat')} side="right">
+        <span className="inline-flex">
+          <Button
+            type="button"
+            variant="tertiary"
+            size="icon"
+            onClick={onNewChatClick}
+            disabled={!canCreateSession}
+            data-chat-history-trigger="new-chat"
+            aria-label={t('chat.newChat')}
+          >
+            <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </span>
+      </Tooltip>
       <Tooltip content={t('chat.searchChats')} side="right">
         <Button
           type="button"

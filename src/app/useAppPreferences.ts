@@ -6,10 +6,13 @@ import {
   getProfileStorageKey,
   LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY,
   persistActiveThemePreference,
+  persistSidebarModePreference,
   persistThemePreference,
   readLanguagePreference,
+  readSidebarModePreference,
   readThemePreference,
-  readWorkspacePreference
+  readWorkspacePreference,
+  type DesktopSidebarMode
 } from '@/app/preferences';
 import { AppLanguageCode, getLanguageOption, resolveSupportedLanguageCode } from '@/i18n/languageConfig';
 import { User } from '@/types';
@@ -33,10 +36,12 @@ type UseAppPreferencesOptions = {
   loadedAnonymousPreferences: boolean;
   loadedProfilePreferenceKey: string | null;
   selectedWorkspaceId: string | null;
+  sidebarMode: DesktopSidebarMode;
   setLanguage: Dispatch<SetStateAction<AppLanguageCode>>;
   setLoadedAnonymousPreferences: Dispatch<SetStateAction<boolean>>;
   setLoadedProfilePreferenceKey: Dispatch<SetStateAction<string | null>>;
   setSelectedWorkspaceId: Dispatch<SetStateAction<string | null>>;
+  setSidebarMode: Dispatch<SetStateAction<DesktopSidebarMode>>;
   setResolvedTheme: Dispatch<SetStateAction<ResolvedTheme>>;
   setThemePreference: Dispatch<SetStateAction<ThemePreference>>;
   themePreference: ThemePreference;
@@ -50,10 +55,12 @@ export function useAppPreferences({
   loadedAnonymousPreferences,
   loadedProfilePreferenceKey,
   selectedWorkspaceId,
+  sidebarMode,
   setLanguage,
   setLoadedAnonymousPreferences,
   setLoadedProfilePreferenceKey,
   setSelectedWorkspaceId,
+  setSidebarMode,
   setResolvedTheme,
   setThemePreference,
   themePreference,
@@ -70,6 +77,7 @@ export function useAppPreferences({
       persistActiveThemePreference(profileThemePreference);
       setLanguage(readLanguagePreference(profileKey));
       setSelectedWorkspaceId(readWorkspacePreference(profileKey));
+      setSidebarMode(readSidebarModePreference(profileKey));
       setLoadedProfilePreferenceKey(profileKey);
       safeStorage.removeItem(LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY);
       return;
@@ -87,6 +95,7 @@ export function useAppPreferences({
       setLoadedProfilePreferenceKey(null);
     }
     setSelectedWorkspaceId(null);
+    setSidebarMode('expanded');
   }, [
     isSessionRestoring,
     loadedProfilePreferenceKey,
@@ -94,6 +103,7 @@ export function useAppPreferences({
     setLoadedAnonymousPreferences,
     setLoadedProfilePreferenceKey,
     setSelectedWorkspaceId,
+    setSidebarMode,
     setThemePreference,
     user
   ]);
@@ -170,4 +180,11 @@ export function useAppPreferences({
     }
     safeStorage.removeItem(getProfileStorageKey(activeProfilePreferenceKey, 'workspace_context_id'));
   }, [activeProfilePreferenceKey, loadedProfilePreferenceKey, selectedWorkspaceId]);
+
+  useEffect(() => {
+    if (!activeProfilePreferenceKey || loadedProfilePreferenceKey !== activeProfilePreferenceKey) {
+      return;
+    }
+    persistSidebarModePreference(sidebarMode, activeProfilePreferenceKey);
+  }, [activeProfilePreferenceKey, loadedProfilePreferenceKey, sidebarMode]);
 }

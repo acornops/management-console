@@ -2,8 +2,12 @@ import React from 'react';
 
 export const appDockRootId = 'app-dock-root';
 export const dockedPanelMediaQuery = '(min-width: 1280px)';
-export const dockedPanelMinimumWidth = 380;
-export const desktopSidebarWidth = 256;
+export const dockedPanelMinimumWidth = 300;
+export const resourceCardGridGap = 16;
+export const resourceCardMinimumWidth = 480;
+export const resourceCardMaximumWidth = 640;
+export const expandedDesktopSidebarWidth = 256;
+export const collapsedDesktopSidebarWidth = 64;
 export const minimumMainContentWidth = 560;
 export const dockedPanelMotion = {
   initial: { x: '100%' },
@@ -11,25 +15,55 @@ export const dockedPanelMotion = {
   exit: { x: '100%' },
   transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] }
 } as const;
-export const dockedResourceCardLayoutTransition = {
-  duration: 0.3,
-  ease: [0.16, 1, 0.3, 1]
-} as const;
 
-export function getDockedPanelMaximumWidth(viewportWidth: number): number {
+export function getResourceCardPreservingDockWidth(
+  dockedGridWidth: number,
+  currentDockWidth: number,
+  columnGap: number,
+  itemCount: number
+): number {
+  const fullGridWidth = dockedGridWidth + currentDockWidth;
+  const availableColumnCount = Math.max(
+    1,
+    Math.floor((fullGridWidth + columnGap) / (resourceCardMinimumWidth + columnGap))
+  );
+  const fullColumnCount = Math.max(1, Math.min(itemCount, availableColumnCount));
+  const fullCardWidth = Math.min(
+    resourceCardMaximumWidth,
+    (fullGridWidth - ((fullColumnCount - 1) * columnGap)) / fullColumnCount
+  );
+  return Math.round(fullCardWidth + columnGap);
+}
+
+export function getDockedPanelMaximumWidth(
+  viewportWidth: number,
+  sidebarWidth = expandedDesktopSidebarWidth
+): number {
   return Math.max(
     dockedPanelMinimumWidth,
     Math.min(
       Math.floor(viewportWidth * 0.55),
-      viewportWidth - desktopSidebarWidth - minimumMainContentWidth
+      viewportWidth - sidebarWidth - minimumMainContentWidth
     )
   );
 }
 
-export function getSidePanelMaximumWidth(viewportWidth: number, isDocked: boolean): number {
+export function getSidePanelMaximumWidth(
+  viewportWidth: number,
+  isDocked: boolean,
+  sidebarWidth = expandedDesktopSidebarWidth
+): number {
   return isDocked
-    ? getDockedPanelMaximumWidth(viewportWidth)
+    ? getDockedPanelMaximumWidth(viewportWidth, sidebarWidth)
     : Math.floor(viewportWidth * 0.82);
+}
+
+const DesktopSidebarWidthContext = React.createContext(expandedDesktopSidebarWidth);
+
+export const DesktopSidebarWidthProvider = DesktopSidebarWidthContext.Provider;
+
+export function useDesktopSidebarWidth(): number {
+  return React.useContext(DesktopSidebarWidthContext);
 }
 
 export function useDockedPanelLayout(): boolean {

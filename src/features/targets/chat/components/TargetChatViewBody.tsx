@@ -216,6 +216,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
         {!isPanel && (
           <TargetChatNavigationRail
             automaticInvestigationsEnabled={automaticInvestigationsEnabled}
+            canCreateSession={canChat && hasReadyAiRuntime}
             desktopHistoryPanelId={desktopHistoryPanelId}
             historyControlLabel={historyControlLabel}
             historySearchPageId={historySearchPageId}
@@ -226,7 +227,9 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             mobileHistoryPanelId={mobileHistoryPanelId}
             onChatsClick={toggleHistoryChats}
             onInvestigationsClick={toggleHistoryInvestigations}
+            onNewChatClick={handleCreateSessionClick}
             onSearchClick={openHistorySearch}
+            newChatUnavailableReason={newChatUnavailableReason}
             unseenInvestigationCount={unseenInvestigationCount}
           />
         )}

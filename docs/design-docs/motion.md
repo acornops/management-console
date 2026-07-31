@@ -22,7 +22,7 @@ Tab content does not animate. The indicator connects the old and new selection w
 
 At desktop dock widths, an assistant panel remains a flex sibling of the route content. It enters from the right in 200 ms with the standard side-panel ease-out curve and keeps its layout space until the exit motion completes. The panel must never become an overlay while it is docked.
 
-Repeated catalog cards may use position-only FLIP motion when the dock changes the available column count. Opening the dock reserves the narrower catalog layout before the panel enters. Closing keeps that layout reserved until the panel has left, then repositions the stable cards in 300 ms. Card content does not crossfade, resize, or imply that its underlying data changed.
+Opening an Agent Quick chat dock reserves the narrower catalog layout before the panel enters. The Agent grid settles immediately when its column count changes; cards do not fly across row boundaries and compete with the dock entrance. Closing keeps that layout reserved until the panel has left, then restores the full grid immediately. Card content does not crossfade, resize, or imply that its underlying data changed.
 
 Reduced-motion users receive the final dock and catalog layouts immediately.
 

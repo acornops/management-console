@@ -3,7 +3,8 @@ import { motion, useReducedMotion } from 'framer-motion';
 import {
   NavigationItem,
   NavigationLink,
-  NavigationSection
+  NavigationSection,
+  Tooltip
 } from '@acornops/ui';
 
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
@@ -16,16 +17,26 @@ const MotionNavigationItem = motion.create(NavigationItem);
 export const navIconClass = (active: boolean) =>
   `h-[18px] w-[18px] transition-colors duration-[160ms] motion-reduce:duration-0 ${active ? 'text-accent-strong' : 'text-ui-text-muted/60 group-hover:text-ui-text'}`;
 
+const railIconSlot = (icon: React.ReactNode) => (
+  <span data-rail-icon-slot="true" className="flex h-10 w-10 shrink-0 items-center justify-center">
+    {icon}
+  </span>
+);
+
 export const SidebarSection: React.FC<{
   title: string;
   badge?: string;
   children: React.ReactNode;
   compactAfter?: boolean;
-}> = ({ title, badge, children, compactAfter = false }) => (
+  collapsed?: boolean;
+}> = ({ title, badge, children, compactAfter = false, collapsed = false }) => (
   <NavigationSection
     title={title}
     badge={badge ? <ExperimentalBadge>{badge}</ExperimentalBadge> : undefined}
     compactAfter={compactAfter}
+    className={collapsed
+      ? `px-3 pb-0.5 ${title ? '[&>div:first-child]:sr-only' : ''}`
+      : undefined}
   >
     {children}
   </NavigationSection>
@@ -37,6 +48,45 @@ export const TargetSettingsDivider: React.FC<{ children: React.ReactNode }> = ({
   </div>
 );
 
+const identityInitials = (name: string) => {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    return `${words[0]?.[0] ?? ''}${words[1]?.[0] ?? ''}`.toLocaleUpperCase();
+  }
+  return name.trim().slice(0, 2).toLocaleUpperCase();
+};
+
+export const SidebarTargetIdentity: React.FC<{
+  collapsed: boolean;
+  label: string;
+  name: string;
+  testId: string;
+}> = ({ collapsed, label, name, testId }) => {
+  const identity = (
+    <div
+      className={collapsed
+        ? 'flex h-10 w-full items-center justify-center'
+        : 'border-y border-ui-border bg-ui-surface px-4 py-3'}
+      aria-label={collapsed ? `${label}: ${name}` : undefined}
+    >
+      <div className={collapsed ? 'sr-only' : 'type-micro-label mb-1'}>{label}</div>
+      <div
+        data-desktop-sidebar-active-identity={testId}
+        data-rail-align={collapsed ? 'true' : undefined}
+        className={collapsed
+          ? 'flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-bg type-caption type-emphasis text-ui-text'
+          : 'type-row-title line-clamp-2 break-words'}
+      >
+        {collapsed ? identityInitials(name) : name}
+      </div>
+    </div>
+  );
+
+  return collapsed
+    ? <Tooltip content={name} side="right" className="w-full">{identity}</Tooltip>
+    : identity;
+};
+
 export const SidebarNavButton: React.FC<{
   active: boolean;
   disabled: boolean;
@@ -47,26 +97,50 @@ export const SidebarNavButton: React.FC<{
   assistantStatus?: AssistantNavStatus;
   assistantStatusLabel?: string;
   title?: string;
-}> = ({ active, disabled, icon, label, onClick, badge, assistantStatus = 'idle', assistantStatusLabel, title }) => {
+  collapsed?: boolean;
+  href?: string;
+}> = ({ active, disabled, icon, label, onClick, badge, assistantStatus = 'idle', assistantStatusLabel, title, collapsed = false, href }) => {
   const shouldReduceMotion = useReducedMotion();
-  return (
+  const trailing = (
+    <>
+      {typeof badge === 'number' ? <NavCountBadge count={badge} compact={collapsed} /> : null}
+      <AssistantNavStatusIndicator status={assistantStatus} label={assistantStatusLabel} />
+    </>
+  );
+  const sharedClassName = collapsed
+    ? 'justify-center px-0 [&>span:first-child]:justify-center [&>span:first-child>span:last-child]:sr-only [&>span+span]:absolute [&>span+span]:right-0.5 [&>span+span]:top-0.5'
+    : undefined;
+  const control = href && !disabled ? (
+    <NavigationLink
+      href={href}
+      active={active}
+      className={sharedClassName}
+      title={collapsed ? undefined : title}
+      leading={collapsed ? railIconSlot(icon) : icon}
+      trailing={trailing}
+      onClick={(event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        onClick();
+      }}
+    >
+      {label}
+    </NavigationLink>
+  ) : (
     <MotionNavigationItem
       whileTap={disabled || shouldReduceMotion ? undefined : { scale: 0.98 }}
       onClick={onClick}
       disabled={disabled}
       active={active}
-      title={title}
-      leading={icon}
-      trailing={(
-        <>
-          {typeof badge === 'number' ? <NavCountBadge count={badge} /> : null}
-          <AssistantNavStatusIndicator status={assistantStatus} label={assistantStatusLabel} />
-        </>
-      )}
+      title={collapsed ? undefined : title}
+      className={sharedClassName}
+      leading={collapsed ? railIconSlot(icon) : icon}
+      trailing={trailing}
     >
       {label}
     </MotionNavigationItem>
   );
+  return collapsed ? <Tooltip content={label} side="right" className="w-full">{control}</Tooltip> : control;
 };
 
 export const WorkspaceSidebarNavLink: React.FC<{
@@ -79,24 +153,28 @@ export const WorkspaceSidebarNavLink: React.FC<{
   nested?: boolean;
   reserveBadgeSpace?: boolean;
   onClick: (event: React.MouseEvent<HTMLAnchorElement>) => void;
-}> = ({ active, current = active, href, icon, label, badge, nested = false, reserveBadgeSpace = false, onClick }) => (
-  <NavigationLink
+  collapsed?: boolean;
+}> = ({ active, current = active, href, icon, label, badge, nested = false, reserveBadgeSpace = false, onClick, collapsed = false }) => {
+  const link = <NavigationLink
     href={href}
     onClick={onClick}
     active={!nested && active}
-    className={nested && active
+    className={collapsed
+      ? 'justify-center px-0 [&>span:first-child]:justify-center [&>span:first-child>span:last-child]:sr-only [&>span+span]:absolute [&>span+span]:right-0.5 [&>span+span]:top-0.5'
+      : nested && active
       ? 'bg-ui-surface type-emphasis text-ui-text shadow-sm before:absolute before:left-3 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full before:bg-accent-strong hover:bg-ui-surface [&>span:first-child]:pl-4'
       : nested
         ? '[&>span:first-child]:pl-4'
         : undefined}
     aria-current={current ? 'page' : undefined}
-    leading={icon}
+    leading={collapsed ? railIconSlot(icon) : icon}
     trailing={reserveBadgeSpace ? (
       <span className="ml-2 inline-flex min-w-8 shrink-0 justify-end" aria-hidden={badge === undefined || badge <= 0 ? 'true' : undefined}>
-        {typeof badge === 'number' ? <NavCountBadge count={badge} /> : null}
+        {typeof badge === 'number' ? <NavCountBadge count={badge} compact={collapsed} /> : null}
       </span>
     ) : undefined}
   >
     {label}
-  </NavigationLink>
-);
+  </NavigationLink>;
+  return collapsed ? <Tooltip content={label} side="right" className="w-full">{link}</Tooltip> : link;
+};

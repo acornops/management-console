@@ -8,3 +8,4 @@ Keep only completed plans that remain useful as durable design or validation con
 - [Management Console UI Consistency Hardening](ui-consistency-hardening.md)
 - [AI provider key polish](ai-provider-key-polish.md)
 - [AI provider badge source split](ai-provider-badge-source-split.md)
+- [GitLab-style responsive navigation](gitlab-style-responsive-navigation.md)

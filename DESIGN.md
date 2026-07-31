@@ -378,11 +378,15 @@ Inputs are quiet and stable.
 
 ### Navigation
 
-Navigation is familiar product chrome driven by one route model. Workspace destinations are grouped as inventory, automation, governance, and utilities, with permission-aware omissions. Workspace, target, workflow, and settings destinations remain real links so copy, open-in-new-tab, and browser history continue to work.
+Navigation is familiar product chrome driven by one route model. Workspace destinations are grouped as inventory, automation, governance, and utilities, with permission-aware omissions. Workspace, target, workflow, and settings destinations remain real, base-path-aware links so copy, open-in-new-tab, and browser history continue to work.
 
-- **Desktop (`1024px` and wider):** A fixed `256px` sidebar uses `40px` rows, `6px` corners, muted text, and grouped section labels. Hover shifts to the canvas surface and stronger ink. Active rows use the same canvas surface, semibold ink, an orange icon, `aria-current`, and an optional count badge. Overflow remains wheel-, touch-, and keyboard-scrollable without displaying a scrollbar.
-- **Mobile (below `1024px`):** A `64px` top bar opens a bounded dialog navigation panel. The panel preserves the desktop groups and destinations, traps focus, exposes an explicit close control, returns focus to the trigger, and keeps overflow scrollable without visible scrollbar chrome.
-- **State:** Focus uses the standard orange ring. Press feedback may scale to `0.98`; it becomes instant under reduced motion. Status and approval counts reserve stable space when their appearance would otherwise shift labels.
+- **Desktop (`1200px` and wider):** The profile preference selects a `256px` expanded sidebar or a `64px` icon rail. Missing and invalid preferences resolve to expanded. The stable toggle exposes `aria-controls`, `aria-expanded`, translated labels, and keeps focus while the width changes.
+- **Expanded desktop:** `40px` rows, `6px` corners, muted text, and grouped section labels. Hover shifts to the canvas surface and stronger ink. Active rows use the same canvas surface, semibold ink, an orange icon, `aria-current`, and an optional count badge.
+- **Collapsed desktop:** Preserve the glyph, workspace identity, `18px` destination icons, compact badges/status, account avatar, and active states. Labels and headings become visually hidden accessible names. Hover and focus expose viewport-clamped right-side tooltips; workspace and account panels open to the rail's right. Workflow child destinations remain available through route tabs rather than a nested rail.
+- **Overlay navigation (below `1200px`):** A `64px` top bar opens a left drawer sized `min(80vw, 320px)`. The drawer preserves the same groups and destinations, traps focus, exposes an explicit close control, dismisses on outside click and Escape, restores trigger focus, locks background scroll, and releases modal isolation when closed or resized into desktop.
+- **State and sizing:** Sidebar width and drawer transforms use 160–200ms with the ease-out-quint curve; reduced motion makes spatial changes immediate. Docked assistants use the active `256px` or `64px` sidebar width when preserving the required `560px` main-content allowance. Status and approval counts reserve stable space when their appearance would otherwise shift labels.
+
+Any AcornOps console claiming management-console shell alignment, including the platform admin console, adopts this navigation contract unless its own requirements explicitly document a divergence.
 
 ### Tabs and Filters
 

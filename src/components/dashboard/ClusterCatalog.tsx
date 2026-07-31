@@ -474,7 +474,13 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
   });
 
   return (
-    <section id="cluster-catalog-panel" data-cluster-catalog="true" aria-labelledby="cluster-catalog-heading" className="grid min-w-0 shrink-0 content-start gap-4">
+    <section
+      id="cluster-catalog-panel"
+      data-cluster-catalog="true"
+      data-resource-card-catalog="true"
+      aria-labelledby="cluster-catalog-heading"
+      className="resource-card-catalog grid min-w-0 shrink-0 content-start gap-4"
+    >
       <h2 id="cluster-catalog-heading" className="type-section-title sr-only">
         {t('dashboard.clusterCatalog')}
       </h2>
@@ -506,7 +512,7 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
         filteredEmpty={<ClusterCatalogEmptyState filtered isLoading={false} loadError={false} onRetry={onRetry} />}
         error={<ClusterCatalogEmptyState filtered={hasActiveFilter} isLoading={false} loadError onRetry={onRetry} />}
       >
-        <div data-cluster-card-grid="true" data-resource-card-grid="true" className="resource-card-grid grid min-w-0 items-stretch gap-4">
+        <div data-cluster-card-grid="true" data-resource-card-grid="true" className="resource-card-grid min-w-0 gap-4">
           {sortedClusters.map((cluster) => (
             <ClusterCatalogCard key={cluster.id} {...itemProps(cluster)} />
           ))}

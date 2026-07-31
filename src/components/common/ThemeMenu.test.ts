@@ -9,6 +9,7 @@ const themeMenu = readFileSync(resolve(root, 'src/components/common/ThemeMenu.ts
 const themeToggleIcon = readFileSync(resolve(root, 'src/components/common/ThemeToggleIcon.tsx'), 'utf8');
 const loginPage = readFileSync(resolve(root, 'src/pages/LoginPage.tsx'), 'utf8');
 const desktopSidebar = readFileSync(resolve(root, 'src/app/AppDesktopSidebar.tsx'), 'utf8');
+const desktopAccountMenu = readFileSync(resolve(root, 'src/app/AppDesktopAccountMenu.tsx'), 'utf8');
 const mobileNavigation = readFileSync(resolve(root, 'src/app/AppMobileNavigation.tsx'), 'utf8');
 
 describe('ThemeMenu', () => {
@@ -48,16 +49,17 @@ describe('ThemeMenu', () => {
     expect(themeToggleIcon).toContain('useReducedMotion()');
   });
 
-  it('uses the same structural icon-tile border as adjacent account actions', () => {
-    expect(themeMenu).toContain('rounded-md border border-ui-border bg-ui-bg');
-    expect(themeMenu).not.toContain('rounded-md border border-control-boundary bg-ui-bg');
+  it('keeps the restored account action compact without an icon tile', () => {
+    expect(themeMenu).toContain('border-transparent bg-transparent');
+    expect(themeMenu).not.toContain('rounded-md border border-ui-border bg-ui-bg');
   });
 
   it('is the shared implementation on login, desktop account, and mobile navigation surfaces', () => {
     expect(loginPage).toContain('<ThemeMenu');
     expect(loginPage).toContain('variant="login"');
-    expect(desktopSidebar).toContain('<ThemeMenu');
-    expect(desktopSidebar).toContain('variant="account"');
+    expect(desktopSidebar).toContain('<AppDesktopAccountMenu');
+    expect(desktopAccountMenu).toContain('<ThemeMenu');
+    expect(desktopAccountMenu).toContain('variant="account"');
     expect(mobileNavigation).toContain('<ThemeMenu');
     expect(mobileNavigation).toContain('variant="mobile"');
   });

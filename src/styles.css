@@ -480,27 +480,15 @@ select {
 }
 
 .resource-card-grid {
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
 }
 
-@media (min-width: 768px) {
-  .resource-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1280px) {
-  .resource-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  [data-app-shell='true']:has([data-docked-assistant='true']) .resource-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  [data-agent-catalog-layout='docked'] .resource-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.resource-card-grid > * {
+  flex: 1 1 min(100%, 30rem);
+  max-width: 40rem;
+  min-width: 0;
 }
 
 .workspace-overview-page {
@@ -540,7 +528,7 @@ select {
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1200px) {
   .management-console-mobile-navigation {
     display: none !important;
   }

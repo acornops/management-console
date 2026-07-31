@@ -34,12 +34,15 @@ top-level navigation item, Workflow coupling, or new chat route.
 
 ## Chat and Investigation History
 
-The existing assistant rail has Search, Chats, and Investigations. Chats shows
-manual sessions only; Investigations shows automatic sessions only. Each list
-keeps its existing last-activity ordering, and Search continues to span both.
-Investigation rows use current status plus linked issue scope, object, and
-severity instead of a redundant `Automatic` label. Human replies do not move an
-automatic session into Chats.
+The assistant rail begins with New chat, followed by Search, Chats, and
+Investigations. New chat uses the same guarded action as the page header and
+stays visible but disabled with an explanation when permissions or AI runtime
+configuration prevent session creation. Chats shows manual sessions only;
+Investigations shows automatic sessions only. Each list keeps its existing
+last-activity ordering, and Search continues to span both. Investigation rows
+use current status plus linked issue scope, object, and severity instead of a
+redundant `Automatic` label. Human replies do not move an automatic session into
+Chats.
 
 The Investigations rail action shows a capped unseen count for sessions created
 since the current user last viewed that target's Investigations. The cursor is
