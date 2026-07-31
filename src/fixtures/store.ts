@@ -157,6 +157,7 @@ export function createFixtureState(): FixtureState {
     namespaceInclude: [],
     namespaceExclude: ['kube-system'],
     writeConfirmationPolicy: { effectiveRequired: true, overrideRequired: null, source: 'deployment_default' },
+    agentAccessMode: 'read_write',
     summary: {
       resourceCount: 13, findingCount: 3, criticalFindingCount: 1, namespaceCount: 2, nodeCount: 1,
       resourceFamilyCounts: { workloads: 7, network: 3, storage: 1, cluster: 2 },

@@ -26,6 +26,23 @@ describe('mapControlPlaneClusterToKubernetesCluster', () => {
     vi.useRealTimers();
   });
 
+  it('maps the bounded agent access mode and fails closed when it is omitted', () => {
+    const baseCluster = {
+      id: 'cluster-1',
+      workspaceId: 'workspace-1',
+      name: 'demo-cluster',
+      status: 'online' as const
+    };
+
+    expect(
+      mapControlPlaneClusterToKubernetesCluster({
+        ...baseCluster,
+        agentAccessMode: 'read_write'
+      }).agentAccessMode
+    ).toBe('read_write');
+    expect(mapControlPlaneClusterToKubernetesCluster(baseCluster).agentAccessMode).toBe('unknown');
+  });
+
   it('derives persistent cluster findings from unhealthy pod snapshot state', () => {
     const cluster: ControlPlaneClusterDetail = {
       id: 'cluster-1',

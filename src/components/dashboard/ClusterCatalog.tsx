@@ -12,6 +12,7 @@ import { useCatalogNow } from '@/features/targets/catalog/useCatalogNow';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { HealthStatus, KubernetesCluster } from '@/types';
 import { getAgentConnectionState, getEffectiveHealthStatus } from '@/utils/telemetry';
+import { getClusterWriteAccessLabel } from './ClusterCatalog.helpers';
 
 interface ClusterCatalogProps {
   kubernetesClusters: KubernetesCluster[];
@@ -115,10 +116,6 @@ function getClusterResourceCount(cluster: KubernetesCluster): number {
   const summaryCount = cluster.resourceSummary?.resourceCount;
   if (typeof summaryCount === 'number' && Number.isFinite(summaryCount)) return summaryCount;
   return cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
-}
-
-function getWriteGuardLabel(cluster: KubernetesCluster, t: Translate): string {
-  return cluster.writeConfirmationPolicy?.effectiveRequired ?? true ? t('clusterSetup.writeConfirmationsRequired') : t('clusterSetup.writeConfirmationsNotRequired');
 }
 
 const ClusterStatusPill: React.FC<{
@@ -306,9 +303,9 @@ const ClusterOperationalDetails: React.FC<{ cluster: KubernetesCluster }> = ({ c
       Icon: ICONS.Layers
     },
     {
-      label: t('dashboard.writeGuard'),
-      compactLabel: t('dashboard.writeGuardShort'),
-      value: getWriteGuardLabel(cluster, t),
+      label: t('dashboard.writeAccess'),
+      compactLabel: t('dashboard.writeAccessShort'),
+      value: getClusterWriteAccessLabel(cluster, t),
       Icon: ICONS.Shield
     },
     {
@@ -325,8 +322,8 @@ const ClusterOperationalDetails: React.FC<{ cluster: KubernetesCluster }> = ({ c
         <div key={label} className="min-w-0">
           <dt className="type-micro-label flex min-w-0 items-center gap-0.5 text-ui-text-muted" title={label}>
             <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="hidden truncate 2xl:inline">{label}</span>
-            <span className="truncate 2xl:hidden">{compactLabel}</span>
+            <span className="hidden truncate sm:inline">{label}</span>
+            <span className="truncate sm:hidden">{compactLabel}</span>
           </dt>
           <dd className="type-caption mt-1 break-words type-emphasis leading-4 text-ui-text [overflow-wrap:anywhere]" title={value}>
             {value}

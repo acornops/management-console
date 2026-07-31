@@ -529,6 +529,10 @@ export function mapControlPlaneClusterToKubernetesCluster(cluster: ControlPlaneC
       exclude: namespaceExclude
     },
     writeConfirmationPolicy: cluster.writeConfirmationPolicy,
+    agentAccessMode:
+      cluster.agentAccessMode === 'read_only' || cluster.agentAccessMode === 'read_write'
+        ? cluster.agentAccessMode
+        : 'unknown',
     workspaceId: cluster.workspaceId,
     agentConnectionState,
     owners: [],

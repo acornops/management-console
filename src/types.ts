@@ -19,6 +19,7 @@ export interface KubernetesCluster {
     overrideRequired: boolean | null;
     source: 'cluster_override' | 'deployment_default';
   };
+  agentAccessMode?: 'read_only' | 'read_write' | 'unknown';
   workspaceId: string;
   agentConnectionState?: 'connected' | 'disconnected' | 'not_installed';
   owners: string[];
