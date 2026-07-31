@@ -7,8 +7,8 @@ export const FIXTURE_IDS = {
   virtualMachine: 'fixture-vm',
   workflowAnalystAgent: 'fixture-workflow-analyst',
   specialistAgent: 'fixture-specialist',
-  targetDiagnosticsAgent: 'fixture-target-diagnostics-agent',
-  incidentReporterAgent: 'fixture-incident-reporter-agent',
+  kubernetesAgent: 'fixture-kubernetes-agent',
+  virtualMachineAgent: 'fixture-virtual-machine-agent',
   workflow: 'fixture-workflow',
   session: 'fixture-session',
   run: 'fixture-run'
@@ -211,28 +211,32 @@ export function createFixtureState(): FixtureState {
       readiness: { status: 'ready', reasons: [] }, capabilitySummary: 'Kubernetes inspection and diagnostics', createdAt: EARLIER, updatedAt: NOW
     },
     {
-      id: FIXTURE_IDS.targetDiagnosticsAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Target Diagnostics',
-      avatarEmoji: '🔎',
-      description: 'Collects diagnostic evidence from an explicitly selected target.',
-      instructions: 'Inspect only the exact target scope compiled for this run.',
-      status: 'active', origin: { type: 'template', templateId: 'acornops-starter', templateVersion: 3 },
+      id: FIXTURE_IDS.kubernetesAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Kubernetes Agent',
+      avatarEmoji: '☸️',
+      description: 'Investigates and safely operates explicitly selected Kubernetes targets.',
+      instructions: 'Operate only on the exact Kubernetes target compiled for this run. Use live target evidence, distinguish observations from inferences, require approval before every write, verify changes, and provide rollback guidance.',
+      status: 'active', origin: { type: 'manual' },
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
-      version: 1, permissionMode: 'ask_before_changes', semanticCapabilityIds: ['target.diagnostics.read'],
-      targetScope: { type: 'selected_target', targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [] },
+      version: 1, permissionMode: 'ask_before_changes',
+      semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate', 'target.diagnostics.read', 'target.remediation.write'],
+      tools: ['prompt.resources.read', 'reports.pdf.generate'],
+      targetScope: { type: 'selected_target', targetTypes: ['kubernetes'], targetIds: [] },
       contextScope: ['target'], contextGrants: [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] },
-      capabilitySummary: 'Target diagnostics', createdAt: EARLIER, updatedAt: NOW
+      capabilitySummary: 'Kubernetes target tools', createdAt: EARLIER, updatedAt: NOW
     },
     {
-      id: FIXTURE_IDS.incidentReporterAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Incident Reporter',
-      avatarEmoji: '📝',
-      description: 'Produces an incident report from explicitly granted evidence.',
-      instructions: 'Use only evidence and context present in the compiled scope.',
-      status: 'active', origin: { type: 'template', templateId: 'acornops-starter', templateVersion: 3 },
+      id: FIXTURE_IDS.virtualMachineAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Virtual Machine Agent',
+      avatarEmoji: '🖥️',
+      description: 'Investigates explicitly selected Linux virtual-machine targets.',
+      instructions: 'Operate only on the exact virtual-machine target compiled for this run. Use live target evidence, distinguish observations from inferences, preserve provenance, disclose missing inputs, and do not make changes.',
+      status: 'active', origin: { type: 'manual' },
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
-      version: 1, permissionMode: 'ask_before_changes', semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate'],
-      targetScope: { type: 'workspace', targetTypes: [], targetIds: [] }, contextScope: ['workspace'],
+      version: 1, permissionMode: 'ask_before_changes',
+      semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate', 'target.diagnostics.read'],
+      tools: ['prompt.resources.read', 'reports.pdf.generate'],
+      targetScope: { type: 'selected_target', targetTypes: ['virtual_machine'], targetIds: [] }, contextScope: ['target'],
       contextGrants: [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] },
-      capabilitySummary: 'Incident reporting', createdAt: EARLIER, updatedAt: NOW
+      capabilitySummary: 'Virtual-machine target tools', createdAt: EARLIER, updatedAt: NOW
     }
   ];
   const workflows = [{
@@ -247,47 +251,49 @@ export function createFixtureState(): FixtureState {
     capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['target.read', 'issue.read'], contextGrants: ['workspace.summary'], maxRuntimeSeconds: 600, retentionDays: 30, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
-    id: 'fixture-template-target-diagnostics', workspaceId: FIXTURE_IDS.workspace, version: 1,
+    id: 'fixture-template-kubernetes-health', workspaceId: FIXTURE_IDS.workspace, version: 1,
     origin: { type: 'manual' }, source: 'user',
-    name: 'Target diagnostics', description: 'Inspect one exact target using live diagnostic evidence.', status: 'active',
+    name: 'Kubernetes health check', description: 'Inspect one Kubernetes target for workload failures, warning events, resource pressure, and relevant logs.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
-    prompt: 'Inspect target diagnostics using live evidence and summarize safe next actions.',
-    agentIds: [FIXTURE_IDS.targetDiagnosticsAgent], executionMode: 'direct',
+    prompt: "Assess the selected Kubernetes target's current health without making changes. Inspect workload readiness and availability, pod restarts, warning events, resource pressure, and relevant recent logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
+    agentIds: [FIXTURE_IDS.kubernetesAgent], executionMode: 'direct',
+    resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['kubernetes'], targetIds: [] } }],
     category: 'Operations', tags: ['diagnostics'],
-    capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['target.kubernetes.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
+    capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['target.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
-    id: 'fixture-template-incident-report', workspaceId: FIXTURE_IDS.workspace, version: 1,
+    id: 'fixture-template-virtual-machine-health', workspaceId: FIXTURE_IDS.workspace, version: 1,
     origin: { type: 'manual' }, source: 'user',
-    name: 'Incident report', description: 'Generate an incident report from explicitly granted evidence.', status: 'active',
+    name: 'Virtual machine health check', description: 'Inspect one Linux VM for host pressure, degraded services, suspicious processes or listeners, and relevant logs.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
-    prompt: 'Generate an incident report with provenance from the available incident context.',
-    agentIds: [FIXTURE_IDS.incidentReporterAgent], executionMode: 'direct',
-    category: 'Reporting', tags: ['incident'],
-    capabilityPolicy: { mode: 'read_only', restrictionMode: 'inherit', semanticCapabilityIds: [], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 180, approvalRequirements: [] },
+    prompt: "Assess the selected Linux virtual machine's current health without making changes. Inspect the host summary, filesystem pressure, top processes, network listeners, degraded systemd services, and relevant allowlisted journal logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
+    agentIds: [FIXTURE_IDS.virtualMachineAgent], executionMode: 'direct',
+    resourceRequirements: [{ type: 'target', minimum: 1, maximum: 1, requiredOperations: ['read'], constraints: { targetTypes: ['virtual_machine'], targetIds: [] } }],
+    category: 'Operations', tags: ['diagnostics', 'virtual-machine'],
+    capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['target.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 180, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }];
   const automationTemplates = [
     {
-      id: 'target-diagnostics', version: 3, name: 'Target diagnostics',
-      description: 'Inspect one exact target using live diagnostic evidence.', installMode: 'automatic',
+      id: 'kubernetes-health-check', version: 7, name: 'Kubernetes health check',
+      description: 'Inspect one Kubernetes target for workload failures, warning events, resource pressure, and relevant logs.', installMode: 'automatic',
       installationStatus: 'active', setupSteps: [], blockerCodes: [],
-      workflowId: 'fixture-template-target-diagnostics'
+      workflowId: 'fixture-template-kubernetes-health'
     },
     {
-      id: 'target-remediation', version: 3, name: 'Target remediation',
+      id: 'target-remediation', version: 7, name: 'Target remediation',
       description: 'Diagnose and safely change one exact target with approval-gated writes.', installMode: 'opt_in',
       installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Select an exact Kubernetes target', 'Preview approval-gated tools', 'Activate'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
     },
     {
-      id: 'incident-report', version: 3, name: 'Incident report',
-      description: 'Generate an incident report from explicitly granted evidence.', installMode: 'automatic',
+      id: 'virtual-machine-health-check', version: 7, name: 'Virtual machine health check',
+      description: 'Inspect one Linux VM for host pressure, degraded services, suspicious processes or listeners, and relevant logs.', installMode: 'automatic',
       installationStatus: 'active', setupSteps: [], blockerCodes: [],
-      workflowId: 'fixture-template-incident-report'
+      workflowId: 'fixture-template-virtual-machine-health'
     },
     {
-      id: 'incident-investigation', version: 3, name: 'Incident investigation',
+      id: 'incident-investigation', version: 7, name: 'Incident investigation',
       description: 'Coordinate target diagnostics and incident reporting for an exact target and selected chats.', installMode: 'opt_in',
       installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Select an exact target and incident chats', 'Preview coordinated access', 'Activate'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']

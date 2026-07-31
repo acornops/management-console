@@ -135,7 +135,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
         itemCount={visibleAgents.length}
         filtered={hasActiveFilters && agents.length > 0}
         loading={
-          <div data-resource-card-grid="true" className="resource-card-grid gap-4" aria-hidden="true">
+          <div data-agent-card-grid="true" data-resource-card-grid="true" className="resource-card-grid gap-4" aria-hidden="true">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="h-44 rounded-lg border border-ui-border bg-ui-surface shadow-sm" />
             ))}

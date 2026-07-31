@@ -8,10 +8,11 @@ const readSource = (path: string) => readFileSync(resolve(root, path), 'utf8');
 describe('resource card grid', () => {
   it('keeps clusters, virtual machines, and agents on one container-aware column contract', () => {
     const styles = readSource('src/styles.css');
+    const agentCatalog = readSource('src/pages/WorkspaceAgentsCatalog.tsx');
     const catalogs = [
       readSource('src/components/dashboard/ClusterCatalog.tsx'),
       readSource('src/pages/virtual-machines/VirtualMachinesListView.tsx'),
-      readSource('src/pages/WorkspaceAgentsCatalog.tsx')
+      agentCatalog
     ];
 
     for (const catalog of catalogs) {
@@ -25,6 +26,9 @@ describe('resource card grid', () => {
     expect(styles).toContain('flex-wrap: wrap');
     expect(styles).toContain('flex: 1 1 min(100%, 30rem)');
     expect(styles).toContain('max-width: 40rem');
+    expect(styles).toMatch(/\[data-agent-card-grid='true'\] > \* \{\s*max-width: none;/);
+    expect(styles).toMatch(/\[data-agent-card-grid='true'\] > :only-child \{\s*max-width: 40rem;/);
+    expect(agentCatalog.match(/data-agent-card-grid="true"/g)).toHaveLength(2);
     expect(styles).toContain("[data-agent-catalog-layout='docked'] .resource-card-grid > *");
     expect(styles).toContain('flex-basis: 100%');
     expect(styles).toContain('max-width: none');

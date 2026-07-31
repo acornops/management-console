@@ -491,6 +491,14 @@ select {
   min-width: 0;
 }
 
+[data-agent-card-grid='true'] > * {
+  max-width: none;
+}
+
+[data-agent-card-grid='true'] > :only-child {
+  max-width: 40rem;
+}
+
 [data-agent-catalog-layout='docked'] .resource-card-grid > * {
   flex-basis: 100%;
   max-width: none;

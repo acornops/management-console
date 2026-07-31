@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('default workflows are directly editable without creating a copy', async ({ page }) => {
   await page.goto(
-    '/workspaces/fixture-workspace/workflows?workflow=fixture-template-target-diagnostics',
+    '/workspaces/fixture-workspace/workflows?workflow=fixture-template-kubernetes-health',
     { waitUntil: 'domcontentloaded' }
   );
 
@@ -12,7 +12,7 @@ test('default workflows are directly editable without creating a copy', async ({
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   const editDrawer = page.getByRole('dialog', { name: 'Edit workflow' });
   await expect(editDrawer).toBeVisible();
-  await expect(editDrawer.getByLabel('Workflow name')).toHaveValue('Target diagnostics');
+  await expect(editDrawer.getByLabel('Workflow name')).toHaveValue('Kubernetes health check');
 });
 
 test('workflow detail keeps primary navigation lean across contextual and compact views', async ({ page }) => {

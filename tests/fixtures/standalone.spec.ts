@@ -306,9 +306,9 @@ test('recommended workflows can be added and activated without entering the libr
   const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
   await expect(drawer).toBeVisible();
   await expect(drawer).toBeFocused();
-  await expect(drawer.getByRole('button', { name: /Target diagnostics/ })).toBeVisible();
+  await expect(drawer.getByRole('button', { name: /Kubernetes health check/ })).toBeVisible();
   await expect(drawer.getByRole('button', { name: /Target remediation/ })).toBeVisible();
-  await expect(drawer.getByRole('button', { name: /Incident report/ })).toBeVisible();
+  await expect(drawer.getByRole('button', { name: /Virtual machine health check/ })).toBeVisible();
   await expect(drawer.getByRole('button', { name: /Incident investigation/ })).toBeVisible();
 
   await drawer.getByRole('button', { name: /Target remediation/ }).click();
