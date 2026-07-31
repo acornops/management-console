@@ -13,7 +13,12 @@ import {
   createTargetChatControllerStore,
   TargetChatControllerSubscriber
 } from '@/app/targetChatControllerStore';
-import { appDockRootId } from '@/app/dockedPanelLayout';
+import {
+  appDockRootId,
+  collapsedDesktopSidebarWidth,
+  DesktopSidebarWidthProvider,
+  expandedDesktopSidebarWidth
+} from '@/app/dockedPanelLayout';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { useWorkspaceApprovalSummary } from '@/hooks/useWorkspaceApprovalSummary';
 import {
@@ -22,11 +27,12 @@ import {
 } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 import { PageLoadingFallback } from '@acornops/ui';
 import { ToastViewport } from '@acornops/ui';
-import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { KubernetesCluster, Workspace } from '@/types';
 import { AppPaths, assistantSessionFromLocation, type AppRoute } from '@/utils/routes';
+import { useTargetPromptLauncher } from '@/app/useTargetPromptLauncher';
+import { getTargetReturnContext, type TargetReturnContext } from '@/app/targetReturnContext';
 
 const AppClusterChatRuntime = React.lazy(() =>
   import('@/app/AppClusterChatRuntime').then((module) => ({ default: module.AppClusterChatRuntime }))
@@ -37,61 +43,6 @@ const AppClusterCopilotPanel = React.lazy(() =>
 const AppDialogs = React.lazy(() =>
   import('@/app/AppDialogs').then((module) => ({ default: module.AppDialogs }))
 );
-
-interface TargetReturnContext {
-  targetId: string;
-  targetType: 'kubernetes' | 'virtual_machine';
-  workspaceId: string;
-  path: string;
-}
-
-function getTargetReturnContext(previousRoute: AppRoute | null, nextRoute: AppRoute): TargetReturnContext | null {
-  if (nextRoute.kind === 'workspaceKubernetesClusterDiagnostics') {
-    if (previousRoute?.kind === 'workspaceOverview' && previousRoute.workspaceId === nextRoute.workspaceId) {
-      return {
-        targetId: nextRoute.clusterId,
-        targetType: 'kubernetes',
-        workspaceId: nextRoute.workspaceId,
-        path: AppPaths.workspaceOverview(nextRoute.workspaceId)
-      };
-    }
-    if (previousRoute?.kind === 'workspaceKubernetesClusters' && previousRoute.workspaceId === nextRoute.workspaceId) {
-      return {
-        targetId: nextRoute.clusterId,
-        targetType: 'kubernetes',
-        workspaceId: nextRoute.workspaceId,
-        path: AppPaths.workspaceKubernetesClusters(nextRoute.workspaceId, {
-          q: previousRoute.q,
-          status: previousRoute.status
-        })
-      };
-    }
-  }
-
-  if (nextRoute.kind === 'workspaceVirtualMachineDetail') {
-    if (previousRoute?.kind === 'workspaceOverview' && previousRoute.workspaceId === nextRoute.workspaceId) {
-      return {
-        targetId: nextRoute.vmId,
-        targetType: 'virtual_machine',
-        workspaceId: nextRoute.workspaceId,
-        path: AppPaths.workspaceOverview(nextRoute.workspaceId)
-      };
-    }
-    if (previousRoute?.kind === 'workspaceVirtualMachines' && previousRoute.workspaceId === nextRoute.workspaceId) {
-      return {
-        targetId: nextRoute.vmId,
-        targetType: 'virtual_machine',
-        workspaceId: nextRoute.workspaceId,
-        path: AppPaths.workspaceVirtualMachines(nextRoute.workspaceId, {
-          q: previousRoute.q,
-          status: previousRoute.status
-        })
-      };
-    }
-  }
-
-  return null;
-}
 
 export const AppShell: React.FC<AppShellProps> = ({
   acceptWorkspaceInvitation,
@@ -142,6 +93,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   isDark,
   isDeletingWorkspace,
   isMobileNavOpen,
+  sidebarMode,
   isAccountMenuOpen,
   isSidebarWorkspaceMenuOpen,
   language,
@@ -176,6 +128,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   setIsCreatingWorkspace,
   setIsDeletingWorkspace,
   setIsMobileNavOpen,
+  setSidebarMode,
   setIsSidebarWorkspaceMenuOpen,
   setLanguage,
   setNewClusterName,
@@ -239,7 +192,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   const chatRuntimeCluster = isClusterCopilotOpen && clusterCopilotCluster ? clusterCopilotCluster : routeChatCluster;
   const chatRuntimeWorkspace = chatRuntimeCluster ? workspaces.find((workspace) => workspace.id === chatRuntimeCluster.workspaceId) : undefined;
   const chatRuntimeInitialSessionId = routeChatCluster ? assistantSessionFromLocation(window.location) : null;
-  const [pendingVmTargetPrompt, setPendingVmTargetPrompt] = React.useState<PendingVmTargetPrompt | null>(null);
   const isClusterChatVisible = activeClusterSubview === 'chat' || Boolean(isClusterCopilotOpen && clusterCopilotCluster);
   const hasOpenDialog = Boolean(
     deleteTargetWorkspace
@@ -253,6 +205,31 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [targetChatControllerStore] = React.useState(createTargetChatControllerStore);
   const previousAssistantRuntimeStatusRef = React.useRef<AssistantNavStatus>('idle');
   const isClusterChatVisibleRef = React.useRef(isClusterChatVisible);
+  const desktopSidebarWidth = sidebarMode === 'collapsed'
+    ? collapsedDesktopSidebarWidth
+    : expandedDesktopSidebarWidth;
+
+  React.useEffect(() => {
+    const desktopQuery = window.matchMedia('(min-width: 1200px)');
+    const closeDrawerAtDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) setIsMobileNavOpen(false);
+    };
+    const closeDrawerAfterResize = () => {
+      if (window.innerWidth >= 1200) setIsMobileNavOpen(false);
+    };
+    const viewportObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(closeDrawerAfterResize);
+    closeDrawerAfterResize();
+    desktopQuery.addEventListener('change', closeDrawerAtDesktop);
+    window.addEventListener('resize', closeDrawerAfterResize);
+    viewportObserver?.observe(document.documentElement);
+    return () => {
+      desktopQuery.removeEventListener('change', closeDrawerAtDesktop);
+      window.removeEventListener('resize', closeDrawerAfterResize);
+      viewportObserver?.disconnect();
+    };
+  }, [setIsMobileNavOpen]);
 
   React.useEffect(() => {
     const previousRoute = previousRouteRef.current;
@@ -362,31 +339,24 @@ export const AppShell: React.FC<AppShellProps> = ({
     );
   }, [setKubernetesClusters, setWorkspaces]);
 
-  const runTargetPrompt = React.useCallback((request: TargetPromptRequest) => {
-    if (request.targetType === 'kubernetes') {
-      const cluster = kubernetesClusters.find((item) => item.id === request.targetId && item.workspaceId === request.workspaceId);
-      if (!cluster) return;
-      openClusterCopilot(cluster, request.prompt);
-      return;
-    }
-
-    setPendingVmTargetPrompt({
-      workspaceId: request.workspaceId,
-      targetId: request.targetId,
-      prompt: request.prompt,
-      id: Date.now()
-    });
-    navigate(AppPaths.workspaceVirtualMachineDetail(
-      request.workspaceId,
-      request.targetId,
-      'chat',
-      route.kind === 'workspaceVirtualMachineDetail' ? route.catalogState : undefined
-    ));
-  }, [kubernetesClusters, navigate, openClusterCopilot, route]);
-
-  const consumePendingVmTargetPrompt = React.useCallback(() => {
-    setPendingVmTargetPrompt(null);
-  }, []);
+  const {
+    consumePendingVmTargetPrompt,
+    pendingVmTargetPrompt,
+    runTargetPrompt,
+    vmCopilotPanel
+  } = useTargetPromptLauncher({
+    isDark,
+    kubernetesClusters,
+    navigate,
+    openClusterCopilot,
+    route,
+    setClusterCopilotInitialPrompt,
+    setIsClusterCopilotOpen,
+    userId: user.id,
+    virtualMachines: virtualMachinesInWorkspaceContext,
+    workspaceContext,
+    workspaces
+  });
 
   const renderAppContent = (clusterChatController: TargetChatController | null) => (
     <>
@@ -460,12 +430,14 @@ export const AppShell: React.FC<AppShellProps> = ({
           />
         </React.Suspense>
       )}
+      {vmCopilotPanel}
     </>
   );
 
   return (
     <WorkspaceWorkflowActivityProvider value={workflowActivity}>
-    <div data-app-shell="true" className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-ui-bg text-ui-text font-sans transition-colors duration-300 lg:flex-row">
+    <DesktopSidebarWidthProvider value={desktopSidebarWidth}>
+    <div data-app-shell="true" className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-ui-bg text-ui-text font-sans transition-colors duration-300 min-[1200px]:flex-row">
       <AppMobileNavigation
         activeAgentSubview={activeAgentSubview}
         activeClusterSubview={activeClusterSubview}
@@ -517,6 +489,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       />
 
       <AppDesktopSidebar
+        mode={sidebarMode}
         workspaces={workspaces}
         selectedWorkspace={selectedWorkspace}
         selectedWorkspaceId={selectedWorkspaceId}
@@ -563,6 +536,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onSetSidebarWorkspaceMenuOpen={setIsSidebarWorkspaceMenuOpen}
         onSelectTheme={selectTheme}
         onLogout={() => void handleLogout()}
+        onSetMode={setSidebarMode}
         user={user}
       />
 
@@ -635,6 +609,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       <ToastViewport toasts={toasts} isDark={isDark} onDismiss={dismissToast} />
     </div>
+    </DesktopSidebarWidthProvider>
     </WorkspaceWorkflowActivityProvider>
   );
 };

@@ -70,6 +70,19 @@ test('workspace overview keeps the desktop assistant beside the main content', a
   expect(await recentActivityDialog.evaluate((element) => Boolean(element.closest('[data-target-chat-surface="true"]')))).toBe(true);
 });
 
+test('workspace overview opens VM issue assistance in the desktop dock', async ({ page }) => {
+  await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
+  const vmIssue = page.locator('[data-attention-board="true"] article').filter({
+    hasText: 'Payment gateway service is degraded'
+  });
+
+  await vmIssue.getByRole('button', { name: 'Open assistant' }).click();
+
+  await expect(page).toHaveURL(overviewPath);
+  await expect(page.getByRole('complementary', { name: 'VM Assistant' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Workspace Overview', includeHidden: true })).toBeVisible();
+});
+
 test('desktop assistant keeps the capability preview within the dock', async ({ page }) => {
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Open assistant' }).first().click();

@@ -3,12 +3,14 @@ import type React from 'react';
 import type { ActivePrimaryNav, ActiveResourceNav } from '@/app/appRouteState';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ResolvedTheme, ThemePreference } from '@/app/theme';
+import type { DesktopSidebarMode } from '@/app/preferences';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import type { KubernetesCluster, User, Workspace } from '@/types';
 import type { AgentSubview, ClusterSubview, VmSubview } from '@/utils/routes';
 
 export interface AppDesktopSidebarProps {
+  mode: DesktopSidebarMode;
   workspaces: Workspace[];
   selectedWorkspace: Workspace | undefined;
   selectedWorkspaceId: string | null;
@@ -42,6 +44,7 @@ export interface AppDesktopSidebarProps {
   onSetSidebarWorkspaceMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onSelectTheme: (preference: ThemePreference, source: HTMLButtonElement) => void;
   onLogout: () => void;
+  onSetMode: (mode: DesktopSidebarMode) => void;
   user: User;
 }
 

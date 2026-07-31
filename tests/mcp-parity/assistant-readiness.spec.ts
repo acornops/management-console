@@ -27,6 +27,13 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   await page.goto(`/workspaces/${workspaceId}/kubernetes-clusters/${clusterId}/chat?session=fixture-session`);
   await expect(page.getByText('Why is the payments worker restarting?')).toBeVisible();
   await expect(page.getByText('Connect an AI model to continue')).toBeVisible();
+  const railNewChat = page.locator('[data-chat-history-trigger="new-chat"]');
+  await expect(railNewChat).toBeVisible();
+  await expect(railNewChat).toBeDisabled();
+  await railNewChat.hover();
+  await expect(page.getByRole('tooltip', {
+    name: 'Configure an AI provider and model before starting a new chat.'
+  })).toBeVisible();
   await expect(page.getByRole('textbox', { name: /Message .* assistant/ })).toHaveCount(0);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.screenshot({ path: '/tmp/ai-readiness-desktop-light.png', fullPage: true });

@@ -9,6 +9,7 @@ describe('focused application motion source contracts', () => {
   const app = readSource('src/App.tsx');
   const loginPage = readSource('src/pages/LoginPage.tsx');
   const desktopSidebar = readSource('src/app/AppDesktopSidebar.tsx');
+  const desktopAccountMenu = readSource('src/app/AppDesktopAccountMenu.tsx');
   const mobileNavigation = readSource('src/app/AppMobileNavigation.tsx');
   const settingsPage = readSource('src/pages/SettingsPage.tsx');
   const themeTransitionHook = readSource('src/hooks/useThemeTransition.ts');
@@ -22,7 +23,7 @@ describe('focused application motion source contracts', () => {
   it('routes every application theme control through the shared transition hook', () => {
     expect(app).toContain('const handleSelectTheme = useThemeTransition(setThemePreference, resolvedTheme);');
     expect(loginPage).toContain('onSelect={onSelectTheme}');
-    expect(desktopSidebar).toContain('onSelect={onSelectTheme}');
+    expect(desktopAccountMenu).toContain('onSelect={onSelectTheme}');
     expect(mobileNavigation).toContain('onSelect={onSelectTheme}');
     expect(themeMenu).toContain('onSelect(option, event.currentTarget);');
     // The theme flips in place (no View Transition snapshot) so live motion never

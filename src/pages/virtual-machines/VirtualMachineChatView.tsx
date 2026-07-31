@@ -13,6 +13,9 @@ interface VirtualMachineChatViewProps {
   currentUserId: string;
   isDark: boolean;
   initialInputValue?: string;
+  displayMode?: 'full' | 'panel';
+  onClose?: () => void;
+  onMaximize?: () => void;
   onOpenAiSettings: () => void;
   onInitialInputConsumed?: () => void;
 }
@@ -30,6 +33,9 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
   currentUserId,
   isDark,
   initialInputValue,
+  displayMode,
+  onClose,
+  onMaximize,
   onOpenAiSettings,
   onInitialInputConsumed
 }) => {
@@ -127,6 +133,9 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       onDeleteSession={controller.handleDeleteSession}
       onCancelRun={controller.handleCancelRun}
       isInFlightAssistantPlaceholder={controller.isInFlightAssistantPlaceholder}
+      displayMode={displayMode}
+      onClose={onClose}
+      onMaximize={onMaximize}
     />
   );
 };

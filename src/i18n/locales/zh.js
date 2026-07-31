@@ -145,6 +145,7 @@ export const zh = {
     clusterAssistant: '集群助手',
     resizeClusterAssistant: '调整集群助手宽度',
     vmAssistant: '虚拟机助手',
+    resizeVmAssistant: '调整虚拟机助手宽度',
     agentAssistant: 'Agent 助手',
     aiAssistantStatus: {
       working: 'AI 助手正在处理',
@@ -211,6 +212,8 @@ export const zh = {
     goHome: '返回 AcornOps 首页',
     openNavigation: '打开导航菜单',
     closeNavigation: '关闭导航菜单',
+    expandSidebar: '展开侧边栏',
+    collapseSidebar: '收起侧边栏',
     toggleTheme: '切换主题',
     account: '账号',
     accountSettings: '账号设置',

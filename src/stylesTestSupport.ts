@@ -22,7 +22,11 @@ export const overviewPage = readSource('src/pages/WorkspaceOverviewPage.tsx');
 export const userSettingsPage = readSource('src/pages/UserSettingsPage.tsx');
 export const workspaceSettingsPage = readSource('src/pages/WorkspaceSettingsPage.tsx');
 export const settingsPage = readSource('src/pages/SettingsPage.tsx');
-export const desktopSidebar = readSource('src/app/AppDesktopSidebar.tsx');
+export const desktopSidebar = [
+  readSource('src/app/AppDesktopSidebar.tsx'),
+  readSource('src/app/AppDesktopSidebarHeader.tsx'),
+  readSource('src/app/AppDesktopAccountMenu.tsx')
+].join('\n');
 export const mobileNavigation = readSource('src/app/AppMobileNavigation.tsx');
 export const appShell = readSource('src/app/AppShell.tsx');
 export const appTargetChatRuntime = readSource('src/app/AppClusterChatRuntime.tsx');

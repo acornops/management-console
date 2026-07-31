@@ -205,6 +205,11 @@ const canonicalModules = new Set([
   'Select.tsx',
   'Tooltip.tsx'
 ]);
+const resourceCardCatalogPaths = [
+  'src/components/dashboard/ClusterCatalog.tsx',
+  'src/pages/virtual-machines/VirtualMachinesListView.tsx',
+  'src/pages/WorkspaceAgentsCatalog.tsx'
+];
 
 for (const path of productionSources) {
   const source = readFileSync(path, 'utf8');
@@ -353,6 +358,33 @@ for (const path of files) {
       report(path, 'shared-table-header', `line ${line}: visible column headers must compose through DataTableHeaderCell`);
     }
   }
+}
+
+for (const repoPath of resourceCardCatalogPaths) {
+  const path = join(root, repoPath);
+  const source = readFileSync(path, 'utf8');
+  if (!source.includes('data-resource-card-catalog="true"') || !source.includes('resource-card-catalog')) {
+    report(path, 'shared-resource-card-catalog', 'catalog must use the shared resource-card-catalog container');
+  }
+  if (!source.includes('data-resource-card-grid="true"') || !source.includes('resource-card-grid')) {
+    report(path, 'shared-resource-card-grid', 'catalog must use the shared resource-card-grid layout');
+  }
+}
+
+const stylesPath = join(root, 'src/styles.css');
+const stylesSource = readFileSync(stylesPath, 'utf8');
+for (const contractRule of [
+  'display: flex',
+  'flex-wrap: wrap',
+  'flex: 1 1 min(100%, 30rem)',
+  'max-width: 40rem'
+]) {
+  if (!stylesSource.includes(contractRule)) {
+    report(stylesPath, 'shared-resource-card-grid', `missing shared layout rule ${contractRule}`);
+  }
+}
+if (/(?:cluster|vm|agent)-card-grid[^{]*\{[^}]*grid-template-columns/s.test(stylesSource)) {
+  report(stylesPath, 'shared-resource-card-grid', 'resource-card catalogs must not define feature-specific column rules');
 }
 
 const uiIndexSource = readFileSync(uiIndexPath, 'utf8');

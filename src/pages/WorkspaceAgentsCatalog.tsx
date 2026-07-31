@@ -1,5 +1,4 @@
 import React from 'react';
-import { useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import {
@@ -14,7 +13,6 @@ import {
   type DiscoveryFilterOption
 } from '@acornops/ui';
 import { Settings } from 'lucide-react';
-import { dockedResourceCardLayoutTransition } from '@/app/dockedPanelLayout';
 import { ICONS } from '@/constants';
 import {
   ResourceCatalogActionMenu,
@@ -94,7 +92,6 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   onOpenSettings
 }) => {
   const { t } = useTranslation();
-  const shouldReduceMotion = useReducedMotion();
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
   const filterOptions = React.useMemo<Array<DiscoveryFilterOption<AgentFocusFilter>>>(() => [
     { value: 'all', label: t('agentsWorkflows.agents.filters.all'), count: agents.length },
@@ -108,7 +105,8 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
     <section
       aria-label={t('agentsWorkflows.agents.catalogLabel')}
       data-agent-catalog-layout={dockedQuickChatOpen ? 'docked' : 'full'}
-      className="min-w-0"
+      data-resource-card-catalog="true"
+      className="resource-card-catalog min-w-0"
     >
       {(loading || agents.length > 0 || hasActiveFilters) && (
         <DiscoveryFilterBar
@@ -137,7 +135,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
         itemCount={visibleAgents.length}
         filtered={hasActiveFilters && agents.length > 0}
         loading={
-          <div data-resource-card-grid="true" className="resource-card-grid grid gap-4" aria-hidden="true">
+          <div data-resource-card-grid="true" className="resource-card-grid gap-4" aria-hidden="true">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="h-44 rounded-lg border border-ui-border bg-ui-surface shadow-sm" />
             ))}
@@ -147,7 +145,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
         filteredEmpty={<EmptyState embedded icon={<ICONS.Search />} title={t('agentsWorkflows.agents.noResultsTitle')} description={t('agentsWorkflows.agents.noResultsBody')} />}
         error={null}
       >
-        <div data-agent-card-grid="true" data-resource-card-grid="true" className="resource-card-grid grid min-w-0 items-stretch gap-4">
+        <div data-agent-card-grid="true" data-resource-card-grid="true" className="resource-card-grid min-w-0 gap-4">
           {visibleAgents.map((agent) => {
             const readinessBlocked = agent.status !== 'active' || agent.readiness.status !== 'ready';
             const readinessLabel = readinessBlocked
@@ -163,8 +161,6 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                 actionAttribute={{ 'data-agent-card-primary-action': 'true' }}
                 actionLabel={t('agentsWorkflows.agents.openDetailsLabel', { name: agent.name })}
                 onActivate={() => onOpenManagement(agent)}
-                layoutMotion={!shouldReduceMotion}
-                layoutTransition={dockedResourceCardLayoutTransition}
               >
                 <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
                   <AgentAvatar emoji={agent.avatarEmoji} />

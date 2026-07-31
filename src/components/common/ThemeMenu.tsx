@@ -90,7 +90,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
     variant === 'login'
       ? 'flex h-11 w-11 items-center justify-center rounded-lg border border-control-boundary bg-ui-surface/95 text-ui-text-muted shadow-sm transition-colors duration-[160ms] hover:bg-ui-surface-strong hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg motion-reduce:duration-0'
       : variant === 'account'
-      ? 'group/theme flex min-h-12 w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0'
+      ? 'group/theme flex h-auto min-h-10 w-full items-center justify-between gap-3 rounded-lg border-transparent bg-transparent px-3 py-2 text-left text-ui-text-muted shadow-none transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:h-auto sm:w-full'
       : 'type-ui flex min-h-11 w-full items-center justify-between rounded-md px-3 py-2 text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0';
 
   return (
@@ -122,15 +122,13 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
         {variant === 'login' ? (
           <ThemeToggleIcon resolvedTheme={resolvedTheme} />
         ) : variant === 'account' ? (
-          <span className="flex min-w-0 items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg">
+          <>
+            <span className="flex min-w-0 items-center gap-3">
               <ThemeToggleIcon resolvedTheme={resolvedTheme} />
+              <span>{t('app.theme')}</span>
             </span>
-            <span className="min-w-0">
-              <span className="type-row-title block">{t('app.theme')}</span>
-              <span className="block type-caption leading-4 text-ui-text-muted">{selectedLabel}</span>
-            </span>
-          </span>
+            <span className="shrink-0 type-caption text-ui-text-muted">{selectedLabel}</span>
+          </>
         ) : (
           <>
             <span className="flex items-center gap-2">

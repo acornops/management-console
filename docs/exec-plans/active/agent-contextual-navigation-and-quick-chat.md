@@ -19,8 +19,11 @@ workspace-owned automation definitions.
   an accessible modal drawer on narrower viewports. Its open Agent is
   represented by `panel=chat&agent=<id>` in the URL.
 - The desktop dock slides in from the right and exits in the same direction
-  while remaining a layout sibling. Agent cards animate into the available
-  columns instead of being covered by the dock.
+  while remaining a layout sibling. Its opening width replaces one catalog
+  column so Agent cards keep their full-layout width as the catalog settles
+  immediately into two columns instead of being covered by the dock.
+- Agent cards do not animate across grid rows when the column count changes;
+  the dock entrance is the only spatial motion in this interaction.
 - Reduced-motion users receive the same layout change without transitional
   movement.
 - The panel uses the existing Agent conversation APIs and can maximize to the
@@ -47,8 +50,10 @@ workspace-owned automation definitions.
   Agent-specific data-source adapters keep their requests on Agent APIs.
 - Settings and the Agents catalog each use one standard `PageShell`.
 - Agent cards expose route-backed Quick chat. It docks beside the catalog on
-  wide screens, remains a modal drawer on narrow screens, and maximizes to the
-  full Chat route.
+  wide screens, uses the shared assistant frame's card-aware opening width,
+  remains user-resizable, falls back to a modal drawer on narrow screens, and
+  maximizes to the full Chat route. Cluster, VM, and Agent docks share that
+  frame and width policy.
 
 ## Validation
 

@@ -9,7 +9,12 @@ export const GLOBAL_LANGUAGE_STORAGE_KEY = 'app_language';
 export const LEGACY_WORKSPACE_CONTEXT_STORAGE_KEY = 'acornops_workspace_context_id';
 export const PROFILE_PREFERENCE_STORAGE_PREFIX = 'acornops_profile_preferences';
 
-export type ProfilePreferenceName = 'theme' | 'language' | 'workspace_context_id';
+export type DesktopSidebarMode = 'expanded' | 'collapsed';
+export type ProfilePreferenceName = 'theme' | 'language' | 'workspace_context_id' | 'sidebar_mode';
+
+export function parseDesktopSidebarMode(value: string | null): DesktopSidebarMode {
+  return value === 'collapsed' ? 'collapsed' : 'expanded';
+}
 
 export function getProfilePreferenceKey(user: User): string {
   return encodeURIComponent(user.email.trim().toLowerCase());
@@ -65,4 +70,18 @@ export function readLanguagePreference(profileKey?: string): AppLanguageCode {
 export function readWorkspacePreference(profileKey: string): string | null {
   const saved = safeStorage.getItem(getProfileStorageKey(profileKey, 'workspace_context_id'));
   return saved && saved.trim().length > 0 ? saved : null;
+}
+
+export function readSidebarModePreference(profileKey?: string): DesktopSidebarMode {
+  if (!profileKey) return 'expanded';
+  return parseDesktopSidebarMode(
+    safeStorage.getItem(getProfileStorageKey(profileKey, 'sidebar_mode'))
+  );
+}
+
+export function persistSidebarModePreference(
+  mode: DesktopSidebarMode,
+  profileKey: string
+): void {
+  safeStorage.setItem(getProfileStorageKey(profileKey, 'sidebar_mode'), mode);
 }

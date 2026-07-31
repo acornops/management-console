@@ -145,6 +145,7 @@ export const en = {
     clusterAssistant: 'Cluster Assistant',
     resizeClusterAssistant: 'Resize cluster assistant',
     vmAssistant: 'VM Assistant',
+    resizeVmAssistant: 'Resize VM assistant',
     agentAssistant: 'Agent Assistant',
     aiAssistantStatus: {
       working: 'Assistant is working',
@@ -211,6 +212,8 @@ export const en = {
     goHome: 'Go to AcornOps home',
     openNavigation: 'Open navigation menu',
     closeNavigation: 'Close navigation menu',
+    expandSidebar: 'Expand sidebar',
+    collapseSidebar: 'Collapse sidebar',
     toggleTheme: 'Toggle theme',
     account: 'Account',
     accountSettings: 'Account Settings',

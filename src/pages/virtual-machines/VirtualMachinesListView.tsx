@@ -177,7 +177,12 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
         }
       />
 
-      <section id="vm-catalog-panel" aria-labelledby="vm-catalog-heading" className="grid min-w-0 shrink-0 content-start gap-4">
+      <section
+        id="vm-catalog-panel"
+        data-resource-card-catalog="true"
+        aria-labelledby="vm-catalog-heading"
+        className="resource-card-catalog grid min-w-0 shrink-0 content-start gap-4"
+      >
         <h2 id="vm-catalog-heading" className="type-section-title sr-only">
           {t('virtualMachines.list.catalog')}
         </h2>
@@ -234,7 +239,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
         )}
 
         {visibleItems.length > 0 ? (
-          <div data-vm-card-grid="true" data-resource-card-grid="true" className="resource-card-grid grid min-w-0 items-stretch gap-4">
+          <div data-vm-card-grid="true" data-resource-card-grid="true" className="resource-card-grid min-w-0 gap-4">
             {visibleItems.map((vm) => {
               const requiresAgentInstall = vm.status === 'unknown';
               const canDeleteVm = canManageTargets;

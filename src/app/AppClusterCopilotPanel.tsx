@@ -1,17 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { DrawerFrame } from '@acornops/ui';
+import { AssistantDockFrame } from '@/app/AssistantDockFrame';
 import { ClusterChatPanel } from '@/features/kubernetes-cluster-detail/components/detail/ClusterChatPanel';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { KubernetesCluster, Workspace } from '@/types';
 import { AppPaths, withAssistantSession } from '@/utils/routes';
-import {
-  desktopSidebarWidth,
-  dockedPanelMinimumWidth,
-  getSidePanelMaximumWidth,
-  minimumMainContentWidth,
-  useDockedPanelLayout
-} from '@/app/dockedPanelLayout';
 
 interface AppClusterCopilotPanelProps {
   cluster: KubernetesCluster | null;
@@ -43,65 +36,18 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
   onResizeWidth
 }) => {
   const { t } = useTranslation();
-  const isResizingRef = useRef(false);
-  const resizeFrameRef = useRef<number | null>(null);
-  const pendingWidthRef = useRef(width);
-  const isDocked = useDockedPanelLayout();
+  if (!cluster || !chatController) return null;
 
-  useEffect(() => {
-    pendingWidthRef.current = width;
-  }, [width]);
-
-  useEffect(() => {
-    const commitPendingWidth = () => {
-      resizeFrameRef.current = null;
-      onResizeWidth(pendingWidthRef.current);
-    };
-
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!isResizingRef.current) return;
-      const maxWidth = getSidePanelMaximumWidth(window.innerWidth, isDocked);
-      const nextWidth = Math.min(Math.max(window.innerWidth - event.clientX, dockedPanelMinimumWidth), maxWidth);
-      pendingWidthRef.current = nextWidth;
-      if (resizeFrameRef.current !== null) return;
-      resizeFrameRef.current = window.requestAnimationFrame(commitPendingWidth);
-    };
-
-    const handleMouseUp = () => {
-      if (!isResizingRef.current) return;
-      isResizingRef.current = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      if (resizeFrameRef.current !== null) {
-        window.cancelAnimationFrame(resizeFrameRef.current);
-        resizeFrameRef.current = null;
-      }
-    };
-  }, [isDocked, onResizeWidth]);
-
-  if (!isOpen || !cluster || !chatController) return null;
-
-  const panelContents = (
-    <>
-      <div
-        role="separator"
-        aria-orientation="vertical"
-        aria-label={t('app.resizeClusterAssistant')}
-        className="absolute left-0 top-0 z-[110] hidden h-full w-1.5 cursor-ew-resize transition-colors hover:bg-accent/30 xl:block"
-        onMouseDown={(event) => {
-          event.preventDefault();
-          isResizingRef.current = true;
-          document.body.style.cursor = 'ew-resize';
-          document.body.style.userSelect = 'none';
-        }}
-      />
+  return (
+    <AssistantDockFrame
+      ariaLabel={t('app.clusterAssistant')}
+      dockId="cluster"
+      isOpen={isOpen}
+      resizeLabel={t('app.resizeClusterAssistant')}
+      width={width}
+      onClose={onClose}
+      onWidthChange={onResizeWidth}
+    >
       <ClusterChatPanel
         cluster={cluster}
         chatController={chatController}
@@ -124,37 +70,6 @@ export const AppClusterCopilotPanel: React.FC<AppClusterCopilotPanelProps> = ({
         }}
         onInitialPromptHandled={onInitialPromptHandled}
       />
-    </>
-  );
-
-  if (isDocked) {
-    return (
-      <aside
-        aria-label={t('app.clusterAssistant')}
-        data-docked-assistant="true"
-        className="relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-l border-ui-border bg-ui-surface"
-        style={{
-          width,
-          minWidth: dockedPanelMinimumWidth,
-          maxWidth: `calc(100vw - ${desktopSidebarWidth + minimumMainContentWidth}px)`
-        }}
-      >
-        {panelContents}
-        <div data-floating-layer="true" className="pointer-events-none absolute inset-0 z-[120]" />
-      </aside>
-    );
-  }
-
-  return (
-    <DrawerFrame
-      unframed
-      isOpen
-      onClose={onClose}
-      ariaLabel={t('app.clusterAssistant')}
-      style={{ width }}
-      className="max-w-[calc(100vw-1rem)]"
-    >
-      {panelContents}
-    </DrawerFrame>
+    </AssistantDockFrame>
   );
 };

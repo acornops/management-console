@@ -12,9 +12,11 @@ import {
   GLOBAL_THEME_STORAGE_KEY,
   getProfileStorageKey,
   persistActiveThemePreference,
+  persistSidebarModePreference,
   persistThemePreference,
   readLanguagePreference,
   readInitialThemePreference,
+  readSidebarModePreference,
   readThemePreference
 } from './preferences';
 
@@ -75,6 +77,48 @@ describe('language preferences', () => {
     window.localStorage.setItem(GLOBAL_LANGUAGE_STORAGE_KEY, 'zh');
 
     expect(readLanguagePreference()).toBe('fr');
+  });
+});
+
+describe('sidebar preferences', () => {
+  beforeEach(() => {
+    installStorageMock();
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: originalWindow,
+      writable: true
+    });
+  });
+
+  it('defaults missing and invalid profile values to expanded', () => {
+    expect(readSidebarModePreference('operator')).toBe('expanded');
+    window.localStorage.setItem(getProfileStorageKey('operator', 'sidebar_mode'), 'wide');
+    expect(readSidebarModePreference('operator')).toBe('expanded');
+  });
+
+  it('persists collapsed mode independently per profile', () => {
+    persistSidebarModePreference('collapsed', 'operator-a');
+    persistSidebarModePreference('expanded', 'operator-b');
+
+    expect(readSidebarModePreference('operator-a')).toBe('collapsed');
+    expect(readSidebarModePreference('operator-b')).toBe('expanded');
+  });
+
+  it('keeps expanded as the safe value when storage is unavailable', () => {
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: () => { throw new Error('storage unavailable'); },
+        setItem: () => { throw new Error('storage unavailable'); }
+      }
+    });
+
+    expect(readSidebarModePreference('operator')).toBe('expanded');
+    expect(() => persistSidebarModePreference('collapsed', 'operator')).not.toThrow();
   });
 });
 

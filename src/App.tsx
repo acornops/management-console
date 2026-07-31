@@ -22,7 +22,7 @@ import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from 
 import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
 import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
-import { readInitialThemePreference, readLanguagePreference } from '@/app/preferences';
+import { readInitialThemePreference, readLanguagePreference, type DesktopSidebarMode } from '@/app/preferences';
 import { getSystemTheme, resolveThemePreference, type ResolvedTheme, type ThemePreference } from '@/app/theme';
 import { getSupportedLanguages } from '@/i18n/languageConfig';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
@@ -46,6 +46,7 @@ const App: React.FC = () => {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isSidebarWorkspaceMenuOpen, setIsSidebarWorkspaceMenuOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState<DesktopSidebarMode>('expanded');
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [loadedProfilePreferenceKey, setLoadedProfilePreferenceKey] = useState<string | null>(null);
   const [loadedAnonymousPreferences, setLoadedAnonymousPreferences] = useState(false);
@@ -187,10 +188,12 @@ const App: React.FC = () => {
     loadedAnonymousPreferences,
     loadedProfilePreferenceKey,
     selectedWorkspaceId,
+    sidebarMode,
     setLanguage,
     setLoadedAnonymousPreferences,
     setLoadedProfilePreferenceKey,
     setSelectedWorkspaceId,
+    setSidebarMode,
     setResolvedTheme,
     setThemePreference,
     themePreference,
@@ -530,6 +533,7 @@ const App: React.FC = () => {
       isDark={isDark}
       isDeletingWorkspace={isDeletingWorkspace}
       isMobileNavOpen={isMobileNavOpen}
+      sidebarMode={sidebarMode}
       isAccountMenuOpen={isAccountMenuOpen}
       isSidebarWorkspaceMenuOpen={isSidebarWorkspaceMenuOpen}
       language={language}
@@ -566,6 +570,7 @@ const App: React.FC = () => {
       setIsCreatingWorkspace={setIsCreatingWorkspace}
       setIsDeletingWorkspace={setIsDeletingWorkspace}
       setIsMobileNavOpen={setIsMobileNavOpen}
+      setSidebarMode={setSidebarMode}
       setIsSidebarWorkspaceMenuOpen={setIsSidebarWorkspaceMenuOpen}
       setLanguage={setLanguage}
       setNewClusterName={setNewClusterName}
