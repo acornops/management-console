@@ -419,7 +419,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                     i18nKey="virtualMachines.list.deleteVmConfirmationLabel"
                     values={{ name: deleteTargetVm.name }}
                     components={{
-                      name: <span className="type-emphasis text-status-danger-text" />
+                      name: <span className="normal-case type-emphasis text-status-danger-text" />
                     }}
                   />
                 </label>

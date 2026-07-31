@@ -141,7 +141,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                       i18nKey="app.deleteWorkspaceConfirmationLabel"
                       values={{ name: deleteTargetWorkspace.name }}
                       components={{
-                        name: <span className="type-emphasis text-status-danger-text" />
+                        name: <span className="normal-case type-emphasis text-status-danger-text" />
                       }}
                     />
                   </label>

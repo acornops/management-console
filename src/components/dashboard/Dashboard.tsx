@@ -193,7 +193,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     i18nKey="dashboard.deleteClusterConfirmationLabel"
                     values={{ name: deleteTargetCluster.name }}
                     components={{
-                      name: <span className="type-emphasis text-status-danger-text" />
+                      name: <span className="normal-case type-emphasis text-status-danger-text" />
                     }}
                   />
                 </label>

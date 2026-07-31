@@ -128,7 +128,7 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
                     i18nKey={confirmationI18nKey}
                     values={{ name: targetName }}
                     components={{
-                      name: <span className="type-emphasis text-status-danger-text" />
+                      name: <span className="normal-case type-emphasis text-status-danger-text" />
                     }}
                   />
                 </label>

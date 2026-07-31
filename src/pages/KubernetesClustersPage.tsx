@@ -88,7 +88,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const metricHistoryRequestSeqRef = useRef(0);
-  const deletedClusterIdsRef = useRef(new Set<string>());
+  const [deletedClusterIds, setDeletedClusterIds] = useState<ReadonlySet<string>>(() => new Set());
   const [localCatalogState, setLocalCatalogState] = useState<ClusterCatalogRouteState>({});
   const [catalogRequestFilters, setCatalogRequestFilters] = useState({
     q: '',
@@ -175,7 +175,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
       if (!onDeleteKubernetesCluster) return;
 
       await onDeleteKubernetesCluster(cluster);
-      deletedClusterIdsRef.current.add(cluster.id);
+      setDeletedClusterIds((current) => new Set(current).add(cluster.id));
       setMetricHistoryByClusterId((current) => withoutRecordKey(current, cluster.id));
     },
     [onDeleteKubernetesCluster]
@@ -200,7 +200,10 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     pageSize: 50,
     strategy: 'sentinel'
   });
-  const loadedClusterPageItems = useMemo(() => clusterCollection.items.filter((cluster) => !deletedClusterIdsRef.current.has(cluster.id)), [clusterCollection.items]);
+  const loadedClusterPageItems = useMemo(
+    () => clusterCollection.items.filter((cluster) => !deletedClusterIds.has(cluster.id)),
+    [clusterCollection.items, deletedClusterIds]
+  );
   const nextCursor = clusterCollection.nextCursor;
   const isLoading = clusterCollection.phase === 'loading' || clusterCollection.phase === 'refreshing';
   const isLoadingMore = clusterCollection.phase === 'loadingMore';
@@ -213,7 +216,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
   }, [clusterCollection.phase, loadedClusterPageItems, onAppendWorkspaceKubernetesClusters, workspaceId]);
 
   useEffect(() => {
-    deletedClusterIdsRef.current.clear();
+    setDeletedClusterIds(new Set());
   }, [workspaceId]);
 
   useEffect(() => {
