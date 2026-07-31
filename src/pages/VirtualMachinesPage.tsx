@@ -188,6 +188,12 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     onUpsertVirtualMachine: (virtualMachine) => onUpsertWorkspaceVirtualMachine(workspace.id, virtualMachine),
     t
   });
+  const shouldOpenConnectDialog = route.kind === 'workspaceVirtualMachines' && route.connect;
+  React.useEffect(() => {
+    if (!shouldOpenConnectDialog) return;
+    openAddVmModal();
+    navigate(AppPaths.workspaceVirtualMachines(workspace.id, catalogReturnState), { replace: true });
+  }, [catalogReturnState.q, catalogReturnState.status, navigate, openAddVmModal, shouldOpenConnectDialog, workspace.id]);
   const isRegisteredVmAgentConnected = Boolean(
     installInstructions?.vmId &&
     virtualMachines.some((virtualMachine) =>

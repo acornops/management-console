@@ -232,6 +232,15 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
     navigateToKubernetesCluster(cluster);
   };
 
+  const connectClusterFromOverview = () => {
+    if (!workspaceContext) return;
+    navigate(AppPaths.workspaceKubernetesClusters(workspaceContext.id));
+    onInitiateAddCluster(workspaceContext.id);
+  };
+  const connectVirtualMachineFromOverview = () => {
+    if (!workspaceContext) return;
+    navigate(AppPaths.workspaceVirtualMachines(workspaceContext.id, { connect: true }));
+  };
   const openClusterSettingsFromCatalog = (cluster: KubernetesCluster) => {
     navigate(AppPaths.workspaceKubernetesClusterDiagnostics(
       cluster.workspaceId,
@@ -385,6 +394,8 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               virtualMachines={virtualMachinesInWorkspaceContext}
               hasLoadedWorkspaceVirtualMachines={hasLoadedWorkspaceVirtualMachines}
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
+              onConnectCluster={getWorkspacePermission(workspaceContext.id, 'manage_targets') ? connectClusterFromOverview : undefined}
+              onConnectVirtualMachine={getWorkspacePermission(workspaceContext.id, 'manage_targets') ? connectVirtualMachineFromOverview : undefined}
               onRunTriage={onRunTargetPrompt}
               navigate={navigate}
             />

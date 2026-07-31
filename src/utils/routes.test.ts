@@ -258,6 +258,19 @@ describe('routes', () => {
       q: 'bastion prod',
       status: 'attention'
     });
+    const connectPath = AppPaths.workspaceVirtualMachines('team alpha', {
+      q: 'bastion prod',
+      status: 'attention',
+      connect: true
+    });
+    expect(connectPath).toBe('/workspaces/team%20alpha/virtual-machines?q=bastion+prod&status=attention&connect=1');
+    expect(parseAppRoute(connectPath)).toEqual({
+      kind: 'workspaceVirtualMachines',
+      workspaceId: 'team alpha',
+      q: 'bastion prod',
+      status: 'attention',
+      connect: true
+    });
 
     const detailPath = AppPaths.workspaceVirtualMachineDetail('team-alpha', 'vm-one', 'overview', {
       q: 'bastion',

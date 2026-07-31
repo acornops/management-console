@@ -47,6 +47,10 @@ describe('workspace overview style contract', () => {
     expect(overviewPage).toContain("t('overview.viewMoreIssue')");
     expect(overviewPage).toContain('onRunTriage({');
     expect(overviewPage).toContain("t('overview.connectedTargetCount'");
+    expect(overviewPage).toContain('actions={emptyActions}');
+    expect(overviewPage).toContain('<Button type="button" onClick={onConnectCluster} variant="primary" size="md">');
+    expect(overviewPage).toContain('<Button type="button" onClick={onConnectVirtualMachine} variant="primary" size="md">');
+    expect(overviewPage).not.toContain('showConnectClusterAction');
     expect(overviewPage).toContain('flex shrink-0 items-center gap-4 text-ui-text-muted');
     expect(overviewPage).toContain('w-full px-5 py-4 text-left');
     expect(overviewPage).toContain('data-attention-issue-meta="true"');

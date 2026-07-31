@@ -542,9 +542,9 @@ describe('theme color contract', () => {
     expect(darkTheme).not.toContain('--ao-status-warning: oklch(0.76 0.13 78)');
   });
 
-  it('keeps app page-header action buttons at the medium size', () => {
+  it('keeps primary app actions at the medium size', () => {
     expect(dashboardPage).toContain('<Button onClick={onAddCluster} variant="primary" size="md" className="whitespace-nowrap">');
-    expect(overviewPage).not.toContain('<Button onClick={onConnectCluster} variant="secondary" size="md">');
+    expect(overviewPage).toContain('<Button type="button" onClick={onConnectCluster} variant="primary" size="md">');
     expect(mcpServersViewHeader).toContain('<AddMcpServerAction');
     expect(addMcpServerAction).toContain('variant="secondary"');
     expect(addMcpServerAction).toContain("size = 'md'");

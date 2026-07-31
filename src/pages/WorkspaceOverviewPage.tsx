@@ -32,6 +32,8 @@ interface WorkspaceOverviewPageProps {
   virtualMachines: ControlPlaneVirtualMachine[];
   hasLoadedWorkspaceVirtualMachines: boolean;
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
+  onConnectCluster?: () => void;
+  onConnectVirtualMachine?: () => void;
   onRunTriage: (request: TargetPromptRequest) => void;
   navigate: (path: string) => void;
 }
@@ -51,6 +53,8 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   virtualMachines,
   hasLoadedWorkspaceVirtualMachines,
   onReplaceWorkspaceVirtualMachines,
+  onConnectCluster,
+  onConnectVirtualMachine,
   onRunTriage,
   navigate
 }) => {
@@ -188,6 +192,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     emptyTitle: string,
     emptyBody: string,
     cards: WorkspaceOverviewTargetCard[],
+    emptyActions?: React.ReactNode,
     state?: {
       error?: string | null;
       isLoading?: boolean;
@@ -217,7 +222,15 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
         ) : state?.error && state.retry ? (
           <div className="px-4 py-5 sm:px-5">{renderCollectionRecovery(state.error, state.retry)}</div>
         ) : cards.length === 0 ? (
-          <EmptyState embedded headingLevel={3} className="min-h-0 px-4 py-6 sm:px-5" icon={<Icon />} title={emptyTitle} description={emptyBody} />
+          <EmptyState
+            embedded
+            headingLevel={3}
+            className="min-h-0 px-4 py-6 sm:px-5"
+            icon={<Icon />}
+            title={emptyTitle}
+            description={emptyBody}
+            actions={emptyActions}
+          />
         ) : (
           <>
             {state?.retainedError && state.retry && (
@@ -425,7 +438,13 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             ICONS.Layers,
             t('overview.noConnectedClustersTitle'),
             t('overview.noConnectedClustersBody'),
-            connectedClusterCards
+            connectedClusterCards,
+            onConnectCluster ? (
+              <Button type="button" onClick={onConnectCluster} variant="primary" size="md">
+                <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+                {t('dashboard.addCluster')}
+              </Button>
+            ) : undefined
           )}
           {renderConnectedGroup(
             t('overview.connectedVirtualMachinesTitle'),
@@ -433,6 +452,12 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             t('overview.noConnectedVirtualMachinesTitle'),
             t('overview.noConnectedVirtualMachinesBody'),
             connectedVirtualMachineCards,
+            onConnectVirtualMachine ? (
+              <Button type="button" onClick={onConnectVirtualMachine} variant="primary" size="md">
+                <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
+                {t('virtualMachines.list.connectVm')}
+              </Button>
+            ) : undefined,
             {
               error: virtualMachineLoadError && !hasPriorVirtualMachineData ? virtualMachineLoadError : null,
               isLoading: isLoadingVirtualMachines,

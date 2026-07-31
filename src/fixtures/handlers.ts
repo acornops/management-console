@@ -13,6 +13,16 @@ export const fixtureHandlers = [
     const delayMs = Number(fixtureParams.get('fixtureDelayMs') || 0);
     const delayPath = fixtureParams.get('fixtureDelayPath') || '';
     const failurePaths = (fixtureParams.get('fixtureFailurePath') || '').split(',').filter(Boolean);
+    const requestPath = new URL(request.url).pathname;
+    const isKubernetesCollection = /\/workspaces\/[^/]+\/kubernetes-clusters$/.test(requestPath);
+    const isVirtualMachineCollection = /\/workspaces\/[^/]+\/virtual-machines$/.test(requestPath);
+    if (request.method === 'GET' && (
+      (fixtureParams.get('fixtureEmptyTargets') === '1' && (isKubernetesCollection || isVirtualMachineCollection)) ||
+      (fixtureParams.get('fixtureEmptyKubernetesClusters') === '1' && isKubernetesCollection) ||
+      (fixtureParams.get('fixtureEmptyVirtualMachines') === '1' && isVirtualMachineCollection)
+    )) {
+      return Response.json({ items: [] });
+    }
     if (failurePaths.some((failurePath) => new URL(request.url).pathname.includes(failurePath))) {
       return Response.json(
         { error: { code: 'FIXTURE_FORCED_FAILURE', message: 'This collection is temporarily unavailable in fixture mode.' } },

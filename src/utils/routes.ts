@@ -34,7 +34,9 @@ export interface ClusterCatalogReturnState {
   status?: ClusterCatalogStatusFilter;
 }
 
-export type VmCatalogRouteState = ClusterCatalogRouteState;
+export interface VmCatalogRouteState extends ClusterCatalogRouteState {
+  connect?: boolean;
+}
 export type VmCatalogReturnState = ClusterCatalogReturnState;
 
 export type AppRoute =
@@ -311,6 +313,14 @@ function withClusterCatalogRouteState(path: string, state?: ClusterCatalogRouteS
   return appendQuery(path, params);
 }
 
+function withVmCatalogRouteState(path: string, state?: VmCatalogRouteState): string {
+  const params = new URLSearchParams();
+  if (state?.q?.trim()) params.set('q', state.q.trim());
+  if (state?.status && state.status !== 'all') params.set('status', state.status);
+  if (state?.connect) params.set('connect', '1');
+  return appendQuery(path, params);
+}
+
 function withClusterCatalogReturnState(path: string, state?: ClusterCatalogReturnState): string {
   const params = new URLSearchParams();
   if (state?.q?.trim()) params.set('catalogQ', state.q.trim());
@@ -412,7 +422,8 @@ export function parseAppRoute(path: string): AppRoute {
     return {
       kind: 'workspaceVirtualMachines',
       workspaceId: decodeParam(workspaceVirtualMachinesMatch[1]),
-      ...parseClusterCatalogRouteState(params)
+      ...parseClusterCatalogRouteState(params),
+      ...(params.get('connect') === '1' ? { connect: true } : {})
     };
   }
 
@@ -530,7 +541,7 @@ export const AppPaths = {
   workspaceKubernetesClusters: (workspaceId: string, state?: ClusterCatalogRouteState): string =>
     withClusterCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`, state),
   workspaceVirtualMachines: (workspaceId: string, state?: VmCatalogRouteState): string =>
-    withClusterCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`, state),
+    withVmCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`, state),
   workspaceVirtualMachineDetail: (workspaceId: string, vmId: string, tab?: VmSubview, catalogState?: VmCatalogReturnState): string => {
     const base = `/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}`;
     return withClusterCatalogReturnState(tab ? `${base}/${vmSubviewPathSegment(tab)}` : base, catalogState);

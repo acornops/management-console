@@ -6,6 +6,8 @@ test('workspace overview exposes real links with a coherent heading structure', 
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { level: 1, name: 'Workspace Overview' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Connect Cluster' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Connect VM' })).toHaveCount(0);
   await expect(page.getByRole('heading', { level: 2, name: 'What needs attention now' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Kubernetes clusters' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Virtual machines' })).toBeVisible();
@@ -23,6 +25,36 @@ test('workspace overview exposes real links with a coherent heading structure', 
   await expect(issueLink).toHaveAttribute('href', '/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster');
   await clusterLink.focus();
   await expect(clusterLink).toBeFocused();
+});
+
+test('workspace overview opens cluster connection when no clusters are connected', async ({ page }) => {
+  await page.goto(`${overviewPath}?fixtureEmptyKubernetesClusters=1`, { waitUntil: 'domcontentloaded' });
+
+  const clusterGroup = page
+    .getByRole('heading', { level: 2, name: 'Kubernetes clusters' })
+    .locator('xpath=ancestor::div[@data-target-group="true"]');
+  const connectCluster = clusterGroup.getByRole('button', { name: 'Connect Cluster' });
+  await expect(connectCluster).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Connect VM' })).toHaveCount(0);
+  await connectCluster.click();
+
+  await expect(page).toHaveURL('/workspaces/fixture-workspace/kubernetes-clusters');
+  await expect(page.getByRole('dialog')).toContainText('Connect Cluster');
+});
+
+test('workspace overview opens VM connection when no VMs are connected', async ({ page }) => {
+  await page.goto(`${overviewPath}?fixtureEmptyVirtualMachines=1`, { waitUntil: 'domcontentloaded' });
+
+  const vmGroup = page
+    .getByRole('heading', { level: 2, name: 'Virtual machines' })
+    .locator('xpath=ancestor::div[@data-target-group="true"]');
+  const connectVm = vmGroup.getByRole('button', { name: 'Connect VM' });
+  await expect(connectVm).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Connect Cluster' })).toHaveCount(0);
+  await connectVm.click();
+
+  await expect(page).toHaveURL('/workspaces/fixture-workspace/virtual-machines');
+  await expect(page.getByRole('dialog')).toContainText('Connect VM');
 });
 
 test('workspace overview reports collection failures without presenting empty-state success', async ({ page }) => {
