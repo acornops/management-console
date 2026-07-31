@@ -409,7 +409,7 @@ export const zh = {
       cadence: '频率',
       nextRun: '下次运行',
       approvalGate: '审批门控',
-      inputsAndAccess: '权限',
+      access: '权限',
       actions: '操作'
     },
     status: {
@@ -491,9 +491,6 @@ export const zh = {
     rotateError: '轮换签名密钥失败。',
     copyError: '无法复制到剪贴板。',
     copyEndpoint: '复制端点',
-    inputCount: '{{count}} 个已映射输入',
-    inputCount_one: '{{count}} 个已映射输入',
-    inputCount_other: '{{count}} 个已映射输入',
     contextGrantCount: '{{count}} 个上下文授权',
     contextGrantCount_one: '{{count}} 个上下文授权',
     contextGrantCount_other: '{{count}} 个上下文授权',
@@ -546,7 +543,7 @@ export const zh = {
       description: '签名密钥仅显示一次。轮换后，旧密钥会立即失效。',
       endpoint: '端点',
       signingSecret: '签名密钥',
-      signingHelp: '发送 {"inputs":{"parameter":"value"}}，并使用 HMAC-SHA256 对 <timestamp>.<原始 JSON> 签名。包含 X-AcornOps-Event-Id、X-AcornOps-Timestamp 和 X-AcornOps-Signature: v1=<十六进制摘要>。',
+      signingHelp: '发送 JSON 对象，并使用 HMAC-SHA256 对 <timestamp>.<原始 JSON> 签名。包含 X-AcornOps-Event-Id、X-AcornOps-Timestamp 和 X-AcornOps-Signature: v1=<十六进制摘要>。事件元数据不会更改已保存的工作流提示。',
       copyEndpoint: '复制端点',
       copySecret: '复制密钥',
       endpointCopied: '端点已复制。',
@@ -3264,14 +3261,13 @@ export const zh = {
       workflow: '工作流', noWorkflow: '未选择工作流', latestDefinitionHelp: '每次运行都会使用此工作流最新的活跃定义。后续更改会自动生效。', name: '计划名称', defaultName: '{{name}} 计划', frequency: '频率',
       frequency_daily: '每天', frequency_weekdays: '工作日', frequency_weekly: '每周', frequency_custom: '自定义', time: '时间', timezone: '时区', local: '本地', weekdays: '运行日期',
       monday: '星期一', tuesday: '星期二', wednesday: '星期三', thursday: '星期四', friday: '星期五', saturday: '星期六', sunday: '星期日',
-      inputs: '工作流输入', inputsHelp: '这些值会提供给每次计划运行。保存前必须填写所有必填值。',
       context: '上下文访问', contextHelp: '仅批准此周期运行所需的上下文。', contextGrantHelp: '工作流可在每次计划运行时读取此上下文。',
       previewing: '正在检查计划…', previewPending: '完成计划设置后可查看接下来的运行时间。', previewUnavailable: '计划预览暂不可用。',
       runAs: '运行身份', creatorIdentityHelp: '计划任务以其已认证创建者的身份运行。每次运行都会重新检查工作区成员资格和权限。', identityLoadFailed: '无法加载你的计划任务身份。',
       credentialReadiness: '凭据就绪状态', capabilityReadiness: '能力就绪状态', scheduleOwner: '计划任务所有者',
       credentialReadinessHelp: '正在检查 {{owner}} 的凭据。个人 MCP 连接绝不会借用其他用户的凭据。', capabilityBlocked: '请先解决工作流能力要求，再启用此计划任务。',
       capabilityReadinessHelp: '根据所选目标、Agent 分配和当前启用的工具进行检查。',
-      advanced: '高级 Cron 和 JSON', cron: 'Cron 表达式', json: '输入默认值 JSON', invalidJson: '输入默认值必须是 JSON 对象。',
+      advanced: '高级 Cron', cron: 'Cron 表达式',
       enabled: '创建后立即启用计划', cancel: '取消', create: '创建计划', creating: '正在创建…', createError: '无法创建工作流计划'
     }
   },

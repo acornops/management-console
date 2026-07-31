@@ -463,7 +463,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.workflow')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.cadence')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.nextRun')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.inputsAndAccess')}</DataTableHeaderCell>
+                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.access')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('workflowActivity.activity')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" numeric className="whitespace-nowrap">{t('schedules.table.actions')}</DataTableHeaderCell>
               </DataTableRow>

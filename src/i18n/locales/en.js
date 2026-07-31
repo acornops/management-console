@@ -409,7 +409,7 @@ export const en = {
       cadence: 'Cadence',
       nextRun: 'Next run',
       approvalGate: 'Approval gate',
-      inputsAndAccess: 'Access',
+      access: 'Access',
       actions: 'Actions'
     },
     status: {
@@ -491,9 +491,6 @@ export const en = {
     rotateError: 'Failed rotating the signing secret.',
     copyError: 'Could not copy to the clipboard.',
     copyEndpoint: 'Copy endpoint',
-    inputCount: '{{count}} mapped inputs',
-    inputCount_one: '{{count}} mapped input',
-    inputCount_other: '{{count}} mapped inputs',
     contextGrantCount: '{{count}} context grants',
     contextGrantCount_one: '{{count}} context grant',
     contextGrantCount_other: '{{count}} context grants',
@@ -546,7 +543,7 @@ export const en = {
       description: 'The signing secret is shown only once. Rotating it immediately invalidates the previous secret.',
       endpoint: 'Endpoint',
       signingSecret: 'Signing secret',
-      signingHelp: 'Send {"inputs":{"parameter":"value"}} and sign <timestamp>.<raw JSON> with HMAC-SHA256. Include X-AcornOps-Event-Id, X-AcornOps-Timestamp, and X-AcornOps-Signature: v1=<hex digest>.',
+      signingHelp: 'Send a JSON object and sign <timestamp>.<raw JSON> with HMAC-SHA256. Include X-AcornOps-Event-Id, X-AcornOps-Timestamp, and X-AcornOps-Signature: v1=<hex digest>. Event metadata does not alter the saved workflow prompt.',
       copyEndpoint: 'Copy endpoint',
       copySecret: 'Copy secret',
       endpointCopied: 'Endpoint copied.',
@@ -3264,14 +3261,13 @@ export const en = {
       workflow: 'Workflow', noWorkflow: 'No workflow selected', latestDefinitionHelp: 'Each run uses the latest active definition of this workflow. Later changes apply automatically.', name: 'Schedule name', defaultName: '{{name}} schedule', frequency: 'Frequency',
       frequency_daily: 'Daily', frequency_weekdays: 'Weekdays', frequency_weekly: 'Weekly', frequency_custom: 'Custom', time: 'Time', timezone: 'Timezone', local: 'local', weekdays: 'Run on',
       monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
-      inputs: 'Workflow inputs', inputsHelp: 'These values are supplied to every scheduled run. Required values must be complete before saving.',
       context: 'Context access', contextHelp: 'Approve only the context this recurring run needs.', contextGrantHelp: 'The workflow may read this context on every scheduled run.',
       previewing: 'Checking schedule...', previewPending: 'Complete the schedule to see upcoming runs.', previewUnavailable: 'Schedule preview is unavailable.',
       runAs: 'Runs as', creatorIdentityHelp: 'Schedules run as their authenticated creator. Workspace membership and permissions are rechecked for every run.', identityLoadFailed: 'Your schedule identity could not be loaded.',
       credentialReadiness: 'Credential readiness', capabilityReadiness: 'Capability readiness', scheduleOwner: 'the schedule owner',
       credentialReadinessHelp: 'Checked for {{owner}}. Individual MCP connections are never borrowed from another user.', capabilityBlocked: 'Resolve the workflow capability requirements before enabling this schedule.',
       capabilityReadinessHelp: 'Checked against the selected target, Agent assignments, and currently enabled tools.',
-      advanced: 'Advanced cron and JSON', cron: 'Cron expression', json: 'Input defaults JSON', invalidJson: 'Input defaults must be a JSON object.',
+      advanced: 'Advanced cron', cron: 'Cron expression',
       enabled: 'Start this schedule enabled', cancel: 'Cancel', create: 'Create schedule', creating: 'Creating...', createError: 'Unable to create workflow schedule'
     }
   },
