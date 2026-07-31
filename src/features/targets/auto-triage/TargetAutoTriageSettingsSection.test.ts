@@ -9,6 +9,13 @@ import {
   TargetAutoTriageSettingsSection,
   toAutoTriageDraft
 } from '@/features/targets/auto-triage/TargetAutoTriageSettingsSection';
+import {
+  AutoTriageNamespaceEligibilityFields
+} from '@/features/targets/auto-triage/AutoTriageNamespaceEligibilityFields';
+import {
+  parseAutoTriageNamespaceList,
+  validateAutoTriageNamespaceList
+} from '@/features/targets/auto-triage/autoTriageNamespaceValidation';
 import type { TargetAutoTriageSettings } from '@/services/controlPlaneApi';
 
 function settings(): TargetAutoTriageSettings {
@@ -19,6 +26,9 @@ function settings(): TargetAutoTriageSettings {
     minimumSeverity: 'warning',
     writeMode: 'follow_target',
     additionalInstructions: '',
+    namespaceInclude: [],
+    namespaceExclude: [],
+    includeClusterScopedIssues: true,
     revision: 0,
     canEdit: true,
     eligibleCurrentIssueCount: 0,
@@ -64,8 +74,53 @@ describe('target auto-triage settings draft', () => {
       enabled: false,
       minimumSeverity: 'warning',
       writeMode: 'follow_target',
-      additionalInstructions: ''
+      additionalInstructions: '',
+      namespaceIncludeText: '',
+      namespaceExcludeText: '',
+      includeClusterScopedIssues: true
     });
+  });
+
+  it('normalizes comma and newline separated namespace eligibility', () => {
+    expect(parseAutoTriageNamespaceList(' payments, production\nsandbox, payments ')).toEqual([
+      'payments',
+      'production',
+      'sandbox'
+    ]);
+  });
+
+  it('rejects invalid and oversized namespace lists before save', () => {
+    expect(validateAutoTriageNamespaceList('payments, Production')).toMatchObject({
+      error: 'invalid'
+    });
+    expect(validateAutoTriageNamespaceList(
+      Array.from({ length: 101 }, (_, index) => `team-${index}`).join(',')
+    )).toMatchObject({
+      error: 'too_many'
+    });
+    expect(validateAutoTriageNamespaceList('payments, payments')).toEqual({
+      values: ['payments']
+    });
+  });
+
+  it('associates namespace validation errors with the invalid field', () => {
+    const markup = renderToStaticMarkup(
+      React.createElement(AutoTriageNamespaceEligibilityFields, {
+        targetId: 'cluster-1',
+        canEdit: true,
+        namespaceIncludeText: 'Production',
+        namespaceExcludeText: '',
+        includeClusterScopedIssues: true,
+        namespaceIncludeError: 'invalid',
+        onNamespaceIncludeTextChange: () => undefined,
+        onNamespaceExcludeTextChange: () => undefined,
+        onIncludeClusterScopedIssuesChange: () => undefined
+      })
+    );
+
+    expect(markup).toContain('aria-invalid="true"');
+    expect(markup).toContain('auto-triage-namespace-include-cluster-1-error');
+    expect(markup).toContain('autoTriage.namespaceInvalid');
   });
 
   it('keeps unsaved combinations local until every editable field matches', () => {
@@ -76,6 +131,10 @@ describe('target auto-triage settings draft', () => {
     expect(isSameAutoTriageDraft(persisted, {
       ...draft,
       additionalInstructions: 'Never modify production.'
+    })).toBe(false);
+    expect(isSameAutoTriageDraft(persisted, {
+      ...draft,
+      namespaceIncludeText: 'payments'
     })).toBe(false);
   });
 

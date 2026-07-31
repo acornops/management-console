@@ -16,7 +16,10 @@ describe('auto-triage API', () => {
       enabled: true,
       minimumSeverity: 'warning',
       writeMode: 'approval_required',
-      additionalInstructions: 'Check the runbook.'
+      additionalInstructions: 'Check the runbook.',
+      namespaceInclude: ['payments'],
+      namespaceExclude: ['sandbox'],
+      includeClusterScopedIssues: false
     });
     expect(requestJson).toHaveBeenCalledWith(
       '/api/v1/workspaces/workspace%201/targets/target%2F1/auto-triage',
@@ -27,7 +30,10 @@ describe('auto-triage API', () => {
           enabled: true,
           minimumSeverity: 'warning',
           writeMode: 'approval_required',
-          additionalInstructions: 'Check the runbook.'
+          additionalInstructions: 'Check the runbook.',
+          namespaceInclude: ['payments'],
+          namespaceExclude: ['sandbox'],
+          includeClusterScopedIssues: false
         })
       }
     );

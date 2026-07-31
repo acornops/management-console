@@ -50,13 +50,16 @@ export interface TargetAutoTriageSettings {
   minimumSeverity: AutoTriageMinimumSeverity;
   writeMode: AutoTriageWriteMode;
   additionalInstructions: string;
+  namespaceInclude: string[];
+  namespaceExclude: string[];
+  includeClusterScopedIssues: boolean;
   revision: number;
   updatedBy?: string;
   createdAt?: string;
   updatedAt?: string;
   canEdit: boolean;
   eligibleCurrentIssueCount: number;
-  queueSummary?: {
+  queueSummary: {
     activeCount: number;
     waitingCount: number;
     oldestWaitingAt?: string;

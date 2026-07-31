@@ -32,6 +32,9 @@ export const autoTriageApi = {
       minimumSeverity: AutoTriageMinimumSeverity;
       writeMode: AutoTriageWriteMode;
       additionalInstructions: string;
+      namespaceInclude: string[];
+      namespaceExclude: string[];
+      includeClusterScopedIssues: boolean;
     }
   ): Promise<TargetAutoTriageSettings> {
     return requestJson<TargetAutoTriageSettings>(

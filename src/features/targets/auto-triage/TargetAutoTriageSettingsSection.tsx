@@ -12,7 +12,15 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { appHref } from '@/app/workspaceNavigation';
-import { Button, InlineAlert, Select, Switch, Textarea, buttonClassName, formTextareaClassName } from '@acornops/ui';
+import {
+  Button,
+  InlineAlert,
+  Select,
+  Switch,
+  Textarea,
+  buttonClassName,
+  formTextareaClassName
+} from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
 import { ExperimentalBadge } from '@/components/common/ExperimentalBadge';
 import {
@@ -27,12 +35,22 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { formatRelativeTime } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
+import {
+  AutoTriageNamespaceEligibilityFields
+} from './AutoTriageNamespaceEligibilityFields';
+import {
+  parseAutoTriageNamespaceList,
+  validateAutoTriageNamespaceList
+} from './autoTriageNamespaceValidation';
 
 interface AutoTriageDraft {
   enabled: boolean;
   minimumSeverity: AutoTriageMinimumSeverity;
   writeMode: AutoTriageWriteMode;
   additionalInstructions: string;
+  namespaceIncludeText: string;
+  namespaceExcludeText: string;
+  includeClusterScopedIssues: boolean;
 }
 
 const autoTriageTextareaClassName = formTextareaClassName('min-h-32 resize-y py-3 leading-6');
@@ -42,7 +60,10 @@ export function toAutoTriageDraft(settings: TargetAutoTriageSettings): AutoTriag
     enabled: settings.enabled,
     minimumSeverity: settings.minimumSeverity,
     writeMode: settings.writeMode,
-    additionalInstructions: settings.additionalInstructions
+    additionalInstructions: settings.additionalInstructions,
+    namespaceIncludeText: settings.namespaceInclude.join(', '),
+    namespaceExcludeText: settings.namespaceExclude.join(', '),
+    includeClusterScopedIssues: settings.includeClusterScopedIssues
   };
 }
 
@@ -52,6 +73,9 @@ export function isSameAutoTriageDraft(settings: TargetAutoTriageSettings, draft:
     && settings.minimumSeverity === draft.minimumSeverity
     && settings.writeMode === draft.writeMode
     && settings.additionalInstructions === draft.additionalInstructions
+    && settings.namespaceInclude.join(',') === parseAutoTriageNamespaceList(draft.namespaceIncludeText).join(',')
+    && settings.namespaceExclude.join(',') === parseAutoTriageNamespaceList(draft.namespaceExcludeText).join(',')
+    && settings.includeClusterScopedIssues === draft.includeClusterScopedIssues
   );
 }
 
@@ -99,9 +123,20 @@ export const TargetAutoTriageSettingsSection: React.FC<{
   const canEdit = Boolean(settings?.canEdit && canManageTargets);
   const isWriteCapable = draft?.writeMode !== 'read_only';
   const characterCount = draft ? [...draft.additionalInstructions].length : 0;
+  const namespaceIncludeValidation = validateAutoTriageNamespaceList(draft?.namespaceIncludeText || '');
+  const namespaceExcludeValidation = validateAutoTriageNamespaceList(draft?.namespaceExcludeText || '');
+  const namespaceScopeValid = targetType !== 'kubernetes'
+    || (!namespaceIncludeValidation.error && !namespaceExcludeValidation.error);
   const isDirty = Boolean(settings && draft && !isSameAutoTriageDraft(settings, draft));
   const cannotSaveWriteMode = Boolean(isWriteCapable && !canCreateReadWriteRuns);
-  const canSave = Boolean(canEdit && isDirty && !cannotSaveWriteMode && status !== 'saving' && status !== 'starting');
+  const canSave = Boolean(
+    canEdit
+    && isDirty
+    && namespaceScopeValid
+    && !cannotSaveWriteMode
+    && status !== 'saving'
+    && status !== 'starting'
+  );
   const canStartExisting = Boolean(
     canEdit
     && settings?.enabled
@@ -144,7 +179,19 @@ export const TargetAutoTriageSettingsSection: React.FC<{
     try {
       const saved = await controlPlaneApi.updateTargetAutoTriageSettings(workspaceId, targetId, {
         expectedRevision: settings.revision,
-        ...draft
+        enabled: draft.enabled,
+        minimumSeverity: draft.minimumSeverity,
+        writeMode: draft.writeMode,
+        additionalInstructions: draft.additionalInstructions,
+        namespaceInclude: targetType === 'kubernetes'
+          ? namespaceIncludeValidation.values
+          : [],
+        namespaceExclude: targetType === 'kubernetes'
+          ? namespaceExcludeValidation.values
+          : [],
+        includeClusterScopedIssues: targetType === 'kubernetes'
+          ? draft.includeClusterScopedIssues
+          : true
       });
       setSettings(saved);
       setDraft(toAutoTriageDraft(saved));
@@ -278,6 +325,27 @@ export const TargetAutoTriageSettingsSection: React.FC<{
                 />
               </label>
             </div>
+
+            {targetType === 'kubernetes' && (
+              <AutoTriageNamespaceEligibilityFields
+                targetId={targetId}
+                canEdit={canEdit}
+                namespaceIncludeText={draft.namespaceIncludeText}
+                namespaceExcludeText={draft.namespaceExcludeText}
+                includeClusterScopedIssues={draft.includeClusterScopedIssues}
+                namespaceIncludeError={namespaceIncludeValidation.error}
+                namespaceExcludeError={namespaceExcludeValidation.error}
+                onNamespaceIncludeTextChange={(namespaceIncludeText) => setDraft((current) => current
+                  ? { ...current, namespaceIncludeText }
+                  : current)}
+                onNamespaceExcludeTextChange={(namespaceExcludeText) => setDraft((current) => current
+                  ? { ...current, namespaceExcludeText }
+                  : current)}
+                onIncludeClusterScopedIssuesChange={(includeClusterScopedIssues) => setDraft((current) => current
+                  ? { ...current, includeClusterScopedIssues }
+                  : current)}
+              />
+            )}
 
             <div className="grid gap-3 border-b border-ui-border p-6">
               <div className="flex flex-wrap items-end justify-between gap-2">
@@ -416,7 +484,7 @@ export function QueueSummary({
   settings: TargetAutoTriageSettings;
   t: (key: string, values?: Record<string, unknown>) => string;
 }) {
-  const summary = settings.queueSummary ?? { activeCount: 0, waitingCount: 0 };
+  const summary = settings.queueSummary;
   const hasActivity = summary.activeCount > 0 || summary.waitingCount > 0;
   const issuesPath = targetType === 'kubernetes'
     ? AppPaths.workspaceKubernetesClusterDiagnostics(workspaceId, targetId, 'overview')

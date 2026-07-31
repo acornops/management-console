@@ -159,7 +159,9 @@ The management console is the browser client for the control-plane API. Keep thi
   preserve the existing approval and retention paths, and relax creator-only
   reply ownership only when `origin=auto_triage`. Target auto-triage settings,
   issue activity, and chat context do not depend on Automation navigation,
-  Workflow permissions, or Workflow UI modules.
+  Workflow permissions, or Workflow UI modules. Kubernetes settings expose
+  namespace include and exclude eligibility plus cluster-scoped issue control;
+  virtual-machine settings do not expose namespace fields.
 - The target-chat `/` picker sends structured tool runtime aliases and target
   skill IDs separately from prompt text. It never repurposes `@` prompt
   references, and stale references remain visible when the control plane

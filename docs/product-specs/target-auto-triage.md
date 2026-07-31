@@ -19,6 +19,14 @@ top-level navigation item, Workflow coupling, or new chat route.
   alone.
 - Treat additional instructions as optional advanced guidance, not a system
   prompt. Enforce the 4,000-character count and provide a clear action.
+- On Kubernetes targets, expose comma-separated namespace include and exclude
+  lists plus an explicit cluster-scoped issue switch. Empty lists mean all
+  namespaces already observed by the target, and exclusions take precedence.
+  Explain that this narrows issue eligibility without expanding collection or
+  tool access. Validate lowercase Kubernetes DNS-label names inline, associate
+  errors with the relevant input, deduplicate entries, and enforce the
+  100-namespace API limit before save. Do not render these controls for virtual
+  machines.
 - Enabling never starts current issues implicitly. After save, offer an explicit
   action for the current eligible count or confirm that future matching issues
   will start automatically.
