@@ -4,7 +4,7 @@ import { Button } from '@acornops/ui';
 import { CloseButton, FilterToggleGroup, type CompactControlItem } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
-import { PageSearchInput, pageSearchInputClassName } from '@acornops/ui';
+import { DateTimePicker, PageSearchInput } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
@@ -15,7 +15,6 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { Workspace, WorkspaceAuditCategory, WorkspaceAuditEvent } from '@/types';
 import { formatUserDateTime } from '@/utils/dateTime';
-import { TextInput } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceAuditLogPageProps {
@@ -186,13 +185,23 @@ function filtersEqual(first: AuditFilters, second: AuditFilters): boolean {
 }
 
 export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ workspace }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const closeAuditDetailsButtonRef = useRef<HTMLButtonElement>(null);
   const [draftFilters, setDraftFilters] = useState<AuditFilters>(defaultFilters);
   const [appliedFilters, setAppliedFilters] = useState<AuditFilters>(defaultFilters);
   const [activeTimePreset, setActiveTimePreset] = useState<AuditTimePreset | undefined>();
   const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<WorkspaceAuditEvent | null>(null);
+  const dateTimePickerLabels = useMemo(() => ({
+    calendar: t('common.dateTimePicker.calendar'),
+    clear: t('common.dateTimePicker.clear'),
+    done: t('common.dateTimePicker.done'),
+    hour: t('common.dateTimePicker.hour'),
+    minute: t('common.dateTimePicker.minute'),
+    nextMonth: t('common.dateTimePicker.nextMonth'),
+    now: t('common.dateTimePicker.now'),
+    previousMonth: t('common.dateTimePicker.previousMonth')
+  }), [t]);
 
   const applyNormalizedFilters = useCallback((nextFilters: AuditFilters) => {
     const normalizedFilters = normalizeFilters(nextFilters);
@@ -389,40 +398,44 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
           </div>
           {isCustomRangeOpen && (
             <div id="audit-custom-range-controls" className="mt-3 grid gap-3 rounded-lg border border-ui-border bg-ui-bg/70 p-3 sm:grid-cols-2 lg:w-[34rem] lg:max-w-full">
-              <label className="grid gap-2" htmlFor="audit-filter-from">
+              <div className="grid gap-2">
                 <span className="type-caption">{t('auditLog.filterFrom')}</span>
-                <TextInput
+                <DateTimePicker
                   id="audit-filter-from"
-                  type="datetime-local"
                   value={draftFilters.from}
-                  onChange={(event) => {
+                  onChange={(value) => {
                     setActiveTimePreset(undefined);
                     setDraftFilters((current) => ({
                       ...current,
-                      from: event.target.value
+                      from: value
                     }));
                   }}
-                  aria-label={t('auditLog.filterFrom')}
-                  className={pageSearchInputClassName('lg:w-full')}
+                  ariaLabel={t('auditLog.filterFrom')}
+                  locale={i18n.resolvedLanguage}
+                  placeholder={t('auditLog.selectDateTime')}
+                  labels={dateTimePickerLabels}
+                  className="lg:w-full"
                 />
-              </label>
-              <label className="grid gap-2" htmlFor="audit-filter-to">
+              </div>
+              <div className="grid gap-2">
                 <span className="type-caption">{t('auditLog.filterTo')}</span>
-                <TextInput
+                <DateTimePicker
                   id="audit-filter-to"
-                  type="datetime-local"
                   value={draftFilters.to}
-                  onChange={(event) => {
+                  onChange={(value) => {
                     setActiveTimePreset(undefined);
                     setDraftFilters((current) => ({
                       ...current,
-                      to: event.target.value
+                      to: value
                     }));
                   }}
-                  aria-label={t('auditLog.filterTo')}
-                  className={pageSearchInputClassName('lg:w-full')}
+                  ariaLabel={t('auditLog.filterTo')}
+                  locale={i18n.resolvedLanguage}
+                  placeholder={t('auditLog.selectDateTime')}
+                  labels={dateTimePickerLabels}
+                  className="lg:w-full"
                 />
-              </label>
+              </div>
             </div>
           )}
         </form>

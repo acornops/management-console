@@ -83,6 +83,7 @@ describe('@acornops/ui public API', () => {
     expect(index).toContain("export * from './CloseButton';");
     expect(index).toContain("export * from './CompactControls';");
     expect(index).toContain("export * from './TextInput';");
+    expect(index).toContain("export * from './DateTimePicker';");
     expect(index).toContain("export * from './FileInput';");
     expect(index).not.toContain('ComponentVocabulary');
     expect(packageJson.exports).toHaveProperty('.');

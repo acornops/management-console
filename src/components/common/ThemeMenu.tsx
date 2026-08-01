@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Monitor, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +20,35 @@ export interface ThemeMenuProps {
 }
 
 const themePreferences: ThemePreference[] = ['system', 'light', 'dark'];
+const accountMenuWidth = 192;
+const accountMenuEstimatedHeight = 124;
+const floatingMenuGap = 8;
+const viewportPadding = 8;
+
+interface AccountThemeMenuPositionInput {
+  menuHeight: number;
+  trigger: Pick<DOMRect, 'bottom' | 'left' | 'right'>;
+  viewportHeight: number;
+  viewportWidth: number;
+}
+
+export function getAccountThemeMenuPosition({
+  menuHeight,
+  trigger,
+  viewportHeight,
+  viewportWidth
+}: AccountThemeMenuPositionInput): { left: number; top: number } {
+  const rightPlacement = trigger.right + floatingMenuGap;
+  const left = rightPlacement + accountMenuWidth <= viewportWidth - viewportPadding
+    ? rightPlacement
+    : Math.max(viewportPadding, trigger.left - floatingMenuGap - accountMenuWidth);
+  const maximumTop = Math.max(viewportPadding, viewportHeight - viewportPadding - menuHeight);
+
+  return {
+    left,
+    top: Math.min(Math.max(viewportPadding, trigger.bottom - menuHeight), maximumTop)
+  };
+}
 
 export function getThemeMenuFocusIndex(currentIndex: number, key: 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'): number {
   if (key === 'Home') return 0;
@@ -36,8 +66,11 @@ function preferenceIcon(preference: ThemePreference, className: string): React.R
 export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme, variant, onSelect }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [accountPortalHost, setAccountPortalHost] = React.useState<HTMLElement | null>(null);
+  const [accountMenuStyle, setAccountMenuStyle] = React.useState<React.CSSProperties | null>(null);
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const menuContainerRef = React.useRef<HTMLDivElement>(null);
   const selectedItemRef = React.useRef<HTMLButtonElement>(null);
   const menuId = React.useId();
   const selectedLabel = t(`app.theme${preference[0].toUpperCase()}${preference.slice(1)}`);
@@ -52,9 +85,9 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
   React.useEffect(() => {
     if (!isOpen) return;
     const handlePointerDown = (event: MouseEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
-        close();
-      }
+      const target = event.target as Node;
+      if (wrapperRef.current?.contains(target) || menuContainerRef.current?.contains(target)) return;
+      close();
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
@@ -70,12 +103,44 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
     };
   }, [close, isOpen]);
 
+  const updateAccountMenuPosition = React.useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const portalHost = trigger.closest<HTMLElement>('[data-sidebar-account="true"]');
+    if (!portalHost) return;
+    const position = getAccountThemeMenuPosition({
+      menuHeight: menuContainerRef.current?.offsetHeight || accountMenuEstimatedHeight,
+      trigger: trigger.getBoundingClientRect(),
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth
+    });
+    const portalHostBounds = portalHost.getBoundingClientRect();
+    setAccountPortalHost(portalHost);
+    setAccountMenuStyle({
+      left: position.left - portalHostBounds.left,
+      position: 'absolute',
+      top: position.top - portalHostBounds.top,
+      width: accountMenuWidth
+    });
+  }, []);
+
+  React.useLayoutEffect(() => {
+    if (!isOpen || variant !== 'account') return undefined;
+    updateAccountMenuPosition();
+    const frame = window.requestAnimationFrame(updateAccountMenuPosition);
+    window.addEventListener('resize', updateAccountMenuPosition);
+    document.addEventListener('scroll', updateAccountMenuPosition, true);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updateAccountMenuPosition);
+      document.removeEventListener('scroll', updateAccountMenuPosition, true);
+    };
+  }, [isOpen, updateAccountMenuPosition, variant]);
+
   const wrapperClass = variant === 'login' ? 'fixed right-4 top-4 z-[70]' : 'relative w-full';
   const menuPlacementClass =
     variant === 'login'
       ? 'fixed bottom-4 left-4 right-4 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2'
-      : variant === 'account'
-      ? 'bottom-0 left-full ml-2'
       : 'bottom-full right-0 mb-2';
   const triggerClass =
     variant === 'login'
@@ -83,6 +148,73 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
       : variant === 'account'
       ? 'group/theme flex h-auto min-h-10 w-full items-center justify-between gap-3 rounded-lg border-transparent bg-transparent px-3 py-2 text-left text-ui-text-muted shadow-none transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:h-auto sm:w-full'
       : 'type-ui flex min-h-11 w-full items-center justify-between rounded-md px-3 py-2 text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0';
+
+  const menu = (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          ref={menuContainerRef}
+          initial={{
+            opacity: 0,
+            x: variant === 'account' ? -4 : 0,
+            y: variant === 'account' ? 0 : variant === 'mobile' ? 4 : -4,
+            scale: 0.985
+          }}
+          animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+          exit={{
+            opacity: 0,
+            x: variant === 'account' ? -4 : 0,
+            y: variant === 'account' ? 0 : variant === 'mobile' ? 4 : -4,
+            scale: 0.99
+          }}
+          transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+          style={variant === 'account' ? accountMenuStyle ?? { visibility: 'hidden' } : undefined}
+          className={`${
+            variant === 'login' ? 'w-auto sm:w-48' : 'absolute w-48'
+          } z-[70] ${variant === 'account' ? '' : menuPlacementClass}`}
+        >
+          <MenuSurface
+            id={menuId}
+            label={t('app.themeMenuLabel')}
+            initialFocus={selectedItemRef}
+            onDismiss={close}
+            className={`w-full rounded-lg p-1.5 ${
+              variant === 'login' ? 'grid grid-cols-3 sm:block' : ''
+            }`}
+            data-resolved-theme={resolvedTheme}
+          >
+            {themePreferences.map((option) => {
+              const label = t(`app.theme${option[0].toUpperCase()}${option.slice(1)}`);
+              const isSelected = option === preference;
+              return (
+                <MenuItem
+                  key={option}
+                  ref={isSelected ? selectedItemRef : undefined}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={isSelected}
+                  tabIndex={isSelected ? 0 : -1}
+                  onClick={(event) => {
+                    onSelect(option, event.currentTarget);
+                    close(true);
+                  }}
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left type-ui transition-colors duration-[160ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:min-h-9 ${
+                    isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                  }`}
+                >
+                  <span className="flex h-5 w-5 items-center justify-center">{preferenceIcon(option, 'h-4 w-4')}</span>
+                  <span className="flex-1">{label}</span>
+                  <span className="flex h-4 w-4 items-center justify-center" aria-hidden="true">
+                    {isSelected && <Check className="h-3.5 w-3.5" />}
+                  </span>
+                </MenuItem>
+              );
+            })}
+          </MenuSurface>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   return (
     <div ref={wrapperRef} className={wrapperClass} data-theme-menu={variant}>
@@ -131,62 +263,7 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
         )}
       </MotionMenuTrigger>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: variant === 'mobile' ? 4 : -4,
-              scale: 0.985
-            }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: variant === 'mobile' ? 4 : -4, scale: 0.99 }}
-            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            className={`${
-              variant === 'login' ? 'w-auto sm:w-48' : 'absolute w-48'
-            } z-[70] ${menuPlacementClass}`}
-          >
-            <MenuSurface
-              id={menuId}
-              label={t('app.themeMenuLabel')}
-              initialFocus={selectedItemRef}
-              onDismiss={close}
-              className={`w-full rounded-lg border border-control-boundary bg-ui-surface p-1.5 text-ui-text shadow-xl ${
-                variant === 'login' ? 'grid grid-cols-3 sm:block' : ''
-              }`}
-              data-resolved-theme={resolvedTheme}
-            >
-              {themePreferences.map((option) => {
-                const label = t(`app.theme${option[0].toUpperCase()}${option.slice(1)}`);
-                const isSelected = option === preference;
-                return (
-                  <MenuItem
-                    key={option}
-                    ref={isSelected ? selectedItemRef : undefined}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={isSelected}
-                    tabIndex={isSelected ? 0 : -1}
-                    onClick={(event) => {
-                      onSelect(option, event.currentTarget);
-                      close(true);
-                    }}
-                    className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left type-ui transition-colors duration-[160ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:min-h-9 ${
-                      isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                    }`}
-                  >
-                    <span className="flex h-5 w-5 items-center justify-center">{preferenceIcon(option, 'h-4 w-4')}</span>
-                    <span className="flex-1">{label}</span>
-                    <span className="flex h-4 w-4 items-center justify-center" aria-hidden="true">
-                      {isSelected && <Check className="h-3.5 w-3.5" />}
-                    </span>
-                  </MenuItem>
-                );
-              })}
-            </MenuSurface>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {variant === 'account' ? (accountPortalHost ? createPortal(menu, accountPortalHost) : null) : menu}
     </div>
   );
 };

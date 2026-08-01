@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { getThemeMenuFocusIndex } from './ThemeMenu';
+import { getAccountThemeMenuPosition, getThemeMenuFocusIndex } from './ThemeMenu';
 
 const root = process.cwd();
 const themeMenu = readFileSync(resolve(root, 'src/components/common/ThemeMenu.tsx'), 'utf8');
@@ -21,6 +21,21 @@ describe('ThemeMenu', () => {
     expect(getThemeMenuFocusIndex(1, 'End')).toBe(2);
   });
 
+  it('places the account menu beside its trigger and flips only at the viewport edge', () => {
+    expect(getAccountThemeMenuPosition({
+      menuHeight: 124,
+      trigger: { bottom: 540, left: 100, right: 300 },
+      viewportHeight: 800,
+      viewportWidth: 1000
+    })).toEqual({ left: 308, top: 416 });
+    expect(getAccountThemeMenuPosition({
+      menuHeight: 124,
+      trigger: { bottom: 540, left: 800, right: 990 },
+      viewportHeight: 800,
+      viewportWidth: 1000
+    })).toEqual({ left: 600, top: 416 });
+  });
+
   it('uses radio-menu semantics, checked state, Escape handling, outside dismissal, and focus restoration', () => {
     expect(themeMenu).toContain('<MenuSurface');
     expect(themeMenu).toContain('<motion.div');
@@ -30,6 +45,7 @@ describe('ThemeMenu', () => {
     expect(themeMenu).toContain('initialFocus={selectedItemRef}');
     expect(themeMenu).toContain("event.key === 'Escape'");
     expect(themeMenu).toContain("document.addEventListener('mousedown', handlePointerDown)");
+    expect(themeMenu).toContain('createPortal(menu, accountPortalHost)');
     expect(themeMenu).toContain('triggerRef.current?.focus');
   });
 

@@ -17,6 +17,7 @@ import { IconTile } from '@acornops/ui';
 import { DialogFrame, DrawerFrame } from '@acornops/ui';
 import { DataSurface, PageBackLink, PageHeader, PageSection, PageShell, TableToolbar } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableFrame, DataTableHeader, DataTableHeaderCell, DataTableRow, DataTableStateRow } from '@acornops/ui';
+import { DateTimePicker } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import '@acornops/ui/fonts';
@@ -70,6 +71,7 @@ const Catalog = () => {
   const [dark, setDark] = React.useState(false);
   const [checked, setChecked] = React.useState(true);
   const [selected, setSelected] = React.useState('all');
+  const [dateTime, setDateTime] = React.useState('2026-08-01T20:43');
   const [catalogTab, setCatalogTab] = React.useState<CatalogTab>('overview');
   const [catalogFilter, setCatalogFilter] = React.useState<CatalogFilter>('all');
   const [searchOnlyQuery, setSearchOnlyQuery] = React.useState('cluster');
@@ -284,6 +286,10 @@ const Catalog = () => {
           <div>
             <FieldLabel>Shared select</FieldLabel>
             <Select<string> className="mt-2" value={selected} onChange={setSelected} ariaLabel="Inventory filter" options={[{ value: 'all', label: 'All targets' }, { value: 'healthy', label: 'Healthy' }, { value: 'attention', label: 'Needs attention' }]} />
+          </div>
+          <div>
+            <FieldLabel htmlFor="catalog-date-time">Date and time</FieldLabel>
+            <DateTimePicker id="catalog-date-time" ariaLabel="Date and time" value={dateTime} onChange={setDateTime} className="mt-2" />
           </div>
           <label className="flex min-h-11 items-center gap-3"><Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} /><span className="type-ui">Checkbox</span></label>
           <label className="flex min-h-11 items-center gap-3"><Radio name="catalog-radio" defaultChecked /><span className="type-ui">Radio</span></label>

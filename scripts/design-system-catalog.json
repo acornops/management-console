@@ -10,6 +10,7 @@
     "CompactControls": "SegmentedTabs",
     "DangerZone": "DangerZone",
     "DataTable": "DataTable",
+    "DateTimePicker": "DateTimePicker",
     "DestructiveConfirmationDialog": "DestructiveConfirmationDialog",
     "DiscoveryFilterBar": "DiscoveryFilterBar",
     "EmptyState": "EmptyState",

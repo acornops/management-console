@@ -21,6 +21,16 @@ export const zh = {
     filterResults: '筛选结果',
     resetFilters: '重置筛选',
     clearAll: '全部清除',
+    dateTimePicker: {
+      calendar: '日历',
+      clear: '清除',
+      done: '完成',
+      hour: '小时',
+      minute: '分钟',
+      nextMonth: '下个月',
+      now: '现在',
+      previousMonth: '上个月'
+    },
     on: '开启',
     off: '关闭',
     removeFilter: '移除{{filter}}筛选：{{value}}',
@@ -2574,6 +2584,7 @@ export const zh = {
     filterObjectType: '对象类型',
     filterFrom: '开始时间',
     filterTo: '结束时间',
+    selectDateTime: '选择日期和时间',
     applyFilters: '应用',
     clearFilters: '清除',
     categories: {

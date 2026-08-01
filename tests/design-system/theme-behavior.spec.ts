@@ -284,6 +284,34 @@ test('an authenticated Light profile stays light across restoration and returns 
   expect(new Set(accountActionStyles.map(({ fontSize }) => fontSize)).size).toBe(1);
   expect(new Set(accountActionStyles.map(({ fontWeight }) => fontWeight)).size).toBe(1);
   expect(new Set(accountActionStyles.map(({ lineHeight }) => lineHeight)).size).toBe(1);
+
+  await accountTheme.click();
+  const accountThemeMenu = page.getByRole('menu', { name: 'Theme preference' });
+  await expect(accountThemeMenu).toBeVisible();
+  const [accountMenuBounds, accountThemeBounds, themeMenuBounds] = await Promise.all([
+    accountMenu.boundingBox(),
+    accountTheme.boundingBox(),
+    accountThemeMenu.boundingBox()
+  ]);
+  expect(accountMenuBounds).not.toBeNull();
+  expect(accountThemeBounds).not.toBeNull();
+  expect(themeMenuBounds).not.toBeNull();
+  expect(themeMenuBounds!.x).toBeGreaterThan(accountThemeBounds!.x + accountThemeBounds!.width);
+  expect(Math.abs(
+    themeMenuBounds!.y + themeMenuBounds!.height - accountThemeBounds!.y - accountThemeBounds!.height
+  )).toBeLessThanOrEqual(2);
+  expect(themeMenuBounds!.x + themeMenuBounds!.width).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth - 8));
+  const [accountBorderColor, themeMenuBorderColor] = await Promise.all([
+    accountMenu.evaluate((element) => window.getComputedStyle(element).borderColor),
+    accountThemeMenu.evaluate((element) => window.getComputedStyle(element).borderColor)
+  ]);
+  expect(themeMenuBorderColor).toBe(accountBorderColor);
+  await expect.poll(() => accountMenu.evaluate((element) => element.scrollWidth)).toBe(
+    await accountMenu.evaluate((element) => element.clientWidth)
+  );
+  await page.keyboard.press('Escape');
+  await expect(accountThemeMenu).toBeHidden();
+
   await page.getByRole('button', { name: 'Logout' }).click();
 
   await expectResolvedTheme(page, 'dark');

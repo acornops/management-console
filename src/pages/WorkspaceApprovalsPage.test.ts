@@ -20,4 +20,9 @@ describe('WorkspaceApprovalsPage asynchronous isolation', () => {
     expect(page).toContain('const decisionScopeKey = scopeKey');
     expect(page).toContain('if (currentScopeKey.current !== decisionScopeKey) return');
   });
+
+  it('keeps terminal collection states inside the canonical data surface', () => {
+    expect(page).toContain("import { DataSurface } from '@acornops/ui'");
+    expect(page.match(/<DataSurface aria-label=\{t\('approvals\.queueTitle'\)\}>/g)).toHaveLength(3);
+  });
 });

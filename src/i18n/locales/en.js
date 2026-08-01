@@ -21,6 +21,16 @@ export const en = {
     filterResults: 'Filter results',
     resetFilters: 'Reset filters',
     clearAll: 'Clear all',
+    dateTimePicker: {
+      calendar: 'Calendar',
+      clear: 'Clear',
+      done: 'Done',
+      hour: 'Hour',
+      minute: 'Minute',
+      nextMonth: 'Next month',
+      now: 'Now',
+      previousMonth: 'Previous month'
+    },
     on: 'On',
     off: 'Off',
     removeFilter: 'Remove {{filter}} filter: {{value}}',
@@ -2574,6 +2584,7 @@ export const en = {
     filterObjectType: 'Object type',
     filterFrom: 'From',
     filterTo: 'To',
+    selectDateTime: 'Select date and time',
     applyFilters: 'Apply',
     clearFilters: 'Clear',
     categories: {

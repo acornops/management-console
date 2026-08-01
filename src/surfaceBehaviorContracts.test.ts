@@ -177,6 +177,8 @@ describe('surface behavior contracts', () => {
     expect(auditLogPage).toContain("const timePresetOptions: AuditTimePreset[] = ['today', 'last24h', 'past7d', 'past30d'];");
     expect(auditLogPage).toContain('<FilterToggleGroup');
     expect(auditLogPage).toContain('activeValue={activeTimePreset');
+    expect(auditLogPage).toContain('<DateTimePicker');
+    expect(auditLogPage).not.toContain('type="datetime-local"');
     expect(auditLogPage).toContain('applyNormalizedFilters(nextFilters);');
   });
 

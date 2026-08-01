@@ -35,6 +35,11 @@ tiles use the matching status-soft treatment. Icon actions must use `Button`
 with the `icon` or `dangerIcon` variant so hover, focus, disabled, and target
 behavior remain explicit.
 
+Use `DateTimePicker` when a product flow needs date-and-time selection. It
+keeps the calendar, time fields, focus treatment, keyboard navigation, and
+theme behavior inside the shared control vocabulary instead of exposing
+browser-specific `datetime-local` chrome.
+
 `EmptyState` uses one quiet presentation everywhere: a compact neutral icon
 tile, title, description, and optional supporting content. It does not add its
 own frame or accent treatment. The legacy `embedded` prop remains accepted for

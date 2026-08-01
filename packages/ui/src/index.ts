@@ -9,6 +9,7 @@ export * from './CollectionState';
 export * from './CompactControls';
 export * from './DangerZone';
 export * from './DataTable';
+export * from './DateTimePicker';
 export * from './DestructiveConfirmationDialog';
 export * from './Dialog';
 export * from './DiscoveryFilterBar';

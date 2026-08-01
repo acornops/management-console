@@ -5,6 +5,7 @@ import { Button } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { FilterToggleGroup, type CompactControlItem } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { DataSurface } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
@@ -216,19 +217,31 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
       <CollectionState
         phase={visibleApprovalPhase}
         itemCount={hasAnyApprovals ? visibleApprovalsByFilter.pending.length + visibleApprovalsByFilter.decided.length : 0}
-        loading={<InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />}
-        empty={<EmptyState
-          icon={<ICONS.CheckCircle2 />}
-          title={t(focusedApproval ? 'approvals.focusedEmptyTitle' : 'approvals.emptyTitle')}
-          description={t(focusedApproval ? 'approvals.focusedEmptyBody' : 'approvals.emptyBody')}
-        />}
-        error={<EmptyState
-          role="alert"
-          icon={<ICONS.AlertTriangle />}
-          title={t('approvals.loadError')}
-          description={visibleApprovalError}
-          actions={<Button variant="secondary" onClick={() => void loadApprovals()}>{t('common.retry', { defaultValue: 'Retry' })}</Button>}
-        />}
+        loading={(
+          <DataSurface aria-label={t('approvals.queueTitle')}>
+            <InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />
+          </DataSurface>
+        )}
+        empty={(
+          <DataSurface aria-label={t('approvals.queueTitle')}>
+            <EmptyState
+              icon={<ICONS.CheckCircle2 />}
+              title={t(focusedApproval ? 'approvals.focusedEmptyTitle' : 'approvals.emptyTitle')}
+              description={t(focusedApproval ? 'approvals.focusedEmptyBody' : 'approvals.emptyBody')}
+            />
+          </DataSurface>
+        )}
+        error={(
+          <DataSurface aria-label={t('approvals.queueTitle')}>
+            <EmptyState
+              role="alert"
+              icon={<ICONS.AlertTriangle />}
+              title={t('approvals.loadError')}
+              description={visibleApprovalError}
+              actions={<Button variant="secondary" onClick={() => void loadApprovals()}>{t('common.retry', { defaultValue: 'Retry' })}</Button>}
+            />
+          </DataSurface>
+        )}
         feedback={visibleApprovalError ? <InlineAlert tone="danger" className="mb-5">{visibleApprovalError}</InlineAlert> : <InlineLoadingIndicator label={t('common.loading')} className="mb-5" />}
         announcement={visibleApprovalPhase === 'ready' ? `${summary.waiting} ${t('approvals.filters.pending')}` : undefined}
       >
