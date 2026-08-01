@@ -44,7 +44,7 @@ test('cluster overview exposes coherent headings and accessible metric data', as
   await expect(page.getByRole('heading', { level: 2, name: 'CPU Usage' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Memory' })).toBeVisible();
 
-  const metricTables = page.locator('table.sr-only');
+  const metricTables = page.locator('.sr-only table');
   await expect(metricTables).toHaveCount(2);
   await expect(metricTables.nth(0).locator('caption')).toHaveText('CPU Usage data');
   await expect(metricTables.nth(0).locator('tbody tr')).toHaveCount(2);

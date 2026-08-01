@@ -52,21 +52,21 @@ test('Agent cards open route-backed Chat and can maximize to full Chat', async (
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
 
   const cardGrid = page.locator('[data-agent-card-grid="true"]');
-  await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(2);
+  await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(3);
   const agentCards = page.locator('[data-agent-card="true"]');
-  const [fullLayoutCardBox, secondFullLayoutCardBox, fullLayoutGridBox] = await Promise.all([
+  const [fullLayoutCardBox, thirdFullLayoutCardBox, fullLayoutGridBox] = await Promise.all([
     agentCards.first().boundingBox(),
-    agentCards.nth(1).boundingBox(),
+    agentCards.nth(2).boundingBox(),
     cardGrid.boundingBox()
   ]);
   expect(fullLayoutCardBox).not.toBeNull();
-  expect(secondFullLayoutCardBox).not.toBeNull();
+  expect(thirdFullLayoutCardBox).not.toBeNull();
   expect(fullLayoutGridBox).not.toBeNull();
-  if (!fullLayoutCardBox || !secondFullLayoutCardBox || !fullLayoutGridBox) {
-    throw new Error('The Agent grid and both cards must have full-layout boxes');
+  if (!fullLayoutCardBox || !thirdFullLayoutCardBox || !fullLayoutGridBox) {
+    throw new Error('The Agent grid and edge cards must have full-layout boxes');
   }
   expect(fullLayoutCardBox.x).toBeCloseTo(fullLayoutGridBox.x, 0);
-  expect(secondFullLayoutCardBox.x + secondFullLayoutCardBox.width).toBeCloseTo(
+  expect(thirdFullLayoutCardBox.x + thirdFullLayoutCardBox.width).toBeCloseTo(
     fullLayoutGridBox.x + fullLayoutGridBox.width,
     0
   );
@@ -83,19 +83,24 @@ test('Agent cards open route-backed Chat and can maximize to full Chat', async (
   await expect(panel.locator('header [data-agent-avatar="true"]')).toHaveText('☸️');
   await expect(panel.getByRole('heading', { name: 'Chat with Kubernetes Specialist' })).toBeVisible();
   await expect(panel.getByRole('separator', { name: 'Resize chat panel' })).toBeVisible();
-  await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(1);
-  const [dockedLayoutCardBox, dockedGridBox] = await Promise.all([
+  await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(2);
+  const [dockedLayoutCardBox, secondDockedLayoutCardBox, dockedGridBox] = await Promise.all([
     page.locator('[data-agent-card="true"]').first().boundingBox(),
+    page.locator('[data-agent-card="true"]').nth(1).boundingBox(),
     cardGrid.boundingBox()
   ]);
   expect(dockedLayoutCardBox).not.toBeNull();
+  expect(secondDockedLayoutCardBox).not.toBeNull();
   expect(dockedGridBox).not.toBeNull();
-  if (!dockedLayoutCardBox || !dockedGridBox) {
+  if (!dockedLayoutCardBox || !secondDockedLayoutCardBox || !dockedGridBox) {
     throw new Error('The Agent grid and cards must have layout boxes before and after Chat opens');
   }
   expect(dockedLayoutCardBox.width).toBeCloseTo(fullLayoutCardBox.width, 0);
   expect(Math.abs(dockedLayoutCardBox.x - dockedGridBox.x)).toBeLessThanOrEqual(1);
-  expect(dockedLayoutCardBox.width).toBeCloseTo(dockedGridBox.width, 0);
+  expect(secondDockedLayoutCardBox.x + secondDockedLayoutCardBox.width).toBeCloseTo(
+    dockedGridBox.x + dockedGridBox.width,
+    0
+  );
 
   const [mainBox, panelBox] = await Promise.all([main.boundingBox(), panel.boundingBox()]);
   expect(mainBox).not.toBeNull();
@@ -123,7 +128,7 @@ test('Agent cards open route-backed Chat and can maximize to full Chat', async (
 
   await panel.getByRole('button', { name: 'Close' }).click();
   await expect(panel).toHaveCount(0);
-  await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(2);
+  await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(3);
 
   await page.setViewportSize({ width: 1850, height: 1000 });
   await card.getByRole('button', { name: 'Chat with Kubernetes Specialist' }).click();
@@ -302,7 +307,7 @@ test('Agent tools use the dedicated stable route without nested capability navig
   await expect(page.getByRole('heading', { level: 1, name: 'Tools' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Agent capability sections' })).toHaveCount(0);
   await expect(page.getByRole('heading', { level: 2, name: 'Tool inventory' })).toBeVisible();
-  await expect(page.getByRole('table', { name: 'Tools' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'No built-in tools are available.' })).toBeVisible();
 });
 
 test('Agent detail stays within a narrow viewport in light and dark themes', async ({ browser }) => {
