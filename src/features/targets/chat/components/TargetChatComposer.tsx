@@ -232,7 +232,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               rows={1}
               className={`${
                 isPanel ? 'min-h-9 type-body' : 'min-h-10 type-body'
-              } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60`}
+              } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 text-ui-text shadow-none outline-none placeholder:text-ui-text-muted/60 hover:bg-transparent focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60`}
               role="combobox"
               aria-label={t('chat.composerInputLabel', { name: subject.name })}
               aria-controls={referenceMenuId}
