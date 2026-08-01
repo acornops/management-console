@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { WorkspaceCapability, WorkspaceRoleCapabilityGroupKey, WorkspaceRoleTemplate } from '@/types';
 import { formatRole } from './memberUtils';
-import { Button } from '@acornops/ui';
+import { Button, IconTile } from '@acornops/ui';
 
 interface RoleTemplatePreviewProps {
   roleTemplate?: WorkspaceRoleTemplate;
@@ -62,9 +62,9 @@ export const RoleTemplatePreview: React.FC<RoleTemplatePreviewProps> = ({ roleTe
   return (
     <section className={clsx('rounded-lg border border-ui-border bg-ui-bg px-4 py-4', className)} aria-label={t('members.rolePreviewTitle')}>
       <div className="flex min-w-0 items-start gap-3">
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ui-surface text-accent-strong">
+        <IconTile size="xs" tone="accent" className="mt-0.5">
           <Shield className="h-4 w-4" aria-hidden="true" />
-        </div>
+        </IconTile>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h4 className="type-row-title min-w-0 break-words text-ui-text">{formatRole(roleTemplate.key, roleTemplate)}</h4>

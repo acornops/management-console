@@ -2,10 +2,9 @@ import React from 'react';
 import { Loader2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, ComboboxListbox, ComboboxOption, InlineAlert } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
-import { menuOptionClassName, menuSurfaceClassName } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 
@@ -239,11 +238,11 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
       </div>
 
       <div className="space-y-4 overflow-y-auto p-6 custom-scrollbar">
-        <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 type-caption type-emphasis leading-5 text-status-warning-text">
+        <InlineAlert tone="warning" className="type-emphasis leading-5">
           {t('clusterSetup.namespaceScopeApplyHelp')}
-        </div>
+        </InlineAlert>
         {errorMessage && (
-          <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-caption type-emphasis leading-5 text-status-danger-text">{errorMessage}</div>
+          <InlineAlert tone="danger" className="type-emphasis leading-5">{errorMessage}</InlineAlert>
         )}
 
         <div className="relative space-y-1.5" onBlur={(event) => handleFieldBlur(event, 'include')}>
@@ -295,32 +294,26 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
             {t('clusterSetup.namespaceScopeIncludeHelp')}
           </p>
           {includeListOpen && (
-            <div id="namespace-scope-include-suggestions" role="listbox" className={menuSurfaceClassName('absolute z-20 mt-2 max-h-48 w-full p-1')}>
+            <ComboboxListbox id="namespace-scope-include-suggestions" label={t('clusterSetup.includeNamespaces')} className="absolute z-20 mt-2 max-h-48 w-full p-1">
               {includeSuggestions.length > 0 ? (
                 includeSuggestions.map((namespace, index) => (
-                  <Button
+                  <ComboboxOption
                     key={namespace}
                     id={`namespace-scope-include-option-${index}`}
-                    type="button"
-                    variant="tertiary"
-                    role="option"
-                    aria-selected={index === includeHighlightedIndex}
+                    active={index === includeHighlightedIndex}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => addTokens('include', [namespace])}
-                    className={menuOptionClassName({
-                      active: index === includeHighlightedIndex,
-                      className: 'block rounded-sm'
-                    })}
+                    className="block rounded-sm"
                   >
                     {namespace}
-                  </Button>
+                  </ComboboxOption>
                 ))
               ) : (
                 <div className="px-3 py-2 type-caption type-emphasis text-ui-text-muted" role="status">
                   {t('clusterSetup.namespaceScopeAutocompleteEmpty')}
                 </div>
               )}
-            </div>
+            </ComboboxListbox>
           )}
         </div>
 
@@ -373,32 +366,26 @@ export const NamespaceScopeDialog: React.FC<NamespaceScopeDialogProps> = ({ clus
             {t('clusterSetup.namespaceScopeExcludeHelp')}
           </p>
           {excludeListOpen && (
-            <div id="namespace-scope-exclude-suggestions" role="listbox" className={menuSurfaceClassName('absolute z-20 mt-2 max-h-48 w-full p-1')}>
+            <ComboboxListbox id="namespace-scope-exclude-suggestions" label={t('clusterSetup.excludeNamespaces')} className="absolute z-20 mt-2 max-h-48 w-full p-1">
               {excludeSuggestions.length > 0 ? (
                 excludeSuggestions.map((namespace, index) => (
-                  <Button
+                  <ComboboxOption
                     key={namespace}
                     id={`namespace-scope-exclude-option-${index}`}
-                    type="button"
-                    variant="tertiary"
-                    role="option"
-                    aria-selected={index === excludeHighlightedIndex}
+                    active={index === excludeHighlightedIndex}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => addTokens('exclude', [namespace])}
-                    className={menuOptionClassName({
-                      active: index === excludeHighlightedIndex,
-                      className: 'block rounded-sm'
-                    })}
+                    className="block rounded-sm"
                   >
                     {namespace}
-                  </Button>
+                  </ComboboxOption>
                 ))
               ) : (
                 <div className="px-3 py-2 type-caption type-emphasis text-ui-text-muted" role="status">
                   {t('clusterSetup.namespaceScopeAutocompleteEmpty')}
                 </div>
               )}
-            </div>
+            </ComboboxListbox>
           )}
         </div>
       </div>

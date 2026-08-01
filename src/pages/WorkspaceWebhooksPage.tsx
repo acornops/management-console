@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import { DestructiveConfirmationDialog } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
@@ -280,17 +281,17 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
       />
 
       {workspaceStateCurrent && mutationError && !deleteTargetWebhook && (
-        <div role="alert" className="mb-5 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-body type-emphasis text-status-danger-text">
+        <InlineAlert tone="danger" className="mb-5 type-body type-emphasis">
           {mutationError}
-        </div>
+        </InlineAlert>
       )}
 
       {!canManageWebhooks && (
         <section className="mb-5 rounded-lg border border-ui-border bg-ui-surface p-4">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-ui-text-muted">
+            <IconTile>
               <ICONS.Lock className="h-5 w-5" aria-hidden="true" />
-            </div>
+            </IconTile>
             <div>
               <h2 className="type-row-title">{t('workspaceWebhooks.readOnlyTitle')}</h2>
               <p className="mt-1 max-w-2xl type-body leading-6 text-ui-text-muted">{t('workspaceWebhooks.readOnlyDescription')}</p>

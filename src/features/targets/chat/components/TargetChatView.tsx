@@ -32,7 +32,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   currentUserId = '',
   target,
   headerLeading, automaticInvestigationsEnabled = true, capabilityPreviewEnabled = true,
-  titleKey,
+  title: titleOverride, titleKey,
   descriptionKey,
   promptTitleKey,
   promptBodyKey,
@@ -170,7 +170,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const isPanel = displayMode === 'panel';
   const activeSession = sessions.find((session) => session.id === activeSessionId) || null;
   const resolvedTitleKey = titleKey || 'chat.triageConsole';
-  const title = activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey);
+  const title = titleOverride ?? (activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey));
   const isHydratingExistingConversation = Boolean(activeSession?.backendSessionId && activeSession.hydrated === false && visibleMessages.length === 0);
   const hasConversationLoadError = Boolean(activeSession?.backendSessionId && activeSession.messagesLoadFailed && visibleMessages.length === 0);
   const isLoadingInitialConversation = !activeSession && isSessionsLoading;

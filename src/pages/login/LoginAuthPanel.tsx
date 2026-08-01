@@ -6,7 +6,7 @@ import { EmailField, ErrorMessage, NoticeCard, OidcLoginButton, PasswordField, S
 import { LoginPasswordAuthForm } from '@/pages/login/LoginPasswordAuthForm';
 import { isPlausibleAuthEmailToken, isValidEmailAddress, routeToken } from '@/pages/login/loginAuthPanelState';
 import type { AuthMode, LoginAuthPanelProps, PasswordResetRequestState, PendingVerificationState, ResetLinkState, VerifyLinkState } from '@/pages/login/loginAuthPanelState';
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 
 export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled, passwordSignupEnabled, passwordResetEnabled, sessionNotice, onLogin, onPasswordLogin, onPasswordSignup, onVerifyEmail, onResendVerification, onRequestPasswordReset, onResetPassword }: LoginAuthPanelProps) {
   const { t } = useTranslation();
@@ -509,9 +509,9 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
     <div className="relative overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
       <div className="p-5 sm:p-8">
         {sessionNotice && (
-          <div role="status" className="mb-5 rounded-md border border-status-warning/30 bg-status-warning-soft px-4 py-3 type-body type-emphasis text-status-warning-text">
+          <InlineAlert tone="warning" className="mb-5 type-body type-emphasis">
             {sessionNotice}
-          </div>
+          </InlineAlert>
         )}
         <h1 className="type-route-title mb-2 text-center text-ui-text">{mode === 'signup' && canSignup ? t('login.createAccount') : mode === 'forgot' ? t('login.forgotPasswordTitle') : mode === 'reset' ? t('login.resetPasswordTitle') : t('login.welcomeBack')}</h1>
         {loginSubtitle && <p className="mb-8 text-center type-ui leading-6 text-ui-text-muted">{loginSubtitle}</p>}

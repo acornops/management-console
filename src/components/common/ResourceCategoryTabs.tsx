@@ -1,15 +1,12 @@
-import { clsx } from 'clsx';
-import React, { useRef } from 'react';
-import { LayoutGroup } from 'framer-motion';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { twMerge } from 'tailwind-merge';
-import { ActiveTabIndicator } from '@acornops/ui';
-import { Button } from '@acornops/ui';
+import { SegmentedTabs } from '@acornops/ui';
 
 export interface ResourceCategoryTabModel<T extends string> {
   value: T;
   label: string;
   count?: number;
+  controlsId?: string;
   isActive: boolean;
 }
 
@@ -19,6 +16,7 @@ export function getResourceCategoryTabModel<T extends string>({
   counts,
   labelPrefix,
   getLabel,
+  controlsId,
   translate
 }: {
   categories: ReadonlyArray<T>;
@@ -26,12 +24,14 @@ export function getResourceCategoryTabModel<T extends string>({
   counts?: Partial<Record<T, number>>;
   labelPrefix: string;
   getLabel?: (category: T) => string;
+  controlsId?: string | ((category: T) => string);
   translate: (key: string) => string;
 }): Array<ResourceCategoryTabModel<T>> {
   return categories.map((category) => ({
     value: category,
     label: getLabel ? getLabel(category) : translate(`${labelPrefix}.${category}`),
     count: counts?.[category],
+    controlsId: typeof controlsId === 'function' ? controlsId(category) : controlsId,
     isActive: active === category
   }));
 }
@@ -57,94 +57,28 @@ export const ResourceCategoryTabs = <T extends string>({
   className?: string;
   ariaLabel?: string;
   idBase: string;
-  controlsId: string;
+  controlsId: string | ((category: T) => string);
 }) => {
   const { t } = useTranslation();
-  const layoutGroupId = React.useId();
   const tabs = getResourceCategoryTabModel({
     categories,
     active,
     counts,
     labelPrefix,
     getLabel,
+    controlsId,
     translate: (key) => t(key)
   });
-  const tabLayoutSignature = tabs.map((tab) => `${tab.value}:${tab.label}:${tab.count ?? ''}`).join('|');
-  const tabListRef = useRef<HTMLDivElement | null>(null);
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  React.useLayoutEffect(() => {
-    const tabList = tabListRef.current;
-    const activeIndex = tabs.findIndex((tab) => tab.isActive);
-    const activeTab = tabRefs.current[activeIndex];
-    if (!tabList || !activeTab) return;
-
-    const listRect = tabList.getBoundingClientRect();
-    const activeRect = activeTab.getBoundingClientRect();
-    const edgeInset = 1;
-    if (activeRect.left < listRect.left + edgeInset) {
-      tabList.scrollLeft -= listRect.left + edgeInset - activeRect.left;
-    } else if (activeRect.right > listRect.right - edgeInset) {
-      tabList.scrollLeft += activeRect.right - listRect.right + edgeInset;
-    }
-  }, [active, tabLayoutSignature]);
-  const focusTab = (index: number) => {
-    const nextTab = tabs[index];
-    if (!nextTab) return;
-    onSelect(nextTab.value);
-    tabRefs.current[index]?.focus();
-  };
-  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
-    if (event.key === 'ArrowRight') {
-      event.preventDefault();
-      focusTab((index + 1) % tabs.length);
-    } else if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      focusTab((index - 1 + tabs.length) % tabs.length);
-    } else if (event.key === 'Home') {
-      event.preventDefault();
-      focusTab(0);
-    } else if (event.key === 'End') {
-      event.preventDefault();
-      focusTab(tabs.length - 1);
-    }
-  };
 
   return (
-    <LayoutGroup id={layoutGroupId}>
-      <div
-        ref={tabListRef}
-        role="tablist"
-        aria-label={ariaLabel}
-        className={twMerge(clsx('no-scrollbar flex w-full max-w-full shrink-0 items-center overflow-x-auto border-b border-ui-border', className))}
-      >
-        {tabs.map((tab, index) => (
-          <Button
-            key={tab.value}
-            ref={(element) => {
-              tabRefs.current[index] = element;
-            }}
-            type="button"
-            variant="tertiary"
-            role="tab"
-            id={`${idBase}-${tab.value}-tab`}
-            aria-controls={controlsId}
-            aria-selected={tab.isActive}
-            tabIndex={tab.isActive ? 0 : -1}
-            onClick={() => onSelect(tab.value)}
-            onKeyDown={(event) => handleTabKeyDown(event, index)}
-            className={twMerge(
-              clsx(
-                'relative inline-flex min-h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap border-b-2 px-4 type-ui text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25',
-                tab.isActive ? 'border-transparent text-ui-text' : 'border-transparent hover:text-ui-text'
-              )
-            )}
-          >
-            <span>{tab.label}</span>
-            {typeof tab.count === 'number' && <span className="type-count">{tab.count}</span>}
-            {tab.isActive && <ActiveTabIndicator />}
-          </Button>
-        ))}
-      </div>
-    </LayoutGroup>
+    <SegmentedTabs
+      activeValue={active}
+      allPanelsMounted={false}
+      ariaLabel={ariaLabel ?? labelPrefix}
+      className={className}
+      idBase={idBase}
+      items={tabs}
+      onValueChange={onSelect}
+    />
   );
 };

@@ -19,8 +19,12 @@ not drift.
 - Utilities contains Workspace Settings and Help and is visually separated from
   governance.
 - Account controls remain pinned outside the independently scrolling navigation.
-- Navigation overflow remains available to wheel, touch, and keyboard input, but
-  desktop and mobile navigation do not display scrollbar chrome.
+- At desktop viewport heights of `820px` or less, every permitted destination
+  remains visible while row gaps, group padding, and pinned shell padding become
+  denser. Destination rows and icons retain their standard sizes.
+- Navigation overflow remains available to wheel, touch, and keyboard input as
+  an extreme-height fallback, but desktop and mobile navigation do not display
+  scrollbar chrome.
 
 ## Route and Link Rules
 
@@ -61,6 +65,13 @@ Desktop destination rows are 40px; mobile targets are at least 44px. Icons are
 18px with 12px between icon and label. Active rows use a quiet tonal surface,
 ink-weight label, and orange icon. Hover is warm neutral; the orange ring is for
 keyboard focus.
+
+Short desktop viewports keep the same row and icon sizes while reducing the
+inter-row cadence from `44px` to `42px` and tightening group and shell spacing.
+Section titles use `12px` before and `8px` after spacing, separating them from
+the preceding group while keeping them associated with the destinations below.
+No destination moves behind a disclosure solely because viewport height is
+constrained.
 
 State changes use a 160ms color transition. Sidebar width and drawer transforms
 use 160–200ms with the ease-out-quint curve. Reduced-motion users receive

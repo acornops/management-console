@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import { Bot, LoaderCircle, Settings } from 'lucide-react';
 import { Button } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import type { AiRuntimeReadinessStatus } from '@/features/ai/aiRuntimeReadiness';
 
 interface TargetAssistantReadinessStateProps {
@@ -57,9 +58,9 @@ export const TargetAssistantReadinessState: React.FC<TargetAssistantReadinessSta
         aria-busy={isLoading || undefined}
       >
         <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted [&_svg]:h-4 [&_svg]:w-4" aria-hidden="true">
+          <IconTile>
             {icon}
-          </span>
+          </IconTile>
           <div className="min-w-0 flex-1">
             <h2 className="type-row-title text-ui-text">{title}</h2>
             <p className="type-caption mt-1 max-w-[72ch] text-ui-text-muted">{description}</p>

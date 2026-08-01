@@ -111,7 +111,8 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('type-body mt-2 max-w-2xl');
     expect(chatView).toContain('t(resolvedDescriptionKey, { name: target.name })');
     expect(chatView).toContain("const resolvedTitleKey = titleKey || 'chat.triageConsole';");
-    expect(chatView).toContain('const title = activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey);');
+    expect(chatView).toContain('title: titleOverride');
+    expect(chatView).toContain('const title = titleOverride ?? (activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey));');
     expect(chatView).toContain('automaticInvestigationsEnabled = true');
     expect(chatView).toContain('automaticInvestigationsEnabled={automaticInvestigationsEnabled}');
     expect(chatView).toContain('<TargetChatHistoryRail');
@@ -460,7 +461,7 @@ describe('target chat polish contracts', () => {
     expect(generatedReportCard).toContain("t('chat.generatedIncidentReport')");
     expect(generatedReportCard).toContain("t('chat.downloadPdf')");
     expect(generatedReportCard).toContain('getControlPlaneUrl(report.downloadUrl).toString()');
-    expect(generatedReportCard).toContain('role="alert"');
+    expect(generatedReportCard).toContain('<InlineAlert tone="danger"');
     expect(generatedReportCard).not.toContain('setTraceExpanded');
     expect(enLocale).toContain("generatedIncidentReport: 'Generated incident report'");
     expect(zhLocale).toContain("generatedIncidentReport: '已生成事件报告'");

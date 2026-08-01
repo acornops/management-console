@@ -4,6 +4,7 @@ import { handleAppLinkClick } from '@/app/workspaceNavigation';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import { PageBackLink, PageHeader, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
@@ -49,9 +50,9 @@ const SettingRow: React.FC<{
 }> = ({ icon: Icon, label, description, action }) => (
   <div className="flex flex-col gap-4 border-b border-ui-border p-6 transition-colors last:border-0 hover:bg-ui-bg/20 sm:flex-row sm:items-center sm:justify-between">
     <div className="flex w-full min-w-0 items-center gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong shadow-sm">
+      <IconTile>
         <Icon className="h-5 w-5" />
-      </div>
+      </IconTile>
       <div className="min-w-0">
         <p className="mb-0.5 type-row-title">{label}</p>
         <p className="break-words type-caption text-ui-text-muted">{description}</p>

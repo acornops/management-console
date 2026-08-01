@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { SegmentedTabs } from '@acornops/ui';
 import { InlineConfirmation } from '@acornops/ui';
@@ -49,14 +49,14 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
       </div>
 
       {error && (
-        <div role="alert" className="rounded-md border border-status-danger/30 bg-status-danger-soft px-3 py-2 type-body text-status-danger-text">
+        <InlineAlert tone="danger" className="px-3 py-2 type-body">
           {error}
-        </div>
+        </InlineAlert>
       )}
       {notice && (
-        <div role="status" className="rounded-md border border-status-success/30 bg-status-success-soft px-3 py-2 type-body text-status-success-text">
+        <InlineAlert tone="success" className="px-3 py-2 type-body">
           {notice}
-        </div>
+        </InlineAlert>
       )}
 
       {activeTab === 'mcp' && (

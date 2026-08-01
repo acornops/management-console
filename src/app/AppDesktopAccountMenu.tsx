@@ -60,7 +60,7 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
   }, [close, isOpen]);
 
   return (
-    <div className={`relative z-50 border-t border-ui-border bg-ui-surface ${collapsed ? 'px-3 pb-3 pt-3' : 'p-4'}`} ref={menuRef}>
+    <div data-sidebar-account="true" className={`relative z-50 border-t border-ui-border bg-ui-surface ${collapsed ? 'px-3 pb-3 pt-3' : 'p-4'}`} ref={menuRef}>
       <div className="relative">
         <Tooltip content={t('app.accountSettings')} side="right" disabled={!collapsed} className="w-full">
           <MotionButton
@@ -133,7 +133,7 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
                   <span>{t('app.accountSettings')}</span>
                 </MotionButton>
                 <ThemeMenu preference={themePreference} resolvedTheme={resolvedTheme} variant="account" onSelect={onSelectTheme} />
-                <MotionButton type="button" variant="tertiary" size="md" whileTap={{ scale: 0.98 }} onClick={() => { close(); onLogout(); }} className="control-target type-ui flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2 text-left text-status-danger-text transition-colors duration-[160ms] hover:bg-status-danger-soft motion-reduce:duration-0 sm:min-h-10">
+                <MotionButton type="button" variant="tertiary" size="md" whileTap={{ scale: 0.98 }} onClick={() => { close(); onLogout(); }} className="control-target type-ui flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2 text-left text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text motion-reduce:duration-0 sm:min-h-10">
                   <ICONS.LogOut className="h-4 w-4 shrink-0" />
                   <span>{t('app.logout')}</span>
                 </MotionButton>

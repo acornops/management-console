@@ -1,5 +1,6 @@
 import { AlertCircle, BotMessageSquare, MessageSquare } from 'lucide-react';
 import { Button } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 
 interface ChatEmptyPromptProps {
   isPanel: boolean;
@@ -15,9 +16,9 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
     <div className={`mx-auto ${isPanel ? 'max-w-3xl pt-2' : 'flex max-w-3xl flex-col justify-center pt-4 lg:min-h-[28rem] lg:pt-0'}`}>
       <div className="border-y border-ui-border/70 py-5">
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-ui-border bg-ui-bg text-ui-text-muted shadow-sm">
+          <IconTile>
             <BotMessageSquare className="h-5 w-5" />
-          </div>
+          </IconTile>
           <div className="min-w-0">
             <h2 className={`type-section-title ${isPanel ? '' : ''} text-ui-text`}>{title}</h2>
             <p className={`${isPanel ? 'mt-2 type-body' : 'mt-2 max-w-2xl type-body'} leading-6 text-ui-text-muted`}>{body}</p>
@@ -32,7 +33,7 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
             variant="secondary"
             onClick={() => void onSendSuggestion(suggestion.label)}
             disabled={!canSendSuggestion}
-            className="control-target group flex min-h-14 items-start gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-left type-ui text-ui-text transition-colors hover:border-ui-text-muted/40 hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="control-target group flex min-h-14 items-start gap-3 rounded-lg px-4 py-3 text-left"
           >
             <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" />
             <span className="min-w-0 break-words">{suggestion.label}</span>

@@ -44,6 +44,8 @@ const preset = {
           'rgb(var(--ao-control-secondary-hover-rgb) / <alpha-value>)',
         'control-secondary-fg':
           'rgb(var(--ao-control-secondary-fg-rgb) / <alpha-value>)',
+        'control-secondary-boundary':
+          'rgb(var(--ao-control-secondary-boundary-rgb) / <alpha-value>)',
         'control-activation':
           'rgb(var(--ao-control-activation-bg-rgb) / <alpha-value>)',
         'control-activation-hover':

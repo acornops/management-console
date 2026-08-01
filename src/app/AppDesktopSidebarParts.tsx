@@ -4,6 +4,7 @@ import {
   NavigationItem,
   NavigationLink,
   NavigationSection,
+  IconTile,
   Tooltip
 } from '@acornops/ui';
 
@@ -31,6 +32,8 @@ export const SidebarSection: React.FC<{
   collapsed?: boolean;
 }> = ({ title, badge, children, compactAfter = false, collapsed = false }) => (
   <NavigationSection
+    data-sidebar-section="true"
+    data-sidebar-section-titled={title && !collapsed ? 'true' : undefined}
     title={title}
     badge={badge ? <ExperimentalBadge>{badge}</ExperimentalBadge> : undefined}
     compactAfter={compactAfter}
@@ -43,7 +46,7 @@ export const SidebarSection: React.FC<{
 );
 
 export const TargetSettingsDivider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="border-t border-ui-border px-3 pb-5 pt-3">
+  <div data-sidebar-settings-divider="true" className="border-t border-ui-border px-3 pb-5 pt-3">
     <div className="space-y-0.5">{children}</div>
   </div>
 );
@@ -70,15 +73,20 @@ export const SidebarTargetIdentity: React.FC<{
       aria-label={collapsed ? `${label}: ${name}` : undefined}
     >
       <div className={collapsed ? 'sr-only' : 'type-micro-label mb-1'}>{label}</div>
-      <div
-        data-desktop-sidebar-active-identity={testId}
-        data-rail-align={collapsed ? 'true' : undefined}
-        className={collapsed
-          ? 'flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-bg type-caption type-emphasis text-ui-text'
-          : 'type-row-title line-clamp-2 break-words'}
-      >
-        {collapsed ? identityInitials(name) : name}
-      </div>
+      {collapsed ? (
+        <IconTile
+          size="xs"
+          data-desktop-sidebar-active-identity={testId}
+          data-rail-align="true"
+          className="type-caption type-emphasis text-ui-text"
+        >
+          {identityInitials(name)}
+        </IconTile>
+      ) : (
+        <div data-desktop-sidebar-active-identity={testId} className="type-row-title line-clamp-2 break-words">
+          {name}
+        </div>
+      )}
     </div>
   );
 

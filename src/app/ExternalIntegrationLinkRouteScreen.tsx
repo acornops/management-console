@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { MiniProgressBar } from '@acornops/ui';
 import {
@@ -139,9 +140,9 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
       <section className="flex w-full max-w-md flex-col items-center gap-6 text-center">
         <img src={logoSrc} className="h-12 w-12" alt="AcornOps" />
         <div className="space-y-3">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-ui-border bg-ui-surface text-accent-strong">
+          <IconTile size="lg" tone="accent" className="mx-auto rounded-full">
             <Link2 aria-hidden="true" className="h-5 w-5" />
-          </div>
+          </IconTile>
           <h1 className="type-route-title text-ui-text">
             {preview
               ? t('externalIntegrationLink.approvalTitleNamed', { name: preview.clientDisplayName })

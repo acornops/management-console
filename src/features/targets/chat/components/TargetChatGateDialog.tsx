@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import type { ChatSession } from '@/types';
 
 interface TargetChatGateDialogProps {
@@ -47,9 +48,9 @@ export const TargetChatGateDialog: React.FC<TargetChatGateDialogProps> = ({
       className={`${isPanel ? 'max-w-sm' : 'max-w-md'} w-full rounded-lg border border-ui-border bg-ui-surface p-5 text-ui-text shadow-2xl shadow-ui-text/15 outline-none`}
     >
         <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-ui-text-muted">
+          <IconTile tone="warning">
             <AlertTriangle className="h-5 w-5" />
-          </span>
+          </IconTile>
           <div className="min-w-0">
             <h2 id={dialogTitleId} className="type-panel-title text-ui-text">
               {title}

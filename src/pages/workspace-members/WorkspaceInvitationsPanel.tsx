@@ -127,7 +127,6 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
             size="sm"
             onClick={onLoadMoreInvitations}
             disabled={isLoadingMoreInvitations}
-            className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
@@ -157,7 +156,6 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               size="sm"
               aria-expanded={shouldShowInvitations}
               onClick={() => setIsExpanded((expanded) => !expanded)}
-              className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
             >
               {shouldShowInvitations ? t('members.hideInvitations') : t('members.showInvitations')}
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${shouldShowInvitations ? 'rotate-180' : ''}`} aria-hidden="true" />
@@ -194,7 +192,6 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                         variant="secondary"
                         size="sm"
                         onClick={() => void copyExistingInviteLink(invitation)}
-                        className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
                       >
                         {copiedInvitationId === invitation.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                         {copiedInvitationId === invitation.id ? t('members.copied') : t('members.copy')}
@@ -207,7 +204,6 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                         size="sm"
                         onClick={() => void recreateInvitation(invitation)}
                         disabled={recreatingInvitationId === invitation.id}
-                        className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {recreatingInvitationId === invitation.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
                         {recreatingInvitationId === invitation.id ? t('members.recreatingInvite') : t('members.recreateInvite')}
@@ -235,7 +231,6 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                     size="sm"
                     onClick={onLoadMoreInvitations}
                     disabled={isLoadingMoreInvitations}
-                    className="control-target type-ui inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoadingMoreInvitations && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     {isLoadingMoreInvitations ? t('members.loadingInvitations') : t('members.loadMoreInvitations')}
@@ -296,7 +291,6 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                     type="button"
                     variant="secondary"
                     onClick={() => void copyReplacementInviteLink()}
-                    className="type-ui inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text transition-colors hover:bg-ui-bg"
                   >
                     {copiedReplacementInviteId === createdReplacementInvite.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     {copiedReplacementInviteId === createdReplacementInvite.id ? t('members.copied') : t('members.copy')}
@@ -323,7 +317,6 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               variant="secondary"
               size="sm"
               onClick={closeReplacementInviteDialog}
-              className="control-target type-ui inline-flex items-center justify-center rounded-lg border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
             >
               {t('members.close')}
             </Button>

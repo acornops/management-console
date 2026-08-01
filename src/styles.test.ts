@@ -9,6 +9,7 @@ import {
   chatView,
   clusterOverviewView,
   clusterSettingsView,
+  compactControls,
   contrastRatio,
   darkTheme,
   dashboardPage,
@@ -370,20 +371,19 @@ describe('theme color contract', () => {
   it('keeps workload filter controls compact and aligned', () => {
     expect(resourceExplorerControls).toContain('data-resource-search-filter-bar="true"');
     expect(resourceExplorerControls).toContain('id="resource-search"');
-    expect(resourceCategoryTabs).toContain('role="tablist"');
-    expect(resourceCategoryTabs).toContain('role="tab"');
-    expect(resourceCategoryTabs).toContain('aria-selected={tab.isActive}');
+    expect(resourceCategoryTabs).toContain('<SegmentedTabs');
+    expect(resourceCategoryTabs).toContain('items={tabs}');
+    expect(resourceCategoryTabs).toContain('controlsId');
     expect(resourceCategoryTabs).not.toContain('aria-pressed');
     expect(resourceCategoryTabs).not.toContain('attentionCounts');
     expect(resourceCategoryTabs).not.toContain('reservesAttentionSlot');
     expect(resourceCategoryTabs).not.toContain('min-w-[4.5rem]');
-    expect(resourceCategoryTabs).toContain('tabIndex={tab.isActive ? 0 : -1}');
-    expect(resourceCategoryTabs).toContain("event.key === 'ArrowRight'");
+    expect(compactControls).toContain('tabIndex={tab.isActive ? 0 : -1}');
+    expect(compactControls).toContain("event.key === 'ArrowRight'");
     expect(workloadsExplorer).toContain('<ResourceCategoryTabs<ResourceFamily>');
     expect(workloadsExplorer).toContain('labelPrefix="resources.families"');
     expect(resourceCategoryTabs).not.toContain('min-w-[8.5rem]');
-    expect(resourceCategoryTabs).toContain('whitespace-nowrap');
-    expect(resourceCategoryTabs).toContain('border-b-2');
+    expect(compactControls).toContain('border-b-2');
     expect(resourceExplorerControls).not.toContain('rounded-lg px-5 py-2');
     expect(workloadsExplorer).toContain("const SHOW_UNHEALTHY_ONLY_STORAGE_KEY = 'acornops_resources_show_unhealthy_only'");
     expect(workloadsExplorer).toContain('return true;');
@@ -486,14 +486,14 @@ describe('theme color contract', () => {
   });
 
   it('keeps button hierarchy restrained with orange reserved for activation actions', () => {
-    expect(buttonComponent).toContain("export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'danger' | 'activation'");
+    expect(buttonComponent).toContain("export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'icon' | 'danger' | 'dangerIcon' | 'activation'");
     expect(buttonComponent).toContain('primary: filledNeutralButtonClass');
     expect(buttonComponent).toContain('border border-control-boundary bg-control-primary text-control-primary-fg');
     expect(buttonComponent).toContain("activation: 'border border-transparent bg-control-activation text-control-activation-fg");
     expect(buttonComponent).toContain('hover:bg-control-activation-hover');
     expect(buttonComponent).toContain("data-design-contrast-exception={variant === 'activation' ? 'activation' : undefined}");
     expect(buttonComponent).not.toContain('shadow-accent/20');
-    expect(buttonComponent).toContain("secondary: 'border border-control-boundary bg-control-secondary text-control-secondary-fg shadow-sm");
+    expect(buttonComponent).toContain('secondary: quietNeutralButtonClass');
     expect(buttonComponent).toContain("danger: 'border border-control-boundary bg-control-danger text-control-danger-fg");
     expect(buttonComponent).not.toContain('text-ui-bg');
     expect(buttonComponent).toContain("tertiary: 'text-ui-text-muted");
@@ -506,11 +506,10 @@ describe('theme color contract', () => {
     expect(addClusterModal).toContain('variant="primary"');
   });
 
-  it('meets WCAG AA contrast for standard filled buttons and records the branded activation exception', () => {
+  it('meets WCAG AA text and boundary contrast for shared buttons and records the branded activation exception', () => {
     const textPairs = [
       ['--ao-control-primary-fg-rgb', '--ao-control-primary-bg-rgb'],
       ['--ao-control-primary-fg-rgb', '--ao-control-primary-hover-rgb'],
-      ['--ao-control-secondary-fg-rgb', '--ao-control-secondary-bg-rgb'],
       ['--ao-control-secondary-fg-rgb', '--ao-control-secondary-hover-rgb'],
       ['--ao-control-danger-fg-rgb', '--ao-control-danger-bg-rgb'],
       ['--ao-control-danger-fg-rgb', '--ao-control-danger-hover-rgb']
@@ -585,7 +584,8 @@ describe('theme color contract', () => {
     expect(mcpServerCard).not.toContain('data-mcp-server-card="true"');
     expect(mcpServersView).not.toContain('xl:grid-cols-3');
     expect(mcpServersView).not.toContain('absolute inset-0 z-0');
-    expect(mcpServerCard).toContain("aria-label={t('mcpServers.serverActionsNamed', { name: server.name })}");
+    expect(mcpServerCard).toContain("label={t('mcpServers.serverActionsNamed', { name: server.name })}");
+    expect(mcpServerCard).toContain('<ActionMenu');
     expect(mcpServerCard).toContain('<MenuItem');
   });
 
@@ -602,7 +602,8 @@ describe('theme color contract', () => {
     expect(styles).toContain('scrollbar-gutter: stable both-edges;');
     expect(pageComposition).toContain('px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)] custom-scrollbar stable-scrollbar-gutter');
     expect(overviewPage).toContain('<PageShell>');
-    expect(dashboardPage).toContain('<PageShell contentClassName="resource-catalog-rack">');
+    expect(dashboardPage).toContain('<PageShell>');
+    expect(dashboardPage).not.toContain('contentClassName="resource-catalog-rack"');
     expect(dashboardPage).not.toContain('<PageShell width=');
     expect(overviewPage).not.toContain('max-w-[90rem]');
     expect(dashboardPage).not.toContain('max-w-[90rem]');

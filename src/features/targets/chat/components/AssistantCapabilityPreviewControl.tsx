@@ -8,6 +8,7 @@ import type {
   ControlPlaneTargetAssistantCapabilityToolPreviewItem
 } from '@/services/control-plane/types';
 import { Button } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 
 interface AssistantCapabilityPreviewControlProps {
   canChat: boolean;
@@ -157,7 +158,11 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
             aria-labelledby={buttonId}
           >
             <div className="flex items-start gap-2">
-              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ui-border bg-ui-bg text-ui-text-muted">
+              <IconTile
+                size="xs"
+                tone={error ? 'warning' : 'neutral'}
+                className="mt-0.5 h-7 w-7 rounded-full [&_svg]:h-3.5 [&_svg]:w-3.5"
+              >
                 {error ? (
                   <AlertTriangle className="h-3.5 w-3.5 text-status-warning-text" />
                 ) : isLoading ? (
@@ -165,7 +170,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                 ) : (
                   <SlidersHorizontal className="h-3.5 w-3.5" />
                 )}
-              </div>
+              </IconTile>
               <div className="min-w-0">
                 <p className="type-body type-emphasis text-ui-text">{t('chat.capabilityPreviewTitle')}</p>
                 <p className="mt-1 type-caption leading-5 text-ui-text-muted">

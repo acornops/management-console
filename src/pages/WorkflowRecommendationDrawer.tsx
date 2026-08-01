@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { activateAutomationTemplate, installAutomationTemplate, listAutomationTemplates, type AutomationTemplateApi } from '@/services/control-plane/agentApi';
@@ -94,10 +94,10 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
         </p>
       ) : loadError ? (
         <div className="space-y-4">
-          <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 type-body text-status-danger-text">
+          <InlineAlert tone="danger" className="type-body">
             <strong>{t('workflowRecommendations.loadFailed')}</strong>
             <span className="mt-1 block">{loadError}</span>
-          </div>
+          </InlineAlert>
           <Button variant="secondary" size="sm" onClick={() => setReloadKey((value) => value + 1)}>
             {t('workflowRecommendations.retry')}
           </Button>
@@ -182,9 +182,9 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
                 </Button>
               )}
               {actionError && (
-                <div role="alert" className="rounded-md border border-status-danger/25 bg-status-danger-soft p-3 type-body text-status-danger-text">
+                <InlineAlert tone="danger" className="type-body">
                   {actionError}
-                </div>
+                </InlineAlert>
               )}
             </section>
           ) : null}

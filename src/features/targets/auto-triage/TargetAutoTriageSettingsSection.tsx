@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { appHref } from '@/app/workspaceNavigation';
 import {
   Button,
+  IconTile,
   InlineAlert,
   Select,
   Switch,
@@ -275,9 +276,9 @@ export const TargetAutoTriageSettingsSection: React.FC<{
           <>
             <div className="grid gap-6 border-b border-ui-border p-6 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)]">
               <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong shadow-sm">
+                <IconTile>
                   <Bot className="h-5 w-5" aria-hidden="true" />
-                </div>
+                </IconTile>
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
                     <p className="type-body type-emphasis text-ui-text">{t('autoTriage.enabledLabel')}</p>

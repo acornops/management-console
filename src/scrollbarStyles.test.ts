@@ -23,7 +23,7 @@ describe('scrollbar styling contract', () => {
 
   it('keeps navigation scrollable without visible scrollbar chrome', () => {
     expect(compactControls).toContain('no-scrollbar flex gap-2 overflow-x-auto');
-    expect(resourceCategoryTabs).toContain('no-scrollbar flex w-full max-w-full shrink-0 items-center overflow-x-auto');
+    expect(resourceCategoryTabs).toContain('<SegmentedTabs');
     expect(desktopSidebar).toContain('no-scrollbar min-h-0 flex-1 overflow-y-auto');
     expect(mobileNavigation).toContain('no-scrollbar min-h-0 flex-1 divide-y divide-ui-border overflow-y-auto');
     expect(agentDetailPanel).toContain('className="flex h-full min-h-0 flex-1 flex-col"');

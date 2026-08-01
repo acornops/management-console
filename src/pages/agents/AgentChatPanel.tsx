@@ -113,6 +113,7 @@ export const AgentChatPanel: React.FC<{
   agent: AgentDefinition;
   currentUserId: string;
   displayMode?: 'full' | 'panel';
+  title?: string;
   isDark: boolean;
   permissions?: Workspace['permissions'];
   onClose?: () => void;
@@ -122,6 +123,7 @@ export const AgentChatPanel: React.FC<{
   agent,
   currentUserId,
   displayMode = 'full',
+  title,
   isDark,
   permissions,
   onClose,
@@ -307,6 +309,7 @@ export const AgentChatPanel: React.FC<{
       <TargetChatView
         target={{ id: agent.id, workspaceId: agent.workspaceId, name: agent.name }}
         headerLeading={<AgentAvatar emoji={agent.avatarEmoji} size={displayMode === 'panel' ? 'md' : 'lg'} />}
+        title={title}
         automaticInvestigationsEnabled={false}
         capabilityPreviewEnabled={false}
         isDark={isDark}

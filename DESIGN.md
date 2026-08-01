@@ -11,6 +11,7 @@ colors:
   paper-surface: "oklch(0.996 0.004 85)"
   pressed-surface: "oklch(0.962 0.012 74)"
   warm-border: "oklch(0.925 0.012 74)"
+  control-secondary-boundary: "{colors.warm-border}"
   ink-text: "oklch(0.3 0.008 72)"
   muted-ink: "oklch(0.54 0.025 54)"
   metric-blue: "oklch(0.52 0.085 244)"
@@ -114,7 +115,8 @@ components:
     rounded: "{rounded.sm}"
     padding: "10px 16px"
   button-secondary:
-    backgroundColor: "{colors.paper-surface}"
+    backgroundColor: "transparent"
+    borderColor: "{colors.control-secondary-boundary}"
     textColor: "{colors.ink-text}"
     rounded: "{rounded.sm}"
     padding: "10px 16px"
@@ -196,6 +198,7 @@ and must not be generalized to navigation labels, links, body copy, or controls.
 - **Paper Surface** (`paper-surface`): Cards, panels, dialogs, controls, and content surfaces.
 - **Pressed Surface** (`pressed-surface`): Stronger neutral layer for active, inset, or grouped surfaces.
 - **Warm Border** (`warm-border`): The default structural divider.
+- **Secondary Control Boundary** (`control-secondary-boundary`): The faint warm structural outline for quiet secondary controls. It follows the theme's warm-border token so the control does not read as a dark framed button; the orange keyboard-focus ring carries the strong interaction boundary.
 - **Ink Text** (`ink-text`): Primary text.
 - **Muted Ink** (`muted-ink`): Helper text, metadata, quiet labels, and the scoped scrollbar thumb used by intentional console scroll regions.
 - **Code Night** (`code-night`): Code and terminal-style surfaces.
@@ -262,10 +265,10 @@ The shared theme menu appears on login and authenticated desktop and mobile navi
 
 ## 4. Elevation
 
-The console is flat by default. Depth comes from warm surfaces, borders, and layout rhythm first; shadows are small structural cues on buttons, cards, dialogs, and floating panels. Tonal contrast should remain readable without depending on shadow.
+The console is flat by default. Depth comes from warm surfaces, borders, and layout rhythm first; shadows are small structural cues on primary buttons, cards, dialogs, and floating panels. Tonal contrast should remain readable without depending on shadow.
 
 ### Shadow Vocabulary
-- **Subtle Surface** (`shadow-sm`, approximately `0 1px 2px rgb(0 0 0 / 0.05)`): Cards, secondary buttons, small panels.
+- **Subtle Surface** (`shadow-sm`, approximately `0 1px 2px rgb(0 0 0 / 0.05)`): Cards, primary buttons, and small panels.
 - **Dialog Lift** (`shadow-2xl`): Modal and drawer panels only.
 - **Focus Ring** (`0 0 0 2px rgb(var(--brand-orange-rgb) / 0.15 to 0.25)`): Keyboard focus and focused fields.
 
@@ -285,12 +288,29 @@ Buttons are compact, predictable, and text-led. They use lucide icons when an ic
 - **Primary:** Filled neutral, near-ink background with canvas text. Use for the strongest action on a utilitarian screen.
 - **Dark Primary:** Strong warm-neutral fill with light text. Never invert the page background and text tokens to construct a button.
 - **Activation:** Canonical signal-orange fill with light logo-cream text for workflow launch and activation moments only. The same AcornOps orange is used in both themes, and the fill provides its own boundary without a permanent dark outline or stacked shadow. This user-directed brand pairing is an explicit contrast exception and must not be generalized to routine controls. Create, Add, Invite, Save, Continue, and routine Run actions use neutral Primary.
-- **Secondary:** Paper surface, interactive boundary, ink text, small shadow. Dark mode uses a warm dark surface with light text.
-- **Danger:** Semantic destructive fill. Dark mode uses `#A92C3C` with light text.
+- **Secondary and icon-only:** Transparent at rest with the dedicated faint secondary-control boundary and ink text. Hover and press use the strong warm-neutral surface; the controls have no elevation. Dark mode keeps the same transparent treatment with its warm structural boundary and light text.
+- **Danger:** Semantic destructive fill for explicit confirmation actions. Dark mode uses `#A92C3C` with light text.
+- **Danger icon:** Quiet destructive icon-only controls use the faint structural boundary and muted ink at rest. Hover and press add the danger-soft fill, danger text, and a restrained danger boundary; keyboard focus remains orange.
 - **Tertiary / Ghost:** Text-muted default, soft orange wash on hover.
 - **Sizing:** Default controls are at least `44px` high; compact controls may reduce to `36px` from the `sm` breakpoint upward. Inline text actions use the shared `inline` size instead of locally removing padding or minimum heights.
 - **Variant ownership:** Every shared `Button` call site declares its semantic variant explicitly, even when it currently matches the component fallback. This makes intent reviewable and prevents a secondary boundary from leaking into brand, navigation, inline text, menu, or icon actions during migrations.
-- **Hover / Focus / Disabled:** Enabled foreground and fill pairs meet WCAG 2.1 AA normal-text contrast. Interactive and focus boundaries use the semantic boundary token where 3:1 non-text contrast is required. Disabled controls keep their dimensions, reduce to `50%` opacity, and use a not-allowed cursor.
+- **Hover / Focus / Disabled:** Enabled foreground and fill pairs meet WCAG 2.1 AA normal-text contrast. Secondary outlines stay intentionally faint, while keyboard focus uses the high-visibility orange signal ring. Disabled controls keep their dimensions, reduce to `50%` opacity, and use a not-allowed cursor.
+
+### Context icon tiles
+
+`IconTile` is the canonical non-interactive context-glyph primitive. It is
+flat, borderless, and has no hover, focus, pressed, or elevation treatment, so
+it cannot be mistaken for an icon button. Neutral context uses a `6%` ink tint
+with muted ink. Identity context may retain the strong-orange glyph on the same
+neutral tint, while success, warning, danger, and metric context use their
+named semantic token pairs. Sizes are fixed at `32px`, `36px`, `40px`, and
+`48px` for dense, compact, standard, and large compositions.
+
+Icon actions use the shared `Button` `icon` or `dangerIcon` variant instead.
+Feature code does not reconstruct decorative glyph tiles with control borders,
+shadows, or pressed-surface fills. A live state indicator may retain a distinct
+documented animation or boundary when that treatment communicates state rather
+than affordance.
 
 ### Route composition and spacing
 
@@ -312,13 +332,16 @@ Authenticated route shells always use the default full width. When prose, a
 ledger, or another task surface needs a narrower reading measure, constrain that
 surface inside the shell instead of changing the route shell width.
 
-Resource-card catalog routes use the shared `resource-catalog-rack` inner
-constraint. It caps the route content at `92rem`, exactly three `30rem` card
-tracks plus two `1rem` gaps. At that width, one- and two-item final rows retain
-the same card width as a complete three-item row. Below it, the existing
-container-aware wrapping takes over: a two-column row divides the available
-rack width equally, while a single card remains capped at `40rem`. Docked
-assistant layouts continue to collapse the card grid to one flexible column.
+Resource-card catalog routes keep both the `PageShell` content and the shared
+`resource-card-catalog` section full width so route chrome, filters, and cards
+reclaim space when the desktop sidebar collapses. The grid reserves as many
+potential columns as fit at the `30rem` card minimum, then divides the available
+row width evenly across those columns. Cards fill their tracks without a fixed
+maximum. Empty potential columns remain reserved, so sparse catalogs do not
+consume capacity intended for another card. When only one minimum-width column
+fits, that column spans the full grid. Wider pages naturally admit additional
+columns. Docked Agent layouts use the same capacity calculation, including two
+columns when they fit.
 
 Workflows and MCP Catalog use the shared catalog split. One bordered surface contains a divided library and detail pane with a `32rem` minimum height. At `lg` and wider, the default library uses `minmax(18rem, 22rem)` and detail fills the remaining width; dense definition libraries such as Workflows may explicitly opt into the compact `minmax(15rem, 18rem)` width. A task-heavy route may opt into the bounded desktop variant: the route canvas stays fixed, the library and active detail body scroll independently, and the detail header remains visible. Below `lg`, document scrolling resumes to avoid nested touch-scroll regions; only the route-selected pane is visible, and detail provides a Back action that returns to the library and restores focus to its selected row. Desktop may preview the first visible item without writing selection state to the URL. Shared primitives also own list headers, row padding and selection, loading and empty states, detail headers, detail-body padding and tone, and the discovery-to-surface gap. Page-specific filters, metadata, actions, and detail fields remain feature-owned.
 
@@ -333,6 +356,28 @@ Chips are status labels, not decoration.
 - **Style:** Rounded pill or compact rounded badge, uppercase, high-weight small text.
 - **State:** Success, warning, danger, and neutral use semantic soft backgrounds with readable semantic text.
 - **Rule:** Status meaning must be readable from text, not color alone.
+- **Sizing:** `StatusBadge` provides default and compact sizes. Compact is for
+  short adapters such as Experimental; navigation counters and input tokens are
+  separate patterns.
+
+### Menus, tabs, and autocomplete
+
+`ActionMenu` owns menu semantics, controlled and uncontrolled state, custom
+triggers, focus movement, printable-key typeahead, dismissal, focus
+restoration, collision handling, and dialog-local floating placement.
+`MenuSurface` is used directly only when a reviewed feature retains custom
+motion or placement. Application code does not own menu roles or import the
+low-level floating-menu hook.
+
+`SegmentedTabs` owns tab DOM, keyboard behavior, active-tab visibility, and
+per-item panel relationships through `controlsId`. Domain adapters may translate
+labels and counts but do not reproduce tab markup or behavior.
+
+Autocomplete features keep query, async, token, active-index, and selection
+state while `ComboboxListbox`, `ComboboxGroup`, and `ComboboxOption` own the
+roles and canonical presentation. Bordered semantic feedback uses
+`InlineAlert`, including its success, title, icon, action, and inferred live
+region variants.
 
 ### Cards / Containers
 
@@ -359,17 +404,15 @@ Operator-facing collection tables use the Kubernetes MCP Servers table as the vi
 
 ### Empty states
 
-Route-level collections use the shared `EmptyState` component. Standalone states
-open with a small layered-paper illustration that recalls the operator's ledger,
-then use an optional context label, panel-title heading, body description with a
-restrained reading measure, optional teaching detail, and an action row separated
-by the canonical `24px` gap. The layered paper remains neutral and static while
-its framed glyph uses the strong signal-orange text token to mark the available
-setup path; it never implies activity. Standalone collection
-states use one dashed warm-border frame with a `12rem` minimum height. Tables,
-queues, and master-detail panes use the embedded surface mode with the compact
-`40px` icon tile so the same anatomy sits inside the existing boundary without
-creating nested cards.
+Route-level collections use the shared `EmptyState` component. Every empty,
+filtered-empty, and collection failure state uses the same quiet anatomy: a
+compact neutral `40px` icon tile, optional context label, panel-title heading,
+body description with a restrained reading measure, optional teaching detail,
+and an action row separated by the canonical `24px` gap. The component does not
+add a dashed frame, layered-card illustration, or orange icon treatment. Parent
+routes, tables, queues, and master-detail panes continue to own any surrounding
+surface boundary. The former `embedded` prop remains temporarily
+source-compatible but no longer changes the presentation.
 
 Genuinely empty inventory and filtered no-results states share the component but
 keep distinct copy and icons. A permission-gated, genuinely empty infrastructure
@@ -395,6 +438,7 @@ Navigation is familiar product chrome driven by one route model. Workspace desti
 - **Desktop (`1200px` and wider):** The profile preference selects a `256px` expanded sidebar or a `64px` icon rail. Missing and invalid preferences resolve to expanded. The stable toggle exposes `aria-controls`, `aria-expanded`, translated labels, and keeps focus while the width changes.
 - **Expanded desktop:** `40px` rows, `6px` corners, muted text, and grouped section labels. Hover shifts to the canvas surface and stronger ink. Active rows use the same canvas surface, semibold ink, an orange icon, `aria-current`, and an optional count badge.
 - **Collapsed desktop:** Preserve the glyph, workspace identity, `18px` destination icons, compact badges/status, account avatar, and active states. Labels and headings become visually hidden accessible names. Hover and focus expose viewport-clamped right-side tooltips; workspace and account panels open to the rail's right. Workflow management destinations live in the Workflows route family and selected workflow tabs rather than a nested rail.
+- **Short desktop viewports:** At `820px` viewport height and below, preserve every permitted destination while reducing inter-row cadence from `44px` to `42px` and tightening group, workspace-context, header, account, and target-context spacing. Keep `12px` before and `8px` after section titles so each title separates from the preceding group while staying connected to the destinations it labels. Preserve `40px` rows, `18px` icons, genuine links, active state, permission-aware omissions, and pending-approval placement. Scrolling remains only an extreme-height fallback.
 - **Overlay navigation (below `1200px`):** A `64px` top bar opens a left drawer sized `min(80vw, 320px)`. The drawer preserves the same groups and destinations, traps focus, exposes an explicit close control, dismisses on outside click and Escape, restores trigger focus, locks background scroll, and releases modal isolation when closed or resized into desktop.
 - **State and sizing:** Sidebar width and drawer transforms use 160–200ms with the ease-out-quint curve; reduced motion makes spatial changes immediate. Docked assistants use the active `256px` or `64px` sidebar width when preserving the required `560px` main-content allowance. Status and approval counts reserve stable space when their appearance would otherwise shift labels.
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -80,15 +80,15 @@ export const WorkflowRunDrawer: React.FC<{
           <WorkflowCapabilityLedger workspaceId={workflow.workspaceId} preview={preview} loading={previewing} error={previewError} onRetry={onRetryPreview} />
 
           {blocker && (
-            <p role="alert" className="rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-body type-emphasis text-status-warning-text">
+            <InlineAlert tone="warning" className="type-body type-emphasis">
               {blocker}
-            </p>
+            </InlineAlert>
           )}
           {launchError && (
-            <p role="alert" className="rounded-md border border-status-danger/30 bg-status-danger-soft px-3 py-2 type-body type-emphasis text-status-danger-text">
+            <InlineAlert tone="danger" className="type-body type-emphasis">
               {launchError}
               {launchRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={launchRecovery.href}>{launchRecovery.label}</a>}
-            </p>
+            </InlineAlert>
           )}
         </div>
       )}

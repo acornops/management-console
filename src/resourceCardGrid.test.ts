@@ -22,31 +22,28 @@ describe('resource card grid', () => {
       expect(catalog).toContain('resource-card-grid');
     }
 
-    expect(styles).toContain('display: flex');
-    expect(styles).toContain('flex-wrap: wrap');
-    expect(styles).toContain('flex: 1 1 min(100%, 30rem)');
-    expect(styles).toMatch(/\.resource-card-grid > \* \{[\s\S]*?max-width: none;/);
-    expect(styles).toMatch(/\.resource-card-grid > :only-child \{\s*max-width: 40rem;/);
+    expect(styles).toContain('display: grid');
+    expect(styles).toContain('grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr))');
+    expect(styles).toMatch(/\.resource-card-grid > \* \{[\s\S]*?width: 100%;[\s\S]*?min-width: 0;/);
+    expect(styles).not.toMatch(/\.resource-card-grid > \* \{[^}]*max-width:/);
     expect(styles).toContain('container-name: resource-card-catalog');
-    expect(styles).toContain('@container resource-card-catalog (min-width: 92rem)');
-    expect(styles).toContain('flex: 0 0 30rem');
-    expect(styles).toContain('max-width: 30rem');
     expect(agentCatalog.match(/data-agent-card-grid="true"/g)).toHaveLength(2);
-    expect(styles).toContain("[data-agent-catalog-layout='docked'] .resource-card-grid > *");
-    expect(styles).toContain('flex-basis: 100%');
-    expect(styles).toContain('max-width: none');
+    expect(styles).not.toContain("[data-agent-catalog-layout='docked'] .resource-card-grid");
     expect(styles).not.toContain('container-name: cluster-catalog');
   });
 
-  it('uses the shared three-card catalog width on full catalog routes', () => {
+  it('keeps route shells and catalog sections full width while bounding wide-layout cards', () => {
     const dashboard = readSource('src/components/dashboard/Dashboard.tsx');
     const virtualMachines = readSource('src/pages/virtual-machines/VirtualMachinesListView.tsx');
     const agents = readSource('src/pages/WorkspaceAgentsPage.tsx');
     const styles = readSource('src/styles.css');
 
-    expect(styles).toMatch(/\.resource-catalog-rack \{\s*margin-inline: auto;\s*max-width: 92rem;\s*width: 100%;/);
+    const catalogRule = styles.match(/\.resource-card-catalog \{([^}]*)\}/)?.[1] ?? '';
+    expect(catalogRule).not.toContain('max-width');
+    expect(catalogRule).not.toContain('margin-inline');
     for (const route of [dashboard, virtualMachines, agents]) {
-      expect(route).toContain('<PageShell contentClassName="resource-catalog-rack">');
+      expect(route).toContain('<PageShell>');
+      expect(route).not.toContain('contentClassName="resource-catalog-rack"');
     }
   });
 
@@ -56,6 +53,7 @@ describe('resource card grid', () => {
     const vmAssistant = readSource('src/app/AppVirtualMachineCopilotPanel.tsx');
     const agentAssistant = readSource('src/pages/agents/AgentQuickChatPanel.tsx');
     const assistantDockFrame = readSource('src/app/AssistantDockFrame.tsx');
+    const dockLayout = readSource('src/app/dockedPanelLayout.ts');
     const catalogs = [
       readSource('src/components/dashboard/ClusterCatalog.tsx'),
       readSource('src/pages/virtual-machines/VirtualMachinesListView.tsx'),
@@ -73,10 +71,11 @@ describe('resource card grid', () => {
       expect(catalog).toContain('resource-card-grid');
     }
 
-    expect(assistantDockFrame).toContain('cardGrid.children.length');
+    expect(assistantDockFrame).not.toContain('cardGrid.children.length');
     expect(assistantDockFrame).toContain(
       'getResourceCardPreservingDockWidth('
     );
+    expect(dockLayout).toContain('availableColumnCount');
   });
 
   it('animates the dock without flying Agent cards across grid rows', () => {

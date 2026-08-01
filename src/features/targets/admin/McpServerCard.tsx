@@ -1,14 +1,11 @@
 import React from 'react';
-import { MenuItem, Switch } from '@acornops/ui';
-import { createPortal } from 'react-dom';
+import { ActionMenu, IconTile, MenuItem, Switch } from '@acornops/ui';
 import { Edit3, Loader2, Link2, MoreVertical, RefreshCcw, Server, Settings2, Trash2, Unlink2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuSurfaceClassName } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { formatDiscoveryTimestamp, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
 import type { McpConnection } from '@/services/control-plane/catalogApi';
-import { useFloatingActionMenu } from '@acornops/ui';
 import { formatUserDateTime } from '@/utils/dateTime';
 import {
   mcpConnectAction,
@@ -105,21 +102,10 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
 }) => {
   const { t } = useTranslation();
   const healthCheckHelpId = React.useId();
-  const actionMenuId = React.useId();
   const recoveryActionRef = React.useRef<HTMLButtonElement>(null);
   const managedConnectionRef = React.useRef<HTMLParagraphElement>(null);
   const rowRef = React.useRef<HTMLTableRowElement>(null);
   const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
-  const {
-    triggerRef: actionMenuButtonRef,
-    menuRef: actionMenuRef,
-    style: actionMenuStyle,
-    close: closeActionMenu
-  } = useFloatingActionMenu({
-    open: actionMenuOpen,
-    setOpen: setActionMenuOpen,
-    estimatedHeight: 316
-  });
   const canDeleteServer = canEditServers && server.canDelete && !server.isSystem;
   const canEditServer = canEditServers && server.canEditConnection && !server.isSystem;
   const canTestServer = canEditServers && !server.isSystem && server.canToggle && server.authType === 'none';
@@ -180,18 +166,27 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
     setActionMenuOpen(true);
   }, [connection, recoveryAction]);
 
-  React.useEffect(() => {
-    if (!recoveryAction || !actionMenuOpen) return;
-    window.requestAnimationFrame(() => recoveryActionRef.current?.focus());
-  }, [actionMenuOpen, recoveryAction]);
-
-  const actionMenu =
-    actionMenuOpen && actionMenuStyle && typeof document !== 'undefined'
-      ? createPortal(
-          <div ref={actionMenuRef} id={actionMenuId} role="menu" className={menuSurfaceClassName('fixed z-[130] p-1')} style={actionMenuStyle}>
+  const actionMenu = (
+    <ActionMenu
+      label={t('mcpServers.serverActionsNamed', { name: server.name })}
+      open={actionMenuOpen}
+      onOpenChange={setActionMenuOpen}
+      estimatedHeight={316}
+      initialFocus={recoveryAction ? recoveryActionRef : 'first'}
+      trigger={(
+        <Button
+          data-mcp-server-primary-actions="true"
+          type="button"
+          variant="tertiary"
+          size="icon"
+          className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+        >
+          <MoreVertical className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      )}
+    >
             <MenuItem
               onClick={() => {
-                closeActionMenu();
                 onManageTools(server.id);
               }}
             >
@@ -202,7 +197,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               <MenuItem
                 disabled={Boolean(pendingTestServerId)}
                 onClick={() => {
-                  closeActionMenu();
                   onTestConnection(server);
                 }}
                 aria-describedby={healthCheckHelpId}
@@ -218,7 +212,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             {canEditServer && (
               <MenuItem
                 onClick={() => {
-                  closeActionMenu();
                   onEdit(server);
                 }}
               >
@@ -230,7 +223,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               <MenuItem
                 disabled={pendingConnection}
                 onClick={() => {
-                  closeActionMenu();
                   onRetry(server);
                 }}
               >
@@ -244,7 +236,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               data-mcp-action="verify_mcp_server"
               disabled={connectionDisabled}
               onClick={() => {
-                closeActionMenu();
                 onVerify(server);
               }}
             >
@@ -262,7 +253,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               data-mcp-action={connectAction}
               disabled={connectionDisabled}
               onClick={() => {
-                closeActionMenu();
                 onConnect(server);
               }}
             >
@@ -286,7 +276,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             <MenuItem
               disabled={connectionDisabled}
               onClick={() => {
-                closeActionMenu();
                 onDisconnect(server);
               }}
             >
@@ -298,7 +287,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             <MenuItem
               destructive
               onClick={() => {
-                closeActionMenu();
                 onDelete(server);
               }}
             >
@@ -306,10 +294,8 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               <span>{t('mcpServers.delete')}</span>
             </MenuItem>
           )}
-        </div>,
-            document.body
-          )
-        : null;
+    </ActionMenu>
+  );
 
   return (
     <DataTableRow
@@ -320,9 +306,9 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
     >
       <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
+          <IconTile tone="accent">
             <Server className="h-5 w-5 text-accent-strong" />
-          </div>
+          </IconTile>
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center">
               <h3 className="type-row-title truncate" title={server.name}>
@@ -431,21 +417,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             {t('mcpServers.healthCheckHelp')}
           </span>
         )}
-        <Button
-          ref={actionMenuButtonRef}
-          data-mcp-server-primary-actions="true"
-          type="button"
-          variant="tertiary"
-          size="icon"
-          onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
-          className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-          aria-haspopup="menu"
-          aria-expanded={actionMenuOpen}
-          aria-controls={actionMenuOpen ? actionMenuId : undefined}
-          aria-label={t('mcpServers.serverActionsNamed', { name: server.name })}
-        >
-          <MoreVertical className="h-4 w-4" aria-hidden="true" />
-        </Button>
         {actionMenu}
       </DataTableCell>
     </DataTableRow>

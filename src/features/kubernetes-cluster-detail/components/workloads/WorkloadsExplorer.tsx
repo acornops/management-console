@@ -498,7 +498,7 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
             size="sm"
             onClick={onLoadMoreResources}
             disabled={isLoadingInitial || isLoadingMore}
-            className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+            className="control-target px-4 py-2"
           >
             {isLoadingMore ? t('resources.loadingMore') : t('resources.loadMore')}
           </Button>

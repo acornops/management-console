@@ -2,6 +2,7 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { ChevronLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { IconTile } from './IconTile';
 
 export interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
   contentClassName?: string;
@@ -172,7 +173,7 @@ export const DataSurface: React.FC<DataSurfaceProps> = ({
       {(heading || description || icon || count || toolbar) && (
         <TableToolbar>
           <div className="flex min-w-0 items-center gap-3">
-            {icon && <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-accent-strong">{icon}</div>}
+            {icon && <IconTile>{icon}</IconTile>}
             <div className="min-w-0">
               {heading && <h2 className="type-section-title text-ui-text">{heading}</h2>}
               {description && <div className="type-caption mt-1 text-ui-text-muted">{description}</div>}

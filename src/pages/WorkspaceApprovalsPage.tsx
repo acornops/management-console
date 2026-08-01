@@ -7,6 +7,7 @@ import { FilterToggleGroup, type CompactControlItem } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
@@ -250,9 +251,9 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
         <section className="min-w-0 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         <div className="flex flex-col gap-3 border-b border-ui-border bg-ui-bg px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-accent-strong">
+            <IconTile>
               <ICONS.CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-            </div>
+            </IconTile>
             <div>
               <h2 className="type-section-title">{t('approvals.queueTitle')}</h2>
               <p className="type-caption mt-1 text-ui-text-muted">{t('approvals.queueBody')}</p>

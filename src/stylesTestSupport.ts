@@ -16,6 +16,7 @@ export const themeMenu = readSource('src/components/common/ThemeMenu.tsx');
 export const themeToggleIcon = readSource('src/components/common/ThemeToggleIcon.tsx');
 export const themeInit = readSource('public/theme-init.js');
 export const designSystemCheck = readSource('scripts/check-design-system.mjs');
+export const compactControls = readSource('packages/ui/src/CompactControls.tsx');
 export const loginPreview = readSource('src/pages/login/LoginPreview.tsx');
 export const dashboardPage = readSource('src/components/dashboard/Dashboard.tsx');
 export const overviewPage = readSource('src/pages/WorkspaceOverviewPage.tsx');

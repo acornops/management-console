@@ -67,4 +67,19 @@ describe('TargetAssistantReadinessState', () => {
     expect(unavailable).toContain('AI settings unavailable');
     expect(unavailable).toContain('Open AI Settings');
   });
+
+  it('renders the compact icon as a non-interactive tonal tile', () => {
+    const markup = renderToStaticMarkup(
+      <TargetAssistantReadinessState
+        compact
+        status="unconfigured"
+        canManageAiSettings
+        onOpenAiSettings={() => undefined}
+        t={t}
+      />
+    );
+
+    expect(markup).toContain('bg-ui-text/[0.06]');
+    expect(markup).not.toContain('border border-ui-border bg-ui-bg text-ui-text-muted');
+  });
 });

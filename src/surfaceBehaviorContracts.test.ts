@@ -4,6 +4,7 @@ import {
   auditLogPage,
   chatSubmit,
   clusterOverviewView,
+  compactControls,
   dataTable,
   dashboardPage,
   enLocale,
@@ -121,10 +122,10 @@ describe('surface behavior contracts', () => {
   });
 
   it('reveals the active resource category when compact tab strips overflow', () => {
-    expect(resourceCategoryTabs).toContain('React.useLayoutEffect(() => {');
-    expect(resourceCategoryTabs).toContain('const activeTab = tabRefs.current[activeIndex];');
-    expect(resourceCategoryTabs).toContain('tabList.scrollLeft +=');
-    expect(resourceCategoryTabs).toContain('ref={tabListRef}');
+    expect(resourceCategoryTabs).toContain('<SegmentedTabs');
+    expect(compactControls).toContain('activeTab?.scrollIntoView');
+    expect(compactControls).toContain("inline: 'nearest'");
+    expect(compactControls).toContain('ref={tablistRef}');
   });
 
   it('keeps workspace members and audit log tables inside the viewport', () => {

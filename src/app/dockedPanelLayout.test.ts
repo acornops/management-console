@@ -19,8 +19,8 @@ describe('docked panel layout', () => {
   });
 
   it('sizes a dock to replace one bounded resource-card track', () => {
-    expect(getResourceCardPreservingDockWidth(664, 420, 16, 4)).toBe(550);
-    expect(getResourceCardPreservingDockWidth(856, 420, 16, 4)).toBe(646);
-    expect(getResourceCardPreservingDockWidth(3000, 420, 16, 4)).toBe(656);
+    expect(getResourceCardPreservingDockWidth(664, 420, 16)).toBe(550);
+    expect(getResourceCardPreservingDockWidth(856, 420, 16)).toBe(646);
+    expect(getResourceCardPreservingDockWidth(3000, 420, 16)).toBe(573);
   });
 });

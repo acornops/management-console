@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, Copy, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { Button, Checkbox, CollectionState, Switch } from '@acornops/ui';
+import { Button, Checkbox, CollectionState, IconTile, Switch } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
@@ -334,9 +334,9 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
             <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 type-ui leading-6 text-ui-text-muted">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
+                <IconTile size="xs" tone="accent" className="mt-0.5">
                   <ICONS.Terminal className="h-4 w-4" />
-                </span>
+                </IconTile>
                 <p>{t('clusterSetup.installBody')}</p>
               </div>
             </div>

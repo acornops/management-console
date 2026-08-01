@@ -5,6 +5,7 @@ import {
   DestructiveConfirmationActions,
   DialogFrame
 } from './OverlayFrames';
+import { IconTile } from './IconTile';
 
 export interface DestructiveConfirmationDialogProps {
   cancelLabel?: string;
@@ -42,9 +43,9 @@ export const DestructiveConfirmationDialog: React.FC<DestructiveConfirmationDial
     titleId={titleId}
     title={(
       <span className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
+        <IconTile size="sm" tone="danger">
           <Trash2 className="h-4 w-4" aria-hidden="true" />
-        </span>
+        </IconTile>
         <span>{title}</span>
       </span>
     )}

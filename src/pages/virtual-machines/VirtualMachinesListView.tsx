@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
 import { Server, Settings, Trash2 } from 'lucide-react';
 import { ICONS } from '@/constants';
-import { Button } from '@acornops/ui';
+import { Button, IconTile, InlineAlert } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
@@ -53,7 +53,7 @@ const VmStatusPill: React.FC<{
   const { t } = useTranslation();
   const label = getVmCatalogStatusLabel(vm, issueSummary, t);
   return (
-    <TargetCatalogStatusPill label={label} reason={getVmCatalogStatusReason(vm, issueSummary, issueSummaryLoadState, t)} toneClassName={getVmCatalogStatusTone(vm, issueSummary)} />
+    <TargetCatalogStatusPill label={label} reason={getVmCatalogStatusReason(vm, issueSummary, issueSummaryLoadState, t)} tone={getVmCatalogStatusTone(vm, issueSummary)} />
   );
 };
 
@@ -161,7 +161,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   };
 
   return (
-    <PageShell contentClassName="resource-catalog-rack">
+    <PageShell>
       <PageHeader
         title={t('virtualMachines.title')}
         description={t('virtualMachines.list.description')}
@@ -224,18 +224,13 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
         )}
 
         {hasLoadError && items.length > 0 && (
-          <div
-            role="alert"
-            className="flex flex-col gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between"
+          <InlineAlert
+            tone="danger"
+            title={t('virtualMachines.list.loadFailedTitle')}
+            action={<Button type="button" variant="secondary" size="sm" onClick={onRetryLoad}>{t('common.retry')}</Button>}
           >
-            <div className="min-w-0">
-              <p className="type-row-title">{t('virtualMachines.list.loadFailedTitle')}</p>
-              <p className="type-caption mt-1 text-status-danger-text/80">{t('virtualMachines.list.loadFailedBody')}</p>
-            </div>
-            <Button type="button" variant="secondary" size="sm" onClick={onRetryLoad} className="shrink-0">
-              {t('common.retry')}
-            </Button>
-          </div>
+            {t('virtualMachines.list.loadFailedBody')}
+          </InlineAlert>
         )}
 
         {visibleItems.length > 0 ? (
@@ -267,9 +262,9 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                 >
                   <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong">
+                      <IconTile size="sm" tone="accent">
                         <Server className="h-4 w-4" />
-                      </span>
+                      </IconTile>
                       <div className="min-w-0 flex-1">
                         <h3 className="type-panel-title truncate text-ui-text" title={vm.name}>
                           {vm.name}
@@ -392,9 +387,9 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
           >
             <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-7 py-5">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
+                <IconTile size="sm" tone="danger">
                   <Trash2 className="h-4 w-4" />
-                </span>
+                </IconTile>
                 <div>
                   <h3 id="delete-vm-title" className="type-row-title text-ui-text">
                     {t('virtualMachines.list.deleteVm')}

@@ -2,7 +2,7 @@ import React from 'react';
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, buttonClassName } from '@acornops/ui';
+import { Button, InlineAlert, buttonClassName } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
@@ -392,7 +392,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
         </>}
       />
 
-      {error && <div role="alert" className="mb-4 rounded-md border border-status-danger/30 bg-status-danger-soft px-4 py-3 type-body text-status-danger-text">{error}</div>}
+      {error && <InlineAlert tone="danger" className="mb-4 type-body">{error}</InlineAlert>}
 
       {noEnabledRegistries && (
         <div className="space-y-4">
@@ -484,7 +484,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
             filteredEmpty={<MasterDetailEmptyState title="No MCP servers found" description="Adjust the search, source, or compatibility filter." />}
             error={<div role="alert" className="space-y-3 p-5 type-body text-status-danger-text"><p>{catalogError || 'The MCP catalog could not be loaded.'}</p><Button variant="secondary" size="sm" onClick={() => void retryArtifacts()}>Retry</Button></div>}
             feedback={catalogError
-              ? <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft p-3 type-body text-status-danger-text">{catalogError}</div>
+              ? <InlineAlert tone="danger" className="rounded-none border-x-0 border-b-0 p-3 type-body">{catalogError}</InlineAlert>
               : <span className="sr-only">{loadingMore ? 'Loading more servers' : 'Refreshing catalog'}</span>}
             announcement={catalogPhase === 'ready' ? `${artifacts.length} servers loaded` : undefined}
           >
@@ -571,7 +571,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
                   />
                 )}
               </div>
-              {selectedDestination?.inactive && <p role="status" className="mt-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-body text-status-warning-text">{selectedDestination.name} is {selectedDestination.status}. You can configure it now, but the capability will not be usable until the destination becomes active.</p>}
+              {selectedDestination?.inactive && <InlineAlert tone="warning" className="mt-3 px-3 py-2 type-body">{selectedDestination.name} is {selectedDestination.status}. You can configure it now, but the capability will not be usable until the destination becomes active.</InlineAlert>}
               {!selectedArtifact.compatible && <p role="status" className="mt-3 type-body text-status-warning-text">{selectedArtifact.incompatibilityReason || 'This artifact has no supported endpoint.'}</p>}
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" disabled={!canManageMcp || !selectedDestination || !selectedArtifact.compatible || !endpoint || endpoint.supported === false || missingConfiguration || installedCurrent || loadingDestination || pending} onClick={() => void install()}>{pending ? 'Saving…' : installedCurrent ? 'Installed' : matchingInstallation ? 'Update' : 'Install'}</Button>

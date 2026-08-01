@@ -73,15 +73,18 @@ export function getVmCatalogStatusReason(
   return t('virtualMachines.list.vmStateClear');
 }
 
-export function getVmCatalogStatusTone(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): string {
-  if (vm.status === 'unknown') return statusTone(vm.status);
+export function getVmCatalogStatusTone(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): 'success' | 'warning' | 'danger' | 'neutral' {
+  if (vm.status === 'unknown') return 'neutral';
   if ((issueSummary?.critical ?? 0) > 0) {
-    return 'border-status-danger/25 bg-status-danger-soft text-status-danger-text';
+    return 'danger';
   }
   if ((issueSummary?.total ?? 0) > 0 && vm.status === 'online') {
-    return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
+    return 'warning';
   }
-  return statusTone(vm.status);
+  if (vm.status === 'online') return 'success';
+  if (vm.status === 'degraded') return 'warning';
+  if (vm.status === 'offline') return 'danger';
+  return 'neutral';
 }
 
 export function formatSnapshotTime(vm: ControlPlaneVirtualMachine): string {

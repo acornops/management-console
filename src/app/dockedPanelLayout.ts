@@ -5,7 +5,6 @@ export const dockedPanelMediaQuery = '(min-width: 1280px)';
 export const dockedPanelMinimumWidth = 300;
 export const resourceCardGridGap = 16;
 export const resourceCardMinimumWidth = 480;
-export const resourceCardMaximumWidth = 640;
 export const expandedDesktopSidebarWidth = 256;
 export const collapsedDesktopSidebarWidth = 64;
 export const minimumMainContentWidth = 560;
@@ -19,19 +18,16 @@ export const dockedPanelMotion = {
 export function getResourceCardPreservingDockWidth(
   dockedGridWidth: number,
   currentDockWidth: number,
-  columnGap: number,
-  itemCount: number
+  columnGap: number
 ): number {
   const fullGridWidth = dockedGridWidth + currentDockWidth;
   const availableColumnCount = Math.max(
     1,
     Math.floor((fullGridWidth + columnGap) / (resourceCardMinimumWidth + columnGap))
   );
-  const fullColumnCount = Math.max(1, Math.min(itemCount, availableColumnCount));
-  const fullCardWidth = Math.min(
-    resourceCardMaximumWidth,
-    (fullGridWidth - ((fullColumnCount - 1) * columnGap)) / fullColumnCount
-  );
+  const fullCardWidth = (
+    fullGridWidth - ((availableColumnCount - 1) * columnGap)
+  ) / availableColumnCount;
   return Math.round(fullCardWidth + columnGap);
 }
 

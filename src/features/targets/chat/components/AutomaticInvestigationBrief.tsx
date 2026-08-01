@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bot } from 'lucide-react';
+import { IconTile } from '@acornops/ui';
 
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
 
@@ -12,9 +13,9 @@ export const AutomaticInvestigationBrief: React.FC<{
   <div className="flex w-full justify-start">
     <div className="w-full max-w-2xl rounded-xl border border-ui-border bg-ui-surface p-4 shadow-sm sm:p-5">
       <div className="flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong">
+        <IconTile size="xs" tone="accent">
           <Bot className="h-4 w-4" aria-hidden="true" />
-        </span>
+        </IconTile>
         <div className="min-w-0">
           <p className="type-body type-emphasis text-ui-text">{t('chat.automaticInvestigationStarted')}</p>
           <p className="type-caption mt-1 leading-5 text-ui-text-muted">

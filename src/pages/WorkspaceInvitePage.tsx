@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
-import { PageShell } from '@acornops/ui';
+import { Button, IconTile, PageShell } from '@acornops/ui';
 import { ControlPlaneWorkspaceInvitation } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { formatRole } from '@/pages/workspace-members/memberUtils';
@@ -80,9 +79,9 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
           ) : invitation ? (
             <div className="space-y-7">
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong">
+                <IconTile size="lg" tone="accent">
                   <ShieldCheck className="h-6 w-6" />
-                </div>
+                </IconTile>
                 <div>
                   <p className="type-label">{t('invite.title')}</p>
                   <h1 className="mt-2 type-panel-title">{invitation.workspaceName}</h1>
@@ -137,9 +136,9 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-status-danger-soft text-status-danger-text">
+              <IconTile size="lg" tone="danger">
                 <AlertTriangle className="h-6 w-6" />
-              </div>
+              </IconTile>
               <div>
                 <h1 className="type-panel-title">{t('invite.unavailable')}</h1>
                 <p className="mt-2 type-ui leading-6 text-ui-text-muted">{errorMessage || t('invite.invalid')}</p>

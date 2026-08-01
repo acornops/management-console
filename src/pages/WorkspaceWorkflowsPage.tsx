@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, DrawerFrame, SegmentedTabs } from '@acornops/ui';
+import { Button, DrawerFrame, InlineAlert, SegmentedTabs } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { MasterDetailLayout, MasterDetailPaneBody, MasterDetailPaneHeader } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
@@ -398,9 +398,9 @@ export const WorkspaceWorkflowsPage: React.FC<{
         className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
       >
       {workflowLoadError && <WorkflowLoadErrorNotice onRetry={() => setWorkflowCatalogReloadKey((value) => value + 1)} />}
-      {workflowOptionsError && <div role="alert" className="mb-4 flex flex-col gap-3 rounded-md border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-body text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
-        <div><strong>Workflow options could not be loaded.</strong> {workflowOptionsError}</div><Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>Retry</Button>
-      </div>}
+      {workflowOptionsError && <InlineAlert tone="danger" className="mb-4 type-body" title="Workflow options could not be loaded." action={<Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>Retry</Button>}>
+        {workflowOptionsError}
+      </InlineAlert>}
       {createPanelOpen && <WorkflowCreateDrawer
           createWorkflowStep={createWorkflowStep} setCreateWorkflowStep={setCreateWorkflowStep}
           createDraft={createDraft} setCreateDraft={setCreateDraft}

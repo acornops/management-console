@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { Button } from '@acornops/ui';
+import { Button, IconTile } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
@@ -102,7 +102,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <PageShell contentClassName="resource-catalog-rack">
+    <PageShell>
       <PageHeader
         title={t('dashboard.title')}
         description={workspaceName ? t('dashboard.descriptionWorkspace') : t('dashboard.descriptionGlobal')}
@@ -166,9 +166,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           >
             <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-7 py-5">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
+                <IconTile size="sm" tone="danger">
                   <Trash2 className="h-4 w-4" />
-                </span>
+                </IconTile>
                 <div>
                   <h3 id="delete-cluster-title" className="type-row-title text-ui-text">
                     {t('dashboard.deleteCluster')}
@@ -218,7 +218,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 size="sm"
                 onClick={closeDeleteClusterDialog}
                 disabled={isDeletingCluster}
-                className="control-target rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:bg-ui-bg disabled:opacity-50"
+                className="control-target px-4 py-2"
               >
                 {t('app.cancel')}
               </Button>

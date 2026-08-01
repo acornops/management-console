@@ -1,7 +1,7 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { CheckCircle2, ShieldCheck, XCircle } from 'lucide-react';
-import { Button } from '@acornops/ui';
+import { Button, IconTile } from '@acornops/ui';
 import { PendingApproval } from '@/types';
 
 interface ApprovalCheckpointProps {
@@ -159,6 +159,7 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({ approval
   const approvalStatus = approval.status || 'pending';
   const isPending = approvalStatus === 'pending';
   const StatusIcon = approvalStatus === 'approved' ? CheckCircle2 : approvalStatus === 'pending' ? ShieldCheck : XCircle;
+  const statusTone = approvalStatus === 'approved' ? 'success' : approvalStatus === 'pending' ? 'warning' : 'danger';
   const statusToneClass =
     approvalStatus === 'approved'
       ? 'border-status-success/30 bg-status-success-soft text-status-success-text'
@@ -175,9 +176,9 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({ approval
       <div className="px-4 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${statusToneClass}`}>
+            <IconTile size="xs" tone={statusTone} className="mt-0.5">
               <StatusIcon className="h-4 w-4" />
-            </div>
+            </IconTile>
             <div className="min-w-0">
               <h3 className="type-row-title text-ui-text">{t('chat.guardTitle')}</h3>
               <p className="mt-1 break-words type-panel-title leading-6 text-ui-text">{approvalSummary}</p>

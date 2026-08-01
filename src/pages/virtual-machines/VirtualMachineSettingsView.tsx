@@ -1,7 +1,7 @@
 import React from 'react';
 import { KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, IconTile, InlineAlert } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
@@ -32,9 +32,9 @@ const SettingRow: React.FC<{
 }> = ({ icon: Icon, label, description, action }) => (
   <div className="flex flex-col gap-5 border-b border-ui-border p-6 transition-colors last:border-0 hover:bg-ui-bg/20 sm:flex-row sm:items-center sm:justify-between">
     <div className="flex min-w-0 items-center gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong shadow-sm">
+      <IconTile>
         <Icon className="h-5 w-5" aria-hidden="true" />
-      </div>
+      </IconTile>
       <div className="min-w-0">
         <p className="mb-0.5 type-row-title">{label}</p>
         <div className="break-words type-caption leading-5 text-ui-text-muted">{description}</div>
@@ -148,7 +148,7 @@ export const VirtualMachineSettingsView: React.FC<{
               </Button>
             )}
           />
-          {rotationError && <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft p-4 type-body type-emphasis text-status-danger-text">{rotationError}</div>}
+          {rotationError && <InlineAlert tone="danger" className="rounded-none border-x-0 border-b-0 p-4 type-body type-emphasis">{rotationError}</InlineAlert>}
           {installInstructions && (
             <div className="border-t border-ui-border bg-ui-bg/60 p-6">
               <p className="mb-2 type-row-title">{t('virtualMachines.settings.installInstructions')}</p>

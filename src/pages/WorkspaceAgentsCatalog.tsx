@@ -182,6 +182,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                         event.stopPropagation();
                         onQuickChat(agent);
                       }}
+                      aria-label={t('agentChat.quickChatLabel', { name: agent.name })}
                       data-agent-quick-chat="true"
                     >
                       <ICONS.MessageSquare className="h-4 w-4" aria-hidden="true" />

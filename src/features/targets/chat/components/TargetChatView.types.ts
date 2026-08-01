@@ -16,7 +16,7 @@ export interface TargetChatViewProps {
   automaticInvestigationsEnabled?: boolean;
   capabilityPreviewEnabled?: boolean;
   isDark: boolean;
-  titleKey?: string;
+  title?: string; titleKey?: string;
   descriptionKey?: string;
   promptTitleKey?: string;
   promptBodyKey?: string;

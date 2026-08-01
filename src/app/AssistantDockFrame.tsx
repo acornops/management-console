@@ -82,8 +82,7 @@ export const AssistantDockFrame: React.FC<AssistantDockFrameProps> = ({
           getResourceCardPreservingDockWidth(
             dockedGridWidth,
             width,
-            columnGap,
-            cardGrid.children.length
+            columnGap
           ),
           dockedPanelMinimumWidth
         ),
@@ -96,7 +95,7 @@ export const AssistantDockFrame: React.FC<AssistantDockFrameProps> = ({
     const maximumWidth = getSidePanelMaximumWidth(window.innerWidth, true, desktopSidebarWidth);
     onWidthChange(Math.min(
       Math.max(
-        getResourceCardPreservingDockWidth(dockedGridWidth, width, columnGap, 3),
+        getResourceCardPreservingDockWidth(dockedGridWidth, width, columnGap),
         dockedPanelMinimumWidth
       ),
       maximumWidth

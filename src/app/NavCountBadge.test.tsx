@@ -17,7 +17,8 @@ describe('NavCountBadge', () => {
     const markup = renderToStaticMarkup(<NavCountBadge count={42} compact />);
 
     expect(markup).toContain('data-nav-count-badge="compact"');
-    expect(markup).toContain('h-4 w-4 min-w-4');
+    expect(markup).toContain('h-5 min-w-5');
+    expect(markup).toContain('type-count');
     expect(markup).toContain('aria-label="42"');
     expect(markup).toContain('title="42"');
     expect(markup).toContain('>9+<');

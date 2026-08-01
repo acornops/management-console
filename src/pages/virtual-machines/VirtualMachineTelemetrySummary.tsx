@@ -1,6 +1,7 @@
 import React from 'react';
 import { Activity, Gauge, HardDrive } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { IconTile } from '@acornops/ui';
 import {
   formatVmBytes,
   formatVmLoad,
@@ -50,9 +51,9 @@ export const VirtualMachineTelemetrySummary: React.FC<{ latestTelemetryPoint: Vm
       {cards.map(({ label, value, detail, icon: Icon }) => (
         <div key={label} className="rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong">
+            <IconTile size="sm" tone="metric">
               <Icon className="h-4 w-4" />
-            </div>
+            </IconTile>
             <div className="min-w-0">
               <p className="type-micro-label text-ui-text-muted">{label}</p>
               <p className="mt-1 type-data">{value}</p>

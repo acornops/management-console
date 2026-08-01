@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight } from 'lucide-react';
 import { ICONS } from '@/constants';
-import { PageHeader, PageShell } from '@acornops/ui';
+import { IconTile, PageHeader, PageShell } from '@acornops/ui';
 
 const HelpAction: React.FC<{
   icon: React.ElementType;
@@ -14,9 +14,9 @@ const HelpAction: React.FC<{
     href={href}
     className="group grid min-h-24 grid-cols-[2.5rem_minmax(0,1fr)_1.25rem] items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-ui-bg focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25 sm:px-6"
   >
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong">
+    <IconTile>
       <Icon className="h-5 w-5" aria-hidden="true" />
-    </span>
+    </IconTile>
     <span className="min-w-0">
       <span className="block type-row-title">{title}</span>
       <span className="mt-1 block type-caption leading-5 text-ui-text-muted">{description}</span>

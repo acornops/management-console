@@ -267,7 +267,7 @@ export const Notice: React.FC<
           variant="secondary"
           size="sm"
           onClick={onAction}
-          className="control-target shrink-0 rounded-md border border-ui-border bg-ui-bg px-2.5 py-1 text-ui-text shadow-sm transition-colors hover:border-accent/35 hover:bg-accent-soft/45 hover:text-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          className="shrink-0 px-2.5 py-1"
         >
           {actionLabel}
         </Button>

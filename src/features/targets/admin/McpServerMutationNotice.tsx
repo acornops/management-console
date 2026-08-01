@@ -1,7 +1,8 @@
 import React from 'react';
+import { InlineAlert } from '@acornops/ui';
 
 export const McpServerMutationNotice: React.FC<{ message: string | null }> = ({ message }) => message ? (
-  <p role="status" className="type-caption mb-5 rounded-lg border border-status-success/30 bg-status-success-soft px-4 py-3 text-status-success-text">
+  <InlineAlert tone="success" className="mb-5">
     {message}
-  </p>
+  </InlineAlert>
 ) : null;

@@ -39,24 +39,41 @@ test('the base Agent URL opens Chat and browser history restores it', async ({ p
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
 });
 
-test('Agent cards open route-backed Quick chat and can maximize to full Chat', async ({ page }) => {
+test('Agent cards open route-backed Chat and can maximize to full Chat', async ({ page }) => {
   await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
 
   const cardGrid = page.locator('[data-agent-card-grid="true"]');
   await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(2);
-  const fullLayoutCardBox = await page.locator('[data-agent-card="true"]').first().boundingBox();
+  const agentCards = page.locator('[data-agent-card="true"]');
+  const [fullLayoutCardBox, secondFullLayoutCardBox, fullLayoutGridBox] = await Promise.all([
+    agentCards.first().boundingBox(),
+    agentCards.nth(1).boundingBox(),
+    cardGrid.boundingBox()
+  ]);
   expect(fullLayoutCardBox).not.toBeNull();
+  expect(secondFullLayoutCardBox).not.toBeNull();
+  expect(fullLayoutGridBox).not.toBeNull();
+  if (!fullLayoutCardBox || !secondFullLayoutCardBox || !fullLayoutGridBox) {
+    throw new Error('The Agent grid and both cards must have full-layout boxes');
+  }
+  expect(fullLayoutCardBox.x).toBeCloseTo(fullLayoutGridBox.x, 0);
+  expect(secondFullLayoutCardBox.x + secondFullLayoutCardBox.width).toBeCloseTo(
+    fullLayoutGridBox.x + fullLayoutGridBox.width,
+    0
+  );
 
   const card = page.locator('[data-agent-id="fixture-specialist"]');
   await expect(card.locator('[data-agent-avatar="true"]')).toHaveText('☸️');
-  await card.getByRole('button', { name: 'Quick chat' }).click();
+  await expect(card.getByText('Chat', { exact: true })).toBeVisible();
+  await card.getByRole('button', { name: 'Chat with Kubernetes Specialist' }).click();
   await expect(page).toHaveURL(/panel=chat.*agent=fixture-specialist|agent=fixture-specialist.*panel=chat/);
   const main = page.getByRole('main');
-  const panel = page.getByRole('complementary', { name: 'Quick chat with Kubernetes Specialist' });
+  const panel = page.getByRole('complementary', { name: 'Chat with Kubernetes Specialist' });
   await expect(panel).toBeVisible();
   await expect(panel.locator('header [data-agent-avatar="true"]')).toHaveText('☸️');
-  await expect(panel.getByRole('heading', { name: 'Agent chat' })).toBeVisible();
+  await expect(panel.getByRole('heading', { name: 'Chat with Kubernetes Specialist' })).toBeVisible();
+  await expect(panel.getByRole('separator', { name: 'Resize chat panel' })).toBeVisible();
   await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(1);
   const [dockedLayoutCardBox, dockedGridBox] = await Promise.all([
     page.locator('[data-agent-card="true"]').first().boundingBox(),
@@ -64,19 +81,17 @@ test('Agent cards open route-backed Quick chat and can maximize to full Chat', a
   ]);
   expect(dockedLayoutCardBox).not.toBeNull();
   expect(dockedGridBox).not.toBeNull();
-  if (!fullLayoutCardBox || !dockedLayoutCardBox || !dockedGridBox) {
-    throw new Error('The Agent grid and cards must have layout boxes before and after Quick chat opens');
+  if (!dockedLayoutCardBox || !dockedGridBox) {
+    throw new Error('The Agent grid and cards must have layout boxes before and after Chat opens');
   }
-  expect(dockedLayoutCardBox.width).toBeGreaterThan(fullLayoutCardBox.width);
-  expect(Math.abs(
-    dockedLayoutCardBox.x + dockedLayoutCardBox.width
-      - (dockedGridBox.x + dockedGridBox.width)
-  )).toBeLessThanOrEqual(1);
+  expect(dockedLayoutCardBox.width).toBeCloseTo(fullLayoutCardBox.width, 0);
+  expect(Math.abs(dockedLayoutCardBox.x - dockedGridBox.x)).toBeLessThanOrEqual(1);
+  expect(dockedLayoutCardBox.width).toBeCloseTo(dockedGridBox.width, 0);
 
   const [mainBox, panelBox] = await Promise.all([main.boundingBox(), panel.boundingBox()]);
   expect(mainBox).not.toBeNull();
   expect(panelBox).not.toBeNull();
-  if (!mainBox || !panelBox) throw new Error('The Agents catalog and Quick chat dock must both have layout boxes');
+  if (!mainBox || !panelBox) throw new Error('The Agents catalog and Chat dock must both have layout boxes');
   expect(mainBox.x + mainBox.width).toBeLessThanOrEqual(panelBox.x + 1);
   expect(mainBox.width).toBeGreaterThan(panelBox.width);
   expect(panelBox.height).toBeCloseTo(1000, 0);
@@ -101,14 +116,16 @@ test('Agent cards open route-backed Quick chat and can maximize to full Chat', a
   await expect(panel).toHaveCount(0);
   await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(2);
 
-  await card.getByRole('button', { name: 'Quick chat' }).click();
+  await page.setViewportSize({ width: 1850, height: 1000 });
+  await card.getByRole('button', { name: 'Chat with Kubernetes Specialist' }).click();
   await expect(panel).toBeVisible();
+  await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(2);
   await panel.getByRole('button', { name: 'Open full chat' }).click();
   await expect(page).toHaveURL(agentDetailPath('chat'));
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
 });
 
-test('opening Agent Quick chat replaces an existing target assistant dock', async ({ page }) => {
+test('opening Agent Chat replaces an existing target assistant dock', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/overview', { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Open assistant' }).first().click();
   await expect(page.getByRole('complementary', { name: 'Cluster Assistant' })).toBeVisible();
@@ -120,9 +137,9 @@ test('opening Agent Quick chat replaces an existing target assistant dock', asyn
   await agentsLink.click();
   await expect(page).toHaveURL('/workspaces/fixture-workspace/agents');
   const card = page.locator('[data-agent-id="fixture-specialist"]');
-  await card.getByRole('button', { name: 'Quick chat' }).click();
+  await card.getByRole('button', { name: 'Chat with Kubernetes Specialist' }).click();
 
-  await expect(page.getByRole('complementary', { name: 'Quick chat with Kubernetes Specialist' })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Chat with Kubernetes Specialist' })).toBeVisible();
   await expect(page.getByRole('complementary', { name: 'Cluster Assistant' })).toHaveCount(0);
   await expect(page.locator('[data-docked-assistant="true"]')).toHaveCount(1);
 });
@@ -206,15 +223,15 @@ test('browser Back uses the Agent discard dialog and keeps the draft when cancel
   await expect(page).toHaveURL(/panel=create/);
 });
 
-test('Agent Quick chat remains a modal drawer in a narrow viewport', async ({ browser }) => {
+test('Agent Chat remains a modal drawer in a narrow viewport', async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
 
   const card = page.locator('[data-agent-id="fixture-specialist"]');
-  await card.getByRole('button', { name: 'Quick chat' }).click();
+  await card.getByRole('button', { name: 'Chat with Kubernetes Specialist' }).click();
 
-  await expect(page.getByRole('dialog', { name: 'Quick chat with Kubernetes Specialist' })).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Quick chat with Kubernetes Specialist' })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Chat with Kubernetes Specialist' })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Chat with Kubernetes Specialist' })).toHaveCount(0);
   await page.close();
 });
 

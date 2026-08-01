@@ -41,6 +41,45 @@ test('catalog controls meet responsive target minimums', async ({ page }, testIn
   }
 });
 
+test('action menus navigate, dismiss, restore focus, and stay in the nearest dialog layer', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
+  await page.goto('/design-system.html');
+
+  const trigger = page.getByRole('button', { name: 'Open example menu' });
+  await trigger.focus();
+  await trigger.press('ArrowDown');
+  const menu = page.getByRole('menu', { name: 'Open example menu' });
+  await expect(menu.getByRole('menuitem', { name: 'Selected item' })).toBeFocused();
+
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.getByRole('menuitem', { name: 'Linked item' })).toBeFocused();
+  await page.keyboard.type('d');
+  await expect(menu.getByRole('menuitem', { name: 'Delete item' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+
+  await trigger.click();
+  await page.getByRole('heading', { name: 'Fields and selection controls' }).click();
+  await expect(menu).toHaveCount(0);
+  await trigger.click();
+  await page.keyboard.press('Tab');
+  await expect(menu).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Open dialog' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Confirm change' });
+  await dialog.getByRole('button', { name: 'Dialog actions' }).click();
+  const dialogMenu = page.getByRole('menu', { name: 'Dialog actions' });
+  await expect(dialogMenu).toBeVisible();
+  expect(await dialogMenu.evaluate((element) => Boolean(element.closest('[role="dialog"] [data-floating-layer="true"]')))).toBe(true);
+  const menuBox = await dialogMenu.boundingBox();
+  const viewport = page.viewportSize();
+  expect(menuBox?.x ?? -1).toBeGreaterThanOrEqual(0);
+  expect(menuBox?.y ?? -1).toBeGreaterThanOrEqual(0);
+  expect((menuBox?.x ?? 0) + (menuBox?.width ?? 0)).toBeLessThanOrEqual(viewport?.width ?? 0);
+  expect((menuBox?.y ?? 0) + (menuBox?.height ?? 0)).toBeLessThanOrEqual(viewport?.height ?? 0);
+});
+
 test('overlay frames isolate, contain, nest, restore, and reflow accessibly', async ({ browser, page: projectPage }, testInfo) => {
   test.setTimeout(60_000);
   const dark = testInfo.project.name === 'mobile';

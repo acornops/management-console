@@ -1,10 +1,12 @@
 {
   "catalogedModules": {
     "Button": "Button",
+    "ActionMenu": "ActionMenu",
     "Card": "cardClassName",
     "Checkbox": "Checkbox",
     "CloseButton": "CloseButton",
     "CollectionState": "CollectionState",
+    "Combobox": "ComboboxListbox",
     "CompactControls": "SegmentedTabs",
     "DangerZone": "DangerZone",
     "DataTable": "DataTable",
@@ -16,11 +18,11 @@
     "FormControls": "FieldLabel",
     "InlineAlert": "InlineAlert",
     "InlineConfirmation": "InlineConfirmation",
+    "IconTile": "IconTile",
     "Loading": "MiniProgressBar",
     "MasterDetailLayout": "MasterDetailLayout",
     "ModalStepIndicator": "ModalStepIndicator",
     "Navigation": "NavigationSection",
-    "OverflowActionMenu": "OverflowActionMenu",
     "OverlayFrames": "DialogFrame",
     "PageComposition": "PageShell",
     "Select": "Select",
@@ -32,6 +34,7 @@
   "composedModules": {
     "ActiveTabIndicator": "Rendered inside the catalog's SegmentedTabs example, which owns its positioning contract.",
     "Dialog": "Rendered through DialogFrame, the public composition that supplies the catalog dialog anatomy.",
+    "OverflowActionMenu": "Rendered as the compatibility action-menu composition in the catalog's composite patterns.",
     "PageSearchInput": "Rendered through each DiscoveryFilterBar example so search and recovery behavior stay integrated.",
     "RightSidePanel": "Rendered through DrawerFrame, which demonstrates the public responsive panel composition.",
     "SearchFilterFrame": "Rendered through the three DiscoveryFilterBar variants that exercise its responsive layout."
@@ -40,6 +43,6 @@
     "formControlStyles": "Shared class-name helpers consumed by the catalog's visible form-control primitives.",
     "menuStyles": "Shared class-name helpers consumed by visible menu triggers, items, and overflow menus.",
     "types": "TypeScript-only public contracts with no independently renderable catalog surface.",
-    "useFloatingActionMenu": "Behavior hook exercised by the catalog's interactive OverflowActionMenu example."
+    "useFloatingActionMenu": "Low-level package behavior used by ActionMenu; application code is required to consume ActionMenu instead."
   }
 }

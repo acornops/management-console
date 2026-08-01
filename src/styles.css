@@ -479,43 +479,60 @@ select {
   display: none;
 }
 
-.resource-catalog-rack {
-  margin-inline: auto;
-  max-width: 92rem;
-  width: 100%;
-}
-
 .resource-card-catalog {
   container-name: resource-card-catalog;
   container-type: inline-size;
 }
 
 .resource-card-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
   align-items: stretch;
 }
 
 .resource-card-grid > * {
-  flex: 1 1 min(100%, 30rem);
-  max-width: none;
+  width: 100%;
   min-width: 0;
 }
 
-.resource-card-grid > :only-child {
-  max-width: 40rem;
-}
-
-@container resource-card-catalog (min-width: 92rem) {
-  .resource-card-grid > * {
-    flex: 0 0 30rem;
-    max-width: 30rem;
+@media (min-width: 1200px) and (max-height: 820px) {
+  .management-console-desktop-sidebar [data-sidebar-header='true'],
+  .management-console-desktop-sidebar [data-sidebar-account='true'] {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
   }
-}
 
-[data-agent-catalog-layout='docked'] .resource-card-grid > * {
-  flex-basis: 100%;
-  max-width: none;
+  .management-console-desktop-sidebar [data-sidebar-workspace-context='true'] {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .management-console-desktop-sidebar [data-sidebar-section='true'] {
+    padding-bottom: 0.25rem;
+  }
+
+  .management-console-desktop-sidebar [data-sidebar-section-titled='true'] {
+    padding-top: 0.5rem;
+  }
+
+  .management-console-desktop-sidebar [data-sidebar-section='true'] > div:last-child > :not([hidden]) ~ :not([hidden]),
+  .management-console-desktop-sidebar [data-sidebar-settings-divider='true'] > div > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.125rem;
+  }
+
+  .management-console-desktop-sidebar [data-sidebar-density-nav='true'] > div > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0;
+  }
+
+  .management-console-desktop-sidebar [data-sidebar-settings-divider='true'] {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .management-console-desktop-sidebar [data-sidebar-target-context='true'] {
+    margin-bottom: 0.5rem;
+    padding-top: 0;
+  }
 }
 
 .workspace-overview-page {

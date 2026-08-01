@@ -6,7 +6,8 @@ import {
   DataTableGridHeader,
   DataTableGridHeaderCell,
   DrawerFrame,
-  EmptyState
+  EmptyState,
+  IconTile
 } from '@acornops/ui';
 import {
   classNames,
@@ -80,7 +81,7 @@ export const InfrastructureRow: React.FC<{
   const content = (
     <>
       <div data-resource-row-identity="true" className="flex min-w-0 max-w-full items-center gap-4 sm:gap-5 xl:gap-6">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-metric-blue/20 bg-metric-blue/10 text-metric-blue">{icon}</div>
+        <IconTile size="lg" tone="metric">{icon}</IconTile>
         <div className="min-w-0">
           <h3 className="type-row-title break-words [overflow-wrap:anywhere]" title={title}>
             {title}

@@ -9,6 +9,7 @@ export interface CompactControlItem<T extends string> {
   value: T;
   label: React.ReactNode;
   count?: number;
+  controlsId?: string;
   icon?: React.ReactNode;
   disabled?: boolean;
 }
@@ -91,7 +92,7 @@ export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted 
             id={idBase ? `${idBase}-${tab.value}-tab` : undefined}
             type="button"
             role="tab"
-            aria-controls={idBase && (allPanelsMounted || tab.isActive) ? `${idBase}-${tab.value}-panel` : undefined}
+            aria-controls={tab.controlsId ?? (idBase && (allPanelsMounted || tab.isActive) ? `${idBase}-${tab.value}-panel` : undefined)}
             aria-selected={tab.ariaSelected}
             disabled={tab.disabled}
             tabIndex={tab.isActive ? 0 : -1}

@@ -2,7 +2,7 @@ import React from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { Select } from '@acornops/ui';
@@ -158,9 +158,9 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
 
       <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">
         {error && phase !== 'error' && (
-          <div role="alert" className="border-b border-status-danger/25 bg-status-danger-soft px-5 py-3 type-body text-status-danger-text">
+          <InlineAlert tone="danger" className="rounded-none border-x-0 border-t-0 px-5 type-body">
             {error}
-          </div>
+          </InlineAlert>
         )}
         {canManage && !capabilities.workspaceManagedSourcesEnabled && (
           <p className="border-b border-ui-border p-4 type-body text-ui-text-muted">{t('catalogSources.policyDisabled')}</p>
@@ -274,15 +274,15 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
             />
           }
           error={
-            <div role="alert" className="border-b border-status-danger/25 bg-status-danger-soft px-5 py-3 type-body text-status-danger-text">
+            <InlineAlert tone="danger" className="rounded-none border-x-0 border-t-0 px-5 type-body">
               {error}
-            </div>
+            </InlineAlert>
           }
           feedback={
             error ? (
-              <div role="alert" className="border-t border-status-danger/25 bg-status-danger-soft px-5 py-3 type-body text-status-danger-text">
+              <InlineAlert tone="danger" className="rounded-none border-x-0 border-b-0 px-5 type-body">
                 {error}
-              </div>
+              </InlineAlert>
             ) : (
               <span className="sr-only">{t('catalogSources.loading')}</span>
             )

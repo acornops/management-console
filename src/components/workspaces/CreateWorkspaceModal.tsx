@@ -1,7 +1,7 @@
 import React from 'react';
 import { BotMessageSquare, Check, KeyRound, Loader2, MailPlus, Plus, Trash2, Users, Workflow } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, CloseButton, DialogFrame, FieldValidationMessage, fieldInvalidClass, ModalStepIndicator, Select, TextInput } from '@acornops/ui';
+import { Button, CloseButton, DialogFrame, FieldValidationMessage, fieldInvalidClass, IconTile, ModalStepIndicator, Select, TextInput } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
 import { CreateWorkspaceMemberResult } from '@/components/workspaces/CreateWorkspaceMemberResult';
 import { formatRole } from '@/pages/workspace-members/memberUtils';
@@ -394,9 +394,9 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
             </div>
             <aside className="rounded-lg border border-ui-border bg-ui-surface p-5">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent-strong">
+                <IconTile size="xs" tone="accent" className="mt-0.5">
                   <Users className="h-4 w-4" aria-hidden="true" />
-                </span>
+                </IconTile>
                 <div>
                   <h4 className="type-row-title">{t('workspaceCreate.ownerAccessTitle')}</h4>
                   <p className="type-caption mt-2 text-ui-text-muted">{t('workspaceCreate.ownerAccessBody')}</p>
@@ -419,9 +419,9 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6 custom-scrollbar">
             <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 type-ui leading-6 text-ui-text-muted">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-strong">
+                <IconTile size="xs" tone="accent" className="mt-0.5">
                   <MailPlus className="h-4 w-4" aria-hidden="true" />
-                </span>
+                </IconTile>
                 <p>{t('workspaceCreate.memberAccessBody')}</p>
               </div>
             </div>
@@ -565,9 +565,9 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
         <>
           <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">
             <div className="mx-auto max-w-2xl py-3 sm:py-6">
-              <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-accent/20 bg-accent-soft text-accent-strong">
+              <IconTile tone="accent" className="h-11 w-11 rounded-lg">
                 <KeyRound className="h-5 w-5" aria-hidden="true" />
-              </span>
+              </IconTile>
               <p className="type-micro-label mt-5 text-accent-strong">{t('workspaceCreate.aiSetupKicker')}</p>
               <h4 className="type-section-title mt-2 text-ui-text">{t('workspaceCreate.aiSetupTitle')}</h4>
               <p className="type-body mt-2 max-w-[65ch] text-ui-text-muted">{t('workspaceCreate.aiSetupBody')}</p>

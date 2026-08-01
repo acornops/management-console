@@ -1,11 +1,8 @@
 import React from 'react';
-import { MenuItem, Switch } from '@acornops/ui';
-import { createPortal } from 'react-dom';
+import { ActionMenu, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
 import { Activity, BookOpen, Check, Download, Eye, FileText, Globe2, MoreVertical, RotateCcw, Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuSurfaceClassName } from '@acornops/ui';
 import type { ControlPlaneTargetToolItem } from '@/services/controlPlaneApi';
-import { useFloatingActionMenu } from '@acornops/ui';
 import { Button } from '@acornops/ui';
 import { DataTableCell, DataTableRow } from '@acornops/ui';
 
@@ -33,8 +30,6 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   onToggleTool
 }) => {
   const { t } = useTranslation();
-  const actionMenuId = React.useId();
-  const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
   const isTogglingTool = pendingToolId === tool.id;
   const isBlockedByOtherToolToggle = Boolean(pendingToolId && !isTogglingTool);
   const canEditTool = canEditTools && (tool.permissions?.canEdit ?? true);
@@ -42,21 +37,9 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   const isUnavailable = tool.enabled && tool.availability?.available === false;
   const isToggleable = tool.toggleable ?? !isPlatformNative;
   const canToggleTool = isToggleable && canEditTool && !isBlockedByOtherToolToggle && !isTogglingTool;
-  const capabilityBadgeClassName = capability === 'write' ? 'bg-status-warning-soft text-status-warning-text' : 'bg-status-success-soft text-status-success-text';
 
   const targetInsightsActionCount = tool.id === 'target_insights' ? (canEditTool ? 5 : 4) : 1;
-  const {
-    triggerRef: actionMenuButtonRef,
-    menuRef: actionMenuRef,
-    style: actionMenuStyle,
-    close: closeActionMenu
-  } = useFloatingActionMenu({
-    open: actionMenuOpen,
-    setOpen: setActionMenuOpen,
-    estimatedHeight: targetInsightsActionCount * 40 + 16
-  });
   const invokeTargetInsightsAction = (action: 'files' | 'settings' | 'activity' | 'export' | 'reset') => {
-    closeActionMenu();
     if (onTargetInsightsAction) {
       onTargetInsightsAction(tool, action);
       return;
@@ -64,10 +47,22 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
     onConfigure(tool);
   };
 
-  const actionMenu =
-    actionMenuOpen && actionMenuStyle && typeof document !== 'undefined'
-      ? createPortal(
-          <div ref={actionMenuRef} id={actionMenuId} role="menu" className={menuSurfaceClassName('fixed z-[130] p-1')} style={actionMenuStyle}>
+  const actionMenu = (
+    <ActionMenu
+      label={t('tools.actionsNamed', { tool: tool.label })}
+      estimatedHeight={targetInsightsActionCount * 40 + 16}
+      trigger={(
+        <Button
+          data-target-tool-primary-actions="true"
+          type="button"
+          variant="tertiary"
+          size="icon"
+          className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+        >
+          <MoreVertical className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      )}
+    >
             {tool.id === 'target_insights' ? (
               <>
                 <MenuItem onClick={() => invokeTargetInsightsAction('files')}>
@@ -96,7 +91,6 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
             ) : !isPlatformNative ? (
               <MenuItem
                 onClick={() => {
-                  closeActionMenu();
                   onConfigure(tool);
                 }}
               >
@@ -108,16 +102,14 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
                 <span>{canEditTool ? t('tools.configureTool') : t('tools.viewTool')}</span>
               </MenuItem>
             ) : null}
-          </div>,
-          document.body
-        )
-      : null;
+    </ActionMenu>
+  );
 
   return (
     <DataTableRow data-target-tool-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
       <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
+          <IconTile tone="accent">
             {tool.id === 'target_insights' ? (
               <BookOpen className="h-5 w-5 text-accent-strong" aria-hidden="true" />
             ) : isPlatformNative ? (
@@ -125,13 +117,13 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
             ) : (
               <Globe2 className="h-5 w-5 text-accent-strong" aria-hidden="true" />
             )}
-          </div>
+          </IconTile>
           <div className="min-w-0 flex-1">
             <span className="type-row-title flex min-w-0 flex-wrap items-center gap-2">
               <span className="truncate">{tool.label}</span>
               <span className="type-micro-label shrink-0 rounded-full bg-accent-soft/45 px-2 py-0.5 text-accent-readable">{t('common.providedByAcornOps')}</span>
               {isUnavailable && (
-                <span className="type-micro-label shrink-0 rounded-full bg-status-warning-soft px-2 py-0.5 text-status-warning-text">{t('tools.unavailable')}</span>
+                <StatusBadge tone="warning">{t('tools.unavailable')}</StatusBadge>
               )}
             </span>
             <span className="type-caption mt-1 block line-clamp-2 break-words" title={tool.description}>
@@ -145,7 +137,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
         </div>
       </DataTableCell>
       <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
-        <span className={`type-micro-label rounded-full px-2.5 py-1 ${capabilityBadgeClassName}`}>{capabilityLabel}</span>
+        <StatusBadge tone={capability === 'write' ? 'warning' : 'success'} className="px-2.5 py-1">{capabilityLabel}</StatusBadge>
       </DataTableCell>
       <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         {!isToggleable ? (
@@ -167,30 +159,13 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
         )}
       </DataTableCell>
       <DataTableCell className="type-caption hidden px-4 py-6 sm:px-6 md:table-cell lg:px-8">
-        <span className="type-micro-label rounded-full bg-ui-bg px-2.5 py-1 text-ui-text-muted">{runtimeLabel}</span>
+        <StatusBadge tone="neutral" className="px-2.5 py-1">{runtimeLabel}</StatusBadge>
       </DataTableCell>
       <DataTableCell className="px-4 py-6 text-right sm:px-6 lg:px-8">
         {isPlatformNative ? (
           <span className="type-caption text-ui-text-muted">{t('tools.noConfiguration')}</span>
         ) : (
-          <>
-            <Button
-              ref={actionMenuButtonRef}
-              data-target-tool-primary-actions="true"
-              type="button"
-              variant="tertiary"
-              size="icon"
-              onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
-              className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-              aria-haspopup="menu"
-              aria-expanded={actionMenuOpen}
-              aria-controls={actionMenuOpen ? actionMenuId : undefined}
-              aria-label={t('tools.actionsNamed', { tool: tool.label })}
-            >
-              <MoreVertical className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            {actionMenu}
-          </>
+          actionMenu
         )}
       </DataTableCell>
     </DataTableRow>

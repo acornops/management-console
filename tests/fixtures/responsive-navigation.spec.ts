@@ -120,6 +120,61 @@ test('the 1200px boundary switches between persistent and overlay navigation', a
   await expect(page.locator('.management-console-desktop-sidebar')).toBeVisible();
 });
 
+test('short desktop viewports tighten navigation spacing without hiding destinations', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
+
+  const sidebar = page.locator('.management-console-desktop-sidebar');
+  const navigation = sidebar.getByRole('navigation', { name: 'Workspace navigation' });
+  const clusters = sidebar.getByRole('link', { name: 'Kubernetes Clusters' });
+  const virtualMachines = sidebar.getByRole('link', { name: 'Virtual Machines' });
+  const outboundWebhooks = sidebar.getByRole('link', { name: 'Webhooks' });
+  const governanceTitle = sidebar.getByText('Governance', { exact: true });
+  const approvals = sidebar.getByRole('link', { name: 'Approvals' });
+  const workspaceSettings = sidebar.getByRole('link', { name: 'Workspace Settings' });
+  const rowCadence = async () => {
+    const clusterTop = await clusters.evaluate((element) => element.getBoundingClientRect().top);
+    const virtualMachineTop = await virtualMachines.evaluate((element) => element.getBoundingClientRect().top);
+    return Math.round((virtualMachineTop - clusterTop) * 100) / 100;
+  };
+
+  await expect(clusters).toBeVisible();
+  await expect(virtualMachines).toBeVisible();
+  await expect(approvals).toBeVisible();
+  await expect(workspaceSettings).toBeVisible();
+  expect(await rowCadence()).toBe(44);
+
+  await page.setViewportSize({ width: 1600, height: 700 });
+  await expect(clusters).toBeVisible();
+  await expect(virtualMachines).toBeVisible();
+  await expect(approvals).toBeVisible();
+  await expect(workspaceSettings).toBeVisible();
+  await expect(approvals.locator('[data-nav-count-badge="default"]')).toHaveAttribute('aria-label', '1');
+  expect(await rowCadence()).toBe(42);
+  const webhooksBox = await outboundWebhooks.boundingBox();
+  const governanceTitleBox = await governanceTitle.boundingBox();
+  const approvalsBox = await approvals.boundingBox();
+  expect(webhooksBox).not.toBeNull();
+  expect(governanceTitleBox).not.toBeNull();
+  expect(approvalsBox).not.toBeNull();
+  if (!webhooksBox || !governanceTitleBox || !approvalsBox) {
+    throw new Error('Short-viewport group title spacing needs layout boxes');
+  }
+  expect(governanceTitleBox.y - (webhooksBox.y + webhooksBox.height)).toBe(12);
+  expect(approvalsBox.y - (governanceTitleBox.y + governanceTitleBox.height)).toBe(8);
+  await expect.poll(() => navigation.evaluate((element) => element.scrollHeight - element.clientHeight))
+    .toBeLessThanOrEqual(1);
+
+  await expect(approvals).toHaveAttribute('href', '/workspaces/fixture-workspace/approvals');
+  await expect(workspaceSettings).toHaveAttribute('href', '/workspaces/fixture-workspace/settings');
+
+  await page.getByRole('button', { name: 'Collapse sidebar' }).click();
+  await expect(approvals.locator('[data-nav-count-badge="compact"]')).toHaveAttribute('aria-label', '1');
+  expect(await rowCadence()).toBe(42);
+  await expect.poll(() => navigation.evaluate((element) => element.scrollHeight - element.clientHeight))
+    .toBeLessThanOrEqual(1);
+});
+
 test('collapsed rail controls and identities share one centerline', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.addInitScript(([key, value]) => window.localStorage.setItem(key, value), [

@@ -2,8 +2,7 @@ import React from 'react';
 import { motion, type Transition } from 'framer-motion';
 import { ChevronRight, MoreHorizontal } from 'lucide-react';
 
-import { Button } from '@acornops/ui';
-import { menuSurfaceClassName } from '@acornops/ui';
+import { ActionMenu, Button, StatusBadge, type StatusBadgeTone } from '@acornops/ui';
 
 export type TargetCatalogKind = 'cluster' | 'vm';
 
@@ -65,11 +64,11 @@ export const TargetCatalogCard: React.FC<TargetCatalogCardProps> = ({ targetKind
 export const TargetCatalogStatusPill: React.FC<{
   label: string;
   reason: string;
-  toneClassName: string;
-}> = ({ label, reason, toneClassName }) => (
-  <span className={`inline-flex max-w-[8.5rem] items-center rounded-full border px-2 py-0.5 type-micro-label ${toneClassName}`} aria-label={`${label}: ${reason}`}>
+  tone: StatusBadgeTone;
+}> = ({ label, reason, tone }) => (
+  <StatusBadge tone={tone} className="max-w-[8.5rem]" aria-label={`${label}: ${reason}`}>
     <span className="truncate">{label}</span>
-  </span>
+  </StatusBadge>
 );
 
 export const TargetCatalogActionHint: React.FC<{ label: string }> = ({ label }) => (
@@ -90,128 +89,35 @@ interface TargetCatalogActionMenuProps {
   children: React.ReactNode;
 }
 
-type MenuFocusTarget = 'first' | 'last';
-
 export const ResourceCatalogActionMenu: React.FC<Omit<TargetCatalogActionMenuProps, 'targetKind'> & {
   triggerAttribute?: Record<string, string>;
-}> = ({ triggerAttribute = {}, label, open, onOpenChange, children }) => {
-  const rootRef = React.useRef<HTMLDivElement>(null);
-  const triggerRef = React.useRef<HTMLButtonElement>(null);
-  const menuRef = React.useRef<HTMLDivElement>(null);
-  const pendingFocusRef = React.useRef<MenuFocusTarget>('first');
-  const onOpenChangeRef = React.useRef(onOpenChange);
-  const menuId = React.useId();
-
-  const menuItems = React.useCallback(() => Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? []), []);
-
-  React.useLayoutEffect(() => {
-    onOpenChangeRef.current = onOpenChange;
-  }, [onOpenChange]);
-
-  const openMenu = React.useCallback(
-    (focusTarget: MenuFocusTarget) => {
-      pendingFocusRef.current = focusTarget;
-      onOpenChangeRef.current(true);
-    },
-    []
-  );
-
-  const closeMenu = React.useCallback(
-    (restoreFocus = false) => {
-      onOpenChangeRef.current(false);
-      if (restoreFocus) {
-        window.requestAnimationFrame(() => triggerRef.current?.focus());
-      }
-    },
-    []
-  );
-
-  React.useLayoutEffect(() => {
-    if (!open) return undefined;
-    const items = menuItems();
-    items.forEach((item) => {
-      item.tabIndex = -1;
-    });
-    const target = pendingFocusRef.current === 'last' ? items[items.length - 1] : items[0];
-    const frame = window.requestAnimationFrame(() => target?.focus());
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) closeMenu();
-    };
-    document.addEventListener('mousedown', handlePointerDown, true);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      document.removeEventListener('mousedown', handlePointerDown, true);
-    };
-  }, [closeMenu, menuItems, open]);
-
-  const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const items = menuItems();
-    const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closeMenu(true);
-      return;
-    }
-    if (event.key === 'Tab') {
-      onOpenChangeRef.current(false);
-      return;
-    }
-    if (items.length === 0) return;
-
-    let nextIndex: number | null = null;
-    if (event.key === 'ArrowDown') nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
-    if (event.key === 'ArrowUp') nextIndex = currentIndex < 0 ? items.length - 1 : (currentIndex - 1 + items.length) % items.length;
-    if (event.key === 'Home') nextIndex = 0;
-    if (event.key === 'End') nextIndex = items.length - 1;
-    if (nextIndex === null) return;
-    event.preventDefault();
-    items[nextIndex]?.focus();
-  };
-
-  return (
-    <div ref={rootRef} className="pointer-events-auto relative z-20">
-      <Button
-        ref={triggerRef}
+}> = ({ triggerAttribute = {}, label, open, onOpenChange, children }) => (
+  <span className="pointer-events-auto relative z-20">
+    <ActionMenu
+      label={label}
+      open={open}
+      onOpenChange={onOpenChange}
+      className="type-body"
+      trigger={(
+        <Button
         {...triggerAttribute}
         type="button"
         variant="tertiary"
         size="icon"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
         aria-label={label}
         onClick={(event) => {
           event.stopPropagation();
-          if (open) closeMenu();
-          else openMenu('first');
-        }}
-        onKeyDown={(event) => {
-          if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-          event.preventDefault();
-          event.stopPropagation();
-          openMenu(event.key === 'ArrowUp' ? 'last' : 'first');
         }}
         className={open ? 'bg-ui-bg text-ui-text' : undefined}
       >
         <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
       </Button>
-      {open && (
-        <div
-          ref={menuRef}
-          id={menuId}
-          role="menu"
-          aria-label={label}
-          onClick={(event) => event.stopPropagation()}
-          onKeyDown={handleMenuKeyDown}
-          className={menuSurfaceClassName('absolute right-0 top-11 w-52 p-1 type-body sm:top-9')}
-        >
-          {children}
-        </div>
       )}
-    </div>
-  );
-};
+    >
+      {children}
+    </ActionMenu>
+  </span>
+);
 
 export const TargetCatalogActionMenu: React.FC<TargetCatalogActionMenuProps> = ({ targetKind, ...props }) => (
   <ResourceCatalogActionMenu

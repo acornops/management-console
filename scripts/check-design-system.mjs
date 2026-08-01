@@ -199,6 +199,7 @@ const canonicalModules = new Set([
   'DiscoveryFilterBar.tsx',
   'EmptyState.tsx',
   'FormControls.tsx',
+  'IconTile.tsx',
   'OverlayFrames.tsx',
   'PageComposition.tsx',
   'RightSidePanel.tsx',
@@ -311,6 +312,23 @@ for (const path of files) {
     if (/\bvariant\s*=/.test(opening.source)) continue;
     const line = source.slice(0, opening.start).split('\n').length;
     report(path, 'implicit-button-variant', `line ${line}: shared buttons must declare their visual intent with an explicit variant`);
+  }
+
+  for (const opening of jsxOpenings(source, /<[A-Za-z][A-Za-z0-9.]*(?=[\s>])/g)) {
+    const tagName = opening.source.match(/^<([A-Za-z][A-Za-z0-9.]*)/)?.[1];
+    if (!tagName || ['button', 'motion.button', 'Button', 'MotionButton', 'IconTile'].includes(tagName)) continue;
+    const classNameSource = topLevelClassNameValues(opening.source).map(({ value }) => value).join(' ');
+    if (!classNameSource || classNameSource.includes('pending-agent-step-pulse')) continue;
+    const isCenteredSquare = /(?:^|\s)(?:flex|inline-flex)(?:\s|$)/.test(classNameSource)
+      && /(?:^|\s)items-center(?:\s|$)/.test(classNameSource)
+      && /(?:^|\s)justify-center(?:\s|$)/.test(classNameSource)
+      && /(?:^|\s)h-(?:7|8|9|10|11|12)(?:\s|$)/.test(classNameSource)
+      && /(?:^|\s)w-(?:7|8|9|10|11|12)(?:\s|$)/.test(classNameSource);
+    const reconstructsControlFrame = /(?:^|\s)border-ui-border(?:\s|$)/.test(classNameSource)
+      && /(?:^|\s)bg-ui-(?:bg|surface)(?:\/[^\s]+)?(?:\s|$)/.test(classNameSource);
+    if (!isCenteredSquare || !reconstructsControlFrame) continue;
+    const line = source.slice(0, opening.start).split('\n').length;
+    report(path, 'noninteractive-icon-tile', `line ${line}: use IconTile for flat context glyphs or Button for icon actions`);
   }
 
   for (const opening of jsxOpenings(source, /<[A-Za-z][A-Za-z0-9.]*(?=[\s>])/g)) {

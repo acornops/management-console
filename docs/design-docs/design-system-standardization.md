@@ -15,7 +15,10 @@ Page code supplies content and semantic intent through typed shared primitives:
 - `DataTableHeader`, `DataTableHeaderCell`, `DataTableGridHeader`, and `DataTableGridHeaderCell` provide one header anatomy for semantic tables and responsive grid ledgers.
 - `SearchFilterFrame`, `DiscoveryFilterBar`, and typed definitions from `createDiscoveryFilterGroup` compose the canonical framed collection search, visible categorical filters, result feedback, and no-match recovery.
 - `DialogFrame` and `DrawerFrame` provide the canonical overlay header, body, footer, close control, width presets, focus containment, Escape behavior, and focus restoration.
-- `Button`, `Select`, `Checkbox`, `Radio`, `Switch`, `MenuTrigger`, `MenuItem`, `ThemeMenu`, `FieldLabel`, and `HelpText` provide the control vocabulary.
+- `Button`, `Select`, `Checkbox`, `Radio`, `Switch`, `ActionMenu`,
+  `MenuSurface`, `MenuItem`, `MenuLink`, `SegmentedTabs`, `ComboboxListbox`,
+  `ComboboxGroup`, `ComboboxOption`, `InlineAlert`, `StatusBadge`, `ThemeMenu`,
+  `FieldLabel`, and `HelpText` provide the control and feedback vocabulary.
 
 The supported button intents are neutral `primary`, `secondary`, `tertiary`, `icon`, and `danger`, plus orange `activation`. Activation is limited to workflow launch or activation. Create, Add, Invite, Save, Continue, and routine Run actions are neutral primary actions.
 
@@ -86,7 +89,15 @@ Pages may retain layouts that match their work: tables, split panes, resource ex
 
 Run `npm run design:catalog` and open `/design-system.html` to inspect light and dark component states at responsive widths. The catalog includes page-return navigation, theme-toggle, code-surface, segmented-tab, search-only, single-filter and multi-filter discovery bars, compact-control, and lifecycle-action examples. It is a development entrypoint and is not registered in the production application router or included as a production build entry.
 
-`npm run design:check` runs in normal and CI validation. It rejects native select, checkbox, and radio controls outside the primitives; custom switches; the retired `accent` button intent; activation buttons outside reviewed workflow contexts; component-local literal colors; every standard named Tailwind palette; `backdrop-blur`; copied route-shell signatures; authenticated route pages without shared composition or a documented embedded exception; and cluster, virtual-machine, or agent catalogs that leave the shared resource-card container and grid contract. Raw buttons must use one of the tested shared sizing helpers or the canonical responsive `control-target` utility. The explicit 40 px desktop-sidebar navigation row is the sole desktop-only target exception.
+`npm run design:check` and `npm run design:adoption` run in normal and CI
+validation. Together they reject native controls outside shared primitives,
+feature-owned menu/listbox/option and tab markup, direct application use of the
+floating-menu hook, bordered semantic callout copies, raw typography, low-level
+overlays, visible native tables outside exact reviewed renderer exceptions,
+literal colors, copied route shells, and resource catalogs outside the shared
+layout contract. Raw buttons must use one of the tested shared sizing helpers
+or the canonical responsive `control-target` utility. The explicit 40 px
+desktop-sidebar navigation row is the sole desktop-only target exception.
 
 ## Ownership
 

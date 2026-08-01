@@ -2,7 +2,7 @@ import React from 'react';
 import { ExternalLink, KeyRound, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Checkbox, CloseButton, DialogFrame, InlineLoadingIndicator, Select } from '@acornops/ui';
+import { Button, Checkbox, CloseButton, DialogFrame, InlineAlert, InlineLoadingIndicator, Select } from '@acornops/ui';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 import type {
   McpOAuthIssuerCandidate,
@@ -289,13 +289,12 @@ export const McpOAuthDialog: React.FC<McpOAuthDialogProps> = ({
           )}
 
           {error && (
-            <div
+            <InlineAlert
               id={errorId}
-              role="alert"
-              className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text"
+              tone="danger"
             >
               {error}
-            </div>
+            </InlineAlert>
           )}
         </div>
 

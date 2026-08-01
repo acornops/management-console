@@ -320,7 +320,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                         size="sm"
                         onClick={() => void loadPodLogs('manual')}
                         disabled={isPodLogsLoading}
-                        className="control-target inline-flex items-center gap-2 rounded-lg border border-ui-border bg-ui-surface px-3 py-2 type-ui text-ui-text transition-colors hover:bg-ui-bg disabled:cursor-not-allowed disabled:opacity-60"
+                        className="control-target px-3 py-2"
                       >
                         {isPodLogsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
                         {t('workloads.refresh')}

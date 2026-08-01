@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Textarea } from '@acornops/ui';
+import { Button, InlineAlert, Textarea } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
@@ -95,8 +95,8 @@ export const WorkflowCreateDrawer: React.FC<{
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
         {!canManageWorkflows && <div className="mb-4 rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You need manage_workflows to create workflows.</div>}
         {!workflowOptionsReady && <div className="mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-caption type-emphasis text-status-warning-text">Workflow options must load before you can create a workflow.</div>}
-        {createError && <div role="alert" aria-live="assertive" className="mb-4 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{createError}</div>}
-        {stepNavigationError && <div className="mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 type-caption type-emphasis text-status-warning-text" role="status" aria-live="polite">{stepNavigationError}</div>}
+        {createError && <InlineAlert tone="danger" aria-live="assertive" className="mb-4 type-emphasis">{createError}</InlineAlert>}
+        {stepNavigationError && <InlineAlert tone="warning" className="mb-4 type-emphasis" aria-live="polite">{stepNavigationError}</InlineAlert>}
         {createWorkflowStep === 1 && (
           <div className="space-y-5">
             <div>

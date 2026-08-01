@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from '@acornops/ui';
+import { Button, IconTile } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 
@@ -31,9 +31,9 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
   >
     <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-warning-soft text-status-warning-text">
+        <IconTile size="sm" tone="warning">
           <AlertTriangle className="h-4 w-4" />
-        </div>
+        </IconTile>
         <h3 id="unsaved-changes-dialog-title" className="type-panel-title">{title}</h3>
       </div>
       <CloseButton

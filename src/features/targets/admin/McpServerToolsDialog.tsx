@@ -222,7 +222,7 @@ export const McpServerToolsDialog: React.FC<{
               {renderToolSection(t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
               <div ref={loadMoreSentinelRef}>
                 {hasMoreTools && (
-                  <Button type="button" variant="secondary" size="sm" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="control-target type-ui w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 text-ui-text-muted transition-colors hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60">
+                  <Button type="button" variant="secondary" size="sm" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="w-full">
                     {isLoadingMoreTools ? t('mcpServers.loadingTools') : t('common.loadMore')}
                   </Button>
                 )}

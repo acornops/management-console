@@ -4,6 +4,7 @@ import { Download, FileText } from 'lucide-react';
 import { getControlPlaneUrl } from '@/services/control-plane/http';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { IconTile, InlineAlert } from '@acornops/ui';
 
 interface GeneratedReportCardProps {
   trace?: LiveRunTrace;
@@ -38,9 +39,9 @@ export const GeneratedReportCard: React.FC<GeneratedReportCardProps> = ({ trace,
           aria-labelledby={`generated-report-${report.reportId}`}
         >
           <div className="flex min-w-0 items-start gap-3">
-            <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-status-success-soft text-status-success-text">
+            <IconTile size="xs" tone="success" className="mt-0.5">
               <FileText className="h-4 w-4" aria-hidden="true" />
-            </span>
+            </IconTile>
             <div className="min-w-0">
               <p className="type-micro-label text-ui-text-muted">{t('chat.generatedIncidentReport')}</p>
               <h3 id={`generated-report-${report.reportId}`} className="type-row-title mt-0.5 truncate text-ui-text">
@@ -66,10 +67,10 @@ export const GeneratedReportCard: React.FC<GeneratedReportCardProps> = ({ trace,
         </section>
       ))}
       {generationFailed && (
-        <div className="rounded-lg border border-status-danger/30 bg-status-danger-soft px-4 py-3 type-body text-status-danger-text" role="alert">
+        <InlineAlert tone="danger" className="type-body">
           <p className="type-emphasis">{t('chat.incidentReportGenerationFailed')}</p>
           <p className="type-caption mt-1">{t('chat.incidentReportGenerationFailedBody')}</p>
-        </div>
+        </InlineAlert>
       )}
     </div>
   );

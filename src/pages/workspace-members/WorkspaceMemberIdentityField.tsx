@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Check, Loader2, Search, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CollectionState } from '@acornops/ui';
+import { CollectionState, ComboboxListbox, ComboboxOption } from '@acornops/ui';
 import { TextInput } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { WorkspaceMemberCandidate, WorkspaceMemberDiscoveryMode } from '@/types';
@@ -194,10 +194,9 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
       </p>
 
       {listIsOpen && (
-        <div
+        <ComboboxListbox
           id={listboxId}
-          role="listbox"
-          aria-label={t('members.directoryResults')}
+          label={t('members.directoryResults')}
           className="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-ui-border bg-ui-surface p-1.5 shadow-lg"
         >
           <CollectionState
@@ -211,20 +210,15 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
             {candidates.map((candidate, index) => {
               const available = candidate.status === 'available';
               return (
-                <Button
+                <ComboboxOption
                   key={candidate.userId}
                   id={`${listboxId}-${index}`}
-                  type="button"
-                  variant="tertiary"
-                  role="option"
-                  aria-selected={index === activeIndex}
+                  active={index === activeIndex}
                   disabled={!available}
                   onMouseDown={(event) => event.preventDefault()}
                   onMouseEnter={() => available && setActiveIndex(index)}
                   onClick={() => available && onSelect(candidate)}
-                  className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-md px-3 py-2.5 text-left transition-colors focus:outline-none sm:min-h-9 ${
-                    index === activeIndex ? 'bg-accent-soft text-ui-text' : 'text-ui-text hover:bg-ui-bg'
-                  } disabled:cursor-not-allowed disabled:opacity-55`}
+                  className="justify-between rounded-md py-2.5 disabled:opacity-55"
                 >
                   <span className="min-w-0">
                     <span className="flex min-w-0 items-center gap-2">
@@ -236,11 +230,11 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
                     <span className="block truncate type-caption text-ui-text-muted">{candidate.email}</span>
                   </span>
                   <span className="shrink-0 rounded-full border border-ui-border bg-ui-bg px-2 py-1 type-micro-label">{candidateStatusLabel(candidate.status, t)}</span>
-                </Button>
+                </ComboboxOption>
               );
             })}
           </CollectionState>
-        </div>
+        </ComboboxListbox>
       )}
     </div>
   );

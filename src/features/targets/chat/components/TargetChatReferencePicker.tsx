@@ -2,7 +2,7 @@ import React from 'react';
 import { BookOpen, Wrench, X } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import type { ChatAssistantReference } from '@/types';
-import { Button } from '@acornops/ui';
+import { Button, ComboboxGroup, ComboboxListbox, ComboboxOption } from '@acornops/ui';
 
 interface TargetChatReferenceChipsProps {
   references: ChatAssistantReference[];
@@ -55,7 +55,7 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
     const items = references.map((reference, index) => ({ reference, index })).filter(({ reference }) => reference.kind === kind);
     if (items.length === 0) return null;
     return (
-      <div role="group" aria-label={label}>
+      <ComboboxGroup label={label}>
         <p className="px-3 pb-1 pt-2 type-micro-label">{label}</p>
         {items.map(({ reference, index }) => {
           const Icon = reference.kind === 'tool' ? Wrench : BookOpen;
@@ -67,19 +67,14 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
               ? t('chat.referenceImportedSkill')
               : t('chat.referenceSkill');
           return (
-            <Button
+            <ComboboxOption
               key={`${reference.kind}:${reference.id}`}
-              type="button"
-              variant="tertiary"
               id={`${id}-option-${index}`}
-              role="option"
-              aria-selected={isActive}
+              active={isActive}
               onMouseEnter={() => onActiveIndexChange(index)}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => onSelect(reference)}
-              className={`control-target flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors focus:outline-none ${
-                isActive ? 'bg-ui-bg text-ui-text' : 'text-ui-text hover:bg-ui-bg'
-              }`}
+              className="control-target items-start gap-2 rounded-lg"
             >
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
               <span className="min-w-0 flex-1">
@@ -87,18 +82,17 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
                 <span className="mt-0.5 block truncate type-caption text-ui-text-muted">{reference.description || metadata}</span>
               </span>
               <span className="shrink-0 pt-0.5 type-micro-label">{metadata}</span>
-            </Button>
+            </ComboboxOption>
           );
         })}
-      </div>
+      </ComboboxGroup>
     );
   };
 
   return (
-    <div
+    <ComboboxListbox
       id={id}
-      role="listbox"
-      aria-label={t('chat.referencePickerLabel')}
+      label={t('chat.referencePickerLabel')}
       className="absolute bottom-full left-2 right-2 z-50 mb-2 max-h-72 overflow-y-auto rounded-xl border border-ui-border bg-ui-surface-strong p-1.5 shadow-xl shadow-ui-text/10 custom-scrollbar"
     >
       {references.length === 0 ? (
@@ -109,6 +103,6 @@ export const TargetChatReferenceMenu: React.FC<TargetChatReferenceMenuProps> = (
           {renderGroup('skill', t('chat.capabilityPreviewSkills'))}
         </>
       )}
-    </div>
+    </ComboboxListbox>
   );
 };

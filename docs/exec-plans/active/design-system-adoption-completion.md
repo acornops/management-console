@@ -203,7 +203,40 @@ control-plane-mode validation suite all pass.
     tests.
   - `npm run design:snapshots` passed 21 checks with one intentional mobile
     skip and produced no snapshot differences.
-- PENDING: Stage 4 validation.
+- PASS: Stage 4 component consolidation.
+  - Added public `ActionMenu`, `MenuSurface`, `MenuLink`,
+    `ComboboxListbox`, `ComboboxGroup`, and `ComboboxOption` primitives;
+    extended `SegmentedTabs`, `InlineAlert`, and `StatusBadge`; retained
+    `OverflowActionMenu` and `ResourceCategoryTabs` as compatibility adapters.
+  - Migrated feature-owned tabs, action menus, autocomplete listboxes,
+    semantic callouts, and status pills to the shared vocabulary without API
+    or control-plane contract changes; removed the unused `HealthBadge`.
+  - Added `feature-owned-menu`, `feature-owned-listbox`, `shared-tab-copy`, and
+    `semantic-callout-bypass` AST rules with mutation coverage.
+  - `npm run ui:check` passed the Changeset, typecheck, 42-module build,
+    27-symbol export check, and package dry run.
+  - `npm run design:check` passed across 435 source files.
+  - `npm run design:adoption` reported zero violations for every category,
+    one exact permanent Markdown-table exception, and zero temporary
+    exceptions.
+  - `npm run lint` passed.
+  - `npm run test -- --reporter=dot --maxWorkers=4` passed 166 files and 792
+    tests before unrelated concurrent edits appeared in the shared worktree.
+  - `npm run design:snapshots` passed 23 checks with one intentional mobile
+    skip. Exactly four reviewed catalog baselines changed for the new shared
+    component specimens in light/dark desktop and compact layouts.
+  - Action-menu browser coverage passed in desktop and mobile for first focus,
+    disabled-item skipping, typeahead, outside/Escape/Tab dismissal, focus
+    restoration, viewport bounds, and nearest-dialog-layer placement.
+  - The required `VITE_APP_DATA_MODE=control-plane npm run validate` reached
+    unit tests after the UI, design, adoption, and lint gates passed, then
+    stopped on two unrelated concurrent changes: the separate quiet-secondary
+    button work changed `Button.tsx` without updating its source-contract
+    assertion, and contextual-navigation work added `titleOverride` without
+    updating the target-chat source-contract assertion. Both failures reproduce
+    in isolation. A separate route run also showed baseline drift from that
+    concurrent navigation/fixture work, so those unrelated baselines were not
+    updated.
 - PENDING: Stage 5 and final validation.
 
 ## Publishing Log

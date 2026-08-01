@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trans } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, Textarea, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
@@ -91,7 +91,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
-        {stepNavigationError && <div className="type-caption type-emphasis mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 text-status-warning-text" role="status" aria-live="polite">{stepNavigationError}</div>}
+        {stepNavigationError && <InlineAlert tone="warning" className="mb-4 type-emphasis" aria-live="polite">{stepNavigationError}</InlineAlert>}
         <div className="space-y-5">
           {createAgentStep === 1 && (
             <>

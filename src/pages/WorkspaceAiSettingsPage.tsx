@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
@@ -395,9 +396,9 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
             <SettingSection title={t('workspaceAiSettings.behaviorTitle')} description={t('workspaceAiSettings.behaviorBody')} sectionRef={behaviorSectionRef} className="scroll-mt-8">
               <div className="p-6">
                 <div className="mb-5 flex min-w-0 items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong shadow-sm">
+                  <IconTile>
                     <ICONS.Zap className="h-5 w-5" aria-hidden="true" />
-                  </div>
+                  </IconTile>
                   <div className="min-w-0">
                     <p className="mb-0.5 type-row-title">{t('workspaceAiSettings.behavior')}</p>
                     <p className="type-caption leading-5 text-ui-text-muted">{t('workspaceAiSettings.behaviorDescription')}</p>
@@ -491,9 +492,9 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                   <div key={provider} className="border-b border-ui-border p-6 last:border-0">
                     <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                       <div className="flex min-w-0 items-center gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong shadow-sm">
+                        <IconTile>
                           <ICONS.Lock className="h-5 w-5" aria-hidden="true" />
-                        </div>
+                        </IconTile>
                         <div className="min-w-0">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
                             <p className="type-row-title">{providerLabel(provider)}</p>

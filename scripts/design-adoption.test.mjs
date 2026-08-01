@@ -19,7 +19,12 @@ describe('design-system adoption mutations', () => {
     ['low-level-overlay', 'export const Sample = () => <div role="dialog">Details</div>;'],
     ['native-visible-table', 'export const Sample = () => <table><tbody><tr><td>Value</td></tr></tbody></table>;'],
     ['raw-typography', 'export const Sample = () => <p className="text-sm font-semibold">Value</p>;'],
-    ['ui-export-shadow', 'export const EmptyState = () => <p className="type-body">Empty</p>;']
+    ['ui-export-shadow', 'export const EmptyState = () => <p className="type-body">Empty</p>;'],
+    ['feature-owned-menu', 'export const Sample = () => <div role="menu">Actions</div>;'],
+    ['feature-owned-menu', "import { useFloatingActionMenu } from '@acornops/ui'; export const Sample = () => null;"],
+    ['feature-owned-listbox', 'export const Sample = () => <div role="listbox"><div role="option">One</div></div>;'],
+    ['shared-tab-copy', 'export const Sample = () => <div role="tablist"><button role="tab">One</button></div>;'],
+    ['semantic-callout-bypass', 'export const Sample = () => <div role="alert" className="rounded border border-status-danger/25 bg-status-danger-soft">Failed</div>;']
   ])('rejects the %s forbidden sample', (rule, source) => {
     expect(analyze(source).some((violation) => violation.rule === rule)).toBe(true);
   });
@@ -61,7 +66,11 @@ describe('design-system adoption mutations', () => {
       'low-level-overlay',
       'native-visible-table',
       'raw-typography',
-      'ui-export-shadow'
+      'ui-export-shadow',
+      'feature-owned-menu',
+      'feature-owned-listbox',
+      'shared-tab-copy',
+      'semantic-callout-bypass'
     ]);
   });
 });

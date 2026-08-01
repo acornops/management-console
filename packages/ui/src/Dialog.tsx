@@ -86,6 +86,7 @@ export const Dialog: React.FC<DialogProps> = ({
         onKeyDown={onKeyDown}
         onMouseDown={(event) => event.stopPropagation()}
       >
+        <div data-floating-layer="true" className="pointer-events-none absolute inset-0 z-[120]" />
         {children}
       </motion.div>
     </motion.div>

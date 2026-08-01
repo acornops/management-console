@@ -1,8 +1,8 @@
 import React from 'react';
 import { ICONS } from '@/constants';
-import { FieldValidationMessage, fieldInvalidClass } from '@acornops/ui';
+import { FieldValidationMessage, InlineAlert, fieldInvalidClass } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
-import { Button, TextInput } from '@acornops/ui';
+import { Button, IconTile, TextInput } from '@acornops/ui';
 
 export const fieldWrapClass = 'relative block';
 export const inputClass = formInputClassName('px-4');
@@ -18,7 +18,7 @@ export function NoticeCard({ icon, title, body, status, danger }: { icon: React.
   return (
     <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4">
       <div className="mb-3 flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">{icon}</span>
+        <IconTile size="sm" tone="accent">{icon}</IconTile>
         <div>
           <h2 className="type-panel-title text-ui-text">{title}</h2>
           <p className="type-body leading-5 text-ui-text-muted">{body}</p>
@@ -127,9 +127,9 @@ export function PasswordField({
 
 export function ErrorMessage({ message }: { message: string }) {
   return (
-    <p role="alert" className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 type-caption type-emphasis text-status-danger-text">
+    <InlineAlert tone="danger" className="px-3 py-2 type-emphasis">
       {message}
-    </p>
+    </InlineAlert>
   );
 }
 

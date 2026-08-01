@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, IconTile, InlineAlert } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
@@ -51,7 +51,7 @@ export const WorkflowSearchTagSuggestions: React.FC<{
   workflowSearchTags.length > 0 && query.trim() ? (
     <div className="flex flex-wrap gap-2 px-1" aria-label="Workflow tag suggestions">
       {workflowSearchTags.slice(0, 8).map((tag) => (
-        <Button key={tag} type="button" variant="secondary" size="sm" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="rounded-md border border-ui-border bg-ui-surface px-2.5 py-1.5 text-ui-text-muted hover:text-ui-text sm:min-h-8">
+        <Button key={tag} type="button" variant="secondary" size="sm" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="px-2.5 py-1.5 sm:min-h-8">
           {tag}
         </Button>
       ))}
@@ -137,9 +137,9 @@ export const WorkflowDeleteDialog: React.FC<{
     <DialogFrame unframed titleId="delete-workflow-title" closeDisabled={deletingWorkflowId === deleteTargetWorkflow.id} className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl" onClose={onClose}>
       <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
+          <IconTile size="sm" tone="danger">
             <ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />
-          </span>
+          </IconTile>
           <div>
             <h3 id="delete-workflow-title" className="type-row-title text-ui-text">
               Delete workflow
@@ -158,9 +158,9 @@ export const WorkflowDeleteDialog: React.FC<{
           <TextInput id="delete-workflow-confirmation-input" value={deleteWorkflowConfirmation} onChange={(event) => setDeleteWorkflowConfirmation(event.target.value)} disabled={deletingWorkflowId === deleteTargetWorkflow.id} autoComplete="off" spellCheck={false} className="focus:border-status-danger/45 focus:ring-status-danger/20" />
         </div>
         {deleteWorkflowError && (
-          <div role="alert" aria-live="assertive" className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">
+          <InlineAlert tone="danger" aria-live="assertive" className="px-3 py-2">
             {deleteWorkflowError}
-          </div>
+          </InlineAlert>
         )}
       </div>
       <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
@@ -248,9 +248,9 @@ const AgentAssignmentRow: React.FC<{
 }> = ({ agent, label }) => {
   const showRole = agent.role.trim().toLowerCase() !== label.trim().toLowerCase();
   return <div className="grid gap-3 py-3 first:pt-0 last:pb-0 sm:grid-cols-[2.25rem_1fr_auto] sm:items-center">
-    <div className="flex h-9 w-9 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
+    <IconTile size="sm">
       <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
-    </div>
+    </IconTile>
     <div className="min-w-0">
       <div className="break-words type-body type-emphasis text-ui-text [overflow-wrap:anywhere]">{agent.name}</div>
       {showRole && <div className="type-caption mt-1 break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.role}</div>}
@@ -542,12 +542,9 @@ export const WorkflowCapabilityLedger: React.FC<{
             </div>
           }
           error={
-            <div role="alert" className="mt-4 flex flex-col gap-3 border-y border-status-danger/25 bg-status-danger-soft px-3 py-3 type-body text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
-              <span>{error}</span>
-              <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
-                Retry preview
-              </Button>
-            </div>
+            <InlineAlert tone="danger" className="mt-4 rounded-none border-x-0 px-3 type-body" action={<Button type="button" variant="secondary" size="sm" onClick={onRetry}>Retry preview</Button>}>
+              {error}
+            </InlineAlert>
           }
           empty={null}
         >
@@ -591,10 +588,9 @@ export const WorkflowCapabilitySummary: React.FC<{
           itemCount={preview ? 1 : 0}
           loading={<div role="status" aria-live="polite" className="type-caption mt-4 text-ui-text-muted">Resolving capabilities…</div>}
           error={
-            <div role="alert" className="mt-4 flex flex-col gap-3 border-y border-status-danger/25 bg-status-danger-soft px-3 py-3 type-body text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
-              <span>{error}</span>
-              <Button type="button" variant="secondary" size="sm" onClick={onRetry}>Retry</Button>
-            </div>
+            <InlineAlert tone="danger" className="mt-4 rounded-none border-x-0 px-3 type-body" action={<Button type="button" variant="secondary" size="sm" onClick={onRetry}>Retry</Button>}>
+              {error}
+            </InlineAlert>
           }
           empty={null}
         >

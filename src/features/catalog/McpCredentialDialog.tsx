@@ -2,7 +2,7 @@ import React from 'react';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
@@ -173,9 +173,9 @@ export const McpCredentialDialog: React.FC<McpCredentialDialogProps> = ({
           </label>
 
           {error && !credentialValidationError && (
-            <div id={errorId} role="alert" className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
+            <InlineAlert id={errorId} tone="danger">
               {error}
-            </div>
+            </InlineAlert>
           )}
         </div>
 

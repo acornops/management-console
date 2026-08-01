@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Settings, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, IconTile, InlineAlert } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
@@ -67,14 +67,14 @@ function getClusterStatusLabel(cluster: KubernetesCluster, requiresAgentInstall:
   return t('dashboard.healthy');
 }
 
-function getClusterStatusClass(cluster: KubernetesCluster, requiresAgentInstall: boolean, issueSummary?: ControlPlaneTargetIssueSummary): string {
+function getClusterStatusTone(cluster: KubernetesCluster, requiresAgentInstall: boolean, issueSummary?: ControlPlaneTargetIssueSummary): 'success' | 'warning' | 'danger' {
   const status = getEffectiveHealthStatus(cluster);
-  if (requiresAgentInstall) return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
+  if (requiresAgentInstall) return 'warning';
   if (getAgentConnectionState(cluster) === 'disconnected' || status === HealthStatus.RED || (issueSummary?.critical ?? 0) > 0)
-    return 'border-status-danger/25 bg-status-danger-soft text-status-danger-text';
+    return 'danger';
   if (status === HealthStatus.YELLOW || (issueSummary?.warning ?? 0) > 0 || (issueSummary?.active ?? 0) > 0)
-    return 'border-status-warning/25 bg-status-warning-soft text-status-warning-text';
-  return 'border-status-success/25 bg-status-success-soft text-status-success-text';
+    return 'warning';
+  return 'success';
 }
 
 function getClusterStateReason(
@@ -125,7 +125,7 @@ const ClusterStatusPill: React.FC<{
   label: string;
   reason: string;
 }> = ({ cluster, requiresAgentInstall, issueSummary, label, reason }) => (
-  <TargetCatalogStatusPill label={label} reason={reason} toneClassName={getClusterStatusClass(cluster, requiresAgentInstall, issueSummary)} />
+  <TargetCatalogStatusPill label={label} reason={reason} tone={getClusterStatusTone(cluster, requiresAgentInstall, issueSummary)} />
 );
 
 const ClusterMetadata: React.FC<{ cluster: KubernetesCluster }> = ({ cluster }) => {
@@ -351,9 +351,9 @@ const ClusterCatalogCard: React.FC<ClusterItemProps> = (props) => {
     >
       <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-accent-strong">
+          <IconTile size="sm" tone="accent">
             <ICONS.Layers className="h-4 w-4" />
-          </span>
+          </IconTile>
           <div className="min-w-0 flex-1">
             <h3 className="type-panel-title break-words text-ui-text">{cluster.name}</h3>
             <ClusterMetadata cluster={cluster} />
@@ -484,20 +484,13 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
       {controls && <div data-cluster-catalog-controls="true">{controls}</div>}
 
       {loadError && sortedClusters.length > 0 && (
-        <div
-          role="alert"
-          className="flex flex-col gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between"
+        <InlineAlert
+          tone="danger"
+          title={t('dashboard.clusterLoadFailed')}
+          action={onRetry ? <Button type="button" variant="secondary" size="sm" onClick={onRetry}>{t('common.retry')}</Button> : undefined}
         >
-          <div className="min-w-0">
-            <p className="type-row-title">{t('dashboard.clusterLoadFailed')}</p>
-            <p className="type-caption mt-1 text-status-danger-text/80">{t('dashboard.clusterLoadFailedBody')}</p>
-          </div>
-          {onRetry && (
-            <Button type="button" variant="secondary" size="sm" onClick={onRetry} className="shrink-0">
-              {t('common.retry')}
-            </Button>
-          )}
-        </div>
+          {t('dashboard.clusterLoadFailedBody')}
+        </InlineAlert>
       )}
 
       <CollectionState

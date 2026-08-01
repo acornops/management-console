@@ -350,7 +350,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                               variant="secondary"
                               size="sm"
                               onClick={() => void openArtifact(toolCall)}
-                              className="control-target inline-flex min-h-9 items-center rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text transition-colors hover:bg-ui-surface/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
+                              className="control-target min-h-9 px-3"
                               aria-expanded={artifactView?.callId === toolCall.callId}
                             >
                               {artifactView?.callId === toolCall.callId ? 'Hide full result' : 'View full result'}

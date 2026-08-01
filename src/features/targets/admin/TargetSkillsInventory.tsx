@@ -1,17 +1,14 @@
 import React from 'react';
-import { MenuItem, Switch } from '@acornops/ui';
+import { ActionMenu, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
-import { createPortal } from 'react-dom';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { menuSurfaceClassName } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import type { ControlPlaneTargetSkillsCatalog } from '@/services/controlPlaneApi';
 import { sourceLabel, summarizeBytes, syncLabel } from '@/features/targets/admin/targetSkillsViewModel';
-import { useFloatingActionMenu } from '@acornops/ui';
 import { Button, TextInput } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
@@ -39,37 +36,30 @@ interface TargetSkillRowProps {
 
 const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, pendingToggleSkillId, onEditSkill, onDeleteSkill, onToggleSkill }) => {
   const { t } = useTranslation();
-  const actionMenuId = React.useId();
-  const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
-  const {
-    triggerRef: actionMenuButtonRef,
-    menuRef: actionMenuRef,
-    style: actionMenuStyle,
-    close: closeActionMenu
-  } = useFloatingActionMenu({
-    open: actionMenuOpen,
-    setOpen: setActionMenuOpen,
-    estimatedHeight: 104
-  });
   const isTogglingSkill = pendingToggleSkillId === skill.id;
   const isBlockedByOtherSkillToggle = Boolean(pendingToggleSkillId && !isTogglingSkill);
   const canToggleSkill = canEditSkills && !isBlockedByOtherSkillToggle && !isTogglingSkill;
   const canEditSource = canEditSkills && !skill.inherited;
   const canRemoveSource = canEditSkills && !skill.inherited;
   const assistantState = !skill.enabled ? 'disabled' : skill.validationStatus === 'valid' ? 'assistantVisible' : 'needsFixes';
-  const assistantStateClass =
-    assistantState === 'assistantVisible'
-      ? 'bg-status-success-soft text-status-success-text'
-      : assistantState === 'disabled'
-      ? 'bg-ui-bg text-ui-text-muted'
-      : 'bg-status-warning-soft text-status-warning-text';
-  const actionMenu =
-    actionMenuOpen && actionMenuStyle && typeof document !== 'undefined'
-      ? createPortal(
-          <div ref={actionMenuRef} id={actionMenuId} role="menu" className={menuSurfaceClassName('fixed z-[130] p-1')} style={actionMenuStyle}>
+  const actionMenu = (
+    <ActionMenu
+      label={t('targetSkills.actionsNamed', { name: skill.name })}
+      estimatedHeight={104}
+      trigger={(
+        <Button
+          data-target-skill-primary-actions="true"
+          type="button"
+          variant="tertiary"
+          size="icon"
+          className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+        >
+          <MoreVertical className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      )}
+    >
             <MenuItem
               onClick={() => {
-                closeActionMenu();
                 onEditSkill(skill.id);
               }}
             >
@@ -84,7 +74,6 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
               <MenuItem
                 destructive
                 onClick={() => {
-                  closeActionMenu();
                   onDeleteSkill(skill.id);
                 }}
               >
@@ -92,27 +81,25 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
                 <span>{t('targetSkills.deleteSkill')}</span>
               </MenuItem>
             )}
-          </div>,
-          document.body
-        )
-      : null;
+    </ActionMenu>
+  );
 
   return (
     <DataTableRow data-target-skill-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
       <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg">
+          <IconTile tone="accent" className="relative">
             <BookOpen className="h-5 w-5 text-accent-strong" aria-hidden="true" />
             {skill.source.type === 'git_import' && (
               <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-md border border-ui-border bg-ui-surface shadow-sm">
                 <GitBranch className="h-3 w-3 text-ui-text-muted" aria-hidden="true" />
               </span>
             )}
-          </div>
+          </IconTile>
           <div className="min-w-0 flex-1">
             <span className="type-row-title block truncate">{skill.name}</span>
             {skill.inherited && (
-              <span className="type-micro-label mt-1 inline-flex rounded-full bg-ui-bg px-2 py-0.5 text-ui-text-muted">Platform default</span>
+              <StatusBadge tone="neutral" className="mt-1">Platform default</StatusBadge>
             )}
             <span className="mt-1 block line-clamp-2 break-words type-caption leading-5 text-ui-text-muted" title={skill.description}>
               {skill.description}
@@ -121,7 +108,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
         </div>
       </DataTableCell>
       <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
-        <span className={`type-micro-label rounded-full px-2.5 py-1 ${assistantStateClass}`}>{t(`targetSkills.state.${assistantState}`)}</span>
+        <StatusBadge tone={assistantState === 'assistantVisible' ? 'success' : assistantState === 'needsFixes' ? 'warning' : 'neutral'} className="px-2.5 py-1">{t(`targetSkills.state.${assistantState}`)}</StatusBadge>
       </DataTableCell>
       <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <Switch
@@ -139,21 +126,6 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
         {skill.bundleStats.fileCount} files, {summarizeBytes(skill.bundleStats.totalBytes)}
       </DataTableCell>
       <DataTableCell className="px-4 py-6 text-right sm:px-6 lg:px-8">
-        <Button
-          ref={actionMenuButtonRef}
-          data-target-skill-primary-actions="true"
-          type="button"
-          variant="tertiary"
-          size="icon"
-          onClick={() => setActionMenuOpen((isOpen) => !isOpen)}
-          className="control-target inline-flex h-10 w-10 items-center justify-center rounded-md border border-transparent bg-transparent text-ui-text-muted transition-colors hover:border-ui-border hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-          aria-haspopup="menu"
-          aria-expanded={actionMenuOpen}
-          aria-controls={actionMenuOpen ? actionMenuId : undefined}
-          aria-label={t('targetSkills.actionsNamed', { name: skill.name })}
-        >
-          <MoreVertical className="h-4 w-4" aria-hidden="true" />
-        </Button>
         {actionMenu}
       </DataTableCell>
     </DataTableRow>

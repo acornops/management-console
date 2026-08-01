@@ -22,10 +22,12 @@ describe('ThemeMenu', () => {
   });
 
   it('uses radio-menu semantics, checked state, Escape handling, outside dismissal, and focus restoration', () => {
-    expect(themeMenu).toContain('role="menu"');
+    expect(themeMenu).toContain('<MenuSurface');
+    expect(themeMenu).toContain('<motion.div');
+    expect(themeMenu).toContain('onDismiss={close}');
     expect(themeMenu).toContain('role="menuitemradio"');
     expect(themeMenu).toContain('aria-checked={isSelected}');
-    expect(themeMenu).toContain("['ArrowDown', 'ArrowUp', 'Home', 'End']");
+    expect(themeMenu).toContain('initialFocus={selectedItemRef}');
     expect(themeMenu).toContain("event.key === 'Escape'");
     expect(themeMenu).toContain("document.addEventListener('mousedown', handlePointerDown)");
     expect(themeMenu).toContain('triggerRef.current?.focus');

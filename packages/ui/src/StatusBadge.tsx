@@ -1,9 +1,15 @@
 import React from 'react';
+import { twMerge } from 'tailwind-merge';
 
-export const StatusBadge: React.FC<{
-  tone: 'success' | 'warning' | 'danger' | 'neutral';
-  children: React.ReactNode;
-}> = ({ tone, children }) => {
+export type StatusBadgeTone = 'success' | 'warning' | 'danger' | 'neutral';
+export type StatusBadgeSize = 'compact' | 'default';
+
+export interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  tone: StatusBadgeTone;
+  size?: StatusBadgeSize;
+}
+
+export const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(({ className, size = 'default', tone, ...props }, ref) => {
   const toneClass =
     tone === 'success'
       ? 'border-status-success/25 bg-status-success-soft text-status-success-text'
@@ -14,8 +20,17 @@ export const StatusBadge: React.FC<{
           : 'border-ui-border bg-ui-bg text-ui-text-muted';
 
   return (
-    <span className={`rounded-full border px-2 py-0.5 type-micro-label ${toneClass}`}>
-      {children}
-    </span>
+    <span
+      ref={ref}
+      className={twMerge(
+        'inline-flex max-w-full items-center rounded-full border type-micro-label',
+        size === 'compact' ? 'px-1.5 py-0.5 normal-case leading-none tracking-normal' : 'px-2 py-0.5',
+        toneClass,
+        className
+      )}
+      {...props}
+    />
   );
-};
+});
+
+StatusBadge.displayName = 'StatusBadge';

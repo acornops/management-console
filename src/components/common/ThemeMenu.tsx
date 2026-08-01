@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import { ThemeToggleIcon } from '@/components/common/ThemeToggleIcon';
-import { MenuItem, MenuTrigger } from '@acornops/ui';
+import { MenuItem, MenuSurface, MenuTrigger } from '@acornops/ui';
 
 const MotionMenuTrigger = motion.create(MenuTrigger);
 
@@ -38,9 +38,8 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
   const [isOpen, setIsOpen] = React.useState(false);
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
-  const itemRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+  const selectedItemRef = React.useRef<HTMLButtonElement>(null);
   const menuId = React.useId();
-  const selectedIndex = themePreferences.indexOf(preference);
   const selectedLabel = t(`app.theme${preference[0].toUpperCase()}${preference.slice(1)}`);
 
   const close = React.useCallback((restoreFocus = false) => {
@@ -52,37 +51,29 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
 
   React.useEffect(() => {
     if (!isOpen) return;
-    itemRefs.current[selectedIndex]?.focus({ preventScroll: true });
-
     const handlePointerDown = (event: MouseEvent) => {
       if (!wrapperRef.current?.contains(event.target as Node)) {
         close();
       }
     };
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [close, isOpen, selectedIndex]);
-
-  const focusItem = (index: number) => itemRefs.current[index]?.focus({ preventScroll: true });
-
-  const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape') {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
       event.preventDefault();
       event.stopPropagation();
       close(true);
-      return;
-    }
-    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
-
-    event.preventDefault();
-    const currentIndex = itemRefs.current.findIndex((item) => item === document.activeElement);
-    focusItem(getThemeMenuFocusIndex(currentIndex < 0 ? selectedIndex : currentIndex, event.key as 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'));
-  };
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [close, isOpen]);
 
   const wrapperClass = variant === 'login' ? 'fixed right-4 top-4 z-[70]' : 'relative w-full';
   const menuPlacementClass =
     variant === 'login'
-      ? 'fixed bottom-4 left-4 right-4 grid grid-cols-3 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:block'
+      ? 'fixed bottom-4 left-4 right-4 sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2'
       : variant === 'account'
       ? 'bottom-0 left-full ml-2'
       : 'bottom-full right-0 mb-2';
@@ -143,9 +134,6 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            id={menuId}
-            role="menu"
-            aria-label={t('app.themeMenuLabel')}
             initial={{
               opacity: 0,
               y: variant === 'mobile' ? 4 : -4,
@@ -154,41 +142,48 @@ export const ThemeMenu: React.FC<ThemeMenuProps> = ({ preference, resolvedTheme,
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: variant === 'mobile' ? 4 : -4, scale: 0.99 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            onKeyDown={handleMenuKeyDown}
             className={`${
               variant === 'login' ? 'w-auto sm:w-48' : 'absolute w-48'
-            } z-[70] rounded-lg border border-control-boundary bg-ui-surface p-1.5 text-ui-text shadow-xl ${menuPlacementClass}`}
-            data-resolved-theme={resolvedTheme}
+            } z-[70] ${menuPlacementClass}`}
           >
-            {themePreferences.map((option, index) => {
-              const label = t(`app.theme${option[0].toUpperCase()}${option.slice(1)}`);
-              const isSelected = option === preference;
-              return (
-                <MenuItem
-                  key={option}
-                  ref={(element) => {
-                    itemRefs.current[index] = element;
-                  }}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={isSelected}
-                  tabIndex={isSelected ? 0 : -1}
-                  onClick={(event) => {
-                    onSelect(option, event.currentTarget);
-                    close(true);
-                  }}
-                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left type-ui transition-colors duration-[160ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:min-h-9 ${
-                    isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                  }`}
-                >
-                  <span className="flex h-5 w-5 items-center justify-center">{preferenceIcon(option, 'h-4 w-4')}</span>
-                  <span className="flex-1">{label}</span>
-                  <span className="flex h-4 w-4 items-center justify-center" aria-hidden="true">
-                    {isSelected && <Check className="h-3.5 w-3.5" />}
-                  </span>
-                </MenuItem>
-              );
-            })}
+            <MenuSurface
+              id={menuId}
+              label={t('app.themeMenuLabel')}
+              initialFocus={selectedItemRef}
+              onDismiss={close}
+              className={`w-full rounded-lg border border-control-boundary bg-ui-surface p-1.5 text-ui-text shadow-xl ${
+                variant === 'login' ? 'grid grid-cols-3 sm:block' : ''
+              }`}
+              data-resolved-theme={resolvedTheme}
+            >
+              {themePreferences.map((option) => {
+                const label = t(`app.theme${option[0].toUpperCase()}${option.slice(1)}`);
+                const isSelected = option === preference;
+                return (
+                  <MenuItem
+                    key={option}
+                    ref={isSelected ? selectedItemRef : undefined}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={isSelected}
+                    tabIndex={isSelected ? 0 : -1}
+                    onClick={(event) => {
+                      onSelect(option, event.currentTarget);
+                      close(true);
+                    }}
+                    className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left type-ui transition-colors duration-[160ms] focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary motion-reduce:duration-0 sm:min-h-9 ${
+                      isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                    }`}
+                  >
+                    <span className="flex h-5 w-5 items-center justify-center">{preferenceIcon(option, 'h-4 w-4')}</span>
+                    <span className="flex-1">{label}</span>
+                    <span className="flex h-4 w-4 items-center justify-center" aria-hidden="true">
+                      {isSelected && <Check className="h-3.5 w-3.5" />}
+                    </span>
+                  </MenuItem>
+                );
+              })}
+            </MenuSurface>
           </motion.div>
         )}
       </AnimatePresence>

@@ -62,6 +62,8 @@
   --ao-control-secondary-hover-rgb: 247 241 234;
   --ao-control-secondary-fg: var(--ao-text);
   --ao-control-secondary-fg-rgb: 48 45 41;
+  --ao-control-secondary-boundary: var(--ao-border);
+  --ao-control-secondary-boundary-rgb: 235 229 222;
   --ao-control-activation-bg: var(--ao-brand-orange);
   --ao-control-activation-bg-rgb: 255 112 59;
   --ao-control-activation-hover: var(--ao-brand-orange-bright);
@@ -174,6 +176,8 @@
   --ao-control-secondary-hover-rgb: 45 40 39;
   --ao-control-secondary-fg: var(--ao-text);
   --ao-control-secondary-fg-rgb: 245 241 239;
+  --ao-control-secondary-boundary: var(--ao-border);
+  --ao-control-secondary-boundary-rgb: 70 65 64;
   --ao-control-activation-bg: var(--ao-brand-orange);
   --ao-control-activation-bg-rgb: 255 112 59;
   --ao-control-activation-hover: var(--ao-brand-orange-bright);

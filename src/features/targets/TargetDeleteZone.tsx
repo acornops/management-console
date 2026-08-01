@@ -2,7 +2,7 @@ import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Trans } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, IconTile, InlineAlert } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { DangerZone, DangerZoneRow } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
@@ -106,9 +106,9 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
           >
             <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-7 py-5">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
+                <IconTile size="sm" tone="danger">
                   <ICONS.Trash2 className="h-4 w-4" aria-hidden="true" />
-                </span>
+                </IconTile>
                 <div>
                   <h3 id={titleId} className="type-row-title text-ui-text">
                     {title}
@@ -144,9 +144,9 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
                 />
               </div>
               {error && (
-                <div role="alert" className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">
+                <InlineAlert tone="danger" className="px-3 py-2">
                   {error}
-                </div>
+                </InlineAlert>
               )}
             </div>
 

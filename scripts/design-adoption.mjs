@@ -10,7 +10,11 @@ export const ADOPTION_RULES = [
   'low-level-overlay',
   'native-visible-table',
   'raw-typography',
-  'ui-export-shadow'
+  'ui-export-shadow',
+  'feature-owned-menu',
+  'feature-owned-listbox',
+  'shared-tab-copy',
+  'semantic-callout-bypass'
 ];
 
 const nativeControls = new Set(['button', 'input', 'textarea']);
@@ -152,6 +156,14 @@ export function analyzeSource({
               `application code must compose ${exportedName} through DialogFrame or DrawerFrame`
             );
           }
+          if (exportedName === 'useFloatingActionMenu') {
+            add(
+              'feature-owned-menu',
+              element,
+              'import:useFloatingActionMenu',
+              'application code must compose floating menus through ActionMenu'
+            );
+          }
         }
       }
     }
@@ -178,6 +190,45 @@ export function analyzeSource({
       }
 
       const role = attributeStringValue(jsxAttribute(node, 'role'));
+      const isIntrinsic = tagName[0] === tagName[0]?.toLocaleLowerCase();
+      if (isIntrinsic && (role === 'menu' || role?.startsWith('menuitem'))) {
+        add(
+          'feature-owned-menu',
+          node,
+          `jsx-role:${role}:${lineOf(sourceFile, node)}`,
+          'application-owned menu markup must use ActionMenu, MenuSurface, MenuItem, or MenuLink'
+        );
+      }
+      if (isIntrinsic && (role === 'listbox' || role === 'option')) {
+        add(
+          'feature-owned-listbox',
+          node,
+          `jsx-role:${role}:${lineOf(sourceFile, node)}`,
+          'application-owned listbox markup must use the shared Combobox components'
+        );
+      }
+      if (isIntrinsic && (role === 'tablist' || role === 'tab')) {
+        add(
+          'shared-tab-copy',
+          node,
+          `jsx-role:${role}:${lineOf(sourceFile, node)}`,
+          'application-owned tab behavior must compose through SegmentedTabs'
+        );
+      }
+      const className = attributeStringValue(jsxAttribute(node, 'className')) ?? '';
+      if (
+        isIntrinsic
+        && (role === 'alert' || role === 'status')
+        && /(?:^|\s)border(?:\s|$|-)/.test(className)
+        && /(?:^|\s)bg-status-(?:danger|warning|success)-soft(?:\/\d+)?(?=\s|$)/.test(className)
+      ) {
+        add(
+          'semantic-callout-bypass',
+          node,
+          `jsx-role:${role}:${lineOf(sourceFile, node)}`,
+          'bordered semantic feedback must compose through InlineAlert'
+        );
+      }
       if (role === 'dialog') {
         add(
           'low-level-overlay',

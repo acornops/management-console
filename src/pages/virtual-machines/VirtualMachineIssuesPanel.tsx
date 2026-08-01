@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { Button, DataTableHeader, DataTableHeaderCell, IconTile } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { issueStatusTone } from '@/pages/issues/issueUi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
@@ -55,9 +55,9 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
     <section aria-labelledby={issueSectionTitleId} className="mb-10 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
       <div className="flex flex-col gap-6 border-b border-ui-border bg-ui-bg px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 items-start gap-4">
-          <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface/70 text-accent-strong">
+          <IconTile tone="warning" className="mt-1">
             <ICONS.AlertTriangle className="h-5 w-5" aria-hidden="true" />
-          </div>
+          </IconTile>
           <div className="min-w-0">
             <h2 id={issueSectionTitleId} className="type-row-title">
               {t('virtualMachines.overview.activeIssues')}

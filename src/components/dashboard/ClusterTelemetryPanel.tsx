@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { formatCpuCores, formatMemoryGiB, getClusterTelemetrySnapshot } from '@/components/dashboard/clusterTelemetryModel';
 import { TelemetryTrendSummary } from '@/features/targets/catalog/TelemetryTrendSummary';
 import { ICONS } from '@/constants';
@@ -273,13 +273,9 @@ export const ClusterTelemetryPanel: React.FC<{
           <span>{axisEndLabel}</span>
         </div>
         {loadState === 'error' && hasTrend && (
-          <div
-            role="alert"
-            className="mt-2 flex min-w-0 items-center justify-between gap-3 rounded-md border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text"
-          >
-            <span className="type-caption min-w-0 break-words">{t('dashboard.telemetryRefreshFailed')}</span>
-            {retryButton}
-          </div>
+          <InlineAlert tone="danger" className="mt-2 min-w-0 px-3 py-2" action={retryButton}>
+            <span className="break-words">{t('dashboard.telemetryRefreshFailed')}</span>
+          </InlineAlert>
         )}
       </div>
     </section>

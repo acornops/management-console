@@ -5,6 +5,8 @@ import {
   Button,
   DataTableHeader,
   DataTableHeaderCell,
+  IconTile,
+  InlineAlert,
   PageHeader,
   PageShell
 } from '@acornops/ui';
@@ -244,9 +246,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       >
         <div className="flex flex-col gap-6 border-b border-ui-border bg-ui-bg px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-start gap-4">
-            <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-surface/70 text-accent-strong">
+            <IconTile tone="warning" className="mt-1">
               <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-            </div>
+            </IconTile>
             <div className="min-w-0">
               <h2 id={issueSectionTitleId} className="type-row-title">
                 {t('clusterOverview.activeIssues')}
@@ -418,21 +420,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       </section>
 
       {metricHistoryStatus === 'error' && (
-        <div
-          className="mb-4 flex flex-col gap-3 rounded-md border border-status-warning/25 bg-status-warning-soft px-4 py-4 text-status-warning-text sm:flex-row sm:items-center sm:justify-between"
-          role="alert"
+        <InlineAlert
+          tone="warning"
+          className="mb-4 py-4"
+          title={t('clusterOverview.telemetryLoadFailedTitle')}
+          icon={<AlertTriangle className="h-4 w-4" />}
+          action={<Button onClick={retryMetricHistory} variant="secondary" size="sm" className="w-full sm:w-auto">{t('common.retry')}</Button>}
         >
-          <div className="flex min-w-0 items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="type-row-title text-status-warning-text">{t('clusterOverview.telemetryLoadFailedTitle')}</p>
-              <p className="type-caption mt-1 max-w-3xl text-status-warning-text">{t('clusterOverview.telemetryLoadFailedBody')}</p>
-            </div>
-          </div>
-          <Button onClick={retryMetricHistory} variant="secondary" size="sm" className="w-full shrink-0 sm:w-auto">
-            {t('common.retry')}
-          </Button>
-        </div>
+          <span className="max-w-3xl">{t('clusterOverview.telemetryLoadFailedBody')}</span>
+        </InlineAlert>
       )}
 
       {(metricHistoryStatus !== 'error' || hasMetricSamples) && (

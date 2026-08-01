@@ -71,7 +71,7 @@ describe('virtual machine connection filters', () => {
     expect(vmMatchesConnectionFilter(vm, 'attention', issues)).toBe(true);
     expect(vmMatchesConnectionFilter(vm, 'healthy', issues)).toBe(false);
     expect(getVmCatalogStatusLabel(vm, issues, t)).toBe('dashboard.criticalStatus:1');
-    expect(getVmCatalogStatusTone(vm, issues)).toContain('text-status-danger-text');
+    expect(getVmCatalogStatusTone(vm, issues)).toBe('danger');
     expect(getVmCatalogStatusReason(vm, issues, 'ready', t)).toBe('virtualMachines.list.vmStateCriticalIssues:1');
   });
 
@@ -90,7 +90,7 @@ describe('virtual machine connection filters', () => {
     expect(vmNeedsAttention(vm, noIssues)).toBe(false);
     expect(vmMatchesConnectionFilter(vm, 'healthy', noIssues)).toBe(true);
     expect(getVmCatalogStatusLabel(vm, noIssues, (key) => key)).toBe('dashboard.healthy');
-    expect(getVmCatalogStatusTone(vm, noIssues)).toContain('text-status-success-text');
+    expect(getVmCatalogStatusTone(vm, noIssues)).toBe('success');
   });
 
   it('keeps setup-required VMs out of attention regardless of incomplete summaries', () => {
@@ -107,6 +107,6 @@ describe('virtual machine connection filters', () => {
     expect(vmNeedsAttention(vm)).toBe(false);
     expect(vmMatchesConnectionFilter(vm, 'not_installed')).toBe(true);
     expect(getVmCatalogStatusLabel(vm, undefined, (key) => key)).toBe('dashboard.setupRequired');
-    expect(getVmCatalogStatusTone(vm, undefined)).toContain('text-ui-text-muted');
+    expect(getVmCatalogStatusTone(vm, undefined)).toBe('neutral');
   });
 });

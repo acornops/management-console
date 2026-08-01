@@ -13,6 +13,7 @@ import { FieldValidationMessage } from '@acornops/ui';
 import { FileInput } from '@acornops/ui';
 import { FieldLabel, HelpText, MenuItem, MenuTrigger, Radio, Switch } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import { DialogFrame, DrawerFrame } from '@acornops/ui';
 import { DataSurface, PageBackLink, PageHeader, PageSection, PageShell, TableToolbar } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableFrame, DataTableHeader, DataTableHeaderCell, DataTableRow, DataTableStateRow } from '@acornops/ui';
@@ -21,6 +22,10 @@ import { StatusBadge } from '@acornops/ui';
 import '@acornops/ui/fonts';
 import {
   cardClassName,
+  ActionMenu,
+  ComboboxGroup,
+  ComboboxListbox,
+  ComboboxOption,
   CloseButton,
   DestructiveConfirmationDialog,
   FilterToggleGroup,
@@ -31,6 +36,7 @@ import {
   MasterDetailPaneBody,
   MasterDetailPaneHeader,
   MasterDetailRow,
+  MenuLink,
   MiniProgressBar,
   ModalStepIndicator,
   NavigationItem,
@@ -104,10 +110,22 @@ const Catalog = () => {
           <Button variant="secondary">Secondary</Button>
           <Button variant="tertiary">Tertiary</Button>
           <Button variant="icon" size="icon" aria-label="More actions"><MoreHorizontal className="h-4 w-4" /></Button>
+          <Button variant="dangerIcon" size="icon" aria-label="Delete item"><Trash2 className="h-4 w-4" /></Button>
           <Button variant="danger"><Trash2 className="h-4 w-4" />Delete</Button>
           <Button variant="activation"><Rocket className="h-4 w-4" />Launch workflow</Button>
           <Button variant="primary" disabled>Disabled</Button>
           <Button variant="primary" disabled aria-busy="true">Saving...</Button>
+        </div>
+      </PageSection>
+
+      <PageSection title="Context glyphs" description="Flat tiles provide identity and status context without borrowing button affordance.">
+        <div className="flex flex-wrap items-center gap-4 rounded-lg border border-ui-border bg-ui-surface p-surface">
+          <IconTile><Clock /></IconTile>
+          <IconTile tone="accent"><Rocket /></IconTile>
+          <IconTile tone="success"><Check /></IconTile>
+          <IconTile tone="warning"><Clock /></IconTile>
+          <IconTile tone="danger"><Trash2 /></IconTile>
+          <IconTile tone="metric"><Clock /></IconTile>
         </div>
       </PageSection>
 
@@ -270,7 +288,19 @@ const Catalog = () => {
           <label className="flex min-h-11 items-center gap-3"><Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} /><span className="type-ui">Checkbox</span></label>
           <label className="flex min-h-11 items-center gap-3"><Radio name="catalog-radio" defaultChecked /><span className="type-ui">Radio</span></label>
           <div className="flex min-h-11 items-center justify-between gap-3"><span className="type-ui">Switch</span><Switch checked={checked} onCheckedChange={setChecked} label="Enable catalog example" /></div>
-          <div className="flex items-center gap-2"><MenuTrigger aria-label="Open example menu"><MoreHorizontal className="h-4 w-4" /></MenuTrigger><div role="menu" className="w-48 rounded-md border border-ui-border bg-ui-surface p-1 shadow-lg"><MenuItem selected><Check className="h-4 w-4" />Selected item</MenuItem><MenuItem destructive><Trash2 className="h-4 w-4" />Delete item</MenuItem></div></div>
+          <ActionMenu label="Open example menu" trigger={<MenuTrigger><MoreHorizontal className="h-4 w-4" /></MenuTrigger>}>
+            <MenuItem selected><Check className="h-4 w-4" />Selected item</MenuItem>
+            <MenuItem disabled>Unavailable item</MenuItem>
+            <MenuLink href="#catalog-combobox">Linked item</MenuLink>
+            <MenuItem destructive><Trash2 className="h-4 w-4" />Delete item</MenuItem>
+          </ActionMenu>
+          <ComboboxListbox id="catalog-combobox" label="Example suggestions" className="relative max-h-40 w-full">
+            <ComboboxGroup label="Targets">
+              <p className="px-3 py-1 type-micro-label">Targets</p>
+              <ComboboxOption active>Production cluster</ComboboxOption>
+              <ComboboxOption disabled>Unavailable VM</ComboboxOption>
+            </ComboboxGroup>
+          </ComboboxListbox>
         </div>
       </PageSection>
 
@@ -278,8 +308,9 @@ const Catalog = () => {
         <div className="grid gap-3 md:grid-cols-2">
           <InlineAlert tone="neutral">Inspect-only access keeps actions disabled.</InlineAlert>
           <InlineAlert tone="warning">This workflow can write to live systems.</InlineAlert>
+          <InlineAlert tone="success" title="Workspace saved" action={<Button variant="tertiary" size="sm">View</Button>}>The new settings are active.</InlineAlert>
           <InlineAlert tone="danger">The control plane could not load this surface.</InlineAlert>
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-ui-border bg-ui-surface p-4"><StatusBadge tone="success">Healthy</StatusBadge><StatusBadge tone="warning">Pending</StatusBadge><StatusBadge tone="danger">Failed</StatusBadge><StatusBadge tone="neutral">Paused</StatusBadge></div>
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-ui-border bg-ui-surface p-4"><StatusBadge tone="success">Healthy</StatusBadge><StatusBadge tone="warning">Pending</StatusBadge><StatusBadge tone="danger">Failed</StatusBadge><StatusBadge tone="neutral">Paused</StatusBadge><StatusBadge tone="warning" size="compact">Experimental</StatusBadge></div>
         </div>
       </PageSection>
 
@@ -408,6 +439,10 @@ const Catalog = () => {
       >
         <div className="space-y-4">
           <InlineAlert tone="warning">This change affects future workflow runs.</InlineAlert>
+          <ActionMenu label="Dialog actions" trigger={<MenuTrigger><MoreHorizontal className="h-4 w-4" /></MenuTrigger>}>
+            <MenuItem>Inspect change</MenuItem>
+            <MenuItem>Duplicate change</MenuItem>
+          </ActionMenu>
           <Button variant="danger" onClick={() => setDestructiveDialogOpen(true)}>Open nested confirmation</Button>
         </div>
       </DialogFrame>

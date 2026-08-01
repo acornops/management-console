@@ -48,6 +48,7 @@ export const AgentQuickChatPanel: React.FC<AgentQuickChatPanelProps> = ({
         agent={agent}
         currentUserId={currentUserId}
         displayMode="panel"
+        title={t('agentChat.quickChatLabel', { name: agent.name })}
         isDark={isDark}
         permissions={permissions}
         onClose={onClose}

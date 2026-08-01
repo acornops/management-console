@@ -14,8 +14,8 @@ workspace-owned automation definitions.
 - Agent navigation opens directly to Chat under Operations, groups MCP Servers,
   Skills, and Tools under Capabilities, and keeps Agent Settings separate.
 - Agent detail routes remain shareable and restore the selected section.
-- Each Agent card exposes a distinct Quick chat action.
-- Quick chat opens as a full-height dock beside the catalog on desktop and as
+- Each Agent card exposes a distinct Chat action with an Agent-specific accessible name.
+- Chat opens as a full-height dock beside the catalog on desktop and as
   an accessible modal drawer on narrower viewports. Its open Agent is
   represented by `panel=chat&agent=<id>` in the URL.
 - The desktop dock slides in from the right and exits in the same direction
@@ -28,8 +28,8 @@ workspace-owned automation definitions.
   movement.
 - The panel uses the existing Agent conversation APIs and can maximize to the
   full Agent Chat route.
-- Closing Quick chat removes only its panel-specific route parameters.
-- Disabled, draft, or unready Agents may be inspected in Quick chat, where the
+- Closing Chat removes only its panel-specific route parameters.
+- Disabled, draft, or unready Agents may be inspected in Chat, where the
   existing conversation readiness state explains why sending is unavailable.
 
 ## Target Boundary
@@ -49,7 +49,7 @@ workspace-owned automation definitions.
 - MCP Servers, Skills, and Tools reuse the shared target administration views;
   Agent-specific data-source adapters keep their requests on Agent APIs.
 - Settings and the Agents catalog each use one standard `PageShell`.
-- Agent cards expose route-backed Quick chat. It docks beside the catalog on
+- Agent cards expose route-backed Chat. It docks beside the catalog on
   wide screens, uses the shared assistant frame's card-aware opening width,
   remains user-resizable, falls back to a modal drawer on narrow screens, and
   maximizes to the full Chat route. Cluster, VM, and Agent docks share that
@@ -70,7 +70,7 @@ workspace-owned automation definitions.
 - `npm run bundle:check` — passed across 72 JavaScript chunks; the largest was
   `vendor-react` at 312,686 bytes.
 - `npm run smoke:routes` — passed.
-- Focused Agent Quick chat desktop and narrow-viewport browser tests — passed:
+- Focused Agent Chat desktop and narrow-viewport browser tests — passed:
   2 tests.
 - `npm run smoke:fixtures` — 191 of 195 repeated tests passed in the long
   aggregate; two third-repetition server timeouts both passed immediately in

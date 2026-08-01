@@ -180,12 +180,15 @@ Responsive column hiding preserves the row identity and its primary action. Row 
 
 ## Action menus and popovers
 
-The repository-owned family is `ActionMenu`, `ActionMenuItem`, `ActionMenuSeparator`, `ActionSubmenu`, and `Popover`. Internal `useDismissableLayer` and `useRovingFocus` helpers keep behavior consistent. Support one nested submenu level only.
+The repository-owned family is `ActionMenu`, `MenuSurface`, `MenuItem`, and
+`MenuLink`. `ActionMenu` supports controlled and uncontrolled opening, custom
+triggers, and first, last, or ref-selected initial focus. `MenuSurface` is the
+presentation and keyboard layer used when a reviewed feature, such as the theme
+picker, must retain custom placement or motion.
 
 Action menus provide:
 
 - Arrow-key movement, Home, End, and printable-key typeahead;
-- Right and Left Arrow behavior for the supported submenu level;
 - Escape dismissal and documented Tab behavior;
 - outside-click dismissal;
 - disabled-item skipping;
@@ -193,9 +196,14 @@ Action menus provide:
 - viewport collision handling and edge clamping;
 - correct menu, menuitem, checkbox-item, and radio-item semantics.
 
-`Popover` is nonmodal and is used for arbitrary supplementary controls or content. It must not use menu roles unless its content is genuinely an action menu.
+Floating action menus portal to the nearest dialog floating layer when one is
+present and otherwise use the document viewport. Feature code does not import
+the low-level floating-menu hook.
 
-Feature code does not implement `role="menu"` or `role="listbox"`. The shared `Select` is the only listbox implementation.
+Feature code does not implement `role="menu"`, `role="listbox"`, or
+`role="option"`. Select controls use `Select`; autocomplete features compose
+`ComboboxListbox`, `ComboboxGroup`, and `ComboboxOption` while retaining their
+query, async loading, token, active-index, and selection state.
 
 ## Forms and unsaved changes
 
@@ -273,6 +281,9 @@ The interaction checker rejects:
 - feature-owned modal and drawer signatures;
 - arbitrary overlay widths;
 - feature-owned menu and listbox roles;
+- direct application use of the low-level floating-menu hook;
+- feature-owned tab lists or tabs instead of `SegmentedTabs`;
+- bordered semantic alerts or status panels instead of `InlineAlert`;
 - direct pagination observers outside the cursor hook;
 - paginated service methods projected to arrays or cursors discarded;
 - raw production tables outside shared table primitives, excluding rendered Markdown;

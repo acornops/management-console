@@ -24,7 +24,7 @@ export const AppDesktopSidebarHeader: React.FC<AppDesktopSidebarHeaderProps> = (
   const collapsed = mode === 'collapsed';
 
   return (
-    <div className={`flex items-center ${collapsed ? 'flex-col gap-1 px-3 py-3' : 'justify-between gap-2 px-4 py-5'}`}>
+    <div data-sidebar-header="true" className={`flex items-center ${collapsed ? 'flex-col gap-1 px-3 py-3' : 'justify-between gap-2 px-4 py-5'}`}>
       <Button
         variant="tertiary"
         size="inline"

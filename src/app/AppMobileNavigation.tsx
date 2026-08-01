@@ -606,7 +606,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                     type="button"
                     variant="secondary"
                     onClick={onLogout}
-                    className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 py-2 text-ui-text transition-colors hover:bg-ui-bg"
+                    className="min-h-11 px-3 py-2"
                   >
                     {t('app.logout')}
                   </Button>

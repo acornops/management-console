@@ -3,8 +3,9 @@ import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadiness
 import { isServerWorkflowRunId } from '@/pages/workflows/workflowRunIdentity';
 import { Loader2, SendHorizontal, Square } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -153,8 +154,8 @@ export const WorkflowAgentsPanel: React.FC<{
       </Button>
     )}
   >
-    {agentSelectionError && <div role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{agentSelectionError}</div>}
-    {agentSelectionResult && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-status-success/30 bg-status-success-soft p-3 type-caption type-emphasis text-status-success-text">{agentSelectionResult}</div>}
+    {agentSelectionError && <InlineAlert tone="danger" aria-live="assertive" className="type-emphasis">{agentSelectionError}</InlineAlert>}
+    {agentSelectionResult && <InlineAlert tone="success" aria-live="polite" aria-atomic="true" className="type-emphasis">{agentSelectionResult}</InlineAlert>}
     {!canManageWorkflows && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
     {selectionFeedback && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-body type-emphasis text-ui-text">{selectionFeedback}</div>}
     {isEditingAgentSelection && selectedAgentSelectionDraft ? (
@@ -302,7 +303,7 @@ export const WorkflowRunsPanel: React.FC<{
 
   return (
   <WorkflowPanel title="Activity" description="Inspect this workflow's runs, approval pauses, trace events, and active instructions." showHeader={showHeader}>
-    {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <div key={message} role="alert" aria-live="assertive" className="rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{message}</div>)}
+    {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <InlineAlert key={message} tone="danger" aria-live="assertive" className="type-emphasis">{message}</InlineAlert>)}
     {workflow.runs.length > 0 ? workflow.runs.map((run) => {
       const effectiveRunId = run.runId || run.id;
       const isServerBackedRun = isServerWorkflowRunId(run.runId);
@@ -386,7 +387,7 @@ export const WorkflowRunsPanel: React.FC<{
                 {coordinationLoadingId === run.id ? (
                   <div role="status" aria-live="polite" className="type-caption mt-3 text-ui-text-muted">{t('workflowCoordination.traceLoading')}</div>
                 ) : coordinationErrorByExecutionId[run.id] ? (
-                  <div role="alert" className="mt-3 rounded-md border border-status-danger/30 bg-status-danger-soft px-3 py-2 type-caption type-emphasis text-status-danger-text">{coordinationErrorByExecutionId[run.id]}</div>
+                  <InlineAlert tone="danger" className="mt-3 px-3 py-2 type-emphasis">{coordinationErrorByExecutionId[run.id]}</InlineAlert>
                 ) : (coordinationByExecutionId[run.id]?.children.length || 0) === 0 ? (
                   <div className="type-caption mt-3 text-ui-text-muted">{t('workflowCoordination.traceEmpty')}</div>
                 ) : (
@@ -445,7 +446,7 @@ export const WorkflowRunsPanel: React.FC<{
                   workflowSessionId={workflowSessionId}
                 />
               )}
-              {runMessageError && <div role="alert" aria-live="assertive" className="mt-2 rounded-md border border-status-danger/30 bg-status-danger-soft p-3 type-caption type-emphasis text-status-danger-text">{runMessageError}{runMessageRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={runMessageRecovery.href}>{runMessageRecovery.label}</a>}</div>}
+              {runMessageError && <InlineAlert tone="danger" aria-live="assertive" className="mt-2 type-emphasis">{runMessageError}{runMessageRecovery && <a className="ml-2 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary" href={runMessageRecovery.href}>{runMessageRecovery.label}</a>}</InlineAlert>}
             </section>
             </>
           )}
@@ -529,9 +530,9 @@ const AgentCapabilityReviewList: React.FC<{
         <section key={agent.agentId} className="grid gap-4 border-t border-ui-border py-5 first:border-t-0 first:pt-0 last:pb-0">
           <div className="min-w-0">
             <h4 className="type-panel-title grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-2 text-ui-text">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md border border-ui-border bg-ui-bg text-ui-text-muted">
+              <IconTile size="xs">
                 <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
-              </span>
+              </IconTile>
               <span className="min-w-0 break-words [overflow-wrap:anywhere]">{agent.name}</span>
             </h4>
             <p className="type-caption mt-1 text-ui-text-muted">Selected Agent</p>
@@ -570,10 +571,9 @@ export const WorkflowCapabilitiesPanel: React.FC<{
       showHeader={showHeader}
     >
       {catalogFailures.length > 0 && (
-        <div role="alert" className="flex flex-col gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft p-3 type-body text-status-warning-text sm:flex-row sm:items-center sm:justify-between">
-          <span>{t('workflowCatalog.inlineFailure')} {catalogFailures.join(' ')}</span>
-          <Button type="button" variant="secondary" size="sm" onClick={onRetryCatalog}>{t('common.retry')}</Button>
-        </div>
+        <InlineAlert tone="warning" className="type-body" action={<Button type="button" variant="secondary" size="sm" onClick={onRetryCatalog}>{t('common.retry')}</Button>}>
+          {t('workflowCatalog.inlineFailure')} {catalogFailures.join(' ')}
+        </InlineAlert>
       )}
       <AgentCapabilityReviewList agentReviews={agentReviews} />
     </WorkflowPanel>

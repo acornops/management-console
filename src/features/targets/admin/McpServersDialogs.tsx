@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, IconTile } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { Switch } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
@@ -394,10 +394,10 @@ export const McpServerFormDialog: React.FC<{
                             />
                             <Button
                               type="button"
-                              variant="danger"
+                              variant="dangerIcon"
                               size="icon"
                               onClick={() => removePublicHeader(header.id)}
-                              className="control-target rounded-lg border border-ui-border p-2 text-ui-text-muted transition-colors hover:bg-status-danger-soft hover:text-status-danger-text sm:self-center"
+                              className="control-target sm:self-center"
                               aria-label={t('mcpServers.removeHeader')}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -446,15 +446,15 @@ export const McpServerFormDialog: React.FC<{
                 <p className="type-caption mt-2 text-ui-text-muted">{t('mcpServers.aboutServersBody')}</p>
                 <div className="mt-5 space-y-4">
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg text-ui-text-muted">
+                    <IconTile size="xs" className="mt-0.5">
                       <SlidersHorizontal className="h-4 w-4" />
-                    </span>
+                    </IconTile>
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.aboutDiscovery')}</p>
                   </div>
                   <div className="flex gap-3">
-                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-status-warning-soft text-status-warning-text">
+                    <IconTile size="xs" tone="warning" className="mt-0.5">
                       <ShieldCheck className="h-4 w-4" />
-                    </span>
+                    </IconTile>
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.aboutWriteApproval')}</p>
                   </div>
                 </div>
@@ -504,9 +504,9 @@ export const DeleteMcpServerDialog: React.FC<{
     >
         <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-status-danger-soft text-status-danger-text">
+            <IconTile size="sm" tone="danger">
               <Trash2 className="h-4 w-4" />
-            </span>
+            </IconTile>
             <div>
               <h3 id="delete-mcp-server-title" className="type-panel-title">
                 {t('mcpServers.delete')}
@@ -530,7 +530,7 @@ export const DeleteMcpServerDialog: React.FC<{
             size="sm"
             onClick={onClose}
             disabled={pending}
-            className="control-target type-ui rounded-lg border border-ui-border bg-ui-surface px-4 py-2 text-ui-text-muted transition-colors hover:bg-ui-bg disabled:opacity-50"
+            className="control-target px-4 py-2"
           >
             {t('app.cancel')}
           </Button>

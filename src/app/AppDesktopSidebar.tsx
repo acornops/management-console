@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Sidebar, Tooltip } from '@acornops/ui';
+import { Button, IconTile, Sidebar, Tooltip } from '@acornops/ui';
 
 import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
@@ -11,8 +11,11 @@ import { AgentSubview, AppPaths, ClusterSubview, VmSubview } from '@/utils/route
 import type { ActiveResourceNav } from '@/app/appRouteState';
 import { navIconClass, SidebarNavButton, SidebarSection, SidebarTargetIdentity, TargetSettingsDivider, WorkspaceSidebarNavLink } from '@/app/AppDesktopSidebarParts';
 import type { AppDesktopSidebarProps } from '@/app/AppNavigation.types';
-import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
-import { Button } from '@acornops/ui';
+import {
+  appHref,
+  getWorkspaceNavigationGroups,
+  handleAppLinkClick
+} from '@/app/workspaceNavigation';
 
 const MotionButton = motion.create(Button);
 
@@ -160,11 +163,11 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
         onSetMode={onSetMode}
       />
 
-      <nav id="desktop-sidebar-navigation" aria-label={t('app.workspaceNavigation')} className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+      <nav id="desktop-sidebar-navigation" data-sidebar-density-nav="true" aria-label={t('app.workspaceNavigation')} className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-0.5">
           {!isAgentSidebar && !isClusterSidebar && !isVirtualMachineSidebar && (
             <>
-              <div className={`relative mt-1 min-w-0 px-3 ${collapsed ? 'mb-3' : 'mb-5'}`} ref={sidebarWorkspaceMenuRef}>
+              <div data-sidebar-workspace-context="true" className={`relative mt-1 min-w-0 px-3 ${collapsed ? 'mb-3' : 'mb-5'}`} ref={sidebarWorkspaceMenuRef}>
                 {hasWorkspaces ? (
                   <Tooltip content={t('app.selectWorkspace')} side="right" disabled={!collapsed} className="w-full">
                   <MotionButton
@@ -182,9 +185,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                     title={t('app.selectWorkspace')}
                   >
                     <span className="flex min-w-0 items-center gap-3">
-                      <span data-rail-align={collapsed ? 'true' : undefined} className="w-8 h-8 rounded bg-accent-soft flex items-center justify-center shrink-0">
+                      <IconTile data-rail-align={collapsed ? 'true' : undefined} size="xs" tone="accent">
                         <span className="text-accent-readable type-emphasis font-mono type-caption">{selectedWorkspaceInitials}</span>
-                      </span>
+                      </IconTile>
                       <span className={collapsed ? 'sr-only' : 'min-w-0 flex flex-col items-start'}>
                         <span className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal type-body type-emphasis leading-tight text-ui-text" title={selectedWorkspaceName}>
                           {selectedWorkspaceName}
@@ -199,9 +202,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 ) : (
                   <div className="w-full flex items-center justify-between p-3 rounded-lg border border-transparent text-left" title={t('app.noWorkspacesAvailable')}>
                     <span className="flex min-w-0 items-center gap-3">
-                      <span data-rail-align={collapsed ? 'true' : undefined} className="w-8 h-8 rounded bg-ui-bg flex items-center justify-center shrink-0">
+                      <IconTile data-rail-align={collapsed ? 'true' : undefined} size="xs">
                         <span className="text-ui-text-muted type-emphasis font-mono type-caption">{selectedWorkspaceInitials}</span>
-                      </span>
+                      </IconTile>
                       <span className="min-w-0 flex flex-col items-start">
                         <span
                           className="line-clamp-2 max-w-[8.75rem] break-words whitespace-normal type-body type-emphasis leading-tight text-ui-text-muted"
@@ -341,7 +344,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
           {isAgentSidebar && (
             <>
-              <div className={collapsed ? 'mb-2 px-3 pt-1' : 'mb-8 px-4 pt-2'}>
+              <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'mb-8 px-4 pt-2'}>
                 <MotionButton
                   type="button"
                   variant="secondary"
@@ -355,9 +358,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   aria-label={t('agentChat.backToAgents')}
                 >
                   {collapsed ? (
-                    <span data-rail-context-control="back" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg transition-colors group-hover:bg-accent-soft group-hover:text-accent-strong">
+                    <IconTile size="xs" data-rail-context-control="back" className="transition-colors group-hover:text-accent-strong">
                       <ICONS.ChevronLeft className="h-3.5 w-3.5" />
-                    </span>
+                    </IconTile>
                   ) : <ICONS.ChevronLeft className="h-3.5 w-3.5" />}
                   <span className={collapsed ? 'sr-only' : undefined}>{t('agentChat.backToAgents')}</span>
                 </MotionButton>
@@ -421,7 +424,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
           {isClusterSidebar && (
             <>
-              <div className={collapsed ? 'mb-2 px-3 pt-1' : 'px-4 mb-8 pt-2'}>
+              <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'px-4 mb-8 pt-2'}>
                 <MotionButton
                   type="button"
                   variant="secondary"
@@ -435,9 +438,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   aria-label={t('app.backToWorkspace')}
                 >
                   {collapsed ? (
-                    <span data-rail-context-control="back" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg transition-colors group-hover:bg-accent-soft group-hover:text-accent-strong">
+                    <IconTile size="xs" data-rail-context-control="back" className="transition-colors group-hover:text-accent-strong">
                       <ICONS.ChevronLeft className="w-3.5 h-3.5" />
-                    </span>
+                    </IconTile>
                   ) : <ICONS.ChevronLeft className="w-3.5 h-3.5" />}
                   <span className={collapsed ? 'sr-only' : undefined}>{t('app.backToWorkspace')}</span>
                 </MotionButton>
@@ -510,7 +513,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
           {isVirtualMachineSidebar && (
             <>
-              <div className={collapsed ? 'mb-2 px-3 pt-1' : 'px-4 mb-8 pt-2'}>
+              <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'px-4 mb-8 pt-2'}>
                 <MotionButton
                   type="button"
                   variant="secondary"
@@ -524,9 +527,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                   aria-label={t('app.backToWorkspace')}
                 >
                   {collapsed ? (
-                    <span data-rail-context-control="back" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-ui-border bg-ui-bg transition-colors group-hover:bg-accent-soft group-hover:text-accent-strong">
+                    <IconTile size="xs" data-rail-context-control="back" className="transition-colors group-hover:text-accent-strong">
                       <ICONS.ChevronLeft className="w-3.5 h-3.5" />
-                    </span>
+                    </IconTile>
                   ) : <ICONS.ChevronLeft className="w-3.5 h-3.5" />}
                   <span className={collapsed ? 'sr-only' : undefined}>{t('app.backToWorkspace')}</span>
                 </MotionButton>

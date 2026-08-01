@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { IconTile } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { isKnownOnlyWorkspaceOwner } from '@/app/workspaceLeave';
@@ -44,9 +45,9 @@ const SettingRow: React.FC<{
 }> = ({ icon: Icon, label, description, action }) => (
   <div className="flex flex-col gap-5 border-b border-ui-border p-6 transition-colors last:border-0 hover:bg-ui-bg/20 sm:flex-row sm:items-center sm:justify-between">
     <div className="flex min-w-0 items-center gap-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong shadow-sm">
+      <IconTile>
         <Icon className="h-5 w-5" aria-hidden="true" />
-      </div>
+      </IconTile>
       <div className="min-w-0">
         <p className="mb-0.5 type-row-title">{label}</p>
         <p className="type-caption leading-5 text-ui-text-muted">{description}</p>
@@ -173,9 +174,9 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
         ) : (
           <section className="mb-10 rounded-xl border border-ui-border bg-ui-surface p-6 shadow-sm sm:p-8">
             <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ui-border bg-ui-bg text-accent-strong">
+              <IconTile>
                 <ICONS.Shield className="h-5 w-5" aria-hidden="true" />
-              </div>
+              </IconTile>
               <div className="min-w-0">
                 <h2 className="mb-1 type-row-title">{t('workspaceSettings.limitedAccessTitle')}</h2>
                 <p className="max-w-2xl type-body leading-6 text-ui-text-muted">{t('workspaceSettings.limitedAccessBody')}</p>

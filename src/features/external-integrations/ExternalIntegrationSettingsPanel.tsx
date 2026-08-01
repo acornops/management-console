@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { InlineConfirmation } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -249,15 +249,14 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
   return (
     <>
       {error && (
-        <div className="flex flex-col gap-3 border-b border-ui-border bg-status-danger-soft px-6 py-3 type-body text-status-danger-text sm:flex-row sm:items-center sm:justify-between" role="alert">
-          <span>{error}</span>
-          <Button size="sm" variant="tertiary" disabled={mutationInFlight} onClick={() => void refresh()}>{t('settings.externalIntegrationsRetry')}</Button>
-        </div>
+        <InlineAlert tone="danger" className="rounded-none border-x-0 border-t-0 px-6 type-body" action={<Button size="sm" variant="tertiary" disabled={mutationInFlight} onClick={() => void refresh()}>{t('settings.externalIntegrationsRetry')}</Button>}>
+          {error}
+        </InlineAlert>
       )}
       {notice && (
-        <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 type-body text-status-success-text" role="status">
+        <InlineAlert tone="success" className="rounded-none border-x-0 border-t-0 px-6 type-body">
           {notice}
-        </div>
+        </InlineAlert>
       )}
       {links?.length ? links.map((link) => (
         <ExternalIntegrationGrantEditor
