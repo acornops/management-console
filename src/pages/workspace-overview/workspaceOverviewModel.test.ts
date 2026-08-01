@@ -6,6 +6,7 @@ import type { ControlPlaneIssueItem, ControlPlaneVirtualMachine } from '@/servic
 import {
   buildWorkspaceOverviewCards,
   getSeverityRank,
+  mapControlPlaneIssueToOverviewIssue,
   sortWorkspaceOverviewIssues,
   type WorkspaceOverviewIssue
 } from './workspaceOverviewModel';
@@ -96,6 +97,40 @@ describe('workspace overview model', () => {
     expect(sortWorkspaceOverviewIssues(issues).map((issue) => issue.id)).toEqual(['1', '2', '3']);
   });
 
+  it('describes an issue without narrower VM scope as applying to the entire VM', () => {
+    const mapped = mapControlPlaneIssueToOverviewIssue(issue({
+      targetType: 'virtual_machine',
+      namespace: '',
+      scopeName: '',
+      objectKind: '',
+      objectName: ''
+    }), (key) => key === 'overview.entireVirtualMachine' ? 'Entire VM' : key);
+
+    expect(mapped.detail).toBe('Entire VM');
+  });
+
+  it('keeps distinct human summaries and omits raw or repeated overview evidence', () => {
+    const withContext = mapControlPlaneIssueToOverviewIssue(issue({
+      title: 'Service failed',
+      summary: 'The payment service stopped after three restart attempts.',
+      reason: 'SERVICE_FAILED'
+    }), t);
+    const repeated = mapControlPlaneIssueToOverviewIssue(issue({
+      title: 'Service failed',
+      summary: 'Service failed.',
+      reason: 'SERVICE_FAILED'
+    }), t);
+    const rawOnly = mapControlPlaneIssueToOverviewIssue(issue({
+      title: 'Service failed',
+      summary: '',
+      reason: 'SERVICE_FAILED'
+    }), t);
+
+    expect(withContext.evidence).toBe('The payment service stopped after three restart attempts.');
+    expect(repeated.evidence).toBe('');
+    expect(rawOnly.evidence).toBe('');
+  });
+
   it('groups connected targets and sorts attention issues across target types by urgency', () => {
     const issues: ControlPlaneIssueItem[] = [
       issue({
@@ -153,9 +188,35 @@ describe('workspace overview model', () => {
     ]);
     expect(result.connectedClusterCards.map((card) => card.name)).toEqual(['cluster-1', 'cluster-2', 'cluster-3']);
     expect(result.connectedVirtualMachineCards.map((card) => card.name)).toEqual(['vm-1', 'vm-2']);
+    expect(result.connectedClusterCards[1].postureTone).toBe('bg-accent-soft text-accent-readable');
+    expect(result.connectedVirtualMachineCards[0]).toMatchObject({
+      postureLabel: 'dashboard.warningStatus',
+      postureTone: 'bg-accent-soft text-accent-readable'
+    });
+    expect(result.connectedVirtualMachineCards[1]).toMatchObject({
+      postureLabel: 'virtualMachines.list.degraded',
+      postureTone: 'bg-accent-soft text-accent-readable'
+    });
     expect(result.attentionItems[0].issue.evidence).toBe('API server unavailable.');
     expect(result.attentionItems[1].issue.evidence).toBe('85% used');
     expect(result.criticalIssueCount).toBe(1);
     expect(result.warningIssueCount).toBe(2);
+  });
+
+  it('lets an authoritative critical issue summary override an online VM posture', () => {
+    const result = buildWorkspaceOverviewCards({
+      kubernetesClusters: [],
+      issues: [],
+      virtualMachineIssueSummaryById: {
+        'vm-1': { total: 1, active: 1, recovering: 0, critical: 1, warning: 0, info: 0 }
+      },
+      virtualMachines: [vm({ id: 'vm-1', name: 'critical-vm', status: 'online' })],
+      t
+    });
+
+    expect(result.connectedVirtualMachineCards[0]).toMatchObject({
+      postureLabel: 'dashboard.criticalStatus',
+      postureTone: 'bg-status-danger-soft text-status-danger-text'
+    });
   });
 });

@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { safeStorage } from '@/utils/safeStorage';
 
-import { clearRecentInvestigation, readRecentInvestigation, writeRecentInvestigation } from './recentInvestigation';
+import {
+  clearRecentInvestigation,
+  clearRecentInvestigationForWorkspace,
+  readRecentInvestigation,
+  writeRecentInvestigation
+} from './recentInvestigation';
 
 describe('recent investigation context', () => {
   const storageKey = 'acornops.workspace.recent-investigation';
@@ -75,6 +80,38 @@ describe('recent investigation context', () => {
     expect(readRecentInvestigation('workspace-a', 'user-b')?.targetName).toBe('vm-1');
     expect(readRecentInvestigation('workspace-b', 'user-a')?.targetName).toBe('vm-2');
     expect(readRecentInvestigation('workspace-b', 'user-b')).toBeNull();
+  });
+
+  it('clears only the current user and workspace investigation', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
+
+    writeRecentInvestigation({
+      userId: 'user-a',
+      workspaceId: 'workspace-a',
+      path: '/workspaces/workspace-a/kubernetes-clusters/cluster-1/chat',
+      targetName: 'cluster-1',
+      targetType: 'kubernetes'
+    });
+    writeRecentInvestigation({
+      userId: 'user-a',
+      workspaceId: 'workspace-b',
+      path: '/workspaces/workspace-b/virtual-machines/vm-1/chat',
+      targetName: 'vm-1',
+      targetType: 'virtual_machine'
+    });
+    writeRecentInvestigation({
+      userId: 'user-b',
+      workspaceId: 'workspace-a',
+      path: '/workspaces/workspace-a/virtual-machines/vm-2/chat',
+      targetName: 'vm-2',
+      targetType: 'virtual_machine'
+    });
+
+    clearRecentInvestigationForWorkspace('user-a', 'workspace-a');
+
+    expect(readRecentInvestigation('workspace-a', 'user-a')).toBeNull();
+    expect(readRecentInvestigation('workspace-b', 'user-a')?.targetName).toBe('vm-1');
+    expect(readRecentInvestigation('workspace-a', 'user-b')?.targetName).toBe('vm-2');
   });
 
   it('fails closed for expired entries and invalid payloads while preserving valid entries', () => {

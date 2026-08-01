@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ControlPlaneIssueItem } from '@/services/controlPlaneApi';
-import { issueTargetScopeLabel, kubernetesIssueNamespace } from './issueUi';
+import { issueSeverityTone, issueStatusTone, issueSupportingText, issueTargetScopeLabel, kubernetesIssueNamespace, shouldShowIssueStatus } from './issueUi';
 
 function issue(overrides: Partial<ControlPlaneIssueItem> = {}): ControlPlaneIssueItem {
   return {
@@ -44,6 +44,55 @@ describe('kubernetesIssueNamespace', () => {
       scopeKind: 'Node',
       scopeName: 'worker-1'
     }), 'Cluster-wide')).toBe('Cluster-wide');
+  });
+});
+
+describe('issueSeverityTone', () => {
+  it('uses the shared warning treatment for warning pills', () => {
+    expect(issueSeverityTone('warning')).toBe('bg-status-warning-soft text-status-warning-text');
+  });
+
+  it('keeps critical and informational severities semantically distinct', () => {
+    expect(issueSeverityTone('critical')).toBe('bg-status-danger-soft text-status-danger-text');
+    expect(issueSeverityTone('info')).toBe('bg-ui-surface-strong text-ui-text-muted');
+  });
+});
+
+describe('issueStatusTone', () => {
+  it('keeps issue status pills borderless across semantic tones', () => {
+    expect(issueStatusTone('active')).toBe('bg-ui-surface-strong text-ui-text-muted');
+    expect(issueStatusTone('recovering')).toBe('bg-status-warning-soft text-status-warning-text');
+    expect(issueStatusTone('resolved')).toBe('bg-status-success-soft text-status-success-text');
+  });
+});
+
+describe('shouldShowIssueStatus', () => {
+  it('suppresses the default active state while preserving transitional and terminal states', () => {
+    expect(shouldShowIssueStatus('active')).toBe(false);
+    expect(shouldShowIssueStatus('recovering')).toBe(true);
+    expect(shouldShowIssueStatus('resolved')).toBe(true);
+  });
+});
+
+describe('issueSupportingText', () => {
+  it('prefers the diagnostic summary over a generic state reason', () => {
+    expect(issueSupportingText({
+      title: 'Pod pending',
+      summary: 'Latest snapshot reports pod api-7d8 in namespace demo as Pending.',
+      reason: 'Pending'
+    })).toBe('Latest snapshot reports pod api-7d8 in namespace demo as Pending.');
+  });
+
+  it('falls back to the reason when no summary is available', () => {
+    expect(issueSupportingText({ title: 'Pod pending', summary: '  ', reason: 'Unschedulable' })).toBe('Unschedulable');
+  });
+
+  it('omits repeated summaries and machine-only reason codes', () => {
+    expect(issueSupportingText({
+      title: 'ssh.service is failed',
+      summary: 'ssh.service is failed.',
+      reason: 'SERVICE_FAILED'
+    })).toBe('');
   });
 });
 

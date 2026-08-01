@@ -50,7 +50,7 @@ export const DangerZoneRow: React.FC<{
         <p className="type-caption max-w-2xl text-ui-text-muted">{description}</p>
         {detail}
       </div>
-      <div className={twMerge('w-full shrink-0 sm:w-64', actionClassName)}>{action}</div>
+      <div className={twMerge('flex w-full shrink-0 justify-end sm:w-auto', actionClassName)}>{action}</div>
     </section>
   );
 };

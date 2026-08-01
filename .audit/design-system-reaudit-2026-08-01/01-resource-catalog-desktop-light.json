@@ -1,0 +1,33 @@
+{
+  "number": "01",
+  "name": "resource-catalog-desktop-light",
+  "route": "/workspaces/fixture-workspace/kubernetes-clusters",
+  "viewport": {
+    "width": 1850,
+    "height": 1000
+  },
+  "theme": "light",
+  "language": "en",
+  "kind": "resource",
+  "status": 200,
+  "title": "AcornOps",
+  "consoleErrors": [],
+  "evidence": {
+    "viewport": {
+      "width": 1850,
+      "height": 1000
+    },
+    "documentOverflow": 0,
+    "display": "grid",
+    "columns": "487.328px 487.328px 487.328px",
+    "gridWidth": 1494,
+    "cards": [
+      {
+        "width": 487.3,
+        "top": 226,
+        "maxWidth": "none"
+      }
+    ]
+  },
+  "screenshotPath": "/home/ning/acornops/management-console/.audit/design-system-reaudit-2026-08-01/01-resource-catalog-desktop-light.png"
+}

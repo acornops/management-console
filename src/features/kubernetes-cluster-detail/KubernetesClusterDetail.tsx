@@ -8,22 +8,15 @@ import { OverviewView } from '@/features/kubernetes-cluster-detail/components/de
 import { ResourcesView } from '@/features/kubernetes-cluster-detail/components/detail/views/ResourcesView';
 import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
 import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
-import type { TargetToolCatalog } from '@/features/targets/admin/targetMcpCatalogTypes';
+import { useCapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
 import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/clusterChatFooter';
 import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
 import { KubernetesClusterDetailProps, View } from '@/features/kubernetes-cluster-detail/types';
 import { toKubernetesTargetDescriptor } from '@/features/targets/targetDescriptor';
-import type { ControlPlaneTargetSkillsCatalog, ControlPlaneTargetToolsCatalog } from '@/services/controlPlaneApi';
 
 interface KubernetesClusterDetailLocationState {
   view: View;
   sessionId: string | null;
-}
-
-interface CapabilityCatalogCache {
-  mcpServers?: TargetToolCatalog;
-  skills?: ControlPlaneTargetSkillsCatalog;
-  tools?: ControlPlaneTargetToolsCatalog;
 }
 
 const VIEWS: View[] = ['overview', 'resources', 'mcpServers', 'skills', 'tools', 'chat', 'settings'];
@@ -125,32 +118,12 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   const userMarkdownComponents = useMemo(() => createMarkdownComponents('user'), []);
   const target = useMemo(() => toKubernetesTargetDescriptor(cluster), [cluster]);
   const targetCacheKey = `${target.workspaceId}:${target.id}`;
-  const [capabilityCatalogsByTarget, setCapabilityCatalogsByTarget] = useState<Record<string, CapabilityCatalogCache>>({});
-  const cachedCapabilityCatalogs = capabilityCatalogsByTarget[targetCacheKey];
-  const cacheCapabilityCatalog = React.useCallback(<K extends keyof CapabilityCatalogCache,>(
-    kind: K,
-    catalog: NonNullable<CapabilityCatalogCache[K]>
-  ) => {
-    setCapabilityCatalogsByTarget((current) => ({
-      ...current,
-      [targetCacheKey]: {
-        ...current[targetCacheKey],
-        [kind]: catalog
-      }
-    }));
-  }, [targetCacheKey]);
-  const cacheMcpServersCatalog = React.useCallback(
-    (catalog: TargetToolCatalog) => cacheCapabilityCatalog('mcpServers', catalog),
-    [cacheCapabilityCatalog]
-  );
-  const cacheSkillsCatalog = React.useCallback(
-    (catalog: ControlPlaneTargetSkillsCatalog) => cacheCapabilityCatalog('skills', catalog),
-    [cacheCapabilityCatalog]
-  );
-  const cacheToolsCatalog = React.useCallback(
-    (catalog: ControlPlaneTargetToolsCatalog) => cacheCapabilityCatalog('tools', catalog),
-    [cacheCapabilityCatalog]
-  );
+  const {
+    cachedCatalogs: cachedCapabilityCatalogs,
+    cacheMcpServersCatalog,
+    cacheSkillsCatalog,
+    cacheToolsCatalog
+  } = useCapabilityCatalogCache(targetCacheKey);
 
   const {
     currentUserId,

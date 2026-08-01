@@ -16,9 +16,24 @@ test('workspace overview exposes real links with a coherent heading structure', 
   const virtualMachineLink = page.locator('[data-connected-targets="true"] a').filter({ hasText: 'Payments VM' });
   const issueLink = page.getByRole('link', { name: 'View More' }).first();
   const attentionBoard = page.locator('[data-attention-board="true"]');
+  const warningIssue = attentionBoard.locator('article').filter({ hasText: 'Payment gateway service is degraded' });
+  const warningIssueTargetIdentity = warningIssue.locator('[data-attention-target-identity="true"]');
 
   await expect(page.getByRole('button', { name: 'Open assistant' }).first()).toBeVisible();
   await expect(attentionBoard.getByText('Active', { exact: true })).toHaveCount(0);
+  await expect(warningIssue.getByText('Warning', { exact: true })).toHaveCSS('background-color', 'rgb(255, 236, 221)');
+  await expect(warningIssue.getByText('Warning', { exact: true })).toHaveCSS('color', 'rgb(186, 68, 0)');
+  await expect(warningIssue.getByText('Warning', { exact: true })).toHaveCSS('border-top-width', '0px');
+  await expect(warningIssue.getByText('Payments VM', { exact: true })).toHaveCSS('font-weight', '500');
+  await expect(warningIssue.getByText('Last seen', { exact: true })).toHaveCount(0);
+  const warningIssueObservedAt = warningIssue.locator('time');
+  await expect(warningIssue.getByText(/^(Just now|(?:[5-9]|[1-5]\d)s ago)$/)).toBeVisible();
+  await expect(warningIssueObservedAt).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T/);
+  await expect(warningIssueObservedAt).toHaveAttribute('title', /\S/);
+  await expect(warningIssueTargetIdentity.locator('[data-target-type-icon="true"]')).toHaveAttribute('title', 'Virtual machine');
+  await expect(warningIssueTargetIdentity).toHaveText(/Virtual machine\s*Payments VM/);
+  await expect(virtualMachineLink.getByText('Payments VM', { exact: true })).toHaveCSS('font-weight', '500');
+  await expect(virtualMachineLink.getByText('1 warning', { exact: true })).toHaveCSS('color', 'rgb(186, 68, 0)');
   await expect(attentionBoard.locator('[data-target-type-icon="true"]').first()).toHaveAttribute('title', 'Kubernetes cluster');
   await expect(clusterLink).toHaveAttribute('href', '/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster');
   await expect(virtualMachineLink).toHaveAttribute('href', '/workspaces/fixture-workspace/virtual-machines/fixture-vm');

@@ -6,6 +6,7 @@ import {
   DialogFrame
 } from './OverlayFrames';
 import { IconTile } from './IconTile';
+import { InlineAlert } from './InlineAlert';
 
 export interface DestructiveConfirmationDialogProps {
   cancelLabel?: string;
@@ -62,13 +63,13 @@ export const DestructiveConfirmationDialog: React.FC<DestructiveConfirmationDial
       />
     )}
   >
-    <div className="type-body rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
+    <InlineAlert tone="warning" className="type-body">
       {description}
-    </div>
+    </InlineAlert>
     {error && (
-      <div role="alert" aria-live="assertive" className="mt-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 type-caption text-status-danger-text">
+      <InlineAlert tone="danger" role="alert" aria-live="assertive" className="mt-4">
         {error}
-      </div>
+      </InlineAlert>
     )}
   </DialogFrame>
 );

@@ -347,13 +347,13 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
               <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'mb-8 px-4 pt-2'}>
                 <MotionButton
                   type="button"
-                  variant="secondary"
+                  variant="tertiary"
                   size="sm"
                   onClick={onBackToWorkspaceSidebar}
                   className={`control-target group flex h-10 items-center justify-center gap-2 text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${
                     collapsed
                       ? 'mb-1 w-full rounded-md border border-transparent bg-transparent p-0 hover:bg-transparent'
-                      : 'mb-4 w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 hover:bg-accent-soft hover:text-accent-strong'
+                      : 'mb-4 w-full justify-start gap-3 rounded-md px-3 py-2 hover:bg-ui-bg hover:text-accent-strong'
                   }`}
                   aria-label={t('agentChat.backToAgents')}
                 >
@@ -427,13 +427,13 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
               <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'px-4 mb-8 pt-2'}>
                 <MotionButton
                   type="button"
-                  variant="secondary"
+                  variant="tertiary"
                   size="sm"
                   onClick={onBackToWorkspaceSidebar}
                   className={`control-target group flex h-10 items-center justify-center gap-2 text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${
                     collapsed
                       ? 'mb-1 w-full rounded-md border border-transparent bg-transparent p-0 hover:bg-transparent'
-                      : 'mb-4 w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 hover:bg-accent-soft hover:text-accent-strong'
+                      : 'mb-4 w-full justify-start gap-3 rounded-md px-3 py-2 hover:bg-ui-bg hover:text-accent-strong'
                   }`}
                   aria-label={t('app.backToWorkspace')}
                 >
@@ -516,13 +516,13 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
               <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'px-4 mb-8 pt-2'}>
                 <MotionButton
                   type="button"
-                  variant="secondary"
+                  variant="tertiary"
                   size="sm"
                   onClick={onBackToWorkspaceSidebar}
                   className={`control-target group flex h-10 items-center justify-center gap-2 text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${
                     collapsed
                       ? 'mb-1 w-full rounded-md border border-transparent bg-transparent p-0 hover:bg-transparent'
-                      : 'mb-4 w-full rounded-lg border border-ui-border bg-ui-bg px-4 py-2 hover:bg-accent-soft hover:text-accent-strong'
+                      : 'mb-4 w-full justify-start gap-3 rounded-md px-3 py-2 hover:bg-ui-bg hover:text-accent-strong'
                   }`}
                   aria-label={t('app.backToWorkspace')}
                 >

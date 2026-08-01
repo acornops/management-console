@@ -397,7 +397,7 @@ export const TargetInsightsDialog: React.FC<TargetInsightsDialogProps> = ({ work
                       <p className="type-row-title">{t('tools.targetInsights.noFiles')}</p>
                       <p className="type-caption mt-2 text-ui-text-muted">{t('tools.targetInsights.noFilesHelp')}</p>
                       {canEdit && (
-                        <Button variant="secondary" size="sm" className="mt-4" onClick={startNewFile}>
+                        <Button variant="primary" size="sm" className="mt-4" onClick={startNewFile}>
                           <FilePlus2 className="h-4 w-4" />
                           {t('tools.targetInsights.newFile')}
                         </Button>

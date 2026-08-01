@@ -1,0 +1,58 @@
+{
+  "number": "04",
+  "name": "audit-log-mobile-monday-first",
+  "route": "/workspaces/fixture-workspace/audit-log",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "theme": "dark",
+  "language": "zh",
+  "kind": "date-time",
+  "status": 200,
+  "title": "AcornOps",
+  "consoleErrors": [],
+  "evidence": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "documentOverflow": 0,
+    "language": "zh-CN",
+    "weekdayLabels": [
+      "一",
+      "二",
+      "三",
+      "四",
+      "五",
+      "六",
+      "日"
+    ],
+    "keyboardDates": {
+      "initialDate": "2026-08-01",
+      "homeDate": "2026-07-27",
+      "endDate": "2026-08-02"
+    },
+    "dialog": {
+      "left": 46,
+      "top": 159,
+      "right": 366,
+      "bottom": 701,
+      "width": 320,
+      "height": 542
+    },
+    "monthButtonHeights": [
+      44,
+      44
+    ],
+    "timeInputHeights": [
+      44,
+      44
+    ],
+    "triggerHeights": [
+      44,
+      44
+    ]
+  },
+  "screenshotPath": "/home/ning/acornops/management-console/.audit/design-system-reaudit-2026-08-01/04-audit-log-mobile-monday-first.png"
+}

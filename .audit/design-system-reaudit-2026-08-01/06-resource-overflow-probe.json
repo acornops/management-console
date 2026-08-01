@@ -1,0 +1,366 @@
+{
+  "grid": {
+    "clientWidth": 1329,
+    "scrollWidth": 1329,
+    "columns": "432.328px 432.328px 432.344px"
+  },
+  "cards": [
+    {
+      "width": 432.328125,
+      "clientWidth": 430,
+      "scrollWidth": 430,
+      "overflowingDescendants": [
+        {
+          "tag": "div",
+          "className": "-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden",
+          "text": "Setup Required",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "inline-flex items-center rounded-full border type-micro-label px-2 py-0.5 border-status-warning/25 bg-status-warning-soft text-status-warning-text max-w-[8.5rem]",
+          "text": "Setup Required",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate",
+          "text": "Setup Required",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "min-[1440px]:hidden",
+          "text": "Set up",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "hidden xl:inline min-[1440px]:hidden",
+          "text": "Registered",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "hidden xl:inline min-[1440px]:hidden",
+          "text": "Pending",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "hidden xl:inline min-[1440px]:hidden",
+          "text": "Agent needed",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Scope",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Access",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Resources",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -306,
+          "right": -306,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        }
+      ]
+    },
+    {
+      "width": 432.328125,
+      "clientWidth": 430,
+      "scrollWidth": 430,
+      "overflowingDescendants": [
+        {
+          "tag": "div",
+          "className": "-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden",
+          "text": "1 critical",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -754.3,
+          "right": -754.3,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "inline-flex items-center rounded-full border type-micro-label px-2 py-0.5 border-status-danger/25 bg-status-danger-soft text-status-danger-text max-w-[8.5rem]",
+          "text": "1 critical",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -754.3,
+          "right": -754.3,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate",
+          "text": "1 critical",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -754.3,
+          "right": -754.3,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "div",
+          "className": "sr-only",
+          "text": "Singapore Production CPU and memory telemetry over timeMetric17d agonowCPU0.25 cores0.33 coresMemory0.68 GiB0.75 GiB",
+          "clientWidth": 1,
+          "scrollWidth": 373,
+          "left": 16,
+          "right": 17,
+          "width": 1,
+          "overflowX": "hidden",
+          "position": "absolute"
+        },
+        {
+          "tag": "caption",
+          "className": "sr-only",
+          "text": "Singapore Production CPU and memory telemetry over time",
+          "clientWidth": 1,
+          "scrollWidth": 425,
+          "left": 15,
+          "right": 16,
+          "width": 1,
+          "overflowX": "hidden",
+          "position": "absolute"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Scope",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -754.3,
+          "right": -754.3,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Access",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -754.3,
+          "right": -754.3,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Resources",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -754.3,
+          "right": -754.3,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        }
+      ]
+    },
+    {
+      "width": 432.34375,
+      "clientWidth": 430,
+      "scrollWidth": 430,
+      "overflowingDescendants": [
+        {
+          "tag": "div",
+          "className": "-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden",
+          "text": "Setup Required",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "inline-flex items-center rounded-full border type-micro-label px-2 py-0.5 border-status-warning/25 bg-status-warning-soft text-status-warning-text max-w-[8.5rem]",
+          "text": "Setup Required",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate",
+          "text": "Setup Required",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "min-[1440px]:hidden",
+          "text": "Set up",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "hidden xl:inline min-[1440px]:hidden",
+          "text": "Registered",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "hidden xl:inline min-[1440px]:hidden",
+          "text": "Pending",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "hidden xl:inline min-[1440px]:hidden",
+          "text": "Agent needed",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "visible",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Scope",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Access",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        },
+        {
+          "tag": "span",
+          "className": "truncate sm:hidden",
+          "text": "Resources",
+          "clientWidth": 0,
+          "scrollWidth": 0,
+          "left": -1202.7,
+          "right": -1202.7,
+          "width": 0,
+          "overflowX": "hidden",
+          "position": "static"
+        }
+      ]
+    }
+  ]
+}

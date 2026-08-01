@@ -120,7 +120,7 @@ test('the 1200px boundary switches between persistent and overlay navigation', a
   await expect(page.locator('.management-console-desktop-sidebar')).toBeVisible();
 });
 
-test('short desktop viewports tighten navigation spacing without hiding destinations', async ({ page }) => {
+test('short desktop viewports preserve navigation rhythm and scroll destinations independently', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
 
@@ -148,9 +148,8 @@ test('short desktop viewports tighten navigation spacing without hiding destinat
   await expect(clusters).toBeVisible();
   await expect(virtualMachines).toBeVisible();
   await expect(approvals).toBeVisible();
-  await expect(workspaceSettings).toBeVisible();
   await expect(approvals.locator('[data-nav-count-badge="default"]')).toHaveAttribute('aria-label', '1');
-  expect(await rowCadence()).toBe(42);
+  expect(await rowCadence()).toBe(44);
   const webhooksBox = await outboundWebhooks.boundingBox();
   const governanceTitleBox = await governanceTitle.boundingBox();
   const approvalsBox = await approvals.boundingBox();
@@ -160,10 +159,13 @@ test('short desktop viewports tighten navigation spacing without hiding destinat
   if (!webhooksBox || !governanceTitleBox || !approvalsBox) {
     throw new Error('Short-viewport group title spacing needs layout boxes');
   }
-  expect(governanceTitleBox.y - (webhooksBox.y + webhooksBox.height)).toBe(12);
+  expect(governanceTitleBox.y - (webhooksBox.y + webhooksBox.height)).toBe(22);
   expect(approvalsBox.y - (governanceTitleBox.y + governanceTitleBox.height)).toBe(8);
   await expect.poll(() => navigation.evaluate((element) => element.scrollHeight - element.clientHeight))
-    .toBeLessThanOrEqual(1);
+    .toBeGreaterThan(1);
+
+  await workspaceSettings.scrollIntoViewIfNeeded();
+  await expect(workspaceSettings).toBeInViewport();
 
   await expect(approvals).toHaveAttribute('href', '/workspaces/fixture-workspace/approvals');
   await expect(workspaceSettings).toHaveAttribute('href', '/workspaces/fixture-workspace/settings');
@@ -171,8 +173,6 @@ test('short desktop viewports tighten navigation spacing without hiding destinat
   await page.getByRole('button', { name: 'Collapse sidebar' }).click();
   await expect(approvals.locator('[data-nav-count-badge="compact"]')).toHaveAttribute('aria-label', '1');
   expect(await rowCadence()).toBe(42);
-  await expect.poll(() => navigation.evaluate((element) => element.scrollHeight - element.clientHeight))
-    .toBeLessThanOrEqual(1);
 });
 
 test('collapsed rail controls and identities share one centerline', async ({ page }) => {
@@ -259,7 +259,7 @@ test('collapsed rail count badges stay small, circular, and inside the rail', as
   const rowDeltas = navigationRowTops.slice(1).map(
     (top, index) => Math.round((top - navigationRowTops[index]) * 100) / 100
   );
-  expect(rowDeltas).toEqual(rowDeltas.map(() => 44));
+  expect(rowDeltas).toEqual(rowDeltas.map(() => 42));
 });
 
 test('mobile drawer is left anchored, dismissible, and cleaned up on desktop resize', async ({ page }) => {

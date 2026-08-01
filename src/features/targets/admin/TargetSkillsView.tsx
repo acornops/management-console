@@ -6,7 +6,7 @@ import { Checkbox } from '@acornops/ui';
 import { TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
-import { PageShell } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import {
   controlPlaneApi,
   ControlPlaneTargetSkillDetail,
@@ -379,31 +379,33 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
 
   return (
     <PageShell>
-      <header className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <h1 className="type-route-title">{t('targetSkills.title')}</h1>
-          <p className="type-body mt-2">{t('targetSkills.description', { name: subject.name })}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" size="md" onClick={openImportDialog} disabled={!canEditSkills}>
-            <GitBranch className="h-4 w-4" />
-            {t('targetSkills.import')}
-          </Button>
-          <Button variant="secondary" size="md" onClick={openCreateEditor} disabled={!canEditSkills}>
-            <Plus className="h-4 w-4" />
-            {t('targetSkills.createSkill')}
-          </Button>
-        </div>
-        {showPermissionNotice && (
-          <p className="type-caption lg:max-w-xs">
-            {catalog?.permissions?.editableRoles?.length
-              ? t('targetSkills.manageNoAccessWithRoles', {
-                  roles: catalog.permissions.editableRoles.join(', ')
-                })
-              : t('targetSkills.manageNoAccess')}
-          </p>
+      <PageHeader
+        title={t('targetSkills.title')}
+        description={t('targetSkills.description', { name: subject.name })}
+        actions={(
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="secondary" size="md" onClick={openImportDialog} disabled={!canEditSkills}>
+                <GitBranch className="h-4 w-4" aria-hidden="true" />
+                {t('targetSkills.import')}
+              </Button>
+              <Button variant="primary" size="md" onClick={openCreateEditor} disabled={!canEditSkills}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                {t('targetSkills.createSkill')}
+              </Button>
+            </div>
+            {showPermissionNotice && (
+              <p className="type-caption max-w-xs type-emphasis text-ui-text-muted sm:text-right">
+                {catalog?.permissions?.editableRoles?.length
+                  ? t('targetSkills.manageNoAccessWithRoles', {
+                      roles: catalog.permissions.editableRoles.join(', ')
+                    })
+                  : t('targetSkills.manageNoAccess')}
+              </p>
+            )}
+          </div>
         )}
-      </header>
+      />
 
       {catalogError && <div className="type-caption mb-5 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{catalogError}</div>}
 

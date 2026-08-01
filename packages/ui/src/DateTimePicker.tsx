@@ -65,10 +65,31 @@ export function toLocalDateTimeValue(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function getCalendarDates(month: Date): Date[] {
+interface LocaleWeekInfo {
+  firstDay: number;
+}
+
+type LocaleWithWeekInfo = Intl.Locale & {
+  getWeekInfo?: () => LocaleWeekInfo;
+  weekInfo?: LocaleWeekInfo;
+};
+
+export function getFirstDayOfWeek(locale?: string): number {
+  try {
+    const resolvedLocale = locale || new Intl.DateTimeFormat().resolvedOptions().locale;
+    const localeWithWeekInfo = new Intl.Locale(resolvedLocale) as LocaleWithWeekInfo;
+    const firstDay = localeWithWeekInfo.getWeekInfo?.().firstDay ?? localeWithWeekInfo.weekInfo?.firstDay;
+    return typeof firstDay === 'number' && firstDay >= 1 && firstDay <= 7 ? firstDay % 7 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function getCalendarDates(month: Date, firstDayOfWeek = 0): Date[] {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
   const start = new Date(first);
-  start.setDate(first.getDate() - first.getDay());
+  const leadingDays = (first.getDay() - firstDayOfWeek + 7) % 7;
+  start.setDate(first.getDate() - leadingDays);
   return Array.from({ length: 42 }, (_, index) => {
     const date = new Date(start);
     date.setDate(start.getDate() + index);
@@ -115,15 +136,16 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const [popupStyle, setPopupStyle] = useState<React.CSSProperties | null>(null);
   const labels = { ...defaultLabels, ...suppliedLabels };
 
-  const calendarDates = useMemo(() => getCalendarDates(visibleMonth), [visibleMonth]);
+  const firstDayOfWeek = useMemo(() => getFirstDayOfWeek(locale), [locale]);
+  const calendarDates = useMemo(() => getCalendarDates(visibleMonth, firstDayOfWeek), [firstDayOfWeek, visibleMonth]);
   const weekdays = useMemo(() => {
     const sunday = new Date(2024, 0, 7);
     return Array.from({ length: 7 }, (_, index) => {
       const date = new Date(sunday);
-      date.setDate(sunday.getDate() + index);
+      date.setDate(sunday.getDate() + firstDayOfWeek + index);
       return new Intl.DateTimeFormat(locale, { weekday: 'narrow' }).format(date);
     });
-  }, [locale]);
+  }, [firstDayOfWeek, locale]);
 
   const triggerValue = selectedDate
     ? new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(selectedDate)
@@ -269,7 +291,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
             <button
               type="button"
               aria-label={labels.previousMonth}
-              className={buttonClassName({ variant: 'tertiary', size: 'icon', className: 'h-9 w-9 min-h-9' })}
+              className={buttonClassName({ variant: 'tertiary', size: 'icon' })}
               onClick={() => {
                 const next = shiftMonth(activeDate, -1);
                 setActiveDate(next);
@@ -282,7 +304,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
             <button
               type="button"
               aria-label={labels.nextMonth}
-              className={buttonClassName({ variant: 'tertiary', size: 'icon', className: 'h-9 w-9 min-h-9' })}
+              className={buttonClassName({ variant: 'tertiary', size: 'icon' })}
               onClick={() => {
                 const next = shiftMonth(activeDate, 1);
                 setActiveDate(next);
@@ -322,8 +344,13 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                     else if (event.key === 'ArrowRight') { event.preventDefault(); moveActiveDate(1); }
                     else if (event.key === 'ArrowUp') { event.preventDefault(); moveActiveDate(-7); }
                     else if (event.key === 'ArrowDown') { event.preventDefault(); moveActiveDate(7); }
-                    else if (event.key === 'Home') { event.preventDefault(); moveActiveDate(-activeDate.getDay()); }
-                    else if (event.key === 'End') { event.preventDefault(); moveActiveDate(6 - activeDate.getDay()); }
+                    else if (event.key === 'Home') {
+                      event.preventDefault();
+                      moveActiveDate(-((activeDate.getDay() - firstDayOfWeek + 7) % 7));
+                    } else if (event.key === 'End') {
+                      event.preventDefault();
+                      moveActiveDate(6 - ((activeDate.getDay() - firstDayOfWeek + 7) % 7));
+                    }
                     else if (event.key === 'PageUp') {
                       event.preventDefault();
                       const next = shiftMonth(activeDate, -1);
@@ -368,7 +395,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
               onKeyDown={(event) => {
                 if (event.key === 'Enter') commitTime(hour, minute);
               }}
-              className={formInputClassName('h-10 min-h-10 px-3 text-center type-ui')}
+              className={formInputClassName('px-3 text-center type-ui sm:min-h-9')}
             />
           </label>
           <span className="mb-2.5 type-ui text-ui-text-muted" aria-hidden="true">:</span>
@@ -385,7 +412,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
               onKeyDown={(event) => {
                 if (event.key === 'Enter') commitTime(hour, minute);
               }}
-              className={formInputClassName('h-10 min-h-10 px-3 text-center type-ui')}
+              className={formInputClassName('px-3 text-center type-ui sm:min-h-9')}
             />
           </label>
           <span className="mb-2.5 shrink-0 type-caption text-ui-text-muted">24h</span>

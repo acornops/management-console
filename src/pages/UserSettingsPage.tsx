@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { handleAppLinkClick } from '@/app/workspaceNavigation';
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert, StatusBadge } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
@@ -230,18 +230,18 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             label={t('settings.email')}
             description={user.email}
             action={
-              <div className="flex items-center gap-2 rounded-lg bg-status-success-soft px-3 py-1.5 text-status-success-text">
+              <StatusBadge tone="success" className="gap-2 px-3 py-1.5 type-caption normal-case tracking-normal">
                 <ICONS.CheckCircle2 className="h-4 w-4" />
                 <span className="type-caption type-emphasis">{t('settings.verified')}</span>
-              </div>
+              </StatusBadge>
             }
           />
           <SettingRow icon={ICONS.LayoutGrid} label={t('settings.workspacesJoined')} description={formatQuota(user.quota?.workspaceMemberships, t('settings.quotaUnavailable'))} />
         </SettingSection>
 
         <SettingSection title={t('settings.securityTitle')} description={t('settings.securityBody')}>
-          {securityError && <div className="border-b border-ui-border bg-status-danger-soft px-6 py-3 type-body text-status-danger-text">{securityError}</div>}
-          {securityNotice && <div className="border-b border-ui-border bg-status-success-soft px-6 py-3 type-body text-status-success-text">{securityNotice}</div>}
+          {securityError && <InlineAlert tone="danger" role="alert" className="rounded-none border-x-0 border-t-0 px-6 py-3 type-body">{securityError}</InlineAlert>}
+          {securityNotice && <InlineAlert tone="success" className="rounded-none border-x-0 border-t-0 px-6 py-3 type-body">{securityNotice}</InlineAlert>}
           <SettingRow
             icon={ICONS.Lock}
             label={t('settings.password')}

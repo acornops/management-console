@@ -1,13 +1,16 @@
 import React from 'react';
+import { Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { TelemetryTrendSummary } from '@/features/targets/catalog/TelemetryTrendSummary';
 import type { ControlPlaneVirtualMachine, ControlPlaneVirtualMachineMetricHistoryPoint } from '@/services/controlPlaneApi';
 import { formatCompactRelativeTime, formatUserTime } from '@/utils/dateTime';
+import { getTelemetryTimestampFreshness } from '@/utils/telemetry';
 
 export interface VmMetricTimelinePoint {
   timestamp: number;
   loadAverage1m: number | null;
+  cpuUsagePercent: number | null;
   memoryUsedPercent: number | null;
   memoryUsedBytes: number | null;
   memoryTotalBytes: number | null;
@@ -37,6 +40,7 @@ export function getVmMetricTimeline(points: ControlPlaneVirtualMachineMetricHist
       return {
         timestamp,
         loadAverage1m: finiteNonNegativeNumber(point.loadAverage1m),
+        cpuUsagePercent: finitePercentNumber(point.cpuUsagePercent),
         memoryUsedPercent: finitePercentNumber(point.memoryUsedPercent),
         memoryUsedBytes: finiteNonNegativeNumber(point.memoryUsedBytes),
         memoryTotalBytes: finiteNonNegativeNumber(point.memoryTotalBytes),
@@ -50,6 +54,7 @@ export function getVmMetricTimeline(points: ControlPlaneVirtualMachineMetricHist
 export function getLatestVmTelemetryPoint(points: VmMetricTimelinePoint[]): VmMetricTimelinePoint | null {
   const latestMetricPoint = [...points].reverse().find((point) =>
     point.loadAverage1m !== null ||
+    point.cpuUsagePercent !== null ||
     point.memoryUsedPercent !== null ||
     point.memoryUsedBytes !== null ||
     point.memoryTotalBytes !== null ||
@@ -61,6 +66,7 @@ export function getLatestVmTelemetryPoint(points: VmMetricTimelinePoint[]): VmMe
   const latestWith = (predicate: (point: VmMetricTimelinePoint) => boolean): VmMetricTimelinePoint | null =>
     [...points].reverse().find(predicate) || null;
   const loadPoint = latestWith((point) => point.loadAverage1m !== null);
+  const cpuPoint = latestWith((point) => point.cpuUsagePercent !== null);
   const memoryPoint = latestWith((point) =>
     point.memoryUsedPercent !== null ||
     point.memoryUsedBytes !== null ||
@@ -72,6 +78,7 @@ export function getLatestVmTelemetryPoint(points: VmMetricTimelinePoint[]): VmMe
   return {
     timestamp: latestMetricPoint.timestamp,
     loadAverage1m: loadPoint?.loadAverage1m ?? null,
+    cpuUsagePercent: cpuPoint?.cpuUsagePercent ?? null,
     memoryUsedPercent: memoryPoint?.memoryUsedPercent ?? null,
     memoryUsedBytes: memoryPoint?.memoryUsedBytes ?? null,
     memoryTotalBytes: memoryPoint?.memoryTotalBytes ?? null,
@@ -102,24 +109,35 @@ function getMetricEmptyCopyKey(pointCount: number, usablePointCount: number): st
   return 'virtualMachines.list.waitingForAnotherVmSample';
 }
 
-export const VmOperationalDetails: React.FC<{ vm: ControlPlaneVirtualMachine; issueCount?: number }> = ({ vm, issueCount }) => {
+export const VmOperationalDetails: React.FC<{ vm: ControlPlaneVirtualMachine }> = ({ vm }) => {
   const { t } = useTranslation();
+  const logSourceCount = vm.allowedLogSources?.length;
   const details = [
-    { label: t('virtualMachines.list.logSources'), compactLabel: t('virtualMachines.list.logSourcesShort'), value: vm.allowedLogSources?.length ?? 0, Icon: ICONS.BookOpen },
-    { label: t('virtualMachines.list.processes'), compactLabel: t('virtualMachines.list.processes'), value: vm.summary ? vm.summary.processCount : '-', Icon: ICONS.Activity },
-    { label: t('virtualMachines.list.issues'), compactLabel: t('virtualMachines.list.issues'), value: issueCount ?? '-', Icon: ICONS.Shield }
+    ...(vm.hostname && vm.hostname !== vm.name ? [{
+      label: t('virtualMachines.list.host'),
+      value: vm.hostname,
+      Icon: ICONS.Server,
+      warning: false
+    }] : []),
+    ...(typeof logSourceCount === 'number' ? [{
+      label: t('virtualMachines.list.logSourcesShort'),
+      value: logSourceCount === 0
+        ? t('virtualMachines.list.noLogSources')
+        : t('virtualMachines.list.logSourceCount', { count: logSourceCount }),
+      Icon: ICONS.BookOpen,
+      warning: logSourceCount === 0
+    }] : [])
   ];
 
+  if (details.length === 0) return null;
+
   return (
-    <dl className="mx-4 grid grid-cols-3 gap-3 border-t border-ui-border/60 pb-4 pt-3">
-      {details.map(({ label, compactLabel, value, Icon }) => (
-        <div key={label} className="min-w-0">
-          <dt className="type-micro-label flex min-w-0 items-center gap-0.5 text-ui-text-muted" title={label}>
-            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="hidden truncate 2xl:inline">{label}</span>
-            <span className="truncate 2xl:hidden">{compactLabel}</span>
-          </dt>
-          <dd className="type-caption mt-1 break-words type-emphasis leading-4 text-ui-text [overflow-wrap:anywhere]" title={String(value)}>{value}</dd>
+    <dl data-vm-operational-details="true" className="mx-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-ui-border/60 pb-4 pt-3">
+      {details.map(({ label, value, Icon, warning }) => (
+        <div key={label} className="flex min-w-0 items-center gap-1.5" title={`${label}: ${value}`}>
+          <Icon className={`h-3.5 w-3.5 shrink-0 ${warning ? 'text-status-warning-text' : 'text-ui-text-muted'}`} aria-hidden="true" />
+          <dt className="type-caption shrink-0 text-ui-text-muted">{label}:</dt>
+          <dd className={`type-caption min-w-0 break-words type-emphasis leading-4 [overflow-wrap:anywhere] ${warning ? 'text-status-warning-text' : 'text-ui-text'}`}>{value}</dd>
         </div>
       ))}
     </dl>
@@ -141,30 +159,19 @@ export const VmCardResourceChart: React.FC<{
   const plotBottom = 96;
   const safePoints = React.useMemo(() => points.slice(-12), [points]);
 
-  const loadPointCount = safePoints.filter((point) => point.loadAverage1m !== null).length;
+  const cpuPointCount = safePoints.filter((point) => point.cpuUsagePercent !== null).length;
   const memoryPointCount = safePoints.filter((point) => point.memoryUsedPercent !== null).length;
-  const usableMetricPointCount = Math.max(loadPointCount, memoryPointCount);
+  const usableMetricPointCount = Math.max(cpuPointCount, memoryPointCount);
   const hasTrend = usableMetricPointCount >= 2;
   const xForIndex = (index: number) =>
     safePoints.length === 1
       ? width / 2
       : paddingX + (index * (width - paddingX * 2)) / (safePoints.length - 1);
-  const maxForMetric = (metric: 'loadAverage1m' | 'memoryUsedPercent') => {
-    const values = safePoints
-      .map((point) => point[metric])
-      .filter((value): value is number => value !== null);
-    if (values.length === 0) return 1;
-    return Math.max(...values, 1);
-  };
-  const maxByMetric = {
-    loadAverage1m: maxForMetric('loadAverage1m'),
-    memoryUsedPercent: maxForMetric('memoryUsedPercent')
-  };
-  const yForValue = (value: number, metric: 'loadAverage1m' | 'memoryUsedPercent') => {
-    const ratio = Math.max(0, Math.min(1, value / maxByMetric[metric]));
+  const yForValue = (value: number) => {
+    const ratio = Math.max(0, Math.min(1, value / 100));
     return paddingTop + (1 - ratio) * (plotBottom - paddingTop);
   };
-  const buildPath = (metric: 'loadAverage1m' | 'memoryUsedPercent') => {
+  const buildPath = (metric: 'cpuUsagePercent' | 'memoryUsedPercent') => {
     const segments: string[] = [];
     let continuesPreviousSample = false;
     safePoints.forEach((point, index) => {
@@ -173,14 +180,14 @@ export const VmCardResourceChart: React.FC<{
         continuesPreviousSample = false;
         return;
       }
-      segments.push(`${continuesPreviousSample ? 'L' : 'M'} ${xForIndex(index)} ${yForValue(value, metric)}`);
+      segments.push(`${continuesPreviousSample ? 'L' : 'M'} ${xForIndex(index)} ${yForValue(value)}`);
       continuesPreviousSample = true;
     });
     return segments.join(' ');
   };
-  const loadPath = hasTrend ? buildPath('loadAverage1m') : '';
+  const cpuPath = hasTrend ? buildPath('cpuUsagePercent') : '';
   const memoryPath = hasTrend ? buildPath('memoryUsedPercent') : '';
-  const latestMetricPoint = (metric: 'loadAverage1m' | 'memoryUsedPercent') => {
+  const latestMetricPoint = (metric: 'cpuUsagePercent' | 'memoryUsedPercent') => {
     for (let index = safePoints.length - 1; index >= 0; index -= 1) {
       const point = safePoints[index] as VmMetricTimelinePoint;
       const value = point[metric];
@@ -188,10 +195,17 @@ export const VmCardResourceChart: React.FC<{
     }
     return null;
   };
-  const latestLoadPoint = latestMetricPoint('loadAverage1m');
+  const latestCpuPoint = latestMetricPoint('cpuUsagePercent');
   const latestMemoryPoint = latestMetricPoint('memoryUsedPercent');
+  const latestRootDiskPoint = [...safePoints].reverse().find((point) => point.rootDiskUsedPercent !== null);
   const chartLatest = safePoints[safePoints.length - 1];
   const chartFirst = safePoints[0];
+  const latestSnapshotTimestamp = vm.latestSnapshot?.timestamp ? Date.parse(vm.latestSnapshot.timestamp) : NaN;
+  const latestSignalTimestamp = chartLatest?.timestamp ?? (Number.isFinite(latestSnapshotTimestamp) ? latestSnapshotTimestamp : null);
+  const telemetryFreshness = latestSignalTimestamp === null
+    ? 'unavailable'
+    : getTelemetryTimestampFreshness(latestSignalTimestamp, now);
+  const telemetryIsStale = telemetryFreshness === 'stale' || telemetryFreshness === 'offline';
   const chartMessage = points.length === 0 && loadState === 'loading'
     ? t('virtualMachines.list.loadingTelemetry')
     : points.length === 0 && loadState === 'error'
@@ -206,12 +220,24 @@ export const VmCardResourceChart: React.FC<{
     ? t('dashboard.telemetryPaused')
     : loadState === 'error'
       ? t('virtualMachines.list.telemetryRefreshFailed')
-      : hasTrend && chartLatest
+      : chartLatest
         ? formatCompactRelativeTime(chartLatest.timestamp, { now })
         : t('dashboard.telemetryAxisNow');
+  const lastSignalLabel = paused
+    ? t('dashboard.telemetryPaused')
+    : loadState === 'error'
+      ? t('virtualMachines.list.telemetryRefreshFailed')
+      : loadState === 'loading'
+        ? t('virtualMachines.list.loadingTelemetry')
+        : latestSignalTimestamp !== null
+          ? t(telemetryIsStale ? 'dashboard.lastUpdatedTime' : 'dashboard.updatedTime', {
+              time: formatCompactRelativeTime(latestSignalTimestamp, { now })
+            })
+          : null;
   const metricItems = [
-    { label: t('virtualMachines.list.load1m'), value: formatVmLoad(latestLoadPoint?.value ?? null), Icon: ICONS.Activity, markerClassName: 'bg-accent-strong' },
-    { label: t('virtualMachines.list.memory'), value: formatVmPercent(latestMemoryPoint?.value ?? null), Icon: ICONS.HardDrive, markerClassName: 'bg-metric-blue' }
+    { label: t('virtualMachines.list.cpu'), value: formatVmPercent(latestCpuPoint?.value ?? null), Icon: ICONS.Cpu, markerClassName: 'bg-accent-strong' },
+    { label: t('virtualMachines.list.memory'), value: formatVmPercent(latestMemoryPoint?.value ?? null), Icon: ICONS.HardDrive, markerClassName: 'bg-metric-blue' },
+    { label: t('virtualMachines.list.disk'), value: formatVmPercent(latestRootDiskPoint?.rootDiskUsedPercent ?? null), Icon: Database, markerClassName: null }
   ];
   const trendSummary = hasTrend ? (
     <TelemetryTrendSummary
@@ -221,9 +247,9 @@ export const VmCardResourceChart: React.FC<{
       endLabel={axisEndLabel}
       series={[
         {
-          label: t('virtualMachines.list.load1m'),
-          startValue: formatVmLoad(safePoints.find((point) => point.loadAverage1m !== null)?.loadAverage1m ?? null),
-          endValue: formatVmLoad(latestLoadPoint?.value ?? null)
+          label: t('virtualMachines.list.cpu'),
+          startValue: formatVmPercent(safePoints.find((point) => point.cpuUsagePercent !== null)?.cpuUsagePercent ?? null),
+          endValue: formatVmPercent(latestCpuPoint?.value ?? null)
         },
         {
           label: t('virtualMachines.list.memory'),
@@ -239,12 +265,12 @@ export const VmCardResourceChart: React.FC<{
       className="shrink-0 px-4 pb-3"
       aria-label={t('virtualMachines.list.telemetryFor', { name: vm.name })}
     >
-      <dl className="grid min-w-0 grid-cols-2 gap-4 border-t border-ui-border/60 py-3">
+      <dl className="grid min-w-0 grid-cols-3 gap-3 border-t border-ui-border/60 py-3">
         {metricItems.map(({ label, value, Icon, markerClassName }) => (
           <div key={label} className="min-w-0">
             <dt className="type-micro-label flex items-center gap-1.5 text-ui-text-muted">
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />
+              {markerClassName && <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />}
               <span className="truncate">{label}</span>
             </dt>
             <dd className="type-caption mt-1 truncate type-emphasis text-ui-text" title={value}>{value}</dd>
@@ -252,12 +278,12 @@ export const VmCardResourceChart: React.FC<{
         ))}
       </dl>
       <div>
-        <div className="relative h-[104px] min-w-0 overflow-hidden">
+        <div className="relative h-[88px] min-w-0 overflow-hidden">
           <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
             <line x1="0" x2="180" y1="20" y2="20" className="stroke-ui-border/55" strokeWidth="1" />
             <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/55" strokeWidth="1" />
             <line x1="0" x2="180" y1="88" y2="88" className="stroke-ui-border/55" strokeWidth="1" />
-            {loadPath && <path d={loadPath} fill="none" className="stroke-accent-strong" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />}
+            {cpuPath && <path d={cpuPath} fill="none" className="stroke-accent-strong" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />}
             {memoryPath && <path d={memoryPath} fill="none" className="stroke-metric-blue" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" opacity="0.78" />}
           </svg>
           {!hasTrend && (
@@ -267,11 +293,20 @@ export const VmCardResourceChart: React.FC<{
           )}
         </div>
         {trendSummary}
-        <div className="type-caption mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-ui-text-muted">
-          <span>{axisStartLabel}</span>
-          <span className="truncate text-center">{t('dashboard.telemetryAxisLabel')}</span>
-          <span className="truncate text-right">{axisEndLabel}</span>
-        </div>
+        {(hasTrend || lastSignalLabel) && (
+          <div className="type-caption mt-1 flex min-w-0 items-center justify-between gap-3 text-ui-text-muted">
+            {hasTrend && <span>{axisStartLabel}</span>}
+            {lastSignalLabel && (
+              <span
+                className={`ml-auto truncate text-right ${telemetryIsStale && loadState === 'ready' && !paused ? 'text-status-warning-text' : ''}`}
+                role={loadState === 'error' ? 'alert' : loadState === 'loading' ? 'status' : undefined}
+                aria-live={loadState !== 'ready' ? 'polite' : undefined}
+              >
+                {lastSignalLabel}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

@@ -2,12 +2,30 @@ import { expect, test } from '@playwright/test';
 
 const overviewPath = '/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster/overview';
 
+test('cluster issue table keeps header and body cell padding aligned at wide widths', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
+
+  const issueTable = page.getByRole('table', { name: 'Open Issues' });
+  const issueHeader = issueTable.getByRole('columnheader', { name: 'Issue' });
+  const issueCell = issueTable.getByRole('cell').first();
+  await expect(issueHeader).toBeVisible();
+  await expect(issueCell).toBeVisible();
+  await expect(issueTable.getByText('Active', { exact: true })).toHaveCount(0);
+
+  const [headerPadding, cellPadding] = await Promise.all([
+    issueHeader.evaluate((element) => getComputedStyle(element).paddingInline),
+    issueCell.evaluate((element) => getComputedStyle(element).paddingInline)
+  ]);
+  expect(cellPadding).toBe(headerPadding);
+});
+
 test('cluster overview exposes coherent headings and accessible metric data', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { level: 1, name: 'Cluster Overview' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 2, name: 'Current Issues' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Open Issues' })).toBeVisible();
   await expect(page.locator('h3:visible').filter({ hasText: 'Payments worker is restarting' })).toHaveCount(1);
   await expect(page.getByText('1 issue', { exact: true })).toBeVisible();
   await expect(page.getByText('1 critical issue', { exact: true })).toBeVisible();
@@ -15,6 +33,7 @@ test('cluster overview exposes coherent headings and accessible metric data', as
   const issueRow = page.getByRole('row').filter({ hasText: 'Payments worker is restarting' });
   await expect(issueRow).toBeHidden();
   const issueCard = page.getByRole('article').filter({ hasText: 'Payments worker is restarting' });
+  await expect(issueCard.getByText('Active', { exact: true })).toHaveCount(0);
   await expect(issueCard.getByText('production', { exact: true })).toBeVisible();
   const assistantButton = issueCard.getByRole('button', { name: 'Open assistant' });
   await expect(assistantButton).toBeVisible();

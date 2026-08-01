@@ -9,7 +9,7 @@ import { WorkspaceInvitation } from '@/types';
 import { formatInvitationStatus, formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { formatUserDateTime } from '@/utils/dateTime';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
-import { Button, TextInput } from '@acornops/ui';
+import { Button, InlineAlert, TextInput } from '@acornops/ui';
 
 interface WorkspaceInvitationsPanelProps {
   invitations: WorkspaceInvitation[];
@@ -116,7 +116,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
   const noInvitationsState = (
     <div className="type-body px-5 py-8 text-center">
       {loadError && (
-        <div className="type-caption mb-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-left text-status-danger-text">{loadError}</div>
+        <InlineAlert tone="danger" role="alert" className="mb-4 text-left">{loadError}</InlineAlert>
       )}
       {t('members.noPendingInvitations')}
       {hasMoreInvitations && (
@@ -172,8 +172,8 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
             feedback={isLoadingMoreInvitations ? <span className="sr-only">{t('members.loadingInvitations')}</span> : null}
           >
             <div className="divide-y divide-ui-border">
-              {inviteErrorMessage && <div className="type-caption bg-status-danger-soft px-5 py-3 text-status-danger-text">{inviteErrorMessage}</div>}
-              {loadError && <div className="type-caption bg-status-danger-soft px-5 py-3 text-status-danger-text">{loadError}</div>}
+              {inviteErrorMessage && <InlineAlert tone="danger" role="alert" className="rounded-none border-x-0 px-5 py-3">{inviteErrorMessage}</InlineAlert>}
+              {loadError && <InlineAlert tone="danger" role="alert" className="rounded-none border-x-0 px-5 py-3">{loadError}</InlineAlert>}
               {visibleInvitations.map((invitation) => (
                 <div key={invitation.id} className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
@@ -308,7 +308,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
               })}
             </p>
 
-            {replacementInviteErrorMessage && <p className="type-caption rounded-lg bg-status-danger-soft px-3 py-2 text-status-danger-text">{replacementInviteErrorMessage}</p>}
+            {replacementInviteErrorMessage && <InlineAlert tone="danger" role="alert">{replacementInviteErrorMessage}</InlineAlert>}
           </div>
 
           <div className="flex shrink-0 justify-end border-t border-ui-border bg-ui-surface px-6 py-4 sm:px-8">

@@ -1,0 +1,199 @@
+[
+  {
+    "number": "01",
+    "name": "resource-catalog-desktop-light",
+    "route": "/workspaces/fixture-workspace/kubernetes-clusters",
+    "viewport": {
+      "width": 1850,
+      "height": 1000
+    },
+    "theme": "light",
+    "language": "en",
+    "kind": "resource",
+    "status": 200,
+    "title": "AcornOps",
+    "consoleErrors": [],
+    "evidence": {
+      "viewport": {
+        "width": 1850,
+        "height": 1000
+      },
+      "documentOverflow": 0,
+      "display": "grid",
+      "columns": "487.328px 487.328px 487.328px",
+      "gridWidth": 1494,
+      "cards": [
+        {
+          "width": 487.3,
+          "top": 226,
+          "maxWidth": "none"
+        }
+      ]
+    },
+    "screenshotPath": "/home/ning/acornops/management-console/.audit/design-system-reaudit-2026-08-01/01-resource-catalog-desktop-light.png"
+  },
+  {
+    "number": "02",
+    "name": "resource-catalog-mobile-dark",
+    "route": "/workspaces/fixture-workspace/agents",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "theme": "dark",
+    "language": "en",
+    "kind": "resource",
+    "status": 200,
+    "title": "AcornOps",
+    "consoleErrors": [],
+    "evidence": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentOverflow": 0,
+      "display": "grid",
+      "columns": "358px",
+      "gridWidth": 358,
+      "cards": [
+        {
+          "width": 358,
+          "top": 458,
+          "maxWidth": "none"
+        },
+        {
+          "width": 358,
+          "top": 673,
+          "maxWidth": "none"
+        },
+        {
+          "width": 358,
+          "top": 888,
+          "maxWidth": "none"
+        },
+        {
+          "width": 358,
+          "top": 1103,
+          "maxWidth": "none"
+        }
+      ]
+    },
+    "screenshotPath": "/home/ning/acornops/management-console/.audit/design-system-reaudit-2026-08-01/02-resource-catalog-mobile-dark.png"
+  },
+  {
+    "number": "03",
+    "name": "audit-log-desktop-monday-first",
+    "route": "/workspaces/fixture-workspace/audit-log",
+    "viewport": {
+      "width": 1600,
+      "height": 1000
+    },
+    "theme": "light",
+    "language": "zh",
+    "kind": "date-time",
+    "status": 200,
+    "title": "AcornOps",
+    "consoleErrors": [],
+    "evidence": {
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "documentOverflow": 0,
+      "language": "zh-CN",
+      "weekdayLabels": [
+        "一",
+        "二",
+        "三",
+        "四",
+        "五",
+        "六",
+        "日"
+      ],
+      "keyboardDates": {
+        "initialDate": "2026-08-01",
+        "homeDate": "2026-07-27",
+        "endDate": "2026-08-02"
+      },
+      "dialog": {
+        "left": 352,
+        "top": 367,
+        "right": 672,
+        "bottom": 839,
+        "width": 320,
+        "height": 472
+      },
+      "monthButtonHeights": [
+        36,
+        36
+      ],
+      "timeInputHeights": [
+        36,
+        36
+      ],
+      "triggerHeights": [
+        44,
+        44
+      ]
+    },
+    "screenshotPath": "/home/ning/acornops/management-console/.audit/design-system-reaudit-2026-08-01/03-audit-log-desktop-monday-first.png"
+  },
+  {
+    "number": "04",
+    "name": "audit-log-mobile-monday-first",
+    "route": "/workspaces/fixture-workspace/audit-log",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "theme": "dark",
+    "language": "zh",
+    "kind": "date-time",
+    "status": 200,
+    "title": "AcornOps",
+    "consoleErrors": [],
+    "evidence": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentOverflow": 0,
+      "language": "zh-CN",
+      "weekdayLabels": [
+        "一",
+        "二",
+        "三",
+        "四",
+        "五",
+        "六",
+        "日"
+      ],
+      "keyboardDates": {
+        "initialDate": "2026-08-01",
+        "homeDate": "2026-07-27",
+        "endDate": "2026-08-02"
+      },
+      "dialog": {
+        "left": 46,
+        "top": 159,
+        "right": 366,
+        "bottom": 701,
+        "width": 320,
+        "height": 542
+      },
+      "monthButtonHeights": [
+        44,
+        44
+      ],
+      "timeInputHeights": [
+        44,
+        44
+      ],
+      "triggerHeights": [
+        44,
+        44
+      ]
+    },
+    "screenshotPath": "/home/ning/acornops/management-console/.audit/design-system-reaudit-2026-08-01/04-audit-log-mobile-monday-first.png"
+  }
+]

@@ -137,14 +137,14 @@ const Catalog = () => {
             id="catalog-leave-title"
             title="Leave workspace"
             description="Remove your access while keeping shared resources available to remaining members."
-            action={<Button variant="secondary" className="w-full">Leave workspace</Button>}
+            action={<Button variant="secondary" className="w-full sm:w-auto">Leave workspace</Button>}
           />
           <DangerZoneRow
             id="catalog-delete-title"
             title="Delete workspace"
             description="Permanently remove this workspace and its saved operational context."
             tone="danger"
-            action={<Button variant="danger" className="w-full"><Trash2 className="h-4 w-4" />Delete workspace</Button>}
+            action={<Button variant="danger" className="w-full sm:w-auto"><Trash2 className="h-4 w-4" />Delete workspace</Button>}
           />
         </DangerZone>
       </PageSection>
@@ -316,7 +316,7 @@ const Catalog = () => {
           <InlineAlert tone="warning">This workflow can write to live systems.</InlineAlert>
           <InlineAlert tone="success" title="Workspace saved" action={<Button variant="tertiary" size="sm">View</Button>}>The new settings are active.</InlineAlert>
           <InlineAlert tone="danger">The control plane could not load this surface.</InlineAlert>
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-ui-border bg-ui-surface p-4"><StatusBadge tone="success">Healthy</StatusBadge><StatusBadge tone="warning">Pending</StatusBadge><StatusBadge tone="danger">Failed</StatusBadge><StatusBadge tone="neutral">Paused</StatusBadge><StatusBadge tone="warning" size="compact">Experimental</StatusBadge></div>
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-ui-border bg-ui-surface p-4"><StatusBadge tone="success">Healthy</StatusBadge><StatusBadge tone="warning">Pending</StatusBadge><StatusBadge tone="danger">Failed</StatusBadge><StatusBadge tone="neutral">Paused</StatusBadge><StatusBadge tone="neutral" size="compact" className="border border-ui-border bg-ui-surface-strong text-ui-text">Experimental</StatusBadge></div>
         </div>
       </PageSection>
 

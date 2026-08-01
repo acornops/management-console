@@ -10,3 +10,6 @@ Keep only completed plans that remain useful as durable design or validation con
 - [AI provider key polish](ai-provider-key-polish.md)
 - [AI provider badge source split](ai-provider-badge-source-split.md)
 - [GitLab-style responsive navigation](gitlab-style-responsive-navigation.md)
+- [Design-System Audit Remediation](design-system-audit-remediation.md)
+- [Management Console Design-System Re-audit](design-system-reaudit.md)
+- [Capability Navigation Continuity](capability-navigation-continuity.md)

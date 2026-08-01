@@ -106,7 +106,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   );
 
   return (
-    <DataTableRow data-target-tool-row="true" className="group border-b border-ui-bg transition-colors hover:bg-accent-soft/45">
+    <DataTableRow data-target-tool-row="true" className="group transition-colors hover:bg-accent-soft/45">
       <DataTableCell className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-w-0 gap-3">
           <IconTile tone="accent">

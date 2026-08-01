@@ -190,6 +190,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
             id="workspace-leave-title"
             title={t('workspaceSettings.leaveTitle')}
             description={t('workspaceSettings.leaveBody')}
+            actionClassName={isConfirmingLeave ? 'sm:w-64' : undefined}
             detail={
               <>
                 {leaveBlockedByKnownOnlyOwner && (
@@ -203,9 +204,9 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
               </>
             }
             action={
-              <div>
+              <div className="flex w-full justify-end">
                 {isConfirmingLeave ? (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid w-full grid-cols-2 gap-2">
                     <Button
                       type="button"
                       variant="secondary"
@@ -239,7 +240,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                     type="button"
                     variant="secondary"
                     size="md"
-                    className="w-full"
+                    className="w-full sm:w-auto"
                     onClick={() => setIsConfirmingLeave(true)}
                     disabled={!onLeaveWorkspace || leaveBlockedByKnownOnlyOwner}
                     aria-label={t('workspaceSettings.leaveNamedWorkspace', {
@@ -275,7 +276,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                 disabled={!canDeleteWorkspace}
                 variant="danger"
                 size="md"
-                className="w-full"
+                className="w-full sm:w-auto"
                 aria-label={canDeleteWorkspace ? t('app.deleteNamedWorkspace', { name: workspace.name }) : t('app.ownerDeleteOnly')}
                 title={canDeleteWorkspace ? t('app.deleteNamedWorkspace', { name: workspace.name }) : t('app.ownerDeleteOnly')}
               >

@@ -4,6 +4,16 @@ import { formatRelativeTime } from '@/utils/dateTime';
 export type AgentConnectionState = 'connected' | 'disconnected' | 'not_installed';
 export type TelemetryFreshness = 'current' | 'stale' | 'offline' | 'unavailable';
 
+export function getTelemetryTimestampFreshness(timestamp: string | number, now = Date.now()): TelemetryFreshness {
+  const parsedTime = typeof timestamp === 'number' ? timestamp : Date.parse(timestamp);
+  if (!Number.isFinite(parsedTime)) return 'unavailable';
+
+  const deltaMs = Math.max(now - parsedTime, 0);
+  if (deltaMs < 2 * 60 * 1000) return 'current';
+  if (deltaMs < 10 * 60 * 1000) return 'stale';
+  return 'offline';
+}
+
 export function getAgentConnectionState(cluster: KubernetesCluster): AgentConnectionState {
   if (cluster.agentConnectionState) {
     return cluster.agentConnectionState;
@@ -22,13 +32,7 @@ export function getTelemetryFreshness(cluster: KubernetesCluster, now = Date.now
   if (connectionState === 'not_installed') return 'unavailable';
   if (connectionState === 'disconnected') return 'offline';
 
-  const parsedTime = Date.parse(cluster.lastUpdate);
-  if (Number.isNaN(parsedTime)) return 'unavailable';
-
-  const deltaMs = Math.max(now - parsedTime, 0);
-  if (deltaMs < 2 * 60 * 1000) return 'current';
-  if (deltaMs < 10 * 60 * 1000) return 'stale';
-  return 'offline';
+  return getTelemetryTimestampFreshness(cluster.lastUpdate, now);
 }
 
 export function formatLastUpdated(lastUpdate: string, now = Date.now()): string {

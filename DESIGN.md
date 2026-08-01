@@ -20,9 +20,9 @@ colors:
   success: "oklch(0.52 0.13 160)"
   success-soft: "oklch(0.96 0.03 160)"
   success-text: "oklch(0.4 0.12 160)"
-  warning: "oklch(0.58 0.115 105)"
-  warning-soft: "oklch(0.955 0.035 108)"
-  warning-text: "oklch(0.37 0.095 105)"
+  warning: "oklch(0.651 0.179 38.9)"
+  warning-soft: "oklch(0.96 0.035 52)"
+  warning-text: "oklch(0.543 0.165 41.8)"
   danger: "oklch(0.54 0.18 20)"
   danger-soft: "oklch(0.96 0.035 20)"
   danger-text: "oklch(0.45 0.16 20)"
@@ -191,7 +191,7 @@ and must not be generalized to navigation labels, links, body copy, or controls.
 - **Metric Blue** (`metric-blue`): Used for chart contrast and comparative metrics only. It is not a second brand accent.
 
 ### Tertiary
-- **Semantic Green, Ochre, and Red** (`success`, `warning`, `danger`): Used only for status, warnings, and destructive states. Every semantic color has a soft background companion (`success-soft`, `warning-soft`, `danger-soft`) and a darker readable text companion (`success-text`, `warning-text`, `danger-text`) for legible label text on the soft fill.
+- **Semantic Green, Orange, and Red** (`success`, `warning`, `danger`): Used only for status, warnings, and destructive states. Warning reuses the orange signal family so warning pills, guidance, and indicators stay consistent throughout the app. Every semantic color has a soft background companion (`success-soft`, `warning-soft`, `danger-soft`) and a darker readable text companion (`success-text`, `warning-text`, `danger-text`) for legible label text on the soft fill.
 
 ### Neutral
 - **Warm Canvas** (`warm-canvas`): The route background and main app shell.
@@ -353,7 +353,7 @@ Workflow prompts are saved and launched as plain text. Workflow authoring, launc
 
 Chips are status labels, not decoration.
 
-- **Style:** Rounded pill or compact rounded badge, uppercase, high-weight small text.
+- **Style:** Borderless rounded pill or compact rounded badge, uppercase, high-weight small text. Soft fill and readable text carry semantic status without an extra outline.
 - **State:** Success, warning, danger, and neutral use semantic soft backgrounds with readable semantic text.
 - **Rule:** Status meaning must be readable from text, not color alone.
 - **Sizing:** `StatusBadge` provides default and compact sizes. Compact is for
@@ -462,6 +462,7 @@ Dialogs are reserved for confirmation, replacement invites, credential display, 
 - **Overlay:** Text-color scrim in light mode, darker bg scrim in dark mode.
 - **Motion:** Framer Motion state transitions only. No page-load choreography. Reduced-motion variants complete in `0.01s` or immediately.
 - **Focus:** Initial focus and focus wrap are required.
+- **Destructive guidance:** Consequence copy uses the shared warning-orange `InlineAlert`; mutation errors and destructive confirmation buttons remain danger red. Inline destructive confirmations use warning treatment around the explanation and a danger confirm action.
 - **Workspace creation:** After the workspace and optional invites are created, the AI-provider step is omitted when effective provider status reports at least one inherited platform default. The transition waits for that status and retains the setup step if it cannot be loaded.
 - **Workspace AI credentials:** Configured provider rows separate state from source: a semantic green Configured badge sits beside a neutral Platform default or Workspace key badge. Unconfigured providers show one neutral Not configured badge. Inherited-default guidance remains one line on desktop, and Rotate key uses the same compact intrinsic button size as Delete key.
 

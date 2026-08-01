@@ -24,7 +24,7 @@ describe('workspace navigation model', () => {
     expect(regular).toContain('space-y-1');
     expect(experimental).toContain('Automation');
     expect(experimental).toContain('Experimental');
-    expect(experimental).toContain('bg-status-warning-soft');
+    expect(experimental).toContain('border-ui-border bg-ui-surface-strong text-ui-text');
   });
 
   it('groups all permitted destinations and folds Activity into Workflows', () => {

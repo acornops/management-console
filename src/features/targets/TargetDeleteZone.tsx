@@ -87,7 +87,7 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
           description={description}
           tone="danger"
           action={
-            <Button type="button" variant="danger" size="md" className="w-full" onClick={() => setIsOpen(true)}>
+            <Button type="button" variant="danger" size="md" className="w-full sm:w-auto" onClick={() => setIsOpen(true)}>
               <ICONS.Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               {title}
             </Button>
@@ -121,7 +121,7 @@ export const TargetDeleteZone: React.FC<TargetDeleteZoneProps> = ({
 
             <div className="space-y-4 px-7 py-6">
               <p className="type-body leading-6 text-ui-text-muted">{description}</p>
-              <p className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">{agentWarning}</p>
+              <InlineAlert tone="warning">{agentWarning}</InlineAlert>
               <div>
                 <label htmlFor={inputId} className="type-label mb-1.5 block px-1">
                   <Trans

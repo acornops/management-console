@@ -150,7 +150,7 @@ export const WorkflowDeleteDialog: React.FC<{
         <CloseButton onClick={onClose} disabled={deletingWorkflowId === workflowToDelete.id} label="Close delete workflow dialog" />
       </div>
       <div className="space-y-4 px-5 py-5">
-        <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-ui leading-6 text-status-danger-text">Deleting {workflowToDelete.name} removes the workflow definition for future runs. Existing run records and audit events are retained.</div>
+        <InlineAlert tone="warning" className="type-ui leading-6">Deleting {workflowToDelete.name} removes the workflow definition for future runs. Existing run records and audit events are retained.</InlineAlert>
         <div>
           <label htmlFor="delete-workflow-confirmation-input" className="type-label mb-1.5 block px-1">
             Type the workflow name to confirm deletion.

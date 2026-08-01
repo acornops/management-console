@@ -24,6 +24,7 @@ describe('TargetSkillsInventory', () => {
     expect(markup).toContain('data-target-skill-access-summary="true"');
     expect(markup).toContain('data-target-skill-list="true"');
     expect(markup).toContain('No skills configured.');
+    expect(markup).not.toContain('<table');
     expect(markup).not.toContain('id="target-skill-search"');
     expect(markup).not.toContain('Showing 0 of 0');
   });

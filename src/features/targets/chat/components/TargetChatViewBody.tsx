@@ -136,6 +136,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     title,
     traceExpandedByRunId,
     transcriptRef,
+    usesOverlayHistory,
     userMarkdownComponents,
     userTurnRunIdsByIndex,
     visibleMessages,
@@ -233,7 +234,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             unseenInvestigationCount={unseenInvestigationCount}
           />
         )}
-        {!isPanel && isHistoryOpen && (
+        {!isPanel && isHistoryOpen && !usesOverlayHistory && (
           <aside
             id={desktopHistoryPanelId}
             aria-label={t(automaticInvestigationsEnabled && historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
@@ -332,7 +333,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                             type="button"
                             onClick={handleCreateSessionClick}
                             disabled={!canChat || !hasReadyAiRuntime}
-                            variant="secondary"
+                            variant="primary"
                             size="md"
                             className="w-full whitespace-nowrap lg:w-auto"
                           >
@@ -563,7 +564,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
 
         <DrawerFrame
           unframed
-          isOpen={!isPanel && isHistoryOpen}
+          isOpen={!isPanel && isHistoryOpen && usesOverlayHistory}
           onClose={() => setIsHistoryOpen(false)}
           ariaLabel={t(automaticInvestigationsEnabled && historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
           titleId={mobileHistoryPanelId}

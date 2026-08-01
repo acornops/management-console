@@ -10,7 +10,7 @@ import { MenuItem } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
-import { TargetCatalogActionHint, TargetCatalogActionMenu, TargetCatalogCard, TargetCatalogStatusPill } from '@/features/targets/catalog/TargetCatalogPrimitives';
+import { shouldShowResourceCatalogStatus, TargetCatalogActionHint, TargetCatalogActionMenu, TargetCatalogCard, TargetCatalogStatusPill } from '@/features/targets/catalog/TargetCatalogPrimitives';
 import { useCatalogNow } from '@/features/targets/catalog/useCatalogNow';
 import { AppPaths, type VmCatalogReturnState } from '@/utils/routes';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
@@ -109,7 +109,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   const [isDeletingVm, setIsDeletingVm] = React.useState(false);
   const [openVmActionMenuId, setOpenVmActionMenuId] = React.useState<string | null>(null);
   const now = useCatalogNow();
-  const setupRequiredCount = items.filter((vm) => vm.status === 'unknown').length;
+  const notConnectedCount = items.filter((vm) => vm.status === 'unknown').length;
   const hasCompleteIssueSummaries = items
     .filter((vm) => vm.status !== 'unknown')
     .every((vm) => issueSummaryLoadStateByVmId[vm.id] === 'ready' && issueSummaryByVmId[vm.id] !== undefined);
@@ -117,11 +117,11 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
     all: t('virtualMachines.list.allVms'),
     attention: t('dashboard.needsAttention'),
     healthy: t('dashboard.healthy'),
-    not_installed: t('dashboard.notInstalled')
+    not_installed: t('dashboard.notConnected')
   };
   const catalogCounts: Partial<Record<VmConnectionFilter, number>> = {
     all: items.length,
-    not_installed: setupRequiredCount
+    not_installed: notConnectedCount
   };
   if (hasCompleteIssueSummaries) {
     catalogCounts.attention = items.filter((vm) => vmNeedsAttention(vm, issueSummaryByVmId[vm.id])).length;
@@ -241,6 +241,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
               const hasVmMenu = canManageTargets;
               const vmIssueSummary = issueSummaryByVmId[vm.id];
               const vmIssueSummaryLoadState = issueSummaryLoadStateByVmId[vm.id];
+              const showStatus = shouldShowResourceCatalogStatus(getVmCatalogStatusTone(vm, vmIssueSummary));
               const actionHint = vmNeedsAttention(vm, vmIssueSummary) ? t('dashboard.investigate') : t('virtualMachines.list.openDetails');
 
               return (
@@ -273,9 +274,9 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      <div className="xl:hidden 2xl:block">
+                      {showStatus && <div className="xl:hidden 2xl:block">
                         <VmStatusPill vm={vm} issueSummary={vmIssueSummary} issueSummaryLoadState={vmIssueSummaryLoadState} />
-                      </div>
+                      </div>}
                       {hasVmMenu && (
                         <TargetCatalogActionMenu
                           targetKind="vm"
@@ -314,9 +315,9 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                       )}
                     </div>
                   </div>
-                  <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
+                  {showStatus && <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
                     <VmStatusPill vm={vm} issueSummary={vmIssueSummary} issueSummaryLoadState={vmIssueSummaryLoadState} />
-                  </div>
+                  </div>}
 
                   {requiresAgentInstall ? (
                     <PendingVirtualMachineSetup
@@ -335,7 +336,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                       loadState={metricLoadStateByVmId[vm.id] || 'loading'}
                     />
                   )}
-                  <VmOperationalDetails vm={vm} issueCount={vmIssueSummary?.total} />
+                  {!requiresAgentInstall && <VmOperationalDetails vm={vm} />}
                 </TargetCatalogCard>
               );
             })}
@@ -405,9 +406,9 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                   name: deleteTargetVm.name
                 })}
               </p>
-              <p className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
+              <InlineAlert tone="warning">
                 {t('virtualMachines.list.deleteVmAgentWarning')}
-              </p>
+              </InlineAlert>
               <div>
                 <label htmlFor="delete-vm-confirmation-input" className="type-label mb-1.5 block px-1">
                   <Trans
@@ -429,7 +430,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                 />
               </div>
               {deleteVmError && (
-                <div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">{deleteVmError}</div>
+                <InlineAlert tone="danger" role="alert">{deleteVmError}</InlineAlert>
               )}
             </div>
             <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-7 py-5">

@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { Button, IconTile } from '@acornops/ui';
+import { Button, IconTile, InlineAlert } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
@@ -184,9 +184,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                   name: deleteTargetCluster.name
                 })}
               </p>
-              <p className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
+              <InlineAlert tone="warning">
                 {t('dashboard.deleteClusterAgentWarning')}
-              </p>
+              </InlineAlert>
               <div>
                 <label htmlFor="delete-cluster-confirmation-input" className="type-label mb-1.5 block px-1">
                   <Trans
@@ -208,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 />
               </div>
               {deleteClusterError && (
-                <div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">{deleteClusterError}</div>
+                <InlineAlert tone="danger" role="alert">{deleteClusterError}</InlineAlert>
               )}
             </div>
             <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-7 py-5">

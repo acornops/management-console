@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActionMenu, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
-import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Select } from '@acornops/ui';
@@ -137,11 +137,11 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
   const [skillSearch, setSkillSearch] = React.useState('');
   const [skillFilter, setSkillFilter] = React.useState<'all' | 'enabled' | 'disabled' | 'valid' | 'invalid'>('all');
   const filterOptions: Array<SelectOption<typeof skillFilter>> = [
-    { value: 'all', label: 'All skills' },
-    { value: 'enabled', label: 'Enabled' },
-    { value: 'disabled', label: 'Disabled' },
-    { value: 'valid', label: 'Valid' },
-    { value: 'invalid', label: 'Needs fixes' }
+    { value: 'all', label: t('targetSkills.filterAll') },
+    { value: 'enabled', label: t('targetSkills.filterEnabled') },
+    { value: 'disabled', label: t('targetSkills.filterDisabled') },
+    { value: 'valid', label: t('targetSkills.filterValid') },
+    { value: 'invalid', label: t('targetSkills.filterInvalid') }
   ];
 
   const summary = React.useMemo(
@@ -247,56 +247,49 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
           </div>
         )}
         <div className="min-w-0">
-          <DataTable caption={t('targetSkills.tableLabel')} className="w-full table-fixed text-left" aria-label={t('targetSkills.tableLabel')}>
-            <colgroup>
-              <col className="w-[34%]" />
-              <col className="w-[23%]" />
-              <col className="w-[11%]" />
-              <col className="w-[21%]" />
-              <col className="w-[11%]" />
-            </colgroup>
-            <DataTableHeader
-              collectionState={{
-                phase: 'ready',
-                itemCount: filteredSkills.length
-              }}
-            >
-              <DataTableRow>
-                <DataTableHeaderCell>{t('targetSkills.skillColumn')}</DataTableHeaderCell>
-                <DataTableHeaderCell>{t('targetSkills.assistantStateColumn')}</DataTableHeaderCell>
-                <DataTableHeaderCell>{t('targetSkills.enabledColumn')}</DataTableHeaderCell>
-                <DataTableHeaderCell className="hidden md:table-cell">{t('targetSkills.filesColumn')}</DataTableHeaderCell>
-                <DataTableHeaderCell numeric>{t('targetSkills.actionsColumn')}</DataTableHeaderCell>
-              </DataTableRow>
-            </DataTableHeader>
-            <DataTableBody>
-              {filteredSkills.length > 0 ? (
-                filteredSkills.map((skill) => (
-                  <TargetSkillRow
-                    key={skill.id}
-                    skill={skill}
-                    canEditSkills={canEditSkills}
-                    pendingToggleSkillId={pendingToggleSkillId}
-                    onEditSkill={onEditSkill}
-                    onDeleteSkill={onDeleteSkill}
-                    onToggleSkill={onToggleSkill}
-                  />
-                ))
-              ) : (
-                <DataTableRow>
-                  <DataTableCell colSpan={5} className="p-0">
-                    <EmptyState
-                      embedded
-                      headingLevel={3}
-                      icon={skills.length === 0 ? <BookOpen /> : <Search />}
-                      title={skills.length === 0 ? t('targetSkills.empty') : t('targetSkills.noSkillMatches')}
-                      description={skills.length === 0 ? t('targetSkills.emptyHelp') : t('targetSkills.noSkillMatchesHelp')}
+          {filteredSkills.length === 0 ? (
+            <EmptyState
+              embedded
+              headingLevel={3}
+              icon={hasActiveFilters ? <Search /> : <BookOpen />}
+              title={t(hasActiveFilters ? 'targetSkills.noSkillMatches' : 'targetSkills.empty')}
+              description={t(hasActiveFilters ? 'targetSkills.noSkillMatchesHelp' : 'targetSkills.emptyHelp')}
+            />
+          ) : (
+            <DataTableFrame data-target-capability-table-frame="true" className="rounded-none border-0 shadow-none custom-scrollbar">
+              <DataTable caption={t('targetSkills.tableLabel')} className="w-full table-fixed text-left" aria-label={t('targetSkills.tableLabel')}>
+                <colgroup>
+                  <col className="w-[34%]" />
+                  <col className="w-[23%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[21%]" />
+                  <col className="w-[11%]" />
+                </colgroup>
+                <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredSkills.length }}>
+                  <DataTableRow>
+                    <DataTableHeaderCell>{t('targetSkills.skillColumn')}</DataTableHeaderCell>
+                    <DataTableHeaderCell>{t('targetSkills.assistantStateColumn')}</DataTableHeaderCell>
+                    <DataTableHeaderCell>{t('targetSkills.enabledColumn')}</DataTableHeaderCell>
+                    <DataTableHeaderCell className="hidden md:table-cell">{t('targetSkills.filesColumn')}</DataTableHeaderCell>
+                    <DataTableHeaderCell numeric>{t('targetSkills.actionsColumn')}</DataTableHeaderCell>
+                  </DataTableRow>
+                </DataTableHeader>
+                <DataTableBody>
+                  {filteredSkills.map((skill) => (
+                    <TargetSkillRow
+                      key={skill.id}
+                      skill={skill}
+                      canEditSkills={canEditSkills}
+                      pendingToggleSkillId={pendingToggleSkillId}
+                      onEditSkill={onEditSkill}
+                      onDeleteSkill={onDeleteSkill}
+                      onToggleSkill={onToggleSkill}
                     />
-                  </DataTableCell>
-                </DataTableRow>
-              )}
-            </DataTableBody>
-          </DataTable>
+                  ))}
+                </DataTableBody>
+              </DataTable>
+            </DataTableFrame>
+          )}
         </div>
       </section>
     </>

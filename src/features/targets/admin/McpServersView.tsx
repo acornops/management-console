@@ -1,12 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
-import { Button, CollectionState, EmptyState, InlineLoadingIndicator, PageShell } from '@acornops/ui';
-import {
-  TargetMcpServerTestConnectionResult,
-} from '@/services/controlPlaneApi';
+import { Button, CollectionState, InlineLoadingIndicator, PageShell } from '@acornops/ui';
+import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
 import { DeleteMcpServerDialog, McpServerFormDialog } from '@/features/targets/admin/McpServersDialogs';
@@ -29,11 +26,7 @@ import {
   mcpServerFormSubmission,
   ServerFormState,
 } from '@/features/targets/admin/mcpServersCatalog';
-import {
-  resolveMcpCatalogPhase,
-  targetMcpServersDataSource,
-  type McpServersViewProps
-} from '@/features/targets/admin/McpServersView.data';
+import { resolveMcpCatalogPhase, targetMcpServersDataSource, type McpServersViewProps } from '@/features/targets/admin/McpServersView.data';
 
 export type { McpServersDataSource } from '@/features/targets/admin/McpServersView.data';
 
@@ -490,10 +483,40 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     }
   };
 
+  const inventory = (
+    <McpServersInventory
+      servers={servers}
+      canEditServers={canEditServers}
+      pendingTestServerId={pendingTestServerId}
+      pendingToggleServerId={pendingToggleServerId}
+      testResultsByServerId={testResultsByServerId}
+      connections={connections}
+      connectionErrors={connectionErrors}
+      pendingConnectionServerId={pendingConnectionServerId}
+      retryAfterSecondsFor={retryAfterSecondsFor}
+      recoveryServerId={recoveryServerId}
+      recoveryAction={recoveryAction}
+      onManageTools={setSelectedServerId}
+      onTestConnection={(targetServer) => void handleTestConnection(targetServer)}
+      onToggleServer={(targetServer, enabled) => void handleToggleServer(targetServer, enabled)}
+      onEdit={openEditServerModal}
+      onDelete={(targetServer) => {
+        setServerMutationError(null);
+        setDeleteTargetServer(targetServer);
+      }}
+      onConnect={setCredentialDialogServer}
+      onVerify={(targetServer) => void verify(targetServer).then((connection) => {
+        if (connection?.status === 'connected') clearSuccessfulRecovery(targetServer.id);
+      })}
+      onDisconnect={(targetServer) => void disconnect(targetServer)}
+      onRetry={(targetServer) => void retry(targetServer)}
+    />
+  );
+
   return (
     <PageShell>
       <McpServersViewHeader
-        target={subject}
+        subject={subject}
         canEditServers={canEditServers}
         onConnectByUrl={openCreateServerModal}
         catalogDestination={catalogDestination}
@@ -514,7 +537,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         phase={catalogPhase}
         itemCount={servers.length}
         loading={<InlineLoadingIndicator label={t('mcpServers.loadingCatalog')} className="mb-5" />}
-        empty={<EmptyState icon={<Plus />} title={t('mcpServers.empty')} description={t('mcpServers.emptyHelp')} />}
+        empty={inventory}
         error={(
           <div className="type-caption mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
             <span>{catalogError}</span>
@@ -528,33 +551,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           </div>
         ) : <span className="sr-only">{t('mcpServers.loadingCatalog')}</span>}
       >
-        <McpServersInventory
-          servers={servers}
-          canEditServers={canEditServers}
-          pendingTestServerId={pendingTestServerId}
-          pendingToggleServerId={pendingToggleServerId}
-          testResultsByServerId={testResultsByServerId}
-          connections={connections}
-          connectionErrors={connectionErrors}
-          pendingConnectionServerId={pendingConnectionServerId}
-          retryAfterSecondsFor={retryAfterSecondsFor}
-          recoveryServerId={recoveryServerId}
-          recoveryAction={recoveryAction}
-          onManageTools={setSelectedServerId}
-          onTestConnection={(targetServer) => void handleTestConnection(targetServer)}
-          onToggleServer={(targetServer, enabled) => void handleToggleServer(targetServer, enabled)}
-          onEdit={openEditServerModal}
-          onDelete={(targetServer) => {
-            setServerMutationError(null);
-            setDeleteTargetServer(targetServer);
-          }}
-          onConnect={setCredentialDialogServer}
-          onVerify={(targetServer) => void verify(targetServer).then((connection) => {
-            if (connection?.status === 'connected') clearSuccessfulRecovery(targetServer.id);
-          })}
-          onDisconnect={(targetServer) => void disconnect(targetServer)}
-          onRetry={(targetServer) => void retry(targetServer)}
-        />
+        {inventory}
       </CollectionState>
       <McpInstallationConnectionDialog
         installation={credentialDialogServer}

@@ -59,11 +59,22 @@ task local-up
 
 ## Validation
 
-Canonical validation:
+Local handoff validation (no repeated browser suites):
 
 ```bash
 npm run validate
 ```
+
+Full PR/release validation:
+
+```bash
+npm run validate:full
+```
+
+The full gate adds design snapshots, design-route screenshots, and the fixture
+and MCP parity Playwright suites with three repetitions. Do not use it as the
+default feedback loop for routine UI work; run the affected browser spec or
+route directly while iterating.
 
 Focused checks:
 
@@ -81,11 +92,12 @@ npm run smoke:nginx
 ```
 
 Run contract-sensitive validation as `VITE_APP_DATA_MODE=control-plane npm run validate`.
+Use `validate:full` with the same environment only when the full gate is warranted.
 
 The design catalog imports `@acornops/ui` through the same public export map as
 production screens. Do not add catalog-only imports from package internals.
 
-`npm run smoke:nginx` requires Docker. Use it for production image or nginx config changes; it is intentionally outside `npm run validate`.
+`npm run smoke:nginx` requires Docker. Use it for production image or nginx config changes; it is intentionally outside both validation tiers.
 
 ## Documentation Drift Control
 

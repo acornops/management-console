@@ -38,7 +38,7 @@ export const SidebarSection: React.FC<{
     badge={badge ? <ExperimentalBadge>{badge}</ExperimentalBadge> : undefined}
     compactAfter={compactAfter}
     className={collapsed
-      ? `px-3 pb-0.5 ${title ? '[&>div:first-child]:sr-only' : ''}`
+      ? `px-3 pb-0.5 [&>div:last-child]:space-y-0.5 ${title ? '[&>div:first-child]:sr-only' : ''}`
       : undefined}
   >
     {children}
@@ -69,7 +69,7 @@ export const SidebarTargetIdentity: React.FC<{
     <div
       className={collapsed
         ? 'flex h-10 w-full items-center justify-center'
-        : 'border-y border-ui-border bg-ui-surface px-4 py-3'}
+        : 'border-y border-ui-border bg-ui-surface px-2 py-3'}
       aria-label={collapsed ? `${label}: ${name}` : undefined}
     >
       <div className={collapsed ? 'sr-only' : 'type-micro-label mb-1'}>{label}</div>

@@ -8,12 +8,14 @@ import { InlineLoadingIndicator } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
 import { ICONS } from '@/constants';
-import { issueStatusTone } from '@/pages/issues/issueUi';
+import { issueStatusTone, shouldShowIssueStatus } from '@/pages/issues/issueUi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi, type ControlPlaneIssueItem, type ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { type KubernetesCluster, type Workspace } from '@/types';
 import { readRecentInvestigation } from '@/pages/workspace-overview/recentInvestigation';
 import { buildWorkspaceOverviewCards, type WorkspaceOverviewAttentionItem, type WorkspaceOverviewTargetCard } from '@/pages/workspace-overview/workspaceOverviewModel';
+import { issueSeverityTone } from '@/pages/issues/issueUi';
+import { formatOverviewExactTime, formatOverviewRelativeTime } from '@/pages/workspace-overview/workspaceOverviewTime';
 import type { TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { AppPaths } from '@/utils/routes';
@@ -22,6 +24,7 @@ import {
   shouldShowManualAssistantFallback
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
+import { useTargetIssueSummaries } from '@/features/targets/catalog/useTargetIssueSummaries';
 
 interface WorkspaceOverviewPageProps {
   currentUserId: string;
@@ -36,14 +39,6 @@ interface WorkspaceOverviewPageProps {
   navigate: (path: string) => void;
 }
 
-function formatRelativeTime(timestamp: number, t: (key: string, options?: Record<string, unknown>) => string): string {
-  const elapsedMinutes = Math.max(1, Math.floor((Date.now() - timestamp) / 60000));
-  if (elapsedMinutes < 60) return t('overview.updatedMinutesAgo', { count: elapsedMinutes });
-  const elapsedHours = Math.floor(elapsedMinutes / 60);
-  if (elapsedHours < 24) return t('overview.updatedHoursAgo', { count: elapsedHours });
-  return t('overview.updatedDaysAgo', { count: Math.floor(elapsedHours / 24) });
-}
-
 export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   currentUserId,
   workspace,
@@ -56,7 +51,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   onRunTriage,
   navigate
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [workspaceVirtualMachines, setWorkspaceVirtualMachines] = React.useState(virtualMachines);
   const loadIssuePage = React.useCallback(
     async ({ cursor, limit, signal }: { cursor?: string; limit: number; signal: AbortSignal }) => {
@@ -94,6 +89,14 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     pageSize: 50,
     strategy: 'manual'
   });
+  const connectedWorkspaceVirtualMachines = React.useMemo(
+    () => workspaceVirtualMachines.filter((virtualMachine) => virtualMachine.status === 'online' || virtualMachine.status === 'degraded'),
+    [workspaceVirtualMachines]
+  );
+  const {
+    summaryByTargetId: issueSummaryByVmId,
+    refresh: refreshVmIssueSummaries
+  } = useTargetIssueSummaries(connectedWorkspaceVirtualMachines);
   const workspaceIssues = issueCollection.items;
   const hasPriorVirtualMachineData = hasLoadedWorkspaceVirtualMachines || workspaceVirtualMachines.length > 0;
   const isLoadingVirtualMachines =
@@ -119,14 +122,15 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
       buildWorkspaceOverviewCards({
         kubernetesClusters,
         issues: workspaceIssues,
+        virtualMachineIssueSummaryById: issueSummaryByVmId,
         virtualMachines: workspaceVirtualMachines,
         t
       }),
-    [kubernetesClusters, t, workspaceIssues, workspaceVirtualMachines]
+    [issueSummaryByVmId, kubernetesClusters, t, workspaceIssues, workspaceVirtualMachines]
   );
 
   const hasMoreIssues = Boolean(issueCollection.nextCursor);
-  const recentInvestigationUpdated = recentInvestigation ? formatRelativeTime(recentInvestigation.timestamp, t) : '';
+  const recentInvestigationUpdated = recentInvestigation ? formatOverviewRelativeTime(recentInvestigation.timestamp, t) : '';
   const recentInvestigationBody = recentInvestigation
     ? t('overview.quickActionsResumeBody', {
         targetName: recentInvestigation.targetName,
@@ -238,7 +242,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span className={`type-micro-label shrink-0 rounded-full px-2.5 py-1 ${card.postureTone}`}>{card.postureLabel}</span>
-                      <h3 className="type-row-title break-words text-ui-text">{card.name}</h3>
+                      <span className="type-ui break-words text-ui-text">{card.name}</span>
                     </div>
                     <ArrowRight className="h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" aria-hidden="true" />
                   </a>
@@ -255,23 +259,16 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     const issue = item.issue;
     const path = targetPath(item);
     const TargetTypeIcon = item.targetType === 'kubernetes' ? ICONS.Layers : ICONS.Server;
+    const exactObservedAt = formatOverviewExactTime(issue.timestamp, i18n.resolvedLanguage);
     return (
       <article key={`${issue.id}-${item.targetType}-${item.targetId}`} className="w-full px-5 py-4 text-left transition-colors hover:bg-ui-bg sm:px-6">
         <div data-attention-issue-row="true" className="flex flex-col gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`type-micro-label rounded-full px-2.5 py-1 ${
-                  issue.severity === 'critical'
-                    ? 'bg-status-danger-soft text-status-danger-text'
-                    : issue.severity === 'warning'
-                    ? 'bg-status-warning-soft text-status-warning-text'
-                    : 'bg-ui-surface text-ui-text-muted'
-                }`}
-              >
+              <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>
                 {t(`issues.severity.${issue.severity}`)}
               </span>
-              {issue.status !== 'active' && (
+              {shouldShowIssueStatus(issue.status) && (
                 <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
                   {t(`issues.status.${issue.status}`)}
                 </span>
@@ -279,22 +276,27 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             </div>
             <h3 className="mt-2 type-panel-title break-words">{issue.title}</h3>
             <div data-attention-issue-meta="true" className="mt-2 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1.5">
-              <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="type-row-title break-words text-ui-text">{item.targetName}</span>
+              <span data-attention-target-identity="true" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <span
                   data-target-type-icon="true"
-                  className="inline-flex shrink-0 self-center text-ui-text-muted"
+                  className="inline-flex shrink-0 text-ui-text-muted"
                   title={item.targetTypeLabel}
                 >
                   <TargetTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span className="sr-only">{item.targetTypeLabel}</span>
                 </span>
+                <span className="type-ui break-words text-ui-text">{item.targetName}</span>
               </span>
               <span className="type-caption break-words text-ui-text-muted">{issue.detail}</span>
-              <span className="type-caption flex shrink-0 items-center gap-1.5 text-ui-text-muted">
+              <time
+                dateTime={new Date(issue.timestamp).toISOString()}
+                title={exactObservedAt}
+                aria-label={`${t('overview.lastSeenLabel')}: ${exactObservedAt}`}
+                className="type-caption flex shrink-0 items-center gap-1.5 text-ui-text-muted"
+              >
                 <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-                {t('overview.lastSeenLabel')} {formatRelativeTime(issue.timestamp, t)}
-              </span>
+                {formatOverviewRelativeTime(issue.timestamp, t)}
+              </time>
             </div>
             {issue.evidence && <p className="type-body mt-2 line-clamp-2 max-w-4xl text-ui-text-muted">{issue.evidence}</p>}
             <AutomaticInvestigationActivity

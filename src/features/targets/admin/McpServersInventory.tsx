@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Search, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
+import { DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
@@ -108,31 +108,31 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   return (
     <>
       <section data-mcp-server-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
-          <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
+        <div className="grid grid-cols-2 sm:grid-cols-6 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
+          <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-6 xl:col-span-1 xl:border-b-0 xl:border-r">
             <h2 className="type-row-title">{t('mcpServers.serverInventoryTitle')}</h2>
             <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('mcpServers.serverInventoryBody')}</p>
           </div>
-          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
+          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:col-span-2 xl:col-span-1 xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.serversMetric')}</p>
             <p className="type-data mt-0.5">{toolAccessSummary.serverCount}</p>
           </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-2 sm:border-r xl:col-span-1 xl:border-b-0">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
             <p className="type-data mt-0.5">{toolAccessSummary.totalTools}</p>
           </div>
-          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
+          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:col-span-2 sm:border-r-0 xl:col-span-1 xl:border-b-0 xl:border-r">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
             <p className="type-data mt-0.5">{toolAccessSummary.enabledTools}</p>
           </div>
-          <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 sm:border-b-0 sm:border-r xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
             <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.readOnlyTools}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
           </div>
-          <div className="px-5 py-3.5">
+          <div className="col-span-2 px-5 py-3.5 sm:col-span-3 xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
             <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.writeCapableTools}
@@ -172,60 +172,62 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
           </div>
         )}
         <div className="min-w-0">
-          <DataTable caption={t('mcpServers.title')} className="w-full table-fixed text-left" aria-label={t('mcpServers.title')}>
-            <colgroup>
-              <col className="w-[34%]" />
-              <col className="w-[23%]" />
-              <col className="w-[11%]" />
-              <col className="w-[21%]" />
-              <col className="w-[11%]" />
-            </colgroup>
-            <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredServers.length }}>
-              <DataTableRow>
-                <DataTableHeaderCell>{t('mcpServers.server')}</DataTableHeaderCell>
-                <DataTableHeaderCell>{t('mcpServers.status')}</DataTableHeaderCell>
-                <DataTableHeaderCell>{t('mcpServers.enabled')}</DataTableHeaderCell>
-                <DataTableHeaderCell className="hidden md:table-cell">{t('mcpServers.tools')}</DataTableHeaderCell>
-                <DataTableHeaderCell numeric>{t('mcpServers.actions')}</DataTableHeaderCell>
-              </DataTableRow>
-            </DataTableHeader>
-            <DataTableBody>
-              {filteredServers.map((server) => (
-                <McpServerCard
-                  key={server.id}
-                  server={server}
-                  canEditServers={canEditServers}
-                  pendingTestServerId={pendingTestServerId}
-                  pendingToggleServerId={pendingToggleServerId}
-                  testResult={testResultsByServerId[server.id]}
-                  connection={connections[server.id]}
-                  connectionLoadError={connectionErrors[server.id]}
-                  pendingConnection={pendingConnectionServerId === server.id}
-                  retryAfterSeconds={retryAfterSecondsFor(server.id)}
-                  recoveryAction={recoveryServerId === server.id ? recoveryAction : undefined}
-                  onManageTools={onManageTools}
-                  onTestConnection={onTestConnection}
-                  onToggleServer={onToggleServer}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onConnect={onConnect}
-                  onVerify={onVerify}
-                  onDisconnect={onDisconnect}
-                  onRetry={onRetry}
-                />
-              ))}
-              <DataTableStateRow
-                columns={5}
-                phase="ready"
-                itemCount={filteredServers.length}
-                filtered={servers.length > 0}
-                loading={null}
-                empty={<EmptyState embedded headingLevel={3} icon={<Plus />} title={t('mcpServers.empty')} description={t('mcpServers.emptyHelp')} />}
-                filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('mcpServers.noServerMatches')} description={t('mcpServers.noServerMatchesHelp')} />}
-                error={null}
-              />
-            </DataTableBody>
-          </DataTable>
+          {filteredServers.length === 0 ? (
+            <EmptyState
+              embedded
+              headingLevel={3}
+              icon={hasActiveFilters ? <Search /> : <Server />}
+              title={t(hasActiveFilters ? 'mcpServers.noServerMatches' : 'mcpServers.empty')}
+              description={t(hasActiveFilters ? 'mcpServers.noServerMatchesHelp' : 'mcpServers.emptyHelp')}
+            />
+          ) : (
+            <DataTableFrame data-target-capability-table-frame="true" className="rounded-none border-0 shadow-none custom-scrollbar">
+              <DataTable caption={t('mcpServers.title')} className="w-full table-fixed text-left" aria-label={t('mcpServers.title')}>
+                <colgroup>
+                  <col className="w-[34%]" />
+                  <col className="w-[23%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[21%]" />
+                  <col className="w-[11%]" />
+                </colgroup>
+                <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredServers.length }}>
+                  <DataTableRow>
+                    <DataTableHeaderCell>{t('mcpServers.server')}</DataTableHeaderCell>
+                    <DataTableHeaderCell>{t('mcpServers.status')}</DataTableHeaderCell>
+                    <DataTableHeaderCell>{t('mcpServers.enabled')}</DataTableHeaderCell>
+                    <DataTableHeaderCell className="hidden md:table-cell">{t('mcpServers.tools')}</DataTableHeaderCell>
+                    <DataTableHeaderCell numeric>{t('mcpServers.actions')}</DataTableHeaderCell>
+                  </DataTableRow>
+                </DataTableHeader>
+                <DataTableBody>
+                  {filteredServers.map((server) => (
+                    <McpServerCard
+                      key={server.id}
+                      server={server}
+                      canEditServers={canEditServers}
+                      pendingTestServerId={pendingTestServerId}
+                      pendingToggleServerId={pendingToggleServerId}
+                      testResult={testResultsByServerId[server.id]}
+                      connection={connections[server.id]}
+                      connectionLoadError={connectionErrors[server.id]}
+                      pendingConnection={pendingConnectionServerId === server.id}
+                      retryAfterSeconds={retryAfterSecondsFor(server.id)}
+                      recoveryAction={recoveryServerId === server.id ? recoveryAction : undefined}
+                      onManageTools={onManageTools}
+                      onTestConnection={onTestConnection}
+                      onToggleServer={onToggleServer}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onConnect={onConnect}
+                      onVerify={onVerify}
+                      onDisconnect={onDisconnect}
+                      onRetry={onRetry}
+                    />
+                  ))}
+                </DataTableBody>
+              </DataTable>
+            </DataTableFrame>
+          )}
         </div>
       </section>
     </>

@@ -10,6 +10,7 @@ import { ICONS } from '@/constants';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentCapabilityAdminView } from '@/pages/agents/AgentCapabilityAdminView';
+import { useCapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
 
 export type AgentProfileTab = 'chat' | 'mcpServers' | 'skills' | 'tools' | 'settings';
 export const agentProfileTabs: AgentProfileTab[] = ['chat', 'mcpServers', 'skills', 'tools', 'settings'];
@@ -40,8 +41,20 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
   const { selectedAgent } = props;
   const disableButtonRef = React.useRef<HTMLButtonElement>(null);
   const deleteButtonRef = React.useRef<HTMLButtonElement>(null);
+  const {
+    cachedCatalogs: cachedCapabilityCatalogs,
+    cacheMcpServersCatalog,
+    cacheSkillsCatalog,
+    cacheToolsCatalog
+  } = useCapabilityCatalogCache(`${selectedAgent.workspaceId}:${selectedAgent.id}`);
   const routeTitle = t(`agentChat.sections.${props.activeTab}.title`, { name: selectedAgent.name });
   const routeDescription = t(`agentChat.sections.${props.activeTab}.description`, { name: selectedAgent.name });
+  const capabilityCatalogProps = {
+    cachedCatalogs: cachedCapabilityCatalogs,
+    onMcpServersCatalogChange: cacheMcpServersCatalog,
+    onSkillsCatalogChange: cacheSkillsCatalog,
+    onToolsCatalogChange: cacheToolsCatalog
+  };
 
   return (
     <section className="flex h-full min-h-0 flex-1 flex-col">
@@ -80,13 +93,13 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
       <div className="flex min-h-0 flex-1 flex-col">
         {props.activeTab === 'chat' && props.chatContent}
         {props.activeTab === 'mcpServers' && (
-          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="mcp" />
+          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="mcp" {...capabilityCatalogProps} />
         )}
         {props.activeTab === 'skills' && (
-          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="skills" />
+          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="skills" {...capabilityCatalogProps} />
         )}
         {props.activeTab === 'tools' && (
-          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="tools" />
+          <AgentCapabilityAdminView agent={selectedAgent} canManageAgents={props.canManageAgents} canManageMcp={props.canManageMcp} canManageSkills={props.canManageSkills} section="tools" {...capabilityCatalogProps} />
         )}
         {props.activeTab === 'settings' && (
           <div className="space-y-5">
@@ -126,9 +139,10 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
                   id="agent-delete-confirmation"
                   title="Delete this Agent?"
                   description="This permanently removes the Agent and its conversation history."
-                  tone="danger"
+                  tone="warning"
                   cancelLabel={t('common.cancel')}
                   confirmLabel="Delete"
+                  confirmVariant="danger"
                   returnFocusRef={deleteButtonRef}
                   onCancel={() => props.setDeleteConfirmAgentId('')}
                   onConfirm={props.onDeleteSelectedAgent}

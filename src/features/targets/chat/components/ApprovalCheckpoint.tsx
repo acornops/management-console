@@ -1,7 +1,7 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { CheckCircle2, ShieldCheck, XCircle } from 'lucide-react';
-import { Button, IconTile } from '@acornops/ui';
+import { Button, IconTile, StatusBadge } from '@acornops/ui';
 import { PendingApproval } from '@/types';
 
 interface ApprovalCheckpointProps {
@@ -160,12 +160,6 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({ approval
   const isPending = approvalStatus === 'pending';
   const StatusIcon = approvalStatus === 'approved' ? CheckCircle2 : approvalStatus === 'pending' ? ShieldCheck : XCircle;
   const statusTone = approvalStatus === 'approved' ? 'success' : approvalStatus === 'pending' ? 'warning' : 'danger';
-  const statusToneClass =
-    approvalStatus === 'approved'
-      ? 'border-status-success/30 bg-status-success-soft text-status-success-text'
-      : approvalStatus === 'pending'
-      ? 'border-status-warning/30 bg-status-warning-soft text-status-warning-text'
-      : 'border-status-danger/30 bg-status-danger-soft text-status-danger-text';
 
   return (
     <section
@@ -184,9 +178,9 @@ export const ApprovalCheckpoint: React.FC<ApprovalCheckpointProps> = ({ approval
               <p className="mt-1 break-words type-panel-title leading-6 text-ui-text">{approvalSummary}</p>
             </div>
           </div>
-          <p className={`type-micro-label shrink-0 rounded-full border px-2.5 py-1 ${statusToneClass}`} aria-live="polite">
+          <StatusBadge tone={statusTone} className="shrink-0 px-2.5 py-1" aria-live="polite">
             {t(`chat.approvalStatusLabel.${approvalStatus}`)}
-          </p>
+          </StatusBadge>
         </div>
         {!isPending && <p className="mt-2 type-caption leading-5 text-ui-text-muted">{t(`chat.approvalStatus.${approvalStatus}`)}</p>}
         {isPending && !canApproveWriteActions && <p className="mt-2 type-caption leading-5 text-status-warning-text">{t('chat.approvalNoPermission')}</p>}

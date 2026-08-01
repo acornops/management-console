@@ -4,9 +4,17 @@ This repository follows the AcornOps vendor-neutral handoff policy.
 
 ## Before Handoff
 
-Run `npm run validate` before handing off management-console changes. Also run targeted
-unit, route smoke, contract, or control-plane-mode checks when the change
-touches behavior covered by those checks.
+Run targeted tests while iterating and `npm run validate` before handing off
+management-console changes. The default validation gate intentionally excludes
+the repeated browser suites.
+
+Do not run `npm run validate:full` for routine UI changes. Run it only when the
+work is PR- or release-ready, changes broad or high-risk UI behavior, changes
+the browser test harness, updates many visual baselines, or the user explicitly
+requests the full gate. For a localized visual change, run only the affected
+Playwright spec or design route and record the scope in the handoff.
+
+Use control-plane mode when the change touches real API contracts or mappings.
 
 ## Required Evidence
 

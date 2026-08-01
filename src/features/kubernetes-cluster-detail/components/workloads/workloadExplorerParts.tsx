@@ -1,5 +1,6 @@
 import React from 'react';
 import { Activity, Box, Layers, Repeat, Zap } from 'lucide-react';
+import { StatusBadge } from '@acornops/ui';
 import { ControlPlanePodLogs, ControlPlanePodLogsOptions } from '@/services/controlPlaneApi';
 import { Ingress, Namespace, Node as K8sNode, PVC, Service, Workload } from '@/types';
 
@@ -350,20 +351,16 @@ export const ResourceMetaPair: React.FC<{
 );
 
 export const ResourceStatusPill: React.FC<{ status: string; healthy: boolean }> = ({ status, healthy }) => (
-  <span
+  <StatusBadge
+    tone={healthy ? 'success' : 'warning'}
     title={status}
     aria-label={`Status: ${status}`}
-    className={classNames(
-      'inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border px-3 py-1.5 type-caption type-emphasis leading-4',
-      healthy
-        ? 'border-status-success/20 bg-status-success-soft text-status-success-text'
-        : 'border-status-warning/20 bg-status-warning-soft text-status-warning-text'
-    )}
+    className="min-w-0 gap-2 px-3 py-1.5 type-caption type-emphasis normal-case leading-4 tracking-normal"
   >
     <span
       aria-hidden="true"
       className={classNames('h-2 w-2 shrink-0 rounded-full', healthy ? 'bg-status-success' : 'bg-status-warning')}
     />
     <span className="min-w-0 break-words text-left [overflow-wrap:anywhere]">{status}</span>
-  </span>
+  </StatusBadge>
 );

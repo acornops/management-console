@@ -47,10 +47,10 @@ describe('virtual machine connection filters', () => {
     expect(vmMatchesConnectionFilter(vmWithStatus('unknown'), 'not_installed')).toBe(true);
   });
 
-  it('keeps setup-required distinct from disconnected copy', () => {
+  it('keeps not-connected setup distinct from an offline VM', () => {
     const t = (key: string) => key;
 
-    expect(getVmStatusLabel('unknown', t)).toBe('dashboard.setupRequired');
+    expect(getVmStatusLabel('unknown', t)).toBe('dashboard.notConnected');
     expect(getVmStatusLabel('offline', t)).toBe('virtualMachines.list.offline');
   });
 
@@ -93,7 +93,7 @@ describe('virtual machine connection filters', () => {
     expect(getVmCatalogStatusTone(vm, noIssues)).toBe('success');
   });
 
-  it('keeps setup-required VMs out of attention regardless of incomplete summaries', () => {
+  it('keeps not-connected VMs out of attention regardless of incomplete summaries', () => {
     const vm = vmWithStatus('unknown', {
       inventoryCount: 0,
       findingCount: 2,
@@ -106,7 +106,7 @@ describe('virtual machine connection filters', () => {
 
     expect(vmNeedsAttention(vm)).toBe(false);
     expect(vmMatchesConnectionFilter(vm, 'not_installed')).toBe(true);
-    expect(getVmCatalogStatusLabel(vm, undefined, (key) => key)).toBe('dashboard.setupRequired');
-    expect(getVmCatalogStatusTone(vm, undefined)).toBe('neutral');
+    expect(getVmCatalogStatusLabel(vm, undefined, (key) => key)).toBe('dashboard.notConnected');
+    expect(getVmCatalogStatusTone(vm, undefined)).toBe('warning');
   });
 });

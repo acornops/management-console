@@ -310,7 +310,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.virtualMachines.filter((target) => target.workspaceId === decode(match![1]))) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const virtualMachine = { ...clone(state.virtualMachines[0]), id: id('fixture-vm'), workspaceId: decode(match[1]), name: String(input.name || 'Fixture VM'), hostname: input.hostname, status: 'offline', createdAt: NOW, updatedAt: NOW, latestSnapshot: null };
+      const virtualMachine = { ...clone(state.virtualMachines[0]), id: id('fixture-vm'), workspaceId: decode(match[1]), name: String(input.name || 'Fixture VM'), hostname: input.hostname, status: 'unknown', createdAt: NOW, updatedAt: NOW, latestSnapshot: null };
       state.virtualMachines.push(virtualMachine);
       return json({ virtualMachine, agentKey: 'ak_fixture_vm_local_only', keyVersion: 1, installInstructions: 'Fixture mode does not connect external machines.' }, 201);
     }

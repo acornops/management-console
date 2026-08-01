@@ -67,6 +67,9 @@ export const targetSkillsInventory = readSource(
 export const targetToolsView = readSource(
   'src/features/targets/admin/TargetToolsView.tsx'
 );
+export const targetInsightsDialog = readSource(
+  'src/features/targets/admin/TargetInsightsDialog.tsx'
+);
 export const targetSkillsView = readSource(
   'src/features/targets/admin/TargetSkillsView.tsx'
 );

@@ -400,7 +400,7 @@ export function AgentSkillsPanel({ agent, canManageAgents, state }: AgentSkillsP
                       id={`remove-skill-${skill.id}`}
                       title={t('agentsWorkflows.agents.details.capabilities.removeSkill.title', { name: skill.name })}
                       description={t('agentsWorkflows.agents.details.capabilities.removeSkill.description')}
-                      tone="danger"
+                      tone="warning"
                       confirmVariant="danger"
                       confirmLabel={t('agentsWorkflows.agents.details.capabilities.removeSkill.confirm')}
                       confirmDisabled={Boolean(busy)}

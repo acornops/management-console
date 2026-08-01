@@ -90,7 +90,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
 
   return (
     <section id={id} aria-label={isPage ? t('chat.searchChats') : undefined} className={isPage ? 'flex h-full min-h-0 flex-col bg-ui-bg px-[var(--ao-route-padding-x)]' : 'contents'}>
-      <div className={isPage ? 'mx-auto w-full max-w-3xl shrink-0 pb-5 pt-6 lg:pb-6 lg:pt-8' : 'border-b border-ui-border p-4'}>
+      <div className={isPage ? 'w-full shrink-0 pb-5 pt-6 lg:pb-6 lg:pt-8' : 'border-b border-ui-border p-4'}>
         {isPage ? (
           <div className="flex items-center justify-between gap-4">
             <h1 className="type-route-title text-ui-text">{t('chat.chats')}</h1>
@@ -122,7 +122,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
           </div>
         )}
         {isPage && (
-          <div className="relative mt-5">
+          <div className="relative mt-5 max-w-3xl">
             <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
             <PageSearchInput
               data-chat-history-search="true"
@@ -137,7 +137,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
       </div>
 
       <CollectionState
-        className={isPage ? 'mx-auto w-full max-w-3xl flex-1 overflow-y-auto custom-scrollbar' : 'flex-1 overflow-y-auto custom-scrollbar'}
+        className={isPage ? 'w-full max-w-3xl flex-1 overflow-y-auto custom-scrollbar' : 'flex-1 overflow-y-auto custom-scrollbar'}
         phase={isInitialLoading ? 'loading' : isSessionsLoading ? 'refreshing' : 'ready'}
         itemCount={visibleSessions.length}
         filtered={Boolean(normalizedSearchValue)}
