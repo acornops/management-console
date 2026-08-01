@@ -223,8 +223,8 @@ test('collapsed rail count badges stay small, circular, and inside the rail', as
   await expect(backControl).toHaveCSS('height', '32px');
   await expect(identity).toHaveCSS('width', '32px');
   await expect(identity).toHaveCSS('height', '32px');
-  await expect(badge).toHaveCSS('width', '16px');
-  await expect(badge).toHaveCSS('height', '16px');
+  await expect(badge).toHaveCSS('width', '20px');
+  await expect(badge).toHaveCSS('height', '20px');
   await expect(badge).toHaveCSS('border-radius', '9999px');
 
   const sidebarBox = await sidebar.boundingBox();

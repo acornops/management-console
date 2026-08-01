@@ -60,12 +60,13 @@ export async function routeAgentConversationFixtureRequest({
         id: id('fixture-agent-conversation'),
         workspaceId,
         agentId,
-        agentVersion: Number(agent.version || 1),
         title: agent.name,
         createdBy: FIXTURE_IDS.user,
         accessMode,
         permissionMode: agent.permissionMode || 'ask_before_changes',
-        createdAt: now
+        createdAt: now,
+        expiresAt: new Date(Date.parse(now) + (30 * 24 * 60 * 60 * 1000)).toISOString(),
+        status: 'open'
       };
       state.sessions.push(conversation);
       state.messages[conversation.id] = [];
@@ -125,16 +126,19 @@ export async function routeAgentConversationFixtureRequest({
   });
   state.runs[runId] = {
     id: runId,
-    executionId: id('fixture-agent-execution'),
     workspaceId: conversation.workspaceId,
+    agentId: conversation.agentId,
     sessionId: conversationId,
+    messageId,
+    toolAccessMode: conversation.accessMode,
     status: 'completed',
     requestedAt: now,
     startedAt: now,
     endedAt: now,
+    errorCode: null,
     assistantMessage: { content: assistantContent },
     events: [{
-      schema_version: '1',
+      schema_version: 1,
       run_id: runId,
       seq: 1,
       ts: now,
@@ -145,7 +149,6 @@ export async function routeAgentConversationFixtureRequest({
   return json({
     message_id: messageId,
     run_id: runId,
-    executionId: state.runs[runId].executionId,
     status: 'completed'
   }, 202);
 }

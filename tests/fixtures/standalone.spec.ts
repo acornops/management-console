@@ -113,7 +113,7 @@ test('outbound webhooks remain usable from compact navigation', async ({ browser
   await expect(page.getByRole('heading', { name: 'Outbound webhooks' })).toBeVisible();
   await page.getByRole('button', { name: 'Open navigation' }).click();
   const navigation = page.getByRole('dialog', { name: 'Navigation' });
-  await expect(navigation.getByRole('link', { name: 'Outbound Webhook' })).toHaveAttribute('aria-current', 'page');
+  await expect(navigation.getByRole('link', { name: 'Webhooks' })).toHaveAttribute('aria-current', 'page');
   await navigation.getByRole('button', { name: 'Close navigation' }).click();
 
   await page.getByRole('button', { name: 'Create webhook' }).click();
@@ -218,7 +218,7 @@ test('automation ledgers replace column headings with filtered-empty states', as
     'Workflow',
     'Cadence',
     'Next run',
-    'Inputs & access',
+    'Access',
     'Activity',
     'Actions'
   ]);
@@ -275,27 +275,27 @@ test('workspace run links focus the exact execution in workflow history', async 
   await page.goto('/workspaces/fixture-workspace/runs', { waitUntil: 'domcontentloaded' });
   await page.getByRole('link', { name: /Waiting for approval.*Review run/ }).click();
 
-  await expect(page).toHaveURL(/workflow=fixture-workflow.*tab=runs.*execution=fixture-execution-issue-approval/);
-  const execution = page.locator('#workflow-execution-fixture-execution-issue-approval');
+  await expect(page).toHaveURL(/workflow=fixture-workflow.*tab=runs.*execution=fixture-execution-approval/);
+  const execution = page.locator('#workflow-execution-fixture-execution-approval');
   await expect(execution).toBeVisible();
   await expect(execution).toBeFocused();
   await expect(execution.getByText('Waiting for approval', { exact: true }).first()).toBeVisible();
 });
 
-test('Agent detail scopes lifecycle and version actions to Settings', async ({ page }) => {
+test('Agent detail scopes lifecycle actions to Settings', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/agents/fixture-specialist/chat', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Edit agent' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Agent Settings' }).click();
+  await page.getByRole('link', { name: 'Agent Settings' }).click();
   await expect(page).toHaveURL('/workspaces/fixture-workspace/agents/fixture-specialist/settings');
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Disable', exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Configuration versions' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Refresh' }).locator('svg')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Disable Agent' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Delete Agent' })).toBeVisible();
 });
 
 test('recommended workflows can be added and activated without entering the library first', async ({ page }) => {
@@ -307,11 +307,11 @@ test('recommended workflows can be added and activated without entering the libr
   await expect(drawer).toBeVisible();
   await expect(drawer).toBeFocused();
   await expect(drawer.getByRole('button', { name: /Kubernetes health check/ })).toBeVisible();
-  await expect(drawer.getByRole('button', { name: /Target remediation/ })).toBeVisible();
+  await expect(drawer.getByRole('button', { name: /Infrastructure remediation/ })).toBeVisible();
   await expect(drawer.getByRole('button', { name: /Virtual machine health check/ })).toBeVisible();
   await expect(drawer.getByRole('button', { name: /Incident investigation/ })).toBeVisible();
 
-  await drawer.getByRole('button', { name: /Target remediation/ }).click();
+  await drawer.getByRole('button', { name: /Infrastructure remediation/ }).click();
   await expect(drawer.getByRole('button', { name: 'Add workflow' })).toBeEnabled();
   await drawer.getByRole('button', { name: 'Add workflow' }).click();
   await expect(drawer.getByRole('button', { name: 'Activate workflow' })).toBeEnabled();
@@ -344,5 +344,5 @@ test('recommended workflow catalog failure is retryable without leaving the page
   await expect(drawer.getByRole('alert')).toContainText('Recommendation catalog is temporarily unavailable.');
   await page.evaluate(() => (window as typeof window & { __allowFixtureTemplateRequests: () => void }).__allowFixtureTemplateRequests());
   await drawer.getByRole('button', { name: 'Retry' }).click();
-  await expect(drawer.getByRole('button', { name: /Target remediation/ })).toBeVisible();
+  await expect(drawer.getByRole('button', { name: /Infrastructure remediation/ })).toBeVisible();
 });

@@ -38,7 +38,7 @@ import {
 export type { McpServersDataSource } from '@/features/targets/admin/McpServersView.data';
 
 export const McpServersView: React.FC<McpServersViewProps> = ({
-  target,
+  subject,
   canManageMcp = false,
   canManageTools = false,
   canRequestWriteRuns = false,
@@ -46,7 +46,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   onCatalogChange,
   onSyncTools,
   dataSource = targetMcpServersDataSource,
-  connectionDestination = { kind: 'target', id: target.id },
+  connectionDestination = { kind: 'target', id: subject.id },
   catalogDestination,
   scheduleCount
 }) => {
@@ -67,7 +67,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [editingServer, setEditingServer] = useState<TargetToolCatalogServer | null>(null);
   const [serverMutationError, setServerMutationError] = useState<string | null>(null);
   const [serverMutationNotice, setServerMutationNotice] = useState<string | null>(null);
-  const credentialModeImpact = useTargetMcpCredentialModeImpact(target.workspaceId, target.id, scheduleCount);
+  const credentialModeImpact = useTargetMcpCredentialModeImpact(subject.workspaceId, subject.id, scheduleCount);
   const [toolRefreshError, setToolRefreshError] = useState<string | null>(null);
   const [toolRefreshServer, setToolRefreshServer] = useState<TargetToolCatalogServer | null>(null);
   const [credentialDialogServer, setCredentialDialogServer] = useState<TargetToolCatalogServer | null>(null);
@@ -78,7 +78,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [pendingToggleServerId, setPendingToggleServerId] = useState<string | null>(null);
   const [testResultsByServerId, setTestResultsByServerId] = useState<Record<string, TargetMcpServerTestConnectionResult>>({});
   const onSyncToolsRef = useRef(onSyncTools);
-  const localCatalog = useMemo(() => buildLocalCatalog(target, canManageMcp), [target, canManageMcp]);
+  const localCatalog = useMemo(() => buildLocalCatalog(subject, canManageMcp), [subject, canManageMcp]);
   const activeCatalog = catalog || localCatalog;
   const canEditServers = canManageMcp && activeCatalog.permissions.canEdit;
   const servers = activeCatalog.servers;
@@ -101,7 +101,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   }) => {
     if (!filters.serverId) return { items: [], nextCursor: undefined };
     try {
-      return await dataSource.listServerTools(target.workspaceId, target.id, filters.serverId, {
+      return await dataSource.listServerTools(subject.workspaceId, subject.id, filters.serverId, {
         limit,
         cursor,
         signal
@@ -109,7 +109,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     } catch (error) {
       throw new Error(formatMcpMutationError(error, t('mcpServers.loadToolsFailed')));
     }
-  }, [dataSource, target.id, target.workspaceId, t]);
+  }, [dataSource, subject.id, subject.workspaceId, t]);
   const serverToolsCollection = useCursorCollection({
     filters: { serverId: toolsServerId },
     getKey: (tool: TargetToolCatalogItem) => tool.name,
@@ -143,7 +143,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const loadCatalog = useCallback(async (options?: { syncParent?: boolean }) => {
     setCatalogError(null);
     try {
-      const loadedCatalog = await dataSource.getCatalog(target.workspaceId, target.id);
+      const loadedCatalog = await dataSource.getCatalog(subject.workspaceId, subject.id);
       setCatalog(loadedCatalog);
       if (options?.syncParent) {
         onSyncToolsRef.current?.(flattenCatalogTools(loadedCatalog));
@@ -154,7 +154,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       setCatalogError(message);
       return null;
     }
-  }, [dataSource, target.id, target.workspaceId]);
+  }, [dataSource, subject.id, subject.workspaceId]);
   const refreshConnectedServer = useCallback(async (server: TargetToolCatalogServer) => {
     setToolRefreshError(null);
     setToolRefreshServer(server);
@@ -181,7 +181,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     retryAfterSecondsFor
   } = useMcpConnections({
     installations: servers,
-    workspaceId: target.workspaceId,
+    workspaceId: subject.workspaceId,
     destination: connectionDestination,
     onError: setServerMutationError,
     onConnectionReady: refreshConnectedServer,
@@ -298,7 +298,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setServerMutationError(null);
     try {
       if (editingServer) {
-        const updatedServer = await dataSource.updateServer(target.workspaceId, target.id, editingServer.id, {
+        const updatedServer = await dataSource.updateServer(subject.workspaceId, subject.id, editingServer.id, {
           name: serverForm.name.trim(),
           enabled: serverForm.enabled,
           publicHeaders: buildPublicHeadersPayload(true),
@@ -319,7 +319,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           setCredentialDialogServer(loadedServer || pendingCatalogServer(updatedServer));
         }
       } else {
-        const createdServer = await dataSource.createServer(target.workspaceId, target.id, {
+        const createdServer = await dataSource.createServer(subject.workspaceId, subject.id, {
           name: serverForm.name.trim(),
           url: serverForm.url.trim(),
           enabled: serverForm.enabled,
@@ -358,7 +358,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setPendingServerMutation(true);
     setServerMutationError(null);
     try {
-      await dataSource.deleteServer(target.workspaceId, target.id, deleteTargetServer.id);
+      await dataSource.deleteServer(subject.workspaceId, subject.id, deleteTargetServer.id);
       if (selectedServerId === deleteTargetServer.id) {
         setSelectedServerId(null);
       }
@@ -377,7 +377,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setPendingTestServerId(server.id);
     setServerMutationError(null);
     try {
-      const result = await dataSource.testServer(target.workspaceId, target.id, server.id);
+      const result = await dataSource.testServer(subject.workspaceId, subject.id, server.id);
       setTestResultsByServerId((current) => ({ ...current, [server.id]: result }));
       await loadCatalog({ syncParent: true });
     } catch (error) {
@@ -425,7 +425,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setServerMutationError(null);
     applyServerEnabledState(server.id, enabled);
     try {
-      await dataSource.updateServer(target.workspaceId, target.id, server.id, {
+      await dataSource.updateServer(subject.workspaceId, subject.id, server.id, {
         enabled
       });
       await loadCatalog({ syncParent: true });
@@ -450,7 +450,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setPendingToolName(tool.name);
     setToolMutationError(null);
     try {
-      await dataSource.updateServerTool(target.workspaceId, target.id, server.id, tool.name, {
+      await dataSource.updateServerTool(subject.workspaceId, subject.id, server.id, tool.name, {
         enabled: nextEnabled,
         capability: nextCapability
       });
@@ -493,7 +493,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   return (
     <PageShell>
       <McpServersViewHeader
-        target={target}
+        target={subject}
         canEditServers={canEditServers}
         onConnectByUrl={openCreateServerModal}
         catalogDestination={catalogDestination}

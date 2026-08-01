@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { createMarkdownComponents, markdownRemarkPlugins } from '@/features/targets/chat/lib/markdown';
+import { createMarkdownComponents, markdownRemarkPlugins } from '@/features/conversations/presentation';
 
 const workflowResponseMarkdownComponents = createMarkdownComponents('assistant');
 

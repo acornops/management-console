@@ -22,7 +22,7 @@ describe('Agent emoji identity', () => {
   it('suggests recognizable role-specific identities with a neutral fallback', () => {
     expect(suggestAgentEmoji('Kubernetes Specialist')).toBe('☸️');
     expect(suggestAgentEmoji('Incident Reporter')).toBe('📝');
-    expect(suggestAgentEmoji('Target Diagnostics')).toBe('🔎');
+    expect(suggestAgentEmoji('Infrastructure Diagnostics')).toBe('🔎');
     expect(suggestAgentEmoji('Custom helper')).toBe(DEFAULT_AGENT_EMOJI);
   });
 });

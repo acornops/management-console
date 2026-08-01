@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, InlineAlert } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
-import { activateAutomationTemplate, installAutomationTemplate, listAutomationTemplates, type AutomationTemplateApi } from '@/services/control-plane/agentApi';
+import { activateAutomationTemplate, installAutomationTemplate, listAutomationTemplates, type AutomationTemplateApi } from '@/services/control-plane/workflowApi';
 
 interface WorkflowRecommendationDrawerProps {
   open: boolean;

@@ -22,7 +22,6 @@ test('cluster overview exposes coherent headings and accessible metric data', as
   expect(assistantButtonBox).not.toBeNull();
   if (!assistantButtonBox) throw new Error('Open assistant button has no layout box');
   expect(assistantButtonBox.x + assistantButtonBox.width).toBeLessThanOrEqual(1280);
-  await expect(issueCard.getByText('3 open runs', { exact: true })).toHaveCount(1);
   await expect(page.getByRole('heading', { level: 2, name: 'CPU Usage' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Memory' })).toBeVisible();
 
@@ -53,7 +52,7 @@ test('cluster overview reports telemetry history failures with retry', async ({ 
   await page.goto(`${overviewPath}?fixtureFailurePath=fixture-cluster%2Fmetrics%2Fhistory`, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { level: 1, name: 'Cluster Overview' })).toBeVisible();
-  const alert = page.getByRole('alert').filter({ hasText: 'Telemetry history unavailable' });
+  const alert = page.getByRole('status').filter({ hasText: 'Telemetry history unavailable' });
   await expect(alert).toBeVisible();
   await expect(alert.getByRole('button', { name: 'Retry' })).toBeVisible();
   await expect(page.getByText('No telemetry history')).toHaveCount(0);

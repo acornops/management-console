@@ -19,7 +19,7 @@ type TargetChatComposerProps = Pick<
   | 'canChat'
   | 'canCancelActiveRun'
   | 'canPost'
-  | 'target'
+  | 'subject'
   | 'composerActionLabel'
   | 'composerAttachmentNotice'
   | 'composerAttachments'
@@ -87,7 +87,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   canChat,
   canCancelActiveRun,
   canPost,
-  target,
+  subject,
   composerActionLabel,
   composerAttachmentNotice,
   composerAttachments,
@@ -234,12 +234,12 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 isPanel ? 'min-h-9 type-body' : 'min-h-10 type-body'
               } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 text-ui-text outline-none placeholder:text-ui-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60`}
               role="combobox"
-              aria-label={t('chat.composerInputLabel', { name: target.name })}
+              aria-label={t('chat.composerInputLabel', { name: subject.name })}
               aria-controls={referenceMenuId}
               aria-expanded={isReferenceMenuOpen}
               aria-autocomplete="list"
               aria-activedescendant={isReferenceMenuOpen && referencePickerItems[referenceActiveIndex] ? `${referenceMenuId}-option-${referenceActiveIndex}` : undefined}
-              placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: target.name }) : blockedComposerMessage}
+              placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: subject.name }) : blockedComposerMessage}
               disabled={!canPost || isRunActive}
             />
           </div>

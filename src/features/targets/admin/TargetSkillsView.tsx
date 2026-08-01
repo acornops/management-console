@@ -60,7 +60,7 @@ interface TargetSkillsViewWithDataSourceProps extends TargetSkillsViewProps {
 }
 
 export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = ({
-  target,
+  subject,
   canManageSkills = false,
   initialCatalog = null,
   onCatalogChange,
@@ -120,7 +120,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     setCatalogLoading(true);
     setCatalogError(null);
     try {
-      const nextCatalog = await dataSource.listSkills(target.workspaceId, target.id);
+      const nextCatalog = await dataSource.listSkills(subject.workspaceId, subject.id);
       setCatalog(nextCatalog);
       setSelectedSkillId((current) => (current && nextCatalog.items.some((item) => item.id === current) ? current : nextCatalog.items[0]?.id || null));
     } catch (error) {
@@ -128,14 +128,14 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     } finally {
       setCatalogLoading(false);
     }
-  }, [dataSource, target.id, target.workspaceId, formatTargetSkillError]);
+  }, [dataSource, subject.id, subject.workspaceId, formatTargetSkillError]);
 
   const loadSkillDetail = React.useCallback(
     async (skillId: string) => {
       setDetailLoading(true);
       setEditorError(null);
       try {
-        const detail = await dataSource.getSkill(target.workspaceId, target.id, skillId);
+        const detail = await dataSource.getSkill(subject.workspaceId, subject.id, skillId);
         setDetailsById((current) => ({ ...current, [skillId]: detail }));
         setDraftFiles(toDraftFiles(detail.files));
         setActiveFilePath('SKILL.md');
@@ -145,7 +145,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
         setDetailLoading(false);
       }
     },
-    [dataSource, target.id, target.workspaceId, formatTargetSkillError]
+    [dataSource, subject.id, subject.workspaceId, formatTargetSkillError]
   );
 
   React.useEffect(() => {
@@ -267,7 +267,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     setToggleSkillId(skillId);
     setCatalogError(null);
     try {
-      const detail = await dataSource.updateSkill(target.workspaceId, target.id, skillId, { enabled });
+      const detail = await dataSource.updateSkill(subject.workspaceId, subject.id, skillId, { enabled });
       syncSkill(detail);
     } catch (error) {
       setCatalogError(formatTargetSkillError(error, 'targetSkills.updateFailed'));
@@ -281,7 +281,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     setEditorSaving(true);
     setEditorError(null);
     try {
-      const detail = await dataSource.updateSkill(target.workspaceId, target.id, selectedSkillId, {
+      const detail = await dataSource.updateSkill(subject.workspaceId, subject.id, selectedSkillId, {
         files: toRequestFiles(draftFiles)
       });
       syncSkill(detail);
@@ -299,7 +299,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     setEditorError(null);
     setEditorSaving(true);
     try {
-      const detail = await dataSource.createSkill(target.workspaceId, target.id, {
+      const detail = await dataSource.createSkill(subject.workspaceId, subject.id, {
         files: toRequestFiles(draftFiles)
       });
       await loadCatalog();
@@ -318,10 +318,10 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     setImportError(null);
     setEditorSaving(true);
     try {
-      const imported = await dataSource.resolveSkill(target.workspaceId, target.id, {
+      const imported = await dataSource.resolveSkill(subject.workspaceId, subject.id, {
         repoUrl: importUrl.trim()
       });
-      const detail = await dataSource.importSkill(target.workspaceId, target.id, imported);
+      const detail = await dataSource.importSkill(subject.workspaceId, subject.id, imported);
       setIsImportDialogOpen(false);
       setImportUrl('');
       await loadCatalog();
@@ -338,7 +338,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     if (!confirmDeleteSkillId || !canEditSkills) return;
     setPendingDangerAction(confirmDeleteSkillId);
     try {
-      await dataSource.deleteSkill(target.workspaceId, target.id, confirmDeleteSkillId);
+      await dataSource.deleteSkill(subject.workspaceId, subject.id, confirmDeleteSkillId);
       removeSkill(confirmDeleteSkillId);
       setConfirmDeleteSkillId(null);
       closeEditor();
@@ -357,12 +357,12 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
     }
     setPendingDangerAction(confirmReimportSkillId);
     try {
-      const imported = await dataSource.resolveSkill(target.workspaceId, target.id, {
+      const imported = await dataSource.resolveSkill(subject.workspaceId, subject.id, {
         repoUrl: selectedSkill.source.repoUrl,
         ref: selectedSkill.source.ref,
         subpath: selectedSkill.source.subpath
       });
-      const detail = await dataSource.reimportSkill(target.workspaceId, target.id, confirmReimportSkillId, {
+      const detail = await dataSource.reimportSkill(subject.workspaceId, subject.id, confirmReimportSkillId, {
         ...imported,
         force: confirmForceReimport
       });
@@ -382,7 +382,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
       <header className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <h1 className="type-route-title">{t('targetSkills.title')}</h1>
-          <p className="type-body mt-2">{t('targetSkills.description', { name: target.name })}</p>
+          <p className="type-body mt-2">{t('targetSkills.description', { name: subject.name })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" size="md" onClick={openImportDialog} disabled={!canEditSkills}>

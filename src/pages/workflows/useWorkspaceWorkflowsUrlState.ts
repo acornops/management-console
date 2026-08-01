@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-  findWorkflowByRouteTarget,
-  getWorkflowRouteSelectionTarget,
+  findWorkflowByRouteSelection,
+  getWorkflowRouteSelection,
   type WorkflowDefinition,
   type WorkflowView
 } from '@/pages/workflows/workflowModel';
@@ -22,10 +22,10 @@ interface WorkflowUrlStateOptions {
 
 export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) {
   const urlSearch = useUrlSearchState();
-  const routeTarget = getWorkflowRouteSelectionTarget(`?${urlSearch.toString()}`);
-  const routeWorkflow = findWorkflowByRouteTarget(options.workflows, routeTarget);
+  const routeSelection = getWorkflowRouteSelection(`?${urlSearch.toString()}`);
+  const routeWorkflow = findWorkflowByRouteSelection(options.workflows, routeSelection);
   React.useEffect(() => {
-    const nextRouteWorkflow = findWorkflowByRouteTarget(options.workflows, getWorkflowRouteSelectionTarget(`?${urlSearch.toString()}`));
+    const nextRouteWorkflow = findWorkflowByRouteSelection(options.workflows, getWorkflowRouteSelection(`?${urlSearch.toString()}`));
     const routeView = urlSearch.get('tab') as WorkflowView | null;
     const panel = urlSearch.get('panel');
     if (nextRouteWorkflow) options.setSelectedWorkflowId(nextRouteWorkflow.id);
@@ -35,7 +35,7 @@ export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) 
   }, [urlSearch, options.workflows]);
   React.useEffect(() => {
     if (!options.routeHydrated) return;
-    if (routeTarget) {
+    if (routeSelection) {
       if (routeWorkflow) {
         if (urlSearch.get('workflow') !== routeWorkflow.id) {
           updateUrlSearch({ workflow: routeWorkflow.id }, { replace: true });
@@ -48,12 +48,12 @@ export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) 
       }
       return;
     }
-  }, [options.routeHydrated, options.workflows, routeTarget, routeWorkflow, urlSearch]);
+  }, [options.routeHydrated, options.workflows, routeSelection, routeWorkflow, urlSearch]);
   React.useEffect(() => {
     if (!options.createPanelOpen && urlSearch.get('panel') === 'create') updateUrlSearch({ panel: null }, { replace: true });
   }, [options.createPanelOpen]);
   return {
-    hasExplicitWorkflowSelection: Boolean(routeTarget),
+    hasExplicitWorkflowSelection: Boolean(routeSelection),
     selectWorkflow(workflowId: string, updateOptions: { replace?: boolean } = {}) {
       options.setSelectedWorkflowId(workflowId);
       options.setActiveView('overview');

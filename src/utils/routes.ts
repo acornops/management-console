@@ -13,7 +13,6 @@ export interface WorkflowActivityRouteState {
   state?: WorkflowActivityStateFilter;
   origin?: WorkflowActivityOriginFilter;
   workflowId?: string;
-  issueId?: string;
 }
 
 export interface McpCatalogRouteState {
@@ -188,8 +187,7 @@ function parseWorkflowActivityRouteState(params: URLSearchParams): WorkflowActiv
     ...(cleanQueryParam(params.get('q')) ? { q: cleanQueryParam(params.get('q')) } : {}),
     ...(state ? { state } : {}),
     ...(origin ? { origin } : {}),
-    ...(cleanQueryParam(params.get('workflow')) ? { workflowId: cleanQueryParam(params.get('workflow')) } : {}),
-    ...(cleanQueryParam(params.get('issue')) ? { issueId: cleanQueryParam(params.get('issue')) } : {})
+    ...(cleanQueryParam(params.get('workflow')) ? { workflowId: cleanQueryParam(params.get('workflow')) } : {})
   };
 }
 
@@ -200,7 +198,6 @@ function withWorkflowActivityRouteState(path: string, state?: WorkflowActivityRo
   if (state?.state && state.state !== 'all') params.set('state', state.state);
   if (state?.origin) params.set('origin', state.origin);
   if (state?.workflowId) params.set('workflow', state.workflowId);
-  if (state?.issueId) params.set('issue', state.issueId);
   return appendQuery(pathname, params);
 }
 

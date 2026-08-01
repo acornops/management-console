@@ -30,7 +30,6 @@ export type AgentEditDraft = AgentDraft & {
   mcpServers: string;
   tools: string;
   skills: string;
-  targetScope: string;
   contextScope: string;
   allowExternalData: boolean;
 };
@@ -101,16 +100,6 @@ const listValuesChanged = (left: string[], right: string): boolean => {
   return left.some((value, index) => value !== rightValues[index]);
 };
 
-const targetScopeTokens = (scope: AgentDefinitionApi['targetScope']): string[] => {
-  if (Array.isArray(scope)) return scope;
-  if (!scope || typeof scope !== 'object') return ['workspace:current'];
-  return [
-    scope.type ? `scope:${scope.type}` : '',
-    ...(scope.targetTypes || []).map((targetType) => `target-type:${targetType}`),
-    ...(scope.targetIds || []).map((targetId) => `target:${targetId}`)
-  ].filter(Boolean);
-};
-
 const trustPolicyFor = (policy: AgentDefinitionApi['trustPolicy']): AgentDefinition['trustPolicy'] => ({
   boundary: typeof policy?.level === 'string' ? `${policy.level} trust boundary` : 'Restricted workspace trust boundary',
   dataEgress: policy?.allowExternalData === true ? 'Additional data access allowed by policy' : 'Workspace approved context only'
@@ -127,13 +116,11 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
     description: item.description || '',
     instructions: item.instructions || '',
     status: item.status || 'draft',
-    origin: item.origin,
     reviewState: item.reviewState,
     providerType: item.providerType || 'internal',
     ownerUserId,
     owner,
     createdBy: item.createdBy,
-    version: item.version || 1,
     mcpServers: item.mcpInstallations?.map((server) => server.name) || item.mcpServers || [],
     mcpInstallations: item.mcpInstallations || [],
     tools: [
@@ -144,17 +131,10 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
     skills: item.skillInstallations?.map((skill) => skill.name) || item.skills || [],
     skillInstallations: item.skillInstallations || [],
     semanticCapabilityIds: item.semanticCapabilityIds || [],
-    targetScope: targetScopeTokens(item.targetScope),
     contextScope: item.contextGrants || item.contextScope || [],
     permissionMode: item.permissionMode || 'ask_before_changes',
     trustPolicy: trustPolicyFor(item.trustPolicy),
     capabilities: item.capabilities || [],
-    workflowsUsingAgent: item.workflowsUsingAgent || [],
-    workflowUsage: {
-      workflowRunCount: item.workflowUsage?.workflowRunCount ?? 0,
-      lastRunAt: item.workflowUsage?.lastRunAt,
-      lastStatus: item.workflowUsage?.lastStatus as AgentDefinition['workflowUsage']['lastStatus'] | undefined
-    },
     readiness: item.readiness || {
       status: item.status === 'active' ? 'ready' : 'needs_setup',
       reasons: item.status === 'active' ? [] : ['Activate this Agent before starting a conversation.']
@@ -202,7 +182,6 @@ export const createAgentEditDraft = (agent: AgentDefinition): AgentEditDraft => 
   mcpServers: joinInput(agent.mcpServers),
   tools: joinInput(agent.tools),
   skills: joinInput(agent.skills),
-  targetScope: joinInput(agent.targetScope),
   contextScope: joinInput(agent.contextScope),
   allowExternalData: agent.trustPolicy.dataEgress.toLowerCase().includes('external')
 });

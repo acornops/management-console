@@ -1,21 +1,18 @@
 import { requestJson } from './http';
-import type { ImportTargetSkillInput, ResolveGitTargetSkillInput } from './targetSkillTypes';
+import type { ImportSkillInput, ResolveGitSkillInput } from './skillTypes';
 
 export type AgentStatus = 'draft' | 'active' | 'disabled';
 export type AgentProviderType = 'internal' | 'external';
-export type AgentTargetScopeApi = { type?: 'workspace' | 'selected_target'; targetTypes?: string[]; targetIds?: string[] };
 export type RunPermissionMode = 'read_only' | 'ask_before_changes' | 'auto_allowed_changes';
 export interface AgentMcpToolApi { name: string; serverId: string; alias: string; description?: string; capability: 'read' | 'write'; enabled: boolean; reviewState: 'pending' | 'approved' | 'rejected'; riskLevel: 'read_only' | 'non_destructive_write' | 'high_risk' | 'destructive'; autoAllowed: boolean }
-export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; targetConstraints: { targetTypes: string[]; targetIds: string[] }; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
+export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
 export interface WorkspaceNativeToolApi {
   id: string;
   modelAlias: string;
   title: string;
   description: string;
-  targetCatalogDescription?: string;
-  targetToggleable?: boolean;
   semanticCapabilityId: string;
-  invocationScopes: Array<'workflow' | 'target_chat'>;
+  invocationScopes: Array<'workflow' | 'agent_chat'>;
   authorizationClass: 'prompt_resource' | 'internal_artifact' | 'external_http_read';
   auditOperation: 'read' | 'write';
   approvalOperation: 'read' | 'write';
@@ -26,52 +23,8 @@ export interface WorkspaceNativeToolApi {
 }
 export interface AgentSkillApi { id: string; name: string; description: string; enabled: boolean; revision: number; contentDigest: string; source: { type: 'manual' | 'git' | 'template'; provider?: 'github' | 'gitlab'; url?: string; apiBaseUrl?: string; ref?: string; path?: string; pinnedCommit?: string }; files: Array<{ path: string; content: string; contentDigest: string }>; inherited?: boolean }
 export interface ServiceIdentityApi { id: string; workspaceId: string; name: string; status: 'active' | 'disabled'; role: string; createdBy: string; createdAt: string; updatedAt: string }
-export interface AutomationTemplateApi {
-  id: string; version: number; name: string; description: string; installMode: 'automatic' | 'opt_in';
-  installationStatus: 'not_installed' | 'needs_setup' | 'ready' | 'active'; setupSteps: string[];
-  blockerCodes: string[]; workflowId?: string;
-}
-export interface AutomationTemplateInstallationApi { workspaceId: string; templateId: string; templateVersion: number; state: 'pending' | 'complete'; installedBy: string; recordIds: Record<string, string>; installedAt: string }
-
-function normalizeAutomationTemplate(value: unknown): AutomationTemplateApi {
-  const template = value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-  const installMode = template.installMode;
-  const installationStatus = template.installationStatus;
-  if (
-    typeof template.id !== 'string'
-    || typeof template.version !== 'number'
-    || typeof template.name !== 'string'
-    || typeof template.description !== 'string'
-    || (installMode !== 'automatic' && installMode !== 'opt_in')
-    || !['not_installed', 'needs_setup', 'ready', 'active'].includes(String(installationStatus))
-    || !Array.isArray(template.setupSteps)
-    || !Array.isArray(template.blockerCodes)
-  ) {
-    throw new Error('The workflow recommendation catalog returned an invalid recommendation.');
-  }
-  return template as unknown as AutomationTemplateApi;
-}
-
-export function normalizeAutomationTemplateCatalog(value: unknown): {
-  templates: AutomationTemplateApi[];
-  installations: AutomationTemplateInstallationApi[];
-} {
-  const catalog = value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-  if (!Array.isArray(catalog.templates) || !Array.isArray(catalog.installations)) {
-    throw new Error('The workflow recommendation catalog returned an invalid response.');
-  }
-  return {
-    templates: catalog.templates.map(normalizeAutomationTemplate),
-    installations: catalog.installations as AutomationTemplateInstallationApi[]
-  };
-}
-
 export interface AgentCapability {
-  source: 'builtin_tool' | 'mcp_tool' | 'skill' | 'context' | 'target';
+  source: 'builtin_tool' | 'mcp_tool' | 'skill' | 'context';
   providerAgentId?: string;
   resourceType: string;
   resourceScope: string;
@@ -85,13 +38,14 @@ export interface AgentConversationSummaryApi {
   id: string;
   workspaceId: string;
   agentId: string;
-  agentVersion: number;
   title: string;
   createdBy: string;
   accessMode: AgentConversationAccessMode;
-  permissionMode?: RunPermissionMode;
+  permissionMode: RunPermissionMode;
   launchedAt?: string;
   createdAt: string;
+  expiresAt: string;
+  status: 'open' | 'archived';
 }
 export interface AgentConversationMessageApi {
   id: string;
@@ -102,16 +56,19 @@ export interface AgentConversationMessageApi {
 }
 export interface AgentConversationRunApi {
   id: string;
-  executionId?: string;
+  workspaceId: string;
+  agentId: string;
+  sessionId: string;
+  messageId: string;
+  toolAccessMode: AgentConversationAccessMode;
   status: string;
-  requestedAt?: string;
-  startedAt?: string;
-  endedAt?: string;
-  errorCode?: string;
-  errorMessage?: string;
+  requestedAt: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  errorCode: string | null;
   assistantMessage?: { content?: string };
-  events?: Array<{
-    schema_version: string;
+  events: Array<{
+    schema_version: number;
     run_id: string;
     seq: number;
     ts: string;
@@ -133,12 +90,10 @@ export interface AgentDefinitionApi {
   description?: string;
   instructions?: string;
   status?: AgentStatus;
-  origin: { type: 'template' | 'manual'; templateId?: string; templateVersion?: number };
   reviewState: 'draft' | 'reviewed';
   providerType?: AgentProviderType;
   ownerUserId?: string;
   createdBy: string;
-  version?: number;
   mcpServers?: string[];
   mcpTools?: Array<{ serverId: string; toolName: string }>;
   mcpInstallations?: AgentMcpServerApi[];
@@ -148,16 +103,13 @@ export interface AgentDefinitionApi {
   skillInstallations?: AgentSkillApi[];
   permissionMode?: RunPermissionMode;
   semanticCapabilityIds?: string[];
-  targetScope?: string[] | AgentTargetScopeApi;
   contextScope?: string[];
   contextGrants?: string[];
   approvalPolicy?: Record<string, unknown>;
   trustPolicy?: Record<string, unknown>;
-  workflowUsage?: { workflowRunCount?: number; lastRunAt?: string; lastStatus?: string };
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
   capabilitySummary?: string;
   capabilities?: AgentCapability[];
-  workflowsUsingAgent?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -208,7 +160,7 @@ export function postAgentConversationMessage(
   conversationId: string,
   content: string,
   clientRequestId?: string
-): Promise<{ message_id: string; run_id: string; executionId: string; status: string }> {
+): Promise<{ message_id: string; run_id: string; status: string }> {
   return requestJson(
     `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}/messages`,
     {
@@ -226,16 +178,6 @@ export type AgentCreateInput = Partial<Omit<AgentDefinitionApi, 'id' | 'workspac
 export type AgentUpdateInput = Partial<AgentCreateInput> & {
   status?: AgentStatus;
 };
-
-export interface AgentVersionSnapshotApi {
-  id: string;
-  agentId: string;
-  workspaceId: string;
-  version: number;
-  snapshot?: AgentDefinitionApi;
-  createdBy?: string;
-  createdAt: string;
-}
 
 export function listWorkspaceAgents(workspaceId: string, options: { includeInactive?: boolean } = {}): Promise<AgentDefinitionApi[]> {
   const query = options.includeInactive ? '?includeInactive=true' : '';
@@ -270,22 +212,6 @@ export function revokeAgentNativeTool(workspaceId: string, agentId: string, tool
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/native-tools/${encodeURIComponent(toolId)}`,
     { method: 'DELETE' }
   ).then((response) => response.agent);
-}
-
-export function listAutomationTemplates(workspaceId: string): Promise<{
-  templates: AutomationTemplateApi[];
-  installations: AutomationTemplateInstallationApi[];
-}> {
-  return requestJson<unknown>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/automation-templates`)
-    .then(normalizeAutomationTemplateCatalog);
-}
-
-export function installAutomationTemplate(workspaceId: string, templateId: string): Promise<{ workflowId: string; alreadyInstalled: boolean }> {
-  return requestJson(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/automation-templates/${encodeURIComponent(templateId)}/install`, { method: 'POST' });
-}
-
-export function activateAutomationTemplate(workspaceId: string, templateId: string): Promise<{ workflowId: string; status: 'active' }> {
-  return requestJson(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/automation-templates/${encodeURIComponent(templateId)}/activate`, { method: 'POST' });
 }
 
 export function getAgent(workspaceId: string, agentId: string): Promise<AgentDefinitionApi> {
@@ -345,36 +271,6 @@ export function deleteAgent(workspaceId: string, agentId: string): Promise<void>
   );
 }
 
-export function createAgentVersion(workspaceId: string, agentId: string): Promise<AgentVersionSnapshotApi> {
-  return requestJson<{ version: AgentVersionSnapshotApi }>(
-    `/api/v1/agents/${encodeURIComponent(agentId)}/versions`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ workspaceId })
-    }
-  ).then((response) => response.version);
-}
-
-export function listAgentVersions(workspaceId: string, agentId: string): Promise<AgentVersionSnapshotApi[]> {
-  return requestJson<{ items: AgentVersionSnapshotApi[] }>(
-    `/api/v1/agents/${encodeURIComponent(agentId)}/versions?workspaceId=${encodeURIComponent(workspaceId)}`
-  ).then((response) => response.items);
-}
-
-export function restoreAgentVersion(
-  workspaceId: string,
-  agentId: string,
-  versionId: string
-): Promise<AgentDefinitionApi> {
-  return requestJson<{ agent: AgentDefinitionApi }>(
-    `/api/v1/agents/${encodeURIComponent(agentId)}/versions/${encodeURIComponent(versionId)}/restore`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ workspaceId })
-    }
-  ).then((response) => response.agent);
-}
-
 const agentCapabilityBase = (workspaceId: string, agentId: string) => `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}`;
 
 export function listAgentMcpServers(workspaceId: string, agentId: string): Promise<AgentMcpServerApi[]> {
@@ -404,8 +300,8 @@ export function createAgentSkill(workspaceId: string, agentId: string, input: { 
 export function importAgentSkill(workspaceId: string, agentId: string, input: { files: Array<{ path: string; content: string }>; source: { type: 'git'; provider: 'github' | 'gitlab'; url: string; ref: string; path?: string; pinnedCommit: string } }): Promise<AgentSkillApi> {
   return requestJson<{ skill: AgentSkillApi }>(`${agentCapabilityBase(workspaceId, agentId)}/skills/import`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.skill);
 }
-export function resolveAgentGitSkill(workspaceId: string, agentId: string, input: ResolveGitTargetSkillInput): Promise<ImportTargetSkillInput> {
-  return requestJson<ImportTargetSkillInput>(`${agentCapabilityBase(workspaceId, agentId)}/skills/resolve`, { method: 'POST', body: JSON.stringify(input) });
+export function resolveAgentGitSkill(workspaceId: string, agentId: string, input: ResolveGitSkillInput): Promise<ImportSkillInput> {
+  return requestJson<ImportSkillInput>(`${agentCapabilityBase(workspaceId, agentId)}/skills/resolve`, { method: 'POST', body: JSON.stringify(input) });
 }
 export function reimportAgentSkill(workspaceId: string, agentId: string, skillId: string, input: { files: Array<{ path: string; content: string }>; source: { type: 'git'; provider: 'github' | 'gitlab'; url: string; ref: string; path?: string; pinnedCommit: string }; expectedRevision: number }): Promise<AgentSkillApi> {
   return requestJson<{ skill: AgentSkillApi }>(`${agentCapabilityBase(workspaceId, agentId)}/skills/${encodeURIComponent(skillId)}/reimport`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.skill);

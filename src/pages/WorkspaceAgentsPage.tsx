@@ -1,10 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { SelectOption } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import {
-  targetScopeFromTokens,
-  type AgentDefinition
-} from '@/pages/agents/agentModel';
+import { type AgentDefinition } from '@/pages/agents/agentModel';
 import { WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
 import { PageShell } from '@acornops/ui';
 import { CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
@@ -16,21 +13,16 @@ import { DEFAULT_AGENT_EMOJI } from '@/pages/agents/AgentAvatar';
 import { Notice, canManageWorkspaceAgents, createAgentEditDraft, filterVisibleAgents, getAgentEditChangeSummary, isWorkspaceCatalogAgent, mapApiAgent, shouldRefreshAgentEditDraft, splitInput, type AgentDraft, type AgentEditDraft, type AgentEditDraftSource, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createAgent as createWorkspaceAgent,
-  createAgentVersion as createWorkspaceAgentVersion,
   deleteAgent as deleteWorkspaceAgent,
   duplicateAgent as duplicateWorkspaceAgent,
-  listAgentVersions,
   listWorkspaceAgents,
-  restoreAgentVersion,
-  updateAgent as updateWorkspaceAgent,
-  type AgentVersionSnapshotApi
+  updateAgent as updateWorkspaceAgent
 } from '@/services/control-plane/agentApi';
 import type { ProjectMember } from '@/types';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
-import type { WorkflowOption } from '@/services/control-plane/workflowApi';
 import { AppPaths } from '@/utils/routes';
-import { UnsavedChangesDialog } from '@/features/targets/admin/UnsavedChangesDialog';
+import { UnsavedChangesDialog } from '@/features/capabilities/UnsavedChangesDialog';
 import { useAgentDrawerDiscardGuard } from '@/pages/agents/useAgentDrawerDiscardGuard';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace, currentUserId, isDark, routeState, navigate }) => {
@@ -39,7 +31,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [agents, setAgents] = useState<AgentDefinition[]>([]);
   const agentCatalogWorkspaceIdRef = React.useRef(workspace.id);
   const [ownerUserOptions, setOwnerUserOptions] = useState<ProjectMember[]>(workspace.members || []);
-  const [targetOptions, setTargetOptions] = useState<WorkflowOption[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState(routeState?.agentId || initialUrlSearch.get('agent') || '');
   const [query, setQuery] = useState(initialUrlSearch.get('q') || '');
   const initialFocus = initialUrlSearch.get('focus');
@@ -60,11 +51,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [editDraft, setEditDraft] = useState<AgentEditDraft | null>(null);
   const editDraftSourceRef = React.useRef<AgentEditDraftSource | null>(null);
   const [localNotice, setLocalNotice] = useState<LocalNotice | null>(null);
-  const [agentVersionHistories, setAgentVersionHistories] = useState<Record<string, AgentVersionSnapshotApi[]>>({});
   const [creatingAgent, setCreatingAgent] = useState(false);
   const [updatingAgentId, setUpdatingAgentId] = useState('');
   const [duplicatingAgentId, setDuplicatingAgentId] = useState('');
-  const [agentVersionAction, setAgentVersionAction] = useState('');
   const [disableConfirmAgentId, setDisableConfirmAgentId] = useState('');
   const [deleteConfirmAgentId, setDeleteConfirmAgentId] = useState('');
   const editAgentNameInputRef = React.useRef<HTMLInputElement>(null);
@@ -156,21 +145,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       mounted = false;
     };
   }, [ownerUsersReloadKey, workspace.id, workspace.members, workspace.permissions?.read_members]);
-  React.useEffect(() => {
-    let mounted = true;
-    controlPlaneApi.listTargetsForWorkspace(workspace.id, { limit: 200 })
-      .then((page) => {
-        if (mounted) setTargetOptions(page.items.map((target) => ({
-          value: target.id,
-          label: target.name,
-          description: `${target.targetType === 'kubernetes' ? 'Kubernetes cluster' : 'Virtual machine'} · ${target.status}`
-        })));
-      })
-      .catch(() => {
-        if (mounted) setTargetOptions([]);
-      });
-    return () => { mounted = false; };
-  }, [workspace.id]);
   const workspaceCatalogAgents = useMemo(() => agents.filter(isWorkspaceCatalogAgent), [agents]);
   const visibleAgents = useMemo(() => filterVisibleAgents(workspaceCatalogAgents, query, catalogFilters), [workspaceCatalogAgents, query, catalogFilters]);
   const selectedAgent = workspaceCatalogAgents.find((agent) => agent.id === selectedAgentId);
@@ -218,7 +192,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     onDiscardCreateHistory: resetCreateAgentDraft,
     onDiscardEditHistory: clearEditAgentDraft
   });
-  const editDrawerVisible = editPanelOpen || discardRequest?.target === 'edit';
+  const editDrawerVisible = editPanelOpen || discardRequest?.panel === 'edit';
   React.useEffect(() => {
     if (quickChatOpen) setQuickChatLayoutReserved(true);
   }, [quickChatOpen]);
@@ -237,20 +211,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       .filter((member) => Boolean(member.userId))
       .map((member) => ({ value: member.userId as string, label: `${member.name || member.email} (${member.role})` }))
   ], [ownerUserOptions]);
-  React.useEffect(() => {
-    if (!selectedAgent) return;
-    let mounted = true;
-    listAgentVersions(workspace.id, selectedAgent.id)
-      .then((versions) => {
-        if (mounted) setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: versions }));
-      })
-      .catch(() => {
-        if (mounted) setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: current[selectedAgent.id] || [] }));
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [selectedAgent?.id, workspace.id]);
   const updateSelectedAgent = (agentId: string, updater: (agent: AgentDefinition) => AgentDefinition) => {
     setAgents((current) => current.map((agent) => agent.id === agentId ? updater(agent) : agent));
   };
@@ -281,54 +241,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   };
   const openEditAgentDrawerFromDetails = (agent: AgentDefinition) => {
     openEditAgentDrawer(agent);
-  };
-  const saveSelectedAgentVersion = async () => {
-    if (!selectedAgent || !canManageAgents) return;
-    setAgentVersionAction(selectedAgent.id);
-    setLocalNotice(null);
-    try {
-      const version = await createWorkspaceAgentVersion(workspace.id, selectedAgent.id);
-      setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: [version, ...(current[selectedAgent.id] || []).filter((item) => item.id !== version.id)] }));
-      updateSelectedAgent(selectedAgent.id, (agent) => ({
-        ...agent,
-        version: version.version
-      }));
-      setLocalNotice({ tone: 'success', message: `Saved revision ${version.version} as a restore point.` });
-    } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not save a restore point for this agent.' });
-    } finally {
-      setAgentVersionAction('');
-    }
-  };
-  const refreshSelectedAgentVersions = async () => {
-    if (!selectedAgent) return;
-    setAgentVersionAction(`${selectedAgent.id}:history`);
-    setLocalNotice(null);
-    try {
-      const versions = await listAgentVersions(workspace.id, selectedAgent.id);
-      setAgentVersionHistories((current) => ({ ...current, [selectedAgent.id]: versions }));
-      setLocalNotice({ tone: 'success', message: 'Restore points refreshed.' });
-    } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not refresh restore points.' });
-    } finally {
-      setAgentVersionAction('');
-    }
-  };
-  const restoreSelectedAgentVersion = async (version: AgentVersionSnapshotApi) => {
-    if (!selectedAgent || !canManageAgents) return;
-    setAgentVersionAction(`${selectedAgent.id}:restore:${version.id}`);
-    setLocalNotice(null);
-    try {
-      const restored = await restoreAgentVersion(workspace.id, selectedAgent.id, version.id);
-      const mapped = mapApiAgent(restored, workspace.name, ownerLabelsByUserId);
-      setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
-      setSelectedAgentId(mapped.id);
-      setLocalNotice({ tone: 'success', message: `Restored from revision ${version.version} as the new current revision.` });
-    } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not restore that restore point.' });
-    } finally {
-      setAgentVersionAction('');
-    }
   };
   const disableSelectedAgent = async () => {
     if (!selectedAgent || !canManageAgents) return;
@@ -450,7 +362,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         providerType: editDraft.providerType,
         status: editDraft.status,
         ownerUserId: editDraft.ownerUserId.trim() || undefined,
-        targetScope: targetScopeFromTokens(splitInput(editDraft.targetScope)),
         contextGrants: splitInput(editDraft.contextScope),
         trustPolicy: { level: 'restricted', allowExternalData: editDraft.allowExternalData }
       };
@@ -495,7 +406,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
 
   const drawers = (
     <>
-      {(createPanelOpen || discardRequest?.target === 'create') && (
+      {(createPanelOpen || discardRequest?.panel === 'create') && (
         <CreateAgentDrawer createDraft={createDraft} setCreateDraft={setCreateDraft} creatingAgent={creatingAgent} onClose={requestCloseCreate} onSave={() => void createControlPlaneAgent()} />
       )}
       {editDrawerVisible && editingAgent && editDraft && (
@@ -504,7 +415,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           editDraft={editDraft}
           setEditDraft={setEditDraft}
           ownerSelectOptions={ownerSelectOptions}
-          targetOptions={targetOptions}
           editChangeSummary={editChangeSummary}
           updatingAgentId={updatingAgentId}
           nameInputRef={editAgentNameInputRef}
@@ -515,7 +425,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       {discardRequest && (
         <UnsavedChangesDialog
           title="Discard unsaved agent changes?"
-          body={discardRequest.target === 'create'
+          body={discardRequest.panel === 'create'
             ? 'The agent name, emoji, assignment purpose, and instructions will be lost.'
             : `Your unsaved changes to ${editingAgent?.name || 'this agent'} will be lost.`}
           cancelLabel="Keep editing"
@@ -547,20 +457,15 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       canManageSkills={canManageSkills}
       updatingAgentId={updatingAgentId}
       duplicatingAgentId={duplicatingAgentId}
-      agentVersionAction={agentVersionAction}
       disableConfirmAgentId={disableConfirmAgentId}
       setDisableConfirmAgentId={setDisableConfirmAgentId}
       deleteConfirmAgentId={deleteConfirmAgentId}
       setDeleteConfirmAgentId={setDeleteConfirmAgentId}
-      agentVersionHistories={agentVersionHistories}
       onOpenEditAgentDrawer={openEditAgentDrawerFromDetails}
       onDuplicateSelectedAgent={() => void duplicateSelectedAgent()}
-      onSaveSelectedAgentVersion={() => void saveSelectedAgentVersion()}
       onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
       onDisableSelectedAgent={() => void disableSelectedAgent()}
       onDeleteSelectedAgent={() => void deleteSelectedAgent()}
-      onRefreshSelectedAgentVersions={() => void refreshSelectedAgentVersions()}
-      onRestoreSelectedAgentVersion={(version) => void restoreSelectedAgentVersion(version)}
     />
   ) : (
     <div role="status" className="type-body type-emphasis flex h-full items-center justify-center bg-ui-bg text-ui-text-muted">

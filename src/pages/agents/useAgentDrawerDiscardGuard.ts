@@ -1,7 +1,7 @@
 import React from 'react';
 
 export type AgentDiscardRequest = {
-  target: 'create' | 'edit';
+  panel: 'create' | 'edit';
   fromHistory: boolean;
 };
 
@@ -47,16 +47,16 @@ export function useAgentDrawerDiscardGuard({
         skipNextPopstateRef.current = false;
         return;
       }
-      let target: AgentDiscardRequest['target'] | null = null;
+      let panel: AgentDiscardRequest['panel'] | null = null;
       if (createPanelOpenRef.current && createDirtyRef.current) {
-        target = 'create';
+        panel = 'create';
       } else if (editPanelOpenRef.current && editDirtyRef.current) {
-        target = 'edit';
+        panel = 'edit';
       }
-      if (!target) return;
+      if (!panel) return;
       skipNextPopstateRef.current = true;
       window.history.forward();
-      setDiscardRequest({ target, fromHistory: true });
+      setDiscardRequest({ panel, fromHistory: true });
     };
     window.addEventListener('beforeunload', warnBeforeUnload);
     window.addEventListener('popstate', guardHistoryExit, { capture: true });
@@ -66,13 +66,13 @@ export function useAgentDrawerDiscardGuard({
     };
   }, []);
 
-  const requestClose = (target: AgentDiscardRequest['target']) => {
-    const dirty = target === 'create' ? createDirty : editDirty;
+  const requestClose = (panel: AgentDiscardRequest['panel']) => {
+    const dirty = panel === 'create' ? createDirty : editDirty;
     if (dirty) {
-      setDiscardRequest({ target, fromHistory: false });
+      setDiscardRequest({ panel, fromHistory: false });
       return;
     }
-    if (target === 'create') {
+    if (panel === 'create') {
       onCloseCreate();
     } else {
       onCloseEdit();
@@ -82,13 +82,13 @@ export function useAgentDrawerDiscardGuard({
   const discardChanges = () => {
     if (!discardRequest) return;
     if (discardRequest.fromHistory) {
-      if (discardRequest.target === 'create') {
+      if (discardRequest.panel === 'create') {
         onDiscardCreateHistory();
       } else {
         onDiscardEditHistory();
       }
     } else {
-      if (discardRequest.target === 'create') {
+      if (discardRequest.panel === 'create') {
         onCloseCreate();
       } else {
         onCloseEdit();

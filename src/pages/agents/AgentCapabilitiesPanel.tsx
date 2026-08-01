@@ -27,8 +27,8 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
   const { t, tabs, servers, toolRefreshErrors, nativeTools, assignedNativeToolIds, setAssignedNativeToolIds, nativeToolConfigs, setNativeToolConfigs, tools } = capabilityState;
   const activeTab = section || capabilityState.activeTab;
   const { credentialDialogServer, setCredentialDialogServer, busy, setBusy, notice, setNotice, error, setError } = capabilityState;
-  const { manualServer, setManualServer, manualServerOpen, setManualServerOpen, targetOptions } = capabilityState;
-  const { constraintEditor, setConstraintEditor, renameEditor, setRenameEditor, removeServerId, setRemoveServerId, credentialModeChange, setCredentialModeChange } = capabilityState;
+  const { manualServer, setManualServer, manualServerOpen, setManualServerOpen } = capabilityState;
+  const { renameEditor, setRenameEditor, removeServerId, setRemoveServerId, credentialModeChange, setCredentialModeChange } = capabilityState;
   const { recoveryServerId, recoveryAction, serverRows, recoveryControls, managedConnectionMessages, renameTriggers, credentialModeTriggers, removeServerTriggers } = capabilityState;
   const { connections, connectionLoadErrors, connectionLoadingByServerId, pendingConnectionServerId, connect, prepareOAuth, startOAuth, verify, disconnect, retry, retryAfterSecondsFor } = capabilityState;
   const { clearSuccessfulRecovery, refreshAfterCredentialConnection, run, addManualServer, prepareCredentialModeChange, confirmCredentialModeChange, mcpWritable, oauthReturnPath } = capabilityState;
@@ -228,7 +228,6 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                             Connection controls unlock in {retryAfterSeconds}s.
                           </p>
                         )}
-                        {(server.targetConstraints.targetTypes.length > 0 || server.targetConstraints.targetIds.length > 0) && <p className="type-caption mt-1 text-ui-text-muted">Constraints: {[...server.targetConstraints.targetTypes, ...server.targetConstraints.targetIds].join(', ')}</p>}
                         {server.lastDiscoveryError && <p className="type-caption mt-1 text-status-warning-text">{server.lastDiscoveryError}</p>}
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -248,20 +247,6 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                           }
                         >
                           {t('agentsWorkflows.agents.details.capabilities.actions.rename')}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          disabled={!mcpWritable || server.inherited || Boolean(busy)}
-                          onClick={() => {
-                            setConstraintEditor({
-                              serverId: server.id,
-                              targetTypes: [...server.targetConstraints.targetTypes],
-                              targetIds: [...server.targetConstraints.targetIds]
-                            });
-                          }}
-                        >
-                          Constraints
                         </Button>
                         <Button
                           size="sm"
@@ -526,90 +511,6 @@ export const AgentCapabilitiesPanel: React.FC<AgentCapabilitiesPanelProps> = ({ 
                         }}
                         onConfirm={() => void run(`remove:${server.id}`, () => deleteAgentMcpServer(agent.workspaceId, agent.id, server.id), t('agentsWorkflows.agents.details.capabilities.removeServer.success')).then(() => setRemoveServerId(''))}
                       />
-                    )}
-                    {constraintEditor?.serverId === server.id && (
-                      <section className="mt-4 rounded-md border border-ui-border bg-ui-bg p-3" aria-label={`Target constraints for ${server.name}`}>
-                        <h4 className="type-row-title ">Target constraints</h4>
-                        <p className="type-caption mt-1 text-ui-text-muted">Leave exact targets empty to allow every target of the selected types.</p>
-                        <div className="mt-3 flex flex-wrap gap-4">
-                          {(
-                            [
-                              ['kubernetes', 'Kubernetes'],
-                              ['virtual_machine', 'Virtual machines']
-                            ] as const
-                          ).map(([value, label]) => (
-                            <label key={value} className="flex items-center gap-2 type-body type-emphasis">
-                              <Checkbox
-                                checked={constraintEditor.targetTypes.includes(value)}
-                                onChange={(event) =>
-                                  setConstraintEditor(
-                                    (current) =>
-                                      current && {
-                                        ...current,
-                                        targetTypes: event.target.checked ? [...new Set([...current.targetTypes, value])] : current.targetTypes.filter((type) => type !== value)
-                                      }
-                                  )
-                                }
-                              />
-                              {label}
-                            </label>
-                          ))}
-                        </div>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                          {targetOptions.length ? (
-                            targetOptions.map((target) => (
-                              <label key={target.value} className="flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 type-body type-emphasis">
-                                <Checkbox
-                                  className="mt-0.5"
-                                  checked={constraintEditor.targetIds.includes(target.value)}
-                                  disabled={target.disabled}
-                                  onChange={(event) =>
-                                    setConstraintEditor(
-                                      (current) =>
-                                        current && {
-                                          ...current,
-                                          targetIds: event.target.checked ? [...new Set([...current.targetIds, target.value])] : current.targetIds.filter((id) => id !== target.value)
-                                        }
-                                    )
-                                  }
-                                />
-                                <span>
-                                  {target.label}
-                                  {target.description && <span className="type-caption mt-0.5 block text-ui-text-muted">{target.description}</span>}
-                                </span>
-                              </label>
-                            ))
-                          ) : (
-                            <p className="type-caption text-ui-text-muted">No targets are registered.</p>
-                          )}
-                        </div>
-                        <div className="mt-3 flex justify-end gap-2">
-                          <Button size="sm" variant="tertiary" onClick={() => setConstraintEditor(null)}>
-                            Cancel
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            disabled={Boolean(busy)}
-                            onClick={() =>
-                              void run(
-                                `constraints:${server.id}`,
-                                () =>
-                                  updateAgentMcpServer(agent.workspaceId, agent.id, server.id, {
-                                    targetConstraints: {
-                                      targetTypes: constraintEditor.targetTypes,
-                                      targetIds: constraintEditor.targetIds
-                                    },
-                                    expectedRevision: server.revision
-                                  }),
-                                'Target constraints updated.'
-                              ).then(() => setConstraintEditor(null))
-                            }
-                          >
-                            Save constraints
-                          </Button>
-                        </div>
-                      </section>
                     )}
                   </article>
                 );

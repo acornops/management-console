@@ -1,16 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { WorkflowApiDefinition, WorkflowSchedule } from '@/services/control-plane/workflowApi';
-import { enabledScheduleImpactForAgent, enabledScheduleImpactForTarget } from './mcpCredentialModeImpact';
-import { previewWorkflowCapabilities } from '@/services/control-plane/workflowApi';
-
-vi.mock('@/services/control-plane/workflowApi', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@/services/control-plane/workflowApi')>(),
-  previewWorkflowCapabilities: vi.fn()
-}));
+import { enabledScheduleImpactForAgent } from './mcpCredentialModeImpact';
 
 describe('MCP credential mode schedule impact', () => {
-  beforeEach(() => vi.mocked(previewWorkflowCapabilities).mockReset());
-
   it('returns only enabled schedules whose workflow uses the Agent', () => {
     const workflows = [
       { id: 'workflow-direct', agentIds: ['agent-1'] },
@@ -26,54 +18,5 @@ describe('MCP credential mode schedule impact', () => {
 
     expect(enabledScheduleImpactForAgent(workflows, schedules, 'agent-1').map((schedule) => schedule.id))
       .toEqual(['schedule-direct', 'schedule-coordinated']);
-  });
-
-  it('uses bounded target tool metadata instead of internal compiled scopes', async () => {
-    vi.mocked(previewWorkflowCapabilities)
-      .mockResolvedValueOnce({
-        workflowId: 'workflow-match',
-        workflowVersion: 1,
-        mode: 'read_only',
-        semanticCapabilityIds: [],
-        checkedAt: '2026-07-24T00:00:00.000Z',
-        status: 'ready',
-        reasonCodes: [],
-        tools: {
-          read: [{
-            id: 'tool-1', name: 'inspect', label: 'Inspect', access: 'read', source: 'target',
-            serverIds: ['server-1', 'server-2']
-          }],
-          write: []
-        },
-        directMcpServers: [],
-        enabledSkills: [],
-        mcpRequirements: [],
-        approvalRequirements: [],
-        counts: { tools: 1, readTools: 1, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
-      })
-      .mockResolvedValueOnce({
-        workflowId: 'workflow-other',
-        workflowVersion: 1,
-        mode: 'read_only',
-        semanticCapabilityIds: [],
-        checkedAt: '2026-07-24T00:00:00.000Z',
-        status: 'ready',
-        reasonCodes: [],
-        tools: { read: [], write: [] },
-        directMcpServers: [],
-        enabledSkills: [],
-        mcpRequirements: [],
-        approvalRequirements: [],
-        counts: { tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
-      });
-    const schedules = [
-      { id: 'schedule-match', workflowId: 'workflow-match', status: 'enabled', approvedContextGrants: [] },
-      { id: 'schedule-other', workflowId: 'workflow-other', status: 'enabled', approvedContextGrants: [] },
-      { id: 'schedule-paused', workflowId: 'workflow-paused', status: 'paused', approvedContextGrants: [] }
-    ] as WorkflowSchedule[];
-
-    await expect(enabledScheduleImpactForTarget('workspace-1', schedules, 'target-1', 'server-1'))
-      .resolves.toEqual([schedules[0]]);
-    expect(previewWorkflowCapabilities).toHaveBeenCalledTimes(2);
   });
 });

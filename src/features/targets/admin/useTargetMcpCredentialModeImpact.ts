@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { targetMcpCredentialModeScheduleCount } from '@/features/catalog/mcpCredentialModeImpact';
+const noScheduleImpact = async (): Promise<number> => 0;
 
 export function useTargetMcpCredentialModeImpact(
   workspaceId: string,
   targetId: string,
-  scheduleCount: (workspaceId: string, subjectId: string, serverId: string) => Promise<number> = targetMcpCredentialModeScheduleCount
+  scheduleCount: (workspaceId: string, subjectId: string, serverId: string) => Promise<number> = noScheduleImpact
 ) {
   const [impact, setImpact] = useState<{ affectedScheduleCount: number } | null>(null);
   const [loading, setLoading] = useState(false);

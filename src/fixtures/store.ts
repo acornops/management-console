@@ -189,12 +189,12 @@ export function createFixtureState(): FixtureState {
       avatarEmoji: '📊',
       description: 'Inspects repository state and prepares bounded operational changes.',
       instructions: 'Inspect repository evidence before proposing or applying a change.',
-      status: 'active', origin: { type: 'template', templateId: 'repository-operator', templateVersion: 2 },
+      status: 'active',
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
-      version: 3, permissionMode: 'ask_before_changes',
-      semanticCapabilityIds: ['target.read', 'issue.read'], targetScope: { type: 'workspace', targetTypes: ['kubernetes', 'virtual_machine'], targetIds: [] },
-      contextScope: ['workspace', 'targets'], contextGrants: ['workspace.summary'],
-      workflowUsage: { workflowRunCount: 8, lastRunAt: NOW, lastStatus: 'completed' }, readiness: { status: 'ready', reasons: [] },
+      permissionMode: 'ask_before_changes',
+      semanticCapabilityIds: ['workspace.audit.read', 'issue.read'],
+      contextScope: ['workspace'], contextGrants: ['workspace.summary'],
+      readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Repository inspection and issue triage', createdAt: EARLIER, updatedAt: NOW
     },
     {
@@ -202,96 +202,92 @@ export function createFixtureState(): FixtureState {
       avatarEmoji: '☸️',
       description: 'Investigates Kubernetes health and workload failures.',
       instructions: 'Inspect live cluster evidence before recommending a change.',
-      status: 'active', origin: { type: 'manual' }, reviewState: 'reviewed', providerType: 'internal',
-      createdBy: FIXTURE_IDS.user, ownerUserId: FIXTURE_IDS.user, version: 2,
+      status: 'active', reviewState: 'reviewed', providerType: 'internal',
+      createdBy: FIXTURE_IDS.user, ownerUserId: FIXTURE_IDS.user,
       tools: [], skills: ['fixture-kubernetes-triage'],
-      permissionMode: 'ask_before_changes', semanticCapabilityIds: ['target.kubernetes.read'],
-      targetScope: { type: 'selected_target', targetTypes: ['kubernetes'], targetIds: [FIXTURE_IDS.cluster] },
-      contextScope: ['target'], contextGrants: ['target.snapshot'], workflowUsage: { workflowRunCount: 12, lastRunAt: NOW, lastStatus: 'completed' },
+      permissionMode: 'ask_before_changes', semanticCapabilityIds: ['infrastructure.diagnostics.read'],
+      contextScope: [], contextGrants: [],
       readiness: { status: 'ready', reasons: [] }, capabilitySummary: 'Kubernetes inspection and diagnostics', createdAt: EARLIER, updatedAt: NOW
     },
     {
       id: FIXTURE_IDS.kubernetesAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Kubernetes Agent',
       avatarEmoji: '☸️',
-      description: 'Investigates and safely operates explicitly selected Kubernetes targets.',
-      instructions: 'Operate only on the exact Kubernetes target compiled for this run. Use live target evidence, distinguish observations from inferences, require approval before every write, verify changes, and provide rollback guidance.',
-      status: 'active', origin: { type: 'manual' },
+      description: 'Investigates and safely operates Kubernetes environments named in a request.',
+      instructions: 'Use relevant MCP tools when the request identifies a Kubernetes environment. Use live evidence, distinguish observations from inferences, require approval before every write, verify changes, and provide rollback guidance.',
+      status: 'active',
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
-      version: 1, permissionMode: 'ask_before_changes',
-      semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate', 'target.diagnostics.read', 'target.remediation.write'],
+      permissionMode: 'ask_before_changes',
+      semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate', 'infrastructure.diagnostics.read', 'infrastructure.remediation.write'],
       tools: ['prompt.resources.read', 'reports.pdf.generate'],
-      targetScope: { type: 'selected_target', targetTypes: ['kubernetes'], targetIds: [] },
-      contextScope: ['target'], contextGrants: [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] },
-      capabilitySummary: 'Kubernetes target tools', createdAt: EARLIER, updatedAt: NOW
+      contextScope: [], contextGrants: [], readiness: { status: 'ready', reasons: [] },
+      capabilitySummary: 'Kubernetes MCP tools', createdAt: EARLIER, updatedAt: NOW
     },
     {
       id: FIXTURE_IDS.virtualMachineAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Virtual Machine Agent',
       avatarEmoji: '🖥️',
-      description: 'Investigates explicitly selected Linux virtual-machine targets.',
-      instructions: 'Operate only on the exact virtual-machine target compiled for this run. Use live target evidence, distinguish observations from inferences, preserve provenance, disclose missing inputs, and do not make changes.',
-      status: 'active', origin: { type: 'manual' },
+      description: 'Investigates Linux virtual machines named in a request.',
+      instructions: 'Use relevant MCP tools when the request identifies a virtual machine. Use live evidence, distinguish observations from inferences, preserve provenance, disclose missing inputs, and do not make changes.',
+      status: 'active',
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
-      version: 1, permissionMode: 'ask_before_changes',
-      semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate', 'target.diagnostics.read'],
+      permissionMode: 'ask_before_changes',
+      semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate', 'infrastructure.diagnostics.read'],
       tools: ['prompt.resources.read', 'reports.pdf.generate'],
-      targetScope: { type: 'selected_target', targetTypes: ['virtual_machine'], targetIds: [] }, contextScope: ['target'],
-      contextGrants: [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] },
-      capabilitySummary: 'Virtual-machine target tools', createdAt: EARLIER, updatedAt: NOW
+      contextScope: [],
+      contextGrants: [], readiness: { status: 'ready', reasons: [] },
+      capabilitySummary: 'Virtual-machine MCP tools', createdAt: EARLIER, updatedAt: NOW
     }
   ];
   const workflows = [{
-    id: FIXTURE_IDS.workflow, workspaceId: FIXTURE_IDS.workspace, version: 2,
-    origin: { type: 'manual' }, source: 'user', name: 'Production health review',
-    description: 'Review target health and summarize prioritized follow-up actions.', status: 'active',
+    id: FIXTURE_IDS.workflow, workspaceId: FIXTURE_IDS.workspace,
+    name: 'Production health review',
+    description: 'Review production health and summarize prioritized follow-up actions.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' },
     createdAt: EARLIER, prompt: 'Review production health and produce a concise operational summary.',
     starterPrompt: 'Review production health and produce a concise operational summary.', agentIds: [FIXTURE_IDS.workflowAnalystAgent, FIXTURE_IDS.specialistAgent],
     executionMode: 'coordinated',
     category: 'Operations', tags: ['production', 'health'],
-    capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['target.read', 'issue.read'], contextGrants: ['workspace.summary'], maxRuntimeSeconds: 600, retentionDays: 30, approvalRequirements: [] },
+    capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['workspace.audit.read', 'issue.read'], contextGrants: ['workspace.summary'], maxRuntimeSeconds: 600, retentionDays: 30, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
-    id: 'fixture-template-kubernetes-health', workspaceId: FIXTURE_IDS.workspace, version: 1,
-    origin: { type: 'manual' }, source: 'user',
-    name: 'Kubernetes health check', description: 'Inspect one Kubernetes target for workload failures, warning events, resource pressure, and relevant logs.', status: 'active',
+    id: 'fixture-template-kubernetes-health', workspaceId: FIXTURE_IDS.workspace,
+    name: 'Kubernetes health check', description: 'Inspect available Kubernetes environments for workload failures, warning events, resource pressure, and relevant logs.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
-    prompt: "Assess the selected Kubernetes target's current health without making changes. Inspect workload readiness and availability, pod restarts, warning events, resource pressure, and relevant recent logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
+    prompt: "Assess the available Kubernetes environments' current health without making changes. Inspect workload readiness and availability, pod restarts, warning events, resource pressure, and relevant recent logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
     agentIds: [FIXTURE_IDS.kubernetesAgent], executionMode: 'direct',
     category: 'Operations', tags: ['diagnostics'],
-    capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['target.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
+    capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['infrastructure.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
-    id: 'fixture-template-virtual-machine-health', workspaceId: FIXTURE_IDS.workspace, version: 1,
-    origin: { type: 'manual' }, source: 'user',
+    id: 'fixture-template-virtual-machine-health', workspaceId: FIXTURE_IDS.workspace,
     name: 'Virtual machine health check', description: 'Inspect one Linux VM for host pressure, degraded services, suspicious processes or listeners, and relevant logs.', status: 'active',
     createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User', email: 'test-user@fixture.acornops.dev' }, createdAt: EARLIER,
     prompt: "Assess the selected Linux virtual machine's current health without making changes. Inspect the host summary, filesystem pressure, top processes, network listeners, degraded systemd services, and relevant allowlisted journal logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
     agentIds: [FIXTURE_IDS.virtualMachineAgent], executionMode: 'direct',
     category: 'Operations', tags: ['diagnostics', 'virtual-machine'],
-    capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['target.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 180, approvalRequirements: [] },
+    capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['infrastructure.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 180, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }];
   const automationTemplates = [
     {
-      id: 'kubernetes-health-check', version: 7, name: 'Kubernetes health check',
-      description: 'Inspect one Kubernetes target for workload failures, warning events, resource pressure, and relevant logs.', installMode: 'automatic',
+      id: 'kubernetes-health-check', name: 'Kubernetes health check',
+      description: 'Inspect available Kubernetes environments for workload failures, warning events, resource pressure, and relevant logs.', installMode: 'automatic',
       installationStatus: 'active', setupSteps: [], blockerCodes: [],
       workflowId: 'fixture-template-kubernetes-health'
     },
     {
-      id: 'target-remediation', version: 7, name: 'Target remediation',
-      description: 'Diagnose and safely change a Kubernetes target named in the request with approval-gated writes.', installMode: 'opt_in',
+      id: 'infrastructure-remediation', name: 'Infrastructure remediation',
+      description: 'Diagnose and safely change a Kubernetes environment named in the request with approval-gated writes.', installMode: 'opt_in',
       installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Preview approval-gated tools', 'Activate'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
     },
     {
-      id: 'virtual-machine-health-check', version: 7, name: 'Virtual machine health check',
+      id: 'virtual-machine-health-check', name: 'Virtual machine health check',
       description: 'Inspect one Linux VM for host pressure, degraded services, suspicious processes or listeners, and relevant logs.', installMode: 'automatic',
       installationStatus: 'active', setupSteps: [], blockerCodes: [],
       workflowId: 'fixture-template-virtual-machine-health'
     },
     {
-      id: 'incident-investigation', version: 7, name: 'Incident investigation',
+      id: 'incident-investigation', name: 'Incident investigation',
       description: 'Coordinate diagnostics and incident reporting from targets and context named in the request.', installMode: 'opt_in',
       installationStatus: 'not_installed', setupSteps: ['Add workflow', 'Preview coordinated access', 'Activate'],
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
@@ -313,21 +309,16 @@ export function createFixtureState(): FixtureState {
     id: string,
     status: string,
     origin: Record<string, any>,
-    targetId: string,
-    targetType: 'kubernetes' | 'virtual_machine',
     createdAt: string,
     options: { startedAt?: string; endedAt?: string; output?: string } = {}
   ) => ({
     id,
     workspaceId: FIXTURE_IDS.workspace,
-    workflow: { id: FIXTURE_IDS.workflow, name: 'Production health review', version: 2 },
+    workflow: { id: FIXTURE_IDS.workflow, name: 'Production health review' },
     status,
     origin,
     rootRun: {
       id: `${id}-run`,
-      targetId,
-      targetName: targetType === 'kubernetes' ? cluster.name : virtualMachine.name,
-      targetType,
       requestedAt: createdAt,
       ...(options.startedAt ? { startedAt: options.startedAt } : {}),
       ...(options.endedAt ? { endedAt: options.endedAt } : {})
@@ -341,41 +332,35 @@ export function createFixtureState(): FixtureState {
   });
   const workflowExecutions = [
     execution(
-      'fixture-execution-issue-approval',
+      'fixture-execution-approval',
       'waiting_for_approval',
       {
         schemaVersion: 1,
         kind: 'historical_event',
-        label: 'Triage new issues'
+        label: 'Review incoming operational events'
       },
-      FIXTURE_IDS.cluster,
-      'kubernetes',
       fixtureMinutesAgo(3),
       { startedAt: fixtureMinutesAgo(3, 5) }
     ),
     execution(
-      'fixture-execution-issue-running',
+      'fixture-execution-running',
       'running',
       {
         schemaVersion: 1,
         kind: 'historical_event',
-        label: 'Triage new issues'
+        label: 'Review incoming operational events'
       },
-      FIXTURE_IDS.cluster,
-      'kubernetes',
       fixtureMinutesAgo(4),
       { startedAt: fixtureMinutesAgo(4, 8) }
     ),
     execution(
-      'fixture-execution-issue-review',
+      'fixture-execution-review',
       'needs_review',
       {
         schemaVersion: 1,
         kind: 'historical_event',
-        label: 'Escalate recurring workload failures with an exceptionally long historical label'
+        label: 'Escalate recurring operational failures with an exceptionally long historical label'
       },
-      FIXTURE_IDS.cluster,
-      'kubernetes',
       fixtureMinutesAgo(6),
       { startedAt: fixtureMinutesAgo(6, 4) }
     ),
@@ -383,8 +368,6 @@ export function createFixtureState(): FixtureState {
       'fixture-execution-scheduled-running',
       'running',
       { schemaVersion: 1, kind: 'schedule', label: 'Weekday morning review', scheduleId: 'fixture-schedule' },
-      FIXTURE_IDS.cluster,
-      'kubernetes',
       fixtureMinutesAgo(9),
       { startedAt: fixtureMinutesAgo(9, 5) }
     ),
@@ -396,21 +379,17 @@ export function createFixtureState(): FixtureState {
         kind: 'historical_event',
         label: 'Triage virtual machine service issues'
       },
-      FIXTURE_IDS.virtualMachine,
-      'virtual_machine',
       fixtureMinutesAgo(18),
       {
         startedAt: fixtureMinutesAgo(18, 3),
         endedAt: fixtureMinutesAgo(17, 11),
-        output: 'The run stopped after the target agent became unavailable.'
+        output: 'The run stopped after the infrastructure connector became unavailable.'
       }
     ),
     execution(
       'fixture-execution-completed',
       'completed',
       { schemaVersion: 1, kind: 'manual', label: 'Manual' },
-      FIXTURE_IDS.cluster,
-      'kubernetes',
       fixtureMinutesAgo(38),
       {
         startedAt: fixtureMinutesAgo(38, 5),
@@ -427,26 +406,10 @@ export function createFixtureState(): FixtureState {
         label: 'Deleted workflow webhook',
         webhookId: 'fixture-deleted-workflow-webhook'
       },
-      FIXTURE_IDS.cluster,
-      'kubernetes',
       fixtureMinutesAgo(50),
       { startedAt: fixtureMinutesAgo(50, 3), endedAt: fixtureMinutesAgo(48, 9) }
     )
   ];
-  const issueActivity = (issueId: string) => {
-    const issueTargetId = issueId === 'fixture-vm-issue' ? FIXTURE_IDS.virtualMachine : FIXTURE_IDS.cluster;
-    const related = workflowExecutions.filter((item) => (
-      item.origin.kind === 'historical_event' && item.rootRun.targetId === issueTargetId
-    ));
-    const open = related.filter((item) => !['completed', 'failed', 'cancelled'].includes(item.status));
-    return {
-      totalCount: related.length,
-      openCount: open.length,
-      attentionCount: related.filter((item) => ['waiting_for_approval', 'needs_review'].includes(item.status)).length,
-      ...(open[0] ? { openExecution: open[0] } : {}),
-      latestExecution: related[0]
-    };
-  };
   const issues = [
     {
       id: 'fixture-issue', workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', targetName: cluster.name,
@@ -454,8 +417,7 @@ export function createFixtureState(): FixtureState {
       title: 'Payments worker is restarting', summary: 'One replica is in CrashLoopBackOff.', scopeKind: 'Pod',
       scopeName: 'payments-worker-7c5b9f-demo', namespace: 'production', objectKind: 'Pod', objectName: 'payments-worker-7c5b9f-demo',
       reason: 'CrashLoopBackOff', firstSeenAt: EARLIER, lastSeenAt: NOW, lastObservedSnapshotAt: NOW, occurrenceCount: 4,
-      reopenedCount: 0, cleanSnapshotCount: 0, latestEvidence: { restartCount: 4 }, createdAt: EARLIER, updatedAt: NOW,
-      workflowActivity: issueActivity('fixture-issue')
+      reopenedCount: 0, cleanSnapshotCount: 0, latestEvidence: { restartCount: 4 }, createdAt: EARLIER, updatedAt: NOW
     },
     {
       id: 'fixture-vm-issue', workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.virtualMachine, targetType: 'virtual_machine', targetName: virtualMachine.name,
@@ -463,8 +425,7 @@ export function createFixtureState(): FixtureState {
       title: 'Payment gateway service is degraded', summary: 'The service is responding slowly and one health check failed.',
       scopeKind: 'Service', scopeName: 'payment-gateway.service', objectKind: 'Service', objectName: 'payment-gateway.service',
       reason: 'Health check timeout', firstSeenAt: EARLIER, lastSeenAt: NOW, lastObservedSnapshotAt: NOW, occurrenceCount: 2,
-      reopenedCount: 0, cleanSnapshotCount: 0, latestEvidence: { responseTimeMs: 890 }, createdAt: EARLIER, updatedAt: NOW,
-      workflowActivity: issueActivity('fixture-vm-issue')
+      reopenedCount: 0, cleanSnapshotCount: 0, latestEvidence: { responseTimeMs: 890 }, createdAt: EARLIER, updatedAt: NOW
     }
   ];
   return {
@@ -492,8 +453,8 @@ export function createFixtureState(): FixtureState {
     workflows,
     automationTemplates,
     workflowSchedules: [
-      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
-      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, workflowVersion: 2, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
+      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
+      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
     ],
     workflowWebhooks: [
       {
@@ -507,7 +468,7 @@ export function createFixtureState(): FixtureState {
     approvals: [
       {
         approvalId: 'fixture-workspace-approval',
-        runId: 'fixture-execution-issue-review-run',
+        runId: 'fixture-execution-review-run',
         source: 'workflow_tool',
         workflowId: FIXTURE_IDS.workflow,
         targetId: FIXTURE_IDS.cluster,

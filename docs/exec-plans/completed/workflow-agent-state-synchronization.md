@@ -13,7 +13,7 @@ changes.
   begins.
 - Treat a successful empty API response as authoritative empty state; use
   fallbacks only when live data is unavailable.
-- Never reuse workflow sessions, compiled access, version history, or edit state
+- Never reuse workflow sessions, compiled access, or edit state
   across workspace boundaries.
 - Use existing workflow and agent API contracts without backend changes.
 - Preserve unrelated changes in the existing dirty worktree.

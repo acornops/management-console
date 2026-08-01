@@ -1,99 +1,40 @@
 import type { TargetType } from './types';
+import type {
+  CreateSkillInput,
+  GitSkillImportSource,
+  ImportSkillInput,
+  ReimportSkillInput,
+  ResolveGitSkillInput,
+  SkillDetail,
+  SkillFile,
+  SkillImportProvider,
+  SkillsCatalog,
+  SkillSource,
+  SkillSourceType,
+  SkillSummary,
+  SkillSyncStatus,
+  SkillValidationStatus,
+  UpdateSkillInput
+} from './skillTypes';
 
 interface ControlPlaneTargetScope {
-  targetId: string;
-  targetType: TargetType;
+  targetId?: string;
+  targetType?: TargetType;
   clusterId?: string;
 }
 
-export type TargetSkillSourceType = 'manual' | 'git_import';
-export type TargetSkillImportProvider = 'github' | 'gitlab';
-export type TargetSkillValidationStatus = 'valid' | 'invalid';
-export type TargetSkillSyncStatus = 'not_applicable' | 'current' | 'modified';
-
-export interface ControlPlaneTargetSkillFile {
-  path: string;
-  content: string;
-  sizeBytes: number;
-}
-
-export interface ControlPlaneTargetSkillSource {
-  type: TargetSkillSourceType;
-  provider?: TargetSkillImportProvider;
-  repoUrl?: string;
-  apiBaseUrl?: string;
-  ref?: string;
-  subpath?: string;
-  commitSha?: string;
-  syncStatus: TargetSkillSyncStatus;
-}
-
-export interface ControlPlaneTargetSkillSummary extends ControlPlaneTargetScope {
-  id: string;
-  workspaceId: string;
-  name: string;
-  description: string;
-  enabled: boolean;
-  validationStatus: TargetSkillValidationStatus;
-  validationErrors: string[];
-  bundleStats: {
-    fileCount: number;
-    totalBytes: number;
-  };
-  source: ControlPlaneTargetSkillSource;
-  createdAt: string;
-  updatedAt: string;
-  inherited?: boolean;
-}
-
-export interface ControlPlaneTargetSkillDetail extends ControlPlaneTargetSkillSummary {
-  files: ControlPlaneTargetSkillFile[];
-}
-
-export interface ControlPlaneTargetSkillsCatalog extends ControlPlaneTargetScope {
-  workspaceId: string;
-  permissions: {
-    canEdit: boolean;
-    editableRoles: string[];
-  };
-  items: ControlPlaneTargetSkillSummary[];
-  nextCursor?: string;
-}
-
-export interface CreateTargetSkillInput {
-  files: Array<{
-    path: string;
-    content: string;
-  }>;
-}
-
-export interface ResolveGitTargetSkillInput {
-  repoUrl: string;
-  ref?: string;
-  subpath?: string;
-}
-
-export interface GitTargetSkillImportSource {
-  provider: TargetSkillImportProvider;
-  repoUrl: string;
-  ref: string;
-  subpath?: string;
-  commitSha?: string;
-}
-
-export interface ImportTargetSkillInput {
-  files: CreateTargetSkillInput['files'];
-  source: GitTargetSkillImportSource;
-}
-
-export interface ReimportTargetSkillInput extends ImportTargetSkillInput {
-  force?: boolean;
-}
-
-export interface UpdateTargetSkillInput {
-  enabled?: boolean;
-  files?: Array<{
-    path: string;
-    content: string;
-  }>;
-}
+export type TargetSkillSourceType = SkillSourceType;
+export type TargetSkillImportProvider = SkillImportProvider;
+export type TargetSkillValidationStatus = SkillValidationStatus;
+export type TargetSkillSyncStatus = SkillSyncStatus;
+export type ControlPlaneTargetSkillFile = SkillFile;
+export type ControlPlaneTargetSkillSource = SkillSource;
+export type ControlPlaneTargetSkillSummary = SkillSummary & ControlPlaneTargetScope;
+export type ControlPlaneTargetSkillDetail = SkillDetail & ControlPlaneTargetScope;
+export type ControlPlaneTargetSkillsCatalog = SkillsCatalog & ControlPlaneTargetScope;
+export type CreateTargetSkillInput = CreateSkillInput;
+export type ResolveGitTargetSkillInput = ResolveGitSkillInput;
+export type GitTargetSkillImportSource = GitSkillImportSource;
+export type ImportTargetSkillInput = ImportSkillInput;
+export type ReimportTargetSkillInput = ReimportSkillInput;
+export type UpdateTargetSkillInput = UpdateSkillInput;

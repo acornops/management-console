@@ -135,7 +135,7 @@ export const AgentToolsPanel: React.FC<AgentToolsPanelProps> = ({
                         {assigned ? t('agentsWorkflows.agents.details.capabilities.nativeTools.granted') : t('agentsWorkflows.agents.details.capabilities.nativeTools.notGranted')}
                       </StatusBadge>
                     </div>
-                    <p className="type-caption mt-1 max-w-[70ch] text-ui-text-muted">{tool.targetCatalogDescription || tool.description}</p>
+                    <p className="type-caption mt-1 max-w-[70ch] text-ui-text-muted">{tool.description}</p>
                     <p className="type-code mt-1 text-ui-text-muted">{tool.id}</p>
                   </div>
                   {tool.id === FETCH_TOOL_ID ? (

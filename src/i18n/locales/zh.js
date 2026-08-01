@@ -263,7 +263,7 @@ export const zh = {
     refreshError: '自动刷新运行暂不可用。请手动刷新，或重新聚焦此窗口后重试。',
     openCount: '{{count}} 个进行中',
     attentionCount: '{{count}} 个需要关注',
-    target: '目标',
+    scope: '范围',
     workspaceScope: '工作区范围',
     duration: '持续时间',
     durationUnavailable: '持续时间不可用',
@@ -287,12 +287,6 @@ export const zh = {
       skipped: '已跳过',
       rejected: '已拒绝'
     },
-    relatedRuns: '{{count}} 个相关运行',
-    relatedRuns_one: '{{count}} 个相关运行',
-    relatedRuns_other: '{{count}} 个相关运行',
-    openRuns: '{{count}} 个进行中的运行',
-    openRuns_one: '{{count}} 个进行中的运行',
-    openRuns_other: '{{count}} 个进行中的运行',
     origin: {
       manual: '手动',
       external_integration: '外部集成',
@@ -319,7 +313,7 @@ export const zh = {
     },
     columns: {
       run: '工作流和来源',
-      target: '目标',
+      scope: '范围',
       time: '活动',
       duration: '持续时间',
       action: '操作'
@@ -336,13 +330,11 @@ export const zh = {
       attention: '需要关注',
       completed: '已完成',
       failed: '失败',
-      cancelled: '已取消',
-      issueApplied: '问题：{{issue}}'
+      cancelled: '已取消'
     },
     actions: {
       openRun: '打开运行',
       reviewRun: '审核运行',
-      viewRuns: '查看运行',
       reviewFailure: '审核失败',
       viewHistory: '查看历史'
     }
@@ -1734,10 +1726,6 @@ export const zh = {
     resizeQuickChat: '调整对话面板宽度',
     ready: '就绪',
     needsSetup: '需要配置',
-    workflowUsage: '工作流使用情况',
-    workflowUsageCount: '已分配给 {{count}} 个工作流。',
-    workflowUsageCount_one: '已分配给 {{count}} 个工作流。',
-    workflowUsageCount_other: '已分配给 {{count}} 个工作流。',
     noWorkflowUsage: '当前没有工作流使用此 Agent。',
     sections: {
       chat: {
@@ -1758,7 +1746,7 @@ export const zh = {
       },
       settings: {
         title: 'Agent 设置',
-        description: '管理 {{name}} 的配置版本和生命周期操作。'
+        description: '管理 {{name}} 的生命周期操作。'
       }
     },
     tabs: {
@@ -3225,7 +3213,7 @@ export const zh = {
       toolbarLabel: 'Agent 目录搜索和筛选', searchPlaceholder: '搜索 Agent', searchLabel: '搜索 Agent', statusFilterLabel: '按状态筛选 Agent',
       resultCount: '显示 {{visible}} 个，共 {{total}} 个 Agent', totalCount: '{{count}} 个 Agent', totalCount_one: '{{count}} 个 Agent', totalCount_other: '{{count}} 个 Agent', newAgent: '新建 Agent', createPermission: '需要 manage_agents 权限才能创建 Agent。', emptyTitle: '此工作区暂无 Agent', emptyBody: '创建 Agent，为工作流提供能力。', emptyReadOnlyBody: '工作区管理员创建 Agent 后，它们会显示在这里。',
       noResultsTitle: '没有匹配的 Agent', noResultsBody: '请调整搜索或状态筛选。', filters: { all: '全部' },
-      status: { active: '已启用', draft: '草稿', disabled: '已停用' }, tabs: { overview: '概览', capabilities: '能力', versions: '恢复点', settings: '设置' },
+      status: { active: '已启用', draft: '草稿', disabled: '已停用' }, tabs: { overview: '概览', capabilities: '能力', settings: '设置' },
       fields: { identity: 'Agent', status: '状态', capabilities: '能力', assignment: '工作流分配' },
       openProfile: '打开 {{name}} Agent 资料',
       quickChat: '对话',
@@ -3246,19 +3234,16 @@ export const zh = {
       edit: '编辑 Agent', reactivate: '重新启用', dangerZone: '危险操作', retryAll: '全部重试', unavailable: '部分实时数据暂不可用',
       details: {
         profileSections: 'Agent 资料分区',
-        tabs: { overview: '概览', capabilities: '能力', versions: '恢复点', settings: '设置' },
+        tabs: { overview: '概览', capabilities: '能力', settings: '设置' },
         managePermission: '需要 manage_agents 权限才能更改此 Agent。',
         disabledStatus: '此 Agent 已停用，无法用于新的分配。',
         identityAssignment: '身份与分配', owner: '所有者', source: '来源', kind: '类型', status: '状态', provider: '提供方', lastActivity: '最近工作流使用', noActivity: '暂无工作流使用',
         kindValue: { specialist: '专家' }, providerValue: { internal: '内部', external: '外部' },
         assignedWorkflows: '已分配的工作流', noAssignedWorkflows: '未分配工作流。',
-        scopePolicy: '范围与策略', targetScope: '目标范围', noTargetScope: '无目标范围', contextScope: '上下文范围', noContextScope: '无上下文范围',
+        scopePolicy: '范围与策略', contextScope: '上下文范围', noContextScope: '无上下文范围',
         permissionModeLabel: '权限模式', approvalGateLabel: '审批关卡', trustBoundary: '信任边界', dataAccess: '数据访问',
         permissionMode: { read_only: '只读', ask_before_changes: '更改前询问', auto_allowed_changes: '自动执行常规更改' },
         approvalGate: { read_only: '已禁用写入', ask_before_changes: '每个可写工具执行前', auto_allowed_changes: '高风险或破坏性写入前' },
-        restorePoints: '已保存的恢复点', customRestorePointsDescription: '保存当前 Agent 定义，或从已保存的恢复点创建新的当前修订版。',
-        saving: '正在保存...', saveRestorePoint: '保存恢复点', restore: '恢复', noRestorePoints: '尚未保存恢复点。', revisionLabel: '修订版 {{version}}',
-        restoreConfirmationTitle: '恢复修订版 {{version}}？', restoreConfirmationDescription: '这会从已保存的恢复点创建新的当前修订版。现有运行不受影响。', confirmRestore: '恢复此恢复点',
         agentLifecycle: 'Agent 生命周期', lifecycleDescription: '管理此 Agent 是否可接收新分配，或将其永久删除。',
         disableAgent: '停用 Agent', disableDescription: '停止将此 Agent 用于新的分配。现有工作流引用会保留。', confirmDisableTitle: '确认停用 Agent', confirmDisable: '确认停用',
         disableImpact: '停用可能中断 {{count}} 个已分配的工作流。', disableImpact_one: '停用可能中断 {{count}} 个已分配的工作流。', disableImpact_other: '停用可能中断 {{count}} 个已分配的工作流。',
@@ -3289,7 +3274,7 @@ export const zh = {
       runAs: '运行身份', creatorIdentityHelp: '计划任务以其已认证创建者的身份运行。每次运行都会重新检查工作区成员资格和权限。', identityLoadFailed: '无法加载你的计划任务身份。',
       credentialReadiness: '凭据就绪状态', capabilityReadiness: '能力就绪状态', scheduleOwner: '计划任务所有者',
       credentialReadinessHelp: '正在检查 {{owner}} 的凭据。个人 MCP 连接绝不会借用其他用户的凭据。', capabilityBlocked: '请先解决工作流能力要求，再启用此计划任务。',
-      capabilityReadinessHelp: '根据所选目标、Agent 分配和当前启用的工具进行检查。',
+      capabilityReadinessHelp: '根据 Agent 分配和当前启用的工具进行检查。',
       advanced: '高级 Cron', cron: 'Cron 表达式',
       enabled: '创建后立即启用计划', cancel: '取消', create: '创建计划', creating: '正在创建…', createError: '无法创建工作流计划'
     }

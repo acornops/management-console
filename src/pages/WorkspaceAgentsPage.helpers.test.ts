@@ -4,32 +4,7 @@ import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import { mapApiAgent } from './WorkspaceAgentsPage.helpers';
 
 describe('workspace Agent ownership mapping', () => {
-  it('treats legacy template-origin Agents as workspace-owned', () => {
-    const mapped = mapApiAgent({
-      id: 'agent-1',
-      workspaceId: 'workspace-1',
-      name: 'Target Diagnostics',
-      description: 'Inspect one target.',
-      instructions: 'Use live evidence.',
-      status: 'active',
-      origin: {
-        type: 'template',
-        templateId: 'acornops-starter',
-        templateVersion: 4
-      },
-      reviewState: 'reviewed',
-      providerType: 'internal',
-      ownerUserId: 'user-1',
-      createdBy: 'user-1',
-      version: 1
-    } as AgentDefinitionApi, 'Operations', new Map([['user-1', 'Ning Tan']]));
-
-    expect(mapped.owner).toBe('Ning Tan');
-    expect(mapped.origin.type).toBe('template');
-    expect(mapped.avatarEmoji).toBe('🤖');
-  });
-
-  it('maps the persisted Agent emoji identity', () => {
+  it('maps the persisted Agent identity and workspace owner', () => {
     const mapped = mapApiAgent({
       id: 'agent-2',
       workspaceId: 'workspace-1',
@@ -37,12 +12,13 @@ describe('workspace Agent ownership mapping', () => {
       avatarEmoji: '☸️',
       instructions: 'Inspect live evidence.',
       status: 'active',
-      origin: { type: 'manual' },
       reviewState: 'reviewed',
       providerType: 'internal',
+      ownerUserId: 'user-1',
       createdBy: 'user-1'
-    } as AgentDefinitionApi, 'Operations');
+    } as AgentDefinitionApi, 'Operations', new Map([['user-1', 'Ning Tan']]));
 
     expect(mapped.avatarEmoji).toBe('☸️');
+    expect(mapped.owner).toBe('Ning Tan');
   });
 });

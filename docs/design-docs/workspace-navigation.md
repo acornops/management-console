@@ -92,7 +92,7 @@ on window focus. A transient request failure keeps the last successful value.
 Activity may show the normalized open-execution count using the same badge
 rules. The shared workflow activity store refreshes the count on workspace
 entry, every two seconds while visible, and on focus. Attention-required detail
-belongs inside Activity and issue context rather than a second navigation badge.
+belongs inside Activity rather than a second navigation badge.
 
 ## Cross-Console Alignment
 

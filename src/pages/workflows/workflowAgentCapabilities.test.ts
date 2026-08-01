@@ -12,18 +12,15 @@ const agent: AgentDefinition = {
   description: '',
   instructions: '',
   status: 'active',
-  origin: { type: 'manual' },
   reviewState: 'reviewed',
   providerType: 'internal',
   createdBy: 'user-1',
   owner: 'Operator',
-  version: 1,
-  mcpServers: ['acornops-target-agent'],
+  mcpServers: ['targets'],
   tools: ['get_resource', 'get_resource_logs', 'list_resources'],
   nativeToolConfigs: {},
-  skills: ['acornops-observability', 'acornops-target-boundary-design'],
-  semanticCapabilityIds: ['target.diagnostics.read'],
-  targetScope: ['workspace'],
+  skills: ['acornops-observability', 'acornops-infrastructure-boundary-design'],
+  semanticCapabilityIds: ['infrastructure.diagnostics.read'],
   contextScope: ['workspace_metadata'],
   permissionMode: 'read_only',
   trustPolicy: {
@@ -33,13 +30,11 @@ const agent: AgentDefinition = {
   capabilities: [{
     source: 'builtin_tool',
     resourceType: 'kubernetes',
-    resourceScope: 'target_inventory',
+    resourceScope: 'infrastructure_inventory',
     toolId: 'list_resources',
     operation: 'read',
     requiresApproval: false
   }],
-  workflowsUsingAgent: [],
-  workflowUsage: { workflowRunCount: 0 },
   readiness: { status: 'ready', reasons: [] }
 };
 
@@ -54,7 +49,7 @@ const workflow: WorkflowDefinition = {
   lastRun: 'No runs yet',
   agentIds: [agent.id],
   executionMode: 'direct',
-  semanticCapabilityIds: ['target.diagnostics.read'],
+  semanticCapabilityIds: ['infrastructure.diagnostics.read'],
   capabilityRestrictionMode: 'restrict',
   agents: [{
     agentId: agent.id,
@@ -78,17 +73,17 @@ describe('workflowAgentCapabilities', () => {
 
     expect(review).toHaveLength(1);
     expect(review[0].agentId).toBe('agent-cluster-triage');
-    expect(review[0].mcpServers).toEqual(['Acornops Target Agent']);
-    expect(review[0].semanticCapabilityIds).toEqual(['target.diagnostics.read']);
-    expect(review[0].skills).toEqual(['Acornops Observability', 'Acornops Target Boundary Design']);
+    expect(review[0].mcpServers).toEqual(['Targets']);
+    expect(review[0].semanticCapabilityIds).toEqual(['infrastructure.diagnostics.read']);
+    expect(review[0].skills).toEqual(['Acornops Observability', 'Acornops Infrastructure Boundary Design']);
     expect(review[0].tools).toEqual([
       { id: 'get_resource', label: 'get_resource', access: 'unknown', requiresApproval: false },
       { id: 'get_resource_logs', label: 'get_resource_logs', access: 'unknown', requiresApproval: false },
       { id: 'list_resources', label: 'list_resources', access: 'read', requiresApproval: false }
     ]);
-    expect(review[0].tools.map((tool) => tool.id)).not.toContain('target.diagnostics.read');
+    expect(review[0].tools.map((tool) => tool.id)).not.toContain('infrastructure.diagnostics.read');
     expect(review[0].writeAccess).toBe('Writes are disabled');
-    expect(review[0].capabilityRules).toContain('read kubernetes target_inventory via list_resources');
+    expect(review[0].capabilityRules).toContain('read kubernetes infrastructure_inventory via list_resources');
   });
 
   it('reviews every coordinated Agent as a peer so their ceilings can be combined', () => {
@@ -145,7 +140,7 @@ describe('workflowAgentCapabilities', () => {
       capabilities: [{
         source: 'builtin_tool',
         resourceType: 'kubernetes',
-        resourceScope: 'target_inventory',
+        resourceScope: 'infrastructure_inventory',
         toolId: 'patch_resource',
         operation: 'write',
         requiresApproval: true

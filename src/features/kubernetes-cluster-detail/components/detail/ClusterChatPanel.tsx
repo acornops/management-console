@@ -96,7 +96,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
 
   return (
     <TargetChatView
-      target={target}
+      subject={target}
       isDark={isDark}
       canChat={canChat}
       isConversationOwner={isActiveSessionOwner}

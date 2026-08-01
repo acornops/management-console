@@ -391,14 +391,19 @@ for (const repoPath of resourceCardCatalogPaths) {
 
 const stylesPath = join(root, 'src/styles.css');
 const stylesSource = readFileSync(stylesPath, 'utf8');
+const resourceCardGridRule = stylesSource.match(/\.resource-card-grid\s*\{([^}]*)\}/)?.[1] || '';
 for (const contractRule of [
-  'display: flex',
-  'flex-wrap: wrap',
-  'flex: 1 1 min(100%, 30rem)',
-  'max-width: 40rem'
+  'display: grid',
+  'grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr))'
 ]) {
-  if (!stylesSource.includes(contractRule)) {
+  if (!resourceCardGridRule.includes(contractRule)) {
     report(stylesPath, 'shared-resource-card-grid', `missing shared layout rule ${contractRule}`);
+  }
+}
+const resourceCardItemRule = stylesSource.match(/\.resource-card-grid\s*>\s*\*\s*\{([^}]*)\}/)?.[1] || '';
+for (const contractRule of ['width: 100%', 'min-width: 0']) {
+  if (!resourceCardItemRule.includes(contractRule)) {
+    report(stylesPath, 'shared-resource-card-grid', `missing shared item rule ${contractRule}`);
   }
 }
 if (/(?:cluster|vm|agent)-card-grid[^{]*\{[^}]*grid-template-columns/s.test(stylesSource)) {

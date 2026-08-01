@@ -78,7 +78,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
   return (
     <TargetChatView
       currentUserId={currentUserId}
-      target={target}
+      subject={target}
       isDark={isDark}
       titleKey="virtualMachines.chat.title"
       descriptionKey="virtualMachines.chat.description"

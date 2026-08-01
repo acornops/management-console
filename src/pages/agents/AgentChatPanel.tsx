@@ -1,9 +1,11 @@
 import React from 'react';
 import { Button, InlineAlert } from '@acornops/ui';
 import { useTranslation } from 'react-i18next';
-import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
-import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
-import type { LiveRunTrace } from '@/features/targets/chat/types';
+import {
+  ConversationView,
+  createMarkdownComponents,
+  type LiveRunTrace
+} from '@/features/conversations/presentation';
 import type { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval, Workspace } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
@@ -102,7 +104,7 @@ function toChatSession(
     backendSessionId: summary.id,
     name: summary.title,
     createdBy: summary.createdBy,
-    status: 'open',
+    status: summary.status,
     hydrated,
     messages,
     timestamp: Date.parse(summary.createdAt) || Date.now()
@@ -306,8 +308,8 @@ export const AgentChatPanel: React.FC<{
           )}
         </div>
       )}
-      <TargetChatView
-        target={{ id: agent.id, workspaceId: agent.workspaceId, name: agent.name }}
+      <ConversationView
+        subject={{ id: agent.id, workspaceId: agent.workspaceId, name: agent.name }}
         headerLeading={<AgentAvatar emoji={agent.avatarEmoji} size={displayMode === 'panel' ? 'md' : 'lg'} />}
         title={title}
         automaticInvestigationsEnabled={false}

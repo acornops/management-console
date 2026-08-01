@@ -39,8 +39,28 @@ export default defineConfig(({ command, mode }) => {
             if (id.includes('/src/i18n/locales/')) {
               return 'app-locales';
             }
+            if (
+              id.endsWith('/src/features/targets/chat/components/TargetChatView.tsx')
+              || id.endsWith('/src/features/targets/chat/components/TargetChatViewBody.tsx')
+              || id.endsWith('/src/features/targets/chat/components/TargetChatComposer.tsx')
+            ) {
+              return 'target-chat-shell';
+            }
+            if (id.includes('/src/features/targets/chat/')) {
+              return 'target-chat-runtime';
+            }
             if (!id.includes('node_modules')) {
               return undefined;
+            }
+            if (
+              id.includes('/react-markdown/')
+              || id.includes('/remark-gfm/')
+              || id.includes('/unified/')
+              || id.includes('/micromark')
+              || id.includes('/mdast-util-')
+              || id.includes('/hast-util-')
+            ) {
+              return 'vendor-markdown';
             }
             if (id.includes('tailwind-merge') || id.includes('/clsx/')) {
               return 'vendor-utilities';

@@ -30,7 +30,7 @@ import type { ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   currentUserId = '',
-  target,
+  subject,
   headerLeading, automaticInvestigationsEnabled = true, capabilityPreviewEnabled = true,
   title: titleOverride, titleKey,
   descriptionKey,
@@ -507,7 +507,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     setIsAssistantCapabilitiesPreviewLoading(true);
     setAssistantCapabilitiesPreviewError('');
     setAssistantCapabilitiesPreview(null);
-    controlPlaneApi.getTargetAssistantCapabilitiesPreview(target.workspaceId, target.id, requestedToolAccessMode)
+    controlPlaneApi.getTargetAssistantCapabilitiesPreview(subject.workspaceId, subject.id, requestedToolAccessMode)
       .then((preview) => {
         if (cancelled) return;
         setAssistantCapabilitiesPreview(preview);
@@ -525,7 +525,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [canChat, capabilityPreviewEnabled, target.id, target.workspaceId, requestedToolAccessMode, t]);
+  }, [canChat, capabilityPreviewEnabled, subject.id, subject.workspaceId, requestedToolAccessMode, t]);
 
   React.useEffect(() => {
     setRuntimeFallbackNotice('');
@@ -629,7 +629,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     <TargetChatViewBody
       {...{
         activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, automaticInvestigationsEnabled, capabilityPreviewEnabled, canApproveWriteActions,
-        canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, target, composerActionLabel, composerAttachmentNotice: composerNotice,
+        canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, subject, composerActionLabel, composerAttachmentNotice: composerNotice,
         composerAttachments, composerReferences, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, currentUserId, deleteSessionError, deleteTargetSession,
         deletingSessionId, desktopHistoryPanelId, dismissReferenceMenu, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
         handleChatWindowDragLeave, handleChatWindowDragOver, handleChatWindowDrop, handleComposerInputChange, handleComposerKeyDown, handleCreateSessionClick, handleModelAndEffortChange, handleModelChange, headerLeading, historyButtonRef,

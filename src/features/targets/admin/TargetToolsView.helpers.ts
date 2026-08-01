@@ -1,6 +1,6 @@
 import { formInputClassName, formTextareaClassName } from '@acornops/ui';
 
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
+import type { CapabilitySubject } from '@/features/capabilities/admin';
 import {
   controlPlaneApi,
   type ControlPlaneTargetToolItem,
@@ -11,7 +11,7 @@ import {
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 export interface TargetToolsViewProps {
-  target: TargetDescriptor;
+  subject: CapabilitySubject;
   canManageTools?: boolean;
   initialCatalog?: ControlPlaneTargetToolsCatalog | null;
   onCatalogChange?: (catalog: ControlPlaneTargetToolsCatalog) => void;

@@ -40,9 +40,7 @@ export function useWorkflowCapabilityPreview(input: {
     })
       .then((response) => {
         if (requestRef.current !== requestId) return;
-        if (response.workflowId !== workflow.id
-          || (workflow.version !== undefined && response.workflowVersion !== workflow.version)
-          || response.mode !== workflow.policy.mode) {
+        if (response.workflowId !== workflow.id || response.mode !== workflow.policy.mode) {
           setError('The capability check is stale. Retry before launch.');
           return;
         }
@@ -59,7 +57,7 @@ export function useWorkflowCapabilityPreview(input: {
       window.clearTimeout(timer);
       if (requestRef.current === requestId) requestRef.current += 1;
     };
-  }, [input.workspaceId, input.workflow?.id, input.workflow?.version, input.workflow?.policy.mode, input.workflow?.contextGrants.join('\0'), retryKey]);
+  }, [input.workspaceId, input.workflow?.id, input.workflow?.policy.mode, input.workflow?.contextGrants.join('\0'), retryKey]);
 
   return { preview, loading, error, blocker, retry: () => setRetryKey((value) => value + 1) };
 }

@@ -11,7 +11,6 @@ export function workflowCapabilityPreview(
   const tools: Array<Record<string, unknown>> = [];
   return {
     workflowId,
-    workflowVersion: workflow.version,
     mode: (workflow.capabilityPolicy as { mode?: string } | undefined)?.mode || 'read_only',
     semanticCapabilityIds: (workflow.capabilityPolicy as { semanticCapabilityIds?: string[] } | undefined)?.semanticCapabilityIds || [],
     checkedAt: NOW,

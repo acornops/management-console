@@ -1,7 +1,6 @@
 import React from 'react';
 import { Switch } from '@acornops/ui';
-import { buildTraceFromRunEvents } from '@/features/targets/chat/hooks/chatRunTrace';
-import type { LiveRunTrace } from '@/features/targets/chat/types';
+import { buildTraceFromRunEvents, type LiveRunTrace } from '@/features/conversations/presentation';
 import {
   type WorkflowDefinition,
   type WorkflowStatus,
@@ -322,17 +321,12 @@ export function mapApiWorkflowToDefinition(
       required: true
     };
   });
-  const source = 'user';
-
   return {
     id: workflow.id,
     workspaceId,
-    version: workflow.version,
     name: workflow.name,
     description: workflow.description || fallback?.description || 'Workspace-scoped workflow served by control-plane.',
     status: workflow.status || 'active',
-    source,
-    origin: workflow.origin,
     createdBy: workflow.createdBy,
     agentIds,
     executionMode,
@@ -349,7 +343,7 @@ export function mapApiWorkflowToDefinition(
       mode: workflowPolicy.mode,
       approvals: uniqueValues(workflowPolicy.approvalRequirements)
     },
-    starterPrompt: workflow.prompt || workflow.starterPrompt || fallback?.starterPrompt || `Start ${workflow.name}.`,
+    starterPrompt: workflow.prompt || fallback?.starterPrompt || `Start ${workflow.name}.`,
     runs: fallback?.runs || []
   };
 }

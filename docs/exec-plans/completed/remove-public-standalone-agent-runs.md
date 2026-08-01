@@ -9,7 +9,7 @@ Remove the console controls and API client surface for standalone Agent runs.
 - Agent profiles no longer expose an Activity tab or Run Agent action.
 - Legacy `panel=activity` and `agentTab=activity` links fall back to the Agent
   overview instead of rendering a removed surface.
-- Agent definition management, capability configuration, restore points, and
+- Agent definition management, capability configuration, and
   Workflow assignment remain unchanged.
 - Frontend API types and tests no longer expose Agent activity or trigger
   endpoints.

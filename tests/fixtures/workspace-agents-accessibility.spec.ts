@@ -33,7 +33,7 @@ test('the base Agent URL opens Chat and browser history restores it', async ({ p
 
   await expect(page.locator('header [data-agent-avatar="true"]')).toHaveText('☸️');
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
-  await page.getByRole('button', { name: 'Agent Settings' }).click();
+  await page.getByRole('link', { name: 'Agent Settings' }).click();
   await expect(page).toHaveURL(agentDetailPath('settings'));
   await page.goBack();
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();

@@ -82,11 +82,11 @@ describe('frontend fixture router', () => {
     expect(getFixtureState().agents.some((agent) => agent.name === 'Fixture mutation agent')).toBe(true);
     expect(getFixtureState().workflows.some((workflow) => workflow.name === 'Fixture mutation workflow')).toBe(true);
 
-    const templateInstall = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/automation-templates/target-remediation/install`, { method: 'POST' }));
+    const templateInstall = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/automation-templates/infrastructure-remediation/install`, { method: 'POST' }));
     expect(templateInstall.status).toBe(201);
     const installedWorkflowId = (templateInstall.body as { workflowId: string }).workflowId;
     expect(getFixtureState().workflows.some((workflow) => workflow.id === installedWorkflowId && workflow.status === 'paused')).toBe(true);
-    const templateActivation = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/automation-templates/target-remediation/activate`, { method: 'POST' }));
+    const templateActivation = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/automation-templates/infrastructure-remediation/activate`, { method: 'POST' }));
     expect(templateActivation.status).toBe(200);
     expect(getFixtureState().workflows.find((workflow) => workflow.id === installedWorkflowId)?.status).toBe('active');
 
@@ -120,7 +120,7 @@ describe('frontend fixture router', () => {
     });
 
     const decision = await routeFixtureRequest(request(
-      '/api/v1/runs/fixture-execution-issue-review-run/approvals/fixture-workspace-approval/decision',
+      '/api/v1/runs/fixture-execution-review-run/approvals/fixture-workspace-approval/decision',
       { method: 'POST', body: JSON.stringify({ decision: 'approved' }) }
     ));
     expect(decision.body).toMatchObject({ status: 'approved', decision: 'approved' });

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   cancelWorkflowRun,
+  listAutomationTemplates,
   createWorkflowSchedule,
   createWorkflow,
   createWorkflowSession,
@@ -29,6 +30,21 @@ describe('workflow control-plane api', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it('validates workflow recommendation catalog responses at the control-plane boundary', async () => {
+    const validTemplate = {
+      id: 'infrastructure-remediation', name: 'Infrastructure remediation', description: 'Safely change infrastructure named in the request.',
+      installMode: 'opt_in', installationStatus: 'not_installed', setupSteps: ['Add paused workflow'],
+      blockerCodes: ['TEMPLATE_NOT_INSTALLED']
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ templates: [validTemplate], installations: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ templates: [{ id: 'broken-template' }], installations: [] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(listAutomationTemplates('workspace-1')).resolves.toEqual({ templates: [validTemplate], installations: [] });
+    await expect(listAutomationTemplates('workspace-1')).rejects.toThrow('invalid recommendation');
   });
 
   it('loads workspace workflow definitions from the control plane', async () => {
@@ -77,8 +93,7 @@ describe('workflow control-plane api', () => {
         status: 'running',
         children: [{
           id: 'delegation-1',
-          capabilityId: 'target.diagnostics.read',
-          target: { id: 'cluster-1', targetType: 'kubernetes' },
+          capabilityId: 'infrastructure.diagnostics.read',
           agent: { id: 'agent-1', name: 'Workflow Analyst' },
           required: true,
           status: 'running'
@@ -90,7 +105,7 @@ describe('workflow control-plane api', () => {
     const response = await getWorkflowExecution('execution-1');
 
     expect(response.coordination?.children[0]).toMatchObject({
-      capabilityId: 'target.diagnostics.read',
+      capabilityId: 'infrastructure.diagnostics.read',
       agent: { name: 'Workflow Analyst' },
       status: 'running'
     });
@@ -106,8 +121,6 @@ describe('workflow control-plane api', () => {
           workflow: {
             id: 'workflow-1',
             workspaceId: 'workspace-1',
-            version: 1,
-            origin: { type: 'manual' },
             name: 'Custom workflow',
             prompt: 'Inspect the repository.',
             agentIds: ['agent-1'],
@@ -138,7 +151,6 @@ describe('workflow control-plane api', () => {
       }
     })).resolves.toMatchObject({
       id: 'workflow-1',
-      origin: { type: 'manual' },
       agentIds: ['agent-1'],
       executionMode: 'direct'
     });
@@ -198,7 +210,7 @@ describe('workflow control-plane api', () => {
   it('duplicates an effective workflow definition into a custom draft', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
-      return Promise.resolve(new Response(JSON.stringify({ workflow: { id: 'workflow-copy', workspaceId: 'workspace-1', version: 1, source: 'user', createdBy: 'user-1', name: 'Triage copy', status: 'draft', requiredPermissions: [], policy: { mode: 'read_only', maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] }, steps: [] } }), { status: 201 }));
+      return Promise.resolve(new Response(JSON.stringify({ workflow: { id: 'workflow-copy', workspaceId: 'workspace-1', source: 'user', createdBy: 'user-1', name: 'Triage copy', status: 'draft', requiredPermissions: [], policy: { mode: 'read_only', maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] }, steps: [] } }), { status: 201 }));
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -299,7 +311,7 @@ describe('workflow control-plane api', () => {
 
   it('previews workflow capabilities without creating a session or run', async () => {
     const payload = {
-      workflowId: 'workflow-1', workflowVersion: 4, mode: 'read_write', semanticCapabilityIds: ['target.remediation.write'],
+      workflowId: 'workflow-1', mode: 'read_write', semanticCapabilityIds: ['infrastructure.remediation.write'],
       checkedAt: '2026-07-17T00:00:00.000Z', status: 'ready', reasonCodes: [],
       tools: { read: [], write: [] }, directMcpServers: [], enabledSkills: [], approvalRequirements: [],
       counts: { tools: 0, readTools: 0, writeTools: 0, directMcpServers: 0, enabledSkills: 0, approvals: 0 }
@@ -324,7 +336,7 @@ describe('workflow control-plane api', () => {
 
   it('preserves generic MCP authentication recovery metadata without provider profiles', () => {
     const preview = normalizeWorkflowCapabilitiesPreview({
-      workflowId: 'workflow-1', workflowVersion: 4, mode: 'read_only', semanticCapabilityIds: [],
+      workflowId: 'workflow-1', mode: 'read_only', semanticCapabilityIds: [],
       checkedAt: '2026-07-19T00:00:00.000Z', status: 'blocked', reasonCodes: ['MCP_CONNECTION_UNAVAILABLE'],
       tools: { read: [], write: [] }, directMcpServers: [], enabledSkills: [], approvalRequirements: [],
       mcpRequirements: [{

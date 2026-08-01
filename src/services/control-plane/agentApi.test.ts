@@ -4,21 +4,17 @@ import {
   changeAgentConversationAccess,
   createAgent,
   createAgentConversation,
-  createAgentVersion,
   deleteAgent,
   deleteAgentConversation,
   duplicateAgent,
   getAgent,
   getAgentConversation,
   listAgentConversations,
-  listAutomationTemplates,
-  listAgentVersions,
   listWorkspaceAgents,
   listWorkspaceNativeTools,
   postAgentConversationMessage,
   grantAgentNativeTool,
   revokeAgentNativeTool,
-  restoreAgentVersion,
   updateAgent
 } from './agentApi';
 
@@ -46,7 +42,6 @@ describe('agent control-plane api', () => {
       id: 'conversation-1',
       workspaceId: 'workspace/a',
       agentId: 'agent/a',
-      agentVersion: 3,
       title: 'Incident reporter',
       createdBy: 'user-1',
       accessMode: 'read_only',
@@ -109,33 +104,18 @@ describe('agent control-plane api', () => {
     });
   });
 
-  it('validates workflow recommendation catalog responses at the control-plane boundary', async () => {
-    const validTemplate = {
-      id: 'target-remediation', version: 4, name: 'Target remediation', description: 'Safely change one target.',
-      installMode: 'opt_in', installationStatus: 'not_installed', setupSteps: ['Add paused workflow'],
-      blockerCodes: ['TEMPLATE_NOT_INSTALLED']
-    };
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ templates: [validTemplate], installations: [] }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ templates: [{ id: 'broken-template' }], installations: [] }), { status: 200 }));
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(listAutomationTemplates('workspace-1')).resolves.toEqual({ templates: [validTemplate], installations: [] });
-    await expect(listAutomationTemplates('workspace-1')).rejects.toThrow('invalid recommendation');
-  });
-
   it('lists and assigns code-owned native tools through manage_agents routes', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
-      if (url.endsWith('/catalog/native-tools')) return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'reports.pdf.generate', title: 'Generate PDF report', targetCatalogDescription: 'Create a provenance-linked PDF incident report from the current assistant conversation and available evidence.', invocationScopes: ['workflow', 'target_chat'] }] }), { status: 200 }));
+      if (url.endsWith('/catalog/native-tools')) return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'reports.pdf.generate', title: 'Generate PDF report', description: 'Create a provenance-linked PDF incident report from the current conversation and available evidence.', invocationScopes: ['workflow', 'agent_chat'] }] }), { status: 200 }));
       return Promise.resolve(new Response(JSON.stringify({ agent: { id: 'agent-1', workspaceId: 'workspace-1', tools: init?.method === 'PUT' ? ['reports.pdf.generate'] : [] } }), { status: 200 }));
     });
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(listWorkspaceNativeTools('workspace-1')).resolves.toMatchObject([{
       id: 'reports.pdf.generate',
-      targetCatalogDescription: 'Create a provenance-linked PDF incident report from the current assistant conversation and available evidence.',
-      invocationScopes: ['workflow', 'target_chat']
+      description: 'Create a provenance-linked PDF incident report from the current conversation and available evidence.',
+      invocationScopes: ['workflow', 'agent_chat']
     }]);
     await expect(grantAgentNativeTool('workspace-1', 'agent-1', 'reports.pdf.generate')).resolves.toMatchObject({ tools: ['reports.pdf.generate'] });
     await grantAgentNativeTool('workspace-1', 'agent-1', 'http.fetch.get', {
@@ -236,19 +216,10 @@ describe('agent control-plane api', () => {
     expect(JSON.parse(call?.[1]?.body as string)).toEqual({ workspaceId: 'workspace-1', name: 'Diagnostics copy' });
   });
 
-  it('calls agent version and deletion routes', async () => {
+  it('calls the agent deletion route', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (url.endsWith('/api/v1/auth/csrf')) {
         return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
-      }
-      if (url.endsWith('/api/v1/agents/agent-1/versions') && init?.method === 'POST') {
-        return Promise.resolve(new Response(JSON.stringify({ version: { id: 'version-1', agentId: 'agent-1', workspaceId: 'workspace-1', version: 2, createdAt: 'now' } }), { status: 201 }));
-      }
-      if (url.includes('/api/v1/agents/agent-1/versions?workspaceId=workspace-1')) {
-        return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'version-1', agentId: 'agent-1', workspaceId: 'workspace-1', version: 2, createdAt: 'now' }] }), { status: 200 }));
-      }
-      if (url.endsWith('/api/v1/agents/agent-1/versions/version-1/restore')) {
-        return Promise.resolve(new Response(JSON.stringify({ agent: { id: 'agent-1', workspaceId: 'workspace-1', name: 'Restored agent', version: 3 } }), { status: 200 }));
       }
       if (url.endsWith('/api/v1/agents/agent-1') && init?.method === 'DELETE') {
         return Promise.resolve(new Response(null, { status: 204 }));
@@ -257,13 +228,8 @@ describe('agent control-plane api', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(createAgentVersion('workspace-1', 'agent-1')).resolves.toMatchObject({ id: 'version-1' });
-    await expect(listAgentVersions('workspace-1', 'agent-1')).resolves.toHaveLength(1);
-    await expect(restoreAgentVersion('workspace-1', 'agent-1', 'version-1')).resolves.toMatchObject({ version: 3 });
     await expect(deleteAgent('workspace-1', 'agent-1')).resolves.toBeUndefined();
 
-    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/api/v1/agents/agent-1/versions?workspaceId=workspace-1'))).toBe(true);
-    expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith('/api/v1/agents/agent-1/versions/version-1/restore'))).toBe(true);
     expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith('/api/v1/agents/agent-1') && call[1]?.method === 'DELETE')).toBe(true);
   });
 });

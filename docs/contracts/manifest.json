@@ -1,23 +1,38 @@
 {
   "repo": "management-console",
   "version": 1,
-  "runtimeDependencies": ["control-plane"],
+  "runtimeDependencies": [
+    "control-plane"
+  ],
   "counterparts": {
     "control-plane": {
       "authContract": {
         "config": "GET /api/v1/auth/config returns effective workspace-user OIDC and password capability flags without exposing admission policy.",
         "logout": "POST /api/v1/auth/logout returns {status=ok,mode=oidc|local,redirectPath}; redirectPath is an AcornOps path and never a provider URL.",
-        "browserResults": ["auth_result=oidc_access_denied", "logout_result=success", "logout_result=local_only", "logout_result=incomplete"]
+        "browserResults": [
+          "auth_result=oidc_access_denied",
+          "logout_result=success",
+          "logout_result=local_only",
+          "logout_result=incomplete"
+        ]
       },
       "workspaceAiCredentialContract": {
-        "statusFields": ["provider", "configured", "enabled", "source=workspace|platform_default|none"],
+        "statusFields": [
+          "provider",
+          "configured",
+          "enabled",
+          "source=workspace|platform_default|none"
+        ],
         "precedence": "A workspace override takes precedence over the inherited platform default.",
         "privacy": "Provider keys are write-only and never appear in responses.",
         "workspaceCreation": "The console omits AI setup step 3 only after the new workspace reports at least one configured source=platform_default provider; status lookup failure retains the step."
       },
       "kubernetesRbacAdditions": {
         "catalogPath": "GET /api/v1/workspaces/{workspaceId}/kubernetes-rbac-additions",
-        "catalogFields": ["version", "items[].{key,name,description?}"],
+        "catalogFields": [
+          "version",
+          "items[].{key,name,description?}"
+        ],
         "registrationField": "rbacAdditionKeys[]?",
         "resolution": "The control plane resolves selected keys against the effective future-onboarding catalog (Helm deployment baseline merged with admin upserts and disabled keys) and stores an immutable per-cluster snapshot. Later deployment or admin changes do not affect existing clusters; agent-key rotation reuses the stored snapshot.",
         "accessMode": "read_only installs configured get, list, and watch; read_write also installs configured create, patch, and delete. Patch requires list.",
@@ -35,11 +50,15 @@
       "workflowCapabilityCeiling": {
         "rule": "A workflow selects one or more active reviewed specialist Agents. restrictionMode=inherit resolves their current combined ceiling at session creation; restrictionMode=restrict requires semanticCapabilityIds to be an explicit subset.",
         "emptyRestrictionSemantics": "inherit requires an empty semanticCapabilityIds array. restrict may use an empty array to intentionally authorize no semantic capabilities. The console sends restrictionMode explicitly and stored definitions always contain the final field.",
-        "agentOnlyAdditions": ["mcp_servers", "mcp_tools", "skills"],
+        "agentOnlyAdditions": [
+          "mcp_servers",
+          "mcp_tools",
+          "skills"
+        ],
         "runtimeToolIdentity": "McpToolRef{serverId,toolName}"
       },
       "workflowRuntimePolicy": {
-        "authority": "ASSISTANT_MAX_RUNTIME_MS is the only workflow execution limit and TARGET_CHAT_REPORT_RETENTION_DAYS is the only workflow and target-chat report retention policy.",
+        "authority": "ASSISTANT_MAX_RUNTIME_MS is the only workflow execution limit and GENERATED_DOCUMENT_RETENTION_DAYS is the only generated-document retention policy.",
         "mutationContract": "Workflow mutations reject maxRuntimeSeconds, retentionDays, and all other unknown capability-policy fields; deployment policy is authoritative.",
         "response": "Workflow responses normalize maxRuntimeSeconds and retentionDays to effective deployment values.",
         "options": "Workflow option catalogs expose one effective runtime limit and one effective retention policy.",
@@ -49,19 +68,30 @@
         "path": "POST /api/v1/workflows/{workflowId}/capabilities-preview",
         "authorization": "Requires workspace-data read and the workflow mode's run-creation capability.",
         "snapshot": "Assigned Agents, reviewed mappings, and available tool routes are evaluated from one request snapshot. Workflows never select or persist a target.",
-        "statuses": ["ready", "blocked"],
+        "statuses": [
+          "ready",
+          "blocked"
+        ],
         "digests": "Responses include promptDigest and bindingDigest from the exact runtime-parameter compilation used for an accepted launch.",
         "mcpAuthRequirements": "Every credentialed MCP server in the compiled Agent scope emits mcpRequirements[].{serverId,serverName,authType,owningAgent.{id,name},connectionState,authRequirement.{scope,credentialLabel,requiredInformation[].{name,description}},action}; generic connection metadata and guidance only, never provider profiles, URLs, headers, or credential values",
         "privacy": "Responses expose bounded reason codes and explicit capability-preview metadata only; compiled scopes, credentials, URLs, headers, tool arguments, input schemas, private connection state, and internal coordinator identity are excluded.",
         "mutation": "Preview creates no session, execution, run, approval, or audit record. Dispatch recompiles an internal authoritative scope that is never returned by the public API."
       },
       "workspaceNativeToolContract": {
-        "catalog": ["prompt.resources.read", "http.fetch.get", "reports.pdf.generate"],
+        "catalog": [
+          "prompt.resources.read",
+          "http.fetch.get",
+          "reports.pdf.generate"
+        ],
+        "modelAliases": {
+          "prompt.resources.read": "_acornops_read_prompt_resources",
+          "http.fetch.get": "acornops_fetch",
+          "reports.pdf.generate": "acornops_generate_pdf_report"
+        },
         "ownership": "Control-plane code owns workspace-native metadata, schemas, authorization class, audit operation, and execution.",
         "assignment": "manage_agents grants, updates, or revokes a tool on a specialist Agent and transactionally rebinds exact reviewed mappings and dependent readiness; optional code-validated config is accepted on PUT, revoke clears config, and bodyless grants remain valid for unconfigured tools; manage_mcp is not required.",
-        "modelAliases": { "prompt.resources.read": "_acornops_read_prompt_resources", "http.fetch.get": "acornops_fetch", "reports.pdf.generate": "acornops_generate_pdf_report" },
-        "invocationScopePolicy": "Workspace-native declarations carry invocationScopes. prompt.resources.read and http.fetch.get support workflow; reports.pdf.generate supports workflow and target_chat; delegated specialist Workflow runs receive no workspace-native tools.",
-        "artifactSafety": "reports.pdf.generate is a control-plane-owned internal_artifact available to workflows and target chat without crossing the target-adapter boundary. It is allowed in read-only runs without write approval, persisted as a write audit event, bounded, provenance-linked, authenticated, and idempotent by workflow run or target run plus tool_call_id.",
+        "invocationScopePolicy": "Workspace-native declarations carry invocationScopes. prompt.resources.read and http.fetch.get support workflow; reports.pdf.generate supports workflow, target_chat, and agent_chat; delegated specialist Workflow runs receive no workspace-native tools.",
+        "artifactSafety": "reports.pdf.generate is a control-plane-owned internal_artifact available to workflows, target chat, and Agent chat without crossing the target-adapter boundary. It is allowed in read-only runs without write approval, persisted as a write audit event, bounded, provenance-linked, authenticated, and idempotent by workflow or interactive run plus tool_call_id.",
         "promptResources": "prompt.resources.read accepts binding IDs only and dispatches bounded reads through the providers authorized in the run's signed resource bindings.",
         "fetchSafety": "http.fetch.get accepts only a concrete url and executes unauthenticated public HTTPS GET in the control plane against one to 20 run-snapshotted full-URL patterns. Wildcards are restricted to path/query. DNS is public-only and pinned, redirects and IP literals are blocked, timeout is 15 seconds, decompressed output is capped at 256 KiB, and only JSON or text is returned as untrusted external data. Audits and metrics omit full URLs, queries, and bodies.",
         "ui": "Agent Capabilities > Tools lists AcornOps native tools separately from MCP-discovered tools. Fetch configuration uses a GET-only repeatable full-URL drawer; grant, configuration update, and revoke require manage_agents only.",
@@ -71,60 +101,14 @@
       "workflowRoutingContract": {
         "request": "required unique non-empty agentIds; strict schema rejects every unknown field with INVALID_REQUEST",
         "response": "executionMode is derived as direct for one selected Agent or coordinated for two or more; selection order has no meaning",
-        "coordinationTrace": "GET workflow execution returns only bounded child capability, target, specialist, status, and failure; internal coordinator identity and sensitive execution content are omitted",
+        "coordinationTrace": "GET workflow execution returns only bounded child capability, specialist, status, and failure; internal coordinator identity and sensitive execution content are omitted",
         "cancellation": "parent cancellation cascades to active coordinated child runs"
       },
-      "workflowWebhooks": {
-        "managementPaths": [
-          "GET /api/v1/workspaces/{workspaceId}/workflow-webhooks",
-          "POST /api/v1/workspaces/{workspaceId}/workflow-webhooks",
-          "PATCH /api/v1/workflow-webhooks/{webhookId}",
-          "DELETE /api/v1/workflow-webhooks/{webhookId}",
-          "POST /api/v1/workflow-webhooks/{webhookId}/rotate-secret"
-        ],
-        "ingressPath": "POST /api/v1/workflow-webhooks/{webhookId}/events",
-        "authorization": "read_workspace_data lists workflow webhooks; manage_workflows creates, updates, deletes, and rotates secrets; ingress is authenticated only by the webhook HMAC",
-        "webhookContract": "Any JSON object as event metadata plus X-AcornOps-Event-Id, X-AcornOps-Timestamp, and X-AcornOps-Signature=v1=<HMAC-SHA256(secret, timestamp.rawBody)>; metadata never changes the saved prompt; 256 KiB maximum, five-minute timestamp window, replay-protected, bounded request attempts, and 60 accepted events per webhook per minute",
-        "dispatchPolicy": "Every delivery recompiles the current saved workflow definition, user-principal authorization, capability mappings, MCP readiness, AI policy, approvals, and execution idempotency; configuration failures auto-pause the webhook",
-        "secretPolicy": "Webhook secrets are encrypted at rest and returned only on creation or explicit rotation; rotation invalidates an already-verified request before durable acceptance"
-      },
-      "workflowActivityVisibility": {
-        "paths": [
-          "GET /api/v1/workspaces/{workspaceId}/workflow-executions",
-          "GET /api/v1/workflow-executions/{executionId}"
-        ],
-        "authorization": "Browser users require read_workspace_data in the exact workspace; workspace activity routes are not exposed to external-integration credentials.",
-        "pagination": "The ledger uses an opaque stable cursor and returns {items,nextCursor?,summary.{openCount,attentionCount}} with bounded status, origin, workflow, and issue filters.",
-        "provenance": "Every execution returns an immutable safe origin snapshot for manual, external_integration, schedule, webhook, or retained historical-event dispatch. Schedule and webhook labels survive deletion; webhook payloads and occurrence keys are never projected.",
-        "refresh": "The console uses two-second visible-window polling and immediate focus refresh so background activity remains current without a second workspace event transport.",
-        "context": "Issue rows expose a compact workflowActivity summary without per-issue queries. Schedule and workflow-webhook rows keep configuration, last dispatch outcome, and latest successful execution pointer separate.",
-        "statusAuthority": "The aggregate execution status is authoritative; dispatch failure does not imply a running execution and terminal execution status never renders as in progress."
-      },
-      "targetAutoTriage": {
-        "status": "experimental",
-        "settingsPaths": [
-          "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage",
-          "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage"
-        ],
-        "startPaths": [
-          "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage/investigations",
-          "POST /api/v1/workspaces/{workspaceId}/issues/{issueId}/automatic-investigation"
-        ],
-        "defaults": "Missing settings resolve to disabled, warning minimum severity, follow_target write mode, empty additional instructions, empty namespace include and exclude lists, cluster-scoped issues included, and revision zero.",
-        "eligibility": "Kubernetes namespace eligibility is evaluated for new lifecycle enqueueing, explicit current-issue queueing, manual start, retry, eligible counts, and worker revalidation. Empty includes allow every observed namespace, exclusions win, and cluster-scoped issues have an independent switch. Virtual-machine eligibility remains target-wide.",
-        "idempotency": "One durable job and one automatic session are allowed for each issue ID and lifecycle version. Enabling or lowering the threshold never queues existing issues without the explicit bulk-start endpoint.",
-        "safety": "The target and agent are hard ceilings. read_only exposes no write tools; approval_required forces write confirmation; full_write skips confirmation only when the target permits it. The pinned run confirmation override is honored by target bootstrap.",
-        "runtime": "The control-plane worker uses a dedicated non-overlapping one-second timer and error boundary, leases due jobs, limits nonterminal automatic runs to two per target, reuses linked session and run IDs after recovery, guards linked run changes by expected status, reconciles terminal races, omits unavailable individual-credential MCP tools for system-auto-triage, and stops automatic runs when issues resolve. Explicit current-issue queueing is atomic at the saved settings revision. Session creation locks the current enabled revision, persists that pinned revision on the job, and prevents stale workers from starting after disablement or a policy edit.",
-        "queueVisibility": "Target settings responses include queueSummary.{activeCount,waitingCount,oldestWaitingAt?}. Counts follow worker admission semantics, remain independent of Workflow activity, and support a compact link to the existing target issue surface rather than a separate queue page.",
-        "historyUi": "The console filters the existing target session history into manual Chats and auto_triage Investigations while global search spans both. Investigation rows use linked issue scope, object, severity, and assistant status. A per-user, per-target browser marker derives the supplementary unseen badge from existing session creation timestamps; it is not control-plane state.",
-        "sharedChat": "Browser members with create_sessions and the relevant run capability may reply to auto_triage sessions with actual message authorship. Manual sessions and all external-integration access remain creator-owned.",
-        "workflowIndependence": "Automatic investigation enqueueing is evaluated independently during issue lifecycle persistence and does not alter generic workflow issue events or webhook behavior. The worker does not consult Automation runtime mode or share a Workflow scheduler tick."
-      },
       "systemAutomationDefinitions": {
-        "provisioning": "The greenfield baseline creates only the final schema. Current-version workspace provisioning atomically commits the two automatic specialist Agents, two active workspace-owned default workflows, and a completed starter installation. Optional recommended workflows are added explicitly; coordinated workflows use a versioned code-owned coordinator profile and create no hidden Agent.",
-        "attribution": "Default Agents and workflows are workspace-owned, use manual origin, and display their workspace creator. Legacy template-origin definitions are treated as workspace-owned.",
+        "provisioning": "The greenfield baseline creates only the final schema. Current workspace provisioning atomically commits the two automatic specialist Agents, two active workspace-owned default workflows, and a completed starter installation. Optional recommended workflows are added explicitly; coordinated workflows use a code-owned coordinator profile and create no hidden Agent.",
+        "attribution": "Agents and workflows are workspace-owned definitions and display their workspace creator.",
         "visibility": "Every public Agent is a specialist capability profile. Public workflow, compiled-scope, audit, search, and trace DTOs omit internal coordinator profile instructions and identity.",
-        "mutation": "Every workspace Agent and workflow, including legacy template-origin rows, is directly editable with the corresponding manage permission and is never overwritten, upgraded, or automatically restored by AcornOps. Agent deletion returns structured dependent workflows until those dependencies are removed.",
+        "mutation": "Every workspace Agent and workflow is directly editable with the corresponding manage permission and is never overwritten, upgraded, or automatically restored by AcornOps. Agent deletion returns structured dependent workflows until those dependencies are removed.",
         "duplication": "manage_agents or manage_workflows may copy the effective definition into a manual draft without capability installations, history, executions, schedules, sessions, or activity."
       },
       "agentConversationContract": {
@@ -134,16 +118,22 @@
           "PATCH /api/v1/agent-conversations/{conversationId}/access",
           "POST /api/v1/agent-conversations/{conversationId}/messages"
         ],
-        "runtime": "Console-only single-Agent manual conversations dispatch through a protected system-managed Workflow carrier with origin.type=agent_chat. Carriers are draft-only, hidden from workflow catalogs, and unavailable to direct workflow reads, edits, duplication, schedules, triggers, and capability preview.",
-        "access": "Conversations are workspace-readable. Only the creator may continue, change access, or delete them. New conversation access is the intersection of the pinned Agent permission mode and creator capabilities: read_write requires a write-capable Agent plus create_read_write_runs; otherwise access is read_only. A creator may pause a write-capable conversation by changing it to read_only, while a pinned read_only Agent cannot be elevated. Existing approval and audit paths remain authoritative.",
-        "pinning": "Creation pins the Agent revision, permissionMode, specialist snapshot, read scope, and maximum capability ceiling. Conversation summaries project the pinned permissionMode so clients do not infer policy from a newer Agent revision. Newly added capabilities are excluded. Removed pinned capabilities fail closed and require a new conversation.",
+        "runtime": "Console-only single-Agent manual conversations use the neutral sessions, messages, runs, events, approvals, artifacts, retention, and deletion runtime. Each message dispatches directly with scope.type=agent_chat and creates no Workflow definition, session, execution, or run.",
+        "access": "Conversations are workspace-readable. Only the creator may continue, change access, or delete them. New conversation access is the intersection of the current Agent permission mode and creator capabilities: read_write requires a write-capable Agent plus create_read_write_runs; otherwise access is read_only. A creator may pause a write-capable conversation by changing it to read_only, while a currently read-only Agent cannot be elevated. Conversations and Agent definitions with active direct runs cannot be deleted. Existing approval and audit paths remain authoritative.",
+        "pinning": "A conversation binds the Agent identity and preferred access mode. Each message resolves the current active, ready Agent and actor policy, then atomically pins the exact instructions, tools, skills, principal, model, Agent snapshot, and compiled scope on the new run. Capability additions and removals therefore apply only to later runs; active runs retain their immutable snapshots.",
         "automationBoundary": "Agent chat cannot schedule, accept triggers, coordinate or delegate to other Agents. Workflows remain the only repeatable, multi-Agent, scheduled, or externally triggered automation model."
       },
       "catalogAuthorization": {
         "manageSources": "manage_catalog_sources",
-        "installAgentMcp": ["manage_agents", "manage_mcp"],
-        "installAgentSkills": ["manage_agents", "manage_skills"],
+        "installAgentMcp": [
+          "manage_agents",
+          "manage_mcp"
+        ],
         "installTargetMcp": "manage_mcp",
+        "installAgentSkills": [
+          "manage_agents",
+          "manage_skills"
+        ],
         "toolReview": "scope-specific tool permission",
         "runtimeCredentialOwnership": "none | workspace installation owner | individual user owner"
       },
@@ -163,17 +153,37 @@
         ]
       },
       "mcpRecoveryRouteState": {
-        "query": ["mcpServer", "mcpAction"],
-        "actions": ["connect_mcp_server", "authorize_mcp_server", "select_authorization_server", "reauthorize_mcp_server", "verify_mcp_server"],
+        "query": [
+          "mcpServer",
+          "mcpAction"
+        ],
+        "actions": [
+          "connect_mcp_server",
+          "authorize_mcp_server",
+          "select_authorization_server",
+          "reauthorize_mcp_server",
+          "verify_mcp_server"
+        ],
         "automaticMutation": false,
         "clearAfterSuccessfulRepair": true
       },
       "catalogRouteState": {
         "path": "/workspaces/:workspaceId/catalog",
-        "query": ["q", "source", "compatibility", "artifact", "destination"],
-        "destinations": ["agent:{agentId}", "target:{targetId}"],
+        "query": [
+          "q",
+          "source",
+          "compatibility",
+          "artifact",
+          "destination"
+        ],
+        "destinations": [
+          "agent:{agentId}",
+          "target:{targetId}"
+        ],
         "excludedDestination": "system-owned coordination records",
-        "artifactKinds": ["mcp_server"]
+        "artifactKinds": [
+          "mcp_server"
+        ]
       },
       "webhookEventTypes": [
         "workspace.deleted.v1",
@@ -206,6 +216,52 @@
         "mcp.server.tested.v1",
         "tool.catalog.changed.v1"
       ],
+      "workflowWebhooks": {
+        "managementPaths": [
+          "GET /api/v1/workspaces/{workspaceId}/workflow-webhooks",
+          "POST /api/v1/workspaces/{workspaceId}/workflow-webhooks",
+          "PATCH /api/v1/workflow-webhooks/{webhookId}",
+          "DELETE /api/v1/workflow-webhooks/{webhookId}",
+          "POST /api/v1/workflow-webhooks/{webhookId}/rotate-secret"
+        ],
+        "ingressPath": "POST /api/v1/workflow-webhooks/{webhookId}/events",
+        "authorization": "read_workspace_data lists workflow webhooks; manage_workflows creates, updates, deletes, and rotates secrets; ingress is authenticated only by the webhook HMAC",
+        "webhookContract": "Any JSON object as event metadata plus X-AcornOps-Event-Id, X-AcornOps-Timestamp, and X-AcornOps-Signature=v1=<HMAC-SHA256(secret, timestamp.rawBody)>; metadata never changes the saved prompt; 256 KiB maximum, five-minute timestamp window, replay-protected, bounded request attempts, and 60 accepted events per webhook per minute",
+        "dispatchPolicy": "Every delivery recompiles the current saved workflow definition, user-principal authorization, capability mappings, MCP readiness, AI policy, approvals, and execution idempotency; configuration failures auto-pause the webhook",
+        "secretPolicy": "Webhook secrets are encrypted at rest and returned only on creation or explicit rotation; rotation invalidates an already-verified request before durable acceptance"
+      },
+      "workflowActivityVisibility": {
+        "paths": [
+          "GET /api/v1/workspaces/{workspaceId}/workflow-executions",
+          "GET /api/v1/workflow-executions/{executionId}"
+        ],
+        "authorization": "Browser users require read_workspace_data in the exact workspace; workspace activity routes are not exposed to external-integration credentials.",
+        "pagination": "The ledger uses an opaque stable cursor and returns {items,nextCursor?,summary.{openCount,attentionCount}} with bounded status, origin, and workflow filters.",
+        "provenance": "Every execution returns an immutable safe origin snapshot for manual, external_integration, schedule, webhook, or retained historical-event dispatch. Schedule and webhook labels survive deletion; webhook payloads and occurrence keys are never projected.",
+        "refresh": "The console uses two-second visible-window polling and immediate focus refresh so background activity remains current without a second workspace event transport.",
+        "context": "Schedule and workflow-webhook rows keep configuration, last dispatch outcome, and latest successful execution pointer separate.",
+        "statusAuthority": "The aggregate execution status is authoritative; dispatch failure does not imply a running execution and terminal execution status never renders as in progress."
+      },
+      "targetAutoTriage": {
+        "status": "experimental",
+        "settingsPaths": [
+          "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage",
+          "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage"
+        ],
+        "startPaths": [
+          "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage/investigations",
+          "POST /api/v1/workspaces/{workspaceId}/issues/{issueId}/automatic-investigation"
+        ],
+        "defaults": "Missing settings resolve to disabled, warning minimum severity, follow_target write mode, empty additional instructions, empty namespace include and exclude lists, cluster-scoped issues included, and revision zero.",
+        "eligibility": "Kubernetes namespace eligibility is evaluated for new lifecycle enqueueing, explicit current-issue queueing, manual start, retry, eligible counts, and worker revalidation. Empty includes allow every observed namespace, exclusions win, and cluster-scoped issues have an independent switch. Virtual-machine eligibility remains target-wide.",
+        "idempotency": "One durable job and one automatic session are allowed for each issue ID and lifecycle version. Enabling or lowering the threshold never queues existing issues without the explicit bulk-start endpoint.",
+        "safety": "The target and agent are hard ceilings. read_only exposes no write tools; approval_required forces write confirmation; full_write skips confirmation only when the target permits it. The pinned run confirmation override is honored by target bootstrap.",
+        "runtime": "The control-plane worker uses a dedicated non-overlapping one-second timer and error boundary, leases due jobs, limits nonterminal automatic runs to two per target, reuses linked session and run IDs after recovery, guards linked run changes by expected status, reconciles terminal races, omits unavailable individual-credential MCP tools for system-auto-triage, and stops automatic runs when issues resolve. Explicit current-issue queueing is atomic at the saved settings revision. Session creation locks the current enabled revision, persists that pinned revision on the job, and prevents stale workers from starting after disablement or a policy edit.",
+        "queueVisibility": "Target settings responses include queueSummary.{activeCount,waitingCount,oldestWaitingAt?}. Counts follow worker admission semantics, remain independent of Workflow activity, and support a compact link to the existing target issue surface rather than a separate queue page.",
+        "historyUi": "The console filters the existing target session history into manual Chats and auto_triage Investigations while global search spans both. Investigation rows use linked issue scope, object, severity, and assistant status. A per-user, per-target browser marker derives the supplementary unseen badge from existing session creation timestamps; it is not control-plane state.",
+        "sharedChat": "Browser members with create_sessions and the relevant run capability may reply to auto_triage sessions with actual message authorship. Manual sessions and all external-integration access remain creator-owned.",
+        "workflowIndependence": "Automatic investigation enqueueing is evaluated independently during issue lifecycle persistence and does not invoke Workflow execution or alter outbound issue webhook behavior. The worker does not consult Automation runtime mode or share a Workflow scheduler tick."
+      },
       "eventTypes": [
         "run_progress",
         "run_started",
@@ -230,9 +286,31 @@
         "run_cancelled",
         "run_completed"
       ],
-      "toolCallCompletedPayloadFields": ["call_id", "tool", "result", "context_meta", "artifact?", "artifactUnavailable?", "is_error"],
-      "toolCallCompletedContextMetaFields": ["schema_version", "strategy", "original_bytes", "context_bytes", "truncated", "omissions"],
-      "toolCallCompletedArtifactFields": ["id", "expires_at", "sha256", "uncompressed_bytes", "compressed_bytes", "content_type"],
+      "toolCallCompletedPayloadFields": [
+        "call_id",
+        "tool",
+        "result",
+        "context_meta",
+        "artifact?",
+        "artifactUnavailable?",
+        "is_error"
+      ],
+      "toolCallCompletedContextMetaFields": [
+        "schema_version",
+        "strategy",
+        "original_bytes",
+        "context_bytes",
+        "truncated",
+        "omissions"
+      ],
+      "toolCallCompletedArtifactFields": [
+        "id",
+        "expires_at",
+        "sha256",
+        "uncompressed_bytes",
+        "compressed_bytes",
+        "content_type"
+      ],
       "toolCallCompletedResultMaxBytes": 12288,
       "targetChatActivityEventTypes": [
         "message.created",
@@ -285,23 +363,99 @@
         "targetSkillDetail.files[].{path,content,sizeBytes}"
       ],
       "requestFields": {
-        "registerCluster": ["name", "agentAccessMode?=read_only|read_write", "namespaceInclude?", "namespaceExclude?", "rbacAdditionKeys[]?"],
-        "patchCluster": ["name?", "namespaceInclude?", "namespaceExclude?", "writeConfirmationRequiredOverride?"],
-        "registerVirtualMachine": ["name", "hostname?", "osFamily?", "serviceManager?", "allowedLogSources?"],
-        "patchVirtualMachine": ["name?", "hostname?", "allowedLogSources?"],
-        "workflowSchedule": ["workflowId", "name", "cron", "timezone", "enabled?", "principal.{type=user,id=currentUserId}"],
-        "workflowWebhook": ["workflowId", "name", "enabled?", "approvedContextGrants[]?"],
-        "workflowWebhookUpdate": ["workspaceId", "name?", "enabled?", "approvedContextGrants[]?", "no workflowId, status, or principal"],
-        "promptReferenceResolve": ["prompt", "workflowId?", "requirements[]?"],
-        "catalogImport": ["artifact", "version", "remoteEndpoint", "serverName?", "enabled?", "endpointConfiguration?", "expectedRevision? only on re-import", "no targetType from browser"],
-        "postMessage": ["content", "toolAccessMode", "clientMessageId", "llm.{provider,model,reasoningEffort}?", "references[].{kind=tool|skill,id}?"],
-        "postWorkflowMessage": ["launch.{kind=launch,clientRequestId?}", "followUp.{kind=follow_up,content,clientRequestId?}"],
-        "workflowCapabilityPreview": ["workflowId", "approvedContextGrants"],
-        "workflowDefinitionMutation": ["prompt", "no inputs or parameters fields"]
+        "registerCluster": [
+          "name",
+          "agentAccessMode?=read_only|read_write",
+          "namespaceInclude?",
+          "namespaceExclude?",
+          "rbacAdditionKeys[]?"
+        ],
+        "patchCluster": [
+          "name?",
+          "namespaceInclude?",
+          "namespaceExclude?",
+          "writeConfirmationRequiredOverride?"
+        ],
+        "registerVirtualMachine": [
+          "name",
+          "hostname?",
+          "osFamily?",
+          "serviceManager?",
+          "allowedLogSources?"
+        ],
+        "patchVirtualMachine": [
+          "name?",
+          "hostname?",
+          "allowedLogSources?"
+        ],
+        "workflowSchedule": [
+          "workflowId",
+          "name",
+          "cron",
+          "timezone",
+          "enabled?",
+          "principal.{type=user,id=currentUserId}"
+        ],
+        "workflowWebhook": [
+          "workflowId",
+          "name",
+          "enabled?",
+          "approvedContextGrants[]?"
+        ],
+        "workflowWebhookUpdate": [
+          "workspaceId",
+          "name?",
+          "enabled?",
+          "approvedContextGrants[]?",
+          "no workflowId, status, or principal"
+        ],
+        "promptReferenceResolve": [
+          "prompt",
+          "workflowId?",
+          "requirements[]?"
+        ],
+        "catalogImport": [
+          "artifact",
+          "version",
+          "remoteEndpoint",
+          "serverName?",
+          "enabled?",
+          "endpointConfiguration?",
+          "expectedRevision? only on re-import",
+          "no targetType from browser"
+        ],
+        "postMessage": [
+          "content",
+          "toolAccessMode",
+          "clientMessageId",
+          "llm.{provider,model,reasoningEffort}?",
+          "references[].{kind=tool|skill,id}?"
+        ],
+        "postWorkflowMessage": [
+          "launch.{kind=launch,clientRequestId?}",
+          "followUp.{kind=follow_up,content,clientRequestId?}"
+        ],
+        "workflowCapabilityPreview": [
+          "workflowId",
+          "approvedContextGrants"
+        ],
+        "workflowDefinitionMutation": [
+          "prompt",
+          "no inputs or parameters fields"
+        ]
       },
       "responseFields": {
-        "user": ["quota.workspaceMemberships.{used,limit}"],
-        "workspace": ["plan.{key,name}", "currentUserRoleTemplate?", "permissions", "quota.members.{used,limit}", "quota.kubernetesClusters.{used,limit}", "quota.virtualMachines.{used,limit}"],
+        "user": [
+          "quota.workspaceMemberships.{used,limit}"
+        ],
+        "workspace": [
+          "plan.{key,name}",
+          "currentUserRoleTemplate?",
+          "permissions",
+          "quota.members.{used,limit}",
+          "quota.kubernetesClusters.{used,limit}",
+          "quota.virtualMachines.{used,limit}"
+        ],
         "workspaceAiSettings": [
           "workspaceId",
           "defaultProvider",
@@ -316,43 +470,290 @@
           "providers[].{provider,configured,enabled}",
           "no API key values, secret names, or reasoning summary text"
         ],
-        "roleTemplate": ["key", "displayName", "description", "kind", "capabilities", "capabilityGroups[].{key,capabilities,sortOrder}", "protected", "sortOrder"],
-        "membership": ["role", "roleTemplate?"],
-        "memberDiscovery": ["GET /api/v1/workspaces/{workspaceId}/member-candidates", "mode=disabled|exact_email|directory", "items[].{userId,email,displayName,authMethods[]=oidc|password,status=available|member|invited}", "requires manage_members", "POST /api/v1/workspaces/{workspaceId}/members requires a candidate-bound {userId,email,role} and is unavailable when mode=disabled"],
-        "invitation": ["role", "roleTemplate?"],
-        "auditEvent": ["id", "workspaceId", "category", "eventType", "operation", "actor", "object", "summary", "metadata", "occurredAt"],
-        "quotaExceeded": ["error.code=QUOTA_EXCEEDED", "error.details.{quotaKey,used,limit}"],
-        "cluster": ["writeConfirmationPolicy"],
-        "clusterRegistration": ["cluster", "agentKey", "installInstructions"],
-        "kubernetesRbacAdditions": ["version", "items[].{key,name,description?}"],
-        "rotateAgentKey": ["clusterId", "agentKey", "keyVersion"],
-        "virtualMachineRegistration": ["virtualMachine", "agentKey", "installInstructions"],
-        "rotateVirtualMachineAgentKey": ["vmId", "agentKey", "keyVersion", "installInstructions"],
-        "sessionList": ["items", "items[].targetId", "items[].targetType", "items[].clusterId?", "items[].createdBy", "items[].createdByUser.{id,displayName}?", "items[].origin=manual|auto_triage", "items[].automaticInvestigation.{issueId,lifecycleVersion,severity,scopeKind?,scopeName?,objectKind?,objectName?,writeMode,effectiveToolMode,confirmationRequiredForWrite}?", "items[].lastRuntimeSelection.{provider,model,reasoningEffort}?", "nextCursor?"],
-        "targetChatActivity": ["targetId", "targetType", "targetName", "windowSeconds", "generatedAt", "recentActivity[].{sessionId,title,createdBy,createdByUser?,origin,linkedIssueId?,linkedIssueLifecycleVersion?,lastActivityAt,lastRunId?,lastRunStatus?,activeRun?,hasActiveRun,hasRecentWriteCapableRun,latestToolAccessMode?}"],
-        "conversationOwnerRequired": ["error.code=CONVERSATION_OWNER_REQUIRED", "error.retryable=false"],
-        "runDetails": ["targetId", "targetType", "clusterId?"],
-        "runApprovals": ["[].targetId", "[].targetType", "[].clusterId?", "[].summary?", "[].sessionId?", "[].sessionOrigin?", "[].sessionTitle?"],
-        "runApprovalDecision": ["targetId", "targetType", "clusterId?", "summary?", "conflict.approval.{targetId,targetType,clusterId?,summary?}"],
-        "postMessageAccepted": ["message_id", "run_id", "runtimeSelection.{provider,model,reasoningEffort}"],
-        "runEventFrame": ["schema_version", "run_id", "seq", "ts", "type", "payload"],
-        "agent": ["id", "workspaceId", "name", "avatarEmoji", "description?", "instructions", "status", "origin", "reviewState", "providerType", "version", "ownerUserId", "mcpServers[]", "tools[]", "nativeToolConfigs", "skills[]", "contextGrants[]", "targetScope", "approvalPolicy", "trustPolicy", "workflowUsage.{workflowRunCount,lastRunAt?,lastStatus?}", "readiness.{status,reasons[]}"],
-        "automationDiagnostics": ["status", "runtime.{mode,workspaceEnabled,workerIntervalMs}", "dispatch.{byStatus,oldestPendingAgeSeconds}", "runs.{workflowByStatus,byExecutorRole,byGraphPosition,active}", "schedules.schedulerLagSeconds", "approvals.{pending,oldestPendingAgeSeconds}", "templates.{byReadiness,items[]}", "reports.retainedSources", "checkedAt"],
-        "workflowExecutionAccepted": ["executionId", "run_id", "status"],
-        "workflowDefinition": ["saved prompt without runtime parameters"],
-        "promptReferenceDescriptor": ["type", "displayName", "description", "icon", "placeholderLabel", "availability", "unavailableReason?", "minimum", "maximum", "allowPinnedReferences", "provider", "providerVersion"],
-        "promptReferenceResolution": ["prompt", "promptDigest", "bindingDigest", "tokens[]", "candidates[]", "bindings[]", "blockers[]", "resolvedAt"],
-        "workflowReport": ["id", "executionId?", "runId?", "targetRunId?", "sourceVersion", "mediaType", "title", "sourceSizeBytes", "retentionExpiresAt", "downloadUrl", "no source or PDF bytes"],
-        "workflowSelectedAgents": ["agentIds[]", "executionMode=direct|coordinated", "internal session authorization ceiling selectedAgents[]", "jwtClaims.executor_role", "jwtClaims.agent_id? specialist only", "jwtClaims.agent_version? specialist only", "jwtClaims.trigger_id?"],
-        "workflowExecutionSummary": ["id", "workspaceId", "workflow.{id,name,version}", "status", "origin", "rootRun?", "createdBy?", "createdAt", "startedAt?", "endedAt?", "updatedAt"],
-        "workflowExecutionPage": ["items", "nextCursor?", "summary.{openCount,attentionCount,latestUpdatedAt?}"],
-        "workflowActivitySummary": ["totalCount", "openCount", "attentionCount", "openExecution?", "latestExecution?"],
-        "workflowSchedule": ["id", "workspaceId", "workflowId", "workflowVersion", "name", "status", "cron", "timezone", "approvedContextGrants", "principal.{type=user,id}", "nextRunAt?", "lastRunAt?", "lastStatus?", "lastExecutionId?", "lastRunId?", "latestExecution?", "lastError?", "createdBy", "updatedBy"],
-        "workflowSchedulePage": ["items", "summary.{total,active,paused,approvalGated,nextRunAt?}"],
-        "workflowWebhook": ["id", "workspaceId", "workflowId", "name", "status=enabled|paused", "approvedContextGrants", "principal.{type=user,id}", "endpointUrl", "lastReceivedAt?", "lastStatus?", "lastExecutionId?", "lastRunId?", "latestExecution?", "lastError?"],
-        "workflowWebhookPage": ["items"],
-        "workflowWebhookSecret": ["url", "secret", "secretDisclosure=one_time"],
-        "workspaceApprovalInbox": ["query.{status?,limit?,cursor?,runId?,approvalId?}", "items[].{approvalId,runId,source,workflowId?,targetId?,summary,toolName,requestedBy?,expiresAt,status,decision?,decidedBy?,decidedAt?,requestedAt}", "pendingCount", "nextCursor?"]
+        "roleTemplate": [
+          "key",
+          "displayName",
+          "description",
+          "kind",
+          "capabilities",
+          "capabilityGroups[].{key,capabilities,sortOrder}",
+          "protected",
+          "sortOrder"
+        ],
+        "membership": [
+          "role",
+          "roleTemplate?"
+        ],
+        "kubernetesRbacAdditions": [
+          "version",
+          "items[].{key,name,description?}"
+        ],
+        "memberDiscovery": [
+          "GET /api/v1/workspaces/{workspaceId}/member-candidates",
+          "mode=disabled|exact_email|directory",
+          "items[].{userId,email,displayName,authMethods[]=oidc|password,status=available|member|invited}",
+          "requires manage_members",
+          "POST /api/v1/workspaces/{workspaceId}/members requires a candidate-bound {userId,email,role} and is unavailable when mode=disabled"
+        ],
+        "invitation": [
+          "role",
+          "roleTemplate?"
+        ],
+        "auditEvent": [
+          "id",
+          "workspaceId",
+          "category",
+          "eventType",
+          "operation",
+          "actor",
+          "object",
+          "summary",
+          "metadata",
+          "occurredAt"
+        ],
+        "quotaExceeded": [
+          "error.code=QUOTA_EXCEEDED",
+          "error.details.{quotaKey,used,limit}"
+        ],
+        "cluster": [
+          "writeConfirmationPolicy"
+        ],
+        "clusterRegistration": [
+          "cluster",
+          "agentKey",
+          "installInstructions"
+        ],
+        "rotateAgentKey": [
+          "clusterId",
+          "agentKey",
+          "keyVersion"
+        ],
+        "virtualMachineRegistration": [
+          "virtualMachine",
+          "agentKey",
+          "installInstructions"
+        ],
+        "rotateVirtualMachineAgentKey": [
+          "vmId",
+          "agentKey",
+          "keyVersion",
+          "installInstructions"
+        ],
+        "sessionList": [
+          "items",
+          "items[].targetId",
+          "items[].targetType",
+          "items[].clusterId?",
+          "items[].createdBy",
+          "items[].createdByUser.{id,displayName}?",
+          "items[].origin=manual|auto_triage",
+          "items[].automaticInvestigation.{issueId,lifecycleVersion,severity,scopeKind?,scopeName?,objectKind?,objectName?,writeMode,effectiveToolMode,confirmationRequiredForWrite}?",
+          "items[].lastRuntimeSelection.{provider,model,reasoningEffort}?",
+          "nextCursor?"
+        ],
+        "targetChatActivity": [
+          "targetId",
+          "targetType",
+          "targetName",
+          "windowSeconds",
+          "generatedAt",
+          "recentActivity[].{sessionId,title,createdBy,createdByUser?,origin,linkedIssueId?,linkedIssueLifecycleVersion?,lastActivityAt,lastRunId?,lastRunStatus?,activeRun?,hasActiveRun,hasRecentWriteCapableRun,latestToolAccessMode?}"
+        ],
+        "conversationOwnerRequired": [
+          "error.code=CONVERSATION_OWNER_REQUIRED",
+          "error.retryable=false"
+        ],
+        "runDetails": [
+          "targetId",
+          "targetType",
+          "clusterId?"
+        ],
+        "runApprovals": [
+          "[].targetId",
+          "[].targetType",
+          "[].clusterId?",
+          "[].summary?",
+          "[].sessionId?",
+          "[].sessionOrigin?",
+          "[].sessionTitle?"
+        ],
+        "runApprovalDecision": [
+          "targetId",
+          "targetType",
+          "clusterId?",
+          "summary?",
+          "conflict.approval.{targetId,targetType,clusterId?,summary?}"
+        ],
+        "postMessageAccepted": [
+          "message_id",
+          "run_id",
+          "runtimeSelection.{provider,model,reasoningEffort}"
+        ],
+        "runEventFrame": [
+          "schema_version",
+          "run_id",
+          "seq",
+          "ts",
+          "type",
+          "payload"
+        ],
+        "agent": [
+          "id",
+          "workspaceId",
+          "name",
+          "avatarEmoji",
+          "description?",
+          "instructions",
+          "status",
+          "origin",
+          "reviewState",
+          "providerType",
+          "ownerUserId",
+          "mcpServers[]",
+          "mcpTools[]",
+          "tools[]",
+          "nativeToolConfigs",
+          "skills[]",
+          "contextGrants[]",
+          "approvalPolicy",
+          "trustPolicy",
+          "readiness.{status,reasons[]}"
+        ],
+        "automationDiagnostics": [
+          "status",
+          "runtime.{mode,workspaceEnabled,workerIntervalMs}",
+          "dispatch.{byStatus,oldestPendingAgeSeconds}",
+          "runs.{workflowByStatus,byExecutorRole,byGraphPosition,active}",
+          "schedules.schedulerLagSeconds",
+          "approvals.{pending,oldestPendingAgeSeconds}",
+          "templates.{byReadiness,items[]}",
+          "reports.retainedSources",
+          "checkedAt"
+        ],
+        "workflowExecutionAccepted": [
+          "executionId",
+          "run_id",
+          "status"
+        ],
+        "workflowDefinition": [
+          "saved prompt without runtime parameters"
+        ],
+        "promptReferenceDescriptor": [
+          "type",
+          "displayName",
+          "description",
+          "icon",
+          "placeholderLabel",
+          "availability",
+          "unavailableReason?",
+          "minimum",
+          "maximum",
+          "allowPinnedReferences",
+          "provider",
+          "providerVersion"
+        ],
+        "promptReferenceResolution": [
+          "prompt",
+          "promptDigest",
+          "bindingDigest",
+          "tokens[]",
+          "candidates[]",
+          "bindings[]",
+          "blockers[]",
+          "resolvedAt"
+        ],
+        "generatedDocument": [
+          "id",
+          "workflowExecutionId?",
+          "workflowRunId?",
+          "conversationRunId?",
+          "mediaType",
+          "title",
+          "sourceSizeBytes",
+          "retentionExpiresAt",
+          "downloadUrl",
+          "no source or PDF bytes"
+        ],
+        "workflowSelectedAgents": [
+          "agentIds[]",
+          "executionMode=direct|coordinated",
+          "internal session authorization ceiling selectedAgentSnapshots[]",
+          "jwtClaims.executor_role",
+          "jwtClaims.agent_id? specialist only",
+          "jwtClaims.trigger_id?"
+        ],
+        "workflowExecutionSummary": [
+          "id",
+          "workspaceId",
+          "workflow.{id,name}",
+          "status",
+          "origin",
+          "rootRun?",
+          "createdBy?",
+          "createdAt",
+          "startedAt?",
+          "endedAt?",
+          "updatedAt"
+        ],
+        "workflowExecutionPage": [
+          "items",
+          "nextCursor?",
+          "summary.{openCount,attentionCount,latestUpdatedAt?}"
+        ],
+        "workflowSchedule": [
+          "id",
+          "workspaceId",
+          "workflowId",
+          "name",
+          "status",
+          "cron",
+          "timezone",
+          "approvedContextGrants",
+          "principal.{type=user,id}",
+          "nextRunAt?",
+          "lastRunAt?",
+          "lastStatus?",
+          "lastExecutionId?",
+          "lastRunId?",
+          "latestExecution?",
+          "lastError?",
+          "createdBy",
+          "updatedBy"
+        ],
+        "workflowSchedulePage": [
+          "items",
+          "summary.{total,active,paused,approvalGated,nextRunAt?}"
+        ],
+        "workflowWebhook": [
+          "id",
+          "workspaceId",
+          "workflowId",
+          "name",
+          "status=enabled|paused",
+          "approvedContextGrants",
+          "principal.{type=user,id}",
+          "endpointUrl",
+          "lastReceivedAt?",
+          "lastStatus?",
+          "lastExecutionId?",
+          "lastRunId?",
+          "latestExecution?",
+          "lastError?"
+        ],
+        "workflowWebhookPage": [
+          "items"
+        ],
+        "workflowWebhookSecret": [
+          "url",
+          "secret",
+          "secretDisclosure=one_time"
+        ],
+        "workspaceApprovalInbox": [
+          "query.{status?,limit?,cursor?,runId?,approvalId?}",
+          "items[].{approvalId,runId,source,summary,toolName,requestedBy?,expiresAt,status,decision?,decidedBy?,decidedAt?,requestedAt}",
+          "pendingCount",
+          "nextCursor?"
+        ]
       }
     }
   }

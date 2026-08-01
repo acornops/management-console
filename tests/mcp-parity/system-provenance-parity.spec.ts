@@ -25,7 +25,7 @@ test('default and custom Agents use the same compact resource treatment and sett
   await page.getByRole('button', { name: 'Open details for Workflow Analyst' }).click();
   const defaultHeader = page.getByRole('heading', { level: 1, name: 'Agent chat' }).locator('..');
   await expect(defaultHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Agent Settings' }).click();
+  await page.getByRole('link', { name: 'Agent Settings' }).click();
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
 
   await page.goto(`/workspaces/${workspaceId}/agents/fixture-specialist/settings`);
@@ -35,12 +35,12 @@ test('default and custom Agents use the same compact resource treatment and sett
 });
 
 test('recommendations retain attribution while added workflows become workspace-owned', async ({ page }) => {
-  const installResponse = await page.request.post(`${fixtureApi}/workspaces/${workspaceId}/automation-templates/target-remediation/install`);
+  const installResponse = await page.request.post(`${fixtureApi}/workspaces/${workspaceId}/automation-templates/infrastructure-remediation/install`);
   expect(installResponse.ok(), `template install failed with ${installResponse.status()}`).toBe(true);
   const { workflowId } = await installResponse.json() as { workflowId: string };
 
   await page.goto(`/workspaces/${workspaceId}/workflows?workflow=${workflowId}`);
-  const addedRow = page.getByRole('button', { name: /Select workflow Target remediation/ });
+  const addedRow = page.getByRole('button', { name: /Select workflow Infrastructure remediation/ });
   await expect(addedRow.getByText('Provided by AcornOps')).toHaveCount(0);
   const addedHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(addedHeader.getByText('Provided by AcornOps')).toHaveCount(0);

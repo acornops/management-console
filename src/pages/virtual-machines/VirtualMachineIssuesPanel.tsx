@@ -7,7 +7,6 @@ import { issueStatusTone } from '@/pages/issues/issueUi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { issueSeverityTone } from '@/pages/virtual-machines/virtualMachineUi';
 import { formatUserDateTime } from '@/utils/dateTime';
-import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
 import {
   AutomaticInvestigationActivity,
   shouldShowManualAssistantFallback
@@ -113,11 +112,6 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       </div>
                       <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
                       <p className="type-body mt-1 break-words">{issue.reason || issue.summary}</p>
-                      <IssueWorkflowActivity
-                        workspaceId={workspaceId}
-                        issueId={issue.id}
-                        activity={issue.workflowActivity}
-                      />
                       <AutomaticInvestigationActivity
                         workspaceId={workspaceId}
                         targetId={issue.targetId}
@@ -137,7 +131,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
                         <Button
                           onClick={() => onOpenIssueTriage(issue)}
-                          variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                          variant="primary"
                           size="md"
                           className="whitespace-nowrap"
                         >
@@ -175,11 +169,6 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                     <dd className="type-caption mt-1">{formatUserDateTime(issueTimestamp(issue))}</dd>
                   </div>
                 </dl>
-                <IssueWorkflowActivity
-                  workspaceId={workspaceId}
-                  issueId={issue.id}
-                  activity={issue.workflowActivity}
-                />
                 <AutomaticInvestigationActivity
                   workspaceId={workspaceId}
                   targetId={issue.targetId}
@@ -190,7 +179,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                 {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
                   <Button
                     onClick={() => onOpenIssueTriage(issue)}
-                    variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                    variant="primary"
                     size="md"
                     className="mt-4"
                   >

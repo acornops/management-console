@@ -11,7 +11,7 @@ boundaries for workspace specialist Agents and target default Agents.
   search, source, compatibility, selected artifact, and destination in URL state.
 - Use an inline artifact list and detail/install panel. Show source, version,
   digest, transport compatibility, endpoint, authentication, endpoint
-  configuration, and target constraints before import.
+  configuration, and destination ownership before import.
 - Keep credentials write-only and never echo them after save.
 - Group destinations into workspace specialist Agents and Cluster/VM default
   Agents. Exclude the AcornOps Manager and warn, without blocking configuration,

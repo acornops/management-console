@@ -8,7 +8,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ProjectMember, Workspace } from '@/types';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { mapApiAgent } from '@/pages/WorkspaceAgentsPage.helpers';
-import { findWorkflowByRouteTarget, filterWorkflowDefinitions, getWorkflowDeleteBlocker, getWorkflowLaunchBlocker, getWorkflowPrimaryAction, getWorkflowRouteQuery, getWorkflowRouteSelectionTarget, type WorkflowDefinition, type WorkflowRunMessage, type WorkflowView } from '@/pages/workflows/workflowModel';
+import { findWorkflowByRouteSelection, filterWorkflowDefinitions, getWorkflowDeleteBlocker, getWorkflowLaunchBlocker, getWorkflowPrimaryAction, getWorkflowRouteQuery, getWorkflowRouteSelection, type WorkflowDefinition, type WorkflowRunMessage, type WorkflowView } from '@/pages/workflows/workflowModel';
 import { listWorkflowOptions, listWorkflowRunEvents, listWorkflowRunApprovals, listWorkflowSessions, listWorkspaceWorkflows, type WorkflowOptionsCatalog, type WorkflowRunApproval, type WorkflowRunEvent } from '@/services/control-plane/workflowApi';
 import { listWorkspaceAgents } from '@/services/control-plane/agentApi';
 import { createAgentSelectionDraft, createFallbackWorkflowOptions, createWorkflowDraft, createWorkflowEditDraft, isRunActive, mapApiWorkflowToDefinition, mapWorkflowRunSummary, mergeWorkflowRunsWithLocalDispatches, normalizeWorkflowOptionsCatalog, uniqueValues, workflowStatusTone, workflowViews, type AgentSelectionDraft, type CreateWorkflowDraft, type WorkflowEditDraft } from '@/pages/workflows/workflowPageHelpers';
@@ -51,7 +51,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
   navigate: (path: string) => void;
 }> = ({ workspace, navigate }) => {
   const initialWorkflowQuery = useMemo(() => getWorkflowRouteQuery(window.location.search), []);
-  const initialWorkflowTarget = useMemo(() => getWorkflowRouteSelectionTarget(window.location.search), []);
+  const initialWorkflowSelection = useMemo(() => getWorkflowRouteSelection(window.location.search), []);
   const workflowUrlSearch = useUrlSearchState();
   const managementPanel = workflowUrlSearch.get('panel');
   const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
@@ -77,7 +77,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const workflowSearchTags = useMemo(() => uniqueValues(workflows.flatMap((workflow) => workflow.tags)), [workflows]);
   const filteredWorkflows = useMemo(() => filterWorkflowDefinitions(workflows, query), [query, workflows]);
   const visibleWorkflows = filteredWorkflows;
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState(initialWorkflowTarget);
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState(initialWorkflowSelection);
   const initialView = new URLSearchParams(window.location.search).get('tab') as WorkflowView | null;
   const [activeView, setActiveView] = useState<WorkflowView>(initialView && workflowViews.includes(initialView) ? initialView : 'overview');
   const [workflowLoadError, setWorkflowLoadError] = useState('');
@@ -204,7 +204,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
             : workflow;
         });
         setWorkflows(mapped);
-        setSelectedWorkflowId((current) => findWorkflowByRouteTarget(mapped, initialWorkflowTarget)?.id || (mapped.some((workflow) => workflow.id === current) ? current : mapped[0]?.id || ''));
+        setSelectedWorkflowId((current) => findWorkflowByRouteSelection(mapped, initialWorkflowSelection)?.id || (mapped.some((workflow) => workflow.id === current) ? current : mapped[0]?.id || ''));
         setWorkflowCatalogReady(true);
       })
       .catch((error) => {
@@ -213,7 +213,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
         setWorkflowCatalogReady(true);
       });
     return () => { mounted = false; };
-  }, [initialWorkflowTarget, workspace.id, workflowAgentCatalogWorkspaceId, workflowCatalogReloadKey, workflowOptionsCatalogWorkspaceId, workflowOwnerCatalogWorkspaceId]);
+  }, [initialWorkflowSelection, workspace.id, workflowAgentCatalogWorkspaceId, workflowCatalogReloadKey, workflowOptionsCatalogWorkspaceId, workflowOwnerCatalogWorkspaceId]);
   React.useEffect(() => {
     let mounted = true;
     setWorkflowOptionsCatalogWorkspaceId('');
@@ -347,7 +347,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const selectedWorkflowEditDraft = selectedWorkflow
     ? workflowEditDrafts[selectedWorkflow.id] || createWorkflowEditDraft(selectedWorkflow)
     : undefined;
-  const deleteTargetWorkflow = deleteWorkflowId
+  const workflowToDelete = deleteWorkflowId
     ? workflows.find((workflow) => workflow.id === deleteWorkflowId)
     : undefined;
   const closeDeleteWorkflowDialog = () => {
@@ -596,7 +596,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
         </>
       )}
       <WorkflowDeleteDialog
-        deleteTargetWorkflow={deleteTargetWorkflow}
+        workflowToDelete={workflowToDelete}
         deleteWorkflowConfirmation={deleteWorkflowConfirmation}
         deleteWorkflowError={deleteWorkflowError}
         deletingWorkflowId={deletingWorkflowId}

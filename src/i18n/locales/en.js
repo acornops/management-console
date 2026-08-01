@@ -263,7 +263,7 @@ export const en = {
     refreshError: 'Automatic Activity refresh is temporarily unavailable. Refresh manually or refocus this window to try again.',
     openCount: '{{count}} open',
     attentionCount: '{{count}} need attention',
-    target: 'Target',
+    scope: 'Scope',
     workspaceScope: 'Workspace scope',
     duration: 'Duration',
     durationUnavailable: 'Duration unavailable',
@@ -287,12 +287,6 @@ export const en = {
       skipped: 'Skipped',
       rejected: 'Rejected'
     },
-    relatedRuns: '{{count}} related runs',
-    relatedRuns_one: '{{count}} related run',
-    relatedRuns_other: '{{count}} related runs',
-    openRuns: '{{count}} open runs',
-    openRuns_one: '{{count}} open run',
-    openRuns_other: '{{count}} open runs',
     origin: {
       manual: 'Manual',
       external_integration: 'External integration',
@@ -319,7 +313,7 @@ export const en = {
     },
     columns: {
       run: 'Workflow and origin',
-      target: 'Target',
+      scope: 'Scope',
       time: 'Activity',
       duration: 'Duration',
       action: 'Action'
@@ -336,13 +330,11 @@ export const en = {
       attention: 'Needs attention',
       completed: 'Completed',
       failed: 'Failed',
-      cancelled: 'Cancelled',
-      issueApplied: 'Issue: {{issue}}'
+      cancelled: 'Cancelled'
     },
     actions: {
       openRun: 'Open run',
       reviewRun: 'Review run',
-      viewRuns: 'View runs',
       reviewFailure: 'Review failure',
       viewHistory: 'View history'
     }
@@ -1734,10 +1726,6 @@ export const en = {
     resizeQuickChat: 'Resize chat panel',
     ready: 'Ready',
     needsSetup: 'Needs setup',
-    workflowUsage: 'Workflow usage',
-    workflowUsageCount: 'Assigned to {{count}} workflows.',
-    workflowUsageCount_one: 'Assigned to {{count}} workflow.',
-    workflowUsageCount_other: 'Assigned to {{count}} workflows.',
     noWorkflowUsage: 'No workflows currently use this Agent.',
     sections: {
       chat: {
@@ -1758,7 +1746,7 @@ export const en = {
       },
       settings: {
         title: 'Agent Settings',
-        description: 'Manage configuration versions and lifecycle actions for {{name}}.'
+        description: 'Manage lifecycle actions for {{name}}.'
       }
     },
     tabs: {
@@ -3225,7 +3213,7 @@ export const en = {
       toolbarLabel: 'Agent catalog search and filters', searchPlaceholder: 'Search agents', searchLabel: 'Search agents', statusFilterLabel: 'Filter agents by status',
       resultCount: '{{visible}} of {{total}} agents', totalCount: '{{count}} agents', totalCount_one: '{{count}} agent', totalCount_other: '{{count}} agents', newAgent: 'New agent', createPermission: 'You need manage_agents to create agents.', emptyTitle: 'No agents in this workspace', emptyBody: 'Create an Agent to make capabilities available to workflows.', emptyReadOnlyBody: 'Agents will appear here after a workspace manager creates them.',
       noResultsTitle: 'No agents match', noResultsBody: 'Adjust the search or status filter.', filters: { all: 'All' },
-      status: { active: 'Active', draft: 'Draft', disabled: 'Disabled' }, tabs: { overview: 'Overview', capabilities: 'Capabilities', versions: 'Restore points', settings: 'Settings' },
+      status: { active: 'Active', draft: 'Draft', disabled: 'Disabled' }, tabs: { overview: 'Overview', capabilities: 'Capabilities', settings: 'Settings' },
       fields: { identity: 'Agent', status: 'Status', capabilities: 'Capabilities', assignment: 'Assignment' },
       openProfile: 'Open {{name}} agent profile',
       quickChat: 'Chat',
@@ -3246,19 +3234,16 @@ export const en = {
       edit: 'Edit agent', reactivate: 'Reactivate', dangerZone: 'Danger zone', retryAll: 'Retry all', unavailable: 'Some live data is unavailable',
       details: {
         profileSections: 'Agent profile sections',
-        tabs: { overview: 'Overview', capabilities: 'Capabilities', versions: 'Restore points', settings: 'Settings' },
+        tabs: { overview: 'Overview', capabilities: 'Capabilities', settings: 'Settings' },
         managePermission: 'You need manage_agents permission to change this agent.',
         disabledStatus: 'This agent cannot be selected for new assignments while disabled.',
         identityAssignment: 'Identity and assignment', owner: 'Owner', source: 'Source', kind: 'Kind', status: 'Status', provider: 'Provider', lastActivity: 'Latest Workflow use', noActivity: 'No Workflow use yet',
         kindValue: { specialist: 'Specialist' }, providerValue: { internal: 'Internal', external: 'External' },
         assignedWorkflows: 'Assigned workflows', noAssignedWorkflows: 'No assigned workflows.',
-        scopePolicy: 'Scope and policy', targetScope: 'Target scope', noTargetScope: 'No target scope', contextScope: 'Context scope', noContextScope: 'No context scope',
+        scopePolicy: 'Scope and policy', contextScope: 'Context scope', noContextScope: 'No context scope',
         permissionModeLabel: 'Permission mode', approvalGateLabel: 'Approval gate', trustBoundary: 'Trust boundary', dataAccess: 'Data access',
         permissionMode: { read_only: 'Read only', ask_before_changes: 'Ask before changes', auto_allowed_changes: 'Automatic routine changes' },
         approvalGate: { read_only: 'Writes are disabled', ask_before_changes: 'Before every write-capable tool', auto_allowed_changes: 'Before high-risk or destructive writes' },
-        restorePoints: 'Saved restore points', customRestorePointsDescription: 'Save the current Agent definition, or restore a saved point as a new current revision.',
-        saving: 'Saving...', saveRestorePoint: 'Save restore point', restore: 'Restore', noRestorePoints: 'No restore points saved yet.', revisionLabel: 'Revision {{version}}',
-        restoreConfirmationTitle: 'Restore revision {{version}}?', restoreConfirmationDescription: 'This creates a new current revision from the saved restore point. Existing runs are unchanged.', confirmRestore: 'Restore point',
         agentLifecycle: 'Agent lifecycle', lifecycleDescription: 'Manage whether this agent can receive new assignments, or permanently remove it.',
         disableAgent: 'Disable agent', disableDescription: 'Stop this agent from being selected for new assignments. Existing workflow references stay in place.', confirmDisableTitle: 'Confirm disable agent', confirmDisable: 'Confirm disable',
         disableImpact: 'Disabling may interrupt {{count}} assigned workflows.', disableImpact_one: 'Disabling may interrupt {{count}} assigned workflow.', disableImpact_other: 'Disabling may interrupt {{count}} assigned workflows.',
@@ -3289,7 +3274,7 @@ export const en = {
       runAs: 'Runs as', creatorIdentityHelp: 'Schedules run as their authenticated creator. Workspace membership and permissions are rechecked for every run.', identityLoadFailed: 'Your schedule identity could not be loaded.',
       credentialReadiness: 'Credential readiness', capabilityReadiness: 'Capability readiness', scheduleOwner: 'the schedule owner',
       credentialReadinessHelp: 'Checked for {{owner}}. Individual MCP connections are never borrowed from another user.', capabilityBlocked: 'Resolve the workflow capability requirements before enabling this schedule.',
-      capabilityReadinessHelp: 'Checked against the selected target, Agent assignments, and currently enabled tools.',
+      capabilityReadinessHelp: 'Checked against Agent assignments and currently enabled tools.',
       advanced: 'Advanced cron', cron: 'Cron expression',
       enabled: 'Start this schedule enabled', cancel: 'Cancel', create: 'Create schedule', creating: 'Creating...', createError: 'Unable to create workflow schedule'
     }

@@ -393,7 +393,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const runId = decode(match[1]);
     const execution = state.workflowExecutions.find((item) => item.rootRun?.id === runId);
     const eventStatus = execution?.status || 'completed';
-    const event = eventStatus === 'waiting_for_approval' ? { schema_version: 1, run_id: runId, seq: 1, ts: NOW, type: 'tool_approval_requested', payload: { tool: 'restart_workload', arguments: { target: execution?.rootRun?.targetId } } } : { schema_version: 1, run_id: runId, seq: 1, ts: NOW, type: `run.${eventStatus}`, payload: { status: eventStatus } };
+    const event = eventStatus === 'waiting_for_approval' ? { schema_version: 1, run_id: runId, seq: 1, ts: NOW, type: 'tool_approval_requested', payload: { tool: 'restart_workload', arguments: { workload: 'payments-api' } } } : { schema_version: 1, run_id: runId, seq: 1, ts: NOW, type: `run.${eventStatus}`, payload: { status: eventStatus } };
     return json([event]);
   }
   const approvalResponse = await routeApprovalFixtureRequest({ request, state, path, method, url, now: NOW });
@@ -416,7 +416,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.agents) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const agent = { id: id('fixture-agent'), workspaceId: decode(match[1]), name: input.name, avatarEmoji: input.avatarEmoji || '🤖', description: input.description || '', instructions: input.instructions || '', status: input.status || 'draft', origin: { type: 'manual' }, reviewState: input.reviewState || 'draft', providerType: 'internal', createdBy: FIXTURE_IDS.user, version: 1, permissionMode: input.permissionMode || 'read_only', semanticCapabilityIds: input.semanticCapabilityIds || [], targetScope: input.targetScope || { type: 'workspace', targetTypes: [], targetIds: [] }, contextScope: input.contextScope || [], contextGrants: input.contextGrants || [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] }, createdAt: NOW, updatedAt: NOW };
+      const agent = { id: id('fixture-agent'), workspaceId: decode(match[1]), name: input.name, avatarEmoji: input.avatarEmoji || '🤖', description: input.description || '', instructions: input.instructions || '', status: input.status || 'draft', reviewState: input.reviewState || 'draft', providerType: 'internal', createdBy: FIXTURE_IDS.user, permissionMode: input.permissionMode || 'read_only', semanticCapabilityIds: input.semanticCapabilityIds || [], contextScope: input.contextScope || [], contextGrants: input.contextGrants || [], readiness: { status: 'ready', reasons: [] }, createdAt: NOW, updatedAt: NOW };
       state.agents.push(agent);
       return json({ agent }, 201);
     }
@@ -426,7 +426,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const original = state.agents.find((item) => item.id === decode(match![1]));
     if (!original) return notFound('Agent');
     const input = await bodyOf(request);
-    const agent = { ...clone(original), id: id('fixture-agent'), name: input.name || `${original.name} copy`, origin: { type: 'manual' }, status: 'draft', reviewState: 'draft', createdAt: NOW, updatedAt: NOW };
+    const agent = { ...clone(original), id: id('fixture-agent'), name: input.name || `${original.name} copy`, status: 'draft', reviewState: 'draft', createdAt: NOW, updatedAt: NOW };
     state.agents.push(agent);
     return json({ agent }, 201);
   }
@@ -436,15 +436,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const agent = state.agents.find((item) => item.id === agentId);
     if (!agent) return notFound('Agent');
     if (method === 'GET') return json({ agent: clone(agent) });
-    if (method === 'PATCH') { Object.assign(agent, await bodyOf(request), { updatedAt: NOW, version: Number(agent.version || 0) + 1 }); return json({ agent: clone(agent) }); }
+    if (method === 'PATCH') { Object.assign(agent, await bodyOf(request), { updatedAt: NOW }); return json({ agent: clone(agent) }); }
     if (method === 'DELETE') { state.agents = state.agents.filter((item) => item.id !== agentId); return noContent(); }
-  }
-  match = path.match(/^\/api\/v1\/agents\/([^/]+)\/versions$/);
-  if (match) {
-    const agent = state.agents.find((item) => item.id === decode(match![1]));
-    if (!agent) return notFound('Agent');
-    const version = { id: `fixture-agent-version-${agent.version}`, agentId: agent.id, workspaceId: agent.workspaceId, version: agent.version || 1, snapshot: clone(agent), createdBy: FIXTURE_IDS.user, createdAt: NOW };
-    return method === 'GET' ? json({ items: [version] }) : json({ version }, 201);
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents\/([^/]+)\/mcp\/servers$/);
   if (match) {
@@ -457,7 +450,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
         isSystem: false, canDelete: true, canEditConnection: true, canToggle: true,
         authType: input.authType || 'none', credentialMode: input.credentialMode || 'none',
         authHeaderName: input.authHeaderName, agentId, revision: 1,
-        targetConstraints: { targetTypes: [], targetIds: [] }, connectionStatus: 'unknown',
+        connectionStatus: 'unknown',
         lastDiscoveryAt: null, lastDiscoveryError: null, tools: []
       };
       state.agentMcpServers.push(server);
@@ -479,7 +472,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'POST') {
       const input = await bodyOf(request);
       const agentIds = Array.isArray(input.agentIds) ? input.agentIds : [];
-      const workflow = { id: id('fixture-workflow'), workspaceId: decode(match[1]), version: 1, origin: { type: 'manual' }, source: 'user', name: input.name, description: input.description || '', status: input.status || 'draft', createdBy: FIXTURE_IDS.user, createdAt: NOW, ...input, agentIds, executionMode: agentIds.length > 1 ? 'coordinated' : 'direct', readiness: { status: 'ready', reasons: [] } };
+      const workflow = { id: id('fixture-workflow'), workspaceId: decode(match[1]), name: input.name, description: input.description || '', status: input.status || 'draft', createdBy: FIXTURE_IDS.user, createdAt: NOW, ...input, agentIds, executionMode: agentIds.length > 1 ? 'coordinated' : 'direct', readiness: { status: 'ready', reasons: [] } };
       state.workflows.push(workflow);
       return json({ workflow }, 201);
     }
@@ -489,7 +482,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const original = state.workflows.find((item) => item.id === decode(match![1]));
     if (!original) return notFound('Workflow');
     const input = await bodyOf(request);
-    const workflow = { ...clone(original), id: id('fixture-workflow'), name: input.name || `${original.name} copy`, status: 'draft', origin: { type: 'manual' }, createdAt: NOW };
+    const workflow = { ...clone(original), id: id('fixture-workflow'), name: input.name || `${original.name} copy`, status: 'draft', createdAt: NOW };
     state.workflows.push(workflow);
     return json({ workflow }, 201);
   }
@@ -498,7 +491,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const workflowId = decode(match[1]);
     const workflow = state.workflows.find((item) => item.id === workflowId);
     if (!workflow) return notFound('Workflow');
-    if (method === 'PATCH') { Object.assign(workflow, await bodyOf(request), { version: Number(workflow.version || 0) + 1 }); return json({ workflow: clone(workflow) }); }
+    if (method === 'PATCH') { Object.assign(workflow, await bodyOf(request)); return json({ workflow: clone(workflow) }); }
     if (method === 'DELETE') { state.workflows = state.workflows.filter((item) => item.id !== workflowId); return json({ deleted: true }); }
   }
   const workflowActivityResponse = routeWorkflowActivityFixtureRequest({
@@ -513,7 +506,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.workflowSchedules), summary: { total: state.workflowSchedules.length, active: state.workflowSchedules.filter((item) => item.status === 'enabled').length, paused: state.workflowSchedules.filter((item) => item.status === 'paused').length, approvalGated: 0 } });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), workflowVersion: 1, status: input.enabled === false ? 'paused' : 'enabled', approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW, ...input };
+      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), status: input.enabled === false ? 'paused' : 'enabled', approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW, ...input };
       state.workflowSchedules.push(schedule);
       return json({ schedule }, 201);
     }
@@ -544,7 +537,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   match = path.match(/^\/api\/v1\/workflows\/([^/]+)\/sessions$/);
   if (match) {
     const workflowId = decode(match[1]);
-    if (method === 'POST') return json({ session: { id: 'fixture-workflow-session', workflowId, workspaceId: FIXTURE_IDS.workspace, workflowVersion: 2 } }, 201);
+    if (method === 'POST') return json({ session: { id: 'fixture-workflow-session', workflowId, workspaceId: FIXTURE_IDS.workspace } }, 201);
   }
   match = path.match(/^\/api\/v1\/workflow-sessions\/([^/]+)\/messages$/);
   if (match && method === 'POST') return json({ message_id: id('fixture-workflow-message'), run_id: FIXTURE_IDS.run, executionId: 'fixture-workflow-execution', status: 'completed' }, 202);

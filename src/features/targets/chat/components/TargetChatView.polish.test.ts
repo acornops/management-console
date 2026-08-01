@@ -109,7 +109,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('Plus');
     expect(chatView).toContain('type-route-title');
     expect(chatView).toContain('type-body mt-2 max-w-2xl');
-    expect(chatView).toContain('t(resolvedDescriptionKey, { name: target.name })');
+    expect(chatView).toContain('t(resolvedDescriptionKey, { name: subject.name })');
     expect(chatView).toContain("const resolvedTitleKey = titleKey || 'chat.triageConsole';");
     expect(chatView).toContain('title: titleOverride');
     expect(chatView).toContain('const title = titleOverride ?? (activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey));');
@@ -188,7 +188,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('!wasRunActive || isRunActive || !canPost');
     expect(chatView).toContain('composerRootRef.current?.contains(activeElement)');
     expect(chatView).toContain('textarea.style.height =');
-    expect(chatView).toContain("aria-label={t('chat.composerInputLabel', { name: target.name })}");
+    expect(chatView).toContain("aria-label={t('chat.composerInputLabel', { name: subject.name })}");
     expect(chatView).toContain('role="list" aria-label={t(\'chat.attachments\')}');
     expect(chatView).toContain('role="listitem"');
     expect(chatView).toContain('const modelMenuId = React.useId();');
@@ -352,7 +352,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('recentActivityWarning: effectiveRecentActivityWarning');
     expect(chatView).toContain("const blockedComposerMessage = recentActivityWarning");
     expect(chatView).toContain("t('chat.chooseRecentActivityAction')");
-    expect(chatView).toContain('placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: target.name }) : blockedComposerMessage}');
+    expect(chatView).toContain('placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: subject.name }) : blockedComposerMessage}');
     expect(chatView).toContain('{canPost ? composerSubmitUnavailableReason || t(resolvedFooterKey) : blockedFooterMessage}');
     expect(chatView).toContain("recentActivityWarning ? t('chat.chooseRecentActivityAction')");
     expect(chatView).toContain('const activeRunTrace = isInFlightPlaceholder && activeRunId ? runTracesByRunId[activeRunId] : undefined;');

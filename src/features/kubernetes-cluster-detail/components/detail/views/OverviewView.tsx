@@ -17,13 +17,11 @@ import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/se
 import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
 import { formatRelativeTime as formatReadableRelativeTime, formatUserTime } from '@/utils/dateTime';
 import { formatLastUpdated, getAgentConnectionState, getTelemetryFreshness, getTelemetryFreshnessLabel } from '@/utils/telemetry';
-import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
 import {
   AutomaticInvestigationActivity,
   shouldShowManualAssistantFallback
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
-import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface OverviewViewProps {
@@ -120,19 +118,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const [clusterIssues, setClusterIssues] = useState<ControlPlaneIssueItem[] | null>(null);
   const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [issueRequestVersion, setIssueRequestVersion] = useState(0);
-  const workflowActivity = useWorkspaceWorkflowActivity();
-  const workflowActivityRevisionRef = React.useRef(workflowActivity.revision);
   const issueSectionTitleId = React.useId();
   useVisibilityAwareRefresh(() => {
     setIssueRequestVersion((value) => value + 1);
   });
-  useEffect(() => {
-    if (workflowActivityRevisionRef.current === workflowActivity.revision) return;
-    workflowActivityRevisionRef.current = workflowActivity.revision;
-    if (workflowActivity.workspaceId === cluster.workspaceId) {
-      setIssueRequestVersion((value) => value + 1);
-    }
-  }, [cluster.workspaceId, workflowActivity.revision, workflowActivity.workspaceId]);
   useEffect(() => {
     let isCurrent = true;
 
@@ -308,11 +297,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                         </div>
                         <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
                         <p className="type-body mt-1 break-words">{issue.reason || issue.summary}</p>
-                        <IssueWorkflowActivity
-                          workspaceId={cluster.workspaceId}
-                          issueId={issue.id}
-                          activity={issue.workflowActivity}
-                        />
                         <AutomaticInvestigationActivity
                           workspaceId={cluster.workspaceId}
                           targetId={cluster.id}
@@ -331,7 +315,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                           {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
                             <Button
                               onClick={() => openIssueTriage(issue)}
-                              variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                              variant="primary"
                               size="md"
                               className="whitespace-nowrap"
                             >
@@ -370,11 +354,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                       <dd className="type-caption mt-1">{formatRelativeTime(issueTimestamp(issue))}</dd>
                     </div>
                   </dl>
-                  <IssueWorkflowActivity
-                    workspaceId={cluster.workspaceId}
-                    issueId={issue.id}
-                    activity={issue.workflowActivity}
-                  />
                   <AutomaticInvestigationActivity
                     workspaceId={cluster.workspaceId}
                     targetId={cluster.id}
@@ -385,7 +364,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                   {onOpenCopilot && shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
                     <Button
                       onClick={() => openIssueTriage(issue)}
-                      variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                      variant="primary"
                       size="md"
                       className="mt-4"
                     >

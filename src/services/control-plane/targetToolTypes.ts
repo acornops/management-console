@@ -51,8 +51,8 @@ export interface ControlPlaneTargetToolItem {
 
 export interface ControlPlaneTargetToolsCatalog {
   workspaceId: string;
-  targetId: string;
-  targetType: 'kubernetes' | 'virtual_machine';
+  targetId?: string;
+  targetType?: 'kubernetes' | 'virtual_machine';
   permissions: {
     canEdit: boolean;
     editableRoles?: string[];

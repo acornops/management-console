@@ -4,10 +4,10 @@ import type {
   CreateTargetSkillInput
 } from '@/services/controlPlaneApi';
 import { formatControlPlaneError, type ControlPlaneErrorArea } from '@/services/control-plane/errorFormatting';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
+import type { CapabilitySubject } from '@/features/capabilities/admin';
 
 export interface TargetSkillsViewProps {
-  target: TargetDescriptor;
+  subject: CapabilitySubject;
   canManageSkills?: boolean;
   initialCatalog?: ControlPlaneTargetSkillsCatalog | null;
   onCatalogChange?: (catalog: ControlPlaneTargetSkillsCatalog) => void;

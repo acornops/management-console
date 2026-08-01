@@ -17,7 +17,7 @@ import { ICONS } from '@/constants';
 import {
   ResourceCatalogActionMenu,
   ResourceCatalogCard
-} from '@/features/targets/catalog/TargetCatalogPrimitives';
+} from '@/features/capabilities/catalog';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 import { statusTone } from '@/pages/WorkspaceAgentsPage.helpers';

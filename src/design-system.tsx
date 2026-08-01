@@ -362,6 +362,7 @@ const Catalog = () => {
             <ModalStepIndicator
               steps={[{ id: 'describe', label: 'Describe' }, { id: 'access', label: 'Access' }, { id: 'review', label: 'Review' }]}
               currentStepId="access"
+              compactOnMobile
             />
             <div className="flex flex-wrap items-center gap-3">
               <Tooltip content="Explains an unfamiliar action">

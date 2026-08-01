@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const overviewPath = '/workspaces/fixture-workspace/virtual-machines/fixture-vm';
 
-test('VM issue actions stay distinct from related workflow activity at operator widths', async ({ page }) => {
+test('VM issue actions remain usable at operator widths', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
 

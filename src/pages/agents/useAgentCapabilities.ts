@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CompactControlItem } from '@acornops/ui';
-import { enabledScheduleImpactForAgent } from '@/features/catalog/mcpCredentialModeImpact';
+import { countEnabledScheduleImpactForAgent } from '@/features/catalog/mcpCredentialModeImpact';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
@@ -16,8 +16,6 @@ import {
   type AgentSkillApi,
   type WorkspaceNativeToolApi
 } from '@/services/control-plane/agentApi';
-import { listTargetsForWorkspace } from '@/services/control-plane/targetApi';
-import { listWorkspaceWorkflowSchedules, listWorkspaceWorkflows, type WorkflowOption } from '@/services/control-plane/workflowApi';
 
 export type CapabilityTab = 'mcp' | 'tools' | 'skills';
 
@@ -62,12 +60,6 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
     description: '',
     content: ''
   });
-  const [targetOptions, setTargetOptions] = React.useState<WorkflowOption[]>([]);
-  const [constraintEditor, setConstraintEditor] = React.useState<{
-    serverId: string;
-    targetTypes: string[];
-    targetIds: string[];
-  } | null>(null);
   const [renameEditor, setRenameEditor] = React.useState<{
     serverId: string;
     name: string;
@@ -139,26 +131,6 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
   }, [agent.id, agent.nativeToolConfigs, agent.tools]);
 
   React.useEffect(() => {
-    let mounted = true;
-    listTargetsForWorkspace(agent.workspaceId, { limit: 200 })
-      .then(
-        (page) =>
-          mounted &&
-          setTargetOptions(
-            page.items.map((target) => ({
-              value: target.id,
-              label: target.name,
-              description: `${target.targetType === 'kubernetes' ? 'Kubernetes cluster' : 'Virtual machine'} · ${target.status}`
-            }))
-          )
-      )
-      .catch(() => mounted && setTargetOptions([]));
-    return () => {
-      mounted = false;
-    };
-  }, [agent.workspaceId]);
-
-  React.useEffect(() => {
     if (recoveryAction !== 'connect_by_url') return;
     setManualServerOpen(true);
     updateUrlSearch({ mcpAction: null }, { replace: true });
@@ -226,9 +198,9 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
     if (!row) return;
     row.scrollIntoView({ block: 'center' });
     const frame = window.requestAnimationFrame(() => {
-      const focusTarget = recoveryControls.current.get(recoveryServerId) || managedConnectionMessages.current.get(recoveryServerId);
-      if (!focusTarget) return;
-      focusTarget.focus();
+      const focusElement = recoveryControls.current.get(recoveryServerId) || managedConnectionMessages.current.get(recoveryServerId);
+      if (!focusElement) return;
+      focusElement.focus();
       focusedRecoveryKey.current = recoveryKey;
     });
     return () => window.cancelAnimationFrame(frame);
@@ -300,8 +272,7 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
     try {
       let affectedScheduleCount = 0;
       if (credentialMode === 'individual') {
-        const [workflowItems, schedulePage] = await Promise.all([listWorkspaceWorkflows(agent.workspaceId), listWorkspaceWorkflowSchedules(agent.workspaceId)]);
-        affectedScheduleCount = enabledScheduleImpactForAgent(workflowItems, schedulePage.items, agent.id).length;
+        affectedScheduleCount = await countEnabledScheduleImpactForAgent(agent.workspaceId, agent.id);
       }
       setCredentialModeChange({
         server,
@@ -369,9 +340,6 @@ export function useAgentCapabilities({ agent, canManageAgents, canManageMcp, can
     setManualServerOpen,
     manualSkill,
     setManualSkill,
-    targetOptions,
-    constraintEditor,
-    setConstraintEditor,
     renameEditor,
     setRenameEditor,
     removeServerId,

@@ -150,8 +150,8 @@ export interface ClusterToolCatalogServer {
 
 export interface ClusterToolCatalog {
   workspaceId: string;
-  clusterId: string;
-  targetId: string;
+  clusterId?: string;
+  targetId?: string;
   targetType?: 'kubernetes' | 'virtual_machine';
   permissions: {
     canEdit: boolean;

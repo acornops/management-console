@@ -83,7 +83,6 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
         state: routeState.state || 'open',
         origin: routeState.origin,
         workflowId: routeState.workflowId,
-        sourceIssueId: routeState.issueId,
         limit: 50,
         cursor
       });
@@ -100,7 +99,6 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
     }
   }, [
     deferredQuery,
-    routeState.issueId,
     routeState.origin,
     routeState.state,
     routeState.workflowId,
@@ -130,8 +128,7 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
     routeState.q,
     routeState.state && routeState.state !== 'open',
     routeState.origin,
-    routeState.workflowId,
-    routeState.issueId
+    routeState.workflowId
   ].filter(Boolean).length;
   const activityLedgerFillsAvailableSpace = phase === 'loading' || items.length > 0;
 
@@ -201,15 +198,9 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
               q: undefined,
               state: undefined,
               origin: undefined,
-              workflowId: undefined,
-              issueId: undefined
+              workflowId: undefined
             })}
         />
-        {routeState.issueId && (
-          <p className="type-caption mb-4 shrink-0 text-ui-text-muted">
-            {t('workflowActivity.filters.issueApplied', { issue: routeState.issueId })}
-          </p>
-        )}
 
         {workspaceActivity.error && (
           <InlineAlert tone="warning" className="mb-4 shrink-0">{t('workflowActivity.refreshError')}</InlineAlert>
@@ -227,7 +218,7 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
             collectionState={{ phase, itemCount: items.length }}
           >
             <DataTableGridHeaderCell>{t('workflowActivity.columns.run')}</DataTableGridHeaderCell>
-            <DataTableGridHeaderCell>{t('workflowActivity.columns.target')}</DataTableGridHeaderCell>
+            <DataTableGridHeaderCell>{t('workflowActivity.columns.scope')}</DataTableGridHeaderCell>
             <DataTableGridHeaderCell>{t('workflowActivity.columns.time')}</DataTableGridHeaderCell>
             <DataTableGridHeaderCell>{t('workflowActivity.columns.duration')}</DataTableGridHeaderCell>
             <DataTableGridHeaderCell numeric>{t('workflowActivity.columns.action')}</DataTableGridHeaderCell>

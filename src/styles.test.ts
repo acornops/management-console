@@ -287,7 +287,7 @@ describe('theme color contract', () => {
     expect(loginPreview).not.toContain('shadow-accent-bright/30');
   });
 
-  it('makes the workspace homepage triage workflow inspectable from summary to target issue boards', () => {
+  it('makes the workspace homepage triage flow inspectable from summary to target issue boards', () => {
     expect(overviewPage).toContain('const issueCollection = useCursorCollection({');
     expect(overviewPage).toContain("strategy: 'manual'");
     expect(overviewPage).toContain('pageSize: 24');

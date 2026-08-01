@@ -26,23 +26,23 @@ test('cluster capability catalogs remain visible during revisit refreshes', asyn
   await expect(page.getByRole('heading', { name: 'Tools' })).toBeVisible();
   await expect(page.getByText('Generate PDF report')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Skills', exact: true }).click();
+  await page.getByRole('link', { name: 'Skills', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible();
   await expect(page.getByText('Kubernetes triage')).toBeVisible();
 
-  await page.getByRole('button', { name: 'MCP Servers', exact: true }).click();
+  await page.getByRole('link', { name: 'MCP Servers', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'MCP Servers' })).toBeVisible();
   await expect(page.getByText('AcornOps Kubernetes Tools')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Tools', exact: true }).click();
+  await page.getByRole('link', { name: 'Tools', exact: true }).click();
   await expect(page.getByText('Loading tools')).toHaveCount(0);
   await expect(page.getByText('Generate PDF report')).toBeVisible({ timeout: 750 });
 
-  await page.getByRole('button', { name: 'Skills', exact: true }).click();
+  await page.getByRole('link', { name: 'Skills', exact: true }).click();
   await expect(page.getByText('Loading skills')).toHaveCount(0);
   await expect(page.getByText('Kubernetes triage')).toBeVisible({ timeout: 750 });
 
-  await page.getByRole('button', { name: 'MCP Servers', exact: true }).click();
+  await page.getByRole('link', { name: 'MCP Servers', exact: true }).click();
   await expect(page.getByText('Loading MCP server catalog...')).toHaveCount(0);
   await expect(page.getByText('AcornOps Kubernetes Tools')).toBeVisible({ timeout: 750 });
 });

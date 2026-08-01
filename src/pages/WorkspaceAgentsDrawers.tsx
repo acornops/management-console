@@ -9,7 +9,6 @@ import { Select, SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { AgentEmojiPicker, suggestAgentEmoji } from '@/pages/agents/AgentAvatar';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
-import type { WorkflowOption } from '@/services/control-plane/workflowApi';
 import {
   statusOptions,
   type AgentDraft,
@@ -196,7 +195,6 @@ interface EditAgentDrawerProps {
   editDraft: AgentEditDraft;
   setEditDraft: React.Dispatch<React.SetStateAction<AgentEditDraft | null>>;
   ownerSelectOptions: Array<SelectOption<string>>;
-  targetOptions: WorkflowOption[];
   editChangeSummary: string[];
   updatingAgentId: string;
   nameInputRef?: React.RefObject<HTMLInputElement | null>;
@@ -209,24 +207,12 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
   editDraft,
   setEditDraft,
   ownerSelectOptions,
-  targetOptions,
   editChangeSummary,
   updatingAgentId,
   nameInputRef,
   onClose,
   onSave
 }) => {
-  const scopeTokens = editDraft.targetScope.split(/\n|,/).map((token) => token.trim()).filter(Boolean);
-  const selectedTypes = new Set(scopeTokens.filter((token) => token.startsWith('target-type:')).map((token) => token.slice(12)));
-  const selectedIds = new Set(scopeTokens.filter((token) => token.startsWith('target:')).map((token) => token.slice(7)));
-  const updateTargetScope = (types: Set<string>, ids: Set<string>) => setEditDraft((draft) => draft && ({
-    ...draft,
-    targetScope: [
-      types.size || ids.size ? 'scope:selected_target' : 'scope:workspace',
-      ...[...types].sort().map((type) => `target-type:${type}`),
-      ...[...ids].sort().map((id) => `target:${id}`)
-    ].join('\n')
-  }));
   return (
   <DrawerFrame unframed
     isOpen
@@ -295,46 +281,6 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
 
           <p className="type-body rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-ui-text-muted">This form edits the Agent definition only. Its workspace-owned capability ceiling is configured independently and remains visible in the Capabilities tab.</p>
 
-          <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
-            <h3 className="type-row-title ">Target scope</h3>
-            <p className="type-caption mt-2 text-ui-text-muted">Allow target types broadly, then optionally narrow the Agent to exact targets.</p>
-            <div className="mt-3 flex flex-wrap gap-4">
-              {([
-                ['kubernetes', 'Kubernetes'],
-                ['virtual_machine', 'Virtual machines']
-              ] as const).map(([value, label]) => (
-                <label key={value} className="type-body type-emphasis flex items-center gap-2 text-ui-text">
-                  <Checkbox
-                    checked={selectedTypes.has(value)}
-                    onChange={(event) => {
-                      const next = new Set(selectedTypes);
-                      event.target.checked ? next.add(value) : next.delete(value);
-                      updateTargetScope(next, selectedIds);
-                    }}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-            <div className="mt-4 grid gap-2" aria-label="Exact target scope">
-              {targetOptions.length ? targetOptions.map((target) => (
-                <label key={target.value} className="type-body type-emphasis flex items-start gap-2 rounded-md border border-ui-border px-3 py-2 text-ui-text">
-                  <Checkbox
-                    className="mt-0.5"
-                    checked={selectedIds.has(target.value)}
-                    disabled={target.disabled}
-                    onChange={(event) => {
-                      const next = new Set(selectedIds);
-                      event.target.checked ? next.add(target.value) : next.delete(target.value);
-                      updateTargetScope(selectedTypes, next);
-                    }}
-                  />
-                  <span><span className="block">{target.label}</span>{target.description && <span className="type-caption block text-ui-text-muted">{target.description}</span>}</span>
-                </label>
-              )) : <p className="type-caption text-ui-text-muted">No targets are registered in this workspace.</p>}
-            </div>
-          </section>
-
           {editChangeSummary.length > 0 && <section className="border-y border-ui-border py-4">
             <h3 className="type-row-title ">Changes before save</h3>
             <ul className="type-body type-emphasis mt-3 grid gap-2">
@@ -342,16 +288,6 @@ export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
             </ul>
           </section>}
 
-          <section className="border-y border-ui-border py-4">
-            <h3 className="type-row-title ">Affected workflows</h3>
-            <div className="mt-3 grid gap-2">
-              {editingAgent.workflowsUsingAgent.length > 0
-                ? editingAgent.workflowsUsingAgent.map((workflow) => (
-                  <a key={workflow} href={`/workspaces/${editingAgent.workspaceId}/workflows?${new URLSearchParams({ q: workflow }).toString()}`} className="type-body type-emphasis text-accent-strong underline-offset-4 hover:underline">{workflow}</a>
-                ))
-                : <span className="type-caption text-ui-text-muted">No workflows currently assign this agent.</span>}
-            </div>
-          </section>
         </div>
       </div>
 

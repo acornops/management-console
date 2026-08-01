@@ -22,7 +22,7 @@ limited to bounded overview aggregates and selectors.
 | Kubernetes clusters | `KubernetesClustersPage` | sentinel | Migrated to `useCursorCollection`; deleted-item suppression and parent synchronization remain feature-owned. |
 | Kubernetes resources | `ResourcesView`, `WorkloadsExplorer` | sentinel, page size 100 | Migrated to `useCursorCollection`; the dense explorer layout and keyboard Load more fallback are preserved. |
 | Virtual machines | `useVirtualMachineListRefresh` | drain | Migrated bounded workspace refresh aggregate; focus and interval refresh retain current items. |
-| Workspace, Kubernetes, and VM issues | overview and issue panels | drain plus embedded activity | Bounded issue responses include workflow-activity summaries; issue collections refresh when the workspace activity revision changes without issuing per-issue execution requests. |
+| Workspace, Kubernetes, and VM issues | overview and issue panels | drain | Issue collections refresh through their target-owned polling lifecycle. |
 | MCP server catalog | `McpServersView` | not paginated | Migrated visible lifecycle to one mounted `CollectionState`, retaining descriptor fallback servers during refresh. |
 | MCP server tools | `McpServersView`, `McpServerToolsDialog` | sentinel | Migrated to `useCursorCollection`; active server tools remain visible during refresh and append. |
 | Target tools | `TargetToolsView` | descriptor collection | Migrated visible table precedence to `DataTableStateRow`; descriptor refresh remains target-owned. |

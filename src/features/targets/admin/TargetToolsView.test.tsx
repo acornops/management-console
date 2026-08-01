@@ -29,7 +29,7 @@ describe('TargetToolsView', () => {
     };
 
     const markup = renderToStaticMarkup(
-      <TargetToolsView target={target} canManageTools initialCatalog={catalog} />
+      <TargetToolsView subject={target} canManageTools initialCatalog={catalog} />
     );
 
     expect(markup).toContain('data-target-tools-access-summary="true"');

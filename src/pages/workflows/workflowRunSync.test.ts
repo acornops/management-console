@@ -28,7 +28,7 @@ describe('workflow run response synchronization', () => {
 
   it('ignores empty assistant output and indexes saved responses across sessions', () => {
     const sessions = [{
-      id: 'session-1', workflowId: 'workflow-1', workspaceId: 'workspace-1', workflowVersion: 1,
+      id: 'session-1', workflowId: 'workflow-1', workspaceId: 'workspace-1',
       runs: [
         { id: 'run-empty', assistantMessage: { content: '   ' } },
         { id: 'run-saved', requestedAt: '2026-07-19T12:57:45.000Z', assistantMessage: { content: 'Saved response' } }

@@ -17,7 +17,6 @@ export interface WorkspaceOverviewIssue {
   lastSeenAt: string;
   detail: string;
   evidence: string;
-  workflowActivity?: ControlPlaneIssueItem['workflowActivity'];
   automaticInvestigation?: ControlPlaneIssueItem['automaticInvestigation'];
 }
 
@@ -102,7 +101,6 @@ export function mapControlPlaneIssueToOverviewIssue(
     lastSeenAt: item.lastSeenAt,
     detail: issueDetail(item, t),
     evidence: compactText(item.reason) || compactText(item.summary),
-    ...(item.workflowActivity ? { workflowActivity: item.workflowActivity } : {}),
     ...(item.automaticInvestigation ? { automaticInvestigation: item.automaticInvestigation } : {})
   };
 }

@@ -42,7 +42,7 @@ import {
 export type { TargetToolsDataSource } from '@/features/targets/admin/TargetToolsView.helpers';
 
 export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
-  target,
+  subject,
   canManageTools = false,
   initialCatalog = null,
   onCatalogChange,
@@ -116,13 +116,13 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     setCatalogLoading(true);
     setCatalogError(null);
     try {
-      setCatalog(await dataSource.listTools(target.workspaceId, target.id));
+      setCatalog(await dataSource.listTools(subject.workspaceId, subject.id));
     } catch (error) {
       setCatalogError(formatError(error, t('tools.loadFailed'), 'targetTools'));
     } finally {
       setCatalogLoading(false);
     }
-  }, [dataSource, target.id, target.workspaceId, t]);
+  }, [dataSource, subject.id, subject.workspaceId, t]);
 
   React.useEffect(() => {
     void loadCatalog();
@@ -143,12 +143,12 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   const exportTargetInsights = async (tool: ControlPlaneTargetToolItem) => {
     setCatalogError(null);
     try {
-      const text = await controlPlaneApi.exportTargetInsights(target.workspaceId, target.id);
+      const text = await controlPlaneApi.exportTargetInsights(subject.workspaceId, subject.id);
       const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${tool.id}-${target.id}.md`;
+      link.download = `${tool.id}-${subject.id}.md`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -216,8 +216,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     setSaving(true);
     try {
       const updated = await dataSource.updateTool(
-        target.workspaceId,
-        target.id,
+        subject.workspaceId,
+        subject.id,
         editingTool.id,
         draftRequest.request
       );
@@ -240,8 +240,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
     setCatalogError(null);
     try {
       const updated = await dataSource.updateTool(
-        target.workspaceId,
-        target.id,
+        subject.workspaceId,
+        subject.id,
         tool.id,
         { enabled }
       );
@@ -277,7 +277,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         <div className="min-w-0">
           <h1 className="type-route-title">{t('tools.title')}</h1>
           <p className="type-body mt-2">
-            {t('tools.description', { name: target.name })}
+            {t('tools.description', { name: subject.name })}
           </p>
         </div>
         {showPermissionNotice && (
@@ -414,13 +414,13 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       ) : null}
 
       {editingTool?.id === 'target_insights' && targetInsightsAction === 'files' && (
-        <TargetInsightsDialog workspaceId={target.workspaceId} targetId={target.id} tool={editingTool} canEdit={canEditSelectedTool} savingTool={saving} onClose={closeConfigure} />
+        <TargetInsightsDialog workspaceId={subject.workspaceId} targetId={subject.id} tool={editingTool} canEdit={canEditSelectedTool} savingTool={saving} onClose={closeConfigure} />
       )}
 
       {editingTool?.id === 'target_insights' && targetInsightsAction === 'settings' && (
         <TargetInsightsSettingsDialog
-          workspaceId={target.workspaceId}
-          targetId={target.id}
+          workspaceId={subject.workspaceId}
+          targetId={subject.id}
           tool={editingTool}
           canEdit={canEditSelectedTool}
           savingTool={saving}
@@ -437,16 +437,16 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
 
       {editingTool?.id === 'target_insights' && targetInsightsAction === 'activity' && (
         <TargetInsightsActivityDialog
-          workspaceId={target.workspaceId}
-          targetId={target.id}
-          targetType={target.targetType}
+          workspaceId={subject.workspaceId}
+          targetId={subject.id}
+          targetType={subject.targetType}
           tool={editingTool}
           onClose={closeConfigure}
         />
       )}
 
       {editingTool?.id === 'target_insights' && targetInsightsAction === 'reset' && (
-        <TargetInsightsResetDialog workspaceId={target.workspaceId} targetId={target.id} tool={editingTool} canEdit={canEditSelectedTool} onClose={closeConfigure} />
+        <TargetInsightsResetDialog workspaceId={subject.workspaceId} targetId={subject.id} tool={editingTool} canEdit={canEditSelectedTool} onClose={closeConfigure} />
       )}
 
       {editingTool && editingTool.id !== 'target_insights' && draft && (

@@ -9,7 +9,7 @@ import { IconTile } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
-import { TraceFooter } from '@/features/targets/chat/components/TraceFooter';
+import { TraceFooter } from '@/features/conversations/presentation';
 import {
   AgentAssignmentList,
   WorkflowPanel,
@@ -397,7 +397,6 @@ export const WorkflowRunsPanel: React.FC<{
                         <div className="min-w-0">
                           <div className="break-words type-body type-emphasis text-ui-text [overflow-wrap:anywhere]">{child.capabilityId}</div>
                           <dl className="type-caption mt-1 grid gap-x-3 gap-y-1 text-ui-text-muted sm:grid-cols-[4rem_minmax(0,1fr)]">
-                            <dt>{t('workflowCoordination.targetLabel')}</dt><dd className="break-words [overflow-wrap:anywhere]">{child.target.targetType}: {child.target.id}</dd>
                             <dt>{t('workflowCoordination.agentLabel')}</dt><dd className="break-words [overflow-wrap:anywhere]">{child.agent.name}</dd>
                           </dl>
                           {child.failure && <div className="type-caption mt-2 break-words text-status-danger-text [overflow-wrap:anywhere]">{child.failure.code}: {child.failure.message}</div>}

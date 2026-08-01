@@ -1,17 +1,20 @@
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
-import type { McpServersDataSource } from '@/features/targets/admin/McpServersView';
-import type { TargetSkillsDataSource } from '@/features/targets/admin/TargetSkillsView';
-import type { TargetToolsDataSource } from '@/features/targets/admin/TargetToolsView';
 import type {
-  ControlPlaneTargetSkillDetail,
-  ControlPlaneTargetSkillsCatalog,
-  ControlPlaneTargetToolItem,
-  ControlPlaneTargetToolsCatalog,
-  CreateTargetMcpServerInput,
-  TargetMcpServer,
-  TargetMcpServerTestConnectionResult,
-  UpdateTargetMcpServerInput
-} from '@/services/controlPlaneApi';
+  CapabilityMcpDataSource,
+  CapabilitySkillsCatalog,
+  CapabilitySkillDetail,
+  CapabilitySkillsDataSource,
+  CapabilitySubject,
+  CapabilityToolItem,
+  CapabilityToolsCatalog,
+  CapabilityToolsDataSource,
+  CreateMcpServerInput,
+  McpServerRecord,
+  McpServerTestConnectionResult,
+  McpToolCatalog,
+  McpToolCatalogItem,
+  McpToolCatalogServer,
+  UpdateMcpServerInput
+} from '@/features/capabilities/admin';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import {
   createAgentMcpServer,
@@ -35,26 +38,19 @@ import {
   type AgentSkillApi,
   type WorkspaceNativeToolApi
 } from '@/services/control-plane/agentApi';
-import { enabledScheduleImpactForAgent } from '@/features/catalog/mcpCredentialModeImpact';
-import { listWorkspaceWorkflowSchedules, listWorkspaceWorkflows } from '@/services/control-plane/workflowApi';
-import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
+import { countEnabledScheduleImpactForAgent } from '@/features/catalog/mcpCredentialModeImpact';
 
 const textBytes = (value: string) => new TextEncoder().encode(value).byteLength;
 
-export function toAgentCapabilitySubject(agent: AgentDefinition): TargetDescriptor {
+export function toAgentCapabilitySubject(agent: AgentDefinition): CapabilitySubject {
   return {
     id: agent.id,
     workspaceId: agent.workspaceId,
-    // Shared capability views do not branch on target type. The Agent data sources
-    // below keep every request on Agent-specific API routes.
-    targetType: 'kubernetes',
-    name: agent.name,
-    chatSessions: [],
-    mcpTools: []
+    name: agent.name
   };
 }
 
-function mapAgentMcpTool(tool: AgentMcpToolApi, serverEnabled: boolean): TargetToolCatalogItem {
+function mapAgentMcpTool(tool: AgentMcpToolApi, serverEnabled: boolean): McpToolCatalogItem {
   const enabledEffective = serverEnabled && tool.enabled;
   return {
     name: tool.name,
@@ -68,13 +64,13 @@ function mapAgentMcpTool(tool: AgentMcpToolApi, serverEnabled: boolean): TargetT
   };
 }
 
-function mapConnectionStatus(status?: string): TargetToolCatalogServer['connectionStatus'] {
+function mapConnectionStatus(status?: string): McpToolCatalogServer['connectionStatus'] {
   if (status === 'ok' || status === 'connected') return 'ok';
   if (status === 'error') return 'error';
   return 'unknown';
 }
 
-function mapAgentMcpServer(server: AgentMcpServerApi): TargetToolCatalogServer {
+function mapAgentMcpServer(server: AgentMcpServerApi): McpToolCatalogServer {
   const tools = server.tools.map((tool) => mapAgentMcpTool(tool, server.enabled));
   const enabledConfigured = tools.filter((tool) => tool.enabledConfigured).length;
   const enabledEffective = tools.filter((tool) => tool.enabledEffective).length;
@@ -111,11 +107,10 @@ function mapAgentMcpServer(server: AgentMcpServerApi): TargetToolCatalogServer {
   };
 }
 
-function mapAgentMcpInstallation(server: AgentMcpServerApi, agent: AgentDefinition): TargetMcpServer {
+function mapAgentMcpInstallation(server: AgentMcpServerApi, agent: AgentDefinition): McpServerRecord {
   return {
     id: server.id,
     workspaceId: agent.workspaceId,
-    targetId: agent.id,
     serverName: server.name,
     serverUrl: server.url,
     enabled: server.enabled,
@@ -138,17 +133,15 @@ function mapAgentMcpInstallation(server: AgentMcpServerApi, agent: AgentDefiniti
   };
 }
 
-function mcpCatalog(agent: AgentDefinition, servers: AgentMcpServerApi[], canManageMcp: boolean): TargetToolCatalog {
+function mcpCatalog(agent: AgentDefinition, servers: AgentMcpServerApi[], canManageMcp: boolean): McpToolCatalog {
   return {
     workspaceId: agent.workspaceId,
-    clusterId: agent.id,
-    targetId: agent.id,
     permissions: { canEdit: canManageMcp, editableRoles: [] },
     servers: servers.map(mapAgentMcpServer)
   };
 }
 
-export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: boolean): McpServersDataSource {
+export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: boolean): CapabilityMcpDataSource {
   return {
     async getCatalog(workspaceId, subjectId) {
       return mcpCatalog(agent, await listAgentMcpServers(workspaceId, subjectId), canManageMcp);
@@ -158,7 +151,7 @@ export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: b
       const server = (await listAgentMcpServers(workspaceId, subjectId)).find((item) => item.id === serverId);
       return { items: server ? server.tools.map((tool) => mapAgentMcpTool(tool, server.enabled)) : [] };
     },
-    async createServer(workspaceId, subjectId, input: CreateTargetMcpServerInput) {
+    async createServer(workspaceId, subjectId, input: CreateMcpServerInput) {
       const server = await createAgentMcpServer(workspaceId, subjectId, {
         name: input.name,
         url: input.url,
@@ -168,7 +161,7 @@ export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: b
       });
       return mapAgentMcpInstallation(server, agent);
     },
-    async updateServer(workspaceId, subjectId, serverId, input: UpdateTargetMcpServerInput) {
+    async updateServer(workspaceId, subjectId, serverId, input: UpdateMcpServerInput) {
       const server = await updateAgentMcpServer(workspaceId, subjectId, serverId, {
         name: input.name,
         enabled: input.enabled,
@@ -184,7 +177,7 @@ export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: b
       await testAgentMcpServer(workspaceId, subjectId, serverId);
       const server = (await listAgentMcpServers(workspaceId, subjectId)).find((item) => item.id === serverId);
       if (!server) throw new Error('The MCP server could not be reloaded after testing.');
-      const result: TargetMcpServerTestConnectionResult = {
+      const result: McpServerTestConnectionResult = {
         serverId,
         serverName: server.name,
         serverUrl: server.url,
@@ -208,11 +201,9 @@ export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: b
   };
 }
 
-function mapAgentSkill(agent: AgentDefinition, skill: AgentSkillApi): ControlPlaneTargetSkillDetail {
+function mapAgentSkill(agent: AgentDefinition, skill: AgentSkillApi): CapabilitySkillDetail {
   const totalBytes = skill.files.reduce((total, file) => total + textBytes(file.content), 0);
   return {
-    targetId: agent.id,
-    targetType: 'kubernetes',
     id: skill.id,
     workspaceId: agent.workspaceId,
     name: skill.name,
@@ -246,19 +237,17 @@ const nameFromSkillFiles = (files: Array<{ path: string; content: string }>) => 
   return markdown.match(/^name:\s*(.+)$/m)?.[1]?.trim() || 'untitled-skill';
 };
 
-export function createAgentSkillsDataSource(agent: AgentDefinition, canManageSkills: boolean): TargetSkillsDataSource {
+export function createAgentSkillsDataSource(agent: AgentDefinition, canManageSkills: boolean): CapabilitySkillsDataSource {
   const getAgentSkill = async (workspaceId: string, subjectId: string, skillId: string) => {
     const skill = (await listAgentSkills(workspaceId, subjectId)).find((item) => item.id === skillId);
     if (!skill) throw new Error('The Agent skill could not be found.');
     return skill;
   };
   return {
-    async listSkills(workspaceId, subjectId): Promise<ControlPlaneTargetSkillsCatalog> {
+    async listSkills(workspaceId, subjectId): Promise<CapabilitySkillsCatalog> {
       const items = (await listAgentSkills(workspaceId, subjectId)).map((skill) => mapAgentSkill(agent, skill));
       return {
         workspaceId,
-        targetId: subjectId,
-        targetType: 'kubernetes',
         permissions: { canEdit: canManageSkills, editableRoles: [] },
         items
       };
@@ -322,11 +311,11 @@ function mapNativeTool(
   enabled: boolean,
   config: Record<string, unknown> | undefined,
   canManageTools: boolean
-): ControlPlaneTargetToolItem {
+): CapabilityToolItem {
   return {
     id: tool.id,
     label: tool.title,
-    description: tool.targetCatalogDescription || tool.description,
+    description: tool.description,
     enabled,
     toggleable: true,
     origin: 'platform_native',
@@ -342,30 +331,30 @@ function mapNativeTool(
   };
 }
 
-export function createAgentToolsDataSource(agent: AgentDefinition, canManageTools: boolean): TargetToolsDataSource {
+export function createAgentToolsDataSource(agent: AgentDefinition, canManageTools: boolean): CapabilityToolsDataSource {
   let assignedToolIds = [...(agent.tools || [])];
   let toolConfigs = { ...(agent.nativeToolConfigs || {}) };
   let nativeTools: WorkspaceNativeToolApi[] = [];
   return {
-    async listTools(workspaceId, subjectId): Promise<ControlPlaneTargetToolsCatalog> {
+    async listTools(workspaceId, subjectId): Promise<CapabilityToolsCatalog> {
       const loadedNativeTools = await listWorkspaceNativeTools(workspaceId).catch(() => assignedToolIds.map<WorkspaceNativeToolApi>((toolId) => ({
         id: toolId,
         modelAlias: toolId,
         title: toolId,
         description: 'Workspace-native Agent tool.',
         semanticCapabilityId: toolId,
-        invocationScopes: ['workflow'],
+        invocationScopes: ['agent_chat'],
         authorizationClass: 'prompt_resource',
         auditOperation: 'read',
         approvalOperation: 'read',
         inputSchema: {},
         outputSchema: {}
       })));
-      nativeTools = Array.isArray(loadedNativeTools) ? loadedNativeTools : [];
+      nativeTools = Array.isArray(loadedNativeTools)
+        ? loadedNativeTools.filter((tool) => tool.invocationScopes.includes('agent_chat'))
+        : [];
       return {
         workspaceId,
-        targetId: subjectId,
-        targetType: 'kubernetes',
         permissions: { canEdit: canManageTools, editableRoles: [] },
         items: nativeTools.map((tool) => mapNativeTool(
           tool,
@@ -392,9 +381,5 @@ export async function countAgentCredentialModeScheduleImpact(
   workspaceId: string,
   agentId: string
 ): Promise<number> {
-  const [workflows, schedules] = await Promise.all([
-    listWorkspaceWorkflows(workspaceId),
-    listWorkspaceWorkflowSchedules(workspaceId)
-  ]);
-  return enabledScheduleImpactForAgent(workflows, schedules.items, agentId).length;
+  return countEnabledScheduleImpactForAgent(workspaceId, agentId);
 }

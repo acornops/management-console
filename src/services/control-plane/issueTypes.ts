@@ -1,6 +1,5 @@
 import type { TargetType } from './types';
 import type { AutomaticInvestigationSummary } from './autoTriageTypes';
-import type { WorkflowActivitySummary } from './workflowApi';
 
 export interface ControlPlaneIssueItem {
   id: string;
@@ -31,7 +30,6 @@ export interface ControlPlaneIssueItem {
   latestEvidence?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
-  workflowActivity?: WorkflowActivitySummary;
   automaticInvestigation?: AutomaticInvestigationSummary;
 }
 

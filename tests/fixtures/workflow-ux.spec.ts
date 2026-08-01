@@ -10,9 +10,9 @@ test('default workflows are directly editable without creating a copy', async ({
   await expect(page.getByRole('button', { name: 'Schedules', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Launch', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
-  const editDrawer = page.getByRole('dialog', { name: 'Edit workflow' });
-  await expect(editDrawer).toBeVisible();
-  await expect(editDrawer.getByLabel('Workflow name')).toHaveValue('Kubernetes health check');
+  const settingsPanel = page.getByRole('tabpanel', { name: 'Settings' });
+  await expect(settingsPanel).toBeVisible();
+  await expect(settingsPanel.getByLabel('Workflow name')).toHaveValue('Kubernetes health check');
 });
 
 test('workflow detail keeps primary navigation lean across contextual and compact views', async ({ page }) => {
@@ -22,29 +22,28 @@ test('workflow detail keeps primary navigation lean across contextual and compac
   });
 
   await expect(page.getByRole('heading', { name: 'Production health review' })).toBeVisible();
-  await expect(page.getByRole('tablist')).toHaveCount(0);
+  await expect(page.getByRole('tablist', { name: 'Workflow sections' })).toBeVisible();
+  await expect(page.getByRole('tablist', { name: 'Workflow detail sections' })).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Search workflow library' })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Back to workflows' })).toBeVisible();
 
   const workflowActions = page.getByLabel('Workflow actions').getByRole('button');
-  await expect(workflowActions).toHaveCount(5);
-  await expect(page.getByRole('button', { name: 'Run activity', exact: true })).toBeVisible();
+  await expect(workflowActions).toHaveCount(4);
+  await expect(page.getByRole('tab', { name: 'Runs', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Schedules', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Incoming webhooks', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Webhooks', exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Edit agents' }).click();
   await expect(page).toHaveURL(/tab=agents/);
-  const agentsDrawer = page.getByRole('dialog', { name: 'Agents' });
-  await expect(agentsDrawer).toBeVisible();
-  await expect(agentsDrawer.getByRole('checkbox').first()).toBeVisible();
-  await agentsDrawer.getByRole('button', { name: 'Close' }).click();
+  const agentsPanel = page.getByRole('tabpanel', { name: 'Agents' });
+  await expect(agentsPanel).toBeVisible();
+  await expect(agentsPanel.getByRole('checkbox').first()).toBeVisible();
+  await page.getByRole('tab', { name: 'Overview', exact: true }).click();
   await expect(page).not.toHaveURL(/tab=/);
 
-  await page.getByRole('button', { name: 'Run activity', exact: true }).click();
+  await page.getByRole('tab', { name: 'Runs', exact: true }).click();
   await expect(page).toHaveURL(/tab=runs/);
-  const activityDrawer = page.getByRole('dialog', { name: 'Run activity' });
-  await expect(activityDrawer).toBeVisible();
-  await activityDrawer.getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByRole('tabpanel', { name: 'Runs' })).toBeVisible();
 
   const geometry = await page.evaluate(() => {
     const pageShell = document.querySelector<HTMLElement>('.page-shell');
@@ -68,7 +67,7 @@ test('workflow workspace stacks discovery controls below its views and keeps emp
   await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
 
-  const viewTabs = page.getByRole('tablist', { name: 'Workflow views' });
+  const viewTabs = page.getByRole('tablist', { name: 'Workflow sections' });
   const workflowSearch = page.getByRole('searchbox', { name: 'Search workflow library' });
   const workflowDiscoveryFrame = page.locator('[data-search-filter-frame="true"]').filter({ has: workflowSearch });
   const [tabsBox, workflowSearchBox, workflowDiscoveryFrameBox] = await Promise.all([
@@ -133,7 +132,7 @@ test('workflow desktop workspace keeps chrome fixed and scrolls detail content i
   expect(initial.detailOverflowY).toBe('hidden');
   expect(initial.bodyOverflowY).toBe('auto');
   expect(initial.bodyScrollHeight).toBeGreaterThan(initial.bodyClientHeight);
-  expect(initial.headerHeight).toBeLessThanOrEqual(145);
+  expect(initial.headerHeight).toBeLessThanOrEqual(200);
 
   await detailBody.evaluate((element) => element.scrollTo(0, 160));
   const afterScroll = await page.evaluate(() => {
@@ -151,8 +150,8 @@ test('workflow desktop workspace keeps chrome fixed and scrolls detail content i
   expect(afterScroll.bodyScrollTop).toBeGreaterThan(0);
   expect(afterScroll.headerTop).toBe(initial.headerTop);
 
-  await page.getByRole('button', { name: 'Run activity', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Run activity' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Runs', exact: true }).click();
+  await expect(page.getByRole('tabpanel', { name: 'Runs' })).toBeVisible();
   await expect(detailBody).toHaveCSS('overflow-y', 'auto');
 });
 
@@ -224,7 +223,7 @@ test('workflow webhook management stays scoped in a table-first drawer and creat
   await page.goto('/workspaces/fixture-workspace/workflows?workflow=fixture-workflow', {
     waitUntil: 'domcontentloaded'
   });
-  await page.getByRole('button', { name: 'Incoming webhooks', exact: true }).click();
+  await page.getByRole('button', { name: 'Webhooks', exact: true }).click();
 
   const drawer = page.getByRole('dialog', { name: 'Webhooks' });
   await expect(drawer).toBeVisible();

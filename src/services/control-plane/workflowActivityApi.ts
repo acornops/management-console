@@ -12,21 +12,18 @@ export type WorkflowExecutionStatus =
   | 'cancelled';
 
 export type WorkflowExecutionOrigin =
-  | { schemaVersion: 1; kind: 'manual' | 'external_integration' | 'agent_chat' | 'historical_event'; label: string }
+  | { schemaVersion: 1; kind: 'manual' | 'external_integration' | 'historical_event'; label: string }
   | { schemaVersion: 1; kind: 'schedule'; label: string; scheduleId: string }
   | { schemaVersion: 1; kind: 'webhook'; label: string; webhookId: string };
 
 export interface WorkflowExecutionSummary {
   id: string;
   workspaceId: string;
-  workflow: { id: string; name: string; version: number };
+  workflow: { id: string; name: string };
   status: WorkflowExecutionStatus;
   origin: WorkflowExecutionOrigin;
   rootRun?: {
     id: string;
-    targetId?: string;
-    targetName?: string;
-    targetType?: 'kubernetes' | 'virtual_machine';
     requestedAt: string;
     startedAt?: string;
     endedAt?: string;
@@ -36,14 +33,6 @@ export interface WorkflowExecutionSummary {
   startedAt?: string;
   endedAt?: string;
   updatedAt: string;
-}
-
-export interface WorkflowActivitySummary {
-  openCount: number;
-  attentionCount: number;
-  totalCount?: number;
-  openExecution?: WorkflowExecutionSummary;
-  latestExecution?: WorkflowExecutionSummary;
 }
 
 export interface WorkflowExecutionPage {
@@ -57,7 +46,6 @@ export interface WorkspaceWorkflowExecutionFilters {
   state?: 'all' | 'open' | 'attention' | 'completed' | 'failed' | 'cancelled';
   origin?: WorkflowExecutionOrigin['kind'];
   workflowId?: string;
-  sourceIssueId?: string;
   limit?: number;
   cursor?: string;
 }
@@ -77,7 +65,6 @@ const executionStatuses = new Set<WorkflowExecutionStatus>([
 const originKinds = new Set<WorkflowExecutionOrigin['kind']>([
   'manual',
   'external_integration',
-  'agent_chat',
   'schedule',
   'webhook',
   'historical_event'
@@ -103,7 +90,7 @@ function parseOrigin(value: unknown): WorkflowExecutionOrigin | null {
   if (!input || input.schemaVersion !== 1 || !label || !originKinds.has(kind as WorkflowExecutionOrigin['kind'])) {
     return null;
   }
-  if (kind === 'manual' || kind === 'external_integration' || kind === 'agent_chat' || kind === 'historical_event') {
+  if (kind === 'manual' || kind === 'external_integration' || kind === 'historical_event') {
     return { schemaVersion: 1, kind, label };
   }
   if (kind === 'schedule') {
@@ -128,8 +115,6 @@ function parseExecution(value: unknown): WorkflowExecutionSummary | null {
     || !workflow
     || !text(workflow.id)
     || !text(workflow.name)
-    || !Number.isInteger(workflow.version)
-    || Number(workflow.version) < 1
     || !executionStatuses.has(status as WorkflowExecutionStatus)
     || !origin
     || !createdAt
@@ -139,30 +124,18 @@ function parseExecution(value: unknown): WorkflowExecutionSummary | null {
   const rootInput = input.rootRun === undefined ? null : record(input.rootRun);
   const rootRequestedAt = rootInput ? timestamp(rootInput.requestedAt) : undefined;
   if (input.rootRun !== undefined && (!rootInput || !text(rootInput.id) || !rootRequestedAt)) return null;
-  const rootTargetType = rootInput?.targetType;
-  if (
-    rootTargetType !== undefined
-    && rootTargetType !== 'kubernetes'
-    && rootTargetType !== 'virtual_machine'
-  ) return null;
-  const parsedRootTargetType = rootTargetType as 'kubernetes' | 'virtual_machine' | undefined;
-
   return {
     id: text(input.id)!,
     workspaceId: text(input.workspaceId)!,
     workflow: {
       id: text(workflow.id)!,
-      name: text(workflow.name)!,
-      version: Number(workflow.version)
+      name: text(workflow.name)!
     },
     status: status as WorkflowExecutionStatus,
     origin,
     ...(rootInput ? {
       rootRun: {
         id: text(rootInput.id)!,
-        ...(text(rootInput.targetId) ? { targetId: text(rootInput.targetId) } : {}),
-        ...(text(rootInput.targetName) ? { targetName: text(rootInput.targetName) } : {}),
-        ...(parsedRootTargetType ? { targetType: parsedRootTargetType } : {}),
         requestedAt: rootRequestedAt!,
         ...(timestamp(rootInput.startedAt) ? { startedAt: timestamp(rootInput.startedAt) } : {}),
         ...(timestamp(rootInput.endedAt) ? { endedAt: timestamp(rootInput.endedAt) } : {})
@@ -224,7 +197,6 @@ export async function listWorkspaceWorkflowExecutions(
   if (filters.state && filters.state !== 'all') params.set('state', filters.state);
   if (filters.origin) params.set('origin', filters.origin);
   if (filters.workflowId) params.set('workflowId', filters.workflowId);
-  if (filters.sourceIssueId) params.set('sourceIssueId', filters.sourceIssueId);
   if (filters.limit) params.set('limit', String(filters.limit));
   if (filters.cursor) params.set('cursor', filters.cursor);
   const query = params.toString();

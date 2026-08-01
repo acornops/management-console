@@ -10,12 +10,12 @@ function workflowWithRun(run: WorkflowDefinition['runs'][number]): WorkflowDefin
   return {
     id: 'workflow-1',
     workspaceId: 'workspace-1',
-    name: 'Target diagnostics',
-    description: 'Inspect one target.',
+    name: 'Infrastructure diagnostics',
+    description: 'Inspect infrastructure named in the request.',
     status: 'active',
     agentIds: ['agent-1'],
     executionMode: 'direct',
-    semanticCapabilityIds: ['target.diagnostics.read'],
+    semanticCapabilityIds: ['infrastructure.diagnostics.read'],
     capabilityRestrictionMode: 'restrict',
     owner: 'AcornOps',
     tags: [],
@@ -134,13 +134,13 @@ describe('WorkflowCapabilitiesPanel', () => {
     workflow.agents = [{ agentId: 'agent-1', name: 'Kubernetes Operator', role: 'Direct', required: true }];
     const agent: AgentDefinition = {
       id: 'agent-1', workspaceId: 'workspace-1', name: 'Kubernetes Operator', avatarEmoji: 'K',
-      description: '', instructions: '', status: 'active', origin: { type: 'manual' }, reviewState: 'reviewed',
-      providerType: 'internal', createdBy: 'user-1', owner: 'Operator', version: 1,
+      description: '', instructions: '', status: 'active', reviewState: 'reviewed',
+      providerType: 'internal', createdBy: 'user-1', owner: 'Operator',
       mcpServers: [], tools: ['patch_resource'], nativeToolConfigs: {}, skills: [], semanticCapabilityIds: [],
-      targetScope: ['workspace'], contextScope: [], permissionMode: 'ask_before_changes',
+      contextScope: [], permissionMode: 'ask_before_changes',
       trustPolicy: { boundary: 'Workspace', dataEgress: 'Blocked' },
-      capabilities: [{ source: 'builtin_tool', resourceType: 'kubernetes', resourceScope: 'target', toolId: 'patch_resource', operation: 'write', requiresApproval: true }],
-      workflowsUsingAgent: [], workflowUsage: { workflowRunCount: 0 }, readiness: { status: 'ready', reasons: [] }
+      capabilities: [{ source: 'builtin_tool', resourceType: 'kubernetes', resourceScope: 'infrastructure', toolId: 'patch_resource', operation: 'write', requiresApproval: true }],
+      readiness: { status: 'ready', reasons: [] }
     };
 
     const html = renderToStaticMarkup(

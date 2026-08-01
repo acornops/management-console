@@ -2,11 +2,53 @@ import { requestJson } from './http';
 import type { ControlPlaneRunEvent, ControlPlaneRunToolApproval } from './types';
 import type { WorkflowExecutionSummary } from './workflowActivityApi';
 
+export interface AutomationTemplateApi {
+  id: string; name: string; description: string; installMode: 'automatic' | 'opt_in';
+  installationStatus: 'not_installed' | 'needs_setup' | 'ready' | 'active'; setupSteps: string[];
+  blockerCodes: string[]; workflowId?: string;
+}
+export interface AutomationTemplateInstallationApi { workspaceId: string; templateId: string; state: 'pending' | 'complete'; installedBy: string; recordIds: Record<string, string>; installedAt: string }
+
+function normalizeAutomationTemplate(value: unknown): AutomationTemplateApi {
+  const template = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  const installMode = template.installMode;
+  const installationStatus = template.installationStatus;
+  if (
+    typeof template.id !== 'string'
+    || typeof template.name !== 'string'
+    || typeof template.description !== 'string'
+    || (installMode !== 'automatic' && installMode !== 'opt_in')
+    || !['not_installed', 'needs_setup', 'ready', 'active'].includes(String(installationStatus))
+    || !Array.isArray(template.setupSteps)
+    || !Array.isArray(template.blockerCodes)
+  ) {
+    throw new Error('The workflow recommendation catalog returned an invalid recommendation.');
+  }
+  return template as unknown as AutomationTemplateApi;
+}
+
+export function normalizeAutomationTemplateCatalog(value: unknown): {
+  templates: AutomationTemplateApi[];
+  installations: AutomationTemplateInstallationApi[];
+} {
+  const catalog = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  if (!Array.isArray(catalog.templates) || !Array.isArray(catalog.installations)) {
+    throw new Error('The workflow recommendation catalog returned an invalid response.');
+  }
+  return {
+    templates: catalog.templates.map(normalizeAutomationTemplate),
+    installations: catalog.installations as AutomationTemplateInstallationApi[]
+  };
+}
+
 export {
   listWorkspaceWorkflowExecutions
 } from './workflowActivityApi';
 export type {
-  WorkflowActivitySummary,
   WorkflowExecutionOrigin,
   WorkflowExecutionPage,
   WorkflowExecutionStatus,
@@ -17,10 +59,6 @@ export type {
 export type WorkflowApiDefinition = Record<string, unknown> & {
   id: string;
   workspaceId: string;
-  version: number;
-  origin?: { type: 'template' | 'manual'; templateId?: string; templateVersion?: number };
-  source?: 'system' | 'user';
-  templateId?: string;
   name: string;
   description?: string;
   status?: 'active' | 'draft' | 'paused';
@@ -28,7 +66,6 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   createdByUser?: { id?: string; userId?: string; displayName?: string; email?: string };
   createdAt?: string;
   prompt?: string;
-  starterPrompt?: string;
   agentIds: string[];
   executionMode: 'direct' | 'coordinated';
   tags?: string[];
@@ -52,11 +89,8 @@ export interface WorkflowOption {
   disabled?: boolean;
   disabledReason?: string;
   provenance?: {
-    source: 'workspace' | 'target' | 'agent';
+    source: 'workspace' | 'agent';
     provider?: 'github' | 'gitlab';
-    targetId?: string;
-    targetName?: string;
-    targetType?: 'kubernetes' | 'virtual_machine';
     agentId?: string;
     serverId?: string;
     toolName?: string;
@@ -85,7 +119,6 @@ export interface WorkflowSessionResponse {
     id: string;
     workflowId: string;
     workspaceId: string;
-    workflowVersion: number;
   } & Record<string, unknown>;
 }
 export type WorkflowCapabilityPreviewReasonCode =
@@ -98,7 +131,7 @@ export interface WorkflowCapabilityToolPreview {
   label: string;
   description?: string;
   access: 'read' | 'write';
-  source: 'target' | 'mcp' | 'builtin';
+  source: 'mcp' | 'builtin';
   serverId?: string;
   serverIds?: string[];
 }
@@ -128,7 +161,6 @@ export type WorkflowMcpRequirementPreview = WorkflowMcpRequirementPreviewBase & 
 
 export interface WorkflowCapabilitiesPreview {
   workflowId: string;
-  workflowVersion: number;
   mode: 'read_only' | 'read_write';
   semanticCapabilityIds: string[];
   checkedAt: string;
@@ -162,7 +194,6 @@ export function normalizeWorkflowCapabilitiesPreview(
 
   return {
     workflowId: typeof value?.workflowId === 'string' ? value.workflowId : '',
-    workflowVersion: typeof value?.workflowVersion === 'number' ? value.workflowVersion : 0,
     mode: value?.mode === 'read_write' ? 'read_write' : 'read_only',
     semanticCapabilityIds: previewArray<string>(value?.semanticCapabilityIds),
     checkedAt: typeof value?.checkedAt === 'string' ? value.checkedAt : '',
@@ -197,7 +228,6 @@ export interface WorkflowRunSummary {
   executorRole?: 'coordinator' | 'specialist';
   parentRunId?: string;
   agentId?: string;
-  agentVersion?: number;
   status?: string;
   createdBy?: string;
   requestedAt?: string;
@@ -215,7 +245,6 @@ export interface WorkflowSchedule {
   id: string;
   workspaceId: string;
   workflowId: string;
-  workflowVersion: number;
   name: string;
   status: 'enabled' | 'paused';
   cron: string;
@@ -270,10 +299,8 @@ export interface WorkflowSchedulePreview {
 export interface WorkspaceApprovalInboxRow {
   approvalId: string;
   runId: string;
-  source: 'target_tool' | 'workflow_gate' | 'agent_gate' | 'agent_tool' | 'workflow_tool';
+  source: 'interactive_tool' | 'workflow_gate' | 'agent_gate' | 'agent_tool' | 'workflow_tool';
   workflowId?: string;
-  targetId?: string;
-  targetType?: string;
   summary: string;
   toolName: string;
   requestedBy?: string;
@@ -337,7 +364,6 @@ export interface WorkflowCoordinationChild {
   id: string;
   childRunId?: string;
   capabilityId: string;
-  target: { id: string; targetType: 'kubernetes' | 'virtual_machine' };
   agent: { id: string; name: string };
   required: boolean;
   status: string;
@@ -358,6 +384,22 @@ export function listWorkspaceWorkflows(workspaceId: string): Promise<WorkflowApi
   return requestJson<{ items: WorkflowApiDefinition[] }>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/workflows`
   ).then((page) => page.items);
+}
+
+export function listAutomationTemplates(workspaceId: string): Promise<{
+  templates: AutomationTemplateApi[];
+  installations: AutomationTemplateInstallationApi[];
+}> {
+  return requestJson<unknown>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/automation-templates`)
+    .then(normalizeAutomationTemplateCatalog);
+}
+
+export function installAutomationTemplate(workspaceId: string, templateId: string): Promise<{ workflowId: string; alreadyInstalled: boolean }> {
+  return requestJson(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/automation-templates/${encodeURIComponent(templateId)}/install`, { method: 'POST' });
+}
+
+export function activateAutomationTemplate(workspaceId: string, templateId: string): Promise<{ workflowId: string; status: 'active' }> {
+  return requestJson(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/automation-templates/${encodeURIComponent(templateId)}/activate`, { method: 'POST' });
 }
 
 export function getWorkflowExecution(executionId: string): Promise<WorkflowExecutionResponse> {

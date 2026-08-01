@@ -36,12 +36,9 @@ export interface WorkflowAgentReference {
 export interface WorkflowDefinition {
   id: string;
   workspaceId: string;
-  version?: number;
   name: string;
   description: string;
   status: WorkflowStatus;
-  source?: 'system' | 'user';
-  origin?: { type: 'template' | 'manual'; templateId?: string; templateVersion?: number };
   createdBy?: string;
   agentIds: string[];
   executionMode: 'direct' | 'coordinated';
@@ -85,7 +82,7 @@ function workflowRouteParams(search: string): URLSearchParams {
   return new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
 }
 
-function normalizeWorkflowRouteTarget(value: string): string {
+function normalizeWorkflowRouteSelection(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
@@ -93,7 +90,7 @@ export function getWorkflowRouteQuery(search: string): string {
   return workflowRouteParams(search).get('q')?.trim() || '';
 }
 
-export function getWorkflowRouteSelectionTarget(search: string): string {
+export function getWorkflowRouteSelection(search: string): string {
   return (workflowRouteParams(search).get('workflow') || '').trim();
 }
 
@@ -118,12 +115,12 @@ export function filterWorkflowDefinitions(workflows: WorkflowDefinition[], query
   });
 }
 
-export function findWorkflowByRouteTarget(workflows: WorkflowDefinition[], target: string): WorkflowDefinition | undefined {
-  const normalizedTarget = normalizeWorkflowRouteTarget(target);
-  if (!normalizedTarget) return undefined;
+export function findWorkflowByRouteSelection(workflows: WorkflowDefinition[], selection: string): WorkflowDefinition | undefined {
+  const normalizedSelection = normalizeWorkflowRouteSelection(selection);
+  if (!normalizedSelection) return undefined;
   return workflows.find((workflow) => (
-    normalizeWorkflowRouteTarget(workflow.id) === normalizedTarget ||
-    normalizeWorkflowRouteTarget(workflow.name) === normalizedTarget
+    normalizeWorkflowRouteSelection(workflow.id) === normalizedSelection ||
+    normalizeWorkflowRouteSelection(workflow.name) === normalizedSelection
   ));
 }
 

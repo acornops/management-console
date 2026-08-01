@@ -123,18 +123,18 @@ export const WorkflowLibraryList: React.FC<{
 };
 
 export const WorkflowDeleteDialog: React.FC<{
-  deleteTargetWorkflow?: WorkflowDefinition;
+  workflowToDelete?: WorkflowDefinition;
   deleteWorkflowConfirmation: string;
   deleteWorkflowError: string;
   deletingWorkflowId: string;
   onClose: () => void;
   onDelete: (workflow: WorkflowDefinition) => void;
   setDeleteWorkflowConfirmation: React.Dispatch<React.SetStateAction<string>>;
-}> = ({ deleteTargetWorkflow, deleteWorkflowConfirmation, deleteWorkflowError, deletingWorkflowId, onClose, onDelete, setDeleteWorkflowConfirmation }) => {
-  if (!deleteTargetWorkflow) return null;
+}> = ({ workflowToDelete, deleteWorkflowConfirmation, deleteWorkflowError, deletingWorkflowId, onClose, onDelete, setDeleteWorkflowConfirmation }) => {
+  if (!workflowToDelete) return null;
 
   return (
-    <DialogFrame unframed titleId="delete-workflow-title" closeDisabled={deletingWorkflowId === deleteTargetWorkflow.id} className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl" onClose={onClose}>
+    <DialogFrame unframed titleId="delete-workflow-title" closeDisabled={deletingWorkflowId === workflowToDelete.id} className="w-full max-w-lg overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl" onClose={onClose}>
       <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-center gap-3">
           <IconTile size="sm" tone="danger">
@@ -147,15 +147,15 @@ export const WorkflowDeleteDialog: React.FC<{
             <p className="type-caption mt-0.5 type-emphasis text-ui-text-muted">This action cannot be undone.</p>
           </div>
         </div>
-        <CloseButton onClick={onClose} disabled={deletingWorkflowId === deleteTargetWorkflow.id} label="Close delete workflow dialog" />
+        <CloseButton onClick={onClose} disabled={deletingWorkflowId === workflowToDelete.id} label="Close delete workflow dialog" />
       </div>
       <div className="space-y-4 px-5 py-5">
-        <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-ui leading-6 text-status-danger-text">Deleting {deleteTargetWorkflow.name} removes the workflow definition for future runs. Existing run records and audit events are retained.</div>
+        <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-ui leading-6 text-status-danger-text">Deleting {workflowToDelete.name} removes the workflow definition for future runs. Existing run records and audit events are retained.</div>
         <div>
           <label htmlFor="delete-workflow-confirmation-input" className="type-label mb-1.5 block px-1">
             Type the workflow name to confirm deletion.
           </label>
-          <TextInput id="delete-workflow-confirmation-input" value={deleteWorkflowConfirmation} onChange={(event) => setDeleteWorkflowConfirmation(event.target.value)} disabled={deletingWorkflowId === deleteTargetWorkflow.id} autoComplete="off" spellCheck={false} className="focus:border-status-danger/45 focus:ring-status-danger/20" />
+          <TextInput id="delete-workflow-confirmation-input" value={deleteWorkflowConfirmation} onChange={(event) => setDeleteWorkflowConfirmation(event.target.value)} disabled={deletingWorkflowId === workflowToDelete.id} autoComplete="off" spellCheck={false} className="focus:border-status-danger/45 focus:ring-status-danger/20" />
         </div>
         {deleteWorkflowError && (
           <InlineAlert tone="danger" aria-live="assertive" className="px-3 py-2">
@@ -164,11 +164,11 @@ export const WorkflowDeleteDialog: React.FC<{
         )}
       </div>
       <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
-        <Button variant="secondary" size="sm" onClick={onClose} disabled={deletingWorkflowId === deleteTargetWorkflow.id}>
+        <Button variant="secondary" size="sm" onClick={onClose} disabled={deletingWorkflowId === workflowToDelete.id}>
           Cancel
         </Button>
-        <Button variant="danger" size="sm" onClick={() => onDelete(deleteTargetWorkflow)} disabled={deletingWorkflowId === deleteTargetWorkflow.id || deleteWorkflowConfirmation !== deleteTargetWorkflow.name}>
-          {deletingWorkflowId === deleteTargetWorkflow.id ? 'Deleting...' : 'Delete workflow'}
+        <Button variant="danger" size="sm" onClick={() => onDelete(workflowToDelete)} disabled={deletingWorkflowId === workflowToDelete.id || deleteWorkflowConfirmation !== workflowToDelete.name}>
+          {deletingWorkflowId === workflowToDelete.id ? 'Deleting...' : 'Delete workflow'}
         </Button>
       </div>
     </DialogFrame>
@@ -325,7 +325,7 @@ const WorkflowPreviewToolRows: React.FC<{
                 {tool.description && <span className="type-caption mt-0.5 block text-ui-text-muted">{tool.description}</span>}
               </span>
               <span className="flex shrink-0 flex-wrap gap-1.5">
-                <StatusBadge tone="neutral">{tool.source === 'target' ? 'Target' : tool.source === 'mcp' ? 'MCP' : 'Built-in'}</StatusBadge>
+                <StatusBadge tone="neutral">{tool.source === 'mcp' ? 'MCP' : 'Built-in'}</StatusBadge>
                 <StatusBadge tone={tool.access === 'write' ? 'warning' : 'success'}>{tool.access}</StatusBadge>
               </span>
             </li>

@@ -2,7 +2,8 @@ import type {
   TargetToolCatalog,
   TargetToolCatalogItem
 } from '@/features/targets/admin/targetMcpCatalogTypes';
-import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
+import type { TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
+import type { CapabilitySubject } from '@/features/capabilities/admin';
 import {
   controlPlaneApi,
   type CreateTargetMcpServerInput,
@@ -12,7 +13,7 @@ import {
 } from '@/services/controlPlaneApi';
 
 export interface McpServersViewProps {
-  target: TargetDescriptor;
+  subject: CapabilitySubject & { mcpTools?: TargetMcpToolSummary[] };
   canManageMcp?: boolean;
   canManageTools?: boolean;
   canRequestWriteRuns?: boolean;

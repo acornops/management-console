@@ -25,7 +25,7 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
   if (view === 'skills') {
     return (
       <TargetSkillsView
-        target={target}
+        subject={target}
         canManageSkills={Boolean(workspace.permissions?.manage_skills)}
       />
     );
@@ -34,7 +34,7 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
   if (view === 'tools') {
     return (
       <TargetToolsView
-        target={target}
+        subject={target}
         canManageTools={Boolean(workspace.permissions?.manage_tools || workspace.permissions?.manage_target_insights)}
       />
     );
@@ -42,7 +42,7 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
 
   return (
     <McpServersView
-      target={target}
+      subject={target}
       canManageMcp={Boolean(workspace.permissions?.manage_mcp)}
       canManageTools={Boolean(workspace.permissions?.manage_tools || workspace.permissions?.manage_target_insights)}
       canRequestWriteRuns={Boolean(workspace.permissions?.create_read_write_runs)}

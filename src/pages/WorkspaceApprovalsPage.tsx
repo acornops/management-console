@@ -23,7 +23,6 @@ import { formatUserDateTime } from '@/utils/dateTime';
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
-import { AppPaths, withAssistantSession } from '@/utils/routes';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
@@ -302,7 +301,6 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                   <DataTableHeaderCell density="dense">{t('approvals.table.approval')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.activity')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.requestedBy')}</DataTableHeaderCell>
-                  <DataTableHeaderCell density="dense">{t('approvals.table.target')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.source')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.expires')}</DataTableHeaderCell>
                   <DataTableHeaderCell density="dense">{t('approvals.table.status')}</DataTableHeaderCell>
@@ -317,17 +315,6 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                     (approvalId && approval.approvalId === approvalId) ||
                     (!approvalId && runId && approval.runId === runId)
                   );
-                  const investigationPath = approval.sessionOrigin === 'auto_triage'
-                    && approval.sessionId
-                    && approval.targetId
-                    && (approval.targetType === 'kubernetes' || approval.targetType === 'virtual_machine')
-                    ? withAssistantSession(
-                        approval.targetType === 'kubernetes'
-                          ? AppPaths.workspaceKubernetesClusterDiagnostics(workspace.id, approval.targetId, 'chat')
-                          : AppPaths.workspaceVirtualMachineDetail(workspace.id, approval.targetId, 'chat'),
-                        approval.sessionId
-                      )
-                    : null;
                   return (
                     <DataTableRow key={approval.approvalId} className={`type-body ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
                       <DataTableCell as="th" scope="row" className="px-4 py-4 type-emphasis text-ui-text">{approval.summary}</DataTableCell>
@@ -338,17 +325,11 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                       <DataTableCell className="px-4 py-4 text-ui-text-muted">
                         {approval.sessionOrigin === 'auto_triage' ? t('approvals.acornOps') : approval.requestedBy || t('approvals.system')}
                       </DataTableCell>
-                      <DataTableCell className="px-4 py-4 text-ui-text-muted">{approval.targetId || t('approvals.targetWorkspace')}</DataTableCell>
                       <DataTableCell className="px-4 py-4 type-emphasis text-ui-text">{sourceLabel(approval, t)}</DataTableCell>
                       <DataTableCell className="px-4 py-4 text-ui-text-muted">{formatDateTime(approval.expiresAt, t('approvals.none'))}</DataTableCell>
                       <DataTableCell className="px-4 py-4"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></DataTableCell>
                       <DataTableCell className="px-4 py-4">
                         <div className="flex gap-2">
-                          {investigationPath && navigate && (
-                            <Button size="sm" variant="tertiary" onClick={() => navigate(investigationPath)}>
-                              {t('approvals.actions.openInvestigation')}
-                            </Button>
-                          )}
                           <Button size="sm" variant="secondary" onClick={() => void decideApproval(approval, 'approved')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
                             {decision === 'loading' ? t('approvals.actions.deciding') : t('approvals.actions.approve')}
                           </Button>

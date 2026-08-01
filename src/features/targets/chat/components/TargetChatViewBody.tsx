@@ -40,7 +40,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     canDeleteSessions,
     canManageAiSettings,
     canPost,
-    target,
+    subject,
     composerActionLabel,
     composerAttachmentNotice,
     composerAttachments,
@@ -156,8 +156,8 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     markViewed: markInvestigationsViewed
   } = useAutomaticInvestigationViewState({
     currentUserId: automaticInvestigationsEnabled ? currentUserId : '',
-    workspaceId: target.workspaceId,
-    targetId: target.id,
+    workspaceId: subject.workspaceId,
+    targetId: subject.id,
     sessions
   });
   const {
@@ -242,7 +242,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           >
             <div className="flex h-full w-full shrink-0 flex-col overflow-hidden">
               <ConversationHistory
-                appName={target.name}
+                appName={subject.name}
                 sessions={sessions}
                 sessionOrigin={automaticInvestigationsEnabled
                   ? historyView === 'investigations' ? 'auto_triage' : 'manual'
@@ -283,7 +283,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             <ConversationHistory
               id={historySearchPageId}
               mode="page"
-              appName={target.name}
+              appName={subject.name}
               sessions={sessions}
               activeSessionId={activeSessionId}
               sessionAssistantStatuses={sessionAssistantStatuses}
@@ -311,7 +311,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                       {headerLeading}
                       <div className="min-w-0">
                         <h1 className="type-section-title truncate text-ui-text">{title}</h1>
-                        <p className="mt-1 type-caption text-ui-text-muted">{t('chat.panelDescription', { name: target.name })}</p>
+                        <p className="mt-1 type-caption text-ui-text-muted">{t('chat.panelDescription', { name: subject.name })}</p>
                       </div>
                     </div>
                     <TargetChatPanelControls onClose={onClose} onMaximize={onMaximize} t={t} />
@@ -322,7 +322,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                       {headerLeading}
                       <div className="min-w-0">
                         <h1 className="type-route-title">{title}</h1>
-                        <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: target.name })}</p>
+                        <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: subject.name })}</p>
                       </div>
                     </div>
                     <div className="flex w-full min-w-0 shrink-0 items-center gap-3 lg:w-auto lg:max-w-2xl lg:justify-end">
@@ -364,7 +364,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 ) : visibleMessages.length === 0 ? (
                   <ChatEmptyPrompt
                     isPanel={isPanel}
-                    title={t(resolvedPromptTitleKey, { name: target.name })}
+                    title={t(resolvedPromptTitleKey, { name: subject.name })}
                     body={t(resolvedPromptBodyKey)}
                     suggestions={resolvedSuggestionKeys.map((suggestionKey) => ({
                       key: suggestionKey,
@@ -505,7 +505,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   canChat={canChat}
                   canCancelActiveRun={canCancelActiveRun}
                   canPost={canPost}
-                  target={target}
+                  subject={subject}
                   composerActionLabel={composerActionLabel}
                   composerAttachmentNotice={composerAttachmentNotice}
                   composerAttachments={composerAttachments}
@@ -575,7 +575,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           className="ml-12 h-full w-[min(21rem,calc(100vw-5rem))] max-w-none border-l-0 bg-ui-surface shadow-xl outline-none"
         >
           <ConversationHistory
-            appName={target.name}
+            appName={subject.name}
             sessions={sessions}
             sessionOrigin={automaticInvestigationsEnabled
               ? historyView === 'investigations' ? 'auto_triage' : 'manual'

@@ -2,11 +2,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AddMcpServerAction } from '@/features/catalog/AddMcpServerAction';
-import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
+import type { CapabilitySubject } from '@/features/capabilities/admin';
 import { AppPaths } from '@/utils/routes';
 
 interface McpServersViewHeaderProps {
-  target: TargetDescriptor;
+  target: CapabilitySubject;
   canEditServers: boolean;
   onConnectByUrl: () => void;
   catalogDestination?: string;

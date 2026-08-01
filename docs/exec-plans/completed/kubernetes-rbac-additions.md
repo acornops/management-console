@@ -19,7 +19,8 @@ a cluster, without exposing API groups, resources, or verbs.
 
 ## Result
 
-Complete. Lint, all 801 tests, contract and harness checks, route smoke, the
-focused progressive-disclosure browser test, and the production build pass. The
-catalog request is invalidated on modal close or workspace switch to prevent
-stale checklist data.
+The console request is invalidated on modal close or workspace switch. It shows
+the effective administrator-authored catalog, submits only selected stable keys,
+and preserves the explicit empty state when no additions are configured. The
+control plane resolves those keys into an immutable per-cluster snapshot, and
+AgentK constrains custom-resource operations to that snapshot.

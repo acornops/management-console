@@ -17,13 +17,11 @@ import { buildWorkspaceOverviewCards, type WorkspaceOverviewAttentionItem, type 
 import type { TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { AppPaths } from '@/utils/routes';
-import { IssueWorkflowActivity } from '@/features/workflow-activity/WorkflowActivityUi';
 import {
   AutomaticInvestigationActivity,
   shouldShowManualAssistantFallback
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
-import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 
 interface WorkspaceOverviewPageProps {
   currentUserId: string;
@@ -59,8 +57,6 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
   navigate
 }) => {
   const { t } = useTranslation();
-  const workflowActivity = useWorkspaceWorkflowActivity();
-  const workflowActivityRevisionRef = React.useRef(workflowActivity.revision);
   const [workspaceVirtualMachines, setWorkspaceVirtualMachines] = React.useState(virtualMachines);
   const loadIssuePage = React.useCallback(
     async ({ cursor, limit, signal }: { cursor?: string; limit: number; signal: AbortSignal }) => {
@@ -98,11 +94,6 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     pageSize: 50,
     strategy: 'manual'
   });
-  React.useEffect(() => {
-    if (workflowActivityRevisionRef.current === workflowActivity.revision) return;
-    workflowActivityRevisionRef.current = workflowActivity.revision;
-    if (workflowActivity.workspaceId === workspace.id) void issueCollection.refresh();
-  }, [issueCollection.refresh, workflowActivity.revision, workflowActivity.workspaceId, workspace.id]);
   const workspaceIssues = issueCollection.items;
   const hasPriorVirtualMachineData = hasLoadedWorkspaceVirtualMachines || workspaceVirtualMachines.length > 0;
   const isLoadingVirtualMachines =
@@ -306,7 +297,6 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
               </span>
             </div>
             {issue.evidence && <p className="type-body mt-2 line-clamp-2 max-w-4xl text-ui-text-muted">{issue.evidence}</p>}
-            <IssueWorkflowActivity workspaceId={workspace.id} issueId={issue.id} activity={issue.workflowActivity} navigate={navigate} />
             <AutomaticInvestigationActivity
               workspaceId={workspace.id}
               targetId={issue.targetId}
@@ -320,7 +310,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
               <Button
                 onClick={() => openAssistantForIssue(item)}
-                variant={(issue.workflowActivity?.openCount || 0) > 0 ? 'secondary' : 'primary'}
+                variant="primary"
                 size="sm"
                 className="w-full justify-center sm:w-auto"
               >

@@ -52,24 +52,11 @@ webhook payloads or raw occurrence keys as provenance.
 
 The Activity tab shows open executions; the Workflows navigation item carries
 the Experimental badge. The Activity ledger defaults to open work
-and supports URL-backed search, state, origin,
-workflow, and issue filters. Rows show workflow and origin, target, lifecycle
-time, honest duration, and one exact-run action. Exact links open the existing
+and supports URL-backed search, state, origin, and workflow filters. Rows show
+workflow and origin, workspace scope, lifecycle time, honest duration, and one
+exact-run action. Exact links open the existing
 workflow-scoped Runs tab and focus the matching execution. The
 `tab=runs` URL value remains the compatibility contract for those links.
-
-Workspace, Kubernetes, and virtual-machine issue rows show the most relevant
-execution with its origin and current state. Their primary action follows this
-order:
-
-1. Waiting for approval or needs review: **Review run**.
-2. More than one open execution: **View runs** with the issue filter applied.
-3. One open execution: **Open run**.
-4. Failed latest automation: **Review failure**.
-5. Completed latest automation: **View history**.
-
-Manual investigation remains available. Automation visibility adds context and
-a direct next step; it does not replace operator judgment.
 
 ## Collection Behavior
 

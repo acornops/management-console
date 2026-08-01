@@ -3,7 +3,7 @@ import type { KubernetesCluster } from '@/types';
 export interface TargetMcpServer {
   id: string;
   workspaceId: string;
-  targetId: string;
+  targetId?: string;
   serverName: string;
   serverUrl: string;
   enabled: boolean;

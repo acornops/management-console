@@ -4,7 +4,8 @@ import type {
   TargetToolCatalogServer
 } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { formatMcpError } from '@/services/control-plane/mcpError';
-import type { TargetDescriptor, TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
+import type { TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
+import type { CapabilitySubject } from '@/features/capabilities/admin';
 import type { CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
 import { formatUserDateTime } from '@/utils/dateTime';
 
@@ -209,10 +210,13 @@ export function computeToolCounts(tools: TargetToolCatalogItem[]): TargetToolCat
   };
 }
 
-export function buildLocalCatalog(target: TargetDescriptor, canEdit: boolean): TargetToolCatalog {
+export function buildLocalCatalog(
+  subject: CapabilitySubject & { mcpTools?: TargetMcpToolSummary[] },
+  canEdit: boolean
+): TargetToolCatalog {
   const servers = new Map<string, TargetToolCatalogServer>();
 
-  for (const tool of target.mcpTools || []) {
+  for (const tool of subject.mcpTools || []) {
     const id = getServerKey(tool);
     const type = tool.toolType === 'builtin' ? 'builtin' : 'mcp';
     const existing = servers.get(id);
@@ -225,7 +229,7 @@ export function buildLocalCatalog(target: TargetDescriptor, canEdit: boolean): T
     const tools = [mapTool(tool)];
     servers.set(id, {
       id,
-      name: getServerName(tool, target.name),
+      name: getServerName(tool, subject.name),
       url: getServerUrl(tool),
       type,
       enabled: true,
@@ -245,10 +249,12 @@ export function buildLocalCatalog(target: TargetDescriptor, canEdit: boolean): T
   }
 
   return {
-    workspaceId: target.workspaceId,
-    clusterId: target.targetType === 'kubernetes' ? target.id : '',
-    targetId: target.id,
-    targetType: target.targetType,
+    workspaceId: subject.workspaceId,
+    ...(subject.targetType ? {
+      clusterId: subject.targetType === 'kubernetes' ? subject.id : '',
+      targetId: subject.id,
+      targetType: subject.targetType
+    } : {}),
     permissions: {
       canEdit,
       editableRoles: []

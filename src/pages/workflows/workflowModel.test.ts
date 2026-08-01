@@ -9,12 +9,12 @@ function workflow(
   return {
     id: 'workflow-1',
     workspaceId: 'workspace-1',
-    name: 'Target diagnostics',
+    name: 'Infrastructure diagnostics',
     description: 'Inspect infrastructure health.',
     status,
     agentIds: ['agent-1'],
     executionMode: 'direct',
-    semanticCapabilityIds: ['target.diagnostics.read'],
+    semanticCapabilityIds: ['infrastructure.diagnostics.read'],
     capabilityRestrictionMode: 'restrict',
     readiness,
     owner: 'Workspace owner',
@@ -33,14 +33,14 @@ describe('workflow primary actions', () => {
   it('keeps Schedule and Launch visible for active workflows with readiness blockers', () => {
     expect(getWorkflowPrimaryAction(workflow('active', {
       status: 'needs_setup',
-      reasons: ['No compatible target is connected.']
+      reasons: ['A required MCP connection is unavailable.']
     }))).toBe('launch');
   });
 
   it('keeps activation as the lifecycle action for inactive workflows', () => {
     expect(getWorkflowPrimaryAction(workflow('draft', {
       status: 'needs_setup',
-      reasons: ['No compatible target is connected.']
+      reasons: ['A required MCP connection is unavailable.']
     }))).toBe('activate');
   });
 });

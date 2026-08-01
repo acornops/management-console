@@ -1,7 +1,9 @@
 import React from 'react';
-import { McpServersView } from '@/features/targets/admin/McpServersView';
-import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
-import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
+import {
+  CapabilityMcpServersView,
+  CapabilitySkillsView,
+  CapabilityToolsView
+} from '@/features/capabilities/admin';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import {
   countAgentCredentialModeScheduleImpact,
@@ -42,9 +44,9 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
 
   if (section === 'skills') {
     return (
-      <TargetSkillsView
+      <CapabilitySkillsView
         key={agent.id}
-        target={subject}
+        subject={subject}
         canManageSkills={canManageSkills}
         dataSource={skillsDataSource}
       />
@@ -53,9 +55,9 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
 
   if (section === 'tools') {
     return (
-      <TargetToolsView
+      <CapabilityToolsView
         key={agent.id}
-        target={subject}
+        subject={subject}
         canManageTools={canManageAgents}
         dataSource={toolsDataSource}
       />
@@ -63,9 +65,9 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
   }
 
   return (
-    <McpServersView
+    <CapabilityMcpServersView
       key={agent.id}
-      target={subject}
+      subject={subject}
       canManageMcp={canManageMcp}
       canManageTools={canManageMcp}
       dataSource={mcpDataSource}

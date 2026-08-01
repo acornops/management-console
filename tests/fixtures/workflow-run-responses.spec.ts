@@ -12,7 +12,6 @@ test('saved workflow responses render as Markdown in the run summary and discuss
             id: 'fixture-workflow-session',
             workflowId: 'fixture-workflow',
             workspaceId: 'fixture-workspace',
-            workflowVersion: 2,
             runs: [{
               id: 'fixture-workflow-run',
               executionId: 'fixture-workflow-execution',

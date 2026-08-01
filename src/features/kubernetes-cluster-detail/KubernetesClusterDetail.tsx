@@ -272,7 +272,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             {activeView === 'mcpServers' && (
               <McpServersView
                 key={targetCacheKey}
-                target={target}
+                subject={target}
                 canManageMcp={canManageMcp}
                 canManageTools={canManageTools}
                 canRequestWriteRuns={canRequestWriteRuns}
@@ -284,7 +284,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             {activeView === 'skills' && (
               <TargetSkillsView
                 key={targetCacheKey}
-                target={target}
+                subject={target}
                 canManageSkills={Boolean(currentWorkspacePermissions?.manage_skills)}
                 initialCatalog={cachedCapabilityCatalogs?.skills}
                 onCatalogChange={cacheSkillsCatalog}
@@ -293,7 +293,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
             {activeView === 'tools' && (
               <TargetToolsView
                 key={targetCacheKey}
-                target={target}
+                subject={target}
                 canManageTools={canManageTools}
                 initialCatalog={cachedCapabilityCatalogs?.tools}
                 onCatalogChange={cacheToolsCatalog}
@@ -326,7 +326,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 workspaceAiSettings={workspaceAiSettings}
                 isWorkspaceAiSettingsLoading={isWorkspaceAiSettingsLoading}
                 workspaceAiSettingsError={workspaceAiSettingsError}
-                target={target}
+                subject={target}
                 assistantMarkdownComponents={assistantMarkdownComponents}
                 userMarkdownComponents={userMarkdownComponents}
                 visibleMessages={visibleMessages}

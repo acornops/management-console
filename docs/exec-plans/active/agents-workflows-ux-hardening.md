@@ -33,7 +33,7 @@ catalog, pagination, and schedule-preview contracts.
 - Closing a contextual schedule or webhook drawer removes only its
   panel-specific parameters.
 - Agent inspection uses one stable profile workspace with Overview,
-  Capabilities, Restore points, and Settings tabs. Disable and delete actions
+  Capabilities and Settings tabs. Disable and delete actions
   appear only in Settings.
 - Agent catalog state comes only from the control-plane statuses `active`,
   `draft`, and `disabled`; readiness terminology and locally derived health are
@@ -45,9 +45,8 @@ catalog, pagination, and schedule-preview contracts.
 - Unavailable catalogs, loading, retry, permission, and mutation states explain
   the next action in English and Mandarin.
 - Agent profile actions use the shared button sizes and refresh icon treatment.
-- Default Agents are ordinary workspace-owned definitions. Legacy
-  template-origin records follow the same edit, version, restore, duplicate,
-  disable, and delete rules.
+- Agents are ordinary workspace-owned definitions with the same edit, restore,
+  duplicate, disable, and delete rules.
 - Default and recommended workflows are ordinary workspace-owned definitions.
   They are directly editable and AcornOps never overwrites, upgrades, or
   automatically restores them.

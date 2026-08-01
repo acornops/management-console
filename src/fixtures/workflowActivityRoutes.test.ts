@@ -16,7 +16,7 @@ function route(path: string, method = 'GET') {
 describe('workflow activity fixture routes', () => {
   beforeEach(resetFixtureStore);
 
-  it('provides deterministic scheduled, issue, approval, review, terminal, and deleted-webhook states', () => {
+  it('provides deterministic scheduled, approval, review, terminal, and deleted-webhook states', () => {
     const response = route('/api/v1/workspaces/fixture-workspace/workflow-executions');
     expect(response?.status).toBe(200);
     const body = response?.body as {
@@ -35,14 +35,7 @@ describe('workflow activity fixture routes', () => {
     expect(body.summary.attentionCount).toBeGreaterThan(0);
   });
 
-  it('filters multiple issue automations', () => {
-    const issuePath = '/api/v1/workspaces/fixture-workspace/workflow-executions?sourceIssueId=fixture-issue';
-    const issueResponse = route(issuePath);
-    const issueBody = issueResponse?.body as { items: Array<{ id: string }> };
-    expect(issueBody.items).toHaveLength(3);
-  });
-
-  it('searches workflow, provenance, and target labels', () => {
+  it('searches workflow and provenance labels', () => {
     const response = route('/api/v1/workspaces/fixture-workspace/workflow-executions?search=weekday%20morning');
     const body = response?.body as { items: Array<{ id: string }> };
     expect(body.items.map((item) => item.id)).toEqual(['fixture-execution-scheduled-running']);
@@ -62,11 +55,11 @@ describe('workflow activity fixture routes', () => {
     };
     expect(body.items[0]?.runs).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        executionId: 'fixture-execution-issue-approval',
+        executionId: 'fixture-execution-approval',
         status: 'waiting_for_approval'
       }),
       expect.objectContaining({
-        executionId: 'fixture-execution-issue-review',
+        executionId: 'fixture-execution-review',
         status: 'needs_review'
       })
     ]));

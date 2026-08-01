@@ -27,7 +27,7 @@ export interface TargetChatViewBodyProps {
   canManageAiSettings: boolean;
   canPost: boolean;
   currentUserId?: string;
-  target: ChatPresentationSubject;
+  subject: ChatPresentationSubject;
   composerActionLabel: string;
   composerAttachmentNotice: string;
   composerAttachments: ComposerAttachment[];
